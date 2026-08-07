@@ -24,7 +24,7 @@ public class TrackVerb : Verb
     /// <summary>What a success teaches: reading sign, and what it says about where something went.</summary>
     public override string? GrantedModusMentisId(Element? target) => "spoor_reading";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
         => Destination(scene, pov, target) != null;
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
@@ -86,7 +86,7 @@ public class StalkVerb : Verb
     /// <summary>What a success teaches: staying with somebody who does not know you are there.</summary>
     public override string? GrantedModusMentisId(Element? target) => "stalking";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
         => Plan(scene, pov, target) != null;
 
     public override string Verbatim(Scene scene, PoV pov, Element target)

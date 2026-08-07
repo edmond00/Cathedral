@@ -13,7 +13,9 @@ public class SnarlingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Bares teeth first and negotiates second, meeting pressure with a show of menace pitched to end the contest early. Reads how much threat a moment needs, and spends exactly that much before anyone bleeds.";
     public override string SkillMeans       => "the bared-teeth warning that ends fights before they start";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Speaking };
+    // Action only — see HowlingModusMentis: a snarl is voice, and the Speaking function is for
+    // conversation, which requires AnatomyCapability.Speech.
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "muzzle" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.Low;

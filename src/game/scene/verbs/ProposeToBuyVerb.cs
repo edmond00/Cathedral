@@ -18,7 +18,7 @@ public class ProposeToBuyVerb : DialogueVerb
     public override int    BaseDifficulty    => 1;   // the action only meets the NPC; the dialogue carries the real stakes
     protected override string DialogueTreeId => "propose_to_buy";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (target is not SceneNpc sceneNpc) return false;
         if (SleeperGate.IsAsleep(scene, pov, target)) return false;  // wake them first

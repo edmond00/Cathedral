@@ -16,13 +16,16 @@ public class StealVerb : Verb
     public override string DisplayName    => "Steal";
     public override int    BaseDifficulty => 3;
 
+    /// <summary>Lifting something and carrying it away. No hands, no verb.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
+
     /// <summary>What a success teaches: taking what is not yours, quietly.</summary>
     public override string? GrantedModusMentisId(Element? target) => "petty_thief";
 
     /// <summary>Stealing is always an illegal action.</summary>
     public override bool IsLegal => false;
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (target is not ItemElement itemEl) return false;
         if (!pov.Where.IsPrivate) return false;

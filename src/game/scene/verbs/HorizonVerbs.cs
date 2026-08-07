@@ -21,7 +21,7 @@ public class ObserveHorizonVerb : Verb
     /// <summary>What a success teaches: reading a landscape and holding its shape in your head.</summary>
     public override string? GrantedModusMentisId(Element? target) => "topographia";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (target is not HorizonPointOfInterest horizon) return false;
         if (!pov.Where.PointsOfInterest.Contains(horizon)) return false;
@@ -69,11 +69,11 @@ public class GoTowardVerb : Verb
     /// <summary>What a success teaches: holding a bearing across ground you have only seen from afar.</summary>
     public override string? GrantedModusMentisId(Element? target) => "cartography";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
         => Reachable(pov, target).Count > 0;
 
     /// <summary>One action per landmark seen from here and not already underfoot.</summary>
-    public override IEnumerable<VerbView> ExpandViews(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    public override IEnumerable<VerbView> ExpandViews(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         foreach (var area in Reachable(pov, target))
             yield return new VerbView(this, $"set out for the {area.DisplayName.ToLowerInvariant()}", target, variant: area);

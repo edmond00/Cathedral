@@ -15,6 +15,9 @@ public class ElegyModusMentis : ModusMentis
     public override string SkillMeans       => "the sense for loss, endings and the passing of things";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "spleen", "pineal_gland" };
+
+    /// <summary>Stands on letters, number or institutions.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
     public override string PersonaTone     => "a grave, mournful soul who sees the ending folded inside every beginning";

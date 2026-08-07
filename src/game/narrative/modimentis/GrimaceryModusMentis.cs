@@ -15,6 +15,9 @@ public class GrimaceryModusMentis : ModusMentis
     public override string SkillMeans       => "the making and mimicking of faces and expressions";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "visage" };
+
+    /// <summary>Words with a person, not a voice in the air.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
     public override string PersonaTone     => "a rubber-faced mimic who can wear anyone's expression a half-second after seeing it";

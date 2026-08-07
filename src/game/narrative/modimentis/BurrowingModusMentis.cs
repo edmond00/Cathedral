@@ -14,7 +14,9 @@ public class BurrowingModusMentis : ModusMentis
         "Sets claw and foot to digging: opening ground, moving earth, and shaping a hole that holds. Reads soil for how it will dig and treats going under as the natural answer to danger and weather alike.";
     public override string SkillMeans       => "the digging of burrows, tunnels and underground passages";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
-    public override string[] Organs        => new[] { "claws", "feet" };
+    // Beast anatomy throughout: a human has no claws, so pairing them with "feet" (human-only) left this
+    // learnable by nobody at all. Digging is claws and the legs driving them.
+    public override string[] Organs        => new[] { "claws", "legs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
     public override string PersonaTone     => "a digger that trusts the ground more than anything built on top of it";

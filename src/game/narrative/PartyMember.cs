@@ -124,6 +124,16 @@ public abstract class PartyMember
     /// <summary>Shortcut to the anatomy type used by this member's species.</summary>
     public AnatomyType AnatomyType => Species.AnatomyType;
 
+    /// <summary>
+    /// What this body is able to do beyond its organs (see <see cref="AnatomyCapability"/>) — read
+    /// from the anatomy, never stored, so it cannot drift from the species.
+    /// </summary>
+    public AnatomyCapability Capabilities =>
+        AnatomyFactoryRegistry.GetFactory(Species.AnatomyType).Capabilities;
+
+    /// <summary>True when this body has every capability in <paramref name="required"/>.</summary>
+    public bool Can(AnatomyCapability required) => (Capabilities & required) == required;
+
     // ── Display name (subclasses define this differently) ────────
     /// <summary>Human-readable name shown in the party panel.</summary>
     public abstract string DisplayName { get; }

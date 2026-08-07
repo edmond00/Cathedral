@@ -80,6 +80,7 @@ public static class VerbAudit
                       $"≥3 on {TargetThreePlusVerbs:P0}, a sense on {TargetSensory:P0}");
 
         AuditDeadVerbs(sb, warnings, everOffered);
+        AuditAnatomyReach(sb);
 
         sb.AppendLine();
         if (warnings.Count == 0)
@@ -432,5 +433,29 @@ public static class VerbAudit
 
         foreach (var id in dead)
             warnings.Add($"verb '{id}' is never offered by any sampled location — nothing places its target");
+    }
+
+    /// <summary>
+    /// What each anatomy is allowed to attempt, and what its body rules out
+    /// (<c>Verb.RequiredCapabilities</c>). Not a warning: a beast being barred from twenty-four verbs
+    /// is the design, not a fault. It is here so the cost of that design stays visible — and so the
+    /// next anatomy's poverty is one line to read rather than something to work out from the source.
+    /// </summary>
+    private static void AuditAnatomyReach(StringBuilder sb)
+    {
+        var verbs = VerbRegistry.Instance.GetAll().OrderBy(v => v.VerbId).ToList();
+
+        sb.AppendLine();
+        sb.AppendLine("--- ANATOMY ---");
+        foreach (var anatomy in ModusMentisAnatomy.AllAnatomies)
+        {
+            var caps    = AnatomyFactoryRegistry.GetFactory(anatomy).Capabilities;
+            var blocked = verbs.Where(v => (caps & v.RequiredCapabilities) != v.RequiredCapabilities)
+                               .Select(v => v.VerbId).ToList();
+
+            sb.AppendLine($"  {anatomy,-6} can [{caps}] — {verbs.Count - blocked.Count}/{verbs.Count} verbs");
+            if (blocked.Count > 0)
+                sb.AppendLine($"      barred: {string.Join(", ", blocked)}");
+        }
     }
 }

@@ -44,8 +44,31 @@ public abstract class Verb
     /// </summary>
     public virtual bool CanBeUsedUnderThreat => false;
 
-    /// <summary>Returns whether this verb can be executed given the current scene state.</summary>
-    public abstract bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null);
+    /// <summary>
+    /// What the acting body must be able to do for this verb to be offered at all — speech for
+    /// anything that opens a conversation, handcraft for tools, locks and carrying. Default
+    /// <see cref="AnatomyCapability.None"/>: available to every anatomy.
+    ///
+    /// <para>Checked in <see cref="IsPossible"/> before any scene state, so it holds for every caller
+    /// at once. Without it a wolf narrating after a Speak-About hand-off is offered "introduce
+    /// myself" and "pick the lock" like anyone else.</para>
+    /// </summary>
+    public virtual AnatomyCapability RequiredCapabilities => AnatomyCapability.None;
+
+    /// <summary>
+    /// Whether this verb can be executed given the current scene state <b>and</b> the acting body.
+    ///
+    /// <para>Sealed on purpose: the anatomy gate is applied here, once, and the per-verb condition
+    /// lives in <see cref="IsPossibleFor"/>. Direct callers exist outside the scene view — the routine
+    /// replay engine, the verb audit, the debug window — and a gate they could each forget is a gate
+    /// that does not hold. A null actor means "no particular body" (content audits, tooling) and
+    /// passes the capability test.</para>
+    /// </summary>
+    public bool IsPossible(Scene scene, PoV pov, Element target, PartyMember? actor = null)
+        => (actor?.Can(RequiredCapabilities) ?? true) && IsPossibleFor(scene, pov, target, actor);
+
+    /// <summary>The verb's own condition: scene state, target shape, affinity, schedule, tools.</summary>
+    protected abstract bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null);
 
     /// <summary>Natural-language string describing the intended action, sent to the LLM.</summary>
     public abstract string Verbatim(Scene scene, PoV pov, Element target);
@@ -57,7 +80,7 @@ public abstract class Verb
     /// items, or <c>RequestJobVerb</c> across offered jobs) override this to yield several views,
     /// carrying a per-view payload in <see cref="VerbView.Variant"/>.
     /// </summary>
-    public virtual IEnumerable<VerbView> ExpandViews(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    public virtual IEnumerable<VerbView> ExpandViews(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (IsPossible(scene, pov, target, actor))
             yield return new VerbView(this, Verbatim(scene, pov, target), target);

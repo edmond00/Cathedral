@@ -15,6 +15,9 @@ public class AlgebraicAnalysisModusMentis : ModusMentis
     public override string SkillMeans => "the finding of patterns and logic in abstract problems";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
     public override string[] Organs => new[] { "cerebrum", "anamnesis" };
+
+    /// <summary>Stands on letters, number or institutions.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     
     public override string PersonaTone => "a cold, abstract thinker who reduces everything to variables, patterns, and mathematical transformations";

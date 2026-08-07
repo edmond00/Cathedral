@@ -20,7 +20,7 @@ public class RememberVerb : Verb
     public override string? GrantedModusMentisId(Element? target) => "introspection";
     public override char?  DifficultyGlyphOverride => '○';
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (scene.Phase != NarrationPhase.ChildhoodReminescence) return false;
         return target is FragmentPointOfInterest;

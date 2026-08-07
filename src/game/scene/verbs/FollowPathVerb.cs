@@ -18,7 +18,7 @@ public class FollowPathVerb : Verb
     /// <summary>What a success teaches: a path read and followed is terrain understood.</summary>
     public override string? GrantedModusMentisId(Element? target) => "topographia";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (target is not PathPointOfInterest path) return false;
         return pov.Where.Id == path.AreaA.Id || pov.Where.Id == path.AreaB.Id;

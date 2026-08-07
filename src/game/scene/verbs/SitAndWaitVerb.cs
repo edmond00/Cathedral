@@ -23,7 +23,7 @@ public class SitAndWaitVerb : Verb
     /// <summary>What a success teaches: letting time pass without filling it.</summary>
     public override string? GrantedModusMentisId(Element? target) => "patience";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
         => target is SitSpotPointOfInterest && pov.Where.PointsOfInterest.Contains(target);
 
     public override string Verbatim(Scene scene, PoV pov, Element target)

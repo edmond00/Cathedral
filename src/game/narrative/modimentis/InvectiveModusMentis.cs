@@ -15,6 +15,9 @@ public class InvectiveModusMentis : ModusMentis
     public override string SkillMeans       => "sharp insults and cutting words";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "hepar", "spleen" };
+
+    /// <summary>Words with a person, not a voice in the air.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.Low;
 

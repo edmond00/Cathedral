@@ -14,10 +14,13 @@ public class GrabVerb : Verb
     public override string DisplayName    => "Grab";
     public override int    BaseDifficulty => 1;
 
+    /// <summary>Taking a made thing off a shelf and carrying it. No hands, no verb.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
+
     /// <summary>What a success teaches: taking a made thing cleanly off its shelf.</summary>
     public override string? GrantedModusMentisId(Element? target) => "finesse";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (target is not ItemElement itemEl) return false;
         if (pov.Where.IsPrivate) return false;                 // private → Steal

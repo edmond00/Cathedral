@@ -15,6 +15,9 @@ public class ArithmeticLogicModusMentis : ModusMentis
     public override string SkillMeans       => "the careful counting and calculating of numbers";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "encephalon" };
+
+    /// <summary>Stands on letters, number or institutions.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
     public override string PersonaTone     => "a clerkly mind that counts before it commits, in pence and pounds, paces and pints";

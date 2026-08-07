@@ -166,7 +166,7 @@ public sealed partial class PersonalityTraitRegistry
         {
             TraitId     = "shipwrecked",
             DisplayName = "Came Off the Water",
-            ModiMentis  = new[] { "natation", "nautical_jargon", "wind_reading" },
+            ModiMentis  = new[] { "natation", "nautical_jargon", "wayfaring" },
             Appearance  = "the weathering of someone who spent years in salt air and has not lost it",
             Persona     = "You worked the water once and something bad happened out there. You will talk about the sea readily and about that day not at all.",
             Opinions    = new[]

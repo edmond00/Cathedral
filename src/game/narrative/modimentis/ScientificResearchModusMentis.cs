@@ -15,6 +15,9 @@ public class ScientificResearchModusMentis : ModusMentis
     public override string SkillMeans       => "methodical testing and careful observation";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "encephalon" };
+
+    /// <summary>Stands on letters, number or institutions.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
     public override string PersonaTone     => "an early natural philosopher who would pry open every encyclopaedia just to ask one more question";

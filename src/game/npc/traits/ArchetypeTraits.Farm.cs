@@ -93,7 +93,7 @@ public sealed partial class PersonalityTraitRegistry
             {
                 TraitId     = "farmhand_sweet_on_someone",
                 DisplayName = "Sweet on Someone Here",
-                ModiMentis  = new[] { "comeliness", "seduction", "grooming" },
+                ModiMentis  = new[] { "comeliness", "seduction", "comeliness" },
                 Items       = new Func<Item>[] { () => new Hairpin() },
                 Appearance  = "washed and tidied to a standard the work does not require",
                 Persona     = "You are in love with someone on this farm and everyone knows except, you devoutly hope, them. You are transparently distracted.",
@@ -131,7 +131,7 @@ public sealed partial class PersonalityTraitRegistry
             {
                 TraitId     = "farmhand_orchard_thief",
                 DisplayName = "Always in the Orchard",
-                ModiMentis  = new[] { "petty_thief", "clambering", "forage_lore" },
+                ModiMentis  = new[] { "petty_thief", "athletics", "forage_lore" },
                 Items       = new Func<Item>[] { () => new Apple() },
                 Appearance  = "eating an apple that did not obviously come from anywhere legitimate",
                 Persona     = "You steal fruit constantly and consider it a right rather than a theft. You are cheerfully unrepentant if caught.",
@@ -170,7 +170,7 @@ public sealed partial class PersonalityTraitRegistry
             {
                 TraitId     = "shepherd_wolf_killer",
                 DisplayName = "Killed the Wolf",
-                ModiMentis  = new[] { "hunt", "ferocity", "vigilance" },
+                ModiMentis  = new[] { "hunt", "brawling", "vigilance" },
                 Wounds      = new Func<Wound>[] { () => new ScarWound() },
                 Items       = new Func<Item>[] { () => new HuntingSpear() },
                 Appearance  = "a spear kept within reach, and a torn white scar across the forearm",
@@ -198,7 +198,7 @@ public sealed partial class PersonalityTraitRegistry
             {
                 TraitId     = "shepherd_star_reader",
                 DisplayName = "Reads the Sky",
-                ModiMentis  = new[] { "wind_reading", "cartography", "clairvoyance" },
+                ModiMentis  = new[] { "wayfaring", "cartography", "clairvoyance" },
                 Organs      = new[] { ("left_eye", 1), ("right_eye", 1) },
                 Appearance  = "glances up at the sky mid-sentence, and appears to get something from it",
                 Persona     = "You have spent thousands of nights under an open sky and you know the stars and the weather better than anyone here. You are quietly certain about the future weather and usually right.",
@@ -310,7 +310,7 @@ public sealed partial class PersonalityTraitRegistry
             {
                 TraitId     = "swineherd_truffle_finder",
                 DisplayName = "Finds What the Pigs Find",
-                ModiMentis  = new[] { "mycology", "scenting", "enterprise" },
+                ModiMentis  = new[] { "mycology", "ripelore", "enterprise" },
                 Items       = new Func<Item>[] { () => new Mushroom() },
                 Appearance  = "a cloth pouch of something dark and pungent tucked well out of sight",
                 Persona     = "Your pigs root up things worth real money and you sell them quietly to people passing through. Nobody local knows what they are worth.",
@@ -401,7 +401,7 @@ public sealed partial class PersonalityTraitRegistry
             {
                 TraitId     = "poultry_fox_war",
                 DisplayName = "At War with the Fox",
-                ModiMentis  = new[] { "hunt", "vigilance", "spoor_reading" },
+                ModiMentis  = new[] { "hunt", "vigilance", "stalking" },
                 Items       = new Func<Item>[] { () => new Rope() },
                 Appearance  = "hollow-eyed, and glances toward the treeline mid-conversation",
                 Persona     = "A fox is taking your birds and you have not slept properly in weeks. It has become intensely personal.",
@@ -448,7 +448,7 @@ public sealed partial class PersonalityTraitRegistry
             {
                 TraitId     = "poultry_child_worker",
                 DisplayName = "Barely Grown",
-                ModiMentis  = new[] { "obedience", "surefoot", "forage_lore" },
+                ModiMentis  = new[] { "obedience", "acrobatics", "forage_lore" },
                 Organs      = new[] { ("left_foot", 1), ("right_foot", 1) },
                 Appearance  = "very young for the work, and moving at a run out of habit",
                 Persona     = "You are young enough that this is your first real post. You take it extremely seriously and are anxious about doing it wrong.",

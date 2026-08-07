@@ -30,7 +30,7 @@ public abstract class SensoryVerb : Verb
     /// character is standing in. Both are needed — half the interesting objects in a building are
     /// inside a spot rather than loose in the room.
     /// </summary>
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (target is not PointOfInterest poi) return false;
         if (!poi.RewardsSense(VerbId)) return false;

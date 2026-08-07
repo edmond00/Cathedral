@@ -186,7 +186,7 @@ public class SyntheticNarrationNode : NarrationNode
 /// </summary>
 public interface IVerbRefreshable
 {
-    void RefreshVerbs(Scene scene, PoV pov, Protagonist? actor = null);
+    void RefreshVerbs(Scene scene, PoV pov, PartyMember? actor = null);
 }
 
 /// <summary>
@@ -241,7 +241,7 @@ public class SyntheticObservationObject : ObservationObject, IVerbRefreshable, I
     }
 
     /// <inheritdoc cref="IVerbRefreshable"/>
-    public void RefreshVerbs(Scene scene, PoV pov, Protagonist? actor = null)
+    public void RefreshVerbs(Scene scene, PoV pov, PartyMember? actor = null)
     {
         SubOutcomes.Clear();
 
@@ -379,7 +379,7 @@ public class SyntheticNpcObservationObject : ObservationObject, INpcContextLabel
     /// affinity change would neither retire nor unlock verbs until the location was re-entered.
     /// The stamped <see cref="ContextLabel"/>, if any, is re-applied to the fresh VerbOutcomes.
     /// </summary>
-    public void RefreshVerbs(Scene scene, PoV pov, Protagonist? actor = null)
+    public void RefreshVerbs(Scene scene, PoV pov, PartyMember? actor = null)
     {
         SubOutcomes.Clear();
         foreach (var verb in scene.Verbs)

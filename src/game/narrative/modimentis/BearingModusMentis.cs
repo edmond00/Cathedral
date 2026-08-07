@@ -15,6 +15,9 @@ public class BearingModusMentis : ModusMentis
     public override string SkillMeans       => "the dignified posture and presence that commands respect";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "trunk" };
+
+    /// <summary>Words with a person, not a voice in the air.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.High;
 

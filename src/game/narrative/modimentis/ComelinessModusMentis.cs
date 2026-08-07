@@ -15,6 +15,9 @@ public class ComelinessModusMentis : ModusMentis
     public override string SkillMeans       => "good looks used deliberately to advantage";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "visage" };
+
+    /// <summary>Words with a person, not a voice in the air.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
     public override string PersonaTone     => "a fair face fully aware of its own effect and precise about spending it";

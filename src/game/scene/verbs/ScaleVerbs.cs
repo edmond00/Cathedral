@@ -41,7 +41,7 @@ public class ScaleUpVerb : ScaleVerbBase
     public override string VerbId      => "scale_up";
     public override string DisplayName => "Scale";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
         => target is ScalePointOfInterest scale && pov.Where.Id == scale.BottomArea.Id;
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
@@ -64,7 +64,7 @@ public class ScaleDownVerb : ScaleVerbBase
     public override string VerbId      => "scale_down";
     public override string DisplayName => "Climb Back Down";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
         => target is ScalePointOfInterest scale && pov.Where.Id == scale.TopArea.Id;
 
     public override string Verbatim(Scene scene, PoV pov, Element target)

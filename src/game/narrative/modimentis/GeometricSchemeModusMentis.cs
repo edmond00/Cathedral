@@ -15,6 +15,9 @@ public class GeometricSchemeModusMentis : ModusMentis
     public override string SkillMeans       => "the drawing and measuring of lines, shapes and angles";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "cerebrum", "eyes" };
+
+    /// <summary>Stands on letters, number or institutions.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
     public override string PersonaTone     => "a quiet draughtsman who sees the world as triangles, circles and the lines that join them";

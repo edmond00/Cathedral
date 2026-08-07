@@ -13,7 +13,10 @@ public class HowlingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Sends the long call and reads the answers: who is out there, how far, how many, and whether they are friend. Treats voice as a beacon across distance, binding the scattered together and warning the strange away.";
     public override string SkillMeans       => "long-distance calling and answering by voice";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Speaking };
+    // Observation only. A howl is voice, not speech: the Speaking function feeds dialogue replies,
+    // and dialogue needs AnatomyCapability.Speech, which no beast has — so carrying it here would
+    // have made this the one modus mentis that claimed a conversation it could never hold.
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation };
     public override string[] Organs        => new[] { "muzzle" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override MoralLevel MoralLevel => MoralLevel.High;

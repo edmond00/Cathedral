@@ -323,6 +323,52 @@ builds produce identically-named areas the corruption was invisible in the log. 
 it because they always built one factory per location — which is now what the game does too, so a
 green audit finally covers the path the game takes.
 
+### What a body can do
+
+A companion may be a beast, and after a Speak-About hand-off a beast **narrates**: it observes,
+thinks, chooses goals and acts. Two things therefore decide what a party member may learn and do, and
+they are decided separately:
+
+- **Organs — free, no authoring.** Every id in a modus mentis's `Organs` must resolve on the body.
+  A human cannot learn a `fangs` skill; a beast cannot learn a `hands` one. Note the ids are shared
+  where the anatomy is: `LegsOrgan` and `BeastLegsOrgan` both answer `"legs"`, `BeastClawsOrgan`
+  answers `"claws"`, and both trunks answer `"trunk"` — so anything reasoning about this by class
+  name is wrong. `ModusMentisAnatomy.SourcesOf(anatomy)` is the list, built from the anatomy factory.
+- **Capabilities — authored.** A wolf owns a tongue and a cerebrum, so nothing structural keeps
+  rhetoric or lockpicking away from it. `AnatomyCapability` is three flags — **Speech** (conversation,
+  not voice), **Handcraft** (tools, locks, carrying, fine work), **Abstraction** (letters, number,
+  institutions) — declared **per anatomy** on `IAnatomyFactory` (Human has all three; Beast has none)
+  and **required** per piece of content (`ModusMentis.RequiredCapabilities`,
+  `Verb.RequiredCapabilities`, both defaulting to `None`).
+
+The direction matters: content declares what it *needs*, anatomies declare what they *have*. Adding
+an anatomy is one line on its factory — no revisiting 180 modi mentis and 54 verbs.
+
+Three consequences worth knowing:
+
+- **`Verb.IsPossible` is sealed**; the per-verb condition moved to `protected IsPossibleFor`. The
+  capability test lives in the sealed half so the routine replay engine, the verb audit and the debug
+  window cannot each forget it. The whole `DialogueVerb` family declares `Speech` once, `ExtractionVerb`
+  declares `Handcraft` once.
+- **The gate reads the acting member, not the protagonist.** `RefreshSceneVerbs` passes
+  `_activePartyMember`, and the actor parameter widened from `Protagonist?` to `PartyMember?`
+  throughout (`Scene.View`, `VerbRegistry.GetApplicable`, `IVerbRefreshable.RefreshVerbs`). The two
+  places that genuinely need the protagonist — the `max_companions` ceiling in `TameVerb` and
+  `propose_to_join` — do `actor as Protagonist`. `RoutineReplayEngine` used to pass
+  `ActingMember as Protagonist`, i.e. **null** for every companion, skipping every actor-dependent gate.
+- **Learning is refused, not capped.** An MM naming an absent organ contributes +0 to the level cap,
+  so it used to be grantable and stuck at level 1 — held, useless, unexplained. Every grant path now
+  asks `ModusMentisAnatomy.IsLearnableBy` first: `NpcContentGenerator` filters the three pools *before*
+  sampling (so an archetype still gets the count it asked for), `NpcSkillGrant` refuses, and
+  `ModusMentisGrantOutcome` teaches nothing when the acting body cannot hold the lesson. A global
+  personality trait offering a skill the drawn anatomy lacks is normal and logged; an *archetype's own*
+  trait doing it is a content fault, and `--npc-audit` names it.
+
+`cli/beast_verbs.cli` is the regression: the same flower patch, looked at by the protagonist (offered
+"gather a daisy") and then, after the hand-off, by the cat (`goal gather` finds no such goal, and the
+phase runs on "examine the flower patch closely" instead). `--verb-audit` prints what each anatomy is
+barred from — 25 of 54 verbs for a beast.
+
 ### A worked example
 
 This is the script that verified the phase-transition refactor. The assertion is in the `state`
@@ -446,8 +492,10 @@ same person will differ between visits.
 
 It also checks that every trait's modus-mentis and organ-part ids resolve (a typo grants nothing,
 silently), that the pools are the intended 60 global + 6 per archetype with no duplicate ids, that
-every skill is filed in a memory module and within its organ-derived cap, and that sex agrees with
-the genitories score. It finishes with one fully-generated NPC printed in full, which is the quickest
+every skill is filed in a memory module and within its organ-derived cap, that no NPC holds a skill
+its own anatomy cannot learn, that no **archetype-specific** trait offers one (a shepherd trait
+reaching for a beast's scenting teaches nothing — global traits are exempt, being dealt to every
+anatomy), and that sex agrees with the genitories score. It finishes with one fully-generated NPC printed in full, which is the quickest
 way to see whether a trait you just wrote actually reads well on a person.
 
 Run it after touching `NpcContentGenerator`, any archetype's generation block, or any trait.
@@ -463,18 +511,25 @@ dotnet run -- --mm-audit
 The hard rules (R1–R10, listed on `ModusMentisRuleValidator`) are **fatal**: `ValidateOrThrow` runs
 them at startup, so a rule-breaking MM can never reach the game — the audit is how you read what
 broke without launching. They cover function combinations, memory-type agreement, fighting-skill
-cross-references, and the two anatomy rules that are easiest to get wrong:
+cross-references, and the four anatomy rules that are easiest to get wrong:
 
 - **R5** — an MM's `Organs` is **exactly 1 body region XOR exactly 2 distinct organs**, canonical ids
   only, never a mix. There is no "primary" entry: every one contributes to the level cap through its
   `IMaxLevelContributionStat` (organ +0..+3, region +0..+6), so code reading only `Organs[0]` is a bug;
 - **R10** — every organ and region owns exactly one correctly-scoped contribution stat. Without it
   `GetMaxLevelForModusMentis` contributes +0 and silently caps every MM related to that source at
-  level 1 — a wrong number in the memory menu and nothing anywhere to say why.
+  level 1 — a wrong number in the memory menu and nothing anywhere to say why;
+- **R11** — every organ and region of **every anatomy** keeps at least 3 MMs that anatomy can learn.
+  The counterweight to `RequiredCapabilities`: barring a beast from speech and letters is right, but
+  done freely it leaves a wolf's heart with nothing to spend itself on;
+- **R12** — every MM is learnable by at least one anatomy. Five were not when this rule was written —
+  `fangs` paired with `teeths`, `claws` with `arms` — which reads perfectly well and reaches nobody.
 
 Then the soft targets, which only warn: the ~80/20 two-organ vs one-region split, the morality and
 memory-type distributions, ~10% discrete, and per-organ/region coverage (R6 makes fewer than 5
-related MMs fatal, so the coverage table is really about spotting the ones scraping the floor).
+related MMs fatal, so the coverage table is really about spotting the ones scraping the floor). The
+report also prints a **per-anatomy** table — what each anatomy can actually learn, source by source,
+which is a much smaller set than the catalogue-wide one and the only one R11 reads.
 
 Run it after adding or editing a modus mentis, a fighting skill, an organ, or a body region.
 
@@ -534,6 +589,10 @@ Then it warns about the things that are silent at runtime:
 - a `ReferenceToolIds` entry no item matches, which makes a tool-gated verb permanently *impossible*
   rather than merely hard;
 - a location with fewer than two landmark areas, so a horizon observation has nothing to name.
+
+It closes with the **anatomy** table: what each anatomy may attempt and what its body rules out
+(`Verb.RequiredCapabilities`). Never a warning — a beast barred from 25 of 54 verbs is the design —
+but it keeps the cost of that design visible, and makes the next anatomy's poverty one line to read.
 
 Run it after adding a verb, a connector type, or a batch of scene content.
 

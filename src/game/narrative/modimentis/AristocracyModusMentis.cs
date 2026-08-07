@@ -15,6 +15,9 @@ public class AristocracyModusMentis : ModusMentis
     public override string SkillMeans       => "the careful manners of the highborn";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "cerebrum", "tongue" };
+
+    /// <summary>Words with a person, not a voice in the air.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
     public override string PersonaTone     => "a castle-raised soul who knows precedence, salutation and where to stand at table";

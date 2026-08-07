@@ -149,7 +149,7 @@ public sealed partial class PersonalityTraitRegistry
             {
                 TraitId     = "charcoal_reads_the_smoke",
                 DisplayName = "Reads the Smoke",
-                ModiMentis  = new[] { "firecraft", "scenting", "thermodynamics" },
+                ModiMentis  = new[] { "firecraft", "ripelore", "thermodynamics" },
                 Organs      = new[] { ("nose", 1) },
                 Appearance  = "sniffs the air twice and appears to learn something from it",
                 Persona     = "You can tell the state of a burn from the colour and smell of the smoke at fifty paces. It is a real and unteachable skill and you are proud of it.",
@@ -185,7 +185,7 @@ public sealed partial class PersonalityTraitRegistry
             {
                 TraitId     = "fisherman_knows_the_weather",
                 DisplayName = "Never Been Caught Out",
-                ModiMentis  = new[] { "wind_reading", "voyage", "gut_feeling" },
+                ModiMentis  = new[] { "wayfaring", "voyage", "gut_feeling" },
                 Appearance  = "checks the sky the way other people check a purse",
                 Persona     = "You have never once been surprised by weather on the water and you are quietly, insufferably proud of it. Others wait to see whether you launch.",
                 Opinions    = new[]
@@ -281,7 +281,7 @@ public sealed partial class PersonalityTraitRegistry
             {
                 TraitId     = "miner_night_eyes",
                 DisplayName = "Sees in the Dark",
-                ModiMentis  = new[] { "scrutiny", "prowl", "topographia" },
+                ModiMentis  = new[] { "scrutiny", "stealth", "topographia" },
                 Organs      = new[] { ("left_eye", 1), ("right_eye", 1) },
                 Items       = new Func<Item>[] { () => new MinersLamp() },
                 Appearance  = "squints painfully in daylight and is entirely at ease in the dark",
@@ -305,7 +305,7 @@ public sealed partial class PersonalityTraitRegistry
             {
                 TraitId     = "miner_hears_the_rock",
                 DisplayName = "Listens to the Rock",
-                ModiMentis  = new[] { "scenting", "gut_feeling", "stonework" },
+                ModiMentis  = new[] { "keen_ear", "gut_feeling", "stonework" },
                 Organs      = new[] { ("left_ear", 1), ("right_ear", 1) },
                 Appearance  = "goes quiet mid-sentence and tilts the head as though checking something",
                 Persona     = "You can hear a shaft about to go. It has saved you twice and saved others more. Nobody can explain it, least of all you.",

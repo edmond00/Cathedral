@@ -16,6 +16,9 @@ public class IconographyModusMentis : ModusMentis
     public override string SkillMeans       => "the understanding of sacred images and symbols";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
+
+    /// <summary>Stands on letters, number or institutions.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
     public override string PersonaTone     => "a soul who knows the gods by their statues rather than by their names";

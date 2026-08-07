@@ -38,7 +38,7 @@ public class BegForCoinVerb : SocialDialogueVerb
 
     protected override string DialogueTreeId => "beg_for_coin";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
         => Available(scene, pov, target) != null;
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
@@ -73,7 +73,7 @@ public class ProvokeVerb : SocialDialogueVerb
     /// <summary>Words, not blows. What it leads to is the NPC's decision, at least formally.</summary>
     public override bool IsLegal => true;
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
         => Available(scene, pov, target) != null;
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
@@ -105,7 +105,7 @@ public class ProposeToJoinVerb : SocialDialogueVerb
 
     protected override string DialogueTreeId => "propose_to_join";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         var npc = Available(scene, pov, target);
         if (npc == null) return false;
@@ -114,7 +114,11 @@ public class ProposeToJoinVerb : SocialDialogueVerb
         if (npc.AffinityTable.IsEnemy(key)) return false;
         if (npc.AffinityTable.GetLevel(key) < AffinityLevel.CloseAcquaintance) return false;
 
-        return actor == null || actor.CompanionParty.Count < TameVerb.MaxCompanions(actor);
+        // The roster belongs to the protagonist: a companion asking someone to come along is asking
+        // on their behalf, and there is nobody else to count against. No actor at all (content
+        // tooling) leaves the ceiling untested.
+        if (actor is not Protagonist proto) return actor == null;
+        return proto.CompanionParty.Count < TameVerb.MaxCompanions(proto);
     }
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
@@ -146,7 +150,7 @@ public class GatherKnowledgeVerb : SocialDialogueVerb
 
     protected override string DialogueTreeId => "gather_knowledge";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
         => Available(scene, pov, target) != null;
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
@@ -177,6 +181,9 @@ public class PickpocketVerb : Verb
     public override string DisplayName    => "Pickpocket";
     public override int    BaseDifficulty => 5;
 
+    /// <summary>Fingers in someone's purse. No hands, no verb.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
+
     public override bool IsLegal => false;
 
     /// <summary>What a success teaches: taking from a person without them knowing.</summary>
@@ -189,7 +196,7 @@ public class PickpocketVerb : Verb
     public override int DifficultyFor(Element? target)
         => target is SleepingNpcPointOfInterest ? 2 : BaseDifficulty;
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         // A sleeper reaches this as the merged sleeping observation rather than as an NPC, because
         // placement swaps them and their bed for one object while the sleep lasts.

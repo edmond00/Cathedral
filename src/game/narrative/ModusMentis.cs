@@ -46,6 +46,23 @@ public abstract class ModusMentis
     /// </para>
     /// </summary>
     public abstract string[] Organs { get; }
+
+    /// <summary>
+    /// What a body must be <i>able</i> to do to hold this modus mentis, over and above owning the
+    /// organs in <see cref="Organs"/>. Default <see cref="AnatomyCapability.None"/>: anything with the
+    /// right organs can learn it.
+    ///
+    /// <para>This is the authored half of the anatomy gate. The structural half is free — a modus
+    /// mentis related to <c>fangs</c> is already out of a human's reach — but a wolf owns a tongue and
+    /// a cerebrum, so only a declaration keeps rhetoric away from it. Every modus mentis carrying the
+    /// Speaking function requires <see cref="AnatomyCapability.Speech"/>; the lettered and
+    /// institutional ones require <see cref="AnatomyCapability.Abstraction"/>.</para>
+    ///
+    /// <para>Rule R11 guarantees the declarations here can never strand an anatomy: every organ and
+    /// region of every anatomy keeps at least 3 modi mentis its owner can actually learn.</para>
+    /// </summary>
+    public virtual AnatomyCapability RequiredCapabilities => AnatomyCapability.None;
+
     public int Level { get; set; }                    // current level; capped by GetMaxLevelForModusMentis (random initial)
     public int CurrentXp { get; set; }                // progress toward next level; reset to 0 on level-up
 

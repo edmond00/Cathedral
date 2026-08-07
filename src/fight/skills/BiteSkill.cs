@@ -10,7 +10,10 @@ public sealed class BiteSkill : FightingSkill
     public override string Description            => "Bite the opponent's arm.";
     public override string RequiredModusMentisId  => "ferocity";
     public override string[] SecondaryModusMentisIds => new[] { "predator", "blood_lust" };
-    public override FightingMedium[] Mediums => new[] { FightingMedium.Organ("teeths") };
+    // Fangs, not teeths: ferocity is beast anatomy (fangs + spleen), and R7 requires a main skill's
+    // organ mediums to be among its modus mentis's own organs. It read "teeths" while ferocity was
+    // fangs + teeths — a pair no anatomy could hold, so nobody ever had the skill to notice.
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Organ("fangs") };
     public override int CineticPointsCost         => 1;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 1;

@@ -184,11 +184,19 @@ public static class NpcContentGenerator
     private static void GrantArchetypeSkills(NamedNpcArchetype archetype, PartyMember body, Random rng)
     {
         var registry = ModusMentisRegistry.Instance;
+
+        // Filtered to what this body can hold before anything is sampled, not after. Sampling first
+        // and refusing later would silently shorten the roster — a wolf drawing six skills off the
+        // global pool would keep only the two its anatomy allows — so the anatomy narrows the pool and
+        // the archetype still gets the count it asked for.
+        List<ModusMentis> Pool(IEnumerable<ModusMentis> source)
+            => Shuffled(ModusMentisAnatomy.LearnableBy(source, body), rng);
+
         var pools = new[]
         {
-            Shuffled(registry.GetObservationModiMentis(), rng),
-            Shuffled(registry.GetThinkingModiMentis(),    rng),
-            Shuffled(registry.GetActionModiMentis(),      rng),
+            Pool(registry.GetObservationModiMentis()),
+            Pool(registry.GetThinkingModiMentis()),
+            Pool(registry.GetActionModiMentis()),
         };
 
         var ordered = new List<ModusMentis>();

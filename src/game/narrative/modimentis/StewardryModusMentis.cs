@@ -26,6 +26,9 @@ public class StewardryModusMentis : ModusMentis
         ModusMentisFunction.Speaking,
     };
     public override string[] Organs        => new[] { "eyes", "cerebrum" };
+
+    /// <summary>Words with a person, and the learning behind them.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech | AnatomyCapability.Abstraction;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
     public override string PersonaTone     => "a manor-steward who reckons every hand's labour and every household's due";

@@ -15,6 +15,9 @@ public class BargainingModusMentis : ModusMentis
     public override string SkillMeans       => "skilled haggling and the striking of good bargains";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "tongue", "cerebrum" };
+
+    /// <summary>Words with a person, not a voice in the air.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
     public override string PersonaTone     => "a market-tongued haggler who would rather walk away than pay one penny over the proper figure";

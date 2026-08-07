@@ -15,6 +15,9 @@ public class DecipherModusMentis : ModusMentis
     public override string SkillMeans       => "the deciphering of damaged, coded or obscure writing";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "eyes", "cerebrum" };
+
+    /// <summary>Stands on letters, number or institutions.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
     public override string PersonaTone     => "a candle-eyed novice patient with the worst-formed letters of a faded manuscript";

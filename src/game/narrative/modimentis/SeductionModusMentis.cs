@@ -15,6 +15,9 @@ public class SeductionModusMentis : ModusMentis
     public override string SkillMeans       => "the reading and stirring of desire";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "genitories", "tongue" };
+
+    /// <summary>Words with a person, not a voice in the air.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override MoralLevel MoralLevel => MoralLevel.Low;
     public override bool ActsDiscretely => true;

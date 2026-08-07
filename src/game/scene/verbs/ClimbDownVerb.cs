@@ -19,7 +19,7 @@ public class ClimbDownVerb : Verb
     /// <summary>What a success teaches: hand and foot on rock.</summary>
     public override string? GrantedModusMentisId(Element? target) => "clambering";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (target is not CliffPointOfInterest cliff) return false;
         return pov.Where.Id == cliff.TopArea.Id;

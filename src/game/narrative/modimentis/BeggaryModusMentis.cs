@@ -15,6 +15,9 @@ public class BeggaryModusMentis : ModusMentis
     public override string SkillMeans       => "the asking of strangers for what they owe you nothing of";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "tongue", "eyes" };
+
+    /// <summary>Words with a person, not a voice in the air.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
     public override MoralLevel MoralLevel   => MoralLevel.Low;

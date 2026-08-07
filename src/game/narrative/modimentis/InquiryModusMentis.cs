@@ -15,6 +15,9 @@ public class InquiryModusMentis : ModusMentis
     public override string SkillMeans       => "the drawing out of what someone knows";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "tongue", "cerebrum" };
+
+    /// <summary>Words with a person, not a voice in the air.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
     public override string PersonaTone     => "someone who asks one question at a time and listens to the whole answer";

@@ -15,6 +15,9 @@ public class PoetryModusMentis : ModusMentis
     public override string SkillMeans => "metaphor and lyrical expression";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Observation };
     public override string[] Organs => new[] { "tongue", "hippocampus" };
+
+    /// <summary>Stands on letters, number or institutions.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     
     public override string PersonaTone => "a lyrical soul who perceives and expresses experience through metaphor and rhythm";

@@ -15,6 +15,9 @@ public class MythomaniaModusMentis : ModusMentis
     public override string SkillMeans       => "smooth and brazen lying";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "tongue", "hippocampus" };
+
+    /// <summary>Words with a person, not a voice in the air.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
     public override string PersonaTone     => "a glib tongue that has slipped past gatehouses by inventing a noble lineage and a useful relative";

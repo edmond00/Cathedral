@@ -91,7 +91,7 @@ public sealed partial class PersonalityTraitRegistry
             {
                 TraitId     = "hayward_night_walker",
                 DisplayName = "Walks the Margin at Night",
-                ModiMentis  = new[] { "prowl", "vigilance", "stalking" },
+                ModiMentis  = new[] { "stealth", "vigilance", "stalking" },
                 Organs      = new[] { ("left_eye", 1), ("right_eye", 1) },
                 Appearance  = "grey and hollow-eyed, like someone who keeps the wrong hours on purpose",
                 Persona     = "You patrol the boundary after dark because that is when things are taken. You sleep in the afternoon and you see a great deal nobody knows you see.",
@@ -144,7 +144,7 @@ public sealed partial class PersonalityTraitRegistry
             {
                 TraitId     = "hayward_deer_war",
                 DisplayName = "At War with the Deer",
-                ModiMentis  = new[] { "hunt", "spoor_reading", "marksman" },
+                ModiMentis  = new[] { "hunt", "stalking", "marksman" },
                 Items       = new Func<Item>[] { () => new HuntingBow() },
                 Appearance  = "carries a bow on a round of the hedges, which is not strictly their business",
                 Persona     = "The deer coming out of the wood are your personal enemy. You hunt them beyond what the post allows and you are cagey about it.",
@@ -281,7 +281,7 @@ public sealed partial class PersonalityTraitRegistry
                 TraitId     = "reaper_sunstruck",
                 DisplayName = "Struck by the Sun",
                 Wounds      = new Func<Wound>[] { () => new ConcussionsWound() },
-                ModiMentis  = new[] { "wind_reading" },
+                ModiMentis  = new[] { "wayfaring" },
                 Appearance  = "keeps to the shade oddly deliberately, with a rag tied over the head",
                 Persona     = "You collapsed in a field one August and were not right for a month. Your head still swims in the heat and you are frightened of it happening again.",
                 Opinions    = new[]

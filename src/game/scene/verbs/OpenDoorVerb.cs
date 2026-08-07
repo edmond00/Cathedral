@@ -19,10 +19,13 @@ public class OpenDoorVerb : Verb
     public override string DisplayName    => "Open";
     public override int    BaseDifficulty => 1;
 
+    /// <summary>A latch, a handle, a bar to lift. No hands, no verb.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
+
     /// <summary>What a success teaches: a door passed through is a route learned.</summary>
     public override string? GrantedModusMentisId(Element? target) => "wayfaring";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (target is not DoorPointOfInterest door) return false;
 

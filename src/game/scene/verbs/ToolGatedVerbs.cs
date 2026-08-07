@@ -21,6 +21,13 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public abstract class ExtractionVerb : Verb
 {
+    /// <summary>
+    /// Every extraction verb is a tool in a hand — an axe, a pick, a rod, a spade — so the whole
+    /// family is declared here. A beast digs with its claws, which is the <c>digging</c> modus mentis,
+    /// not this.
+    /// </summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
+
     /// <summary>The kind of point of interest this verb works on.</summary>
     protected abstract bool Accepts(PointOfInterest poi);
 
@@ -28,7 +35,7 @@ public abstract class ExtractionVerb : Verb
     protected static ItemElement? FirstAvailable(Element? target)
         => (target as PointOfInterest)?.Items.FirstOrDefault();
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (target is not PointOfInterest poi) return false;
         if (!Accepts(poi)) return false;
@@ -169,6 +176,9 @@ public class BreakVerb : Verb
     public override string DisplayName    => "Break";
     public override int    BaseDifficulty => 3;
 
+    /// <summary>A hammer or an axe swung at a thing. No hands, no verb.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
+
     public override bool IsLegal => false;
 
     public override IReadOnlyList<string> ReferenceToolIds => new[] { "hammer", "axe" };
@@ -176,7 +186,7 @@ public class BreakVerb : Verb
     /// <summary>What a success teaches: applying more force than finesse, accurately.</summary>
     public override string? GrantedModusMentisId(Element? target) => "brute_force";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (target is not BreakablePointOfInterest breakable) return false;
 

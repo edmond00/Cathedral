@@ -18,7 +18,7 @@ public class GoDownStairsVerb : Verb
     /// <summary>What a success teaches: stairs are footing, and going down is the harder half.</summary>
     public override string? GrantedModusMentisId(Element? target) => "surefoot";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (target is not StairPointOfInterest stair) return false;
         return pov.Where.Id == stair.TopArea.Id;

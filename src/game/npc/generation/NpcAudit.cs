@@ -148,6 +148,26 @@ public static class NpcAudit
                     warnings.Add($"trait '{trait.TraitId}' adjusts unknown organ part '{organPartId}'");
         }
 
+        // An archetype's own traits must name skills that archetype's body can hold. A shepherd trait
+        // granting a beast's wind-reading, or a wolf trait granting a lettered one, teaches nothing at
+        // all — the grant is refused at generation and the character is quietly one skill short.
+        // Global traits are exempt: they are dealt to every anatomy, so some of what they offer is
+        // always going to miss.
+        foreach (var archetypeId in archetypeIds)
+        {
+            var species = ArchetypeAnatomy(archetypeId);
+            if (species == null) continue;
+
+            foreach (var trait in registry.ForArchetype(archetypeId))
+                foreach (var mmId in trait.ModiMentis)
+                {
+                    var mm = ModusMentisRegistry.Instance.GetModusMentis(mmId);
+                    if (mm != null && !ModusMentisAnatomy.IsLearnableBy(mm, species.Value))
+                        warnings.Add($"trait '{trait.TraitId}' ({archetypeId}, {species}) grants "
+                                     + $"'{mmId}', which that anatomy cannot learn");
+                }
+        }
+
         return warnings;
     }
 
@@ -252,6 +272,15 @@ public static class NpcAudit
                 yield return $"{who}: '{mm.ModusMentisId}' at level {mm.Level} over its cap of {cap}";
             if (mm.Level < 1)
                 yield return $"{who}: '{mm.ModusMentisId}' at level {mm.Level}";
+
+            // A skill this body cannot hold — a wolf with rhetoric, someone with a fang skill. It
+            // would sit at level 1 for ever (an absent organ contributes +0), so it reads as merely a
+            // weak skill rather than as the generation fault it is.
+            if (!ModusMentisAnatomy.IsLearnableBy(mm, body))
+                yield return $"{who} ({body.AnatomyType}): holds '{mm.ModusMentisId}', which this "
+                             + $"anatomy cannot learn (organs [{string.Join(", ", mm.Organs)}]"
+                             + (mm.RequiredCapabilities != AnatomyCapability.None
+                                 ? $", needs {mm.RequiredCapabilities}" : "") + ")";
         }
 
         // The observation hint is what the player actually reads; an empty one is a hole in the scene.
@@ -340,6 +369,26 @@ public static class NpcAudit
     /// deliberately absent: they have no traits, no loadout and no dialogue (see the design note in
     /// <see cref="NpcContentGenerator"/>).
     /// </summary>
+    /// <summary>
+    /// The anatomy behind an archetype id, or null when no archetype claims it. Discovered by
+    /// reflection rather than listed, so beast archetypes (which never appear in
+    /// <see cref="SpeakingArchetypes"/>) are covered too — they are exactly the ones whose traits are
+    /// most likely to name a skill of the wrong anatomy.
+    /// </summary>
+    private static AnatomyType? ArchetypeAnatomy(string archetypeId)
+    {
+        _anatomyByArchetype ??= System.Reflection.Assembly.GetExecutingAssembly().GetTypes()
+            .Where(t => t.IsClass && !t.IsAbstract && typeof(NamedNpcArchetype).IsAssignableFrom(t)
+                        && t.GetConstructor(System.Type.EmptyTypes) != null)
+            .Select(t => (NamedNpcArchetype)System.Activator.CreateInstance(t)!)
+            .GroupBy(a => a.ArchetypeId)
+            .ToDictionary(g => g.Key, g => g.First().Species.AnatomyType);
+
+        return _anatomyByArchetype.TryGetValue(archetypeId, out var anatomy) ? anatomy : null;
+    }
+
+    private static Dictionary<string, AnatomyType>? _anatomyByArchetype;
+
     private static IEnumerable<NamedNpcArchetype> SpeakingArchetypes() => new NamedNpcArchetype[]
     {
         new BlacksmithArchetype(), new BakerArchetype(),   new BrewerArchetype(),

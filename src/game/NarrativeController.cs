@@ -580,8 +580,11 @@ public class NarrativeController
                 // saying whether it looks locked) must describe the same period its verbs were gated
                 // at, or the player reads "seems open" and is offered UNLOCK.
                 (outcome as IPeriodStampable)?.StampPeriod(_graph.CurrentPeriod);
+                // Gated against the member who will actually act, not the protagonist: after a
+                // Speak-About hand-off that is a companion, and a beast companion must not be offered
+                // the verbs its body cannot perform (every dialogue verb, everything needing hands).
                 if (outcome is IVerbRefreshable refreshable)
-                    refreshable.RefreshVerbs(_scene, pov, _protagonist);
+                    refreshable.RefreshVerbs(_scene, pov, _activePartyMember);
             }
         }
     }

@@ -33,7 +33,7 @@ public sealed partial class PersonalityTraitRegistry
             {
                 TraitId     = "druid_hates_the_axe",
                 DisplayName = "Will Not Suffer the Axe",
-                ModiMentis  = new[] { "invective", "ferocity", "woodcraft" },
+                ModiMentis  = new[] { "invective", "brute_force", "woodcraft" },
                 Appearance  = "an anger held very still, that surfaces the moment cutting is mentioned",
                 Persona     = "You have gone beyond distrust of woodcutters into open hostility. You have interfered with their work and you would do it again.",
                 Opinions    = new[]
@@ -87,7 +87,7 @@ public sealed partial class PersonalityTraitRegistry
             {
                 TraitId     = "druid_keeps_a_beast",
                 DisplayName = "Something Follows Her",
-                ModiMentis  = new[] { "beast_sense", "husbandry", "scenting" },
+                ModiMentis  = new[] { "beast_sense", "husbandry", "beast_sense" },
                 Appearance  = "there is an animal at the edge of sight that has not run off, and does not intend to",
                 Persona     = "A wild animal attached itself to you years ago and has never left. You do not call it tame and you do not call it yours.",
                 Opinions    = new[]
@@ -204,7 +204,7 @@ public sealed partial class PersonalityTraitRegistry
                 TraitId     = "savage_wolf_scarred",
                 DisplayName = "Marked by the Pack",
                 Wounds      = new Func<Wound>[] { () => new ScarWound(), () => new FingersAmputeeLeftWound() },
-                ModiMentis  = new[] { "ferocity", "predator", "clenched_grit" },
+                ModiMentis  = new[] { "brawling", "hunt", "clenched_grit" },
                 Appearance  = "torn scarring across the shoulder and two fingers gone from the left hand",
                 Persona     = "Wolves had you and you got away. You are not frightened of them now, which everyone else finds the alarming part.",
                 Opinions    = new[]
@@ -231,7 +231,7 @@ public sealed partial class PersonalityTraitRegistry
             {
                 TraitId     = "savage_mourning",
                 DisplayName = "Was Not Always Alone",
-                ModiMentis  = new[] { "elegy", "howling", "endurance" },
+                ModiMentis  = new[] { "elegy", "elegy", "endurance" },
                 Appearance  = "there are two of everything in the shelter and only one of them is used",
                 Persona     = "There was somebody else out here with you and there is not now. You do not have words for it in any language and you do not try.",
                 Opinions    = new[]
@@ -244,7 +244,7 @@ public sealed partial class PersonalityTraitRegistry
             {
                 TraitId     = "savage_watches_the_village",
                 DisplayName = "Watches Your Fires",
-                ModiMentis  = new[] { "prowl", "stalking", "scrutiny" },
+                ModiMentis  = new[] { "stealth", "stalking", "scrutiny" },
                 Organs      = new[] { ("left_eye", 1), ("right_eye", 1) },
                 Appearance  = "knows things about you that nothing in this conversation explains",
                 Persona     = "You have watched the village from the treeline for years. You know their routines, their names, their quarrels. They have no idea.",
@@ -258,7 +258,7 @@ public sealed partial class PersonalityTraitRegistry
             {
                 TraitId     = "savage_healer_of_beasts",
                 DisplayName = "Mends What He Finds",
-                ModiMentis  = new[] { "beast_sense", "herblore", "soft_mouth" },
+                ModiMentis  = new[] { "beast_sense", "herblore", "husbandry" },
                 Items       = new Func<Item>[] { () => new Herb() },
                 Appearance  = "moves slowly and quietly, in the manner of somebody used to not frightening things",
                 Persona     = "You find injured animals and mend them, which sits oddly with everything else about you. You would not describe it as kindness.",

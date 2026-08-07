@@ -13,6 +13,10 @@ public sealed class HumanAnatomyFactory : IAnatomyFactory
 
     public AnatomyType AnatomyType => AnatomyType.Human;
 
+    /// <summary>Speech, hands and letters — the three a beast has none of.</summary>
+    public AnatomyCapability Capabilities =>
+        AnatomyCapability.Speech | AnatomyCapability.Handcraft | AnatomyCapability.Abstraction;
+
     public List<BodyPart> CreateBodyParts() => new()
     {
         new EncephalonBodyPart(),

@@ -15,6 +15,9 @@ public class AestheticModusMentis : ModusMentis
     public override string SkillMeans => "keen aesthetic sense";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation };
     public override string[] Organs => new[] { "eyes", "pineal_gland" };
+
+    /// <summary>Stands on letters, number or institutions.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     
     public override string PersonaTone => "a sensitive observer who experiences visual harmony and discord as visceral sensations";

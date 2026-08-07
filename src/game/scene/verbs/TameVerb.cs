@@ -23,13 +23,16 @@ public class TameVerb : Verb
     public override string DisplayName    => "Tame";
     public override int    BaseDifficulty => 4;
 
+    /// <summary>Handling an animal into accepting a handler. No hands, no verb.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
+
     /// <summary>Working with an animal at close quarters is worth doing under threat.</summary>
     public override bool CanBeUsedUnderThreat => true;
 
     /// <summary>What a success teaches: handling an animal until it accepts being handled.</summary>
     public override string? GrantedModusMentisId(Element? target) => "husbandry";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (target is not SceneNpc sceneNpc) return false;
         if (sceneNpc.Entity is not NpcEntity npc || !npc.IsAlive) return false;
@@ -40,8 +43,9 @@ public class TameVerb : Verb
         if (!npc.AffinityTable.IsAppeased(actor?.AffinityKey ?? "Protagonist")) return false;
 
         // The roster has a ceiling, and it is far better to not offer the action than to run the
-        // whole thing and then refuse the animal at the door.
-        if (actor != null && actor.CompanionParty.Count >= MaxCompanions(actor)) return false;
+        // whole thing and then refuse the animal at the door. The roster is the protagonist's — a
+        // companion taming on their behalf is checked against the same one.
+        if (actor is Protagonist proto && proto.CompanionParty.Count >= MaxCompanions(proto)) return false;
 
         return scene.GetNpcsAt(pov.Where, pov.When).Any(n => n.Id == sceneNpc.Id);
     }

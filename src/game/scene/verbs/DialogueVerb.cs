@@ -25,6 +25,13 @@ public abstract class DialogueVerb : Verb
     protected abstract string DialogueTreeId { get; }
 
     /// <summary>
+    /// Every dialogue verb needs language, so the whole family is declared here once rather than on
+    /// each of the twelve. A beast has voice but not speech: it can howl, snarl and be understood as
+    /// an animal is understood, and it can never open a tree.
+    /// </summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
+
+    /// <summary>
     /// Approaching someone and opening your mouth is the same skill whatever you then say, so every
     /// dialogue verb teaches social interaction. What the <i>conversation</i> teaches is the tree's
     /// business — see <see cref="DialogueTree.GrantedModusMentisId"/>, applied at the resolution.

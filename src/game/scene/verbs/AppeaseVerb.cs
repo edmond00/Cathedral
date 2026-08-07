@@ -27,7 +27,7 @@ public class AppeaseVerb : Verb
     /// <summary>Can be attempted even when the enemy is right there.</summary>
     public override bool CanBeUsedUnderThreat => true;
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (target is not SceneNpc sceneNpc) return false;
         if (SleeperGate.IsAsleep(scene, pov, target)) return false;  // wake them first

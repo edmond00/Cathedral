@@ -15,6 +15,9 @@ public class RhetoricModusMentis : ModusMentis
     public override string SkillMeans => "persuasion and argumentation";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
     public override string[] Organs => new[] { "tongue", "cerebrum" };
+
+    /// <summary>Words with a person, not a voice in the air.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     
     public override string PersonaTone => "a silver-tongued strategist who builds arguments like siege engines";

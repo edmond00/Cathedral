@@ -20,10 +20,13 @@ public class CutVerb : Verb
     public override string DisplayName    => "Cut";
     public override int    BaseDifficulty => 2;
 
+    /// <summary>Butchering a carcass is knife work. No hands, no verb.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
+
     /// <summary>What a success teaches: taking a body apart.</summary>
     public override string? GrantedModusMentisId(Element? target) => "butchery";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (target is not ItemElement itemEl) return false;
 

@@ -1,0 +1,63 @@
+# Regression script for the anatomy gate (see AnatomyCapability, Verb.RequiredCapabilities).
+# Run: dotnet run -- --playground --skip-childhood --fill-party --debug --seed 42 --no-encounters \
+#        --period noon --observe-only flower --cli-timeout 500 \
+#        --cli-script cli/beast_verbs.cli 2>&1 | grep '^\[cli\]'
+# A non-zero exit means an `expect`/`wait` failed.
+#
+# The same object, looked at by two bodies. --observe-only pins the phase to the flower patch, and
+# --fill-party gives the party a beast (the cat Nighthunter at seed 42) that the Speak About hand-off
+# can pass narration to — the only way to make a companion the ACTING member, which is what the gate
+# reads.
+#
+# GATHER is a Handcraft verb. The protagonist is offered it on the patch; the cat, with the same
+# patch in front of it, is not — the goal is not in its list at all, so `goal gather` falls back and
+# stdout carries
+#   [debug] --goal-only 'gather': no such goal here — drawing from all N.
+# (An absence cannot be asserted on screen: `expect` scans the whole terminal, greyed history and all.)
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+expect [KENRYC GREYGATE]
+
+# --- the human: gather is offered, and the action line says so ------------------
+strategy succeed
+goal gather
+click keyword patch
+choose 0
+choose 0
+advance 12 180
+expect gather
+
+# --- hand narration to the beast, on the same object ----------------------------
+# Straight from the same live keyword — do NOT press the footer here: with the action offered but
+# not taken, the phase is idle and that button reads LEAVE, which walks out of the location.
+click keyword patch
+choose 2
+choose 0
+choose 0
+advance 12 180
+expect [NIGHTHUNTER]
+
+# --- the beast: no gather in its goals, but it still acts ------------------------
+# The spoken address leaves its own keyword live ('colour-clusters' at this seed) and it points at the
+# same flower patch. `goal gather` prints the fallback line above; the phase then runs on whatever the
+# cat CAN do, which proves the gate narrowed the goal list rather than emptying it.
+goal gather
+click keyword colour-clusters
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect [NIGHTHUNTER]
+state
+quit

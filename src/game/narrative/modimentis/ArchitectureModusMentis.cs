@@ -15,6 +15,9 @@ public class ArchitectureModusMentis : ModusMentis
     public override string SkillMeans => "structural and spatial thinking";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs => new[] { "eyes", "cerebrum" };
+
+    /// <summary>Stands on letters, number or institutions.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     
     public override string PersonaTone => "a structural analyst who reads buildings as systems of load, material, and intent";

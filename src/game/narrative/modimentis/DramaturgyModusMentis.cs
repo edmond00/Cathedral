@@ -15,6 +15,9 @@ public class DramaturgyModusMentis : ModusMentis
     public override string SkillMeans => "theatrical social performance";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
     public override string[] Organs => new[] { "eyes", "heart" };
+
+    /// <summary>Words with a person, not a voice in the air.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     
     public override string PersonaTone => "a theatrical analyst who perceives social reality as staged performance following dramatic structure";

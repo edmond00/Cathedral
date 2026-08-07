@@ -29,10 +29,10 @@ public class IntroduceMeVerb : DialogueVerb
 
     protected override string DialogueTreeId => "introduce_me";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
         => Candidates(scene, pov, target, actor).Count > 0;
 
-    public override IEnumerable<VerbView> ExpandViews(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    public override IEnumerable<VerbView> ExpandViews(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         foreach (var third in Candidates(scene, pov, target, actor))
             yield return new VerbView(this,
@@ -64,7 +64,7 @@ public class IntroduceMeVerb : DialogueVerb
     /// player. Asking to be introduced to somebody you have already met is not an action worth
     /// offering.
     /// </summary>
-    private static List<NpcEntity> Candidates(Scene scene, PoV pov, Element target, Protagonist? actor)
+    private static List<NpcEntity> Candidates(Scene scene, PoV pov, Element target, PartyMember? actor)
     {
         var empty = new List<NpcEntity>();
 

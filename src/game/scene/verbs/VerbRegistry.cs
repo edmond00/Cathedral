@@ -42,7 +42,7 @@ public class VerbRegistry
     public Verb? Get(string verbId) => _verbs.TryGetValue(verbId, out var v) ? v : null;
 
     /// <summary>Returns verbs that are possible given the current scene, PoV, target element, and actor.</summary>
-    public List<Verb> GetApplicable(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    public List<Verb> GetApplicable(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         return _verbs.Values.Where(v => v.IsPossible(scene, pov, target, actor)).ToList();
     }

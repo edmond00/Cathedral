@@ -16,13 +16,16 @@ public class UnlockDoorVerb : Verb
     public override string DisplayName    => "Unlock";
     public override int    BaseDifficulty => 3;
 
+    /// <summary>Picks, wards and a lock to work. No hands, no verb.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
+
     /// <summary>What a success teaches: forcing a lock teaches locks.</summary>
     public override string? GrantedModusMentisId(Element? target) => "lockpicking";
 
     /// <summary>Forcing open a locked door without a key is illegal.</summary>
     public override bool IsLegal => false;
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (target is not DoorPointOfInterest door) return false;
         return pov.Where.Id == door.FrontArea.Id && door.EffectiveState(pov.When) == DoorState.Locked;

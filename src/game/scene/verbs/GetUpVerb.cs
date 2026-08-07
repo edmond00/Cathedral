@@ -19,7 +19,7 @@ public sealed class GetUpVerb : Verb
     /// <summary>What a success teaches: getting a body up and moving.</summary>
     public override string? GrantedModusMentisId(Element? target) => "vigor";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
         => scene.Phase == NarrationPhase.GetUp;
 
     public override string Verbatim(Scene scene, PoV pov, Element target)

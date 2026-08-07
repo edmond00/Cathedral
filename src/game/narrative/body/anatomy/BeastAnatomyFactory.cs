@@ -14,6 +14,13 @@ public sealed class BeastAnatomyFactory : IAnatomyFactory
 
     public AnatomyType AnatomyType => AnatomyType.Beast;
 
+    /// <summary>
+    /// None of the three. A beast has voice but not language, paws but not hands, and cunning but not
+    /// letters — so every dialogue verb, every tool-and-lock verb and every lettered modus mentis is
+    /// out of its reach, while tracking, scenting, fighting and going places are not.
+    /// </summary>
+    public AnatomyCapability Capabilities => AnatomyCapability.None;
+
     public List<BodyPart> CreateBodyParts() => new()
     {
         new EncephalonBodyPart(),

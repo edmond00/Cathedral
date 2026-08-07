@@ -27,7 +27,7 @@ public class MurderVerb : Verb
     /// <summary>What a success teaches: doing lethal harm to somebody who could not answer it.</summary>
     public override string? GrantedModusMentisId(Element? target) => "foul_play";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
         => SleeperGate.Sleeper(scene, pov, target) != null;
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
@@ -73,7 +73,7 @@ public class WakeUpVerb : DialogueVerb
 
     protected override string DialogueTreeId => "wake_up";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         var sleeper = SleeperGate.Sleeper(scene, pov, target);
         if (sleeper == null) return false;

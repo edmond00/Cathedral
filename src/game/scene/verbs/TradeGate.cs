@@ -11,7 +11,7 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 internal static class TradeGate
 {
-    public static bool CanTrade(NpcEntity npc, Protagonist? actor)
+    public static bool CanTrade(NpcEntity npc, PartyMember? actor)
     {
         var partyMemberId = actor?.AffinityKey ?? "Protagonist";
         if (npc.AffinityTable.IsEnemy(partyMemberId)) return false;

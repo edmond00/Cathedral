@@ -15,6 +15,9 @@ public class EnterpriseModusMentis : ModusMentis
     public override string SkillMeans       => "the understanding of trade, markets and foreign goods";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "cerebrum", "tongue" };
+
+    /// <summary>Words with a person, not a voice in the air.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
     public override string PersonaTone     => "a soul drawn after eccentric foreign merchants, looking for the trade behind the trade";

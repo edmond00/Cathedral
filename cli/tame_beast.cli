@@ -1,0 +1,94 @@
+# Regression script for taming a beast (see TameVerb / RecruitedOutcome).
+# Run: dotnet run -- --playground --skip-childhood --debug --seed 42 --no-encounters --period noon \
+#        --spawn-beast wolf --observe-only wolf --cli-timeout 600 --cli-script cli/tame_beast.cli 2>&1 | grep '^\[cli\]'
+# A non-zero exit means an `expect`/`wait` failed.
+#
+# Three flags make this reachable at all: --spawn-beast puts a wolf in the opening area (a factory
+# rolls one 10-40% of the time and then lets it roam), --observe-only pins the observation to it, and
+# `goal` pins the playground's goal draw to the verb under test — appease first, since a beast that
+# still wants to kill you cannot be tamed, then tame.
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+
+# The beast is there and hostile: the phase opens on it under the threat rule.
+expect wolf
+state
+
+# --- appease: enemy -> suspicious, which is what tame requires --------------------
+strategy succeed
+goal appease
+click keyword wolf
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect Appeasement
+
+# --- close the segment; the beast is still in the scene and still observable ------
+click button
+wait 60
+advance 12 180
+expect wolf
+
+# --- tame: the beast joins the party ---------------------------------------------
+# Difficulty 4 off a three-modus-mentis chain: `strategy succeed` asks for more sixes
+# than there are dice, which used to hang the game outright (NarrativeController caps it).
+goal tame
+click keyword wolf
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect Joined you
+
+# --- after: gone from the scene, present in the party ----------------------------
+# The next segment re-applies the period (StartObservationPhaseWithHistory → ApplyTimePeriod),
+# which re-places the scene's NPCs — the tamed beast is no longer among them, so it cannot be
+# observed or acted on again.
+#
+# That half is NOT asserted on screen: `expect` scans the whole terminal, and the beast's name
+# is all over the greyed history of the two segments that just tamed it. The signal is on stdout
+# instead — with --observe-only still pinned to the beast, this phase prints
+#   [debug] --observe-only 'wolf': nothing here matches — offering the whole scene.
+# and `state` drops one observable (observed=1/10 before the tame, 3/9 after).
+goal none
+click button
+wait 60
+advance 12 180
+state
+
+# The party side is assertable: the management screen lists the beast under P A R T Y.
+manage
+wait 20
+expect Stormtusk
+manage
+wait 20
+
+# --- and it stays gone: leave the location, come back, the scene is rebuilt ------
+# The rebuild is a pure function of the location id, so without the departed record in
+# LocationInstanceState the very same wolf would be standing here again. stdout shows
+#   SceneFactory: 'Stormtusk' left this location for good — not rebuilt
+# (or the --spawn-beast equivalent, since that flag honours the same record).
+click button
+wait mode WorldView 120
+advance 12 120
+travel here
+wait mode LocationInteraction 120
+advance 12 180
+state
+quit

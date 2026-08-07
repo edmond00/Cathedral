@@ -26,7 +26,7 @@ public class CrossVerb : Verb
     public override int DifficultyFor(Element? target)
         => target is CrossingPointOfInterest crossing ? crossing.Difficulty : BaseDifficulty;
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
         => target is CrossingPointOfInterest crossing && crossing.Touches(pov.Where);
 
     public override string Verbatim(Scene scene, PoV pov, Element target)

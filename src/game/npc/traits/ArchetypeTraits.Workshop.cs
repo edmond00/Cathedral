@@ -237,7 +237,7 @@ public sealed partial class PersonalityTraitRegistry
             {
                 TraitId     = "carpenter_roof_climber",
                 DisplayName = "Goes Up on the Roofs",
-                ModiMentis  = new[] { "clambering", "surefoot", "vaulting" },
+                ModiMentis  = new[] { "athletics", "acrobatics", "vaulting" },
                 Organs      = new[] { ("left_foot", 1), ("right_foot", 1) },
                 Appearance  = "moves lightly, with the balance of someone habitually somewhere high",
                 Persona     = "You do all the roof work, at any height, in any weather, and nobody else in the village will. You are quietly contemptuous of people who will not climb.",

@@ -15,6 +15,9 @@ public class SocialInteractionModusMentis : ModusMentis
     public override string SkillMeans       => "easy speech with strangers";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "tongue", "ears" };
+
+    /// <summary>Words with a person, not a voice in the air.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
     public override string PersonaTone     => "a warm, well-spoken soul comfortable in any small company";

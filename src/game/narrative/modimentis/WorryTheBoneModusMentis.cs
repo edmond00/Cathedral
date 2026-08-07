@@ -14,7 +14,8 @@ public class WorryTheBoneModusMentis : ModusMentis
         "Takes hold with the jaw and does not release, working a grip back and forth until something gives. Applies the same stubbornness to any task that yields to persistence rather than force.";
     public override string SkillMeans       => "the stubborn working at a thing until it gives way";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
-    public override string[] Organs        => new[] { "fangs", "teeths" };
+    // Fangs (beast) with teeths (human) reached no anatomy. Worrying at a thing is fangs and tongue.
+    public override string[] Organs        => new[] { "fangs", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
     public override string PersonaTone     => "a stubborn jaw that has never once let go of anything before it gave";

@@ -24,7 +24,7 @@ public sealed class IgnoreVerb : Verb
     public override int    BaseDifficulty => 1;
 
     /// Always possible — the player can always choose not to act.
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null) => true;
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null) => true;
 
     public override string Verbatim(Scene scene, PoV pov, Element target) => VerbatimText;
 

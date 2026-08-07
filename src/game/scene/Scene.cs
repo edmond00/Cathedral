@@ -285,7 +285,7 @@ public class Scene
     /// Produces a <see cref="SceneView"/> for the given point of view: the area, its PoIs and their
     /// items, the NPCs present at this hour, and the areas reachable from here.
     /// </summary>
-    public SceneView View(PoV pov, Protagonist? actor = null)
+    public SceneView View(PoV pov, PartyMember? actor = null)
     {
         var entries = new List<SceneViewEntry>();
 
@@ -315,7 +315,7 @@ public class Scene
         return new SceneView(pov.Where, pov.When, entries, pov.Focus);
     }
 
-    private SceneViewEntry BuildEntry(Element element, PoV pov, Protagonist? actor = null)
+    private SceneViewEntry BuildEntry(Element element, PoV pov, PartyMember? actor = null)
     {
         var verbs    = new List<VerbView>();
 

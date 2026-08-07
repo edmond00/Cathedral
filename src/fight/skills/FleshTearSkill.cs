@@ -10,7 +10,10 @@ public sealed class FleshTearSkill : FightingSkill
     public override string Description            => "Savage tearing bite/scratch. Causes bleeding.";
     public override string RequiredModusMentisId  => "ferocity";
     public override string[] SecondaryModusMentisIds => new[] { "predator", "blood_lust" };
-    public override FightingMedium[] Mediums => new[] { FightingMedium.Organ("fangs"), FightingMedium.Organ("teeths") };
+    // Fangs alone: ferocity is beast anatomy (fangs + spleen) and R7 keeps a main skill's organ
+    // mediums inside its modus mentis's organs. A human jaw does not do this anyway — human tearing
+    // is brawling's business.
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Organ("fangs") };
     public override int CineticPointsCost         => 2;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 1;

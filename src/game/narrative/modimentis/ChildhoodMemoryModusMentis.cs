@@ -37,6 +37,9 @@ public class ChildhoodMemoryModusMentis : ModusMentis
         ModusMentisFunction.Observation,
     };
     public override string[] Organs         => new[] { "anamnesis", "hippocampus" };
+
+    /// <summary>Stands on letters, number or institutions.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
     public override string PersonaTone =>

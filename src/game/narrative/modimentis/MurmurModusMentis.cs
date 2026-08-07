@@ -16,6 +16,9 @@ public class MurmurModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Speaking };
     public override bool ActsDiscretely    => true;
     public override string[] Organs        => new[] { "tongue", "pulmones" };
+
+    /// <summary>Words with a person, not a voice in the air.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
     public override string PersonaTone     => "a voice that hardly rises above the breath, as though still in a temple at vigil";

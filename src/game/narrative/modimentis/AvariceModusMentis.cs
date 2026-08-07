@@ -15,6 +15,9 @@ public class AvariceModusMentis : ModusMentis
     public override string SkillMeans       => "the tight-fisted keeping and hoarding of money";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "heart", "cerebrum" };
+
+    /// <summary>Stands on letters, number or institutions.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
     public override string PersonaTone     => "a tight-fisted soul who counts every coin twice and parts with none willingly";

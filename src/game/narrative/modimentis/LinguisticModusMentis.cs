@@ -15,6 +15,9 @@ public class LinguisticModusMentis : ModusMentis
     public override string SkillMeans       => "the understanding of foreign languages and writing";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "tongue", "cerebrum" };
+
+    /// <summary>Words with a person, not a voice in the air.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
     public override string PersonaTone     => "a child caught by a black book of indecipherable symbols, ever after curious about how foreign tongues are knit";

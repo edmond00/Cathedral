@@ -15,6 +15,9 @@ public class PuppetTheatherModusMentis : ModusMentis
     public override string SkillMeans       => "the giving of voices and life to puppets and objects";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "tongue", "hands" };
+
+    /// <summary>Words with a person, not a voice in the air.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
     public override string PersonaTone     => "a child of wooden dolls who can lend a voice to anything inert and let it answer back";

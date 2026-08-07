@@ -15,6 +15,9 @@ public class ArcheologyModusMentis : ModusMentis
     public override string SkillMeans       => "the study of ruins, relics and ancient remains";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
+
+    /// <summary>Stands on letters, number or institutions.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
     public override string PersonaTone     => "a dreamer who once dreamt a golden arch and ever since has read the ground for ruin";

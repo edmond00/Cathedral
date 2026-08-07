@@ -1,0 +1,57 @@
+# Regression script for the LLM generation-preview box (see src/game/narrative/preview/).
+# Run: dotnet run -- --playground --skip-childhood --debug --seed 42 \
+#        --cli-timeout 220 --cli-script cli/preview_regression.cli 2>&1 | grep '^\[cli\]'
+# A non-zero exit means an `expect`/`wait` failed.
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel 4597
+wait mode LocationInteraction 60
+wait
+
+# Observation preview: both sentences stream into ONE box (opener names "attention"), one CONTINUE.
+expect CONTINUE
+expect attention
+click continue
+wait
+
+# Observation committed: its text is now in the log and the keyword is live.
+expect attention
+strategy succeed
+click keyword attention
+choose 0
+choose 0
+wait 45
+
+# Thinking preview: reasoning part first, gated by CONTINUE.
+expect CONTINUE
+click continue
+wait
+
+# Action preview: the action line always opens with "I will".
+expect I will
+click continue
+wait
+
+# Thinking committed: the action button is live.
+expect I want to
+click action 0
+choose 0
+wait 60
+
+# Dice overlay resolved — confirm it, which triggers outcome generation.
+click continue
+wait 60
+
+# Outcome preview box: only the true outcome is generated, opening first-person with "I".
+expect CONTINUE
+expect tried to
+click continue
+wait 60
+
+# Outcome committed: the success line is in the log and the footer CONTINUE is shown.
+expect SUCCESS
+quit

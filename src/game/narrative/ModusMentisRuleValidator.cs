@@ -22,6 +22,8 @@ namespace Cathedral.Game.Narrative;
 ///   R8  no fighting skill has more than 2 organ mediums
 ///   R9  MM has Fighting ⇔ it is referenced by at least one fighting skill (main or secondary)
 ///   R10 every organ / region has exactly one correctly-scoped IMaxLevelContributionStat
+///   R11 every organ / region of every anatomy has at least 3 MMs that anatomy can learn
+///   R12 every MM is learnable by at least one anatomy
 ///
 /// Soft targets (reported by the audit, never fatal):
 ///   ~80% two-organ MMs vs ~20% one-region MMs
@@ -32,6 +34,16 @@ namespace Cathedral.Game.Narrative;
 public static class ModusMentisRuleValidator
 {
     private const int MinRelatedModiMentis = 5;
+
+    /// <summary>
+    /// R11's floor: how many modi mentis an anatomy must be able to learn for each of its own organs
+    /// and regions. Lower than <see cref="MinRelatedModiMentis"/> because that one counts the whole
+    /// catalogue, while this counts only what one body can actually hold — a beast is barred from
+    /// every Speaking and every lettered modus mentis, so its cerebrum will never see the numbers a
+    /// human's does. Three is the floor at which a source still offers a choice rather than a single
+    /// forced skill.
+    /// </summary>
+    private const int MinPerAnatomy = 3;
 
     /// <summary>
     /// MMs exempt from R1 (Thinking+Action exclusivity). Childhood Reminescence is the special
@@ -193,7 +205,61 @@ public static class ModusMentisRuleValidator
         foreach (var (id, count) in regionCounts.Where(kv => kv.Value < MinRelatedModiMentis).OrderBy(kv => kv.Key))
             violations.Add($"[R6] region '{id}': related to only {count} MM(s) (min {MinRelatedModiMentis})");
 
+        // R11 / R12 — anatomy reach
+        violations.AddRange(CollectAnatomyViolations(all));
+
         return violations;
+    }
+
+    /// <summary>
+    /// R11 and R12 — the two rules that keep the anatomy gate honest.
+    ///
+    /// <para><b>R12</b>: a modus mentis no anatomy can learn is dead content that nothing else
+    /// reports. It happens by pairing organs from two anatomies — <c>fangs</c> with <c>teeths</c>,
+    /// <c>claws</c> with <c>arms</c> — which reads perfectly well and reaches nobody. Five modi mentis
+    /// were in exactly that state when this rule was written.</para>
+    ///
+    /// <para><b>R11</b>: the counterweight to <see cref="ModusMentis.RequiredCapabilities"/>. Barring a
+    /// beast from speech and letters is right, but done freely it would leave a wolf's cerebrum with
+    /// one learnable skill and its heart with none — a body part that exists, contributes to level
+    /// caps, and has nothing to spend itself on. Three per source, per anatomy, is the floor.</para>
+    /// </summary>
+    private static List<string> CollectAnatomyViolations(List<ModusMentis> all)
+    {
+        var violations = new List<string>();
+
+        foreach (var mm in all)
+        {
+            if (!ModusMentisAnatomy.AllAnatomies.Any(a => ModusMentisAnatomy.IsLearnableBy(mm, a)))
+                violations.Add($"[R12] {mm.ModusMentisId}: no anatomy can learn it "
+                               + $"(organs [{string.Join(", ", mm.Organs)}], requires {mm.RequiredCapabilities}) "
+                               + "— usually organs from two different anatomies in one pair");
+        }
+
+        foreach (var anatomy in ModusMentisAnatomy.AllAnatomies)
+        {
+            foreach (var (source, count) in AnatomyCoverage(all, anatomy).OrderBy(kv => kv.Key))
+                if (count < MinPerAnatomy)
+                    violations.Add($"[R11] {anatomy} '{source}': only {count} learnable MM(s) "
+                                   + $"(min {MinPerAnatomy})");
+        }
+
+        return violations;
+    }
+
+    /// <summary>
+    /// Per anatomy: how many modi mentis a body of that anatomy could learn for each organ and region
+    /// it owns. Counts learnability, not mere relation — a modus mentis it is barred from by
+    /// capability does not count towards its floor, which is the entire point of R11.
+    /// </summary>
+    public static Dictionary<string, int> AnatomyCoverage(List<ModusMentis> all, AnatomyType anatomy)
+    {
+        var counts = ModusMentisAnatomy.SourcesOf(anatomy).ToDictionary(id => id, _ => 0);
+        foreach (var mm in all.Where(m => ModusMentisAnatomy.IsLearnableBy(m, anatomy)))
+            foreach (var id in mm.Organs.Distinct())
+                if (counts.ContainsKey(id))
+                    counts[id]++;
+        return counts;
     }
 
     /// <summary>How many MMs relate to each id in <paramref name="ids"/> (via an Organs array of the given arity).</summary>
@@ -303,6 +369,9 @@ public static class ModusMentisRuleValidator
             var secSkills = skills.Where(s => s.SecondaryModusMentisIds.Contains(mm.ModusMentisId)).Select(s => s.SkillId);
             sb.Append($"{mm.ModusMentisId} | fn={string.Join("+", mm.Functions)} | organs={string.Join(",", mm.Organs)}");
             sb.Append($" | mem={mm.MemoryType} | moral={mm.MoralLevel} | discrete={(mm.ActsDiscretely ? "yes" : "no")}");
+            if (mm.RequiredCapabilities != AnatomyCapability.None)
+                sb.Append($" | needs={mm.RequiredCapabilities}");
+            sb.Append($" | anatomy:[{string.Join(",", ModusMentisAnatomy.AllAnatomies.Where(a => ModusMentisAnatomy.IsLearnableBy(mm, a)))}]");
             if (mainSkills.Any()) sb.Append($" | main:[{string.Join(",", mainSkills)}]");
             if (secSkills.Any()) sb.Append($" | sec:[{string.Join(",", secSkills)}]");
             sb.AppendLine();
@@ -324,6 +393,21 @@ public static class ModusMentisRuleValidator
             .Select(kv => $"{kv.Key}={kv.Value}{(kv.Value < MinRelatedModiMentis ? "!" : "")}")));
         sb.AppendLine("regions: " + string.Join("  ", regionCounts.OrderBy(kv => kv.Value).ThenBy(kv => kv.Key)
             .Select(kv => $"{kv.Key}={kv.Value}{(kv.Value < MinRelatedModiMentis ? "!" : "")}")));
+
+        // Per-anatomy reach: what a body of each anatomy can actually learn, source by source. The
+        // catalogue-wide numbers above say nothing about this — a wolf is barred from every Speaking
+        // and every lettered modus mentis, so its counts are a different (much smaller) table.
+        sb.AppendLine();
+        sb.AppendLine($"── learnable per anatomy (min {MinPerAnatomy} each, R11) ──");
+        foreach (var anatomy in ModusMentisAnatomy.AllAnatomies)
+        {
+            int learnable = all.Count(m => ModusMentisAnatomy.IsLearnableBy(m, anatomy));
+            sb.AppendLine($"{anatomy,-6} {learnable}/{all.Count} modi mentis");
+            sb.AppendLine("   " + string.Join("  ", AnatomyCoverage(all, anatomy)
+                .OrderBy(kv => kv.Value).ThenBy(kv => kv.Key)
+                .Select(kv => $"{kv.Key}={kv.Value}{(kv.Value < MinPerAnatomy ? "!" : "")}")));
+        }
+        sb.AppendLine();
 
         // Max-level contribution stats: a source without one grants +0 and caps its MMs at level 1.
         int organStats  = CountMaxLevelStats(OrganIds);

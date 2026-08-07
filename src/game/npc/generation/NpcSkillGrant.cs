@@ -34,6 +34,21 @@ public static class NpcSkillGrant
 
         if (member.ModiMentis.Any(m => m.ModusMentisId == modusMentisId)) return null;
 
+        // The body has the last word. A trait or an archetype naming a skill this anatomy cannot hold
+        // — a wolf asked for rhetoric, a human for a fang skill — used to be granted anyway and simply
+        // capped at level 1, because an absent organ contributes +0 rather than refusing. Held,
+        // useless, and unexplained. This refuses instead, and says which body and which skill.
+        // Expected, not exceptional: global personality traits are dealt to every anatomy, so some of
+        // what they offer always misses. An archetype's OWN traits naming the wrong anatomy is the
+        // real fault, and --npc-audit reports that one by name.
+        if (!ModusMentisAnatomy.IsLearnableBy(template, member))
+        {
+            Console.WriteLine(
+                $"NpcSkillGrant: {member.DisplayName} ({member.AnatomyType}) cannot learn "
+                + $"'{modusMentisId}' — not granted.");
+            return null;
+        }
+
         var instance = (ModusMentis)Activator.CreateInstance(template.GetType())!;
         instance.Level     = RollLevel(member, instance, rng);
         instance.CurrentXp = 0;

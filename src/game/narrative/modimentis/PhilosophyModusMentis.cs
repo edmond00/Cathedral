@@ -15,6 +15,9 @@ public class PhilosophyModusMentis : ModusMentis
     public override string SkillMeans       => "the questioning of deeper meanings behind the obvious";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "encephalon" };
+
+    /// <summary>Words with a person, and the learning behind them.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech | AnatomyCapability.Abstraction;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.High;
 

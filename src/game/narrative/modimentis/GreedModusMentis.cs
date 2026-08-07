@@ -15,6 +15,9 @@ public class GreedModusMentis : ModusMentis
     public override string SkillMeans       => "the relentless desire to have more";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "heart", "eyes" };
+
+    /// <summary>Stands on letters, number or institutions.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
     public override string PersonaTone     => "a soul who has dreamt of purple rubies in a dark dungeon and never quite shaken the want";

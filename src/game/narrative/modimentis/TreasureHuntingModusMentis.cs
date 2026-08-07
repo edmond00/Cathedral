@@ -15,6 +15,9 @@ public class TreasureHuntingModusMentis : ModusMentis
     public override string SkillMeans       => "the hunting of hidden treasure and lost riches";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Observation };
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
+
+    /// <summary>Stands on letters, number or institutions.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
     public override string PersonaTone     => "a soul kept moving by tales of nuggets and lost veins, always one further bend along";

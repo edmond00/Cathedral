@@ -28,7 +28,7 @@ public class SlipIntoVerb : Verb
     public override int DifficultyFor(Element? target)
         => target is SlipIntoPointOfInterest slip ? slip.Difficulty : BaseDifficulty;
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (target is not SlipIntoPointOfInterest slip) return false;
         if (pov.Where.Id == slip.OutsideArea.Id) return true;

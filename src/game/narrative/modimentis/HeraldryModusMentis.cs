@@ -16,6 +16,9 @@ public class HeraldryModusMentis : ModusMentis
     public override string SkillMeans       => "the recognition of coats of arms and family emblems";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "eyes", "cerebrum" };
+
+    /// <summary>Stands on letters, number or institutions.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
     public override string PersonaTone     => "a soul who knows a rider by the device on their shield long before the face";

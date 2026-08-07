@@ -15,6 +15,9 @@ public class ClairvoyanceModusMentis : ModusMentis
     public override string SkillMeans       => "the glimpsing of things beyond ordinary sight";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation };
     public override string[] Organs        => new[] { "eyes", "pineal_gland" };
+
+    /// <summary>Stands on letters, number or institutions.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
     public override string PersonaTone     => "a temple-touched dreamer who catches glimmers others step past";

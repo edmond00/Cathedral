@@ -17,7 +17,7 @@ public class MoveToAreaVerb : Verb
     /// <summary>What a success teaches: walking somewhere on purpose is the whole of wayfaring.</summary>
     public override string? GrantedModusMentisId(Element? target) => "wayfaring";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (target is not Area targetArea) return false;
         if (targetArea.Id == pov.Where.Id) return false; // can't move to same area

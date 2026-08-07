@@ -27,7 +27,7 @@ public abstract class TinyCreatureVerb : Verb
     protected static string TinyName(Element target)
         => (target as SceneNpc)?.Entity.DisplayName?.ToLowerInvariant() ?? "it";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
         => Tiny(scene, pov, target) != null;
 
     // Not recordable. Which insects are where is rolled fresh on every visit, so a routine step

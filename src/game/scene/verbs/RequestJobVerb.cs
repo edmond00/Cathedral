@@ -24,7 +24,7 @@ public class RequestJobVerb : DialogueVerb
     public override int    BaseDifficulty    => 1;   // the action only meets the NPC; the dialogue carries the real stakes
     protected override string DialogueTreeId => "request_job";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
         => Eligible(scene, pov, target, actor) is not null;
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
@@ -37,7 +37,7 @@ public class RequestJobVerb : DialogueVerb
             ? $"meet {NpcName(target)} to ask to work as {job.WithArticle()}"
             : $"meet {NpcName(target)} to ask for work";
 
-    public override IEnumerable<VerbView> ExpandViews(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    public override IEnumerable<VerbView> ExpandViews(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         var npc = Eligible(scene, pov, target, actor);
         if (npc is null) yield break;
@@ -62,7 +62,7 @@ public class RequestJobVerb : DialogueVerb
     public override object? ResolveRoutineVariant(string variantKey) => JobRegistry.Instance.GetById(variantKey);
 
     /// <summary>Returns the eligible job-giving NPC at the target, or null when work cannot be requested.</summary>
-    private static NpcEntity? Eligible(Scene scene, PoV pov, Element target, Protagonist? actor)
+    private static NpcEntity? Eligible(Scene scene, PoV pov, Element target, PartyMember? actor)
     {
         if (target is not SceneNpc sceneNpc) return null;
         if (SleeperGate.IsAsleep(scene, pov, target)) return null;   // nobody hires in their sleep

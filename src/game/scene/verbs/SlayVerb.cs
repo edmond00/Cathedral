@@ -25,7 +25,7 @@ public class SlayVerb : Verb
     /// <summary>Slaying is an attack — it can be attempted even under direct threat.</summary>
     public override bool CanBeUsedUnderThreat => true;
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (target is not SceneNpc npc) return false;
         if (!npc.IsAlive) return false;

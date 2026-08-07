@@ -15,6 +15,9 @@ public class ThermodynamicsModusMentis : ModusMentis
     public override string SkillMeans => "energy and physics principles";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
     public override string[] Organs => new[] { "cerebrum", "anamnesis" };
+
+    /// <summary>Stands on letters, number or institutions.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     
     public override string PersonaTone => "a precise physicist who sees all phenomena as energy transformations governed by immutable laws";

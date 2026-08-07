@@ -92,7 +92,10 @@ public class RoutineReplayEngine
             }
 
             // 4. Verb-level possibility against the live scene/pov.
-            if (!verb.IsPossible(scene, pov, target, ctx.ActingMember as Protagonist))
+            // The acting member itself, not a downcast of it: a companion is a PartyMember and used
+            // to arrive here as null, which skipped every actor-dependent gate — including, now, the
+            // anatomy one that decides whether this body can perform the step at all.
+            if (!verb.IsPossible(scene, pov, target, ctx.ActingMember))
             {
                 Fail(result, i, $"\"{step.DisplayLabel}\" is not possible here.");
                 return result;

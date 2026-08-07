@@ -25,7 +25,7 @@ public class HideAndWaitVerb : Verb
     /// <summary>What a success teaches: being somewhere without being seen there.</summary>
     public override string? GrantedModusMentisId(Element? target) => "stealth";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
         => target is HidingPointOfInterest && pov.Where.PointsOfInterest.Contains(target);
 
     public override string Verbatim(Scene scene, PoV pov, Element target)

@@ -15,6 +15,9 @@ public class FablesAndTalesModusMentis : ModusMentis
     public override string SkillMeans       => "the knowledge of old stories and the lessons they hold";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "tongue", "anamnesis" };
+
+    /// <summary>Words with a person, not a voice in the air.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
     public override string PersonaTone     => "an attentive listener of grandfathers who answers a fresh trouble with a half-remembered fable";

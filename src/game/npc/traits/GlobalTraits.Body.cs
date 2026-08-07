@@ -112,7 +112,7 @@ public sealed partial class PersonalityTraitRegistry
             TraitId     = "small_and_quick",
             DisplayName = "Small and Quick",
             Organs      = new[] { ("left_foot", 1), ("right_foot", 1), ("cerebellum", 1) },
-            ModiMentis  = new[] { "finesse", "surefoot" },
+            ModiMentis  = new[] { "finesse", "acrobatics" },
             Appearance  = "small, wiry and never quite still",
             Persona     = "You are small and fast and you have spent your life being underestimated by larger people. You enjoy that more than you let on.",
             Opinions    = new[] { (DialogueTopic.Work, "There's places I can get into that nobody else here can. That's worth more than a big back") },

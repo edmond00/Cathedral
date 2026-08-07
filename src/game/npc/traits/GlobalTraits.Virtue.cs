@@ -128,7 +128,10 @@ public sealed partial class PersonalityTraitRegistry
         {
             TraitId     = "brave",
             DisplayName = "Brave",
-            ModiMentis  = new[] { "iron_nerves", "ferocity" },
+            // A global trait is dealt to every anatomy, so what it grants has to be reachable by
+            // every anatomy: ferocity is fangs, and a brave human was quietly getting one skill
+            // instead of two. Clenched grit (teeths + backbone) is the human form of standing fast.
+            ModiMentis  = new[] { "iron_nerves", "clenched_grit" },
             Organs      = new[] { ("heart", 1) },
             Appearance  = "stands their ground a beat longer than is quite comfortable to watch",
             Persona     = "You do not frighten easily and you have gone toward trouble more than once when nobody would have blamed you for walking off.",

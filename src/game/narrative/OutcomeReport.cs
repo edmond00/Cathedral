@@ -144,6 +144,18 @@ public sealed class ModusMentisGrantOutcome : OutcomeReport
             return null;
         }
 
+        // A body that cannot hold the lesson learns nothing from it. This is reachable in ordinary
+        // play: a companion acts, the verb teaches the skill it always teaches, and the acting member
+        // may be a beast. Granting anyway would file a skill capped at level 1 forever, since an
+        // absent organ contributes nothing to the cap.
+        if (!ModusMentisAnatomy.IsLearnableBy(template, actor))
+        {
+            Console.WriteLine(
+                $"ModusMentisGrantOutcome: {actor.DisplayName} ({actor.AnatomyType}) cannot learn "
+                + $"'{modusMentisId}' — the action teaches them nothing.");
+            return null;
+        }
+
         return new ModusMentisGrantOutcome(template, actor.GetModusMentisById(modusMentisId) != null);
     }
 
