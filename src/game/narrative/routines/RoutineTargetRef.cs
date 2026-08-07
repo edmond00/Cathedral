@@ -13,7 +13,7 @@ public class RoutineTargetRef
 {
     public RoutineTargetKind Kind { get; set; } = RoutineTargetKind.None;
 
-    /// <summary>Stable identity key — ReferenceLemma for Area/PoI/Spot, display name for NPCs.</summary>
+    /// <summary>Stable identity key — ReferenceLemma for Area/PoI, display name for NPCs.</summary>
     public string Key { get; set; } = "";
 
     /// <summary>Human-readable display name captured at record time (for UI / debugging).</summary>

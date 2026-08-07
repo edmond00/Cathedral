@@ -22,12 +22,6 @@ public class PoV
     public Area Where { get; set; }
 
     /// <summary>
-    /// The spot the agent is currently examining within the area.
-    /// Null when the agent is observing the area at large (not inside any spot).
-    /// </summary>
-    public Spot? InSpot { get; set; }
-
-    /// <summary>
     /// The current time period — the temporal half of the point of view.
     ///
     /// <para>Mirrored by <c>NarrationGraph.CurrentPeriod</c>, which is what NPC placement into graph
@@ -54,11 +48,10 @@ public class PoV
     /// </summary>
     public HashSet<System.Guid> RevealedLandmarks { get; } = new();
 
-    public PoV(Area where, TimePeriod when, Element? focus = null, Spot? inSpot = null)
+    public PoV(Area where, TimePeriod when, Element? focus = null)
     {
-        Where  = where;
-        When   = when;
-        Focus  = focus;
-        InSpot = inSpot;
+        Where = where;
+        When  = when;
+        Focus = focus;
     }
 }

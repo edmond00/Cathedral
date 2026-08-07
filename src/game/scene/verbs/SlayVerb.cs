@@ -6,8 +6,9 @@ namespace Cathedral.Game.Scene.Verbs;
 /// <summary>
 /// Kills a living NPC without combat. Only possible when the player is in the same area
 /// as the NPC and the NPC is currently alive.
-/// On execution: sets <c>IsAlive = false</c>, spawns a <see cref="Cathedral.Game.Npc.Corpse.CorpseSpot"/>
-/// in the current area, and registers it in the scene.
+/// On execution: sets <c>IsAlive = false</c>, spawns the NPC's remains — a
+/// <see cref="Cathedral.Game.Npc.Corpse.CorpsePointOfInterest"/>, plus a belongings PoI for a human —
+/// in the current area, and registers them in the scene.
 /// </summary>
 public class SlayVerb : Verb
 {
@@ -28,7 +29,6 @@ public class SlayVerb : Verb
     {
         if (target is not SceneNpc npc) return false;
         if (!npc.IsAlive) return false;
-        if (pov.InSpot != null) return false;  // can't slay from inside a spot
 
         // Tiny creatures get catch/crush instead. Slaying a snail is not a thing anyone does, and
         // offering it beside "crush" reads as a bug rather than as a choice.

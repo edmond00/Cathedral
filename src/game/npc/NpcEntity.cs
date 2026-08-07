@@ -221,6 +221,6 @@ public class NpcEntity : INpcEntity
     // ── Corpse generation ─────────────────────────────────────────────────────
 
     /// <inheritdoc/>
-    public CorpseSpot GenerateCorpse(Area area)
-        => CorpseRegistry.CreateForNamedNpc(this, area);
+    public List<PointOfInterest> GenerateCorpse()
+        => CorpseRegistry.CreateForNamedNpc(this);
 }

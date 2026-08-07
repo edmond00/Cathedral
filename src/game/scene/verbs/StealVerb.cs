@@ -6,7 +6,7 @@ using Cathedral.Game.Npc.Corpse;
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
-/// Steals an item from a <see cref="Area.IsPrivate"/> area or spot.
+/// Steals an item from a <see cref="Area.IsPrivate"/> area.
 /// Functionally identical to <see cref="GrabVerb"/> but marks the action as illegal,
 /// which triggers witness detection and the "caught red-handed" dialogue on failure.
 /// </summary>
@@ -25,23 +25,13 @@ public class StealVerb : Verb
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
         if (target is not ItemElement itemEl) return false;
+        if (!pov.Where.IsPrivate) return false;
 
-        if (pov.InSpot != null)
-        {
-            // Inside a spot of a private area only.
-            if (!pov.Where.IsPrivate) return false;
-            return pov.InSpot.PointsOfInterest
-                .Where(poi => poi is not CorpseBodyPartPoI)
-                .Any(poi => poi.Items.Any(ie => ie.Id == itemEl.Id));
-        }
-        else
-        {
-            // In a private area directly.
-            if (!pov.Where.IsPrivate) return false;
-            return pov.Where.PointsOfInterest
-                .Where(poi => poi is not CorpseBodyPartPoI)
-                .Any(poi => poi.Items.Any(ie => ie.Id == itemEl.Id));
-        }
+        // A corpse's parts are cut, never stolen — you do not pickpocket a carcass for its own hide.
+        // What the dead were carrying is a plain PoI beside the body, so it still steals normally.
+        return pov.Where.PointsOfInterest
+            .Where(poi => poi is not CorpsePointOfInterest)
+            .Any(poi => poi.Items.Any(ie => ie.Id == itemEl.Id));
     }
 
     public override string Verbatim(Scene scene, PoV pov, Element target)

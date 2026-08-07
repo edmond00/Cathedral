@@ -22,32 +22,15 @@ public class RabbitArchetype : ShallowNpcArchetype
         noun:   "rabbit",
         traits: new[] { "nose twitching, eyes wide", "frozen mid-hop, ears upright", "nibbling at the grass, ready to bolt" });
 
-    public override CorpseSpot CreateCorpse(ShallowNpcEntity entity, Area area)
-    {
-        var bodyParts = new List<PointOfInterest>
-        {
-            new CorpseBodyPartPoI(
-                "Body",
-                new() { "the small limp body of the dead rabbit" },
-                new()
-                {
-                    new ItemElement(new RabbitMeat()),
-                    new ItemElement(new RabbitMeat()),
-                }),
-
-            new CorpseBodyPartPoI(
-                "Pelt",
-                new() { "the soft grey pelt of the rabbit" },
-                new()
-                {
-                    new ItemElement(new RabbitPelt()),
-                }),
-        };
-
-        return CorpseRegistry.CreateForShallowNpc(
-            entity, area,
+    public override List<PointOfInterest> CreateCorpse(ShallowNpcEntity entity)
+        => CorpseRegistry.CreateForShallowNpc(
+            entity,
             displayName:  "Dead Rabbit",
-            descriptions: new() { "A small dead rabbit, its eyes already glazing" },
-            bodyParts);
-    }
+            descriptions: new() { "a small dead rabbit, eyes already glazing, the soft grey pelt unmarked" },
+            parts: new()
+            {
+                new ItemElement(new RabbitMeat()),
+                new ItemElement(new RabbitMeat()),
+                new ItemElement(new RabbitPelt()),
+            });
 }

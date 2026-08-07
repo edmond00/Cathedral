@@ -569,7 +569,7 @@ public class NarrativeController
         foreach (var node in _graph.AllNodes.Values)
         {
             if (node is not SyntheticNarrationNode { Area: { } area } synthetic) continue;
-            SyncSpotObservations(synthetic, area);
+            SyncSpawnedObservations(synthetic, area);
             // Gate at the live period. NPCs were placed into this node by SceneNpcPlacement using
             // the same Scene.GetNpcsAt query the verb gates use, so a present NPC's verbs always
             // survive here, and an absent one simply has no observation object to refresh.
@@ -587,30 +587,42 @@ public class NarrativeController
     }
 
     /// <summary>
-    /// Reconciles a node's spot observations with the spots its area actually holds: adds one for a
-    /// spot that has none, drops one whose spot has left the area.
+    /// Reconciles a node's point-of-interest observations with the PoIs its area actually holds: adds
+    /// one for a PoI that has none, drops one whose PoI has left the area.
     ///
     /// <para>The narration graph is built once, at scene creation, from the areas as the factory left
-    /// them — so anything the game <i>spawns</i> during play had no observation object and could never
-    /// be looked at, entered, or acted on. That is what made a corpse unreachable: it was in
-    /// <c>area.Spots</c> and in the scene's element table, correct in every respect except the only
-    /// one that shows it to the player. Verbs are left to the caller's refresh loop, which runs over
-    /// <c>PossibleOutcomes</c> straight after this and expands the new object like any other.</para>
+    /// them — so anything the game <i>spawns</i> during play has no observation object, and an object
+    /// with no observation object cannot be looked at or acted on however correct it is in
+    /// <c>area.PointsOfInterest</c>. That is what made a corpse unreachable: the body was in the area
+    /// and in the scene's element table, right in every respect except the one that shows it to the
+    /// player.</para>
+    ///
+    /// <para>Verbs are left to the caller's refresh loop, which runs over <c>PossibleOutcomes</c>
+    /// straight after this and expands the new object at the live period like any other.</para>
     /// </summary>
-    private void SyncSpotObservations(SyntheticNarrationNode node, Cathedral.Game.Scene.Area area)
+    private void SyncSpawnedObservations(SyntheticNarrationNode node, Cathedral.Game.Scene.Area area)
     {
         node.PossibleOutcomes.RemoveAll(
-            o => o is SyntheticSpotObject spotObs && !area.Spots.Contains(spotObs.Spot));
+            o => o is SyntheticObservationObject obs && !area.PointsOfInterest.Contains(obs.PointOfInterest));
 
-        var present = node.PossibleOutcomes.OfType<SyntheticSpotObject>().Select(o => o.Spot).ToHashSet();
-        foreach (var spot in area.Spots)
+        var present = node.PossibleOutcomes
+            .OfType<SyntheticObservationObject>()
+            .Select(o => o.PointOfInterest)
+            .ToHashSet();
+
+        foreach (var poi in area.PointsOfInterest)
         {
-            if (present.Contains(spot)) continue;
+            if (present.Contains(poi)) continue;
 
-            // An empty verb list: the refresh pass that follows expands the real ones at the live period.
-            var entry = new SceneViewEntry(spot, new List<VerbView>());
-            node.PossibleOutcomes.Add(new SyntheticSpotObject(spot, entry));
-            Console.WriteLine($"NarrativeController: spot '{spot.DisplayName}' added to node '{node.NodeId}'");
+            // Empty verb lists: the refresh pass that follows expands the real ones, for the PoI and
+            // for every item in it, at the period actually in force.
+            var entry = new SceneViewEntry(poi, new List<VerbView>());
+            var itemEntries = poi.Items
+                .Select(ie => new SceneViewEntry(ie, new List<VerbView>()))
+                .ToList();
+
+            node.PossibleOutcomes.Add(new SyntheticObservationObject(poi, entry, itemEntries, area));
+            Console.WriteLine($"NarrativeController: '{poi.DisplayName}' added to node '{node.NodeId}'");
         }
     }
 
@@ -664,7 +676,7 @@ public class NarrativeController
             // The list is drained whether or not it is used, so a body left in another area cannot
             // open a phase two moves later.
             var corpses = _scene?.PendingCorpseObservations.ToList()
-                          ?? new List<Cathedral.Game.Npc.Corpse.CorpseSpot>();
+                          ?? new List<Cathedral.Game.Npc.Corpse.CorpsePointOfInterest>();
             _scene?.PendingCorpseObservations.Clear();
 
             bool handled = corpses.Count > 0
@@ -759,13 +771,15 @@ public class NarrativeController
     /// in this node, which is the case whenever the kill happened somewhere the player has since left.
     /// </summary>
     private async Task<bool> TryGenerateCorpseObservationAsync(
-        List<Cathedral.Game.Npc.Corpse.CorpseSpot> corpses, Action<List<NarrationBlock>> commit)
+        List<Cathedral.Game.Npc.Corpse.CorpsePointOfInterest> corpses, Action<List<NarrationBlock>> commit)
     {
-        var nodeOutcomes = _currentNode.GetAllDirectConcreteOutcomes().OfType<SyntheticSpotObject>().ToList();
+        var nodeOutcomes = _currentNode.GetAllDirectConcreteOutcomes()
+            .OfType<SyntheticObservationObject>()
+            .ToList();
 
         // Node order is irrelevant here — the bodies are narrated in the order they fell.
         var corpseOutcomes = corpses
-            .Select(c => nodeOutcomes.FirstOrDefault(o => ReferenceEquals(o.Spot, c)))
+            .Select(c => nodeOutcomes.FirstOrDefault(o => ReferenceEquals(o.PointOfInterest, c)))
             .Where(o => o != null)
             .Select(o => (ConcreteOutcome)o!)
             .ToList();
@@ -3499,22 +3513,23 @@ public class NarrativeController
 
         if (result == Fight.FightAdapterResult.Victory)
         {
-            // Spawn corpses for every dead enemy + focus on main enemy's corpse
-            Spot? mainCorpse = null;
+            // A body — and, for a human, their belongings — for every enemy that fell. Each one
+            // queues itself on the scene as it is added, and the narration phase that opens next
+            // observes exactly those, in the order they were spawned here.
+            Cathedral.Game.Scene.PointOfInterest? mainCorpse = null;
             foreach (var enemy in enemies)
             {
-                if (!enemy.IsAlive && _scene != null && _pov != null)
-                {
-                    var corpse = enemy.GenerateCorpse(_pov.Where);
-                    _scene.AddSpotToArea(_pov.Where, corpse);
-                    Console.WriteLine($"NarrativeController: Corpse spawned for {enemy.DisplayName}");
+                if (enemy.IsAlive || _scene == null || _pov == null) continue;
 
-                    if (enemy == npc)
-                        mainCorpse = corpse;
+                foreach (var remains in enemy.GenerateCorpse())
+                {
+                    _scene.AddPointOfInterestToArea(_pov.Where, remains);
+                    if (enemy == npc) mainCorpse ??= remains;
                 }
+                Console.WriteLine($"NarrativeController: Corpse spawned for {enemy.DisplayName}");
             }
 
-            // Focus on main enemy's corpse so the player can loot/inspect
+            // Focus on the main enemy's body so the debug view opens on what just happened.
             if (mainCorpse != null && _pov != null)
             {
                 _pov.Focus = mainCorpse;

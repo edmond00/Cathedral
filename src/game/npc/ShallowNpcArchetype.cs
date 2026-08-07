@@ -30,8 +30,8 @@ public abstract class ShallowNpcArchetype : NpcArchetype
     /// <summary>
     /// What is left of a tiny creature caught intact — a specimen, not a carcass. Empty by default;
     /// override on the ones worth keeping. Caught creatures go straight into the inventory rather
-    /// than leaving a corpse spot on the ground, which is the difference between catching a thing
-    /// and killing it.
+    /// than leaving a body on the ground, which is the difference between catching a thing and
+    /// killing it.
     /// </summary>
     public virtual System.Collections.Generic.List<Narrative.Item> BuildCatchYield() => new();
 
@@ -58,8 +58,8 @@ public abstract class ShallowNpcArchetype : NpcArchetype
     /// </summary>
     protected abstract string ComposeObservationHint(Random rng, string nodeContext);
 
-    /// <summary>Override to build a <see cref="CorpseSpot"/> when an instance is slain.</summary>
-    public abstract CorpseSpot CreateCorpse(ShallowNpcEntity entity, Area area);
+    /// <summary>Override to build the remains left when an instance is slain.</summary>
+    public abstract System.Collections.Generic.List<PointOfInterest> CreateCorpse(ShallowNpcEntity entity);
 
     // ── Composition helpers ──────────────────────────────────────────────────
 

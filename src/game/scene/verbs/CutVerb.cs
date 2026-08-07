@@ -1,12 +1,18 @@
 using System.Collections.Generic;
+using System.Linq;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Npc.Corpse;
 
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
-/// Harvests a body-part item from a <see cref="CorpseBodyPartPoI"/> within a <see cref="CorpseSpot"/>.
-/// The player must be inside the corpse spot for this verb to be active.
+/// Harvests a part from a body — a fang, a hide, a cut of meat — off a
+/// <see cref="CorpsePointOfInterest"/> in the current area.
+///
+/// <para>The corpse's own type is the whole gate: everything a <see cref="CorpsePointOfInterest"/>
+/// holds is flesh, so cut takes it and the pickup verbs do not, while everything in the plain
+/// belongings PoI beside it is cloth and steel, so they take it and cut does not. Neither verb has to
+/// look at an individual item to decide.</para>
 /// </summary>
 public class CutVerb : Verb
 {
@@ -19,13 +25,11 @@ public class CutVerb : Verb
 
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
-        if (target is not ItemElement) return false;
-        if (pov.InSpot is not CorpseSpot) return false;
+        if (target is not ItemElement itemEl) return false;
 
-        // Item must be in a CorpseBodyPartPoI within the current spot
-        return pov.InSpot.PointsOfInterest
-            .OfType<CorpseBodyPartPoI>()
-            .Any(poi => poi.Items.Any(ie => ie.Id == target.Id));
+        return pov.Where.PointsOfInterest
+            .OfType<CorpsePointOfInterest>()
+            .Any(corpse => corpse.Items.Any(ie => ie.Id == itemEl.Id));
     }
 
     public override string Verbatim(Scene scene, PoV pov, Element target)

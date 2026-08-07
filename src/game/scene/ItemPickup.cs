@@ -13,18 +13,14 @@ namespace Cathedral.Game.Scene;
 public static class ItemPickup
 {
     /// <summary>
-    /// Returns the PoI (in the current spot, or the current area) that holds the given item, or null if
-    /// none. Corpse PoIs are excluded unless <paramref name="includeCorpse"/> is set (Cut harvesting).
+    /// Returns the PoI in the current area that holds the given item, or null if none. Corpses are
+    /// excluded unless <paramref name="includeCorpse"/> is set (Cut harvesting).
     /// Mirrors the search used by the pickup verbs' <c>IsPossible</c>.
     /// </summary>
     public static PointOfInterest? FindHoldingPoI(PoV pov, ItemElement item, bool includeCorpse = false)
     {
-        var pois = pov.InSpot != null
-            ? pov.InSpot.PointsOfInterest
-            : pov.Where.PointsOfInterest;
-
-        return pois
-            .Where(poi => includeCorpse || poi is not CorpseBodyPartPoI)
+        return pov.Where.PointsOfInterest
+            .Where(poi => includeCorpse || poi is not CorpsePointOfInterest)
             .FirstOrDefault(poi => poi.Items.Any(ie => ie.Id == item.Id));
     }
 

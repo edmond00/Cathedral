@@ -233,19 +233,13 @@ public static class VerbAudit
     }
 
     /// <summary>
-    /// Everything in an area a player can put a keyword on: its points of interest, the PoIs inside
-    /// its spots, the spots themselves, and the NPCs scheduled anywhere in it. Items are deliberately
-    /// left out — they are never standalone observations, their verbs fold into the parent PoI.
+    /// Everything in an area a player can put a keyword on: its points of interest and the NPCs
+    /// scheduled anywhere in it. Items are deliberately left out — they are never standalone
+    /// observations, their verbs fold into the parent PoI.
     /// </summary>
     private static IEnumerable<Element> Observables(Area area, Scene scene)
     {
         foreach (var poi in area.PointsOfInterest) yield return poi;
-
-        foreach (var spot in area.Spots)
-        {
-            yield return spot;
-            foreach (var poi in spot.PointsOfInterest) yield return poi;
-        }
 
         foreach (var npc in scene.Npcs)
         {
@@ -279,10 +273,6 @@ public static class VerbAudit
         foreach (TimePeriod period in Enum.GetValues<TimePeriod>())
         {
             var pov = new PoV(area, period);
-
-            // A spot's contents are only reachable from inside it.
-            if (target is not Spot && area.Spots.FirstOrDefault(s => s.PointsOfInterest.Contains(target)) is { } holdingSpot)
-                pov.InSpot = holdingSpot;
 
             // A sleeping person is not observed as an NPC: placement swaps them and their bed for a
             // single merged object while the sleep lasts, and murder / wake / pickpocket are offered
@@ -393,9 +383,7 @@ public static class VerbAudit
             ["remember"] = "childhood phase only",
             ["get_up"]   = "get-up phase only",
             ["ignore"]   = "injected directly, never registry-discovered",
-            ["cut"]      = "needs a corpse spot, which only exists after a kill",
-            ["leave"]    = "needs the actor to already be inside a spot",
-            ["enter_spot"] = "no factory builds a Spot; the only one is the corpse spot",
+            ["cut"]      = "needs a corpse, which only exists after a kill",
 
             // Relationship-gated: the stand-in actor is a stranger to everyone, by construction.
             ["go_toward"] = "needs a landmark already picked out from a high place this visit",

@@ -61,11 +61,7 @@ public abstract class SceneFactory
     private static void MergeDuplicateNamedPois(Scene scene)
     {
         foreach (var area in scene.AllAreas)
-        {
             Merge(area.PointsOfInterest);
-            foreach (var spot in area.Spots)
-                Merge(spot.PointsOfInterest);
-        }
 
         static void Merge(List<PointOfInterest> pois)
         {
@@ -111,14 +107,6 @@ public abstract class SceneFactory
                 if (area.StableKey.Length == 0) area.StableKey = areaKey;
 
                 KeyPois(areaKey, area.PointsOfInterest);
-
-                for (int spi = 0; spi < area.Spots.Count; spi++)
-                {
-                    var spot = area.Spots[spi];
-                    var spotKey = $"{areaKey}|sp{spi}:{spot.ReferenceLemma}";
-                    if (spot.StableKey.Length == 0) spot.StableKey = spotKey;
-                    KeyPois(spotKey, spot.PointsOfInterest);
-                }
             }
         }
 
@@ -139,28 +127,26 @@ public abstract class SceneFactory
 
     /// <summary>
     /// Assigns each item a stable <see cref="ItemElement.DepletionKey"/> in deterministic build order
-    /// (areas → their spots → PoIs → items). Because factories are seeded by locationId, the same
-    /// physical slot maps to the same key on every rebuild, so depletion/regeneration can be tracked
-    /// across visits without persisting element GUIDs.
+    /// (areas → PoIs → items). Because factories are seeded by locationId, the same physical slot maps
+    /// to the same key on every rebuild, so depletion/regeneration can be tracked across visits
+    /// without persisting element GUIDs.
+    ///
+    /// <para>The empty segment after the area name is a scar, and it stays: keys are matched against
+    /// persisted <c>LocationInstanceState.ItemDepletions</c> data, and dropping it would orphan every
+    /// depletion already recorded in a save. It once held the name of the enclosing spot, which no
+    /// factory-built PoI ever had — so every key in existence has it empty.</para>
     /// </summary>
     private static void AssignDepletionKeys(Scene scene)
     {
         foreach (var area in scene.AllAreas)
         {
-            KeyContainer(area.DisplayName, "", area.PointsOfInterest);
-            foreach (var spot in area.Spots)
-                KeyContainer(area.DisplayName, spot.ReferenceLemma, spot.PointsOfInterest);
-        }
-
-        static void KeyContainer(string areaName, string spotName, List<PointOfInterest> pois)
-        {
             var lemmaCounts = new Dictionary<string, int>();
-            foreach (var poi in pois)
+            foreach (var poi in area.PointsOfInterest)
             {
                 lemmaCounts.TryGetValue(poi.ReferenceLemma, out int ordinal);
                 lemmaCounts[poi.ReferenceLemma] = ordinal + 1;
                 for (int i = 0; i < poi.Items.Count; i++)
-                    poi.Items[i].DepletionKey = $"{areaName}|{spotName}|{poi.ReferenceLemma}#{ordinal}|{i}";
+                    poi.Items[i].DepletionKey = $"{area.DisplayName}||{poi.ReferenceLemma}#{ordinal}|{i}";
             }
         }
     }
@@ -200,7 +186,7 @@ public abstract class SceneFactory
     protected Random CreateSeededRandom(int locationId) => new(locationId);
 
     /// <summary>
-    /// Registers an element and all its children (section→areas→spots/PoIs→items) in a scene.
+    /// Registers an element and all its children (section→areas→PoIs→items) in a scene.
     /// </summary>
     protected void RegisterAll(Scene scene, Section section)
     {
@@ -210,16 +196,14 @@ public abstract class SceneFactory
     }
 
     /// <summary>
-    /// Registers an area and all its PoIs, Spots (and their PoIs), and items.
-    /// Call this when adding a spot or area outside the normal section hierarchy.
+    /// Registers an area and all its PoIs and their items.
+    /// Call this when adding an area outside the normal section hierarchy.
     /// </summary>
     protected void RegisterAll(Scene scene, Area area)
     {
         area.Register(scene);
         foreach (var poi in area.PointsOfInterest)
             RegisterPoI(scene, poi);
-        foreach (var spot in area.Spots)
-            RegisterAll(scene, spot);
     }
 
     /// <summary>
@@ -239,14 +223,6 @@ public abstract class SceneFactory
         scene.Sections.Add(building.Section);
         RegisterAll(scene, building.Section);
         building.EntryDoor.Register(scene);
-    }
-
-    /// <summary>Registers a spot and all its PoIs and items.</summary>
-    protected void RegisterAll(Scene scene, Spot spot)
-    {
-        spot.Register(scene);
-        foreach (var poi in spot.PointsOfInterest)
-            RegisterPoI(scene, poi);
     }
 
     private static void RegisterPoI(Scene scene, PointOfInterest poi)

@@ -347,8 +347,6 @@ public class RoutinesPanelRenderer
             "go_up_stairs"   => $"go up {t}",
             "go_down_stairs" => $"go down {t}",
             "open_door"      => $"go through {t}",
-            "enter_spot"     => $"reach {t}",
-            "leave"          => $"leave {t}",
             "gather" or "grab" or "steal" or "cut" => $"gain {t}",
             _                => step.DisplayLabel,
         };

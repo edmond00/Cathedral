@@ -32,7 +32,7 @@ public sealed class ItemAcquisitionOutcome : OutcomeReport
     }
 }
 
-/// <summary>Picks up an item from a CorpseBodyPartPoI (cut verb).</summary>
+/// <summary>Harvests an item from a corpse (cut verb).</summary>
 public sealed class CorpseItemAcquisitionOutcome : OutcomeReport
 {
     private readonly ItemElement _itemElement;
@@ -46,8 +46,8 @@ public sealed class CorpseItemAcquisitionOutcome : OutcomeReport
 
     public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
     {
-        if (scene == null || pov?.InSpot == null) return;
-        // Shared pickup (corpse PoIs included): proper inventory placement + full-inventory handling.
+        if (scene == null || pov == null) return;
+        // Shared pickup (corpses included): proper inventory placement + full-inventory handling.
         ItemPickup.Pick(scene, pov, protagonist, _itemElement, includeCorpse: true);
     }
 }
@@ -71,28 +71,6 @@ public sealed class AreaMoveOutcome : OutcomeReport
         if (pov == null) return;
         pov.Where = _destination;
         pov.Focus = null;
-    }
-}
-
-/// <summary>Enters a spot in the current area.</summary>
-public sealed class SpotEnterOutcome : OutcomeReport
-{
-    private readonly Spot _spot;
-
-    public SpotEnterOutcome(Spot spot)
-        : base($"Examining: {spot.DisplayName}", OutcomeReportSeverity.Neutral,
-               $"went to examine {spot.DisplayName}")
-    {
-        _spot = spot;
-    }
-
-    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Movement;
-
-    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
-    {
-        if (pov == null) return;
-        pov.InSpot = _spot;
-        pov.Focus  = null;
     }
 }
 
@@ -240,12 +218,6 @@ public sealed class PoiReplacementOutcome : OutcomeReport
         {
             int index = area.PointsOfInterest.IndexOf(_original);
             if (index >= 0) area.PointsOfInterest[index] = _replacement;
-
-            foreach (var spot in area.Spots)
-            {
-                int spotIndex = spot.PointsOfInterest.IndexOf(_original);
-                if (spotIndex >= 0) spot.PointsOfInterest[spotIndex] = _replacement;
-            }
         }
 
         // The wreck inherits the original's identity so its description seed, and any depletion
@@ -327,22 +299,6 @@ public sealed class RecruitedOutcome : OutcomeReport
     }
 }
 
-/// <summary>Leaves the current spot.</summary>
-public sealed class SpotLeaveOutcome : OutcomeReport
-{
-    public SpotLeaveOutcome()
-        : base("Left the spot", OutcomeReportSeverity.Neutral, "stepped back") { }
-
-    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Movement;
-
-    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
-    {
-        if (pov == null) return;
-        pov.InSpot = null;
-        pov.Focus  = null;
-    }
-}
-
 /// <summary>Unlocks a door and immediately passes through it.</summary>
 public sealed class DoorUnlockOutcome : OutcomeReport
 {
@@ -397,8 +353,8 @@ public sealed class NpcSlaynOutcome : OutcomeReport
     {
         if (scene == null || pov == null) return;
         _sceneNpc.Entity.IsAlive = false;
-        var corpse = _sceneNpc.Entity.GenerateCorpse(pov.Where);
-        scene.AddSpotToArea(pov.Where, corpse);
+        foreach (var remains in _sceneNpc.Entity.GenerateCorpse())
+            scene.AddPointOfInterestToArea(pov.Where, remains);
         pov.Focus = null;
     }
 }

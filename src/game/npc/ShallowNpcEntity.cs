@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Npc.Corpse;
 using Cathedral.Game.Scene;
 
@@ -5,7 +6,7 @@ namespace Cathedral.Game.Npc;
 
 /// <summary>
 /// A shallow NPC instance — anonymous, has no anatomy, cannot fight or converse.
-/// Can be slayed to yield a lootable <see cref="CorpseSpot"/>.
+/// Can be slayed to yield a harvestable <see cref="CorpsePointOfInterest"/>.
 /// </summary>
 public class ShallowNpcEntity : INpcEntity
 {
@@ -30,6 +31,6 @@ public class ShallowNpcEntity : INpcEntity
         ObservationHint            = observationHint;
     }
 
-    public CorpseSpot GenerateCorpse(Area area)
-        => ((ShallowNpcArchetype)Archetype).CreateCorpse(this, area);
+    public List<PointOfInterest> GenerateCorpse()
+        => ((ShallowNpcArchetype)Archetype).CreateCorpse(this);
 }

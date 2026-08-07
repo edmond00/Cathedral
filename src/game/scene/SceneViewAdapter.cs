@@ -17,7 +17,6 @@ namespace Cathedral.Game.Scene;
 ///
 /// Key mappings:
 ///   Area            → SyntheticAreaObservationObject  (ObservationObject with MoveToAreaVerb)
-///   Spot            → SyntheticSpotObject             (ObservationObject with enter verb)
 ///   PointOfInterest → SyntheticObservationObject      (ObservationObject with PoI verbs + folded item verbs)
 ///   SceneNpc        → SyntheticNpcObservationObject   (ObservationObject with NPC verbs)
 ///   ItemElement     → folded into parent PoI as VerbOutcome SubOutcomes (not a standalone observation)
@@ -56,10 +55,6 @@ public static class SceneViewAdapter
             if (entry.Source is Area reachableArea)
             {
                 node.PossibleOutcomes.Add(new SyntheticAreaObservationObject(reachableArea, entry));
-            }
-            else if (entry.Source is Spot spot)
-            {
-                node.PossibleOutcomes.Add(new SyntheticSpotObject(spot, entry));
             }
             else if (entry.Source is PointOfInterest poi)
             {
@@ -291,55 +286,6 @@ public class SyntheticObservationObject : ObservationObject, IVerbRefreshable, I
         var name      = _poi.DisplayName.ToLowerInvariant();
         var nameMood  = SceneViewAdapter.PickMood(_poi.Moods, name, rng);
         return nameMood == null ? name : $"{nameMood} {name}";
-    }
-}
-
-/// <summary>
-/// A synthetic ObservationObject backed by a <see cref="Spot"/> (enterable sub-location).
-/// </summary>
-public class SyntheticSpotObject : ObservationObject, IVerbRefreshable
-{
-    private readonly Spot _spot;
-
-    /// <summary>The spot this observation stands for — how a caller matches an observation back to a
-    /// spot it spawned (a corpse), and how the node sync tells which spots already have one.</summary>
-    public Spot Spot => _spot;
-
-    public SyntheticSpotObject(Spot spot, SceneViewEntry entry)
-    {
-        _spot       = spot;
-        SubOutcomes = new List<ConcreteOutcome>();
-
-        foreach (var vv in entry.ApplicableVerbs)
-            SubOutcomes.Add(new VerbOutcome(vv, spot));
-
-        SubOutcomes.Add(SceneViewAdapter.MakeIgnoreSubOutcome(spot));
-    }
-
-    /// <inheritdoc cref="IVerbRefreshable"/>
-    public void RefreshVerbs(Scene scene, PoV pov, Protagonist? actor = null)
-    {
-        SubOutcomes.Clear();
-        foreach (var verb in scene.Verbs)
-            foreach (var vv in verb.ExpandViews(scene, pov, _spot, actor))
-                SubOutcomes.Add(new VerbOutcome(vv, _spot));
-        SubOutcomes.Add(SceneViewAdapter.MakeIgnoreSubOutcome(_spot));
-    }
-
-    public override string ObservationId => _spot.DisplayName.ToLowerInvariant().Replace(' ', '_');
-
-    public override string NeutralName => _spot.DisplayName;
-
-    public override string ReferenceLemma => _spot.ReferenceLemma;
-
-    public override string GenerateNeutralDescription(int locationId = 0)
-    {
-        if (_spot.Descriptions.Count > 0)
-        {
-            var rng = SceneViewAdapter.DescriptionRng(_spot, locationId);
-            return _spot.Descriptions[rng.Next(_spot.Descriptions.Count)];
-        }
-        return _spot.DisplayName.ToLowerInvariant();
     }
 }
 

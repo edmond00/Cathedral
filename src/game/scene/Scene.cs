@@ -202,103 +202,75 @@ public class Scene
     /// <summary>Gets an area by its UUID.</summary>
     public Area? GetArea(Guid id) => Elements.TryGetValue(id, out var el) && el is Area a ? a : null;
 
-    // ── Dynamic spot management ───────────────────────────────────────────────
+    // ── Runtime point-of-interest management ──────────────────────────────────
 
     /// <summary>
     /// Corpses spawned since the narration last opened a phase, in the order they fell. Drained by
     /// <c>NarrativeController.GenerateObservationsAsync</c>, which opens the following phase by
     /// observing exactly these — the body you just made is what you look at next.
     ///
-    /// <para>Recorded here rather than by each caller because <see cref="AddSpotToArea"/> is the one
-    /// door every corpse comes through: a slay verb applying <c>NpcSlaynOutcome</c> and a won fight
-    /// spawning one body per dead enemy both end up in it.</para>
+    /// <para>Recorded here rather than by each caller because <see cref="AddPointOfInterestToArea"/>
+    /// is the one door every corpse comes through: a slay verb applying <c>NpcSlaynOutcome</c> and a
+    /// won fight spawning one body per dead enemy both end up in it.</para>
     /// </summary>
-    public List<Npc.Corpse.CorpseSpot> PendingCorpseObservations { get; } = new();
+    public List<Npc.Corpse.CorpsePointOfInterest> PendingCorpseObservations { get; } = new();
 
     /// <summary>
-    /// Adds a spot to an area at runtime and registers it (and its PoIs/items) in the scene.
-    /// Used for temporary spots such as corpses that are spawned by verbs, not by the factory.
+    /// Adds a point of interest to an area at runtime and registers it (and its items) in the scene.
+    /// Used for what the game spawns during play — corpses — rather than what a factory built.
     ///
-    /// <para>The narration graph is built once, so a spot added here is not yet a node outcome and
-    /// cannot be observed until <c>NarrativeController.RefreshSceneVerbs</c> syncs it in — which it
-    /// does before every observation phase and every thinking request.</para>
+    /// <para>The narration graph is built once, from the areas as the factory left them, so a PoI
+    /// added here is not yet a node outcome and cannot be observed until
+    /// <c>NarrativeController.SyncSpawnedObservations</c> reconciles it in — which happens before
+    /// every observation phase and every thinking request.</para>
+    ///
+    /// <para>Unlike <c>SceneFactory</c>, this deliberately does <b>not</b> merge a same-named PoI:
+    /// two dead pigs are two bodies, and they behave like any other pair of identically-named
+    /// objects — the observation choice list collapses them to one representative per phase, and the
+    /// ledger retires instances, so the second becomes observable once the first has been seen.</para>
     /// </summary>
-    public void AddSpotToArea(Area area, Spot spot)
+    public void AddPointOfInterestToArea(Area area, PointOfInterest poi)
     {
-        area.Spots.Add(spot);
-        RegisterSpot(spot);
+        area.PointsOfInterest.Add(poi);
+
+        RegisterElement(poi);
+        foreach (var item in poi.Items)
+            RegisterElement(item);
 
         // Virtual replay works on a throwaway scene; queueing an observation off it would make the
         // real narration open on a corpse that was only ever validated, never made.
-        if (spot is Npc.Corpse.CorpseSpot corpse && !IsVirtualReplay)
+        if (poi is Npc.Corpse.CorpsePointOfInterest corpse && !IsVirtualReplay)
             PendingCorpseObservations.Add(corpse);
-    }
-
-    private void RegisterSpot(Spot spot)
-    {
-        RegisterElement(spot);
-        foreach (var poi in spot.PointsOfInterest)
-        {
-            RegisterElement(poi);
-            foreach (var item in poi.Items)
-                RegisterElement(item);
-        }
     }
 
     // ── View (frontend output) ────────────────────────────────────────────────
 
     /// <summary>
-    /// Produces a <see cref="SceneView"/> for the given point of view.
-    ///
-    /// When <c>pov.InSpot != null</c> (player is inside a spot):
-    ///   Shows the spot and its PoIs/items. Movement to areas is blocked; Leave verb is offered.
-    ///
-    /// Otherwise (player is in an area):
-    ///   Shows the area, its PoIs/items, its spots, alive NPCs, and reachable areas.
+    /// Produces a <see cref="SceneView"/> for the given point of view: the area, its PoIs and their
+    /// items, the NPCs present at this hour, and the areas reachable from here.
     /// </summary>
     public SceneView View(PoV pov, Protagonist? actor = null)
     {
         var entries = new List<SceneViewEntry>();
 
-        if (pov.InSpot != null)
+        // 1. Current area
+        entries.Add(BuildEntry(pov.Where, pov, actor));
+
+        // 2. Points of interest in current area
+        foreach (var poi in pov.Where.PointsOfInterest)
         {
-            // ── Inside a spot ──────────────────────────────────────────────
-            entries.Add(BuildEntry(pov.InSpot, pov, actor));
-
-            foreach (var poi in pov.InSpot.PointsOfInterest)
-            {
-                entries.Add(BuildEntry(poi, pov, actor));
-                foreach (var itemElement in poi.Items)
-                    entries.Add(BuildEntry(itemElement, pov, actor));
-            }
+            entries.Add(BuildEntry(poi, pov, actor));
+            foreach (var itemElement in poi.Items)
+                entries.Add(BuildEntry(itemElement, pov, actor));
         }
-        else
-        {
-            // ── In an area ─────────────────────────────────────────────────
 
-            // 1. Current area
-            entries.Add(BuildEntry(pov.Where, pov, actor));
+        // 3. NPCs present at current area and time
+        foreach (var npc in GetNpcsAt(pov.Where, pov.When))
+            entries.Add(BuildEntry(npc, pov, actor));
 
-            // 2. Points of interest in current area
-            foreach (var poi in pov.Where.PointsOfInterest)
-            {
-                entries.Add(BuildEntry(poi, pov, actor));
-                foreach (var itemElement in poi.Items)
-                    entries.Add(BuildEntry(itemElement, pov, actor));
-            }
-
-            // 3. Spots in current area (shown as enterable sub-locations)
-            foreach (var spot in pov.Where.Spots)
-                entries.Add(BuildEntry(spot, pov, actor));
-
-            // 4. NPCs present at current area and time
-            foreach (var npc in GetNpcsAt(pov.Where, pov.When))
-                entries.Add(BuildEntry(npc, pov, actor));
-
-            // 5. Reachable areas (for movement verbs)
-            foreach (var reachable in GetReachableAreas(pov.Where))
-                entries.Add(BuildEntry(reachable, pov, actor));
-        }
+        // 4. Reachable areas (for movement verbs)
+        foreach (var reachable in GetReachableAreas(pov.Where))
+            entries.Add(BuildEntry(reachable, pov, actor));
 
         // Always include focused element if not already listed
         if (pov.Focus != null && entries.All(e => e.Source.Id != pov.Focus.Id))

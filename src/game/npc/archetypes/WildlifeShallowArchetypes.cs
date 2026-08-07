@@ -14,27 +14,18 @@ namespace Cathedral.Game.Npc.Archetypes;
 /// </summary>
 public abstract class GenericShallowArchetype : ShallowNpcArchetype
 {
-    /// <summary>One-line description of the corpse "body" PoI.</summary>
+    /// <summary>One-line description of the body, read when the corpse is observed.</summary>
     protected abstract string CorpseBodyDescription { get; }
 
     /// <summary>Items dropped when this creature is killed (may be empty).</summary>
     protected abstract List<ItemElement> BuildCorpseDrops();
 
-    public override CorpseSpot CreateCorpse(ShallowNpcEntity entity, Area area)
-    {
-        var bodyParts = new List<PointOfInterest>
-        {
-            new CorpseBodyPartPoI(
-                "Body",
-                new() { CorpseBodyDescription },
-                BuildCorpseDrops()),
-        };
-        return CorpseRegistry.CreateForShallowNpc(
-            entity, area,
+    public override List<PointOfInterest> CreateCorpse(ShallowNpcEntity entity)
+        => CorpseRegistry.CreateForShallowNpc(
+            entity,
             displayName:  $"Dead {TypeDisplayName}",
-            descriptions: new() { $"The still body of a {TypeDisplayName.ToLowerInvariant()}" },
-            bodyParts);
-    }
+            descriptions: new() { CorpseBodyDescription },
+            parts:        BuildCorpseDrops());
 }
 
 // ── Small mammals ────────────────────────────────────────────────────────────

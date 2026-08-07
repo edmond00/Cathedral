@@ -35,9 +35,7 @@ public abstract class SensoryVerb : Verb
         if (target is not PointOfInterest poi) return false;
         if (!poi.RewardsSense(VerbId)) return false;
 
-        return pov.InSpot != null
-            ? pov.InSpot.PointsOfInterest.Contains(poi)
-            : pov.Where.PointsOfInterest.Contains(poi);
+        return pov.Where.PointsOfInterest.Contains(poi);
     }
 
     // No SuccessReports: the narration is the outcome. The modus-mentis grant is appended by the

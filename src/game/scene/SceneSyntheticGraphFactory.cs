@@ -163,16 +163,8 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
             node.PossibleOutcomes.Add(new SyntheticObservationObject(poi, entry, itemSubEntries, area));
         }
 
-        // Add spots as synthetic enterable sub-locations
-        foreach (var spot in area.Spots)
-        {
-            var entry = new SceneViewEntry(spot,
-                _scene.Verbs
-                    .SelectMany(v => v.ExpandViews(_scene, pov, spot))
-                    .ToList());
-
-            node.PossibleOutcomes.Add(new SyntheticSpotObject(spot, entry));
-        }
+        // Anything the game spawns later — a corpse — is reconciled in by
+        // NarrativeController.SyncSpawnedObservations, which runs before every observation phase.
 
         return node;
     }

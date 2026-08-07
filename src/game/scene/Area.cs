@@ -4,7 +4,7 @@ namespace Cathedral.Game.Scene;
 
 /// <summary>
 /// A specific space within a <see cref="Section"/>.
-/// Contains <see cref="PointOfInterest"/>s and <see cref="Spot"/>s the player can focus on.
+/// Contains the <see cref="PointOfInterest"/>s the player can focus on.
 /// Connected to other areas via directed edges in <see cref="Scene.AreaGraph"/>.
 /// </summary>
 public class Area : Element
@@ -26,12 +26,6 @@ public class Area : Element
 
     /// <summary>Points of interest (large objects, features) directly within this area.</summary>
     public List<PointOfInterest> PointsOfInterest { get; } = new();
-
-    /// <summary>
-    /// Sub-locations within this area that the player can enter.
-    /// Each spot has its own PoIs and is navigated separately (Enter/Leave verbs).
-    /// </summary>
-    public List<Spot> Spots { get; } = new();
 
     /// <summary>Mood adjectives for procedural neutral descriptions.</summary>
     public string[] Moods { get; }

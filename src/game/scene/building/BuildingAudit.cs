@@ -412,11 +412,6 @@ public static class BuildingAudit
         {
             AddKey(area);
             foreach (var poi in area.PointsOfInterest) AddKey(poi);
-            foreach (var spot in area.Spots)
-            {
-                AddKey(spot);
-                foreach (var poi in spot.PointsOfInterest) AddKey(poi);
-            }
         }
 
         void AddKey(Element e)

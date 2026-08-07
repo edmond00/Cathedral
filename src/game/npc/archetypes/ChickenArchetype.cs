@@ -22,34 +22,17 @@ public class ChickenArchetype : ShallowNpcArchetype
         noun:   "hen",
         traits: new[] { "clucking and scratching in the dirt", "pecking at the ground, oblivious", "fluffed up and strutting" });
 
-    public override CorpseSpot CreateCorpse(ShallowNpcEntity entity, Area area)
-    {
-        var bodyParts = new List<PointOfInterest>
-        {
-            new CorpseBodyPartPoI(
-                "Body",
-                new() { "the limp feathered body of the chicken" },
-                new()
-                {
-                    new ItemElement(new ChickenMeat()),
-                    new ItemElement(new ChickenMeat()),
-                }),
-
-            new CorpseBodyPartPoI(
-                "Wings",
-                new() { "the outstretched wings of the dead chicken" },
-                new()
-                {
-                    new ItemElement(new ChickenFeather()),
-                    new ItemElement(new ChickenFeather()),
-                    new ItemElement(new ChickenFeather()),
-                }),
-        };
-
-        return CorpseRegistry.CreateForShallowNpc(
-            entity, area,
+    public override List<PointOfInterest> CreateCorpse(ShallowNpcEntity entity)
+        => CorpseRegistry.CreateForShallowNpc(
+            entity,
             displayName:  "Dead Chicken",
-            descriptions: new() { "A limp chicken, its neck broken, feathers already going flat" },
-            bodyParts);
-    }
+            descriptions: new() { "a limp chicken, its neck broken, wings splayed and the feathers already going flat" },
+            parts: new()
+            {
+                new ItemElement(new ChickenMeat()),
+                new ItemElement(new ChickenMeat()),
+                new ItemElement(new ChickenFeather()),
+                new ItemElement(new ChickenFeather()),
+                new ItemElement(new ChickenFeather()),
+            });
 }

@@ -3403,11 +3403,7 @@ public class LocationTravelGameController : IDisposable
     private static void ApplyDepletion(Cathedral.Game.Scene.Scene scene, double nowDays)
     {
         foreach (var area in scene.AllAreas)
-        {
             ApplyToPois(area.PointsOfInterest);
-            foreach (var spot in area.Spots)
-                ApplyToPois(spot.PointsOfInterest);
-        }
 
         void ApplyToPois(List<Cathedral.Game.Scene.PointOfInterest> pois)
         {

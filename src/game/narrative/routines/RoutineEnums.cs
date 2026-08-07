@@ -12,7 +12,6 @@ public enum RoutineTargetKind
     None,
     Area,
     PointOfInterest,
-    Spot,
     Npc,
     Item,
 }
@@ -42,9 +41,8 @@ public enum RoutineChainEffect
     None = 0,
 
     /// <summary>
-    /// Relocates the point of view in space (<see cref="Cathedral.Game.Scene.PoV.Where"/> /
-    /// <see cref="Cathedral.Game.Scene.PoV.InSpot"/>). See <see cref="RoutineChainEffectExtensions.Repositions"/>
-    /// for what that means to the recorder.
+    /// Relocates the point of view in space (<see cref="Cathedral.Game.Scene.PoV.Where"/>).
+    /// See <see cref="RoutineChainEffectExtensions.Repositions"/> for what that means to the recorder.
     /// </summary>
     Movement = 1 << 0,
 

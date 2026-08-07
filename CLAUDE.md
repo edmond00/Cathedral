@@ -198,18 +198,30 @@ heart wound that closed on the journey must not still be counted a line later.
 
 ### Corpses
 
-A kill spawns a `CorpseSpot` in the area it happened in, through `Scene.AddSpotToArea` — the one door
-both routes come through, the `slay`/`attack` verb applying `NpcSlaynOutcome` and a won fight
-spawning one body per dead enemy. Tiny creatures are the exception and leave nothing.
+A kill spawns a `CorpsePointOfInterest` in the area it happened in, through
+`Scene.AddPointOfInterestToArea` — the one door both routes come through, the `slay`/`attack` verb
+applying `NpcSlaynOutcome` and a won fight spawning one body per dead enemy. A human additionally
+leaves a plain belongings PoI holding what they carried. Tiny creatures leave nothing.
+
+**A corpse is an ordinary area PoI, not a place you enter.** Its `Items` are the harvestable parts,
+and `SyntheticObservationObject` folds a PoI's items into its own sub-outcomes — so one keyword on
+the body offers "cut the wolf fang" and "cut the animal hide" together, in a single phase. Identical
+parts collapse to one goal (`PersonaChoiceSelector` de-dupes by label): a pig with five `PorkMeat`
+offers one "cut the pork meat", and each cut removes one instance while the goal remains.
+
+The verb split needs no per-item reasoning: everything in a `CorpsePointOfInterest` is flesh, so
+`cut` takes it and `grab`/`steal` refuse it (`ItemPickup.FindHoldingPoI` filters the type, and
+`StealVerb` repeats the filter); everything in the belongings PoI beside it is cloth and steel, so
+the pickup verbs take it and `cut` — which requires a `CorpsePointOfInterest` — does not.
 
 Two rules the rest of it depends on:
 
-- **A spawned spot is not yet observable.** The narration graph is built once, from the areas as the
+- **A spawned PoI is not yet observable.** The narration graph is built once, from the areas as the
   factory left them, so anything the game spawns during play has no observation object — and an
-  object with no observation object cannot be looked at, entered or acted on, however correct it is
-  in `area.Spots`. `NarrativeController.SyncSpotObservations` reconciles the two before every
-  observation phase and every thinking request (it runs from `RefreshSceneVerbs`). That sync is why a
-  corpse is reachable at all; without it the body existed and the player could never be told.
+  object with no observation object cannot be looked at or acted on, however correct it is in
+  `area.PointsOfInterest`. `NarrativeController.SyncSpawnedObservations` reconciles the two before
+  every observation phase and every thinking request (it runs from `RefreshSceneVerbs`). That sync is
+  why a corpse is reachable at all; without it the body existed and the player was never told.
 - **A corpse opens the next narration phase, alone.** `PendingCorpseObservations` collects what fell,
   `GenerateObservationsAsync` drains it, and `GenerateCorpseObservationAsync` observes every body in
   the order it fell — first plainly, each later one through a transition — with no persona choice and
@@ -218,11 +230,15 @@ Two rules the rest of it depends on:
   standing leads the phase after this one anyway. The list is drained whether or not it is used, so a
   body left in an area the player has since walked out of cannot open a phase two moves later.
 
-Note what is **not** solved: the narration graph is area-shaped, and `RefreshSceneVerbs` gates verbs
-with `new PoV(area, period)` — no `InSpot`. So while the real PoV does enter a corpse, the graph never
-does, and the body-part PoIs inside it never become observations. `CutVerb.IsPossible` requires
-`pov.InSpot is CorpseSpot`, so **harvesting a corpse is currently unreachable through narration**;
-the corpse can be observed and entered, and that is where it stops.
+Two bodies in one room are two same-named PoIs, deliberately unmerged. They behave like any other
+pair of identical objects — the observation choice list keeps one representative per phase and the
+ledger retires instances, so the second becomes observable once the first has been seen. This is the
+one place `Scene` does *not* follow `SceneFactory`, which merges same-named PoIs at build time.
+
+Historical note: a corpse used to be an enterable `Spot` holding one PoI per body part, and that was
+the only content the `Spot`/`PoV.InSpot` axis ever had — no factory built one. The axis is gone.
+Nothing in `docs/` ever planned other spot content; the `# spots` sections in the location design
+docs use the word in its pre-`c3fef5a` sense, meaning what is now a `PointOfInterest`.
 
 ### A worked example
 

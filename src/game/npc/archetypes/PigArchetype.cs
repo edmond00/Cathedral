@@ -22,34 +22,17 @@ public class PigArchetype : ShallowNpcArchetype
         noun:   "pig",
         traits: new[] { "snout twitching as it roots in the mire", "wallowing in the mud", "grunting over a trough" });
 
-    public override CorpseSpot CreateCorpse(ShallowNpcEntity entity, Area area)
-    {
-        var bodyParts = new List<PointOfInterest>
-        {
-            new CorpseBodyPartPoI(
-                "Body",
-                new() { "the heavy pink carcass of the dead pig" },
-                new()
-                {
-                    new ItemElement(new PorkMeat()),
-                    new ItemElement(new PorkMeat()),
-                    new ItemElement(new PorkMeat()),
-                }),
-
-            new CorpseBodyPartPoI(
-                "Haunches",
-                new() { "the thick haunches of the pig carcass" },
-                new()
-                {
-                    new ItemElement(new PorkMeat()),
-                    new ItemElement(new PorkMeat()),
-                }),
-        };
-
-        return CorpseRegistry.CreateForShallowNpc(
-            entity, area,
+    public override List<PointOfInterest> CreateCorpse(ShallowNpcEntity entity)
+        => CorpseRegistry.CreateForShallowNpc(
+            entity,
             displayName:  "Dead Pig",
-            descriptions: new() { "A heavy pig carcass collapsed in the mire, still steaming faintly" },
-            bodyParts);
-    }
+            descriptions: new() { "a heavy pink carcass collapsed in the mire, thick in the haunches and still steaming faintly" },
+            parts: new()
+            {
+                new ItemElement(new PorkMeat()),
+                new ItemElement(new PorkMeat()),
+                new ItemElement(new PorkMeat()),
+                new ItemElement(new PorkMeat()),
+                new ItemElement(new PorkMeat()),
+            });
 }

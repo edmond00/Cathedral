@@ -12,6 +12,7 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Npc.Corpse;
 using Cathedral.Game.Scene;
 using Cathedral.Game.Scene.Verbs;
 using Microsoft.Msagl.GraphViewerGdi;
@@ -46,18 +47,19 @@ public class SceneDebugWindow : Form
     private string _currentAreaId = "";
 
     /// <summary>
-    /// Shape of the scene the backend graph was last drawn from. The hierarchy is not static — a
-    /// corpse spawns a spot mid-play — and the graph used to be built once in the constructor, so a
-    /// body that really was in <c>area.Spots</c> was simply never drawn and read as "no corpse
-    /// spawned". Compared on every PoV update; a rebuild only happens when it actually moved, since
-    /// re-laying out the whole hierarchy on every action is not free.
+    /// Shape of the scene the backend graph was last drawn from. The hierarchy is not static — a kill
+    /// adds a corpse PoI mid-play — and the graph used to be built once in the constructor and never
+    /// again, so a body that really was in <c>area.PointsOfInterest</c> was simply never drawn, and
+    /// read to anyone looking at this window as "no corpse spawned". Compared on every PoV update; a
+    /// rebuild only happens when it actually moved, since re-laying out the whole hierarchy on every
+    /// action is not free.
     /// </summary>
     private int _backGraphSignature = -1;
 
     // ── Node fill colours ────────────────────────────────────────
     private static readonly MsaglColor ColorSection          = new(  0, 160, 160); // teal
     private static readonly MsaglColor ColorArea             = new( 90, 145, 210); // blue
-    private static readonly MsaglColor ColorSpot             = new(180, 110, 210); // violet
+    private static readonly MsaglColor ColorCorpse           = new(180, 110, 210); // violet
     private static readonly MsaglColor ColorPointOfInterest  = new(210, 160,  50); // amber
     private static readonly MsaglColor ColorItem             = new(120, 180, 120); // green
     private static readonly MsaglColor ColorNpc              = new(140,  70, 200); // purple
@@ -292,23 +294,10 @@ public class SceneDebugWindow : Form
         var view  = _scene.View(_pov);
         var added = new HashSet<string>();
 
-        // Hub: current area or spot
-        string hubId;
-        string hubLabel;
-        MsaglColor hubColor;
-        if (_pov.InSpot != null)
-        {
-            hubId    = _pov.InSpot.Id.ToString();
-            hubLabel = $"★ {_pov.InSpot.DisplayName} (spot)";
-            hubColor = ColorSpot;
-        }
-        else
-        {
-            hubId    = view.CurrentArea.Id.ToString();
-            hubLabel = $"★ {view.CurrentArea.DisplayName}";
-            hubColor = ColorArea;
-        }
-        AddNode(msagl, added, hubId, hubLabel, hubColor, MsaglShape.Diamond);
+        // Hub: the current area
+        string hubId    = view.CurrentArea.Id.ToString();
+        string hubLabel = $"★ {view.CurrentArea.DisplayName}";
+        AddNode(msagl, added, hubId, hubLabel, ColorArea, MsaglShape.Diamond);
 
         // Build outcomes through the adapter — all entries now produce ObservationObjects.
         var node = SceneViewAdapter.ToNarrationNode(view);
@@ -318,20 +307,20 @@ public class SceneDebugWindow : Form
 
             MsaglColor obsColor = obs switch
             {
-                SyntheticAreaObservationObject => ColorReachable,
-                SyntheticNpcObservationObject  => ColorNpc,
-                SyntheticSpotObject            => ColorSpot,
-                SyntheticObservationObject     => ColorPointOfInterest,
-                _                              => ColorKeyword,
+                SyntheticAreaObservationObject                                     => ColorReachable,
+                SyntheticNpcObservationObject                                      => ColorNpc,
+                SyntheticObservationObject { PointOfInterest: CorpsePointOfInterest } => ColorCorpse,
+                SyntheticObservationObject                                         => ColorPointOfInterest,
+                _                                                                  => ColorKeyword,
             };
 
             string obsId    = $"obs_{oi}_{obs.ObservationId}";
             string obsLabel = obs switch
             {
-                SyntheticAreaObservationObject => $"→ {obs.GenerateNeutralDescription()}",
-                SyntheticNpcObservationObject  => $"NPC: {obs.GenerateNeutralDescription()}",
-                SyntheticSpotObject            => $"⊙ {obs.GenerateNeutralDescription()}",
-                _                             => obs.GenerateNeutralDescription(),
+                SyntheticAreaObservationObject                                     => $"→ {obs.GenerateNeutralDescription()}",
+                SyntheticNpcObservationObject                                      => $"NPC: {obs.GenerateNeutralDescription()}",
+                SyntheticObservationObject { PointOfInterest: CorpsePointOfInterest } => $"† {obs.GenerateNeutralDescription()}",
+                _                                                                  => obs.GenerateNeutralDescription(),
             };
 
             AddNode(msagl, added, obsId, obsLabel, obsColor);
@@ -365,8 +354,8 @@ public class SceneDebugWindow : Form
     // ══════════════════════════════════════════════════════════════
 
     /// <summary>
-    /// A cheap fingerprint of everything the backend graph draws: areas, their spots, and every PoI
-    /// and item under both. Any spawn, pickup or removal moves it.
+    /// A cheap fingerprint of everything the backend graph draws: every area's PoIs and their items.
+    /// Any spawn, pickup or removal moves it.
     /// </summary>
     private int SceneSignature()
     {
@@ -376,13 +365,6 @@ public class SceneDebugWindow : Form
             {
                 sig = sig * 31 + area.PointsOfInterest.Count;
                 foreach (var poi in area.PointsOfInterest) sig = sig * 31 + poi.Items.Count;
-
-                sig = sig * 31 + area.Spots.Count;
-                foreach (var spot in area.Spots)
-                {
-                    sig = sig * 31 + spot.PointsOfInterest.Count;
-                    foreach (var poi in spot.PointsOfInterest) sig = sig * 31 + poi.Items.Count;
-                }
             }
         return sig;
     }
@@ -408,11 +390,15 @@ public class SceneDebugWindow : Form
                 AddNode(msagl, addedNodes, areaId, area.DisplayName, ColorArea);
                 msagl.AddEdge(sectionId, "contains", areaId).Attr.Color = new MsaglColor(100, 100, 110);
 
-                // PoIs
+                // PoIs — a corpse spawned mid-play is one of these, coloured apart so a body is
+                // findable in a room full of furniture.
                 foreach (var poi in area.PointsOfInterest)
                 {
                     var poiId = poi.Id.ToString();
-                    AddNode(msagl, addedNodes, poiId, poi.DisplayName, ColorPointOfInterest);
+                    bool isCorpse = poi is CorpsePointOfInterest;
+                    AddNode(msagl, addedNodes, poiId,
+                            isCorpse ? $"† {poi.DisplayName}" : poi.DisplayName,
+                            isCorpse ? ColorCorpse : ColorPointOfInterest);
                     msagl.AddEdge(areaId, "", poiId).Attr.Color = new MsaglColor(180, 140, 40);
 
                     foreach (var itemEl in poi.Items)
@@ -420,28 +406,6 @@ public class SceneDebugWindow : Form
                         var itemId = itemEl.Id.ToString();
                         AddNode(msagl, addedNodes, itemId, itemEl.DisplayName, ColorItem);
                         msagl.AddEdge(poiId, "", itemId).Attr.Color = new MsaglColor(100, 160, 100);
-                    }
-                }
-
-                // Spots
-                foreach (var spot in area.Spots)
-                {
-                    var spotId = spot.Id.ToString();
-                    AddNode(msagl, addedNodes, spotId, $"⊙ {spot.DisplayName}", ColorSpot);
-                    msagl.AddEdge(areaId, "spot", spotId).Attr.Color = new MsaglColor(140, 80, 180);
-
-                    foreach (var poi in spot.PointsOfInterest)
-                    {
-                        var poiId = poi.Id.ToString();
-                        AddNode(msagl, addedNodes, poiId, poi.DisplayName, ColorPointOfInterest);
-                        msagl.AddEdge(spotId, "", poiId).Attr.Color = new MsaglColor(180, 140, 40);
-
-                        foreach (var itemEl in poi.Items)
-                        {
-                            var itemId = itemEl.Id.ToString();
-                            AddNode(msagl, addedNodes, itemId, itemEl.DisplayName, ColorItem);
-                            msagl.AddEdge(poiId, "", itemId).Attr.Color = new MsaglColor(100, 160, 100);
-                        }
                     }
                 }
             }
@@ -673,23 +637,15 @@ public class SceneDebugWindow : Form
             lines.Add($"  Context: {area.ContextDescription}");
             lines.Add($"  Transition: {area.TransitionDescription}");
             lines.Add($"  Points of Interest: {area.PointsOfInterest.Count}");
-            lines.Add($"  Spots: {area.Spots.Count}");
             var reachable = _scene.GetReachableAreas(area);
             lines.Add($"  Connects to: {string.Join(", ", reachable.Select(a => a.DisplayName))}");
-        }
-        else if (element is Spot spot)
-        {
-            lines.Add("");
-            lines.Add("─── Spot Info ───");
-            lines.Add($"  Parent Area: {spot.ParentArea.DisplayName}");
-            lines.Add($"  Points of Interest: {spot.PointsOfInterest.Count}");
-            foreach (var poi in spot.PointsOfInterest)
-                lines.Add($"    • {poi.DisplayName} ({poi.Items.Count} items)");
         }
         else if (element is PointOfInterest poi)
         {
             lines.Add("");
-            lines.Add("─── Point of Interest Info ───");
+            lines.Add(poi is CorpsePointOfInterest ? "─── Corpse Info ───" : "─── Point of Interest Info ───");
+            if (poi is CorpsePointOfInterest corpse)
+                lines.Add($"  Was: {corpse.NpcEntity.DisplayName} ({corpse.NpcEntity.SpeciesName})");
             lines.Add($"  Items: {string.Join(", ", poi.Items.Select(i => i.DisplayName))}");
         }
         else if (element is SceneNpc npc)
@@ -722,8 +678,7 @@ public class SceneDebugWindow : Form
         }
 
         var focusName = _pov.Focus?.DisplayName ?? "(none)";
-        var spotPart  = _pov.InSpot != null ? $"  |  Spot: {_pov.InSpot.DisplayName}" : "";
-        _povLabel.Text = $"  PoV — Where: {_pov.Where.DisplayName}{spotPart}  |  When: {_pov.When}  |  Focus: {focusName}";
+        _povLabel.Text = $"  PoV — Where: {_pov.Where.DisplayName}  |  When: {_pov.When}  |  Focus: {focusName}";
     }
 
     private void UpdateStateBox()

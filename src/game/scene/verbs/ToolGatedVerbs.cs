@@ -34,9 +34,7 @@ public abstract class ExtractionVerb : Verb
         if (!Accepts(poi)) return false;
         if (poi.Items.Count == 0) return false;   // worked out; the verb has nothing left to do
 
-        return pov.InSpot != null
-            ? pov.InSpot.PointsOfInterest.Contains(poi)
-            : pov.Where.PointsOfInterest.Contains(poi);
+        return pov.Where.PointsOfInterest.Contains(poi);
     }
 
     /// <summary>Declared so <c>InventoryCapacityRule</c> can refuse before the roll rather than after.</summary>
@@ -182,9 +180,7 @@ public class BreakVerb : Verb
     {
         if (target is not BreakablePointOfInterest breakable) return false;
 
-        return pov.InSpot != null
-            ? pov.InSpot.PointsOfInterest.Contains(breakable)
-            : pov.Where.PointsOfInterest.Contains(breakable);
+        return pov.Where.PointsOfInterest.Contains(breakable);
     }
 
     public override string Verbatim(Scene scene, PoV pov, Element target)

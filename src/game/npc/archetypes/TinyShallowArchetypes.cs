@@ -26,16 +26,15 @@ public abstract class TinyShallowArchetype : ShallowNpcArchetype
     public override bool IsTiny => true;
 
     /// <summary>
-    /// A tiny creature crushed or caught leaves no body worth walking over to. The corpse spot exists
-    /// because the slay path demands one, but it holds nothing — stepping on a beetle does not
-    /// furnish a room with a carcass.
+    /// A tiny creature leaves no body worth crossing a room for, so it leaves none at all: an empty
+    /// list, and nothing is added to the area. Stepping on a beetle does not furnish a room with a
+    /// carcass, and an empty corpse PoI would be an observation offering only IGNORE.
+    ///
+    /// <para>Unreachable in practice — <c>catch</c> and <c>crush</c> remove a tiny creature through
+    /// <c>TinyCreatureRemovedOutcome</c>, and both <c>slay</c> and <c>attack</c> refuse them — but the
+    /// contract has to be answered, and this is the honest answer.</para>
     /// </summary>
-    public override CorpseSpot CreateCorpse(ShallowNpcEntity entity, Area area)
-        => CorpseRegistry.CreateForShallowNpc(
-            entity, area,
-            displayName:  $"Crushed {TypeDisplayName}",
-            descriptions: new() { $"What is left of a {TypeDisplayName.ToLowerInvariant()}, which is very little" },
-            new List<PointOfInterest>());
+    public override List<PointOfInterest> CreateCorpse(ShallowNpcEntity entity) => new();
 }
 
 // ── Insects ──────────────────────────────────────────────────────────────────

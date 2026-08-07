@@ -13,9 +13,9 @@ public static class RoutineTargetResolver
 {
     /// <summary>
     /// Resolves a routine target against the live scene. <paramref name="pov"/> is the working point of
-    /// view for the current step: PoI/Spot/Item targets prefer a match in the current area/spot (so the
-    /// verb's <c>IsPossible</c>, which is scoped to the PoV, accepts the resolved instance), falling
-    /// back to a scene-wide search.
+    /// view for the current step: PoI/Item targets prefer a match in the current area (so the verb's
+    /// <c>IsPossible</c>, which is scoped to the PoV, accepts the resolved instance), falling back to a
+    /// scene-wide search.
     /// </summary>
     public static Element? Resolve(Scene.Scene scene, PoV pov, RoutineTargetRef target)
     {
@@ -26,30 +26,12 @@ public static class RoutineTargetResolver
 
             case RoutineTargetKind.PointOfInterest:
             {
-                // Current area (or spot) first, then scene-wide.
-                var here = pov.InSpot?.PointsOfInterest ?? pov.Where.PointsOfInterest;
-                var local = here.FirstOrDefault(p => KeyMatches(p.ReferenceLemma, target.Key));
-                if (local != null) return local;
-                foreach (var area in scene.AllAreas)
-                {
-                    var direct = area.PointsOfInterest.FirstOrDefault(p => KeyMatches(p.ReferenceLemma, target.Key));
-                    if (direct != null) return direct;
-                    foreach (var spot in area.Spots)
-                    {
-                        var inSpot = spot.PointsOfInterest.FirstOrDefault(p => KeyMatches(p.ReferenceLemma, target.Key));
-                        if (inSpot != null) return inSpot;
-                    }
-                }
-                return null;
-            }
-
-            case RoutineTargetKind.Spot:
-            {
-                var local = pov.Where.Spots.FirstOrDefault(s => KeyMatches(s.ReferenceLemma, target.Key));
+                // Current area first, then scene-wide.
+                var local = pov.Where.PointsOfInterest.FirstOrDefault(p => KeyMatches(p.ReferenceLemma, target.Key));
                 if (local != null) return local;
                 return scene.AllAreas
-                    .SelectMany(a => a.Spots)
-                    .FirstOrDefault(s => KeyMatches(s.ReferenceLemma, target.Key));
+                    .SelectMany(a => a.PointsOfInterest)
+                    .FirstOrDefault(p => KeyMatches(p.ReferenceLemma, target.Key));
             }
 
             case RoutineTargetKind.Npc:
@@ -57,10 +39,10 @@ public static class RoutineTargetResolver
                     .FirstOrDefault(n => n.IsAlive && KeyMatches(n.DisplayName, target.Key));
 
             case RoutineTargetKind.Item:
-                // Scoped to the current area/spot — must match the pickup verb's IsPossible scope.
+                // Scoped to the current area — must match the pickup verb's IsPossible scope.
                 // Depletion has already removed still-depleted items, so a depleted resource resolves
                 // to null → the routine greys out until it regrows.
-                return FindItem(pov.InSpot?.PointsOfInterest ?? pov.Where.PointsOfInterest, target.Key);
+                return FindItem(pov.Where.PointsOfInterest, target.Key);
 
             default:
                 return null;

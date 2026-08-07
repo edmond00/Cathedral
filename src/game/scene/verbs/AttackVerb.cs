@@ -32,7 +32,6 @@ public class AttackVerb : Verb
         // the option alongside them reads as a bug rather than as a choice.
         if (sceneNpc.Entity.Archetype is ShallowNpcArchetype { IsTiny: true }) return false;
         if (!sceneNpc.IsAlive) return false;
-        if (pov.InSpot != null) return false;  // can't attack from inside a spot
 
         return scene.GetNpcsAt(pov.Where, pov.When).Exists(n => n.Id == sceneNpc.Id);
     }

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Npc.Corpse;
 using Cathedral.Game.Scene;
 
@@ -31,8 +32,9 @@ public interface INpcEntity
     string SpeciesName { get; }
 
     /// <summary>
-    /// Generates a temporary corpse <see cref="CorpseSpot"/> to be placed in the area where
-    /// this NPC died. The spot is added at runtime and not persisted between scenes.
+    /// The remains this NPC leaves where it died: a <see cref="CorpsePointOfInterest"/>, and for a
+    /// human a second PoI holding what they carried. Added to the area at runtime and not persisted
+    /// between scenes — the scene is rebuilt on every arrival, and bodies do not survive that.
     /// </summary>
-    CorpseSpot GenerateCorpse(Area area);
+    List<PointOfInterest> GenerateCorpse();
 }
