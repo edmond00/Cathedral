@@ -32,9 +32,30 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
     protected override IReadOnlyDictionary<string, NarrationNode> CollectAllNodes(NarrationNode entry)
         => _areaNodes;
 
+    /// <summary>
+    /// The area narration opens in: the first one the factory built, or — under
+    /// <c>--start-area &lt;name&gt;</c> — the first whose display name contains that name. Inert at its
+    /// default, and inert again when nothing matches, so a location without the named room behaves
+    /// exactly as it always did. The PoV is built from this same helper, so the two cannot disagree.
+    /// </summary>
+    public static Area? ResolveEntryArea(Cathedral.Game.Scene.Scene scene)
+    {
+        var wanted = Config.Debug.StartArea;
+        if (!string.IsNullOrWhiteSpace(wanted))
+        {
+            var match = scene.AllAreas.FirstOrDefault(
+                a => a.DisplayName.Contains(wanted, StringComparison.OrdinalIgnoreCase));
+            if (match != null) return match;
+
+            Console.Error.WriteLine($"[debug] --start-area: no area matching '{wanted}' in this location — " +
+                                    $"opening where the factory did. Areas: {string.Join(", ", scene.AllAreas.Select(a => a.DisplayName))}");
+        }
+        return scene.AllAreas.FirstOrDefault();
+    }
+
     protected override NarrationNode BuildNodes(Random rng, int locationId)
     {
-        var firstArea = _scene.AllAreas.FirstOrDefault();
+        var firstArea = ResolveEntryArea(_scene);
         if (firstArea == null)
             throw new InvalidOperationException("Scene has no areas — cannot build synthetic graph");
 

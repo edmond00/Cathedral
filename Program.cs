@@ -55,6 +55,12 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --cpu                              Run LLM on CPU only (no GPU offloading)");
     Console.WriteLine("  --seed <n>                         Fix the master RNG seed for a reproducible run (world, spawn, dice)");
     Console.WriteLine("  --start-at <name>                  DEBUG: spawn on the first biome/location matching <name> (e.g. village, farm)");
+    Console.WriteLine("  --start-area <name>                DEBUG: open narration in the first area of the location matching <name>");
+    Console.WriteLine("                                     (e.g. pigsty, smithy). --start-at picks the location, this picks the room:");
+    Console.WriteLine("                                     without it a script lands in whichever area was built first and has to walk");
+    Console.WriteLine("  --observe-only <name>              DEBUG: an observation phase may only look at objects matching <name> (e.g. pig).");
+    Console.WriteLine("                                     Which object a phase opens on is otherwise a persona choice out of a dozen,");
+    Console.WriteLine("                                     so a script that wants to act on one thing cannot count on reaching it");
     Console.WriteLine("  --period <name>                    DEBUG: arrive at every location at this time of day (dawn…night) instead of a random one");
     Console.WriteLine("  --dither [mode[:levels[:scale]]]   Retune the final full-screen dither layer (mode off|bayer|mono|noise).");
     Console.WriteLine("                                     Resting state is bayer:6:1; game events pulse it for 0.15s.");
@@ -360,6 +366,12 @@ for (int i = 0; i < args.Length; i++)
 {
     if (args[i] == "--start-at" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
         Cathedral.Config.Debug.StartAt = args[i + 1];
+
+    if (args[i] == "--start-area" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
+        Cathedral.Config.Debug.StartArea = args[i + 1];
+
+    if (args[i] == "--observe-only" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
+        Cathedral.Config.Debug.ObserveOnly = args[i + 1];
 
     if (args[i] == "--period" && i + 1 < args.Length &&
         Enum.TryParse<Cathedral.Game.Narrative.TimePeriod>(args[i + 1], ignoreCase: true, out var forced))

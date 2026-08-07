@@ -114,7 +114,7 @@ public class ObservationPhaseController
         // "Birch Tree") to one random representative each. Order matters: deduplicating first would
         // elect one birch to stand for the group, and retiring it would take its twins with it —
         // the ledger works on instances precisely so the second birch stays observable.
-        var candidates = DeduplicateByName(ledger.Remaining(allOutcomes));
+        var candidates = DeduplicateByName(ObserveOnlyFilter(ledger.Remaining(allOutcomes)));
 
         var slotId = await _observationExecutor.GetOrCreateSlotForModusMentisPublicAsync(modusMentis);
         _observationExecutor.ResetSlot(slotId);
@@ -265,7 +265,7 @@ public class ObservationPhaseController
         //    persona cannot immediately shift to an identical one), then collapses duplicates.
         var focusName = GetNeutralName(focusOutcome);
         var followUpCandidates = DeduplicateByName(
-            ledger.Remaining(currentNode.GetAllDirectConcreteOutcomes())
+            ObserveOnlyFilter(ledger.Remaining(currentNode.GetAllDirectConcreteOutcomes()))
                 .Where(o => !GetNeutralName(o).Equals(focusName, StringComparison.OrdinalIgnoreCase)));
         await AppendFollowUpObservationsAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis,
             followUpCandidates, new List<ConcreteOutcome> { focusOutcome }, firstText, locationId, ledger, ct, isReminescence, overall, area, part);
@@ -350,7 +350,8 @@ public class ObservationPhaseController
             // the object. A long observation gets two distinct keywords, both mapped to this same object
             // so either click does the same thing; a normal-length one keeps a single keyword.
             int wanted = text.Length > Config.Narrative.ObservationTwoKeywordsThreshold ? 2 : 1;
-            var kws = KeywordExtractor.ExtractKeywords(text, GetReferenceLemma(outcome), wanted);
+            var kws = KeywordExtractor.ExtractKeywords(text, GetReferenceLemma(outcome), wanted,
+                                                       ownName: GetNeutralName(outcome));
             sentences.Add(new NarrationSentence(text, kws));
             ledger.Observe(outcome);
             foreach (var kw in kws)
@@ -540,6 +541,81 @@ public class ObservationPhaseController
     }
 
     /// <summary>
+    /// Opens a narration phase on the bodies an action just made: every corpse in
+    /// <paramref name="corpseOutcomes"/> is observed, in the order they fell, and nothing else is.
+    /// Like the post-dialogue opener the objects are imposed — there is no "what draws you?" selection
+    /// and no length gate — because looking away from something you have just killed to notice the
+    /// weather is not a thing a person does. The first is observed plainly; each further one is
+    /// reached by a transition, so a won fight against three reads as one sweep across three bodies.
+    ///
+    /// <para>The narrator is freshly sampled (sensory memory first, like any first observation): a kill
+    /// through a verb has an originating chain, but a kill through a fight has none, and the two should
+    /// not open differently. Every corpse goes on the ledger, so the rest of the phase looks elsewhere.
+    /// Returns an empty list — so the caller falls back to the normal phase — when there is no
+    /// observation MM or nothing was produced.</para>
+    /// </summary>
+    public async Task<List<NarrationBlock>> GenerateCorpseObservationAsync(
+        IReadOnlyList<ConcreteOutcome> corpseOutcomes,
+        int locationId,
+        PartyMember actingMember,
+        ObservationLedger? ledger = null,
+        LlmPreviewSession? preview = null,
+        Action<List<NarrationBlock>>? commit = null,
+        CancellationToken ct = default)
+    {
+        if (corpseOutcomes.Count == 0) return new List<NarrationBlock>();
+
+        ledger ??= new ObservationLedger();
+        var observationModusMentis = PickFirstObservationModusMentis(actingMember);
+        if (observationModusMentis == null)
+        {
+            Console.WriteLine("ObservationPhaseController: No observation modus mentis for corpse observation.");
+            return new List<NarrationBlock>();
+        }
+
+        Console.WriteLine($"ObservationPhaseController: Corpse observation of {corpseOutcomes.Count} " +
+                          $"body(ies) with {observationModusMentis.DisplayName}");
+
+        var slotId = await _observationExecutor.GetOrCreateSlotForModusMentisPublicAsync(observationModusMentis);
+        _observationExecutor.ResetSlot(slotId);
+
+        var allKeywords = new List<string>();
+        var keywordOutcomeMap = new Dictionary<string, ConcreteOutcome>(StringComparer.OrdinalIgnoreCase);
+        var sentences = new List<NarrationSentence>();
+
+        var part = preview?.BeginAccumulatingPart(PreviewTitles.For(observationModusMentis));
+
+        for (int i = 0; i < corpseOutcomes.Count; i++)
+        {
+            await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId,
+                observationModusMentis, corpseOutcomes[i], withTransition: i > 0, locationId, ledger, ct,
+                isReminescence: false, innerThought: null, part: part);
+        }
+
+        if (sentences.Count == 0)
+        {
+            preview?.Reset();
+            Console.WriteLine("ObservationPhaseController: Corpse observation produced nothing.");
+            return new List<NarrationBlock>();
+        }
+
+        var block = new NarrationBlock(
+            Type: NarrationBlockType.Observation,
+            ModusMentis: observationModusMentis,
+            Text: string.Join(" ", sentences.Select(s => s.Text)),
+            Keywords: allKeywords,
+            Actions: null,
+            SourceObservationType: ObservationType.Overall,
+            KeywordOutcomeMap: keywordOutcomeMap,
+            Sentences: sentences);
+
+        Console.WriteLine($"ObservationPhaseController: Corpse observation complete ({sentences.Count} sentences, {allKeywords.Count} keywords)");
+        var resultBlocks = new List<NarrationBlock> { block };
+        FinalizePreview(preview, commit, resultBlocks, part);
+        return resultBlocks;
+    }
+
+    /// <summary>
     /// Opens a narration phase with a single, forced observation of a same-area enemy — the "under
     /// threat" lead-in used when a visual threat is present (the same condition that turns the exit
     /// button into RUNAWAY). Like the post-dialogue opener, the observed object is imposed
@@ -607,6 +683,34 @@ public class ObservationPhaseController
         var resultBlocks = new List<NarrationBlock> { block };
         FinalizePreview(preview, commit, resultBlocks, part);
         return resultBlocks;
+    }
+
+    /// <summary>
+    /// Narrows a candidate pool to what <c>--observe-only</c> names. Whole words are matched first —
+    /// "pig" means the pig, not the Courtyard–Pigsty Track that merely contains those letters — and a
+    /// loose substring pass runs only when no word matched, so a partial name still works when it is
+    /// unambiguous. Returns the pool untouched at the flag's default, and again when nothing in it
+    /// matches at all: a phase where the named object is absent narrates normally rather than going
+    /// blank.
+    /// </summary>
+    private static IEnumerable<ConcreteOutcome> ObserveOnlyFilter(IEnumerable<ConcreteOutcome> outcomes)
+    {
+        var wanted = Config.Debug.ObserveOnly;
+        if (string.IsNullOrWhiteSpace(wanted)) return outcomes;
+
+        var pool = outcomes.ToList();
+
+        var byWord = pool.Where(o => Regex.IsMatch(
+            GetNeutralName(o), $@"\b{Regex.Escape(wanted)}\b", RegexOptions.IgnoreCase)).ToList();
+        if (byWord.Count > 0) return byWord;
+
+        var bySubstring = pool
+            .Where(o => GetNeutralName(o).Contains(wanted, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        if (bySubstring.Count > 0) return bySubstring;
+
+        Console.WriteLine($"[debug] --observe-only '{wanted}': nothing here matches — offering the whole scene.");
+        return pool;
     }
 
     /// <summary>

@@ -777,18 +777,32 @@ public abstract class PartyMember
     /// <summary>
     /// Awards XP to a modusMentis. When CurrentXp reaches the pineal threshold the bar resets to 0
     /// and the level increments. No-op once the modusMentis has reached its max level.
+    ///
+    /// <para>Returns what the award came to, so callers can tell the player without re-deriving any
+    /// of these rules — see <see cref="ModusMentisXpAward"/>. A caller with nothing to show may
+    /// ignore the return; one that shows something must use it rather than reading level and bar
+    /// itself, so every message about experience is worded in one place.</para>
     /// </summary>
-    public void AwardModusMentisXp(ModusMentis modusMentis, int amount = 1)
+    public ModusMentisXpAward AwardModusMentisXp(ModusMentis modusMentis, int amount = 1)
     {
         int maxLevel = GetMaxLevelForModusMentis(modusMentis);
-        if (modusMentis.Level >= maxLevel) return;          // capped — no XP
+        if (modusMentis.Level >= maxLevel)                   // capped — no XP
+            return ModusMentisXpAward.None(modusMentis);
+
+        int threshold   = GetModusMentisXpThreshold();
+        int levelBefore = modusMentis.Level;
+
         modusMentis.CurrentXp += amount;
-        if (modusMentis.CurrentXp >= GetModusMentisXpThreshold())
+        if (modusMentis.CurrentXp >= threshold)
         {
             modusMentis.CurrentXp = 0;                       // reset bar
             modusMentis.Level++;
             if (modusMentis.Level >= maxLevel) modusMentis.CurrentXp = 0;
         }
+
+        return new ModusMentisXpAward(modusMentis, Landed: true,
+            Levelled: modusMentis.Level > levelBefore,
+            modusMentis.Level, modusMentis.CurrentXp, threshold);
     }
 
     // ── Wound helpers ─────────────────────────────────────────────

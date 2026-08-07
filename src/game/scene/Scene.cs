@@ -205,13 +205,33 @@ public class Scene
     // ── Dynamic spot management ───────────────────────────────────────────────
 
     /// <summary>
+    /// Corpses spawned since the narration last opened a phase, in the order they fell. Drained by
+    /// <c>NarrativeController.GenerateObservationsAsync</c>, which opens the following phase by
+    /// observing exactly these — the body you just made is what you look at next.
+    ///
+    /// <para>Recorded here rather than by each caller because <see cref="AddSpotToArea"/> is the one
+    /// door every corpse comes through: a slay verb applying <c>NpcSlaynOutcome</c> and a won fight
+    /// spawning one body per dead enemy both end up in it.</para>
+    /// </summary>
+    public List<Npc.Corpse.CorpseSpot> PendingCorpseObservations { get; } = new();
+
+    /// <summary>
     /// Adds a spot to an area at runtime and registers it (and its PoIs/items) in the scene.
     /// Used for temporary spots such as corpses that are spawned by verbs, not by the factory.
+    ///
+    /// <para>The narration graph is built once, so a spot added here is not yet a node outcome and
+    /// cannot be observed until <c>NarrativeController.RefreshSceneVerbs</c> syncs it in — which it
+    /// does before every observation phase and every thinking request.</para>
     /// </summary>
     public void AddSpotToArea(Area area, Spot spot)
     {
         area.Spots.Add(spot);
         RegisterSpot(spot);
+
+        // Virtual replay works on a throwaway scene; queueing an observation off it would make the
+        // real narration open on a corpse that was only ever validated, never made.
+        if (spot is Npc.Corpse.CorpseSpot corpse && !IsVirtualReplay)
+            PendingCorpseObservations.Add(corpse);
     }
 
     private void RegisterSpot(Spot spot)

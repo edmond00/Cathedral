@@ -648,12 +648,17 @@ public class DialogueTreeController
             void CommitResolution()
             {
                 // Award +1 XP to every learned speaking MM that voiced a chosen reply on this branch.
+                // Through a report rather than a bare award, so each one earns its own chip below —
+                // the experience a conversation teaches used to accrue in complete silence.
+                var practiceReports = new List<OutcomeReport>();
                 if (succeeded)
                 {
                     foreach (var mm in _chosenMMs.DistinctBy(m => m.ModusMentisId))
                     {
-                        var learned = _protagonist.GetModusMentisById(mm.ModusMentisId);
-                        if (learned != null) _protagonist.AwardModusMentisXp(learned);
+                        var practice = ModusMentisPracticeOutcome.For(_protagonist, mm);
+                        if (practice == null) continue;
+                        practice.Apply(_protagonist, null, null);
+                        if (practice.ShowInUI) practiceReports.Add(practice);
                     }
                 }
 
@@ -687,6 +692,10 @@ public class DialogueTreeController
                 }
 
                 _npc.AffinityTable.MarkFirstContact(_partyMemberId);
+
+                // The replies' own practice reads as the coda to what the conversation came to, so
+                // it goes after the relation outcomes and after the tree's lesson.
+                reports.AddRange(practiceReports);
 
                 // A branch can legitimately change nothing (a failure with no failure-outcome), and
                 // silence there reads as a bug — say so plainly instead.

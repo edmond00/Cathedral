@@ -212,10 +212,6 @@ public class ActionExecutionController
         if (succeeded)
         {
             actualOutcome = action.PreselectedOutcome;
-
-            // Award +1 XP to every modusMentis in the action chain (observation → thinking → action).
-            foreach (var chainModusMentis in action.GetModusMentisChain())
-                ActingMember.AwardModusMentisXp(chainModusMentis);
         }
         else
         {
@@ -233,6 +229,15 @@ public class ActionExecutionController
         var llmDecidedReports = new System.Collections.Generic.List<OutcomeReport>();
         if (!succeeded && failureWound != null)
             llmDecidedReports.Add(new WoundInflictionOutcome(failureWound));
+
+        // +1 XP for every modusMentis in the action chain (observation → thinking → action), as a
+        // report rather than a bare award so each one shows the player a chip. The caller applies it.
+        if (succeeded)
+            foreach (var chainModusMentis in action.GetModusMentisChain())
+            {
+                var practice = ModusMentisPracticeOutcome.For(ActingMember, chainModusMentis);
+                if (practice != null) llmDecidedReports.Add(practice);
+            }
 
         // === ITEM CONSUMPTION CHECK (item critic) ===
         if (action.CombinedItem != null)

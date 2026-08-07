@@ -69,7 +69,7 @@ public sealed class SkillAcquisitionOutcome : OutcomeReport
     private readonly ModusMentis _template;
 
     public SkillAcquisitionOutcome(ModusMentis template)
-        : base($"Skill acquired: {template.DisplayName}", OutcomeReportSeverity.Positive,
+        : base($"Modus mentis acquired: {template.DisplayName}", OutcomeReportSeverity.Positive,
                $"learned {template.DisplayName}")
     {
         _template = template;
@@ -96,12 +96,12 @@ public sealed class SkillAcquisitionOutcome : OutcomeReport
 /// would reset it to level 1, which is why the known case awards experience and nothing else.</para>
 ///
 /// <para><b>All three cases show a chip, and only the first narrates.</b> Learning reads as
-/// "Skill learned: Metalcraft"; practising something known reads as the quieter "Skill practised:
-/// Metalcraft (3/8 xp)", or "Skill improved: Metalcraft — level 3" when that point of experience
-/// happened to fill the bar. A modus mentis already at its organ-derived ceiling earns nothing, so
-/// it shows nothing — otherwise every action would end with a chip about how you cannot get any
-/// better at walking. The practice chips are decided in <see cref="Apply"/> rather than in the
-/// constructor, because until the XP is awarded there is no telling which of the three it is.</para>
+/// "Modus mentis learned: Metalcraft"; practising something known is worded by
+/// <see cref="ModusMentisXpAward.Describe"/>, the same formatter the chain and the fight log use. A
+/// modus mentis already at its organ-derived ceiling earns nothing, so it shows nothing — otherwise
+/// every action would end with a chip about how you cannot get any better at walking. The practice
+/// chips are decided in <see cref="Apply"/> rather than in the constructor, because until the XP is
+/// awarded there is no telling which of the three it is.</para>
 ///
 /// <para>Only the learning case carries a <see cref="OutcomeReport.Verbatim"/>. The narrator lists
 /// verbatims as the sentence of what the action came to, and "I gained a point of experience" is not
@@ -116,7 +116,7 @@ public sealed class ModusMentisGrantOutcome : OutcomeReport
     private bool _practiceLanded;
 
     private ModusMentisGrantOutcome(ModusMentis template, bool alreadyKnown)
-        : base(alreadyKnown ? string.Empty : $"Skill learned: {template.DisplayName}",
+        : base(alreadyKnown ? string.Empty : $"Modus mentis learned: {template.DisplayName}",
                OutcomeReportSeverity.Positive,
                alreadyKnown ? string.Empty : $"learned {template.DisplayName}")
     {
@@ -153,29 +153,21 @@ public sealed class ModusMentisGrantOutcome : OutcomeReport
         if (known != null)
         {
             // Observe the award rather than re-deriving its rules: AwardModusMentisXp is a no-op at
-            // the organ-derived max level, and rolls the bar over into a level when it fills. Reading
-            // level and bar either side tells us which of the three happened without duplicating any
-            // of that logic here.
-            int levelBefore = known.Level;
-            int xpBefore    = known.CurrentXp;
-            protagonist.AwardModusMentisXp(known);
+            // the organ-derived max level, rolls the bar over into a level when it fills, and reports
+            // which of the three happened — so none of that logic is duplicated here, and the chip is
+            // worded by the same formatter every other experience message uses.
+            var award = protagonist.AwardModusMentisXp(known);
 
-            if (known.Level > levelBefore)
+            _practiceLanded = award.Landed;
+            if (award.Landed)
             {
-                _practiceLanded = true;
-                Text     = $"Skill improved: {known.DisplayName} — level {known.Level}";
-                Severity = OutcomeReportSeverity.Positive;
-            }
-            else if (known.CurrentXp != xpBefore)
-            {
-                _practiceLanded = true;
-                Text     = $"Skill practised: {known.DisplayName} ({known.CurrentXp}/{protagonist.GetModusMentisXpThreshold()} xp)";
-                Severity = OutcomeReportSeverity.Neutral;
+                Text     = award.Describe();
+                Severity = award.Levelled ? OutcomeReportSeverity.Positive : OutcomeReportSeverity.Neutral;
             }
 
             Console.WriteLine($"ModusMentisGrant: {protagonist.DisplayName} already knows {_template.DisplayName}"
                             + (_practiceLanded
-                                ? $" — awarded XP ({known.CurrentXp}/{protagonist.GetModusMentisXpThreshold()}, level {known.Level})"
+                                ? $" — awarded XP ({award.CurrentXp}/{award.Threshold}, level {award.Level})"
                                 : " — at max level, no XP awarded"));
             return;
         }
@@ -185,6 +177,62 @@ public sealed class ModusMentisGrantOutcome : OutcomeReport
         var dropped = protagonist.LearnModusMentis(instance);
         Console.WriteLine($"ModusMentisGrant: {protagonist.DisplayName} learned {_template.DisplayName}"
                         + (dropped != null ? $" (evicted {dropped.DisplayName} from working memory)" : ""));
+    }
+}
+
+/// <summary>
+/// One point of experience for a modus mentis the actor <b>already knows</b> — the lesson the dice
+/// themselves teach, as opposed to <see cref="ModusMentisGrantOutcome"/>'s, which is the verb's.
+///
+/// <para>Every modus mentis that fed the roll earns it: the observation that surfaced the object,
+/// the thinking that chose the goal, the action that carried it out, and (in conversation) the
+/// speaking modus mentis that voiced the reply. Each of those used to be awarded in a silent loop,
+/// so the player watched their memory menu change with nothing anywhere saying why. Routing them
+/// through a report means each one shows its own chip, worded by
+/// <see cref="ModusMentisXpAward.Describe"/> like every other experience message.</para>
+///
+/// <para>The chip is decided in <see cref="Apply"/>, because until the XP is awarded there is no
+/// telling whether it practised, levelled, or hit the ceiling and did nothing. Nothing is narrated:
+/// <see cref="OutcomeReport.Verbatim"/> stays empty because "I gained a point of experience" is not
+/// a thing that happens in the fiction.</para>
+/// </summary>
+public sealed class ModusMentisPracticeOutcome : OutcomeReport
+{
+    private readonly string _modusMentisId;
+    private bool            _landed;
+
+    private ModusMentisPracticeOutcome(string modusMentisId)
+        : base(string.Empty, OutcomeReportSeverity.Neutral, verbatim: string.Empty)
+    {
+        _modusMentisId = modusMentisId;
+    }
+
+    public override bool ShowInUI => _landed;
+
+    /// <summary>
+    /// The practice report for <paramref name="modusMentis"/>, or null when the actor does not know
+    /// it. Held by id rather than by instance so the XP always lands on the actor's own copy — the
+    /// chain can carry a modus mentis resolved elsewhere, and awarding a detached instance would
+    /// change nothing the player can ever see.
+    /// </summary>
+    public static ModusMentisPracticeOutcome? For(PartyMember actor, ModusMentis? modusMentis)
+    {
+        if (modusMentis == null) return null;
+        if (actor.GetModusMentisById(modusMentis.ModusMentisId) == null) return null;
+        return new ModusMentisPracticeOutcome(modusMentis.ModusMentisId);
+    }
+
+    public override void Apply(PartyMember protagonist, Cathedral.Game.Scene.Scene? scene, Cathedral.Game.Scene.PoV? pov)
+    {
+        var known = protagonist.GetModusMentisById(_modusMentisId);
+        if (known == null) return;
+
+        var award = protagonist.AwardModusMentisXp(known);
+        _landed = award.Landed;
+        if (!award.Landed) return;
+
+        Text     = award.Describe();
+        Severity = award.Levelled ? OutcomeReportSeverity.Positive : OutcomeReportSeverity.Neutral;
     }
 }
 

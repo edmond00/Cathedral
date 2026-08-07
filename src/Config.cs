@@ -61,6 +61,33 @@ public static class Config
         public static string? StartAt { get; set; } = null;
 
         /// <summary>
+        /// Area inside a location to open narration in, e.g. "pigsty". Set by
+        /// <c>--start-area &lt;name&gt;</c>. Matched case-insensitively as a substring of the area's
+        /// display name; ignored when the location has no such area, so it is harmless to leave on
+        /// while moving between locations.
+        ///
+        /// <para><c>--start-at</c> gets a script to the right location; this gets it to the right room.
+        /// Without it a script arrives in whichever area the factory built first — a farm's courtyard —
+        /// and reaching anything else means walking there through observation, thinking and an action
+        /// per step, with the persona choosing what is observable at each one. Anything that lives in a
+        /// specific room (a pigsty's pigs, a smithy's anvil) is otherwise a long approach away.</para>
+        /// </summary>
+        public static string? StartArea { get; set; } = null;
+
+        /// <summary>
+        /// Restricts what an observation phase may look at to objects whose name contains this, e.g.
+        /// "pig". Set by <c>--observe-only &lt;name&gt;</c>. Null (the default) offers the whole scene,
+        /// exactly as before.
+        ///
+        /// <para>Which object a phase observes is a persona choice, and a phase opens on ONE object out
+        /// of a dozen — so a script that wants to act on a particular thing is at the mercy of that
+        /// choice, and re-rolling seeds until the right one comes up first is not a test. This pins it.
+        /// Ignored for a phase where nothing matches (the persona chooses freely again), so an area
+        /// without the named object still narrates instead of falling silent.</para>
+        /// </summary>
+        public static string? ObserveOnly { get; set; } = null;
+
+        /// <summary>
         /// Suppresses random travel encounters. Set by <c>--no-encounters</c>. Inert at its default
         /// of false: a run without the flag rolls for encounters exactly as it always did.
         ///
@@ -110,7 +137,7 @@ public static class Config
 
     #region Terminal Configuration
     public static class Name {
-        public const string GameTitle = "untitled palimpsests";
+        public const string GameTitle = "proscribed palimpsests";
         public const string Chapter = "Volume 1";
         public const string ChapterSubtitle = "Turnips and Radishes";
     }

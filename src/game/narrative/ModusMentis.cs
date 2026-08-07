@@ -114,6 +114,39 @@ public abstract class ModusMentis
 }
 
 /// <summary>
+/// What one call to <see cref="PartyMember.AwardModusMentisXp"/> came to, and the single place the
+/// player-facing wording for it is decided.
+///
+/// <para>Every site that grants experience — an action's modus-mentis chain, a landed blow, a
+/// conversation branch, a verb's own lesson — reports it through <see cref="Describe"/>, so the
+/// narration chips and the fight log say the same thing in the same words. Nothing here is "skill":
+/// a <b>fighting skill</b> is a separate concept (see <c>FightingSkill</c>) and keeps that name; what
+/// gains experience is always a <b>modus mentis</b>.</para>
+/// </summary>
+/// <param name="ModusMentis">The instance that was awarded (or would have been).</param>
+/// <param name="Landed">False when the modus mentis sits at its organ-derived ceiling and earned nothing.</param>
+/// <param name="Levelled">True when this point of experience filled the bar and raised the level.</param>
+public readonly record struct ModusMentisXpAward(
+    ModusMentis ModusMentis, bool Landed, bool Levelled, int Level, int CurrentXp, int Threshold)
+{
+    /// <summary>An award that did nothing — the capped case.</summary>
+    public static ModusMentisXpAward None(ModusMentis mm) => new(mm, false, false, mm.Level, mm.CurrentXp, 0);
+
+    /// <summary>
+    /// The one line describing this award, or the empty string when nothing was gained (a capped
+    /// modus mentis must show no chip and no log line — otherwise every action would end with a
+    /// note about how you cannot get any better at walking).
+    /// </summary>
+    public string Describe() =>
+        !Landed  ? string.Empty
+        : Levelled ? $"Modus mentis improved: {ModusMentis.DisplayName} — level {Level}"
+                   : $"Modus mentis practised: {ModusMentis.DisplayName} ({CurrentXp}/{Threshold} xp)";
+
+    /// <summary>The same line attributed to a fighter, for the fight log.</summary>
+    public string DescribeFor(string who) => Landed ? $"{who} — {Describe()}" : string.Empty;
+}
+
+/// <summary>
 /// ModusMentis functions determine when and how a modusMentis is used.
 /// ModiMentis can have multiple functions.
 /// </summary>

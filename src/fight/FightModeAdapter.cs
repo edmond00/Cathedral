@@ -1437,6 +1437,10 @@ public class FightModeAdapter
                 // Fight-learned modiMentis enter working memory (FIFO input module), not the
                 // long-term procedural/sensory/semantic modules — they must be consolidated later.
                 active.Member.LearnModusMentis(instance);
+                // What the check actually bought is the modus mentis; the skill line below only names
+                // the skill it unlocks, which left the new entry in the memory menu unexplained.
+                _state.AddLog($"{active.DisplayName} — Modus mentis learned: {instance.DisplayName}",
+                    LogEntryType.Learning);
             }
 
             _state.AddLog(

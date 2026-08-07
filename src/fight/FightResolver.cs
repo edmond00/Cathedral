@@ -310,10 +310,17 @@ public static class FightResolver
         Wound? wound = null;
         if (isHit)
         {
-            // Award +1 XP to each MM contributing to this skill (player attacks only).
+            // Award +1 XP to each MM contributing to this skill (player attacks only), and say so:
+            // one log line per modus mentis that actually gained something. A capped one earns
+            // nothing and Describe() returns empty for it, so the log stays quiet about it rather
+            // than repeating every turn that you cannot get any better.
             if (attacker.IsPlayerControlled)
                 foreach (var mm in skill.GetContributingModiMentis(attacker))
-                    attacker.Member.AwardModusMentisXp(mm);
+                {
+                    var award = attacker.Member.AwardModusMentisXp(mm);
+                    if (award.Landed)
+                        state?.AddLog(award.DescribeFor(attacker.DisplayName), LogEntryType.Learning);
+                }
 
             // A landed blow wounds. There is no post-hoc mitigation roll any more: damage
             // resistance downgraded severity invisibly, after the fact, which the player never saw

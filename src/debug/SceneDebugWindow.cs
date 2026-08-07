@@ -45,6 +45,15 @@ public class SceneDebugWindow : Form
     private MsaglGraph _backGraph;
     private string _currentAreaId = "";
 
+    /// <summary>
+    /// Shape of the scene the backend graph was last drawn from. The hierarchy is not static — a
+    /// corpse spawns a spot mid-play — and the graph used to be built once in the constructor, so a
+    /// body that really was in <c>area.Spots</c> was simply never drawn and read as "no corpse
+    /// spawned". Compared on every PoV update; a rebuild only happens when it actually moved, since
+    /// re-laying out the whole hierarchy on every action is not free.
+    /// </summary>
+    private int _backGraphSignature = -1;
+
     // ── Node fill colours ────────────────────────────────────────
     private static readonly MsaglColor ColorSection          = new(  0, 160, 160); // teal
     private static readonly MsaglColor ColorArea             = new( 90, 145, 210); // blue
@@ -243,6 +252,11 @@ public class SceneDebugWindow : Form
 
         _pov = pov;
 
+        // Rebuild the hierarchy first when the scene grew or shrank (a corpse spot, its PoIs, an item
+        // taken), so the highlight below lands on a node that exists in the graph being shown.
+        if (SceneSignature() != _backGraphSignature)
+            _backGraph = BuildBackendGraph();
+
         // Reset old backend highlight
         if (_currentAreaId.Length > 0 && _backGraph.FindNode(_currentAreaId) is { } prev)
         {
@@ -350,8 +364,33 @@ public class SceneDebugWindow : Form
     //  BACKEND GRAPH (full scene hierarchy)
     // ══════════════════════════════════════════════════════════════
 
+    /// <summary>
+    /// A cheap fingerprint of everything the backend graph draws: areas, their spots, and every PoI
+    /// and item under both. Any spawn, pickup or removal moves it.
+    /// </summary>
+    private int SceneSignature()
+    {
+        int sig = 17;
+        foreach (var section in _scene.Sections)
+            foreach (var area in section.Areas)
+            {
+                sig = sig * 31 + area.PointsOfInterest.Count;
+                foreach (var poi in area.PointsOfInterest) sig = sig * 31 + poi.Items.Count;
+
+                sig = sig * 31 + area.Spots.Count;
+                foreach (var spot in area.Spots)
+                {
+                    sig = sig * 31 + spot.PointsOfInterest.Count;
+                    foreach (var poi in spot.PointsOfInterest) sig = sig * 31 + poi.Items.Count;
+                }
+            }
+        return sig;
+    }
+
     private MsaglGraph BuildBackendGraph()
     {
+        _backGraphSignature = SceneSignature();
+
         var msagl = new MsaglGraph("scene")
         {
             LayoutAlgorithmSettings = new Microsoft.Msagl.Layout.MDS.MdsLayoutSettings(),

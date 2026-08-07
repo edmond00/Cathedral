@@ -327,8 +327,9 @@ public class NarrativeController
         _scene = scene;
         _npcPlacement = new Cathedral.Game.Scene.SceneNpcPlacement(scene, _graph.AllNodes.Values);
 
-        // Build initial PoV from the first area
-        var firstArea = scene.AllAreas.FirstOrDefault();
+        // Build initial PoV from the area the graph opened on — the first the factory built, or the
+        // one --start-area names. Same helper, so PoV and entry node can never point at different rooms.
+        var firstArea = Cathedral.Game.Scene.SceneSyntheticGraphFactory.ResolveEntryArea(scene);
         if (firstArea != null)
         {
             _pov = new PoV(firstArea, TimePeriod.Morning);
@@ -567,7 +568,8 @@ public class NarrativeController
 
         foreach (var node in _graph.AllNodes.Values)
         {
-            if (node is not SyntheticNarrationNode { Area: { } area }) continue;
+            if (node is not SyntheticNarrationNode { Area: { } area } synthetic) continue;
+            SyncSpotObservations(synthetic, area);
             // Gate at the live period. NPCs were placed into this node by SceneNpcPlacement using
             // the same Scene.GetNpcsAt query the verb gates use, so a present NPC's verbs always
             // survive here, and an absent one simply has no observation object to refresh.
@@ -581,6 +583,34 @@ public class NarrativeController
                 if (outcome is IVerbRefreshable refreshable)
                     refreshable.RefreshVerbs(_scene, pov, _protagonist);
             }
+        }
+    }
+
+    /// <summary>
+    /// Reconciles a node's spot observations with the spots its area actually holds: adds one for a
+    /// spot that has none, drops one whose spot has left the area.
+    ///
+    /// <para>The narration graph is built once, at scene creation, from the areas as the factory left
+    /// them — so anything the game <i>spawns</i> during play had no observation object and could never
+    /// be looked at, entered, or acted on. That is what made a corpse unreachable: it was in
+    /// <c>area.Spots</c> and in the scene's element table, correct in every respect except the only
+    /// one that shows it to the player. Verbs are left to the caller's refresh loop, which runs over
+    /// <c>PossibleOutcomes</c> straight after this and expands the new object like any other.</para>
+    /// </summary>
+    private void SyncSpotObservations(SyntheticNarrationNode node, Cathedral.Game.Scene.Area area)
+    {
+        node.PossibleOutcomes.RemoveAll(
+            o => o is SyntheticSpotObject spotObs && !area.Spots.Contains(spotObs.Spot));
+
+        var present = node.PossibleOutcomes.OfType<SyntheticSpotObject>().Select(o => o.Spot).ToHashSet();
+        foreach (var spot in area.Spots)
+        {
+            if (present.Contains(spot)) continue;
+
+            // An empty verb list: the refresh pass that follows expands the real ones at the live period.
+            var entry = new SceneViewEntry(spot, new List<VerbView>());
+            node.PossibleOutcomes.Add(new SyntheticSpotObject(spot, entry));
+            Console.WriteLine($"NarrativeController: spot '{spot.DisplayName}' added to node '{node.NodeId}'");
         }
     }
 
@@ -628,10 +658,23 @@ public class NarrativeController
             _postDialogueNpc = null;
             _postDialogueObservationMM = null;
 
+            // Corpse-first: bodies made since the last phase open this one, and nothing else does.
+            // Ahead of the threat opener because a corpse is a one-shot event consumed right here,
+            // while an enemy still standing will lead the next phase — and the one after — anyway.
+            // The list is drained whether or not it is used, so a body left in another area cannot
+            // open a phase two moves later.
+            var corpses = _scene?.PendingCorpseObservations.ToList()
+                          ?? new List<Cathedral.Game.Npc.Corpse.CorpseSpot>();
+            _scene?.PendingCorpseObservations.Clear();
+
+            bool handled = corpses.Count > 0
+                        && await TryGenerateCorpseObservationAsync(corpses, CommitObservation);
+
             // Threat-first: a same-area (visual) enemy opens the phase with a forced, caution-flavoured
             // observation of that enemy — the same condition that turns the exit button into RUNAWAY.
             // This takes precedence over post-dialogue continuity.
-            bool handled = await TryGenerateThreatObservationAsync(CommitObservation);
+            if (!handled)
+                handled = await TryGenerateThreatObservationAsync(CommitObservation);
 
             // Otherwise, if a dialogue just ended, open with a single observation of that NPC.
             if (!handled)
@@ -704,6 +747,37 @@ public class NarrativeController
 
         var blocks = await _observationController.GenerateThreatObservationAsync(
             threatOutcome, _protagonist.CurrentLocationId, _activePartyMember,
+            ledger: _observationLedger, preview: _previewSession, commit: commit);
+        return blocks.Count > 0;
+    }
+
+    /// <summary>
+    /// Runs the corpse opener: resolves each spawned corpse to its observation object in the current
+    /// node and, for those still here, opens the phase by observing them and only them (see
+    /// <see cref="ObservationPhaseController.GenerateCorpseObservationAsync"/>). Returns false — so the
+    /// caller falls through to the threat / post-dialogue / normal openers — when none of the bodies is
+    /// in this node, which is the case whenever the kill happened somewhere the player has since left.
+    /// </summary>
+    private async Task<bool> TryGenerateCorpseObservationAsync(
+        List<Cathedral.Game.Npc.Corpse.CorpseSpot> corpses, Action<List<NarrationBlock>> commit)
+    {
+        var nodeOutcomes = _currentNode.GetAllDirectConcreteOutcomes().OfType<SyntheticSpotObject>().ToList();
+
+        // Node order is irrelevant here — the bodies are narrated in the order they fell.
+        var corpseOutcomes = corpses
+            .Select(c => nodeOutcomes.FirstOrDefault(o => ReferenceEquals(o.Spot, c)))
+            .Where(o => o != null)
+            .Select(o => (ConcreteOutcome)o!)
+            .ToList();
+
+        if (corpseOutcomes.Count == 0)
+        {
+            Console.WriteLine("NarrativeController: no spawned corpse is observable in this node — normal observation.");
+            return false;
+        }
+
+        var blocks = await _observationController.GenerateCorpseObservationAsync(
+            corpseOutcomes, _protagonist.CurrentLocationId, _activePartyMember,
             ledger: _observationLedger, preview: _previewSession, commit: commit);
         return blocks.Count > 0;
     }
@@ -1715,6 +1789,11 @@ public class NarrativeController
     {
         Console.WriteLine($"NarrativeController: committing {(result.Succeeded ? "SUCCESS" : "FAILURE")} outcome");
 
+        // The dice chain's own lesson — one report per modus mentis that fed the roll (observation →
+        // thinking → action), so each shows its own chip instead of the XP moving in silence. Built
+        // here and applied with the rest below; a capped modus mentis reports nothing.
+        var practiceReports = new System.Collections.Generic.List<OutcomeReport>();
+
         if (deferredCommit)
         {
             // Keep only the chosen branch's narration in the narrator slot history (discard the
@@ -1724,7 +1803,10 @@ public class NarrativeController
             // Commit deferred side-effects for the FINAL (possibly humor-modified) outcome.
             if (result.Succeeded)
                 foreach (var chainModusMentis in result.Action.GetModusMentisChain())
-                    _activePartyMember.AwardModusMentisXp(chainModusMentis);
+                {
+                    var practice = ModusMentisPracticeOutcome.For(_activePartyMember, chainModusMentis);
+                    if (practice != null) practiceReports.Add(practice);
+                }
             if (result.ItemConsumed && result.Action.CombinedItem != null)
             {
                 _activePartyMember.RemoveItem(result.Action.CombinedItem);
@@ -1748,6 +1830,10 @@ public class NarrativeController
             allReports.AddRange(GatherVerbReports(result.ActualOutcome, result.Succeeded));
             allReports.AddRange(result.LlmDecidedReports);
         }
+
+        // The chain's practice chips read as the quiet coda to whatever the verb actually did, so
+        // they go last — after the verb's own reports and after its lesson.
+        allReports.AddRange(practiceReports);
 
         // Record this verb into the in-progress routine BEFORE applying reports, so the recorder
         // evaluates the verb against the pre-move PoV. The reports come along because they carry the

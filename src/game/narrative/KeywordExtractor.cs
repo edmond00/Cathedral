@@ -39,12 +39,25 @@ public static class KeywordExtractor
     /// back when the text is short. Used to highlight two keywords for a long observation (both linked
     /// to the same object). With <paramref name="count"/> = 1 this reproduces <see cref="ExtractKeyword"/>.
     /// </summary>
-    public static List<string> ExtractKeywords(string text, string referenceLemma, int count)
+    public static List<string> ExtractKeywords(string text, string referenceLemma, int count, string? ownName = null)
     {
         if (string.IsNullOrWhiteSpace(text) || count <= 0) return new List<string>();
 
         var candidates = NounExtractor.ExtractNounsWithLemmas(text);
         var refLemma = (referenceLemma ?? string.Empty).ToLowerInvariant().Trim();
+
+        // Playground names the object itself instead. Placeholder prose is the same frame for every
+        // object ("My attention is drawn to a X. This is a …"), so the associated-word rule below
+        // ranked the frame's own vocabulary — "attention" — for object after object. Every observation
+        // in a phase then carried the same keyword, and since a block maps a keyword to the FIRST
+        // outcome that claimed it, only the first object observed was ever clickable: a script could
+        // not act on the second thing it was told about. Naming the object gives one distinct handle
+        // per object, which is the whole point of the mode.
+        if (PlaygroundMode.IsActive)
+        {
+            var own = PlaygroundOwnWord(candidates, ownName, refLemma);
+            if (own != null) return new List<string> { own };
+        }
 
         // Drop the object's own word (by lemma) so keywords are associated, not the object itself.
         if (candidates.Count > 1 && !string.IsNullOrEmpty(refLemma))
@@ -87,6 +100,35 @@ public static class KeywordExtractor
             if (result.Count >= count) break;
         }
         return result;
+    }
+
+    /// <summary>
+    /// The surface in <paramref name="candidates"/> that IS the object — its own noun — for the
+    /// playground keyword rule. Tried in order: the head word of <paramref name="ownName"/> (the last
+    /// word of "Courtyard–Pigsty Track", of "a pig"), then <paramref name="refLemma"/>. The name is
+    /// tried first because an NPC's reference lemma is the generic "person", which never appears in
+    /// the text. Returns null when neither is in the sentence, leaving the normal rule to run.
+    /// </summary>
+    private static string? PlaygroundOwnWord(
+        List<(string Surface, string Lemma)> candidates, string? ownName, string refLemma)
+    {
+        foreach (var word in new[] { HeadWord(ownName), refLemma })
+        {
+            if (string.IsNullOrEmpty(word)) continue;
+            foreach (var c in candidates)
+                if (c.Lemma.Equals(word, StringComparison.OrdinalIgnoreCase)
+                 || c.Surface.Equals(word, StringComparison.OrdinalIgnoreCase))
+                    return c.Surface;
+        }
+        return null;
+    }
+
+    /// <summary>The last alphabetic word of a display name, lower-cased: "a pig" → "pig".</summary>
+    private static string? HeadWord(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return null;
+        var words = Regex.Matches(name, @"[A-Za-z]+");
+        return words.Count > 0 ? words[^1].Value.ToLowerInvariant() : null;
     }
 
     private static string? LongestWord(string text)

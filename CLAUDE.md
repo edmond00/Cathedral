@@ -31,6 +31,8 @@ from the game's (very chatty) diagnostic logging on the same stdout.
 | `--skip-childhood` | Skips the childhood + get-up phases and fills starting skills/items randomly — from the master seed, so the same seed gives the same kit. |
 | `--debug` | Lets `strategy` force action outcomes. Under `--cli` it never prompts — see below. |
 | `--start-at <name>` | Spawns the protagonist on the first biome or location matching `<name>` (`village`, `farm`, `field`, `cave`…). Without it you get wherever the seed puts you, which is usually plain or forest — testing anything village-specific otherwise means hunting for a lucky seed. |
+| `--start-area <name>` | Opens narration in the first area of the location whose name matches `<name>` (`pigsty`, `smithy`, `hall`…). `--start-at` picks the location, this picks the room. Without it you arrive in whichever area the factory built first — a farm's courtyard — and reaching any other one costs an observation, a think and an action **per step**, with the persona choosing what is observable at each. Anything that lives in one room (a pigsty's pigs, a smithy's anvil) is otherwise a long walk away. Inert when the location has no such area, so it can be left on across a multi-location run. |
+| `--observe-only <name>` | Restricts what an observation phase may look at to objects matching `<name>`. **This is what makes a specific object reachable at all.** A phase opens on ONE object the persona chose out of a dozen, so without it a script that wants to act on the pig is waiting on a coin flip it cannot influence — and re-rolling seeds until the right object comes up first is not a test. Whole words match before substrings (`pig` means the pig, not the Courtyard–Pigsty Track), and a phase where nothing matches falls back to the whole scene rather than narrating nothing. |
 | `--no-encounters` | Suppresses random travel encounters. **Pass this in every script that travels.** An encounter puts the game in `EncounterPrompt`, where a script waiting for `LocationInteraction` sits until its timeout and reports a failure that has nothing to do with what it was testing. |
 | `--period <name>` | Pins the arrival time of day (`dawn`…`night`) instead of drawing one at random. Needed for anything period-gated: every building's entry door shuts at `night`, and a random draw reaches that one visit in six. |
 | `--fill-party` | Fills the companion roster to its heart-derived ceiling (`max_companions`) right after the childhood phase, with NPCs generated from random archetypes — the **last** slot a beast, every slot before it a human. Recruiting even one companion in play takes a conversation and a check (or an appease *and* a tame), which is a long approach for anything that just needs a populated party. Note the ceiling is the *heart* score, and a protagonist accepted straight out of creation has a heart of 1 — so a plain script gets one beast and nothing else. For humans too, raise the heart first (`click cell 94 24` on the creation screen bumps it, four presses reaching 5). |
@@ -193,6 +195,34 @@ Only Low and Medium wounds heal, over `wound_healing` days (100–1000, from the
 age: nothing to keep in sync, and correct whenever it happens to be read. The sweep runs on entry to
 the world view, before the old-age check — healing restores HP and lifetime is wound-aware, so a
 heart wound that closed on the journey must not still be counted a line later.
+
+### Corpses
+
+A kill spawns a `CorpseSpot` in the area it happened in, through `Scene.AddSpotToArea` — the one door
+both routes come through, the `slay`/`attack` verb applying `NpcSlaynOutcome` and a won fight
+spawning one body per dead enemy. Tiny creatures are the exception and leave nothing.
+
+Two rules the rest of it depends on:
+
+- **A spawned spot is not yet observable.** The narration graph is built once, from the areas as the
+  factory left them, so anything the game spawns during play has no observation object — and an
+  object with no observation object cannot be looked at, entered or acted on, however correct it is
+  in `area.Spots`. `NarrativeController.SyncSpotObservations` reconciles the two before every
+  observation phase and every thinking request (it runs from `RefreshSceneVerbs`). That sync is why a
+  corpse is reachable at all; without it the body existed and the player could never be told.
+- **A corpse opens the next narration phase, alone.** `PendingCorpseObservations` collects what fell,
+  `GenerateObservationsAsync` drains it, and `GenerateCorpseObservationAsync` observes every body in
+  the order it fell — first plainly, each later one through a transition — with no persona choice and
+  no length gate, the way the post-dialogue opener imposes the person just spoken to. It runs *ahead*
+  of the threat opener: a corpse is a one-shot event consumed on the spot, while an enemy still
+  standing leads the phase after this one anyway. The list is drained whether or not it is used, so a
+  body left in an area the player has since walked out of cannot open a phase two moves later.
+
+Note what is **not** solved: the narration graph is area-shaped, and `RefreshSceneVerbs` gates verbs
+with `new PoV(area, period)` — no `InSpot`. So while the real PoV does enter a corpse, the graph never
+does, and the body-part PoIs inside it never become observations. `CutVerb.IsPossible` requires
+`pov.InSpot is CorpseSpot`, so **harvesting a corpse is currently unreachable through narration**;
+the corpse can be observed and entered, and that is where it stops.
 
 ### A worked example
 
@@ -458,3 +488,10 @@ description path.
   while the game becomes unclickable. Keep one manual click-through in your release routine.
 - **Narration quality**: `--playground` produces placeholder prose. A passing script proves flow,
   state and layout — never that the prompts still produce good writing.
+- **Which keyword a real observation offers**: under `--playground` the clickable keyword is the
+  object's **own** noun (`pig` for the pig), because placeholder prose is one frame reused for every
+  object and the real rule — pick the noun most *associated* with it, excluding its own — ranked the
+  frame's vocabulary instead. Every observation in a phase came out as "attention", a block maps a
+  keyword to the first outcome that claims it, and so **only the first object observed was ever
+  clickable**. Scripts can now click any observed object by name; what a real run highlights is still
+  a different word, and only a real run shows it.

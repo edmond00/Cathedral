@@ -301,6 +301,10 @@ public class SyntheticSpotObject : ObservationObject, IVerbRefreshable
 {
     private readonly Spot _spot;
 
+    /// <summary>The spot this observation stands for — how a caller matches an observation back to a
+    /// spot it spawned (a corpse), and how the node sync tells which spots already have one.</summary>
+    public Spot Spot => _spot;
+
     public SyntheticSpotObject(Spot spot, SceneViewEntry entry)
     {
         _spot       = spot;
