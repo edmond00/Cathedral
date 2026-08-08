@@ -14,7 +14,6 @@ public class HaywardArchetype : PeasantArchetype
     public override ItemTag? SellTag => ItemTag.Crop;
     public override ItemTag? BuyTag  => ItemTag.Tool;
     public override int    ModiMentisCount => 7;
-    public override bool   IsBrave      => true;
     public override int    AuthorityLevel => 1;
 
     public override string RoleNoun => "hayward";

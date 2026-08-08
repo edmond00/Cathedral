@@ -24,17 +24,4 @@ public enum ThreatLevel
 public record ThreatContext(ThreatLevel Level, NpcEntity? Threat)
 {
     public static readonly ThreatContext None = new(ThreatLevel.None, null);
-
-    /// <summary>
-    /// Natural-language description of the threat situation, injected into LLM prompts.
-    /// Returns empty string when there is no threat.
-    /// </summary>
-    public string ToPromptDescription() => Level switch
-    {
-        ThreatLevel.Visual =>
-            $"{Threat?.DisplayName ?? "An enemy"} is right here and threatening you directly.",
-        ThreatLevel.Audio =>
-            $"{Threat?.DisplayName ?? "An enemy"} is a few steps away — noise could draw them in.",
-        _ => string.Empty,
-    };
 }

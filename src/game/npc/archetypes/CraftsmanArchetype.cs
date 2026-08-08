@@ -5,8 +5,8 @@ namespace Cathedral.Game.Npc.Archetypes;
 /// <summary>
 /// Abstract base for village workshop workers (blacksmith, weaver, miller, baker, etc.).
 /// Sets sensible defaults: human, non-hostile, persistent, can speak.
-/// Master craftsmen are typically <see cref="IsBrave"/> = true (will defend their workshop);
-/// apprentices and journeymen leave <see cref="IsBrave"/> at the default.
+/// Master craftsmen carry <see cref="NamedNpcArchetype.AuthorityLevel"/> 1 — they answer for the
+/// workshop and will defend it; apprentices and journeymen leave it at 0.
 /// </summary>
 public abstract class CraftsmanArchetype : NamedNpcArchetype
 {

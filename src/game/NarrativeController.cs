@@ -673,17 +673,28 @@ public class NarrativeController
             _postDialogueNpc = null;
             _postDialogueObservationMM = null;
 
-            // Corpse-first: bodies made since the last phase open this one, and nothing else does.
-            // Ahead of the threat opener because a corpse is a one-shot event consumed right here,
-            // while an enemy still standing will lead the next phase — and the one after — anyway.
-            // The list is drained whether or not it is used, so a body left in another area cannot
-            // open a phase two moves later.
+            // Arrival-first: somebody who heard a failed action and has just walked in opens the
+            // phase. Ahead of the corpse opener — both are one-shot events, but an arrival is the
+            // newest of them and the one that has just changed what the player may safely do next
+            // (they are a Visual presence now, so the exit is a RUNAWAY roll). Drained whether or not
+            // it is used, like the corpse list, so a stale arrival cannot open a phase two moves on.
+            var arrivals = _scene?.PendingArrivalObservations.ToList() ?? new List<SceneNpc>();
+            _scene?.PendingArrivalObservations.Clear();
+
+            bool handled = arrivals.Count > 0
+                        && await TryGenerateArrivalObservationAsync(arrivals, CommitObservation);
+
+            // Corpse-next: bodies made since the last phase. Ahead of the threat opener because a
+            // corpse is a one-shot event consumed right here, while an enemy still standing will lead
+            // the next phase — and the one after — anyway. The list is drained whether or not it is
+            // used, so a body left in another area cannot open a phase two moves later.
             var corpses = _scene?.PendingCorpseObservations.ToList()
                           ?? new List<Cathedral.Game.Npc.Corpse.CorpsePointOfInterest>();
             _scene?.PendingCorpseObservations.Clear();
 
-            bool handled = corpses.Count > 0
-                        && await TryGenerateCorpseObservationAsync(corpses, CommitObservation);
+            if (!handled)
+                handled = corpses.Count > 0
+                       && await TryGenerateCorpseObservationAsync(corpses, CommitObservation);
 
             // Threat-first: a same-area (visual) enemy opens the phase with a forced, caution-flavoured
             // observation of that enemy — the same condition that turns the exit button into RUNAWAY.
@@ -764,6 +775,45 @@ public class NarrativeController
             threatOutcome, _protagonist.CurrentLocationId, _activePartyMember,
             ledger: _observationLedger, preview: _previewSession, commit: commit);
         return blocks.Count > 0;
+    }
+
+    /// <summary>
+    /// Runs the arrival opener: somebody heard a failed action from the next room and has walked in,
+    /// so the phase opens on them and nothing else. Reuses the threat opener's caution-flavoured
+    /// generation — the feeling is the same one, and an arrival is very often a threat by the time it
+    /// finishes crossing the room.
+    ///
+    /// <para>Only arrivals still standing in the current area are narrated: the player may have moved
+    /// on between the failure and this phase, and announcing a person who came to a room nobody is in
+    /// would read as somebody materialising. Returns false when nothing was left to narrate, so the
+    /// caller falls through to the corpse / threat / normal openers.</para>
+    /// </summary>
+    private async Task<bool> TryGenerateArrivalObservationAsync(
+        List<SceneNpc> arrivals, Action<List<NarrationBlock>> commit)
+    {
+        if (_scene == null || _pov == null || _protagonist == null) return false;
+
+        foreach (var arrival in arrivals)
+        {
+            if (!arrival.IsAlive) continue;
+            if (_scene.GetAreaOf(arrival, _pov.When)?.Id != _pov.Where.Id) continue;
+
+            var outcome = _currentNode.GetAllDirectConcreteOutcomes()
+                .OfType<SyntheticNpcObservationObject>()
+                .FirstOrDefault(o => ReferenceEquals(o.NpcEntity, arrival.Entity));
+            if (outcome == null)
+            {
+                Console.WriteLine($"NarrativeController: arriving '{arrival.Entity.DisplayName}' has no observation object — normal observation.");
+                continue;
+            }
+
+            var blocks = await _observationController.GenerateThreatObservationAsync(
+                outcome, _protagonist.CurrentLocationId, _activePartyMember,
+                ledger: _observationLedger, preview: _previewSession, commit: commit);
+            if (blocks.Count > 0) return true;
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -896,6 +946,10 @@ public class NarrativeController
                 _worldContext,
                 _locationId,
                 _activePartyMember,
+                // The scene and PoV are what the coded choice rules judge from: they decide whether a
+                // goal on offer is a crime, which decides what this mind is shown.
+                _scene,
+                _pov,
                 isReminescence: _scene?.Phase == NarrationPhase.ChildhoodReminescence,
                 autoSuccess: _scene?.Phase == NarrationPhase.ChildhoodReminescence
                              || _scene?.Phase == NarrationPhase.GetUp,
@@ -1053,7 +1107,9 @@ public class NarrativeController
             // === CODED RULES CHECK (before LLM — fast, deterministic, absolute) ===
 
             // Determine if the action is illegal so we know whether to compute witness context.
-            bool isIllegalAction = !action.Verb.IsLegal || (_pov?.Where.IsPrivate ?? false);
+            // Contextual: the verb, its target and who counts the actor an enemy all speak to it.
+            bool isIllegalAction = _scene != null && _pov != null
+                && action.Verb.IsIllegal(_scene, _pov, action.PreselectedOutcome?.VerbView.Target, _activePartyMember);
 
             // Compute witness context (visual = same area, audio = adjacent area).
             var witnessContext = (isIllegalAction && _scene != null && _pov != null)
@@ -1945,28 +2001,42 @@ public class NarrativeController
         NarrationDiceClear();
         _ambianceEngine?.SetFilter(MusicFilter.None);
 
-        // === FAILURE-PATH WITNESS CONFRONTATION (step 4b) ===
-        // On failure, the executor already asked the LLM whether the witness noticed.
-        // If detected, override the normal failure flow with a caught-red-handed dialogue.
-        if (!result.Succeeded && result.WitnessDetected && result.DetectedWitness != null && _pov != null)
-        {
-            var crimeType = DetermineCrimeType(result.Action.Verb, _pov.Where.IsPrivate);
-            Console.WriteLine($"NarrativeController: Witness '{result.DetectedWitness.DisplayName}' detected failed illegal action (crime: {crimeType})");
-            var catchTree = CaughtRedHandedTreeFactory.Create(crimeType, result.DetectedWitness.IsBrave);
-            SetPendingDialogue(new Cathedral.Game.Narrative.DialogueOutcome(result.DetectedWitness, tree: catchTree), result.Action);
-            return;
-        }
+        // === FAILURE-PATH SOCIAL CONSEQUENCE ===
+        // Three rungs of one ladder, decided deterministically by the executor from effective
+        // proximity (no LLM). At most one is set. See ActionExecutionController.FailureConsequences.
 
-        // === FAILURE-PATH ENEMY OPPORTUNITY ATTACK ===
-        // An action failed under threat: the enemy seizes the moment and attacks with the initiative.
-        if (!result.Succeeded && result.FightTriggered && result.FightEnemy != null)
+        // Seen by an enemy: they attack, with the initiative.
+        if (!result.Succeeded && result.FightWithEnemy != null)
         {
-            Console.WriteLine($"NarrativeController: Enemy '{result.FightEnemy.DisplayName}' attacks after failed action under threat — enemy initiative");
-            _pendingFightOutcome = new FightOutcome(result.FightEnemy, $"opportunity attack by {result.FightEnemy.DisplayName}")
+            Console.WriteLine($"NarrativeController: Enemy '{result.FightWithEnemy.DisplayName}' attacks after failed action in plain sight — enemy initiative");
+            _pendingFightOutcome = new FightOutcome(result.FightWithEnemy, $"opportunity attack by {result.FightWithEnemy.DisplayName}")
             {
                 EnemyInitiative = true
             };
             return;
+        }
+
+        // Seen by a witness: they confront you, and the tree decides what that becomes.
+        if (!result.Succeeded && result.CaughtByWitness != null && _pov != null)
+        {
+            var crimeType = DetermineCrimeType(result.Action.Verb, _pov.Where.IsPrivate);
+            Console.WriteLine($"NarrativeController: Witness '{result.CaughtByWitness.DisplayName}' caught the failed illegal action (crime: {crimeType})");
+            var catchTree = CaughtRedHandedTreeFactory.Create(crimeType);
+            SetPendingDialogue(new Cathedral.Game.Narrative.DialogueOutcome(result.CaughtByWitness, tree: catchTree), result.Action);
+            return;
+        }
+
+        // Only heard, from a room away: they come to look. Nothing is confronted yet — the point of
+        // this rung is that it leaves room to leave. What it costs is that they are now standing in
+        // the room with you, which closes the free exit and makes the next slip a caught one.
+        if (!result.Succeeded && result.NpcDrawnIn != null && _scene != null && _pov != null)
+        {
+            var arriving = _scene.Npcs.FirstOrDefault(n => ReferenceEquals(n.Entity, result.NpcDrawnIn));
+            if (arriving != null)
+                _scene.DrawNpcTo(arriving, _pov.Where);
+            else
+                Console.Error.WriteLine(
+                    $"NarrativeController: '{result.NpcDrawnIn.DisplayName}' was drawn in but is not a scene NPC — nobody arrives.");
         }
 
         // Handle outcome based on type - show continue button for next step
@@ -3350,11 +3420,18 @@ public class NarrativeController
         if (threat.Level == ThreatLevel.Visual && threat.Threat != null)
             return (ExitButtonKind.RunawayEnemy, threat.Threat);
 
-        // Illegal (private) location with a bystander who could see you leave.
-        if (_pov.Where.IsPrivate)
+        // A bystander who can see you leave, and a reason for them to stop you: either you are
+        // standing somewhere you have no business being, or they came in here after you.
+        //
+        // The second condition is what makes the approach cost something. Three crimes happen in the
+        // open — pickpocket, stalk, attack — so a witness drawn to a public square by a botched one
+        // would, on the privacy test alone, watch you stroll away.
+        var witness = WitnessSelector.ComputeContext(_scene, _pov);
+        if (witness.Type == WitnessType.Visual && witness.Witness != null)
         {
-            var witness = WitnessSelector.ComputeContext(_scene, _pov);
-            if (witness.Type == WitnessType.Visual && witness.Witness != null)
+            var sceneNpc = _scene.Npcs.FirstOrDefault(n => ReferenceEquals(n.Entity, witness.Witness));
+            bool cameForYou = sceneNpc != null && _scene.DisplacedNpcs.ContainsKey(sceneNpc.Id);
+            if (_pov.Where.IsPrivate || cameForYou)
                 return (ExitButtonKind.RunawayWitness, witness.Witness);
         }
 
@@ -3513,7 +3590,7 @@ public class NarrativeController
         else
         {
             Console.WriteLine($"NarrativeController: RUNAWAY failed — witness '{target.DisplayName}' confronts trespass");
-            var catchTree = CaughtRedHandedTreeFactory.Create(CriminalAffinityType.Intruder, target.IsBrave);
+            var catchTree = CaughtRedHandedTreeFactory.Create(CriminalAffinityType.Intruder);
             // A runaway confrontation has no observation→thinking→action origin — resample the narrator.
             SetPendingDialogue(new DialogueOutcome(target, tree: catchTree), null);
         }
@@ -3715,19 +3792,30 @@ public class NarrativeController
         return CriticTrees.IsMovementVerb(action.ActionText);
     }
 
-    /// Determines the <see cref="CriminalAffinityType"/> for a verb that was just executed.
+    /// <summary>
+    /// What the witness will say they saw, for a verb that was just caught. Only reached once the
+    /// action is already established as a crime, so this names the kind rather than re-deciding it —
+    /// see <see cref="Cathedral.Game.Scene.Verbs.Verb.IsIllegal"/> for the deciding.
+    ///
+    /// <para>The violent verbs all read as <c>Murderer</c>, including a bare <c>attack</c>: what the
+    /// witness is reacting to is somebody setting about a person, and the accusation is worded from
+    /// that. Anything unlisted done inside a private area is trespass, which is what makes an
+    /// otherwise innocuous verb a crime there in the first place.</para>
     /// </summary>
     private static CriminalAffinityType DetermineCrimeType(Cathedral.Game.Scene.Verbs.Verb verb, bool areaIsPrivate)
     {
         return verb.VerbId switch
         {
             "steal"       => CriminalAffinityType.Thief,
+            "pickpocket"  => CriminalAffinityType.Thief,
             "grab"        => areaIsPrivate ? CriminalAffinityType.Thief : CriminalAffinityType.None,
             "slay"        => CriminalAffinityType.Murderer,
+            "murder"      => CriminalAffinityType.Murderer,
+            "attack"      => CriminalAffinityType.Murderer,
             "unlock_door" => CriminalAffinityType.Intruder,
             "slip_into"   => CriminalAffinityType.Intruder,
+            "stalk"       => CriminalAffinityType.Intruder,
             "break"       => CriminalAffinityType.Vandal,
-            "pickpocket"  => CriminalAffinityType.Thief,
             _             => areaIsPrivate ? CriminalAffinityType.Intruder : CriminalAffinityType.None,
         };
     }

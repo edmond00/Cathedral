@@ -10,23 +10,27 @@ namespace Cathedral.Game.Dialogue.Affinity;
 /// </summary>
 public class AffinityTable
 {
-    private readonly Dictionary<string, AffinityLevel>       _table;
-    private readonly Dictionary<string, CriminalAffinityType> _criminalRecord;
-    private readonly HashSet<string>                          _enemies;
+    private readonly Dictionary<string, AffinityLevel> _table;
+    private readonly HashSet<string>                   _enemies;
 
     public AffinityTable()
     {
-        _table          = new Dictionary<string, AffinityLevel>();
-        _criminalRecord = new Dictionary<string, CriminalAffinityType>();
-        _enemies        = new HashSet<string>();
+        _table   = new Dictionary<string, AffinityLevel>();
+        _enemies = new HashSet<string>();
     }
 
-    /// <summary>Initialise from an existing (possibly persisted) dictionary — shares the reference.</summary>
-    public AffinityTable(Dictionary<string, AffinityLevel> sharedData)
+    /// <summary>
+    /// Initialise from existing (possibly persisted) stores — shares both references, so everything
+    /// written during a visit lands in the location's saved state with no save step.
+    ///
+    /// <para>Both stores must be shared, not one. Affinity alone used to persist while enmity was
+    /// re-minted per visit, so someone you fled from mid-fight greeted you as a mild acquaintance on
+    /// your next arrival: the grudge existed for exactly as long as the scene did.</para>
+    /// </summary>
+    public AffinityTable(Dictionary<string, AffinityLevel> sharedData, HashSet<string> sharedEnemies)
     {
-        _table          = sharedData;
-        _criminalRecord = new Dictionary<string, CriminalAffinityType>();
-        _enemies        = new HashSet<string>();
+        _table   = sharedData;
+        _enemies = sharedEnemies;
     }
 
     // ── Read ──────────────────────────────────────────────────────────────────
@@ -94,30 +98,16 @@ public class AffinityTable
     public bool IsAppeased(string partyMemberId)
         => !IsEnemy(partyMemberId) && GetLevel(partyMemberId) == AffinityLevel.Suspicious;
 
-    /// <summary>Marks <paramref name="partyMemberId"/> as an enemy of this NPC.</summary>
+    /// <summary>
+    /// Marks <paramref name="partyMemberId"/> as an enemy of this NPC. Persistent: the grudge is
+    /// filed in the location's state and survives the scene being torn down and rebuilt, so walking
+    /// out of a fight ends the fight and not the enmity.
+    /// </summary>
     public void SetEnemy(string partyMemberId) => _enemies.Add(partyMemberId);
 
     /// <summary>Clears the enemy flag (e.g. after a successful reconciliation).</summary>
     public void ClearEnemy(string partyMemberId) => _enemies.Remove(partyMemberId);
 
-    // ── Criminal record ───────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Returns the worst crime this NPC has witnessed the given party member commit.
-    /// Falls back to <see cref="CriminalAffinityType.None"/> when nothing is recorded.
-    /// </summary>
-    public CriminalAffinityType GetCrime(string partyMemberId)
-        => _criminalRecord.TryGetValue(partyMemberId, out var crime) ? crime : CriminalAffinityType.None;
-
-    /// <summary>Records (or upgrades) a witnessed crime for the given party member.</summary>
-    public void RecordCrime(string partyMemberId, CriminalAffinityType crime)
-    {
-        // Only escalate, never downgrade the criminal record.
-        if (!_criminalRecord.TryGetValue(partyMemberId, out var current) || crime > current)
-            _criminalRecord[partyMemberId] = crime;
-    }
-
-    /// <summary>Clears a previously recorded crime (e.g. after an accepted apology or pardon).</summary>
-    public void ClearCrime(string partyMemberId)
-        => _criminalRecord.Remove(partyMemberId);
+    /// <summary>Exposes the raw enemy set for save/load serialisation.</summary>
+    public HashSet<string> GetRawEnemies() => _enemies;
 }

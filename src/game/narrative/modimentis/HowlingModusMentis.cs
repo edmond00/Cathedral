@@ -19,7 +19,6 @@ public class HowlingModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation };
     public override string[] Organs        => new[] { "muzzle" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
-    public override MoralLevel MoralLevel => MoralLevel.High;
 
     public override string PersonaTone     => "a far-calling voice that holds the scattered pack together across the dark";
     public override string PersonaReminder  => "far-calling voice";

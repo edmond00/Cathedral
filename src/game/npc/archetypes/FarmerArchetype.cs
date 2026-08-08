@@ -23,7 +23,6 @@ public class FarmerArchetype : NamedNpcArchetype
 
     /// <summary>Holds his own land, but works it with his own hands.</summary>
     public override SocialCategory? Social  => SocialCategory.Peasant;
-    public override bool IsBrave            => true;   // owns the land, will demand a fight
     public override int  AuthorityLevel     => 1;      // landowner
 
     public override string RoleNoun => "farmer";

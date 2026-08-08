@@ -55,7 +55,7 @@ public static class DialogueTreeAudit
         // The caught-red-handed trees are built per crime and never registered, so the registry walk
         // would miss them entirely. One variant is representative — the three differ only in the
         // witness's opening line.
-        trees.Add(CaughtRedHandedTreeFactory.Create(CriminalAffinityType.Thief, witnessIsBrave: true));
+        trees.Add(CaughtRedHandedTreeFactory.Create(CriminalAffinityType.Thief));
 
         foreach (var tree in trees)
         {

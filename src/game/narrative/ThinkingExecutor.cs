@@ -57,6 +57,8 @@ public class ThinkingExecutor
         WorldContext worldContext,
         int locationId,
         PartyMember actingMember,
+        Scene.Scene? scene = null,
+        PoV? pov = null,
         bool isReminescence = false,
         bool autoSuccess = false,
         LlmPreviewSession? preview = null,
@@ -90,8 +92,14 @@ public class ThinkingExecutor
         string areaLocation = node.GenerateNeutralDescription(locationId);
         string? observedPhrase = sourceObs?.NeutralPhrase;
 
+        // The coded choice rules need somewhere to judge from; without a scene (tooling, tests) they
+        // are simply not run and every option stands.
+        var choiceCtx = scene != null && pov != null
+            ? new Rules.Choice.ChoiceRuleContext(scene, pov, actingMember, thinkingModusMentis)
+            : null;
+
         // ── Decision 1: GOAL ────────────────────────────────────────────────────
-        var (resolved, goalThought) = await ChooseGoalAsync(thinkingSlot, subOutcomes, thinkingModusMentis, overallLocation, areaLocation, observedPhrase, cancellationToken, reasoningPart);
+        var (resolved, goalThought) = await ChooseGoalAsync(thinkingSlot, subOutcomes, thinkingModusMentis, overallLocation, areaLocation, observedPhrase, choiceCtx, cancellationToken, reasoningPart);
         bool isIgnore = resolved is VerbOutcome vIgnore && vIgnore.VerbView.Verb is IgnoreVerb;
 
         // ── Early exit: IGNORE (reasoning only, no action) ──────────────────────
@@ -154,9 +162,15 @@ public class ThinkingExecutor
         // via the persona-reasoning → neutral-critic pass (the selector resets the slot in and out, so
         // the action rewrite below starts fresh). Skipped for auto-success phases (reminescence /
         // get-up). Replaces the former plausibility + difficulty critic trees.
+        // The willingness rules judge the action skill against the goal now settled on, so the context
+        // is rebuilt around the skill rather than the thinking modus mentis.
+        var fitCtx = choiceCtx == null
+            ? null
+            : choiceCtx with { ModusMentis = skill, Goal = resolved };
+
         var (fit, fitThought) = autoSuccess
             ? (PersonaFit.Willing, (string?)null)
-            : await AskPersonaFitAsync(actionSlot, skill, goalPhrase, overallLocation, areaLocation, observedPhrase, cancellationToken, actionPart);
+            : await AskPersonaFitAsync(actionSlot, skill, goalPhrase, overallLocation, areaLocation, observedPhrase, fitCtx, cancellationToken, actionPart);
 
         // "unwilling to do it" → the skill refuses; produce a first-person refusal outcome, no action.
         // The fit want explains the refusal, so it rides into the rewrite as the inner thought.
@@ -235,8 +249,13 @@ public class ThinkingExecutor
     /// pick means the skill refuses the action. Phrasing the whole set as parallel stances (rather than
     /// three "do it …" commands plus a lone "refuse") keeps the critic matching on the willingness axis
     /// instead of on which option names the target.
+    ///
+    /// <para>The default set. <see cref="Rules.Choice.ChoiceRulesChecker.FilterWillingness"/> may narrow
+    /// it before it is offered — an unscrupulous skill asked to commit a crime loses the refusal.</para>
     /// </summary>
-    private static readonly string[] PersonaFitActions = { "eager to do it", "willing to do it", "reluctant to do it" };
+    private static readonly Rules.Choice.WillingnessOptions DefaultWillingness = new(
+        new[] { "eager to do it", "willing to do it", "reluctant to do it" },
+        DeclineOption: "unwilling to do it");
 
     /// <summary>
     /// Asks the action skill how strongly it is drawn to the action, through the same
@@ -249,10 +268,17 @@ public class ThinkingExecutor
     /// </summary>
     private async Task<(PersonaFit Fit, string? Reasoning)> AskPersonaFitAsync(
         int actionSlot, ModusMentis skill, string goalPhrase,
-        string? overallLocation, string? areaLocation, string? observedPhrase, CancellationToken ct,
+        string? overallLocation, string? areaLocation, string? observedPhrase,
+        Rules.Choice.ChoiceRuleContext? choiceCtx, CancellationToken ct,
         PreviewPart? part = null)
     {
         if (PlaygroundMode.IsActive) return (PersonaFit.Willing, null);
+
+        // Coded rules narrow the answers before they are offered. A skill with no refusal left cannot
+        // land on PersonaFit.Refused at all — the decline option is simply not in the prompt.
+        var options = choiceCtx == null
+            ? DefaultWillingness
+            : Rules.Choice.ChoiceRulesChecker.FilterWillingness(DefaultWillingness, choiceCtx);
 
         string situation = ThinkingPromptConstructor.SituationLine(overallLocation, areaLocation, observedPhrase).TrimEnd();
         string lead = situation.Length == 0 ? "" : situation + " ";
@@ -265,9 +291,9 @@ public class ThinkingExecutor
             PersonaOpening.Willingness);
 
         var chosen = await _selector.SelectAsync(
-            actionSlot, skill, PersonaFitActions,
+            actionSlot, skill, options.Stances,
             a => a,
-            prompt, declineOption: "unwilling to do it", preview: part?.NextSegment(isFree: true), ct: ct);
+            prompt, declineOption: options.DeclineOption, preview: part?.NextSegment(isFree: true), ct: ct);
 
         Console.WriteLine($"ThinkingExecutor: Persona-fit for '{goalPhrase}' ({skill.DisplayName}): {chosen.Item ?? "unwilling to do it"}");
         var fit = chosen.Item switch
@@ -275,7 +301,10 @@ public class ThinkingExecutor
             "eager to do it"    => PersonaFit.Eager,
             "willing to do it"  => PersonaFit.Willing,
             "reluctant to do it" => PersonaFit.Reluctant,
-            null                => PersonaFit.Refused,
+            // Null means the critic matched nothing on offer. With a decline available that is the
+            // refusal; without one there is no refusal to express, so the least eager stance stands in
+            // rather than cancelling an action this skill was never allowed to decline.
+            null                => options.DeclineOption != null ? PersonaFit.Refused : PersonaFit.Reluctant,
             _                   => PersonaFit.Willing, // unrecognised → proceed at base difficulty
         };
         return (fit, chosen.Reasoning);
@@ -290,6 +319,7 @@ public class ThinkingExecutor
         string? overallLocation,
         string? areaLocation,
         string? observedPhrase,
+        Rules.Choice.ChoiceRuleContext? choiceCtx,
         CancellationToken ct,
         PreviewPart? part = null)
     {
@@ -298,6 +328,13 @@ public class ThinkingExecutor
         var realOutcomes = subOutcomes
             .Where(o => !(o is VerbOutcome vo && vo.VerbView.Verb is IgnoreVerb))
             .ToList();
+
+        // Coded rules narrow the list to what this mind may be shown at all — a principled modus
+        // mentis is not offered crimes, an unscrupulous one is offered nothing else. Applied before
+        // the empty check on purpose: filtering everything away IS a decision, and it reads as ignore.
+        if (choiceCtx != null)
+            realOutcomes = Rules.Choice.ChoiceRulesChecker.FilterGoals(realOutcomes, choiceCtx).ToList();
+
         if (realOutcomes.Count == 0) return (IgnoreVerb.MakeOutcome(), null);
 
         if (PlaygroundMode.IsActive)

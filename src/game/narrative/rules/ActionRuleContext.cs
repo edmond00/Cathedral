@@ -27,6 +27,18 @@ public class ActionRuleContext
         _actionModusMentis ??= Actor.ModiMentis
             .FirstOrDefault(m => m.ModusMentisId == Action.ActionModusMentisId);
 
+    /// <summary>
+    /// Whether this action is a crime — asked once, here, so the rules that care about it cannot
+    /// disagree about what counts. Legality is contextual (see <see cref="Verbs.Verb.IsIllegal"/>):
+    /// the verb, the target and who the actor's enemies are all speak to it.
+    ///
+    /// <para>False when there is no PoV to judge from, which is the safe reading: with no scene there
+    /// is no witness to be caught by and no private space to be standing in.</para>
+    /// </summary>
+    public bool IsIllegalAction =>
+        Scene != null && PoV != null
+        && Action.Verb.IsIllegal(Scene, PoV, Action.PreselectedOutcome?.VerbView.Target, Actor);
+
     public ActionRuleContext(
         ParsedNarrativeAction action,
         PartyMember           actor,

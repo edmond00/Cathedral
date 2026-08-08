@@ -19,7 +19,6 @@ public class SeductionModusMentis : ModusMentis
     /// <summary>Words with a person, not a voice in the air.</summary>
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
-    public override MoralLevel MoralLevel => MoralLevel.Low;
     public override bool ActsDiscretely => true;
 
     public override string PersonaTone     => "a deliberate charmer who reads wanting in others and answers it with intent";

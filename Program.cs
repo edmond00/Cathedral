@@ -86,6 +86,8 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --mm-audit                         Print the modus-mentis content audit (hard-rule violations, coverage, soft stats) and exit");
     Console.WriteLine("  --verb-audit                       Print the verb-coverage audit (verbs per observable vs targets, dead verbs,");
     Console.WriteLine("                                     unresolvable modus-mentis and tool ids, landmark counts) and exit");
+    Console.WriteLine("  --crime-audit                      Print the crime audit (contextual verb legality, the morality choice rules,");
+    Console.WriteLine("                                     enmity surviving a rebuild and a save) and exit");
     Console.WriteLine("  --help, -h                         Show this help message");
     return;
 }
@@ -128,6 +130,15 @@ if (args.Length >= 1 && args[0] == "--building-audit")
 if (args.Length >= 1 && args[0] == "--verb-audit")
 {
     Console.WriteLine(Cathedral.Game.Scene.VerbAudit.BuildReport());
+    return;
+}
+
+// Crime audit: contextual verb legality, the coded choice rules, and enmity outliving a visit —
+// the three parts of the crime system that fail silently and that a --cli walk cannot reach.
+// Headless: builds scenes and asks the rules directly; no LLM, no window.
+if (args.Length >= 1 && args[0] == "--crime-audit")
+{
+    Console.WriteLine(Cathedral.Game.Scene.CrimeAudit.BuildReport());
     return;
 }
 

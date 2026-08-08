@@ -81,7 +81,8 @@ public class StalkVerb : Verb
     public override string DisplayName    => "Stalk";
     public override int    BaseDifficulty => 4;
 
-    public override bool IsLegal => false;
+    /// <summary>Following a stranger about for a day is a crime wherever it is done.</summary>
+    protected override bool IsIllegalFor(Scene scene, PoV pov, Element? target, PartyMember? actor) => true;
 
     /// <summary>What a success teaches: staying with somebody who does not know you are there.</summary>
     public override string? GrantedModusMentisId(Element? target) => "stalking";

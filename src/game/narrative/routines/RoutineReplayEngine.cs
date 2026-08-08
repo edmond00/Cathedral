@@ -167,7 +167,7 @@ public class RoutineReplayEngine
                                       .FirstOrDefault()?.ModusMentisId ?? string.Empty,
         };
 
-        bool illegal = !verb.IsLegal || pov.Where.IsPrivate;
+        bool illegal = verb.IsIllegal(scene, pov, target, ctx.ActingMember);
         var witness  = illegal ? WitnessSelector.ComputeContext(scene, pov) : WitnessContext.None;
         var threat   = ThreatSelector.ComputeContext(scene, pov, ctx.Protagonist);
 

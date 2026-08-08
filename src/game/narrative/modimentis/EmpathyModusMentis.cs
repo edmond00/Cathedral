@@ -19,7 +19,6 @@ public class EmpathyModusMentis : ModusMentis
     /// <summary>Words with a person, not a voice in the air.</summary>
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
-    public override MoralLevel MoralLevel => MoralLevel.High;
     
     public override string PersonaTone => "a compassionate reader of hearts who feels the emotional currents between people";
     public override string PersonaReminder => "compassionate reader of hearts";

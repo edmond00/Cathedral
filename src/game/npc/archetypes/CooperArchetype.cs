@@ -14,7 +14,6 @@ public class CooperArchetype : CraftsmanArchetype
     public override ItemTag? SellTag => ItemTag.Craftware;
     public override ItemTag? BuyTag  => ItemTag.Wood;
     public override int    ModiMentisCount => 8;
-    public override bool   IsBrave      => true;
     public override int    AuthorityLevel => 1;
 
     public override string RoleNoun => "cooper";

@@ -14,7 +14,6 @@ public class BlacksmithArchetype : CraftsmanArchetype
     public override ItemTag? SellTag => ItemTag.Ironwork;
     public override ItemTag? BuyTag  => ItemTag.Mineral;
     public override int    ModiMentisCount => 10;
-    public override bool   IsBrave      => true;
     public override int    AuthorityLevel => 1;
 
     public override string RoleNoun => "blacksmith";

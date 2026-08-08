@@ -21,9 +21,6 @@ public class AppeaseVerb : Verb
     /// <summary>What a success teaches: reading an animal well enough to calm it.</summary>
     public override string? GrantedModusMentisId(Element? target) => "beast_sense";
 
-    /// <summary>Appeasing is a legal, non-violent action.</summary>
-    public override bool IsLegal => true;
-
     /// <summary>Can be attempted even when the enemy is right there.</summary>
     public override bool CanBeUsedUnderThreat => true;
 

@@ -19,7 +19,6 @@ public class LullabyModusMentis : ModusMentis
     /// <summary>Words with a person, not a voice in the air.</summary>
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
-    public override MoralLevel MoralLevel => MoralLevel.High;
 
     public override string PersonaTone     => "a gentle soul who can settle a frightened creature with the half-remembered tune of a mother's song";
     public override string PersonaReminder  => "soft-singing comforter";

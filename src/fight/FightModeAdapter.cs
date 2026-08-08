@@ -286,11 +286,11 @@ public class FightModeAdapter
 
     /// <summary>
     /// Resolve the combat personality for an enemy NPC: an archetype override wins,
-    /// otherwise the personality is derived from its IsBrave / AuthorityLevel flags.
+    /// otherwise the personality is derived from its authority level.
     /// </summary>
     private static AiPersonality ResolvePersonality(NpcEntity npc) =>
         npc.Archetype.AiPersonalityOverride
-        ?? AiPersonality.FromArchetypeFlags(npc.IsBrave, npc.AuthorityLevel);
+        ?? AiPersonality.FromAuthority(npc.AuthorityLevel);
 
     /// <summary>
     /// Called on every controller tick. <paramref name="deltaTime"/> is elapsed REAL seconds since

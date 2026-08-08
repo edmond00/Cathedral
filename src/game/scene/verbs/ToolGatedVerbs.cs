@@ -179,7 +179,13 @@ public class BreakVerb : Verb
     /// <summary>A hammer or an axe swung at a thing. No hands, no verb.</summary>
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
 
-    public override bool IsLegal => false;
+    /// <summary>
+    /// Wrecking somebody's property is a crime; wrecking a thing standing in a public place is only
+    /// bad manners. The sealed half already covers doing it inside a private area, so what is left is
+    /// the object that belongs to one while being reachable from outside it.
+    /// </summary>
+    protected override bool IsIllegalFor(Scene scene, PoV pov, Element? target, PartyMember? actor)
+        => PrivacyModel.ReachesPrivateArea(scene, target);
 
     public override IReadOnlyList<string> ReferenceToolIds => new[] { "hammer", "axe" };
 

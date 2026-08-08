@@ -79,12 +79,6 @@ public class NpcEntity : INpcEntity
     // ── Witness / authority ───────────────────────────────────────────────────
 
     /// <summary>
-    /// When true this NPC will not flee or submit when confronting a criminal —
-    /// they will demand a fight instead (sets <see cref="FightRequestedByDialogue"/>).
-    /// </summary>
-    public bool IsBrave { get; }
-
-    /// <summary>
     /// Relative authority level (0 = none, higher = more official).
     /// Guards and law-enforcement archetypes set this > 0; commoners leave it 0.
     /// </summary>
@@ -212,7 +206,6 @@ public class NpcEntity : INpcEntity
         Traits.NpcTextProfile text,
         bool                canSpeak                = false,
         AffinityTable?      affinityTable           = null,
-        bool                isBrave                 = false,
         int                 authorityLevel          = 0,
         IReadOnlyList<string>? ownedSectionIds      = null)
     {
@@ -224,7 +217,6 @@ public class NpcEntity : INpcEntity
         Text                       = text;
         CanSpeak                   = canSpeak;
         AffinityTable              = affinityTable ?? new AffinityTable();
-        IsBrave                    = isBrave;
         AuthorityLevel             = authorityLevel;
         OwnedSectionIds            = ownedSectionIds != null ? new List<string>(ownedSectionIds) : [];
     }

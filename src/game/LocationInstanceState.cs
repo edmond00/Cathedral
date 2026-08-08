@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Cathedral.Game.Dialogue.Affinity;
@@ -58,6 +59,20 @@ public sealed class LocationInstanceState
     public Dictionary<string, Dictionary<string, AffinityLevel>> NpcAffinity { get; init; } = new();
 
     /// <summary>
+    /// Who each NPC counts an enemy, keyed by <see cref="Npc.INpcEntity.PersistentId"/> and holding
+    /// <c>PartyMember.AffinityKey</c>s. The backing store of that NPC's
+    /// <see cref="AffinityTable"/> enemy set, so a fight declared during a visit is still declared on
+    /// the next one.
+    ///
+    /// <para>Separate from <see cref="NpcAffinity"/> because enmity is not a point on the affinity
+    /// ladder — an enemy has an affinity level as well, and the two move independently (the reconcile
+    /// tree clears the flag and leaves you Suspicious). Keeping enmity per-visit made running away the
+    /// dominant answer to every fight: the scene was rebuilt on arrival, the grudge was not rebuilt
+    /// with it, and the man who drew steel on you last time had no memory of it.</para>
+    /// </summary>
+    public Dictionary<string, HashSet<string>> NpcEnemies { get; init; } = new();
+
+    /// <summary>
     /// Item-depletion timestamps: <c>ItemElement.DepletionKey</c> → the <c>GameClock.Days</c> at
     /// which that slot was last picked. A slot is depleted while <c>now − pickedAt &lt;
     /// PoI.RegenDays</c>, so a berry bush stripped bare stays bare for a while and then does not.
@@ -102,7 +117,9 @@ public sealed class LocationInstanceState
     {
         if (!NpcAffinity.TryGetValue(persistentId, out var dict))
             NpcAffinity[persistentId] = dict = new Dictionary<string, AffinityLevel>();
-        return new AffinityTable(dict);
+        if (!NpcEnemies.TryGetValue(persistentId, out var enemies))
+            NpcEnemies[persistentId] = enemies = new HashSet<string>();
+        return new AffinityTable(dict, enemies);
     }
 
     /// <summary>Records that an NPC has left this location for good.</summary>
@@ -135,5 +152,6 @@ public sealed class LocationInstanceState
 
     public override string ToString()
         => $"Location {LocationId} ({LocationType}) — {NpcAffinity.Count} known NPC(s), " +
+           $"{NpcEnemies.Values.Count(e => e.Count > 0)} hostile, " +
            $"{DepartedNpcs.Count} departed, {ItemDepletions.Count} depleted slot(s)";
 }

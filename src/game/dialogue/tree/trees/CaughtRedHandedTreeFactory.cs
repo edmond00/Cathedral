@@ -5,28 +5,35 @@ using Cathedral.Game.Npc;
 namespace Cathedral.Game.Dialogue.Tree.Trees;
 
 /// <summary>
-/// Builds a "caught red-handed" dialogue tree at runtime, parameterized by:
-/// - <paramref name="criminalType"/> — the crime the party member was witnessed committing
-/// - <paramref name="witnessIsBrave"/> — whether the witness will escalate to a fight on failure
+/// Builds a "caught red-handed" dialogue tree at runtime, parameterized by the crime the party
+/// member was witnessed committing.
 ///
 /// Tree shape: the witness confronts the player, who may apologise, lie, shift the blame, or
 /// provoke. Apologising runs deepest — it is the only route where the witness can actually be
 /// talked round — and provoking is a dead end by design:
-///   apologise → success: forgiven (crime cleared) / failure: rejected (recorded; fight if brave)
-///   lie       → success: believed (no record)     / failure: caught out (recorded + fight)
-///   deflect   → success: doubt takes hold         / failure: they are certain (recorded + fight)
+///   apologise → success: the matter is dropped / failure: rejected, and they draw
+///   lie       → success: believed              / failure: caught out, and they draw
+///   deflect   → success: doubt takes hold      / failure: they are certain, and they draw
 ///   provoke   → every end is a forced failure: the witness draws
 ///
 /// <para>
-/// Both parameters reach into the text, not just the outcomes: the crime decides what the witness
-/// accuses you of at every level of the tree, and a brave witness's refusals demand a fight where a
-/// timid one's merely dismiss you. Difficulty follows the <see cref="BranchDifficulty.Hard"/>
-/// ladder throughout — talking your way out of a crime should never be small talk.
+/// <b>Failure always means a fight.</b> The witness's nerve used to be a per-archetype flag, and a
+/// timid one's failure outcome was an affinity write identical to the success outcome's — so against
+/// roughly a third of the people in the game, losing this conversation after botching a burglary cost
+/// exactly nothing, silently and with no way for a player to tell which kind of witness they had.
+/// The consequence is now the same for everybody, and it lasts: an enemy stays an enemy across
+/// visits, so walking out of the fight leaves somebody in that location who is still waiting.
 /// </para>
 ///
 /// <para>
-/// Every replica is the spoken line, plainly: a brave refusal says the matter will be settled by
-/// fighting, and leaves the shouting to the persona. See "Authoring the neutral text" on
+/// The crime reaches into the text, not just the outcome: it decides what the witness accuses you of
+/// at every level of the tree. Difficulty follows the <see cref="BranchDifficulty.Hard"/> ladder
+/// throughout — talking your way out of a crime should never be small talk.
+/// </para>
+///
+/// <para>
+/// Every replica is the spoken line, plainly: a refusal says the matter will be settled by fighting,
+/// and leaves the shouting to the persona. See "Authoring the neutral text" on
 /// <see cref="DialogueTree"/>.
 /// </para>
 /// </summary>
@@ -35,12 +42,12 @@ public static class CaughtRedHandedTreeFactory
     public const string TreeIdPrefix = "caught_red_handed";
 
     /// <summary>
-    /// Creates a unique caught-red-handed tree for the given crime type and witness bravery.
+    /// Creates a unique caught-red-handed tree for the given crime type.
     /// The returned tree is NOT registered in <see cref="DialogueTreeRegistry"/> — it is used
     /// directly by the game controller when witness confrontation is triggered.
     /// </summary>
-    public static DialogueTree Create(CriminalAffinityType criminalType, bool witnessIsBrave)
-        => new CaughtRedHandedTree(criminalType, witnessIsBrave);
+    public static DialogueTree Create(CriminalAffinityType criminalType)
+        => new CaughtRedHandedTree(criminalType);
 
     // ── Private concrete tree ─────────────────────────────────────────────────
 
@@ -59,35 +66,26 @@ public static class CaughtRedHandedTreeFactory
 
         private readonly CriminalAffinityType _criminalType;
 
-        internal CaughtRedHandedTree(CriminalAffinityType criminalType, bool witnessIsBrave)
+        internal CaughtRedHandedTree(CriminalAffinityType criminalType)
         {
             _criminalType = criminalType;
 
             // Two shared outcome sets. Apologise, lie and deflect are three routes to the same
             // success; a rejected apology, a caught-out lie, a disbelieved deflection and any
-            // provocation all land on the same failure — which draws steel only against a brave
-            // witness.
+            // provocation all land on the same failure, and it draws steel every time.
             SuccessOutcomes = new IDialogueOutcome[]
             {
-                new ClearCrimeOutcome(),
                 new AffinityTransitionOutcome(AffinityLevel.AnnoyingAcquaintance),
             };
-            FailureOutcomes = witnessIsBrave
-                ? new IDialogueOutcome[]
-                  {
-                      new CriminalAffinityOutcome(criminalType),
-                      new FightRequestOutcome(),
-                  }
-                : new IDialogueOutcome[]
-                  {
-                      new CriminalAffinityOutcome(criminalType),
-                      new AffinityTransitionOutcome(AffinityLevel.AnnoyingAcquaintance),
-                  };
+            FailureOutcomes = new IDialogueOutcome[]
+            {
+                new FightRequestOutcome(),
+            };
 
             // ── Local authoring helpers ─────────────────────────────────────
             //
-            // Everything below is built with locals rather than fields: the tree depends on two
-            // constructor arguments, so it cannot be static, and a local graph reads in the order
+            // Everything below is built with locals rather than fields: the tree depends on a
+            // constructor argument, so it cannot be static, and a local graph reads in the order
             // the conversation actually runs.
 
             // A branch end on the hard ladder. `depth` is how many player replies reached it.
@@ -111,9 +109,6 @@ public static class CaughtRedHandedTreeFactory
                 failureReplicaIndirect: failureIndirect,
                 mode:                   ResolutionMode.ForceFailure);
 
-            // A brave witness answers a failure with violence; a timid one just turns you out.
-            string Fail(string timid, string brave) => witnessIsBrave ? brave : timid;
-
             string act      = CrimeAct(criminalType);        // "taking that", "coming in here"
             string actHeard = CrimeActHeard(criminalType);   // the same, as the accused heard it
 
@@ -124,50 +119,38 @@ public static class CaughtRedHandedTreeFactory
             var apologyResult = End("apology_result", 2,
                 "See that it never happens again. Now go.",
                 "I tell {you:name} to see that it never happens again, and to go.",
-                Fail("Your words mean nothing. Go, and do not let me see you again.",
-                     "Sorry means nothing to me now. You will answer for this here and now."),
-                Fail("I tell {you:name} their words mean nothing, and not to let me see them again.",
-                     "I tell {you:name} sorry means nothing now, and that they will answer for this here."));
+                "Sorry means nothing to me now. You will answer for this here and now.",
+                "I tell {you:name} sorry means nothing now, and that they will answer for this here.");
 
             var apologyOwnItResult = End("apology_own_it", 3,
                 "You said it without my having to drag it out of you. That counts for something. Go.",
                 "I tell {you:name} that saying it without my dragging it out counts for something, and let them go.",
-                Fail("Saying it does not undo it. Out.",
-                     "You admit it to my face and expect mercy. Stand and answer for it."),
-                Fail("I tell {you:name} that saying it does not undo it, and to get out.",
-                     "I tell {you:name} they admit it and expect mercy, and demand they stand and answer."));
+                "You admit it to my face and expect mercy. Stand and answer for it.",
+                "I tell {you:name} they admit it and expect mercy, and demand they stand and answer.");
 
             var apologyRestoreResult = End("apology_restore", 3,
                 "Put it back and I will say I was looking elsewhere. Move.",
                 "I tell {you:name} to put it back, and that I will claim I was looking elsewhere.",
-                Fail("It is too late to put anything back. Out with you.",
-                     "You would hand it over now. No. It is settled by force or not at all."),
-                Fail("I tell {you:name} it is too late to put anything back.",
-                     "I tell {you:name} it is too late, and that this is settled by force or not at all."));
+                "You would hand it over now. No. It is settled by force or not at all.",
+                "I tell {you:name} it is too late, and that this is settled by force or not at all.");
 
             var apologyNoExcuseResult = End("apology_no_excuse", 3,
                 "No excuse offered at all. That is the first honest thing anyone has said to me here. Go.",
                 "I tell {you:name} that no excuse at all is the first honest thing anyone has said to me here.",
-                Fail("No excuse and no pardon. Get out.",
-                     "Honest and still guilty. Honesty will not save you. Face me."),
-                Fail("I tell {you:name} there is no excuse and no pardon.",
-                     "I tell {you:name} honesty will not save them, and to face me."));
+                "Honest and still guilty. Honesty will not save you. Face me.",
+                "I tell {you:name} honesty will not save them, and to face me.");
 
             var apologyNothingLeftResult = End("apology_nothing_left", 4,
                 "I have been at the end of things myself. Go, before I change my mind, and do not come back to this door.",
                 "I tell {you:name} I have been at the end of things myself, and to go before I change my mind.",
-                Fail("Everyone is at the end of something. It does not make my losses smaller. Out.",
-                     "Do not make me the villain in this. Draw."),
-                Fail("I tell {you:name} everyone is at the end of something, and it does not make my losses smaller.",
-                     "I tell {you:name} not to make me the villain, and to draw."));
+                "Do not make me the villain in this. Draw.",
+                "I tell {you:name} not to make me the villain, and to draw.");
 
             var apologyNoDefenceResult = End("apology_no_defence", 4,
                 "You will not even argue your own case. That is either shame or honesty, and I am tired enough to call it honesty. Go.",
                 "I tell {you:name} that refusing to argue their case is either shame or honesty, and that I will call it honesty.",
-                Fail("Then there is nothing to weigh in your favour. Out.",
-                     "You will not defend yourself with words. Then defend yourself properly."),
-                Fail("I tell {you:name} there is nothing to weigh in their favour.",
-                     "I tell {you:name} that if they will not defend themselves with words they may do it properly."));
+                "You will not defend yourself with words. Then defend yourself properly.",
+                "I tell {you:name} that if they will not defend themselves with words they may do it properly.");
 
             // The witness is wavering — the one place in this tree where a fourth reply exists.
             var apologyWeighing = new NpcLineNode(
@@ -225,42 +208,32 @@ public static class CaughtRedHandedTreeFactory
             var lieResult = End("lie_result", 2,
                 "Perhaps I saw it wrong. Go on, then.",
                 "I allow that perhaps I saw it wrong, and tell {you:name} to go on.",
-                Fail("You are lying to my face. Get out before I fetch someone who cares more than I do.",
-                     "You are lying to my face. Now you will answer for it."),
-                Fail("I tell {you:name} they are lying to my face, and to get out.",
-                     "I tell {you:name} they are lying to my face, and that they will answer for it."));
+                "You are lying to my face. Now you will answer for it.",
+                "I tell {you:name} they are lying to my face, and that they will answer for it.");
 
             var lieDetailResult = End("lie_detail", 3,
                 "You have an answer for it, and it holds together. I will say no more.",
                 "I allow that {you:name} has an answer for it that holds together, and let it be.",
-                Fail("Too neat. Nobody answers that quickly unless they prepared it. Out.",
-                     "That story is too well made. You had it ready. Face me."),
-                Fail("I tell {you:name} nobody answers that quickly unless they prepared it.",
-                     "I tell {you:name} the story is too well made, and to face me."));
+                "That story is too well made. You had it ready. Face me.",
+                "I tell {you:name} the story is too well made, and to face me.");
 
             var lieConfidentResult = End("lie_confident", 3,
                 "You are either honest or the coolest liar I have met. I will take the first. Go.",
                 "I tell {you:name} they are either honest or the coolest liar I have met, and that I will take the first.",
-                Fail("Cool as you like. I know what I saw. Get out of my sight.",
-                     "You stand there without shame. Then stand and fight."),
-                Fail("I tell {you:name} I know what I saw.",
-                     "I tell {you:name} they stand there without shame, and to stand and fight."));
+                "You stand there without shame. Then stand and fight.",
+                "I tell {you:name} they stand there without shame, and to stand and fight.");
 
             var lieMistakenResult = End("lie_mistaken", 3,
                 "It was dim, I will grant you that. Perhaps I misread it. Go on.",
                 "I grant {you:name} that it was dim and I may have misread it.",
-                Fail("I know my own eyes. Out.",
-                     "Do not tell me what I saw. Draw."),
-                Fail("I tell {you:name} I know my own eyes.",
-                     "I tell {you:name} not to tell me what I saw, and to draw."));
+                "Do not tell me what I saw. Draw.",
+                "I tell {you:name} not to tell me what I saw, and to draw.");
 
             var lieSomeoneElseResult = End("lie_someone_else", 3,
                 "Someone else, then. I will be watching either way.",
                 "I allow that it was someone else, and tell {you:name} I will be watching either way.",
-                Fail("There was nobody else. There never is. Out.",
-                     "You would blame a stranger to save yourself. Then answer to me."),
-                Fail("I tell {you:name} there was nobody else and there never is.",
-                     "I tell {you:name} they would blame a stranger to save themselves, and to answer to me."));
+                "You would blame a stranger to save yourself. Then answer to me.",
+                "I tell {you:name} they would blame a stranger to save themselves, and to answer to me.");
 
             var lieDetails = new NpcLineNode(
                 nodeId:          "lie_details",
@@ -315,26 +288,20 @@ public static class CaughtRedHandedTreeFactory
             var deflectResult = End("deflect_result", 2,
                 "There have been others about, that is true enough. Go on, but I am watching.",
                 "I allow that there have been others about, and tell {you:name} I am watching.",
-                Fail("Convenient. There is always someone else. Get out.",
-                     "You would point anywhere but at yourself. Then we will settle it with weapons."),
-                Fail("I tell {you:name} there is always someone else, and to get out.",
-                     "I tell {you:name} they would point anywhere but at themselves, and that we settle it with weapons."));
+                "You would point anywhere but at yourself. Then we will settle it with weapons.",
+                "I tell {you:name} they would point anywhere but at themselves, and that we settle it with weapons.");
 
             var deflectSentResult = End("deflect_sent", 3,
                 "Sent, were you. Then it is whoever sent you I want, not you. Go, and think about who you work for.",
                 "I tell {you:name} it is whoever sent them I want, and to think about who they work for.",
-                Fail("Sent or not, it was your hands. Out.",
-                     "Then I will start with the one standing in front of me. Draw."),
-                Fail("I tell {you:name} that sent or not it was their hands.",
-                     "I tell {you:name} I will start with the one in front of me, and to draw."));
+                "Then I will start with the one standing in front of me. Draw.",
+                "I tell {you:name} I will start with the one in front of me, and to draw.");
 
             var deflectPermissionResult = End("deflect_permission", 3,
                 "You thought you had leave. That is a fool's mistake, not a thief's. Go, and ask next time.",
                 "I tell {you:name} that is a fool's mistake and not a thief's, and to ask next time.",
-                Fail("Nobody gave you leave, and you knew it. Out.",
-                     "Do not insult me with that. You will answer for it properly."),
-                Fail("I tell {you:name} nobody gave them leave and they knew it.",
-                     "I tell {you:name} not to insult me, and that they will answer for it properly."));
+                "Do not insult me with that. You will answer for it properly.",
+                "I tell {you:name} not to insult me, and that they will answer for it properly.");
 
             var deflectExplain = new NpcLineNode(
                 nodeId:          "deflect_explain",
@@ -369,10 +336,8 @@ public static class CaughtRedHandedTreeFactory
                     End("deflect_admit", 2,
                         "You caught yourself out before I had to. That is worth something. Go.",
                         "I tell {you:name} that catching themselves out before I had to is worth something.",
-                        Fail("Yes, it was. Out with you.",
-                             "You admit it and expect that to save you. Stand and answer."),
-                        Fail("I agree that it was them, and tell {you:name} to get out.",
-                             "I tell {you:name} that admitting it will not save them, and to stand and answer."))));
+                        "You admit it and expect that to save you. Stand and answer.",
+                        "I tell {you:name} that admitting it will not save them, and to stand and answer.")));
 
             // ══════════════════════════════════════════════════════════════
             //  D — provoke them (every end forced to failure)
@@ -522,20 +487,5 @@ public static class CaughtRedHandedTreeFactory
             CriminalAffinityType.Murderer => "attacking somebody",
             _                             => "doing what you did",
         };
-    }
-
-    // ── Inner outcome: clear crime ────────────────────────────────────────────
-
-    private sealed class ClearCrimeOutcome : IDialogueOutcome
-    {
-        public string Description => "crime record cleared (apology accepted)";
-
-        public Cathedral.Game.Narrative.OutcomeReport? Apply(NpcEntity npc, string partyMemberId)
-        {
-            npc.AffinityTable.ClearCrime(partyMemberId);
-            return DialogueOutcomeReports.Relation(
-                $"{npc.DisplayName} lets the matter drop",
-                Cathedral.Game.Narrative.OutcomeReportSeverity.Positive);
-        }
     }
 }

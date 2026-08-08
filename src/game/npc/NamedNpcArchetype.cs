@@ -99,12 +99,6 @@ public abstract class NamedNpcArchetype : NpcArchetype
     public virtual Narrative.TimePeriod SleepPeriod => Narrative.TimePeriod.Night;
 
     /// <summary>
-    /// Whether spawned NPCs confront criminals bravely (demand fight) rather than submitting.
-    /// Override to true for guards, owners, or aggressive archetypes.
-    /// </summary>
-    public virtual bool IsBrave => false;
-
-    /// <summary>
     /// Relative authority level (0 = civilian, higher = more official enforcement power).
     /// Override in guard/lawkeeper archetypes.
     /// </summary>
@@ -113,7 +107,7 @@ public abstract class NamedNpcArchetype : NpcArchetype
     /// <summary>
     /// Optional combat-personality override consulted by the fight builder. When non-null
     /// this is used directly as the fighter's <c>AiPersonality</c>; when null the personality
-    /// is derived from <see cref="IsBrave"/> and <see cref="AuthorityLevel"/>. Override on
+    /// is derived from <see cref="AuthorityLevel"/>. Override on
     /// archetypes that want to hand-tune their feel (wolf vs bear vs brigand).
     /// </summary>
     public virtual Cathedral.Fight.AiPersonality? AiPersonalityOverride => null;
@@ -202,7 +196,6 @@ public abstract class NamedNpcArchetype : NpcArchetype
             text,
             canSpeak:              CanSpeak,
             affinityTable:         affinityTable,
-            isBrave:               IsBrave,
             authorityLevel:        AuthorityLevel,
             ownedSectionIds:       DefaultOwnedSectionIds);
     }

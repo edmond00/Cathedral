@@ -43,8 +43,8 @@ public class ActionEvaluationResult
 
     /// <summary>
     /// Witness context computed before the pipeline. Carried forward so
-    /// <see cref="ActionExecutionController.ExecuteDiceRollAsync"/> can re-ask
-    /// the witness detection question on failure without needing the scene again.
+    /// <see cref="ActionExecutionController.ExecuteDiceRollAsync"/> can resolve witness detection on
+    /// failure without needing the scene again.
     /// </summary>
     public Cathedral.Game.Scene.WitnessContext WitnessContext { get; set; }
         = Cathedral.Game.Scene.WitnessContext.None;
@@ -102,10 +102,8 @@ public class ActionExecutionController
     /// PHASE 1: Evaluate action plausibility and difficulty.
     /// Shows normal loading screen during this phase.
     /// Returns evaluation result with plausibility status and difficulty score.
-    /// When <paramref name="witnessContext"/> is non-None, also asks the LLM
-    /// how likely the witness is to detect the action (stored for step 4b re-ask on failure).
-    /// When <paramref name="threatContext"/> is non-None and the action cannot be used under
-    /// threat, asks the LLM whether the enemy gets an opportunity (informational).
+    /// <paramref name="witnessContext"/> and <paramref name="threatContext"/> are carried through
+    /// untouched, to be read on the failure path by <see cref="ResolveFailureConsequences"/>.
     /// </summary>
     // Not async: every LLM step formerly here (plausibility, difficulty, witness/threat) has moved
     // out, so evaluation is now pure arithmetic. Kept returning Task so callers still await it.
@@ -203,11 +201,7 @@ public class ActionExecutionController
 
         // Determine actual outcome and (on failure) its consequences.
         OutcomeBase actualOutcome;
-        WoundInstance? failureWound = null;
-        bool witnessDetected = false;
-        Cathedral.Game.Npc.NpcEntity? detectedWitness = null;
-        bool fightTriggered = false;
-        Cathedral.Game.Npc.NpcEntity? fightEnemy = null;
+        var consequences = default(FailureConsequences);
 
         if (succeeded)
         {
@@ -215,14 +209,10 @@ public class ActionExecutionController
         }
         else
         {
-            var (wound, wDetected, wWitness, fTriggered, fEnemy) = ResolveFailureConsequences(evalResult);
-            failureWound    = wound;
-            witnessDetected = wDetected;
-            detectedWitness = wWitness;
-            fightTriggered  = fTriggered;
-            fightEnemy      = fEnemy;
-            actualOutcome   = new WoundOutcome(failureWound);
+            consequences  = ResolveFailureConsequences(evalResult);
+            actualOutcome = new WoundOutcome(consequences.Wound);
         }
+        var failureWound = consequences.Wound;
 
         // Wound-infliction report (failure only). Verb-specific reports are built later in
         // NarrativeController via SuccessReports()/FailureReports().
@@ -283,10 +273,9 @@ public class ActionExecutionController
             Narration = narration,
             FailureWound = failureWound,
             IsPlausibilityFailure = false,
-            WitnessDetected = witnessDetected,
-            DetectedWitness = detectedWitness,
-            FightTriggered = fightTriggered,
-            FightEnemy = fightEnemy,
+            CaughtByWitness = consequences.CaughtBy,
+            FightWithEnemy  = consequences.FightWith,
+            NpcDrawnIn      = consequences.DrawnIn,
         };
     }
 
@@ -351,8 +340,8 @@ public class ActionExecutionController
         }
         else
         {
-            var (failureWound, witnessDetected, detectedWitness, fightTriggered, fightEnemy) =
-                ResolveFailureConsequences(evalResult);
+            var consequences = ResolveFailureConsequences(evalResult);
+            var failureWound = consequences.Wound;
             OutcomeBase failureOutcome = new WoundOutcome(failureWound);
 
             var llmDecidedReports = new List<OutcomeReport>();
@@ -383,10 +372,9 @@ public class ActionExecutionController
                 Narration = narration,
                 FailureWound = failureWound,
                 IsPlausibilityFailure = false,
-                WitnessDetected = witnessDetected,
-                DetectedWitness = detectedWitness,
-                FightTriggered = fightTriggered,
-                FightEnemy = fightEnemy,
+                CaughtByWitness = consequences.CaughtBy,
+                FightWithEnemy  = consequences.FightWith,
+                NpcDrawnIn      = consequences.DrawnIn,
                 ItemConsumed = itemConsumed,
             };
         }
@@ -429,8 +417,8 @@ public class ActionExecutionController
         }
 
         // ── Failure branch data: sampled wound + deterministic witness/threat consequences ──
-        var (failureWound, witnessDetected, detectedWitness, fightTriggered, fightEnemy) =
-            ResolveFailureConsequences(evalResult);
+        var consequences = ResolveFailureConsequences(evalResult);
+        var failureWound = consequences.Wound;
         OutcomeBase failureOutcome = new WoundOutcome(failureWound);
 
         var llmDecidedReports = new List<OutcomeReport>();
@@ -478,10 +466,9 @@ public class ActionExecutionController
             Narration = failureNarration,
             FailureWound = failureWound,
             IsPlausibilityFailure = false,
-            WitnessDetected = witnessDetected,
-            DetectedWitness = detectedWitness,
-            FightTriggered = fightTriggered,
-            FightEnemy = fightEnemy,
+            CaughtByWitness = consequences.CaughtBy,
+            FightWithEnemy  = consequences.FightWith,
+            NpcDrawnIn      = consequences.DrawnIn,
             ItemConsumed = itemConsumed,
         };
 
@@ -520,18 +507,45 @@ public class ActionExecutionController
     }
 
     /// <summary>
-    /// Resolves the consequences of a failed action deterministically (no LLM):
-    ///   • a sampled physical penalty from the verb's <see cref="Verb.FailurePenalties"/> (wound or none);
-    ///   • whether a witness catches the failed illegal action (effective-Audio proximity);
-    ///   • whether a nearby enemy starts a fight (any effective proximity).
-    /// Discreteness of the action modus mentis downgrades witness/threat proximity one step
-    /// (see <see cref="Cathedral.Game.Scene.ProximityModel"/>). Effective-Visual cases are already
-    /// blocked by the coded rules before execution, so only Audio (and, for combat verbs, Visual
-    /// threat) reach here.
+    /// What a failed action costs, decided deterministically (no LLM). At most one of the three
+    /// social consequences can be set: they are three rungs of one ladder, not a set of flags.
     /// </summary>
-    private (WoundInstance? wound, bool witnessDetected, Cathedral.Game.Npc.NpcEntity? detectedWitness,
-             bool fightTriggered, Cathedral.Game.Npc.NpcEntity? fightEnemy)
-        ResolveFailureConsequences(ActionEvaluationResult evalResult)
+    /// <param name="Wound">Sampled from the verb's <see cref="Verb.FailurePenalties"/>; often none.</param>
+    /// <param name="CaughtBy">A witness who <b>saw</b> it: the caught-red-handed confrontation.</param>
+    /// <param name="FightWith">An enemy who <b>saw</b> it: the fight, on their initiative.</param>
+    /// <param name="DrawnIn">
+    /// Somebody a room away who <b>heard</b> it and is coming to look — witness or enemy alike. They
+    /// move into the area and open the next observation phase; nothing else happens yet, which is
+    /// what leaves room to run.
+    /// </param>
+    private readonly record struct FailureConsequences(
+        WoundInstance?                  Wound,
+        Cathedral.Game.Npc.NpcEntity?   CaughtBy,
+        Cathedral.Game.Npc.NpcEntity?   FightWith,
+        Cathedral.Game.Npc.NpcEntity?   DrawnIn);
+
+    /// <summary>
+    /// Resolves what a failed action costs. The physical penalty is a verb-authored roll; the social
+    /// consequence is read off <b>effective</b> proximity
+    /// (<see cref="Cathedral.Game.Scene.ProximityModel"/>), which is where the acting modus mentis's
+    /// discreteness applies:
+    ///
+    /// <list type="bullet">
+    /// <item>effective <b>Visual</b> — they are in the room and watched it go wrong. A witness
+    ///   confronts you; an enemy simply attacks. Only a discrete modus mentis (or a combat verb) can
+    ///   reach this at all, since the coded rules stop anyone else from trying in front of somebody.</item>
+    /// <item>effective <b>Audio</b> — they heard it from the next room and come to look. No
+    ///   confrontation yet: they arrive, the next observation phase opens on them, and from then on
+    ///   they are a Visual presence and the door is no longer a free exit.</item>
+    /// <item>effective <b>None</b> — nobody is any the wiser. This is what discreteness buys at a
+    ///   distance: a quiet failure a room away is not heard at all.</item>
+    /// </list>
+    ///
+    /// <para>The enemy and witness ladders are deliberately identical in shape and differ only in what
+    /// the top rung is — a fight against somebody who already wants one, a conversation against
+    /// somebody who has just discovered they might.</para>
+    /// </summary>
+    private FailureConsequences ResolveFailureConsequences(ActionEvaluationResult evalResult)
     {
         var action = evalResult.Action;
         bool discrete = evalResult.ActionModusMentis?.ActsDiscretely ?? false;
@@ -546,29 +560,33 @@ public class ActionExecutionController
             ? $"💥 [FAILURE PENALTY] {wound.WoundName} ({WoundLocationLabel(wound)}, {wound.Handicap})"
             : "💥 [FAILURE PENALTY] no injury");
 
-        // Witness (illegal action): effective-Audio + failure ⇒ caught red-handed.
-        bool witnessDetected = false;
-        Cathedral.Game.Npc.NpcEntity? detectedWitness = null;
+        // An enemy in the room outranks a witness in the room: the quarrel is already declared, and
+        // being asked to explain yourself by somebody drawing steel is not a conversation.
+        var effThreat  = Cathedral.Game.Scene.ProximityModel.Effective(evalResult.ThreatContext.Level, discrete);
         var effWitness = Cathedral.Game.Scene.ProximityModel.Effective(evalResult.WitnessContext.Type, discrete);
-        if (effWitness == Cathedral.Game.Scene.WitnessType.Audio)
+
+        if (effThreat == Cathedral.Game.Scene.ThreatLevel.Visual)
         {
-            witnessDetected = true;
-            detectedWitness = evalResult.WitnessContext.Witness;
-            Console.WriteLine($"👁 [WITNESS] failed within earshot — caught red-handed by {detectedWitness?.DisplayName ?? "someone"}.");
+            var enemy = evalResult.ThreatContext.Threat;
+            Console.WriteLine($"⚔ [THREAT] failed in front of the enemy — fight with {enemy?.DisplayName ?? "them"}.");
+            return new FailureConsequences(wound, null, enemy, null);
         }
 
-        // Threat (enemy): any effective proximity + failure ⇒ fight (enemy initiative set by caller).
-        bool fightTriggered = false;
-        Cathedral.Game.Npc.NpcEntity? fightEnemy = null;
-        var effThreat = Cathedral.Game.Scene.ProximityModel.Effective(evalResult.ThreatContext.Level, discrete);
-        if (effThreat != Cathedral.Game.Scene.ThreatLevel.None)
+        if (effWitness == Cathedral.Game.Scene.WitnessType.Visual)
         {
-            fightTriggered = true;
-            fightEnemy = evalResult.ThreatContext.Threat;
-            Console.WriteLine($"⚔ [THREAT] failed under threat — fight triggered with {fightEnemy?.DisplayName ?? "the enemy"}.");
+            var witness = evalResult.WitnessContext.Witness;
+            Console.WriteLine($"👁 [WITNESS] failed in plain sight — caught red-handed by {witness?.DisplayName ?? "someone"}.");
+            return new FailureConsequences(wound, witness, null, null);
         }
 
-        return (wound, witnessDetected, detectedWitness, fightTriggered, fightEnemy);
+        // Heard, not seen. Whoever is nearest comes to look; the enemy first, for the same reason.
+        var heardBy = effThreat  == Cathedral.Game.Scene.ThreatLevel.Audio  ? evalResult.ThreatContext.Threat
+                    : effWitness == Cathedral.Game.Scene.WitnessType.Audio  ? evalResult.WitnessContext.Witness
+                    : null;
+        if (heardBy != null)
+            Console.WriteLine($"👂 [EARSHOT] failed within earshot — {heardBy.DisplayName} comes to look.");
+
+        return new FailureConsequences(wound, null, null, heardBy);
     }
 
     /// <summary>Returns a readable location label for a wound, using WildcardZoneHint as fallback.</summary>
@@ -675,24 +693,19 @@ public class ActionExecutionResult
     public bool ItemConsumed { get; set; }
 
     /// <summary>
-    /// True when a witness detected the failed action (step 4b).
-    /// Always false on success — the new design never triggers witness confrontation on success.
+    /// The witness who <b>saw</b> a failed crime, if any — the caught-red-handed confrontation.
+    /// Null on success: nothing is ever confronted for succeeding.
     /// </summary>
-    public bool WitnessDetected { get; set; }
+    public Cathedral.Game.Npc.NpcEntity? CaughtByWitness { get; set; }
 
     /// <summary>
-    /// The NPC who detected the crime. Non-null only when <see cref="WitnessDetected"/> is true.
+    /// The enemy who <b>saw</b> a failed action, if any — the fight, on their initiative.
     /// </summary>
-    public Cathedral.Game.Npc.NpcEntity? DetectedWitness { get; set; }
+    public Cathedral.Game.Npc.NpcEntity? FightWithEnemy { get; set; }
 
     /// <summary>
-    /// True when a nearby enemy seized an opportunity to attack on the failure path (step 4c).
-    /// Always false on success.
+    /// Somebody a room away who <b>heard</b> a failed action and is coming to look. They move into
+    /// the area and open the next observation phase; the confrontation, if any, comes later.
     /// </summary>
-    public bool FightTriggered { get; set; }
-
-    /// <summary>
-    /// The enemy who triggered the fight. Non-null only when <see cref="FightTriggered"/> is true.
-    /// </summary>
-    public Cathedral.Game.Npc.NpcEntity? FightEnemy { get; set; }
+    public Cathedral.Game.Npc.NpcEntity? NpcDrawnIn { get; set; }
 }

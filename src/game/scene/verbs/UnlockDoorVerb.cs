@@ -22,8 +22,14 @@ public class UnlockDoorVerb : Verb
     /// <summary>What a success teaches: forcing a lock teaches locks.</summary>
     public override string? GrantedModusMentisId(Element? target) => "lockpicking";
 
-    /// <summary>Forcing open a locked door without a key is illegal.</summary>
-    public override bool IsLegal => false;
+    /// <summary>
+    /// Forcing a lock is a crime when the door leads somewhere private — which is the question, not
+    /// where you are standing while you pick it. A house door is listed in the street's points of
+    /// interest as well as the room's, so <c>pov.Where</c> alone would call a burglary from the
+    /// street lawful. A public storehouse's lock is nobody's privacy.
+    /// </summary>
+    protected override bool IsIllegalFor(Scene scene, PoV pov, Element? target, PartyMember? actor)
+        => PrivacyModel.ReachesPrivateArea(scene, target);
 
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {

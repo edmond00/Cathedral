@@ -13,7 +13,7 @@ namespace Cathedral.Game.Scene.Verbs;
 ///
 /// On execution: opens the reconcile dialogue tree.
 /// Success: clears enemy flag + sets Suspicious affinity.
-/// Failure: stays enemy (and may demand a fight if IsBrave).
+/// Failure: stays enemy, and may demand a fight.
 /// </summary>
 public class ReconcileVerb : DialogueVerb
 {
@@ -21,9 +21,6 @@ public class ReconcileVerb : DialogueVerb
     public override string DisplayName       => "Reconcile";
     public override int    BaseDifficulty    => 1;   // the action only meets the NPC; the dialogue carries the real stakes
     protected override string DialogueTreeId => "reconcile";
-
-    /// <summary>Reconciliation is a legal, non-violent action.</summary>
-    public override bool IsLegal => true;
 
     /// <summary>Can be attempted even when the enemy is right there.</summary>
     public override bool CanBeUsedUnderThreat => true;

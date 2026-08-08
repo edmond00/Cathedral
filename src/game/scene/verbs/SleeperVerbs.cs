@@ -22,7 +22,12 @@ public class MurderVerb : Verb
     public override string DisplayName    => "Murder";
     public override int    BaseDifficulty => 2;
 
-    public override bool IsLegal => false;
+    /// <summary>
+    /// Unconditional, unlike <c>slay</c> and <c>attack</c> — which stop being crimes against somebody
+    /// who has already declared for violence. A sleeper has declared for nothing: whatever was between
+    /// you, they cannot answer it from where they lie, and that is the entire content of the verb.
+    /// </summary>
+    protected override bool IsIllegalFor(Scene scene, PoV pov, Element? target, PartyMember? actor) => true;
 
     /// <summary>What a success teaches: doing lethal harm to somebody who could not answer it.</summary>
     public override string? GrantedModusMentisId(Element? target) => "foul_play";

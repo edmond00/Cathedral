@@ -18,16 +18,16 @@ public class IllegalActionVisualWitnessRule : IActionRule
 {
     public ActionRuleResult Check(ActionRuleContext ctx)
     {
-        if (!IsIllegalAction(ctx)) return ActionRuleResult.Pass();
+        if (!ctx.IsIllegalAction) return ActionRuleResult.Pass();
 
-        bool discrete = ctx.ActionModusMentis?.ActsDiscretely ?? false;
-        if (ProximityModel.Effective(ctx.WitnessContext.Type, discrete) != WitnessType.Visual)
-            return ActionRuleResult.Pass();
+        // Raw proximity, not effective: this is the "may I act at all?" question, and a discrete
+        // modus mentis may always attempt — that permission is what discreteness buys. What it does
+        // NOT buy is safety, since failing in front of somebody still costs the full price
+        // (see ProximityModel). Only a non-discrete skill is stopped from trying.
+        if (ctx.WitnessContext.Type != WitnessType.Visual) return ActionRuleResult.Pass();
+        if (ctx.ActionModusMentis?.ActsDiscretely == true) return ActionRuleResult.Pass();
 
         var witnessName = ctx.WitnessContext.Witness?.DisplayName ?? "someone";
         return ActionRuleResult.Fail($"{witnessName} is right here — I would be caught red-handed.");
     }
-
-    private static bool IsIllegalAction(ActionRuleContext ctx)
-        => !ctx.Action.Verb.IsLegal || ctx.PoV?.Where.IsPrivate == true;
 }

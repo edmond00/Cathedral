@@ -255,6 +255,124 @@ the only content the `Spot`/`PoV.InSpot` axis ever had — no factory built one.
 Nothing in `docs/` ever planned other spot content; the `# spots` sections in the location design
 docs use the word in its pre-`c3fef5a` sense, meaning what is now a `PointOfInterest`.
 
+### Crime: what makes an act illegal, and what it costs
+
+**Legality is contextual, and `Verb.IsIllegal(scene, pov, target, actor)` is the only place it is
+decided.** Sealed, like `IsPossible` and for the same reason — the setting test (standing in a private
+area makes *anything* trespass) applies to every verb at once, and three call sites could each forget
+it. The verb's own half is `protected IsIllegalFor`. What that buys:
+
+- `attack` / `slay` against somebody who **already counts you an enemy** is not a crime — the quarrel
+  was declared before the blow. `murder` (on a sleeper) stays unconditional: a sleeper has declared
+  nothing;
+- `unlock_door`, `slip_into` and `break` ask `PrivacyModel.ReachesPrivateArea(scene, target)`, **not
+  `pov.Where`**. A house door is listed in the street's PoIs *and* the room's, so reading the actor's
+  own area would call a burglary from the street lawful. A public storehouse's lock is nobody's
+  privacy.
+
+`PrivacyModel` answers "does this object reach into somebody's private space?" — from a connector's
+own two endpoints where it has them, else from whichever areas list the PoI.
+
+**Two rule families, and the split matters.** `ActionRulesChecker` (`IActionRule`) judges an action
+already chosen: it *rejects*, the player is told why in the modus mentis's voice, and it costs a
+noetic point. `ChoiceRulesChecker` (`IGoalChoiceRule`, `IWillingnessRule`) narrows what is *offered*:
+it *withholds*, silently, and nothing is spent because nothing was refused. Character belongs in the
+choice rules ("that never occurred to me"); circumstance belongs in the action rules ("that man is
+watching"). Both are ordered lists of tiny classes — a new rule is one file and one line.
+
+Morality now has four distinct behaviours, two per side of the chain:
+
+| | thinking MM | action MM |
+|---|---|---|
+| **High** | crimes are dropped from its goal list (`HighMoralityAvoidsCrimeRule`) — filtering everything away is a legitimate result and reads as ignore | refuses outright (`IllegalActionHighMoralityRule`) |
+| **Low** | if any goal on offer is a crime, **only** the crimes are offered (`LowMoralityPrefersCrimeRule`) | cannot refuse — the decline option is withheld, leaving eager/willing/reluctant (`LowMoralityNeverRefusesCrimeRule`) |
+
+Both sides are needed because the goal and the means are two separate LLM decisions: a scrupulous
+skill can still be picked to carry out a goal some other modus mentis chose. Note `MoralLevel` is read
+**only** off these two — R13 makes a non-Medium value on anything else fatal.
+
+**Getting caught is deterministic, and it is two separate questions.** Keeping them apart is what
+makes discreteness mean something:
+
+1. **May I act at all?** Asked by the coded rules against **raw** proximity. Somebody in the room
+   blocks a non-discrete MM outright. A **discrete** MM may always attempt — that permission is the
+   whole of what `ActsDiscretely` buys at close range (and `CanBeUsedUnderThreat` verbs are likewise
+   never blocked).
+2. **What does failing cost?** Asked against **effective** proximity — `ProximityModel`, where
+   discreteness applies. It silences you *through a wall*, never *in the same room*: `Audio → None`,
+   `Visual → Visual`.
+
+Three rungs of one ladder, identical for witnesses and enemies except in what the top rung is:
+
+| effective | witness | enemy |
+|---|---|---|
+| **Visual** | caught red-handed → the tree | they attack, on their initiative |
+| **Audio** | **they come to look** — `Scene.DrawNpcTo` moves them into your area | same |
+| **None** | nothing | nothing |
+
+**The Audio rung is an approach, not a verdict.** Nothing is confronted yet; what it costs is that
+they are now standing in the room, which closes the free exit and makes the *next* slip a caught one.
+That needs real state, because position is resolved from `NpcSchedules` and
+`SceneNpcPlacement.PlaceForPeriod` re-derives every NPC observation object from it on **every**
+segment — so somebody moved any other way is put straight back one phase later, exactly as a tamed
+beast's stale observation object is. `Scene.DisplacedNpcs` is consulted inside `GetNpcsAt` and
+`GetAreaOf` instead: one override in one lookup, and the placement, the verb gates, both selectors and
+the exit button follow without knowing it exists. A displaced NPC also reads as going nowhere all day,
+so `stalk` correctly declines to follow them. One visit's business — what outlasts it is whatever the
+confrontation turned into.
+
+An arrival opens the next observation phase, **ahead of the corpse opener** (both are one-shot events,
+but an arrival is the newest and has just changed what is safe to do), and only if they are still in
+the player's area — announcing somebody who came to a room nobody is in reads as materialising.
+
+A catch opens `CaughtRedHandedTreeFactory`'s tree, and **its failure outcome is always a fight** — the
+witness's nerve used to be a per-archetype `IsBrave` flag whose timid branch wrote the same affinity
+level the success branch did, so against a third of the game losing that conversation cost exactly
+nothing. `IsBrave` is gone; `AuthorityLevel > 0` now carries the two things it also did (who joins a
+fight as an ally, and the fight AI's aggression).
+
+The consequence **lasts**, because `NpcEnemies` persists (see "What survives a visit"). Walking out
+of the fight ends the fight, not the enmity: come back and they are still a Visual threat, the footer
+button is RUNAWAY, and any failed action under threat starts it again.
+
+**Only a Visual presence gates LEAVE.** `ComputeExitContext` tests `== Visual` on both branches, so
+neither the Audio tier nor discreteness touches the footer button — the exit is a property of who is
+in the room with you. The witness branch additionally needs a *reason*: either the area is private, or
+**they came in here after you** (`DisplacedNpcs`). Without that second condition the three crimes that
+happen in the open — `pickpocket`, `stalk`, `attack` — would draw a witness across a public square who
+then watched you stroll off.
+
+There is deliberately **no criminal record**. One existed — written, escalated and cleared, with not a
+single reader anywhere — and `CriminalAffinityType` survives only to word the confrontation.
+
+**Earshot is not the area graph.** `SceneAdjacency.WithinEarshot` is the shared definition used by
+both `WitnessSelector` and `ThreatSelector` (which each had a private copy of it). It walks graph
+edges in both directions *and* the far side of every connector — because a gate connector carries no
+`AreaGraph` edge by design, and reading the graph alone made two rooms joined by a door non-adjacent.
+That erased the whole Audio tier indoors: of 3618 sampled private-area situations, **every** witness
+was Visual (blocked outright) and **not one** was Audio, so the confrontation could not happen inside
+a building at all. A door is a gate, not a wall. `--crime-audit` prints the tier distribution and
+fails if Audio is ever empty again.
+
+### Checking the crime system
+
+```bash
+dotnet run -- --crime-audit
+```
+
+Assertion-shaped rather than statistical, because these are rules with right answers. It checks
+contextual legality against real built scenes (a verb × context truth table), the choice rules at each
+morality, the two-question discreteness table (may I act × what failing costs), the witness-tier
+distribution, the approach (a drawn-in NPC is really there, at every period, and survives the
+placement pass), and that enmity survives both a scene rebuild and a `ToJson`/`FromJson` round trip.
+Run it after touching a verb's legality, a choice rule, `ProximityModel`, `PrivacyModel`,
+`SceneAdjacency`, `Scene.DisplacedNpcs` or `LocationInstanceState`.
+
+`cli/crime.cli` is the live counterpart — it drives a full illegal chain from inside a bedroom — but
+read its header first: `--playground` cannot exercise the willingness rules (it answers the persona-fit
+question without asking it), and which witness tier fires is seed-dependent. The audit is what covers
+those.
+
 ### Recruiting: taming a beast, and the two-step it belongs to
 
 Both routes into the party — `tame` for a beast, the `propose_to_join` dialogue for a person — end in
@@ -302,9 +420,16 @@ its fields. Four rules govern anything added to it:
   it is a class and not a record: a `with`-copy would silently detach a store the scene still writes;
 - **wired in one place** — a new fact is one property plus one line in `AttachTo`.
 
-Three facts live there today: `NpcAffinity`, `ItemDepletions`, and `DepartedNpcs` — everyone this
-location has lost for good. Corpses, wounds dealt and forced doors are deliberately *not* there: they
-are one visit's business.
+Four facts live there today: `NpcAffinity`, `NpcEnemies`, `ItemDepletions`, and `DepartedNpcs` —
+everyone this location has lost for good. Corpses, wounds dealt and forced doors are deliberately
+*not* there: they are one visit's business.
+
+`NpcEnemies` is separate from `NpcAffinity` because enmity is not a point on the affinity ladder —
+an enemy has an affinity level as well, and the two move independently (the reconcile tree clears the
+flag and leaves you `Suspicious`). Both are handed to the same `AffinityTable` by `AffinityFor`, which
+shares *both* backing stores. Sharing only one is what made running away the dominant answer to every
+fight: the scene was rebuilt on arrival, the grudge was not rebuilt with it, and the man who drew
+steel on you last visit greeted you as a mild acquaintance.
 
 **Every departure goes through `Scene.RemoveNpcFromPlay`** — the slay/murder verbs, a won fight,
 `TameVerb`'s `RecruitedOutcome` and the `propose_to_join` tree. It does the three writes that make
@@ -508,10 +633,10 @@ Run it after touching `NpcContentGenerator`, any archetype's generation block, o
 dotnet run -- --mm-audit
 ```
 
-The hard rules (R1–R10, listed on `ModusMentisRuleValidator`) are **fatal**: `ValidateOrThrow` runs
+The hard rules (R1–R13, listed on `ModusMentisRuleValidator`) are **fatal**: `ValidateOrThrow` runs
 them at startup, so a rule-breaking MM can never reach the game — the audit is how you read what
 broke without launching. They cover function combinations, memory-type agreement, fighting-skill
-cross-references, and the four anatomy rules that are easiest to get wrong:
+cross-references, and the rules that are easiest to get wrong:
 
 - **R5** — an MM's `Organs` is **exactly 1 body region XOR exactly 2 distinct organs**, canonical ids
   only, never a mix. There is no "primary" entry: every one contributes to the level cap through its
@@ -523,7 +648,11 @@ cross-references, and the four anatomy rules that are easiest to get wrong:
   The counterweight to `RequiredCapabilities`: barring a beast from speech and letters is right, but
   done freely it leaves a wolf's heart with nothing to spend itself on;
 - **R12** — every MM is learnable by at least one anatomy. Five were not when this rule was written —
-  `fangs` paired with `teeths`, `claws` with `arms` — which reads perfectly well and reaches nobody.
+  `fangs` paired with `teeths`, `claws` with `arms` — which reads perfectly well and reaches nobody;
+- **R13** — a MM with neither `Thinking` nor `Action` is `MoralLevel.Medium`. Morality is only ever
+  read off the thinking MM (which crimes it is offered) or the action MM (whether it will do one), so
+  a principled *observation* MM is a claim nothing can honour: it reads as character in the memory
+  panel, skews the 20/60/20 target, and changes nothing in play. Six were like that.
 
 Then the soft targets, which only warn: the ~80/20 two-organ vs one-region split, the morality and
 memory-type distributions, ~10% discrete, and per-organ/region coverage (R6 makes fewer than 5

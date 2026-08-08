@@ -19,7 +19,6 @@ public class WeepingModusMentis : ModusMentis
     /// <summary>Words with a person, not a voice in the air.</summary>
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
-    public override MoralLevel MoralLevel => MoralLevel.High;
 
     public override string PersonaTone     => "an open-faced mourner who weeps easily and is ashamed of none of it";
     public override string PersonaReminder  => "unashamed weeper";

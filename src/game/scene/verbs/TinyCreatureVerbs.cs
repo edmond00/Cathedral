@@ -92,8 +92,8 @@ public class CrushVerb : TinyCreatureVerb
     public override string DisplayName    => "Crush";
     public override int    BaseDifficulty => 1;
 
-    /// <summary>Killing something that could not have hurt you is not an accident of method.</summary>
-    public override bool IsLegal => true;
+    // Left legal deliberately: nobody prosecutes the death of a snail. Killing something that could
+    // not have hurt you is a matter for the persona, and `cruelty` is what it teaches.
 
     /// <summary>What a success teaches: doing harm because it was easy.</summary>
     public override string? GrantedModusMentisId(Element? target) => "cruelty";

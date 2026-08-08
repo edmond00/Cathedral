@@ -1,17 +1,33 @@
 namespace Cathedral.Game.Scene;
 
 /// <summary>
-/// The "discreteness downgrades proximity by one step" model shared by the coded action rules and
-/// the failure handler. A discrete modus mentis is one step harder to notice, so an observer's
-/// effective proximity drops one level: Visual → Audio, Audio → None. A non-discrete modus mentis
-/// keeps the raw level.
+/// What a discrete modus mentis buys, and what it does not. Shared by the coded action rules and the
+/// failure handler so witnesses (illegal actions) and threats (enemies) are judged identically.
 ///
-/// The effective level then decides behavior uniformly for witnesses (illegal actions) and threats
-/// (enemies):
-///   • effective Visual → the action is blocked outright by a coded rule (impossible);
-///   • effective Audio  → the action proceeds, but a failure triggers the consequence
-///                        (caught-red-handed confrontation for a witness, a fight for a threat);
-///   • effective None   → no effect.
+/// <para><b>Discreteness silences you through a wall, not in the same room.</b> Someone one room away
+/// is working from what they can hear, and quiet work gives them nothing: Audio drops to None. Someone
+/// standing in the room with you is working from what they can see, and no amount of quiet changes
+/// that: Visual stays Visual.</para>
+///
+/// <para>That is a change from the old one-step-downgrade rule, which turned a Visual watcher into an
+/// Audio one and so let a discreet skill fail in front of somebody and pay an Audio price for it.
+/// The two questions are now separate, and only the second one lives here:</para>
+///
+/// <list type="number">
+/// <item><b>May I act at all?</b> Asked by the coded rules against the <i>raw</i> proximity. A Visual
+///   watcher blocks a non-discrete modus mentis outright; a discrete one may always attempt. This is
+///   what discreteness is for — permission to try under observation.</item>
+/// <item><b>What does failing cost?</b> Asked here, against the <i>effective</i> proximity:
+///   <list type="bullet">
+///   <item>effective Visual → caught on the spot: the confrontation (witness) or the fight (threat);</item>
+///   <item>effective Audio → they heard something and come to look: the NPC moves into the area,
+///     becoming a Visual presence from the next observation phase;</item>
+///   <item>effective None → nothing happened that anyone can act on.</item>
+///   </list></item>
+/// </list>
+///
+/// <para>So a discreet skill is the only one that may work in front of an audience, and it pays the
+/// full price when it slips there; away from the room it is not heard at all.</para>
 /// </summary>
 public static class ProximityModel
 {
@@ -21,9 +37,8 @@ public static class ProximityModel
         if (!discrete) return raw;
         return raw switch
         {
-            WitnessType.Visual => WitnessType.Audio,
-            WitnessType.Audio  => WitnessType.None,
-            _                  => WitnessType.None,
+            WitnessType.Audio => WitnessType.None,   // not heard through a wall
+            _                 => raw,                // seen is seen
         };
     }
 
@@ -33,9 +48,8 @@ public static class ProximityModel
         if (!discrete) return raw;
         return raw switch
         {
-            ThreatLevel.Visual => ThreatLevel.Audio,
-            ThreatLevel.Audio  => ThreatLevel.None,
-            _                  => ThreatLevel.None,
+            ThreatLevel.Audio => ThreatLevel.None,
+            _                 => raw,
         };
     }
 }

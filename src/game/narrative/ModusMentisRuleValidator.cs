@@ -24,6 +24,7 @@ namespace Cathedral.Game.Narrative;
 ///   R10 every organ / region has exactly one correctly-scoped IMaxLevelContributionStat
 ///   R11 every organ / region of every anatomy has at least 3 MMs that anatomy can learn
 ///   R12 every MM is learnable by at least one anatomy
+///   R13 a MM with neither Thinking nor Action is MoralLevel.Medium — nothing reads its morality
 ///
 /// Soft targets (reported by the audit, never fatal):
 ///   ~80% two-organ MMs vs ~20% one-region MMs
@@ -134,6 +135,17 @@ public static class ModusMentisRuleValidator
                     violations.Add($"[R4] {mm.ModusMentisId}: Procedural memory requires the Action function");
                     break;
             }
+
+            // R13 — morality is only ever read off a thinking or an action modus mentis: the goal
+            // filter asks the thinker, the willingness filter and the impossibility rule ask the
+            // actor. A MM that does neither has nowhere for a MoralLevel to be consulted, so a
+            // non-Medium one is a claim the engine cannot honour — it reads as character in the
+            // memory panel, skews the audit's 20/60/20 distribution, and changes nothing in play.
+            if (!fns.Contains(ModusMentisFunction.Thinking)
+                && !fns.Contains(ModusMentisFunction.Action)
+                && mm.MoralLevel != MoralLevel.Medium)
+                violations.Add($"[R13] {mm.ModusMentisId}: is {mm.MoralLevel} morality but has neither "
+                               + "Thinking nor Action — nothing would ever read it (must be Medium)");
 
             // R5 — exactly 1 region XOR exactly 2 distinct organs, canonical ids only
             var organs = mm.Organs;

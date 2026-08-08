@@ -26,13 +26,19 @@ public readonly record struct AiPersonality(double Aggression, double Caution, d
     public static AiPersonality Mastermind => new(0.50, 0.55, 0.90);
 
     /// <summary>
-    /// Derive a sensible default from the NPC-level personality flags exposed by
-    /// <c>NpcEntity</c>: a brave NPC trends toward Aggressive, an authority figure toward Cunning.
+    /// Derive a sensible default from <c>NpcEntity.AuthorityLevel</c>: someone who answers for a
+    /// place stands their ground in it, and trends toward Aggressive and (higher up) Cunning.
+    ///
+    /// <para>Authority is the whole input. A separate "brave" flag used to supply the aggression
+    /// term, and it was carried by exactly the archetypes that answer for their own working
+    /// ground — the same set this reads, once the three wilderness masters were given the
+    /// authority they always behaved as though they had.</para>
     /// </summary>
-    public static AiPersonality FromArchetypeFlags(bool isBrave, int authorityLevel)
+    public static AiPersonality FromAuthority(int authorityLevel)
     {
-        double aggression = 0.40 + (isBrave ? 0.30 : 0.00);
-        double caution    = 0.40 - (isBrave ? 0.10 : 0.00) + (authorityLevel > 0 ? 0.05 : 0.00);
+        bool answersForThePlace = authorityLevel > 0;
+        double aggression = 0.40 + (answersForThePlace ? 0.30 : 0.00);
+        double caution    = 0.40 - (answersForThePlace ? 0.10 : 0.00) + (answersForThePlace ? 0.05 : 0.00);
         double cunning    = 0.40 + (authorityLevel >= 2 ? 0.25 : 0.10 * authorityLevel);
         return new AiPersonality(
             System.Math.Clamp(aggression, 0, 1),

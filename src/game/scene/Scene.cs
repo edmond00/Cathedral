@@ -105,6 +105,8 @@ public class Scene
         npc.Entity.IsAlive = false;
         Npcs.Remove(npc);
         NpcSchedules.Remove(npc.Id);
+        DisplacedNpcs.Remove(npc.Id);
+        PendingArrivalObservations.Remove(npc);
 
         if (!IsVirtualReplay)
             DepartedNpcs.Add(npc.Entity.PersistentId);
@@ -159,6 +161,16 @@ public class Scene
         foreach (var npc in Npcs)
         {
             if (!npc.IsAlive) continue;
+
+            // A displaced NPC has left their day behind and stands where they were drawn to, at every
+            // period, until the visit ends. Checked before the schedule so the override is total —
+            // they are here and they are not also still at the forge.
+            if (DisplacedNpcs.TryGetValue(npc.Id, out var displaced))
+            {
+                if (displaced.Id == area.Id) result.Add(npc);
+                continue;
+            }
+
             if (!NpcSchedules.TryGetValue(npc.Id, out var schedule)) continue;
 
             var scheduled = schedule.GetArea(period);
@@ -177,7 +189,9 @@ public class Scene
     /// they will be next, working out whether someone is asleep in their own bed.</para>
     /// </summary>
     public Area? GetAreaOf(SceneNpc npc, TimePeriod period)
-        => NpcSchedules.TryGetValue(npc.Id, out var schedule) ? schedule.GetArea(period) : null;
+        => DisplacedNpcs.TryGetValue(npc.Id, out var displaced)
+            ? displaced
+            : NpcSchedules.TryGetValue(npc.Id, out var schedule) ? schedule.GetArea(period) : null;
 
     /// <summary>
     /// An NPC's whole day, in period order: where they are at each, null where they are away.
@@ -250,6 +264,47 @@ public class Scene
     /// won fight spawning one body per dead enemy both end up in it.</para>
     /// </summary>
     public List<Npc.Corpse.CorpsePointOfInterest> PendingCorpseObservations { get; } = new();
+
+    /// <summary>
+    /// NPCs standing somewhere their schedule does not put them, by <c>SceneNpc.Id</c> → where they
+    /// actually are. Written when somebody within earshot hears an action go wrong and comes to look
+    /// (see <see cref="ProximityModel"/>), which is the only thing in the game that moves a person
+    /// off their day.
+    ///
+    /// <para><b>This is what makes the approach real</b>, and it has to live here rather than in the
+    /// caller. Position is resolved from <see cref="NpcSchedules"/> by <see cref="GetNpcsAt"/>, and
+    /// <c>SceneNpcPlacement.PlaceForPeriod</c> re-derives every NPC observation object from that on
+    /// <i>every</i> segment — so a person moved any other way is put back one observation phase
+    /// later, exactly as a tamed beast's stale observation object is. Consulted here instead, one
+    /// override in one lookup, and the placement, the verb gates, the witness and threat selectors
+    /// and the exit button all follow without knowing anything about it.</para>
+    ///
+    /// <para>One visit's business, like corpses: not in <c>LocationInstanceState</c>. What outlasts
+    /// the visit is whatever the confrontation turned into — an enmity, which is persisted.</para>
+    /// </summary>
+    public Dictionary<System.Guid, Area> DisplacedNpcs { get; } = new();
+
+    /// <summary>
+    /// NPCs who have just walked in and have not yet been narrated, in arrival order. Drained by
+    /// <c>NarrativeController.GenerateObservationsAsync</c>, which opens the next phase on them —
+    /// ahead of a corpse and ahead of the standing-threat opener, because somebody crossing a room to
+    /// reach you is both the newest thing to have happened and the most expensive to ignore.
+    /// </summary>
+    public List<SceneNpc> PendingArrivalObservations { get; } = new();
+
+    /// <summary>
+    /// Moves <paramref name="npc"/> into <paramref name="area"/> for the rest of the visit and queues
+    /// them to open the next observation phase. Idempotent: somebody already standing there is not
+    /// announced twice.
+    /// </summary>
+    public void DrawNpcTo(SceneNpc npc, Area area)
+    {
+        if (DisplacedNpcs.TryGetValue(npc.Id, out var already) && already.Id == area.Id) return;
+
+        DisplacedNpcs[npc.Id] = area;
+        if (!PendingArrivalObservations.Contains(npc)) PendingArrivalObservations.Add(npc);
+        Console.WriteLine($"Scene: '{npc.Entity.DisplayName}' comes to {area.DisplayName} to see what the noise was.");
+    }
 
     /// <summary>
     /// Adds a point of interest to an area at runtime and registers it (and its items) in the scene.

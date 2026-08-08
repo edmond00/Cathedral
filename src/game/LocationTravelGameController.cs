@@ -3474,11 +3474,14 @@ public class LocationTravelGameController : IDisposable
             var section = scene.Sections.FirstOrDefault(s => s.Areas.Contains(pov.Where));
             if (section != null)
             {
+                // Who wades in: the people who answer for this place. Authority stands in for the
+                // former per-archetype bravery flag, which was carried by the same masters and
+                // owners this reads — a bystander with no stake watches.
                 allies = section.Areas
                     .SelectMany(a => scene.GetNpcsAt(a, pov.When))
                     .Where(n => n.IsAlive
                         && n.Entity is Cathedral.Game.Npc.NpcEntity ne
-                        && ne.IsBrave
+                        && ne.AuthorityLevel > 0
                         && ne != mainEnemy)
                     .Select(n => (Cathedral.Game.Npc.NpcEntity)n.Entity)
                     .Distinct()

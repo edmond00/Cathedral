@@ -18,8 +18,12 @@ public class AttackVerb : Verb
     /// <summary>What a success teaches: opening a fight with your hands.</summary>
     public override string? GrantedModusMentisId(Element? target) => "brawling";
 
-    /// <summary>Attacking a person is never a legal action.</summary>
-    public override bool IsLegal => false;
+    /// <summary>
+    /// Attacking somebody is a crime — unless they already count you an enemy, in which case the
+    /// quarrel was declared before the blow and striking first is only who moved quicker.
+    /// </summary>
+    protected override bool IsIllegalFor(Scene scene, PoV pov, Element? target, PartyMember? actor)
+        => !TargetIsAlreadyHostile(target, actor);
 
     /// <summary>Attack is a combat verb — valid to attempt even under direct threat.</summary>
     public override bool CanBeUsedUnderThreat => true;

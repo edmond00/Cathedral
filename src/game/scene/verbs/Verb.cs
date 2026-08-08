@@ -32,10 +32,44 @@ public abstract class Verb
     public virtual char? DifficultyGlyphOverride => null;
 
     /// <summary>
-    /// Whether executing this verb is a legal action.
-    /// Override to false for verbs that constitute crimes (stealing, trespassing, attacking innocents).
+    /// Whether performing this verb, here, on this target, is a crime — the one question the witness
+    /// rules, the morality rules and the caught-red-handed path all ask.
+    ///
+    /// <para>Sealed on purpose, for the same reason <see cref="IsPossible"/> is: the setting test —
+    /// standing in somebody's private area makes <i>anything</i> done there trespass — holds for every
+    /// verb at once, and a gate that each of the three call sites could forget is a gate that does not
+    /// hold. The verb's own, conditional half lives in <see cref="IsIllegalFor"/>.</para>
+    ///
+    /// <para>Legality is contextual, not a constant: a blow struck at somebody who is already your
+    /// enemy is self-defence, a lock picked on a public storehouse is nobody's business, and a bowl
+    /// smashed in a public hall is only bad manners. A null actor means "no particular body" (content
+    /// audits, tooling) and is treated as having no enemies — the strictest reading, so an audit never
+    /// under-reports what is a crime.</para>
     /// </summary>
-    public virtual bool IsLegal => true;
+    public bool IsIllegal(Scene scene, PoV pov, Element? target, PartyMember? actor = null)
+        => pov.Where.IsPrivate || IsIllegalFor(scene, pov, target, actor);
+
+    /// <summary>
+    /// The verb's own condition for being a crime, asked outside anybody's private space.
+    /// Defaults to false — most verbs are nobody's business. Override for the crimes, and consult
+    /// <see cref="PrivacyModel.ReachesPrivateArea"/> rather than <c>pov.Where</c> for anything whose
+    /// wrongness comes from where the <i>target</i> leads.
+    /// </summary>
+    protected virtual bool IsIllegalFor(Scene scene, PoV pov, Element? target, PartyMember? actor) => false;
+
+    /// <summary>
+    /// Whether <paramref name="target"/> is somebody who already counts <paramref name="actor"/> an
+    /// enemy. Striking first at someone who has already declared for violence is not a crime — the
+    /// quarrel exists before the blow, and a witness to it is watching a fight, not a murder.
+    ///
+    /// <para>Shared by attack, slay and murder, which agree on this and on very little else. Only
+    /// <see cref="NpcEntity"/> keeps an affinity table; shallow wildlife has no opinion of anybody,
+    /// and the three verbs exclude the tiny ones outright.</para>
+    /// </summary>
+    protected static bool TargetIsAlreadyHostile(Element? target, PartyMember? actor)
+        => actor != null
+           && target is SceneNpc { Entity: NpcEntity npc }
+           && npc.AffinityTable.IsEnemy(actor.AffinityKey);
 
     /// <summary>
     /// Whether this verb is valid to use when an enemy is nearby (same area).

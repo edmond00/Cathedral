@@ -17,7 +17,12 @@ public class FishermanArchetype : WildernessNpcArchetype
     public override ItemTag? SellTag => ItemTag.Fish;
     public override ItemTag? BuyTag  => ItemTag.Craftware;
     public override int    ModiMentisCount => 8;
-    public override bool   IsBrave      => true;
+
+    /// <summary>
+    /// Master of their own working ground, and reads as one in a fight: authority is what
+    /// decides who squares up rather than stands back, and how the fight AI carries itself.
+    /// </summary>
+    public override int    AuthorityLevel => 1;
 
     public override string RoleNoun => "fisherman";
 

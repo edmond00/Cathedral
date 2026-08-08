@@ -14,7 +14,6 @@ public class MillerArchetype : CraftsmanArchetype
     public override ItemTag? SellTag => ItemTag.Crop;
     public override ItemTag? BuyTag  => ItemTag.Crop;
     public override int    ModiMentisCount => 9;
-    public override bool   IsBrave      => true;
     public override int    AuthorityLevel => 1;
 
     public override string RoleNoun => "miller";

@@ -70,8 +70,8 @@ public class ProvokeVerb : SocialDialogueVerb
 
     protected override string DialogueTreeId => "provoke";
 
-    /// <summary>Words, not blows. What it leads to is the NPC's decision, at least formally.</summary>
-    public override bool IsLegal => true;
+    // Left legal deliberately: words, not blows. What it leads to is the NPC's decision, at least
+    // formally, and a witness to a provocation has watched an argument.
 
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
         => Available(scene, pov, target) != null;
@@ -184,7 +184,8 @@ public class PickpocketVerb : Verb
     /// <summary>Fingers in someone's purse. No hands, no verb.</summary>
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
 
-    public override bool IsLegal => false;
+    /// <summary>Taking from somebody's pockets is a crime wherever they are standing.</summary>
+    protected override bool IsIllegalFor(Scene scene, PoV pov, Element? target, PartyMember? actor) => true;
 
     /// <summary>What a success teaches: taking from a person without them knowing.</summary>
     public override string? GrantedModusMentisId(Element? target) => "petty_thief";

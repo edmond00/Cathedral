@@ -22,8 +22,12 @@ public class StealVerb : Verb
     /// <summary>What a success teaches: taking what is not yours, quietly.</summary>
     public override string? GrantedModusMentisId(Element? target) => "petty_thief";
 
-    /// <summary>Stealing is always an illegal action.</summary>
-    public override bool IsLegal => false;
+    /// <summary>
+    /// Taking what is not yours is a crime wherever it happens. Unconditional here rather than left
+    /// to the sealed setting test: the verb already requires a private area, so the two agree today —
+    /// but a chest that stops being private must not quietly become free to loot.
+    /// </summary>
+    protected override bool IsIllegalFor(Scene scene, PoV pov, Element? target, PartyMember? actor) => true;
 
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {

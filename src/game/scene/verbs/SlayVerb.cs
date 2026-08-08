@@ -19,8 +19,12 @@ public class SlayVerb : Verb
     /// <summary>What a success teaches: killing without giving the other a fight.</summary>
     public override string? GrantedModusMentisId(Element? target) => "low_blow";
 
-    /// <summary>Slaying a living person is never a legal action.</summary>
-    public override bool IsLegal => false;
+    /// <summary>
+    /// Killing is a crime — unless the one being killed already counts you an enemy. Finishing
+    /// somebody who has declared for your death is not what a witness would call murder.
+    /// </summary>
+    protected override bool IsIllegalFor(Scene scene, PoV pov, Element? target, PartyMember? actor)
+        => !TargetIsAlreadyHostile(target, actor);
 
     /// <summary>Slaying is an attack — it can be attempted even under direct threat.</summary>
     public override bool CanBeUsedUnderThreat => true;

@@ -19,8 +19,14 @@ public class SlipIntoVerb : Verb
     public override string DisplayName    => "Slip Into";
     public override int    BaseDifficulty => 5;
 
-    /// <summary>Getting in where you are not admitted, without breaking anything.</summary>
-    public override bool IsLegal => false;
+    /// <summary>
+    /// Getting in where you are not admitted — but a gap is only a way past a lock if there is
+    /// something private behind it. A breach in a barn wall leading to a public yard is a shortcut,
+    /// not a burglary. Read from the gap's own two endpoints, so climbing back out of a private room
+    /// is judged the same way as dropping into it.
+    /// </summary>
+    protected override bool IsIllegalFor(Scene scene, PoV pov, Element? target, PartyMember? actor)
+        => PrivacyModel.ReachesPrivateArea(scene, target);
 
     /// <summary>What a success teaches: getting through a way in that was not meant as one.</summary>
     public override string? GrantedModusMentisId(Element? target) => "sneak_art";
