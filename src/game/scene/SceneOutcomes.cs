@@ -153,39 +153,6 @@ public sealed class TinyCreatureRemovedOutcome : OutcomeReport
     }
 }
 
-/// <summary>
-/// Records the landmarks picked out from a high place, so <c>GoTowardVerb</c> can head for them.
-///
-/// <para>Knowledge, not world state: it goes on the point of view, and it is per-visit. Declares no
-/// <c>RoutineChainEffect</c> because nothing about the world moved — only what the character knows
-/// about it.</para>
-/// </summary>
-public sealed class LandmarksRevealedOutcome : OutcomeReport
-{
-    private readonly System.Collections.Generic.IReadOnlyList<Area> _landmarks;
-
-    public LandmarksRevealedOutcome(System.Collections.Generic.IReadOnlyList<Area> landmarks)
-        : base(Describe(landmarks), OutcomeReportSeverity.Positive, Verbalise(landmarks))
-    {
-        _landmarks = landmarks;
-    }
-
-    private static string Describe(System.Collections.Generic.IReadOnlyList<Area> areas)
-        => areas.Count == 0
-            ? "Nothing worth walking to"
-            : "Landmarks noted: " + string.Join(", ", areas.Select(a => a.DisplayName));
-
-    private static string Verbalise(System.Collections.Generic.IReadOnlyList<Area> areas)
-        => areas.Count == 0
-            ? "found nothing out there worth the walk"
-            : "picked out " + string.Join(" and ", areas.Select(a => a.DisplayName)) + " from up here";
-
-    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
-    {
-        if (pov == null) return;
-        foreach (var area in _landmarks) pov.RevealedLandmarks.Add(area.Id);
-    }
-}
 
 /// <summary>
 /// Swaps a point of interest for another in place — the wreck a broken thing becomes.

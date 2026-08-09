@@ -36,17 +36,6 @@ public class PoV
     /// </summary>
     public Element? Focus { get; set; }
 
-    /// <summary>
-    /// Landmark areas the agent has picked out from a high place — see
-    /// <c>ObserveHorizonVerb</c>. <c>GoTowardVerb</c> only offers the ones in here, so heading
-    /// straight for the mill is something you can do <i>because you have seen where it is</i>, not
-    /// something the map hands you.
-    ///
-    /// <para>Lives on the PoV rather than the scene because it is knowledge, not world state, and it
-    /// is deliberately per-visit: the scene is rebuilt from scratch each time you arrive, and having
-    /// to climb again to re-find your bearings is the right cost.</para>
-    /// </summary>
-    public HashSet<System.Guid> RevealedLandmarks { get; } = new();
 
     public PoV(Area where, TimePeriod when, Element? focus = null)
     {

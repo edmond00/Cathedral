@@ -50,6 +50,28 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --skip-childhood                   Skip the childhood reminescence + get-up phases; randomly fill starting skills/items as if they had run");
     Console.WriteLine("  --mm                               After the childhood reminescence phase, fill every empty memory slot with random unheld modiMentis");
     Console.WriteLine("  --weapons                          Give the protagonist a starter weapon loadout (Arming Sword, Hunting Bow, Round Shield)");
+    Console.WriteLine("  --location-type <name>             DEBUG: force which scene factory builds every location (forest, village,");
+    Console.WriteLine("                                     cave…), ignoring the biome underfoot. --start-at only finds a biome the");
+    Console.WriteLine("                                     world happens to contain; this builds one regardless");
+    Console.WriteLine("  --npc-hostile                      DEBUG: every NPC counts the protagonist an enemy from the start. reconcile");
+    Console.WriteLine("                                     and appease apply only to an enemy, and earning a HUMAN one in script means");
+    Console.WriteLine("                                     a crime, a catch, a lost confrontation and a fight walked out of");
+    Console.WriteLine("  --npc-affinity <level>             DEBUG: start every NPC at this affinity (DistantAcquaintance, CloseFriend…)");
+    Console.WriteLine("                                     instead of Stranger. Six verbs are gated on already knowing somebody;");
+    Console.WriteLine("                                     earning it in-script makes the test a test of that conversation instead");
+    Console.WriteLine("  --auto-dialogue                    DEBUG: settle every dialogue as an immediate success instead of holding");
+    Console.WriteLine("                                     it. A dozen verbs only OPEN a conversation; this lets their test assert");
+    Console.WriteLine("                                     about the verb rather than walk somebody else's tree");
+    Console.WriteLine("  --npc-static                       DEBUG: pin every NPC to one area all day instead of following their schedule.");
+    Console.WriteLine("  --silent                           DEBUG: open no audio device — no music, no sound effects. Used by the test suite.");
+    Console.WriteLine("                                     Where somebody stands at a given hour is drawn from the location seed, so an");
+    Console.WriteLine("                                     NPC verb's test cannot otherwise name the room");
+    Console.WriteLine("  --location-id <n>                  DEBUG: build every scene as location id <n>, whatever vertex you stand on.");
+    Console.WriteLine("                                     A scene is a pure function of its id, so this is what makes --verb-probe's");
+    Console.WriteLine("                                     reported rooms and objects actually exist in the run");
+    Console.WriteLine("  --grant-item <id[,id…]>            DEBUG: put named items in the starting pack (e.g. axe, pick, shovel, fishing_rod).");
+    Console.WriteLine("                                     Five verbs are tool-gated and refused outright without one, and the starting");
+    Console.WriteLine("                                     kit is random — so their success test is unwritable without this");
     Console.WriteLine("  --fill-party                       DEBUG: after the childhood phase, fill the party to max_companions with generated");
     Console.WriteLine("                                     NPCs — the last slot a beast, every slot before it a human");
     Console.WriteLine("  --cpu                              Run LLM on CPU only (no GPU offloading)");
@@ -86,6 +108,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --mm-audit                         Print the modus-mentis content audit (hard-rule violations, coverage, soft stats) and exit");
     Console.WriteLine("  --verb-audit                       Print the verb-coverage audit (verbs per observable vs targets, dead verbs,");
     Console.WriteLine("                                     unresolvable modus-mentis and tool ids, landmark counts) and exit");
+    Console.WriteLine("  --verb-probe                       Print, per verb, the flags that reach it from a cold start (for writing cli tests) and exit");
     Console.WriteLine("  --crime-audit                      Print the crime audit (contextual verb legality, the morality choice rules,");
     Console.WriteLine("                                     enmity surviving a rebuild and a save) and exit");
     Console.WriteLine("  --help, -h                         Show this help message");
@@ -99,6 +122,56 @@ if (args.Length >= 1 && args[0] == "--dialogue-audit")
     Console.WriteLine(Cathedral.Game.Dialogue.Tree.DialogueTreeAudit.BuildReport());
     return;
 }
+
+// ── Debug targeting flags, parsed BEFORE any early-returning mode ───────────
+// The audits and --verb-probe return without ever reaching the rest of the argument parsing, so a
+// flag read further down is invisible to them. --verb-probe in particular exists to report the
+// situations that reach each verb, and it has to be able to sweep under the same conditions a test
+// will run under — otherwise it reports that six affinity-gated verbs are unreachable, which is
+// only true because it never saw the flag that would have unlocked them.
+
+// --npc-affinity <level>: start every NPC at this affinity instead of Stranger.
+for (int i = 0; i < args.Length - 1; i++)
+{
+    if (args[i] != "--npc-affinity") continue;
+    if (Enum.TryParse<Cathedral.Game.Dialogue.Affinity.AffinityLevel>(args[i + 1], ignoreCase: true, out var lvl))
+        Cathedral.Config.Debug.NpcAffinity = lvl;
+    else
+        Console.Error.WriteLine($"[debug] --npc-affinity: '{args[i + 1]}' is not an affinity level — ignored. "
+                                + $"Try: {string.Join(", ", Enum.GetNames<Cathedral.Game.Dialogue.Affinity.AffinityLevel>())}");
+    break;
+}
+
+// --auto-dialogue: settle every conversation as a success without entering Dialogue mode.
+if (args.Any(a => a == "--auto-dialogue")) Cathedral.Config.Debug.AutoDialogue = true;
+
+if (args.Any(a => a == "--npc-static")) Cathedral.Config.Debug.NpcStatic = true;
+
+// --silent: open no audio device. The test suite passes this on every script.
+if (args.Any(a => a == "--silent")) Cathedral.Config.Debug.Silent = true;
+
+// --npc-hostile: every NPC counts the protagonist an enemy from the start.
+if (args.Any(a => a == "--npc-hostile")) Cathedral.Config.Debug.NpcHostile = true;
+
+// --location-type <name>: force which factory builds every location, ignoring the biome underfoot.
+// --start-at only finds a biome the generated world happens to contain; this builds one regardless.
+for (int i = 0; i < args.Length - 1; i++)
+{
+    if (args[i] != "--location-type") continue;
+    Cathedral.Config.Debug.LocationType = args[i + 1];
+    break;
+}
+
+// --location-id <n>: build every scene as that location id. What makes --verb-probe's findings and
+// a real run agree — see Config.Debug.LocationId.
+for (int i = 0; i < args.Length - 1; i++)
+{
+    if (args[i] != "--location-id") continue;
+    if (int.TryParse(args[i + 1], out int locId)) Cathedral.Config.Debug.LocationId = locId;
+    else Console.Error.WriteLine($"[debug] --location-id: '{args[i + 1]}' is not a number — ignored.");
+    break;
+}
+
 
 // NPC generation audit: spawn a sample of every archetype twice, check determinism, trait
 // resolution and body/skill/inventory shape, then exit. Headless — no LLM, no window, no world.
@@ -130,6 +203,14 @@ if (args.Length >= 1 && args[0] == "--building-audit")
 if (args.Length >= 1 && args[0] == "--verb-audit")
 {
     Console.WriteLine(Cathedral.Game.Scene.VerbAudit.BuildReport());
+    return;
+}
+
+// Verb probe: for each verb, the exact flags that reach it from a cold start. What a CLI test for
+// that verb has to open with. Headless: builds scenes and asks every verb; no LLM, no window.
+if (args.Length >= 1 && args[0] == "--verb-probe")
+{
+    Console.WriteLine(Cathedral.Game.Scene.VerbProbe.BuildReport());
     return;
 }
 
@@ -354,6 +435,17 @@ if (args.Any(a => a == "--fill-party"))
 }
 
 // Check for --weapons flag (give protagonist starter weapons)
+// --npc-static: pin every NPC to one area all day, so a test can name the room they are in.
+// --grant-item <id[,id…]>: seed the starting pack. What makes a tool-gated verb's success test
+// writable at all — see GrantItemMode.
+for (int i = 0; i < args.Length - 1; i++)
+{
+    if (args[i] != "--grant-item") continue;
+    Cathedral.Game.GrantItemMode.ItemIds = args[i + 1]
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    break;
+}
+
 if (args.Any(a => a == "--weapons"))
 {
     Cathedral.Game.WeaponsMode.IsActive = true;

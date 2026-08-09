@@ -205,6 +205,25 @@ public class SyntheticObservationObject : ObservationObject, IVerbRefreshable, I
     /// </summary>
     public PointOfInterest PointOfInterest => _poi;
 
+    /// <inheritdoc/>
+    /// <remarks>
+    /// A sleeper is not observable as a person: while the sleep lasts, SceneNpcPlacement swaps them
+    /// and their bed for one merged <see cref="SleepingNpcPointOfInterest"/>, which is what murder,
+    /// wake_up and pickpocket are offered on. That object is named after the individual — a generated
+    /// name — so without this the only way to reach it was to spell one, and a test that spells a
+    /// generated name breaks the day the name generator changes. Hand through the same aliases the
+    /// waking NPC answers to: species and archetype id.
+    /// </remarks>
+    public override System.Collections.Generic.IEnumerable<string> TargetingAliases
+    {
+        get
+        {
+            if (_poi is not SleepingNpcPointOfInterest sleeping) yield break;
+            yield return sleeping.Sleeper.Entity.SpeciesName;
+            yield return sleeping.Sleeper.Entity.Archetype.ArchetypeId;
+        }
+    }
+
     /// <summary>
     /// The area this observation is made from. A connector PoI (door, stair, path) sits in two areas'
     /// PoI lists and therefore yields two distinct observation objects — this is what tells them
@@ -410,6 +429,25 @@ public class SyntheticNpcObservationObject : ObservationObject, INpcContextLabel
     public override string NeutralPhrase => Label;
 
     public override string ReferenceLemma => "person";          // names aren't in the embedding vocab
+
+    /// <inheritdoc/>
+    /// <remarks>
+    /// The real name and the species. NeutralName is the name-faked contextual label ("a stranger"),
+    /// so neither is otherwise reachable — and a beast from <c>--spawn-beast wolf</c> answers to a
+    /// generated name like "Stormtusk", which is not what a test asking for the wolf will type.
+    /// </remarks>
+    public override System.Collections.Generic.IEnumerable<string> TargetingAliases
+    {
+        get
+        {
+            yield return _npc.DisplayName;
+            yield return _npc.Entity.SpeciesName;
+            // The archetype id too ("wolf", "boar"): --spawn-beast names a beast by archetype, so
+            // that is the word a test types, while the species display name may differ ("Grey Wolf")
+            // and the individual answers to a generated name ("Stormtusk").
+            yield return _npc.Entity.Archetype.ArchetypeId;
+        }
+    }
 
     /// <summary>
     /// Named NPC: the stamped contextual label (else the proper name). Shallow NPC: the clean articled

@@ -43,12 +43,20 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
         var wanted = Config.Debug.StartArea;
         if (!string.IsNullOrWhiteSpace(wanted))
         {
+            // Exact name first, substring only as a fallback — the same
+            // whole-thing-before-partial rule --observe-only uses, and for the same reason. Rooms
+            // nest by name ("Alehouse", "Alehouse Store", "Alehouse Bedroom"), so a plain substring
+            // match on "Alehouse" lands in whichever the factory happened to build first. A test
+            // aimed at the taproom quietly opened in the storeroom, found none of the people it
+            // named, and went on to exercise something else entirely.
             var match = scene.AllAreas.FirstOrDefault(
-                a => a.DisplayName.Contains(wanted, StringComparison.OrdinalIgnoreCase));
+                            a => a.DisplayName.Equals(wanted, StringComparison.OrdinalIgnoreCase))
+                     ?? scene.AllAreas.FirstOrDefault(
+                            a => a.DisplayName.Contains(wanted, StringComparison.OrdinalIgnoreCase));
             if (match != null) return match;
 
-            Console.Error.WriteLine($"[debug] --start-area: no area matching '{wanted}' in this location — " +
-                                    $"opening where the factory did. Areas: {string.Join(", ", scene.AllAreas.Select(a => a.DisplayName))}");
+            Cathedral.Game.DebugFlagAudit.Miss("--start-area", wanted, "wherever the factory opened");
+            Console.Error.WriteLine($"[debug]   areas here: {string.Join(", ", scene.AllAreas.Select(a => a.DisplayName))}");
         }
         return scene.AllAreas.FirstOrDefault();
     }

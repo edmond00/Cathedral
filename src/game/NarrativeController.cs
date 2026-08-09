@@ -1071,6 +1071,7 @@ public class NarrativeController
         try
         {
             Console.WriteLine($"NarrativeController: Starting action execution for '{action.ActionText}'");
+            _cliLastExecutedVerbId = action.PreselectedOutcome?.VerbView.Verb.VerbId;
 
             // Whoever is the active party member performs this action: their skills, organ scores,
             // XP, wounds, and item consumption all apply (not necessarily the protagonist's).
@@ -3257,11 +3258,47 @@ public class NarrativeController
     }
 
     /// <summary>Click the first region whose keyword matches (case-insensitive).</summary>
+    /// <summary>
+    /// Click a narration keyword by name, or — when <paramref name="keyword"/> is a number — by
+    /// position in the offered list.
+    ///
+    /// <para>The index form exists because a verb test cannot know the word. Which keyword an
+    /// observation highlights is chosen from the prose (under <c>--playground</c> it is the object's
+    /// own noun, in a real run the noun most associated with it), so a script that has already pinned
+    /// the phase to one object with <c>--observe-only</c> knows exactly <i>what</i> it is looking at
+    /// and still cannot spell the handle. Guessing it from the object's display name is what made
+    /// two thirds of the generated verb tests fail on "no clickable keyword 'stern' on screen".</para>
+    ///
+    /// <para>Name-matching stays the default and stays preferred for hand-written scripts: it reads
+    /// as intent and survives a reordering. Use the index where the point is "whatever this phase
+    /// opened on".</para>
+    /// </summary>
+    /// <summary>
+    /// The verb id of the last action actually put through execution, or null before any. Read by
+    /// the CLI's <c>expect-verb</c>: the outcome banner ("SUCCESS") is the same for every verb, so it
+    /// is the only thing a verb test can assert that a wrong verb cannot satisfy.
+    /// </summary>
+    public string? CliLastExecutedVerbId() => _cliLastExecutedVerbId;
+
+    private string? _cliLastExecutedVerbId;
+
     public string? CliClickKeyword(string keyword)
     {
-        var region = _ui.KeywordRegions
-            .FirstOrDefault(r => r.Keyword.Equals(keyword, StringComparison.OrdinalIgnoreCase));
-        if (region == null) return $"no clickable keyword '{keyword}' on screen";
+        var regions = _ui.KeywordRegions;
+
+        KeywordRegion? region;
+        if (int.TryParse(keyword, out int index))
+        {
+            if (index < 0 || index >= regions.Count)
+                return $"no keyword {index} on screen ({regions.Count} offered)";
+            region = regions[index];
+        }
+        else
+        {
+            region = regions.FirstOrDefault(r => r.Keyword.Equals(keyword, StringComparison.OrdinalIgnoreCase));
+            if (region == null) return $"no clickable keyword '{keyword}' on screen";
+        }
+
         OnMouseMove(region.StartX, region.Y);
         OnMouseClick(region.StartX, region.Y);
         return null;

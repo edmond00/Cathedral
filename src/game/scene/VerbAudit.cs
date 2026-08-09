@@ -189,8 +189,20 @@ public static class VerbAudit
 
             SweepAreaVerbs(scene, everOffered, actor);
 
-            if (scene.AllAreas.Count(a => a.IsLandmark) < 2)
-                warnings.Add($"{label} {id}: fewer than two landmark areas — there is nothing for a horizon to name");
+            // A climb has to be worth making. Every area reachable only by scaling something is
+            // there for what it offers at the top — the tops the old automatic pass produced were
+            // documented as "deliberately bare: what it is for is the view", so one that ends up
+            // with nothing on it is an empty room the player paid a roll to reach.
+            foreach (var climb in scene.AllAreas
+                         .SelectMany(a => a.PointsOfInterest)
+                         .OfType<Building.ScalePointOfInterest>()
+                         .Distinct())
+            {
+                int atTop = climb.TopArea.PointsOfInterest.Count(p => p != climb);
+                if (atTop == 0)
+                    warnings.Add($"{label} {id}: '{climb.TopArea.DisplayName}' is reachable only by "
+                                 + $"climbing '{climb.DisplayName}' and has nothing on it — a roll paid for an empty room");
+            }
 
             foreach (var area in scene.AllAreas)
             {
@@ -387,7 +399,6 @@ public static class VerbAudit
             ["cut"]      = "needs a corpse, which only exists after a kill",
 
             // Relationship-gated: the stand-in actor is a stranger to everyone, by construction.
-            ["go_toward"] = "needs a landmark already picked out from a high place this visit",
             ["appease"]                 = "needs an enemy or an annoyed acquaintance",
             ["propose_to_join"]         = "needs close-acquaintance-or-better, and room in the party",
             ["tame"]                    = "needs a beast already appeased",

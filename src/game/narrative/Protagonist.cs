@@ -134,7 +134,14 @@ public class Protagonist : PartyMember
     /// Affinity key stays the fixed "Protagonist" constant regardless of the generated
     /// <see cref="CharacterName"/>, so changing the display name never re-keys NPC affinity.
     /// </summary>
-    public override string AffinityKey => "Protagonist";
+    /// <summary>
+    /// The protagonist's affinity key, as a constant. Needed by name outside an instance — the
+    /// debug affinity seeding runs when a location's store is created, before any protagonist is in
+    /// scope — and a second literal "Protagonist" elsewhere would be a silent mismatch.
+    /// </summary>
+    public const string AffinityKeyConstant = "Protagonist";
+
+    public override string AffinityKey => AffinityKeyConstant;
 
     /// <summary>
     /// Rolls a fresh gendered name from the procedural generator, matching the current gender

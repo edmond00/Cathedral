@@ -109,15 +109,16 @@ public class FightModeAdapter
 
     // ── AI delay ────────────────────────────────────────────────────
     private int _aiDelayFrames;
-    private const int AiDelay = 15;
+    /// <summary>Beat before an enemy acts, so its turn reads as a decision. None under playground.</summary>
+    private static int AiDelay => Config.AnimationsAreInstant ? 0 : 15;
 
     // ── Movement animation ──────────────────────────────────────────
     private int _movementFrameTimer;
-    private const int PlayerMoveFramesPerTile = 3;
-    private const int AiMoveFramesPerTile = 1;
+    private static int PlayerMoveFramesPerTile => Config.AnimationsAreInstant ? 0 : 3;
+    private static int AiMoveFramesPerTile => Config.AnimationsAreInstant ? 0 : 1;
 
     // ── Dice timing ─────────────────────────────────────────────────
-    private const float DiceRollDuration = Config.Dice.AnimationDurationSeconds;
+    private static float DiceRollDuration => Config.Dice.AnimationDurationSeconds;
     private double _diceElapsed;
 
     // ── Vital-heat box timing ───────────────────────────────────────
@@ -125,9 +126,9 @@ public class FightModeAdapter
     /// Real seconds between humors as the buff's cost is drawn. One humor per step, matching the
     /// cadence travel burns them at — the box exists to be watched, not waited out.
     /// </summary>
-    private const float VitalHeatStepSeconds = 0.18f;
+    private static float VitalHeatStepSeconds => Config.AnimationsAreInstant ? 0f : 0.18f;
     /// <summary>Steps to hold the finished bar before handing the turn back.</summary>
-    private const int VitalHeatHoldSteps = 4;
+    private static int VitalHeatHoldSteps => Config.AnimationsAreInstant ? 0 : 4;
     private double _vitalHeatElapsed;
     private int _vitalHeatHoldSteps;
 

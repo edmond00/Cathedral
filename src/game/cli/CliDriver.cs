@@ -143,7 +143,7 @@ public sealed class CliDriver
                 // a fresh settle before the next.
                 if (_draining)
                 {
-                    var pv = _game.CliNarration?.CliPreview();
+                    var pv = ActivePreview();
                     if (pv is { Active: true, Complete: true } && _drainPressesLeft > 0)
                     {
                         _drainPressesLeft--;
@@ -226,12 +226,15 @@ public sealed class CliDriver
                 case "scroll":      CmdScroll(rest);                  break;
                 case "strategy":    CmdStrategy(rest);                break;
                 case "goal":        CmdGoal(rest);                    break;
+                case "observe":     CmdObserve(rest);                 break;
                 case "fight-end":   CmdFightEnd(rest);                break;
                 case "clock":       CmdClock(rest);                   break;
                 case "wait":        CmdWait(rest);                    break;
                 case "advance":     CmdAdvance(rest);                 break;
                 case "expect":      CmdExpect(rest, expectPresent: true);  break;
                 case "expect-not":  CmdExpect(rest, expectPresent: false); break;
+                case "expect-verb": CmdExpectVerb(rest);              break;
+                case "allow-flag-miss": CmdAllowFlagMiss(rest);       break;
                 case "quit":        CmdQuit();                        break;
                 default:            CliMode.Emit($"error: unknown command '{cmd}' (try `help`)"); break;
             }
@@ -240,6 +243,21 @@ public sealed class CliDriver
         {
             CliMode.Emit($"error: {ex.GetType().Name}: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// The preview box currently on screen, wherever it lives. Narration owns one and a conversation
+    /// owns another, and <c>advance</c> has to drain whichever is up.
+    ///
+    /// <para>Reading only narration's made <c>advance</c> a no-op in Dialogue mode, so a dialogue
+    /// script had to press <c>click continue</c> by hand and guess how many times — the reply options
+    /// are themselves generated as a stack of previews, one press each. Same idiom everywhere now.</para>
+    /// </summary>
+    private (bool Active, string Title, string Text, bool Complete)? ActivePreview()
+    {
+        var dialogue = _game.CliDialogue?.Controller?.CliPreview();
+        if (dialogue is { Active: true }) return dialogue;
+        return _game.CliNarration?.CliPreview();
     }
 
     /// <summary>Split on whitespace, honouring "double quoted" arguments.</summary>
@@ -272,7 +290,17 @@ public sealed class CliDriver
           world                     avatar vertex, biome, location, travel range
           destinations              reachable vertices, by name
         Action
-          click keyword <name>      click a narration keyword
+          allow-flag-miss <flag>    declare that a narrowing flag is expected to match nothing, so
+                                    its miss does not fail the run. For scripts that test an ABSENCE
+          observe <name|none>       pin what an observation phase may look at, the way `goal` pins
+                                    the goal draw. A two-phase script usually needs both
+          expect-verb <verb-id>     assert which verb the last executed action carried. What a
+                                    verb test must assert: `expect SUCCESS` matches ANY action's
+                                    outcome banner and so passes on the wrong verb
+          click keyword <name|n>    click a narration keyword by name, or by position.
+                                    The index form is for tests: a phase pinned with
+                                    --observe-only knows what it is looking at but not
+                                    which word the prose highlighted
           click action <n>          click a narration action by index
           click option <n>          pick a dialogue reply by index
           clock <days>              DEBUG: push the world clock forward, then heal any wound
@@ -578,7 +606,7 @@ public sealed class CliDriver
         {
             case "keyword":
             {
-                if (a.Length < 2) { CliMode.Emit("error: click keyword <name>"); return; }
+                if (a.Length < 2) { CliMode.Emit("error: click keyword <name|index>"); return; }
                 var n = _game.CliNarration;
                 if (n == null) { CliMode.Emit("error: not in narration"); return; }
                 Report(n.CliClickKeyword(a[1]), $"clicked keyword \"{a[1]}\"");
@@ -886,6 +914,32 @@ public sealed class CliDriver
     }
 
     /// <summary>
+    /// Pins what an observation phase may look at, the way <c>goal</c> pins the goal draw. Same
+    /// switch as <c>--observe-only</c>; a command too, because a script with two phases usually needs
+    /// to look at two different things.
+    ///
+    /// <para><c>cli/tame/success.cli</c> is why: it appeases a beast in one phase and tames it in the
+    /// next, and the two are different objects only because the outcome of the first changes what the
+    /// second may look at. A script that needs two phases to open on two things cannot say so with a
+    /// launch flag, which is set once. <c>observe none</c> hands the choice back.</para>
+    /// </summary>
+    private static void CmdObserve(string[] a)
+    {
+        if (a.Length == 0) { CliMode.Emit($"observe={Config.Debug.ObserveOnly ?? "anything"}"); return; }
+
+        string want = a[0];
+        if (want.ToLowerInvariant() is "none" or "auto" or "off" or "anything")
+        {
+            Config.Debug.ObserveOnly = null;
+            CliMode.Emit("ok: observe=anything");
+            return;
+        }
+
+        Config.Debug.ObserveOnly = want;
+        CliMode.Emit($"ok: observe={want}");
+    }
+
+    /// <summary>
     /// Pins the playground's goal choice to one verb, the way <c>strategy</c> pins the dice. Set it
     /// before the keyword click whose thinking phase should land on that goal; <c>goal none</c> (or
     /// <c>auto</c>) hands the choice back to the RNG. Same switch as <c>--goal-only</c> — a command
@@ -993,6 +1047,55 @@ public sealed class CliDriver
         _waiting = true;
     }
 
+    /// <summary>
+    /// Asserts which verb the last executed action actually carried.
+    ///
+    /// <para>The assertion a verb test needs, and the one <c>expect SUCCESS</c> is not. "SUCCESS" is
+    /// the outcome banner of <i>any</i> action, so a script meant to test <c>break</c> that opened on
+    /// a path instead, followed the path, and succeeded, passed. Sixty of them did. This reads the
+    /// verb id off the action that ran, so a test can only pass on its own verb.</para>
+    /// </summary>
+    /// <summary>
+    /// Declares that a narrowing flag is <i>expected</i> to match nothing, so its miss does not fail
+    /// the run.
+    ///
+    /// <para>Needed because some scripts test an absence. <c>cli/gather/beast_barred.cli</c> checks
+    /// that a beast is not offered <c>gather</c> at all — so <c>--goal-only gather</c> finding no such
+    /// goal is the assertion passing, not the test misfiring. Without this the strictness that catches
+    /// a mis-aimed test would make an absence test impossible to write.</para>
+    /// </summary>
+    private void CmdAllowFlagMiss(string[] a)
+    {
+        if (a.Length == 0) { CliMode.Emit("error: allow-flag-miss <flag>"); return; }
+        _allowedFlagMisses.Add(a[0]);
+        CliMode.Emit($"ok: a miss of {a[0]} is expected here");
+    }
+
+    /// <summary>Flags whose misses this script has declared expected — see <see cref="CmdAllowFlagMiss"/>.</summary>
+    private readonly HashSet<string> _allowedFlagMisses = new(StringComparer.OrdinalIgnoreCase);
+
+    private void CmdExpectVerb(string[] a)
+    {
+        if (a.Length == 0) { CliMode.Emit("error: expect-verb <verb-id>"); return; }
+        var n = _game.CliNarration;
+        if (n == null) { CliMode.Emit("error: not in narration"); return; }
+
+        var actual = n.CliLastExecutedVerbId();
+        if (actual == null)
+        {
+            CliMode.Emit($"FAIL: expected verb '{a[0]}' — no action has been executed yet");
+            CliMode.HasFailedAssertion = true;
+            return;
+        }
+        if (string.Equals(actual, a[0], StringComparison.OrdinalIgnoreCase))
+        {
+            CliMode.Emit($"PASS: executed verb was '{actual}'");
+            return;
+        }
+        CliMode.Emit($"FAIL: expected verb '{a[0]}' but '{actual}' was executed");
+        CliMode.HasFailedAssertion = true;
+    }
+
     private void CmdExpect(string[] a, bool expectPresent)
     {
         if (a.Length == 0) { CliMode.Emit("error: expect <text>"); return; }
@@ -1027,6 +1130,25 @@ public sealed class CliDriver
 
     private void CmdQuit()
     {
+        // A narrowing flag that narrowed nothing fails the run. --start-area, --observe-only and
+        // --goal-only all fall back silently when they match nothing (open where the factory did,
+        // offer the whole scene, draw from every goal), which is right for a person poking at the
+        // game and disastrous for a test: the script goes on to exercise something other than what it
+        // was written for, and reports whatever THAT did. See DebugFlagAudit — this is not
+        // hypothetical, it is how 59 verb tests came to pass without ever running their verb.
+        foreach (var miss in Cathedral.Game.DebugFlagAudit.Misses)
+        {
+            // A script may declare a miss expected — see `allow-flag-miss`. Some tests are about an
+            // absence, and for those the miss IS the result.
+            if (_allowedFlagMisses.Any(f => miss.StartsWith(f, StringComparison.OrdinalIgnoreCase)))
+            {
+                CliMode.Emit($"ok (expected): {miss}");
+                continue;
+            }
+            CliMode.Emit($"FAIL: {miss} — the script did not test what it names");
+            CliMode.HasFailedAssertion = true;
+        }
+
         CliMode.Emit(CliMode.HasFailedAssertion ? "quitting (assertions FAILED)" : "quitting (all assertions passed)");
         _game.CliRequestClose();
     }

@@ -114,6 +114,66 @@ public static class BuildingFactory
         var interiorDoors = new List<DoorPointOfInterest>();
         var stairs        = new List<StairPointOfInterest>();
 
+        // ── Roof ──────────────────────────────────────────────────────────────
+        // Every building can be climbed, from the street outside to its own roof. Here rather than in
+        // each scene factory because it is a property of BUILDINGS, and there is one place that makes
+        // those — a village, a farm and a field would otherwise each have to remember.
+        //
+        // What a roof is for is the view: the caller hangs a landscape per outdoor area on it, so the
+        // climb buys a road to anywhere else outside. It is also where a slip-in belongs (a chimney is
+        // reached from a roof), which is why this runs before the doors.
+        var roof = new Area(
+            displayName:           $"{spec.BuildingName} Roof",
+            referenceLemma:        "roof",
+            contextDescription:    $"up on the roof of the {spec.BuildingName.ToLowerInvariant()}",
+            transitionDescription: "pull yourself over the eaves",
+            descriptions:          new List<string>
+            {
+                $"A pitch of {BuildingDescriptions.MaterialWord(mat)} above the "
+                + $"{spec.BuildingName.ToLowerInvariant()}, steep enough to need hands and high "
+                + "enough to see over everything around it",
+            },
+            moods: new[] { "airy", "exposed", "windy", "high" });
+
+        var wallClimb = new ScalePointOfInterest(
+            spec.OutsideArea, roof, ScaleKind.Wall, $"{spec.BuildingName} Wall",
+            new List<string>
+            {
+                $"The {spec.BuildingName.ToLowerInvariant()}'s outside wall of "
+                + $"{BuildingDescriptions.MaterialWord(mat)}, with gaps enough for fingers and "
+                + "boot-toes going up to the eaves",
+            },
+            new[] { "sheer", "weathered", "hand-worn" })
+        {
+            Senses = SensoryProfile.Examinable,
+            VerbModiMentis = new Dictionary<string, string> { ["examine"] = "architecture" },
+        };
+
+        // Deliberately NOT in allRooms: that list has already had IsPrivate stamped on it, and a
+        // roof is outside — climbing onto one is not trespass, and everything done up there would
+        // otherwise read as a crime. It joins the section below, where the section exists.
+
+        // A way in that is not the door, from the roof into the hall below: a chimney you cannot climb
+        // back up, or a shutter you can. Rolled, so not every building has one — and it is the other
+        // half of why a roof is worth climbing, the first being the view.
+        SlipIntoPointOfInterest? roofSlipIn = null;
+        if (rng.NextDouble() < 0.6)
+        {
+            var slipKind = rng.NextDouble() < 0.5 ? SlipKind.Chimney : SlipKind.Window;
+            (string Name, string Desc, string[] Moods) slipSpec = slipKind == SlipKind.Chimney
+                ? ("Chimney", "A smoke-hole wide enough at the head to take a body, and sooted the whole way down",
+                   new[] { "sooted", "warm", "narrow" })
+                : ("Broken Shutter", "A shutter hanging off one hinge, and behind it a gap nobody has got round to boarding",
+                   new[] { "hanging", "splintered", "dark" });
+
+            roofSlipIn = new SlipIntoPointOfInterest(
+                roof, hall, slipKind, $"{spec.BuildingName} {slipSpec.Name}",
+                new List<string> { slipSpec.Desc }, slipSpec.Moods)
+            {
+                Senses = SensoryProfile.Examinable,
+            };
+        }
+
         var entryDoor = MakeDoor(
             spec.OutsideArea, hall,
             $"{spec.BuildingName} Door",
@@ -175,6 +235,10 @@ public static class BuildingFactory
         { IsInterior = true };
         foreach (var room in allRooms) section.Areas.Add(room);
 
+        // The roof belongs to its building's section too — sections must partition the areas, and an
+        // area in none crashes the fight path outright.
+        section.Areas.Add(roof);
+
         // ── Beds, in roster order ─────────────────────────────────────────────
         var bedPois  = new List<PointOfInterest>();
         var bedAreas = new List<Area>();
@@ -195,6 +259,9 @@ public static class BuildingFactory
             EntryDoor:           entryDoor,
             InteriorDoors:       interiorDoors,
             Stairs:              stairs,
+            Roof:                roof,
+            WallClimb:           wallClimb,
+            RoofSlipIn:          roofSlipIn,
             Beds:                bedPois,
             Material:            mat,
             Kind:                kind,

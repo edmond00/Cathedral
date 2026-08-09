@@ -33,7 +33,21 @@ public class NpcSchedule
 
     /// <summary>Returns the area the NPC should be at during <paramref name="period"/>, or null if absent.</summary>
     public Area? GetArea(TimePeriod period)
-        => _areaByPeriod.TryGetValue(period, out var area) ? area : null;
+        => Config.Debug.NpcStatic
+            ? StaticArea
+            : _areaByPeriod.TryGetValue(period, out var area) ? area : null;
+
+    /// <summary>
+    /// The one area <c>--npc-static</c> pins this NPC to: whichever they spend most of the day in,
+    /// ties broken by period order so the choice is deterministic. Their workplace, in practice —
+    /// which is the room a test looking for them would name.
+    /// </summary>
+    private Area? StaticArea => _areaByPeriod
+        .Where(kv => kv.Value != null)
+        .GroupBy(kv => kv.Value!.Id)
+        .OrderByDescending(g => g.Count())
+        .ThenBy(g => g.Min(kv => (int)kv.Key))
+        .FirstOrDefault()?.First().Value;
 
     /// <summary>All (period, area) pairs where the NPC is present.</summary>
     public IEnumerable<(TimePeriod Period, Area Area)> ActivePeriods

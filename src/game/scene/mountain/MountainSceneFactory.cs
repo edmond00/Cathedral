@@ -159,21 +159,14 @@ public class MountainSceneFactory : SceneFactory
             FurnitureSubfactory.AddShortcuts(rng, scene, outdoors, FurnitureSubfactory.Setting.Highland);
             FurnitureSubfactory.AddExtractionPoints(rng, outdoors, FurnitureSubfactory.Setting.Highland);
 
-            var climbTop = FurnitureSubfactory.AddClimb(
-                rng, scene, outdoors[0], FurnitureSubfactory.Setting.Highland);
-            if (climbTop != null)
-            {
-                // Sections must partition the areas, so the new top belongs to the section its foot is
-                // in — an area in no section crashes the fight path outright.
-                var host = scene.Sections.First(s => s.Areas.Contains(outdoors[0]));
-                host.Areas.Add(climbTop);
-                RegisterAll(scene, climbTop);
-            }
         }
 
-        // Landmarks, and a view from anywhere that has to be climbed to. Must run after the
-        // connectors are attached: it finds the high ground by looking for their tops.
-        MarkLandmarksAndViews(scene);
+        // The high ground sees the whole place. The high crag is the top of the cliff, so
+        // reaching it costs a climb — and what it buys is a road to everywhere else here, which is
+        // the entire bargain of going up. Placed by hand rather than found: the old automatic pass
+        // named whichever areas were built first, which from a summit is not a view, it is a list.
+        if (_highCrag != null)
+            AddLandscapes(scene, _highCrag, scene.AllAreas);
 }
 
     // ── Area builders ────────────────────────────────────────────────────────

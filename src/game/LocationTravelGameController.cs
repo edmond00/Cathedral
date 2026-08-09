@@ -2892,6 +2892,7 @@ public class LocationTravelGameController : IDisposable
                 _protagonist = new Protagonist();
                 _protagonist.InitializeMemory();
                 WeaponsMode.ApplyIfActive(_protagonist);
+        GrantItemMode.ApplyIfActive(_protagonist);
             }
             var protagonist = _protagonist;
             
@@ -3043,6 +3044,7 @@ public class LocationTravelGameController : IDisposable
         _protagonist = new Protagonist();
         _protagonist.InitializeMemory();
         WeaponsMode.ApplyIfActive(_protagonist);
+        GrantItemMode.ApplyIfActive(_protagonist);
 
         _hasGameStarted = true;
         Console.WriteLine("LocationTravelGameController: Game state reset complete");
@@ -3351,8 +3353,29 @@ public class LocationTravelGameController : IDisposable
         var locationName = biomeInfo.location?.Name.ToLowerInvariant();
         var sessionPath  = _llamaServer.SessionLogDir;
 
-        if ((locationName == null || !_sceneFactories.TryGetValue(locationName, out var newFactory)) &&
-            !_sceneFactories.TryGetValue(biomeName, out newFactory))
+        Func<SceneFactory>? newFactory;
+
+        // --location-type overrides the biome entirely, so a test can build a forest in a world that
+        // has none. Checked first, and loud when it names something unregistered: falling back to
+        // whatever is underfoot is how a forest test came to run in a plain.
+        if (Config.Debug.LocationType is { } forcedType)
+        {
+            if (_sceneFactories.TryGetValue(forcedType.ToLowerInvariant(), out newFactory))
+            {
+                Console.WriteLine($"[debug] --location-type: building a '{forcedType}' here.");
+            }
+            else
+            {
+                DebugFlagAudit.Miss("--location-type", forcedType,
+                    $"the biome underfoot ({locationName ?? biomeName}). Registered: {string.Join(", ", _sceneFactories.Keys)}");
+                newFactory = null;
+            }
+        }
+        else newFactory = null;
+
+        if (newFactory == null
+            && (locationName == null || !_sceneFactories.TryGetValue(locationName, out newFactory))
+            && !_sceneFactories.TryGetValue(biomeName, out newFactory))
         {
             newFactory = () => new PlainSceneFactory(sessionPath);
         }
@@ -3374,7 +3397,13 @@ public class LocationTravelGameController : IDisposable
         }
         lis = state;
 
-        var scene = sceneFactory.Build(vertexIndex, state);
+        // --location-id pins WHICH scene gets built, independently of where the avatar is standing.
+        // The build is a pure function of this number, so it is the difference between a test aimed
+        // at "a village" and one aimed at the exact village --verb-probe reported.
+        int buildId = Config.Debug.LocationId ?? vertexIndex;
+        if (Config.Debug.LocationId is int forced)
+            Console.WriteLine($"[debug] --location-id: building vertex {vertexIndex} as location {forced}.");
+        var scene = sceneFactory.Build(buildId, state);
 
         // Debug: --spawn-beast puts one where the script opens. Before the first-contact pass below,
         // so it is flagged an enemy exactly like a beast the factory rolled.
@@ -3533,6 +3562,18 @@ public class LocationTravelGameController : IDisposable
             _llamaServer == null || _modusMentisSlotManager == null)
             return;
         
+        // --auto-dialogue settles the conversation where it stands and never enters Dialogue mode, so
+        // a verb test asserts about its verb rather than about somebody else's dialogue tree. The
+        // trees themselves are covered by cli/_systems/dialogue_*.cli.
+        if (Config.Debug.AutoDialogue
+            && Cathedral.Game.Dialogue.Runtime.DialogueAutoResolve.TryResolve(
+                   dialogueOutcome.Target, _narrativeController.Protagonist,
+                   dialogueOutcome.TreeId, dialogueOutcome.Tree))
+        {
+            _narrativeController.OnDialogueCompleted(dialogueOutcome.Target);
+            return;
+        }
+
         Console.WriteLine($"LocationTravelGameController: Starting dialogue with {dialogueOutcome.Target.DisplayName}");
         
         _dialogueAdapter = new DialogueTreeAdapter(

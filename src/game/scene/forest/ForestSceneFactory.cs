@@ -150,21 +150,21 @@ public class ForestSceneFactory : SceneFactory
             FurnitureSubfactory.AddShortcuts(rng, scene, outdoors, FurnitureSubfactory.Setting.Woodland);
             FurnitureSubfactory.AddExtractionPoints(rng, outdoors, FurnitureSubfactory.Setting.Woodland);
 
-            var climbTop = FurnitureSubfactory.AddClimb(
-                rng, scene, outdoors[0], FurnitureSubfactory.Setting.Woodland);
-            if (climbTop != null)
+            // A giant tree, and from its crown a road to every other part of the wood. On the ground
+            // a forest is the least legible place in the game — everything looks like more forest —
+            // so height buys more here than anywhere.
+            var crown = FurnitureSubfactory.AddGiantTree(rng, scene, outdoors[0]);
+            if (crown != null)
             {
-                // Sections must partition the areas, so the new top belongs to the section its foot is
+                // Sections must partition the areas, so the crown belongs to the section its trunk is
                 // in — an area in no section crashes the fight path outright.
                 var host = scene.Sections.First(s => s.Areas.Contains(outdoors[0]));
-                host.Areas.Add(climbTop);
-                RegisterAll(scene, climbTop);
+                host.Areas.Add(crown);
+                RegisterAll(scene, crown);
+                AddLandscapes(scene, crown, scene.AllAreas);
             }
         }
 
-        // Landmarks, and a view from anywhere that has to be climbed to. Must run after the
-        // connectors are attached: it finds the high ground by looking for their tops.
-        MarkLandmarksAndViews(scene);
 }
 
     // ── Area builders ────────────────────────────────────────────────────────

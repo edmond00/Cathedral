@@ -383,8 +383,9 @@ public static class FurnitureSubfactory
     /// top so the caller can put it in a section (sections must partition the areas, so only the
     /// factory can decide where it belongs).
     ///
-    /// <para>Returns null when the roll says no. The top area is deliberately bare: what it is for is
-    /// the view, which <c>MarkLandmarksAndViews</c> hangs there afterwards.</para>
+    /// <para>Returns null when the roll says no. The top area comes back bare, and the caller must
+    /// put something on it — a climb that costs a roll and arrives nowhere is what the building
+    /// audit's empty-top warning exists to catch.</para>
     /// </summary>
     public static Area? AddClimb(Random rng, Scene scene, Area bottom, Setting setting, double chance = 0.5)
     {
@@ -434,24 +435,44 @@ public static class FurnitureSubfactory
     }
 
     /// <summary>
-    /// Adds a way into <paramref name="inside"/> that is not its door — a chimney off a roof, a
-    /// broken window, a hole in the thatch. Illegal to use, and the whole reason a roof is worth
-    /// climbing to.
+    /// Adds a giant tree to <paramref name="area"/> — a trunk big enough to climb, and a crown to
+    /// climb to. Returns the crown, or null when the roll says no.
+    ///
+    /// <para>The crown is the forest's viewpoint: from up there the rest of the wood is laid out, and
+    /// the factory hangs a landscape per area on it. On the ground a forest is the least legible
+    /// place in the game — everything looks like more forest — so the tree is worth the climb in a
+    /// way a barn loft is not.</para>
     /// </summary>
-    public static void AddSlipIn(Random rng, Scene scene, Area outside, Area inside, double chance = 0.6)
+    public static Area? AddGiantTree(Random rng, Scene scene, Area area, double chance = 0.5)
     {
-        if (rng.NextDouble() > chance) return;
+        if (rng.NextDouble() > chance) return null;
 
-        var kind = rng.NextDouble() < 0.5 ? SlipKind.Chimney : SlipKind.Window;
-        (string Name, string Desc, string[] Moods) spec = kind == SlipKind.Chimney
-            ? ("Chimney", "A smoke-hole wide enough at the head to take a body, and sooted the whole way down", new[] { "sooted", "warm", "narrow" })
-            : ("Broken Shutter", "A shutter hanging off one hinge, and behind it a gap nobody has got round to boarding", new[] { "hanging", "splintered", "dark" });
+        var crown = new Area(
+            displayName:           "Giant Tree Crown",
+            referenceLemma:        "crown",
+            contextDescription:    "up in the crown of the giant tree",
+            transitionDescription: "haul yourself into the crown",
+            descriptions:          new List<string>
+            {
+                "A platform of limbs near the top of a tree far older than the wood around it, "
+                + "with the whole forest laid out below the leaves",
+            },
+            moods: new[] { "airy", "swaying", "green-lit", "high" });
 
-        new SlipIntoPointOfInterest(
-            outside, inside, kind, spec.Name,
-            new List<string> { spec.Desc }, spec.Moods)
+        new ScalePointOfInterest(
+            area, crown, ScaleKind.Tree, "Giant Tree",
+            new List<string>
+            {
+                "A trunk too wide for three people to reach round, its bark broken into holds the "
+                + "whole way up to where the limbs begin",
+            },
+            new[] { "vast", "mossed", "ancient" })
         {
             Senses = SensoryProfile.Examinable,
+            VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft" },
         }.AttachTo(scene);
+
+        return crown;
     }
+
 }

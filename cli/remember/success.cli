@@ -1,0 +1,38 @@
+# remember — success
+#
+# REMEMBER exists only in the childhood-reminescence phase, so this test is the one that must NOT
+# pass --skip-childhood: that flag skips the phase entirely and fills the starting kit as if it had
+# run. Every other script in the suite passes it, which is why this verb had no test.
+#
+# The phase auto-succeeds by design — NarrativeController short-circuits it before the critic: no
+# plausibility check, no noetic cost, dice at difficulty 0. So there is no `strategy` here and no
+# meaningful failure case; `cli/remember/` has one script, deliberately.
+#
+# FLAGS: --playground --debug --seed 42 --no-encounters
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+
+# The phase opens on its own — no travel, no location. Wait for the mode rather than for idleness.
+wait mode ChildhoodReminescence 60
+advance 12 180
+regions
+
+# A memory fragment is the observable, and REMEMBER is the only verb the phase offers.
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+# What makes this a remember test rather than an any-verb test.
+expect-verb remember
+quit

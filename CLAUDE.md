@@ -41,6 +41,13 @@ from the game's (very chatty) diagnostic logging on the same stdout.
 | `--spawn-beast <name>` | Puts a beast (`wolf`, `boar`, `bear`, `black bear`, `stray dog`, `fox`, `cat`) in the **opening area** of every scene, at every period, flagged an enemy by the same first-contact pass that flags a rolled one. Everything a script does *to* a beast — appease, tame, track — starts with one being where the script opens, and no factory guarantees that: a wolf is rolled 10–20% of the time, a boar 25–40%, and whichever is rolled then roams between areas with the hour. Follows `--start-area`, since it spawns into whichever area narration opens in. |
 | `--goal-only <verb-id>` | Forces the playground's goal choice onto one verb. `--playground` replaces the persona's "what do you want to do?" with a **uniform draw over every goal the observed object offers**, so a script meaning to `appease` a beast — and then `tame` it — is otherwise picking out of a dozen. The CLI's `goal` command sets the same switch, which is what a script that needs two different goals in one run should use. Inert when no goal in a phase matches, which then draws as usual. |
 | `--advance-days <n>` | Pushes the world clock forward `n` days on first arrival at the world map. The clock only moves on travel arrival and work stints while a wound needs 100–1000 days to close, so without this nothing about healing is observable. Fires once, before anything has happened — for healing *a wound taken in play*, use the `clock` command instead. |
+| `--location-type test` | Builds the **test location** (`TestSceneFactory`) — a kitchen sink holding one of everything, under names that never change. This is what the whole CLI suite runs in; see "The test location" below. It is attached to no biome, so this flag is the only way in. |
+| `--silent` | Opens no audio device: no music, no sound effects, no loading wash. `run_tests.sh` passes it on every script — a full run launches the game a hundred-odd times, and without it that is an hour of overlapping music from windows nobody is watching. Implemented by not opening the MIDI device, which is a state the engine already handles (a machine with no MIDI runs the same path). |
+| `--location-type <name>` | Forces which scene factory builds every location (`village`, `forest`, `cave`…), ignoring the biome underfoot. **Prefer this to `--start-at` in a test.** `--start-at` searches the *generated world* and shrugs when it finds nothing — at seed 42 there is no forest in reach, so every forest test silently ran in a plain. This builds one regardless, so a test does not depend on world generation at all. |
+| `--location-id <n>` | Builds every scene as location id `n`. A scene is a pure function of its id (`CreateSeededRandom(locationId)`), so the id decides the layout, the room names, the objects and the people — a village rolls a Chain or a Hub with entirely different rooms. Together with `--location-type` it determines the whole scene, which is what makes `--verb-probe`'s reported rooms actually exist in the run. |
+| `--npc-static` | Pins every NPC to the area they spend most of the day in, instead of following their schedule. Where somebody stands at a given hour is drawn from the location seed across six periods, so an NPC verb's test cannot otherwise name the room — and a test that names the wrong one finds it empty. `--verb-probe` sets the same flag, so its rooms and the run's agree by construction. |
+| `--auto-dialogue` | Settles every conversation as an immediate success instead of holding one. A dozen verbs only *open* a dialogue and the tree decides what follows, so without this a **verb** test has to walk somebody else's tree to reach its own assertion — and breaks whenever that tree is re-authored. `DialogueAutoResolve` performs exactly the writes a won conversation makes, so nothing reading the world afterwards can tell. The trees themselves are covered by `cli/_systems/dialogue_*.cli`. |
+| `--grant-item <id[,id…]>` | Puts named items in the starting pack (`axe`, `pick`, `shovel`, `fishing_rod`…). Five verbs are tool-gated and `RequiredToolRule` refuses them outright without one; the starting kit is random, so their success test is unwritable otherwise. Note the rule accepts only `Action.CombinedItem` — **carrying** the tool is not enough, the script must combine it with the action (`click action 0` → `choose 1` → pick the item → `click action 1`). |
 
 A typical invocation:
 
@@ -373,6 +380,39 @@ read its header first: `--playground` cannot exercise the willingness rules (it 
 question without asking it), and which witness tier fires is seed-dependent. The audit is what covers
 those.
 
+### Landscapes: the one way to move without walking
+
+A `LandscapePointOfInterest` is **a road you can see but cannot yet be on**. It hangs in an area you
+had to climb to, points at another area of the same location, and `voyage_toward` walks it. It is a
+`ConnectorPointOfInterest` like a door or a stair, with two differences:
+
+- **listed at the viewpoint only** (`AttachToViewpoint`, not `AttachTo`), because a road visible from
+  a rooftop is not visible from the street. Travel is therefore **one-way**: you come back by the
+  ordinary graph;
+- **`AllowsGraphEdge` is true**, unlike every other connector. Those are *gates* — crossing them is
+  meant to cost a roll, so a graph edge beside one silently makes them decorative, which is what the
+  building audit checks for. A landscape gates nothing; it is a shortcut earned by the climb, and the
+  destination is expected to be walkable by road as well.
+
+Observing one offers the journey. There is **no looking step**: this replaced a pair of verbs where
+`observe_horizon` searched a horizon to record what could be seen and `go_toward` walked to it. What
+that extra roll bought was a set of area ids written onto the `PoV` — and `RefreshSceneVerbs` builds a
+*throwaway* `PoV` to re-gate verbs against, so the reveal worked, the knowledge was written, and the
+verb that depended on it read an empty set every time. `go_toward` was unreachable in the shipped
+game. Searching a scene for what is worth looking at is the narration system's job and it already
+does it; a landscape is an object in an area, refreshed like any other, with no second copy to
+disagree with.
+
+**Placement is manual, per factory** — there is no automatic pass. A view over a location is a claim
+about that location, and the one thing automatic placement reliably produced was a cave entrance
+reporting that "the country opens out below". Today: a mountain's and a peak's topmost area, a
+forest's giant-tree crowns, and **every building's roof** (reached by scaling its outside wall, seeing
+every other outside area — roofs do not see other roofs). Caves have none by design. Climbable areas
+that had nothing to offer once climbed were deleted rather than given a view.
+
+Examining a landscape teaches `topographia`; contemplating one teaches `aesthetic`; the voyage itself
+teaches `voyage`.
+
 ### Recruiting: taming a beast, and the two-step it belongs to
 
 Both routes into the party — `tame` for a beast, the `propose_to_join` dialogue for a person — end in
@@ -526,6 +566,158 @@ expect Skill learned        # every successful verb teaches a modus mentis
 dump
 quit
 ```
+
+### The test suite
+
+```bash
+./run_tests.sh              # every audit, then every CLI script
+./run_tests.sh audits       # the headless audits only (seconds)
+./run_tests.sh cli          # the CLI scripts only
+./run_tests.sh cli gather   # just cli/gather/
+```
+
+Exit code is the number of failures. `--playground` makes every animation instant
+(`Config.AnimationsAreInstant`: the 5-second dice tumble, the vital-heat bar, the fight AI's pause,
+movement framing), which takes a script from ~45 s to ~12 s — the difference between a suite you run
+and one you don't.
+
+**Layout: one folder per verb, named exactly the verb id.**
+
+```
+cli/<verb-id>/success.cli     the verb carried through   (strategy succeed  → expect SUCCESS)
+cli/<verb-id>/fail.cli        the verb attempted, missed (strategy fail-dice → expect FAILURE)
+cli/<verb-id>/success2.cli    a second script where the verb has genuinely different outcomes
+cli/_systems/                 scripts that test a system rather than a verb — the preview box,
+                              the Speak-About hand-off, the crime chain
+```
+
+**Every new verb must arrive with its folder and at least those two scripts.** A verb with no test is
+a verb nobody will notice breaking: `--verb-audit` proves it is *offered*, and only a script proves it
+*works*. Add a third when the verb's outcome genuinely forks (`cli/gather/beast_barred.cli` is the
+anatomy gate, which is neither a success nor a failure of the roll).
+
+**The test location.** Every script in the suite runs in one place: `--location-type test`, built by
+`src/game/scene/test/TestSceneFactory.cs`. It is a kitchen sink — ten areas holding one of every kind
+of thing the game has, and covering **44 of the 54 registered verbs** from a cold start.
+
+It exists because the alternative did not survive development. Scripts used to run against the real
+factories and name what they aimed at (`--start-area "Alehouse Store"`, `--observe-only "Shelving
+Rack"`), and those names are *rolled*. Adding a single `rng.NextDouble()` to the middle of
+`BuildingFactory` — one new content roll — re-seeded every draw after it, renamed the buildings and
+the people in them, and broke six unrelated tests. Moving the roll to the end of the method fixes it
+exactly once, until the next piece of content.
+
+So **nothing in this factory is rolled.** The `rng` handed to `BuildSections` is deliberately never
+touched: every area, object and description is written out, and a script pinned to `"Test Yard"` stays
+pinned to it forever.
+
+Two things follow from that, and both matter:
+
+- **It is not content, and the audits do not sweep it.** `--verb-audit` covers the nine real factories
+  only. If a verb becomes reachable *only* in the test location, the audit's dead-verb warning is
+  exactly what should say so — whether the real world places a lockable door, an ore seam or a
+  sleeping NPC is that audit's job, not a verb test's.
+- **The types are the content.** Verbs gate on a *subclass* or a reference lemma — `dig` wants a
+  `DiggableGroundPointOfInterest`, `mine` an `OreVeinPointOfInterest`, `cut_wood` a lemma of
+  `tree`/`log`/`stump`, `fish` a water crossing with `HoldsFish`, a sleeper a bed whose lemma is
+  `pallet`, and every extraction verb also wants items still on the target. A plain `PointOfInterest`
+  named "Test Ore Seam" reads correctly and is offered to nobody; the first draft of the file was
+  written that way and covered 25 verbs instead of 44.
+
+The ten it does not cover are situational rather than missing: `get_up` and `remember` are phase-only,
+`cut` needs a corpse and `tame` an appeased beast (their scripts build that first), and the six
+affinity-gated dialogue verbs are invisible to `--verb-probe` because affinity is applied when a scene
+is attached to its instance state, long after the factory build the probe inspects.
+
+Four things that are not obvious until a script hits them, all of them learned by a test failing for
+a reason that had nothing to do with its verb:
+
+- **A hostile beast opens the next observation phase wherever it stands**, ahead of `--observe-only`.
+  A wolf in the wood therefore hijacked every phase that started there, and `cut_wood`, `scale_up` and
+  `stalk` all ran `appease` on it instead of the verb they name. The wolf has a den of its own now, and
+  only the scripts that want it go in.
+- **A verb that produces an item is refused by the carry rule before it reaches the dice** if nothing
+  carried can hold the result — "I have nowhere left to put a log", with no roll and no banner. A `Log`
+  is `ItemSize.Large` and needs a container, so `cli/cut_wood/` grants `axe,sack`. This is not about a
+  full pack: emptying it changes nothing.
+- **A landed `attack` prints no outcome banner.** It starts a fight, and the fight screen replaces the
+  narration before the banner can be read, so `wait mode Fighting` is the assertion. `expect SUCCESS`
+  is right for the *failed* attack, which stays in narration.
+- **Never `--observe-only` a generated name.** `--verb-probe` reports an NPC's display name because
+  that is what it has, but names come from the name generator — content, free to change. Use the
+  archetype id (`brewer`, `weaver`, `plowman`), which is what `TargetingAliases` accepts — including
+  for a **sleeper**, who is observable only as the merged `SleepingNpcPointOfInterest` and now hands
+  through the species and archetype id of the person inside it. Same for assertions:
+  `cli/tame/success.cli` asserts the `P A R T Y` header rather than the beast's name.
+
+**Adding a verb? Add what it needs to the test location, and its `cli/<verb>/` folder.**
+
+**Each script carries its own flags** on a `# FLAGS:` header line, which is what the runner executes:
+
+```
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters \
+#        --start-at mountain --start-area "Boulder Field" --period dawn --observe-only "Boulder"
+```
+
+A test that needs a particular biome, room, hour or object says so in the one place a reader looks.
+
+**Finding those flags: `--verb-probe`.** Do not hunt for a seed.
+
+```bash
+dotnet run -- --verb-probe
+```
+
+It sweeps every factory × location id × area × period × object and prints, per verb, the situations
+that offered it — as the flags themselves:
+
+```
+── gather
+     [12/12 ids] --start-at mountain --start-area "Boulder Field" --period dawn --observe-only "Boulder"
+```
+
+Two things about that output are load-bearing:
+
+- **The `[12/12 ids]` count.** Area and object names are *per location id* — a village rolls a Chain
+  or a Hub layout with different rooms — so a combination found in one id opens somewhere else on
+  another seed. Prefer the ubiquitous ones; anything thin is a script that will fail when something
+  upstream of spawn changes.
+- **It reports the observable, not the target.** An item is never observed in its own right
+  (`SceneViewAdapter` folds an item's verbs into its holding PoI's action list), so `--observe-only`
+  only ever matches the holder. Pinning to `"Rock"` when the rock lives in a `"Boulder"` matches
+  nothing and silently opens on the whole scene.
+
+It also lists the verbs no cold start reaches, with the reason (`tame` needs an appeased beast, `cut`
+needs a corpse, `request_job` needs an acquaintance). Those need a script that builds the situation
+first — `cli/tame/success.cli` appeases before it tames — or a debug flag that sets it up.
+
+**Assert the verb, never the banner.** `expect SUCCESS` matches the outcome banner of *any* action,
+so a script aimed at `break` that opened on a path, followed the path and succeeded, passed. Sixty of
+them did. **`expect-verb <verb-id>`** reads the verb id off the action that actually ran, and is what
+makes a verb test a verb test. It cannot survive a scene rebuild (a new `NarrativeController` resets
+what it recorded), so anything crossing a location boundary must assert some other way.
+
+**A narrowing flag that narrows nothing fails the run.** `--start-at`, `--start-area`,
+`--observe-only` and `--goal-only` all *fall back* when they match nothing — open where the factory
+did, offer the whole scene, draw from every goal. That is right for a person poking at the game and
+disastrous for a test, which then exercises something else and reports whatever that did. Every miss
+now goes through `DebugFlagAudit` and fails the run naming the flag. A script that is testing an
+**absence** (`cli/gather/beast_barred.cli` checks a beast is *not* offered `gather`) declares it with
+`allow-flag-miss <flag>`.
+
+**Dialogue.** `--playground` stubs `DialogueTreeAdapter`'s LLM slot — it was the one place in the
+dialogue path still reaching for the server, so before that every tree in the game was unreachable
+under playground: `Setup` threw, the conversation "completed" instantly, and a verb test watched a
+dialogue open and close without a word being said. `advance` drains whichever preview box is up
+(narration's or the conversation's), and `strategy` now reaches the resolution roll, which it never
+did — so the failure branch of a tree is finally testable. Verb tests pass `--auto-dialogue` and
+assert about their verb; `cli/_systems/dialogue_*.cli` drive a real tree and assert on the branch's
+success vs failure replica.
+
+**`click keyword <n>` for pinned phases.** Which word an observation highlights comes from the prose
+(under `--playground` the object's own noun), not from its display name, so a test that has pinned the
+phase with `--observe-only` still cannot spell the handle — `"Brew Barrel"` is not `barrel`. Clicking
+by index means "whatever this phase opened on". Name-matching stays right for hand-written scripts:
+it reads as intent and survives reordering.
 
 ### Extending the CLI for a new feature
 
@@ -717,7 +909,9 @@ Then it warns about the things that are silent at runtime:
   (a typo grants nothing, silently — the same failure `--npc-audit` guards for in traits);
 - a `ReferenceToolIds` entry no item matches, which makes a tool-gated verb permanently *impossible*
   rather than merely hard;
-- a location with fewer than two landmark areas, so a horizon observation has nothing to name.
+- a scale point or cliff whose **top** area holds nothing — a climb that costs a roll and arrives
+  somewhere with no points of interest at all. This replaced a check that counted landmark areas,
+  which the landscape refactor made meaningless.
 
 It closes with the **anatomy** table: what each anatomy may attempt and what its body rules out
 (`Verb.RequiredCapabilities`). Never a warning — a beast barred from 25 of 54 verbs is the design —

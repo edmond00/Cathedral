@@ -387,7 +387,7 @@ public class ThinkingExecutor
 
         if (matched.Count > 0) return matched;
 
-        Console.WriteLine($"[debug] --goal-only '{wanted}': no such goal here — drawing from all {outcomes.Count}.");
+        Cathedral.Game.DebugFlagAudit.Miss("--goal-only", wanted, $"all {outcomes.Count} offered goal(s)");
         return outcomes;
     }
 

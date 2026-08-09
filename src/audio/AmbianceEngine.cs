@@ -159,7 +159,9 @@ public sealed class AmbianceEngine : IDisposable
         // -1 means "unknown" — the first SendProgramChange to each channel will always send.
         Array.Fill(_channelPatch, -1);
 
-        _device = OpenBestDevice();
+        // --silent opens nothing. A null device is a state every path here already handles (a
+        // machine with no MIDI runs it), so silence costs no special case anywhere else.
+        _device = Config.Debug.Silent ? null : OpenBestDevice();
         if (_device != null)
         {
             _device.PrepareForEventsSending();
@@ -1042,8 +1044,11 @@ public sealed class AmbianceEngine : IDisposable
                 // filter adds is the brown-noise wash that says "something is being computed".
                 // The interaction SFX (preview-text reveals, hovers, clicks) come from
                 // TriggerGameEvent / PlaySoundEffect and are untouched by this.
-                using var brownNoise = new BrownNoiseStreamer(amplitude: 0.22f * _sfxVolume);
-                brownNoise.Start();
+                // The one sound that does NOT come through the MIDI device, so silence has to be
+                // asked for again here or a silent run still washes noise over every model call.
+                using var brownNoise = Config.Debug.Silent
+                    ? null : new BrownNoiseStreamer(amplitude: 0.22f * _sfxVolume);
+                brownNoise?.Start();
 
                 // Nothing to sequence — hold until SetFilter cancels us, then the `using`
                 // above stops the noise on the way out.

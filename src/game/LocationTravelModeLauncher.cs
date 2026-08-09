@@ -183,6 +183,13 @@ public static class LocationTravelModeLauncher
             gameController.RegisterSceneFactory("mountain", () => new MountainSceneFactory());
             gameController.RegisterSceneFactory("peak",     () => new PeakSceneFactory());
             gameController.RegisterSceneFactory("coast",    () => new CoastSceneFactory());
+
+            // The test location: every kind of thing in one place, under names that never change.
+            // Attached to no biome, so --location-type test is the only way in and it can never
+            // appear in a real world. See TestSceneFactory.
+            gameController.RegisterSceneFactory(
+                Cathedral.Game.Scene.Test.TestSceneFactory.TypeName,
+                () => new Cathedral.Game.Scene.Test.TestSceneFactory());
             
             // Attach the LLM server if it is ready
             if (PlaygroundMode.IsActive && llamaServer != null)
@@ -426,6 +433,19 @@ public static class LocationTravelModeLauncher
         
         // Cleanup
         Console.WriteLine("Shutting down...");
+
+        // Debug viewers FIRST. Each runs its own WinForms message pump on a background thread, over
+        // the very scene and LLM session the lines below are about to dispose. Left running, the pump
+        // handles one more message against freed state, throws, and WinForms answers by constructing a
+        // ThreadExceptionDialog on a process that is already tearing down — which cannot create a
+        // window handle (Win32Exception 1406) and dies as an unhandled exception on that thread.
+        //
+        // The visible cost was the exit code: a --cli run whose every assertion had passed still
+        // exited 127, so the whole test suite read as failing. Being background threads, they were
+        // going to be killed anyway; the point is to stop the pump while the state is still valid.
+        Cathedral.Debug.SceneDebugManager.Close();
+        Cathedral.Debug.LlmMonitorDebugManager.Close();
+
         gameController?.Dispose();
         llamaServer?.Dispose();
         ambianceEngine?.Dispose();

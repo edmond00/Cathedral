@@ -1,0 +1,39 @@
+# appease — success
+#
+# Gentling a hostile beast out of hostility. Forced past the dice.
+#
+# --spawn-beast is what makes this reachable: appease only applies to an ENEMY (or an annoying
+# acquaintance), and a wilderness factory rolls a beast 10–40% of the time and then lets it roam.
+# The spawned one is flagged an enemy by the same first-contact pass that flags a rolled one.
+#
+# This used to exist only as the first half of cli/tame/success.cli — a beast that still wants to
+# kill you cannot be tamed, so taming is appease-then-tame. Split out so the verb has its own test.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Den" --period noon --observe-only wolf
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+expect wolf
+
+strategy succeed
+goal appease
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect SUCCESS
+
+# What makes this an appease test rather than an any-verb test.
+expect-verb appease
+quit

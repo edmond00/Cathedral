@@ -228,6 +228,16 @@ public abstract class SceneFactory
         scene.Sections.Add(building.Section);
         RegisterAll(scene, building.Section);
         building.EntryDoor.Register(scene);
+
+        // The wall climb joins the outside area to the roof, so it has to be attached at BOTH ends —
+        // unlike a landscape, a wall is as visible from the street as from the roof, and you climb
+        // back down it. Attached here rather than in BuildingFactory, which has no scene: the same
+        // populate-then-register split the entry door follows.
+        building.WallClimb.AttachTo(scene);
+
+        // The chimney or broken shutter, when this building rolled one: a roof's other reason to
+        // exist, and where slip_into lives — an illegal entry that skips a locked door.
+        building.RoofSlipIn?.AttachTo(scene);
     }
 
     private static void RegisterPoI(Scene scene, PointOfInterest poi)
@@ -340,70 +350,61 @@ public abstract class SceneFactory
     // ── Landmarks and horizons ────────────────────────────────────────────────
 
     /// <summary>
-    /// Marks the location's landmark areas and hangs a <see cref="HorizonPointOfInterest"/> in every
-    /// area you can only reach by climbing.
+    /// Hangs a <see cref="LandscapePointOfInterest"/> in <paramref name="viewpoint"/> for each of
+    /// <paramref name="destinations"/> — one distant place seen from a high one, and the road to it.
     ///
-    /// <para>Call this at the end of <c>BuildSections</c>, after the connectors are attached. It
-    /// finds the high ground for itself — the top of any cliff or scale point — so a factory that
-    /// adds a climb gets its view without having to remember to.</para>
+    /// <para>Deliberate, not automatic. This replaced a pass that found its own high ground (the top
+    /// of any cliff or scale point) and named the first area of each section as a landmark. It was
+    /// tidy and it was wrong: a cave's entrance hall is the top of the mineshaft ladder, so every
+    /// cave in the game reported that "the country opens out below", and the places it named from a
+    /// mountain were whichever areas happened to be built first. A view over a location is a
+    /// statement about that location, so a factory makes it.</para>
     ///
-    /// <para><paramref name="landmarks"/> should be the two or three places in this location worth
-    /// naming from a distance: the mill, the cliff top, the standing stone. Fewer than two and a
-    /// survey has nothing to compare; <c>--verb-audit</c> reports any location that falls short.
-    /// Nulls are ignored so a factory can pass optional areas without guarding each one.</para>
+    /// <para>The viewpoint itself is skipped, and so is any duplicate: a road to where you are
+    /// standing is not a road.</para>
     /// </summary>
-    protected static void MarkLandmarksAndViews(Scene scene, params Area?[] landmarks)
+    /// <summary>
+    /// Hangs a landscape on every building roof in the scene, one per outdoor ground area.
+    ///
+    /// <para>Call at the end of a factory that builds buildings. Shared rather than copied per
+    /// factory because the roof itself is: <c>BuildingFactory</c> gives every building one, so a
+    /// factory that forgot this left a climbable area with nothing on it — which is exactly what
+    /// happened to fields, and what <c>--verb-audit</c>'s climb check now catches.</para>
+    ///
+    /// <para>Roofs do not see other roofs. A view over a settlement is the ground between the
+    /// buildings, not a way of crossing it without ever coming down.</para>
+    /// </summary>
+    protected static void AddRoofLandscapes(Scene scene)
     {
-        var marked = landmarks.Where(a => a != null).Select(a => a!).Distinct().ToList();
-
-        // No explicit list: take the first area of each section. Sections are the location's
-        // meaningful sub-places — the farmyard, the longhouse, the forge, the tunnel network — so
-        // their heads are exactly the things a person on a roof would name. Capped at three, because
-        // a survey that lists eight places is not a survey.
-        if (marked.Count == 0)
-            marked = scene.Sections
-                .Where(s => s.Areas.Count > 0)
-                .Select(s => s.Areas[0])
-                .Distinct()
-                .Take(3)
-                .ToList();
-
-        // A location can legitimately be one section — a coast that rolled no clifftop, say — and one
-        // landmark gives a survey nothing to compare against. Top up from the far end of the area
-        // list, which for the linear layouts is the other end of the place.
-        if (marked.Count < 2)
-            foreach (var area in scene.AllAreas.AsEnumerable().Reverse())
-            {
-                if (marked.Count >= 2) break;
-                if (!marked.Contains(area)) marked.Add(area);
-            }
-
-        foreach (var area in marked) area.IsLandmark = true;
-        if (marked.Count == 0) return;
-
-        // High ground: the top of anything that has to be climbed. Doors and paths do not count —
-        // a view is about height, not about passage.
-        var high = scene.AllAreas
-            .Where(area => area.PointsOfInterest.Any(p =>
-                (p is Building.CliffPointOfInterest cliff && cliff.TopArea.Id == area.Id) ||
-                (p is Building.ScalePointOfInterest scale && scale.TopArea.Id == area.Id)))
+        var roofs = scene.AllAreas
+            .SelectMany(a => a.PointsOfInterest)
+            .OfType<Building.ScalePointOfInterest>()
+            .Select(sp => sp.TopArea)
             .Distinct()
             .ToList();
 
-        foreach (var area in high)
+        var ground = scene.OutdoorAreas.Where(a => !roofs.Any(r => r.Id == a.Id)).ToList();
+
+        foreach (var roof in roofs)
+            AddLandscapes(scene, roof, ground);
+    }
+
+
+    protected static void AddLandscapes(Scene scene, Area viewpoint, IEnumerable<Area> destinations)
+    {
+        foreach (var destination in destinations.Distinct())
         {
-            if (area.PointsOfInterest.OfType<HorizonPointOfInterest>().Any()) continue;
+            if (destination.Id == viewpoint.Id) continue;
 
-            var horizon = new HorizonPointOfInterest(
-                marked,
-                "The View",
-                new() { "The country opens out below, further than anything at ground level allows" });
-
-            // Keyed here rather than left to the stable-key walk so the view's rolled prose does not
-            // depend on which area happened to be walked last.
-            horizon.StableKey = $"horizon|{area.DisplayName}";
-            area.PointsOfInterest.Add(horizon);
-            horizon.Register(scene);
+            var landscape = new LandscapePointOfInterest(
+                viewpoint, destination,
+                $"Distant {destination.DisplayName}",
+                new List<string>
+                {
+                    $"The {destination.DisplayName.ToLowerInvariant()} lies out there, small with distance "
+                    + "and clear enough to walk to",
+                });
+            landscape.AttachToViewpoint(scene);
         }
     }
 

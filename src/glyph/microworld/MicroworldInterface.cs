@@ -617,7 +617,8 @@ namespace Cathedral.Glyph.Microworld
                     }
                     else
                     {
-                        Console.WriteLine($"[debug] --start-at \"{want}\" matched nothing in this world — using the normal spawn");
+                        Cathedral.Game.DebugFlagAudit.Miss("--start-at", want,
+                            "the normal spawn. The world has no such biome in reach — use --location-type to build one regardless");
                     }
                 }
 

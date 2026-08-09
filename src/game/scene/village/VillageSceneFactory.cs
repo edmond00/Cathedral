@@ -155,31 +155,10 @@ public class VillageSceneFactory : SceneFactory
             FurnitureSubfactory.AddShortcuts(rng, scene, furnishable, FurnitureSubfactory.Setting.Settlement);
             FurnitureSubfactory.AddExtractionPoints(rng, furnishable, FurnitureSubfactory.Setting.Settlement);
 
-            var climbTop = FurnitureSubfactory.AddClimb(
-                rng, scene, furnishable[0], FurnitureSubfactory.Setting.Settlement);
-            if (climbTop != null)
-            {
-                // Sections must partition the areas, so the new top belongs to the section its foot is
-                // in — an area in no section crashes the fight path outright.
-                var host = scene.Sections.First(s => s.Areas.Contains(furnishable[0]));
-                host.Areas.Add(climbTop);
-                RegisterAll(scene, climbTop);
-
-                // The roof is only worth the climb if it leads somewhere. A chimney or a broken
-                // shutter puts you inside a house without ever touching its door — which is the whole
-                // point of the wall, and the reason SLIP INTO is an illegal action.
-                var target = _houses.Count > 0
-                    ? _houses[rng.Next(_houses.Count)].House
-                    : _workshops.Count > 0 ? _workshops[rng.Next(_workshops.Count)].Building : null;
-
-                if (target != null)
-                    FurnitureSubfactory.AddSlipIn(rng, scene, climbTop, target.PublicHall);
-            }
         }
 
-        // Landmarks, and a view from anywhere that has to be climbed to. Must run after the
-        // connectors are attached: it finds the high ground by looking for their tops.
-        MarkLandmarksAndViews(scene);
+        // Every building has a roof, and from a roof you can see the rest of the outside.
+        AddRoofLandscapes(scene);
 }
 
     /// <summary>

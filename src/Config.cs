@@ -61,6 +61,45 @@ public static class Config
         public static string? StartAt { get; set; } = null;
 
         /// <summary>
+        /// Forces every scene to be built as though it were this location id, whatever vertex the
+        /// protagonist actually stands on. Set by <c>--location-id &lt;n&gt;</c>.
+        ///
+        /// <para><b>What it is for.</b> A scene is a pure function of its location id
+        /// (<c>SceneFactory.CreateSeededRandom(locationId)</c>), so the id decides the layout, the
+        /// room names, the objects and the people — a village rolls a Chain or a Hub with entirely
+        /// different rooms depending on it. That makes every other targeting flag id-dependent:
+        /// <c>--start-area "Alehouse Store"</c> and <c>--observe-only "Shelving Rack"</c> name things
+        /// that exist in *some* villages.</para>
+        ///
+        /// <para><c>--verb-probe</c> reports the situations that reach each verb by sampling ids
+        /// 0…N. Without this flag a test written from that report is aimed at a location the game
+        /// will never build — <c>--start-at village</c> lands on whatever vertex the world generated,
+        /// and its id is not one of the sampled ones. Pinning the id is what makes the probe's
+        /// findings and the run agree, and so what makes a generated verb test hit its verb.</para>
+        ///
+        /// <para>Inert at its default of null: the vertex index is used, exactly as before.</para>
+        /// </summary>
+        public static int? LocationId { get; set; } = null;
+
+        /// <summary>
+        /// Forces which scene factory builds every location, ignoring the biome under the avatar.
+        /// Set by <c>--location-type &lt;name&gt;</c> ("forest", "village", "cave"…).
+        ///
+        /// <para><b>Why <c>--start-at</c> is not enough.</b> That flag walks the generated world
+        /// looking for a matching biome, and when the world does not contain one within reach it
+        /// shrugs and uses the normal spawn. At seed 42 there is no forest near the start, so every
+        /// test written for a forest ran in a plain — and, since <c>--location-id</c> pins the id but
+        /// not the factory, went on to build the wrong factory at the right number.</para>
+        ///
+        /// <para>Together with <see cref="LocationId"/> this gives a test complete control: the
+        /// factory and the id decide the whole scene, so the world need not contain the biome at all.
+        /// That is what makes a verb test independent of world generation.</para>
+        ///
+        /// <para>Inert at its default of null.</para>
+        /// </summary>
+        public static string? LocationType { get; set; } = null;
+
+        /// <summary>
         /// Area inside a location to open narration in, e.g. "pigsty". Set by
         /// <c>--start-area &lt;name&gt;</c>. Matched case-insensitively as a substring of the area's
         /// display name; ignored when the location has no such area, so it is harmless to leave on
@@ -73,6 +112,88 @@ public static class Config
         /// specific room (a pigsty's pigs, a smithy's anvil) is otherwise a long approach away.</para>
         /// </summary>
         public static string? StartArea { get; set; } = null;
+
+        /// <summary>
+        /// Pins every NPC to one area for the whole day, instead of following their schedule. Set by
+        /// <c>--npc-static</c>.
+        ///
+        /// <para><b>What it is for.</b> A schedule sends somebody to their bed, their workplace and
+        /// two or three other rooms across the six periods, drawn from the location seed — so "where
+        /// is the brewer at dawn?" has an answer that depends on the location id and the hour, and
+        /// nothing about it is guessable when writing a test. Every NPC verb (stalk, provoke,
+        /// pickpocket, meet_stranger, attack …) has to find its person before it can do anything, and
+        /// a test that names the wrong room finds an empty one.</para>
+        ///
+        /// <para>This removes the variable: the NPC is where the schedule puts them at their busiest
+        /// hour, at every hour. Run <c>--verb-probe</c> with the same flag and its reported rooms are
+        /// the rooms the run will use.</para>
+        ///
+        /// <para>Inert at its default of false — schedules are followed exactly as before, so nothing
+        /// about a normal run changes.</para>
+        /// </summary>
+        public static bool NpcStatic { get; set; } = false;
+
+        /// <summary>
+        /// Opens no audio device at all: no music, no sound effects, no loading wash.
+        ///
+        /// <para>For test runs. The suite launches the game a hundred-odd times, and every one of
+        /// them starts its ambience — so a full run is an hour of music from windows nobody is
+        /// looking at, several of them overlapping. <c>run_tests.sh</c> passes this on every script.</para>
+        ///
+        /// <para>Implemented by not opening the MIDI device rather than by turning a volume down,
+        /// because that is a state the engine already supports and handles everywhere: a machine with
+        /// no MIDI device runs this path in production. Nothing else has to learn about silence.</para>
+        ///
+        /// <para>Inert at its default of false.</para>
+        /// </summary>
+        public static bool Silent { get; set; } = false;
+        /// <summary>
+        /// Settles every dialogue as an immediate success instead of holding it. Set by
+        /// <c>--auto-dialogue</c>.
+        ///
+        /// <para>A dozen verbs do nothing themselves — they open a conversation, and the tree decides
+        /// what follows. Without this, a test for the <i>verb</i> has to walk somebody else's tree to
+        /// reach its own assertion, and is broken by any re-authoring of that tree. With it, the verb
+        /// test asserts about the verb; the trees are covered separately by
+        /// <c>cli/_systems/dialogue_*.cli</c>, which drive them properly.</para>
+        ///
+        /// <para>See <c>DialogueAutoResolve</c>: it performs exactly the writes a won conversation
+        /// makes, so nothing reading the world afterwards can tell the difference.</para>
+        ///
+        /// <para>Inert at its default of false.</para>
+        /// </summary>
+        public static bool AutoDialogue { get; set; } = false;
+
+        /// <summary>
+        /// Starts every NPC at this affinity with the protagonist instead of Stranger. Set by
+        /// <c>--npc-affinity &lt;level&gt;</c> (<c>distant_acquaintance</c>, <c>close_friend</c>…).
+        ///
+        /// <para>Six verbs are gated on already knowing somebody — <c>propose_to_buy</c>,
+        /// <c>propose_to_sell</c>, <c>propose_to_join</c>, <c>request_job</c>,
+        /// <c>strengthen_relationship</c> and the trade modes behind them all want
+        /// DistantAcquaintance or better. Earning that in-script means holding a whole conversation
+        /// first and winning its roll, which makes the test a test of <i>that</i> conversation.</para>
+        ///
+        /// <para>Seeded when a location's affinity store is first handed out, so it behaves exactly
+        /// like a relationship built in play — including persisting, since it lands in the same
+        /// backing store. Inert at its default of null.</para>
+        /// </summary>
+        public static Game.Dialogue.Affinity.AffinityLevel? NpcAffinity { get; set; } = null;
+
+        /// <summary>
+        /// Makes every NPC count the protagonist an enemy from the start. Set by <c>--npc-hostile</c>.
+        ///
+        /// <para>The counterpart to <see cref="NpcAffinity"/>, for the verbs that need somebody who
+        /// already wants to fight: <c>reconcile</c> and <c>appease</c> apply only to an enemy (or an
+        /// annoying acquaintance). <c>--spawn-beast</c> covers the beast case, but a wolf cannot be
+        /// reconciled with — that tree needs somebody who can speak — and earning a human enemy in
+        /// script means committing a crime, being caught, losing the confrontation and walking out of
+        /// the resulting fight.</para>
+        ///
+        /// <para>Seeded into the same enemy store gameplay writes to, so it reads back exactly like a
+        /// grudge earned in play. Inert at its default of false.</para>
+        /// </summary>
+        public static bool NpcHostile { get; set; } = false;
 
         /// <summary>
         /// Restricts what an observation phase may look at to objects whose name contains this, e.g.
@@ -698,14 +819,30 @@ public static class Config
         /// How long the dice-roll animation tumbles before the values lock in. Shared by every roll
         /// context — narrative checks, get-up, runaway, dialogue resolutions and fights — so the spin
         /// (and the dice-roll music that plays alongside it) has one consistent length.
+        ///
+        /// <para><b>Zero in playground mode.</b> Every one of these is time spent watching something
+        /// there is nothing to decide about, and the test suite pays it once per roll across a
+        /// hundred-odd scripts. Playground already replaces the thing that makes a run slow (the
+        /// LLM); this replaces the rest. See <see cref="AnimationsAreInstant"/>.</para>
         /// </summary>
-        public const float AnimationDurationSeconds = 5.0f;
+        public static float AnimationDurationSeconds => AnimationsAreInstant ? 0f : 5.0f;
 
         /// <summary>
         /// The animation duration in milliseconds, for <see cref="System.Threading.Tasks.Task.Delay(int)"/>.
         /// </summary>
-        public const int AnimationDurationMs = (int)(AnimationDurationSeconds * 1000);
+        public static int AnimationDurationMs => (int)(AnimationDurationSeconds * 1000);
     }
+
+    /// <summary>
+    /// Whether purely decorative timing should be skipped: dice tumbling, a vital-heat bar draining,
+    /// an AI pausing before it moves. True under <c>--playground</c>, which is the flag that means
+    /// "this is a test run, not a play session".
+    ///
+    /// <para>Deliberately not its own switch. Every caller of this is animating a result that has
+    /// already been decided, so there is nothing a script could want to observe mid-way — and a
+    /// second flag would be one more thing a new test has to remember to pass.</para>
+    /// </summary>
+    public static bool AnimationsAreInstant => Cathedral.Game.PlaygroundMode.IsActive;
 
     #endregion
 

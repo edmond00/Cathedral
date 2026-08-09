@@ -145,21 +145,12 @@ public class CaveSceneFactory : SceneFactory
             FurnitureSubfactory.AddShortcuts(rng, scene, outdoors, FurnitureSubfactory.Setting.Underground);
             FurnitureSubfactory.AddExtractionPoints(rng, outdoors, FurnitureSubfactory.Setting.Underground);
 
-            var climbTop = FurnitureSubfactory.AddClimb(
-                rng, scene, outdoors[0], FurnitureSubfactory.Setting.Underground);
-            if (climbTop != null)
-            {
-                // Sections must partition the areas, so the new top belongs to the section its foot is
-                // in — an area in no section crashes the fight path outright.
-                var host = scene.Sections.First(s => s.Areas.Contains(outdoors[0]));
-                host.Areas.Add(climbTop);
-                RegisterAll(scene, climbTop);
-            }
         }
 
-        // Landmarks, and a view from anywhere that has to be climbed to. Must run after the
-        // connectors are attached: it finds the high ground by looking for their tops.
-        MarkLandmarksAndViews(scene);
+        // No climb and no landscape here. The old automatic pass gave this one a viewpoint because
+        // something in it happened to be the top of a ladder or a rock step, and then a bare area
+        // with a view over nothing worth naming. A view is now a deliberate statement about a
+        // location, and this location does not make one.
 }
 
     // ── Area builders ────────────────────────────────────────────────────────

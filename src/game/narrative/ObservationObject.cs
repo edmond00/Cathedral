@@ -33,6 +33,15 @@ public abstract class ObservationObject : ConcreteOutcome, IObservation
     public abstract string NeutralName { get; }
 
     /// <summary>
+    /// Extra names <c>--observe-only</c> may target this object by, beyond its neutral name and id.
+    /// Empty for most things; an NPC adds its species, because a beast placed by
+    /// <c>--spawn-beast wolf</c> is called something like "Stormtusk" and a test naturally asks for
+    /// the wolf. Test-targeting only — nothing in play or in a prompt reads this.
+    /// </summary>
+    public virtual System.Collections.Generic.IEnumerable<string> TargetingAliases
+        => System.Array.Empty<string>();
+
+    /// <summary>
     /// Natural, articled noun phrase used to fill neutral sentence templates — e.g. "a beech tree",
     /// "an old well". Distinct from <see cref="NeutralName"/> ("Beech Tree"), which is a title and
     /// would read unnaturally mid-sentence ("...shifts to Beech Tree"). The default lower-cases

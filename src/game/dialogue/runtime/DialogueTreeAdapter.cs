@@ -115,6 +115,12 @@ public class DialogueTreeAdapter
 
     // ── Setup ────────────────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// The slot id used under <c>--playground</c>, where no LLM instance exists. Never dereferenced:
+    /// every generation path checks <c>PlaygroundMode</c> first and returns neutral text.
+    /// </summary>
+    private const int PlaygroundSlotId = -1;
+
     private async Task SetupAndStartAsync()
     {
         try
@@ -139,7 +145,18 @@ public class DialogueTreeAdapter
             // swapped for its placeholder).
             string rawPrompt    = _npc.WayToSpeakDescription ?? $"You are {names.Placeholder("npc")}.";
             string systemPrompt = names.ToPlaceholder(rawPrompt);
-            _npcSlotId = await _llmManager.CreateInstanceAsync(systemPrompt);
+
+            // Playground: no server, so no slot. This was the ONE place in the dialogue path that
+            // still reached for the LLM directly — everything downstream (PersonaRewriter,
+            // PersonaChoiceSelector) already answers with neutral text under playground and never
+            // touches the slot id. Asking for one threw "Server is not ready", the catch below logged
+            // to stderr, and the conversation "completed" instantly: no greeting, no replies, no
+            // resolution roll, no outcomes. Every dialogue tree in the game was unreachable under
+            // --playground, and silently so — a verb test could watch a dialogue open and close
+            // without a word being said and call it a pass.
+            _npcSlotId = PlaygroundMode.IsActive
+                ? PlaygroundSlotId
+                : await _llmManager.CreateInstanceAsync(systemPrompt);
 
             _controller = new DialogueTreeController(
                 tree:        tree,

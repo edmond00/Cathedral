@@ -314,9 +314,13 @@ public static class BuildingAudit
     {
         // A public hall is the non-private area of a building section (one whose areas are otherwise
         // all private). Outdoor sections have no private areas at all and are skipped.
+        //
+        // Roofs are excluded structurally — an area reached by climbing is never a hall. Without that
+        // a private building, whose hall IS private, has exactly one non-private area (its roof), and
+        // the roof gets mistaken for the counter nobody is standing behind.
         foreach (var section in scene.Sections)
         {
-            var halls = section.Areas.Where(a => !a.IsPrivate).ToList();
+            var halls = section.Areas.Where(a => !a.IsPrivate && !IsClimbedTo(scene, a)).ToList();
             if (halls.Count != 1 || section.Areas.Count < 2) continue;
             if (!section.Areas.Any(a => a.IsPrivate)) continue;
 
@@ -332,6 +336,16 @@ public static class BuildingAudit
     }
 
     /// <summary>
+    /// Whether <paramref name="area"/> is reached by climbing — the top of a scale point. A hall is
+    /// never one, so this is what separates a shop counter from a roof without reading names.
+    /// </summary>
+    private static bool IsClimbedTo(Scene scene, Area area)
+        => scene.AllAreas
+            .SelectMany(a => a.PointsOfInterest)
+            .OfType<ScalePointOfInterest>()
+            .Any(sp => sp.TopArea.Id == area.Id);
+
+    /// <summary>
     /// Every master must be out of their own public hall for at least one day period.
     ///
     /// <para>This is what makes employing someone structural rather than decorative: without it a
@@ -343,7 +357,7 @@ public static class BuildingAudit
     {
         foreach (var section in scene.Sections)
         {
-            var halls = section.Areas.Where(a => !a.IsPrivate).ToList();
+            var halls = section.Areas.Where(a => !a.IsPrivate && !IsClimbedTo(scene, a)).ToList();
             if (halls.Count != 1 || !section.Areas.Any(a => a.IsPrivate)) continue;
 
             var hall      = halls[0];

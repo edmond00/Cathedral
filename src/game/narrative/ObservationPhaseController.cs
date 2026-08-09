@@ -700,16 +700,24 @@ public class ObservationPhaseController
 
         var pool = outcomes.ToList();
 
-        var byWord = pool.Where(o => Regex.IsMatch(
-            GetNeutralName(o), $@"\b{Regex.Escape(wanted)}\b", RegexOptions.IgnoreCase)).ToList();
+        // Exact name first. Objects and the paths between them share words — a Boulder Field holds a
+        // Boulder and is joined by a "Boulder Field–Scree Track" — so a whole-word match on "Boulder"
+        // keeps both, and the persona is as likely to look at the track. Which is how a gather test
+        // came to follow a path instead. An exact name is unambiguous, so it wins outright.
+        var byExact = pool.Where(o => TargetableNames(o)
+            .Any(n => n.Equals(wanted, StringComparison.OrdinalIgnoreCase))).ToList();
+        if (byExact.Count > 0) return byExact;
+
+        var byWord = pool.Where(o => TargetableNames(o).Any(n => Regex.IsMatch(
+            n, $@"\b{Regex.Escape(wanted)}\b", RegexOptions.IgnoreCase))).ToList();
         if (byWord.Count > 0) return byWord;
 
         var bySubstring = pool
-            .Where(o => GetNeutralName(o).Contains(wanted, StringComparison.OrdinalIgnoreCase))
+            .Where(o => TargetableNames(o).Any(n => n.Contains(wanted, StringComparison.OrdinalIgnoreCase)))
             .ToList();
         if (bySubstring.Count > 0) return bySubstring;
 
-        Console.WriteLine($"[debug] --observe-only '{wanted}': nothing here matches — offering the whole scene.");
+        Cathedral.Game.DebugFlagAudit.Miss("--observe-only", wanted, "the whole scene");
         return pool;
     }
 
@@ -887,6 +895,28 @@ public class ObservationPhaseController
     }
 
     /// <summary>Short name of an outcome, used for the observation-choice enum.</summary>
+    /// <summary>
+    /// Every name <c>--observe-only</c> may be matched against: the neutral name the narration uses,
+    /// and the observation id.
+    ///
+    /// <para>The id is what makes an NPC targetable at all. An NPC's <c>NeutralName</c> is its stamped
+    /// <i>contextual label</i> — "a stranger", "my acquaintance Aldric" — because the real name is
+    /// deliberately kept away from the LLM. So a script asking for a person by name matched nothing,
+    /// fell back to the whole scene, and tested whatever the persona happened to look at instead:
+    /// every NPC verb (stalk, provoke, pickpocket, meet_stranger, attack …) was untestable, and
+    /// silently so. <c>ObservationId</c> is derived from the real display name, so matching it too
+    /// costs nothing and makes them reachable.</para>
+    /// </summary>
+    private static IEnumerable<string> TargetableNames(ConcreteOutcome outcome)
+    {
+        yield return GetNeutralName(outcome);
+        if (outcome is ObservationObject obs)
+        {
+            yield return obs.ObservationId.Replace('_', ' ');
+            foreach (var alias in obs.TargetingAliases) yield return alias;
+        }
+    }
+
     private static string GetNeutralName(ConcreteOutcome outcome)
         => outcome is ObservationObject obs ? obs.NeutralName
          : outcome.DisplayName;

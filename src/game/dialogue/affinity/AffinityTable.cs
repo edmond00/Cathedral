@@ -17,6 +17,7 @@ public class AffinityTable
     {
         _table   = new Dictionary<string, AffinityLevel>();
         _enemies = new HashSet<string>();
+        SeedDebugAffinity();
     }
 
     /// <summary>
@@ -31,6 +32,29 @@ public class AffinityTable
     {
         _table   = sharedData;
         _enemies = sharedEnemies;
+        SeedDebugAffinity();
+    }
+
+    /// <summary>
+    /// <c>--npc-affinity</c> and <c>--npc-hostile</c>: start the protagonist at a given level with
+    /// this NPC, and/or as its declared enemy, rather than as a so a test can reach the six verbs gated on already knowing somebody without holding
+    /// a conversation to earn it first.
+    ///
+    /// <para>Here rather than in <c>LocationInstanceState.AffinityFor</c> because that is only one of
+    /// the two ways a table is made: a scene built without a persistent state — which is what the
+    /// audits and <c>--verb-probe</c> do — never goes through it, so the flag appeared to do nothing
+    /// exactly where it was being used to find situations.</para>
+    ///
+    /// <para>Only fills a gap, never overwrites: a relationship actually built in play, or restored
+    /// from a save, wins. Inert unless the flag is passed.</para>
+    /// </summary>
+    private void SeedDebugAffinity()
+    {
+        if (Config.Debug.NpcHostile) _enemies.Add(Narrative.Protagonist.AffinityKeyConstant);
+
+        if (Config.Debug.NpcAffinity is not { } seeded) return;
+        if (_table.ContainsKey(Narrative.Protagonist.AffinityKeyConstant)) return;
+        _table[Narrative.Protagonist.AffinityKeyConstant] = seeded;
     }
 
     // ── Read ──────────────────────────────────────────────────────────────────

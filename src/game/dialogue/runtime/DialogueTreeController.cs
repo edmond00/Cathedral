@@ -85,6 +85,39 @@ public class DialogueTreeController
     /// <summary>Report of the NPC's most recent line, from the player's side, or null before the first.</summary>
     private string?                           _lastNpcNeutralLine;
 
+    /// <summary>
+    /// The resolution dice, honouring <c>--debug</c>'s <c>strategy</c> preset.
+    ///
+    /// <para>This roll used to be a plain draw that consulted nothing, so <c>strategy succeed</c> and
+    /// <c>strategy fail-dice</c> — which pin every other roll in the game, in narration and in a
+    /// fight — did nothing to a conversation. A script could not choose whether it won or lost one,
+    /// which made the failure branch of every dialogue tree untestable.</para>
+    ///
+    /// <para>A forced success fills exactly <paramref name="difficulty"/> sixes (capped at the pool,
+    /// the same guard the narration roll uses so an impossible demand cannot spin); a forced failure
+    /// fills none. Anything else draws as it always did.</para>
+    /// </summary>
+    private int[] RollResolution(int diceCount, int difficulty)
+    {
+        var values = Enumerable.Range(0, diceCount).Select(_ => _rng.Next(1, 7)).ToArray();
+        if (!DebugMode.IsActive || DebugMode.IsAutoStrategy) return values;
+
+        switch (DebugMode.CurrentStrategy)
+        {
+            case DebugStrategy.Succeed:
+                int needed = Math.Min(difficulty, diceCount);
+                for (int i = 0; i < values.Length; i++) values[i] = i < needed ? 6 : Math.Min(values[i], 5);
+                Console.WriteLine($"DialogueTreeController: [debug] strategy Succeed — forcing {needed} six(es) of {diceCount}.");
+                break;
+
+            case DebugStrategy.FailDiceRoll:
+                for (int i = 0; i < values.Length; i++) if (values[i] == 6) values[i] = 5;
+                Console.WriteLine("DialogueTreeController: [debug] strategy FailDiceRoll — no sixes.");
+                break;
+        }
+        return values;
+    }
+
     /// <summary>Per-roll humor modifier budget from the viscera <c>humor_modifier_limit</c> stat.</summary>
     private static int HumorModifierLimit(PartyMember member)
         => member.DerivedStats.First(s => s.Name == "humor_modifier_limit").GetValue(member);
@@ -593,7 +626,7 @@ public class DialogueTreeController
         _ = Task.Run(async () =>
         {
             await Task.Delay(Config.Dice.AnimationDurationMs); // Let the animation play
-            int[] values = Enumerable.Range(0, diceCount).Select(_ => _rng.Next(1, 7)).ToArray();
+            int[] values = RollResolution(diceCount, difficulty);
             _state.CompleteDiceRoll(values);
             _dice.Complete(values);
             // Same verdict cue as narration: a click so the reveal is heard even with no MIDI device,
