@@ -696,6 +696,41 @@ them did. **`expect-verb <verb-id>`** reads the verb id off the action that actu
 makes a verb test a verb test. It cannot survive a scene rebuild (a new `NarrativeController` resets
 what it recorded), so anything crossing a location boundary must assert some other way.
 
+**And assert the outcome, not just the roll.** The banner is printed from `result.Succeeded` — the
+dice — and says nothing about what the verb *did*. A verb whose `SuccessReports` stopped returning
+anything would still roll, still print SUCCESS, still satisfy `expect-verb`, and gather nothing. So
+every `success.cli` also asserts the chip its outcome puts in the outcome block:
+
+| outcome | chip | verbs |
+|---|---|---|
+| `ItemAcquisitionOutcome` / `ItemGrantOutcome` | `Item received:` | gather, grab, steal, cut, and the four extraction verbs |
+| `AreaMoveOutcome` | `Moved to:` | move, the climbs, the crossings, voyage_toward, track, stalk |
+| `NpcSlaynOutcome` | `Slain:` | slay, murder |
+| `DoorUnlockOutcome` | `Door unlocked` | unlock_door |
+| `RecruitedOutcome` | `Joined you:` | tame |
+| `AffinityChangeOutcome` | `Appeasement:` | appease |
+| `PoiReplacementOutcome` | `Broken:` | break |
+| `SleeperRousedOutcome` | `Woken:` | wake_up |
+| `TimeShiftOutcome` | `Time passes:` | sit_and_wait, hide_and_wait |
+| `TinyCreatureRemovedOutcome` | `Caught:` / `Crushed:` | catch, crush |
+| `CoinGrantOutcome` | `Coins received:` | pickpocket |
+| `DialogueTriggerOutcome` | `Conversation:` | the eleven verbs that open one |
+| the modus mentis grant | `Modus mentis` | examine, listen, smell, contemplate — no scene outcome of their own |
+
+Match the **prefix** only; what follows is a name or a room and moves with the content. `Modus mentis`
+is deliberately cut short of its noun: a first grant reads `acquired`, a repeat reads `learned`
+(`ModusMentisPracticeOutcome`, whose `ShowInUI` is false when nothing moved).
+
+Four verbs assert something else instead, and for a reason: **`attack`** lands in a fight, and the
+fight screen replaces the narration before any chip can be read — `wait mode Fighting` is its
+assertion. **`get_up`** and **`remember`** are phase transitions. **`ignore`** does nothing by design.
+
+**Put the assertion after the verb under test, not after the setup.** `expect` scans the whole
+terminal, greyed history included, so a chip left by an earlier action reads exactly like the one you
+meant. `cli/cut/success.cli` slays before it cuts and asserts `Slain:` on the kill and `Item
+received:` on the cut — putting both after the first action would have passed while proving nothing
+about the verb the folder is named for.
+
 **A narrowing flag that narrows nothing fails the run.** `--start-at`, `--start-area`,
 `--observe-only` and `--goal-only` all *fall back* when they match nothing — open where the factory
 did, offer the whole scene, draw from every goal. That is right for a person poking at the game and

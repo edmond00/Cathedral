@@ -32,6 +32,11 @@ click continue
 advance 12 180
 
 expect SUCCESS
+# The OUTCOME, not just the banner. "SUCCESS" is the dice result — it is printed from
+# result.Succeeded and says nothing about what the verb did, so a verb whose SuccessReports
+# stopped producing anything would still pass every other assertion here. This is the chip
+# the outcome block carries, and it is the only line that proves the verb had an effect.
+expect Moved to:
 
 # What makes this a move test rather than an any-verb test.
 expect-verb move
