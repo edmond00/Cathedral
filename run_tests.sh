@@ -103,7 +103,13 @@ run_cli() {
     local scripts
     mapfile -t scripts < <(find cli -name '*.cli' | sort)
     for s in "${scripts[@]}"; do
-        [ -n "$filter" ] && [[ "$s" != cli/$filter/* ]] && continue
+        # A filter matches either a whole range (`cli verb`, `cli outcome`, `cli system`) or one
+        # folder inside a range (`cli gather` → cli/verb/gather/, `cli item_acquisition` →
+        # cli/outcome/item_acquisition/). Naming the range is the common case for a partial run;
+        # naming the folder is what you type while writing one test.
+        if [ -n "$filter" ] && [[ "$s" != cli/$filter/* ]] && [[ "$s" != cli/*/$filter/* ]]; then
+            continue
+        fi
 
         local flags
         flags=$(grep -m1 '^# FLAGS:' "$s" | sed 's/^# FLAGS: *//')

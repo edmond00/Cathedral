@@ -58,7 +58,7 @@ public static class DialogueAutoResolve
         // fires if no outcome already set a level).
         foreach (var outcome in tree.SuccessOutcomes)
         {
-            outcome.Apply(OutcomeContext.ForDialogue(npc, partyMemberId, protagonist));
+            outcome.ApplyTo(OutcomeContext.ForDialogue(npc, partyMemberId, protagonist));
             applied.Add(outcome.DisplayName);
         }
 
@@ -69,7 +69,7 @@ public static class DialogueAutoResolve
         {
             var lesson = ModusMentisGrantOutcome.For(protagonist, id);
             if (lesson == null) continue;
-            lesson.Apply(OutcomeContext.For(protagonist, null, null));
+            lesson.ApplyTo(OutcomeContext.For(protagonist, null, null));
             applied.Add($"learned {id}");
         }
 

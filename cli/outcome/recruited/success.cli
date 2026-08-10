@@ -1,0 +1,115 @@
+# recruited — the outcome, not the verb.
+#
+# cli/verb/tame/ proves the chip is printed. This proves the chip corresponds to something
+# real: the world is inspected before and after, and it moved. The verb script runs in full
+# here — the two overlap on purpose, same scenario, different question.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Den" --period noon --observe-only wolf
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# --- before ---
+inspect party
+advance 12 180
+
+# The beast is there and hostile: the phase opens on it under the threat rule.
+expect wolf
+state
+
+# --- appease: enemy -> suspicious, which is what tame requires --------------------
+strategy succeed
+goal appease
+click keyword wolf
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect Appeasement
+
+# --- close the segment; the beast is still in the scene and still observable ------
+click button
+wait 60
+advance 12 180
+expect wolf
+
+# --- tame: the beast joins the party ---------------------------------------------
+# Difficulty 4 off a three-modus-mentis chain: `strategy succeed` asks for more sixes
+# than there are dice, which used to hang the game outright (NarrativeController caps it).
+goal tame
+click keyword wolf
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect Joined you
+
+# --- after: gone from the scene, present in the party ----------------------------
+# The next segment re-applies the period (StartObservationPhaseWithHistory → ApplyTimePeriod),
+# which re-places the scene's NPCs — the tamed beast is no longer among them, so it cannot be
+# observed or acted on again.
+#
+# That half is NOT asserted on screen: `expect` scans the whole terminal, and the beast's name
+# is all over the greyed history of the two segments that just tamed it. The signal is on stdout
+# instead — with --observe-only still pinned to the beast, this phase prints
+#   [debug] --observe-only 'wolf': nothing here matches — offering the whole scene.
+# and `state` drops one observable (observed=1/10 before the tame, 3/9 after).
+goal none
+click button
+wait 60
+advance 12 180
+state
+
+# The party side: the management screen lists the beast under P A R T Y, and that is all this
+# asserts. The roster prints a NAME and no species, and a beast's name comes from the name
+# generator — content, free to change, and a test that spells one breaks the day somebody adds a
+# syllable. That the beast is really in the party is proven above by "Joined you", and that it is
+# really out of the scene by the observable count dropping across the tame.
+manage
+wait 20
+expect P A R T Y
+manage
+wait 20
+
+# --- and it stays gone: leave the location, come back, the scene is rebuilt ------
+# The rebuild is a pure function of the location id, so without the departed record in
+# LocationInstanceState the very same wolf would be standing here again. stdout shows
+#   SceneFactory: '<the beast>' left this location for good — not rebuilt
+click button
+wait mode WorldView 120
+advance 12 120
+travel here
+wait mode LocationInteraction 120
+advance 12 180
+state
+
+# After a successful tame the beast is recruited and gone from the location for good, so a later
+# phase's `--observe-only wolf` matching nothing is this script's whole point — the observable count
+# dropping across the tame is the assertion. Declared expected so the strict flag check does not
+# read the success as a misfire.
+allow-flag-miss --observe-only
+# The outcome TYPE, asserted by its stable id rather than by chip wording. `expect <chip>`
+# proves what the player was told; this proves what actually ran. See --outcome-audit.
+expect-outcome recruited
+
+
+# --- the outcome really ran ---
+expect-outcome recruited
+
+# --- after: the world moved ---
+inspect party
+expect-state party companion
+quit

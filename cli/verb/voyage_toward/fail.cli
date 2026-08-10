@@ -1,0 +1,48 @@
+# voyage_toward — fail
+#
+# Setting out and not getting there: the checks pass, the dice do not. Cross-country is rougher
+# going than a path, and rarely turns an ankle.
+#
+# A landscape is a point of interest in the high area, not remembered knowledge, so it is observed
+# like anything else and the observation offers the journey. That is the whole of the refactor: the
+# verb it replaced needed a separate OBSERVE HORIZON to record revealed areas onto the PoV, and
+# nothing else in the game gated on accumulated point-of-view state — so the reveal was written and
+# the verb refresh, which builds its own PoV, could never see it.
+#
+# The roof is reached by climbing the building's wall; --start-area puts the script up there directly.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Crown" --period dawn --observe-only "Distant Test Yard"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy fail-dice
+goal voyage_toward
+advance 12 180
+regions
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect FAILURE
+
+# What makes this a voyage_toward test rather than an any-verb test.
+expect-verb voyage_toward
+# The failure assertion that means something: the verb's own consequence did NOT happen.
+# Asserting the wound instead would be flaky — FailurePenalties samples one slot in five,
+# so most failures injure nobody.
+expect-no-outcome area_move
+quit

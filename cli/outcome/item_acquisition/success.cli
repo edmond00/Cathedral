@@ -1,0 +1,43 @@
+# item_acquisition — the outcome, not the verb.
+#
+# cli/verb/gather/ proves the verb prints "Item received:". This proves the chip corresponds to
+# something real: the item is in the pack afterwards and was not there before. The two overlap on
+# purpose — same scenario, different question.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --npc-static --start-area "Test Field" --period dawn --observe-only "Test Berry Bush"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# --- before: the pack does not hold what the bush has ---------------------------
+inspect items
+expect-no-state items hawthorn_berry
+
+strategy succeed
+goal gather
+advance 12 180
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+# --- the chip, and that it was this outcome that ran -----------------------------
+expect Item received:
+expect-outcome item_acquisition
+
+# --- after: it is really carried -------------------------------------------------
+# The point of the whole range. A verb whose SuccessReports built the chip and never reached the
+# pack would satisfy every assertion above this line.
+inspect items
+expect-state items hawthorn_berry
+quit

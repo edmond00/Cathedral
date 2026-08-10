@@ -306,7 +306,7 @@ public class DialogueTreeController
         // stays silent when the step was a no-op. This used to adjust the table by hand and then
         // build a separate report describing what it had just done.
         var walkedOut = new AffinityIncrementOutcome(-1);
-        walkedOut.Apply(OutcomeContext.ForDialogue(_npc, _partyMemberId, _protagonist));
+        walkedOut.ApplyTo(OutcomeContext.ForDialogue(_npc, _partyMemberId, _protagonist));
         if (walkedOut.ShowInUI) AppendOutcomeReports(new List<Outcome> { walkedOut });
 
         Console.WriteLine(
@@ -690,7 +690,7 @@ public class DialogueTreeController
                     {
                         var practice = ModusMentisPracticeOutcome.For(_protagonist, mm);
                         if (practice == null) continue;
-                        practice.Apply(OutcomeContext.For(_protagonist, null, null));
+                        practice.ApplyTo(OutcomeContext.For(_protagonist, null, null));
                         if (practice.ShowInUI) practiceReports.Add(practice);
                     }
                 }
@@ -704,7 +704,7 @@ public class DialogueTreeController
                     Console.WriteLine($"DialogueTreeController: applying outcome — {outcome.DisplayName}");
                     // The outcome IS the chip now: applying it settles its own wording, and one
                     // that changed nothing never reports, so ShowInUI keeps it off the screen.
-                    outcome.Apply(OutcomeContext.ForDialogue(_npc, _partyMemberId, _protagonist));
+                    outcome.ApplyTo(OutcomeContext.ForDialogue(_npc, _partyMemberId, _protagonist));
                     reports.Add(outcome);
                 }
 
@@ -721,7 +721,7 @@ public class DialogueTreeController
                     {
                         var lesson = ModusMentisGrantOutcome.For(_protagonist, id);
                         if (lesson == null) continue;
-                        lesson.Apply(OutcomeContext.For(_protagonist, null, null));
+                        lesson.ApplyTo(OutcomeContext.For(_protagonist, null, null));
                         if (lesson.ShowInUI) reports.Add(lesson);
                     }
                 }
@@ -735,7 +735,15 @@ public class DialogueTreeController
                 // A branch can legitimately change nothing (a failure with no failure-outcome), and
                 // silence there reads as a bug — say so plainly instead.
                 if (reports.Count == 0)
-                    reports.Add(new NoDialogueConsequenceOutcome(_npc.DisplayName));
+                {
+                    // Applied like any other, even though applying it does nothing: an outcome that
+                    // reaches the player should always have gone through ApplyTo, which is what
+                    // records it. This was the one that did not, so `expect-outcome` could not see
+                    // the only outcome whose whole job is to be seen.
+                    var nothing = new NoDialogueConsequenceOutcome(_npc.DisplayName);
+                    nothing.ApplyTo(OutcomeContext.ForDialogue(_npc, _partyMemberId, _protagonist));
+                    reports.Add(nothing);
+                }
                 AppendOutcomeReports(reports);
 
                 EndConversation();

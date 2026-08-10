@@ -169,6 +169,21 @@ public static class OutcomeAudit
             warnings.Add($"verb '{v}' returned no outcome in any sampled situation — it rolls, prints "
                        + "SUCCESS and changes nothing");
 
+        // ── Test coverage ────────────────────────────────────────────────────────
+        // A verb test proves the chip was printed; an outcome test proves the world actually moved.
+        // Without this check the second half of that pair falls quietly behind the code — which is
+        // exactly what happened to the verb suite before --verb-audit named the verbs nobody tested.
+        var testRoot = new System.IO.DirectoryInfo("cli/outcome");
+        if (testRoot.Exists)
+        {
+            var covered = testRoot.GetDirectories().Select(d => d.Name)
+                                  .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            foreach (var t in all.Select(IdOf).Where(id => !covered.Contains(id) && !NoTest.ContainsKey(id))
+                                 .OrderBy(id => id, StringComparer.Ordinal))
+                warnings.Add($"outcome '{t}' has no cli/outcome/{t}/ test — nothing proves that its "
+                           + "chip corresponds to a real change in the world");
+        }
+
         sb.AppendLine($"── WARNINGS ({warnings.Count}) ──");
         if (warnings.Count == 0) sb.AppendLine("     none");
         foreach (var w in warnings) sb.AppendLine($"     ⚠ {w}");
@@ -190,11 +205,25 @@ public static class OutcomeAudit
         ["reminescence_transition"] = "childhood phase transition",
         ["get_up_transition"]       = "the get-up phase",
         ["state_capture"]           = "internal bookkeeping, never shown",
-        ["humor_change"]            = "failure and emotional reactions",
-        ["dialogue_outcome_report"] = "built by DialogueTreeController for first contact and affinity moves",
+        ["no_dialogue_consequence"] = "built by DialogueTreeController when a branch resolved with no outcomes",
         ["recruited"]               = "tame, which needs an already-appeased beast",
         ["corpse_item_acquisition"] = "cut, which needs a corpse",
         ["affinity_change"]         = "appease, which needs a hostile NPC",
+    };
+
+    /// <summary>
+    /// Outcomes deliberately not covered by a <c>cli/outcome/</c> script, and why. Everything here
+    /// belongs to the childhood and get-up phases, which every test script skips with
+    /// <c>--skip-childhood</c>: driving the UI through a whole reminescence to assert a dictionary
+    /// write is a long way round for no more certainty than a headless check would give.
+    /// </summary>
+    private static readonly Dictionary<string, string> NoTest = new()
+    {
+        ["childhood_history"]       = "childhood phase, skipped by every script",
+        ["skill_acquisition"]       = "childhood phase, skipped by every script",
+        ["reminescence_transition"] = "childhood phase, skipped by every script",
+        ["get_up_transition"]       = "the get-up phase, skipped by every script",
+        ["state_capture"]           = "internal bookkeeping — no chip, and no state a script can read",
     };
 
     /// <summary>

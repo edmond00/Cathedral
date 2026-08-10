@@ -125,6 +125,16 @@ Run `help` for the authoritative list. The essentials:
                             USE THIS, not a bare `click continue`, to get from a keyword click
                             to the action list — see the trap below
   wait [secs] | wait mode <GameMode> [secs]
+  inspect [subject]         the game state an outcome can change, by STABLE id — items, coins,
+                            where, party, wounds, skills, npcs, pois, or all. What cli/outcome/
+                            reads: `expect` scans the SCREEN, this reads the world
+  expect-state <subj> <text> | expect-no-state <subj> <text>
+                            assert `inspect <subj>` does (or does not) report a line containing
+                            <text>. The outcome range's assertion
+  expect-outcome <id> | expect-no-outcome <id>
+                            assert an outcome of that id was applied this run. `expect <chip>`
+                            proves what the player was TOLD; this proves what ran — the only way
+                            to assert the outcomes that show no chip at all
   expect <text> | expect-not <text>
   quit
 ```
@@ -272,11 +282,22 @@ The consequence-side counterpart to `--verb-audit`. The catalogue is built by **
 *produces* each is found by sweeping real scenes the way `--verb-probe` does, then reading every
 dialogue tree's outcome sets.
 
-It warns about the two faults that are silent at runtime:
+It prints the catalogue, who produces each outcome, and the same table **per verb and per tree** —
+which is the direction somebody writing a test actually asks in ("what should my `success.cli`
+assert?"). The sweep covers a verb's whole surface, not just its successes: `FailureReports`,
+`FailurePenalties` (which is where `wound_infliction` hides — a wound is *sampled*, so nothing in the
+reports lists shows a verb can hurt you) and `ResolveGrantedModusMentisId` (the lesson every verb
+teaches, applied by `NarrativeController` rather than returned by the verb — the two most common
+outcomes in the game were missing from the table until it read this).
+
+It warns about three faults that are silent at runtime:
 
 - an `Outcome` subclass nothing produces — dead content;
 - a verb whose `SuccessReports` comes back empty everywhere. It still rolls, still prints SUCCESS,
-  still satisfies `expect-verb`, and changes nothing.
+  still satisfies `expect-verb`, and changes nothing;
+- an outcome with **no `cli/outcome/<id>/` folder** — nothing proving its chip corresponds to a real
+  change. Deliberate exceptions go in `OutcomeAudit.NoTest` with a reason; the five there all belong
+  to the childhood and get-up phases, which every script skips with `--skip-childhood`.
 
 Two details keep those warnings worth reading. The sweep calls the **view-aware** `SuccessReports`
 overload once per expanded view, because a verb that splits one target into several actions decides
@@ -648,20 +669,41 @@ Exit code is the number of failures. `--playground` makes every animation instan
 movement framing), which takes a script from ~45 s to ~12 s — the difference between a suite you run
 and one you don't.
 
-**Layout: one folder per verb, named exactly the verb id.**
+**Layout: three ranges, and each answers a different question.**
 
 ```
-cli/<verb-id>/success.cli     the verb carried through   (strategy succeed  → expect SUCCESS)
-cli/<verb-id>/fail.cli        the verb attempted, missed (strategy fail-dice → expect FAILURE)
-cli/<verb-id>/success2.cli    a second script where the verb has genuinely different outcomes
-cli/_systems/                 scripts that test a system rather than a verb — the preview box,
-                              the Speak-About hand-off, the crime chain
+cli/verb/<verb-id>/success.cli    the verb carried through   (strategy succeed  → expect SUCCESS)
+cli/verb/<verb-id>/fail.cli       the verb attempted, missed (strategy fail-dice → expect FAILURE)
+cli/verb/<verb-id>/success2.cli   a second script where the verb has genuinely different outcomes
+cli/outcome/<outcome-id>/success.cli   one per entry in the outcome catalogue
+cli/system/                       scripts that test a system rather than a verb or an outcome —
+                                  the preview box, the Speak-About hand-off, the crime chain
 ```
 
-**Every new verb must arrive with its folder and at least those two scripts.** A verb with no test is
-a verb nobody will notice breaking: `--verb-audit` proves it is *offered*, and only a script proves it
-*works*. Add a third when the verb's outcome genuinely forks (`cli/gather/beast_barred.cli` is the
-anatomy gate, which is neither a success nor a failure of the roll).
+`./run_tests.sh cli verb` runs a whole range; `./run_tests.sh cli gather` runs one folder inside one.
+
+**The two ranges compose, and that composition is the point.** A verb test asserts that the verb
+declares the right outcome; an outcome test asserts that the outcome really changes the world. Put
+together they say the verb changes the world — without either range having to know both halves:
+
+```
+cli/verb/gather/     GRAB the bramble  →  "Item received: …" is printed
+cli/outcome/item_acquisition/          →  after that chip, the item IS in the pack
+```
+
+They overlap on purpose: the same scenario, asked two different questions.
+
+**Where the composition needs care.** It covers the *mechanism* but not the *arguments*.
+`AreaMoveOutcome(destination)` takes its destination from the verb, so a verb producing
+`AreaMoveOutcome(wrong_area)` would satisfy both halves. That is why a verb test asserts the **whole
+chip**, `Moved to: Test Wood`, and not just its prefix — the test location's names never change, so
+the argument is assertable there even though it is not in the real world.
+
+**Every new verb arrives with its folder and at least those two scripts; every new outcome arrives
+with a `cli/outcome/<id>/` folder.** Both are enforced: `--verb-audit` names a verb nothing offers,
+and `--outcome-audit` names an outcome with no test folder. Add a third verb script when the outcome
+genuinely forks (`cli/verb/gather/beast_barred.cli` is the anatomy gate, which is neither a success
+nor a failure of the roll).
 
 **The test location.** Every script in the suite runs in one place: `--location-type test`, built by
 `src/game/scene/test/TestSceneFactory.cs`. It is a kitchen sink — ten areas holding one of every kind

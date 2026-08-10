@@ -26,7 +26,7 @@ public sealed class ItemAcquisitionOutcome : Outcome
         _itemElement = itemElement;
     }
 
-    public override void Apply(OutcomeContext ctx)
+    protected override void Apply(OutcomeContext ctx)
     {
         if (ctx.Scene == null || ctx.PoV == null) return;
         // Shared pickup: removes from the holding PoI, adds to inventory, and stamps depletion.
@@ -46,7 +46,7 @@ public sealed class CorpseItemAcquisitionOutcome : Outcome
         _itemElement = itemElement;
     }
 
-    public override void Apply(OutcomeContext ctx)
+    protected override void Apply(OutcomeContext ctx)
     {
         if (ctx.Scene == null || ctx.PoV == null) return;
         // Shared pickup (corpses included): proper inventory placement + full-inventory handling.
@@ -68,7 +68,7 @@ public sealed class AreaMoveOutcome : Outcome
 
     public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Movement;
 
-    public override void Apply(OutcomeContext ctx)
+    protected override void Apply(OutcomeContext ctx)
     {
         if (ctx.PoV == null) return;
         ctx.PoV.Where = _destination;
@@ -98,7 +98,7 @@ public sealed class TimeShiftOutcome : Outcome
 
     public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.TimeShift;
 
-    public override void Apply(OutcomeContext ctx)
+    protected override void Apply(OutcomeContext ctx)
     {
         if (ctx.PoV == null) return;
         ctx.PoV.When  = _destination;
@@ -148,7 +148,7 @@ public sealed class TinyCreatureRemovedOutcome : Outcome
     /// </summary>
     public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Breaking;
 
-    public override void Apply(OutcomeContext ctx)
+    protected override void Apply(OutcomeContext ctx)
     {
         if (_npc.Entity is ShallowNpcEntity shallow) shallow.IsAlive = false;
         if (ctx.PoV != null) ctx.PoV.Focus = null;
@@ -179,7 +179,7 @@ public sealed class PoiReplacementOutcome : Outcome
     /// <summary>Breaking: a rebuilt scene has the furniture whole again, so no routine may assume otherwise.</summary>
     public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Breaking;
 
-    public override void Apply(OutcomeContext ctx)
+    protected override void Apply(OutcomeContext ctx)
     {
         if (ctx.Scene == null) return;
 
@@ -216,7 +216,7 @@ public sealed class SleeperRousedOutcome : Outcome
         _npc = npc;
     }
 
-    public override void Apply(OutcomeContext ctx) => _npc.Roused = true;
+    protected override void Apply(OutcomeContext ctx) => _npc.Roused = true;
 }
 
 /// <summary>
@@ -245,7 +245,7 @@ public sealed class RecruitedOutcome : Outcome
     /// <summary>Breaking: a rebuilt scene would put them back where they were.</summary>
     public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Breaking;
 
-    public override void Apply(OutcomeContext ctx)
+    protected override void Apply(OutcomeContext ctx)
     {
         if (ctx.Actor! is not Protagonist proto) return;
         if (_npc.Entity is not NpcEntity npc) return;
@@ -287,7 +287,7 @@ public sealed class DoorUnlockOutcome : Outcome
     public override RoutineChainEffect RoutineChainEffect
         => RoutineChainEffect.Movement | RoutineChainEffect.Breaking;
 
-    public override void Apply(OutcomeContext ctx)
+    protected override void Apply(OutcomeContext ctx)
     {
         if (ctx.Scene == null || ctx.PoV == null) return;
         _door.DoorState  = DoorState.Unlocked;
@@ -316,7 +316,7 @@ public sealed class NpcSlaynOutcome : Outcome
     // Removes an actor from the scene — later steps may only have been possible because of it.
     public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Breaking;
 
-    public override void Apply(OutcomeContext ctx)
+    protected override void Apply(OutcomeContext ctx)
     {
         if (ctx.Scene == null || ctx.PoV == null) return;
 
@@ -357,7 +357,7 @@ public sealed class FightTriggerOutcome : Outcome
     // A fight is a phase a routine cannot contain, and it reshapes the scene while it runs.
     public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Breaking;
 
-    public override void Apply(OutcomeContext ctx)
+    protected override void Apply(OutcomeContext ctx)
     {
         if (ctx.Scene == null) return;
         ctx.Scene.PendingFightRequest = new FightRequest(Target);
@@ -395,7 +395,7 @@ public sealed class DialogueTriggerOutcome : Outcome
     // RoutineTriggeredPhase; that is a separate question from whether a skip is safe.
     public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.None;
 
-    public override void Apply(OutcomeContext ctx)
+    protected override void Apply(OutcomeContext ctx)
     {
         if (ctx.Scene == null) return;
         ctx.Scene.PendingDialogueRequest = new DialogueRequest(Target, TreeId);
@@ -414,7 +414,7 @@ public sealed class AffinityChangeOutcome : Outcome
         Target = npc;
     }
 
-    public override void Apply(OutcomeContext ctx)
+    protected override void Apply(OutcomeContext ctx)
     {
         Target.AffinityTable.ClearEnemy(ctx.Actor!.AffinityKey);
         Target.AffinityTable.SetLevel(ctx.Actor!.AffinityKey, Cathedral.Game.Dialogue.Affinity.AffinityLevel.Suspicious);
@@ -433,7 +433,7 @@ public sealed class StateCaptureOutcome : Outcome
         _element = element;
     }
 
-    public override void Apply(OutcomeContext ctx)
+    protected override void Apply(OutcomeContext ctx)
         => ctx.Scene?.StateChanges.Capture(_element);
 }
 
@@ -461,7 +461,7 @@ public sealed class ReminescenceTransitionOutcome : Outcome
     // declared so the rule holds if that ever changes.
     public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Breaking;
 
-    public override void Apply(OutcomeContext ctx)
+    protected override void Apply(OutcomeContext ctx)
     {
         if (ctx.Scene == null) return;
         ctx.Scene.PendingReminescenceTransition = new ReminescenceTransitionRequest(_fromId, _nextId, _fragmentName);
@@ -481,7 +481,7 @@ public sealed class GetUpTransitionOutcome : Outcome
     // Leaves exploration entirely — see ReminescenceTransitionOutcome.
     public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Breaking;
 
-    public override void Apply(OutcomeContext ctx)
+    protected override void Apply(OutcomeContext ctx)
     {
         if (ctx.Scene == null) return;
         ctx.Scene.PendingGetUpTransition = true;

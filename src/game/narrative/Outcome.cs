@@ -98,7 +98,29 @@ public abstract class Outcome : INarratable
     /// party-member id where the scene-side ones wanted a scene and a point of view, and two
     /// incompatible signatures were the only thing keeping them in a separate hierarchy.
     /// </summary>
-    public virtual void Apply(OutcomeContext ctx) { }
+    protected virtual void Apply(OutcomeContext ctx) { }
+
+    /// <summary>
+    /// Carries this outcome out. <b>The only way in</b> — <see cref="Apply"/> is protected precisely
+    /// so no call site can bypass the recording below.
+    ///
+    /// <para>What the recording buys: the CLI's <c>expect-outcome</c>. A chip proves what the player
+    /// was TOLD; this proves what actually ran, which is the only way to assert the four outcomes
+    /// that show no chip at all, and the only way for a test to name an outcome without depending on
+    /// its wording.</para>
+    /// </summary>
+    public void ApplyTo(OutcomeContext ctx)
+    {
+        Applied.Add(OutcomeId);
+        Apply(ctx);
+    }
+
+    /// <summary>
+    /// Every outcome id applied this run, in order. Test scaffolding only — nothing in the game reads
+    /// it. Grows for the life of the process, which is what lets a script assert about an outcome
+    /// several phases after it fired.
+    /// </summary>
+    public static readonly List<string> Applied = new();
 
     /// <summary>
     /// True once <see cref="Report"/> has settled this outcome's wording — i.e. something observable
@@ -172,7 +194,7 @@ public sealed class SkillAcquisitionOutcome : Outcome
         _template = template;
     }
 
-    public override void Apply(OutcomeContext ctx)
+    protected override void Apply(OutcomeContext ctx)
     {
         var instance = (ModusMentis)Activator.CreateInstance(_template.GetType())!;
         instance.Level = 1;
@@ -256,7 +278,7 @@ public sealed class ModusMentisGrantOutcome : Outcome
         return new ModusMentisGrantOutcome(template, actor.GetModusMentisById(modusMentisId) != null);
     }
 
-    public override void Apply(OutcomeContext ctx)
+    protected override void Apply(OutcomeContext ctx)
     {
         var known = ctx.Actor!.GetModusMentisById(_template.ModusMentisId);
         if (known != null)
@@ -331,7 +353,7 @@ public sealed class ModusMentisPracticeOutcome : Outcome
         return new ModusMentisPracticeOutcome(modusMentis.ModusMentisId);
     }
 
-    public override void Apply(OutcomeContext ctx)
+    protected override void Apply(OutcomeContext ctx)
     {
         var known = ctx.Actor!.GetModusMentisById(_modusMentisId);
         if (known == null) return;
@@ -357,7 +379,7 @@ public sealed class ItemGrantOutcome : Outcome
         _item = item;
     }
 
-    public override void Apply(OutcomeContext ctx)
+    protected override void Apply(OutcomeContext ctx)
         => ctx.Actor!.AcquireItem(_item);
 }
 
@@ -378,7 +400,7 @@ public sealed class CoinGrantOutcome : Outcome
         _amount = amount;
     }
 
-    public override void Apply(OutcomeContext ctx)
+    protected override void Apply(OutcomeContext ctx)
     {
         if (ctx.Actor! is Protagonist proto)
             proto.Party.Add(_coin, _amount);
@@ -409,21 +431,10 @@ public sealed class WoundInflictionOutcome : Outcome
     private static string FormatVerbatim(WoundInstance w)
         => $"suffered {w.WoundName.ToLowerInvariant()} to my {WoundLocation(w)}";
 
-    public override void Apply(OutcomeContext ctx)
+    protected override void Apply(OutcomeContext ctx)
         => ctx.Actor!.Wounds.Add(Wound);
 }
 
-/// <summary>Modifies a humor score. Apply is a no-op until HumorQueue routing is implemented.</summary>
-public sealed class HumorChangeOutcome : Outcome
-{
-    public HumorChangeOutcome(string humorName, int amount)
-        : base($"{humorName} {(amount > 0 ? "+" : "")}{amount}",
-               amount > 0 ? OutcomeSeverity.Positive : OutcomeSeverity.Negative,
-               $"felt my {humorName.ToLowerInvariant()} {(amount > 0 ? "rise" : "fall")}")
-    { }
-
-    // TODO: route into HumorQueue once implemented
-}
 
 /// <summary>
 /// Internal: records a childhood-reminescence fragment in the protagonist's history.
@@ -450,7 +461,7 @@ public sealed class ChildhoodHistoryOutcome : Outcome
         _setLocation    = setLocation;
     }
 
-    public override void Apply(OutcomeContext ctx)
+    protected override void Apply(OutcomeContext ctx)
     {
         // Childhood history is ctx.Actor!-only and only produced during the (solo) reminescence
         // phase, so the acting member is always the ctx.Actor! here.

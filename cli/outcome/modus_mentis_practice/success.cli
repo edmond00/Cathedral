@@ -1,0 +1,52 @@
+# modus_mentis_practice — the outcome, not the verb.
+#
+# cli/verb/smell/ proves the chip is printed. This proves it corresponds to something real.
+# The verb script runs in full and the outcome assertions go on the end.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Field" --period dawn --observe-only "Test Peat Cut"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# --- before ---
+inspect skills
+
+strategy succeed
+goal smell
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+expect SUCCESS
+# The OUTCOME, not just the banner. "SUCCESS" is the dice result — it is printed from
+# result.Succeeded and says nothing about what the verb did, so a verb whose SuccessReports
+# stopped producing anything would still pass every other assertion here. This is the chip
+# the outcome block carries, and it is the only line that proves the verb had an effect.
+# Just "Modus mentis": a first grant reads "acquired", a repeat reads "learned".
+expect Modus mentis
+
+# What makes this a smell test rather than an any-verb test: SUCCESS/FAILURE is the outcome banner
+# of every verb alike, so only this can tell them apart.
+expect-verb smell
+
+# --- the outcome really ran ---
+expect-outcome modus_mentis_practice
+
+# --- after: the world moved ---
+inspect skills
+quit

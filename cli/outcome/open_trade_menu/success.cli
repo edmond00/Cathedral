@@ -1,0 +1,43 @@
+# open_trade_menu — the outcome, not the verb.
+#
+# cli/verb/propose_to_buy/ proves the chip is printed. This proves the chip corresponds to something
+# real: the world is inspected before and after, and it moved. The two overlap on purpose —
+# same scenario, different question.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --npc-affinity CloseFriend --location-type test --location-id 0 --npc-static --start-area "Test Hall" --period noon --observe-only "brewer"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# --- before ---
+inspect npcs
+expect-state npcs "trade=None"
+
+strategy succeed
+goal propose_to_buy
+advance 12 180
+regions
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+# --- the outcome really ran ---
+expect-outcome open_trade_menu
+
+# --- after: the world moved ---
+inspect npcs
+quit

@@ -234,6 +234,11 @@ public sealed class CliDriver
                 case "expect":      CmdExpect(rest, expectPresent: true);  break;
                 case "expect-not":  CmdExpect(rest, expectPresent: false); break;
                 case "expect-verb": CmdExpectVerb(rest);              break;
+                case "inspect":     CmdInspect(rest);                  break;
+                case "expect-state":    CmdExpectState(rest, want: true);  break;
+                case "expect-no-state": CmdExpectState(rest, want: false); break;
+                case "expect-outcome": CmdExpectOutcome(rest, want: true);  break;
+                case "expect-no-outcome": CmdExpectOutcome(rest, want: false); break;
                 case "allow-flag-miss": CmdAllowFlagMiss(rest);       break;
                 case "quit":        CmdQuit();                        break;
                 default:            CliMode.Emit($"error: unknown command '{cmd}' (try `help`)"); break;
@@ -297,6 +302,19 @@ public sealed class CliDriver
           expect-verb <verb-id>     assert which verb the last executed action carried. What a
                                     verb test must assert: `expect SUCCESS` matches ANY action's
                                     outcome banner and so passes on the wrong verb
+          inspect [subject]         print the game state an outcome can change, by STABLE id:
+                                    items / coins / where / party / wounds / skills / npcs / pois,
+                                    or all. What cli/outcome/ asserts on — the chip says the player
+                                    was told, this says the world actually moved
+          expect-state <subj> <text>  assert `inspect <subj>` reports a line containing <text>.
+                                    What cli/outcome/ asserts with: `expect` reads the SCREEN,
+                                    this reads the world
+          expect-no-state <subj> <text>  the negative form (an NPC gone, an item no longer held)
+          expect-outcome <id>       assert an outcome of that id was applied this run (see
+                                    --outcome-audit for the catalogue). `expect <chip>` proves
+                                    what the player was TOLD; this proves what ran, which is the
+                                    only way to assert the outcomes that show no chip
+          expect-no-outcome <id>    the negative form, for asserting something did NOT happen
           click keyword <name|n>    click a narration keyword by name, or by position.
                                     The index form is for tests: a phase pinned with
                                     --observe-only knows what it is looking at but not
@@ -1073,6 +1091,103 @@ public sealed class CliDriver
 
     /// <summary>Flags whose misses this script has declared expected — see <see cref="CmdAllowFlagMiss"/>.</summary>
     private readonly HashSet<string> _allowedFlagMisses = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Asserts that an outcome of the given id has (or has not) been applied this run.
+    ///
+    /// <para>The counterpart to <c>expect-verb</c>, one level down. <c>expect &lt;chip&gt;</c> proves
+    /// what the player was <i>told</i>; this proves what actually <i>ran</i>. That distinction is
+    /// what makes the four chip-less outcomes testable at all — <c>state_capture</c> and the phase
+    /// transitions show nothing on screen — and it lets a test name an outcome by its stable id
+    /// rather than by wording that is free to change.</para>
+    ///
+    /// <para>Reads <see cref="Outcome.Applied"/>, appended by <c>Outcome.ApplyTo</c>, which is the
+    /// only way an outcome can be carried out.</para>
+    /// </summary>
+    /// <summary>
+    /// Prints the game state an outcome can change: carried items, coins, where and when, the party,
+    /// wounds, skills, the scene's NPCs and the area's points of interest.
+    ///
+    /// <para>What the <c>cli/outcome/</c> range is built on. A verb test asserts the chip — that the
+    /// player was told something happened; an outcome test inspects before and after and asserts the
+    /// world really moved. Everything is named by stable id so an assertion survives a content
+    /// rewrite.</para>
+    /// </summary>
+    private void CmdInspect(string[] a)
+    {
+        var n = _game.CliNarration;
+        if (n == null) { CliMode.Emit("error: not in narration"); return; }
+
+        string subject = a.Length == 0 ? "all" : a[0].ToLowerInvariant();
+        var lines = n.CliInspect(subject);
+        if (lines.Count == 0) { CliMode.Emit($"inspect {subject}: (nothing)"); return; }
+        foreach (var line in lines) CliMode.Emit(line);
+    }
+
+    /// <summary>
+    /// Asserts that <c>inspect &lt;subject&gt;</c> does (or does not) report a line containing the
+    /// given text. The assertion the <c>cli/outcome/</c> range is built on.
+    ///
+    /// <para>Separate from <c>expect</c> because they read different things: <c>expect</c> scans the
+    /// rendered terminal, which is what the player sees, while this reads the world itself. An
+    /// outcome test needs the second — a chip proves the player was told, not that anything
+    /// changed.</para>
+    /// </summary>
+    private void CmdExpectState(string[] a, bool want)
+    {
+        if (a.Length < 2)
+        {
+            CliMode.Emit($"error: expect{(want ? "" : "-no")}-state <subject> <text>");
+            return;
+        }
+
+        var n = _game.CliNarration;
+        if (n == null) { CliMode.Emit("error: not in narration"); return; }
+
+        string subject = a[0].ToLowerInvariant();
+        string needle  = string.Join(' ', a.Skip(1));
+        var    lines   = n.CliInspect(subject);
+        bool   found   = lines.Any(l => l.Contains(needle, StringComparison.OrdinalIgnoreCase));
+
+        if (found == want)
+        {
+            CliMode.Emit(want ? $"PASS: {subject} has \"{needle}\""
+                              : $"PASS: {subject} has no \"{needle}\"");
+            return;
+        }
+
+        CliMode.Emit(want
+            ? $"FAIL: {subject} has no \"{needle}\" — saw: "
+              + (lines.Count == 0 ? "(nothing)" : string.Join(" | ", lines.Take(8)))
+            : $"FAIL: {subject} still has \"{needle}\"");
+        CliMode.HasFailedAssertion = true;
+    }
+
+    private void CmdExpectOutcome(string[] a, bool want)
+    {
+        if (a.Length == 0)
+        {
+            CliMode.Emit($"error: expect{(want ? "" : "-no")}-outcome <outcome-id>");
+            return;
+        }
+
+        string id      = a[0];
+        bool   applied = Narrative.Outcome.Applied.Contains(id, StringComparer.OrdinalIgnoreCase);
+
+        if (applied == want)
+        {
+            CliMode.Emit(want ? $"PASS: outcome '{id}' was applied"
+                              : $"PASS: outcome '{id}' was not applied");
+            return;
+        }
+
+        CliMode.Emit(want
+            ? $"FAIL: expected outcome '{id}' — applied so far: "
+              + (Narrative.Outcome.Applied.Count == 0 ? "(none)"
+                 : string.Join(", ", Narrative.Outcome.Applied.Distinct()))
+            : $"FAIL: outcome '{id}' was applied and should not have been");
+        CliMode.HasFailedAssertion = true;
+    }
 
     private void CmdExpectVerb(string[] a)
     {

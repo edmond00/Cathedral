@@ -235,7 +235,7 @@ public abstract class Verb
     public void Execute(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         foreach (var report in SuccessReports(scene, pov, actor, target))
-            report.Apply(OutcomeContext.For(actor, scene, pov));
+            report.ApplyTo(OutcomeContext.For(actor, scene, pov));
     }
 
     // ── Routine recording hooks ───────────────────────────────────────────────

@@ -1608,7 +1608,7 @@ public class NarrativeController
         {
             reminescenceReportList = action.Verb.SuccessReports(_scene, _pov, _protagonist, target);
             foreach (var report in reminescenceReportList)
-                report.Apply(OutcomeContext.For(_protagonist, _scene, _pov));
+                report.ApplyTo(OutcomeContext.For(_protagonist, _scene, _pov));
         }
         catch (Exception ex)
         {
@@ -1945,7 +1945,7 @@ public class NarrativeController
         // Apply every report's game-state change in order — to the acting member, so a companion's
         // loot, learned skills, and suffered wounds land on the companion, not the protagonist.
         foreach (var report in allReports)
-            report.Apply(OutcomeContext.For(_activePartyMember, _scene, _pov));
+            report.ApplyTo(OutcomeContext.For(_activePartyMember, _scene, _pov));
 
         // Self-check for the routine recorder's one silent failure mode: a report that relocates the
         // player without declaring it. The recorder cannot see the move (it runs before Apply, by
@@ -3272,6 +3272,77 @@ public class NarrativeController
     /// is the only thing a verb test can assert that a wrong verb cannot satisfy.
     /// </summary>
     public string? CliLastExecutedVerbId() => _cliLastExecutedVerbId;
+
+    /// <summary>
+    /// A flat, greppable dump of the game state an <see cref="Outcome"/> can change. Read by the
+    /// CLI's <c>inspect</c>, which is what makes the <c>cli/outcome/</c> range possible: a chip
+    /// proves the player was told something happened, and this proves it actually did.
+    ///
+    /// <para>Everything is named by <b>stable id</b> — item ids, modus mentis ids, archetype ids —
+    /// never by display name, because names come from content and a test that spells one breaks the
+    /// day somebody rewrites it. One fact per line, prefixed by subject, so a script asserts with a
+    /// plain <c>expect</c>.</para>
+    /// </summary>
+    public IReadOnlyList<string> CliInspect(string subject)
+    {
+        var outp = new List<string>();
+        bool All(string s) => subject is "all" or "" || subject == s;
+        var actor = _activePartyMember ?? (PartyMember)_protagonist;
+
+        if (All("items"))
+            foreach (var i in actor.GetAllItems())
+                outp.Add($"item {i.ItemId}");
+
+        if (All("coins"))
+            outp.Add($"coins gold={_protagonist.Party.Gold} silver={_protagonist.Party.Silver} "
+                   + $"copper={_protagonist.Party.Copper}");
+
+        if (All("where"))
+            outp.Add($"where area=\"{_pov?.Where.DisplayName ?? "-"}\" period={_pov?.When.ToString() ?? "-"} "
+                   + $"day={(int)Cathedral.Game.Narrative.GameClock.Days}");
+
+        if (All("party"))
+            foreach (var c in _protagonist.CompanionParty)
+                outp.Add($"companion \"{c.DisplayName}\" species=\"{c.PartyDescription}\"");
+
+        if (All("wounds"))
+            foreach (var w in actor.Wounds)
+                outp.Add($"wound {w.WoundName} target={w.TargetId}");
+
+        if (All("skills"))
+            foreach (var m in actor.ModiMentis)
+                outp.Add($"skill {m.ModusMentisId} level={m.Level}");
+
+        if (All("npcs") && _scene != null && _pov != null)
+            foreach (var npc in _scene.Npcs)
+            {
+                string key   = _protagonist.AffinityKey;
+                string where = _scene.GetAreaOf(npc, _pov.When)?.DisplayName ?? "-";
+                var ent = npc.Entity as Cathedral.Game.Npc.NpcEntity;
+                outp.Add($"npc {npc.Entity.Archetype.ArchetypeId} alive={npc.Entity.IsAlive}"
+                       + (ent != null ? $" affinity={ent.AffinityTable.GetLevel(key)}"
+                                      + $" enemy={ent.AffinityTable.IsEnemy(key)}"
+                                      // What a conversation's outcomes write. None of it is visible
+                                      // any other way, and it is the whole state change of half the
+                                      // catalogue: join_party, alms, the trade and job menus, the
+                                      // goad into a fight, the introduction.
+                                      + $" roused={npc.Roused}"
+                                      + $" join={ent.JoinRequested}"
+                                      + $" alms={ent.AlmsGiven}"
+                                      + $" trade={ent.TradeRequest}"
+                                      + $" job={(ent.JobRequest != null)}"
+                                      + $" goaded={ent.FightRequestedByDialogue}"
+                                      + $" introduced={(ent.IntroductionGranted != null)}" : "")
+                       + $" area=\"{where}\"");
+            }
+
+        if (All("pois") && _pov != null)
+            foreach (var poi in _pov.Where.PointsOfInterest)
+                outp.Add($"poi \"{poi.DisplayName}\" lemma={poi.ReferenceLemma} items={poi.Items.Count}"
+                       + (poi is Cathedral.Game.Scene.Building.DoorPointOfInterest d ? $" door={d.DoorState}" : ""));
+
+        return outp;
+    }
 
     private string? _cliLastExecutedVerbId;
 

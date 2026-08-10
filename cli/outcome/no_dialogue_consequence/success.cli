@@ -1,0 +1,58 @@
+# no_dialogue_consequence — the outcome, not the verb.
+#
+# The mirror image of every other test in this folder: it asserts that the world did NOT move, and
+# that the game said so rather than leaving an empty outcome block, which reads as a bug.
+#
+# Needs a genuinely LOST conversation, so no --auto-dialogue (which always wins) and `strategy
+# fail-dice` before the resolution. ProposeToBuyTree is one of the three trees that declare no
+# failure consequences at all — failing to strike a bargain currently costs nothing, and that is
+# exactly what makes this outcome reachable.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --npc-affinity CloseFriend --location-type test --location-id 0 --npc-static --start-area "Test Hall" --period noon --observe-only "brewer"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# --- open the conversation ------------------------------------------------------
+strategy succeed
+goal propose_to_buy
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+# --- walk the tree, and lose the check at the end -------------------------------
+wait mode Dialogue 60
+strategy fail-dice
+advance 20 180
+click option 0
+advance 20 180
+click option 0
+advance 20 180
+
+# Two replies reach this tree's resolution; the roll then needs settling before the outcomes fire.
+# A third `click option` here reports "a dice roll is in progress" and the conversation never ends.
+click continue
+advance 20 180
+
+# --- nothing happened, and the game said so --------------------------------------
+expect-outcome no_dialogue_consequence
+expect Nothing changes between you
+
+# The proof it is a message and not a consequence: no trade opened, and standing is untouched.
+inspect npcs
+expect-state npcs "trade=None"
+quit

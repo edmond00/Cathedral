@@ -1,0 +1,41 @@
+# affinity_change — the outcome, not the verb.
+#
+# cli/verb/appease/ proves the chip is printed. This proves the chip corresponds to something
+# real: the world is inspected before and after, and it moved. The two overlap on purpose —
+# same scenario, different question.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Den" --period noon --observe-only wolf
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# --- before ---
+inspect npcs
+expect-state npcs "wolf alive=True affinity=Stranger enemy=True"
+advance 12 180
+expect wolf
+
+strategy succeed
+goal appease
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+# --- the outcome really ran ---
+expect-outcome affinity_change
+
+# --- after: the world moved ---
+inspect npcs
+expect-state npcs "wolf alive=True affinity=Suspicious"
+quit

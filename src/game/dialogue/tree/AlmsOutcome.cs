@@ -28,7 +28,7 @@ public class AlmsOutcome : Outcome
     // to mean. Trees hand out a fresh set per access precisely so this per-conversation state is safe.
     public override bool ShowInUI => Reported;
 
-    public override void Apply(OutcomeContext ctx)
+    protected override void Apply(OutcomeContext ctx)
     {
         var npc = ctx.Npc!;
         npc.AlmsGiven = _copper;

@@ -128,7 +128,7 @@ public class RoutineReplayEngine
             var reports = verb.SuccessReports(scene, pov, ctx.ActingMember, target, replayView);
             foreach (var report in reports)
             {
-                report.Apply(OutcomeContext.For(ctx.ActingMember, scene, pov));
+                report.ApplyTo(OutcomeContext.For(ctx.ActingMember, scene, pov));
                 if (!dryRun && report.ShowInUI) result.Outcomes.Add(report);
             }
 
@@ -217,7 +217,7 @@ public class RoutineReplayEngine
                 string partyMemberId = protagonist.AffinityKey;
                 foreach (var oc in tree.SuccessOutcomes)
                 {
-                    oc.Apply(OutcomeContext.ForDialogue(req.Npc, partyMemberId, protagonist));
+                    oc.ApplyTo(OutcomeContext.ForDialogue(req.Npc, partyMemberId, protagonist));
                     result.Outcomes.Add(oc);
                 }
 
