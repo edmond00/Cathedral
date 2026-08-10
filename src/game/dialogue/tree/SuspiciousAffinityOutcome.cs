@@ -9,14 +9,24 @@ namespace Cathedral.Game.Dialogue.Tree;
 /// <see cref="AffinityLevel.Suspicious"/> — the post-reconcile wary state.
 /// Gives 0 bonus dice (same as Stranger) but signals the relationship is no longer hostile.
 /// </summary>
-public class SuspiciousAffinityOutcome : IDialogueOutcome
+public class SuspiciousAffinityOutcome : Outcome
 {
-    public string Description => "NPC is now Suspicious of you (wary but no longer hostile)";
+    public SuspiciousAffinityOutcome()
+        : base("affinity becomes suspicious", OutcomeSeverity.Neutral, "") { }
 
-    public OutcomeReport? Apply(NpcEntity npc, string partyMemberId)
+
+    
+    // Ordinary Outcome, like every other consequence. The chip text is settled in Apply because a
+    // conversation's effect only knows its own wording once it has seen this NPC's before/after
+    // state; ShowInUI stays false when nothing actually changed, which is what returning null used
+    // to mean. Trees hand out a fresh set per access precisely so this per-conversation state is safe.
+    public override bool ShowInUI => Reported;
+
+    public override void Apply(OutcomeContext ctx)
     {
-        var before = npc.AffinityTable.GetLevel(partyMemberId);
-        npc.AffinityTable.SetLevel(partyMemberId, AffinityLevel.Suspicious);
-        return DialogueOutcomeReports.AffinityChange(npc, before, AffinityLevel.Suspicious);
+        var npc = ctx.Npc!;
+        var before = npc.AffinityTable.GetLevel(ctx.PartyMemberId!);
+        npc.AffinityTable.SetLevel(ctx.PartyMemberId!, AffinityLevel.Suspicious);
+        ReportAffinity(ctx.Npc!, before, AffinityLevel.Suspicious);
     }
 }

@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Battlecraft — military combat training and the science of killing; a veteran soldier who approaches every engagement as a problem to solve.
-/// Action and Thinking.
+/// VerbAction and Thinking.
 /// </summary>
 public class BattlecraftModusMentis : ModusMentis
 {

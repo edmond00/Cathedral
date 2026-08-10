@@ -7,7 +7,6 @@ using Cathedral.Debug;
 using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Dialogue.Tree.Trees;
 using Cathedral.Game.Narrative;
-using Cathedral.Game.Narrative.Nodes;
 using Cathedral.Game.Narrative.Preview;
 using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Npc;
@@ -68,8 +67,8 @@ public class NarrativeController
     private Cathedral.Game.Scene.SceneNpcPlacement? _npcPlacement;
     
     // Pending fight/dialogue transitions (set by OnDiceRollContinue, consumed by game controller)
-    private FightOutcome? _pendingFightOutcome = null;
-    private DialogueOutcome? _pendingDialogueOutcome = null;
+    private FightTriggerOutcome? _pendingFightOutcome = null;
+    private DialogueTriggerOutcome? _pendingDialogueOutcome = null;
 
     // Continuity context captured when a dialogue becomes pending and consumed by the next observation
     // phase: the NPC talked to and the observation modus mentis that originated the dialogue's chain of
@@ -619,9 +618,9 @@ public class NarrativeController
 
             // Empty verb lists: the refresh pass that follows expands the real ones, for the PoI and
             // for every item in it, at the period actually in force.
-            var entry = new SceneViewEntry(poi, new List<VerbView>());
+            var entry = new SceneViewEntry(poi, new List<VerbAction>());
             var itemEntries = poi.Items
-                .Select(ie => new SceneViewEntry(ie, new List<VerbView>()))
+                .Select(ie => new SceneViewEntry(ie, new List<VerbAction>()))
                 .ToList();
 
             node.PossibleOutcomes.Add(new SyntheticObservationObject(poi, entry, itemEntries, area));
@@ -834,7 +833,7 @@ public class NarrativeController
         var corpseOutcomes = corpses
             .Select(c => nodeOutcomes.FirstOrDefault(o => ReferenceEquals(o.PointOfInterest, c)))
             .Where(o => o != null)
-            .Select(o => (ConcreteOutcome)o!)
+            .Select(o => (NarrativeAnchor)o!)
             .ToList();
 
         if (corpseOutcomes.Count == 0)
@@ -873,7 +872,7 @@ public class NarrativeController
     /// thought (traced back through <paramref name="chainOrigin"/>; null for dialogues that did not come
     /// from an observation→thinking→action chain, e.g. a caught-red-handed confrontation).
     /// </summary>
-    private void SetPendingDialogue(DialogueOutcome outcome, ModusMentisChainElement? chainOrigin)
+    private void SetPendingDialogue(DialogueTriggerOutcome outcome, ModusMentisChainElement? chainOrigin)
     {
         _pendingDialogueOutcome    = outcome;
         _postDialogueNpc           = outcome.Target;
@@ -907,7 +906,7 @@ public class NarrativeController
             _previewSession.Reset();
 
             // Resolve the outcome linked to the clicked keyword via KeywordOutcomeMap or LinkedOutcome
-            ConcreteOutcome? targetOutcome = null;
+            NarrativeAnchor? targetOutcome = null;
             if (sourceObservationBlock?.KeywordOutcomeMap?.TryGetValue(keyword, out var kmo) == true)
                 targetOutcome = kmo;
             else
@@ -999,7 +998,7 @@ public class NarrativeController
                     Text: response.RefusalText,
                     Keywords: null,
                     Actions: null);
-                Console.WriteLine("NarrativeController: Action refused by persona-fit — refusal narrated, no button.");
+                Console.WriteLine("NarrativeController: VerbAction refused by persona-fit — refusal narrated, no button.");
             }
 
             // Deferred commit: the thinking block (and refusal, and its action button) become visible
@@ -1071,7 +1070,7 @@ public class NarrativeController
         try
         {
             Console.WriteLine($"NarrativeController: Starting action execution for '{action.ActionText}'");
-            _cliLastExecutedVerbId = action.PreselectedOutcome?.VerbView.Verb.VerbId;
+            _cliLastExecutedVerbId = action.PreselectedOutcome?.Verb.VerbId;
 
             // Whoever is the active party member performs this action: their skills, organ scores,
             // XP, wounds, and item consumption all apply (not necessarily the protagonist's).
@@ -1110,7 +1109,7 @@ public class NarrativeController
             // Determine if the action is illegal so we know whether to compute witness context.
             // Contextual: the verb, its target and who counts the actor an enemy all speak to it.
             bool isIllegalAction = _scene != null && _pov != null
-                && action.Verb.IsIllegal(_scene, _pov, action.PreselectedOutcome?.VerbView.Target, _activePartyMember);
+                && action.Verb.IsIllegal(_scene, _pov, action.PreselectedOutcome?.Target, _activePartyMember);
 
             // Compute witness context (visual = same area, audio = adjacent area).
             var witnessContext = (isIllegalAction && _scene != null && _pov != null)
@@ -1211,7 +1210,7 @@ public class NarrativeController
             // Handle plausibility failure
             if (!evalResult.IsPlausible)
             {
-                Console.WriteLine($"NarrativeController: Action failed plausibility check");
+                Console.WriteLine($"NarrativeController: VerbAction failed plausibility check");
                 action.IsImpossible = true;
 
                 // Generate plausibility failure narration, streamed into a preview box.
@@ -1227,7 +1226,7 @@ public class NarrativeController
                 // Add outcome narration block (deferred to the preview CONTINUE).
                 var plausibilityBlock = new NarrationBlock(
                     Type: NarrationBlockType.Outcome,
-                    ModusMentis: plausibilityResult.ActionModusMentis ?? throw new InvalidOperationException("Action modusMentis cannot be null"),
+                    ModusMentis: plausibilityResult.ActionModusMentis ?? throw new InvalidOperationException("VerbAction modusMentis cannot be null"),
                     Text: $"[IMPOSSIBLE] {plausibilityResult.Narration}",
                     Keywords: null,
                     Actions: null
@@ -1274,7 +1273,7 @@ public class NarrativeController
             }
             
             // === PHASE 2: DICE ROLL (dice rolling animation) ===
-            Console.WriteLine($"NarrativeController: Action passed plausibility, starting dice roll phase");
+            Console.WriteLine($"NarrativeController: VerbAction passed plausibility, starting dice roll phase");
 
             // Number of dice = total modusMentis level summed across the chain
             int numberOfDice = Math.Max(1, action.GetTotalModusMentisLevel());
@@ -1348,7 +1347,7 @@ public class NarrativeController
             _previewSession.Reset();
             _narrationState.IsLoadingAction = false;
             NarrationDiceClear();
-            _narrationState.ErrorMessage = $"Action execution failed: {ex.Message}";
+            _narrationState.ErrorMessage = $"VerbAction execution failed: {ex.Message}";
         }
     }
     
@@ -1512,9 +1511,9 @@ public class NarrativeController
             _narrationState.LoadingMessage = Config.LoadingMessages.NarratingOutcome;
 
             // Choose the narration hint for the LLM based on success/failure.
-            OutcomeBase outcomeForPrompt = succeeded
-                ? new InlineOutcome("getting up", "with great effort you push yourself to your feet and continue your travel")
-                : new InlineOutcome("the effort", "your exhausted body refuses to rise — you slump back against the tree");
+            INarratable outcomeForPrompt = succeeded
+                ? new InlineNarratable("getting up", "with great effort you push yourself to your feet and continue your travel")
+                : new InlineNarratable("the effort", "your exhausted body refuses to rise — you slump back against the tree");
 
             _previewSession.Reset();
             var part = _previewSession.BeginPart(PreviewTitles.For(actionMm));
@@ -1543,7 +1542,7 @@ public class NarrativeController
                 part.Sink.OnComplete(narration);
             }
 
-            // ActualOutcome is always the VerbOutcome so the GetUpVerb's Success/FailureReports fire.
+            // ActualOutcome is always the VerbAction so the GetUpVerb's Success/FailureReports fire.
             var result = new ActionExecutionResult
             {
                 Action              = action,
@@ -1553,8 +1552,8 @@ public class NarrativeController
                 DifficultyLevel     = getUpDifficulty,
                 Succeeded           = succeeded,
                 ActualOutcome       = action.PreselectedOutcome != null
-                                          ? (OutcomeBase)action.PreselectedOutcome
-                                          : new InlineOutcome("get up", "rise"),
+                                          ? (INarratable)action.PreselectedOutcome
+                                          : new InlineNarratable("get up", "rise"),
                 Narration           = narration,
             };
 
@@ -1594,7 +1593,7 @@ public class NarrativeController
 
         // Pull the verb target out of the preselected outcome chain.
         Element? target = null;
-        if (action.PreselectedOutcome is VerbOutcome vo)
+        if (action.PreselectedOutcome is VerbAction vo)
             target = vo.Target;
 
         if (target == null)
@@ -1604,18 +1603,18 @@ public class NarrativeController
         }
 
         // Collect and apply all verb reports (skills, items, history, transition).
-        System.Collections.Generic.IReadOnlyList<OutcomeReport> reminescenceReportList;
+        System.Collections.Generic.IReadOnlyList<Outcome> reminescenceReportList;
         try
         {
             reminescenceReportList = action.Verb.SuccessReports(_scene, _pov, _protagonist, target);
             foreach (var report in reminescenceReportList)
-                report.Apply(_protagonist, _scene, _pov);
+                report.Apply(OutcomeContext.For(_protagonist, _scene, _pov));
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"NarrativeController: REMEMBER verb threw — {ex.Message}");
             Console.Error.WriteLine(ex.StackTrace);
-            reminescenceReportList = System.Array.Empty<OutcomeReport>();
+            reminescenceReportList = System.Array.Empty<Outcome>();
         }
 
         // Resolve the action modusMentis (ChildhoodReminescenceModusMentis) from the action.
@@ -1631,10 +1630,10 @@ public class NarrativeController
             ? NeutralNarration.ReminescenceOutcome(fpoi.Fragment.Name, fpoi.Fragment.OutcomeText)
             : null;
         var outcomeForPrompt = fpoi != null
-            ? (OutcomeBase)new InlineOutcome(
+            ? (INarratable)new InlineNarratable(
                 displayName:    fpoi.Fragment.Name,
                 naturalLanguage: $"remember: {fpoi.Fragment.OutcomeText}")
-            : new InlineOutcome("memory", "remember this childhood moment");
+            : new InlineNarratable("memory", "remember this childhood moment");
 
         // Generate outcome narration through the LLM exactly as any other action — streamed into the
         // preview box, with the memory block committed on its CONTINUE. The footer says what is
@@ -1848,19 +1847,19 @@ public class NarrativeController
 
     /// <summary>
     /// Gathers the verb-specific outcome reports for a resolved action. Success reports carry the
-    /// chosen <see cref="VerbView"/> (so verbs that expanded into several actions read their variant);
+    /// chosen <see cref="VerbAction"/> (so verbs that expanded into several actions read their variant);
     /// failure reports use the target-only overload. Returns an empty list for non-verb outcomes.
     /// </summary>
-    private System.Collections.Generic.IReadOnlyList<OutcomeReport> GatherVerbReports(OutcomeBase? outcome, bool succeeded)
+    private System.Collections.Generic.IReadOnlyList<Outcome> GatherVerbReports(INarratable? outcome, bool succeeded)
     {
-        if (outcome is VerbOutcome verbTarget && _scene != null && _pov != null && verbTarget.Target != null)
+        if (outcome is VerbAction verbTarget && _scene != null && _pov != null && verbTarget.Target != null)
         {
-            var verb = verbTarget.VerbView.Verb;
+            var verb = verbTarget.Verb;
             if (!succeeded)
                 return verb.FailureReports(_scene, _pov, _activePartyMember, verbTarget.Target);
 
-            var reports = new System.Collections.Generic.List<OutcomeReport>(
-                verb.SuccessReports(_scene, _pov, _activePartyMember, verbTarget.Target, verbTarget.VerbView));
+            var reports = new System.Collections.Generic.List<Outcome>(
+                verb.SuccessReports(_scene, _pov, _activePartyMember, verbTarget.Target, verbTarget));
 
             // Doing a thing is how the thing is learned. Appended last so the lesson reads as the
             // consequence of whatever the verb actually did, not as its headline.
@@ -1870,7 +1869,7 @@ public class NarrativeController
 
             return reports;
         }
-        return System.Array.Empty<OutcomeReport>();
+        return System.Array.Empty<Outcome>();
     }
 
     /// <summary>
@@ -1885,7 +1884,7 @@ public class NarrativeController
         // The dice chain's own lesson — one report per modus mentis that fed the roll (observation →
         // thinking → action), so each shows its own chip instead of the XP moving in silence. Built
         // here and applied with the rest below; a capped modus mentis reports nothing.
-        var practiceReports = new System.Collections.Generic.List<OutcomeReport>();
+        var practiceReports = new System.Collections.Generic.List<Outcome>();
 
         if (deferredCommit)
         {
@@ -1908,18 +1907,18 @@ public class NarrativeController
         }
 
         // Collect all outcome reports: verb-specific + LLM-decided (wound).
-        System.Collections.Generic.List<OutcomeReport> allReports;
+        System.Collections.Generic.List<Outcome> allReports;
         if (result.OutcomeReports != null)
         {
             // Main action path: reports were gathered up-front so their verbatims could feed the
             // narration. Reuse those exact instances — re-gathering would run any item factory a
             // second time and materialise duplicate items.
-            allReports = new System.Collections.Generic.List<OutcomeReport>(result.OutcomeReports);
+            allReports = new System.Collections.Generic.List<Outcome>(result.OutcomeReports);
         }
         else
         {
             // Fallback (e.g. Get-Up): no reports were pre-gathered, so build them now.
-            allReports = new System.Collections.Generic.List<OutcomeReport>();
+            allReports = new System.Collections.Generic.List<Outcome>();
             allReports.AddRange(GatherVerbReports(result.ActualOutcome, result.Succeeded));
             allReports.AddRange(result.LlmDecidedReports);
         }
@@ -1932,7 +1931,7 @@ public class NarrativeController
         // evaluates the verb against the pre-move PoV. The reports come along because they carry the
         // RoutineChainEffect the recorder decides on (skip vs stop, and what counts as movement).
         if (result.Succeeded && _recorder != null && _scene != null && _pov != null
-            && result.ActualOutcome is VerbOutcome)
+            && result.ActualOutcome is VerbAction)
         {
             _recorder.OnVerbSucceeded(result.Action, _scene, _pov, _activePartyMember, result.ItemConsumed, allReports);
         }
@@ -1946,7 +1945,7 @@ public class NarrativeController
         // Apply every report's game-state change in order — to the acting member, so a companion's
         // loot, learned skills, and suffered wounds land on the companion, not the protagonist.
         foreach (var report in allReports)
-            report.Apply(_activePartyMember, _scene, _pov);
+            report.Apply(OutcomeContext.For(_activePartyMember, _scene, _pov));
 
         // Self-check for the routine recorder's one silent failure mode: a report that relocates the
         // player without declaring it. The recorder cannot see the move (it runs before Apply, by
@@ -1984,7 +1983,7 @@ public class NarrativeController
         // Add outcome narration block
         var outcomeBlock = new NarrationBlock(
             Type: NarrationBlockType.Outcome,
-            ModusMentis: result.ActionModusMentis ?? throw new InvalidOperationException("Action modusMentis cannot be null"),
+            ModusMentis: result.ActionModusMentis ?? throw new InvalidOperationException("VerbAction modusMentis cannot be null"),
             Text: $"[{(result.Succeeded ? "SUCCESS" : "FAILURE")}] {result.Narration}",
             Keywords: null,
             Actions: null,
@@ -2010,7 +2009,7 @@ public class NarrativeController
         if (!result.Succeeded && result.FightWithEnemy != null)
         {
             Console.WriteLine($"NarrativeController: Enemy '{result.FightWithEnemy.DisplayName}' attacks after failed action in plain sight — enemy initiative");
-            _pendingFightOutcome = new FightOutcome(result.FightWithEnemy, $"opportunity attack by {result.FightWithEnemy.DisplayName}")
+            _pendingFightOutcome = new FightTriggerOutcome(result.FightWithEnemy, $"opportunity attack by {result.FightWithEnemy.DisplayName}")
             {
                 EnemyInitiative = true
             };
@@ -2023,7 +2022,7 @@ public class NarrativeController
             var crimeType = DetermineCrimeType(result.Action.Verb, _pov.Where.IsPrivate);
             Console.WriteLine($"NarrativeController: Witness '{result.CaughtByWitness.DisplayName}' caught the failed illegal action (crime: {crimeType})");
             var catchTree = CaughtRedHandedTreeFactory.Create(crimeType);
-            SetPendingDialogue(new Cathedral.Game.Narrative.DialogueOutcome(result.CaughtByWitness, tree: catchTree), result.Action);
+            SetPendingDialogue(new Cathedral.Game.Scene.DialogueTriggerOutcome(result.CaughtByWitness, tree: catchTree), result.Action);
             return;
         }
 
@@ -2041,21 +2040,15 @@ public class NarrativeController
         }
 
         // Handle outcome based on type - show continue button for next step
-        if (result.ActualOutcome is FightOutcome fightOutcome)
+        if (result.ActualOutcome is FightTriggerOutcome fightOutcome)
         {
             Console.WriteLine($"NarrativeController: Fight outcome with {fightOutcome.Target.DisplayName}, signaling fight mode");
             _pendingFightOutcome = fightOutcome;
             // Don't show continue button - the game controller will detect the pending fight and switch modes
         }
-        else if (result.ActualOutcome is NarrationNode nextNode)
+        else if (result.ActualOutcome is VerbAction verbOutcome && _scene != null && _pov != null)
         {
-            Console.WriteLine($"NarrativeController: Transition outcome to node {nextNode.NodeId}, showing continue button");
-            _narrationState.PendingTransitionNode = nextNode;
-            _narrationState.ShowContinueButton = true;
-        }
-        else if (result.ActualOutcome is VerbOutcome verbOutcome && _scene != null && _pov != null)
-        {
-            Console.WriteLine($"NarrativeController: Verb outcome '{verbOutcome.VerbView.Verb.VerbId}' on '{verbOutcome.Target?.DisplayName}', reports already applied");
+            Console.WriteLine($"NarrativeController: Verb outcome '{verbOutcome.Verb.VerbId}' on '{verbOutcome.Target?.DisplayName}', reports already applied");
             SceneDebugManager.UpdatePoV(_pov);
 
             // Check if the verb requested a dialogue session
@@ -2063,7 +2056,7 @@ public class NarrativeController
             {
                 var req = _scene.PendingDialogueRequest;
                 _scene.PendingDialogueRequest = null;
-                SetPendingDialogue(new Cathedral.Game.Narrative.DialogueOutcome(req.Npc, req.TreeId), result.Action);
+                SetPendingDialogue(new Cathedral.Game.Scene.DialogueTriggerOutcome(req.Npc, req.TreeId), result.Action);
                 Console.WriteLine($"NarrativeController: Dialogue verb triggered tree '{req.TreeId}' with {req.Npc.DisplayName}");
                 return;
             }
@@ -2073,7 +2066,7 @@ public class NarrativeController
             {
                 var req = _scene.PendingFightRequest;
                 _scene.PendingFightRequest = null;
-                _pendingFightOutcome = new FightOutcome(req.Npc, $"attack on {req.Npc.DisplayName}");
+                _pendingFightOutcome = new FightTriggerOutcome(req.Npc, $"attack on {req.Npc.DisplayName}");
                 Console.WriteLine($"NarrativeController: Attack verb triggered fight with {req.Npc.DisplayName}");
                 return;
             }
@@ -2123,14 +2116,14 @@ public class NarrativeController
         if (_pov != null)
             SceneDebugManager.UpdatePoV(_pov);
 
-        Console.WriteLine("NarrativeController: Action phase complete");
+        Console.WriteLine("NarrativeController: VerbAction phase complete");
     }
     
     /// <summary>
     /// Execute focus observation phase: generate a detailed observation for a specific outcome (async).
     /// Triggered by right-clicking a keyword and selecting an observation modusMentis.
     /// </summary>
-    private async Task ExecuteFocusObservationAsync(ModusMentis observationModusMentis, ConcreteOutcome focusOutcome)
+    private async Task ExecuteFocusObservationAsync(ModusMentis observationModusMentis, NarrativeAnchor focusOutcome)
     {
         try
         {
@@ -2216,7 +2209,7 @@ public class NarrativeController
             Console.WriteLine($"NarrativeController: Speaking phase — skill={speakingModusMentis.DisplayName}, companion={companion.DisplayName}, keyword='{keyword}'");
 
             // Resolve the outcome linked to this keyword
-            ConcreteOutcome? linkedOutcome = null;
+            NarrativeAnchor? linkedOutcome = null;
             if (sourceBlock?.KeywordOutcomeMap?.TryGetValue(keyword, out var ko) == true)
                 linkedOutcome = ko;
             else
@@ -2592,7 +2585,7 @@ public class NarrativeController
                         _narrationState.IsSelectingObservationModusMentis = false;
 
                         // Resolve focus outcome: prefer KeywordOutcomeMap, then LinkedOutcome, then keyword lookup
-                        ConcreteOutcome? focusOutcome = null;
+                        NarrativeAnchor? focusOutcome = null;
                         if (sourceBlock?.KeywordOutcomeMap?.TryGetValue(keyword, out var fko) == true)
                             focusOutcome = fko;
                         else
@@ -2939,7 +2932,7 @@ public class NarrativeController
                          && _narrationState.ThinkingAttemptsRemaining > 0
                          && _protagonist.CompanionParty.Count > 0;
             if (!canSpeak) speakDisabled.Add(2);
-            _choicePopup.Show(screenPos, speakChoices, "Keyword Action", speakDisabled);
+            _choicePopup.Show(screenPos, speakChoices, "Keyword VerbAction", speakDisabled);
         }
     }
 
@@ -2980,7 +2973,7 @@ public class NarrativeController
             _narrationState.IsSelectingObservationModusMentis = false;
 
             // Resolve focus outcome: prefer KeywordOutcomeMap, then LinkedOutcome, then keyword lookup
-            ConcreteOutcome? focusOutcome = null;
+            NarrativeAnchor? focusOutcome = null;
             if (sourceBlock?.KeywordOutcomeMap?.TryGetValue(keyword, out var fko) == true)
                 focusOutcome = fko;
             else
@@ -3074,7 +3067,7 @@ public class NarrativeController
         }
         else
         {
-            // Action choice: 0 = Execute, 1 = Use Tool
+            // VerbAction choice: 0 = Execute, 1 = Use Tool
             var action = _narrationState.ActionPendingModeSelection;
             _narrationState.ActionPendingModeSelection = null;
 
@@ -3092,7 +3085,7 @@ public class NarrativeController
                     _narrationState.IsSelectingItemForAction = true;
                     _narrationState.ActionPendingItemCombination = action;
                     Vector2 screenPos = _terminalInputHandler.CellToScreen(_lastMouseX, _lastMouseY, _core.ClientSize);
-                    _itemSelectionPopup.Show(screenPos, candidateItems, "Combine Tool with Action");
+                    _itemSelectionPopup.Show(screenPos, candidateItems, "Combine Tool with VerbAction");
                 }
                 else
                 {
@@ -3101,7 +3094,7 @@ public class NarrativeController
             }
             else
             {
-                Console.WriteLine("NarrativeController: Action choice dismissed");
+                Console.WriteLine("NarrativeController: VerbAction choice dismissed");
             }
         }
     }
@@ -3351,12 +3344,12 @@ public class NarrativeController
     /// <summary>
     /// Check if a fight outcome is pending (NarrativeController wants to enter fight mode).
     /// </summary>
-    public FightOutcome? PendingFightOutcome => _pendingFightOutcome;
+    public FightTriggerOutcome? PendingFightOutcome => _pendingFightOutcome;
     
     /// <summary>
     /// Check if a dialogue outcome is pending (NarrativeController wants to enter dialogue mode).
     /// </summary>
-    public DialogueOutcome? PendingDialogueOutcome => _pendingDialogueOutcome;
+    public DialogueTriggerOutcome? PendingDialogueOutcome => _pendingDialogueOutcome;
     
     /// <summary>
     /// The protagonist used by this narrative controller.
@@ -3622,14 +3615,14 @@ public class NarrativeController
         if (isEnemy)
         {
             Console.WriteLine($"NarrativeController: RUNAWAY failed — fight starts vs '{target.DisplayName}'");
-            _pendingFightOutcome = new FightOutcome(target, $"failed to run away from {target.DisplayName}");
+            _pendingFightOutcome = new FightTriggerOutcome(target, $"failed to run away from {target.DisplayName}");
         }
         else
         {
             Console.WriteLine($"NarrativeController: RUNAWAY failed — witness '{target.DisplayName}' confronts trespass");
             var catchTree = CaughtRedHandedTreeFactory.Create(CriminalAffinityType.Intruder);
             // A runaway confrontation has no observation→thinking→action origin — resample the narrator.
-            SetPendingDialogue(new DialogueOutcome(target, tree: catchTree), null);
+            SetPendingDialogue(new DialogueTriggerOutcome(target, tree: catchTree), null);
         }
     }
     
@@ -3790,13 +3783,6 @@ public class NarrativeController
             Console.WriteLine($"    Entry Node: {node.IsEntryNode}");
             Console.WriteLine($"    Outcomes: {node.GetAllDirectConcreteOutcomes().Count}");
 
-            var items = node.GetAvailableItems();
-            if (items.Count > 0)
-            {
-                Console.WriteLine($"    Items ({items.Count}):");
-                foreach (var item in items)
-                    Console.WriteLine($"      - {item.DisplayName}");
-            }
 
             var observations = node.PossibleOutcomes.OfType<ObservationObject>().ToList();
             if (observations.Count > 0)
@@ -3928,7 +3914,7 @@ public class NarrativeController
             // === CRITIC: can the item help? (single pass, neutral goal-based phrasing) ===
             // A tool-gated verb asks a different question: not "does this beat bare hands" (bare hands
             // are not an option there) but "can this do the work of the tool this needs".
-            var gatedVerb = action.PreselectedOutcome?.VerbView.Verb;
+            var gatedVerb = action.PreselectedOutcome?.Verb;
             var appropriatenessTree = gatedVerb is { RequiresTool: true }
                 ? CriticTrees.BuildToolSubstitutionTree(
                       goalDescription, CriticTrees.ToolPhrase(gatedVerb.ReferenceToolIds),

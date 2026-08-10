@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Fieldcraft — the general feel for outdoor land-work; weeding, tending and the rhythm of the strips.
-/// Multi-function (Action + Thinking).
+/// Multi-function (VerbAction + Thinking).
 /// </summary>
 public class FieldcraftModusMentis : ModusMentis
 {

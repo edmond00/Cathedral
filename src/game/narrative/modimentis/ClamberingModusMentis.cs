@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Clambering — claw-hooked climbing over bark, stone, and anything with purchase; ascent as escape and vantage.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class ClamberingModusMentis : ModusMentis
 {

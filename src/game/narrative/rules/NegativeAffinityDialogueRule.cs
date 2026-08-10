@@ -29,13 +29,13 @@ public class NegativeAffinityDialogueRule : IActionRule
         var vo = ctx.Action.PreselectedOutcome;
         // Applies to any conversation, plus `appease`, which is not one but is the other way out of
         // hostility.
-        bool speaking = vo.VerbView.Verb is Cathedral.Game.Scene.Verbs.DialogueVerb
-                     || vo.VerbView.Verb.VerbId == "appease";
+        bool speaking = vo.Verb is Cathedral.Game.Scene.Verbs.DialogueVerb
+                     || vo.Verb.VerbId == "appease";
         if (!speaking) return ActionRuleResult.Pass();
         if (vo.Target is not SceneNpc sceneNpc)                  return ActionRuleResult.Pass();
         if (sceneNpc.Entity is not NpcEntity npc)                return ActionRuleResult.Pass();
 
-        var verbId = vo.VerbView.Verb.VerbId;
+        var verbId = vo.Verb.VerbId;
 
         // ── Enemy: only reconcile / appease are allowed ───────────────────────
         if (npc.AffinityTable.IsEnemy(ctx.Actor.AffinityKey))

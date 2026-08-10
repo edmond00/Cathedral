@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Harvestry — reaping and cutting ripe crop; the swing of the sickle and the gathered sheaf.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class HarvestryModusMentis : ModusMentis
 {

@@ -106,7 +106,7 @@ public static class DebugMode
 
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine();
-        Console.WriteLine($"[DEBUG] ═══ Action Strategy ═══");
+        Console.WriteLine($"[DEBUG] ═══ VerbAction Strategy ═══");
         Console.WriteLine($"  Action:  {actionText}");
         Console.WriteLine($"  Outcome: {outcomeSummary}");
         Console.WriteLine();

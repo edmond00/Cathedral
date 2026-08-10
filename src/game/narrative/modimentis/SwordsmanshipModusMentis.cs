@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Swordsmanship — edge, point, and the geometries of close combat; a blade practitioner who reads every fight as timing and line.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class SwordsmanshipModusMentis : ModusMentis
 {

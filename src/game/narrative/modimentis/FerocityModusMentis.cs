@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Ferocity — savage overwhelming attack without reservation; a berserker who attacks at full force before thought can intervene.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class FerocityModusMentis : ModusMentis
 {

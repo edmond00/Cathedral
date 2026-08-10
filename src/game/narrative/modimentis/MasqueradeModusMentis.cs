@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Masquerade — disguise, impersonation, false faces; the art of becoming unremarkable, someone else, or nothing at all.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class MasqueradeModusMentis : ModusMentis
 {

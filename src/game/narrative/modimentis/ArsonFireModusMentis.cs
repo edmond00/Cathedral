@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Arson Fire — lighting what should not burn; reading kindling, draught and timing to use fire as a tool.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class ArsonFireModusMentis : ModusMentis
 {

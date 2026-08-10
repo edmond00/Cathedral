@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Beggary — asking strangers for what you have no claim to, and reading which of them will give it.
-/// Speaking + Action.
+/// Speaking + VerbAction.
 /// </summary>
 public class BeggaryModusMentis : ModusMentis
 {

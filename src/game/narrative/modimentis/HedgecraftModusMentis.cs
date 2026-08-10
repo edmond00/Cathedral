@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Hedgecraft — mending fences, hedges and boundaries; laying the hedge and keeping the margin sound.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class HedgecraftModusMentis : ModusMentis
 {

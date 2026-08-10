@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Npc;
 
+using Cathedral.Game.Narrative;
+
 namespace Cathedral.Game.Dialogue.Tree.Trees;
 
 /// <summary>
@@ -61,8 +63,8 @@ public static class CaughtRedHandedTreeFactory
         public override string AssociatedVerbId => "";   // triggered programmatically, not by a verb
         public override NpcLineNode EntryNode   => _entry;
 
-        public override IReadOnlyList<IDialogueOutcome> SuccessOutcomes { get; }
-        public override IReadOnlyList<IDialogueOutcome> FailureOutcomes { get; }
+        public override IReadOnlyList<Outcome> SuccessOutcomes { get; }
+        public override IReadOnlyList<Outcome> FailureOutcomes { get; }
 
         private readonly CriminalAffinityType _criminalType;
 
@@ -73,11 +75,11 @@ public static class CaughtRedHandedTreeFactory
             // Two shared outcome sets. Apologise, lie and deflect are three routes to the same
             // success; a rejected apology, a caught-out lie, a disbelieved deflection and any
             // provocation all land on the same failure, and it draws steel every time.
-            SuccessOutcomes = new IDialogueOutcome[]
+            SuccessOutcomes = new Outcome[]
             {
                 new AffinityTransitionOutcome(AffinityLevel.AnnoyingAcquaintance),
             };
-            FailureOutcomes = new IDialogueOutcome[]
+            FailureOutcomes = new Outcome[]
             {
                 new FightRequestOutcome(),
             };

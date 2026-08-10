@@ -43,13 +43,13 @@ public class MeetStrangerVerb : DialogueVerb
         => $"meet {NpcPronoun(target)} to introduce myself";
 
     // Read out of context in the routines menu, so the pronoun is replaced by the name.
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbView? view = null)
+    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
         => $"meet {NpcName(target)} to introduce myself";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         if (target is not SceneNpc sceneNpc || sceneNpc.Entity is not NpcEntity npc)
-            return System.Array.Empty<OutcomeReport>();
+            return System.Array.Empty<Outcome>();
         return new[] { new DialogueTriggerOutcome(npc, DialogueTreeRegistry.Instance.Get("meet_stranger").TreeId) };
     }
 }

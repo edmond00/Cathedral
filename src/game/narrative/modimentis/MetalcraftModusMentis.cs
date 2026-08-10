@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Metalcraft — iron at the forge; heat, hammer and temper. A hand that reads metal by its colour and its ring.
-/// Multi-function (Action + Thinking).
+/// Multi-function (VerbAction + Thinking).
 /// </summary>
 public class MetalcraftModusMentis : ModusMentis
 {

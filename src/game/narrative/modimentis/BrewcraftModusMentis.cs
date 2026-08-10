@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Brewcraft — malting, mashing and fermenting ale; the smell of the mash and the patience of the tun.
-/// Multi-function (Action + Thinking).
+/// Multi-function (VerbAction + Thinking).
 /// </summary>
 public class BrewcraftModusMentis : ModusMentis
 {

@@ -7,7 +7,7 @@ namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
 /// REMEMBER — the only action available in the childhood reminescence phase.
-/// All state changes are expressed as <see cref="OutcomeReport"/> objects returned by
+/// All state changes are expressed as <see cref="Outcome"/> objects returned by
 /// <see cref="SuccessReports"/>, which are applied in sequence by the caller.
 /// </summary>
 public class RememberVerb : Verb
@@ -33,7 +33,7 @@ public class RememberVerb : Verb
         return "try to remember";
     }
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         if (target is not FragmentPointOfInterest fragmentPoi)
             throw new InvalidOperationException("RememberVerb target must be a FragmentPointOfInterest");
@@ -41,7 +41,7 @@ public class RememberVerb : Verb
         var data    = fragmentPoi.Fragment;
         var outcome = data.Outcome;
         var origin  = scene.CurrentReminescenceId ?? "";
-        var reports = new List<OutcomeReport>();
+        var reports = new List<Outcome>();
 
         // Skills — visible positive chips; Apply() grants a fresh level-1 instance.
         foreach (var skillType in outcome.SkillTypes)

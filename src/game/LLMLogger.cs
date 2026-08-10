@@ -414,7 +414,7 @@ public static class LLMLogger
         try
         {
             var sb = new StringBuilder();
-            sb.AppendLine($"[{DateTime.Now:HH:mm:ss.fff}] CRITIC SECOND PASS - Action Difficulty Evaluation");
+            sb.AppendLine($"[{DateTime.Now:HH:mm:ss.fff}] CRITIC SECOND PASS - VerbAction Difficulty Evaluation");
             sb.AppendLine($"{'-',-80}");
             sb.AppendLine($"ACTION:");
             sb.AppendLine($"  {actionText}");

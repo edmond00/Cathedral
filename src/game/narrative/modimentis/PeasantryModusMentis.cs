@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Peasantry — country chores, plain ways, the rhythm of barn and field.
-/// Multi-function (Thinking + Action).
+/// Multi-function (Thinking + VerbAction).
 /// </summary>
 public class PeasantryModusMentis : ModusMentis
 {

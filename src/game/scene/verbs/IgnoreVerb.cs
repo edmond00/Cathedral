@@ -30,7 +30,6 @@ public sealed class IgnoreVerb : Verb
 
     // No-op: IgnoreVerb exits the pipeline before SuccessReports() is ever called.
 
-    /// Creates a VerbOutcome for IgnoreVerb with no specific target.
-    public static VerbOutcome MakeOutcome() =>
-        new VerbOutcome(new VerbView(Instance, VerbatimText), null!);
+    /// The "do nothing" action, with no specific target.
+    public static VerbAction MakeOutcome() => new VerbAction(Instance, VerbatimText);
 }

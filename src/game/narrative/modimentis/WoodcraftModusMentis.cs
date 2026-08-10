@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Woodcraft — grain, joint and timber; the shaping and joining of worked wood.
-/// Multi-function (Action + Thinking).
+/// Multi-function (VerbAction + Thinking).
 /// </summary>
 public class WoodcraftModusMentis : ModusMentis
 {

@@ -20,7 +20,7 @@ public class ZeroRepliesDialogueRule : IActionRule
         // than keeping a list of ids. The list this replaces was already missing three verbs by the
         // time anyone looked at it, and a dialogue verb missing from it lets a character with no
         // tongue hold a conversation.
-        if (vo.VerbView.Verb is not Cathedral.Game.Scene.Verbs.DialogueVerb) return ActionRuleResult.Pass();
+        if (vo.Verb is not Cathedral.Game.Scene.Verbs.DialogueVerb) return ActionRuleResult.Pass();
         if (DialogueOptionGenerator.SpeechFluency(ctx.Actor) > 0) return ActionRuleResult.Pass();
 
         return ActionRuleResult.Fail(

@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Marksman — ranged weapon accuracy through patience and reading wind and distance; the hunter who waits for the clean shot.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class MarksmanModusMentis : ModusMentis
 {

@@ -87,6 +87,13 @@ public class AffinityTable
         AffinityLevel max = AffinityLevel.CloseFriend)
     {
         var current = GetLevel(partyMemberId);
+
+        // Suspicious sits OFF the ladder (6, above CloseFriend), so a ±1 step from it is meaningless
+        // arithmetic: Decrement would read max(6-1, 1) and quietly promote a suspicious NPC to Close
+        // Friend for having walked out of a conversation with them. Only SetLevel moves anything on
+        // or off that state. The one caller that knew this guarded itself; the other did not.
+        if (current == AffinityLevel.Suspicious) return;
+
         var next = delta > 0 ? current.Increment(max) : current.Decrement(min);
         _table[partyMemberId] = next;
     }

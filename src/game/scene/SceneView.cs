@@ -14,9 +14,9 @@ public class SceneViewEntry
     public Element Source { get; }
 
     /// <summary>Natural-language descriptions of possible actions (from applicable verbs).</summary>
-    public List<VerbView> ApplicableVerbs { get; }
+    public List<VerbAction> ApplicableVerbs { get; }
 
-    public SceneViewEntry(Element source, List<VerbView> applicableVerbs)
+    public SceneViewEntry(Element source, List<VerbAction> applicableVerbs)
     {
         Source           = source;
         ApplicableVerbs  = applicableVerbs;
@@ -27,30 +27,55 @@ public class SceneViewEntry
 /// A verb presented to the frontend: its natural-language description and a reference
 /// back to the <see cref="Verb"/> that generated it.
 /// </summary>
-public class VerbView
+public class VerbAction : Cathedral.Game.Narrative.NarrativeAnchor
 {
-    /// <summary>The verb instance that generated this view.</summary>
+    /// <summary>The verb instance that generated this action.</summary>
     public Verb Verb { get; }
 
     /// <summary>Natural-language description of the action (e.g. "grab the apple").</summary>
     public string Verbatim { get; }
 
-    /// <summary>The element this verb targets (may differ from the SceneViewEntry source).</summary>
+    /// <summary>The element this verb targets.</summary>
     public Element? Target { get; }
 
     /// <summary>
-    /// Optional per-view payload for verbs that expand a single target into several actions
-    /// (e.g. <c>RequestJobVerb</c> emits one view per offered job, each carrying its <c>Job</c> here).
+    /// Optional per-action payload for verbs that expand a single target into several actions
+    /// (e.g. <c>RequestJobVerb</c> emits one per offered job, each carrying its <c>Job</c> here).
     /// Null for ordinary single-action verbs.
     /// </summary>
     public object? Variant { get; }
 
-    public VerbView(Verb verb, string verbatim, Element? target = null, object? variant = null)
+    /// <summary>
+    /// Contextual NPC label substituted for the target's proper name in the LLM-facing goal phrase.
+    /// Null unless the parent observation object stamps it (named NPCs only); the human-facing
+    /// <see cref="DisplayName"/> always keeps the verbatim verb text.
+    /// </summary>
+    public string? ContextLabel { get; set; }
+
+    public VerbAction(Verb verb, string verbatim, Element? target = null, object? variant = null)
     {
         Verb     = verb;
         Verbatim = verbatim;
         Target   = target;
         Variant  = variant;
+    }
+
+    public override string DisplayName => Verbatim;
+
+    public override string ToNaturalLanguageString()
+    {
+        if (ContextLabel == null || Target is not SceneNpc n) return Verbatim;
+
+        string name = n.DisplayName;
+
+        // Some verbs prefix the bare name with a determiner and lower-case it (e.g. SlayVerb's
+        // "slay the edmund sheaf"). Drop that determiner when swapping in the contextual label —
+        // it already carries its own article ("the reaper of the field (a man)"), so we must not
+        // produce "slay the the reaper …". Case-insensitive so a lower-cased name still matches.
+        string withArticle = Verbatim.Replace($"the {name}", ContextLabel, System.StringComparison.OrdinalIgnoreCase);
+        if (withArticle != Verbatim) return withArticle;
+
+        return Verbatim.Replace(name, ContextLabel, System.StringComparison.OrdinalIgnoreCase);
     }
 }
 

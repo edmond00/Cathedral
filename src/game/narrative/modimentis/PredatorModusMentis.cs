@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Predator — hunting and cornering prey; a patient circling presence that closes when options run out.
-/// Thinking and Action.
+/// Thinking and VerbAction.
 /// </summary>
 public class PredatorModusMentis : ModusMentis
 {

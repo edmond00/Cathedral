@@ -7,7 +7,7 @@ namespace Cathedral.Game.Narrative;
 /// <summary>
 /// Abstract base class for elements in a modusMentis chain.
 /// The modusMentis chain represents the sequence of modiMentis involved in an action:
-/// Observation -> Thinking -> Action
+/// Observation -> Thinking -> VerbAction
 /// Each element has an associated modusMentis and optional link to its origin element.
 /// </summary>
 public abstract class ModusMentisChainElement
@@ -133,7 +133,7 @@ public record DialogueOptionItem(string SkillName, int SkillLevel, string Text);
 /// </summary>
 public class NarrationBlock : ModusMentisChainElement
 {
-    public NarrationBlockType Type { get; init; }              // Observation, Thinking, Action, Outcome
+    public NarrationBlockType Type { get; init; }              // Observation, Thinking, VerbAction, Outcome
     public ModusMentis ModusMentis { get; init; } = null!;                 // Which modusMentis generated this block
     public string Text { get; init; } = "";                    // The narration text
     public List<string>? Keywords { get; init; }               // Highlighted keywords (if observation, max 1 per sentence)
@@ -156,14 +156,14 @@ public class NarrationBlock : ModusMentisChainElement
     /// Each sentence is generated for a specific outcome; clicking its keyword leads directly here.
     /// For merged multi-sentence blocks, prefer KeywordOutcomeMap instead.
     /// </summary>
-    public ConcreteOutcome? LinkedOutcome { get; init; } = null;
+    public NarrativeAnchor? LinkedOutcome { get; init; } = null;
 
     /// <summary>
     /// Per-keyword outcome map for merged observation blocks (multiple sentences joined into one block).
-    /// Maps each extracted keyword → the ConcreteOutcome that sentence was describing.
+    /// Maps each extracted keyword → the NarrativeAnchor that sentence was describing.
     /// Takes precedence over LinkedOutcome during click resolution.
     /// </summary>
-    public Dictionary<string, ConcreteOutcome>? KeywordOutcomeMap { get; init; } = null;
+    public Dictionary<string, NarrativeAnchor>? KeywordOutcomeMap { get; init; } = null;
 
     /// <summary>
     /// For Speaking blocks: the display name of the character who spoke (e.g., "Protagonist").
@@ -175,7 +175,7 @@ public class NarrationBlock : ModusMentisChainElement
     /// Short, prewritten outcome chips rendered below the LLM narration.
     /// Null when there are no concrete outcomes to report.
     /// </summary>
-    public IReadOnlyList<OutcomeReport>? OutcomeReports { get; init; } = null;
+    public IReadOnlyList<Outcome>? OutcomeReports { get; init; } = null;
 
     /// <summary>
     /// For <see cref="NarrationBlockType.DialogueOptions"/> blocks: the selectable player replies,
@@ -208,11 +208,11 @@ public class NarrationBlock : ModusMentisChainElement
         List<ParsedNarrativeAction>? Actions,
         ModusMentisChainElement? ChainOrigin = null,
         ObservationType? SourceObservationType = null,
-        ConcreteOutcome? LinkedOutcome = null,
-        Dictionary<string, ConcreteOutcome>? KeywordOutcomeMap = null,
+        NarrativeAnchor? LinkedOutcome = null,
+        Dictionary<string, NarrativeAnchor>? KeywordOutcomeMap = null,
         List<NarrationSentence>? Sentences = null,
         string? SpeakerName = null,
-        IReadOnlyList<OutcomeReport>? OutcomeReports = null,
+        IReadOnlyList<Outcome>? OutcomeReports = null,
         IReadOnlyList<DialogueOptionItem>? DialogueOptions = null)
     {
         this.Type = Type;
@@ -281,8 +281,8 @@ public class ParsedNarrativeAction : ModusMentisChainElement
     public string ActionModusMentisId { get; set; } = "";           // Which action modusMentis to use for check
     public ModusMentis? ActionModusMentis { get; set; }                   // Resolved modusMentis reference
     public ModusMentis ThinkingModusMentis { get; set; } = null!;         // Which thinking modusMentis generated this
-    public VerbOutcome PreselectedOutcome { get; set; } = null!;  // Success outcome chosen by thinking modusMentis
-    public Verb Verb => PreselectedOutcome.VerbView.Verb;
+    public VerbAction PreselectedOutcome { get; set; } = null!;  // Success outcome chosen by thinking modusMentis
+    public Verb Verb => PreselectedOutcome.Verb;
     public string Keyword { get; set; } = "";                 // Keyword this action relates to
 
     /// <summary>
@@ -325,7 +325,7 @@ public class ParsedNarrativeAction : ModusMentisChainElement
     /// having no normal difficulty), else the difficulty glyph, else '>' before evaluation.
     /// </summary>
     public char DifficultyGlyph
-        => PreselectedOutcome?.VerbView?.Verb?.DifficultyGlyphOverride
+        => PreselectedOutcome?.Verb?.DifficultyGlyphOverride
            ?? (DifficultyLevel > 0
                ? Config.Symbols.DifficultyGlyphs[Math.Clamp(DifficultyLevel, 1, 10) - 1]
                : '>');

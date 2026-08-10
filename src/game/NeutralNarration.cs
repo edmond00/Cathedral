@@ -156,7 +156,7 @@ public static class NeutralNarration
     /// </summary>
     public static string ActionRefusal(string verbVerbatim) => $"I don't want to {FirstPerson(verbVerbatim)}.";
 
-    // ── Action outcomes ────────────────────────────────────────────────────────
+    // ── VerbAction outcomes ────────────────────────────────────────────────────────
     // actionDisplay is already a clean verb phrase (e.g. "climb the tree"), so it is used verbatim.
 
     public static string OutcomeSuccess(string actionDisplay, IReadOnlyList<string>? outcomeVerbatims = null)

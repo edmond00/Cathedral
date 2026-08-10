@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Haulage — the loading, carrying and balancing of heavy loads: sacks, barrels, planks, hay.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class HaulageModusMentis : ModusMentis
 {

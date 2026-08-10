@@ -10,7 +10,7 @@ namespace Cathedral.Game.Scene;
 /// <summary>
 /// Bridges the new Scene system with the existing LLM narrative pipeline.
 ///
-/// The existing pipeline consumes NarrationNode/ConcreteOutcome/ObservationObject types
+/// The existing pipeline consumes NarrationNode/NarrativeAnchor/ObservationObject types
 /// to produce NarrationBlocks. This adapter converts a <see cref="SceneView"/> into
 /// the equivalent structures, allowing Scene-based locations to feed the pipeline
 /// without rewriting the controllers.
@@ -19,7 +19,7 @@ namespace Cathedral.Game.Scene;
 ///   Area            → SyntheticAreaObservationObject  (ObservationObject with MoveToAreaVerb)
 ///   PointOfInterest → SyntheticObservationObject      (ObservationObject with PoI verbs + folded item verbs)
 ///   SceneNpc        → SyntheticNpcObservationObject   (ObservationObject with NPC verbs)
-///   ItemElement     → folded into parent PoI as VerbOutcome SubOutcomes (not a standalone observation)
+///   ItemElement     → folded into parent PoI as VerbAction SubOutcomes (not a standalone observation)
 ///
 /// Observation text is generated from these Descriptions / DisplayName; the persona rewrite
 /// selects the clickable keyword from its own styled sentence.
@@ -80,11 +80,11 @@ public static class SceneViewAdapter
     }
 
     /// <summary>
-    /// Creates a VerbOutcome wrapping IgnoreVerb for the given element.
+    /// Creates a VerbAction wrapping IgnoreVerb for the given element.
     /// Injected as the last SubOutcome of every synthetic ObservationObject.
     /// </summary>
-    public static VerbOutcome MakeIgnoreSubOutcome(Element target)
-        => new VerbOutcome(new VerbView(IgnoreVerb.Instance, IgnoreVerb.VerbatimText, target), target);
+    public static VerbAction MakeIgnoreSubOutcome(Element target)
+        => new VerbAction(IgnoreVerb.Instance, IgnoreVerb.VerbatimText, target);
 
     /// <summary>
     /// The RNG that picks which of an element's descriptions and moods are used when it is observed.
@@ -245,16 +245,16 @@ public class SyntheticObservationObject : ObservationObject, IVerbRefreshable, I
         _viewingArea = viewingArea;
         _period      = period;
 
-        SubOutcomes = new List<ConcreteOutcome>();
+        SubOutcomes = new List<NarrativeAnchor>();
 
         // Verbs that act on the PoI itself
         foreach (var vv in entry.ApplicableVerbs)
-            SubOutcomes.Add(new VerbOutcome(vv, poi));
+            SubOutcomes.Add(vv);
 
         // Verbs that act on items inside the PoI
         foreach (var itemEntry in itemSubEntries)
             foreach (var vv in itemEntry.ApplicableVerbs)
-                SubOutcomes.Add(new VerbOutcome(vv, itemEntry.Source));
+                SubOutcomes.Add(vv);
 
         SubOutcomes.Add(SceneViewAdapter.MakeIgnoreSubOutcome(poi));
     }
@@ -266,13 +266,13 @@ public class SyntheticObservationObject : ObservationObject, IVerbRefreshable, I
 
         foreach (var verb in scene.Verbs)
             foreach (var vv in verb.ExpandViews(scene, pov, _poi, actor))
-                SubOutcomes.Add(new VerbOutcome(vv, _poi));
+                SubOutcomes.Add(vv);
 
         // Items are re-read from the PoI, so grabbed/expired items drop their verbs naturally.
         foreach (var item in _poi.Items)
             foreach (var verb in scene.Verbs)
                 foreach (var vv in verb.ExpandViews(scene, pov, item, actor))
-                    SubOutcomes.Add(new VerbOutcome(vv, item));
+                    SubOutcomes.Add(vv);
 
         SubOutcomes.Add(SceneViewAdapter.MakeIgnoreSubOutcome(_poi));
     }
@@ -321,10 +321,10 @@ public class SyntheticAreaObservationObject : ObservationObject
     public SyntheticAreaObservationObject(Area area, SceneViewEntry entry)
     {
         _area       = area;
-        SubOutcomes = new List<ConcreteOutcome>();
+        SubOutcomes = new List<NarrativeAnchor>();
 
         foreach (var vv in entry.ApplicableVerbs)
-            SubOutcomes.Add(new VerbOutcome(vv, area));
+            SubOutcomes.Add(vv);
 
         SubOutcomes.Add(SceneViewAdapter.MakeIgnoreSubOutcome(area));
     }
@@ -370,10 +370,10 @@ public class SyntheticNpcObservationObject : ObservationObject, INpcContextLabel
     public SyntheticNpcObservationObject(SceneNpc npc, SceneViewEntry entry)
     {
         _npc        = npc;
-        SubOutcomes = new List<ConcreteOutcome>();
+        SubOutcomes = new List<NarrativeAnchor>();
 
         foreach (var vv in entry.ApplicableVerbs)
-            SubOutcomes.Add(new VerbOutcome(vv, npc));
+            SubOutcomes.Add(vv);
 
         SubOutcomes.Add(SceneViewAdapter.MakeIgnoreSubOutcome(npc));
     }
@@ -388,7 +388,7 @@ public class SyntheticNpcObservationObject : ObservationObject, INpcContextLabel
     public SyntheticNpcObservationObject(SceneNpc npc)
     {
         _npc        = npc;
-        SubOutcomes = new List<ConcreteOutcome> { SceneViewAdapter.MakeIgnoreSubOutcome(npc) };
+        SubOutcomes = new List<NarrativeAnchor> { SceneViewAdapter.MakeIgnoreSubOutcome(npc) };
     }
 
     /// <summary>
@@ -403,12 +403,12 @@ public class SyntheticNpcObservationObject : ObservationObject, INpcContextLabel
         SubOutcomes.Clear();
         foreach (var verb in scene.Verbs)
             foreach (var vv in verb.ExpandViews(scene, pov, _npc, actor))
-                SubOutcomes.Add(new VerbOutcome(vv, _npc));
+                SubOutcomes.Add(vv);
         SubOutcomes.Add(SceneViewAdapter.MakeIgnoreSubOutcome(_npc));
 
         if (ContextLabel != null)
             foreach (var sub in SubOutcomes)
-                if (sub is VerbOutcome v) v.ContextLabel = ContextLabel;
+                if (sub is VerbAction v) v.ContextLabel = ContextLabel;
     }
 
     /// <inheritdoc/>
@@ -419,7 +419,7 @@ public class SyntheticNpcObservationObject : ObservationObject, INpcContextLabel
 
         ContextLabel = NpcLabelResolver.Resolve(named, world, locationId, actingMember);
         foreach (var sub in SubOutcomes)
-            if (sub is VerbOutcome v) v.ContextLabel = ContextLabel;
+            if (sub is VerbAction v) v.ContextLabel = ContextLabel;
     }
 
     public override string ObservationId => _npc.DisplayName.ToLowerInvariant().Replace(' ', '_');
@@ -465,44 +465,3 @@ public class SyntheticNpcObservationObject : ObservationObject, INpcContextLabel
         => _npc.Entity.ObservationHint;
 }
 
-/// <summary>
-/// A synthetic outcome representing a Verb action.
-/// </summary>
-public class VerbOutcome : ConcreteOutcome
-{
-    public VerbView  VerbView { get; }
-    public Element?  Target   { get; }
-
-    /// <summary>
-    /// Contextual NPC label substituted for the target's proper name in the LLM-facing goal
-    /// phrase. Null unless the parent observation object stamps it (named NPCs only); the
-    /// human-facing <see cref="DisplayName"/> always keeps the verbatim verb text.
-    /// </summary>
-    public string? ContextLabel { get; set; }
-
-    public VerbOutcome(VerbView verbView, Element? target)
-    {
-        VerbView = verbView;
-        Target   = target;
-    }
-
-    public override string DisplayName => VerbView.Verbatim;
-
-    public override string ToNaturalLanguageString()
-    {
-        if (ContextLabel == null || Target is not SceneNpc n)
-            return VerbView.Verbatim;
-
-        string name = n.DisplayName;
-
-        // Some verbs prefix the bare name with a determiner and lower-case it (e.g. SlayVerb's
-        // "slay the edmund sheaf"). Drop that determiner when swapping in the contextual label —
-        // it already carries its own article ("the reaper of the field (a man)"), so we must not
-        // produce "slay the the reaper …". Case-insensitive so a lower-cased name still matches.
-        string withArticle = VerbView.Verbatim.Replace($"the {name}", ContextLabel, System.StringComparison.OrdinalIgnoreCase);
-        if (withArticle != VerbView.Verbatim)
-            return withArticle;
-
-        return VerbView.Verbatim.Replace(name, ContextLabel, System.StringComparison.OrdinalIgnoreCase);
-    }
-}

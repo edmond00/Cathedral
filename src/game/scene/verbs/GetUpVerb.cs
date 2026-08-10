@@ -25,9 +25,9 @@ public sealed class GetUpVerb : Verb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => "get up and continue my journey";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
-        => new List<OutcomeReport> { new GetUpTransitionOutcome() };
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
+        => new List<Outcome> { new GetUpTransitionOutcome() };
 
-    public override IReadOnlyList<OutcomeReport> FailureReports(Scene scene, PoV pov, PartyMember actor, Element target)
-        => System.Array.Empty<OutcomeReport>();
+    public override IReadOnlyList<Outcome> FailureReports(Scene scene, PoV pov, PartyMember actor, Element target)
+        => System.Array.Empty<Outcome>();
 }

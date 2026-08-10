@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Grooming — the patient care of coat, claw, and companion; inspection and tending as affection made practical.
-/// Observation and Action.
+/// Observation and VerbAction.
 /// </summary>
 public class GroomingModusMentis : ModusMentis
 {

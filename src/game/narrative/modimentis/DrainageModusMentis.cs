@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Drainage — clearing ditches, channels and reed; keeping the water moving off the ground.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class DrainageModusMentis : ModusMentis
 {

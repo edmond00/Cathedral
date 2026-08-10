@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Carousal — the practiced art of the long night: drink held well, songs led loudly, and company kept warm.
-/// Action and Speaking.
+/// VerbAction and Speaking.
 /// </summary>
 public class CarousalModusMentis : ModusMentis
 {

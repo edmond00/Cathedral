@@ -12,7 +12,7 @@ namespace Cathedral.Game;
 public class NarrativeState
 {
     /// <summary>
-    /// All narration blocks in order (Observation, Thinking, Action, Outcome).
+    /// All narration blocks in order (Observation, Thinking, VerbAction, Outcome).
     /// </summary>
     public List<NarrationBlock> Blocks { get; private set; } = new();
 

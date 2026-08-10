@@ -120,7 +120,7 @@ public class ObservationPhaseController
         _observationExecutor.ResetSlot(slotId);
 
         var allKeywords = new List<string>();
-        var keywordOutcomeMap = new Dictionary<string, ConcreteOutcome>(StringComparer.OrdinalIgnoreCase);
+        var keywordOutcomeMap = new Dictionary<string, NarrativeAnchor>(StringComparer.OrdinalIgnoreCase);
         var sentences = new List<NarrationSentence>();
 
         string? overall = _worldContext?.GenerateContextDescription(locationId);
@@ -149,7 +149,7 @@ public class ObservationPhaseController
             // length rules in AppendFollowUpObservationsAsync. The candidate pool is the deduplicated
             // set; objects already observed are excluded from every follow-up choice.
             await AppendFollowUpObservationsAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis,
-                candidates, new List<ConcreteOutcome> { first }, firstText, locationId, ledger, ct, isReminescence, overall, area, part);
+                candidates, new List<NarrativeAnchor> { first }, firstText, locationId, ledger, ct, isReminescence, overall, area, part);
         }
 
         if (sentences.Count == 0)
@@ -213,7 +213,7 @@ public class ObservationPhaseController
     /// block, so it always has. Only the LLM-chosen follow-up draws from what is left unobserved.
     /// </summary>
     public async Task<List<NarrationBlock>> GenerateFocusObservationAsync(
-        ConcreteOutcome focusOutcome,
+        NarrativeAnchor focusOutcome,
         ModusMentis observationModusMentis,
         NarrationNode currentNode,
         int locationId,
@@ -253,7 +253,7 @@ public class ObservationPhaseController
             return await BuildNotInterestedBlockAsync(slotId, observationModusMentis, focusPhrase, isReminescence, ct, innerThought: focusThought, preview: preview, commit: commit, part: part);
 
         var allKeywords = new List<string>();
-        var keywordOutcomeMap = new Dictionary<string, ConcreteOutcome>(StringComparer.OrdinalIgnoreCase);
+        var keywordOutcomeMap = new Dictionary<string, NarrativeAnchor>(StringComparer.OrdinalIgnoreCase);
         var sentences = new List<NarrationSentence>();
 
         // 1. Observe the clicked object (no transition) — it is always the first observation.
@@ -268,7 +268,7 @@ public class ObservationPhaseController
             ObserveOnlyFilter(ledger.Remaining(currentNode.GetAllDirectConcreteOutcomes()))
                 .Where(o => !GetNeutralName(o).Equals(focusName, StringComparison.OrdinalIgnoreCase)));
         await AppendFollowUpObservationsAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis,
-            followUpCandidates, new List<ConcreteOutcome> { focusOutcome }, firstText, locationId, ledger, ct, isReminescence, overall, area, part);
+            followUpCandidates, new List<NarrativeAnchor> { focusOutcome }, firstText, locationId, ledger, ct, isReminescence, overall, area, part);
 
         if (sentences.Count == 0)
         {
@@ -314,10 +314,10 @@ public class ObservationPhaseController
     private async Task<string?> AppendObservationAsync(
         List<NarrationSentence> sentences,
         List<string> allKeywords,
-        Dictionary<string, ConcreteOutcome> keywordOutcomeMap,
+        Dictionary<string, NarrativeAnchor> keywordOutcomeMap,
         int slotId,
         ModusMentis modusMentis,
-        ConcreteOutcome outcome,
+        NarrativeAnchor outcome,
         bool withTransition,
         int locationId,
         ObservationLedger ledger,
@@ -393,11 +393,11 @@ public class ObservationPhaseController
     private async Task AppendFollowUpObservationsAsync(
         List<NarrationSentence> sentences,
         List<string> allKeywords,
-        Dictionary<string, ConcreteOutcome> keywordOutcomeMap,
+        Dictionary<string, NarrativeAnchor> keywordOutcomeMap,
         int slotId,
         ModusMentis modusMentis,
-        List<ConcreteOutcome> candidates,
-        List<ConcreteOutcome> observed,
+        List<NarrativeAnchor> candidates,
+        List<NarrativeAnchor> observed,
         string? firstText,
         int locationId,
         ObservationLedger ledger,
@@ -478,7 +478,7 @@ public class ObservationPhaseController
     /// list (so the caller can fall back to the normal phase) when no observation MM is available.
     /// </summary>
     public async Task<List<NarrationBlock>> GeneratePostDialogueObservationAsync(
-        ConcreteOutcome npcOutcome,
+        NarrativeAnchor npcOutcome,
         ModusMentis? originObservationModusMentis,
         int locationId,
         PartyMember actingMember,
@@ -507,7 +507,7 @@ public class ObservationPhaseController
         _observationExecutor.ResetSlot(slotId);
 
         var allKeywords = new List<string>();
-        var keywordOutcomeMap = new Dictionary<string, ConcreteOutcome>(StringComparer.OrdinalIgnoreCase);
+        var keywordOutcomeMap = new Dictionary<string, NarrativeAnchor>(StringComparer.OrdinalIgnoreCase);
         var sentences = new List<NarrationSentence>();
 
         var part = preview?.BeginAccumulatingPart(PreviewTitles.For(observationModusMentis));
@@ -555,7 +555,7 @@ public class ObservationPhaseController
     /// observation MM or nothing was produced.</para>
     /// </summary>
     public async Task<List<NarrationBlock>> GenerateCorpseObservationAsync(
-        IReadOnlyList<ConcreteOutcome> corpseOutcomes,
+        IReadOnlyList<NarrativeAnchor> corpseOutcomes,
         int locationId,
         PartyMember actingMember,
         ObservationLedger? ledger = null,
@@ -580,7 +580,7 @@ public class ObservationPhaseController
         _observationExecutor.ResetSlot(slotId);
 
         var allKeywords = new List<string>();
-        var keywordOutcomeMap = new Dictionary<string, ConcreteOutcome>(StringComparer.OrdinalIgnoreCase);
+        var keywordOutcomeMap = new Dictionary<string, NarrativeAnchor>(StringComparer.OrdinalIgnoreCase);
         var sentences = new List<NarrationSentence>();
 
         var part = preview?.BeginAccumulatingPart(PreviewTitles.For(observationModusMentis));
@@ -627,7 +627,7 @@ public class ObservationPhaseController
     /// rewrite produced nothing.
     /// </summary>
     public async Task<List<NarrationBlock>> GenerateThreatObservationAsync(
-        ConcreteOutcome threatOutcome,
+        NarrativeAnchor threatOutcome,
         int locationId,
         PartyMember actingMember,
         ObservationLedger? ledger = null,
@@ -651,7 +651,7 @@ public class ObservationPhaseController
         _observationExecutor.ResetSlot(slotId);
 
         var allKeywords = new List<string>();
-        var keywordOutcomeMap = new Dictionary<string, ConcreteOutcome>(StringComparer.OrdinalIgnoreCase);
+        var keywordOutcomeMap = new Dictionary<string, NarrativeAnchor>(StringComparer.OrdinalIgnoreCase);
         var sentences = new List<NarrationSentence>();
 
         var part = preview?.BeginAccumulatingPart(PreviewTitles.For(observationModusMentis));
@@ -693,7 +693,7 @@ public class ObservationPhaseController
     /// matches at all: a phase where the named object is absent narrates normally rather than going
     /// blank.
     /// </summary>
-    private static IEnumerable<ConcreteOutcome> ObserveOnlyFilter(IEnumerable<ConcreteOutcome> outcomes)
+    private static IEnumerable<NarrativeAnchor> ObserveOnlyFilter(IEnumerable<NarrativeAnchor> outcomes)
     {
         var wanted = Config.Debug.ObserveOnly;
         if (string.IsNullOrWhiteSpace(wanted)) return outcomes;
@@ -728,7 +728,7 @@ public class ObservationPhaseController
     /// draw from the same deduplicated set — guarantees a chosen object's duplicates are never
     /// re-proposed for the second observation. Group order follows first appearance.
     /// </summary>
-    private List<ConcreteOutcome> DeduplicateByName(IEnumerable<ConcreteOutcome> outcomes)
+    private List<NarrativeAnchor> DeduplicateByName(IEnumerable<NarrativeAnchor> outcomes)
         => outcomes
             .GroupBy(GetNeutralName, StringComparer.OrdinalIgnoreCase)
             .Select(g =>
@@ -751,9 +751,9 @@ public class ObservationPhaseController
     /// character, and it needs a way to say so. Withholding it while the ledger is empty is what keeps
     /// the request that opens a phase from producing a block with no keyword to click.</para>
     /// </summary>
-    private async Task<PersonaChoice<ConcreteOutcome>> SelectObservationObjectAsync(
+    private async Task<PersonaChoice<NarrativeAnchor>> SelectObservationObjectAsync(
         int slotId,
-        List<ConcreteOutcome> candidates,
+        List<NarrativeAnchor> candidates,
         ModusMentis modusMentis,
         ObservationLedger ledger,
         int locationId,
@@ -763,7 +763,7 @@ public class ObservationPhaseController
         string? areaLocation = null,
         PreviewPart? part = null)
     {
-        if (candidates.Count == 0) return new PersonaChoice<ConcreteOutcome>(null, null);
+        if (candidates.Count == 0) return new PersonaChoice<NarrativeAnchor>(null, null);
 
         // Each object is offered as the act of attending to it — "focus on the plowman of the field
         // (a woman)" — via GetNeutralPhrase (proper names stay verbatim; common-noun objects gain
@@ -795,7 +795,7 @@ public class ObservationPhaseController
     private async Task<(bool Keeps, string? Reasoning)> AskKeepFocusAsync(
         int slotId,
         ModusMentis modusMentis,
-        ConcreteOutcome focusOutcome,
+        NarrativeAnchor focusOutcome,
         string focusPhrase,
         CancellationToken ct,
         bool isReminescence,
@@ -851,7 +851,7 @@ public class ObservationPhaseController
             Keywords: new List<string>(),
             Actions: null,
             SourceObservationType: ObservationType.Focus,
-            KeywordOutcomeMap: new Dictionary<string, ConcreteOutcome>(StringComparer.OrdinalIgnoreCase),
+            KeywordOutcomeMap: new Dictionary<string, NarrativeAnchor>(StringComparer.OrdinalIgnoreCase),
             Sentences: new List<NarrationSentence> { new(text, new List<string>()) }
         );
         var resultBlocks = new List<NarrationBlock> { block };
@@ -907,7 +907,7 @@ public class ObservationPhaseController
     /// silently so. <c>ObservationId</c> is derived from the real display name, so matching it too
     /// costs nothing and makes them reachable.</para>
     /// </summary>
-    private static IEnumerable<string> TargetableNames(ConcreteOutcome outcome)
+    private static IEnumerable<string> TargetableNames(NarrativeAnchor outcome)
     {
         yield return GetNeutralName(outcome);
         if (outcome is ObservationObject obs)
@@ -917,26 +917,25 @@ public class ObservationPhaseController
         }
     }
 
-    private static string GetNeutralName(ConcreteOutcome outcome)
+    private static string GetNeutralName(NarrativeAnchor outcome)
         => outcome is ObservationObject obs ? obs.NeutralName
          : outcome.DisplayName;
 
     /// <summary>The outcome's core noun, used as the keyword-similarity anchor.</summary>
-    private static string GetReferenceLemma(ConcreteOutcome outcome)
+    private static string GetReferenceLemma(NarrativeAnchor outcome)
         => outcome is ObservationObject obs ? obs.ReferenceLemma
          : outcome.DisplayName;
 
     /// <summary>Articled noun phrase of an outcome, used to fill the transition sentence template.</summary>
-    private static string GetNeutralPhrase(ConcreteOutcome outcome, int locationId)
+    private static string GetNeutralPhrase(NarrativeAnchor outcome, int locationId)
         => outcome is ObservationObject obs ? obs.NeutralPhrase
          : GetNeutralDescription(outcome, locationId);
 
     /// <summary>
     /// Returns a rich noun-phrase description of an outcome for the observation sentence.
     /// </summary>
-    private static string GetNeutralDescription(ConcreteOutcome outcome, int locationId)
-        => outcome is NarrationNode nn   ? nn.GenerateNeutralDescription(locationId)
-         : outcome is ObservationObject obs ? obs.GenerateNeutralDescription(locationId)
+    private static string GetNeutralDescription(NarrativeAnchor outcome, int locationId)
+        => outcome is ObservationObject obs ? obs.GenerateNeutralDescription(locationId)
          : outcome.DisplayName;
 
     /// <summary>
@@ -974,7 +973,7 @@ public class ObservationPhaseController
         string keyword,
         ModusMentis speakingModusMentis,
         string companionName,
-        ConcreteOutcome linkedOutcome,
+        NarrativeAnchor linkedOutcome,
         NarrationNode currentNode,
         PartyMember actingMember,
         int locationId,
@@ -1027,7 +1026,7 @@ public class ObservationPhaseController
                     partyWords.Add(w.Trim('.', ',', '\'', '"'));
 
             var allExtractedKeywords = new List<string>();
-            var speakingKeywordOutcomeMap = new Dictionary<string, ConcreteOutcome>(StringComparer.OrdinalIgnoreCase);
+            var speakingKeywordOutcomeMap = new Dictionary<string, NarrativeAnchor>(StringComparer.OrdinalIgnoreCase);
             string? kw = KeywordExtractor
                 .ExtractKeywords(spoken, GetReferenceLemma(linkedOutcome), KeywordCandidatesForSpeaking)
                 .FirstOrDefault(k => !partyWords.Contains(k));

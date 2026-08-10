@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Brute Force - Direct physical power and simple solutions.
-/// Action modusMentis: forceful, impatient, believes in overwhelming strength.
+/// VerbAction modusMentis: forceful, impatient, believes in overwhelming strength.
 /// </summary>
 public class BruteForceModusMentis : ModusMentis
 {

@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Stoneface — the governed countenance; a face that shows exactly what its owner permits and nothing more.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class StonefaceModusMentis : ModusMentis
 {

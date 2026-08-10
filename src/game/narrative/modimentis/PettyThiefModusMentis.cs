@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Petty Thief — the small lift, the picked purse; weaned on busy fairs and careless travellers.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class PettyThiefModusMentis : ModusMentis
 {

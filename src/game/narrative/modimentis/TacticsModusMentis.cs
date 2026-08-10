@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Tactics — combat strategy and positioning; a cold-eyed strategist who wins before the first blow lands.
-/// Thinking and Action.
+/// Thinking and VerbAction.
 /// </summary>
 public class TacticsModusMentis : ModusMentis
 {

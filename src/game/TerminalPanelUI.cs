@@ -380,8 +380,8 @@ public abstract class TerminalPanelUI
 
         var bg = line.Report.Severity switch
         {
-            OutcomeReportSeverity.Negative => Config.NarrativeUI.OutcomeReportNegativeBackground,
-            OutcomeReportSeverity.Positive => Config.NarrativeUI.OutcomeReportPositiveBackground,
+            OutcomeSeverity.Negative => Config.NarrativeUI.OutcomeReportNegativeBackground,
+            OutcomeSeverity.Positive => Config.NarrativeUI.OutcomeReportPositiveBackground,
             _                              => Config.NarrativeUI.OutcomeReportNeutralBackground,
         };
         _terminal.Text(_layout.CONTENT_START_X, y, line.Text,

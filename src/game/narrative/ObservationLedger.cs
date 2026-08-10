@@ -30,7 +30,7 @@ namespace Cathedral.Game.Narrative;
 public sealed class ObservationLedger
 {
     // Reference identity: two outcomes that describe identically are still two separate things.
-    private readonly HashSet<ConcreteOutcome> _observed = new(ReferenceEqualityComparer.Instance);
+    private readonly HashSet<NarrativeAnchor> _observed = new(ReferenceEqualityComparer.Instance);
 
     /// <summary>How many distinct objects have been observed so far this phase.</summary>
     public int Count => _observed.Count;
@@ -43,13 +43,13 @@ public sealed class ObservationLedger
     public bool IsEmpty => _observed.Count == 0;
 
     /// <summary>Records an object as observed. Called once its narration text actually exists.</summary>
-    public void Observe(ConcreteOutcome outcome) => _observed.Add(outcome);
+    public void Observe(NarrativeAnchor outcome) => _observed.Add(outcome);
 
     /// <summary>True when this exact object has already been observed this phase.</summary>
-    public bool WasObserved(ConcreteOutcome outcome) => _observed.Contains(outcome);
+    public bool WasObserved(NarrativeAnchor outcome) => _observed.Contains(outcome);
 
     /// <summary>The subset of <paramref name="outcomes"/> not yet observed, in the given order.</summary>
-    public List<ConcreteOutcome> Remaining(IEnumerable<ConcreteOutcome> outcomes)
+    public List<NarrativeAnchor> Remaining(IEnumerable<NarrativeAnchor> outcomes)
         => outcomes.Where(o => !_observed.Contains(o)).ToList();
 
     /// <summary>Forgets everything — a new narration phase begins.</summary>

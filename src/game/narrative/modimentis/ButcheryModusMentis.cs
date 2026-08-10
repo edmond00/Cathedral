@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Butchery - Knowledge of anatomy and systematic dismemberment
-/// Multi-function modusMentis (Action + Thinking) for practical anatomy and efficient cutting
+/// Multi-function modusMentis (VerbAction + Thinking) for practical anatomy and efficient cutting
 /// </summary>
 public class ButcheryModusMentis : ModusMentis
 {

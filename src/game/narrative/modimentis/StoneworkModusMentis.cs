@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Stonework — lifting, clearing and setting stone; picking the strips clean and laying a sound course.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class StoneworkModusMentis : ModusMentis
 {

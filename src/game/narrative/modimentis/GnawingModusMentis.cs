@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Gnawing — the tooth-work of grinding through the inedible to reach the good; patience measured in bite-marks.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class GnawingModusMentis : ModusMentis
 {

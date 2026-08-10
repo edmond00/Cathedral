@@ -3,6 +3,8 @@ using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Npc;
 using Cathedral.Game.Npc.Trade;
 
+using Cathedral.Game.Narrative;
+
 namespace Cathedral.Game.Dialogue.Tree.Trees;
 
 /// <summary>
@@ -34,12 +36,12 @@ public class ProposeToBuyTree : DialogueTree
     // Success opens the buy menu; a routine bakes in that success so replaying opens trade directly.
     public override DialogueRoutineBehavior RoutineBehavior => DialogueRoutineBehavior.IncludeSuccess;
 
-    public override IReadOnlyList<IDialogueOutcome> SuccessOutcomes { get; } = new IDialogueOutcome[]
+    public override IReadOnlyList<Outcome> SuccessOutcomes => new Outcome[]
     {
         new OpenTradeMenuOutcome(TradeMode.Buy),
     };
 
-    public override IReadOnlyList<IDialogueOutcome> FailureOutcomes { get; } = System.Array.Empty<IDialogueOutcome>();
+    public override IReadOnlyList<Outcome> FailureOutcomes => System.Array.Empty<Outcome>();
 
     /// <summary>A branch end. Opening a stall is not high-stakes, so the easy ladder applies.</summary>
     private static ResolutionNode End(string id, int depth,

@@ -13,9 +13,9 @@ namespace Cathedral.Game.Narrative;
 ///
 /// Hard rules (violations throw at startup, see <see cref="ValidateOrThrow"/>):
 ///   R1  no MM has both Thinking and Action (except exempt special first skills, see below)
-///   R2  every MM has at least one of Observation / Thinking / Action
+///   R2  every MM has at least one of Observation / Thinking / VerbAction
 ///   R3  every MM has at most 3 functions, without duplicates
-///   R4  Semantic memory requires Thinking; Sensory requires Observation; Procedural requires Action
+///   R4  Semantic memory requires Thinking; Sensory requires Observation; Procedural requires VerbAction
 ///   R5  Organs is exactly 1 body-region id XOR exactly 2 distinct organ ids, all ids canonical
 ///   R6  every organ and every body region is related to at least 5 MMs
 ///   R7  the organ mediums of all skills whose MAIN MM this is are a subset of the MM's Organs
@@ -24,7 +24,7 @@ namespace Cathedral.Game.Narrative;
 ///   R10 every organ / region has exactly one correctly-scoped IMaxLevelContributionStat
 ///   R11 every organ / region of every anatomy has at least 3 MMs that anatomy can learn
 ///   R12 every MM is learnable by at least one anatomy
-///   R13 a MM with neither Thinking nor Action is MoralLevel.Medium — nothing reads its morality
+///   R13 a MM with neither Thinking nor VerbAction is MoralLevel.Medium — nothing reads its morality
 ///
 /// Soft targets (reported by the audit, never fatal):
 ///   ~80% two-organ MMs vs ~20% one-region MMs
@@ -47,9 +47,9 @@ public static class ModusMentisRuleValidator
     private const int MinPerAnatomy = 3;
 
     /// <summary>
-    /// MMs exempt from R1 (Thinking+Action exclusivity). Childhood Reminescence is the special
+    /// MMs exempt from R1 (Thinking+VerbAction exclusivity). Childhood Reminescence is the special
     /// temporary first skill of the intro phase and deliberately carries all three of
-    /// Observation/Thinking/Action; every other rule still applies to it.
+    /// Observation/Thinking/VerbAction; every other rule still applies to it.
     /// </summary>
     private static readonly HashSet<string> ThinkingActionExemptIds = new() { "childhood_reminescence" };
 
@@ -111,12 +111,12 @@ public static class ModusMentisRuleValidator
             if (fns.Distinct().Count() != fns.Length)
                 violations.Add($"[R3] {mm.ModusMentisId}: duplicate entries in Functions");
 
-            // R1 — Thinking and Action are mutually exclusive (special first-skill MMs exempt)
+            // R1 — Thinking and VerbAction are mutually exclusive (special first-skill MMs exempt)
             if (!ThinkingActionExemptIds.Contains(mm.ModusMentisId)
                 && fns.Contains(ModusMentisFunction.Thinking) && fns.Contains(ModusMentisFunction.Action))
                 violations.Add($"[R1] {mm.ModusMentisId}: has both Thinking and Action");
 
-            // R2 — at least one of Observation / Thinking / Action
+            // R2 — at least one of Observation / Thinking / VerbAction
             if (!fns.Contains(ModusMentisFunction.Observation)
                 && !fns.Contains(ModusMentisFunction.Thinking)
                 && !fns.Contains(ModusMentisFunction.Action))
@@ -132,7 +132,7 @@ public static class ModusMentisRuleValidator
                     violations.Add($"[R4] {mm.ModusMentisId}: Sensory memory requires the Observation function");
                     break;
                 case Memory.ModusMentisMemoryType.Procedural when !fns.Contains(ModusMentisFunction.Action):
-                    violations.Add($"[R4] {mm.ModusMentisId}: Procedural memory requires the Action function");
+                    violations.Add($"[R4] {mm.ModusMentisId}: Procedural memory requires the VerbAction function");
                     break;
             }
 

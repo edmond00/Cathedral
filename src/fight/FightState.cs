@@ -216,7 +216,7 @@ public class FightState
         _vitalHeatDrawn.Clear();
     }
 
-    // ── Action log ───────────────────────────────────────────────────
+    // ── VerbAction log ───────────────────────────────────────────────────
     private const int MaxLogLines = 200;
     public List<(string Text, LogEntryType Type)> ActionLog { get; } = new();
     public void AddLog(string line, LogEntryType type = LogEntryType.Normal)

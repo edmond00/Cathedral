@@ -44,15 +44,15 @@ public class BegForCoinVerb : SocialDialogueVerb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"ask {NpcPronoun(target)} for a coin";
 
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbView? view = null)
+    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
         => $"beg a coin from {NpcName(target)}";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         var npc = Available(scene, pov, target);
         return npc == null
-            ? System.Array.Empty<OutcomeReport>()
-            : new OutcomeReport[] { new DialogueTriggerOutcome(npc, "beg_for_coin") };
+            ? System.Array.Empty<Outcome>()
+            : new Outcome[] { new DialogueTriggerOutcome(npc, "beg_for_coin") };
     }
 }
 
@@ -79,15 +79,15 @@ public class ProvokeVerb : SocialDialogueVerb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"say something to {NpcPronoun(target)} that cannot be let pass";
 
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbView? view = null)
+    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
         => $"provoke {NpcName(target)}";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         var npc = Available(scene, pov, target);
         return npc == null
-            ? System.Array.Empty<OutcomeReport>()
-            : new OutcomeReport[] { new DialogueTriggerOutcome(npc, "provoke") };
+            ? System.Array.Empty<Outcome>()
+            : new Outcome[] { new DialogueTriggerOutcome(npc, "provoke") };
     }
 }
 
@@ -124,15 +124,15 @@ public class ProposeToJoinVerb : SocialDialogueVerb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"ask {NpcPronoun(target)} to come away with me";
 
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbView? view = null)
+    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
         => $"ask {NpcName(target)} to travel with me";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         var npc = Available(scene, pov, target);
         return npc == null
-            ? System.Array.Empty<OutcomeReport>()
-            : new OutcomeReport[] { new DialogueTriggerOutcome(npc, "propose_to_join") };
+            ? System.Array.Empty<Outcome>()
+            : new Outcome[] { new DialogueTriggerOutcome(npc, "propose_to_join") };
     }
 }
 
@@ -156,15 +156,15 @@ public class GatherKnowledgeVerb : SocialDialogueVerb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"ask {NpcPronoun(target)} what {NpcSubjectPronoun(target)} knows";
 
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbView? view = null)
+    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
         => $"ask {NpcName(target)} what they know";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         var npc = Available(scene, pov, target);
         return npc == null
-            ? System.Array.Empty<OutcomeReport>()
-            : new OutcomeReport[] { new DialogueTriggerOutcome(npc, "gather_knowledge") };
+            ? System.Array.Empty<Outcome>()
+            : new Outcome[] { new DialogueTriggerOutcome(npc, "gather_knowledge") };
     }
 }
 
@@ -215,16 +215,16 @@ public class PickpocketVerb : Verb
             ? "go through their pockets while they sleep"
             : $"go through {NpcPossessive(target)} pockets";
 
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbView? view = null)
+    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
         => $"pick {SleeperGate.Name(target)}'s pocket";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         var sceneNpc = target as SceneNpc ?? (target as SleepingNpcPointOfInterest)?.Sleeper;
         if (sceneNpc?.Entity is not NpcEntity npc)
-            return System.Array.Empty<OutcomeReport>();
+            return System.Array.Empty<Outcome>();
 
-        var reports = new List<OutcomeReport>();
+        var reports = new List<Outcome>();
 
         // Coins, always — everybody carries a few, and a purse with nothing in it would make the
         // whole verb pointless whenever the archetype has no pocket items authored.

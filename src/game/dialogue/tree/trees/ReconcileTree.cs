@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Npc;
 
+using Cathedral.Game.Narrative;
+
 namespace Cathedral.Game.Dialogue.Tree.Trees;
 
 /// <summary>
@@ -32,13 +34,13 @@ public class ReconcileTree : DialogueTree
     /// <summary>What succeeding at this conversation teaches: talking someone down out of their anger.</summary>
     public override string? GrantedModusMentisId => "empathy";
 
-    public override IReadOnlyList<IDialogueOutcome> SuccessOutcomes { get; } = new IDialogueOutcome[]
+    public override IReadOnlyList<Outcome> SuccessOutcomes => new Outcome[]
     {
         new ClearEnemyOutcome(),
         new SuspiciousAffinityOutcome(),
     };
 
-    public override IReadOnlyList<IDialogueOutcome> FailureOutcomes { get; } = new IDialogueOutcome[]
+    public override IReadOnlyList<Outcome> FailureOutcomes => new Outcome[]
     {
         new FightRequestOutcome(),
     };

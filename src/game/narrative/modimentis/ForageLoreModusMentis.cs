@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Forage-Lore — finding and picking fruit and produce; the eye for what is ripe and where it grows.
-/// Multi-function (Thinking + Action).
+/// Multi-function (Thinking + VerbAction).
 /// </summary>
 public class ForageLoreModusMentis : ModusMentis
 {

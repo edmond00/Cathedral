@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Worry the Bone — the jaw's stubborn refusal to let go; gripping, grinding, and working a thing until it yields.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class WorryTheBoneModusMentis : ModusMentis
 {

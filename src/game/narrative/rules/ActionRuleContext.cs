@@ -37,7 +37,7 @@ public class ActionRuleContext
     /// </summary>
     public bool IsIllegalAction =>
         Scene != null && PoV != null
-        && Action.Verb.IsIllegal(Scene, PoV, Action.PreselectedOutcome?.VerbView.Target, Actor);
+        && Action.Verb.IsIllegal(Scene, PoV, Action.PreselectedOutcome?.Target, Actor);
 
     public ActionRuleContext(
         ParsedNarrativeAction action,

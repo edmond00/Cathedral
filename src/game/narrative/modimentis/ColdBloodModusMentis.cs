@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Cold Blood — calculated ruthless calm in violence; an executioner who feels nothing and makes no mistakes.
-/// Thinking and Action.
+/// Thinking and VerbAction.
 /// </summary>
 public class ColdBloodModusMentis : ModusMentis
 {

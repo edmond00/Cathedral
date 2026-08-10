@@ -46,13 +46,13 @@ public class AppeaseVerb : Verb
         => $"try to appease {NpcPronoun(target)}";
 
     // Read out of context in the routines menu, so the pronoun is replaced by the name.
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbView? view = null)
+    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
         => $"try to appease {NpcName(target)}";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         if (target is not SceneNpc sceneNpc || sceneNpc.Entity is not NpcEntity npc)
-            return System.Array.Empty<OutcomeReport>();
+            return System.Array.Empty<Outcome>();
         return new[] { new AffinityChangeOutcome(npc) };
     }
 }

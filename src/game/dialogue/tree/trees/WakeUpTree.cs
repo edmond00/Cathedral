@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Npc;
 
+using Cathedral.Game.Narrative;
+
 namespace Cathedral.Game.Dialogue.Tree.Trees;
 
 /// <summary>
@@ -27,13 +29,13 @@ public class WakeUpTree : DialogueTree
     public override string? GrantedModusMentisId => "murmur";
 
     /// <summary>Woken and willing to talk. The verb itself has already roused them.</summary>
-    public override IReadOnlyList<IDialogueOutcome> SuccessOutcomes { get; } = new IDialogueOutcome[]
+    public override IReadOnlyList<Outcome> SuccessOutcomes => new Outcome[]
     {
         new SuspiciousAffinityOutcome(),
     };
 
     /// <summary>Woken badly. Somebody frightened in their own bed does not stop to ask questions.</summary>
-    public override IReadOnlyList<IDialogueOutcome> FailureOutcomes { get; } = new IDialogueOutcome[]
+    public override IReadOnlyList<Outcome> FailureOutcomes => new Outcome[]
     {
         new FightRequestOutcome(),
     };

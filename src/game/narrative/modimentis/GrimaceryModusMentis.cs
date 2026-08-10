@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Grimacery — the mobile face of the mimic and mummer; expressions pulled, copied, and exaggerated at will.
-/// Action and Speaking.
+/// VerbAction and Speaking.
 /// </summary>
 public class GrimaceryModusMentis : ModusMentis
 {

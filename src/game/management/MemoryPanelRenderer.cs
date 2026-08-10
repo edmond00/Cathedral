@@ -548,7 +548,7 @@ public class MemoryPanelRenderer
         if (dline.Length > 0 && descRow < DetailPanelRow + panelH - 1)
             _terminal.Text(rightX, descRow, dline, Config.Colors.LightGray75, DetailBg);
 
-        // Action button (left column, after meta + XP bar + 1 empty line)
+        // VerbAction button (left column, after meta + XP bar + 1 empty line)
         int btnRow = row + metaLines.Length + 2;
         if (btnRow < DetailPanelRow + panelH - 2)
         {

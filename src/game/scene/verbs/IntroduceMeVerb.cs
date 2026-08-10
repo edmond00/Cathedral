@@ -19,7 +19,7 @@ namespace Cathedral.Game.Scene.Verbs;
 /// itself part of the problem, which is the point.</para>
 ///
 /// <para>Expands into one action per eligible third party present in the location — the
-/// <c>RequestJobVerb</c> pattern — carrying the target in <c>VerbView.Variant</c>.</para>
+/// <c>RequestJobVerb</c> pattern — carrying the target in <c>VerbAction.Variant</c>.</para>
 /// </summary>
 public class IntroduceMeVerb : DialogueVerb
 {
@@ -32,10 +32,10 @@ public class IntroduceMeVerb : DialogueVerb
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
         => Candidates(scene, pov, target, actor).Count > 0;
 
-    public override IEnumerable<VerbView> ExpandViews(Scene scene, PoV pov, Element target, PartyMember? actor = null)
+    public override IEnumerable<VerbAction> ExpandViews(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         foreach (var third in Candidates(scene, pov, target, actor))
-            yield return new VerbView(this,
+            yield return new VerbAction(this,
                 $"ask {NpcPronoun(target)} to present me to the {third.Archetype.RoleNoun}",
                 target, variant: third);
     }
@@ -43,19 +43,19 @@ public class IntroduceMeVerb : DialogueVerb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"ask {NpcPronoun(target)} to present me to someone";
 
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbView? view = null)
+    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
         => view?.Variant is NpcEntity third
             ? $"ask {NpcName(target)} to present me to {third.DisplayName}"
             : $"ask {NpcName(target)} for an introduction";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target, VerbView view)
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target, VerbAction view)
     {
-        if (target is not SceneNpc sceneNpc || sceneNpc.Entity is not NpcEntity speaker) return System.Array.Empty<OutcomeReport>();
-        if (view.Variant is not NpcEntity third) return System.Array.Empty<OutcomeReport>();
+        if (target is not SceneNpc sceneNpc || sceneNpc.Entity is not NpcEntity speaker) return System.Array.Empty<Outcome>();
+        if (view.Variant is not NpcEntity third) return System.Array.Empty<Outcome>();
 
         // Hand the subject to the dialogue adapter, which builds the {third:*} context from it.
         speaker.PendingIntroductionTarget = third;
-        return new OutcomeReport[] { new DialogueTriggerOutcome(speaker, "introduce_me") };
+        return new Outcome[] { new DialogueTriggerOutcome(speaker, "introduce_me") };
     }
 
     /// <summary>
@@ -87,5 +87,5 @@ public class IntroduceMeVerb : DialogueVerb
             .ToList();
     }
 
-    public override string? RoutineVariantKey(VerbView view) => (view.Variant as NpcEntity)?.NpcId;
+    public override string? RoutineVariantKey(VerbAction view) => (view.Variant as NpcEntity)?.NpcId;
 }

@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Musk Marking — the territorial habit of claiming ground and reading claims; scent as boundary, warning, and signature.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class MuskMarkingModusMentis : ModusMentis
 {

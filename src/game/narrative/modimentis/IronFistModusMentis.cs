@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Iron Fist — hardened striking with fist, palm, and knife-edge of hand; a martial artist whose hands are weapons.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class IronFistModusMentis : ModusMentis
 {

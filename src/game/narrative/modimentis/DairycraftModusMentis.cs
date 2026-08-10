@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Dairycraft — milking, churning butter and pressing cheese; the cool clean work of the dairy shed.
-/// Multi-function (Action + Thinking).
+/// Multi-function (VerbAction + Thinking).
 /// </summary>
 public class DairycraftModusMentis : ModusMentis
 {

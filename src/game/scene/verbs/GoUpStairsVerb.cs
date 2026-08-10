@@ -27,9 +27,9 @@ public class GoUpStairsVerb : Verb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"climb up {DefiniteTarget(target)}";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
-        if (target is not StairPointOfInterest stair) return System.Array.Empty<OutcomeReport>();
+        if (target is not StairPointOfInterest stair) return System.Array.Empty<Outcome>();
         return new[] { new AreaMoveOutcome(stair.TopArea) };
     }
 

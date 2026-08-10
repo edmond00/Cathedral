@@ -112,12 +112,12 @@ public abstract class Verb
     /// The default is one view when <see cref="IsPossible"/> holds — the same behaviour as the old
     /// per-verb enumeration. Verbs that turn a single target into several actions (like GRAB across
     /// items, or <c>RequestJobVerb</c> across offered jobs) override this to yield several views,
-    /// carrying a per-view payload in <see cref="VerbView.Variant"/>.
+    /// carrying a per-view payload in <see cref="VerbAction.Variant"/>.
     /// </summary>
-    public virtual IEnumerable<VerbView> ExpandViews(Scene scene, PoV pov, Element target, PartyMember? actor = null)
+    public virtual IEnumerable<VerbAction> ExpandViews(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (IsPossible(scene, pov, target, actor))
-            yield return new VerbView(this, Verbatim(scene, pov, target), target);
+            yield return new VerbAction(this, Verbatim(scene, pov, target), target);
     }
 
     /// <summary>
@@ -205,28 +205,28 @@ public abstract class Verb
     };
 
     /// <summary>
-    /// Returns the <see cref="OutcomeReport"/> objects that result from a successful execution
+    /// Returns the <see cref="Outcome"/> objects that result from a successful execution
     /// of this verb. Each report both describes itself for the UI and applies its own
-    /// game-state change via <see cref="OutcomeReport.Apply"/>.
+    /// game-state change via <see cref="Outcome.Apply"/>.
     /// </summary>
-    public virtual IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
-        => System.Array.Empty<OutcomeReport>();
+    public virtual IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
+        => System.Array.Empty<Outcome>();
 
     /// <summary>
     /// View-aware success reports. Called by the execution pipeline with the exact
-    /// <see cref="VerbView"/> the player chose, so verbs that expanded into several actions can
-    /// read <see cref="VerbView.Variant"/> (e.g. which job was requested). Defaults to the
+    /// <see cref="VerbAction"/> the player chose, so verbs that expanded into several actions can
+    /// read <see cref="VerbAction.Variant"/> (e.g. which job was requested). Defaults to the
     /// target-only overload.
     /// </summary>
-    public virtual IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target, VerbView view)
+    public virtual IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target, VerbAction view)
         => SuccessReports(scene, pov, actor, target);
 
     /// <summary>
-    /// Returns the <see cref="OutcomeReport"/> objects that result from a failed execution
+    /// Returns the <see cref="Outcome"/> objects that result from a failed execution
     /// of this verb (verb-specific failure side-effects, excluding LLM-decided wounds).
     /// </summary>
-    public virtual IReadOnlyList<OutcomeReport> FailureReports(Scene scene, PoV pov, PartyMember actor, Element target)
-        => System.Array.Empty<OutcomeReport>();
+    public virtual IReadOnlyList<Outcome> FailureReports(Scene scene, PoV pov, PartyMember actor, Element target)
+        => System.Array.Empty<Outcome>();
 
     /// <summary>
     /// Applies all success reports in sequence. Kept for compatibility — prefer calling
@@ -235,7 +235,7 @@ public abstract class Verb
     public void Execute(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         foreach (var report in SuccessReports(scene, pov, actor, target))
-            report.Apply(actor, scene, pov);
+            report.Apply(OutcomeContext.For(actor, scene, pov));
     }
 
     // ── Routine recording hooks ───────────────────────────────────────────────
@@ -271,7 +271,7 @@ public abstract class Verb
     /// </summary>
     /// <param name="view">The chosen view when the verb expanded into several actions (e.g. which job
     /// was requested), or null when the caller has none.</param>
-    public virtual string RoutineLabel(Scene scene, PoV pov, Element target, VerbView? view = null)
+    public virtual string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
         => Verbatim(scene, pov, target);
 
     /// <summary>
@@ -299,7 +299,7 @@ public abstract class Verb
     /// Override only for a verb whose reports do not tell the whole story.
     /// </summary>
     public virtual bool BreaksRoutineRecording(Scene scene, PoV pov, Element target,
-                                               IReadOnlyList<OutcomeReport> reports)
+                                               IReadOnlyList<Outcome> reports)
         => reports.Any(r => r.RoutineChainEffect != RoutineChainEffect.None);
 
     /// <summary>
@@ -310,13 +310,13 @@ public abstract class Verb
         => RoutinePhaseKind.None;
 
     /// <summary>
-    /// A stable key identifying the chosen <see cref="VerbView.Variant"/> for routine recording, so
+    /// A stable key identifying the chosen <see cref="VerbAction.Variant"/> for routine recording, so
     /// replay can rebuild the same view (e.g. which job was requested). Default: null (no variant).
     /// </summary>
-    public virtual string? RoutineVariantKey(VerbView view) => null;
+    public virtual string? RoutineVariantKey(VerbAction view) => null;
 
     /// <summary>
-    /// Rebuilds the <see cref="VerbView.Variant"/> payload from a key produced by
+    /// Rebuilds the <see cref="VerbAction.Variant"/> payload from a key produced by
     /// <see cref="RoutineVariantKey"/>, used when replaying a recorded step. Default: null.
     /// </summary>
     public virtual object? ResolveRoutineVariant(string variantKey) => null;

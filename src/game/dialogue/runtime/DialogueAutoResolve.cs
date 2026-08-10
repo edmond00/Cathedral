@@ -58,8 +58,8 @@ public static class DialogueAutoResolve
         // fires if no outcome already set a level).
         foreach (var outcome in tree.SuccessOutcomes)
         {
-            outcome.Apply(npc, partyMemberId);
-            applied.Add(outcome.Description);
+            outcome.Apply(OutcomeContext.ForDialogue(npc, partyMemberId, protagonist));
+            applied.Add(outcome.DisplayName);
         }
 
         // Only the tree's own lesson. AdditionalGrantedModusMentisIds is keyed on WHICH branch was
@@ -69,7 +69,7 @@ public static class DialogueAutoResolve
         {
             var lesson = ModusMentisGrantOutcome.For(protagonist, id);
             if (lesson == null) continue;
-            lesson.Apply(protagonist, null, null);
+            lesson.Apply(OutcomeContext.For(protagonist, null, null));
             applied.Add($"learned {id}");
         }
 

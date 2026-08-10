@@ -329,11 +329,11 @@ public class SceneDebugWindow : Form
             // Verb sub-nodes (VerbOutcomes only; IgnoreVerb shown in grey)
             for (int vi = 0; vi < obs.SubOutcomes.Count; vi++)
             {
-                if (obs.SubOutcomes[vi] is not VerbOutcome vo) continue;
-                bool isIgnore  = vo.VerbView.Verb is IgnoreVerb;
+                if (obs.SubOutcomes[vi] is not VerbAction vo) continue;
+                bool isIgnore  = vo.Verb is IgnoreVerb;
                 var  verbColor = isIgnore ? new MsaglColor(110, 110, 110) : ColorVerb;
                 string verbId    = $"v_{obsId}_{vi}";
-                string verbLabel = vo.VerbView.Verbatim;
+                string verbLabel = vo.Verbatim;
                 AddNode(msagl, added, verbId, verbLabel, verbColor, MsaglShape.Octagon);
                 msagl.AddEdge(obsId, "", verbId).Attr.Color = new MsaglColor(180, 80, 80);
             }

@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Vaulting — the legs' explosive answer to obstacles: the leap, the hurdle, the fence taken in stride.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class VaultingModusMentis : ModusMentis
 {

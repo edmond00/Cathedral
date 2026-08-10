@@ -49,7 +49,7 @@ public class FightModeAdapter
     /// <summary>All enemy NPCs in this fight: main target + allies.</summary>
     public IReadOnlyList<NpcEntity> AllEnemyNpcs { get; }
 
-    // ── Action mode ─────────────────────────────────────────────────
+    // ── VerbAction mode ─────────────────────────────────────────────────
     private bool _isMoveMode = true;
     private int _selectedSkillIndex = -1;
     private string? _selectedMediumKey;
@@ -984,7 +984,7 @@ public class FightModeAdapter
         _actionMenuScrollOffset = Math.Clamp((int)Math.Round(frac * _actionMenuMaxScroll), 0, _actionMenuMaxScroll);
     }
 
-    // ── Action mode switching ─────────────────────────────────────────
+    // ── VerbAction mode switching ─────────────────────────────────────────
 
     private void SetMoveMode()
     {
@@ -1139,7 +1139,7 @@ public class FightModeAdapter
         return result;
     }
 
-    // ── Action execution ──────────────────────────────────────────────
+    // ── VerbAction execution ──────────────────────────────────────────────
 
     private void ExecuteAction(Actions.IFightAction action)
     {

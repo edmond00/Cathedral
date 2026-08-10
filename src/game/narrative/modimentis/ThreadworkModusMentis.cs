@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Threadwork — carding, spinning and warping of fibre; wool and flax into workable thread.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class ThreadworkModusMentis : ModusMentis
 {

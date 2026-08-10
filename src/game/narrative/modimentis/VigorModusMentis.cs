@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Vigor — raw vital force: the heat of blood and loin that drives the body through effort with animal surplus.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class VigorModusMentis : ModusMentis
 {

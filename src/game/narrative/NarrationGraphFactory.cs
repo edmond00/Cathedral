@@ -54,12 +54,6 @@ public abstract class NarrationGraphFactory
     protected Random CreateSeededRandom(int locationId)
         => new Random(locationId);
 
-    protected void ConnectNodes(NarrationNode from, NarrationNode to)
-    {
-        if (from == to) return;
-        if (!from.PossibleOutcomes.Contains(to))
-            from.PossibleOutcomes.Add(to);
-    }
 
     // ── Private helpers ───────────────────────────────────────────────────────
 
@@ -108,13 +102,6 @@ public abstract class NarrationGraphFactory
                 writer.WriteLine($"  Transition: {node.TransitionDescription}");
                 writer.WriteLine($"  Outcomes:   {node.GetAllDirectConcreteOutcomes().Count}");
 
-                var items = node.GetAvailableItems();
-                if (items.Count > 0)
-                {
-                    writer.WriteLine($"  Items ({items.Count}):");
-                    foreach (var item in items)
-                        writer.WriteLine($"    - {item.DisplayName} ({item.ItemId})");
-                }
 
                 var observations = node.PossibleOutcomes.OfType<ObservationObject>().ToList();
                 if (observations.Count > 0)

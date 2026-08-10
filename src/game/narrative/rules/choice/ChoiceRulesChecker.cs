@@ -34,8 +34,8 @@ public static class ChoiceRulesChecker
     };
 
     /// <summary>Narrows <paramref name="goals"/> to what this thinking modus mentis may be shown.</summary>
-    public static IReadOnlyList<ConcreteOutcome> FilterGoals(
-        IReadOnlyList<ConcreteOutcome> goals, ChoiceRuleContext ctx)
+    public static IReadOnlyList<NarrativeAnchor> FilterGoals(
+        IReadOnlyList<NarrativeAnchor> goals, ChoiceRuleContext ctx)
     {
         foreach (var rule in GoalRules)
             goals = rule.Filter(goals, ctx);

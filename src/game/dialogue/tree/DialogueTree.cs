@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Npc;
 
+using Cathedral.Game.Narrative;
+
 namespace Cathedral.Game.Dialogue.Tree;
 
 /// <summary>
@@ -87,10 +89,10 @@ public abstract class DialogueTree
     public abstract NpcLineNode EntryNode { get; }
 
     /// <summary>Effects applied when the tree's single skill check succeeds (shared by all branches).</summary>
-    public abstract IReadOnlyList<IDialogueOutcome> SuccessOutcomes { get; }
+    public abstract IReadOnlyList<Outcome> SuccessOutcomes { get; }
 
     /// <summary>Effects applied when the tree's single skill check fails (shared by all branches).</summary>
-    public abstract IReadOnlyList<IDialogueOutcome> FailureOutcomes { get; }
+    public abstract IReadOnlyList<Outcome> FailureOutcomes { get; }
 
     /// <summary>
     /// How a successful trigger of this dialogue interacts with routine recording/replay.

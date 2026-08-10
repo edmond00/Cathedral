@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Firecraft — the feeding, banking and judging of a working fire: forge, oven, kiln, hearth.
-/// Multi-function (Action + Thinking).
+/// Multi-function (VerbAction + Thinking).
 /// </summary>
 public class FirecraftModusMentis : ModusMentis
 {

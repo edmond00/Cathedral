@@ -3,7 +3,7 @@ using Cathedral.Game.Narrative.Memory;
 namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
-/// Second Wind - the breath found past the point where breath had run out. Action.
+/// Second Wind - the breath found past the point where breath had run out. VerbAction.
 /// </summary>
 public class SecondWindModusMentis : ModusMentis
 {

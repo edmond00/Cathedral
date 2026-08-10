@@ -108,6 +108,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --mm-audit                         Print the modus-mentis content audit (hard-rule violations, coverage, soft stats) and exit");
     Console.WriteLine("  --verb-audit                       Print the verb-coverage audit (verbs per observable vs targets, dead verbs,");
     Console.WriteLine("                                     unresolvable modus-mentis and tool ids, landmark counts) and exit");
+    Console.WriteLine("  --outcome-audit                    Print the outcome catalogue (every consequence, who produces it, what produces nothing) and exit");
     Console.WriteLine("  --verb-probe                       Print, per verb, the flags that reach it from a cold start (for writing cli tests) and exit");
     Console.WriteLine("  --crime-audit                      Print the crime audit (contextual verb legality, the morality choice rules,");
     Console.WriteLine("                                     enmity surviving a rebuild and a save) and exit");
@@ -208,6 +209,14 @@ if (args.Length >= 1 && args[0] == "--verb-audit")
 
 // Verb probe: for each verb, the exact flags that reach it from a cold start. What a CLI test for
 // that verb has to open with. Headless: builds scenes and asks every verb; no LLM, no window.
+// Outcome audit: the catalogue of consequences, who produces each, and the two silent faults —
+// an outcome nothing produces, and a verb that rolls but changes nothing. Headless.
+if (args.Length >= 1 && args[0] == "--outcome-audit")
+{
+    Console.WriteLine(Cathedral.Game.Narrative.OutcomeAudit.BuildReport());
+    return;
+}
+
 if (args.Length >= 1 && args[0] == "--verb-probe")
 {
     Console.WriteLine(Cathedral.Game.Scene.VerbProbe.BuildReport());

@@ -12,7 +12,7 @@ internal static class CrimeGoals
     /// Whether pursuing <paramref name="goal"/> from where the chooser stands would be a crime.
     /// Non-verb goals (and a null one) are never crimes: there is no verb to be illegal.
     /// </summary>
-    public static bool IsCrime(ConcreteOutcome? goal, ChoiceRuleContext ctx)
-        => goal is VerbOutcome vo
-           && vo.VerbView.Verb.IsIllegal(ctx.Scene, ctx.PoV, vo.VerbView.Target, ctx.Actor);
+    public static bool IsCrime(NarrativeAnchor? goal, ChoiceRuleContext ctx)
+        => goal is VerbAction vo
+           && vo.Verb.IsIllegal(ctx.Scene, ctx.PoV, vo.Target, ctx.Actor);
 }

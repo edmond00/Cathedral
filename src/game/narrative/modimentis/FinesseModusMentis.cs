@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Finesse - Delicate, precise manipulation through dexterity and coordination
-/// Action modusMentis for graceful, controlled movements
+/// VerbAction modusMentis for graceful, controlled movements
 /// </summary>
 public class FinesseModusMentis : ModusMentis
 {

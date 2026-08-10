@@ -196,9 +196,9 @@ public static class CrimeAudit
         var (scene, ctxFor, lawful, crime) = BuildGoalFixture(failures);
         if (scene == null) { sb.AppendLine("  (fixture unavailable — skipped)"); sb.AppendLine(); return; }
 
-        var mixed = new List<ConcreteOutcome> { lawful!, crime! };
+        var mixed = new List<NarrativeAnchor> { lawful!, crime! };
 
-        void Case(string name, MoralLevel morality, IReadOnlyList<ConcreteOutcome> offered, int expectedCount, bool expectCrime)
+        void Case(string name, MoralLevel morality, IReadOnlyList<NarrativeAnchor> offered, int expectedCount, bool expectCrime)
         {
             var got = ChoiceRulesChecker.FilterGoals(offered, ctxFor(morality));
             bool hasCrime = got.Any(o => o == crime);
@@ -215,8 +215,8 @@ public static class CrimeAudit
         Case("Medium morality, one lawful + one crime", MoralLevel.Medium, mixed, 2, true);
 
         // The edge that must not throw: everything on offer is a crime.
-        Case("High morality, crime only",             MoralLevel.High,   new List<ConcreteOutcome> { crime! }, 0, false);
-        Case("Low morality, lawful only",             MoralLevel.Low,    new List<ConcreteOutcome> { lawful! }, 1, false);
+        Case("High morality, crime only",             MoralLevel.High,   new List<NarrativeAnchor> { crime! }, 0, false);
+        Case("Low morality, lawful only",             MoralLevel.Low,    new List<NarrativeAnchor> { lawful! }, 1, false);
         sb.AppendLine();
     }
 
@@ -232,7 +232,7 @@ public static class CrimeAudit
         var full = new WillingnessOptions(
             new[] { "eager to do it", "willing to do it", "reluctant to do it" }, "unwilling to do it");
 
-        void Case(string name, MoralLevel morality, ConcreteOutcome goal, bool expectDecline)
+        void Case(string name, MoralLevel morality, NarrativeAnchor goal, bool expectDecline)
         {
             var ctx = ctxFor(morality) with { Goal = goal };
             var got = ChoiceRulesChecker.FilterWillingness(full, ctx);
@@ -455,7 +455,7 @@ public static class CrimeAudit
     /// The goals are built from real verbs against real targets so the legality test under them is
     /// the one the game runs, not a stand-in.
     /// </summary>
-    private static (Scene? Scene, Func<MoralLevel, ChoiceRuleContext> CtxFor, ConcreteOutcome? Lawful, ConcreteOutcome? Crime)
+    private static (Scene? Scene, Func<MoralLevel, ChoiceRuleContext> CtxFor, NarrativeAnchor? Lawful, NarrativeAnchor? Crime)
         BuildGoalFixture(List<string> failures)
     {
         var scene = new Village.VillageSceneFactory().Build(1);
@@ -477,8 +477,8 @@ public static class CrimeAudit
 
         var examine = new ExamineVerb();
         var unlock  = new UnlockDoorVerb();
-        var lawful  = new VerbOutcome(new VerbView(examine, examine.Verbatim(scene, pov, anyThing), anyThing), anyThing);
-        var crime   = new VerbOutcome(new VerbView(unlock, unlock.Verbatim(scene, pov, privateDoor), privateDoor), privateDoor);
+        var lawful  = new VerbAction(examine, examine.Verbatim(scene, pov, anyThing), anyThing);
+        var crime   = new VerbAction(unlock, unlock.Verbatim(scene, pov, privateDoor), privateDoor);
 
         // Sanity: the fixture is only meaningful if the two really do differ in legality.
         if (!unlock.IsIllegal(scene, pov, privateDoor, actor) || examine.IsIllegal(scene, pov, anyThing, actor))

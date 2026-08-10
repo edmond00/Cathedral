@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Surefoot — four-limbed certainty on bad ground; scree, ice, and narrow ledges taken without a slip.
-/// Observation and Action.
+/// Observation and VerbAction.
 /// </summary>
 public class SurefootModusMentis : ModusMentis
 {

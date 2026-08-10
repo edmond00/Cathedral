@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Bearing — the dignified carriage of the whole body; presence that commands a room before a word is spoken.
-/// Action and Speaking.
+/// VerbAction and Speaking.
 /// </summary>
 public class BearingModusMentis : ModusMentis
 {

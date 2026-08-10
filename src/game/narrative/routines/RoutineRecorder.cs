@@ -84,13 +84,13 @@ public class RoutineRecorder
     /// has stopped for the session.
     /// </summary>
     public void OnVerbSucceeded(ParsedNarrativeAction action, Scene.Scene scene, PoV povBeforeMove,
-        PartyMember actingMember, bool itemConsumed, IReadOnlyList<OutcomeReport> reports)
+        PartyMember actingMember, bool itemConsumed, IReadOnlyList<Outcome> reports)
     {
         if (!_recording) return;
 
         var verb   = action.Verb;
         var target = action.PreselectedOutcome.Target;
-        reports ??= Array.Empty<OutcomeReport>();
+        reports ??= Array.Empty<Outcome>();
 
         // No target means nothing stable to record or to reason about — close the session.
         if (target == null) { EmitTrailingPath(); Stop("action had no target"); return; }
@@ -120,9 +120,9 @@ public class RoutineRecorder
             Verbatim         = verb.Verbatim(scene, povBeforeMove, target),
             // Named here, while the scene context is still live: the label is what the player reads
             // in the routines menu, so it must resolve pronouns and variants to concrete names now.
-            Label            = verb.RoutineLabel(scene, povBeforeMove, target, action.PreselectedOutcome.VerbView),
+            Label            = verb.RoutineLabel(scene, povBeforeMove, target, action.PreselectedOutcome),
             TriggeredPhase   = verb.RoutineTriggeredPhase(scene, povBeforeMove, target),
-            VariantKey       = verb.RoutineVariantKey(action.PreselectedOutcome.VerbView) ?? "",
+            VariantKey       = verb.RoutineVariantKey(action.PreselectedOutcome) ?? "",
             Constraints      = BuildConstraints(action, actingMember, itemConsumed),
             RepositionsPointOfView = reports.Any(r => r.RoutineChainEffect.Repositions()),
         };

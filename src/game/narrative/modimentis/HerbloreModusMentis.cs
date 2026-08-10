@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Herblore — herbs and garden greens, their uses and gathering; the knowledge of the herb-patch.
-/// Multi-function (Thinking + Action).
+/// Multi-function (Thinking + VerbAction).
 /// </summary>
 public class HerbloreModusMentis : ModusMentis
 {

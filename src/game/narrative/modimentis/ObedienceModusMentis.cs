@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Obedience — doing as told, without quarrel and without delay.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class ObedienceModusMentis : ModusMentis
 {

@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Brawling — street fighting, rough-and-tumble, and improvised violence; a tavern brawler who fights dirty and wins.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class BrawlingModusMentis : ModusMentis
 {

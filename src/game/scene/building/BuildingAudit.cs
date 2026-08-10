@@ -535,7 +535,7 @@ public static class BuildingAudit
         static string Describe(DoorPointOfInterest door, Area from, TimePeriod when)
         {
             var obs = new SyntheticObservationObject(
-                door, new SceneViewEntry(door, new List<VerbView>()), new List<SceneViewEntry>(), from);
+                door, new SceneViewEntry(door, new List<VerbAction>()), new List<SceneViewEntry>(), from);
             obs.StampPeriod(when);
             return obs.GenerateNeutralDescription(3);
         }

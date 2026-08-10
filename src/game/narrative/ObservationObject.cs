@@ -18,7 +18,7 @@ namespace Cathedral.Game.Narrative;
 /// description returned by <see cref="GenerateNeutralDescription"/> is the neutral meaning the
 /// rewrite re-expresses, so make it rich and noun-phrase.
 /// </summary>
-public abstract class ObservationObject : ConcreteOutcome, IObservation
+public abstract class ObservationObject : NarrativeAnchor, IObservation
 {
     /// <summary>
     /// Unique identifier for this observation (e.g., "fox_den", "owl_pellet_site").
@@ -63,7 +63,7 @@ public abstract class ObservationObject : ConcreteOutcome, IObservation
     /// All concrete sub-outcomes reachable through this observation (items, node transitions).
     /// Populated in the subclass constructor.
     /// </summary>
-    public List<ConcreteOutcome> SubOutcomes { get; protected set; } = new();
+    public List<NarrativeAnchor> SubOutcomes { get; protected set; } = new();
 
     /// <summary>
     /// Generates a rich noun-phrase description of this observation used both in LLM prompts
@@ -73,7 +73,7 @@ public abstract class ObservationObject : ConcreteOutcome, IObservation
     /// </summary>
     public abstract string GenerateNeutralDescription(int locationId = 0);
 
-    // ── ConcreteOutcome overrides ─────────────────────────────────────────────
+    // ── NarrativeAnchor overrides ─────────────────────────────────────────────
 
     /// <inheritdoc/>
     public override string DisplayName => ObservationId;
@@ -83,6 +83,6 @@ public abstract class ObservationObject : ConcreteOutcome, IObservation
 
     // ── IObservation ──────────────────────────────────────────────────────────
     string IObservation.ObservationId => ObservationId;
-    IReadOnlyList<ConcreteOutcome> IObservation.ObservationOutcomes =>
+    IReadOnlyList<NarrativeAnchor> IObservation.ObservationOutcomes =>
         SubOutcomes.AsReadOnly();
 }

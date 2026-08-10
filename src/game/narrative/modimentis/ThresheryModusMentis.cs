@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Threshery — threshing and sifting grain; beating out the ear and winnowing clean grain from chaff.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class ThresheryModusMentis : ModusMentis
 {

@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Pugilitas - The classical art of boxing and hand-to-hand combat
-/// Action modusMentis for disciplined fighting technique
+/// VerbAction modusMentis for disciplined fighting technique
 /// </summary>
 public class PugilitasModusMentis : ModusMentis
 {

@@ -50,16 +50,16 @@ public class AttackVerb : Verb
             : $"attack {DefiniteTarget(target)}";
 
     // Read out of context in the routines menu, so the pronoun is replaced by the name.
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbView? view = null)
+    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
         => $"attack {NpcName(target)}";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
-        if (target is not SceneNpc sceneNpc) return System.Array.Empty<OutcomeReport>();
+        if (target is not SceneNpc sceneNpc) return System.Array.Empty<Outcome>();
         if (sceneNpc.Entity is ShallowNpcEntity)
             return new[] { new NpcSlaynOutcome(sceneNpc) };
         if (sceneNpc.Entity is NpcEntity npc)
             return new[] { new FightTriggerOutcome(npc) };
-        return System.Array.Empty<OutcomeReport>();
+        return System.Array.Empty<Outcome>();
     }
 }

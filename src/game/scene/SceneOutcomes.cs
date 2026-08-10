@@ -7,58 +7,60 @@ using Cathedral.Game.Npc.Corpse;
 using Cathedral.Game.Scene.Building;
 using Cathedral.Game.Dialogue.Affinity;
 
+using Cathedral.Game.Dialogue.Tree;
+
 namespace Cathedral.Game.Scene;
 
-// ── Scene-specific OutcomeReport concrete types ───────────────────────────────
+// ── Scene-specific Outcome concrete types ───────────────────────────────
 // These need Scene / PoV / NPC types, so they live in the Scene namespace.
 
 /// <summary>Picks up an item from a PoI in the scene and adds it to the inventory.</summary>
-public sealed class ItemAcquisitionOutcome : OutcomeReport
+public sealed class ItemAcquisitionOutcome : Outcome
 {
     private readonly ItemElement _itemElement;
 
     public ItemAcquisitionOutcome(ItemElement itemElement)
-        : base($"Item received: {itemElement.Item.DisplayName}", OutcomeReportSeverity.Positive,
+        : base($"Item received: {itemElement.Item.DisplayName}", OutcomeSeverity.Positive,
                $"picked up {itemElement.Item.WithArticle()}")
     {
         _itemElement = itemElement;
     }
 
-    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
+    public override void Apply(OutcomeContext ctx)
     {
-        if (scene == null || pov == null) return;
+        if (ctx.Scene == null || ctx.PoV == null) return;
         // Shared pickup: removes from the holding PoI, adds to inventory, and stamps depletion.
-        ItemPickup.Pick(scene, pov, protagonist, _itemElement);
+        ItemPickup.Pick(ctx.Scene, ctx.PoV, ctx.Actor!, _itemElement);
     }
 }
 
 /// <summary>Harvests an item from a corpse (cut verb).</summary>
-public sealed class CorpseItemAcquisitionOutcome : OutcomeReport
+public sealed class CorpseItemAcquisitionOutcome : Outcome
 {
     private readonly ItemElement _itemElement;
 
     public CorpseItemAcquisitionOutcome(ItemElement itemElement)
-        : base($"Item received: {itemElement.Item.DisplayName}", OutcomeReportSeverity.Positive,
+        : base($"Item received: {itemElement.Item.DisplayName}", OutcomeSeverity.Positive,
                $"harvested {itemElement.Item.WithArticle()}")
     {
         _itemElement = itemElement;
     }
 
-    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
+    public override void Apply(OutcomeContext ctx)
     {
-        if (scene == null || pov == null) return;
+        if (ctx.Scene == null || ctx.PoV == null) return;
         // Shared pickup (corpses included): proper inventory placement + full-inventory handling.
-        ItemPickup.Pick(scene, pov, protagonist, _itemElement, includeCorpse: true);
+        ItemPickup.Pick(ctx.Scene, ctx.PoV, ctx.Actor!, _itemElement, includeCorpse: true);
     }
 }
 
 /// <summary>Moves the PoV to a new area.</summary>
-public sealed class AreaMoveOutcome : OutcomeReport
+public sealed class AreaMoveOutcome : Outcome
 {
     private readonly Area _destination;
 
     public AreaMoveOutcome(Area destination)
-        : base($"Moved to: {destination.DisplayName}", OutcomeReportSeverity.Neutral,
+        : base($"Moved to: {destination.DisplayName}", OutcomeSeverity.Neutral,
                $"made my way to {destination.DisplayName}")
     {
         _destination = destination;
@@ -66,11 +68,11 @@ public sealed class AreaMoveOutcome : OutcomeReport
 
     public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Movement;
 
-    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
+    public override void Apply(OutcomeContext ctx)
     {
-        if (pov == null) return;
-        pov.Where = _destination;
-        pov.Focus = null;
+        if (ctx.PoV == null) return;
+        ctx.PoV.Where = _destination;
+        ctx.PoV.Focus = null;
     }
 }
 
@@ -83,12 +85,12 @@ public sealed class AreaMoveOutcome : OutcomeReport
 /// The controller notices the change after reports apply and re-places NPCs for the new period; the
 /// headless routine replay needs nothing extra, because its verb gates read <c>pov.When</c> directly.</para>
 /// </summary>
-public sealed class TimeShiftOutcome : OutcomeReport
+public sealed class TimeShiftOutcome : Outcome
 {
     private readonly TimePeriod _destination;
 
     public TimeShiftOutcome(TimePeriod destination)
-        : base($"Time passes: {destination.Label()}", OutcomeReportSeverity.Neutral,
+        : base($"Time passes: {destination.Label()}", OutcomeSeverity.Neutral,
                $"waited until {destination.Label().ToLowerInvariant()}")
     {
         _destination = destination;
@@ -96,11 +98,11 @@ public sealed class TimeShiftOutcome : OutcomeReport
 
     public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.TimeShift;
 
-    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
+    public override void Apply(OutcomeContext ctx)
     {
-        if (pov == null) return;
-        pov.When  = _destination;
-        pov.Focus = null;
+        if (ctx.PoV == null) return;
+        ctx.PoV.When  = _destination;
+        ctx.PoV.Focus = null;
     }
 }
 
@@ -112,10 +114,10 @@ public sealed class TimeShiftOutcome : OutcomeReport
 /// <see cref="TimeShiftOutcome"/> carries the only actual effect. Without this the player would be
 /// told the hour had changed and never told why they had been waiting.</para>
 /// </summary>
-public sealed class NoticeOutcome : OutcomeReport
+public sealed class NoticeOutcome : Outcome
 {
     public NoticeOutcome(string text, string verbatim)
-        : base(text, OutcomeReportSeverity.Neutral, verbatim) { }
+        : base(text, OutcomeSeverity.Neutral, verbatim) { }
 }
 
 /// <summary>
@@ -126,13 +128,13 @@ public sealed class NoticeOutcome : OutcomeReport
 /// hand rather than on the ground. Both cases end the same way: the creature stops being alive, so
 /// <c>Scene.GetNpcsAt</c> drops it and every verb on it goes with it.</para>
 /// </summary>
-public sealed class TinyCreatureRemovedOutcome : OutcomeReport
+public sealed class TinyCreatureRemovedOutcome : Outcome
 {
     private readonly SceneNpc _npc;
 
     public TinyCreatureRemovedOutcome(SceneNpc npc, bool caught)
         : base(caught ? $"Caught: {npc.Entity.DisplayName}" : $"Crushed: {npc.Entity.DisplayName}",
-               caught ? OutcomeReportSeverity.Positive : OutcomeReportSeverity.Neutral,
+               caught ? OutcomeSeverity.Positive : OutcomeSeverity.Neutral,
                caught
                    ? $"caught the {npc.Entity.DisplayName.ToLowerInvariant()}"
                    : $"crushed the {npc.Entity.DisplayName.ToLowerInvariant()}")
@@ -146,10 +148,10 @@ public sealed class TinyCreatureRemovedOutcome : OutcomeReport
     /// </summary>
     public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Breaking;
 
-    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
+    public override void Apply(OutcomeContext ctx)
     {
         if (_npc.Entity is ShallowNpcEntity shallow) shallow.IsAlive = false;
-        if (pov != null) pov.Focus = null;
+        if (ctx.PoV != null) ctx.PoV.Focus = null;
     }
 }
 
@@ -161,13 +163,13 @@ public sealed class TinyCreatureRemovedOutcome : OutcomeReport
 /// its own salvage items without the original having to anticipate any of it. The swap happens in
 /// every area holding the original, because a connector or a shared fixture can be in two.</para>
 /// </summary>
-public sealed class PoiReplacementOutcome : OutcomeReport
+public sealed class PoiReplacementOutcome : Outcome
 {
     private readonly PointOfInterest _original;
     private readonly PointOfInterest _replacement;
 
     public PoiReplacementOutcome(PointOfInterest original, PointOfInterest replacement)
-        : base($"Broken: {original.DisplayName}", OutcomeReportSeverity.Neutral,
+        : base($"Broken: {original.DisplayName}", OutcomeSeverity.Neutral,
                $"broke {original.DisplayName.ToLowerInvariant()} apart")
     {
         _original    = original;
@@ -177,11 +179,11 @@ public sealed class PoiReplacementOutcome : OutcomeReport
     /// <summary>Breaking: a rebuilt scene has the furniture whole again, so no routine may assume otherwise.</summary>
     public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Breaking;
 
-    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
+    public override void Apply(OutcomeContext ctx)
     {
-        if (scene == null) return;
+        if (ctx.Scene == null) return;
 
-        foreach (var area in scene.AllAreas)
+        foreach (var area in ctx.Scene.AllAreas)
         {
             int index = area.PointsOfInterest.IndexOf(_original);
             if (index >= 0) area.PointsOfInterest[index] = _replacement;
@@ -190,10 +192,10 @@ public sealed class PoiReplacementOutcome : OutcomeReport
         // The wreck inherits the original's identity so its description seed, and any depletion
         // already recorded against it, stay put.
         _replacement.StableKey = _original.StableKey;
-        _replacement.Register(scene);
-        foreach (var item in _replacement.Items) item.Register(scene);
+        _replacement.Register(ctx.Scene);
+        foreach (var item in _replacement.Items) item.Register(ctx.Scene);
 
-        if (pov != null) pov.Focus = null;
+        if (ctx.PoV != null) ctx.PoV.Focus = null;
     }
 }
 
@@ -203,18 +205,18 @@ public sealed class PoiReplacementOutcome : OutcomeReport
 /// <para>Not persisted, and deliberately so: scenes rebuild on every arrival, and somebody you got
 /// out of bed last week is asleep again tonight.</para>
 /// </summary>
-public sealed class SleeperRousedOutcome : OutcomeReport
+public sealed class SleeperRousedOutcome : Outcome
 {
     private readonly SceneNpc _npc;
 
     public SleeperRousedOutcome(SceneNpc npc)
-        : base($"Woken: {npc.Entity.DisplayName}", OutcomeReportSeverity.Neutral,
+        : base($"Woken: {npc.Entity.DisplayName}", OutcomeSeverity.Neutral,
                $"woke {npc.Entity.DisplayName}")
     {
         _npc = npc;
     }
 
-    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov) => _npc.Roused = true;
+    public override void Apply(OutcomeContext ctx) => _npc.Roused = true;
 }
 
 /// <summary>
@@ -224,17 +226,17 @@ public sealed class SleeperRousedOutcome : OutcomeReport
 /// <c>PartyMember</c> like any other, so recruitment is a list insertion — no copying of organs,
 /// skills, wounds or inventory, and therefore no copy to drift out of step with the original.</para>
 ///
-/// <para>They also leave the scene: dead to <c>GetNpcsAt</c>, which is what every verb gate and the
+/// <para>They also leave the ctx.Scene: dead to <c>GetNpcsAt</c>, which is what every verb gate and the
 /// NPC placement both read, so the person you recruited is not still standing in the square. The
 /// flag is not persisted, so a <i>persistent</i> NPC would reappear on the next visit — a real gap,
 /// and the reason this records the departure in the location state as well.</para>
 /// </summary>
-public sealed class RecruitedOutcome : OutcomeReport
+public sealed class RecruitedOutcome : Outcome
 {
     private readonly SceneNpc _npc;
 
     public RecruitedOutcome(SceneNpc npc)
-        : base($"Joined you: {npc.Entity.DisplayName}", OutcomeReportSeverity.Positive,
+        : base($"Joined you: {npc.Entity.DisplayName}", OutcomeSeverity.Positive,
                $"took {npc.Entity.DisplayName} along with me")
     {
         _npc = npc;
@@ -243,9 +245,9 @@ public sealed class RecruitedOutcome : OutcomeReport
     /// <summary>Breaking: a rebuilt scene would put them back where they were.</summary>
     public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Breaking;
 
-    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
+    public override void Apply(OutcomeContext ctx)
     {
-        if (protagonist is not Protagonist proto) return;
+        if (ctx.Actor! is not Protagonist proto) return;
         if (_npc.Entity is not NpcEntity npc) return;
 
         // The ceiling is checked in the verb gate too, so the action is not offered when the party is
@@ -257,21 +259,21 @@ public sealed class RecruitedOutcome : OutcomeReport
         proto.CompanionParty.Add(npc.Combatant);
 
         // One door for every way out of the world: gone from GetNpcsAt (and so from every verb gate),
-        // out of the scene's NPC list and schedules, and recorded as departed so the next build of
+        // out of the ctx.Scene's NPC list and schedules, and recorded as departed so the next build of
         // this location does not stand them back where they were.
-        scene?.RemoveNpcFromPlay(_npc);
-        if (pov != null) pov.Focus = null;
+        ctx.Scene?.RemoveNpcFromPlay(_npc);
+        if (ctx.PoV != null) ctx.PoV.Focus = null;
     }
 }
 
 /// <summary>Unlocks a door and immediately passes through it.</summary>
-public sealed class DoorUnlockOutcome : OutcomeReport
+public sealed class DoorUnlockOutcome : Outcome
 {
     private readonly DoorPointOfInterest _door;
     private readonly Area                _destination;
 
     public DoorUnlockOutcome(DoorPointOfInterest door, Area destination)
-        : base($"Door unlocked — entered {destination.DisplayName}", OutcomeReportSeverity.Neutral,
+        : base($"Door unlocked — entered {destination.DisplayName}", OutcomeSeverity.Neutral,
                $"unlocked the way into {destination.DisplayName}")
     {
         _door        = door;
@@ -285,27 +287,27 @@ public sealed class DoorUnlockOutcome : OutcomeReport
     public override RoutineChainEffect RoutineChainEffect
         => RoutineChainEffect.Movement | RoutineChainEffect.Breaking;
 
-    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
+    public override void Apply(OutcomeContext ctx)
     {
-        if (scene == null || pov == null) return;
+        if (ctx.Scene == null || ctx.PoV == null) return;
         _door.DoorState  = DoorState.Unlocked;
         // ForcedOpen also defeats the night rule for the rest of this visit. Without it a player who
         // forced an entry door after dark would be shut out again the moment they stepped back
         // outside, since EffectiveState re-shuts every entry door at Night.
         _door.ForcedOpen = true;
-        pov.Where        = _destination;
-        pov.Focus        = null;
-        scene.StateChanges.Capture(_door);
+        ctx.PoV.Where        = _destination;
+        ctx.PoV.Focus        = null;
+        ctx.Scene.StateChanges.Capture(_door);
     }
 }
 
 /// <summary>Kills an NPC without combat and spawns a corpse.</summary>
-public sealed class NpcSlaynOutcome : OutcomeReport
+public sealed class NpcSlaynOutcome : Outcome
 {
     private readonly SceneNpc _sceneNpc;
 
     public NpcSlaynOutcome(SceneNpc sceneNpc)
-        : base($"Slain: {sceneNpc.DisplayName}", OutcomeReportSeverity.Negative,
+        : base($"Slain: {sceneNpc.DisplayName}", OutcomeSeverity.Negative,
                $"killed {sceneNpc.DisplayName}")
     {
         _sceneNpc = sceneNpc;
@@ -314,54 +316,76 @@ public sealed class NpcSlaynOutcome : OutcomeReport
     // Removes an actor from the scene — later steps may only have been possible because of it.
     public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Breaking;
 
-    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
+    public override void Apply(OutcomeContext ctx)
     {
-        if (scene == null || pov == null) return;
+        if (ctx.Scene == null || ctx.PoV == null) return;
 
         // The body is made from the entity, so it survives the removal that follows.
         var remainsList = _sceneNpc.Entity.GenerateCorpse();
-        scene.RemoveNpcFromPlay(_sceneNpc);
+        ctx.Scene.RemoveNpcFromPlay(_sceneNpc);
 
         foreach (var remains in remainsList)
-            scene.AddPointOfInterestToArea(pov.Where, remains);
-        pov.Focus = null;
+            ctx.Scene.AddPointOfInterestToArea(ctx.PoV.Where, remains);
+        ctx.PoV.Focus = null;
     }
 }
 
 /// <summary>Queues a fight with a full NPC (sets scene.PendingFightRequest).</summary>
-public sealed class FightTriggerOutcome : OutcomeReport
+public sealed class FightTriggerOutcome : Outcome
 {
-    private readonly NpcEntity _npc;
+    /// <summary>Who the fight is with. Read by the fight mode this outcome opens.</summary>
+    public NpcEntity Target { get; }
 
-    public FightTriggerOutcome(NpcEntity npc)
-        : base($"Combat begins: {npc.DisplayName}", OutcomeReportSeverity.Negative,
+    /// <summary>Why the fight started, shown when the fight screen opens.</summary>
+    public string CombatContext { get; }
+
+    /// <summary>True when they swung first, which gives them the opening turn.</summary>
+    public bool EnemyInitiative { get; init; }
+
+    /// <summary>Name-faked label for this narrator's point of view, if one was stamped.</summary>
+    public string? ContextLabel { get; set; }
+
+    public FightTriggerOutcome(NpcEntity npc, string combatContext = "")
+        : base($"Combat begins: {npc.DisplayName}", OutcomeSeverity.Negative,
                $"provoked {npc.DisplayName} into a fight")
     {
-        _npc = npc;
+        Target        = npc;
+        CombatContext = string.IsNullOrEmpty(combatContext) ? $"combat with {npc.DisplayName}"
+                                                            : combatContext;
     }
 
     // A fight is a phase a routine cannot contain, and it reshapes the scene while it runs.
     public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Breaking;
 
-    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
+    public override void Apply(OutcomeContext ctx)
     {
-        if (scene == null) return;
-        scene.PendingFightRequest = new FightRequest(_npc);
+        if (ctx.Scene == null) return;
+        ctx.Scene.PendingFightRequest = new FightRequest(Target);
     }
 }
 
 /// <summary>Queues a dialogue session with an NPC (sets scene.PendingDialogueRequest).</summary>
-public sealed class DialogueTriggerOutcome : OutcomeReport
+public sealed class DialogueTriggerOutcome : Outcome
 {
-    private readonly NpcEntity _npc;
-    private readonly string    _treeId;
+    /// <summary>Who is being spoken to. Read by the dialogue mode this outcome opens.</summary>
+    public NpcEntity Target { get; }
 
-    public DialogueTriggerOutcome(NpcEntity npc, string treeId)
-        : base($"Conversation: {npc.DisplayName}", OutcomeReportSeverity.Neutral,
+    /// <summary>Which tree to run. Null when <see cref="Tree"/> carries a built one instead.</summary>
+    public string? TreeId { get; }
+
+    /// <summary>A pre-built tree, for conversations the scene composes rather than looks up.</summary>
+    public DialogueTree? Tree { get; init; }
+
+    /// <summary>Name-faked label for this narrator's point of view, if one was stamped.</summary>
+    public string? ContextLabel { get; set; }
+
+    public DialogueTriggerOutcome(NpcEntity npc, string? treeId = null, DialogueTree? tree = null)
+        : base($"Conversation: {npc.DisplayName}", OutcomeSeverity.Neutral,
                $"began speaking with {npc.DisplayName}")
     {
-        _npc    = npc;
-        _treeId = treeId;
+        Target = npc;
+        TreeId = treeId;
+        Tree   = tree;
     }
 
     // Deliberately None. A dialogue leaves the world in a state that persists to replay time —
@@ -371,53 +395,53 @@ public sealed class DialogueTriggerOutcome : OutcomeReport
     // RoutineTriggeredPhase; that is a separate question from whether a skip is safe.
     public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.None;
 
-    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
+    public override void Apply(OutcomeContext ctx)
     {
-        if (scene == null) return;
-        scene.PendingDialogueRequest = new DialogueRequest(_npc, _treeId);
+        if (ctx.Scene == null) return;
+        ctx.Scene.PendingDialogueRequest = new DialogueRequest(Target, TreeId);
     }
 }
 
 /// <summary>Changes affinity toward the protagonist after appeasement.</summary>
-public sealed class AffinityChangeOutcome : OutcomeReport
+public sealed class AffinityChangeOutcome : Outcome
 {
-    private readonly NpcEntity _npc;
+    private readonly NpcEntity Target;
 
     public AffinityChangeOutcome(NpcEntity npc)
-        : base($"Appeasement: {npc.DisplayName} — hostile→suspicious", OutcomeReportSeverity.Positive,
+        : base($"Appeasement: {npc.DisplayName} — hostile→suspicious", OutcomeSeverity.Positive,
                $"calmed {npc.DisplayName}")
     {
-        _npc = npc;
+        Target = npc;
     }
 
-    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
+    public override void Apply(OutcomeContext ctx)
     {
-        _npc.AffinityTable.ClearEnemy(protagonist.AffinityKey);
-        _npc.AffinityTable.SetLevel(protagonist.AffinityKey, Cathedral.Game.Dialogue.Affinity.AffinityLevel.Suspicious);
+        Target.AffinityTable.ClearEnemy(ctx.Actor!.AffinityKey);
+        Target.AffinityTable.SetLevel(ctx.Actor!.AffinityKey, Cathedral.Game.Dialogue.Affinity.AffinityLevel.Suspicious);
     }
 }
 
 /// <summary>Internal: records an element in scene.StateChanges. No UI chip.</summary>
-public sealed class StateCaptureOutcome : OutcomeReport
+public sealed class StateCaptureOutcome : Outcome
 {
     private readonly Element _element;
     public override bool ShowInUI => false;
 
     public StateCaptureOutcome(Element element)
-        : base(string.Empty, OutcomeReportSeverity.Neutral, verbatim: string.Empty)
+        : base(string.Empty, OutcomeSeverity.Neutral, verbatim: string.Empty)
     {
         _element = element;
     }
 
-    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
-        => scene?.StateChanges.Capture(_element);
+    public override void Apply(OutcomeContext ctx)
+        => ctx.Scene?.StateChanges.Capture(_element);
 }
 
 /// <summary>
 /// Internal: queues a reminescence phase transition.
 /// Does not appear as a UI chip — phase management is handled by NarrativeController.
 /// </summary>
-public sealed class ReminescenceTransitionOutcome : OutcomeReport
+public sealed class ReminescenceTransitionOutcome : Outcome
 {
     private readonly string _fromId;
     private readonly string _nextId;
@@ -426,7 +450,7 @@ public sealed class ReminescenceTransitionOutcome : OutcomeReport
     public override bool ShowInUI => false;
 
     public ReminescenceTransitionOutcome(string fromId, string nextId, string fragmentName)
-        : base(string.Empty, OutcomeReportSeverity.Neutral, verbatim: string.Empty)
+        : base(string.Empty, OutcomeSeverity.Neutral, verbatim: string.Empty)
     {
         _fromId       = fromId;
         _nextId       = nextId;
@@ -437,10 +461,10 @@ public sealed class ReminescenceTransitionOutcome : OutcomeReport
     // declared so the rule holds if that ever changes.
     public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Breaking;
 
-    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
+    public override void Apply(OutcomeContext ctx)
     {
-        if (scene == null) return;
-        scene.PendingReminescenceTransition = new ReminescenceTransitionRequest(_fromId, _nextId, _fragmentName);
+        if (ctx.Scene == null) return;
+        ctx.Scene.PendingReminescenceTransition = new ReminescenceTransitionRequest(_fromId, _nextId, _fragmentName);
     }
 }
 
@@ -448,18 +472,18 @@ public sealed class ReminescenceTransitionOutcome : OutcomeReport
 /// Internal: signals successful completion of the Get-Up phase.
 /// Does not appear as a UI chip — consumed by NarrativeController on the next Continue click.
 /// </summary>
-public sealed class GetUpTransitionOutcome : OutcomeReport
+public sealed class GetUpTransitionOutcome : Outcome
 {
     public override bool ShowInUI => false;
 
-    public GetUpTransitionOutcome() : base(string.Empty, OutcomeReportSeverity.Positive, verbatim: string.Empty) { }
+    public GetUpTransitionOutcome() : base(string.Empty, OutcomeSeverity.Positive, verbatim: string.Empty) { }
 
     // Leaves exploration entirely — see ReminescenceTransitionOutcome.
     public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Breaking;
 
-    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
+    public override void Apply(OutcomeContext ctx)
     {
-        if (scene == null) return;
-        scene.PendingGetUpTransition = true;
+        if (ctx.Scene == null) return;
+        ctx.Scene.PendingGetUpTransition = true;
     }
 }

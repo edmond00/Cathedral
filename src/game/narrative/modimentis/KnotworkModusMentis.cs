@@ -5,7 +5,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 /// <summary>
 /// Knotwork — the craft of rope: hitches, splices and lashings, and knowing which will hold.
 /// Distinct from Nautical Jargon (the sailors' speech): this is what the hands do.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class KnotworkModusMentis : ModusMentis
 {

@@ -38,15 +38,15 @@ public class MurderVerb : Verb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => "kill them where they lie";
 
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbView? view = null)
+    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
         => $"kill {SleeperGate.Name(target)} in their sleep";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         var sleeper = SleeperGate.Sleeper(scene, pov, target);
         return sleeper == null
-            ? System.Array.Empty<OutcomeReport>()
-            : new OutcomeReport[] { new NpcSlaynOutcome(sleeper) };
+            ? System.Array.Empty<Outcome>()
+            : new Outcome[] { new NpcSlaynOutcome(sleeper) };
     }
 
     /// <summary>
@@ -92,15 +92,15 @@ public class WakeUpVerb : DialogueVerb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => "wake them";
 
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbView? view = null)
+    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
         => $"wake {SleeperGate.Name(target)}";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         var sleeper = SleeperGate.Sleeper(scene, pov, target);
-        if (sleeper?.Entity is not NpcEntity npc) return System.Array.Empty<OutcomeReport>();
+        if (sleeper?.Entity is not NpcEntity npc) return System.Array.Empty<Outcome>();
 
-        return new OutcomeReport[]
+        return new Outcome[]
         {
             new SleeperRousedOutcome(sleeper),
             new DialogueTriggerOutcome(npc, "wake_up"),

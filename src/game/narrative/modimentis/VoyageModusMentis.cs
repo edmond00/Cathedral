@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Voyage — long-road steadiness; a wanderer drawn forward by old manuscripts and unmapped horizons.
-/// Multi-function (Thinking + Action).
+/// Multi-function (Thinking + VerbAction).
 /// </summary>
 public class VoyageModusMentis : ModusMentis
 {

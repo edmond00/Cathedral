@@ -51,7 +51,7 @@ namespace Cathedral.Glyph.Interaction
             HEADER_HEIGHT = Math.Max(3, TERMINAL_HEIGHT / 10);
             STATUS_BAR_HEIGHT = 1;
             
-            // Action menu starts at ~60% down the screen
+            // VerbAction menu starts at ~60% down the screen
             ACTION_MENU_START_Y = (int)(TERMINAL_HEIGHT * 0.6);
             NARRATIVE_START_Y = HEADER_HEIGHT + 1;
             NARRATIVE_HEIGHT = ACTION_MENU_START_Y - NARRATIVE_START_Y - 1;

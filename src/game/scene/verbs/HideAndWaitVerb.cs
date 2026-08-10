@@ -31,11 +31,11 @@ public class HideAndWaitVerb : Verb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"hide in {DefiniteTarget(target)} and watch";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         var (period, notice) = WaitForChange(scene, pov.When);
 
-        var reports = new List<OutcomeReport> { new TimeShiftOutcome(period) };
+        var reports = new List<Outcome> { new TimeShiftOutcome(period) };
         if (notice != null) reports.Add(notice);
         return reports;
     }
@@ -48,7 +48,7 @@ public class HideAndWaitVerb : Verb
     /// crossing from one room to another has not come or gone, and a hidden watcher would not count
     /// it. Capped at one period short of a full day, so the worst case is still a change of hour.</para>
     /// </summary>
-    private static (TimePeriod Period, OutcomeReport? Notice) WaitForChange(Scene scene, TimePeriod from)
+    private static (TimePeriod Period, Outcome? Notice) WaitForChange(Scene scene, TimePeriod from)
     {
         var before = scene.PresentAt(from).Select(n => n.Id).ToHashSet();
 

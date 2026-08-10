@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Husbandry — tending, feeding and handling livestock; the daily care of beasts in pen and fold.
-/// Multi-function (Action + Thinking).
+/// Multi-function (VerbAction + Thinking).
 /// </summary>
 public class HusbandryModusMentis : ModusMentis
 {

@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Panting — the muzzle's management of heat and breath; cooling, recovering, and rationing effort by the tongue.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class PantingModusMentis : ModusMentis
 {

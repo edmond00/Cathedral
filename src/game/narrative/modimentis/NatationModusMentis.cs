@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Natation — swimming and the ease of the body in water: breath held, current read, stroke kept.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class NatationModusMentis : ModusMentis
 {

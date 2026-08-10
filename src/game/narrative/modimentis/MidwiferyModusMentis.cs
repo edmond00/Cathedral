@@ -3,7 +3,7 @@ using Cathedral.Game.Narrative.Memory;
 namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
-/// Midwifery - the bringing of a child into the world, and the keeping of the mother. Action.
+/// Midwifery - the bringing of a child into the world, and the keeping of the mother. VerbAction.
 /// </summary>
 public class MidwiferyModusMentis : ModusMentis
 {

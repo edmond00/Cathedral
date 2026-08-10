@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Iron Nerves — absolute composure under pressure; a soldier who has replaced panic with a simple habit of observation and action.
-/// Thinking and Action.
+/// Thinking and VerbAction.
 /// </summary>
 public class IronNervesModusMentis : ModusMentis
 {

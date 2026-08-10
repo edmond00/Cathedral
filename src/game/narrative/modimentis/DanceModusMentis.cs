@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Dance — the legs' schooled joy in rhythm; steps, turns, and the body moving in time with music and partner.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class DanceModusMentis : ModusMentis
 {

@@ -16,7 +16,7 @@ public class InventoryCapacityRule : IActionRule
     public ActionRuleResult Check(ActionRuleContext ctx)
     {
         var outcome = ctx.Action.PreselectedOutcome;
-        var item = outcome?.VerbView.Verb.AcquiredItem(outcome.Target);
+        var item = outcome?.Verb.AcquiredItem(outcome.Target);
         if (item == null) return ActionRuleResult.Pass();          // not a pickup
 
         var check = ctx.Actor.CanAcquire(item);

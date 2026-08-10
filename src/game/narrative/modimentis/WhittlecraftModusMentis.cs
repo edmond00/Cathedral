@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Whittlecraft — fine carving and paring of small wood; pegs, staves, spoons, tallies.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class WhittlecraftModusMentis : ModusMentis
 {

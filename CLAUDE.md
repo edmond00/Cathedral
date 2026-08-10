@@ -218,6 +218,73 @@ age: nothing to keep in sync, and correct whenever it happens to be read. The sw
 the world view, before the old-age check — healing restores HP and lifetime is wound-aware, so a
 heart wound that closed on the journey must not still be counted a line later.
 
+### Verbs, actions and outcomes — the three types, and what each is for
+
+The narration loop has exactly three nouns. They were once eight, several of them named "outcome",
+which is why the word alone never told you which end of the pipeline you were at.
+
+| type | what it is | when |
+|---|---|---|
+| `Verb` | the abstract definition — GRAB, MOVE, ATTACK. Hand-registered in `VerbRegistry`, queried before anything exists (`IsPossible`, `DifficultyFor`, `IsIllegal`, `ExpandViews`) | — |
+| `VerbAction` | a verb **in context**: verb + verbatim + target + variant. What the thinking phase picks as a goal (`PreselectedOutcome`) and what a click executes | before |
+| `Outcome` | a **consequence**: `Apply(OutcomeContext)` changes the world, `Text` is the chip, `Verbatim` is the phrase the narrator gets | after |
+
+Two supporting types, both deliberately thin:
+
+- **`INarratable`** — `DisplayName` + `ToNaturalLanguageString()`. All the outcome narrator needs.
+  An interface, not a base class, because three unrelated families implement it and inheriting from a
+  shared *base* implied kinship they do not have — a fight's entry payload derived from something
+  called `OutcomeBase` purely to be passable to `NarrateOutcomeAsync`, and so read as a consequence
+  for years.
+- **`NarrativeAnchor`** — a place a click can land, with exactly two subclasses: `ObservationObject`
+  (look at it) and `VerbAction` (do it). Both live in the same `SubOutcomes` / `PossibleOutcomes`
+  lists because the thinking phase draws from them together: "look closer at that" and "grab the
+  flower" are both answers to "what do you want to do?".
+
+**Do not reintroduce a second class for one event.** Every consequence used to exist twice — once as
+the chip the player sees, once as a narratable the LLM is told about — written separately and free to
+disagree. `WoundOutcome`/`WoundInflictionOutcome`, `HumorOutcome`/`HumorChangeOutcome`,
+`FightOutcome`/`FightTriggerOutcome`, `DialogueOutcome`/`DialogueTriggerOutcome`. `Outcome` implements
+`INarratable` (`DisplayName => Text`, `ToNaturalLanguageString() => Verbatim`), so one object serves
+both roles, and the mode-entry payloads are now the trigger outcomes themselves.
+
+**A conversation's effects are ordinary outcomes too.** `IDialogueOutcome` is gone: its ten
+implementers are `Outcome` subclasses whose `Apply` reads `ctx.Npc` and `ctx.PartyMemberId`. The only
+thing that had kept them separate was an incompatible `Apply` signature, which `OutcomeContext` now
+carries for both. Because such an outcome settles its own wording at apply time (an affinity move has
+to phrase "Stranger → Distant Acq.", and only the code making the change sees both sides), **a tree
+hands out a fresh set per access** — `SuccessOutcomes => new[] {…}`, expression-bodied, never
+`{ get; } = …`. Trees are singletons in `DialogueTreeRegistry`, so an initialised auto-property would
+share one mutable outcome object across every conversation in the process.
+
+`Report(text)` settles that wording and sets `Reported`; an outcome that never reports changed nothing
+observable, and `ShowInUI` follows. That replaced returning `null` from `Apply`.
+
+### Checking the outcome catalogue
+
+```bash
+dotnet run -- --outcome-audit
+```
+
+The consequence-side counterpart to `--verb-audit`. The catalogue is built by **reflection** over
+`Outcome`, so a new one is covered the moment it is written and there is no list to maintain —
+`OutcomeId` is derived from the type name (`ItemAcquisitionOutcome` → `item_acquisition`). What
+*produces* each is found by sweeping real scenes the way `--verb-probe` does, then reading every
+dialogue tree's outcome sets.
+
+It warns about the two faults that are silent at runtime:
+
+- an `Outcome` subclass nothing produces — dead content;
+- a verb whose `SuccessReports` comes back empty everywhere. It still rolls, still prints SUCCESS,
+  still satisfies `expect-verb`, and changes nothing.
+
+Two details keep those warnings worth reading. The sweep calls the **view-aware** `SuccessReports`
+overload once per expanded view, because a verb that splits one target into several actions decides
+its outcome from the view's `Variant` — `introduce_me` needs to know *which* third party, and the
+target-only overload comes back empty. And outcomes reached by paths the sweep cannot walk (a phase
+transition, a failure branch, `tame`'s appeased beast) are declared in `OutcomeAudit.Elsewhere` with a
+reason, rather than left as noise to be ignored.
+
 ### Corpses
 
 A kill spawns a `CorpsePointOfInterest` in the area it happened in, through
@@ -571,7 +638,7 @@ quit
 
 ```bash
 ./run_tests.sh              # every audit, then every CLI script
-./run_tests.sh audits       # the headless audits only (seconds)
+./run_tests.sh audits       # the headless audits only (seconds) — eight of them
 ./run_tests.sh cli          # the CLI scripts only
 ./run_tests.sh cli gather   # just cli/gather/
 ```

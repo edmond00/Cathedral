@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Death Shake — the finishing snap: seizing and shaking with the whole spine to end a struggle at once.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class DeathShakeModusMentis : ModusMentis
 {

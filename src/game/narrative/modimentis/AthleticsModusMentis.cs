@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Athletics - Physical prowess through running, climbing, and bodily exertion
-/// Action modusMentis for dynamic movement and endurance
+/// VerbAction modusMentis for dynamic movement and endurance
 /// </summary>
 public class AthleticsModusMentis : ModusMentis
 {

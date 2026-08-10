@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Npc;
 
+using Cathedral.Game.Narrative;
+
 namespace Cathedral.Game.Dialogue.Tree.Trees;
 
 /// <summary>
@@ -39,12 +41,12 @@ public class RequestJobTree : DialogueTree
     // Success opens the work menu; a routine bakes in that success so replaying opens work directly.
     public override DialogueRoutineBehavior RoutineBehavior => DialogueRoutineBehavior.IncludeSuccess;
 
-    public override IReadOnlyList<IDialogueOutcome> SuccessOutcomes { get; } = new IDialogueOutcome[]
+    public override IReadOnlyList<Outcome> SuccessOutcomes => new Outcome[]
     {
         new OpenJobMenuOutcome(),
     };
 
-    public override IReadOnlyList<IDialogueOutcome> FailureOutcomes { get; } = System.Array.Empty<IDialogueOutcome>();
+    public override IReadOnlyList<Outcome> FailureOutcomes => System.Array.Empty<Outcome>();
 
     /// <summary>A branch end. Being taken on is a hard check at every depth.</summary>
     private static ResolutionNode End(string id, int depth,

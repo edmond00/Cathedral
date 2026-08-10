@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Vigilance — heightened combat awareness; a sentinel who perceives every opening and every threat before it fully arrives.
-/// Thinking and Action.
+/// Thinking and VerbAction.
 /// </summary>
 public class VigilanceModusMentis : ModusMentis
 {

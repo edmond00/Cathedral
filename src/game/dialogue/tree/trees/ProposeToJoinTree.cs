@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Npc;
 
+using Cathedral.Game.Narrative;
+
 namespace Cathedral.Game.Dialogue.Tree.Trees;
 
 /// <summary>
@@ -25,13 +27,13 @@ public class ProposeToJoinTree : DialogueTree
     /// <summary>What succeeding at this teaches: asking somebody for everything and being told yes.</summary>
     public override string? GrantedModusMentisId => "friendship";
 
-    public override IReadOnlyList<IDialogueOutcome> SuccessOutcomes { get; } = new IDialogueOutcome[]
+    public override IReadOnlyList<Outcome> SuccessOutcomes => new Outcome[]
     {
         new JoinPartyOutcome(),
         new AffinityTransitionOutcome(AffinityLevel.CloseFriend),
     };
 
-    public override IReadOnlyList<IDialogueOutcome> FailureOutcomes { get; } = new IDialogueOutcome[]
+    public override IReadOnlyList<Outcome> FailureOutcomes => new Outcome[]
     {
         new AffinityIncrementOutcome(-1),
     };

@@ -18,7 +18,7 @@ public class RoutineReplayResult
     public string? FailReason { get; set; }
 
     /// <summary>UI-visible outcome reports emitted during full replay (acquired items, etc.).</summary>
-    public List<OutcomeReport> Outcomes { get; set; } = new();
+    public List<Outcome> Outcomes { get; set; } = new();
 
     /// <summary>Extra outcome lines contributed by constraints (e.g. "Used: Torch").</summary>
     public List<string> ExtraLines { get; set; } = new();

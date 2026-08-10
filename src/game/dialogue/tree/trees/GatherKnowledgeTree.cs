@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Npc;
 
+using Cathedral.Game.Narrative;
+
 namespace Cathedral.Game.Dialogue.Tree.Trees;
 
 /// <summary>
@@ -57,13 +59,13 @@ public class GatherKnowledgeTree : DialogueTree
     }
 
     /// <summary>Being treated as somebody worth asking is not nothing.</summary>
-    public override IReadOnlyList<IDialogueOutcome> SuccessOutcomes { get; } = new IDialogueOutcome[]
+    public override IReadOnlyList<Outcome> SuccessOutcomes => new Outcome[]
     {
         new AffinityIncrementOutcome(0),
     };
 
     /// <summary>Being pumped for information by somebody who got nothing is merely tiresome.</summary>
-    public override IReadOnlyList<IDialogueOutcome> FailureOutcomes { get; } = new IDialogueOutcome[]
+    public override IReadOnlyList<Outcome> FailureOutcomes => new Outcome[]
     {
         new AffinityIncrementOutcome(0),
     };

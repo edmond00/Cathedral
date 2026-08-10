@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Survivalism — eating worms to last another day; measures food by whether it keeps you alive.
-/// Multi-function (Thinking + Action).
+/// Multi-function (Thinking + VerbAction).
 /// </summary>
 public class SurvivalismModusMentis : ModusMentis
 {

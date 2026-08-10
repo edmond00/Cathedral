@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Uppercut - Explosive upward striking force in close combat
-/// Action modusMentis for devastating close-quarters attacks
+/// VerbAction modusMentis for devastating close-quarters attacks
 /// </summary>
 public class UppercutModusMentis : ModusMentis
 {

@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Low Blow — underhanded combat targeting vulnerable spots below the belt; a pragmatic fighter with no interest in honor.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class LowBlowModusMentis : ModusMentis
 {

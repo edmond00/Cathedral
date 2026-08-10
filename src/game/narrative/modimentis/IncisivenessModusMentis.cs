@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Incisiveness — precise cutting and piercing through any defense; a duelist who finds the single gap and places the cut there cleanly.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class IncisivenessModusMentis : ModusMentis
 {

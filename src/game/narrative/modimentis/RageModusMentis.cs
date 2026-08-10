@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Rage — consuming battle fury that burns through pain and fear; a warrior who loses himself and finds something unstoppable.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class RageModusMentis : ModusMentis
 {

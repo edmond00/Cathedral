@@ -32,24 +32,24 @@ public class RequestJobVerb : DialogueVerb
 
     // Read out of context in the routines menu: name the NPC, and name the job that was actually
     // requested (the view's variant) rather than the generic "for work".
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbView? view = null)
+    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
         => view?.Variant is Job job
             ? $"meet {NpcName(target)} to ask to work as {job.WithArticle()}"
             : $"meet {NpcName(target)} to ask for work";
 
-    public override IEnumerable<VerbView> ExpandViews(Scene scene, PoV pov, Element target, PartyMember? actor = null)
+    public override IEnumerable<VerbAction> ExpandViews(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         var npc = Eligible(scene, pov, target, actor);
         if (npc is null) yield break;
 
         foreach (var job in JobRegistry.Instance.SampleJobs(npc.NpcId, npc.Archetype.ArchetypeId, JobsOffered))
-            yield return new VerbView(this, $"meet {NpcPronoun(target)} to request to work as {job.WithArticle()}", target, variant: job);
+            yield return new VerbAction(this, $"meet {NpcPronoun(target)} to request to work as {job.WithArticle()}", target, variant: job);
     }
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target, VerbView view)
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target, VerbAction view)
     {
         if (target is not SceneNpc sceneNpc || sceneNpc.Entity is not NpcEntity npc || view.Variant is not Job job)
-            return System.Array.Empty<OutcomeReport>();
+            return System.Array.Empty<Outcome>();
 
         npc.PendingJobOffer = job;   // the dialogue's terminal outcome promotes this to JobRequest
         return new[] { new DialogueTriggerOutcome(npc, DialogueTreeRegistry.Instance.Get("request_job").TreeId) };
@@ -57,7 +57,7 @@ public class RequestJobVerb : DialogueVerb
 
     // Routine recording captures which of the offered jobs was requested, so a replayed routine
     // reopens the work menu for the same job.
-    public override string? RoutineVariantKey(VerbView view) => (view.Variant as Job)?.Id;
+    public override string? RoutineVariantKey(VerbAction view) => (view.Variant as Job)?.Id;
 
     public override object? ResolveRoutineVariant(string variantKey) => JobRegistry.Instance.GetById(variantKey);
 

@@ -3,7 +3,7 @@ using Cathedral.Game.Narrative.Memory;
 namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
-/// Tooth Drawing - the barber-surgeon's trade of pulling and tending teeth. Action.
+/// Tooth Drawing - the barber-surgeon's trade of pulling and tending teeth. VerbAction.
 /// </summary>
 public class ToothDrawingModusMentis : ModusMentis
 {

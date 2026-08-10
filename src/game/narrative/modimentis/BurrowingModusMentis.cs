@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Burrowing — digging in and going under; the claw-and-foot work of tunnels, dens, and refuges in the earth.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class BurrowingModusMentis : ModusMentis
 {

@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Tillage — ploughing, breaking and turning soil; the straight furrow and the ready ground.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class TillageModusMentis : ModusMentis
 {

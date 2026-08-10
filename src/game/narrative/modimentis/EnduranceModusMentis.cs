@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Endurance — the trunk's deep stamina; the slow strength that outlasts cold, hunger, and the long haul.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class EnduranceModusMentis : ModusMentis
 {

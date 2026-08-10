@@ -18,7 +18,7 @@ public enum RoutineTargetKind
 
 /// <summary>
 /// What an outcome report does to a routine being recorded. Every
-/// <see cref="Cathedral.Game.Narrative.OutcomeReport"/> declares one, and the recorder reasons only
+/// <see cref="Cathedral.Game.Narrative.Outcome"/> declares one, and the recorder reasons only
 /// about this value — it never tests concrete report types. A new report therefore only has to
 /// answer this single question to be handled correctly, both when deciding whether an unrecordable
 /// verb may be skipped and when tracking which steps a later step depends on.

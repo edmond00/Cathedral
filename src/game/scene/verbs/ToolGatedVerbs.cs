@@ -47,12 +47,12 @@ public abstract class ExtractionVerb : Verb
     /// <summary>Declared so <c>InventoryCapacityRule</c> can refuse before the roll rather than after.</summary>
     public override Item? AcquiredItem(Element? target) => FirstAvailable(target)?.Item;
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         var element = FirstAvailable(target);
         return element == null
-            ? System.Array.Empty<OutcomeReport>()
-            : new OutcomeReport[] { new ItemAcquisitionOutcome(element) };
+            ? System.Array.Empty<Outcome>()
+            : new Outcome[] { new ItemAcquisitionOutcome(element) };
     }
 
     // Recordable: working a seam or a bank is exactly the repeatable labour a routine is for, and the
@@ -202,10 +202,10 @@ public class BreakVerb : Verb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"break {DefiniteTarget(target)} apart";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
         => target is BreakablePointOfInterest breakable
-            ? new OutcomeReport[] { new PoiReplacementOutcome(breakable, breakable.BrokenVariant) }
-            : System.Array.Empty<OutcomeReport>();
+            ? new Outcome[] { new PoiReplacementOutcome(breakable, breakable.BrokenVariant) }
+            : System.Array.Empty<Outcome>();
 
     /// <summary>Swinging a hammer at furniture sends pieces of it back at you.</summary>
     public override IReadOnlyList<Wound?> FailurePenalties(Element? target) => new Wound?[]

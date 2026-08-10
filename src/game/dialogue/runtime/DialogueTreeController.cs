@@ -299,15 +299,15 @@ public class DialogueTreeController
     private void InterruptConversation()
     {
         _npc.AffinityTable.MarkFirstContact(_partyMemberId);
-        var before = _npc.AffinityTable.GetLevel(_partyMemberId);
-        if (before != AffinityLevel.Suspicious)
-            _npc.AffinityTable.Adjust(_partyMemberId, -1);
 
         // Walking away costs standing, so it gets the same chip a resolved outcome would — the panel
         // closes immediately, but the buffer is shared and the player reads it back in narration.
-        var report = DialogueOutcomeReports.AffinityChange(
-            _npc, before, _npc.AffinityTable.GetLevel(_partyMemberId));
-        if (report != null) AppendOutcomeReports(new List<OutcomeReport> { report });
+        // One object does both: an ordinary outcome applies the step and words its own chip, and
+        // stays silent when the step was a no-op. This used to adjust the table by hand and then
+        // build a separate report describing what it had just done.
+        var walkedOut = new AffinityIncrementOutcome(-1);
+        walkedOut.Apply(OutcomeContext.ForDialogue(_npc, _partyMemberId, _protagonist));
+        if (walkedOut.ShowInUI) AppendOutcomeReports(new List<Outcome> { walkedOut });
 
         Console.WriteLine(
             $"DialogueTreeController: Conversation with {_npc.DisplayName} interrupted — " +
@@ -398,10 +398,10 @@ public class DialogueTreeController
 
     /// <summary>
     /// What the conversation actually changed, as the very chips the narration panel uses for an
-    /// action's outcome — same <see cref="OutcomeReport"/> type, same severity colours, same centred
+    /// action's outcome — same <see cref="Outcome"/> type, same severity colours, same centred
     /// band. A dialogue outcome and an action outcome should not look like different systems.
     /// </summary>
-    private void AppendOutcomeReports(List<OutcomeReport> reports) => Append(new NarrationBlock(
+    private void AppendOutcomeReports(List<Outcome> reports) => Append(new NarrationBlock(
         Type: NarrationBlockType.Outcome,
         ModusMentis: null!,
         Text: "",
@@ -683,14 +683,14 @@ public class DialogueTreeController
                 // Award +1 XP to every learned speaking MM that voiced a chosen reply on this branch.
                 // Through a report rather than a bare award, so each one earns its own chip below —
                 // the experience a conversation teaches used to accrue in complete silence.
-                var practiceReports = new List<OutcomeReport>();
+                var practiceReports = new List<Outcome>();
                 if (succeeded)
                 {
                     foreach (var mm in _chosenMMs.DistinctBy(m => m.ModusMentisId))
                     {
                         var practice = ModusMentisPracticeOutcome.For(_protagonist, mm);
                         if (practice == null) continue;
-                        practice.Apply(_protagonist, null, null);
+                        practice.Apply(OutcomeContext.For(_protagonist, null, null));
                         if (practice.ShowInUI) practiceReports.Add(practice);
                     }
                 }
@@ -698,12 +698,14 @@ public class DialogueTreeController
                 AppendNpcLine(reaction);
 
                 // Apply the tree's success or failure outcome set (shared by every branch).
-                var reports = new List<OutcomeReport>();
+                var reports = new List<Outcome>();
                 foreach (var outcome in succeeded ? _tree.SuccessOutcomes : _tree.FailureOutcomes)
                 {
-                    Console.WriteLine($"DialogueTreeController: applying outcome — {outcome.Description}");
-                    var report = outcome.Apply(_npc, _partyMemberId);
-                    if (report != null) reports.Add(report);
+                    Console.WriteLine($"DialogueTreeController: applying outcome — {outcome.DisplayName}");
+                    // The outcome IS the chip now: applying it settles its own wording, and one
+                    // that changed nothing never reports, so ShowInUI keeps it off the screen.
+                    outcome.Apply(OutcomeContext.ForDialogue(_npc, _partyMemberId, _protagonist));
+                    reports.Add(outcome);
                 }
 
                 // The conversation's own lesson, on top of the experience the replies already earned.
@@ -719,7 +721,7 @@ public class DialogueTreeController
                     {
                         var lesson = ModusMentisGrantOutcome.For(_protagonist, id);
                         if (lesson == null) continue;
-                        lesson.Apply(_protagonist, null, null);
+                        lesson.Apply(OutcomeContext.For(_protagonist, null, null));
                         if (lesson.ShowInUI) reports.Add(lesson);
                     }
                 }
@@ -733,9 +735,7 @@ public class DialogueTreeController
                 // A branch can legitimately change nothing (a failure with no failure-outcome), and
                 // silence there reads as a bug — say so plainly instead.
                 if (reports.Count == 0)
-                    reports.Add(new DialogueOutcomeReport(
-                        $"Nothing changes between you and {_npc.DisplayName}",
-                        OutcomeReportSeverity.Neutral));
+                    reports.Add(new NoDialogueConsequenceOutcome(_npc.DisplayName));
                 AppendOutcomeReports(reports);
 
                 EndConversation();

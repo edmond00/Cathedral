@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Bushcraft — fire, shelter, the wet wood; can read kindling, weather and shelter together.
-/// Multi-function (Action + Thinking).
+/// Multi-function (VerbAction + Thinking).
 /// </summary>
 public class BushcraftModusMentis : ModusMentis
 {

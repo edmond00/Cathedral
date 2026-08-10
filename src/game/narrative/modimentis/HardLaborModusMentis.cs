@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Hard Labor — long, heavy bodily work; a body broken in to the long ache of stable, dock and field.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class HardLaborModusMentis : ModusMentis
 {

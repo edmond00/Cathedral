@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Stealth — moving unheard, unseen; a body that has hidden in shadow long enough to be at home there.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class StealthModusMentis : ModusMentis
 {

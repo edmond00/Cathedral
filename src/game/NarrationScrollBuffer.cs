@@ -198,7 +198,7 @@ public class NarrationScrollBuffer
                 if (line.IsHistory)
                     continue;
 
-                // Action lines are drawn live from their ParsedNarrativeAction: RenderActionLine
+                // VerbAction lines are drawn live from their ParsedNarrativeAction: RenderActionLine
                 // paints the "⑤ [MODUS MENTIS ⟐⟐] " prefix piece by piece and the buffer stores only
                 // the wrapped text. History lines drop the action reference, so the prefix has to be
                 // baked into the text here — otherwise the header vanishes when the segment greys
@@ -832,12 +832,12 @@ public record RenderedLine(
     LineType Type,
     NarrationBlockType BlockType,
     List<string>? Keywords,
-    List<ParsedNarrativeAction>? Actions,  // Actions for rendering (only for Action lines)
+    List<ParsedNarrativeAction>? Actions,  // Actions for rendering (only for VerbAction lines)
     bool IsHistory = false,  // True if this line is part of history (from previous narration nodes)
     int GlobalActionIndex = -1,  // Global action index (0-based) across all thinking blocks, -1 if not an action line
     NarrationBlock? SourceBlock = null,  // The narration block this line comes from (for modusMentis chain tracking)
     List<int>? KeywordOccurrenceIndices = null,  // Parallel to Keywords: which occurrence (0-based) within this line to highlight
-    OutcomeReport? Report = null,  // Set only for LineType.Report lines; null for all other types
+    Outcome? Report = null,  // Set only for LineType.Report lines; null for all other types
     int DialogueOptionIndex = -1  // 0-based index into SourceBlock.DialogueOptions for LineType.DialogueOption lines, -1 otherwise
 );
 

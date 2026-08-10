@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Millcraft — grinding grain into flour; setting the stones and judging the meal by hand.
-/// Multi-function (Action + Thinking).
+/// Multi-function (VerbAction + Thinking).
 /// </summary>
 public class MillcraftModusMentis : ModusMentis
 {

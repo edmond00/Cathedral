@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Steady Hand — controlled bracing and balance under load; holding a thing exactly where it must be.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class SteadyHandModusMentis : ModusMentis
 {

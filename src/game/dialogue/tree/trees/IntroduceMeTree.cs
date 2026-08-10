@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Npc;
 
+using Cathedral.Game.Narrative;
+
 namespace Cathedral.Game.Dialogue.Tree.Trees;
 
 /// <summary>
@@ -30,12 +32,12 @@ public class IntroduceMeTree : DialogueTree
     /// <summary>What succeeding teaches: getting into a room on somebody else's word.</summary>
     public override string? GrantedModusMentisId => "high_society_manners";
 
-    public override IReadOnlyList<IDialogueOutcome> SuccessOutcomes { get; } = new IDialogueOutcome[]
+    public override IReadOnlyList<Outcome> SuccessOutcomes => new Outcome[]
     {
         new IntroductionGrantedOutcome(),
     };
 
-    public override IReadOnlyList<IDialogueOutcome> FailureOutcomes { get; } = new IDialogueOutcome[]
+    public override IReadOnlyList<Outcome> FailureOutcomes => new Outcome[]
     {
         new AffinityIncrementOutcome(-1),
     };

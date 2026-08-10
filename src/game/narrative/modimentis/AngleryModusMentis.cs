@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Anglery — taking fish out of water: reading a pool for where they lie, and the patience of rod and net.
-/// Observation + Action.
+/// Observation + VerbAction.
 /// </summary>
 public class AngleryModusMentis : ModusMentis
 {

@@ -25,7 +25,7 @@ namespace Cathedral.Terminal
         public event Action<int, int>? CellRightClicked;
         public event Action<int, int>? CellHovered;
         public event Action<int, int>? CellMouseReleased;
-        public event Action? MouseLeft;
+        public event System.Action? MouseLeft;
 
         public TerminalInputHandler(TerminalView view, TerminalRenderer renderer)
         {

@@ -17,7 +17,7 @@ namespace Cathedral.Game.Narrative.Rules.Choice;
 /// </summary>
 public class LowMoralityPrefersCrimeRule : IGoalChoiceRule
 {
-    public IReadOnlyList<ConcreteOutcome> Filter(IReadOnlyList<ConcreteOutcome> offered, ChoiceRuleContext ctx)
+    public IReadOnlyList<NarrativeAnchor> Filter(IReadOnlyList<NarrativeAnchor> offered, ChoiceRuleContext ctx)
     {
         if (ctx.ModusMentis.MoralLevel != MoralLevel.Low) return offered;
 

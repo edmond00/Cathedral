@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Pounce — the gathered spring and the committed instant; all four limbs storing patience and spending it at once.
-/// Observation and Action.
+/// Observation and VerbAction.
 /// </summary>
 public class PounceModusMentis : ModusMentis
 {

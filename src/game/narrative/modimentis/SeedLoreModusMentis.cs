@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Seed-Lore — sowing, spacing and the timing of planting; knowing the ground and the season.
-/// Multi-function (Thinking + Action).
+/// Multi-function (Thinking + VerbAction).
 /// </summary>
 public class SeedLoreModusMentis : ModusMentis
 {

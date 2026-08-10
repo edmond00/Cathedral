@@ -53,13 +53,13 @@ public class TameVerb : Verb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"win {NpcPronoun(target)} over and keep {NpcPronoun(target)} with me";
 
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbView? view = null)
+    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
         => $"tame {NpcName(target)}";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
         => target is SceneNpc sceneNpc && sceneNpc.Entity is NpcEntity
-            ? new OutcomeReport[] { new RecruitedOutcome(sceneNpc) }
-            : System.Array.Empty<OutcomeReport>();
+            ? new Outcome[] { new RecruitedOutcome(sceneNpc) }
+            : System.Array.Empty<Outcome>();
 
     /// <summary>A half-tamed animal that changes its mind is at your throat, not across the clearing.</summary>
     public override IReadOnlyList<Wound?> FailurePenalties(Element? target) => new Wound?[]

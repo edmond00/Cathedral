@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Iron Stomach — the gut that keeps down what would fell another; eating, drinking, and enduring the vile.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class IronStomachModusMentis : ModusMentis
 {

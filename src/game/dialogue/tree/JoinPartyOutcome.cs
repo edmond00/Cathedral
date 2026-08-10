@@ -11,14 +11,23 @@ namespace Cathedral.Game.Dialogue.Tree;
 /// controller acts on the flag once the conversation closes. That is also why the flag lives on the
 /// NPC — it is the NPC's decision, and it survives the session ending.</para>
 /// </summary>
-public class JoinPartyOutcome : IDialogueOutcome
+public class JoinPartyOutcome : Outcome
 {
-    public string Description => "the NPC agrees to travel with the player";
+    public JoinPartyOutcome()
+        : base("the NPC agrees to travel with the player", OutcomeSeverity.Positive, "") { }
 
-    public OutcomeReport? Apply(NpcEntity npc, string partyMemberId)
+
+    
+    // Ordinary Outcome, like every other consequence. The chip text is settled in Apply because a
+    // conversation's effect only knows its own wording once it has seen this NPC's before/after
+    // state; ShowInUI stays false when nothing actually changed, which is what returning null used
+    // to mean. Trees hand out a fresh set per access precisely so this per-conversation state is safe.
+    public override bool ShowInUI => Reported;
+
+    public override void Apply(OutcomeContext ctx)
     {
+        var npc = ctx.Npc!;
         npc.JoinRequested = true;
-        return new DialogueOutcomeReport($"{npc.DisplayName} will travel with you",
-                                         OutcomeReportSeverity.Positive);
+        Report($"{npc.DisplayName} will travel with you");
     }
 }

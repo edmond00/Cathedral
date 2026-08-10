@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Npc;
 
+using Cathedral.Game.Narrative;
+
 namespace Cathedral.Game.Dialogue.Tree.Trees;
 
 /// <summary>
@@ -38,12 +40,12 @@ public class MeetStrangerTree : DialogueTree
     /// <summary>What succeeding at this conversation teaches: a first meeting carried off well.</summary>
     public override string? GrantedModusMentisId => "hospitality";
 
-    public override IReadOnlyList<IDialogueOutcome> SuccessOutcomes { get; } = new IDialogueOutcome[]
+    public override IReadOnlyList<Outcome> SuccessOutcomes => new Outcome[]
     {
         new AffinityTransitionOutcome(AffinityLevel.DistantAcquaintance),
     };
 
-    public override IReadOnlyList<IDialogueOutcome> FailureOutcomes { get; } = new IDialogueOutcome[]
+    public override IReadOnlyList<Outcome> FailureOutcomes => new Outcome[]
     {
         new AffinityTransitionOutcome(AffinityLevel.AnnoyingAcquaintance),
     };

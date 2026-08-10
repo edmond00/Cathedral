@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Lope — the tireless four-limbed gait that eats distance; the wolf's trot that outlasts every sprinter.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class LopeModusMentis : ModusMentis
 {

@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Dirty Labor — muck-handling, foul work; learnt by children who carried muck and gut and
-/// learnt to set the nose aside. Action-only.
+/// learnt to set the nose aside. VerbAction-only.
 /// </summary>
 public class DirtyLaborModusMentis : ModusMentis
 {

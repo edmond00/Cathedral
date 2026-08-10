@@ -36,13 +36,13 @@ public class VoyageTowardVerb : Verb
             ? $"set out for the {landscape.Destination.DisplayName.ToLowerInvariant()}"
             : "set out for what I can see from here";
 
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbView? view = null)
+    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
         => Verbatim(scene, pov, target);
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
         => target is LandscapePointOfInterest landscape
-            ? new OutcomeReport[] { new AreaMoveOutcome(landscape.Destination) }
-            : System.Array.Empty<OutcomeReport>();
+            ? new Outcome[] { new AreaMoveOutcome(landscape.Destination) }
+            : System.Array.Empty<Outcome>();
 
     /// <summary>Cross-country is rougher going than a path. Rarely, it turns an ankle.</summary>
     public override IReadOnlyList<Wound?> FailurePenalties(Element? target) => new Wound?[]

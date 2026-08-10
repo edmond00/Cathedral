@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Npc;
 
+using Cathedral.Game.Narrative;
+
 namespace Cathedral.Game.Dialogue.Tree.Trees;
 
 /// <summary>
@@ -30,13 +32,13 @@ public class ProvokeTree : DialogueTree
     public override string? GrantedModusMentisId => "invective";
 
     /// <summary>The goad landed. They come at you, and they come alone.</summary>
-    public override IReadOnlyList<IDialogueOutcome> SuccessOutcomes { get; } = new IDialogueOutcome[]
+    public override IReadOnlyList<Outcome> SuccessOutcomes => new Outcome[]
     {
         new FightRequestOutcome(personal: true),
     };
 
     /// <summary>It missed. No fight, and now they think less of you.</summary>
-    public override IReadOnlyList<IDialogueOutcome> FailureOutcomes { get; } = new IDialogueOutcome[]
+    public override IReadOnlyList<Outcome> FailureOutcomes => new Outcome[]
     {
         new AffinityIncrementOutcome(-1),
     };

@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Lockpicking — feeling the tumblers by touch; learnt as a child on dormitory doors with a stolen hairpin.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class LockpickingModusMentis : ModusMentis
 {

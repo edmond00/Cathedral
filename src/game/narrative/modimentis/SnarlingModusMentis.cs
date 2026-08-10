@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Snarling — the bared-teeth warning; threat displayed loudly enough that the fight never has to happen.
-/// Action and Speaking.
+/// VerbAction and Speaking.
 /// </summary>
 public class SnarlingModusMentis : ModusMentis
 {
@@ -13,7 +13,7 @@ public class SnarlingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Bares teeth first and negotiates second, meeting pressure with a show of menace pitched to end the contest early. Reads how much threat a moment needs, and spends exactly that much before anyone bleeds.";
     public override string SkillMeans       => "the bared-teeth warning that ends fights before they start";
-    // Action only — see HowlingModusMentis: a snarl is voice, and the Speaking function is for
+    // VerbAction only — see HowlingModusMentis: a snarl is voice, and the Speaking function is for
     // conversation, which requires AnatomyCapability.Speech.
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "muzzle" };

@@ -30,12 +30,12 @@ public class TrackVerb : Verb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"follow {DefiniteTarget(target)}";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         var destination = Destination(scene, pov, target);
         return destination == null
-            ? System.Array.Empty<OutcomeReport>()
-            : new OutcomeReport[] { new AreaMoveOutcome(destination) };
+            ? System.Array.Empty<Outcome>()
+            : new Outcome[] { new AreaMoveOutcome(destination) };
     }
 
     /// <summary>
@@ -93,16 +93,16 @@ public class StalkVerb : Verb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"follow {NpcPronoun(target)} at a distance and see where {NpcSubjectPronoun(target)} goes";
 
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbView? view = null)
+    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
         => $"follow {NpcName(target)} to see where they go";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         var plan = Plan(scene, pov, target);
-        if (plan == null) return System.Array.Empty<OutcomeReport>();
+        if (plan == null) return System.Array.Empty<Outcome>();
 
         var (period, arrival, npc) = plan.Value;
-        return new OutcomeReport[]
+        return new Outcome[]
         {
             new TimeShiftOutcome(period),
             new AreaMoveOutcome(arrival),

@@ -88,8 +88,8 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
             {
                 if (!byGuid.TryGetValue(toId, out var toNode) || toNode.Area == null) continue;
                 var toArea   = toNode.Area;
-                var verbView = new VerbView(new MoveToAreaVerb(), toArea.TransitionDescription, toArea);
-                var entry    = new SceneViewEntry(toArea, new List<VerbView> { verbView });
+                var verbView = new VerbAction(new MoveToAreaVerb(), toArea.TransitionDescription, toArea);
+                var entry    = new SceneViewEntry(toArea, new List<VerbAction> { verbView });
                 fromNode.PossibleOutcomes.Add(new SyntheticAreaObservationObject(toArea, entry));
             }
         }

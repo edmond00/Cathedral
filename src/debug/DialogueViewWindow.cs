@@ -113,8 +113,8 @@ public class DialogueViewWindow : Form
                  + $"Verb    : {tree.AssociatedVerbId}\r\n"
                  + $"Routine : {tree.RoutineBehavior}\r\n"
                  + $"Subject : {tree.Description}\r\n"
-                 + $"Success : {string.Join(", ", tree.SuccessOutcomes.Select(o => o.Description))}\r\n"
-                 + $"Failure : {string.Join(", ", tree.FailureOutcomes.Select(o => o.Description))}",
+                 + $"Success : {string.Join(", ", tree.SuccessOutcomes.Select(o => o.DisplayName))}\r\n"
+                 + $"Failure : {string.Join(", ", tree.FailureOutcomes.Select(o => o.DisplayName))}",
         };
 
         var right = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(30, 30, 30) };

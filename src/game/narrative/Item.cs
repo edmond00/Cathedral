@@ -7,8 +7,11 @@ namespace Cathedral.Game.Narrative;
 /// Items have specific names but should not include qualifiers (e.g., "Trout" not "Small Fish").
 /// Implements IObservation as self-referential: an Item IS its own single observation.
 /// </summary>
-public abstract class Item : ConcreteOutcome, IObservation
+public abstract class Item
 {
+    /// <summary>Human-readable name, shown in the pack and in outcome chips.</summary>
+    public abstract string DisplayName { get; }
+
     /// <summary>Unique identifier for this item.</summary>
     public abstract string ItemId { get; }
 
@@ -104,7 +107,6 @@ public abstract class Item : ConcreteOutcome, IObservation
     /// </summary>
     public virtual int UsageLevel => 1;
 
-    public override string ToNaturalLanguageString() => $"acquire {DisplayName}";
 
     /// <summary>
     /// The article/determiner that precedes this item's lowercased name when it is mentioned
@@ -138,8 +140,4 @@ public abstract class Item : ConcreteOutcome, IObservation
     public string DescriptionLower() =>
         Description.Length == 0 ? Description : char.ToLowerInvariant(Description[0]) + Description[1..];
 
-    // ── IObservation (self-referential) ───────────────────────────────────────
-    string IObservation.ObservationId => ItemId;
-    IReadOnlyList<ConcreteOutcome> IObservation.ObservationOutcomes =>
-        new System.Collections.ObjectModel.ReadOnlyCollection<ConcreteOutcome>(new List<ConcreteOutcome> { this });
 }

@@ -17,7 +17,7 @@
 set -uo pipefail
 cd "$(dirname "$0")"
 
-AUDITS=(crime mm verb building dialogue npc item)
+AUDITS=(crime mm verb building dialogue npc item outcome)
 CLI_TIMEOUT=200
 LOG_DIR="${TMPDIR:-/tmp}/cathedral-tests"
 mkdir -p "$LOG_DIR"

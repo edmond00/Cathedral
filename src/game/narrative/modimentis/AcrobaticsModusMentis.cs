@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Acrobatics — leaping, balance, tumbling; a rooftop runaway whose body knows how to fall well.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class AcrobaticsModusMentis : ModusMentis
 {

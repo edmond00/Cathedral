@@ -26,7 +26,7 @@ public sealed record ChoiceRuleContext(
     PoV              PoV,
     PartyMember      Actor,
     ModusMentis      ModusMentis,
-    ConcreteOutcome? Goal = null);
+    NarrativeAnchor? Goal = null);
 
 /// <summary>
 /// A deterministic, coded restriction on what a modus mentis may be <b>offered</b> — as opposed to
@@ -52,7 +52,7 @@ public interface IChoiceRule<T>
 }
 
 /// <summary>A rule that narrows the goals a thinking modus mentis is offered.</summary>
-public interface IGoalChoiceRule : IChoiceRule<IReadOnlyList<ConcreteOutcome>> { }
+public interface IGoalChoiceRule : IChoiceRule<IReadOnlyList<NarrativeAnchor>> { }
 
 /// <summary>A rule that narrows how an action modus mentis may answer "do you want to do it?".</summary>
 public interface IWillingnessRule : IChoiceRule<WillingnessOptions> { }

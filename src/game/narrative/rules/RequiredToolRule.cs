@@ -19,7 +19,7 @@ public class RequiredToolRule : IActionRule
 {
     public ActionRuleResult Check(ActionRuleContext ctx)
     {
-        var verb = ctx.Action.PreselectedOutcome?.VerbView.Verb;
+        var verb = ctx.Action.PreselectedOutcome?.Verb;
         if (verb == null || !verb.RequiresTool)      return ActionRuleResult.Pass();
         if (ctx.Action.CombinedItem != null)         return ActionRuleResult.Pass();
 

@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Cellarcraft — storing, casking and preserving goods; keeping grain, ale and provender sound in store.
-/// Multi-function (Action + Thinking).
+/// Multi-function (VerbAction + Thinking).
 /// </summary>
 public class CellarcraftModusMentis : ModusMentis
 {

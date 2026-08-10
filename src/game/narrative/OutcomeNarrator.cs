@@ -35,7 +35,7 @@ public class OutcomeNarrator
     public async Task<string> NarrateOutcomeAsync(
         ParsedNarrativeAction action,
         ModusMentis actionModusMentis,
-        OutcomeBase outcome,
+        INarratable outcome,
         bool succeeded,
         double difficulty,
         PartyMember protagonist,
@@ -74,8 +74,8 @@ public class OutcomeNarrator
     public async Task<(string success, string failure)> NarrateBothOutcomesAsync(
         ParsedNarrativeAction action,
         ModusMentis actionModusMentis,
-        OutcomeBase successOutcome,
-        OutcomeBase failureOutcome,
+        INarratable successOutcome,
+        INarratable failureOutcome,
         double difficulty,
         PartyMember protagonist,
         IReadOnlyList<string>? successVerbatims,

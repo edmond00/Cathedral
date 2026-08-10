@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Childhood Reminescence — the only modus mentis the protagonist owns at run start.
-/// Covers Observation, Thinking and Action so it can drive the entire CoT pipeline during
+/// Covers Observation, Thinking and VerbAction so it can drive the entire CoT pipeline during
 /// the childhood reminescence phase. Every question filler is phrased as a character
 /// drifting through half-surfaced childhood images rather than exploring a real location.
 /// </summary>

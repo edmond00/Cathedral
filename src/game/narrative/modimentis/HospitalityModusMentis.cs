@@ -6,7 +6,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 /// Hospitality — the practical craft of taking in an arrival: room found, pot stretched, wet
 /// gear dried, beast stalled. Distinct from High Society Manners and Social Interaction (the
 /// social graces): this is the work of housing and feeding a stranger, and the warm busy talk
-/// that goes with it. Multi-function (Action + Speaking).
+/// that goes with it. Multi-function (VerbAction + Speaking).
 /// </summary>
 public class HospitalityModusMentis : ModusMentis
 {

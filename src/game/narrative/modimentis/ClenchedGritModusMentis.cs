@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Clenched Grit — teeth set and back straight through pain; endurance as a bite held against the scream.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class ClenchedGritModusMentis : ModusMentis
 {

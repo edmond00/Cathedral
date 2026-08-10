@@ -108,7 +108,7 @@ namespace Cathedral.Glyph
         // Events for interface interaction
         public event Action<int, OpenTK.Mathematics.Vector2>? VertexHovered;
         public event Action<int, OpenTK.Mathematics.Vector2>? VertexClicked;
-        public event Action? CoreLoaded;
+        public event System.Action? CoreLoaded;
         public event Action<float>? UpdateRequested;
         public event Action<float>? MouseWheelScrolled;
         

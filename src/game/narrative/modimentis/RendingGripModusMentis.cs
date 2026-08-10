@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Rending Grip — fang and claw working together to hold and tear; the predator's mechanics of taking prey apart.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class RendingGripModusMentis : ModusMentis
 {

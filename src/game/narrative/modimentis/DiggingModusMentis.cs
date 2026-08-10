@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Digging — all four limbs turned to moving earth; the pit, the cache, and the thing worth unearthing.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class DiggingModusMentis : ModusMentis
 {

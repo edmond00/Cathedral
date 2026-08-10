@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Sneak Art - The practice of silent movement and remaining undetected
-/// Action modusMentis for stealth and evasion
+/// VerbAction modusMentis for stealth and evasion
 /// </summary>
 public class SneakArtModusMentis : ModusMentis
 {

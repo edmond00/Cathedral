@@ -310,7 +310,7 @@ public class NarrativeUI : TerminalPanelUI
                     }
                     else
                     {
-                        // Action result block (from Action block type) - detect SUCCESS/FAILURE
+                        // VerbAction result block (from VerbAction block type) - detect SUCCESS/FAILURE
                         Vector4 actionColor = Config.NarrativeUI.NarrativeColor;
                         if (renderedLine.Text.Contains("[SUCCESS]"))
                         {

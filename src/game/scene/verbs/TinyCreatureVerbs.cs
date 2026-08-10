@@ -65,13 +65,13 @@ public class CatchVerb : TinyCreatureVerb
             ? arch.BuildCatchYield().FirstOrDefault()
             : null;
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         if (target is not SceneNpc sceneNpc || sceneNpc.Entity is not ShallowNpcEntity shallow)
-            return System.Array.Empty<OutcomeReport>();
-        if (shallow.Archetype is not ShallowNpcArchetype arch) return System.Array.Empty<OutcomeReport>();
+            return System.Array.Empty<Outcome>();
+        if (shallow.Archetype is not ShallowNpcArchetype arch) return System.Array.Empty<Outcome>();
 
-        var reports = new List<OutcomeReport> { new TinyCreatureRemovedOutcome(sceneNpc, caught: true) };
+        var reports = new List<Outcome> { new TinyCreatureRemovedOutcome(sceneNpc, caught: true) };
         foreach (var item in arch.BuildCatchYield())
             reports.Add(new ItemGrantOutcome(item));
 
@@ -101,8 +101,8 @@ public class CrushVerb : TinyCreatureVerb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"crush the {TinyName(target)}";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
         => target is SceneNpc sceneNpc
-            ? new OutcomeReport[] { new TinyCreatureRemovedOutcome(sceneNpc, caught: false) }
-            : System.Array.Empty<OutcomeReport>();
+            ? new Outcome[] { new TinyCreatureRemovedOutcome(sceneNpc, caught: false) }
+            : System.Array.Empty<Outcome>();
 }

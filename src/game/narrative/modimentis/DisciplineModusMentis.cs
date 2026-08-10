@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Discipline — self-control under sting; the hard-won will to outwait impulse and hold the form under pressure.
-/// Multi-function (Thinking + Action).
+/// Multi-function (Thinking + VerbAction).
 /// </summary>
 public class DisciplineModusMentis : ModusMentis
 {

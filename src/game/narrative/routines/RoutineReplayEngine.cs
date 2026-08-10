@@ -106,7 +106,7 @@ public class RoutineReplayEngine
             var ruleResult = CheckCodedRules(scene, pov, ctx, verb, target, step);
             if (!ruleResult.Passed)
             {
-                Fail(result, i, ruleResult.ErrorMessage ?? "Action is not allowed here.");
+                Fail(result, i, ruleResult.ErrorMessage ?? "VerbAction is not allowed here.");
                 return result;
             }
 
@@ -123,12 +123,12 @@ public class RoutineReplayEngine
             object? variant = string.IsNullOrEmpty(step.VariantKey)
                 ? null
                 : verb.ResolveRoutineVariant(step.VariantKey);
-            var replayView = new VerbView(verb, step.Verbatim, target, variant);
+            var replayView = new VerbAction(verb, step.Verbatim, target, variant);
 
             var reports = verb.SuccessReports(scene, pov, ctx.ActingMember, target, replayView);
             foreach (var report in reports)
             {
-                report.Apply(ctx.ActingMember, scene, pov);
+                report.Apply(OutcomeContext.For(ctx.ActingMember, scene, pov));
                 if (!dryRun && report.ShowInUI) result.Outcomes.Add(report);
             }
 
@@ -159,10 +159,10 @@ public class RoutineReplayEngine
     private static ActionRuleResult CheckCodedRules(Scene.Scene scene, PoV pov, RoutineReplayContext ctx,
         Verb verb, Element target, RoutineStep step)
     {
-        var verbView = new VerbView(verb, verb.Verbatim(scene, pov, target), target);
+        var verbView = new VerbAction(verb, verb.Verbatim(scene, pov, target), target);
         var action = new ParsedNarrativeAction
         {
-            PreselectedOutcome  = new VerbOutcome(verbView, target),
+            PreselectedOutcome  = verbView,
             ActionModusMentisId = step.Constraints.OfType<ModusMentisConstraint>()
                                       .FirstOrDefault()?.ModusMentisId ?? string.Empty,
         };
@@ -217,8 +217,8 @@ public class RoutineReplayEngine
                 string partyMemberId = protagonist.AffinityKey;
                 foreach (var oc in tree.SuccessOutcomes)
                 {
-                    var report = oc.Apply(req.Npc, partyMemberId);
-                    if (report != null) result.Outcomes.Add(report);
+                    oc.Apply(OutcomeContext.ForDialogue(req.Npc, partyMemberId, protagonist));
+                    result.Outcomes.Add(oc);
                 }
 
                 if (req.Npc.TradeRequest != TradeMode.None)

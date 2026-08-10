@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Doughcraft — kneading, proving and shaping bread; the feel of a dough come right.
-/// Multi-function (Action + Thinking).
+/// Multi-function (VerbAction + Thinking).
 /// </summary>
 public class DoughcraftModusMentis : ModusMentis
 {

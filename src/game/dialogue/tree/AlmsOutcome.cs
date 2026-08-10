@@ -7,24 +7,31 @@ namespace Cathedral.Game.Dialogue.Tree;
 /// Records that an NPC gave the player a coin or two.
 ///
 /// <para>Sets an amount on the NPC rather than crediting the wallet, because an
-/// <see cref="IDialogueOutcome"/> is handed the NPC and the party-member id and nothing else — no
+/// <see cref="Outcome"/> is handed the NPC and the party-member id and nothing else — no
 /// scene, no protagonist, no purse. The controller pays it out when the session closes, the same way
 /// it opens the trade menu and the work menu.</para>
 ///
 /// <para>Deliberately small. Begging is meant to keep somebody alive, not to be an income.</para>
 /// </summary>
-public class AlmsOutcome : IDialogueOutcome
+public class AlmsOutcome : Outcome
 {
     private readonly int _copper;
 
-    public AlmsOutcome(int copper = 2) => _copper = copper;
+    public AlmsOutcome(int copper = 2)
+        : base($"the NPC gives {copper} copper", OutcomeSeverity.Positive, "") => _copper = copper;
 
-    public string Description => $"the NPC gives {_copper} copper";
 
-    public OutcomeReport? Apply(NpcEntity npc, string partyMemberId)
+    
+    // Ordinary Outcome, like every other consequence. The chip text is settled in Apply because a
+    // conversation's effect only knows its own wording once it has seen this NPC's before/after
+    // state; ShowInUI stays false when nothing actually changed, which is what returning null used
+    // to mean. Trees hand out a fresh set per access precisely so this per-conversation state is safe.
+    public override bool ShowInUI => Reported;
+
+    public override void Apply(OutcomeContext ctx)
     {
+        var npc = ctx.Npc!;
         npc.AlmsGiven = _copper;
-        return DialogueOutcomeReports.Relation(
-            $"{npc.DisplayName} gives you {_copper} copper", OutcomeReportSeverity.Positive);
+        Report($"{npc.DisplayName} gives you {_copper} copper");
     }
 }

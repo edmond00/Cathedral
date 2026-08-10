@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Wayfaring — the walker's craft of the open road: pace, ground, and weather read through legs that know the miles.
-/// Observation and Action.
+/// Observation and VerbAction.
 /// </summary>
 public class WayfaringModusMentis : ModusMentis
 {

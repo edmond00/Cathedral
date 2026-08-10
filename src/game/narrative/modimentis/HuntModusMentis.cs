@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Hunt — snare, stalk, kill small game; a snare-bred hunter whose eye finds the run, the trail
-/// and the thing worth taking. Action-only.
+/// and the thing worth taking. VerbAction-only.
 /// </summary>
 public class HuntModusMentis : ModusMentis
 {

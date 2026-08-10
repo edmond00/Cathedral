@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Tallycraft — folk counting, tallying and measuring; the tally-stick, the toll and the honest reckoning.
-/// Multi-function (Thinking + Action).
+/// Multi-function (Thinking + VerbAction).
 /// </summary>
 public class TallycraftModusMentis : ModusMentis
 {

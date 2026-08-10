@@ -49,7 +49,7 @@ public class ThinkingExecutor
     /// </summary>
     public async Task<ThinkingResponse?> GenerateThinkingAsync(
         ModusMentis thinkingModusMentis,
-        ConcreteOutcome targetOutcome,
+        NarrativeAnchor targetOutcome,
         string keyword,
         NarrationNode node,
         List<ModusMentis> actionModiMentis,
@@ -80,8 +80,8 @@ public class ThinkingExecutor
         // decline option ("walk away and leave it"); the persona choosing it IS the ignore outcome.
         var sourceObs = targetOutcome as ObservationObject;
         var subOutcomes = sourceObs != null
-            ? new List<ConcreteOutcome>(sourceObs.SubOutcomes)
-            : new List<ConcreteOutcome> { targetOutcome };
+            ? new List<NarrativeAnchor>(sourceObs.SubOutcomes)
+            : new List<NarrativeAnchor> { targetOutcome };
 
         string targetDescription = targetOutcome.ToNaturalLanguageString();
 
@@ -100,7 +100,7 @@ public class ThinkingExecutor
 
         // ── Decision 1: GOAL ────────────────────────────────────────────────────
         var (resolved, goalThought) = await ChooseGoalAsync(thinkingSlot, subOutcomes, thinkingModusMentis, overallLocation, areaLocation, observedPhrase, choiceCtx, cancellationToken, reasoningPart);
-        bool isIgnore = resolved is VerbOutcome vIgnore && vIgnore.VerbView.Verb is IgnoreVerb;
+        bool isIgnore = resolved is VerbAction vIgnore && vIgnore.Verb is IgnoreVerb;
 
         // ── Early exit: IGNORE (reasoning only, no action) ──────────────────────
         if (isIgnore)
@@ -151,7 +151,7 @@ public class ThinkingExecutor
         // Reasoning is done — make it continue-able now while the action (different MM) streams behind it.
         reasoningPart?.MarkComplete();
 
-        // ── Action skill slot: persona-fit check, then action-text flavor ───────
+        // ── VerbAction skill slot: persona-fit check, then action-text flavor ───────
         int actionSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(skill);
         _llmManager.ResetInstance(actionSlot);
 
@@ -202,10 +202,10 @@ public class ThinkingExecutor
 
         // Difficulty: verb base ± the persona-fit modifier (eager −1 / willing 0 / reluctant +1),
         // clamped to 1..10. Auto-success phases carry difficulty 0 (rendered with the ○ glyph).
-        var verbOutcome = (VerbOutcome)resolved;
+        var verbOutcome = (VerbAction)resolved;
         int difficultyLevel = autoSuccess
             ? 0
-            : Math.Clamp(verbOutcome.VerbView.Verb.DifficultyFor(verbOutcome.VerbView.Target) + fit.DifficultyModifier, 1, 10);
+            : Math.Clamp(verbOutcome.Verb.DifficultyFor(verbOutcome.Target) + fit.DifficultyModifier, 1, 10);
 
         var action = new ParsedNarrativeAction
         {
@@ -312,9 +312,9 @@ public class ThinkingExecutor
 
     // ── Decision: GOAL ─────────────────────────────────────────────────────────
 
-    private async Task<(ConcreteOutcome Outcome, string? Reasoning)> ChooseGoalAsync(
+    private async Task<(NarrativeAnchor Outcome, string? Reasoning)> ChooseGoalAsync(
         int thinkingSlot,
-        List<ConcreteOutcome> subOutcomes,
+        List<NarrativeAnchor> subOutcomes,
         ModusMentis thinkingModusMentis,
         string? overallLocation,
         string? areaLocation,
@@ -326,7 +326,7 @@ public class ThinkingExecutor
         // Only real, pursuable goals go in the list; "ignore & move on" rides in as the decline option
         // below. Choosing decline returns IgnoreVerb.MakeOutcome() so the caller's isIgnore exit fires.
         var realOutcomes = subOutcomes
-            .Where(o => !(o is VerbOutcome vo && vo.VerbView.Verb is IgnoreVerb))
+            .Where(o => !(o is VerbAction vo && vo.Verb is IgnoreVerb))
             .ToList();
 
         // Coded rules narrow the list to what this mind may be shown at all — a principled modus
@@ -375,14 +375,14 @@ public class ThinkingExecutor
     /// matches — a phase where the named verb does not apply then draws as usual rather than being
     /// unable to choose anything.
     /// </summary>
-    private static List<ConcreteOutcome> GoalOnlyFilter(List<ConcreteOutcome> outcomes)
+    private static List<NarrativeAnchor> GoalOnlyFilter(List<NarrativeAnchor> outcomes)
     {
         var wanted = Config.Debug.GoalOnly;
         if (string.IsNullOrWhiteSpace(wanted)) return outcomes;
 
         var matched = outcomes
-            .Where(o => o is VerbOutcome vo &&
-                        string.Equals(vo.VerbView.Verb.VerbId, wanted, StringComparison.OrdinalIgnoreCase))
+            .Where(o => o is VerbAction vo &&
+                        string.Equals(vo.Verb.VerbId, wanted, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         if (matched.Count > 0) return matched;

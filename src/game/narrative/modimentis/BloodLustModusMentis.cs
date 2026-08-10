@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Blood Lust — the dark intoxication of violence; a fighter who grows stronger and more driven with every blow landed.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class BloodLustModusMentis : ModusMentis
 {

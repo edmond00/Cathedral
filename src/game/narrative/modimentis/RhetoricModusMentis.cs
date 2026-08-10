@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Rhetoric - The art of persuasion through structured argumentation
-/// Action modusMentis for verbal influence and debate
+/// VerbAction modusMentis for verbal influence and debate
 /// </summary>
 public class RhetoricModusMentis : ModusMentis
 {

@@ -48,9 +48,9 @@ public class OpenDoorVerb : Verb
             : $"exit back through {DefiniteTarget(door)}";
     }
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
-        if (target is not DoorPointOfInterest door) return System.Array.Empty<OutcomeReport>();
+        if (target is not DoorPointOfInterest door) return System.Array.Empty<Outcome>();
         var destination = pov.Where.Id == door.FrontArea.Id ? door.BackArea : door.FrontArea;
         return new[] { new AreaMoveOutcome(destination) };
     }

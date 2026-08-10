@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Soft Mouth — the retriever's paradox: jaws strong enough to break, trained to carry without a bruise.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class SoftMouthModusMentis : ModusMentis
 {

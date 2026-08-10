@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Prowl — the low, silent patrol on all four limbs; moving through territory unseen while missing nothing in it.
-/// Observation and Action.
+/// Observation and VerbAction.
 /// </summary>
 public class ProwlModusMentis : ModusMentis
 {

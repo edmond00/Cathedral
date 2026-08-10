@@ -163,8 +163,8 @@ public class LocationTravelGameController : IDisposable
     // Events
     public event Action<GameMode, GameMode>? ModeChanged;
     public event Action<LocationInstanceState>? LocationExited;
-    public event Action? TravelStarted;
-    public event Action? TravelCompleted;
+    public event System.Action? TravelStarted;
+    public event System.Action? TravelCompleted;
 
     // Properties
     public GameMode CurrentMode => _currentMode;
@@ -2879,7 +2879,7 @@ public class LocationTravelGameController : IDisposable
                 return false;
             }
 
-            // Create Action Execution Controller dependencies
+            // Create VerbAction Execution Controller dependencies
             var outcomeNarrator = new OutcomeNarrator(
                 _llamaServer,
                 _modusMentisSlotManager
@@ -3142,7 +3142,7 @@ public class LocationTravelGameController : IDisposable
         {
             case StartFightTransition f:
                 if (_narrativeController != null)
-                    StartFightMode(new FightOutcome(f.Enemy, f.Reason) { EnemyInitiative = f.EnemyInitiative });
+                    StartFightMode(new FightTriggerOutcome(f.Enemy, f.Reason) { EnemyInitiative = f.EnemyInitiative });
                 else
                 {
                     Console.Error.WriteLine("ApplyPhaseTransition: fight requested with no narrative context — returning to travel");
@@ -3152,7 +3152,7 @@ public class LocationTravelGameController : IDisposable
 
             case StartDialogueTransition d:
                 if (_narrativeController != null)
-                    StartDialogueMode(new DialogueOutcome(d.Npc, d.TreeId, d.Tree));
+                    StartDialogueMode(new DialogueTriggerOutcome(d.Npc, d.TreeId, d.Tree));
                 else
                 {
                     Console.Error.WriteLine("ApplyPhaseTransition: dialogue requested with no narrative context — returning to travel");
@@ -3162,7 +3162,7 @@ public class LocationTravelGameController : IDisposable
 
             case StartRoutineDialogueTransition rd:
                 StartRoutineSubPhase(rd.Vertex, rd.NpcKey, rd.Time,
-                    npc => StartDialogueMode(new DialogueOutcome(npc, rd.TreeId)));
+                    npc => StartDialogueMode(new DialogueTriggerOutcome(npc, rd.TreeId)));
                 break;
 
             case StartRoutineTradeTransition rt:
@@ -3478,7 +3478,7 @@ public class LocationTravelGameController : IDisposable
     /// fight recruits the brave NPCs of the section, which is what makes picking one in a village
     /// square a bad idea.
     /// </param>
-    private void StartFightMode(FightOutcome fightOutcome, bool soloEnemy = false)
+    private void StartFightMode(FightTriggerOutcome fightOutcome, bool soloEnemy = false)
     {
         if (_core.Terminal == null || _narrativeController == null)
             return;
@@ -3556,7 +3556,7 @@ public class LocationTravelGameController : IDisposable
     /// <summary>
     /// Transitions from narrative mode into embedded dialogue mode.
     /// </summary>
-    private void StartDialogueMode(DialogueOutcome dialogueOutcome)
+    private void StartDialogueMode(DialogueTriggerOutcome dialogueOutcome)
     {
         if (_core.Terminal == null || _narrativeController == null ||
             _llamaServer == null || _modusMentisSlotManager == null)
@@ -3699,12 +3699,12 @@ public class LocationTravelGameController : IDisposable
             _dialogueAdapter = null;
             Console.WriteLine($"LocationTravelGameController: NPC {npc.DisplayName} demanded fight — entering fight mode"
                             + (provoked ? " (personal — no allies)" : ""));
-            var fightOutcome = new FightOutcome(npc, $"confrontation with {npc.DisplayName}");
+            var fightOutcome = new FightTriggerOutcome(npc, $"confrontation with {npc.DisplayName}");
             StartFightMode(fightOutcome, soloEnemy: provoked);
             return;
         }
 
-        // A successful beg pays out here: an IDialogueOutcome can reach the NPC and nothing else, so
+        // A successful beg pays out here: an Outcome can reach the NPC and nothing else, so
         // the wallet is out of its reach the same way the trade menu is.
         if (npc.AlmsGiven > 0 && _protagonist != null)
         {

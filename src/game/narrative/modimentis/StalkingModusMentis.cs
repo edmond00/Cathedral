@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Stalking — the slow pursuit on soft legs; closing distance on the unaware, one frozen step at a time.
-/// Observation and Action.
+/// Observation and VerbAction.
 /// </summary>
 public class StalkingModusMentis : ModusMentis
 {

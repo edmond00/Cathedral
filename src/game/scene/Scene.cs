@@ -372,7 +372,7 @@ public class Scene
 
     private SceneViewEntry BuildEntry(Element element, PoV pov, PartyMember? actor = null)
     {
-        var verbs    = new List<VerbView>();
+        var verbs    = new List<VerbAction>();
 
         foreach (var verb in Verbs)
             verbs.AddRange(verb.ExpandViews(this, pov, element, actor));

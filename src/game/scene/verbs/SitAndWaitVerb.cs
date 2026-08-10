@@ -29,8 +29,8 @@ public class SitAndWaitVerb : Verb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"sit on {DefiniteTarget(target)} and let the time pass";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
-        => new OutcomeReport[] { new TimeShiftOutcome(pov.When.Next()) };
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
+        => new Outcome[] { new TimeShiftOutcome(pov.When.Next()) };
 
     // ── Routine recording ─────────────────────────────────────────────────────
     // Recordable, but TimeShiftOutcome declares RoutineChainEffect.TimeShift, so the recorder treats

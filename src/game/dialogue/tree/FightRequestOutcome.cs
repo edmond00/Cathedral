@@ -8,7 +8,7 @@ namespace Cathedral.Game.Dialogue.Tree;
 /// <see cref="NpcEntity.FightRequestedByDialogue"/> is set to true so the game controller
 /// can transition into fight mode immediately after the dialogue session ends.
 /// </summary>
-public class FightRequestOutcome : IDialogueOutcome
+public class FightRequestOutcome : Outcome
 {
     /// <summary>
     /// Whether the fight is between the two of them alone. False by default — a fight demanded after
@@ -17,15 +17,23 @@ public class FightRequestOutcome : IDialogueOutcome
     /// </summary>
     private readonly bool _personal;
 
-    public FightRequestOutcome(bool personal = false) => _personal = personal;
+    public FightRequestOutcome(bool personal = false)
+        : base(personal ? "NPC is goaded into a fight, alone" : "NPC demands a fight",
+               OutcomeSeverity.Negative, "") => _personal = personal;
 
-    public string Description => _personal ? "NPC is goaded into a fight, alone" : "NPC demands a fight";
 
-    public OutcomeReport? Apply(NpcEntity npc, string partyMemberId)
+    
+    // Ordinary Outcome, like every other consequence. The chip text is settled in Apply because a
+    // conversation's effect only knows its own wording once it has seen this NPC's before/after
+    // state; ShowInUI stays false when nothing actually changed, which is what returning null used
+    // to mean. Trees hand out a fresh set per access precisely so this per-conversation state is safe.
+    public override bool ShowInUI => Reported;
+
+    public override void Apply(OutcomeContext ctx)
     {
+        var npc = ctx.Npc!;
         npc.FightRequestedByDialogue = true;
         npc.FightIsPersonal          = _personal;
-        return DialogueOutcomeReports.Relation(
-            $"{npc.DisplayName} demands a fight", OutcomeReportSeverity.Negative);
+        Report($"{npc.DisplayName} demands a fight");
     }
 }

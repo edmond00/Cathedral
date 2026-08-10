@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Deadeye — exceptional long-range precision; a legendary shot who treats impossible distances as arithmetic.
-/// Action-only.
+/// VerbAction-only.
 /// </summary>
 public class DeadeyeModusMentis : ModusMentis
 {
