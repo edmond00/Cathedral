@@ -39,9 +39,9 @@ public static class CommonWordLexicon
     // ── Initialisation ──────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Loads the dictionary from <c>models/en_US.dic</c>. Idempotent and non-fatal:
-    /// if the file is missing or unreadable the guard simply stays disabled and the
-    /// pipeline behaves as if no word is ever a common word (no filtering).
+    /// Loads the word list named by <see cref="DictionaryFileName"/> from <c>models/</c>.
+    /// Idempotent and non-fatal: if the file is missing or unreadable the guard simply stays
+    /// disabled and the pipeline behaves as if no word is ever a common word (no filtering).
     /// </summary>
     public static void Initialize()
     {

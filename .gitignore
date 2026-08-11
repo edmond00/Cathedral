@@ -452,6 +452,9 @@ models/llama/backends/*
 # The pre-cleanup models folder, kept locally as an archive (see models/README.md).
 models_old/
 
+# Release packages built by package.ps1 — a staged copy of the game plus a multi-GB zip.
+dist/
+
 # OS generated files
 .DS_Store
 .DS_Store?

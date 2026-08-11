@@ -1,7 +1,43 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <!--
+      Console subsystem for development, GUI subsystem for shipped builds.
+
+      A developer wants the diagnostic stream and the CLI driver, both of which need a console.
+      A player double-clicking the game wants a game, not a black window filling with log lines.
+      The two differ only in a PE subsystem flag, so one property covers it:
+
+          dotnet build                → Exe    (console; the default for everyone)
+          dotnet publish -p:Ship=true → WinExe (no console window; what package.ps1 passes)
+
+      Keyed on an explicit Ship property rather than on Configuration, so that building or
+      profiling in Release still gives you a console. Shipping is a deliberate act.
+
+      ConsoleAttach rejoins a terminal when a shipped build is launched from one, which is what
+      keeps the CLI driver usable against a packaged build.
+    -->
+    <OutputType Condition="'$(Ship)' == 'true'">WinExe</OutputType>
+    <OutputType Condition="'$(Ship)' != 'true'">Exe</OutputType>
+
+    <!--
+      SHIP also compiles out the developer keyboard shortcuts. See Config.Debug.DeveloperKeys:
+      the default is baked in here rather than read from a setting, so a shipped build cannot be
+      talked into exposing them.
+    -->
+    <DefineConstants Condition="'$(Ship)' == 'true'">$(DefineConstants);SHIP</DefineConstants>
+
+    <!--
+      The game is "Proscribed Palimpsest" to a player and "Cathedral" to everyone working on it.
+      Only the shipped executable is renamed, deliberately: run_tests.sh guards the suite with
+      `Get-Process -Name Cathedral`, and that guard is what stops a leftover run from racing a new
+      one. Renaming the development binary would break it silently — the guard would simply stop
+      finding anything, which reads as "all clear".
+
+      No space in the name. A player sees it in a folder listing either way, and every CLI
+      invocation (the whole test driver, any future CI) would otherwise need quoting.
+    -->
+    <AssemblyName Condition="'$(Ship)' == 'true'">ProscribedPalimpsest</AssemblyName>
     <TargetFramework>net8.0-windows</TargetFramework>
     <!-- Allow BinaryFormatter for MSAGL's GViewer which uses it to deserialize its own embedded toolbar resources -->
     <EnableUnsafeBinaryFormatterSerialization>true</EnableUnsafeBinaryFormatterSerialization>

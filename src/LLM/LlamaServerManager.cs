@@ -66,8 +66,61 @@ public class LlamaServerManager : IDisposable
     /// </summary>
     public string? SessionLogDir => _sessionLogDir;
     
+    /// <summary>
+    /// Set once a log write has failed, so the reason is reported once rather than per request.
+    /// </summary>
+    private bool _loggingDisabled;
+
+    /// <summary>
+    /// Creates a directory for diagnostics, or returns null if it cannot be created.
+    ///
+    /// <para><b>Logging must never be able to stop the game working.</b> Every log path here is
+    /// relative to the working directory, so an install the player cannot write to — extracted
+    /// into Program Files, on read-only media, behind a locked-down profile — fails at the first
+    /// <c>CreateDirectory</c>. That call used to sit unguarded inside the server-start try block,
+    /// so the exception was caught as "Error starting server" and the game lost narration
+    /// entirely: no LLM, and a message pointing at the wrong thing.</para>
+    ///
+    /// <para>Returning null instead degrades to silence. Every caller already treats a null log
+    /// directory as "do not log", so the whole diagnostic tree switches off together and nothing
+    /// downstream needs to know why.</para>
+    ///
+    /// <para>Reported once. A disk that has filled up would otherwise print per request, drowning
+    /// the very output someone is reading to work out what went wrong.</para>
+    /// </summary>
+    private string? TryCreateLogDirectory(string path)
+    {
+        if (_loggingDisabled) return null;
+
+        try
+        {
+            Directory.CreateDirectory(path);
+            return path;
+        }
+        catch (Exception ex)
+        {
+            NoteLoggingFailure($"cannot create '{path}'", ex);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Turns diagnostics off for the rest of the session and says so once. Shared by
+    /// <see cref="TryCreateLogDirectory"/> and by the per-request log blocks, so a disk that fills
+    /// up mid-session reports a single line rather than one per LLM call.
+    /// </summary>
+    private void NoteLoggingFailure(string what, Exception ex)
+    {
+        if (_loggingDisabled) return;
+        _loggingDisabled = true;
+        Console.Error.WriteLine(
+            $"LLM logging disabled: {what} ({ex.Message}). " +
+            "The game runs normally; only diagnostics are lost. This usually means the game " +
+            "folder is not writable — move the install somewhere it is if you need the logs.");
+    }
+
     // Helper methods for logging
-    
+
     /// <summary>
     /// Checks if an error message indicates a context length overflow
     /// </summary>
@@ -182,9 +235,9 @@ public class LlamaServerManager : IDisposable
                 
                 // Still create a session log directory for this run
                 var sessionTimestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
-                _sessionLogDir = Path.Combine("logs", $"llm_session_{sessionTimestamp}");
-                Directory.CreateDirectory(_sessionLogDir);
-                Console.WriteLine($"LLM logs will be saved to: {_sessionLogDir}");
+                _sessionLogDir = TryCreateLogDirectory(Path.Combine("logs", $"llm_session_{sessionTimestamp}"));
+                if (_sessionLogDir != null)
+                    Console.WriteLine($"LLM logs will be saved to: {_sessionLogDir}");
                 
                 LoadingProgressUpdated?.Invoke(this, new LoadingProgressEventArgs(1.0f, "Model loaded!", 0));
                 ServerReady?.Invoke(this, new ServerStatusEventArgs(true, "Server already running"));
@@ -197,11 +250,11 @@ public class LlamaServerManager : IDisposable
             
             Console.WriteLine("Starting llama server...");
             
-            // Create session log directory
+            // Create session log directory. A failure here is not fatal — see TryCreateLogDirectory.
             var timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
-            _sessionLogDir = Path.Combine("logs", $"llm_session_{timestamp}");
-            Directory.CreateDirectory(_sessionLogDir);
-            Console.WriteLine($"LLM logs will be saved to: {_sessionLogDir}");
+            _sessionLogDir = TryCreateLogDirectory(Path.Combine("logs", $"llm_session_{timestamp}"));
+            if (_sessionLogDir != null)
+                Console.WriteLine($"LLM logs will be saved to: {_sessionLogDir}");
             
             // Find paths
             var (resolvedServerPath, resolvedModelPath) = ResolvePaths();
@@ -299,9 +352,16 @@ public class LlamaServerManager : IDisposable
         // Create instance log directory and save system prompt
         if (_sessionLogDir != null)
         {
-            var instanceLogDir = Path.Combine(_sessionLogDir, $"slot_{slotId}");
-            Directory.CreateDirectory(instanceLogDir);
-            await File.WriteAllTextAsync(Path.Combine(instanceLogDir, "system_prompt.txt"), systemPrompt);
+            try
+            {
+                var instanceLogDir = Path.Combine(_sessionLogDir, $"slot_{slotId}");
+                Directory.CreateDirectory(instanceLogDir);
+                await File.WriteAllTextAsync(Path.Combine(instanceLogDir, "system_prompt.txt"), systemPrompt);
+            }
+            catch (Exception ex)
+            {
+                NoteLoggingFailure("cannot write a slot log", ex);
+            }
         }
         
         // Pre-cache the system prompt
@@ -365,11 +425,19 @@ public class LlamaServerManager : IDisposable
         string? requestLogDir = null;
         if (_sessionLogDir != null)
         {
-            requestLogDir = Path.Combine(_sessionLogDir, $"slot_{slotId}", $"request_{instance.RequestCount:D3}_{timestamp}");
-            Directory.CreateDirectory(requestLogDir);
-            
-            // Save user question
-            await File.WriteAllTextAsync(Path.Combine(requestLogDir, "user_message.txt"), userMessage);
+            try
+            {
+                requestLogDir = Path.Combine(_sessionLogDir, $"slot_{slotId}", $"request_{instance.RequestCount:D3}_{timestamp}");
+                Directory.CreateDirectory(requestLogDir);
+
+                // Save user question
+                await File.WriteAllTextAsync(Path.Combine(requestLogDir, "user_message.txt"), userMessage);
+            }
+            catch (Exception ex)
+            {
+                requestLogDir = null;
+                NoteLoggingFailure("cannot write a request log", ex);
+            }
         }
         
         try
@@ -581,9 +649,19 @@ public class LlamaServerManager : IDisposable
         string? requestLogDir = null;
         if (_sessionLogDir != null)
         {
-            requestLogDir = Path.Combine(_sessionLogDir, $"slot_{slotId}", $"request_{instance.RequestCount:D3}_{timestamp}");
-            Directory.CreateDirectory(requestLogDir);
-            await File.WriteAllTextAsync(Path.Combine(requestLogDir, "user_message.txt"), userMessage);
+            try
+            {
+                requestLogDir = Path.Combine(_sessionLogDir, $"slot_{slotId}", $"request_{instance.RequestCount:D3}_{timestamp}");
+                Directory.CreateDirectory(requestLogDir);
+                await File.WriteAllTextAsync(Path.Combine(requestLogDir, "user_message.txt"), userMessage);
+            }
+            catch (Exception ex)
+            {
+                // Clearing this switches off every later write in the request too — they are all
+                // guarded by it — so one failure cannot leave half a request logged.
+                requestLogDir = null;
+                NoteLoggingFailure("cannot write a request log", ex);
+            }
         }
 
         try
@@ -708,9 +786,19 @@ public class LlamaServerManager : IDisposable
         string? requestLogDir = null;
         if (_sessionLogDir != null)
         {
-            requestLogDir = Path.Combine(_sessionLogDir, $"slot_{slotId}", $"request_{instance.RequestCount:D3}_{timestamp}");
-            Directory.CreateDirectory(requestLogDir);
-            await File.WriteAllTextAsync(Path.Combine(requestLogDir, "user_message.txt"), userMessage);
+            try
+            {
+                requestLogDir = Path.Combine(_sessionLogDir, $"slot_{slotId}", $"request_{instance.RequestCount:D3}_{timestamp}");
+                Directory.CreateDirectory(requestLogDir);
+                await File.WriteAllTextAsync(Path.Combine(requestLogDir, "user_message.txt"), userMessage);
+            }
+            catch (Exception ex)
+            {
+                // Clearing this switches off every later write in the request too — they are all
+                // guarded by it — so one failure cannot leave half a request logged.
+                requestLogDir = null;
+                NoteLoggingFailure("cannot write a request log", ex);
+            }
         }
 
         try
@@ -874,11 +962,19 @@ public class LlamaServerManager : IDisposable
         string? requestLogDir = null;
         if (_sessionLogDir != null)
         {
-            requestLogDir = Path.Combine(_sessionLogDir, $"slot_{slotId}", $"request_{instance.RequestCount:D3}_{timestamp}");
-            Directory.CreateDirectory(requestLogDir);
-            
-            // Save user message
-            await File.WriteAllTextAsync(Path.Combine(requestLogDir, "user_message.txt"), userMessage);
+            try
+            {
+                requestLogDir = Path.Combine(_sessionLogDir, $"slot_{slotId}", $"request_{instance.RequestCount:D3}_{timestamp}");
+                Directory.CreateDirectory(requestLogDir);
+
+                // Save user message
+                await File.WriteAllTextAsync(Path.Combine(requestLogDir, "user_message.txt"), userMessage);
+            }
+            catch (Exception ex)
+            {
+                requestLogDir = null;
+                NoteLoggingFailure("cannot write a request log", ex);
+            }
         }
         
         var cancellationToken = new CancellationTokenSource();
@@ -1556,11 +1652,6 @@ public class LlamaServerManager : IDisposable
 
     private async Task StartServerProcessAsync(string serverPath, string modelPath, int contextSize, LlamaBackend? backend)
     {
-        // Save llama server logs in the session log directory
-        var logFilePath = _sessionLogDir != null
-            ? Path.Combine(_sessionLogDir, "llama-server.log")
-            : Path.Combine(Environment.CurrentDirectory, "llama-server.log");
-
         var startInfo = new ProcessStartInfo
         {
             FileName = serverPath,
@@ -1579,13 +1670,30 @@ public class LlamaServerManager : IDisposable
             throw new InvalidOperationException("Failed to start llama server process.");
         }
 
-        // Create log file and start logging
-        _logWriter = new StreamWriter(logFilePath, append: false);
+        // The server's own log, if diagnostics are available at all. There is deliberately no
+        // fallback to the working directory: a null session directory means that directory could
+        // not be written to, so falling back would fail again — and this time the exception would
+        // propagate out of the start path and be reported as the server having failed.
+        _logWriter = null;
+        if (_sessionLogDir != null)
+        {
+            try
+            {
+                _logWriter = new StreamWriter(Path.Combine(_sessionLogDir, "llama-server.log"), append: false);
+            }
+            catch (Exception ex)
+            {
+                _loggingDisabled = true;
+                Console.Error.WriteLine($"LLM logging disabled: cannot open llama-server.log ({ex.Message}).");
+            }
+        }
 
         // The two pump tasks below outlive a failed attempt: KillServerProcess clears both fields
         // so the next rung starts clean, and a task still reading the field would then throw a
         // NullReferenceException and log it as if the backend had misbehaved. Capture what they
-        // need instead, so a torn-down attempt ends its pumps quietly.
+        // need instead, so a torn-down attempt ends its pumps quietly. The writer may be null when
+        // logging is unavailable, in which case the pumps still run — they also drive the loading
+        // progress bar, which is not diagnostics.
         var process = _llamaProcess;
         var writer = _logWriter;
 
@@ -1604,8 +1712,12 @@ public class LlamaServerManager : IDisposable
                     var line = await process.StandardOutput.ReadLineAsync();
                     if (line != null)
                     {
-                        await writer.WriteLineAsync($"[STDOUT] {DateTime.Now:HH:mm:ss.fff} {line}");
-                        await writer.FlushAsync();
+                        if (writer != null)
+                        {
+                            await writer.WriteLineAsync($"[STDOUT] {DateTime.Now:HH:mm:ss.fff} {line}");
+                            await writer.FlushAsync();
+                        }
+                        // Outside the null check: this drives the loading bar, not the log.
                         ParseLoadingProgress(line);
                     }
                 }
@@ -1627,8 +1739,13 @@ public class LlamaServerManager : IDisposable
                     var line = await process.StandardError.ReadLineAsync();
                     if (line != null)
                     {
-                        await writer.WriteLineAsync($"[STDERR] {DateTime.Now:HH:mm:ss.fff} {line}");
-                        await writer.FlushAsync();
+                        if (writer != null)
+                        {
+                            await writer.WriteLineAsync($"[STDERR] {DateTime.Now:HH:mm:ss.fff} {line}");
+                            await writer.FlushAsync();
+                        }
+                        // Outside the null check: llama.cpp reports its loading stages on stderr,
+                        // so the progress bar depends on this line even when nothing is logged.
                         ParseLoadingProgress(line);
                     }
                 }

@@ -2,6 +2,18 @@
 using Cathedral.LLM;
 using Cathedral.Game;
 
+// A shipped build is compiled WinExe and owns no console. If it was launched from a terminal
+// anyway — which is the only way --cli is driven against a packaged build — join that terminal so
+// the diagnostic stream and the CLI driver have somewhere to talk. No-op in a console build, and
+// no-op when double-clicked. Touches no game state, so it may precede the seed.
+Cathedral.ConsoleAttach.AttachToParentIfPresent();
+
+// A shipped build answers only the handful of options a player might need to get out of trouble;
+// every development flag below is stripped here, before anything can read it. Inert in a
+// development build. This has to precede the seed parse for the same reason the seed parse
+// precedes everything else: an option removed after it has been acted on has not been removed.
+args = Cathedral.ShipArguments.Filter(args);
+
 // ── Master seed: resolved FIRST, before any other flag is looked at ──────────
 // Every other flag handler below sets a static on some mode class, and touching one of those runs
 // its static initializers — several of which ask GameRng for a stream. The first such ask resolves
@@ -21,8 +33,28 @@ Cathedral.GameRng.Initialize(Cathedral.Config.Rng.Seed);
 // Check for help option
 if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
 {
-    Console.WriteLine("Usage: Cathedral [options]");
+    // From the running executable, not a literal: the shipped build is ProscribedPalimpsest.exe
+    // and the development one is Cathedral.exe, and a usage line naming the wrong one is exactly
+    // the sort of thing nobody notices until a player pastes it into a bug report.
+    Console.WriteLine($"Usage: {System.IO.Path.GetFileNameWithoutExtension(Environment.ProcessPath) ?? "Cathedral"} [options]");
     Console.WriteLine();
+
+    // A shipped build lists what it will actually answer. Printing the full development list
+    // would be worse than printing nothing: every line of it is an instruction that silently
+    // does nothing, and the reader has no way to tell which.
+    if (Cathedral.ShipArguments.IsRestricted)
+    {
+        Console.WriteLine("Options:");
+        Console.WriteLine("  --cpu                              Run the language model on the CPU (use if the GPU misbehaves)");
+        Console.WriteLine("  --gpu                              Run the language model on the GPU, overriding detection");
+        Console.WriteLine("  --no-llm-probe                     Skip hardware detection at startup");
+        Console.WriteLine("  --silent                           Start with no audio device opened");
+        Console.WriteLine("  --help, -h                         Show this help message");
+        Console.WriteLine();
+        Console.WriteLine("Everything else is configured in the game's Settings screen.");
+        return;
+    }
+
     Console.WriteLine("Options:");
     Console.WriteLine("  (no args)                          Launch the narrative exploration game");
     Console.WriteLine("  --music                            Run the procedural ambient music PoC");
@@ -77,6 +109,8 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --cpu                              Run LLM on CPU only, overriding the setting and the first-run probe");
     Console.WriteLine("  --gpu                              Run LLM on the installed GPU backend (models/llama/backends/), same override");
     Console.WriteLine("  --no-llm-probe                     Skip first-run compute-device detection; use whatever is already saved");
+    Console.WriteLine("  --no-developer-keys                Disable the developer keyboard shortcuts (D/M/F/G/H/J, C/V, W/S zoom),");
+    Console.WriteLine("                                     leaving arrows/Space/Escape — i.e. behave as a shipped build does");
     Console.WriteLine("  --seed <n>                         Fix the master RNG seed for a reproducible run (world, spawn, dice)");
     Console.WriteLine("  --start-at <name>                  DEBUG: spawn on the first biome/location matching <name> (e.g. village, farm)");
     Console.WriteLine("  --start-area <name>                DEBUG: open narration in the first area of the location matching <name>");
@@ -494,6 +528,20 @@ if (args.Any(a => a == "--no-llm-probe"))
 {
     Cathedral.LLM.LlamaProbe.Enabled = false;
 }
+
+// Check for --no-developer-keys: behave as a shipped build does, in a development build. The only
+// way to exercise the shipped keyboard without building and running a shipped executable, which
+// cannot be driven by --cli.
+if (args.Any(a => a == "--no-developer-keys"))
+{
+    Cathedral.Config.Debug.DeveloperKeys = false;
+}
+
+// Reported every run, so a --cli script (and a player's log) can tell which keyboard is live.
+// ASCII only: this goes to a console whose code page mangles an em dash when redirected.
+Console.WriteLine(Cathedral.Config.Debug.DeveloperKeys
+    ? "Developer keys: enabled (D/M/F/G/H/J, C/V, W/S zoom)"
+    : "Developer keys: disabled - arrows rotate, Space re-centres, Escape opens the menu");
 
 // (--seed is parsed and locked in at the very top of this file — see the comment there.)
 

@@ -40,7 +40,8 @@ public static class LocationTravelModeLauncher
         var native = new NativeWindowSettings()
         {
             ClientSize = new Vector2i(windowWidth, windowHeight),
-            Title = "Cathedral - Location Travel Mode",
+            // The player's window title. Comes from Config.Name so it cannot drift from the menu.
+            Title = Cathedral.Config.Name.WindowTitle,
             Flags = ContextFlags.Default,
             API = ContextAPI.OpenGL,
             APIVersion = new Version(3, 3),
@@ -395,7 +396,14 @@ public static class LocationTravelModeLauncher
                     gameController.SetMode(GameMode.MainMenu);
                 }
             }
-            else if (args.Key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.D)
+            // Escape above is a player control — the pause menu and the popup dismiss — and is
+            // never gated. The two diagnostic dumps below are, by testing DeveloperKeys as part of
+            // each branch rather than short-circuiting the whole chain: a shipped build must let D
+            // and G fall through to the forwarding branch at the bottom, which is what delivers
+            // keys to fight and dialogue modes. Swallowing them here would take the keyboard away
+            // from gameplay.
+            else if (args.Key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.D
+                     && Cathedral.Config.Debug.DeveloperKeys)
             {
                 // Dump debug info
                 if (gameController != null)
@@ -403,7 +411,8 @@ public static class LocationTravelModeLauncher
                     Console.WriteLine("\n" + gameController.GetDebugInfo());
                 }
             }
-            else if (args.Key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.G)
+            else if (args.Key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.G
+                     && Cathedral.Config.Debug.DeveloperKeys)
             {
                 // Dump narration graph structure (only works in narrative mode)
                 if (gameController?.CurrentMode == GameMode.LocationInteraction)

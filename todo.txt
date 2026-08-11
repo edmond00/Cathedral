@@ -44,6 +44,19 @@ office
 
 new verbs :
 
+new MM :
+- reject
+- minimize
+- avoid
+- deflect
+- sorry
+- delicatess
+- caresse
+- ponder
+- relax
+- confront
+- resistance
+
 SIT AND WAIT
 - new possible outcome for action = change the period of the day
 - sit and wait = go to the next time of the day (noon -> afternoon)

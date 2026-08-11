@@ -731,55 +731,63 @@ namespace Cathedral.Glyph
             // Let camera handle its input first
             bool cameraHandled = _camera.ProcessInput(KeyboardState, args);
 
-            // Debug shader switching (D key)
-            if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D))
+            // Development shortcuts — render debugging and live post-process tuning. Inert in a
+            // shipped build (see Config.Debug.DeveloperKeys), where a stray D or F would otherwise
+            // leave a player looking at a wireframe sphere with no idea how to undo it.
+            //
+            // The camera keys are deliberately OUTSIDE this block: they are the player's controls.
+            if (Config.Debug.DeveloperKeys)
             {
-                debugShaderMode = (debugShaderMode + 1) % 5;
-                string description = debugShaderMode switch
+                // Debug shader switching (D key)
+                if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D))
                 {
-                    0 => "Normal rendering (texture + vertex colors)",
-                    1 => "Vertex colors only (no texture masking)",
-                    2 => "Texture only (white on black)",
-                    3 => "Wireframe/Debug view",
-                    4 => "Grayscale (luminosity-based grayscale)",
-                    _ => "Unknown"
-                };
-                Console.WriteLine($"Debug shader mode: {debugShaderMode} - {description}");
-            }
+                    debugShaderMode = (debugShaderMode + 1) % 5;
+                    string description = debugShaderMode switch
+                    {
+                        0 => "Normal rendering (texture + vertex colors)",
+                        1 => "Vertex colors only (no texture masking)",
+                        2 => "Texture only (white on black)",
+                        3 => "Wireframe/Debug view",
+                        4 => "Grayscale (luminosity-based grayscale)",
+                        _ => "Unknown"
+                    };
+                    Console.WriteLine($"Debug shader mode: {debugShaderMode} - {description}");
+                }
 
-            // Debug markers toggle (M key)
-            if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.M))
-            {
-                debugShowMarkers = !debugShowMarkers;
-                Console.WriteLine($"Debug markers: {(debugShowMarkers ? "ON" : "OFF")}");
-            }
-
-            // Final shader layer: F cycles the dither, G its palette depth, H its grain size
-            if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.F))
-            {
-                Console.WriteLine($"Post-process: {_postProcess.CycleMode()}");
-            }
-
-            if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.G))
-            {
-                _postProcess.Levels = _postProcess.Levels switch
+                // Debug markers toggle (M key)
+                if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.M))
                 {
-                    2 => 3, 3 => 4, 4 => 6, 6 => 8, 8 => 16, _ => 2
-                };
-                Console.WriteLine($"Post-process: {_postProcess.Describe()}");
-            }
+                    debugShowMarkers = !debugShowMarkers;
+                    Console.WriteLine($"Debug markers: {(debugShowMarkers ? "ON" : "OFF")}");
+                }
 
-            if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.H))
-            {
-                _postProcess.PixelScale = _postProcess.PixelScale >= 4 ? 1 : _postProcess.PixelScale + 1;
-                Console.WriteLine($"Post-process: {_postProcess.Describe()}");
-            }
+                // Final shader layer: F cycles the dither, G its palette depth, H its grain size
+                if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.F))
+                {
+                    Console.WriteLine($"Post-process: {_postProcess.CycleMode()}");
+                }
 
-            // J toggles the event pulses, for A/B-ing them against the resting dither
-            if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.J))
-            {
-                _postProcess.PulsesEnabled = !_postProcess.PulsesEnabled;
-                Console.WriteLine($"Post-process: {_postProcess.Describe()}");
+                if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.G))
+                {
+                    _postProcess.Levels = _postProcess.Levels switch
+                    {
+                        2 => 3, 3 => 4, 4 => 6, 6 => 8, 8 => 16, _ => 2
+                    };
+                    Console.WriteLine($"Post-process: {_postProcess.Describe()}");
+                }
+
+                if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.H))
+                {
+                    _postProcess.PixelScale = _postProcess.PixelScale >= 4 ? 1 : _postProcess.PixelScale + 1;
+                    Console.WriteLine($"Post-process: {_postProcess.Describe()}");
+                }
+
+                // J toggles the event pulses, for A/B-ing them against the resting dither
+                if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.J))
+                {
+                    _postProcess.PulsesEnabled = !_postProcess.PulsesEnabled;
+                    Console.WriteLine($"Post-process: {_postProcess.Describe()}");
+                }
             }
 
             // Center camera on protagonist (SPACE key)

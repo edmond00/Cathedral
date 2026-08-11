@@ -1,5 +1,11 @@
 # Cathedral
 
+**"Cathedral" is the development name.** The game is published as **Proscribed
+Palimpsest** (edmond00.itch.io/proscribed) and every player-facing surface says so: the window
+title, the main menu, the shipped executable, the download. The repository, the namespaces, the
+Debug binary and `%APPDATA%\Cathedral` keep the old name deliberately — see "Naming" under
+Packaging.
+
 A Windows desktop narrative RPG built in C# combining a 3D glyph-sphere world with local LLM-driven storytelling. The aesthetic blends roguelike exploration with Chain-of-Thought narrative AI.
 
 ## Build & Run
@@ -9,6 +15,188 @@ dotnet build
 dotnet run                  # main game
 dotnet run -- --help        # all options
 ```
+
+## Packaging a release
+
+```powershell
+./package.ps1                      # dist/ProscribedPalimpsest/ + dist/ProscribedPalimpsest-win64-<date>.zip
+./package.ps1 -NoModel -NoZip      # seconds, for checking the script itself
+./package.ps1 -ReadyToRun          # ~30% larger, faster startup
+```
+
+Self-contained (`--self-contained`), so the .NET runtime ships inside and a player needs nothing
+installed. About 200 MB, and it removes the commonest "it won't start" report.
+
+**Single-file, so the folder a player opens is legible.** A plain self-contained publish is 301
+files at the root and the game sits in the middle of them, alphabetically between
+`PresentationFramework.dll` and `System.Private.CoreLib.dll`. `PublishSingleFile` bundles the
+managed assemblies into the executable: 9 files at the root, of which one is the game and the rest
+are unmanaged libraries that cannot be bundled.
+
+This is **bundling, not trimming** — every assembly is still present, just inside the exe, so the
+reflection the audits and Catalyst depend on is untouched. Managed code runs from the bundle
+without being extracted, so there is no first-run unpacking cost.
+
+Two more prunings, worth about 16 MB and 220 files: `SatelliteResourceLanguages=en` drops thirteen
+folders of localised framework strings for a game with no localisation, and the staging step
+deletes a macOS `.dylib` and a 32-bit MIDI native that an x64 process can never load. After
+pruning the MIDI native, confirm audio still starts — the smoke test asserts a window and a ready
+server but says nothing about sound, and the line to look for is
+`Ambient music engine started`.
+
+**The console is a build flag, not a code path.** `dotnet build` and `dotnet run` produce a console
+`Exe` as always; `package.ps1` passes `-p:Ship=true`, which flips `OutputType` to `WinExe` so a
+player double-clicking the game gets no black window filling with diagnostics. The two differ only
+in a PE subsystem byte — read it with `[BitConverter]::ToUInt16($bytes, $peOffset + 92)`: 3 is
+console, 2 is GUI. It is keyed on an explicit `Ship` property rather than on `Configuration`, so
+building or profiling in Release still gives you a console; shipping is a deliberate act.
+
+`WinExe` alone would make the shipped build permanently mute, including when run from a terminal on
+purpose — which is how a package is verified at all. `ConsoleAttach.AttachToParentIfPresent()`, the
+first line of `Program.cs`, rejoins the launching terminal when there is one and does nothing when
+there is not. So `dist\ProscribedPalimpsest\ProscribedPalimpsest.exe --cli-script …` still works, piped capture and file
+redirection both still work, and a double-click is still silent.
+
+The cost to accept: a shipped build that dies before its window opens shows the player nothing.
+Reproduce it by running that same exe from a terminal.
+
+**`Ship` also strips the development command-line options.** `ShipArguments.Filter` runs as the
+second line of `Program.cs` — after `ConsoleAttach`, before the seed parse — and reduces `args` to
+an **allow-list**: `--cpu`, `--gpu`, `--no-llm-probe`, `--silent`, `--help`. Everything else is
+dropped, along with its value, so `--seed 42` leaves no stray `42` behind. It reports how many it
+ignored, which is visible when the exe was launched from a terminal.
+
+A filter rather than 49 conditionals, for the same reason the packaging payload is an allow-list:
+the option surface grows every time a feature turns out to be hard to reach, and a debug flag left
+reachable does not announce itself — it just works. Filtering once, before anything reads `args`,
+makes every handler unreachable by construction and means a flag added tomorrow is excluded from
+shipped builds without anyone remembering to exclude it.
+
+The five that survive all exist to get a player out of trouble rather than to change the game, and
+`--help` in a shipped build lists exactly those. Printing the full development list would be worse
+than printing nothing: every line is an instruction that silently does nothing, with no way for the
+reader to tell which.
+
+**`Ship` also compiles out the developer keyboard.** It defines a `SHIP` constant, which flips
+`Config.Debug.DeveloperKeys` to false. That gates the render-debug keys (D, M), the post-process
+tuning keys (F, G, H, J), the debug camera (C, V), the window's diagnostic dumps (D, G) — **and
+camera zoom (W, S)**. Zoom is in the list although it is not a debug feature: the game sets the
+camera distance itself per phase, and a player who zooms out of that framing has no control that
+restores it.
+
+What a player keeps: **arrows** rotate, **Space** re-centres on the protagonist, **Escape** opens
+the pause menu and closes narration popups. Escape is never gated — without it there is no way out
+of a scene.
+
+Two things to keep in mind when touching that keyboard:
+
+- **Gate the branch, not the chain.** In `LocationTravelModeLauncher`'s `KeyDown`, the D and G
+  branches test `DeveloperKeys` as part of their own condition. Short-circuiting the whole
+  `else if` chain instead would swallow every non-Escape key before it reached the final `else`,
+  which is what forwards keys to fight and dialogue modes — taking the keyboard away from gameplay.
+- **`--no-developer-keys` makes a development build behave like a shipped one.** Keys cannot be
+  driven by `--cli` at all, so this flag plus the `Developer keys: …` line printed at startup is
+  the only way to check the shipped keyboard without building and hand-testing a shipped exe.
+
+**The payload is an allow-list.** Only paths named in `$Payload` are copied, and a missing required
+one fails the build before anything is archived. The tempting alternative — copy the repo, delete
+what looks unnecessary — ships whatever was added since someone last read the delete list, and
+breaks silently when a new runtime asset arrives without being un-deleted.
+
+Three things the script knows that are not obvious:
+
+- **`dotnet publish` copies neither `assets/` nor `models/`.** Nothing in the csproj marks them as
+  content, so both are staged by the script. Adding a runtime asset means adding it to `$Payload`.
+- **Never enable trimming.** The audits reflect over `Outcome` and `Verb` subclasses to build their
+  catalogues, and Catalyst and MSAGL load types by name. A trimmer removes precisely those, and it
+  fails at runtime on a player's machine rather than at build.
+- **`Compress-Archive` is not used.** The cmdlet in Windows PowerShell 5.1 fails above 2 GB, and
+  this package is larger than that before the model is counted; `ZipFile.CreateFromDirectory`
+  handles it.
+
+Not shipped, and why: `data/` is design source nothing reads at runtime, `assets/old/` is
+superseded art, and `src/` is unnecessary because the two shaders under `src/terminal/Shaders/` are
+read from disk *only if present* and otherwise fall back to strings embedded in the renderers —
+which means **a shipped build runs the embedded copies**. Keep the two in sync when editing a
+shader, or the release will not look like the dev build.
+
+The zip lands around 2.2 GB, nearly all of it `model.gguf`, which is already-compressed
+quantised weights and does not shrink. That is over itch.io's browser upload limit, so releases
+go through `publish.ps1`.
+
+### Publishing
+
+```powershell
+./publish.ps1 -Status     # read-only: what is on the channel now
+./publish.ps1             # publishes to edmond00/proscribed:windows
+```
+
+The target is `edmond00/proscribed:windows`, from the page at edmond00.itch.io/proscribed.
+
+### Naming
+
+The game is **Proscribed Palimpsest**; "Cathedral" is the development name. The split is
+deliberate and is drawn at exactly one line — what a player can see:
+
+| player-facing, renamed | development, still Cathedral |
+|---|---|
+| window title (`Config.Name.WindowTitle`) | repository, csproj, namespaces |
+| main menu (`Config.Name.GameTitle`, stylised lowercase) | `bin/Debug/Cathedral.exe` |
+| `ProscribedPalimpsest.exe`, staged folder, zip | `%APPDATA%\Cathedral\settings.json` |
+| the itch page | the dev-only launchers (fight area, image-to-text, music PoC) |
+
+**Only the shipped executable is renamed**, by an `AssemblyName` conditioned on the same `Ship`
+flag. `run_tests.sh` guards the suite with `Get-Process -Name Cathedral`, and that guard is what
+stops a leftover run from racing a new one; renaming the development binary would break it
+*silently*, because the guard would simply stop finding anything and read as "all clear".
+
+`%APPDATA%\Cathedral` is left alone on purpose. No player ever sees that path, and renaming it
+would discard every existing install's volumes, dither and probed compute device.
+
+The shipped name has no space in it. A player sees it in a folder listing either way, and every
+CLI invocation — the whole test driver, any future CI — would otherwise need quoting.
+
+**It pushes the staged folder, not the zip**, and that is the whole reason it is worth having a
+script. butler diffs a build against the previous one file by file; pushed as a folder, the 2 GB
+model is uploaded once and skipped on every later release, so a code-only update sends a few
+hundred MB. A zip is one opaque blob — change one byte and the entire archive is new. Players
+still get a downloadable archive; itch builds one from the pushed files. The zip `package.ps1`
+makes is for manual distribution and backups, not for this.
+
+**No credentials live in the repo or on a command line.** `butler login` is a one-off interactive
+browser flow that stores a token under `~/.config/itch/butler_creds`; `BUTLER_API_KEY` in the
+environment is the unattended alternative. The script only checks that one of the two exists and
+lets butler do the rest.
+
+Pre-flight refuses to upload rather than publish something broken: the same required paths
+`package.ps1` verifies, plus a **PE subsystem check** that fails a console build (which would mean
+`-p:Ship=true` was lost and players would get a diagnostic window behind the game), plus deleting
+any `logs/` left in the staged folder — those contain the full text of everything the model was
+asked and answered.
+
+### Verifying a shipped build
+
+**Gameplay is verified on the development build; the shipped artifact is verified by starting it.**
+That division is deliberate, and it is why the locked-down option set costs nothing.
+
+`-p:Ship=true` changes exactly three things — a PE subsystem byte, two compile constants, and the
+assembly name. No line of game logic differs, so the CLI suite testing narration, verbs and
+outcomes against the development build is testing the same code with better tools. There is
+deliberately **no flag that re-enables the development options in a shipped build**: the scripts
+are built on `--seed`, `--skip-childhood`, `--observe-only`, `--location-type` and a dozen more, so
+anything that made them usable would put most of the surface back and would drift every time a
+script needed something new.
+
+What only the artifact can prove — that the self-contained runtime resolves, that `assets/` and
+`models/` are found from the executable's own directory, that the GGUF loads and a backend is
+chosen, that a window opens with its fonts — needs **no options at all**. `publish.ps1` launches
+the staged build with an empty command line, waits for a window title and for `LLM Server is ready`
+on stdout, then kills it and its `llama-server` child. `ConsoleAttach` is what makes that output
+readable. A pass covers every packaging failure mode there is; skip it with `-SkipSmokeTest` only
+when re-pushing something already started once.
+
+The confirmation prompt cancels rather than throwing when nothing can answer it, so an unattended
+run never publishes by accident — `-Yes` is how such a run says it meant to.
 
 ## The language model runtime
 
@@ -34,7 +222,7 @@ model from the one `Config.LLM.ModelFileName` actually loaded. Nothing read it. 
 ### Backends: how GPU support is found
 
 `models/llama/` is a **pruned** llama.cpp release — `llama-server.exe`, `llama-bench.exe`, the
-shared libraries, and the fifteen `ggml-cpu-*.dll` microarchitecture variants. `models/llama/BUILD.txt`
+shared libraries, and the fourteen `ggml-cpu-*.dll` microarchitecture variants. `models/llama/BUILD.txt`
 records which upstream build it came from and what was dropped.
 
 Backends resolve **at runtime, not at build time**. ggml scans the server's own directory on
@@ -108,6 +296,22 @@ Two things make that ladder actually work, and both were bugs when written:
 - **`KillServerProcess` closes the log writer as well as killing the process.** Each attempt opens
   `llama-server.log` with `append: false`, so leaving the previous writer open makes the retry fail
   on a locked file — and that failure looks like a second backend fault rather than bookkeeping.
+
+**Logging can never take the LLM down with it.** Every log path is relative to the working
+directory, so an install the player cannot write to — extracted into Program Files, on read-only
+media — fails at the first `CreateDirectory`. That call used to sit unguarded inside the
+server-start try block, so the exception was caught as "Error starting server" and the game lost
+narration entirely, with a message pointing at the wrong thing. Every log directory now goes
+through `TryCreateLogDirectory`, which returns null and reports once; a null session directory
+switches the whole diagnostic tree off, because every writer downstream already tests it. The
+per-request blocks additionally catch their own writes, so a disk filling up mid-session costs
+logging rather than the request. There is deliberately **no fallback to the working directory** for
+`llama-server.log` when the session directory is missing — that is the directory that just proved
+unwritable, and retrying it there is what turned a lost log into a lost server.
+
+To reproduce: put a *file* named `logs` beside the executable and start the game. `CreateDirectory`
+cannot create a directory over it, which is the same failure as a read-only folder without needing
+to change any permissions.
 
 ### Settings
 

@@ -192,6 +192,21 @@ namespace Cathedral.Engine
                 inputProcessed = true;
             }
             
+            // Zoom (W/S) and the debug camera (C/V) are development controls — see
+            // Config.Debug.DeveloperKeys, which is false in a shipped build.
+            //
+            // Zoom is included even though it is not a debugging feature. The game sets the
+            // camera distance itself for each phase (world view, narration, fights), and a player
+            // who zooms away from that framing has no control that restores it. Rotation and
+            // re-centring above stay available because neither can reach an unrecoverable state.
+            if (!Cathedral.Config.Debug.DeveloperKeys)
+            {
+                // Still fire the transform event for the rotation handled above, or the sphere
+                // would not redraw when a player uses the arrow keys.
+                if (inputProcessed) CameraTransformed?.Invoke(_yaw, _pitch, _distance);
+                return inputProcessed;
+            }
+
             // Zoom/Distance controls (W/S keys)
             if (keyboardState.IsKeyDown(Keys.W))
             {

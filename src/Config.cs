@@ -54,6 +54,34 @@ public static class Config
         public static Game.Narrative.TimePeriod? ForcedPeriod { get; set; } = null;
 
         /// <summary>
+        /// Whether the developer keyboard shortcuts respond. <b>False in a shipped build</b>
+        /// (<c>-p:Ship=true</c> defines SHIP); true everywhere else.
+        ///
+        /// <para>What it gates: the render-debug keys (D shader mode, M markers), the post-process
+        /// tuning keys (F dither, G levels, H grain, J pulses), the debug camera (C, V), the
+        /// window's diagnostic dumps (D, G), <b>and camera zoom (W, S)</b>.</para>
+        ///
+        /// <para>Zoom is in that list on purpose even though it is not a debug feature. The game
+        /// frames its own camera — narration, travel and fights each set a distance — and a player
+        /// who zooms out of that framing has no way back to it and reports the result as a bug.
+        /// Rotation and re-centring (arrows, Space) stay: they cannot leave a state you cannot
+        /// recover from.</para>
+        ///
+        /// <para><b>Escape is not gated</b> and never should be. It opens the pause menu and closes
+        /// narration popups; without it a player has no way out of a scene.</para>
+        ///
+        /// <para>Settable so a development build can be tested as though it were shipped
+        /// (<c>--no-developer-keys</c>). Setting it true in a SHIP build does nothing useful — the
+        /// handlers are still compiled in, but nothing turns it on.</para>
+        /// </summary>
+        public static bool DeveloperKeys { get; set; } =
+#if SHIP
+            false;
+#else
+            true;
+#endif
+
+        /// <summary>
         /// Compute device for the language model, overriding both the player's setting and the
         /// first-run probe. Set by <c>--cpu</c> (and <c>--gpu</c>).
         ///
@@ -301,7 +329,17 @@ public static class Config
 
     #region Terminal Configuration
     public static class Name {
+        /// <summary>Stylised lowercase, as the main menu draws it.</summary>
         public const string GameTitle = "proscribed palimpsest";
+
+        /// <summary>
+        /// Title case, for the OS window title bar — the one place the name appears outside the
+        /// game's own typography, next to every other application's. Kept here rather than written
+        /// at the window so the launchers cannot drift from the menu, which is how the title bar
+        /// came to read "Cathedral - Location Travel Mode" in a shipped build.
+        /// </summary>
+        public const string WindowTitle = "Proscribed Palimpsest";
+
         public const string Chapter = "Volume 1";
         public const string ChapterSubtitle = "Turnips and Radishes";
     }
