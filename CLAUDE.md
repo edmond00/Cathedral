@@ -10,6 +10,134 @@ dotnet run                  # main game
 dotnet run -- --help        # all options
 ```
 
+## The language model runtime
+
+Everything the game loads that is not code lives in `models/`, and `models/README.md` is the
+player-facing version of this section.
+
+**The model has no name.** It is always `models/model.gguf`. There is no setting, no alias table
+and no path in `Config` — changing models means replacing that file, and that is the entire
+interface. `LlamaRuntime.ModelFileName` is the one place the string exists.
+
+This works because a GGUF carries its own identity: architecture, tokenizer and chat template are
+all read out of the file, so llama.cpp does not care what it is called. `GgufMetadata` reads
+`general.name` back out of the header for the **startup log**, since otherwise a generic file name
+would leave nobody able to tell what an install was running.
+
+The Settings screen deliberately does *not* show it. Which model backs the narration is an
+implementation detail of the fiction; naming a vendor's model on a player-facing screen buys
+nothing, and the diagnostic need is met by the log.
+
+There was previously a `_modelAliases` dictionary in `LlamaServerManager` naming a *different*
+model from the one `Config.LLM.ModelFileName` actually loaded. Nothing read it. Do not add another.
+
+### Backends: how GPU support is found
+
+`models/llama/` is a **pruned** llama.cpp release — `llama-server.exe`, `llama-bench.exe`, the
+shared libraries, and the fifteen `ggml-cpu-*.dll` microarchitecture variants. `models/llama/BUILD.txt`
+records which upstream build it came from and what was dropped.
+
+Backends resolve **at runtime, not at build time**. ggml scans the server's own directory on
+startup and loads whichever `ggml-*.dll` initialise — that is how the CPU variants pick themselves
+by host ISA, with no help from us. Running `llama-server.exe --version` prints the choice:
+
+```
+load_backend: loaded CPU backend from ...\ggml-cpu-skylakex.dll
+```
+
+A GPU backend joins the same mechanism through the `GGML_BACKEND_PATH` environment variable, set by
+`LlamaRuntime.ApplyBackend`. Three things about that are easy to get wrong:
+
+- **It names one file, not a directory.** Pointing it at a folder is answered with
+  `load_backend: failed to load`. This suits the design — exactly one GPU backend should ever be
+  live — but it means there is no "load everything in here".
+- **The backend's own directory must go on `PATH` too.** A CUDA backend pulls in `cudart64_12.dll`
+  and `cublas64_12.dll` from beside itself, and the directory of a dynamically loaded library is not
+  otherwise searched. Without it the backend fails to load with nothing to say why.
+- **Never mix build numbers.** A backend from a different llama.cpp revision than `ggml-base.dll`
+  crashes inside the backend with no usable diagnostic. This is why every backend is verified in a
+  *subprocess* before use — a crash there costs nothing.
+
+See `models/llama/backends/README.md` for what to drop in. Vulkan is the one worth shipping: one
+59 MB file covering NVIDIA, AMD and Intel, against ~420 MB of CUDA for one vendor Vulkan already
+handles. With the folder empty the game runs on CPU and nothing has to be configured for that.
+
+### Do not pass `-ngl`
+
+llama.cpp's `--fit` defaults to **on** and sizes the offload to fit device memory with a 1 GiB
+margin; `-ngl` itself defaults to `auto`. So the right thing is to pass **neither** and let it fit.
+
+The code used to hardcode `-ngl 99`. On the shipped CPU-only build that was inert, which is why it
+survived — but `99` means "all layers in VRAM" and *overrides* the fitting, so the moment a GPU
+backend is installed it becomes an out-of-memory failure on any card too small for the whole model.
+`BuildServerArguments` now emits `-ngl` only when a player has explicitly set a layer count, and
+`-ngl 0` when the run is deliberately on the CPU.
+
+### The first-run probe
+
+`LlamaProbe` decides **device only** (GPU vs CPU) once, and caches the answer in `UserSettings`
+against the model file's size and timestamp — so replacing `model.gguf` re-probes, and a device
+chosen for a 2 GB model is not reused as evidence about a 5 GB one.
+
+It **measures rather than identifies**. Reading a PCI id answers "is there a GPU", which is not the
+question; the question is "will llama.cpp go faster on it today", and hybrid laptop graphics, stale
+drivers, and integrated GPUs slower than the CPU beside them all get the first question right and
+the second one wrong. So: enumerate devices with `llama-server --list-devices`, then time the
+candidates with `llama-bench -o json`.
+
+**The common case is free.** With no backend installed there is nothing to choose between, so it
+settles on CPU without loading the model or benchmarking anything. Only a machine that actually has
+a backend pays for the measurement, once.
+
+It is skipped entirely under `--playground` (no server is started at all), so the test suite never
+pays for it. `--no-llm-probe` skips it otherwise.
+
+### Failure is a downgrade, not an exit
+
+`StartWithFallbackAsync` walks a ladder — the configured GPU backend, then CPU — and persists the
+downgrade, because a machine that has failed once will fail again and re-attempting costs the player
+the same minute of loading on every launch. The Settings screen's re-detect button is how they ask
+for another try.
+
+Two things make that ladder actually work, and both were bugs when written:
+
+- **`WaitForServerReadyAsync` checks whether the process is still alive.** It polls HTTP with an
+  eight-minute timeout and cannot otherwise distinguish a server still loading from one that exited
+  — both are a refused connection. Without the liveness check a crashed backend costs the full eight
+  minutes before anything reacts, which is indistinguishable from a hang.
+- **`KillServerProcess` closes the log writer as well as killing the process.** Each attempt opens
+  `llama-server.log` with `append: false`, so leaving the previous writer open makes the retry fail
+  on a locked file — and that failure looks like a second backend fault rather than bookkeeping.
+
+### Settings
+
+`UserSettings` (was `AudioSettings`) is the single persisted store, at
+`%APPDATA%\Cathedral\settings.json` — volumes, the dither toggle, and the compute settings. They
+live together because the file is rewritten whole, not merged: two classes writing it would each
+silently discard the other's fields.
+
+**Dither persists the on/off state only, not which dither.** `PostProcessRenderer.Enabled` is
+derived (`Mode != Off`) and restores whichever mode was last in use, so applying the saved bool at
+startup turns the layer on or off without overriding a mode chosen by `--dither`. F/G/H stay live
+tuning and are deliberately unsaved — persisting the mode but not the palette depth or grain size
+would be worse than persisting none of the three. The flag still wins over the saved value, guarded
+by `Config.PostProcess.DitherModeSetByFlag`; without it, a player who once enabled dither in the
+menu would silently break `--dither off` for every later run. The Settings screen still reads the
+toggle back from the *renderer* rather than from `UserSettings`, so it shows the true live state
+after a flag or an F-key cycle — meaning shown and saved can legitimately differ until the toggle
+itself is clicked.
+
+The Settings screen exposes device, GPU layers, threads and re-detect. **All of them apply at the
+next launch**, and the screen says so: the server loads the model once at startup and holds it, so
+applying a change in place would mean tearing it down, re-reading two gigabytes and rebuilding every
+cached persona slot, possibly mid-narration. Re-detect therefore measures nothing on the spot — it
+discards the saved probe signature so the probe re-runs during the next launch's model load, where
+it is already behind a loading screen.
+
+`--cpu` and `--gpu` override all of it for one run through `Config.Debug.ForcedLlmDevice`. They
+deliberately do *not* write to `UserSettings`: flags are parsed before `UserSettings.Load()` runs, so
+a flag that wrote there would be overwritten by the file a moment later.
+
 ## Verifying a change (read this before testing anything)
 
 The game is an OpenGL app driven by mouse clicks, so "run it and see" is not something an

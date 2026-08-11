@@ -38,21 +38,6 @@ public class LlamaServerManager : IDisposable
     /// </summary>
     private const int MinPromptBudget = 256;
 
-    // Model aliases and their corresponding file names
-    private readonly Dictionary<string, string> _modelAliases = new()
-    {
-        { "tiny", "Qwen3-4B-Q4_K_M.gguf" }
-        // { "tiny", "LFM2.5-1.2B-Instruct-Q4_K_M.gguf" }
-        // { "tiny", "Qwen3-1.7B-Q4_K_M.gguf" }
-        // { "medium", "qwen2.5-3b-instruct-q4_k_m.gguf" }
-        // { "tiny", "qwen2.5-1.5b-instruct-q5_k_m.gguf" },
-        // { "medium", "qwen2.5-3b-instruct-q4_k_m.gguf" }
-        // { "medium", "gemma-4-E4B-it-Q4_K_M.gguf" }
-        // { "medium", "gemma-4-E2B-it-Q4_K_M.gguf" }
-    };
-    
-    private string _currentModelAlias = "tiny"; // Default model
-
     // Loading progress tracking
     private DateTime _loadingStartTime = DateTime.MinValue;
     private volatile float _loadingProgress = 0f;
@@ -218,35 +203,40 @@ public class LlamaServerManager : IDisposable
             Directory.CreateDirectory(_sessionLogDir);
             Console.WriteLine($"LLM logs will be saved to: {_sessionLogDir}");
             
-            Console.WriteLine($"Using model: {Config.LLM.ModelFileName}");
-
             // Find paths
             var (resolvedServerPath, resolvedModelPath) = ResolvePaths();
-
-            // Log initialization start
-            try { LLMLogger.LogServerInitStart(Config.LLM.ModelFileName, resolvedServerPath, resolvedModelPath); } catch { }
 
             // Validate paths — both files are required; without them the game cannot run, so exit.
             if (!File.Exists(resolvedServerPath))
             {
                 LogError($"Llama server executable not found at: {resolvedServerPath}");
-                LogError("Download a llama.cpp release and place llama-server.exe in the models/llama/ directory, then restart.");
+                LogError($"Place a llama.cpp release in models/llama/ (see models/llama/BUILD.txt for the expected contents), then restart.");
                 Environment.Exit(1);
             }
 
             if (!File.Exists(resolvedModelPath))
             {
-                LogError($"Model file '{Config.LLM.ModelFileName}' not found at: {resolvedModelPath}");
-                LogError($"Download the GGUF model and place it in the models/ directory as '{Config.LLM.ModelFileName}', then restart.");
+                LogError($"Model file not found at: {resolvedModelPath}");
+                LogError($"Place a GGUF model in the models/ directory named exactly '{LlamaRuntime.ModelFileName}', then restart.");
                 Environment.Exit(1);
             }
 
-            // Start the server process
-            await StartServerProcessAsync(resolvedServerPath, resolvedModelPath, _contextSize);
-            
-            // Wait for server to be ready
-            var isReady = await WaitForServerReadyAsync();
-            
+            // Name the model from its own header — the file name is deliberately generic, so this
+            // is the only way the log says which model actually loaded.
+            var modelName = LlamaRuntime.ModelDisplayName;
+            Console.WriteLine($"Using model: {modelName} ({LlamaRuntime.DescribeInstallation()})");
+
+            try { LLMLogger.LogServerInitStart(modelName, resolvedServerPath, resolvedModelPath); } catch { }
+
+            // First run on this machine (or the model changed): measure what to run on.
+            // On a thread of its own because the probe is synchronous and can run a benchmark,
+            // while this method is deliberately started without being awaited — everything before
+            // its first await would otherwise run on the caller's thread, which is the UI's.
+            await Task.Run(() => LlamaProbe.EnsureProbed());
+
+            // Start the server, stepping down the ladder if a device fails.
+            var isReady = await StartWithFallbackAsync(resolvedServerPath, resolvedModelPath);
+
             _isServerReady = isReady;
             var message = isReady ? "Server started successfully" : "Server failed to start";
             var duration = (DateTime.Now - startTime).TotalSeconds;
@@ -1306,14 +1296,6 @@ public class LlamaServerManager : IDisposable
     }
     
     /// <summary>
-    /// Gets the configured model file name (see <see cref="Config.LLM.ModelFileName"/>).
-    /// </summary>
-    public string GetCurrentModelFileName()
-    {
-        return Config.LLM.ModelFileName;
-    }
-
-    /// <summary>
     /// Stops the Llama server
     /// </summary>
     public void StopServer()
@@ -1361,7 +1343,45 @@ public class LlamaServerManager : IDisposable
         
         _isServerReady = false;
     }
-    
+
+    /// <summary>
+    /// Tears down a failed server attempt so the next rung of the ladder can start cleanly.
+    /// <para>Closes the log writer as well as killing the process. Each attempt opens
+    /// <c>llama-server.log</c> with <c>append: false</c>, so leaving the previous writer open would
+    /// make the retry fail on a locked file — and the failure would look like a second backend
+    /// fault rather than a bookkeeping one.</para>
+    /// </summary>
+    private void KillServerProcess()
+    {
+        if (_llamaProcess != null)
+        {
+            try
+            {
+                if (!_llamaProcess.HasExited)
+                {
+                    _llamaProcess.Kill(entireProcessTree: true);
+                    _llamaProcess.WaitForExit(5000);
+                }
+            }
+            catch { /* already gone */ }
+            finally
+            {
+                try { _llamaProcess.Dispose(); } catch { }
+                _llamaProcess = null;
+            }
+        }
+
+        try
+        {
+            _logWriter?.Flush();
+            _logWriter?.Dispose();
+        }
+        catch { }
+        _logWriter = null;
+
+        _isServerReady = false;
+    }
+
     public void Dispose()
     {
         if (_disposed) return;
@@ -1398,62 +1418,177 @@ public class LlamaServerManager : IDisposable
     /// Resolves the llama-server executable and the single configured model file, both located
     /// under the project's <c>models</c> directory (found by walking up from the app base dir).
     /// </summary>
+    /// <summary>
+    /// Where the server executable and the model are. Both come from <see cref="LlamaRuntime"/>,
+    /// which anchors on the application directory and bounds its search — this used to walk up
+    /// from the base directory with no limit, which on a machine missing the folder does not stop
+    /// at the install directory but climbs to the drive root.
+    /// </summary>
     private (string serverPath, string modelPath) ResolvePaths()
     {
-        var projectRoot = AppDomain.CurrentDomain.BaseDirectory;
+        ModelsDirectory.Require();   // throws with a message naming where it looked
 
-        // Navigate up to find the directory containing the models folder
-        while (projectRoot != null && !Directory.Exists(Path.Combine(projectRoot, "models")))
-        {
-            projectRoot = Directory.GetParent(projectRoot)?.FullName;
-        }
+        var serverPath = LlamaRuntime.ServerPath;
+        var modelPath  = LlamaRuntime.ModelPath;
 
-        if (projectRoot == null)
-        {
-            throw new DirectoryNotFoundException("Could not find models directory.");
-        }
+        if (serverPath == null || modelPath == null)
+            throw new DirectoryNotFoundException("Could not resolve the llama.cpp runtime paths.");
 
-        var serverPath = Path.Combine(projectRoot, "models", "llama", "llama-server.exe");
-        var modelPath = Path.Combine(projectRoot, "models", Config.LLM.ModelFileName);
         return (serverPath, modelPath);
     }
     
-    private async Task StartServerProcessAsync(string serverPath, string modelPath, int contextSize)
+    /// <summary>
+    /// Starts the server on the configured device, and on failure steps down to the CPU.
+    ///
+    /// <para>A GPU that fails at load — an outdated driver, a backend built against another
+    /// llama.cpp revision, a card too small for the model, a laptop that woke up without its
+    /// discrete GPU — must not be the difference between playing the game and not playing it. The
+    /// CPU path always works, so a failed GPU start is a slow game rather than no game.</para>
+    ///
+    /// <para>A downgrade is <b>persisted</b>: whatever the probe once measured, this machine has
+    /// now demonstrated otherwise, and re-attempting a device that has already failed once costs
+    /// the player the same minute of loading on every launch. The Settings screen's re-detect
+    /// button is how they ask for it to be tried again.</para>
+    /// </summary>
+    private async Task<bool> StartWithFallbackAsync(string serverPath, string modelPath)
     {
-        // Save llama server logs in the session log directory
-        var logFilePath = _sessionLogDir != null 
-            ? Path.Combine(_sessionLogDir, "llama-server.log")
-            : Path.Combine(Environment.CurrentDirectory, "llama-server.log");
-        
-        var threadArgs = Config.LLM.CpuThreads > 0 ? $" -t {Config.LLM.CpuThreads}" : string.Empty;
+        foreach (var backend in BuildDeviceLadder())
+        {
+            if (backend != null)
+                Console.WriteLine($"Starting llama server on {backend.Name}...");
+            else
+                Console.WriteLine("Starting llama server on CPU...");
 
+            await StartServerProcessAsync(serverPath, modelPath, _contextSize, backend);
+
+            if (await WaitForServerReadyAsync())
+                return true;
+
+            // Nothing is recoverable in place: llama-server has either exited or is wedged
+            // half-loaded, and the next attempt needs the port back.
+            KillServerProcess();
+
+            if (backend != null)
+            {
+                LogWarning($"The {backend.Name} backend failed to serve the model. Falling back to CPU.");
+                UserSettings.LlmDevice = LlamaComputeDevice.Cpu;
+                UserSettings.LlmProbedDevice = LlamaComputeDevice.Cpu;
+                UserSettings.LlmProbeSummary = $"CPU ({backend.Name} failed to start)";
+                UserSettings.Save();
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// The devices to try, best first. A GPU rung is only present when the settings ask for one
+    /// <i>and</i> a matching backend is actually installed; the CPU is always last and always
+    /// present, which is what makes the ladder terminate.
+    /// </summary>
+    private static IEnumerable<LlamaBackend?> BuildDeviceLadder()
+    {
+        // --cpu / --gpu win over both the setting and the probe, for this run only.
+        var device = Config.Debug.ForcedLlmDevice ?? UserSettings.EffectiveLlmDevice;
+
+        if (device == LlamaComputeDevice.Gpu)
+        {
+            var backends = LlamaRuntime.DiscoverBackends();
+
+            // Prefer the one the probe picked; fall back to whatever else is installed, which
+            // covers a player who chose GPU manually on a machine that was never probed.
+            var chosen = backends.FirstOrDefault(b =>
+                             string.Equals(b.Name, UserSettings.LlmProbedBackend, StringComparison.OrdinalIgnoreCase))
+                         ?? backends.FirstOrDefault();
+
+            if (chosen != null) yield return chosen;
+        }
+
+        yield return null;   // CPU
+    }
+
+    /// <summary>
+    /// Builds the server's command line. Two arguments are deliberately <b>omitted</b> rather than
+    /// given defaults, because llama.cpp's own defaults are better than any constant could be:
+    ///
+    /// <list type="bullet">
+    /// <item><c>-ngl</c> defaults to <c>auto</c>, and <c>--fit</c> (on by default) sizes the offload
+    /// to the device's free memory with a 1 GiB margin. Passing <c>-ngl 99</c>, as this did, means
+    /// "all layers in VRAM" and defeats that fitting — it is the direct cause of an out-of-memory
+    /// failure on any card too small for the whole model.</item>
+    /// <item><c>-t</c> defaults to the host's core count. The old hardcoded 6 was wrong in both
+    /// directions on most machines.</item>
+    /// </list>
+    ///
+    /// Both are still settable — the Settings screen writes them — but only a player's explicit
+    /// choice puts them on the command line.
+    /// </summary>
+    private static string BuildServerArguments(string modelPath, int contextSize, LlamaBackend? backend)
+    {
         // Invariant formatting: the server parses these as C-locale decimals, so a French/German
         // locale writing "1,1" would make llama-server reject the argument.
         var inv = CultureInfo.InvariantCulture;
-        var samplingArgs = $" --repeat-penalty {Config.LLM.RepeatPenalty.ToString(inv)}"
-                         + $" --frequency-penalty {Config.LLM.FrequencyPenalty.ToString(inv)}"
-                         + $" --dry-multiplier {Config.LLM.DryMultiplier.ToString(inv)}";
+        var args = new StringBuilder();
+
+        args.Append($"-m \"{modelPath}\" -c {contextSize} --port 8080");
+        args.Append(" --cache-type-k f16 --cache-type-v f16");
+        args.Append($" --repeat-penalty {Config.LLM.RepeatPenalty.ToString(inv)}");
+        args.Append($" --frequency-penalty {Config.LLM.FrequencyPenalty.ToString(inv)}");
+        args.Append($" --dry-multiplier {Config.LLM.DryMultiplier.ToString(inv)}");
+
+        if (backend == null)
+        {
+            // Explicit, not merely absent: a backend may still be discoverable beside the
+            // executable, and this run has decided not to offload to it.
+            args.Append(" -ngl 0");
+        }
+        else if (UserSettings.LlmGpuLayers >= 0)
+        {
+            args.Append($" -ngl {UserSettings.LlmGpuLayers}");
+        }
+
+        if (UserSettings.LlmCpuThreads > 0)
+            args.Append($" -t {UserSettings.LlmCpuThreads}");
+
+        args.Append(" --verbose");
+        return args.ToString();
+    }
+
+    private async Task StartServerProcessAsync(string serverPath, string modelPath, int contextSize, LlamaBackend? backend)
+    {
+        // Save llama server logs in the session log directory
+        var logFilePath = _sessionLogDir != null
+            ? Path.Combine(_sessionLogDir, "llama-server.log")
+            : Path.Combine(Environment.CurrentDirectory, "llama-server.log");
 
         var startInfo = new ProcessStartInfo
         {
             FileName = serverPath,
-            Arguments = $"-m \"{modelPath}\" -c {contextSize} --port 8080 --cache-type-k f16 --cache-type-v f16{samplingArgs} -ngl {Config.LLM.GpuLayers}{threadArgs} --verbose",
+            Arguments = BuildServerArguments(modelPath, contextSize, backend),
             UseShellExecute = false,
             CreateNoWindow = true,
             RedirectStandardOutput = true,
             RedirectStandardError = true
         };
-        
+        LlamaRuntime.ApplyBackend(startInfo, backend);
+
         _llamaProcess = Process.Start(startInfo);
-        
+
         if (_llamaProcess == null)
         {
             throw new InvalidOperationException("Failed to start llama server process.");
         }
-        
+
         // Create log file and start logging
         _logWriter = new StreamWriter(logFilePath, append: false);
-        
+
+        // The two pump tasks below outlive a failed attempt: KillServerProcess clears both fields
+        // so the next rung starts clean, and a task still reading the field would then throw a
+        // NullReferenceException and log it as if the backend had misbehaved. Capture what they
+        // need instead, so a torn-down attempt ends its pumps quietly.
+        var process = _llamaProcess;
+        var writer = _logWriter;
+
         // Record when model loading started
         _loadingStartTime = DateTime.Now;
         _loadingProgress = 0.05f;
@@ -1464,39 +1599,41 @@ public class LlamaServerManager : IDisposable
         {
             try
             {
-                while (!_llamaProcess.StandardOutput.EndOfStream)
+                while (!process.StandardOutput.EndOfStream)
                 {
-                    var line = await _llamaProcess.StandardOutput.ReadLineAsync();
+                    var line = await process.StandardOutput.ReadLineAsync();
                     if (line != null)
                     {
-                        await _logWriter.WriteLineAsync($"[STDOUT] {DateTime.Now:HH:mm:ss.fff} {line}");
-                        await _logWriter.FlushAsync();
+                        await writer.WriteLineAsync($"[STDOUT] {DateTime.Now:HH:mm:ss.fff} {line}");
+                        await writer.FlushAsync();
                         ParseLoadingProgress(line);
                     }
                 }
             }
+            catch (ObjectDisposedException) { /* attempt torn down by the fallback ladder */ }
             catch (Exception ex)
             {
                 LogError($"Error logging stdout: {ex.Message}");
             }
         });
-        
+
         // Log stderr in background (llama.cpp writes most progress to stderr)
         _ = Task.Run(async () =>
         {
             try
             {
-                while (!_llamaProcess.StandardError.EndOfStream)
+                while (!process.StandardError.EndOfStream)
                 {
-                    var line = await _llamaProcess.StandardError.ReadLineAsync();
+                    var line = await process.StandardError.ReadLineAsync();
                     if (line != null)
                     {
-                        await _logWriter.WriteLineAsync($"[STDERR] {DateTime.Now:HH:mm:ss.fff} {line}");
-                        await _logWriter.FlushAsync();
+                        await writer.WriteLineAsync($"[STDERR] {DateTime.Now:HH:mm:ss.fff} {line}");
+                        await writer.FlushAsync();
                         ParseLoadingProgress(line);
                     }
                 }
             }
+            catch (ObjectDisposedException) { /* attempt torn down by the fallback ladder */ }
             catch (Exception ex)
             {
                 LogError($"Error logging stderr: {ex.Message}");
@@ -1565,6 +1702,26 @@ public class LlamaServerManager : IDisposable
         
         while (DateTime.Now - startTime < timeout)
         {
+            // A server that has exited will never answer, and this loop cannot tell that apart
+            // from one still loading — both are a refused connection. Without this check a crashed
+            // start costs the full eight-minute timeout before anything reacts, which is the
+            // difference between the CPU fallback being a safety net and being indistinguishable
+            // from a hang. Backends crash on load for ordinary reasons: a stale driver, a pack
+            // built against another llama.cpp revision, a card too small for the model.
+            try
+            {
+                if (_llamaProcess is { HasExited: true } exited)
+                {
+                    LogError($"llama-server exited during startup (code {exited.ExitCode}). " +
+                             $"See llama-server.log in {_sessionLogDir ?? "the log directory"} for the reason.");
+                    return false;
+                }
+            }
+            catch (InvalidOperationException)
+            {
+                return false;   // process already torn down
+            }
+
             try
             {
                 var testRequest = new

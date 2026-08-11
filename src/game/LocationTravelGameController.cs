@@ -341,11 +341,18 @@ public class LocationTravelGameController : IDisposable
         AmbianceEngine? ambianceEngine = null)
     {
         _ambianceEngine = ambianceEngine;
-        // Load persisted audio settings and apply them so saved levels take effect on launch.
-        AudioSettings.Load();
-        _ambianceEngine?.SetMasterMusicVolume(AudioSettings.MusicVolume01);
-        _ambianceEngine?.SetMasterSfxVolume(AudioSettings.SfxVolume01);
+        // Load persisted settings and apply them so saved levels take effect on launch.
+        UserSettings.Load();
+        _ambianceEngine?.SetMasterMusicVolume(UserSettings.MusicVolume01);
+        _ambianceEngine?.SetMasterSfxVolume(UserSettings.SfxVolume01);
         _core = core ?? throw new ArgumentNullException(nameof(core));
+
+        // Dither, unless --dither spoke for the layer on this run. Setting Enabled restores
+        // whichever mode was last in use rather than a fixed one, so this turns the layer on or
+        // off without overriding a mode chosen at the command line.
+        if (!Config.PostProcess.DitherModeSetByFlag)
+            _core.PostProcess.Enabled = UserSettings.DitherEnabled;
+
         _interface = microworldInterface ?? throw new ArgumentNullException(nameof(microworldInterface));
         
         // Validate narrative world coherence at startup
@@ -1923,7 +1930,7 @@ public class LocationTravelGameController : IDisposable
         if (_core.Terminal != null)
         {
             if (_llmLoadingRenderer == null)
-                _llmLoadingRenderer = new LLMLoadingRenderer(_core.Terminal, "narrative engine");
+                _llmLoadingRenderer = new LLMLoadingRenderer(_core.Terminal, "language model");
 
             float progress;
             string status;
@@ -2006,26 +2013,67 @@ public class LocationTravelGameController : IDisposable
                 {
                     OnMusicVolumeChanged = v =>
                     {
-                        AudioSettings.MusicVolume = v;
-                        _ambianceEngine?.SetMasterMusicVolume(AudioSettings.MusicVolume01);
-                        AudioSettings.Save();
+                        UserSettings.MusicVolume = v;
+                        _ambianceEngine?.SetMasterMusicVolume(UserSettings.MusicVolume01);
+                        UserSettings.Save();
                     },
                     OnSfxVolumeChanged = v =>
                     {
-                        AudioSettings.SfxVolume = v;
-                        _ambianceEngine?.SetMasterSfxVolume(AudioSettings.SfxVolume01);
-                        AudioSettings.Save();
+                        UserSettings.SfxVolume = v;
+                        _ambianceEngine?.SetMasterSfxVolume(UserSettings.SfxVolume01);
+                        UserSettings.Save();
                     },
-                    OnDitherChanged = on => _core.PostProcess.Enabled = on,
+                    OnDitherChanged = on =>
+                    {
+                        _core.PostProcess.Enabled = on;
+                        UserSettings.DitherEnabled = on;
+                        UserSettings.Save();
+                    },
+
+                    // The three language-model rows only persist; nothing is applied here. The
+                    // server has already loaded the model for this session, so these take effect
+                    // at the next launch and the screen says so.
+                    OnLlmDeviceChanged = d =>
+                    {
+                        UserSettings.LlmDevice = d;
+                        UserSettings.Save();
+                    },
+                    OnLlmGpuLayersChanged = n =>
+                    {
+                        UserSettings.LlmGpuLayers = n;
+                        UserSettings.Save();
+                    },
+                    OnLlmCpuThreadsChanged = n =>
+                    {
+                        UserSettings.LlmCpuThreads = n;
+                        UserSettings.Save();
+                    },
+
+                    // Discarding the signature is the whole of "re-detect": LlamaProbe re-runs
+                    // whenever it does not match the model file, which happens during the next
+                    // launch's model load rather than freezing the game here.
+                    OnLlmRedetect = () =>
+                    {
+                        UserSettings.LlmProbeSignature = "";
+                        UserSettings.Save();
+                    },
+
                     OnBack = () => SetMode(GameMode.MainMenu),
                 };
             }
 
             // Sync controls with the current persisted values each time we enter.
-            _settingsMenuRenderer.MusicVolume = AudioSettings.MusicVolume;
-            _settingsMenuRenderer.SfxVolume   = AudioSettings.SfxVolume;
-            // Read back from the renderer rather than a stored flag, so the toggle also
-            // reflects --dither off and the F key.
+            _settingsMenuRenderer.MusicVolume = UserSettings.MusicVolume;
+            _settingsMenuRenderer.SfxVolume   = UserSettings.SfxVolume;
+            _settingsMenuRenderer.LlmDevice     = UserSettings.LlmDevice;
+            _settingsMenuRenderer.LlmGpuLayers  = UserSettings.LlmGpuLayers;
+            _settingsMenuRenderer.LlmCpuThreads = UserSettings.LlmCpuThreads;
+            // Dither is read back from the renderer rather than from UserSettings, even though it
+            // is persisted now: the renderer is the live truth, so the toggle still shows the real
+            // state after --dither off or an F-key cycle. Those two do not write the setting — a
+            // run overridden at the command line, or mid-session live tuning, is not the player
+            // choosing a default — so the shown state and the saved state can legitimately differ
+            // until the toggle itself is clicked.
             _settingsMenuRenderer.DitherEnabled = _core.PostProcess.Enabled;
             _settingsMenuRenderer.Render();
         }

@@ -74,7 +74,9 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("                                     kit is random — so their success test is unwritable without this");
     Console.WriteLine("  --fill-party                       DEBUG: after the childhood phase, fill the party to max_companions with generated");
     Console.WriteLine("                                     NPCs — the last slot a beast, every slot before it a human");
-    Console.WriteLine("  --cpu                              Run LLM on CPU only (no GPU offloading)");
+    Console.WriteLine("  --cpu                              Run LLM on CPU only, overriding the setting and the first-run probe");
+    Console.WriteLine("  --gpu                              Run LLM on the installed GPU backend (models/llama/backends/), same override");
+    Console.WriteLine("  --no-llm-probe                     Skip first-run compute-device detection; use whatever is already saved");
     Console.WriteLine("  --seed <n>                         Fix the master RNG seed for a reproducible run (world, spawn, dice)");
     Console.WriteLine("  --start-at <name>                  DEBUG: spawn on the first biome/location matching <name> (e.g. village, farm)");
     Console.WriteLine("  --start-area <name>                DEBUG: open narration in the first area of the location matching <name>");
@@ -468,12 +470,29 @@ if (args.Any(a => a == "--weapons"))
 // Check for --cpu flag (run LLM on CPU only)
 if (args.Any(a => a == "--cpu"))
 {
-    Cathedral.Config.LLM.GpuLayers = 0;
+    Cathedral.Config.Debug.ForcedLlmDevice = Cathedral.LLM.LlamaComputeDevice.Cpu;
     Console.ForegroundColor = ConsoleColor.Cyan;
     Console.WriteLine("*** CPU-ONLY MODE ***");
     Console.WriteLine("LLM will run entirely on CPU (no GPU layer offloading).");
     Console.ResetColor();
     Console.WriteLine();
+}
+
+// Check for --gpu flag (force the installed GPU backend, overriding the probe)
+if (args.Any(a => a == "--gpu"))
+{
+    Cathedral.Config.Debug.ForcedLlmDevice = Cathedral.LLM.LlamaComputeDevice.Gpu;
+    Console.ForegroundColor = ConsoleColor.Cyan;
+    Console.WriteLine("*** GPU MODE ***");
+    Console.WriteLine("LLM will use the installed GPU backend. Falls back to CPU if it cannot serve the model.");
+    Console.ResetColor();
+    Console.WriteLine();
+}
+
+// Check for --no-llm-probe (skip first-run hardware detection)
+if (args.Any(a => a == "--no-llm-probe"))
+{
+    Cathedral.LLM.LlamaProbe.Enabled = false;
 }
 
 // (--seed is parsed and locked in at the very top of this file — see the comment there.)
@@ -538,6 +557,9 @@ for (int i = 0; i < args.Length; i++)
 {
     if (args[i] != "--dither") continue;
 
+    // The flag is this run's instruction and outranks the saved on/off state, which is applied
+    // at startup only when nothing on the command line has spoken for the layer.
+    Cathedral.Config.PostProcess.DitherModeSetByFlag = true;
     Cathedral.Config.PostProcess.DitherMode = 1;
 
     if (i + 1 < args.Length && !args[i + 1].StartsWith("--"))

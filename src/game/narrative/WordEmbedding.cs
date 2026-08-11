@@ -98,11 +98,7 @@ public static class WordEmbedding
 
     private static string? ResolveVectorsPath()
     {
-        var dir = AppDomain.CurrentDomain.BaseDirectory;
-        while (dir != null && !Directory.Exists(Path.Combine(dir, "models")))
-            dir = Directory.GetParent(dir)?.FullName;
-        if (dir == null) return null;
-        var candidate = Path.Combine(dir, "models", "embeddings", VectorsFileName);
-        return File.Exists(candidate) ? candidate : null;
+        var candidate = ModelsDirectory.PathTo("embeddings", VectorsFileName);
+        return candidate != null && File.Exists(candidate) ? candidate : null;
     }
 }

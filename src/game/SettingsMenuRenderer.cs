@@ -1,13 +1,23 @@
 using System;
 using OpenTK.Mathematics;
 using Cathedral.Terminal;
+using Cathedral.LLM;
 
 namespace Cathedral.Game;
 
 /// <summary>
-/// Renders and manages the Settings screen on the TerminalHUD.
-/// Shows two volume rows (Music, SFX), each adjusted via [ - ] / [ + ] step buttons,
-/// plus a Back button. Reached from the main menu; active only during GameMode.Settings.
+/// Renders and manages the Settings screen on the TerminalHUD. Reached from the main menu; active
+/// only during <see cref="GameMode.Settings"/>.
+///
+/// <para>Two groups, each under a heading, sharing one column geometry so every label, button and
+/// value lines up down the screen:</para>
+/// <list type="bullet">
+/// <item><b>Audio &amp; video</b> — music and SFX volumes as [ - ] / [ + ] steppers, and the dither
+/// toggle. Dither is a post-process shader rather than a sound setting, which is why the heading
+/// names both and not just audio.</item>
+/// <item><b>Language model</b> — compute device, GPU layers, thread count and re-detect. Unlike
+/// everything above, none of these apply until the next launch; see the row comments.</item>
+/// </list>
 /// </summary>
 public class SettingsMenuRenderer
 {
@@ -34,31 +44,95 @@ public class SettingsMenuRenderer
     /// <summary>Fired with the new state when the dither toggle is clicked.</summary>
     public Action<bool>? OnDitherChanged { get; set; }
 
+    // ── Language model ───────────────────────────────────────────────────────
+    //
+    // Every row below takes effect at the NEXT LAUNCH, and the screen says so. The server loads
+    // the model once at startup and holds it for the session; changing a device in place would
+    // mean killing it, re-reading two gigabytes and rebuilding every cached persona slot, possibly
+    // mid-narration. Deferring is both simpler and the honest thing to show the player.
+
+    /// <summary>Compute device preference. Initialize before Render().</summary>
+    public LlamaComputeDevice LlmDevice { get; set; } = LlamaComputeDevice.Auto;
+
+    /// <summary>Fired with the new device when the device button is clicked.</summary>
+    public Action<LlamaComputeDevice>? OnLlmDeviceChanged { get; set; }
+
+    /// <summary>GPU layers to offload; -1 means let llama.cpp fit it. Initialize before Render().</summary>
+    public int LlmGpuLayers { get; set; } = -1;
+
+    /// <summary>Fired with the new layer count (-1 for automatic).</summary>
+    public Action<int>? OnLlmGpuLayersChanged { get; set; }
+
+    /// <summary>CPU threads; 0 means let llama.cpp choose. Initialize before Render().</summary>
+    public int LlmCpuThreads { get; set; }
+
+    /// <summary>Fired with the new thread count (0 for automatic).</summary>
+    public Action<int>? OnLlmCpuThreadsChanged { get; set; }
+
+    /// <summary>
+    /// Fired when the player asks for hardware detection to run again. The handler is expected to
+    /// discard the saved probe result, not to measure anything here — see <see cref="RequestRedetect"/>.
+    /// </summary>
+    public Action? OnLlmRedetect { get; set; }
+
+    /// <summary>Set once re-detection has been asked for, so the button can acknowledge it.</summary>
+    private bool _redetectRequested;
+
     /// <summary>Fired when the Back button is clicked.</summary>
     public Action? OnBack { get; set; }
 
     // Control indices (also used as hover ids).
-    private const int CtlMusicMinus = 0;
-    private const int CtlMusicPlus  = 1;
-    private const int CtlSfxMinus   = 2;
-    private const int CtlSfxPlus    = 3;
-    private const int CtlBack       = 4;
-    private const int CtlDither     = 5;
+    private const int CtlMusicMinus   = 0;
+    private const int CtlMusicPlus    = 1;
+    private const int CtlSfxMinus     = 2;
+    private const int CtlSfxPlus      = 3;
+    private const int CtlBack         = 4;
+    private const int CtlDither       = 5;
+    private const int CtlDevice       = 6;
+    private const int CtlLayersMinus  = 7;
+    private const int CtlLayersPlus   = 8;
+    private const int CtlThreadsMinus = 9;
+    private const int CtlThreadsPlus  = 10;
+    private const int CtlRedetect     = 11;
     private int _hoveredControl = -1;
 
     private const int Step = 10; // percent per click
 
-    // Layout
-    private const int TitleRow   = 28;
-    private const int MusicRow   = 40;
-    private const int SfxRow     = 43;
-    private const int DitherRow  = 46;
-    private const int BackRow    = 51;
-    private const int BarWidth   = 20;
-    private const int RowWidth   = 47; // total width of a volume row (see column math below)
+    /// <summary>
+    /// Ceiling for the manual GPU-layer setting. No model has more layers than this, and the
+    /// setting is an override for people who know what they are doing — the useful value is the
+    /// automatic one at the bottom of the range.
+    /// </summary>
+    private const int MaxGpuLayers = 99;
+
+    /// <summary>Ceiling for the manual thread count. Above the core count it only adds contention.</summary>
+    private const int MaxCpuThreads = 64;
+
+    // Layout. Two stacks with a heading each, sharing one column geometry so every label,
+    // button and value lines up down the screen.
+    private const int TitleRow         = 28;
+    private const int AudioVideoHeadRow = 34;
+    private const int MusicRow      = 37;
+    private const int SfxRow        = 40;
+    private const int DitherRow     = 43;
+    private const int ModelHeadRow  = 48;
+    private const int DeviceRow     = 51;
+    private const int LayersRow     = 54;
+    private const int ThreadsRow    = 57;
+    private const int RedetectRow   = 60;
+    private const int ModelInfoRow  = 63;   // and the two rows below it
+    private const int BackRow       = 69;
+    private const int BarWidth      = 20;
+    private const int RowWidth      = 47; // total width of a volume row (see column math below)
     private const string BackLabel = "[ Back ]";
     // Widest of the two states, so the hit region does not change size with the label.
     private const int ToggleW = 7; // "[ OFF ]"
+
+    /// <summary>Widest device label ("[ Auto ]"), so the hit region does not move as it cycles.</summary>
+    private const int DeviceW = 8;
+
+    private const string RedetectLabel     = "[ Re-detect hardware ]";
+    private const string RedetectDoneLabel = "[ Will re-detect at next launch ]";
 
     public SettingsMenuRenderer(TerminalHUD terminal)
     {
@@ -76,9 +150,19 @@ public class SettingsMenuRenderer
         _terminal.CenteredText(TitleRow, "S E T T I N G S", Config.Colors.BrightYellow, Config.Colors.Black);
         _terminal.CenteredText(TitleRow + 2, ornament, Config.Colors.DarkGray35, Config.Colors.Black);
 
+        // Not "AUDIO": the dither toggle below is a post-process shader, not a sound setting.
+        DrawSectionHeading(AudioVideoHeadRow, "A U D I O   &   V I D E O");
         DrawVolumeRow(MusicRow, "MUSIC", MusicVolume, CtlMusicMinus, CtlMusicPlus);
         DrawVolumeRow(SfxRow, "SFX", SfxVolume, CtlSfxMinus, CtlSfxPlus);
         DrawDitherRow();
+
+        DrawSectionHeading(ModelHeadRow, "L A N G U A G E   M O D E L");
+        DrawDeviceRow();
+        DrawAutoStepRow(LayersRow, "LAYERS", LlmGpuLayers, -1, CtlLayersMinus, CtlLayersPlus, MaxGpuLayers);
+        DrawAutoStepRow(ThreadsRow, "THREADS", LlmCpuThreads, 0, CtlThreadsMinus, CtlThreadsPlus, MaxCpuThreads);
+        DrawRedetectButton();
+        DrawModelInfo();
+
         DrawBackButton();
 
         // Edge rules against the sphere, drawn last so nothing overwrites them
@@ -139,6 +223,105 @@ public class SettingsMenuRenderer
         _terminal.Text(MinusX, DitherRow, label, textColor, bgColor);
     }
 
+    private void DrawSectionHeading(int row, string text)
+        => _terminal.CenteredText(row, text, Config.Colors.MediumGray60, Config.Colors.Black);
+
+    /// <summary>
+    /// The compute-device cycle: Auto → GPU → CPU. Laid out on the volume rows' columns, with the
+    /// note to the right saying what Auto currently resolves to — a bare "Auto" tells the player
+    /// nothing about whether their machine ended up on a GPU.
+    /// </summary>
+    private void DrawDeviceRow()
+    {
+        int startX = RowStartX;
+        _terminal.FillRect(startX, DeviceRow, RowWidth, 1, ' ', Config.Colors.White, Config.Colors.Black);
+        _terminal.Text(startX, DeviceRow, "DEVICE".PadRight(7), Config.Colors.MediumGray60, Config.Colors.Black);
+
+        bool hovered = _hoveredControl == CtlDevice;
+        Vector4 textColor = hovered ? Config.Colors.BrightYellow : Config.Colors.White;
+        Vector4 bgColor   = hovered ? Config.Colors.DarkYellow   : Config.Colors.Black;
+
+        string label = LlmDevice switch
+        {
+            LlamaComputeDevice.Gpu => "[ GPU ]",
+            LlamaComputeDevice.Cpu => "[ CPU ]",
+            _                      => "[ Auto ]"
+        };
+        _terminal.Text(MinusX, DeviceRow, label.PadRight(DeviceW), textColor, bgColor);
+
+        string note = LlmDevice == LlamaComputeDevice.Auto
+            ? $"using {DescribeEffectiveDevice()}"
+            : "overriding detection";
+        _terminal.Text(MinusX + DeviceW + 2, DeviceRow, Truncate(note, RowWidth - 8 - DeviceW - 2),
+            Config.Colors.DarkGray35, Config.Colors.Black);
+    }
+
+    /// <summary>
+    /// A stepper whose bottom value means "let llama.cpp decide" rather than zero. Both settings
+    /// it serves are overrides: llama.cpp fits the GPU layers to available memory and picks a
+    /// thread count from the core count, and both of those are better than a number the player
+    /// guesses. So the automatic end is the default and is labelled, not shown as a bare 0 or -1.
+    /// </summary>
+    private void DrawAutoStepRow(int row, string label, int value, int autoValue, int minusCtl, int plusCtl, int max)
+    {
+        int startX = RowStartX;
+        _terminal.FillRect(startX, row, RowWidth, 1, ' ', Config.Colors.White, Config.Colors.Black);
+        _terminal.Text(startX, row, label.PadRight(7), Config.Colors.MediumGray60, Config.Colors.Black);
+
+        bool isAuto = value <= autoValue;
+        DrawStepButton(MinusX, row, "[ - ]", minusCtl, !isAuto);
+        DrawStepButton(PlusX, row, "[ + ]", plusCtl, value < max);
+
+        string text = isAuto ? "automatic" : value.ToString();
+        _terminal.Text(BarX, row, text.PadRight(BarWidth),
+            isAuto ? Config.Colors.DarkGray35 : Config.Colors.White, Config.Colors.Black);
+    }
+
+    private void DrawRedetectButton()
+    {
+        string label = _redetectRequested ? RedetectDoneLabel : RedetectLabel;
+        int x = (_terminal.Width - label.Length) / 2;
+
+        // Once asked for, it is done — acknowledge rather than invite a second click.
+        bool hovered = !_redetectRequested && _hoveredControl == CtlRedetect;
+        Vector4 textColor = _redetectRequested ? Config.Colors.DarkGray35
+                          : hovered            ? Config.Colors.BrightYellow
+                          :                      Config.Colors.White;
+        Vector4 bgColor = hovered ? Config.Colors.DarkYellow : Config.Colors.Black;
+
+        _terminal.FillRect(0, RedetectRow, _terminal.Width, 1, ' ', textColor, Config.Colors.Black);
+        _terminal.Text(x, RedetectRow, label, textColor, bgColor);
+    }
+
+    /// <summary>
+    /// Two lines of context under the model rows: what detection found, and when any of this takes
+    /// effect.
+    /// <para>The model itself is deliberately <b>not</b> named here. Which language model the game
+    /// runs on is an implementation detail of the fiction, not a setting, and the row would put a
+    /// vendor's model name in front of the player to no purpose. It is still recovered from the
+    /// GGUF header and written to the startup log, which is where a person diagnosing an install
+    /// needs it.</para>
+    /// </summary>
+    private void DrawModelInfo()
+    {
+        var summary = UserSettings.LlmProbeSummary;
+        _terminal.CenteredText(ModelInfoRow,
+            Truncate(summary.Length > 0 ? $"detected: {summary}" : "detected: not yet — runs at next launch", _terminal.Width - 4),
+            Config.Colors.DarkGray35, Config.Colors.Black);
+
+        _terminal.CenteredText(ModelInfoRow + 1, "changes above take effect at the next launch",
+            Config.Colors.DarkGray35, Config.Colors.Black);
+    }
+
+    /// <summary>What Auto resolves to, in the player's words rather than the enum's.</summary>
+    private static string DescribeEffectiveDevice()
+        => UserSettings.LlmProbedDevice == LlamaComputeDevice.Gpu
+            ? UserSettings.LlmProbedBackend ?? "GPU"
+            : "CPU";
+
+    private static string Truncate(string text, int width)
+        => width <= 1 || text.Length <= width ? text : text[..Math.Max(0, width - 1)] + "…";
+
     private void DrawStepButton(int x, int row, string text, int ctl, bool enabled)
     {
         Vector4 textColor, bgColor;
@@ -189,8 +372,67 @@ public class SettingsMenuRenderer
             case CtlSfxMinus:   SetSfx(SfxVolume - Step); break;
             case CtlSfxPlus:    SetSfx(SfxVolume + Step); break;
             case CtlDither:     ToggleDither(); break;
+            case CtlDevice:     CycleDevice(); break;
+            case CtlLayersMinus:  SetGpuLayers(LlmGpuLayers < 0 ? -1 : LlmGpuLayers - LayerStep); break;
+            case CtlLayersPlus:   SetGpuLayers(LlmGpuLayers < 0 ? LayerStep : LlmGpuLayers + LayerStep); break;
+            case CtlThreadsMinus: SetCpuThreads(LlmCpuThreads - 1); break;
+            case CtlThreadsPlus:  SetCpuThreads(LlmCpuThreads + 1); break;
+            case CtlRedetect:     RequestRedetect(); break;
             case CtlBack:       OnBack?.Invoke(); break;
         }
+    }
+
+    /// <summary>
+    /// Layers move four at a time. Unlike a thread count, which is a small number a player picks
+    /// exactly, this is a fraction of a model's depth — reaching a useful value one click at a
+    /// time would take dozens of presses.
+    /// </summary>
+    private const int LayerStep = 4;
+
+    private void CycleDevice()
+    {
+        LlmDevice = LlmDevice switch
+        {
+            LlamaComputeDevice.Auto => LlamaComputeDevice.Gpu,
+            LlamaComputeDevice.Gpu  => LlamaComputeDevice.Cpu,
+            _                       => LlamaComputeDevice.Auto
+        };
+        OnLlmDeviceChanged?.Invoke(LlmDevice);
+        Render();
+    }
+
+    private void SetGpuLayers(int v)
+    {
+        // Anything below the step floor collapses to automatic, so the bottom of the range is the
+        // setting worth having rather than an unusable "0 layers on the GPU".
+        int clamped = v < LayerStep ? -1 : Math.Min(v, MaxGpuLayers);
+        if (clamped == LlmGpuLayers) return;
+        LlmGpuLayers = clamped;
+        OnLlmGpuLayersChanged?.Invoke(clamped);
+        Render();
+    }
+
+    private void SetCpuThreads(int v)
+    {
+        int clamped = Math.Clamp(v, 0, MaxCpuThreads);
+        if (clamped == LlmCpuThreads) return;
+        LlmCpuThreads = clamped;
+        OnLlmCpuThreadsChanged?.Invoke(clamped);
+        Render();
+    }
+
+    /// <summary>
+    /// Asks for hardware detection to run again. Nothing is measured here: the handler discards the
+    /// saved result, and the probe re-runs during the next launch's model load, where it is already
+    /// behind a loading screen. Measuring on the spot would freeze the game for as long as a
+    /// benchmark takes, to produce a setting that does not apply until the next launch anyway.
+    /// </summary>
+    private void RequestRedetect()
+    {
+        if (_redetectRequested) return;
+        _redetectRequested = true;
+        OnLlmRedetect?.Invoke();
+        Render();
     }
 
     private void ToggleDither()
@@ -235,6 +477,28 @@ public class SettingsMenuRenderer
         {
             if (x >= MinusX && x < MinusX + ToggleW) return CtlDither;
         }
+        else if (y == DeviceRow)
+        {
+            if (x >= MinusX && x < MinusX + DeviceW) return CtlDevice;
+        }
+        else if (y == LayersRow)
+        {
+            if (x >= MinusX && x < MinusX + BtnW) return CtlLayersMinus;
+            if (x >= PlusX  && x < PlusX + BtnW)  return CtlLayersPlus;
+        }
+        else if (y == ThreadsRow)
+        {
+            if (x >= MinusX && x < MinusX + BtnW) return CtlThreadsMinus;
+            if (x >= PlusX  && x < PlusX + BtnW)  return CtlThreadsPlus;
+        }
+        else if (y == RedetectRow && !_redetectRequested)
+        {
+            // Hit-tested against the un-clicked label: once requested the button is inert, and its
+            // acknowledgement text is wider, which would otherwise leave a dead region that still
+            // reports hover.
+            int start = (_terminal.Width - RedetectLabel.Length) / 2;
+            if (x >= start && x < start + RedetectLabel.Length) return CtlRedetect;
+        }
         else if (y == BackRow)
         {
             if (x >= BackStartX && x < BackStartX + BackLabel.Length) return CtlBack;
@@ -250,6 +514,12 @@ public class SettingsMenuRenderer
         CtlSfxMinus   => "settings:sfx-minus",
         CtlSfxPlus    => "settings:sfx-plus",
         CtlDither     => "settings:dither",
+        CtlDevice        => "settings:llm-device",
+        CtlLayersMinus   => "settings:llm-layers-minus",
+        CtlLayersPlus    => "settings:llm-layers-plus",
+        CtlThreadsMinus  => "settings:llm-threads-minus",
+        CtlThreadsPlus   => "settings:llm-threads-plus",
+        CtlRedetect      => "settings:llm-redetect",
         CtlBack       => "settings:back",
         _             => null,
     };

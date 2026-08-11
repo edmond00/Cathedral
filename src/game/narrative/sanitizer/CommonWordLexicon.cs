@@ -117,16 +117,9 @@ public static class CommonWordLexicon
         return _words.Contains(token.ToLowerInvariant());
     }
 
-    // ── Path resolution (mirrors WordEmbedding.ResolveVectorsPath) ───────────────
-
     private static string? ResolveDictionaryPath()
     {
-        var dir = AppDomain.CurrentDomain.BaseDirectory;
-        while (dir != null && !Directory.Exists(Path.Combine(dir, "models")))
-            dir = Directory.GetParent(dir)?.FullName;
-        if (dir == null) return null;
-
-        var candidate = Path.Combine(dir, "models", DictionaryFileName);
-        return File.Exists(candidate) ? candidate : null;
+        var candidate = ModelsDirectory.PathTo(DictionaryFileName);
+        return candidate != null && File.Exists(candidate) ? candidate : null;
     }
 }

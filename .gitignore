@@ -439,6 +439,19 @@ models/llama-*
 models/embeddings/
 catalyst-models/
 
+# The llama.cpp runtime: ~40 MB of third-party binaries, replaced wholesale on an upgrade.
+# Note "models/llama-*" above does NOT cover this — it matches models/llama-old, not models/llama.
+# The two documentation files are kept, since they are what says which build to fetch and how to
+# add a GPU backend to it.
+models/llama/*
+!models/llama/BUILD.txt
+!models/llama/backends/
+models/llama/backends/*
+!models/llama/backends/README.md
+
+# The pre-cleanup models folder, kept locally as an archive (see models/README.md).
+models_old/
+
 # OS generated files
 .DS_Store
 .DS_Store?

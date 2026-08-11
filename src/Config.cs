@@ -54,6 +54,24 @@ public static class Config
         public static Game.Narrative.TimePeriod? ForcedPeriod { get; set; } = null;
 
         /// <summary>
+        /// Compute device for the language model, overriding both the player's setting and the
+        /// first-run probe. Set by <c>--cpu</c> (and <c>--gpu</c>).
+        ///
+        /// <para>It lives here rather than being written into <see cref="UserSettings"/> because
+        /// flags are parsed before <c>UserSettings.Load()</c> runs, so a flag that wrote to the
+        /// settings object would be silently overwritten by the file a moment later. It also
+        /// <i>should</i> not persist: <c>--cpu</c> is one run's instruction, not a change to what
+        /// the player chose.</para>
+        ///
+        /// <para>Null means "no override" — the settings and the probe decide, exactly as if the
+        /// flag did not exist.</para>
+        ///
+        /// <para>Qualified with <c>global::</c> because <see cref="Config.LLM"/> — the sampling
+        /// settings nested in this same class — shadows the <c>Cathedral.LLM</c> namespace here.</para>
+        /// </summary>
+        public static global::Cathedral.LLM.LlamaComputeDevice? ForcedLlmDevice { get; set; } = null;
+
+        /// <summary>
         /// Biome or location name to place the protagonist on at world generation, e.g. "village".
         /// Set by <c>--start-at &lt;name&gt;</c>. Matched case-insensitively as a substring; ignored
         /// when nothing in the world matches.
@@ -406,6 +424,14 @@ public static class Config
     {
         // Resting state of the layer. 0 = off, 1 = Bayer 8x8, 2 = Bayer 4x4 two-tone, 3 = noise
         public static int DitherMode = 1;
+
+        /// <summary>
+        /// True once <c>--dither</c> has set the mode above. The saved
+        /// <see cref="UserSettings.DitherEnabled"/> is applied at startup only when this is false,
+        /// so a player who once turned dither on in the Settings screen does not silently break
+        /// <c>--dither off</c> for every later run. The flag is one run's instruction and wins.
+        /// </summary>
+        public static bool DitherModeSetByFlag = false;
         public static int Levels = 6;       // Quantisation steps per channel (2 = 1 bit)
         public static int PixelScale = 1;   // Dither cell size in pixels (1 = fine, 4 = chunky)
         public static float Strength = 1.0f; // Blend between original and dithered
@@ -1152,12 +1178,16 @@ public static class Config
     /// </summary>
     public static class LLM
     {
-        /// <summary>
-        /// File name of the single GGUF model to load, located directly in the <c>models</c>
-        /// directory. There is no size selection — this exact file is always used. If it is
-        /// missing the game prints an error naming this file and exits.
-        /// </summary>
-        public const string ModelFileName = "qwen2.5-3b-instruct-q4_k_m.gguf";
+        // Nothing here names the model or the hardware, deliberately.
+        //
+        //   which model  — always models/model.gguf (LlamaRuntime.ModelFileName). Changing models
+        //                  means replacing that file; there is no setting and no path to edit.
+        //   which device — measured once by LlamaProbe and stored in UserSettings, where the
+        //                  player can override it from the Settings screen. A constant cannot
+        //                  know whether this machine has a working GPU.
+        //
+        // What remains below is sampling: properties of the prompts and the prose we want out of
+        // them, which is a content decision and belongs in code.
 
         // Sampling parameters (narrative generation and constrained single-token requests)
         public const int GenerationMaxTokens = 512;
@@ -1198,13 +1228,11 @@ public static class Config
         // Temperature for utility requests (health-check, prompt pre-caching)
         public const double UtilityTemperature = 0.1;
 
-        // GPU layer offloading: 99 = all layers on GPU, 0 = CPU-only
-        // Set via --cpu flag at launch
-        public static int GpuLayers { get; set; } = 99;
-
-        // Number of CPU threads for inference (-t flag). 0 = use llama.cpp default (all cores).
-        // Reducing this can help on thermally constrained systems by lowering sustained power draw.
-        public static int CpuThreads { get; set; } = 6;
+        // GPU offloading and thread count used to live here as constants (-ngl 99, -t 6). Both are
+        // now in UserSettings, decided per machine by LlamaProbe and overridable in the Settings
+        // screen. The -ngl 99 in particular was actively harmful once a GPU backend was present:
+        // it means "put all layers in VRAM" and overrides llama.cpp's own --fit, which is on by
+        // default and sizes the offload to the card. See LlamaServerManager.BuildServerArguments.
     }
     
     #endregion

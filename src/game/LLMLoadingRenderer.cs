@@ -21,7 +21,7 @@ public class LLMLoadingRenderer
     // Layout
     private const int ProgressBarWidth = 42;
 
-    public LLMLoadingRenderer(TerminalHUD terminal, string modelLabel = "narrative engine")
+    public LLMLoadingRenderer(TerminalHUD terminal, string modelLabel = "language model")
     {
         _terminal   = terminal ?? throw new ArgumentNullException(nameof(terminal));
         _modelLabel = modelLabel;
