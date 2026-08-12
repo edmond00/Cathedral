@@ -6,8 +6,9 @@ namespace Cathedral.Game.Dialogue.Tree;
 
 /// <summary>
 /// Adjusts the NPC's affinity with the party member by one step up or down,
-/// clamped to the given min/max boundaries.
-/// Used in the "Strengthen Relationship" tree.
+/// clamped to the given min/max boundaries. A delta of 0 is a declared no-op — the conversation
+/// happened and left the relationship exactly where it was — and reports nothing.
+/// Used in the "Strengthen Relationship" and "Gather Knowledge" trees.
 /// </summary>
 public class AffinityIncrementOutcome : Outcome
 {
@@ -19,7 +20,7 @@ public class AffinityIncrementOutcome : Outcome
         int delta,
         AffinityLevel min = AffinityLevel.AnnoyingAcquaintance,
         AffinityLevel max = AffinityLevel.CloseFriend)
-        : base(delta > 0 ? "affinity increases one step" : "affinity decreases one step",
+        : base(delta == 0 ? "" : delta > 0 ? "affinity increases one step" : "affinity decreases one step",
                delta > 0 ? OutcomeSeverity.Positive : OutcomeSeverity.Negative, "")
     {
         _delta = delta;

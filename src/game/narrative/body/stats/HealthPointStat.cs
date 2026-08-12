@@ -15,6 +15,7 @@ public class HealthPointStat : DerivedStat
     public override string Name         => "health_point";
     public override string DisplayName  => "Health Points";
     public override string? RelatedBodyPartId => "trunk";
-    protected override int CalculateValue(int sourceScore) => sourceScore;
+    protected override int CalculateValue(int sourceScore) => Math.Max(1, (sourceScore + 3) / 3);
+    public override int WorstValue => 1;
     public override string FormatValue(int value) => $"{value} HP";
 }

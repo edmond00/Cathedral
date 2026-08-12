@@ -17,7 +17,7 @@
 ### outcomes
 
 - new skill : clairvoyance
-- next reminiscence : comfort
+- next reminiscence : runaway
 
 ## candlelight -> study
 

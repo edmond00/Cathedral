@@ -300,9 +300,9 @@ public class RoutinesPanelRenderer
                     case ActingMemberConstraint actor when !string.IsNullOrWhiteSpace(actor.MemberKey):
                         Add($"with: {actor.MemberKey}");
                         break;
-                    case ModusMentisConstraint mm when !string.IsNullOrWhiteSpace(mm.ModusMentisId):
-                        Add($"modus mentis: {mm.ModusMentisId}");
-                        break;
+                    // No modus mentis line: what a routine needs is what the player must bring to it,
+                    // and the skill it happened to be recorded with is neither brought nor required
+                    // (see RoutineStep.ActionModusMentisId). An item is both, so it stays.
                 }
             }
 

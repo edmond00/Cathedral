@@ -349,15 +349,20 @@ public class ObservationPhaseController
             // Keywords are chosen by rule from the final (sanitized) text — the noun(s) most related to
             // the object. A long observation gets two distinct keywords, both mapped to this same object
             // so either click does the same thing; a normal-length one keeps a single keyword.
+            //
+            // Words already claimed by an earlier object of this block are excluded: the block maps a
+            // keyword to exactly ONE anchor, so a repeated word left the later sentence clickable but
+            // wired to the earlier object.
             int wanted = text.Length > Config.Narrative.ObservationTwoKeywordsThreshold ? 2 : 1;
             var kws = KeywordExtractor.ExtractKeywords(text, GetReferenceLemma(outcome), wanted,
-                                                       ownName: GetNeutralName(outcome));
+                                                       ownName: GetNeutralName(outcome),
+                                                       exclude: keywordOutcomeMap.Keys);
             sentences.Add(new NarrationSentence(text, kws));
             ledger.Observe(outcome);
             foreach (var kw in kws)
             {
                 allKeywords.Add(kw);
-                keywordOutcomeMap.TryAdd(kw, outcome);
+                keywordOutcomeMap[kw] = outcome;
             }
             Console.WriteLine($"ObservationPhaseController: Observed '{outcome.DisplayName}' (keywords: {string.Join(", ", kws)})");
             return text;

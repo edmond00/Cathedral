@@ -404,6 +404,7 @@ public static class VerbAudit
             ["tame"]                    = "needs a beast already appeased",
             ["reconcile"]               = "needs an enemy or an annoyed acquaintance",
             ["strengthen_relationship"] = "needs a non-stranger",
+            ["gather_knowledge"]        = "needs a non-stranger",
             ["propose_to_buy"]          = "needs acquaintance-or-better with a seller",
             ["propose_to_sell"]         = "needs acquaintance-or-better with a buyer",
             ["request_job"]             = "needs acquaintance-or-better with an employer",

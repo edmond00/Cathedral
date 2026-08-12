@@ -9,19 +9,35 @@ namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
 /// Shared gate for the conversations added on top of the original six: the target must be a live,
-/// speaking, awake person who is standing here now.
+/// speaking, awake person who is standing here now — and, unless the verb opts out, somebody the
+/// actor has actually met.
+///
+/// <para><b>The introduction is the gate.</b> <c>meet_stranger</c> is what turns a stranger into a
+/// distant acquaintance, and every other conversation is meant to sit behind it — which is already
+/// how trade (<see cref="TradeGate"/>), work and <c>strengthen_relationship</c> read. These four
+/// were the exception: walking up to a total stranger and asking what they know was offered before
+/// asking their name, so the introduction had no reason to exist. Opting out is a per-verb decision
+/// (see <see cref="RequiresAcquaintance"/>), not a forgotten check.</para>
 /// </summary>
 public abstract class SocialDialogueVerb : DialogueVerb
 {
     public override int BaseDifficulty => 1;   // the action only opens the conversation
 
+    /// <summary>
+    /// Whether the target must be someone the actor has already met. True for anything that asks
+    /// something of a person; the two verbs whose whole subject is a stranger override it.
+    /// </summary>
+    protected virtual bool RequiresAcquaintance => true;
+
     /// <summary>The live, speaking, awake person behind a target who is present now, or null.</summary>
-    protected static NpcEntity? Available(Scene scene, PoV pov, Element target)
+    protected NpcEntity? Available(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (target is not SceneNpc sceneNpc) return null;
         if (SleeperGate.IsAsleep(scene, pov, target)) return null;
         if (sceneNpc.Entity is not NpcEntity npc) return null;
         if (!npc.IsAlive || !npc.CanSpeak) return null;
+        if (RequiresAcquaintance && npc.AffinityTable.IsStranger(actor?.AffinityKey ?? "Protagonist"))
+            return null;
 
         return scene.GetNpcsAt(pov.Where, pov.When).Any(n => n.Id == sceneNpc.Id) ? npc : null;
     }
@@ -38,8 +54,14 @@ public class BegForCoinVerb : SocialDialogueVerb
 
     protected override string DialogueTreeId => "beg_for_coin";
 
+    /// <summary>
+    /// The one conversation that is <i>about</i> being nobody to the person you are addressing.
+    /// Gating it behind an introduction would leave a destitute player with nothing to say to anyone.
+    /// </summary>
+    protected override bool RequiresAcquaintance => false;
+
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
-        => Available(scene, pov, target) != null;
+        => Available(scene, pov, target, actor) != null;
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"ask {NpcPronoun(target)} for a coin";
@@ -49,7 +71,7 @@ public class BegForCoinVerb : SocialDialogueVerb
 
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
-        var npc = Available(scene, pov, target);
+        var npc = Available(scene, pov, target, actor);
         return npc == null
             ? System.Array.Empty<Outcome>()
             : new Outcome[] { new DialogueTriggerOutcome(npc, "beg_for_coin") };
@@ -70,11 +92,18 @@ public class ProvokeVerb : SocialDialogueVerb
 
     protected override string DialogueTreeId => "provoke";
 
+    /// <summary>
+    /// Insulting somebody does not require having been introduced to them, and this is the only way
+    /// to pick a fight with one person instead of the whole square — behind an introduction it would
+    /// be unreachable against exactly the people worth using it on.
+    /// </summary>
+    protected override bool RequiresAcquaintance => false;
+
     // Left legal deliberately: words, not blows. What it leads to is the NPC's decision, at least
     // formally, and a witness to a provocation has watched an argument.
 
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
-        => Available(scene, pov, target) != null;
+        => Available(scene, pov, target, actor) != null;
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"say something to {NpcPronoun(target)} that cannot be let pass";
@@ -84,7 +113,7 @@ public class ProvokeVerb : SocialDialogueVerb
 
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
-        var npc = Available(scene, pov, target);
+        var npc = Available(scene, pov, target, actor);
         return npc == null
             ? System.Array.Empty<Outcome>()
             : new Outcome[] { new DialogueTriggerOutcome(npc, "provoke") };
@@ -107,7 +136,7 @@ public class ProposeToJoinVerb : SocialDialogueVerb
 
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
-        var npc = Available(scene, pov, target);
+        var npc = Available(scene, pov, target, actor);
         if (npc == null) return false;
 
         string key = actor?.AffinityKey ?? "Protagonist";
@@ -129,7 +158,7 @@ public class ProposeToJoinVerb : SocialDialogueVerb
 
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
-        var npc = Available(scene, pov, target);
+        var npc = Available(scene, pov, target, actor);
         return npc == null
             ? System.Array.Empty<Outcome>()
             : new Outcome[] { new DialogueTriggerOutcome(npc, "propose_to_join") };
@@ -139,9 +168,11 @@ public class ProposeToJoinVerb : SocialDialogueVerb
 /// <summary>
 /// Asks somebody what they know.
 ///
-/// <para>Available to anybody who will talk to you at all, because the interesting part is not who
+/// <para>Available to anybody you have been introduced to, because the interesting part is not who
 /// you may ask but what they turn out to know — a shepherd on the lie of the land is worth more than
-/// a reeve on it, and finding that out is the game.</para>
+/// a reeve on it, and finding that out is the game. Not to a stranger, though: asking a person you
+/// have not so much as named yourself to what they know about the district was offered ahead of
+/// meeting them, which made <c>meet_stranger</c> a step with nothing behind it.</para>
 /// </summary>
 public class GatherKnowledgeVerb : SocialDialogueVerb
 {
@@ -151,7 +182,7 @@ public class GatherKnowledgeVerb : SocialDialogueVerb
     protected override string DialogueTreeId => "gather_knowledge";
 
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
-        => Available(scene, pov, target) != null;
+        => Available(scene, pov, target, actor) != null;
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"ask {NpcPronoun(target)} what {NpcSubjectPronoun(target)} knows";
@@ -161,7 +192,7 @@ public class GatherKnowledgeVerb : SocialDialogueVerb
 
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
-        var npc = Available(scene, pov, target);
+        var npc = Available(scene, pov, target, actor);
         return npc == null
             ? System.Array.Empty<Outcome>()
             : new Outcome[] { new DialogueTriggerOutcome(npc, "gather_knowledge") };

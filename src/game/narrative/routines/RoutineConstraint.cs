@@ -59,22 +59,11 @@ public sealed class ItemConstraint : RoutineConstraint
     public override string OutcomeText => $"Used: {ItemName}";
 }
 
-/// <summary>Requires the acting member to still possess the modus mentis used during recording.</summary>
-public sealed class ModusMentisConstraint : RoutineConstraint
-{
-    public string ModusMentisId { get; set; } = "";
-
-    public ModusMentisConstraint() { }
-    public ModusMentisConstraint(string modusMentisId) { ModusMentisId = modusMentisId; }
-
-    public override string Kind => "modus_mentis";
-
-    public override bool IsSatisfied(RoutineReplayContext ctx)
-        => string.IsNullOrEmpty(ModusMentisId)
-        || ctx.ActingMember.GetModusMentisById(ModusMentisId) != null;
-
-    public override void Consume(RoutineReplayContext ctx) { /* not consumed */ }
-}
+// There was a ModusMentisConstraint here, requiring the acting member to still hold the skill the
+// step was recorded with. It is gone: the id is now plain data on the step
+// (RoutineStep.ActionModusMentisId). A constraint is two things at once — a precondition of replay
+// and a line in the routine's requirements list — and the modus mentis should be neither. A routine
+// is a thing the character learned to do, not a thing one skill learned to do.
 
 /// <summary>
 /// Records which party member performed the step and binds that member as the actor at replay.

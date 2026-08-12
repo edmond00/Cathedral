@@ -4,7 +4,12 @@
 # real: the world is inspected before and after, and it moved. The verb script runs in full
 # here — the two overlap on purpose, same scenario, different question.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Hall" --period dawn --observe-only "brewer"
+#
+# --npc-affinity: gather_knowledge is gated on already having been introduced (see
+# SocialDialogueVerb.RequiresAcquaintance) — asking a total stranger what they know about
+# the district was offered ahead of learning their name. Earning that in-script means
+# holding the meet_stranger conversation first, which would make this a test of that tree.
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --npc-affinity DistantAcquaintance --location-type test --location-id 0 --start-area "Test Hall" --period dawn --observe-only "brewer"
 
 wait
 click menu New

@@ -366,6 +366,7 @@ from the game's (very chatty) diagnostic logging on the same stdout.
 | `--start-area <name>` | Opens narration in the first area of the location whose name matches `<name>` (`pigsty`, `smithy`, `hall`…). `--start-at` picks the location, this picks the room. Without it you arrive in whichever area the factory built first — a farm's courtyard — and reaching any other one costs an observation, a think and an action **per step**, with the persona choosing what is observable at each. Anything that lives in one room (a pigsty's pigs, a smithy's anvil) is otherwise a long walk away. Inert when the location has no such area, so it can be left on across a multi-location run. |
 | `--observe-only <name>` | Restricts what an observation phase may look at to objects matching `<name>`. **This is what makes a specific object reachable at all.** A phase opens on ONE object the persona chose out of a dozen, so without it a script that wants to act on the pig is waiting on a coin flip it cannot influence — and re-rolling seeds until the right object comes up first is not a test. Whole words match before substrings (`pig` means the pig, not the Courtyard–Pigsty Track), and a phase where nothing matches falls back to the whole scene rather than narrating nothing. |
 | `--no-encounters` | Suppresses random travel encounters. **Pass this in every script that travels.** An encounter puts the game in `EncounterPrompt`, where a script waiting for `LocationInteraction` sits until its timeout and reports a failure that has nothing to do with what it was testing. |
+| `--allow-reentry` | Lets a world-map click on the vertex the avatar already stands on enter that location. **The game refuses it** — arriving somewhere already opens it (`OnProtagonistArrived` starts the interaction itself), so that click is only ever a way back into the place just walked out of, and a visit is meant to cost a journey. `travel here` is exactly that click, and the spawn vertex is the only one a script can name from a cold start, so **`run_tests.sh` passes this on every script** — you do not put it in a `# FLAGS:` header. |
 | `--period <name>` | Pins the arrival time of day (`dawn`…`night`) instead of drawing one at random. Needed for anything period-gated: every building's entry door shuts at `night`, and a random draw reaches that one visit in six. |
 | `--fill-party` | Fills the companion roster to its heart-derived ceiling (`max_companions`) right after the childhood phase, with NPCs generated from random archetypes — the **last** slot a beast, every slot before it a human. Recruiting even one companion in play takes a conversation and a check (or an appease *and* a tame), which is a long approach for anything that just needs a populated party. Note the ceiling is the *heart* score, and a protagonist accepted straight out of creation has a heart of 1 — so a plain script gets one beast and nothing else. For humans too, raise the heart first (`click cell 94 24` on the creation screen bumps it, four presses reaching 5). |
 | `--start-fight <creature>` | Drops straight into a fight on reaching the world map (`wolf`, `bear`, `bandit`, `brigand`). **The only way a script can reach fight mode at all** — the real routes in are a random travel encounter (which every script disables with `--no-encounters`, precisely because it fires unpredictably) and provoking a location NPC through a conversation and a check. |
@@ -601,6 +602,50 @@ share one mutable outcome object across every conversation in the process.
 
 `Report(text)` settles that wording and sets `Reported`; an outcome that never reports changed nothing
 observable, and `ShowInUI` follows. That replaced returning `null` from `Apply`.
+
+### The economy of a narration phase: noetic points and the two ledgers
+
+A phase's budget is **noetic points**, one spent per observation, thinking or item combination, and
+the pool refills at the phase boundary (`CloseNarrationSegment`). Three rules decide how far that
+budget reaches, and they were designed together — changing one alone re-breaks what the others fix.
+
+- **The pool is the encephalon score divided by three** (`NoeticPointsStat`), **rounded up**. At one
+  point per level a segment was never really spent: a player could work through every object in a
+  room and still have attempts left, so nothing had to be chosen over anything else. Rounded up
+  because flooring lands a starting character on exactly 1, which buys the one thought and nothing
+  else — no focus observation, no Speak-About hand-off (that spends the speaker's own point).
+- **Combining a tool costs nothing.** It is part of the action already on screen, and only one item
+  may ever be combined with it. Charging a point made the five tool-gated verbs (`dig`, `mine`,
+  `fish`, `cut_wood`, `break`) *impossible* once the pool shrank: the thinking phase that produces
+  the action spends the point "Use Tool" then wants, so the option was offered and permanently
+  greyed out.
+- **A failed action does not refill it.** `CloseNarrationSegment(refillNoetic:)` is false on exactly
+  one path — the CONTINUE that closes a segment after a failed action (`_pendingSegmentSucceeded`).
+  Refilling there meant a miss cost nothing, since the very next press handed the whole budget back.
+  Every other boundary (an area move, a fight, a conversation, a hand-off) refills as before.
+- **Nothing is offered twice in one phase.** Two ledgers, same lifetime, cleared together in
+  `CloseNarrationSegment`:
+  - `ObservationLedger` — what has been *looked at*. Keyed by **instance**, so two same-named things
+    stay two things (which is what makes a second corpse reachable). Note `SceneFactory` merges
+    same-named PoIs within an area at build, so ordinary scenery never has twins.
+  - `ActionProposalLedger` — what has been offered a **button**. Keyed by **verb + target +
+    variant**, *not* by instance: `RefreshSceneVerbs` re-expands every scene verb list immediately
+    before each thinking request, so the `VerbAction` recorded and the one filtered are never the
+    same object. Recorded when the button reaches the screen, so a goal the *action* modus mentis
+    refused stays available — that refusal was one mind's, and asking again with another is the move
+    that should work.
+
+The compensations for a smaller pool are that last rule plus a **visible decline**: the goal choice
+offers "do something else entirely" to the persona itself, not only to the match critic as a hidden
+catch-all. With the goal list shrinking request by request, a mind left holding two leftovers it
+cares nothing for needs a way to say so instead of committing to one. When the list empties
+completely the ignore branch fires with no question asked at all — the same "nothing here worth
+doing" line in the thinking modus mentis's voice.
+
+**A player who spends the pool without succeeding can only leave.** Keyword clicks are gated on
+`ThinkingAttemptsRemaining > 0`, so at zero the footer LEAVE button is the way out. That is the
+intended shape, not an oversight — but it is why LEAVE must stay ungated by anything except a Visual
+threat.
 
 ### Checking the outcome catalogue
 
@@ -1238,6 +1283,41 @@ The rules:
 travel range, the second because the night door rule fires in one period out of six. `destinations
 all` exists for the same reason — the plain `destinations` list is only the handful of vertices
 bordering the spawn point, while travel range reaches far further.
+
+### The affinity ladder, and what gates a conversation
+
+`AffinityLevel` is an ordinary 0–5 ladder (Stranger → Close Friend) whose value is the bonus dice a
+conversation gets — **plus `Suspicious` at 6, which sits off the ladder and grants 0**. Three
+consequences the arithmetic will get wrong if you let it:
+
+- **`Adjust(delta)` is a named step, never `level ± 1`.** A step down from Stranger clamps to the
+  `min` (Annoying Acquaintance), and a step either way from Suspicious would land on nonsense — so
+  Suspicious names both its neighbours explicitly (up = Distant Acquaintance, down = Annoying
+  Acquaintance) and **`delta == 0` returns without touching the table at all**. That last one was a
+  real bug with a long tail: `AffinityIncrementOutcome(0)` means "this conversation left things where
+  they were", read as a step *down*, and filed the player as an irritant on first meeting — which
+  then offered `reconcile` against somebody there had never been a quarrel with.
+- **Suspicious must be escapable.** Refusing to move it made it a permanent dead end: an NPC talked
+  down out of hostility could never be improved again, so every later conversation with them changed
+  nothing.
+- **A won conversation must not leave the player worse off.** `reconcile`'s success drops an *enemy*
+  to Suspicious, which is right; imposing it on somebody who merely found you annoying is a
+  downgrade in dice dressed as a win, so `SuspiciousAffinityOutcome(onlyWhenHostile: true)` steps a
+  non-enemy up instead. It runs **before** `ClearEnemyOutcome` in the tree's outcome list — the flag
+  it reads is the one that outcome removes.
+
+**The introduction is the gate for conversation.** `meet_stranger` is what turns a stranger into a
+distant acquaintance, and everything else sits behind it: trade and work through `TradeGate`,
+`strengthen_relationship` and `gather_knowledge` through their own stranger check,
+`introduce_me` because asking somebody who does not know you to vouch for you cannot work in that
+order. `SocialDialogueVerb.RequiresAcquaintance` is the switch; **`beg_for_coin` and `provoke` opt
+out**, because each is *about* addressing somebody who does not know you — behind an introduction,
+begging would leave a destitute player with nothing to say to anyone, and provoking would be
+unreachable against exactly the people worth using it on.
+
+A verb that joins this set must also be named in `VerbAudit`'s `unreachable` table and
+`VerbProbe.WhyUnreached`: the sweeps build scenes with no instance state, so their stand-in actor is
+a stranger to everyone and an affinity-gated verb is *correctly* never offered.
 
 ### Checking dialogue trees without running the game
 

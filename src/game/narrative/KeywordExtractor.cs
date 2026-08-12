@@ -38,10 +38,23 @@ public static class KeywordExtractor
     /// surface, so the same word is never returned twice; fewer than <paramref name="count"/> may come
     /// back when the text is short. Used to highlight two keywords for a long observation (both linked
     /// to the same object). With <paramref name="count"/> = 1 this reproduces <see cref="ExtractKeyword"/>.
+    ///
+    /// <para><paramref name="exclude"/> is what the rest of the phase has already claimed. A block maps
+    /// a keyword to ONE object, so the same word surfacing for a second object made that object's
+    /// sentence clickable but wired to the first one's — the player clicked the word in the sentence
+    /// about the moss and acted on the oak. Excluding the claimed surfaces is what keeps one word one
+    /// object; when nothing else is left the object simply gets no keyword, which is the honest
+    /// outcome — a word that would act on something else is worse than no word at all.</para>
     /// </summary>
-    public static List<string> ExtractKeywords(string text, string referenceLemma, int count, string? ownName = null)
+    public static List<string> ExtractKeywords(string text, string referenceLemma, int count, string? ownName = null,
+                                               IReadOnlyCollection<string>? exclude = null)
     {
         if (string.IsNullOrWhiteSpace(text) || count <= 0) return new List<string>();
+
+        var taken = exclude is { Count: > 0 }
+            ? new HashSet<string>(exclude, StringComparer.OrdinalIgnoreCase)
+            : null;
+        bool IsTaken(string surface) => taken != null && taken.Contains(surface);
 
         var candidates = NounExtractor.ExtractNounsWithLemmas(text);
         var refLemma = (referenceLemma ?? string.Empty).ToLowerInvariant().Trim();
@@ -56,7 +69,7 @@ public static class KeywordExtractor
         if (PlaygroundMode.IsActive)
         {
             var own = PlaygroundOwnWord(candidates, ownName, refLemma);
-            if (own != null) return new List<string> { own };
+            if (own != null) return IsTaken(own) ? new List<string>() : new List<string> { own };
         }
 
         // Drop the object's own word (by lemma) so keywords are associated, not the object itself.
@@ -67,7 +80,7 @@ public static class KeywordExtractor
         if (candidates.Count == 0)
         {
             var w = LongestWord(text);
-            return w != null ? new List<string> { w } : new List<string>();
+            return w != null && !IsTaken(w) ? new List<string> { w } : new List<string>();
         }
 
         // Rank the candidate surfaces: by embedding similarity to the reference lemma when embeddings
@@ -95,6 +108,7 @@ public static class KeywordExtractor
         var result = new List<string>();
         foreach (var surface in ranked)
         {
+            if (IsTaken(surface)) continue;
             if (result.Any(r => r.Equals(surface, StringComparison.OrdinalIgnoreCase))) continue;
             result.Add(surface);
             if (result.Count >= count) break;

@@ -7,7 +7,12 @@
 # pins people to one room; --observe-only pins the phase to one object, which is why the keyword is
 # clicked by index (which word the prose highlights is not something a test can know).
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Hall" --period dawn --observe-only "brewer"
+#
+# --npc-affinity: gather_knowledge is gated on already having been introduced (see
+# SocialDialogueVerb.RequiresAcquaintance) — asking a total stranger what they know about
+# the district was offered ahead of learning their name. Earning that in-script means
+# holding the meet_stranger conversation first, which would make this a test of that tree.
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --npc-affinity DistantAcquaintance --location-type test --location-id 0 --start-area "Test Hall" --period dawn --observe-only "brewer"
 
 wait
 click menu New

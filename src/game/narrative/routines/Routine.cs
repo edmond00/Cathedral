@@ -48,6 +48,7 @@ public class RoutineStep
         Label            = Label,
         TriggeredPhase   = TriggeredPhase,
         VariantKey       = VariantKey,
+        ActionModusMentisId = ActionModusMentisId,
         RepositionsPointOfView = RepositionsPointOfView,
     };
 
@@ -56,6 +57,24 @@ public class RoutineStep
     /// requested job id), so replay rebuilds the same view. Empty when the verb has no variant.
     /// </summary>
     public string VariantKey { get; set; } = "";
+
+    /// <summary>
+    /// The action modus mentis the step was performed with — <b>recorded, not required</b>.
+    ///
+    /// <para>It was a <c>RoutineConstraint</c>, which made it both a precondition of replay and a
+    /// line in the routine's requirements list. Neither is right. A routine is a thing you learned to
+    /// do, not a thing one particular skill learned to do: forgetting the modus mentis you happened
+    /// to use the first time is not a reason to be unable to walk the same walk again, and naming it
+    /// in the menu described the recording rather than what the player must bring. An item is
+    /// different — it is spent, and without it the step genuinely cannot happen — so
+    /// <see cref="ItemConstraint"/> stays a constraint and stays listed.</para>
+    ///
+    /// <para>It is still kept because replay reruns the coded action rules, and morality is read off
+    /// the acting modus mentis (see <c>ActionRuleContext.ActionModusMentis</c>, which already resolves
+    /// to null when the actor no longer holds it — a forgotten skill degrades the rule check, it does
+    /// not block the step).</para>
+    /// </summary>
+    public string ActionModusMentisId { get; set; } = "";
 }
 
 /// <summary>

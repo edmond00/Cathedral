@@ -248,7 +248,7 @@ internal static class ReminescenceCatalog
                 new("strange light in the night",
                     observationText:  "a pale glow seeping under a doorway in the deep of the night, where there should have been none",
                     outcomeText:      "a strange light you chose to follow — running away from the temple that same night",
-                    outcome: To("comfort", skills: new[] { typeof(ClairvoyanceModusMentis) }),
+                    outcome: To("runaway", skills: new[] { typeof(ClairvoyanceModusMentis) }),
                     contextSummary:   "following a strange light to escape the temple"),
 
                 new("candlelight",

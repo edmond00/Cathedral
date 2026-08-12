@@ -62,6 +62,7 @@ public class ThinkingExecutor
         bool isReminescence = false,
         bool autoSuccess = false,
         LlmPreviewSession? preview = null,
+        ActionProposalLedger? proposed = null,
         CancellationToken cancellationToken = default)
     {
         // The reasoning box accumulates the thinking MM's free "wants" (goal, then means) as dimmer
@@ -99,7 +100,7 @@ public class ThinkingExecutor
             : null;
 
         // ── Decision 1: GOAL ────────────────────────────────────────────────────
-        var (resolved, goalThought) = await ChooseGoalAsync(thinkingSlot, subOutcomes, thinkingModusMentis, overallLocation, areaLocation, observedPhrase, choiceCtx, cancellationToken, reasoningPart);
+        var (resolved, goalThought) = await ChooseGoalAsync(thinkingSlot, subOutcomes, thinkingModusMentis, overallLocation, areaLocation, observedPhrase, choiceCtx, proposed, cancellationToken, reasoningPart);
         bool isIgnore = resolved is VerbAction vIgnore && vIgnore.Verb is IgnoreVerb;
 
         // ── Early exit: IGNORE (reasoning only, no action) ──────────────────────
@@ -320,6 +321,7 @@ public class ThinkingExecutor
         string? areaLocation,
         string? observedPhrase,
         Rules.Choice.ChoiceRuleContext? choiceCtx,
+        ActionProposalLedger? proposed,
         CancellationToken ct,
         PreviewPart? part = null)
     {
@@ -329,12 +331,22 @@ public class ThinkingExecutor
             .Where(o => !(o is VerbAction vo && vo.Verb is IgnoreVerb))
             .ToList();
 
+        // Anything this phase has already put a button on screen for is dropped, so a second thought
+        // about the same object reaches for something new instead of re-offering what the player has
+        // already been handed. Before the coded rules, for the same reason the ledger is consulted
+        // before them everywhere else: what has been offered is not this mind's business to weigh.
+        if (proposed != null)
+            realOutcomes = proposed.Remaining(realOutcomes);
+
         // Coded rules narrow the list to what this mind may be shown at all — a principled modus
         // mentis is not offered crimes, an unscrupulous one is offered nothing else. Applied before
         // the empty check on purpose: filtering everything away IS a decision, and it reads as ignore.
         if (choiceCtx != null)
             realOutcomes = Rules.Choice.ChoiceRulesChecker.FilterGoals(realOutcomes, choiceCtx).ToList();
 
+        // Nothing left to offer. The caller's ignore branch narrates the same "nothing here worth
+        // doing" line the decline option produces, in this modus mentis's voice — but with no
+        // question put to it, because there is nothing to ask about.
         if (realOutcomes.Count == 0) return (IgnoreVerb.MakeOutcome(), null);
 
         if (PlaygroundMode.IsActive)
@@ -349,16 +361,21 @@ public class ThinkingExecutor
         var prompt = new PersonaChoicePrompt(
             ThinkingPromptConstructor.SituationLine(overallLocation, areaLocation, observedPhrase),
             "What do you want to do?", "what they want to do");
-        // The persona is shown the real goals only — it must answer as if committing to one. The
-        // decline rides in hidden, for the critic alone: personas regularly answer with something that
-        // was never on the list ("I choose to mark the boy by the wall instead"), and without a letter
-        // meaning "none of these" the critic is forced to call that a match for option A, so the
-        // character acts on an intent nobody expressed. Landing on it is a refusal — the caller's
-        // isIgnore exit fires, and the noetic point is spent all the same.
+        // The decline is shown to the persona, not hidden behind the critic. It serves two purposes
+        // and used to serve only the second:
+        //   • it is a real answer. With the goal list shrinking request by request (see the proposal
+        //     ledger above), a mind left with two leftovers it cares nothing for should be able to say
+        //     so rather than be forced to commit to one of them;
+        //   • it is still the critic's catch-all. Personas regularly answer with something that was
+        //     never on the list ("I choose to mark the boy by the wall instead"), and without a letter
+        //     meaning "none of these" the critic must call that a match for option A, so the character
+        //     acts on an intent nobody expressed.
+        // Landing on it is a refusal — the caller's isIgnore exit fires, and the noetic point is spent
+        // all the same.
         var chosen = await _selector.SelectAsync(
             thinkingSlot, thinkingModusMentis, realOutcomes,
             o => o.ToNaturalLanguageString(),
-            prompt, declineOption: "do something else entirely", declineHiddenFromPersona: true,
+            prompt, declineOption: "do something else entirely",
             preview: part?.NextSegment(isFree: true), ct: ct);
 
         if (chosen.Item == null)

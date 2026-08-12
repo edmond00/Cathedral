@@ -150,14 +150,23 @@ public abstract class TerminalPanelUI
 
         int visibleLines = _layout.NARRATIVE_HEIGHT;
         if (totalLines <= visibleLines && scrollOffset == 0) return (0, 0);
-        // Clamp totalLines so thumb ratio is valid when offset pushes content into view
-        int effectiveTotal = Math.Max(totalLines, scrollOffset + visibleLines);
 
-        float visibleRatio = (float)visibleLines / effectiveTotal;
-        int   thumbHeight  = Math.Max(2, (int)(trackHeight * visibleRatio));
-        int   maxScrollOff = _layout.CalculateMaxScrollOffset(effectiveTotal);
-        float scrollRatio  = maxScrollOff > 0 ? (float)scrollOffset / maxScrollOff : 0f;
-        int   thumbY       = trackStartY + (int)((trackHeight - thumbHeight) * scrollRatio);
+        // Both ratios are measured against `totalLines` — the same number the buffer's own
+        // MaxScrollOffset works from (NarrationScrollBuffer.TotalLines is _renderedLines.Count).
+        //
+        // This used to substitute max(totalLines, scrollOffset + visibleLines). Since
+        // CalculateMaxScrollOffset adds SCROLL_BOTTOM_MARGIN, the bottom offset already exceeds
+        // totalLines - visibleLines, so that substitution added the margin to the denominator a
+        // SECOND time and capped the position ratio at maxScroll / (maxScroll + margin). Scrolled
+        // fully to the bottom the thumb therefore stopped short of the track's end — a quarter of the
+        // way short over a typical buffer — and shrank as it went, since the height ratio was
+        // inflated by the same amount.
+        float visibleRatio = Math.Clamp((float)visibleLines / totalLines, 0f, 1f);
+        int   thumbHeight  = Math.Clamp((int)(trackHeight * visibleRatio), 2, trackHeight);
+
+        int   maxScrollOff = _layout.CalculateMaxScrollOffset(totalLines);
+        float scrollRatio  = maxScrollOff > 0 ? Math.Clamp((float)scrollOffset / maxScrollOff, 0f, 1f) : 0f;
+        int   thumbY       = trackStartY + (int)Math.Round((trackHeight - thumbHeight) * scrollRatio);
 
         Vector4 thumbColor = isThumbHovered
             ? Config.NarrativeUI.ScrollbarThumbHoverColor

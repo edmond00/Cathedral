@@ -1522,6 +1522,19 @@ public class LocationTravelGameController : IDisposable
         {
             Console.WriteLine("LocationTravelGameController: Clicked on protagonist's current position");
 
+            // A visit costs a journey. Arriving somewhere already opens it — OnProtagonistArrived
+            // starts the interaction itself — so this click is only ever a way back into the place
+            // just walked out of, and taking it means a player never has to go anywhere. Refused, so
+            // every trip is to somewhere else. `--allow-reentry` lifts it for scripted runs, where
+            // the spawn vertex is the only one a script can name from a cold start (`travel here`).
+            if (!Config.Debug.AllowReentry)
+            {
+                Console.WriteLine("LocationTravelGameController: refusing to re-enter the current location — "
+                                + "travel somewhere else (--allow-reentry lifts this)");
+                _travelInfoRenderer?.ShowTransientMessage("You have been here — choose somewhere to travel to.");
+                return;
+            }
+
             // Any pending travel plan should be discarded when the player decides to
             // interact with the current cell.
             ClearTravelPlan();

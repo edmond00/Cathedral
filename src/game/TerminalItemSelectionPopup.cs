@@ -14,14 +14,21 @@ namespace Cathedral.Game;
 public class TerminalItemSelectionPopup
 {
     private const int POPUP_WIDTH = 38;
-    private const int MAX_VISIBLE_ITEMS = 15;
+
+    /// <summary>
+    /// How many items fit in the box at once — the popup grid's height less the title row, the close
+    /// hint and the bottom border. It was a flat 15 with <see cref="_scrollOffset"/> declared and
+    /// never written, so a pack holding more than fifteen combinable items simply could not offer
+    /// the rest. Same fault, same fix, as TerminalThinkingModusMentisPopup.
+    /// </summary>
+    private static int MaxVisibleItems => Math.Max(1, Config.Terminal.PopupHeight - 3);
 
     private readonly PopupTerminalHUD _popup;
     private List<Item> _items = new();
     private int? _hoveredItemIndex = null;
     private Vector2 _fixedPosition;
     private int _scrollOffset = 0;
-    private string _title = "Combine Tool with VerbAction";
+    private string _title = "Use with this action";
 
     // Colors reuse the modus mentis popup config
     private static readonly Vector4 BorderColor = Config.Colors.MediumGray60;
@@ -35,7 +42,7 @@ public class TerminalItemSelectionPopup
     /// <summary>
     /// Show the popup at a fixed screen position with the list of items.
     /// </summary>
-    public void Show(Vector2 screenPosition, List<Item> items, string title = "Combine Tool with VerbAction")
+    public void Show(Vector2 screenPosition, List<Item> items, string title = "Use with this action")
     {
         _items = items ?? throw new ArgumentNullException(nameof(items));
         _fixedPosition = screenPosition;
@@ -63,6 +70,27 @@ public class TerminalItemSelectionPopup
 
     /// <summary>The items currently offered (for --cli listing/selection by index).</summary>
     public IReadOnlyList<Item> Choices => _items;
+
+    /// <summary>How many rows the box shows at the current list length.</summary>
+    private int VisibleCount => Math.Min(MaxVisibleItems, _items.Count);
+
+    /// <summary>
+    /// Scrolls the list by <paramref name="lines"/> (negative = toward the top), clamped so the last
+    /// screenful is the furthest the box can go. Returns true when something moved.
+    /// </summary>
+    public bool Scroll(int lines)
+    {
+        if (!IsVisible) return false;
+
+        int maxOffset = Math.Max(0, _items.Count - MaxVisibleItems);
+        int next = Math.Clamp(_scrollOffset + lines, 0, maxOffset);
+        if (next == _scrollOffset) return false;
+
+        _scrollOffset = next;
+        _hoveredItemIndex = null;
+        Render();
+        return true;
+    }
 
     /// <summary>
     /// Update hover state based on screen pixel mouse position.
@@ -125,7 +153,7 @@ public class TerminalItemSelectionPopup
         int cellX = (int)Math.Floor((relativeX + cellPixelSize * 0.5f) / cellPixelSize);
         int cellY = (int)Math.Floor((relativeY + cellPixelSize * 0.5f) / cellPixelSize);
 
-        if (cellY < 1 || cellY > MAX_VISIBLE_ITEMS || cellX < 0 || cellX >= POPUP_WIDTH)
+        if (cellY < 1 || cellY > VisibleCount || cellX < 0 || cellX >= POPUP_WIDTH)
             return null;
 
         int itemIndex = (cellY - 1) + _scrollOffset;
@@ -143,14 +171,20 @@ public class TerminalItemSelectionPopup
         if (!IsVisible)
             return;
 
-        int visibleCount = Math.Min(MAX_VISIBLE_ITEMS, _items.Count);
+        int visibleCount = VisibleCount;
         int popupHeight = visibleCount + 3; // title row + items + close hint
 
         _popup.Fill(0, 0, POPUP_WIDTH, popupHeight, ' ', Config.ThinkingModusMentisPopup.ModusMentisNormalColor, Config.ThinkingModusMentisPopup.BackgroundColor);
         _popup.DrawBox(0, 0, POPUP_WIDTH, popupHeight, BorderColor, Config.ThinkingModusMentisPopup.BackgroundColor);
 
-        int titleX = Math.Max(1, (POPUP_WIDTH - _title.Length) / 2);
-        _popup.DrawText(titleX, 0, _title, TitleColor, Config.ThinkingModusMentisPopup.BackgroundColor);
+        // When the list overflows the box the title carries the position, so the player can see
+        // that more exist and that the wheel reaches them.
+        string title = _items.Count > visibleCount
+            ? $"{_title} ({_scrollOffset + 1}-{_scrollOffset + visibleCount}/{_items.Count})"
+            : _title;
+        if (title.Length > POPUP_WIDTH - 2) title = title.Substring(0, POPUP_WIDTH - 2);
+        int titleX = Math.Max(1, (POPUP_WIDTH - title.Length) / 2);
+        _popup.DrawText(titleX, 0, title, TitleColor, Config.ThinkingModusMentisPopup.BackgroundColor);
 
         int startIndex = _scrollOffset;
         int endIndex = Math.Min(startIndex + visibleCount, _items.Count);

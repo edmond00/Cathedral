@@ -33,8 +33,16 @@ public sealed class NullVirtue : TransmutingVirtue
 {
     public override string Description => "N \u2192 N";
 
-    /// <summary>A null virtue exerts no influence, so no die is ever clickable.</summary>
-    public override bool CanApplyTo(int dieValue) => false;
+    /// <summary>
+    /// Applies to any die, and changes none of them.
+    ///
+    /// <para>Spending a humor is what advances its queue — the tail is removed and whatever sat
+    /// behind it becomes the usable one — so a virtue that could not be spent walled off everything
+    /// queued behind it: a phlegm tail made the whole organ dead for the roll, however useful the
+    /// humor one slot in. Applying it costs a point of the modifier budget and moves the die
+    /// nowhere, which is the player's trade to make.</para>
+    /// </summary>
+    public override bool CanApplyTo(int dieValue) => true;
 
     public override int Apply(int dieValue, Random rng) => dieValue;
 }

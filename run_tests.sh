@@ -127,7 +127,12 @@ run_cli() {
         # --silent is added here rather than in every header: a full run launches the game a
         # hundred-odd times, and without it that is an hour of overlapping music from windows
         # nobody is watching. No script has a reason to want sound, so none of them gets a say.
-        timeout $((CLI_TIMEOUT + 60)) dotnet run --no-build -- "${argv[@]}" --silent \
+        #
+        # --allow-reentry likewise. The game refuses a world-map click on the vertex you are already
+        # standing on — arriving somewhere opens it, so a visit costs a journey — but every script
+        # gets into a location with `travel here`, and the spawn vertex is the only one it can name
+        # without knowing what the seed generated. No script is testing that refusal.
+        timeout $((CLI_TIMEOUT + 60)) dotnet run --no-build -- "${argv[@]}" --silent --allow-reentry \
             --cli-timeout "$CLI_TIMEOUT" --cli-script "$s" > "$log" 2>&1
         local code=$?
 

@@ -258,14 +258,17 @@ public class NarrationScrollBuffer
 
     /// <summary>
     /// Build the separator rule closing a segment: a plain dashed line, or the label centred in it
-    /// with at least four dashes on each side.
+    /// with at least four dashes on each side. Either way it spans the panel — an unlabelled rule
+    /// used to stop at 40 cells, so the same event drew a full-width captioned rule or a half-width
+    /// blank one depending only on whether a caption happened to be passed, which reads as two
+    /// different kinds of break rather than one.
     /// </summary>
     private RenderedLine BuildSeparator(string? label)
     {
         string text;
         if (string.IsNullOrWhiteSpace(label))
         {
-            text = new string('─', Math.Min(_maxWidth, 40));
+            text = new string('─', _maxWidth);
         }
         else
         {

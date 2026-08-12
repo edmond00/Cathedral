@@ -139,8 +139,12 @@ public class TerminalSimpleChoicePopup
             BorderColor,
             Config.ThinkingModusMentisPopup.BackgroundColor);
 
-        int titleX = Math.Max(1, (POPUP_WIDTH - _title.Length) / 2);
-        _popup.DrawText(titleX, 0, _title, TitleColor, Config.ThinkingModusMentisPopup.BackgroundColor);
+        // Titles can carry content now (the clicked keyword), so clip rather than draw past the box.
+        string title = _title.Length > POPUP_WIDTH - 2
+            ? _title.Substring(0, POPUP_WIDTH - 5) + "..."
+            : _title;
+        int titleX = Math.Max(1, (POPUP_WIDTH - title.Length) / 2);
+        _popup.DrawText(titleX, 0, title, TitleColor, Config.ThinkingModusMentisPopup.BackgroundColor);
 
         for (int i = 0; i < _choices.Count; i++)
         {

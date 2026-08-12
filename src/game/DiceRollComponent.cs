@@ -326,7 +326,7 @@ public class DiceRollComponent
         // ── Box sizing — extra rows for the secondary dice group when in dual mode
         int primaryRows   = ((Math.Max(1, NumberOfDice)          + 19) / 20) * 2;
         int secondaryRows = IsDual ? ((Math.Max(1, SecondaryNumberOfDice) + 19) / 20) * 2 + 2 : 0;
-        int humorRows     = _humorEnabled ? 3 : 0; // button row + hint row + padding
+        int humorRows     = _humorEnabled ? 4 : 0; // button row + organ-label row + hint row + padding
         int bgW = 60, bgH = 19 + primaryRows + secondaryRows + humorRows;
         int bgX = centerX - bgW / 2;
         int bgY = centerY - 14;
@@ -535,22 +535,35 @@ public class DiceRollComponent
     }
 
     /// <summary>
-    /// Render the four humor buttons (Stomach, Hepar, Spleen, Pulmones) plus a hint line showing
-    /// the hovered/selected humor's transmuting formula. Captures each button's hit region.
+    /// Render the four humor buttons (Paunch, Hepar, Spleen, Pulmones), the organ each one draws
+    /// from, and a hint line showing the hovered/selected humor's transmuting formula. Captures each
+    /// button's hit region.
+    ///
+    /// <para>The organ name sits under its button in dark grey. Without it the row was four glyphs
+    /// with nothing to say which body they came out of, so a player could not tell which queue they
+    /// were about to spend — and spending is what advances that queue past whatever is in front of
+    /// the humor they actually want.</para>
+    ///
+    /// <para>The column pitch is driven by the widest organ name rather than by the button, since
+    /// "Pulmones" is longer than the five-cell button it labels.</para>
     /// </summary>
     private void RenderHumorButtons(TerminalHUD terminal, int centerX, int rowY)
     {
         var queues = HumorQueuesOrdered();
         if (queues.Length == 0) return;
 
-        const int btnW = 5, gap = 3;
-        int totalW = queues.Length * btnW + (queues.Length - 1) * gap;
-        int startX = centerX - totalW / 2;
+        const int btnW = 5;
+        var labels   = queues.Select(q => OrganLabel(q.OrganId)).ToArray();
+        int cellW    = Math.Max(btnW, labels.Max(l => l.Length));
+        int pitch    = cellW + 2;
+        int totalW   = queues.Length * pitch - 2;
+        int startX   = centerX - totalW / 2;
         bool limitReached = _humorApplied >= _humorLimit;
 
         for (int i = 0; i < queues.Length; i++)
         {
-            int bx = startX + i * (btnW + gap);
+            // The button is centred inside its column so it lines up with the label under it.
+            int bx = startX + i * pitch + (cellW - btnW) / 2;
             var humor = queues[i].PeekConsumable();
             bool selectable = !limitReached && humor != null && IsUsableVirtue(humor.TransmutingVirtue);
             bool selected   = _selectedQueue == i;
@@ -576,6 +589,13 @@ public class DiceRollComponent
             terminal.SetCell(bx + 4, rowY, ']',   bracket, Config.Colors.Black);
 
             _humorButtons[i] = (bx, rowY, btnW);
+
+            // Organ name under the button, dark so it frames rather than competes with the glyph.
+            // The focused column brightens, which is the only cue tying the hint line below to a
+            // particular queue.
+            bool focused = selected || hovered;
+            terminal.Text(startX + i * pitch + (cellW - labels[i].Length) / 2, rowY + 1, labels[i],
+                focused ? Config.Colors.Gray : Config.Colors.DarkGray, Config.Colors.Black);
         }
 
         // Hint / status line: show the focused humor's formula, else the modifier budget.
@@ -586,11 +606,22 @@ public class DiceRollComponent
             hint = $"{fh.Name}:  {fh.TransmutingVirtue.Description}    ({_humorApplied}/{_humorLimit})";
         else
             hint = $"Humor modifiers: {_humorApplied}/{_humorLimit}  —  hover a humor to inspect";
-        terminal.Text(centerX - hint.Length / 2, rowY + 1, hint,
+        terminal.Text(centerX - hint.Length / 2, rowY + 2, hint,
             Config.Colors.DarkGray, Config.Colors.Black);
     }
 
-    private static bool IsUsableVirtue(TransmutingVirtue? v) => v != null && v is not NullVirtue;
+    /// <summary>The organ id as a player-facing name — the queue's own id, capitalised.</summary>
+    private static string OrganLabel(string organId)
+        => string.IsNullOrEmpty(organId)
+            ? "?"
+            : char.ToUpperInvariant(organId[0]) + organId.Substring(1);
+
+    /// <summary>
+    /// Whether a humor can be spent on this roll at all. Only a missing virtue (black bile, the
+    /// critical tail) is unusable: a <see cref="NullVirtue"/> changes no die but still spends the
+    /// humor, which is the only way to reach whatever is queued behind it.
+    /// </summary>
+    private static bool IsUsableVirtue(TransmutingVirtue? v) => v != null;
 
     // ── Humor modifier interaction ─────────────────────────────────────
 

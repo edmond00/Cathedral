@@ -80,21 +80,36 @@ public class AffinityTable
 
     /// <summary>
     /// Bumps affinity one step upward (or downward if <paramref name="delta"/> is -1),
-    /// clamped to <paramref name="min"/>–<paramref name="max"/>.
+    /// clamped to <paramref name="min"/>–<paramref name="max"/>. A <paramref name="delta"/> of 0
+    /// changes nothing, including whether an entry exists at all.
+    ///
+    /// <para>That last part is not pedantry. The test was <c>delta &gt; 0 ? up : down</c>, so 0 read
+    /// as a step DOWN — and a step down from Stranger clamps to the <c>min</c>, which is Annoying
+    /// Acquaintance. A conversation declaring "this leaves the relationship where it was" therefore
+    /// filed the player as an irritant on first meeting, which then offered <c>reconcile</c> against
+    /// somebody there had never been a quarrel with.</para>
     /// </summary>
     public void Adjust(string partyMemberId, int delta,
         AffinityLevel min = AffinityLevel.AnnoyingAcquaintance,
         AffinityLevel max = AffinityLevel.CloseFriend)
     {
+        if (delta == 0) return;
+
         var current = GetLevel(partyMemberId);
 
-        // Suspicious sits OFF the ladder (6, above CloseFriend), so a ±1 step from it is meaningless
-        // arithmetic: Decrement would read max(6-1, 1) and quietly promote a suspicious NPC to Close
-        // Friend for having walked out of a conversation with them. Only SetLevel moves anything on
-        // or off that state. The one caller that knew this guarded itself; the other did not.
-        if (current == AffinityLevel.Suspicious) return;
+        // Suspicious sits OFF the ladder (6, above CloseFriend), so ±1 ARITHMETIC on it is
+        // meaningless: Decrement would read max(6-1, 1) and quietly promote a suspicious NPC to
+        // Close Friend for having walked out of a conversation with them. It is still a state you
+        // must be able to leave, though — refusing to move it at all made it a dead end nothing in
+        // the game could ever improve, so an NPC talked down out of hostility stayed permanently
+        // unimprovable and every later conversation with them changed nothing. Name both
+        // neighbours explicitly instead: up is the civil "we have met" rung, down is the irritant
+        // one. (Suspicious is deliberately NOT between them — it grants no dice, and being wary of
+        // somebody is not a milder form of finding them annoying.)
+        var next = current == AffinityLevel.Suspicious
+            ? (delta > 0 ? AffinityLevel.DistantAcquaintance : AffinityLevel.AnnoyingAcquaintance)
+            : (delta > 0 ? current.Increment(max) : current.Decrement(min));
 
-        var next = delta > 0 ? current.Increment(max) : current.Decrement(min);
         _table[partyMemberId] = next;
     }
 

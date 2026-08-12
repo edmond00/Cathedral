@@ -193,7 +193,8 @@ public static class VerbProbe
         "propose_to_buy"  or "propose_to_sell" => "needs acquaintance-or-better with a trader",
         "propose_to_join"           => "needs close-acquaintance-or-better, and room in the party",
         "request_job"               => "needs acquaintance-or-better with an employer",
-        "strengthen_relationship"   => "needs a non-stranger",
+        "strengthen_relationship"
+            or "gather_knowledge"   => "needs a non-stranger",
         _                           => "no sampled scene offered it",
     };
 

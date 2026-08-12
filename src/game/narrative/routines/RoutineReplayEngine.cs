@@ -163,8 +163,9 @@ public class RoutineReplayEngine
         var action = new ParsedNarrativeAction
         {
             PreselectedOutcome  = verbView,
-            ActionModusMentisId = step.Constraints.OfType<ModusMentisConstraint>()
-                                      .FirstOrDefault()?.ModusMentisId ?? string.Empty,
+            // Recorded on the step rather than held as a constraint: the rules read morality off it
+            // when the actor still has it, and simply see null when they do not.
+            ActionModusMentisId = step.ActionModusMentisId,
         };
 
         bool illegal = verb.IsIllegal(scene, pov, target, ctx.ActingMember);
@@ -178,7 +179,6 @@ public class RoutineReplayEngine
     private static string ConstraintFailReason(RoutineConstraint c) => c switch
     {
         ItemConstraint ic        => $"Missing required item: {ic.ItemName}.",
-        ModusMentisConstraint    => "A required modus mentis has been forgotten.",
         _                        => "A required condition is no longer met.",
     };
 

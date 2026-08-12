@@ -34,10 +34,17 @@ public class ReconcileTree : DialogueTree
     /// <summary>What succeeding at this conversation teaches: talking someone down out of their anger.</summary>
     public override string? GrantedModusMentisId => "empathy";
 
+    /// <summary>
+    /// The affinity move comes FIRST, deliberately: it asks whether this was real hostility or mere
+    /// irritation, and the flag it reads is the one <see cref="ClearEnemyOutcome"/> then removes.
+    /// An enemy is talked down to the wary Suspicious; an annoyed acquaintance — who was never an
+    /// enemy — is stepped one rung up instead, since Suspicious grants fewer dice than the state
+    /// they were already in and a won conversation must not leave the player worse off.
+    /// </summary>
     public override IReadOnlyList<Outcome> SuccessOutcomes => new Outcome[]
     {
+        new SuspiciousAffinityOutcome(onlyWhenHostile: true),
         new ClearEnemyOutcome(),
-        new SuspiciousAffinityOutcome(),
     };
 
     public override IReadOnlyList<Outcome> FailureOutcomes => new Outcome[]

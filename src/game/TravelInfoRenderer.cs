@@ -37,6 +37,19 @@ namespace Cathedral.Game
         private int _paintedX, _paintedY, _paintedW, _paintedH;
         private bool _painted;
 
+        // A short-lived one-line notice shown where the box would be, for the times the world map has
+        // something to say when there is no plan to draw — refusing to re-enter the location under
+        // your feet, above all, which is otherwise a click that silently does nothing.
+        private string?  _notice;
+        private DateTime _noticeUntil = DateTime.MinValue;
+
+        /// <summary>Shows <paramref name="text"/> centred above the bottom edge for a few seconds.</summary>
+        public void ShowTransientMessage(string text)
+        {
+            _notice      = text;
+            _noticeUntil = DateTime.UtcNow.AddSeconds(Config.TravelUI.NoticeSeconds);
+        }
+
         public TravelInfoRenderer(TerminalHUD terminal)
         {
             _terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
@@ -89,11 +102,13 @@ namespace Cathedral.Game
             _blockReason     = overloadWarning;
             _travelBlocked   = overloadWarning != null;
 
-            // Nothing to show when no waypoints are set — keep the world view clean.
+            // Nothing to show when no waypoints are set — keep the world view clean, except for a
+            // notice still inside its window. Drawn AFTER Erase, which wipes the region it lives in.
             if (waypointCount == 0)
             {
                 Erase();
                 _buttonsEnabled = false;
+                DrawNotice();
                 return;
             }
 
@@ -233,6 +248,31 @@ namespace Cathedral.Game
                         Colors.Transparent, Colors.Transparent);
             _painted = false;
             _buttonsEnabled = false;
+        }
+
+        /// <summary>
+        /// Paints the transient notice on one centred line where the travel box would sit, and marks
+        /// that line as the painted region so the next Erase clears it. Expired or empty: nothing.
+        /// </summary>
+        private void DrawNotice()
+        {
+            if (string.IsNullOrEmpty(_notice) || DateTime.UtcNow >= _noticeUntil)
+            {
+                _notice = null;
+                return;
+            }
+
+            string text = _notice;
+            _boxW = Math.Min(text.Length + 4, Math.Max(4, _terminal.Width));
+            _boxH = 1;
+            _boxX = (_terminal.Width - _boxW) / 2;
+            _boxY = _terminal.Height - Config.TravelUI.BoxHeight - Config.TravelUI.BoxBottomMargin;
+
+            _terminal.FillRect(_boxX, _boxY, _boxW, _boxH, ' ',
+                Config.TravelUI.BorderColor, Config.TravelUI.BackgroundColor);
+            _terminal.Text(_boxX + 2, _boxY, text,
+                Config.TravelUI.DangerColor, Config.TravelUI.BackgroundColor);
+            MarkPainted();
         }
 
         private void MarkPainted()

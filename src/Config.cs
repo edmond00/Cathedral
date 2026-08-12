@@ -267,6 +267,22 @@ public static class Config
         public static bool NoEncounters { get; set; } = false;
 
         /// <summary>
+        /// Lets a world-map click on the vertex the avatar is already standing on re-enter that
+        /// location. Set by <c>--allow-reentry</c>.
+        ///
+        /// <para>The game refuses it: arriving somewhere <b>already</b> opens it
+        /// (<c>OnProtagonistArrived</c> starts the interaction itself), so clicking your own vertex is
+        /// only ever a way back into the place you have just walked out of — and a visit is meant to
+        /// cost a journey. Every trip therefore goes somewhere new.</para>
+        ///
+        /// <para>For scripted runs, where it is the opposite of a nuisance: a script has to enter a
+        /// location from a cold start, and the spawn vertex is the only one it can name without
+        /// knowing what the seed generated. This is what <c>travel here</c> needs, so
+        /// <c>run_tests.sh</c> passes it on every script. Inert at its default of false.</para>
+        /// </summary>
+        public static bool AllowReentry { get; set; } = false;
+
+        /// <summary>
         /// Days to push the world clock forward once the run reaches the world map, on top of
         /// whatever travel and work have accrued. Set by <c>--advance-days &lt;n&gt;</c>.
         /// Inert at its default of 0.
@@ -803,6 +819,9 @@ public static class Config
         public const int BoxHeight = 12;
         /// <summary>Cells of empty space between the box bottom edge and the screen bottom.</summary>
         public const int BoxBottomMargin = 8;
+
+        /// <summary>How long a transient world-map notice stays on screen.</summary>
+        public const double NoticeSeconds = 4.0;
 
         // Colors
         public static readonly Vector4 BorderColor      = Colors.DarkYellowGrey;

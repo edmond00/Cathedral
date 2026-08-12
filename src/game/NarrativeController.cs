@@ -97,6 +97,15 @@ public class NarrativeController
     // rope"). Set when an in-place outcome shows the CONTINUE button; consumed by HandleContinueClicked.
     private string? _pendingSegmentLabel;
 
+    /// <summary>
+    /// Whether the action that closed the current segment succeeded. Only a success refills noetic
+    /// points on the CONTINUE that follows — a failed attempt costs the point it spent and leaves the
+    /// player to think again with what is left, which is what makes a point worth spending at all.
+    /// Defaults true so every other path into a segment (a fight, a conversation, an area move)
+    /// refills as before.
+    /// </summary>
+    private bool _pendingSegmentSucceeded = true;
+
     // ── Narration footer button (single button, three values) ────────────────────
     // The one bottom button in narration. In normal exploration it is LEAVE (or RUNAWAY when a
     // visible enemy/witness makes leaving risky) while idle, and CONTINUE while a succeeded action
@@ -200,6 +209,12 @@ public class NarrativeController
     // narrows its choice list by this, so a phase explores the scene instead of circling one object;
     // it is cleared wherever the live text greys into history (see CloseNarrationSegment).
     private readonly ObservationLedger _observationLedger = new();
+
+    // What the current narration phase has already put an action button on screen for. The thinking
+    // side of the same rule the ledger above applies to observations: every goal list narrows by it,
+    // so the points spent in one phase explore the scene instead of circling one action. Cleared in
+    // the same place, for the same reason (see CloseNarrationSegment).
+    private readonly ActionProposalLedger _proposalLedger = new();
 
     public NarrativeController(
         TerminalHUD terminal,
@@ -377,11 +392,19 @@ public class NarrativeController
     /// even standing in the same place with the same point of view.</para>
     /// </summary>
     /// <param name="separatorLabel">Caption for the rule, naming the segment that follows.</param>
-    public void CloseNarrationSegment(string? separatorLabel = null)
+    /// <param name="refillNoetic">
+    /// False keeps the counter where the closing segment left it. Passed by the one caller that
+    /// closes on a <b>failed</b> action: refilling there meant a miss cost nothing, since the very
+    /// next CONTINUE handed the whole budget back. Every other boundary refills.
+    /// </param>
+    public void CloseNarrationSegment(string? separatorLabel = null, bool refillNoetic = true)
     {
+        int kept = _narrationState.ThinkingAttemptsRemaining;
         _scrollBuffer.ConvertToHistory(separatorLabel);
         _narrationState.ResetForNewNode();
+        if (!refillNoetic) _narrationState.ThinkingAttemptsRemaining = kept;
         _observationLedger.Clear();
+        _proposalLedger.Clear();
         _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
     }
 
@@ -391,10 +414,10 @@ public class NarrativeController
     /// where the caller reassigns <c>_currentNode</c> first): the player gets full noetic points and
     /// narration that describes the scene as it now stands.
     /// </summary>
-    public void BeginNarrationSegment(string? separatorLabel = null)
+    public void BeginNarrationSegment(string? separatorLabel = null, bool refillNoetic = true)
     {
-        CloseNarrationSegment(separatorLabel);
-        StartObservationPhaseWithHistory();
+        CloseNarrationSegment(separatorLabel, refillNoetic);
+        StartObservationPhaseWithHistory(refillNoetic);
     }
 
     /// <summary>
@@ -487,7 +510,7 @@ public class NarrativeController
     /// which still opens on the protagonist.
     /// </para>
     /// </summary>
-    private void StartObservationPhaseWithHistory()
+    private void StartObservationPhaseWithHistory(bool refillNoetic = true)
     {
         // The one case the hand-off cannot survive: a companion who has left the party since (dead of
         // old age, or dropped over the party cap). There is no one to narrate as, so the protagonist
@@ -498,10 +521,15 @@ public class NarrativeController
             _activePartyMember = _protagonist;
         }
 
-        _memberNoeticPoints.Clear(); // New node — everyone starts with a fresh counter
-        // ResetForNewNode refilled the counter already, but from whoever was active when the segment
-        // closed; restate it from the member who will actually act, since their maxima differ.
-        _narrationState.ThinkingAttemptsRemaining = _activePartyMember.MaxNoeticPoints;
+        if (refillNoetic)
+        {
+            _memberNoeticPoints.Clear(); // New node — everyone starts with a fresh counter
+            // ResetForNewNode refilled the counter already, but from whoever was active when the
+            // segment closed; restate it from the member who will actually act, since their maxima
+            // differ. A segment closed by a FAILED action refills nothing: the counter (and every
+            // companion's saved counter) carries straight over.
+            _narrationState.ThinkingAttemptsRemaining = _activePartyMember.MaxNoeticPoints;
+        }
         // Re-apply the current time period so this segment's nodes get their NPCs (re)placed and
         // their state-dependent verbs re-expanded (affinity above all: "introduce myself" is for
         // strangers only, and a dialogue may just have changed that).
@@ -953,6 +981,7 @@ public class NarrativeController
                 autoSuccess: _scene?.Phase == NarrationPhase.ChildhoodReminescence
                              || _scene?.Phase == NarrationPhase.GetUp,
                 preview: _previewSession,
+                proposed: _proposalLedger,
                 cancellationToken: CancellationToken.None);
 
             if (response == null)
@@ -1006,6 +1035,14 @@ public class NarrativeController
             // along at commit time so they match the button press.
             void CommitThinking()
             {
+                // An action is "proposed" the moment its button is on screen, which is here — so this
+                // is where the phase records it and stops offering it again. A goal the action modus
+                // mentis refused reaches no button and is deliberately not recorded: the refusal was
+                // that mind's, and asking again with another one is the move that should work.
+                foreach (var proposedAction in response.Actions)
+                    if (proposedAction.PreselectedOutcome is VerbAction proposedVerb)
+                        _proposalLedger.Propose(proposedVerb);
+
                 _scrollBuffer.AddBlock(thinkingBlock);
                 _narrationState.AddBlock(thinkingBlock);
                 _ambianceEngine?.PlaySoundEffect(SoundEffectType.NarrativeReveal);
@@ -1188,6 +1225,9 @@ public class NarrativeController
                 }
                 else
                 {
+                    // Out of points. The CONTINUE that follows closes the segment on a refusal, so
+                    // it refills nothing — same rule as a failed roll. LEAVE is the way out.
+                    _pendingSegmentSucceeded = false;
                     _narrationState.ShowContinueButton = true;
                     return;
                 }
@@ -1266,7 +1306,9 @@ public class NarrativeController
                 else
                 {
                     Console.WriteLine("NarrativeController: No noetic points remaining - showing continue button");
-                    // No more noetic points - show continue button and grey out like a normal failure
+                    // No more noetic points - show continue button and grey out like a normal failure,
+                    // which includes not refilling the pool on the CONTINUE that closes the segment.
+                    _pendingSegmentSucceeded = false;
                     _narrationState.ShowContinueButton = true;
                     return;
                 }
@@ -1410,8 +1452,12 @@ public class NarrativeController
         var newScene = factory.Build(_locationId);
         ReplaceScene(newScene);
 
-        // Preserve the prior narration as history and start a fresh observation phase.
-        BeginNarrationSegment();
+        // Preserve the prior narration as history and start a fresh observation phase, under the
+        // fragment that led here — the childhood phase is one long scroll of memories and an
+        // unlabelled rule between them says nothing about which one just surfaced.
+        BeginNarrationSegment(string.IsNullOrWhiteSpace(req.FragmentName)
+            ? null
+            : $"after remembering {req.FragmentName}");
     }
 
     /// <summary>
@@ -1602,13 +1648,29 @@ public class NarrativeController
             return;
         }
 
-        // Collect and apply all verb reports (skills, items, history, transition).
+        // Collect and apply all verb reports (skills, items, history, transition), then the dice
+        // chain's own lesson — REMEMBER rolls nothing, but the modi mentis that observed the
+        // fragment, chose to reach for it and voiced the memory did the work all the same, and
+        // every other action in the game pays them for it (see CommitOutcomeResult). Appended after
+        // the fragment's own grants so a skill the fragment has just taught is already known when
+        // its practice report is built.
         System.Collections.Generic.IReadOnlyList<Outcome> reminescenceReportList;
         try
         {
-            reminescenceReportList = action.Verb.SuccessReports(_scene, _pov, _protagonist, target);
-            foreach (var report in reminescenceReportList)
+            var reminescenceReports = new System.Collections.Generic.List<Outcome>(
+                action.Verb.SuccessReports(_scene, _pov, _protagonist, target));
+            foreach (var report in reminescenceReports)
                 report.ApplyTo(OutcomeContext.For(_protagonist, _scene, _pov));
+
+            foreach (var chainModusMentis in action.GetModusMentisChain())
+            {
+                var practice = ModusMentisPracticeOutcome.For(_protagonist, chainModusMentis);
+                if (practice == null) continue;
+                practice.ApplyTo(OutcomeContext.For(_protagonist, _scene, _pov));
+                reminescenceReports.Add(practice);
+            }
+
+            reminescenceReportList = reminescenceReports;
         }
         catch (Exception ex)
         {
@@ -2082,6 +2144,12 @@ public class NarrativeController
                     Console.WriteLine($"NarrativeController: area changed to '{_pov.Where.DisplayName}' — transitioning to node '{areaNode.NodeId}'");
                     _narrationState.PendingTransitionNode = areaNode;
                     _narrationState.ShowContinueButton = true;
+                    // Same caption every other resolved action gets. This early return skipped it,
+                    // so the whole family of area-moving verbs — move, follow path, stairs, climb,
+                    // door, crossing — closed its segment under a blank rule while an in-place action
+                    // closed under "after trying to …".
+                    _pendingSegmentLabel     = SegmentLabelFor(result);
+                    _pendingSegmentSucceeded = result.Succeeded;
                     return;
                 }
             }
@@ -2102,6 +2170,7 @@ public class NarrativeController
             _narrationState.ShouldExitOnContinue = IsMovementAction(result.Action);
             _narrationState.ShowContinueButton = true;
             _pendingSegmentLabel = SegmentLabelFor(result);
+            _pendingSegmentSucceeded = result.Succeeded;
         }
         else
         {
@@ -2110,6 +2179,7 @@ public class NarrativeController
             _narrationState.ShouldExitOnContinue = IsMovementAction(result.Action);
             _narrationState.ShowContinueButton = true;
             _pendingSegmentLabel = SegmentLabelFor(result);
+            _pendingSegmentSucceeded = result.Succeeded;
         }
 
         // Refresh debug window to reflect any state changes
@@ -2231,8 +2301,10 @@ public class NarrativeController
                 _scrollBuffer.ConvertToHistory();
                 _narrationState.ResetForPartyMemberChange();
                 // The companion takes over the narration with their own attention: whatever the
-                // speaker had already looked at does not constrain what draws them.
+                // speaker had already looked at — or been offered a button for — does not constrain
+                // what draws them or what they may be shown.
                 _observationLedger.Clear();
+                _proposalLedger.Clear();
                 _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
 
                 _scrollBuffer.AddBlock(speakingBlock);
@@ -2897,9 +2969,15 @@ public class NarrativeController
             {
                 var action = allActions[clickedAction.ActionIndex];
 
+                // Reaching for a tool is part of the action already on screen, not a second thought:
+                // the point was spent when the action was thought of, and only one item may ever be
+                // combined with it (hasItems tests CombinedItem), so nothing loops. Gating this on
+                // remaining points made the five tool-gated verbs unreachable outright once the pool
+                // shrank — the thinking phase that produces the action spends the point that "Use
+                // Tool" then wanted, so `dig`, `mine`, `fish`, `cut_wood` and `break` were offered,
+                // greyed out, and impossible.
                 bool hasItems = action.CombinedItem == null && GetCombinableItems().Count > 0;
-                bool canUseItem = hasItems && _narrationState.ThinkingAttemptsRemaining > 0;
-                var disabledIndices = canUseItem ? new HashSet<int>() : new HashSet<int> { 1 };
+                var disabledIndices = hasItems ? new HashSet<int>() : new HashSet<int> { 1 };
 
                 Console.WriteLine($"NarrativeController: Showing action mode choice for '{action.ActionText}' (hasItems={hasItems})");
                 _narrationState.ActionPendingModeSelection = action;
@@ -2932,7 +3010,10 @@ public class NarrativeController
                          && _narrationState.ThinkingAttemptsRemaining > 0
                          && _protagonist.CompanionParty.Count > 0;
             if (!canSpeak) speakDisabled.Add(2);
-            _choicePopup.Show(screenPos, speakChoices, "Keyword VerbAction", speakDisabled);
+            // The title names what was clicked. It read "Keyword VerbAction" — a leftover of the
+            // Outcome→VerbAction rename, which described the popup's plumbing rather than telling
+            // the player what the three options were about to be aimed at.
+            _choicePopup.Show(screenPos, speakChoices, $"“{clickedKeyword.Keyword}”", speakDisabled);
         }
     }
 
@@ -3085,7 +3166,7 @@ public class NarrativeController
                     _narrationState.IsSelectingItemForAction = true;
                     _narrationState.ActionPendingItemCombination = action;
                     Vector2 screenPos = _terminalInputHandler.CellToScreen(_lastMouseX, _lastMouseY, _core.ClientSize);
-                    _itemSelectionPopup.Show(screenPos, candidateItems, "Combine Tool with VerbAction");
+                    _itemSelectionPopup.Show(screenPos, candidateItems, "Use with this action");
                 }
                 else
                 {
@@ -3109,6 +3190,19 @@ public class NarrativeController
     /// </summary>
     public void OnMouseWheel(float delta)
     {
+        // A popup that overflows its box owns the wheel: scrolling the narration behind a modal the
+        // player is reading through would move text they cannot see anyway.
+        if (_modusMentisPopup.IsVisible)
+        {
+            _modusMentisPopup.Scroll(delta > 0 ? -3 : 3);
+            return;
+        }
+        if (_itemSelectionPopup.IsVisible)
+        {
+            _itemSelectionPopup.Scroll(delta > 0 ? -3 : 3);
+            return;
+        }
+
         if (delta > 0)
         {
             // Scroll up
@@ -3610,7 +3704,13 @@ public class NarrativeController
         {
             Console.WriteLine($"NarrativeController: CONTINUE — transitioning to node {_narrationState.PendingTransitionNode.NodeId}");
             _currentNode = _narrationState.PendingTransitionNode;
-            BeginNarrationSegment();
+            // Carry the same caption the in-place branch below uses. This dropped it, so a segment
+            // closed by an action that MOVED you — every move, climb, crossing and door — got the
+            // unlabelled rule while one closed in place got "after trying to …". Two different
+            // separators for the same event, decided by whether the action happened to relocate you.
+            BeginNarrationSegment(_pendingSegmentLabel, refillNoetic: _pendingSegmentSucceeded);
+            _pendingSegmentLabel     = null;
+            _pendingSegmentSucceeded = true;
             return;
         }
 
@@ -3627,9 +3727,11 @@ public class NarrativeController
         // a labelled separator, refill noetic points, and open a fresh observation of the scene as it
         // now stands (the outcome may have changed it: item gone, state shifted). This makes CONTINUE
         // behave identically for in-place actions and transitions.
-        Console.WriteLine("NarrativeController: CONTINUE — closing segment after action, restarting observations");
-        BeginNarrationSegment(_pendingSegmentLabel);
-        _pendingSegmentLabel = null;
+        Console.WriteLine("NarrativeController: CONTINUE — closing segment after action, restarting observations"
+                        + (_pendingSegmentSucceeded ? "" : " (failed action — noetic points not refilled)"));
+        BeginNarrationSegment(_pendingSegmentLabel, refillNoetic: _pendingSegmentSucceeded);
+        _pendingSegmentLabel     = null;
+        _pendingSegmentSucceeded = true;
     }
 
     /// <summary>
@@ -3995,9 +4097,9 @@ public class NarrativeController
             bool appropriatenessSuccess = appropriatenessResult.OverallSuccess;
             Console.WriteLine($"NarrativeController: Item appropriateness ({(gatedVerb is { RequiresTool: true } ? "tool substitution" : "neutral")}): {(appropriatenessSuccess ? "success" : "fail")}");
 
-            // Item combination always costs one noetic point, regardless of outcome
-            _narrationState.ThinkingAttemptsRemaining = Math.Max(0, _narrationState.ThinkingAttemptsRemaining - 1);
-            Console.WriteLine($"NarrativeController: Item combination consumed 1 noetic point ({_narrationState.ThinkingAttemptsRemaining} remaining)");
+            // No noetic cost: see the "Use Tool" gate in HandleClick. Combining an item is part of the
+            // action the player already paid to think of, and charging for it made every tool-gated
+            // verb impossible once the pool was cut to a third.
 
             if (appropriatenessSuccess)
             {

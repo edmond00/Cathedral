@@ -123,6 +123,8 @@ public class RoutineRecorder
             Label            = verb.RoutineLabel(scene, povBeforeMove, target, action.PreselectedOutcome),
             TriggeredPhase   = verb.RoutineTriggeredPhase(scene, povBeforeMove, target),
             VariantKey       = verb.RoutineVariantKey(action.PreselectedOutcome) ?? "",
+            // Recorded, not required — see RoutineStep.ActionModusMentisId.
+            ActionModusMentisId = action.ActionModusMentisId ?? "",
             Constraints      = BuildConstraints(action, actingMember, itemConsumed),
             RepositionsPointOfView = reports.Any(r => r.RoutineChainEffect.Repositions()),
         };
@@ -218,6 +220,13 @@ public class RoutineRecorder
         => $"{locationId}|{startTime}|" + string.Join(
                ">", steps.Select(s => $"{s.VerbId}:{s.Target?.Key}:{s.VariantKey}"));
 
+    /// <summary>
+    /// What replay must be able to satisfy: who acts, and what the step spends.
+    ///
+    /// <para>The action modus mentis is deliberately NOT here. It is recorded on the step instead
+    /// (<see cref="RoutineStep.ActionModusMentisId"/>) — a constraint is a precondition <i>and</i> a
+    /// line in the routine's requirements list, and the skill you happened to use is neither.</para>
+    /// </summary>
     private static List<RoutineConstraint> BuildConstraints(ParsedNarrativeAction action,
         PartyMember actingMember, bool itemConsumed)
     {
@@ -225,9 +234,6 @@ public class RoutineRecorder
         {
             new ActingMemberConstraint(actingMember.DisplayName),
         };
-
-        if (!string.IsNullOrEmpty(action.ActionModusMentisId))
-            constraints.Add(new ModusMentisConstraint(action.ActionModusMentisId));
 
         if (itemConsumed && action.CombinedItem != null)
             constraints.Add(new ItemConstraint(action.CombinedItem.ItemId, action.CombinedItem.DisplayName));

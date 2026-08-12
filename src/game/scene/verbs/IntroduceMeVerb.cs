@@ -63,6 +63,12 @@ public class IntroduceMeVerb : DialogueVerb
     /// standing with, who is somewhere in this location today, alive, and not already known to the
     /// player. Asking to be introduced to somebody you have already met is not an action worth
     /// offering.
+    ///
+    /// <para>The <b>speaker</b> is deliberately NOT required to be an acquaintance, unlike the rest of
+    /// the conversations (see <c>SocialDialogueVerb.RequiresAcquaintance</c>). This verb is itself an
+    /// introduction — it belongs with <c>meet_stranger</c> on the near side of that gate, not behind
+    /// it. The structural reason follows the same line: the third party must still be a stranger, so a
+    /// gate on both ends would need the player to know exactly one of any two people in a room.</para>
     /// </summary>
     private static List<NpcEntity> Candidates(Scene scene, PoV pov, Element target, PartyMember? actor)
     {

@@ -62,15 +62,20 @@ public class NarrativeUI : TerminalPanelUI
         string agentLabel = $"[{activeAgentName.ToUpper()}]";
         _terminal.Text(_layout.CONTENT_START_X, headerY, agentLabel, Config.NarrativeUI.HeaderColor, Config.NarrativeUI.BackgroundColor);
 
-        // Right: noetic-point counter (only when noetic points are meaningful)
+        // Right: noetic-point counter (only when noetic points are meaningful), named. The markers
+        // alone were a row of unexplained circles — the one number the whole narration loop is spent
+        // against, with nothing on screen saying what it counts.
         if (showNoeticPoints)
         {
             int maxAttempts = maxNoeticPoints;
+            const string label = "NOETIC ";
             string prefix = "[";
-            // Reserve space: maxAttempts markers + prefix "[" + suffix "]"
-            int suffixWidth = 1 + maxAttempts + 1;
-            int prefixX = _layout.CONTENT_END_X - suffixWidth;
+            // Reserve space: label + prefix "[" + maxAttempts markers + suffix "]"
+            int suffixWidth = label.Length + 1 + maxAttempts + 1;
+            int labelX  = _layout.CONTENT_END_X - suffixWidth;
+            int prefixX = labelX + label.Length;
 
+            _terminal.Text(labelX, headerY, label, Config.NarrativeUI.HeaderColor, Config.NarrativeUI.BackgroundColor);
             _terminal.Text(prefixX, headerY, prefix, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
 
             int markerX = prefixX + prefix.Length;

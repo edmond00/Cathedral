@@ -126,6 +126,9 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --no-encounters                    DEBUG: never roll a random travel encounter. For scripted runs: an");
     Console.WriteLine("                                     encounter puts the game in EncounterPrompt, where a script waiting");
     Console.WriteLine("                                     for LocationInteraction hangs until its timeout");
+    Console.WriteLine("  --allow-reentry                    DEBUG: let a world-map click on your own vertex re-enter that location.");
+    Console.WriteLine("                                     The game refuses it — arriving somewhere already opens it, so a visit");
+    Console.WriteLine("                                     costs a journey. Scripts need it: `travel here` is how they get in");
     Console.WriteLine("  --start-fight <creature>           DEBUG: begin a fight on reaching the world map (wolf, bear, bandit, brigand).");
     Console.WriteLine("                                     The only way a script can reach fight mode: the real routes in are a random");
     Console.WriteLine("                                     travel encounter (which scripts disable) or provoking an NPC through dialogue");
@@ -564,6 +567,9 @@ for (int i = 0; i < args.Length; i++)
 
     if (args[i] == "--no-encounters")
         Cathedral.Config.Debug.NoEncounters = true;
+
+    if (args[i] == "--allow-reentry")
+        Cathedral.Config.Debug.AllowReentry = true;
 
     if (args[i] == "--start-fight" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
         Cathedral.Config.Debug.StartFight = args[i + 1];
