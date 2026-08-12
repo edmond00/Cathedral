@@ -60,6 +60,13 @@ public static class CaughtRedHandedTreeFactory
         public override string TreeId           => $"{TreeIdPrefix}_{_criminalType.ToString().ToLowerInvariant()}";
         public override string DisplayName      => "Caught Red-Handed";
         public override string Description      => BuildDescription();
+
+        /// <summary>
+        /// The other chair, and the one that inverts hardest: the NPC is the <b>witness</b>, not the
+        /// culprit. Handed the player's side, the confronting villager was told they had just been
+        /// caught stealing.
+        /// </summary>
+        public override string NpcDescription   => BuildNpcDescription();
         public override string AssociatedVerbId => "";   // triggered programmatically, not by a verb
         public override NpcLineNode EntryNode   => _entry;
 
@@ -437,6 +444,15 @@ public static class CaughtRedHandedTreeFactory
             CriminalAffinityType.Intruder => "being caught trespassing by a witness",
             CriminalAffinityType.Murderer => "being caught committing violence by a witness",
             _                             => "being caught in an illegal act by a witness",
+        };
+
+        /// <summary>The same moment from the witness's side — you are the one who saw it.</summary>
+        private string BuildNpcDescription() => _criminalType switch
+        {
+            CriminalAffinityType.Thief    => "having just caught someone stealing, and confronting them",
+            CriminalAffinityType.Intruder => "having just caught someone where they have no business being, and confronting them",
+            CriminalAffinityType.Murderer => "having just seen someone commit violence, and confronting them",
+            _                             => "having just caught someone in an illegal act, and confronting them",
         };
 
         private static string BuildConfrontationReplica(CriminalAffinityType crime) => crime switch

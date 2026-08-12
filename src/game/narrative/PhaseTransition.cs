@@ -84,12 +84,17 @@ public sealed class StartRoutineDialogueTransition : PhaseTransition
     public string TreeId { get; }
     public TimePeriod Time { get; }
 
-    public StartRoutineDialogueTransition(int vertex, string npcKey, string treeId, TimePeriod time)
+    /// <summary>Where the replay ended — see <see cref="StartRoutineTradeTransition.StartArea"/>.</summary>
+    public Area? StartArea { get; }
+
+    public StartRoutineDialogueTransition(int vertex, string npcKey, string treeId, TimePeriod time,
+                                          Area? startArea = null)
     {
-        Vertex = vertex;
-        NpcKey = npcKey;
-        TreeId = treeId;
-        Time   = time;
+        Vertex    = vertex;
+        NpcKey    = npcKey;
+        TreeId    = treeId;
+        Time      = time;
+        StartArea = startArea;
     }
 }
 
@@ -101,12 +106,27 @@ public sealed class StartRoutineTradeTransition : PhaseTransition
     public TradeMode Mode { get; }
     public TimePeriod Time { get; }
 
-    public StartRoutineTradeTransition(int vertex, string npcKey, TradeMode mode, TimePeriod time)
+    /// <summary>
+    /// The area the replay ended in — the forge, not the square it was entered from.
+    ///
+    /// <para>These three bridges carried <see cref="Time"/> and not the area, while
+    /// <see cref="StartNarrationTransition"/> carried both. So a routine that walked into a workshop
+    /// and traded there put the player back on the scene's <i>default</i> opening area the moment the
+    /// trade menu closed: the walk had happened headlessly and nothing told the rebuilt scene where
+    /// it had ended. Matched by <c>ReferenceLemma</c> like the narration case, because the sub-phase
+    /// rebuilds the scene and the replay's own <see cref="Area"/> instance belongs to a scene that no
+    /// longer exists.</para>
+    /// </summary>
+    public Area? StartArea { get; }
+
+    public StartRoutineTradeTransition(int vertex, string npcKey, TradeMode mode, TimePeriod time,
+                                       Area? startArea = null)
     {
-        Vertex = vertex;
-        NpcKey = npcKey;
-        Mode   = mode;
-        Time   = time;
+        Vertex    = vertex;
+        NpcKey    = npcKey;
+        Mode      = mode;
+        Time      = time;
+        StartArea = startArea;
     }
 }
 
@@ -118,11 +138,16 @@ public sealed class StartRoutineWorkTransition : PhaseTransition
     public string JobId { get; }
     public TimePeriod Time { get; }
 
-    public StartRoutineWorkTransition(int vertex, string npcKey, string jobId, TimePeriod time)
+    /// <summary>Where the replay ended — see <see cref="StartRoutineTradeTransition.StartArea"/>.</summary>
+    public Area? StartArea { get; }
+
+    public StartRoutineWorkTransition(int vertex, string npcKey, string jobId, TimePeriod time,
+                                      Area? startArea = null)
     {
-        Vertex = vertex;
-        NpcKey = npcKey;
-        JobId  = jobId;
-        Time   = time;
+        Vertex    = vertex;
+        NpcKey    = npcKey;
+        JobId     = jobId;
+        Time      = time;
+        StartArea = startArea;
     }
 }

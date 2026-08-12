@@ -27,6 +27,9 @@ public class IntroduceMeTree : DialogueTree
     public override string TreeId           => "introduce_me";
     public override string DisplayName      => "Ask for an Introduction";
     public override string Description      => "asking them to present you to someone they have standing with";
+
+    /// <summary>The other chair — and the pronouns invert with it: you are the one being asked.</summary>
+    public override string NpcDescription   => "being asked to present this person to someone you have standing with";
     public override string AssociatedVerbId => "introduce_me";
 
     /// <summary>What succeeding teaches: getting into a room on somebody else's word.</summary>

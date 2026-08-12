@@ -26,6 +26,9 @@ public class ProvokeTree : DialogueTree
     public override string TreeId           => "provoke";
     public override string DisplayName      => "Provoke";
     public override string Description      => "goading someone into striking the first blow";
+
+    /// <summary>The other chair: you are the one being goaded.</summary>
+    public override string NpcDescription   => "being goaded by someone who wants you to strike the first blow";
     public override string AssociatedVerbId => "provoke";
 
     /// <summary>What succeeding at this teaches: finding the words that cannot be ignored.</summary>

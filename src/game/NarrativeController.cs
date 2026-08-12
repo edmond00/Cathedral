@@ -479,19 +479,29 @@ public class NarrativeController
     /// on. Places NPCs for the period so the target is present, and arms a recorder so anything the
     /// player does after the sub-phase is still recordable — exactly like a normal visit, minus the
     /// opening narration.
+    ///
+    /// <para><paramref name="startAreaLemma"/> is where the headless replay ended. It is not
+    /// cosmetic: the scene is rebuilt here, so without it the point of view sits on the location's
+    /// default opening area and everything after the sub-phase happens there — a routine that walked
+    /// into a forge to trade put the player back in the village square the moment the trade menu
+    /// closed. Set BEFORE <see cref="ApplyTimePeriod"/>, which places NPCs and re-gates every verb
+    /// against the point of view.</para>
     /// </summary>
-    public void PrepareForRoutineSubPhase(TimePeriod period)
+    public void PrepareForRoutineSubPhase(TimePeriod period, string? startAreaKey = null)
     {
         _narrationState.Clear();
         _scrollBuffer.Clear();
         _activePartyMember = _protagonist;
         _memberNoeticPoints.Clear();
         _observationLedger.Clear();
+        _proposalLedger.Clear();
         _postDialogueNpc = null;
         _postDialogueObservationMM = null;
 
+        MovePointOfViewToArea(startAreaKey);
         ApplyTimePeriod(period);
-        Console.WriteLine($"NarrativeController: routine sub-phase prepared at period {period}");
+        Console.WriteLine($"NarrativeController: routine sub-phase prepared at period {period}"
+                        + $", area '{_pov?.Where.DisplayName ?? "-"}'");
 
         if (_scene != null && _scene.Phase == NarrationPhase.Exploration)
             _recorder = new RoutineRecorder(_protagonist, _locationId, period);
@@ -3566,22 +3576,98 @@ public class NarrativeController
     /// narration after a routine replay ends at a moved-to area). Falls back to a normal start when
     /// the area cannot be resolved.
     /// </summary>
-    public void StartAtArea(string areaLemma, TimePeriod time)
+    public void StartAtArea(string areaKey, TimePeriod time)
     {
-        if (_scene != null && _pov != null)
-        {
-            var area = _scene.AllAreas.FirstOrDefault(a =>
-                string.Equals(a.ReferenceLemma, areaLemma, StringComparison.OrdinalIgnoreCase));
-            if (area != null)
-            {
-                // Only the area is set here — StartObservationPhase(time) below routes the period
-                // through ApplyTimePeriod, the single writer of PoV.When + graph period.
-                _pov.Where = area;
-                if (NodeForArea(area) is { } node)
-                    _currentNode = node;
-            }
-        }
+        // Only the area is set here — StartObservationPhase(time) below routes the period through
+        // ApplyTimePeriod, the single writer of PoV.When + graph period.
+        MovePointOfViewToArea(areaKey);
         StartObservationPhase(time);
+    }
+
+    /// <summary>
+    /// Repositions the point of view (and the current node with it) onto the area named by
+    /// <paramref name="areaKey"/>. No-op on null, or when nothing matches — a routine recorded
+    /// before a factory changed should still open somewhere.
+    ///
+    /// <para>Matched by <b>display name</b> first, because that is the only per-location unique
+    /// area identifier: <c>ReferenceLemma</c> is a generic noun, and <c>BuildingFactory</c> gives
+    /// every building's roof the lemma "roof" while prefixing only the display name with the
+    /// building. Resuming a village routine by lemma could therefore land on the wrong building's
+    /// room. <c>--building-audit</c> is what guarantees the display names do not collide (it fails on
+    /// two areas sharing a node-id slug). Lemma is kept as a fallback so a key recorded against an
+    /// older build still finds something.</para>
+    ///
+    /// <para>By name rather than by instance because every caller is resuming into a <b>freshly
+    /// rebuilt</b> scene: the <c>Area</c> the routine ended on belongs to a scene that has already
+    /// been thrown away. Shared by the two resume paths (narration and the routine sub-phase) so
+    /// they cannot disagree about how an area is found.</para>
+    /// </summary>
+    private void MovePointOfViewToArea(string? areaKey)
+    {
+        if (string.IsNullOrWhiteSpace(areaKey) || _scene == null || _pov == null) return;
+
+        var area = _scene.AllAreas.FirstOrDefault(a =>
+                       string.Equals(a.DisplayName, areaKey, StringComparison.OrdinalIgnoreCase))
+                ?? _scene.AllAreas.FirstOrDefault(a =>
+                       string.Equals(a.ReferenceLemma, areaKey, StringComparison.OrdinalIgnoreCase));
+        if (area == null)
+        {
+            Console.Error.WriteLine($"NarrativeController: no area matching '{areaKey}' in the rebuilt "
+                                  + $"scene — staying at '{_pov.Where.DisplayName}'");
+            return;
+        }
+
+        _pov.Where = area;
+        if (NodeForArea(area) is { } node)
+            _currentNode = node;
+        Console.WriteLine($"NarrativeController: point of view resumed at '{area.DisplayName}'");
+    }
+
+    /// <summary>
+    /// Takes the player to the person a go-between has just agreed to present them to, and makes the
+    /// phase that follows open on <b>that</b> person. Returns false when they are nowhere to be found
+    /// at this hour — the reeve keeps his own times — in which case the standing still stands and the
+    /// walk simply does not happen. Being vouched for does not conjure somebody into a room.
+    ///
+    /// <para>Three writes, and it was missing two of them. Moving <c>PoV.Where</c> alone is not
+    /// moving: the observation phase runs against <c>_currentNode</c>, so the point of view said one
+    /// area while everything the player could see and act on still came from the old one — the walk
+    /// happened on paper and nowhere else. And <c>_postDialogueNpc</c> was still the go-between, set
+    /// when the conversation was triggered, so the first observation after being introduced to the
+    /// reeve was of the bondman who introduced you.</para>
+    ///
+    /// <para>Lives here rather than in the game controller because the PoV, the node and the
+    /// post-dialogue context are this class's invariants; reaching in to set one of the three from
+    /// outside is what let them drift apart.</para>
+    /// </summary>
+    public bool WalkToIntroducedNpc(NpcEntity presented)
+    {
+        if (_scene == null || _pov == null) return false;
+
+        var sceneNpc = _scene.Npcs.FirstOrDefault(n => ReferenceEquals(n.Entity, presented));
+        if (sceneNpc == null) return false;
+
+        var where = _scene.GetAreaOf(sceneNpc, _pov.When);
+        if (where == null)
+        {
+            Console.WriteLine($"NarrativeController: {presented.DisplayName} is not about at {_pov.When} — "
+                            + "introduction stands, but no walk");
+            return false;
+        }
+
+        _pov.Where = where;
+        _pov.Focus = sceneNpc;
+        if (NodeForArea(where) is { } node)
+            _currentNode = node;
+
+        // The phase that follows opens on the person just introduced, not on the go-between — that
+        // is what makes the introduction read as an arrival, and puts the conversation it unlocked
+        // one click away.
+        _postDialogueNpc = presented;
+
+        Console.WriteLine($"NarrativeController: walked to {presented.DisplayName} in {where.DisplayName} "
+                        + $"(node '{_currentNode.NodeId}') — next observation is of them");
+        return true;
     }
 
     /// <summary>

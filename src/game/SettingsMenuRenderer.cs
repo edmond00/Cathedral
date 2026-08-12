@@ -44,6 +44,16 @@ public class SettingsMenuRenderer
     /// <summary>Fired with the new state when the dither toggle is clicked.</summary>
     public Action<bool>? OnDitherChanged { get; set; }
 
+    /// <summary>
+    /// Whether the window is borderless-fullscreen. Read back from <c>WindowMode</c> rather than
+    /// from the saved setting, so the row shows the true live state after an F11 press — the key and
+    /// this toggle are two ways to the same switch and must not disagree about where it is.
+    /// </summary>
+    public bool Fullscreen { get; set; }
+
+    /// <summary>Fired with the new state when the fullscreen toggle is clicked.</summary>
+    public Action<bool>? OnFullscreenChanged { get; set; }
+
     // ── Language model ───────────────────────────────────────────────────────
     //
     // Every row below takes effect at the NEXT LAUNCH, and the screen says so. The server loads
@@ -94,6 +104,7 @@ public class SettingsMenuRenderer
     private const int CtlThreadsMinus = 9;
     private const int CtlThreadsPlus  = 10;
     private const int CtlRedetect     = 11;
+    private const int CtlFullscreen   = 12;
     private int _hoveredControl = -1;
 
     private const int Step = 10; // percent per click
@@ -115,18 +126,21 @@ public class SettingsMenuRenderer
     private const int MusicRow      = 37;
     private const int SfxRow        = 40;
     private const int DitherRow     = 43;
-    private const int ModelHeadRow  = 48;
-    private const int DeviceRow     = 51;
-    private const int LayersRow     = 54;
-    private const int ThreadsRow    = 57;
-    private const int RedetectRow   = 60;
-    private const int ModelInfoRow  = 63;   // and the two rows below it
-    private const int BackRow       = 69;
+    private const int FullscreenRow = 46;
+    private const int ModelHeadRow  = 51;
+    private const int DeviceRow     = 54;
+    private const int LayersRow     = 57;
+    private const int ThreadsRow    = 60;
+    private const int RedetectRow   = 63;
+    private const int ModelInfoRow  = 66;   // and the two rows below it
+    private const int BackRow       = 72;
     private const int BarWidth      = 20;
     private const int RowWidth      = 47; // total width of a volume row (see column math below)
     private const string BackLabel = "[ Back ]";
     // Widest of the two states, so the hit region does not change size with the label.
     private const int ToggleW = 7; // "[ OFF ]"
+    // Widest of the two states, so the hit region does not change size with the label.
+    private const int FullscreenW = 10; // "[ WINDOW ]"
 
     /// <summary>Widest device label ("[ Auto ]"), so the hit region does not move as it cycles.</summary>
     private const int DeviceW = 8;
@@ -155,6 +169,7 @@ public class SettingsMenuRenderer
         DrawVolumeRow(MusicRow, "MUSIC", MusicVolume, CtlMusicMinus, CtlMusicPlus);
         DrawVolumeRow(SfxRow, "SFX", SfxVolume, CtlSfxMinus, CtlSfxPlus);
         DrawDitherRow();
+        DrawFullscreenRow();
 
         DrawSectionHeading(ModelHeadRow, "L A N G U A G E   M O D E L");
         DrawDeviceRow();
@@ -221,6 +236,31 @@ public class SettingsMenuRenderer
 
         string label = (DitherEnabled ? "[ ON ]" : "[ OFF ]").PadRight(ToggleW);
         _terminal.Text(MinusX, DitherRow, label, textColor, bgColor);
+    }
+
+    /// <summary>
+    /// Fullscreen on/off, on the dither row's columns. The label carries the key that does the same
+    /// thing, because a player who finds fullscreen here should not have to come back to this screen
+    /// to leave it.
+    /// </summary>
+    private void DrawFullscreenRow()
+    {
+        int startX = RowStartX;
+        _terminal.FillRect(startX, FullscreenRow, RowWidth, 1, ' ', Config.Colors.White, Config.Colors.Black);
+
+        _terminal.Text(startX, FullscreenRow, "SCREEN".PadRight(7), Config.Colors.MediumGray60, Config.Colors.Black);
+
+        bool hovered = _hoveredControl == CtlFullscreen;
+        Vector4 textColor = hovered    ? Config.Colors.BrightYellow
+                          : Fullscreen ? Config.Colors.White
+                          :              Config.Colors.DarkGray35;
+        Vector4 bgColor = hovered ? Config.Colors.DarkYellow : Config.Colors.Black;
+
+        string label = (Fullscreen ? "[ FULL ]" : "[ WINDOW ]").PadRight(FullscreenW);
+        _terminal.Text(MinusX, FullscreenRow, label, textColor, bgColor);
+
+        _terminal.Text(MinusX + FullscreenW + 1, FullscreenRow, "F11",
+            Config.Colors.DarkGray35, Config.Colors.Black);
     }
 
     private void DrawSectionHeading(int row, string text)
@@ -372,6 +412,7 @@ public class SettingsMenuRenderer
             case CtlSfxMinus:   SetSfx(SfxVolume - Step); break;
             case CtlSfxPlus:    SetSfx(SfxVolume + Step); break;
             case CtlDither:     ToggleDither(); break;
+            case CtlFullscreen: ToggleFullscreen(); break;
             case CtlDevice:     CycleDevice(); break;
             case CtlLayersMinus:  SetGpuLayers(LlmGpuLayers < 0 ? -1 : LlmGpuLayers - LayerStep); break;
             case CtlLayersPlus:   SetGpuLayers(LlmGpuLayers < 0 ? LayerStep : LlmGpuLayers + LayerStep); break;
@@ -442,6 +483,13 @@ public class SettingsMenuRenderer
         Render();
     }
 
+    private void ToggleFullscreen()
+    {
+        Fullscreen = !Fullscreen;
+        OnFullscreenChanged?.Invoke(Fullscreen);
+        Render();
+    }
+
     private void SetMusic(int v)
     {
         int clamped = Math.Clamp(v, 0, 100);
@@ -476,6 +524,10 @@ public class SettingsMenuRenderer
         else if (y == DitherRow)
         {
             if (x >= MinusX && x < MinusX + ToggleW) return CtlDither;
+        }
+        else if (y == FullscreenRow)
+        {
+            if (x >= MinusX && x < MinusX + FullscreenW) return CtlFullscreen;
         }
         else if (y == DeviceRow)
         {
@@ -514,6 +566,7 @@ public class SettingsMenuRenderer
         CtlSfxMinus   => "settings:sfx-minus",
         CtlSfxPlus    => "settings:sfx-plus",
         CtlDither     => "settings:dither",
+        CtlFullscreen => "settings:fullscreen",
         CtlDevice        => "settings:llm-device",
         CtlLayersMinus   => "settings:llm-layers-minus",
         CtlLayersPlus    => "settings:llm-layers-plus",

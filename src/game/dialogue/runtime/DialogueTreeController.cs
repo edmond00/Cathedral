@@ -436,7 +436,7 @@ public class DialogueTreeController
         try
         {
             string text = await _replicaWriter.WriteAsync(
-                _npcSlotId, _currentNode.Replica, _context, addresseeRole: "you", subject: _tree.Description,
+                _npcSlotId, _currentNode.Replica, _context, addresseeRole: "you", subject: _tree.NpcDescription,
                 preview: part.Sink);
 
             _state.IsLoadingNpcReplica = false;
@@ -667,7 +667,7 @@ public class DialogueTreeController
             try
             {
                 reaction = await _replicaWriter.WriteAsync(
-                    _npcSlotId, neutral, _context, addresseeRole: "you", subject: _tree.Description,
+                    _npcSlotId, neutral, _context, addresseeRole: "you", subject: _tree.NpcDescription,
                     preview: part.Sink);
             }
             catch (Exception ex)

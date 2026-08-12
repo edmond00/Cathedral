@@ -443,7 +443,15 @@ public class ManagementMenuRenderer
     /// <summary>Everything the selected character is carrying, for <c>--cli</c> discovery.</summary>
     public IReadOnlyList<string> CliCarriedItemNames => _inventoryMenu.CliCarriedItemNames;
 
-    public void OnMouseClick(int x, int y)
+    /// <summary>
+    /// Handle left click at terminal coordinates. <b>Returns true when the click actually landed on
+    /// something</b> — the caller plays its click sound on that, not on every press.
+    ///
+    /// <para>The management screen is mostly art and read-only text, so a click anywhere in it used
+    /// to sound exactly like pressing a button. Reporting the hit here rather than re-hit-testing at
+    /// the call site keeps one answer: this method already knows what it did.</para>
+    /// </summary>
+    public bool OnMouseClick(int x, int y)
     {
         // Back button
         if (IsOnBackButton(x, y))
@@ -451,7 +459,7 @@ public class ManagementMenuRenderer
             if (_activeTab == ManagementTab.Routines)
                 OnRoutinesPortholeClosed?.Invoke();
             OnBack?.Invoke();
-            return;
+            return true;
         }
 
         // View tab click
@@ -489,7 +497,7 @@ public class ManagementMenuRenderer
                     _routinesPanel.ClearHover();
 
                 Render();
-                return;
+                return true;
             }
         }
 
@@ -504,33 +512,33 @@ public class ManagementMenuRenderer
                 SwapMemberArt(GetPartyMember(charIdx));
                 // Memory panel re-renders automatically via Render() with GetPartyMember(_selectedCharacterIndex)
                 Render();
-                return;
+                return true;
             }
         }
 
-        // Memory panel interactive clicks (slot selection + buttons)
-        if (_activeTab == ManagementTab.Memory)
+        // Content-area clicks. Each panel's ProcessClick already reports whether it consumed the
+        // press, which is exactly the answer this method owes its caller.
+        if (_activeTab == ManagementTab.Memory && _memoryPanel.ProcessClick(x, y))
         {
-            if (_memoryPanel.ProcessClick(x, y))
-                Render();
+            Render();
+            return true;
         }
 
-        // Inventory tab clicks
-        if (_activeTab == ManagementTab.Inventory)
+        if (_activeTab == ManagementTab.Inventory && _inventoryMenu.ProcessClick(x, y))
         {
-            if (_inventoryMenu.ProcessClick(x, y))
-                Render();
+            Render();
+            return true;
         }
 
         // Routines tab: toggle a routine's lock state
-        if (_activeTab == ManagementTab.Routines)
+        if (_activeTab == ManagementTab.Routines && _routinesPanel.ProcessClick(x, y, _protagonist))
         {
-            if (_routinesPanel.ProcessClick(x, y, _protagonist))
-            {
-                OnItemConsumed?.Invoke(); // reuse the click-SFX callback
-                Render();
-            }
+            OnItemConsumed?.Invoke(); // reuse the click-SFX callback
+            Render();
+            return true;
         }
+
+        return false;
     }
 
     /// <summary>Handle right click (no special behavior in management mode).</summary>

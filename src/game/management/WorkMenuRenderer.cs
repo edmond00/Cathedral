@@ -126,6 +126,39 @@ public sealed class WorkMenuRenderer
         else _dragging = false;
     }
 
+    /// <summary>
+    /// Stable identity of the clickable element under (x, y), or null when there is none — the same
+    /// contract <c>SettingsMenuRenderer.GetHoveredControlId</c> has, so the controller's one
+    /// "tick when the hovered element changes" rule covers this screen too. Like the trade menu, it
+    /// had no tick at all.
+    ///
+    /// <para>Mirrors <see cref="ClickConfigure"/> and the Done branch of <see cref="OnMouseClick"/>.
+    /// The bar reports one id along its whole length rather than one per day, so dragging the slider
+    /// is silent instead of a rattle — the arrows either side are the discrete controls.</para>
+    /// </summary>
+    public string? GetHoveredControlId(int x, int y)
+    {
+        if (_phase == Phase.Done)
+            return y == _continueRow && x >= _continueX0 && x < _continueX1 ? "work:continue" : null;
+
+        if (_phase != Phase.Configure) return null;   // mid-work: nothing is clickable
+
+        if (y == _buttonsRow)
+        {
+            if (x >= _confirmX0 && x < _confirmX1) return "work:confirm";
+            if (x >= _leaveX0 && x < _leaveX1)     return "work:leave";
+        }
+
+        if (y == _sliderRow)
+        {
+            if (x >= BarX0 - 4 && x < BarX0 - 1) return "work:days-minus";
+            if (x >= BarX0 + BarWidth + 1 && x < BarX0 + BarWidth + 4) return "work:days-plus";
+            if (x >= BarX0 && x <= BarX0 + BarWidth) return "work:days-bar";
+        }
+
+        return null;
+    }
+
     public void OnMouseClick(int x, int y)
     {
         switch (_phase)

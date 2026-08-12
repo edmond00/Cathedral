@@ -35,6 +35,9 @@ public class GatherKnowledgeTree : DialogueTree
     public override string TreeId           => "gather_knowledge";
     public override string DisplayName      => "Ask What They Know";
     public override string Description      => "drawing out what this person knows";
+
+    /// <summary>The other chair: someone is drawing you out about what you know.</summary>
+    public override string NpcDescription   => "being asked what you know about your trade, this place and its people";
     public override string AssociatedVerbId => "gather_knowledge";
 
     /// <summary>The general skill: getting somebody to talk. The same whatever they talked about.</summary>

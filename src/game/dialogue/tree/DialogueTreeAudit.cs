@@ -214,7 +214,10 @@ public static class DialogueTreeAudit
         var resolutionDepths = new Dictionary<ResolutionNode, SortedSet<int>>();
 
         Walk(tree.EntryNode, depth: 0, path: new HashSet<DialogueNode>());
+        // Both sides of the subject. NpcDescription reaches the NPC's rewrite prompt exactly as
+        // Description reaches the player's, so a token typo in it is the same silent fault.
         CollectTokens(tree.Description);
+        CollectTokens(tree.NpcDescription);
 
         foreach (var token in badTokens)
             m.Warnings.Add($"unknown template token {{{token}}}");

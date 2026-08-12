@@ -91,6 +91,34 @@ public sealed class TradeMenuRenderer
 
     public void OnMouseMove(int x, int y) { _hoverMouseX = x; _hoverMouseY = y; }
 
+    /// <summary>
+    /// Stable identity of the clickable element under (x, y), or null when there is none — the same
+    /// contract <c>SettingsMenuRenderer.GetHoveredControlId</c> has, so the controller's one
+    /// "tick when the hovered element changes" rule covers this screen too. It had no tick at all:
+    /// every button here highlighted in silence, which reads as an unresponsive screen next to the
+    /// menus either side of it.
+    ///
+    /// <para>Mirrors <see cref="OnMouseClick"/>'s regions exactly. Anything that grows a click target
+    /// there needs a case here, or that target goes quiet.</para>
+    /// </summary>
+    public string? GetHoveredControlId(int x, int y)
+    {
+        if (y == _buttonsRow)
+        {
+            if (_confirmX0 != int.MinValue && x >= _confirmX0 && x < _confirmX1) return "trade:confirm";
+            if (x >= _leaveX0 && x < _leaveX1) return "trade:leave";
+        }
+
+        for (int i = 0; i < Offers.Count; i++)
+        {
+            if (y != _rowY0 + i) continue;
+            if (x >= _boxX + MinusOff && x < _boxX + MinusOff + 3) return $"trade:minus:{i}";
+            if (x >= _boxX + PlusOff  && x < _boxX + PlusOff  + 3) return $"trade:plus:{i}";
+        }
+
+        return null;
+    }
+
     public void OnMouseClick(int x, int y)
     {
         // Buttons row.

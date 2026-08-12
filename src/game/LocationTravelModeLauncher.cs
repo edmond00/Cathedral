@@ -307,8 +307,15 @@ public static class LocationTravelModeLauncher
                 cliDriver.Start();
             }
 
+            // Restore the window mode the player left in. Done here rather than in the window
+            // settings above because borderless-fullscreen is applied to a live window (it needs the
+            // monitor the window actually opened on), not requested at construction.
+            if (Cathedral.UserSettings.Fullscreen)
+                Cathedral.Glyph.WindowMode.Apply(core, true);
+
             Console.WriteLine("\n=== Location Travel Mode Ready ===");
             Console.WriteLine("Controls:");
+            Console.WriteLine("  - F11 to toggle fullscreen");
             Console.WriteLine("  - Click on locations to travel");
             Console.WriteLine("  - Click on protagonist to interact with current location");
             Console.WriteLine("  - ESC to leave location interaction");
@@ -395,6 +402,14 @@ public static class LocationTravelModeLauncher
                     Console.WriteLine("ESC pressed - opening main menu");
                     gameController.SetMode(GameMode.MainMenu);
                 }
+            }
+            // F11 is a player control, like Escape, and is never gated by DeveloperKeys: a shipped
+            // build that could enter fullscreen and not leave it would be worse than one with no
+            // fullscreen at all. It writes back to UserSettings so the mode survives the session,
+            // which is the same store the Settings screen's row uses.
+            else if (args.Key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.F11)
+            {
+                (gameController as LocationTravelGameController)?.ToggleFullscreen();
             }
             // Escape above is a player control — the pause menu and the popup dismiss — and is
             // never gated. The two diagnostic dumps below are, by testing DeveloperKeys as part of

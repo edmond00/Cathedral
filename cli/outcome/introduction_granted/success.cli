@@ -40,4 +40,11 @@ expect-outcome introduction_granted
 
 # --- after: the world moved ---
 inspect npcs
+
+# The introduction has two halves and only the first was ever asserted here. Being vouched for sets
+# the standing (above); being TAKEN there is the other half, and it silently stopped working — the
+# walk moved PoV.Where without moving the narration node, so the player stayed, observably, with the
+# go-between. The test location pins the reeve to Test Hall and the plowman to Test Yard, so the area
+# after the introduction is the whole assertion.
+expect-state where Test Hall
 quit

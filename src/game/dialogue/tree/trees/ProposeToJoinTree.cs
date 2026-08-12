@@ -22,6 +22,9 @@ public class ProposeToJoinTree : DialogueTree
     public override string TreeId           => "propose_to_join";
     public override string DisplayName      => "Ask to Join You";
     public override string Description      => "asking them to leave this place and travel with you";
+
+    /// <summary>The other chair: you are the one being asked to leave.</summary>
+    public override string NpcDescription   => "being asked to leave this place and travel with this person";
     public override string AssociatedVerbId => "propose_to_join";
 
     /// <summary>What succeeding at this teaches: asking somebody for everything and being told yes.</summary>

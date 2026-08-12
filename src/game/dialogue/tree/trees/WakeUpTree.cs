@@ -23,6 +23,9 @@ public class WakeUpTree : DialogueTree
     public override string TreeId           => "wake_up";
     public override string DisplayName      => "Wake";
     public override string Description      => "waking a sleeping person without frightening them into violence";
+
+    /// <summary>The other chair: you are the sleeper, woken by someone standing over you.</summary>
+    public override string NpcDescription   => "being woken from sleep by a stranger standing over you";
     public override string AssociatedVerbId => "wake_up";
 
     /// <summary>What succeeding at this teaches: keeping somebody calm who has every reason not to be.</summary>

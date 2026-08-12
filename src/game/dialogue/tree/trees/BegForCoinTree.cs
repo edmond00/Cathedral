@@ -21,6 +21,9 @@ public class BegForCoinTree : DialogueTree
     public override string TreeId           => "beg_for_coin";
     public override string DisplayName      => "Beg";
     public override string Description      => "asking a stranger for a coin";
+
+    /// <summary>The other chair: a stranger has stopped you and is asking for money.</summary>
+    public override string NpcDescription   => "being asked for a coin by a stranger";
     public override string AssociatedVerbId => "beg_for_coin";
 
     /// <summary>What succeeding at this teaches: picking the face that will stop, and asking it.</summary>

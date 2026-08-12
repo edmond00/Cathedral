@@ -189,7 +189,10 @@ public class RoutineReplayEngine
     /// <para>The handed-on time period is <c>pov.When</c>, not <c>routine.StartTime</c>: replay begins
     /// at the recorded arrival time but a time-shifting step (waiting out the morning) moves it on,
     /// exactly as a movement step moves <c>pov.Where</c>. Both are read off the PoV the replay
-    /// actually ended at, so whatever opens next opens where and when the routine left off.</para>
+    /// actually ended at, so whatever opens next opens where and when the routine left off — and
+    /// <b>every</b> transition below carries both. The three routine bridges used to pass the period
+    /// alone, so a routine that walked into a workshop to trade dropped the player back on the
+    /// location's default opening area as soon as the menu closed.</para>
     ///
     /// A dialogue trigger is resolved by the tree's
     /// <see cref="DialogueRoutineBehavior"/>: <b>IncludeTrigger</b> reopens the dialogue live, while
@@ -225,13 +228,13 @@ public class RoutineReplayEngine
                 {
                     var mode = req.Npc.TradeRequest;
                     req.Npc.TradeRequest = TradeMode.None;   // consume the transient flag
-                    return new StartRoutineTradeTransition(routine.LocationId, req.Npc.DisplayName, mode, pov.When);
+                    return new StartRoutineTradeTransition(routine.LocationId, req.Npc.DisplayName, mode, pov.When, pov.Where);
                 }
                 if (req.Npc.JobRequest is { } job)
                 {
                     req.Npc.JobRequest      = null;          // consume the transient flags
                     req.Npc.PendingJobOffer = null;
-                    return new StartRoutineWorkTransition(routine.LocationId, req.Npc.DisplayName, job.Id, pov.When);
+                    return new StartRoutineWorkTransition(routine.LocationId, req.Npc.DisplayName, job.Id, pov.When, pov.Where);
                 }
 
                 // Success set neither flag — treat as inert and return to travel rather than hang.
@@ -239,7 +242,7 @@ public class RoutineReplayEngine
             }
 
             // IncludeTrigger (the only other behavior that records the step): reopen the dialogue live.
-            return new StartRoutineDialogueTransition(routine.LocationId, req.Npc.DisplayName, treeId, pov.When);
+            return new StartRoutineDialogueTransition(routine.LocationId, req.Npc.DisplayName, treeId, pov.When, pov.Where);
         }
 
         var last = routine.Steps.LastOrDefault();

@@ -29,6 +29,12 @@ public class ReconcileTree : DialogueTree
     public override string TreeId           => "reconcile";
     public override string DisplayName      => "Reconcile";
     public override string Description      => "attempting to end hostility and reach a fragile peace";
+
+    /// <summary>
+    /// The other chair. Not symmetric: the player is suing for peace, the NPC is the one holding the
+    /// grudge and deciding whether to put it down.
+    /// </summary>
+    public override string NpcDescription   => "being approached by someone you hold a grudge against, who wants to make peace";
     public override string AssociatedVerbId => "reconcile";
 
     /// <summary>What succeeding at this conversation teaches: talking someone down out of their anger.</summary>

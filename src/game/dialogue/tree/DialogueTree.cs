@@ -77,10 +77,29 @@ public abstract class DialogueTree
     public abstract string DisplayName { get; }
 
     /// <summary>
-    /// Overall subject of this dialogue — used in NPC and modus mentis LLM prompts.
-    /// e.g. "meeting a stranger for the first time"
+    /// Overall subject of this dialogue <b>from the player's side</b> — used in the player's own
+    /// modus mentis prompts. e.g. "meeting a stranger for the first time"
+    ///
+    /// <para>Written in the player's voice, because that is who chooses to open the conversation:
+    /// "asking a stranger for a coin", "asking the merchant to show what they have for sale".</para>
     /// </summary>
     public abstract string Description { get; }
+
+    /// <summary>
+    /// The same conversation <b>from the NPC's side</b>, for the prompt that writes their lines.
+    ///
+    /// <para>This exists because <see cref="Description"/> is not neutral and was being handed to
+    /// both speakers. The rewrite prompt renders it as "You are speaking of …", so an NPC answering a
+    /// beggar was told "You are speaking of asking a stranger for a coin" — which casts them as the
+    /// one begging, the exact opposite of their part. The trees where the second person is even
+    /// spelled out ("asking <i>them</i> to present <i>you</i>") inverted both pronouns.</para>
+    ///
+    /// <para>Defaults to <see cref="Description"/>, which is right only where the act is genuinely
+    /// symmetric — meeting for the first time, making peace, deepening a bond are the same thing
+    /// from either chair. Every asymmetric tree overrides it, and a new tree should assume it needs
+    /// to: if one person is asking and the other answering, the two sides differ.</para>
+    /// </summary>
+    public virtual string NpcDescription => Description;
 
     /// <summary>The verb ID that triggers this tree (e.g. "meet_stranger").</summary>
     public abstract string AssociatedVerbId { get; }

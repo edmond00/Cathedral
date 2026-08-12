@@ -28,6 +28,9 @@ public class ProposeToSellTree : DialogueTree
     public override string TreeId           => "propose_to_sell";
     public override string DisplayName      => "Propose to Sell";
     public override string Description      => "offering the buyer goods and trying to interest them in a purchase";
+
+    /// <summary>The other chair: you ARE the buyer being offered goods.</summary>
+    public override string NpcDescription   => "being offered goods by someone hoping you will buy";
     public override string AssociatedVerbId => "propose_to_sell";
 
     /// <summary>What succeeding at this conversation teaches: talking a price into being.</summary>

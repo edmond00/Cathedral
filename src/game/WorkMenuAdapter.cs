@@ -33,6 +33,9 @@ public class WorkMenuAdapter
     public void Update() => _renderer.Render();
 
     public void OnMouseMove(int mx, int my)  => _renderer.OnMouseMove(mx, my);
+
+    /// <summary>Identity of the hovered clickable, for the controller's hover tick.</summary>
+    public string? GetHoveredControlId(int mx, int my) => _renderer.GetHoveredControlId(mx, my);
     public void OnMouseClick(int mx, int my) => _renderer.OnMouseClick(mx, my);
     public void OnMouseWheel(float delta)    { /* no scrolling */ }
     public void OnKeyPress(Keys key)         { /* ESC opens the pause menu (handled by the launcher) */ }

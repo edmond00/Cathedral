@@ -1003,7 +1003,10 @@ public class LocationTravelGameController : IDisposable
         // Main menu handles its own clicks
         if (_currentMode == GameMode.MainMenu && _mainMenuRenderer != null)
         {
-            _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+            // Only on a button — the same predicate the hover tick uses, so the two agree about
+            // what is clickable and a press on the empty backdrop is silent.
+            if (_mainMenuRenderer.GetEnabledButtonAtPosition(x, y) >= 0)
+                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
             _mainMenuRenderer.OnMouseClick(x, y);
             return;
         }
@@ -1011,7 +1014,8 @@ public class LocationTravelGameController : IDisposable
         // Settings screen handles its own clicks
         if (_currentMode == GameMode.Settings && _settingsMenuRenderer != null)
         {
-            _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+            if (_settingsMenuRenderer.GetHoveredControlId(x, y) != null)
+                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
             _settingsMenuRenderer.OnMouseClick(x, y);
             return;
         }
@@ -1025,11 +1029,13 @@ public class LocationTravelGameController : IDisposable
             return;
         }
         
-        // Protagonist management handles its own clicks
+        // Protagonist management handles its own clicks, and says whether the press landed on
+        // anything — the screen is mostly art and read-only text, so firing the click sound first
+        // made every press anywhere in it sound like a button.
         if (_currentMode == GameMode.ProtagonistManagement && _managementMenuRenderer != null)
         {
-            _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
-            _managementMenuRenderer.OnMouseClick(x, y);
+            if (_managementMenuRenderer.OnMouseClick(x, y))
+                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
             return;
         }
         
@@ -1055,7 +1061,8 @@ public class LocationTravelGameController : IDisposable
             // Route to trade adapter if in trading mode
             if (_currentMode == GameMode.Trading && _tradeAdapter != null)
             {
-                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+                if (_tradeAdapter.GetHoveredControlId(x, y) != null)
+                    _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
                 _tradeAdapter.OnMouseClick(x, y);
                 return;
             }
@@ -1063,7 +1070,8 @@ public class LocationTravelGameController : IDisposable
             // Route to work adapter if in working mode
             if (_currentMode == GameMode.Working && _workAdapter != null)
             {
-                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+                if (_workAdapter.GetHoveredControlId(x, y) != null)
+                    _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
                 _workAdapter.OnMouseClick(x, y);
                 return;
             }
@@ -1152,17 +1160,23 @@ public class LocationTravelGameController : IDisposable
         GameMode.LocationInteraction or
         GameMode.Fighting or
         GameMode.Dialogue or
-        GameMode.Trading or
-        GameMode.Working or
         GameMode.ChildhoodReminescence => null, // handled inside NarrativeController
+        // Trade and work are NOT narrative modes — they are their own renderers, and listing them
+        // with the ones above is why neither ever ticked: every button on both screens highlighted
+        // in silence, which reads as an unresponsive screen next to the menus either side of it.
+        GameMode.Trading => _tradeAdapter?.GetHoveredControlId(x, y),
+        GameMode.Working => _workAdapter?.GetHoveredControlId(x, y),
         GameMode.MainMenu => _mainMenuRenderer?.GetEnabledButtonAtPosition(x, y) is { } i and >= 0
             ? $"menu:{i}" : null,
         GameMode.Settings => _settingsMenuRenderer?.GetHoveredControlId(x, y),
         GameMode.ProtagonistCreation => _protagonistCreationRenderer?.GetHoveredElementId(x, y),
-        GameMode.WorldView => (_travelInfoRenderer != null && _travelInfoRenderer.IsOverTravelButton(x, y))
-            ? "travel-button"
-            : (_travelInfoRenderer != null && _travelInfoRenderer.IsOverClearButton(x, y))
-                ? "travel-clear-button" : null,
+        // The travel box has three buttons, not two: ROUTINES was left out and so was the only one
+        // of them that highlighted without a sound.
+        GameMode.WorldView => _travelInfoRenderer == null ? null
+            : _travelInfoRenderer.IsOverTravelButton(x, y)   ? "travel-button"
+            : _travelInfoRenderer.IsOverClearButton(x, y)    ? "travel-clear-button"
+            : _travelInfoRenderer.IsOverRoutinesButton(x, y) ? "travel-routines-button"
+            : null,
         GameMode.Death => _deathScreenRenderer?.IsOverEndRunButton(x, y) == true ? "death-end-run" : null,
         GameMode.EncounterPrompt => _encounterPromptRenderer?.IsOverEngageButton(x, y) == true ? "encounter-engage" : null,
         GameMode.ProtagonistManagement => null, // management menu fires its own tick via OnMouseMove return value
@@ -2042,6 +2056,15 @@ public class LocationTravelGameController : IDisposable
                         UserSettings.DitherEnabled = on;
                         UserSettings.Save();
                     },
+                    // Applied at once, unlike the model rows: the window is right there, and a
+                    // fullscreen setting that took effect next launch would be a strange thing to
+                    // offer. Same switch F11 flips (Cathedral.Glyph.WindowMode), same store.
+                    OnFullscreenChanged = on =>
+                    {
+                        Cathedral.Glyph.WindowMode.Apply(_core, on);
+                        UserSettings.Fullscreen = Cathedral.Glyph.WindowMode.IsFullscreen;
+                        UserSettings.Save();
+                    },
 
                     // The three language-model rows only persist; nothing is applied here. The
                     // server has already loaded the model for this session, so these take effect
@@ -2088,6 +2111,10 @@ public class LocationTravelGameController : IDisposable
             // choosing a default — so the shown state and the saved state can legitimately differ
             // until the toggle itself is clicked.
             _settingsMenuRenderer.DitherEnabled = _core.PostProcess.Enabled;
+            // Fullscreen likewise, and for a sharper reason: F11 flips the same switch from
+            // anywhere in the game, so reading the saved value here would show WINDOW on a window
+            // that is plainly fullscreen.
+            _settingsMenuRenderer.Fullscreen = Cathedral.Glyph.WindowMode.IsFullscreen;
             _settingsMenuRenderer.Render();
         }
     }
@@ -2889,14 +2916,14 @@ public class LocationTravelGameController : IDisposable
     /// <summary>
     /// Starts Phase 6 Chain-of-Thought narrative interaction.
     /// </summary>
-    private void StartNarrativeInteraction(int vertexIndex, string? startAreaLemma = null, Cathedral.Game.Narrative.TimePeriod? startTime = null)
+    private void StartNarrativeInteraction(int vertexIndex, string? startAreaKey = null, Cathedral.Game.Narrative.TimePeriod? startTime = null)
     {
         if (!EstablishNarrativeContext(vertexIndex)) return;
 
         // Start observation phase (async). When continuing after a routine replay, position the
         // session at the area the routine ended in, at its recorded time period.
-        if (startAreaLemma != null && startTime != null)
-            _narrativeController!.StartAtArea(startAreaLemma, startTime.Value);
+        if (startAreaKey != null && startTime != null)
+            _narrativeController!.StartAtArea(startAreaKey, startTime.Value);
         else
             _narrativeController!.StartObservationPhase();
 
@@ -3222,17 +3249,17 @@ public class LocationTravelGameController : IDisposable
                 break;
 
             case StartRoutineDialogueTransition rd:
-                StartRoutineSubPhase(rd.Vertex, rd.NpcKey, rd.Time,
+                StartRoutineSubPhase(rd.Vertex, rd.NpcKey, rd.Time, rd.StartArea?.DisplayName,
                     npc => StartDialogueMode(new DialogueTriggerOutcome(npc, rd.TreeId)));
                 break;
 
             case StartRoutineTradeTransition rt:
-                StartRoutineSubPhase(rt.Vertex, rt.NpcKey, rt.Time,
+                StartRoutineSubPhase(rt.Vertex, rt.NpcKey, rt.Time, rt.StartArea?.DisplayName,
                     npc => StartTradeMode(npc, rt.Mode));
                 break;
 
             case StartRoutineWorkTransition rw:
-                StartRoutineSubPhase(rw.Vertex, rw.NpcKey, rw.Time, npc =>
+                StartRoutineSubPhase(rw.Vertex, rw.NpcKey, rw.Time, rw.StartArea?.DisplayName, npc =>
                 {
                     var job = Cathedral.Game.Narrative.Work.JobRegistry.Instance.GetById(rw.JobId);
                     if (job == null)
@@ -3246,7 +3273,7 @@ public class LocationTravelGameController : IDisposable
                 break;
 
             case StartNarrationTransition n:
-                StartNarrativeInteraction(n.Vertex, n.StartArea?.ReferenceLemma, n.Time);
+                StartNarrativeInteraction(n.Vertex, n.StartArea?.DisplayName, n.Time);
                 break;
 
             case ReturnToTravelTransition:
@@ -3265,7 +3292,8 @@ public class LocationTravelGameController : IDisposable
     /// the world map exactly as after a live visit.
     /// </summary>
     private void StartRoutineSubPhase(int vertex, string npcKey,
-        Cathedral.Game.Narrative.TimePeriod time, Action<Cathedral.Game.Npc.NpcEntity> open)
+        Cathedral.Game.Narrative.TimePeriod time, string? startAreaKey,
+        Action<Cathedral.Game.Npc.NpcEntity> open)
     {
         if (!EstablishNarrativeContext(vertex))
         {
@@ -3274,7 +3302,10 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
-        _narrativeController!.PrepareForRoutineSubPhase(time);
+        // Where AND when the replay ended. The area matters as much as the period: the sub-phase
+        // rebuilds the scene at its default opening area, so without it the player walks out of the
+        // trade menu into the square rather than the forge the routine had walked into.
+        _narrativeController!.PrepareForRoutineSubPhase(time, startAreaKey);
 
         var npc = _narrativeController.Scene?.Npcs
             .FirstOrDefault(n => n.IsAlive && string.Equals(n.DisplayName, npcKey, StringComparison.OrdinalIgnoreCase))
@@ -3631,6 +3662,16 @@ public class LocationTravelGameController : IDisposable
                    dialogueOutcome.Target, _narrativeController.Protagonist,
                    dialogueOutcome.TreeId, dialogueOutcome.Tree))
         {
+            // The flags a won conversation leaves on the NPC are consumed by OnDialogueCompleted,
+            // which this path never reaches — so the one that repositions the player is consumed
+            // here. Without it --auto-dialogue applied the introduction's standing and skipped the
+            // walk, which is precisely the half that was broken in the real game and could not be
+            // caught by a test.
+            if (dialogueOutcome.Target.IntroductionGranted is { } presented)
+            {
+                dialogueOutcome.Target.IntroductionGranted = null;
+                WalkToIntroduction(presented);
+            }
             _narrativeController.OnDialogueCompleted(dialogueOutcome.Target);
             return;
         }
@@ -3838,25 +3879,7 @@ public class LocationTravelGameController : IDisposable
     /// a room.</para>
     /// </summary>
     private void WalkToIntroduction(Cathedral.Game.Npc.NpcEntity presented)
-    {
-        var scene = _narrativeController?.Scene;
-        var pov   = _narrativeController?.CurrentPoV;
-        if (scene == null || pov == null) return;
-
-        var sceneNpc = scene.Npcs.FirstOrDefault(n => ReferenceEquals(n.Entity, presented));
-        if (sceneNpc == null) return;
-
-        var where = scene.GetAreaOf(sceneNpc, pov.When);
-        if (where == null)
-        {
-            Console.WriteLine($"LocationTravelGameController: {presented.DisplayName} is not about at {pov.When} — introduction stands, but no walk");
-            return;
-        }
-
-        pov.Where = where;
-        pov.Focus = sceneNpc;
-        Console.WriteLine($"LocationTravelGameController: walked to {presented.DisplayName} in {where.DisplayName}");
-    }
+        => _narrativeController?.WalkToIntroducedNpc(presented);
 
     /// <summary>
     /// Moves an NPC who agreed to travel with the player out of the scene and into the party.
@@ -4022,8 +4045,32 @@ public class LocationTravelGameController : IDisposable
     /// Routes keyboard input to the active sub-mode (fight or dialogue adapter).
     /// Called from the launcher's KeyDown handler.
     /// </summary>
+    /// <summary>
+    /// Flips the window between windowed and borderless fullscreen and persists the choice. The one
+    /// implementation behind all three ways in: the F11 key, the Settings row, and the CLI's
+    /// <c>key F11</c>. Returns the new state.
+    /// </summary>
+    public bool ToggleFullscreen()
+    {
+        bool now = Cathedral.Glyph.WindowMode.Toggle(_core);
+        UserSettings.Fullscreen = now;
+        UserSettings.Save();
+        _settingsMenuRenderer?.Render();   // the row, if that screen is up, must not go stale
+        return now;
+    }
+
     public void OnKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys key)
     {
+        // Mode-independent, and handled before the per-mode dispatch: fullscreen belongs to the
+        // window, not to whatever the game is showing inside it. This is also the CLI's route in
+        // (`key F11`) — the real keyboard reaches it through the launcher's KeyDown handler, which
+        // only forwards to this method in fight and dialogue modes.
+        if (key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.F11)
+        {
+            ToggleFullscreen();
+            return;
+        }
+
         if (_currentMode == GameMode.Fighting && _fightAdapter != null)
         {
             _fightAdapter.OnKeyPress(key);

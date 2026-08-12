@@ -50,6 +50,13 @@ public static class UserSettings
     /// </summary>
     public static bool DitherEnabled { get; set; } = true;
 
+    /// <summary>
+    /// Whether the game window opens borderless-fullscreen. Applied once the window exists (see
+    /// <c>WindowMode</c>), and toggled either from the Settings screen or with F11 — both of which
+    /// write back here, so the mode the player left in is the mode they come back to.
+    /// </summary>
+    public static bool Fullscreen { get; set; } = false;
+
     // ── Language model ───────────────────────────────────────────────────────
     //
     // These take effect at the next launch. The server loads the model once at startup and holds
@@ -126,6 +133,7 @@ public static class UserSettings
             SfxVolume   = Math.Clamp(dto.SfxVolume, 0, 100);
 
             DitherEnabled = dto.DitherEnabled;
+            Fullscreen    = dto.Fullscreen;
 
             LlmDevice     = dto.LlmDevice;
             LlmGpuLayers  = dto.LlmGpuLayers < 0 ? -1 : dto.LlmGpuLayers;
@@ -158,6 +166,7 @@ public static class UserSettings
                 SfxVolume   = SfxVolume,
 
                 DitherEnabled = DitherEnabled,
+                Fullscreen    = Fullscreen,
 
                 LlmDevice     = LlmDevice,
                 LlmGpuLayers  = LlmGpuLayers,
@@ -182,6 +191,7 @@ public static class UserSettings
         public int MusicVolume { get; set; } = 100;
         public int SfxVolume { get; set; } = 100;
         public bool DitherEnabled { get; set; } = true;
+        public bool Fullscreen { get; set; } = false;
 
         // Written as "Auto"/"Gpu"/"Cpu" rather than 0/1/2, so the file stays hand-editable and a
         // reordered enum cannot silently change what an existing settings file means.

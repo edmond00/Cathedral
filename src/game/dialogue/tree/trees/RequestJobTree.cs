@@ -33,6 +33,9 @@ public class RequestJobTree : DialogueTree
     public override string TreeId           => "request_job";
     public override string DisplayName      => "Request Job";
     public override string Description      => "asking a master or reeve to take you on for work";
+
+    /// <summary>The other chair: you ARE the master or reeve being asked.</summary>
+    public override string NpcDescription   => "being asked for work by someone looking to be taken on";
     public override string AssociatedVerbId => "request_job";
 
     /// <summary>What succeeding at this conversation teaches: putting yourself forward for work.</summary>
