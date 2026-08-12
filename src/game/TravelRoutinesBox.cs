@@ -42,6 +42,17 @@ public class TravelRoutinesBox
         _entries  = entries ?? throw new ArgumentNullException(nameof(entries));
     }
 
+    /// <summary>
+    /// The rows on offer, for <c>--cli</c>. A script picks a routine by index because the rows are
+    /// hit-tested against a rendered box whose geometry moves with how many routines exist.
+    /// </summary>
+    public IReadOnlyList<(string Name, bool Replayable, string? Reason)> CliEntries
+        => _entries.Select(e => (e.Routine.Name, e.Replayable, e.Reason)).ToList();
+
+    /// <summary>The routine behind row <paramref name="index"/>, or null when out of range.</summary>
+    public Routine? CliRoutineAt(int index)
+        => index >= 0 && index < _entries.Count ? _entries[index].Routine : null;
+
     private static Vector4 BoxBg         => new(0.0f, 0.06f, 0.10f, 1.0f);
     private static Vector4 HoverBg       => Config.Colors.DarkPurple;
     private static Vector4 TitleColor    => Config.Colors.BrightPurple;

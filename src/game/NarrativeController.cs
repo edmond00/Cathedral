@@ -3409,6 +3409,17 @@ public class NarrativeController
             foreach (var c in _protagonist.CompanionParty)
                 outp.Add($"companion \"{c.DisplayName}\" species=\"{c.PartyDescription}\"");
 
+        // Recorded routines, by the only two things about them that are stable: the location they
+        // replay at and the ordered verb ids they walk. Names and step labels come from content
+        // (an NPC's rolled name is in them), so a test that spelled one would break the day somebody
+        // renamed a room. Reported here rather than read off the routines panel because recording
+        // happens with no UI open at all — the panel is where a player reads them, not where they
+        // are made.
+        if (All("routines"))
+            foreach (var r in _protagonist.RecordedRoutines)
+                outp.Add($"routine location={r.LocationId} start={r.StartTime} steps={r.Steps.Count} "
+                       + $"verbs=[{string.Join(",", r.Steps.Select(s => s.VerbId))}]");
+
         if (All("wounds"))
             foreach (var w in actor.Wounds)
                 outp.Add($"wound {w.WoundName} target={w.TargetId}");

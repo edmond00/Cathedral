@@ -435,6 +435,17 @@ Run `help` for the authoritative list. The essentials:
                             somewhere else only PLANS the route and leaves the travel box up:
                             follow with `travel-go`, wait for WorldView, then `travel here`
   travel-go                 commit the plan and set out — the TRAVEL button
+  travel neighbour          plan a route to any bordering vertex — leaving, without naming where
+  travel back               plan a route to the last location entered that is not this one.
+                            Together these two are how a script makes a ROUND TRIP, which is the
+                            only way to reach routine replay (a routine replays on ARRIVAL): the
+                            vertex a run starts on is whatever the seed put under the avatar, and
+                            `travel <name>` prefers the vertex underfoot — it would walk straight
+                            back into the location it is trying to leave
+  routines                  list the routines the planned destination offers (opens the box)
+  routines <n>              replay routine n there — picks it and sets out
+  routines continue         press CONTINUE on the post-replay outcome box, which applies the
+                            phase the routine ended on (narration, a dialogue, trade, or work)
   manage [tab]              open/close the protagonist screen; with a tab name
                             (Anatomy / Inventory / Memory / Humors / …) open it there
   select [item name]        show a carried item's info panel; bare `select` lists what
@@ -459,8 +470,11 @@ Run `help` for the authoritative list. The essentials:
                             to the action list — see the trap below
   wait [secs] | wait mode <GameMode> [secs]
   inspect [subject]         the game state an outcome can change, by STABLE id — items, coins,
-                            where, party, wounds, skills, npcs, pois, or all. What cli/outcome/
-                            reads: `expect` scans the SCREEN, this reads the world
+                            where, party, wounds, skills, npcs, pois, routines, or all. What
+                            cli/outcome/ reads: `expect` scans the SCREEN, this reads the world.
+                            `routines` is answerable with NO narration in progress, because a
+                            session's trailing routine is finalised as that session ENDS — reading
+                            it from inside the location reads a moment too early
   expect-state <subj> <text> | expect-no-state <subj> <text>
                             assert `inspect <subj>` does (or does not) report a line containing
                             <text>. The outcome range's assertion
@@ -1054,7 +1068,8 @@ cli/verb/<verb-id>/fail.cli       the verb attempted, missed (strategy fail-dice
 cli/verb/<verb-id>/success2.cli   a second script where the verb has genuinely different outcomes
 cli/outcome/<outcome-id>/success.cli   one per entry in the outcome catalogue
 cli/system/                       scripts that test a system rather than a verb or an outcome —
-                                  the preview box, the Speak-About hand-off, the crime chain
+                                  the preview box, the Speak-About hand-off, the crime chain,
+                                  routine recording and replay
 ```
 
 `./run_tests.sh cli verb` runs a whole range; `./run_tests.sh cli gather` runs one folder inside one.

@@ -1,0 +1,64 @@
+# routine — a walk on its own IS a routine
+#
+# The other half of the recorder's prefix rule, and the half that is easy to get backwards.
+#
+# A repositioning step (move, the climbs, the crossings, a door) never emits a routine WHERE IT
+# HAPPENS: it extends the prefix that a later step will be built on, so the walk into the workshop is
+# part of the trade routine rather than a routine of its own. But if the session ends with steps in
+# the prefix that no emission has claimed, that prefix is emitted at the end — following a track
+# somewhere and stopping there is a "go there" routine, not a leftover
+# (see RoutineRecorder.EmitTrailingPath).
+#
+# So: one move, nothing else, and the visit records exactly one routine of one step. The complement —
+# a prefix already consumed by a terminus does NOT emit a second, redundant routine — is asserted at
+# the end of routine_record_replay.cli.
+#
+# Read after LEAVING, because that is when a session's trailing prefix is finalised. `inspect` answers
+# `routines` with no narration in progress for exactly this reason.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --npc-static --start-area "Test Field" --period dawn --observe-only "Test Yard"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# One successful move — a recordable, repositioning verb — and nothing else.
+strategy succeed
+goal move
+advance 12 180
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect-verb move
+expect Moved to:
+
+# The filter has done its job and must be dropped before the next phase is generated: it names the
+# area we have just walked INTO, and you cannot observe the room you are standing in — so leaving it
+# set makes the next phase fall back and fails the run on a narrowing flag that narrowed nothing.
+observe none
+
+# Two presses, and the first one is not the exit. A move ends on a node transition, so the footer
+# reads CONTINUE: pressing it closes the segment and opens the next phase in the new area, whose
+# observation preview then has to be drained before the footer becomes LEAVE. Pressing once and
+# waiting for WorldView just sits on that preview box until the wait times out.
+click button
+wait 60
+advance 12 180
+click button
+wait mode WorldView 90
+
+# The walk, saved as its own routine. Asserted by verb id rather than by the routine's name, which
+# is built from the destination's display name and is content.
+inspect routines
+expect-state routines verbs=[move]
+quit

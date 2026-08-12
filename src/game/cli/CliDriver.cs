@@ -220,6 +220,7 @@ public sealed class CliDriver
                 case "choose":      CmdChoose(rest);                  break;
                 case "travel":      CmdTravel(rest);                  break;
                 case "travel-go":   CmdTravelGo();                    break;
+                case "routines":    CmdRoutines(rest);                break;
                 case "manage":      CmdManage(rest);                  break;
                 case "select":      CmdSelect(rest);                  break;
                 case "key":         CmdKey(rest);                     break;
@@ -303,9 +304,9 @@ public sealed class CliDriver
                                     verb test must assert: `expect SUCCESS` matches ANY action's
                                     outcome banner and so passes on the wrong verb
           inspect [subject]         print the game state an outcome can change, by STABLE id:
-                                    items / coins / where / party / wounds / skills / npcs / pois,
-                                    or all. What cli/outcome/ asserts on — the chip says the player
-                                    was told, this says the world actually moved
+                                    items / coins / where / party / wounds / skills / npcs / pois /
+                                    routines, or all. What cli/outcome/ asserts on — the chip says
+                                    the player was told, this says the world actually moved
           expect-state <subj> <text>  assert `inspect <subj>` reports a line containing <text>.
                                     What cli/outcome/ asserts with: `expect` reads the SCREEN,
                                     this reads the world
@@ -334,6 +335,11 @@ public sealed class CliDriver
           choose <n>                answer the visible popup by index
           travel <vertex|name>      plan a route to a world vertex (bypasses 3D picking)
           travel-go                 commit the planned route and set out (the TRAVEL button)
+          travel neighbour          plan a route to any bordering vertex (leaving, unnamed)
+          travel back               plan a route to the last location entered that is not this one
+          routines                  list the routines the planned destination offers
+          routines <n>              replay routine n there (picks it and sets out)
+          routines continue         press CONTINUE on the post-replay outcome box
           manage [tab]              open/close the protagonist screen; with a tab name
                                     (Anatomy, Inventory, Memory, Humors, …) open it there
           select [item name]        show a carried item's info panel; bare `select` lists them
@@ -795,6 +801,39 @@ public sealed class CliDriver
                 return;
             }
 
+            // `travel back` plans a route to the last location the player was inside. A round trip is
+            // the only way to reach routine replay — a routine replays on ARRIVAL — and a script
+            // cannot name the vertex it started on, since that is whatever the seed put under the
+            // avatar. Plans only, like any other named destination: follow with `travel-go`.
+            // `travel neighbour` plans a route to any vertex bordering the avatar. The other half of
+            // a round trip: a script that must leave a location and come back cannot name where it
+            // is going either — `travel <name>` prefers the vertex under our feet, which would walk
+            // straight back into the place it is trying to leave.
+            if (want.Equals("neighbour", StringComparison.OrdinalIgnoreCase)
+             || want.Equals("neighbor", StringComparison.OrdinalIgnoreCase))
+            {
+                int here = _game.CliAvatarVertex;
+                int next = (_game.CliWorld.GetTravelGraph()?.GetConnectedNodes(here) ?? Enumerable.Empty<int>())
+                    .FirstOrDefault(v => v != here
+                                      && _game.CliWorld.IsVertexTraversable(v)
+                                      && !_game.CliWorld.IsOutOfTravelRange(v), -1);
+                if (next < 0) { CliMode.Emit("error: travel neighbour — no traversable neighbour in range"); return; }
+                _game.CliClickVertex(next);
+                CliMode.Emit($"ok: route planned to neighbouring vertex {next} — call `travel-go` to set out");
+                return;
+            }
+
+            if (want.Equals("back", StringComparison.OrdinalIgnoreCase))
+            {
+                int last = _game.CliLastLocationVertex;
+                if (last < 0) { CliMode.Emit("error: travel back — no location has been entered yet"); return; }
+                if (last == _game.CliAvatarVertex)
+                { CliMode.Emit($"error: travel back — already standing on vertex {last}"); return; }
+                _game.CliClickVertex(last);
+                CliMode.Emit($"ok: route planned back to vertex {last} — call `travel-go` to set out");
+                return;
+            }
+
             target = -1;
             foreach (int v in searchIn)
             {
@@ -838,6 +877,56 @@ public sealed class CliDriver
 
         _game.StartPlannedTravel();
         CliMode.Emit($"ok: travelling (mode={_game.CurrentMode})");
+    }
+
+    /// <summary>
+    /// The routine box: <c>routines</c> lists what the planned destination offers, <c>routines
+    /// &lt;n&gt;</c> picks one and sets out (the replay runs on arrival), and <c>routines continue</c>
+    /// presses CONTINUE on the outcome box afterwards, which applies the phase the routine ended on.
+    ///
+    /// <para>By index rather than by click because both the rows and the ROUTINES button are
+    /// hit-tested against rendered boxes whose geometry moves with how many routines exist — the same
+    /// reason <c>travel</c> injects a vertex instead of aiming at the sphere.</para>
+    /// </summary>
+    private void CmdRoutines(string[] a)
+    {
+        if (a.Length > 0 && a[0].Equals("continue", StringComparison.OrdinalIgnoreCase))
+        {
+            CliMode.Emit(_game.CliDismissRoutineOutcome()
+                ? $"ok: routine outcome dismissed (mode={_game.CurrentMode})"
+                : "error: no routine outcome box on screen");
+            return;
+        }
+
+        if (_game.CurrentMode != GameMode.WorldView)
+        { CliMode.Emit($"error: routines only works in WorldView (currently {_game.CurrentMode})"); return; }
+
+        if (_game.CliRoutineEntries.Count == 0 && !_game.CliOpenRoutines())
+        { CliMode.Emit("error: no travel plan — `travel <name>` first, then `routines`"); return; }
+
+        var entries = _game.CliRoutineEntries;
+
+        if (a.Length == 0)
+        {
+            CliMode.Emit($"routines: {entries.Count} for this destination");
+            for (int i = 0; i < entries.Count; i++)
+                CliMode.Emit($"  routines {i}  \"{entries[i].Name}\""
+                           + (entries[i].Replayable ? "" : $"  (unreplayable: {entries[i].Reason})"));
+            return;
+        }
+
+        if (!int.TryParse(a[0], out int index))
+        { CliMode.Emit($"error: routines <n>|continue (got '{a[0]}')"); return; }
+
+        if (!_game.CliSelectRoutine(index))
+        {
+            CliMode.Emit(index >= 0 && index < entries.Count
+                ? $"error: routine {index} is not replayable: {entries[index].Reason}"
+                : $"error: no routine {index} (offered 0..{entries.Count - 1})");
+            return;
+        }
+
+        CliMode.Emit($"ok: replaying routine {index} on arrival (mode={_game.CurrentMode})");
     }
 
     /// <summary>
@@ -1115,11 +1204,17 @@ public sealed class CliDriver
     /// </summary>
     private void CmdInspect(string[] a)
     {
-        var n = _game.CliNarration;
-        if (n == null) { CliMode.Emit("error: not in narration"); return; }
-
         string subject = a.Length == 0 ? "all" : a[0].ToLowerInvariant();
-        var lines = n.CliInspect(subject);
+
+        // Some facts outlive the narration that made them — routines are finalised as a session
+        // ENDS, so they can only be read once the narrative controller is gone.
+        var lines = _game.CliInspectGlobal(subject);
+        if (lines == null)
+        {
+            var n = _game.CliNarration;
+            if (n == null) { CliMode.Emit("error: not in narration"); return; }
+            lines = n.CliInspect(subject);
+        }
         if (lines.Count == 0) { CliMode.Emit($"inspect {subject}: (nothing)"); return; }
         foreach (var line in lines) CliMode.Emit(line);
     }
@@ -1141,12 +1236,18 @@ public sealed class CliDriver
             return;
         }
 
-        var n = _game.CliNarration;
-        if (n == null) { CliMode.Emit("error: not in narration"); return; }
-
         string subject = a[0].ToLowerInvariant();
         string needle  = string.Join(' ', a.Skip(1));
-        var    lines   = n.CliInspect(subject);
+
+        // Same fall-through as CmdInspect: a subject that outlives narration (routines) must still
+        // be assertable once the session that produced it has ended.
+        var lines = _game.CliInspectGlobal(subject);
+        if (lines == null)
+        {
+            var n = _game.CliNarration;
+            if (n == null) { CliMode.Emit("error: not in narration"); return; }
+            lines = n.CliInspect(subject);
+        }
         bool   found   = lines.Any(l => l.Contains(needle, StringComparison.OrdinalIgnoreCase));
 
         if (found == want)

@@ -220,6 +220,16 @@ public static class NpcAudit
                         warnings.Add($"{archetype.ArchetypeId}: two NPCs share one wound instance " +
                                      $"({w.WoundName}) — per-injury state will leak between them");
 
+                // An NPC must be born alive. CurrentHp is MaxHp (the trunk score) minus the wound
+                // count, and traits both add wounds and move organ scores, so a low-trunk body dealt
+                // two or three wound-bearing traits used to reach zero and arrive dead: still in
+                // Scene.Npcs, still scheduled, but filtered out of GetNpcsAt, so every verb refused
+                // them and the player met a person they could not touch. NpcContentGenerator now
+                // trims historical wounds to prevent it; this is what stops it coming back.
+                if (!first.IsAlive)
+                    warnings.Add($"{archetype.ArchetypeId}: generated DEAD — trunk {body.MaxHp} vs " +
+                                 $"{body.Wounds.Count} wound(s). Nothing in the world can interact with them");
+
                 // Backstory wounds must be historical, or one long work stint heals every scar off
                 // every NPC in the world.
                 foreach (var w in first.Combatant.Wounds.Where(w => w.InflictedOnDay.HasValue))

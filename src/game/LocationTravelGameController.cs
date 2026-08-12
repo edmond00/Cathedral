@@ -91,6 +91,27 @@ public class LocationTravelGameController : IDisposable
     private GameMode _currentMode;
     private LocationInstanceState? _currentLocationState;
     private int _currentLocationVertex = -1;
+
+    /// <summary>
+    /// The last location the player was actually inside, kept after they leave it (unlike
+    /// <see cref="_currentLocationVertex"/>, which resets to -1). Exists for the CLI's
+    /// <c>travel back</c>: a round trip is the only way to reach routine replay, and a script cannot
+    /// name the vertex it started on — it is whatever the seed put under the avatar.
+    /// </summary>
+    private int _lastLocationVertex = -1;
+
+    /// <summary>The location entered before <see cref="_lastLocationVertex"/>, for the same reason.</summary>
+    private int _previousLocationVertex = -1;
+
+    /// <summary>
+    /// The vertex <c>travel back</c> plans a route to: the most recently entered location that is
+    /// not the one under the avatar's feet. Two are kept because a round trip ends standing on the
+    /// second, and "back" then has to mean the first. -1 before any location was entered.
+    /// </summary>
+    public int CliLastLocationVertex
+        => _lastLocationVertex >= 0 && _lastLocationVertex != _interface.GetAvatarVertex()
+            ? _lastLocationVertex
+            : _previousLocationVertex;
     private int _destinationVertex = -1;
 
     // Travel planning (waypoints + bottom UI)
@@ -2389,6 +2410,90 @@ public class LocationTravelGameController : IDisposable
     /// <summary>Run the healing sweep on demand — the CLI <c>clock</c> command's other half.</summary>
     public int CliHealPartyWounds() => HealPartyWounds();
 
+    // ── Routines (--cli) ──────────────────────────────────────────────────────
+    //
+    // The routine box is reached in play by planning a trip and pressing ROUTINES on the travel
+    // panel, then clicking a row. A script cannot press either: both are hit-tested against a
+    // rendered box whose rows move with how many routines exist. These three seams are the same
+    // three actions, addressed by index instead of by pixel — the pattern `travel`/`travel-go`
+    // already follows for the world sphere.
+
+    /// <summary>
+    /// The protagonist-scoped half of <c>inspect</c>, answerable with no narration in progress.
+    ///
+    /// <para>Routines live on the protagonist and are FINALISED when a narration session ends, so
+    /// the only honest moment to read them is after leaving — by which time the narrative controller
+    /// is gone and <c>CliNarration</c> is null. Asking before leaving would be asking before the
+    /// thing under test has happened.</para>
+    ///
+    /// <para>Returns null for a subject this cannot answer, so the caller falls through to the
+    /// narration-scoped inspect and its "not in narration" error stays meaningful.</para>
+    /// </summary>
+    public IReadOnlyList<string>? CliInspectGlobal(string subject)
+    {
+        if (_protagonist == null) return null;
+        if (subject is not ("routines" or "all")) return null;
+
+        return _protagonist.RecordedRoutines
+            .Select(r => $"routine location={r.LocationId} start={r.StartTime} steps={r.Steps.Count} "
+                       + $"verbs=[{string.Join(",", r.Steps.Select(x => x.VerbId))}]")
+            .ToList();
+    }
+
+    /// <summary>Opens the routine box for the planned destination. False when no trip is planned.</summary>
+    public bool CliOpenRoutines()
+    {
+        if (_currentMode != GameMode.WorldView) return false;
+        if (_travelPlanner is not { HasWaypoints: true }) return false;
+
+        OpenRoutinesBox();
+        return _travelRoutinesBox != null;
+    }
+
+    /// <summary>
+    /// The rows the open routine box is offering: the routine's name, whether it can still be
+    /// replayed, and why not when it cannot. Empty when the box is closed.
+    /// </summary>
+    public IReadOnlyList<(string Name, bool Replayable, string? Reason)> CliRoutineEntries
+        => _travelRoutinesBox?.CliEntries ?? System.Array.Empty<(string, bool, string?)>();
+
+    /// <summary>
+    /// Picks row <paramref name="index"/> and sets out — the same commit the row click makes, so the
+    /// replay runs on arrival exactly as it would in play. False when the box is closed, the index is
+    /// out of range, or that routine is no longer replayable.
+    /// </summary>
+    public bool CliSelectRoutine(int index)
+    {
+        if (_travelRoutinesBox == null) return false;
+        var entries = _travelRoutinesBox.CliEntries;
+        if (index < 0 || index >= entries.Count || !entries[index].Replayable) return false;
+
+        _pendingReplayRoutine = _travelRoutinesBox.CliRoutineAt(index);
+        _travelRoutinesBox    = null;
+        SetTransparentWorldOverlay(clickPassthrough: true);
+        StartPlannedTravel();
+        return true;
+    }
+
+    /// <summary>
+    /// Presses CONTINUE on the post-replay outcome box, applying the phase the routine ended on.
+    /// False when no such box is up. Mirrors the click path in <see cref="OnTerminalCellClicked"/>.
+    /// </summary>
+    public bool CliDismissRoutineOutcome()
+    {
+        if (_routineOutcomeBox == null) return false;
+
+        var transition = _replayFinalTransition ?? Cathedral.Game.Narrative.ReturnToTravelTransition.Instance;
+        _routineOutcomeBox     = null;
+        _replayFinalTransition = null;
+        _core.Terminal?.Clear();
+        ApplyPhaseTransition(transition);
+        return true;
+    }
+
+    /// <summary>True while the post-replay outcome box is on screen (for `wait`).</summary>
+    public bool CliRoutineOutcomeShown => _routineOutcomeBox != null;
+
     /// <summary>
     /// Ages the party: kills the protagonist outright if they have outlived their lifetime, and
     /// otherwise drops any companion who has, announcing them in a modal box. Returns true when the
@@ -2942,6 +3047,16 @@ public class LocationTravelGameController : IDisposable
         {
             Console.Error.WriteLine("NarrativeController: Cannot start - missing dependencies");
             return false;
+        }
+
+        // Recorded here because this is the one door every way into a location comes through —
+        // arriving, clicking your own vertex, and the routine-replay sub-phase all land on it.
+        // Re-entering the same place is not a new step in the history, or one round trip would push
+        // the vertex a test wants to go back to out of it.
+        if (vertexIndex != _lastLocationVertex)
+        {
+            _previousLocationVertex = _lastLocationVertex;
+            _lastLocationVertex     = vertexIndex;
         }
         
         try

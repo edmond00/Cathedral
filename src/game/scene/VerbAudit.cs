@@ -215,7 +215,8 @@ public static class VerbAudit
                     if (offered.Overlaps(SensoryVerbIds)) sensoryCovered++;
 
                     if (offered.Count == 0)
-                        warnings.Add($"{label} {id}: '{observable.DisplayName}' in '{area.DisplayName}' has no verb at any period — it is prose only");
+                        warnings.Add($"{label} {id}: '{observable.DisplayName}' in '{area.DisplayName}' "
+                                   + $"has no verb at any period — it is prose only{WhyNoVerb(scene, area, observable)}");
 
                     CheckTargetOverrides(warnings, label, id, observable);
                 }
@@ -250,6 +251,47 @@ public static class VerbAudit
     /// scheduled anywhere in it. Items are deliberately left out — they are never standalone
     /// observations, their verbs fold into the parent PoI.
     /// </summary>
+    /// <summary>
+    /// Why an observable ended up with no verb, when the answer is structural rather than a content
+    /// gap. Empty for a plain point of interest with nothing to do to it — that is the finding this
+    /// warning was written for, and it needs no elaboration.
+    ///
+    /// <para>An NPC is different: <c>attack</c> accepts any live person standing in front of you, so
+    /// an NPC with <i>no</i> verb at <i>any</i> period is never a content gap — something has made
+    /// them unreachable. The two ways that happens are the two ways <see cref="Observables"/> and
+    /// <c>Scene.GetNpcsAt</c> can disagree about where somebody is, and saying which one it was is the
+    /// difference between a warning you can act on and a name in a list.</para>
+    /// </summary>
+    private static string WhyNoVerb(Scene scene, Area area, Element observable)
+    {
+        if (observable is not SceneNpc npc) return "";
+
+        if (!npc.IsAlive) return " — the NPC is not alive, so GetNpcsAt never returns them";
+
+        if (!scene.NpcSchedules.TryGetValue(npc.Id, out var schedule))
+            return " — the NPC has no schedule entry, so GetNpcsAt never returns them";
+
+        var listedHere = schedule.ActivePeriods
+            .Where(p => p.Area.Id == area.Id)
+            .Select(p => p.Period.ToString())
+            .ToList();
+        var presentHere = Enum.GetValues<TimePeriod>()
+            .Where(p => scene.GetNpcsAt(area, p).Exists(n => n.Id == npc.Id))
+            .Select(p => p.ToString())
+            .ToList();
+
+        if (presentHere.Count == 0)
+            return $" — scheduled here at [{string.Join(", ", listedHere)}] but GetNpcsAt places them "
+                 + $"here at no period (schedule says: {ScheduleSummary(schedule)})";
+
+        return $" — present here at [{string.Join(", ", presentHere)}] and still no verb applies";
+    }
+
+    /// <summary>Period → area, for reading a schedule back in a warning.</summary>
+    private static string ScheduleSummary(Cathedral.Game.Narrative.NpcSchedule schedule)
+        => string.Join("; ", Enum.GetValues<TimePeriod>()
+            .Select(p => $"{p}={schedule.GetArea(p)?.DisplayName ?? "-"}"));
+
     private static IEnumerable<Element> Observables(Area area, Scene scene)
     {
         foreach (var poi in area.PointsOfInterest) yield return poi;

@@ -69,8 +69,47 @@ public static class NpcContentGenerator
         foreach (var trait in traits)
             trait.ApplyGameplay(body, rng);
 
+        EnsureBornAlive(body);
         SettleSkillLevels(body);
         return traits;
+    }
+
+    /// <summary>
+    /// Guarantees the NPC is alive when generation finishes, by dropping historical wounds until at
+    /// least one hit point remains.
+    ///
+    /// <para><b>An NPC could be born dead.</b> <c>CurrentHp</c> is <c>MaxHp − Wounds.Count</c> and
+    /// <c>MaxHp</c> is the trunk score, while traits both add historical wounds and adjust organ
+    /// scores — including downwards. Deal a low-trunk body two or three wound-bearing traits and the
+    /// arithmetic reaches zero, which makes <see cref="Npc.NpcEntity.IsAlive"/> false before anyone
+    /// has touched them. They stay in <c>Scene.Npcs</c> and keep their schedule, but
+    /// <c>Scene.GetNpcsAt</c> filters the dead out, so <b>every</b> verb refuses them: a person
+    /// standing in a room, described in prose, whom the player cannot talk to, rob, or strike. It is
+    /// rare and seed-dependent, which is why it surfaced as an intermittent <c>--verb-audit</c>
+    /// warning rather than as a reproducible complaint.</para>
+    ///
+    /// <para>Trimming the wounds rather than raising the trunk keeps the body the archetype rolled:
+    /// the scar that has to go is the cheapest thing to lose, and the ones that remain are still the
+    /// person's history. Historical wounds only (<c>InflictedOnDay == null</c>) — nothing generated
+    /// here was inflicted in play, but the filter states the rule rather than assuming it.</para>
+    /// </summary>
+    private static void EnsureBornAlive(EnemyCombatant body)
+    {
+        if (body.CurrentHp > 0) return;
+
+        int dropped = 0;
+        while (body.CurrentHp <= 0)
+        {
+            int i = body.Wounds.FindLastIndex(w => w.InflictedOnDay == null);
+            if (i < 0) break;   // nothing left to give back — see the floor below
+            body.Wounds.RemoveAt(i);
+            dropped++;
+        }
+
+        Console.Error.WriteLine(
+            $"NpcContentGenerator: {body.DisplayName} was generated with no hit points "
+            + $"(trunk {body.MaxHp}, {body.Wounds.Count + dropped} trait wounds) — dropped {dropped} "
+            + $"historical wound(s) so they are alive. An NPC nobody can interact with is not content.");
     }
 
     /// <summary>Composes the NPC's text from the archetype's defaults plus the same dealt traits.</summary>
