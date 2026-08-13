@@ -343,7 +343,11 @@ public class ForestSceneFactory : SceneFactory
     {
         if (rng.NextDouble() > chance) return;
         var area = _allAreas[rng.Next(_allAreas.Count)];
-        var entity = archetype.Spawn(rng, area.ContextDescription);
+        // Affinity persists per NPC: Spawn resolves the table by the NPC's stable id. Without the
+        // resolver every rebuild hands out a fresh table, so a beast appeased here is hostile again
+        // on the next arrival while DepartedNpcs still remembers the ones that died.
+        var entity = archetype.Spawn(rng, area.ContextDescription,
+            _locationState != null ? _locationState.AffinityFor : null);
         var sceneNpc = new SceneNpc(entity);
         sceneNpc.Register(scene);
         scene.Npcs.Add(sceneNpc);
