@@ -718,6 +718,47 @@ public abstract class PartyMember
         return true;
     }
 
+    /// <summary>
+    /// Moves a modusMentis out of a long-term module (Procedural / Semantic / Sensory) and onto the
+    /// front of the Residual queue — the way room is made in a full long-term module for something
+    /// better.
+    ///
+    /// <para>Residual is finite, so a prepend into a full queue pushes its last entry out. That entry
+    /// belongs to no module afterwards and must therefore be unlinked from <see cref="ModiMentis"/>
+    /// as well, exactly as <see cref="AcquireModusMentis"/> does on the same overflow. Leaving it
+    /// linked is not harmless: it stays usable in every function list and in every narration chain
+    /// while occupying no slot and appearing nowhere in the memory panel, so the player holds a
+    /// discipline the interface says they have forgotten.</para>
+    ///
+    /// Returns the modusMentis permanently dropped from the member, or null when the queue had room.
+    /// The out parameter <paramref name="archived"/> reports whether the move itself happened.
+    /// </summary>
+    public ModusMentis? ArchiveModusMentis(ModusMentis modusMentis, out bool archived)
+    {
+        archived = false;
+        var residual = GetMemoryModule(MemoryModuleType.Residual);
+        if (residual == null) return null;
+
+        // Refuse before touching the source module. Prepend returns null both when it found room and
+        // when the queue has no usable slot at all, so a queue with none would take the modusMentis
+        // out of its module and put it nowhere — the same slotless state this method exists to
+        // prevent, reached from the other side. Residual capacity floors at 1, so this is a guard
+        // against a future retuning rather than against today's numbers.
+        if (!residual.Slots.Any(s => !s.IsUnusable && !s.IsBlocked)) return null;
+
+        var source = MemoryModules.FirstOrDefault(
+            m => m.Type is MemoryModuleType.Procedural
+                       or MemoryModuleType.Semantic
+                       or MemoryModuleType.Sensory
+              && m.Slots.Any(s => !s.IsUnusable && s.ModusMentis == modusMentis));
+        if (source == null || !source.Remove(modusMentis)) return null;
+
+        archived = true;
+        var dropped = residual.Prepend(modusMentis);
+        if (dropped != null) ModiMentis.Remove(dropped);
+        return dropped;
+    }
+
     /// <summary>Get a memory module by type.</summary>
     public MemoryModule? GetMemoryModule(MemoryModuleType type) =>
         MemoryModules.FirstOrDefault(m => m.Type == type);

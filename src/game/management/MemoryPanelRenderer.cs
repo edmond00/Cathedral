@@ -697,6 +697,13 @@ public class MemoryPanelRenderer
         _selectedSlot = null;
     }
 
+    /// <summary>
+    /// Moves the selected long-term modusMentis onto the front of the Residual queue. Delegates to
+    /// <see cref="PartyMember.ArchiveModusMentis"/> for the same reason REJECT delegates to
+    /// <see cref="PartyMember.RejectModusMentis"/>: a full Residual queue pushes its last entry out
+    /// of memory altogether, and unlinking that entry is the member's business, not the renderer's.
+    /// Doing it here was how a discipline could end up held but slotless.
+    /// </summary>
     private void ExecuteArchive()
     {
         if (!_selectedSlot.HasValue || _member == null) return;
@@ -708,11 +715,13 @@ public class MemoryPanelRenderer
         if (!srcSlot.IsFilled) return;
         var modusMentis = srcSlot.ModusMentis!;
 
-        var residual = _member.MemoryModules.FirstOrDefault(m => m.Type == MemoryModuleType.Residual);
-        if (residual == null) return;
+        var dropped = _member.ArchiveModusMentis(modusMentis, out bool archived);
+        if (!archived) return;
 
-        srcSlot.ModusMentis = null;
-        residual.Prepend(modusMentis);
+        if (dropped != null)
+            Console.WriteLine($"MemoryPanel: archived {modusMentis.DisplayName} — "
+                            + $"{dropped.DisplayName} fell out of residual memory and is forgotten");
+
         _selectedSlot = null;
     }
 
