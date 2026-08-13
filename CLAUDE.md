@@ -37,6 +37,90 @@ The Markdown is the source; `python tools/build_manual.py` typesets it into
 `pip install pypdf reportlab` for page numbers). All design lives in that script — never put HTML
 or styling in the chapters.
 
+## Saving
+
+**One save, no slots, no manual save.** `%APPDATA%\Cathedral\save.json`, written automatically at the
+start of every world-travel phase and at no other point. **New erases it. Death erases it** — all
+three causes, in `TriggerDeath`, so a force-quit at the death screen cannot outlive the character.
+The main menu's **Continue** does two jobs from one button: resume the session in memory if there is
+one, otherwise load from disk.
+
+**Every failure is the same silent refusal**: a missing, corrupt, wrong-version or wrong-seed save
+reads as no save, and Continue simply greys out. There is deliberately no migration and no partial
+read — `SaveGame.CurrentVersion` confines a save to the build that wrote it, which is what lets
+`PartyState.Rebuild` treat an unknown content id as corruption and **fail closed**. A partly-restored
+character is worse than a refused load when there is only one save.
+
+### What is stored, and the rule for adding to it
+
+Five things: the master seed, the clock, the avatar's vertex, `Dictionary<int, LocationInstanceState>`
+verbatim, and the party. Nothing else feeds a scene build — the world is a pure function of the seed,
+a scene of its location id, and the time of day is drawn fresh on every arrival.
+
+**Locations and the party are persisted by opposite means, and that is deliberate.**
+`LocationInstanceState` is plain data shared *by reference*: `AttachTo` hands its dictionaries to the
+scene, gameplay writes land in the saved object, and there is no save step at all. The party cannot
+work that way — it is polymorphic, reference-shared and full of get-only collections — so it is
+*captured* into `PartyState`, which carries the same four-rule contract in its doc comment, with rule
+three inverted (**captured, not shared**).
+
+**Adding a field to a party type means three lines**: one in `PartyState.Capture`, one in
+`PartyState.Rebuild`, and one in `SaveAudit`. The audit is what makes that mandatory —
+`dotnet run -- --save-audit` reflects over the party types and fails naming any public member that is
+neither persisted nor recorded as derived. It exists because this failure is otherwise *silent*: the
+round-trip test compares a capture against itself, so a field captured nowhere matches perfectly.
+
+Three hazards the rebuild is written around, all of which produce quiet wrongness rather than a crash:
+
+- **`ModiMentis` and `LearnedModiMentis` are the same `List` object.** `Rebuild` re-aliases them; two
+  lists means every read path silently diverges from every write path.
+- **Memory slots hold the *same instances* as `ModiMentis`.** Serialised inline in both places you get
+  two objects, and consolidate/archive/reject silently no-op. `save roundtrip` asserts the topology
+  separately, because a value comparison cannot see it.
+- **Restore order is load-bearing**: organ scores before `InitializeMemory()`, or the modules come out
+  the wrong size and every saved slot index lands elsewhere.
+
+### The seed is per run, not per process
+
+The world derives from the master seed, and that seed locks before the window opens — so the save's
+seed is **peeked in `Program.cs` before `GameRng.Initialize`**, and Continue then rebuilds no world at
+all. `--seed` still wins outright, which keeps every scripted run reproducible and means a save from a
+different seed is simply unloadable.
+
+New therefore draws a fresh seed and regenerates the world in place (`GameRng.Reseed`, which also
+clears the streams; `GlyphSphereCore.RebuildForNewSeed`; `MicroworldInterface.RegenerateWorld`). The
+*first* New of a process is exempt — the world it booted with is nobody's yet — so the ordinary
+launch-then-play path carries none of that risk. Note **three** things come off the seed, not one:
+terrain, per-vertex pathfinding noise, and per-edge travel jitter. Regenerating only the terrain lays
+a new world over the old world's travel costs.
+
+**Reloading re-rolls anything random that follows the save**, because RNG stream *positions* are not
+stored. This is a known and accepted save-scum vector, not a bug. The fix, if it is ever wanted, is a
+per-stream draw counter in `SaveGame` — cheap to add precisely because `GameRng` owns `_streams`
+centrally.
+
+### Testing it
+
+**Saving is off by default under `--cli`.** Autosave fires on every entry to the world map, so
+without that rule every scripted run would overwrite the player's real save, hundreds of times per
+suite. A script that is actually testing saving passes `--save-path <file>`, which turns it back on
+against a file of its own; `--no-save` disables it outright.
+
+| | |
+|---|---|
+| `save roundtrip` | capture → serialise → rebuild → re-capture → compare, plus the reference-topology check. Fails naming the first field that did not survive. Append it to any script after doing something interesting. |
+| `inspect save` / `inspect savefile` | the live run / what is on disk, for `expect-state`. **Not `expect`** — that scans the rendered terminal and never sees them. |
+| `save dump` / `save read` / `save write` / `save erase` | print or force, for diagnosis |
+| `pause` | opens the main menu. Escape is handled in the launcher's key hook, not `OnKeyDown`, so `key escape` never reaches it and the menu is otherwise unreachable from a script |
+| `click end-run` | the death screen's END RUN button |
+| `inspect menu` | which menu buttons are enabled — a disabled button differs only by colour, so this is unassertable from the screen |
+| `--black-bile` | fills every humor queue with black bile, so the next journey starves. The only death a script cannot otherwise stage (old age uses `--advance-days`, wounds `--start-fight` plus `fight-end death`) |
+
+`cli/system/save_*.cli` and `cli/system/death_*.cli` cover the lifecycle in-process.
+**`tests/save_reload.sh` is the two-launch check** — save, quit, relaunch, Continue — and is
+deliberately *not* wired into `run_tests.sh`, which launches the game once per script and so cannot
+express a test spanning two processes. Run it by hand before a release.
+
 ## Packaging a release
 
 ```powershell

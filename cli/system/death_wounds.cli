@@ -1,0 +1,33 @@
+# Death by mortal wounds erases the save, and Continue goes with it.
+#
+# Reached through the travel-encounter fight path, which is the only route to DeathCause.Wounds:
+# --start-fight drops into a fight on arrival at the world map and sets the encounter flag, so losing
+# it kills the protagonist rather than merely ending a scene. `fight-end death` settles the fight
+# without having to lose one blow by blow.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --start-fight wolf --save-path .tmp-cli-save/death-wounds.json
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+
+# --start-fight fires on arrival at the world map, BEFORE the view becomes interactive, so no autosave
+# has happened yet — the save is written when the player can choose a destination, which never comes.
+wait mode Fighting 60
+
+fight-end death
+wait mode Death 45
+expect MORTAL WOUNDS
+expect END RUN
+
+expect-state savefile save none
+
+click end-run
+wait mode MainMenu 20
+# Continue is state, not pixels — a disabled button differs only by colour on screen, so
+# this is asserted through inspect rather than by scanning the terminal.
+inspect menu
+expect-state menu Continue disabled
+
+quit

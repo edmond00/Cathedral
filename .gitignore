@@ -472,3 +472,7 @@ Thumbs.db
 # lines if you would rather ship the typeset copy from the repo.
 docs/manual/*.pdf
 docs/manual/_html/
+
+# Throwaway save files written by the cli/system/save_*.cli and death_*.cli scripts, which pass
+# --save-path so a scripted run never touches the player's real save.
+.tmp-cli-save/

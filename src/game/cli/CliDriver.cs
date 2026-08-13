@@ -241,6 +241,9 @@ public sealed class CliDriver
                 case "expect-outcome": CmdExpectOutcome(rest, want: true);  break;
                 case "expect-no-outcome": CmdExpectOutcome(rest, want: false); break;
                 case "allow-flag-miss": CmdAllowFlagMiss(rest);       break;
+                case "save":        CmdSave(rest);                    break;
+                case "pause":       Report(_game.CliOpenPauseMenu() ? null : "could not open the pause menu",
+                                           "opened the pause menu"); break;
                 case "quit":        CmdQuit();                        break;
                 default:            CliMode.Emit($"error: unknown command '{cmd}' (try `help`)"); break;
             }
@@ -296,6 +299,14 @@ public sealed class CliDriver
           world                     avatar vertex, biome, location, travel range
           destinations              reachable vertices, by name
         Action
+          click end-run             the death screen's END RUN button, back to the main menu
+          save roundtrip            capture the run, serialise it, rebuild it and compare. Fails
+                                    naming the first field that did not survive. The save test that
+                                    fits a one-launch-per-script runner
+          save dump | save read     print the LIVE run / what is ON DISK. To ASSERT on either, use
+                                    `inspect save` / `inspect savefile` with expect-state — `expect`
+                                    scans the rendered screen and never sees these
+          save write | save erase   force a write / delete the save, bypassing autosave and death
           allow-flag-miss <flag>    declare that a narrowing flag is expected to match nothing, so
                                     its miss does not fail the run. For scripts that test an ABSENCE
           observe <name|none>       pin what an observation phase may look at, the way `goal` pins
@@ -661,6 +672,14 @@ public sealed class CliDriver
                 Report(f.CliClickSkill(name), $"used skill \"{name}\"");
                 break;
             }
+            case "end-run":
+            {
+                // The death screen's only button. Without a handle here a script can reach a death
+                // but never leave it, so it cannot assert what the menu looks like afterwards.
+                Report(_game.CliDeathEndRun() ? null : "not on the death screen", "ended the run");
+                return;
+            }
+
             case "end-turn":
             {
                 var f = _game.CurrentMode == GameMode.Fighting ? _game.CliFight : null;
@@ -1180,6 +1199,61 @@ public sealed class CliDriver
 
     /// <summary>Flags whose misses this script has declared expected — see <see cref="CmdAllowFlagMiss"/>.</summary>
     private readonly HashSet<string> _allowedFlagMisses = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// The save system, in five subcommands.
+    ///
+    /// <para><c>roundtrip</c> is the one that earns its keep. The suite runs one script per launch, so
+    /// a real save-quit-relaunch test cannot be written in it; this does the whole cycle in memory —
+    /// capture, serialise, rebuild, re-capture, compare — and fails naming the first field that did not
+    /// survive. Append it to any script after doing something interesting.</para>
+    ///
+    /// <para><c>dump</c> summarises the LIVE run, <c>read</c> summarises what is ON DISK. They differ
+    /// exactly when the autosave has not fired since the last change, which is what makes them useful
+    /// as two separate assertions.</para>
+    /// </summary>
+    private void CmdSave(string[] a)
+    {
+        string sub = a.Length > 0 ? a[0].ToLowerInvariant() : "dump";
+        switch (sub)
+        {
+            case "roundtrip":
+                string? divergence = _game.CliSaveRoundTrip();
+                if (divergence == null)
+                {
+                    CliMode.Emit("ok: save round-trip survived");
+                }
+                else
+                {
+                    // A real assertion, not a report: losing state across a save is a test failure and
+                    // must set the run's exit code, the way expect/expect-state do.
+                    CliMode.Emit($"FAIL: save round-trip lost state — {divergence}");
+                    CliMode.HasFailedAssertion = true;
+                }
+                break;
+
+            case "dump":
+                CliMode.EmitBlock(string.Join("\n", _game.CliSaveDump()));
+                break;
+
+            case "read":
+                CliMode.EmitBlock(string.Join("\n", _game.CliSaveRead()));
+                break;
+
+            case "write":
+                Report(_game.CliSaveWrite() ? null : "the save could not be written", "save written");
+                break;
+
+            case "erase":
+                _game.CliSaveErase();
+                CliMode.Emit("ok: save erased");
+                break;
+
+            default:
+                CliMode.Emit($"error: save <roundtrip|dump|read|write|erase> (got '{sub}')");
+                break;
+        }
+    }
 
     /// <summary>
     /// Asserts that an outcome of the given id has (or has not) been applied this run.

@@ -1,0 +1,40 @@
+# Death by starvation erases the save, and Continue goes with it.
+#
+# Starvation is the one death a script cannot stage out of the existing flags: it needs all four humor
+# queues critical (entirely black bile), which in play is the end of a long run of bad organs and long
+# journeys. --black-bile forces that state directly. It is not a special-cased death — a critical
+# queue is a state every consumption path already handles, and travel simply cannot pay its vital-heat
+# debt from queues that have nothing left to give.
+#
+# Note this death happens DURING the journey, not on arrival: heat is paid leg by leg as the route is
+# walked, so the run ends between two cells rather than at a destination.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --black-bile --allow-reentry --save-path .tmp-cli-save/death-starve.json
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 45
+
+# The autosave fired on the way in, so there IS a save to lose — which is what makes the erase below
+# an assertion rather than a tautology.
+expect-no-state savefile save none
+
+# Any journey at all is unaffordable now.
+travel neighbour
+travel-go
+wait mode Death 45
+expect STARVATION
+expect END RUN
+
+expect-state savefile save none
+
+click end-run
+wait mode MainMenu 20
+# Continue is state, not pixels — a disabled button differs only by colour on screen, so
+# this is asserted through inspect rather than by scanning the terminal.
+inspect menu
+expect-state menu Continue disabled
+
+quit
