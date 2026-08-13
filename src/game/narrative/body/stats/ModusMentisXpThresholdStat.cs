@@ -9,7 +9,7 @@ namespace Cathedral.Game.Narrative;
 public class ModusMentisXpThresholdStat : DerivedStat
 {
     public override string Name => "modus_mentis_xp_threshold";
-    public override string DisplayName => "MM XP per Level";
+    public override string DisplayName => "Experience per Level";
     public override string? RelatedOrganId => "pineal_gland";
 
     public override bool HigherIsBetter => false;

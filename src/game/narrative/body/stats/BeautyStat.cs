@@ -10,7 +10,7 @@ namespace Cathedral.Game.Narrative;
 public class BeautyStat : DerivedStat
 {
     public override string Name         => "beauty";
-    public override string DisplayName  => "Beauty";
+    public override string DisplayName  => "Countenance";
     public override string? RelatedBodyPartId => "visage";
     protected override int CalculateValue(int sourceScore) => sourceScore / 5;
     public override string FormatValue(int value) => $"{value} dice";

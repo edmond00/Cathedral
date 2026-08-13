@@ -378,7 +378,7 @@ public class DialogueTreeUI : TerminalPanelUI
         int beautyDice   = _speaker.BeautyDice;
         int maxBeauty    = Math.Max(1, _speaker.MaxBeautyDice);
 
-        const string beautyLabel = "Beauty ";
+        const string beautyLabel = "Countenance ";
         const string attireLabel = "Attire ";
 
         int attireW = DiceBarWidth(attireLabel, WearingDialogueBonus.MaxDice);
