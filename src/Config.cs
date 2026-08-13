@@ -82,6 +82,29 @@ public static class Config
 #endif
 
         /// <summary>
+        /// Whether to write the development log tree under <c>logs/</c> — a directory per LLM
+        /// session, a subdirectory per slot, a further one per request holding the prompt, the
+        /// full context, the reply and its timings, plus the narration-graph dumps.
+        /// <b>False in a shipped build.</b>
+        ///
+        /// <para>That tree is a development instrument: it is how a prompt regression is found,
+        /// and it is worth thousands of files. A player has no use for it, it grows without bound
+        /// (~7 files and 71 KB per LLM request), and it contains the full text of everything the
+        /// model was asked and answered.</para>
+        ///
+        /// <para>What a shipped build writes instead is <c>log.txt</c> — one file, replaced each
+        /// launch, holding the console output and llama-server's output together. That is the file
+        /// a player can attach to a bug report, and it is written in both builds. See
+        /// <see cref="GameLog"/>.</para>
+        /// </summary>
+        public static bool VerboseFileLogging { get; set; } =
+#if SHIP
+            false;
+#else
+            true;
+#endif
+
+        /// <summary>
         /// Compute device for the language model, overriding both the player's setting and the
         /// first-run probe. Set by <c>--cpu</c> (and <c>--gpu</c>).
         ///

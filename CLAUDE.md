@@ -402,6 +402,39 @@ Two things make that ladder actually work, and both were bugs when written:
   `llama-server.log` with `append: false`, so leaving the previous writer open makes the retry fail
   on a locked file — and that failure looks like a second backend fault rather than bookkeeping.
 
+### Logs: one file for a player, a tree for a developer
+
+`log.txt`, beside the game, is **the** log: everything the game prints and everything llama-server
+prints, interleaved, in one file a player can attach to a bug report. It is **truncated at every
+launch** — the question being asked is always "what happened *this* time", and a log that grows
+forever is one nobody reads.
+
+`GameLog.Initialize()` runs as the third line of `Program.cs` and tees `Console.Out`/`Error` through
+a file writer, so ordinary `Console.WriteLine` is captured with no call-site changes.
+`GameLog.WriteToFileOnly` is the other half: output that belongs in the file but not on screen.
+llama-server's stdout/stderr goes through it prefixed `[llama]` — two thousand lines of tensor
+bookkeeping per launch, unreadable on a console and exactly what is wanted when a model fails to
+load. `AutoFlush` is on, because the run worth reading is the one that crashed.
+
+**`Config.Debug.VerboseFileLogging` (false in a shipped build) governs everything else.** The
+`logs/` tree — a directory per LLM session, a subdirectory per slot, another per request holding
+prompt, context, reply and timings, plus the narration-graph dumps — is a development instrument
+worth thousands of files and ~71 KB per request, and it contains the full text of everything the
+model was asked. A shipped build writes none of it: `TryCreateLogDirectory` returns null, which
+switches off every writer downstream because they all already test for a null session directory.
+
+| | `log.txt` | `logs/` tree |
+|---|---|---|
+| development | yes | yes |
+| shipped | yes | **no** |
+
+**The console is not the log.** Output that is mechanical repetition goes to `WriteToFileOnly`
+rather than being deleted — the glyph-atlas rebuild (~90 times a session, and a third of everything
+printed), the camera-centring geometry, the graph adjacency sample, the item catalogue
+(`PrintWorldStructure`, 282 lines naming every item type). A short session went from 790 console
+lines to 296 while `log.txt` kept all of it. Prefer moving a line to the file over deleting it: the
+reason it was printed usually still exists, it just was not worth a third of the screen.
+
 **Logging can never take the LLM down with it.** Every log path is relative to the working
 directory, so an install the player cannot write to — extracted into Program Files, on read-only
 media — fails at the first `CreateDirectory`. That call used to sit unguarded inside the

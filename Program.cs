@@ -8,6 +8,11 @@ using Cathedral.Game;
 // no-op when double-clicked. Touches no game state, so it may precede the seed.
 Cathedral.ConsoleAttach.AttachToParentIfPresent();
 
+// One log file per run, truncated at launch, carrying the console output and llama-server's output
+// together. Opened immediately after the console is attached so that nothing worth keeping is
+// printed before it exists.
+Cathedral.GameLog.Initialize();
+
 // A shipped build answers only the handful of options a player might need to get out of trouble;
 // every development flag below is stripped here, before anything can read it. Inert in a
 // development build. This has to precede the seed parse for the same reason the seed parse

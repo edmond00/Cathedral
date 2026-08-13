@@ -65,10 +65,19 @@ public static class NarrativeWorldValidator
 
     // ── Debug helper ──────────────────────────────────────────────────────────
 
-    /// <summary>Prints all item types grouped by their location (standalone vs nested).</summary>
+    /// <summary>
+    /// Writes all item types, grouped by standalone vs nested, to <c>log.txt</c>.
+    ///
+    /// <para>To the log and not the console, deliberately: this is 282 lines naming every item
+    /// type and its namespace — half of everything a session printed — and nobody reads it while
+    /// watching a game start. It stays available for checking what the registry actually
+    /// contains, one file away instead of on screen.</para>
+    /// </summary>
     public static void PrintWorldStructure()
     {
-        Console.WriteLine("\n=== Narrative World Structure ===");
+        void Line(string text) => Cathedral.GameLog.WriteToFileOnly(text);
+
+        Line("=== Narrative World Structure ===");
 
         var assembly = Assembly.GetExecutingAssembly();
         var allItemTypes = assembly.GetTypes()
@@ -79,20 +88,20 @@ public static class NarrativeWorldValidator
         var standalone = allItemTypes.Where(t => !t.IsNested).ToList();
         var nested     = allItemTypes.Where(t => t.IsNested).ToList();
 
-        Console.WriteLine($"\nStandalone items ({standalone.Count}):");
+        Line($"\nStandalone items ({standalone.Count}):");
         foreach (var t in standalone)
         {
             var item = (Item?)Activator.CreateInstance(t);
-            Console.WriteLine($"  [{item?.ItemId}]  {t.Name}  ({t.Namespace})");
+            Line($"  [{item?.ItemId}]  {t.Name}  ({t.Namespace})");
         }
 
-        Console.WriteLine($"\nNested items ({nested.Count}):");
+        Line($"\nNested items ({nested.Count}):");
         foreach (var t in nested)
         {
             var item = (Item?)Activator.CreateInstance(t);
-            Console.WriteLine($"  [{item?.ItemId}]  {t.DeclaringType?.Name}.{t.Name}");
+            Line($"  [{item?.ItemId}]  {t.DeclaringType?.Name}.{t.Name}");
         }
 
-        Console.WriteLine("\n=================================\n");
+        Line("\n=================================\n");
     }
 }

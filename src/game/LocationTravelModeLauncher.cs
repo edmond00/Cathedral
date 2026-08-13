@@ -87,12 +87,12 @@ public static class LocationTravelModeLauncher
             }
             else
             {
-                Console.WriteLine("=== Initializing LLM System (Phase 5) ===");
-                
-                // Initialize logging for LLM communications
-                LLMLogger.Initialize();
-                Console.WriteLine("✓ LLM communication logging enabled");
-                
+                // The per-request LLM transcript under logs/. A shipped build keeps only log.txt.
+                if (Cathedral.Config.Debug.VerboseFileLogging)
+                {
+                    LLMLogger.Initialize();
+                }
+
                 try
                 {
                     llamaServer = new LlamaServerManager();
@@ -191,7 +191,9 @@ public static class LocationTravelModeLauncher
             gameController.RegisterSceneFactory(
                 Cathedral.Game.Scene.Test.TestSceneFactory.TypeName,
                 () => new Cathedral.Game.Scene.Test.TestSceneFactory());
-            
+
+            Console.WriteLine($"Scene factories registered: {gameController.SceneFactoryCount}");
+
             // Attach the LLM server if it is ready
             if (PlaygroundMode.IsActive && llamaServer != null)
             {

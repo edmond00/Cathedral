@@ -77,6 +77,10 @@ public abstract class NarrationGraphFactory
 
     protected void WriteGraphToLog(NarrationGraph graph, int locationId)
     {
+        // A development instrument: one file per location visited, describing the narration graph.
+        // Shipped builds write only log.txt. See Config.Debug.VerboseFileLogging.
+        if (!Cathedral.Config.Debug.VerboseFileLogging) return;
+
         try
         {
             string logDir = string.IsNullOrEmpty(_sessionPath)

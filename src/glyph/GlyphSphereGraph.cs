@@ -56,11 +56,13 @@ namespace Cathedral.Glyph
             var debugInfo = GetDebugInfo();
             Console.WriteLine($"GlyphSphereGraph built: {debugInfo.nodes} nodes, {debugInfo.edges} edges, {debugInfo.avgConnections:F1} avg connections/node");
             
-            // Log some connection examples for verification
+            // A sample of five vertices' adjacency, kept for verifying the graph build but written
+            // to the log rather than the console: the summary line above is what a reader needs,
+            // and five arrays of neighbour indices is not.
             for (int i = 0; i < Math.Min(5, NodeCount); i++)
             {
                 var connections = _adjacencyList[i];
-                Console.WriteLine($"  Vertex {i}: connected to {connections.Count} vertices: [{string.Join(", ", connections.Take(6))}{(connections.Count > 6 ? "..." : "")}]");
+                Cathedral.GameLog.WriteToFileOnly($"  Vertex {i}: connected to {connections.Count} vertices: [{string.Join(", ", connections.Take(6))}{(connections.Count > 6 ? "..." : "")}]");
             }
         }
 

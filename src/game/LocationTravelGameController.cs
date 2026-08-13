@@ -379,8 +379,13 @@ public class LocationTravelGameController : IDisposable
         // Validate narrative world coherence at startup
         try
         {
+            // The validation is load-bearing — it throws on a duplicate ItemId. The catalogue
+            // listing beside it is a development aid: 282 lines naming every item type and its
+            // namespace, at every single startup. It goes to log.txt in a development build and
+            // is skipped entirely in a shipped one.
             Cathedral.Game.Narrative.NarrativeWorldValidator.ValidateWorldCoherence();
-            Cathedral.Game.Narrative.NarrativeWorldValidator.PrintWorldStructure();
+            if (Config.Debug.VerboseFileLogging)
+                Cathedral.Game.Narrative.NarrativeWorldValidator.PrintWorldStructure();
         }
         catch (Exception ex)
         {
@@ -2844,10 +2849,15 @@ public class LocationTravelGameController : IDisposable
     /// once per build so no factory's working state can leak into the next scene. See the note
     /// there.</para>
     /// </summary>
+    /// <summary>How many biomes have a scene factory. Reported once after registration.</summary>
+    public int SceneFactoryCount => _sceneFactories.Count;
+
     public void RegisterSceneFactory(string biomeName, Func<SceneFactory> factory)
     {
         _sceneFactories[biomeName.ToLowerInvariant()] = factory;
-        Console.WriteLine($"LocationTravelGameController: Registered scene factory for biome '{biomeName}'");
+        // One line per biome was ten lines of the startup log saying only that a registry has
+        // entries in it. The count is reported once when registration finishes.
+        Cathedral.GameLog.WriteToFileOnly($"LocationTravelGameController: Registered scene factory for biome '{biomeName}'");
     }
     
     /// <summary>

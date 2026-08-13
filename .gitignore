@@ -455,6 +455,9 @@ models_old/
 # Release packages built by package.ps1 — a staged copy of the game plus a multi-GB zip.
 dist/
 
+# The single per-run log (GameLog). Replaced on every launch; never worth committing.
+log.txt
+
 # OS generated files
 .DS_Store
 .DS_Store?

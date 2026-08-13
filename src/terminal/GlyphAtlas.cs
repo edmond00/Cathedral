@@ -158,7 +158,10 @@ namespace Cathedral.Terminal
             if (cleanGlyphSet == _currentGlyphSet)
                 return; // No change needed
 
-            Console.WriteLine($"Terminal: Building atlas with {cleanGlyphSet.Length} glyphs");
+            // File only. The atlas is rebuilt whenever the glyph set changes — about ninety times
+            // in a short session — so on the console these two lines were a third of everything
+            // printed, and they say nothing a player or a bug report needs.
+            Cathedral.GameLog.WriteToFileOnly($"Terminal: Building atlas with {cleanGlyphSet.Length} glyphs");
 
             // Dispose old texture
             if (_textureId != 0)
@@ -210,7 +213,7 @@ namespace Cathedral.Terminal
             _textureId = CreateTexture(atlasImage);
             _currentGlyphSet = cleanGlyphSet;
 
-            Console.WriteLine($"Terminal: Atlas built successfully - {cols}x{rows} grid, {atlasWidth}x{atlasHeight} pixels");
+            Cathedral.GameLog.WriteToFileOnly($"Terminal: Atlas built successfully - {cols}x{rows} grid, {atlasWidth}x{atlasHeight} pixels");
         }
 
         private void RenderGlyphToAtlas(Image<Rgba32> atlas, char glyph, int x, int y)

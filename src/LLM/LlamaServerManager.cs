@@ -90,6 +90,11 @@ public class LlamaServerManager : IDisposable
     /// </summary>
     private string? TryCreateLogDirectory(string path)
     {
+        // A shipped build writes no logs/ tree at all — only log.txt, which the pumps below feed
+        // llama-server's output into. Returning null here switches off every writer downstream,
+        // because they all already test for a null session directory.
+        if (!Config.Debug.VerboseFileLogging) return null;
+
         if (_loggingDisabled) return null;
 
         try
@@ -1717,7 +1722,11 @@ public class LlamaServerManager : IDisposable
                             await writer.WriteLineAsync($"[STDOUT] {DateTime.Now:HH:mm:ss.fff} {line}");
                             await writer.FlushAsync();
                         }
-                        // Outside the null check: this drives the loading bar, not the log.
+                        // Into log.txt regardless, and to the file only — llama-server is far too
+                        // verbose to show on screen, but it is exactly what is needed when the
+                        // model fails to load. This is the only copy in a shipped build.
+                        GameLog.WriteToFileOnly($"[llama] {line}");
+                        // Outside both: this drives the loading bar, not the log.
                         ParseLoadingProgress(line);
                     }
                 }
@@ -1744,8 +1753,9 @@ public class LlamaServerManager : IDisposable
                             await writer.WriteLineAsync($"[STDERR] {DateTime.Now:HH:mm:ss.fff} {line}");
                             await writer.FlushAsync();
                         }
-                        // Outside the null check: llama.cpp reports its loading stages on stderr,
-                        // so the progress bar depends on this line even when nothing is logged.
+                        GameLog.WriteToFileOnly($"[llama] {line}");
+                        // Outside both: llama.cpp reports its loading stages on stderr, so the
+                        // progress bar depends on this line even when nothing is logged.
                         ParseLoadingProgress(line);
                     }
                 }

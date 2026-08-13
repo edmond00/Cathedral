@@ -259,7 +259,7 @@ namespace Cathedral.Glyph
         
         private void RebuildGlyphAtlas(string glyphSet)
         {
-            Console.WriteLine($"Rebuilding atlas with glyphs: \"{glyphSet}\"");
+            Cathedral.GameLog.WriteToFileOnly($"Rebuilding atlas with glyphs: \"{glyphSet}\"");
             
             // Dispose old texture
             if (glyphTexture != 0)
@@ -2369,13 +2369,11 @@ void main() { FragColor = vec4(vColor, 1.0); }";
                 // Verify the calculation
                 Vector3 calculatedCameraPos = _camera.GetCameraPosition();
                 
-                Console.WriteLine($"� Camera positioned like drone above protagonist");
-                Console.WriteLine($"  Protagonist position: {protagonistPosition}");
-                Console.WriteLine($"  Camera position: {calculatedCameraPos}");
-                Console.WriteLine($"  Calculated camera pos: {calculatedCameraPos}");
-                Console.WriteLine($"  Camera focused on target: {Vector3.Distance(protagonistPosition, Vector3.Zero) > 0}");
-                Console.WriteLine($"  Camera distance: {_camera.Distance:F2}");
-                Console.WriteLine($"  Camera angles: yaw={_camera.Yaw:F1}°, pitch={_camera.Pitch:F1}°");
+                // One file-only line where there were seven on the console — two of which printed
+                // the same value under different names, which is how long they had gone unread.
+                Cathedral.GameLog.WriteToFileOnly(
+                    $"Camera centred on protagonist at {protagonistPosition}; camera {calculatedCameraPos}, " +
+                    $"distance {_camera.Distance:F2}, yaw {_camera.Yaw:F1}°, pitch {_camera.Pitch:F1}°");
             }
         }
 
