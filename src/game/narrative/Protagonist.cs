@@ -127,6 +127,13 @@ public class Protagonist : PartyMember
     /// </summary>
     public string? CharacterName { get; private set; }
 
+    /// <summary>
+    /// Puts a saved name back. The name is drawn from a run-long RNG stream whose position depends on
+    /// everything drawn before it, so it cannot be reproduced from the seed alone — it has to travel
+    /// in the save.
+    /// </summary>
+    public void RestoreCharacterName(string? name) => CharacterName = name;
+
     /// <summary>The generated name once set, falling back to "Protagonist" before the first roll.</summary>
     public override string DisplayName => CharacterName ?? "Protagonist";
 

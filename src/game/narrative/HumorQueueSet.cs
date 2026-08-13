@@ -23,6 +23,18 @@ public sealed class HumorQueueSet
     /// </summary>
     private int _cycleIndex = 0;
 
+    /// <summary>
+    /// Where the consumption rotation has got to, for saving and restoring. Exposed as a raw index
+    /// rather than as an organ id because it is bookkeeping, not a fact about the body — a save has
+    /// to put the rotation back exactly where it was, or the first drink after a reload comes out of
+    /// the wrong organ.
+    /// </summary>
+    public int CycleIndex
+    {
+        get => _cycleIndex;
+        set => _cycleIndex = ((value % 4) + 4) % 4;
+    }
+
     /// <summary>The organ id of the queue that will be consumed next in the rotation.</summary>
     public string CurrentCycleOrganId => _cycleIndex switch
     {

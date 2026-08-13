@@ -295,6 +295,19 @@ public static class Config
         public static double AdvanceDays { get; set; } = 0;
 
         /// <summary>
+        /// Fills all four humor queues with black bile right after character creation, so the next
+        /// journey starves the protagonist. Set by <c>--black-bile</c>. Inert at its default.
+        ///
+        /// <para>Starvation is the one death a script cannot otherwise stage. Old age is reachable
+        /// with <c>--advance-days</c> (applied just before the old-age check) and death by wounds
+        /// with <c>--start-fight</c> plus <c>fight-end death</c>, but souring the humors takes a
+        /// whole run of bad organs and long journeys. A critical queue is a state the engine already
+        /// handles — every consumption path checks for it — so this only forces the state, it does
+        /// not special-case the death.</para>
+        /// </summary>
+        public static bool BlackBile { get; set; } = false;
+
+        /// <summary>
         /// Modi mentis to grant the protagonist after character creation, and the level to set them
         /// to. Set by <c>--grant-mm &lt;id[,id…]&gt;[:level]</c>. Null means grant nothing.
         ///

@@ -72,6 +72,34 @@ public static class GameRng
     }
 
     /// <summary>
+    /// Starts a NEW run on <paramref name="seed"/>, discarding the previous run's master seed and —
+    /// critically — every long-lived stream in <see cref="_streams"/>.
+    ///
+    /// <para>This is deliberately a different verb from <see cref="Initialize"/>. That one is
+    /// one-shot and shouts when a second seed arrives, because a late seed there means something read
+    /// <see cref="GameRng"/> before the seed was parsed and the run is not the run that was asked for.
+    /// Re-seeding between runs is not that mistake, and must not be reported as one — but it must not
+    /// quietly reuse <see cref="Initialize"/> either, or the warning stops meaning anything.</para>
+    ///
+    /// <para>Clearing the streams is the half that is easy to forget and impossible to see: they are
+    /// never cleared today, so a second new game in one process carries on drawing from the first
+    /// run's dice, spawn and humor sequences. A run must begin from its seed, not from wherever the
+    /// last one left off.</para>
+    ///
+    /// <para>Call only at a run boundary, never mid-run.</para>
+    /// </summary>
+    public static void Reseed(int seed)
+    {
+        lock (_lock)
+        {
+            _masterSeed  = seed;
+            _initialized = true;
+            _streams.Clear();
+        }
+        Console.WriteLine($"[RNG] Master seed re-drawn for a new run: {seed}");
+    }
+
+    /// <summary>
     /// A fresh <see cref="Random"/> for <paramref name="subsystem"/>, seeded
     /// deterministically from the master seed combined with the subsystem name.
     /// Two calls with the same tag return independent generators that produce the

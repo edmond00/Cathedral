@@ -59,4 +59,58 @@ public class ItemRegistry
     /// <summary>Creates a fresh instance of the item type matching <paramref name="prototype"/>.</summary>
     public static Item NewInstance(Item prototype) =>
         (Item)Activator.CreateInstance(prototype.GetType())!;
+
+    /// <summary>
+    /// Every instantiable item type by <see cref="Item.ItemId"/> — <b>including</b> the
+    /// <see cref="IDebugItem"/> fixtures that <see cref="All"/> deliberately withholds.
+    ///
+    /// <para>The two lists answer different questions. <see cref="All"/> is "what may the world be
+    /// stocked with", and a debug fixture must never appear in a shop. This is "what can an id name",
+    /// and a debug item granted with <c>--grant-item</c> is really in a pack, so a save that could not
+    /// name it would quietly lose it on load.</para>
+    /// </summary>
+    private static Dictionary<string, Type>? _typesById;
+
+    /// <summary>
+    /// A fresh instance of the item type whose <see cref="Item.ItemId"/> is <paramref name="itemId"/>,
+    /// or null when no type claims that id. Null means a save names an item this build does not have,
+    /// which the caller should treat as a corrupt save rather than as an empty slot.
+    /// </summary>
+    public static Item? GetById(string itemId)
+    {
+        _typesById ??= BuildTypeIndex();
+        return _typesById.TryGetValue(itemId, out var type)
+            ? (Item)Activator.CreateInstance(type)!
+            : null;
+    }
+
+    private static Dictionary<string, Type> BuildTypeIndex()
+    {
+        var index = new Dictionary<string, Type>(StringComparer.Ordinal);
+        foreach (var type in Assembly.GetExecutingAssembly().GetTypes()
+                     .Where(t => t.IsSubclassOf(typeof(Item)) && !t.IsAbstract
+                              && t.GetConstructor(Type.EmptyTypes) != null))
+        {
+            try
+            {
+                if (Activator.CreateInstance(type) is not Item probe) continue;
+                if (index.TryGetValue(probe.ItemId, out var claimed))
+                {
+                    // Two types answering to one id makes a save ambiguous, and --item-audit already
+                    // reports duplicate ItemIds. Keep the first and say which lost, rather than
+                    // letting reflection order decide silently.
+                    Console.Error.WriteLine(
+                        $"ItemRegistry: item id '{probe.ItemId}' is claimed by both {claimed.Name} " +
+                        $"and {type.Name}; keeping {claimed.Name}.");
+                    continue;
+                }
+                index[probe.ItemId] = type;
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"ItemRegistry: failed to index {type.Name}: {ex.Message}");
+            }
+        }
+        return index;
+    }
 }

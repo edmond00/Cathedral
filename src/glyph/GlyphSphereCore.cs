@@ -169,6 +169,33 @@ namespace Cathedral.Glyph
         public int VertexCount => vertices.Count;
         public Vector3 GetVertexPosition(int index) => vertices[index].Position;
         public float GetVertexNoise(int index) => (index >= 0 && index < vertices.Count) ? vertices[index].Noise : 0f;
+
+        /// <summary>
+        /// Re-derives everything the sphere itself takes from the master seed, for a new run in the
+        /// same process. The mesh is untouched — it is a fixed icosphere and carries no randomness.
+        ///
+        /// <para>Two things are seeded here and are easy to miss, because neither lives in
+        /// <c>GenerateWorld</c>: the per-vertex pathfinding <c>Noise</c> set in <see cref="BuildSphere"/>,
+        /// and the per-edge jitter that <c>GlyphSphereGraph.ComputeEdgeJitter</c> derives whenever the
+        /// graph is built. Regenerating only the terrain would lay a brand-new world over the previous
+        /// world's travel costs — passable-looking, and quietly wrong.</para>
+        ///
+        /// <para>The jitter needs no explicit work: it is computed from the master seed at graph-build
+        /// time, so rebuilding the graph picks up the new seed by itself.</para>
+        /// </summary>
+        public void RebuildForNewSeed()
+        {
+            var random = new Random(GameRng.DerivedSeed("pathfinding-noise"));
+            for (int i = 0; i < vertices.Count; i++)
+            {
+                var v = vertices[i];
+                v.Noise = (float)random.NextDouble();
+                vertices[i] = v;
+            }
+
+            InitializePathfinding();
+            Console.WriteLine("GlyphSphereCore: pathfinding noise and graph rebuilt for the new seed.");
+        }
         
         // Public access to camera for external control
         /// <summary>

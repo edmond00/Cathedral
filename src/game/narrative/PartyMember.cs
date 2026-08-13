@@ -93,6 +93,14 @@ public abstract class PartyMember
     /// but dealt a weak heart would otherwise drop dead the moment they joined the party.
     /// </para>
     /// </summary>
+    /// <summary>
+    /// Puts a saved birth time back verbatim. Distinct from <see cref="SetAgeAtCreation"/>, which is
+    /// age-relative — it computes a birth time from "this many days old *right now*" and clamps it
+    /// against the member's lifetime. Replaying that on load would re-derive the birth time against
+    /// the restored clock and quietly shift everyone's age.
+    /// </summary>
+    public void RestoreBirthTime(double birthTimeDays) => BirthTimeDays = birthTimeDays;
+
     public void SetAgeAtCreation(double ageDays)
     {
         double capped = Math.Min(Math.Max(0, ageDays), GetLifetimeDays() * MaxFractionOfLifeAtCreation);

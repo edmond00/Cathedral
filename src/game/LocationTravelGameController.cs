@@ -709,6 +709,11 @@ public class LocationTravelGameController : IDisposable
                         return;
                     }
 
+                    // A humor carrying no heat pays nothing and the debt does not move — but the queue
+                    // still advances, and every secretion can add black bile, which Consume never
+                    // removes. So a body that cannot pay silts up until all four queues are critical
+                    // and ConsumeCycled returns null, which is the starvation branch above. The drain
+                    // is therefore self-terminating, and needs no attempt limit.
                     if (humor.VitalHeat >= 0)
                     {
                         _tripVhDebt         -= humor.VitalHeat;
@@ -1824,6 +1829,11 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     public void TriggerDeath(DeathCause cause)
     {
+        // Permadeath, and erased here rather than on the death screen's END RUN button: this is the
+        // funnel for all three causes, and it fires the moment the run is over, so force-quitting at
+        // the death screen cannot leave a save that outlives the character.
+        Cathedral.Game.Save.SaveFile.Delete();
+
         _deathCause = cause;
         _interface.MovementPaused = true;
         SetMode(GameMode.Death);
@@ -1850,6 +1860,47 @@ public class LocationTravelGameController : IDisposable
         // depletion timestamps and regen checks use the post-travel time).
         Cathedral.Game.Narrative.GameClock.Advance(_committedTravelDays);
         _committedTravelDays = 0f;
+
+        // Settle any vital-heat debt the journey did not get a chance to drain.
+        //
+        // The per-frame drain in Update() only runs while the mode is Traveling, and the final step of
+        // a path both accrues that step's cost AND fires the arrival — so on a ONE-CELL journey the
+        // debt is raised and the mode changes before a single frame of draining happens. A body whose
+        // queues are entirely black bile could therefore hop between adjacent vertices for ever
+        // without paying anything, while the identical body died two cells into a longer trip.
+        //
+        // Whether a journey is affordable must not depend on how many frames it took, so the same
+        // verdict is reached here.
+        if (_tripVhDebt >= 1.0f && _protagonist != null)
+        {
+            if (_protagonist.HumorQueues.IsFullyCritical)
+            {
+                _consumptionActive        = false;
+                _interface.MovementPaused = false;
+                TriggerDeath(DeathCause.Starvation);
+                return;
+            }
+
+            while (_tripVhDebt >= 1.0f)
+            {
+                var humor = _protagonist.HumorQueues.ConsumeCycled(_protagonist, _travelRng);
+                if (humor == null)
+                {
+                    _consumptionActive        = false;
+                    _interface.MovementPaused = false;
+                    TriggerDeath(DeathCause.Starvation);
+                    return;
+                }
+                if (humor.VitalHeat > 0) _tripVhDebt -= humor.VitalHeat;
+                else break; // negative or zero heat pays nothing; stop rather than spin the queues dry
+            }
+        }
+        _tripVhDebt        = 0f;
+        _consumptionActive = false;
+        // Movement is paused while the drain runs, and the drain's own "debt paid" branch is what
+        // normally lifts it. Arriving mid-drain skips that branch, so releasing it here is what stops
+        // the NEXT journey running its whole progress UI with the avatar standing still.
+        _interface.MovementPaused = false;
 
         // Routine replay: if the player launched travel from the routine box and the routine belongs
         // to this destination, replay it instead of starting a fresh narration phase.
@@ -1927,25 +1978,12 @@ public class LocationTravelGameController : IDisposable
         }
     }
 
-    /// <summary>
-    /// Updates the current location state (called after actions).
-    /// </summary>
-    public void UpdateLocationState(LocationInstanceState newState)
-    {
-        if (_currentMode != GameMode.LocationInteraction)
-        {
-            Console.WriteLine("LocationTravelGameController: Cannot update location state outside LocationInteraction mode");
-            return;
-        }
-
-        _currentLocationState = newState;
-        
-        // Update stored state
-        if (_currentLocationVertex >= 0)
-        {
-            _locationStates[_currentLocationVertex] = newState;
-        }
-    }
+    // UpdateLocationState(LocationInstanceState) was removed here. It replaced the entry in
+    // _locationStates with a different object while the built scene still held the OLD collections —
+    // LocationInstanceState.AttachTo hands its dictionaries to the scene by reference, so a swap
+    // detaches every later write from the state that gets saved. It had no callers, and the save
+    // system depends on that reference-sharing invariant holding. Location state is mutated in
+    // place, never replaced.
 
     /// <summary>
     /// Gets the blueprint for the current location.
@@ -2011,20 +2049,39 @@ public class LocationTravelGameController : IDisposable
                 _mainMenuRenderer = new MainMenuRenderer(_core.Terminal);
             }
             
-            // Configure buttons with callbacks
+            // Continue does two jobs from one button: resume the session already in memory (the pause
+            // menu's return path), or, on a cold start, load the save from disk. So it is enabled when
+            // EITHER exists, and the callback picks between them.
             _mainMenuRenderer.HasGameStarted = _hasGameStarted;
+            _mainMenuRenderer.CanContinue    = _hasGameStarted || HasReadableSave;
             _mainMenuRenderer.SetButtons(
                 onNew: () =>
                 {
-                    ResetGameState();
+                    // Spends the save and gives the run a world of its own — see StartNewRun.
+                    StartNewRun();
                     SetMode(GameMode.ProtagonistCreation);
                 },
                 onContinue: () =>
                 {
-                    if (!_hasGameStarted)
-                        ResetGameState(); // First time: treat as new game
-                    // Resume the paused narration when opened as an overlay; otherwise enter the world.
-                    SetMode(MenuReturnMode);
+                    if (_hasGameStarted)
+                    {
+                        // A live session: resume whatever was paused.
+                        SetMode(MenuReturnMode);
+                        return;
+                    }
+
+                    // A cold start. The old code called ResetGameState() here — a new game wearing
+                    // Continue's clothes, which with a real save on disk would silently destroy it.
+                    if (TryContinueSavedRun())
+                    {
+                        SetMode(GameMode.WorldView);
+                        return;
+                    }
+
+                    // Unreadable after all (deleted or corrupted since the menu was drawn): grey the
+                    // button out rather than starting a run the player did not ask for.
+                    _mainMenuRenderer.CanContinue = false;
+                    _mainMenuRenderer.Render();
                 },
                 onProtagonist: () =>
                 {
@@ -2179,6 +2236,17 @@ public class LocationTravelGameController : IDisposable
                 // now we rebuild modules to reflect the final configured values.
                 protagonist.InitializeMemory();
                 protagonist.ReinitializeHumorQueues();
+
+                // --black-bile is applied HERE, not in ResetGameState. The queues are rebuilt from the
+                // organ scores the player just settled, which overwrites anything put there earlier —
+                // so souring them before this point leaves a perfectly healthy protagonist and the
+                // starvation the flag exists to stage never happens.
+                if (Config.Debug.BlackBile)
+                {
+                    foreach (var queue in protagonist.HumorQueues.All)
+                        queue.FillWith(new Cathedral.Game.Narrative.BlackBileHumor());
+                    Console.WriteLine("[debug] --black-bile: all four humor queues filled with black bile");
+                }
 
                 // Grant the only modus mentis the protagonist starts with.
                 var rmm = ModusMentisRegistry.Instance.GetModusMentis("childhood_reminescence");
@@ -2431,6 +2499,26 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     public IReadOnlyList<string>? CliInspectGlobal(string subject)
     {
+        // The save is a global fact, and — unlike everything the narration controller reports — it is
+        // readable at the world map, which is the only place it is ever written. Answered here so the
+        // ordinary expect-state assertion works on it; `save dump` only emits, and `expect` scans the
+        // rendered screen, so neither can assert anything about a save.
+        //   inspect save     — the LIVE run, as it would be written
+        //   inspect savefile — what is actually ON DISK
+        // They differ exactly when the autosave has not fired since the last change.
+        if (subject == "save")     return CliSaveDump();
+        if (subject == "savefile") return CliSaveRead();
+
+        // Whether a menu button is enabled is state, not pixels: disabled buttons differ only by
+        // colour on screen, so `dump` cannot show it and `expect` cannot assert it. `regions` prints
+        // it but only to the CLI stream, which `expect` does not read either. This is the seam that
+        // makes "Continue is greyed out after a death" assertable.
+        if (subject == "menu")
+            return CliMenuButtons()?
+                       .Select(b => $"menu {b.Label} {(b.Enabled ? "enabled" : "disabled")}")
+                       .ToList()
+                   ?? new List<string> { "menu (not on the main menu)" };
+
         if (_protagonist == null) return null;
         if (subject is not ("routines" or "all")) return null;
 
@@ -2614,6 +2702,13 @@ public class LocationTravelGameController : IDisposable
         // Show the terminal as a UI overlay for the travel info box, but let clicks
         // on transparent cells fall through to the 3D world.
         SetTransparentWorldOverlay(clickPassthrough: true);
+
+        // The one save point. This method is the single funnel for "on the world map, interactive,
+        // choosing where to go", which is past the old-age, companion-capacity and debug-fight gates
+        // in OnEnterWorldView, and is reached again after a companion dismissal. Loading routes
+        // through here too, so a continued run immediately rewrites an identical file — harmless, and
+        // simpler than a flag to suppress it.
+        Autosave();
     }
 
     /// <summary>
@@ -3191,6 +3286,214 @@ public class LocationTravelGameController : IDisposable
         }
     }
     
+    // ── Save / load ───────────────────────────────────────────────────────────
+
+    /// <summary>True when a save exists that this build can read — what gates Continue on a cold start.</summary>
+    public bool HasReadableSave => Cathedral.Game.Save.SaveFile.Exists();
+
+    // ── --cli seams ───────────────────────────────────────────────────────────
+
+    /// <summary>Round-trips the live run in memory. Null when it survived; otherwise the divergence.</summary>
+    public string? CliSaveRoundTrip()
+    {
+        var save = CaptureSave();
+        return save == null ? "no run in progress" : Cathedral.Game.Save.SaveRoundTrip.Check(save);
+    }
+
+    /// <summary>A fixed summary of the live run, for `expect` to assert on.</summary>
+    public IReadOnlyList<string> CliSaveDump()
+    {
+        var save = CaptureSave();
+        return save == null
+            ? new List<string> { "save none" }
+            : Cathedral.Game.Save.SaveRoundTrip.Describe(save);
+    }
+
+    /// <summary>Forces a write of the live run, bypassing the autosave point. False when it did not write.</summary>
+    public bool CliSaveWrite()
+    {
+        var save = CaptureSave();
+        return save != null && Cathedral.Game.Save.SaveFile.Write(save);
+    }
+
+    /// <summary>A summary of what is ON DISK, or "save none" — distinct from <see cref="CliSaveDump"/>.</summary>
+    public IReadOnlyList<string> CliSaveRead()
+    {
+        var save = Cathedral.Game.Save.SaveFile.Read();
+        return save == null
+            ? new List<string> { "save none" }
+            : Cathedral.Game.Save.SaveRoundTrip.Describe(save);
+    }
+
+    /// <summary>Deletes the save from disk, so a script can assert what happens without one.</summary>
+    public void CliSaveErase() => Cathedral.Game.Save.SaveFile.Delete();
+
+    /// <summary>
+    /// Opens the pause menu, as Escape does.
+    ///
+    /// <para>Needed because Escape is handled in the launcher's own key hook rather than in
+    /// <c>OnKeyDown</c>, so <c>key escape</c> from a script never reaches it and the main menu is
+    /// unreachable under <c>--cli</c> — which makes everything on it (New, Continue, and whether
+    /// either is enabled) untestable. This is the plain case of that handler: every mode that is not
+    /// already the menu opens it as an overlay, and <c>MenuReturnMode</c> is what comes back.</para>
+    /// </summary>
+    public bool CliOpenPauseMenu()
+    {
+        if (_currentMode == GameMode.MainMenu) return true;
+        SetMode(GameMode.MainMenu);
+        return _currentMode == GameMode.MainMenu;
+    }
+
+    /// <summary>
+    /// Presses the death screen's END RUN button. The same two writes the click handler makes, so a
+    /// script reaches the main menu exactly as a player does — which is what lets it assert that
+    /// Continue is greyed out after a death.
+    /// </summary>
+    public bool CliDeathEndRun()
+    {
+        if (_currentMode != GameMode.Death) return false;
+        _hasGameStarted = false;
+        SetMode(GameMode.MainMenu);
+        return true;
+    }
+
+    /// <summary>
+    /// Snapshots the run. Called only from <see cref="EnterWorldViewInteractive"/>, which is the one
+    /// moment the player is choosing a destination and, crucially, <b>no scene is live</b> — so the
+    /// location states being serialised cannot be mutated underneath by a scene that still holds their
+    /// collections by reference.
+    /// </summary>
+    /// <summary>Snapshots the run into a save record. Null when there is no run to snapshot.</summary>
+    public Cathedral.Game.Save.SaveGame? CaptureSave()
+    {
+        if (_protagonist == null) return null;
+        return new Cathedral.Game.Save.SaveGame
+        {
+            Seed         = GameRng.MasterSeed,
+            Days         = Cathedral.Game.Narrative.GameClock.Days,
+            AvatarVertex = _interface.GetAvatarVertex(),
+            Party        = Cathedral.Game.Save.PartyState.Capture(_protagonist),
+            Locations    = new Dictionary<int, LocationInstanceState>(_locationStates),
+        };
+    }
+
+    private void Autosave()
+    {
+        if (!_hasGameStarted || _protagonist == null) return;
+        if (Cathedral.Game.Save.SaveFile.Disabled) return;
+
+        var save = CaptureSave();
+        if (save == null) return;
+
+        if (Cathedral.Game.Save.SaveFile.Write(save))
+            Console.WriteLine($"Autosave: day {save.Days:F1}, vertex {save.AvatarVertex}, "
+                            + $"{save.Locations.Count} location(s) remembered");
+    }
+
+    /// <summary>
+    /// Restores the saved run and puts the player on the world map. Returns false when there is no
+    /// readable save, or when the save cannot be rebuilt.
+    ///
+    /// <para><b>Nothing is installed until the whole rebuild has succeeded.</b> The protagonist is
+    /// built to one side first, so a save that names content this build no longer has leaves the menu
+    /// exactly as it was rather than dropping the player into a half-restored run.</para>
+    ///
+    /// <para>No world work happens here: the process booted on this save's seed (see the seed block in
+    /// <c>Program.cs</c>), so the world under the avatar is already the right one.</para>
+    /// </summary>
+    public bool TryContinueSavedRun()
+    {
+        var save = Cathedral.Game.Save.SaveFile.Read();
+        if (save == null) return false;
+
+        if (save.Seed != GameRng.MasterSeed)
+        {
+            // Only reachable under --seed, which pins the process to one world. Refused rather than
+            // loaded into the wrong world.
+            Console.Error.WriteLine(
+                $"Continue: the save was played on seed {save.Seed}, this process is on {GameRng.MasterSeed} — refusing.");
+            return false;
+        }
+
+        var protagonist = save.Party.Rebuild();
+        if (protagonist == null)
+        {
+            Console.Error.WriteLine("Continue: the save could not be rebuilt; leaving the run untouched.");
+            return false;
+        }
+
+        if (_isInNarrativeMode) ExitNarrativeMode();
+
+        _protagonist = protagonist;
+        Cathedral.Game.Narrative.GameClock.Restore(save.Days);
+
+        _locationStates.Clear();
+        foreach (var (vertex, state) in save.Locations) _locationStates[vertex] = state;
+
+        _currentLocationState  = null;
+        _currentLocationVertex = -1;
+        _destinationVertex     = -1;
+        _lastLocationVertex     = -1;
+        _previousLocationVertex = -1;
+        ClearTravelPlan();
+
+        NameFaking.Current = null;
+        SceneSetting.SetPlace(null);
+
+        if (!_interface.PlaceAvatarAt(save.AvatarVertex))
+        {
+            Console.Error.WriteLine("Continue: the saved vertex is not in this world; refusing.");
+            return false;
+        }
+
+        // The loaded run now owns the world the process booted with, so a later New must build its own
+        // rather than replaying this one's.
+        _worldClaimed   = true;
+        _hasGameStarted = true;
+        Console.WriteLine($"Continue: restored day {save.Days:F1} at vertex {save.AvatarVertex}, "
+                        + $"{save.Locations.Count} location(s) remembered");
+        return true;
+    }
+
+    /// <summary>
+    /// True once a run has taken possession of the world this process booted with. Set by the first
+    /// New or Continue; from then on, a further New has to build a world of its own.
+    /// </summary>
+    private bool _worldClaimed = false;
+
+    /// <summary>
+    /// Begins a new run: spends the save, gives the run a world, and clears the previous one out.
+    ///
+    /// <para><b>The seed is per run, not per process.</b> The world — terrain, where each location
+    /// sits, and the people inside it — is a pure function of the master seed, and a save restores its
+    /// own seed at startup so Continue rebuilds nothing. That leaves New: without a fresh seed, a new
+    /// run started after loading would be played in the dead run's world. (This was true before saves
+    /// existed too — two News in one process gave the identical world.)</para>
+    ///
+    /// <para>The first New of a process is the exception, and deliberately so: the world it booted
+    /// with is nobody's yet, so it is simply claimed. That is the ordinary launch-then-play path, and
+    /// it therefore carries none of the regeneration's risk.</para>
+    ///
+    /// <para><c>--seed</c> still wins, so a pinned run replays identically however many times it is
+    /// restarted, and the CLI suite is untouched.</para>
+    /// </summary>
+    public void StartNewRun()
+    {
+        // Erased FIRST: a crash part-way through setup must not leave a save pointing at a world that
+        // no longer exists.
+        Cathedral.Game.Save.SaveFile.Delete();
+
+        if (_worldClaimed)
+        {
+            GameRng.Reseed(Config.Rng.Seed ?? Environment.TickCount);
+            _core.RebuildForNewSeed();
+            _interface.RegenerateWorld();
+        }
+        _worldClaimed = true;
+
+        ResetGameState();
+    }
+
     /// <summary>
     /// Resets game state for a new game. Clears location states, resets protagonist position.
     /// </summary>
@@ -3209,6 +3512,18 @@ public class LocationTravelGameController : IDisposable
         _currentLocationVertex = -1;
         _destinationVertex = -1;
         _locationStates.Clear();
+
+        // The "where was I before" pair drives `travel back`. Left standing, a new run inherits the
+        // previous run's return target — a vertex whose location state has just been cleared.
+        _lastLocationVertex     = -1;
+        _previousLocationVertex = -1;
+
+        // Two statics carry the last scene's identity into whatever opens next: the real-to-false
+        // name map the LLM is told to use, and the place clause in its prompts. Neither is cleared
+        // when a scene closes, so without this a new run's first narration is told it is standing in
+        // the last run's village.
+        NameFaking.Current = null;
+        SceneSetting.SetPlace(null);
 
         // Discard any pending travel plan and range darkening from the previous run.
         ClearTravelPlan();
@@ -3248,6 +3563,9 @@ public class LocationTravelGameController : IDisposable
         _protagonist.InitializeMemory();
         WeaponsMode.ApplyIfActive(_protagonist);
         GrantItemMode.ApplyIfActive(_protagonist);
+
+        // (--black-bile is applied at the end of protagonist creation, not here: the humor queues are
+        // rebuilt from the final organ scores at that point and would overwrite anything set now.)
 
         _hasGameStarted = true;
         Console.WriteLine("LocationTravelGameController: Game state reset complete");

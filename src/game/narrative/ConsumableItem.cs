@@ -173,6 +173,21 @@ public abstract class ConsumableItem : Item
     /// </summary>
     public List<BodyHumor> Composition => _composition ??= GenerateComposition(GameRng.Stream("item-composition"));
 
+    /// <summary>True once this instance's composition has been drawn. False means it is still lazy.</summary>
+    public bool HasComposition => _composition != null;
+
+    /// <summary>
+    /// Puts a saved composition back. Nothing else can: <see cref="Composition"/> is drawn once from
+    /// the run-long <c>item-composition</c> stream, whose position depends on how many consumables
+    /// have been looked at, so it is a property of this apple rather than of apples — reloading and
+    /// re-drawing would silently hand the player different food.
+    ///
+    /// <para>Order is preserved because it is meaningful: the sample is ordered
+    /// most-characteristic-first, and a weak nose reveals only the front of it.</para>
+    /// </summary>
+    public void RestoreComposition(IEnumerable<BodyHumor> humors)
+        => _composition = new List<BodyHumor>(humors ?? throw new ArgumentNullException(nameof(humors)));
+
     /// <summary>
     /// Generate the composition for one instance by sampling the recipe.
     /// Virtual so unusual items can customise, but standard items only declare a recipe.

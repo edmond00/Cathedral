@@ -32,6 +32,16 @@ public class MainMenuRenderer
     /// </summary>
     public bool HasGameStarted { get; set; } = false;
 
+    /// <summary>
+    /// Whether Continue can do anything — a live session to resume, or a readable save on disk.
+    ///
+    /// <para>Separate from <see cref="HasGameStarted"/> because the two genuinely diverge on a cold
+    /// start: with a save present and not yet loaded there is a run to continue but no protagonist to
+    /// inspect, so Continue is enabled while Protagonist is not. Defaults to
+    /// <see cref="HasGameStarted"/> when never set, which is the old behaviour.</para>
+    /// </summary>
+    public bool? CanContinue { get; set; }
+
     public MainMenuRenderer(TerminalHUD terminal)
     {
         _terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
@@ -44,33 +54,32 @@ public class MainMenuRenderer
     {
         _buttons.Clear();
         _buttons.Add(new MenuButton("New", onNew, true));
-        _buttons.Add(new MenuButton("Continue", onContinue, HasGameStarted));
+        _buttons.Add(new MenuButton("Continue", onContinue, CanContinue ?? HasGameStarted));
         _buttons.Add(new MenuButton("Protagonist", onProtagonist, HasGameStarted));
         _buttons.Add(new MenuButton("Settings", onSettings, true));
         _buttons.Add(new MenuButton("Exit", onExit, true));
     }
 
     /// <summary>
-    /// Updates the enabled state of the Continue button.
+    /// Updates the enabled state of a button by label. By label rather than by index: the two setters
+    /// below used to hard-code positions 1 and 2, which is a trap the moment anything is inserted
+    /// above them, and silently disables the wrong row rather than failing.
     /// </summary>
-    public void SetContinueEnabled(bool enabled)
+    private void SetEnabledByLabel(string label, bool enabled)
     {
-        if (_buttons.Count >= 2)
-        {
-            _buttons[1] = _buttons[1] with { Enabled = enabled };
-        }
+        for (int i = 0; i < _buttons.Count; i++)
+            if (string.Equals(_buttons[i].Label, label, StringComparison.OrdinalIgnoreCase))
+            {
+                _buttons[i] = _buttons[i] with { Enabled = enabled };
+                return;
+            }
     }
 
-    /// <summary>
-    /// Updates the enabled state of the Protagonist button.
-    /// </summary>
-    public void SetProtagonistEnabled(bool enabled)
-    {
-        if (_buttons.Count >= 3)
-        {
-            _buttons[2] = _buttons[2] with { Enabled = enabled };
-        }
-    }
+    /// <summary>Updates the enabled state of the Continue button.</summary>
+    public void SetContinueEnabled(bool enabled) => SetEnabledByLabel("Continue", enabled);
+
+    /// <summary>Updates the enabled state of the Protagonist button.</summary>
+    public void SetProtagonistEnabled(bool enabled) => SetEnabledByLabel("Protagonist", enabled);
 
     /// <summary>
     /// Renders the full menu to the terminal.

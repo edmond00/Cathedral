@@ -257,6 +257,11 @@ namespace Cathedral.Glyph.Microworld
         {
             Console.WriteLine("Generating microworld biomes using Perlin noise...");
 
+            // Every vertex is overwritten below, but waterVertices is only ever ADDED to — so on a
+            // second generation the previous world's lakes would still be registered for animation on
+            // tiles that are now dry land.
+            waterVertices.Clear();
+
             // Derive the world's noise offset from the master seed. A large offset moves
             // the sampled region of the (fixed) Perlin field, so each seed is a new world.
             var worldRng = GameRng.For("world-terrain");
@@ -1272,6 +1277,21 @@ namespace Cathedral.Glyph.Microworld
         /// </summary>
         public void ResetProtagonistPosition()
         {
+            ClearMovementState();
+
+            // Re-initialize protagonist at a new random position
+            InitializeProtagonist();
+            Console.WriteLine($"MicroworldInterface: Protagonist reset to vertex {_protagonistVertex}");
+        }
+
+        /// <summary>
+        /// Drops every path, hover and in-flight movement. Shared by the two ways a run's position is
+        /// decided — <see cref="ResetProtagonistPosition"/> rolls a new spawn,
+        /// <see cref="PlaceAvatarAt"/> restores a saved one — because leaving a half-walked path
+        /// behind would have the avatar resume the dead run's journey.
+        /// </summary>
+        public void ClearMovementState()
+        {
             // Clear all path visuals before wiping the path references.
             ClearHoveredPath();
             _hoveredVertex = -1;
@@ -1288,10 +1308,57 @@ namespace Cathedral.Glyph.Microworld
             _moveTimer = 0.0f;
             _pendingHoverVertex = -1;
             MovementPaused = false;
+        }
 
-            // Re-initialize protagonist at a new random position
+        /// <summary>
+        /// Throws the world away and builds a new one from the current master seed — a new run in the
+        /// same process. Call after <c>GameRng.Reseed</c>.
+        ///
+        /// <para>The avatar is forgotten first: it stands on a vertex of the old world, and the tile
+        /// it was covering is about to be overwritten, so restoring that tile afterwards would stamp a
+        /// dead world's terrain onto the new one. <see cref="InitializeProtagonist"/> rolls a fresh
+        /// spawn at the end.</para>
+        ///
+        /// <para>The caller must still re-apply the travel range, which is derived from the
+        /// protagonist rather than the world — <c>EnterWorldViewInteractive</c> already does.</para>
+        /// </summary>
+        public void RegenerateWorld()
+        {
+            ClearMovementState();
+            _protagonistVertex        = -1;
+            _originalProtagonistData  = null;
+            _outOfRangeVertices.Clear();
+
+            GenerateWorld();
             InitializeProtagonist();
-            Console.WriteLine($"MicroworldInterface: Protagonist reset to vertex {_protagonistVertex}");
+            Console.WriteLine($"MicroworldInterface: world regenerated; protagonist at vertex {_protagonistVertex}");
+        }
+
+        /// <summary>
+        /// Puts the avatar on <paramref name="vertexIndex"/> — the load counterpart of
+        /// <see cref="ResetProtagonistPosition"/>, which re-rolls a random spawn and so cannot restore
+        /// a saved position.
+        ///
+        /// <para>Goes through the same private placement the travel loop uses, so the tile under the
+        /// avatar is captured and the previous one restored exactly as in play; a save that wrote the
+        /// glyph directly would leave an '@' stamped on the old vertex for the rest of the run.</para>
+        ///
+        /// <para>Returns false when the vertex is not part of this world, which for a save means it
+        /// was written against a different seed.</para>
+        /// </summary>
+        public bool PlaceAvatarAt(int vertexIndex)
+        {
+            if (!vertexData.ContainsKey(vertexIndex))
+            {
+                Console.Error.WriteLine(
+                    $"MicroworldInterface: cannot place the avatar at vertex {vertexIndex} — no such vertex.");
+                return false;
+            }
+
+            ClearMovementState();
+            PlaceProtagonist(vertexIndex, centerCamera: true);
+            Console.WriteLine($"MicroworldInterface: Avatar restored to vertex {_protagonistVertex}");
+            return true;
         }
 
         /// <summary>

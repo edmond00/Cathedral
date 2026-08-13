@@ -35,4 +35,18 @@ public static class GameClock
 
     /// <summary>Rewinds the clock to zero for a new run.</summary>
     public static void Reset() => Days = 0;
+
+    /// <summary>
+    /// Sets the clock to a saved reading when a run is loaded. The one exception to "time never runs
+    /// back" — restoring a save is not the clock moving, it is the clock being told which run it is
+    /// in.
+    ///
+    /// <para>Mandatory for a save, and easy to underestimate: nothing stores an age, a wound's
+    /// progress or an item depletion. All three are differences measured against this value, so a
+    /// run reloaded with the clock at zero would have every character younger than they were, every
+    /// wound freshly dealt, and every stripped bush regrown.</para>
+    ///
+    /// <para>Call only at a run boundary, never mid-run.</para>
+    /// </summary>
+    public static void Restore(double days) => Days = days < 0 ? 0 : days;
 }

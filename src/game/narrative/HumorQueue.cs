@@ -144,6 +144,29 @@ public sealed class HumorQueue
     public void ForceSet(int index, BodyHumor humor) => _items[index] = humor;
 
     /// <summary>
+    /// Replaces the whole queue with a saved one, front (newest) first. The load counterpart of
+    /// <see cref="Items"/>.
+    ///
+    /// <para>Order is the queue's entire meaning — which humor is spendable, which is about to fall
+    /// off the back, and how deep the black bile has stacked are all positional — so this takes the
+    /// full <see cref="Capacity"/> and refuses anything else rather than padding a short list and
+    /// silently shifting every position.</para>
+    ///
+    /// <para>Deliberately separate from <see cref="ForceSet"/>, which is a display-testing hook that
+    /// bypasses queue logic and is marked for removal. This is the documented load seam.</para>
+    /// </summary>
+    public void RestoreAll(IReadOnlyList<BodyHumor> humors)
+    {
+        if (humors == null) throw new ArgumentNullException(nameof(humors));
+        if (humors.Count != Capacity)
+            throw new ArgumentException(
+                $"A humor queue holds exactly {Capacity} places; got {humors.Count}.", nameof(humors));
+
+        for (int i = 0; i < Capacity; i++)
+            _items[i] = humors[i] ?? throw new ArgumentException($"Humor at place {i} is null.", nameof(humors));
+    }
+
+    /// <summary>
     /// Organ secretion: generate a new random humor, insert at front, remove from back.
     /// If the queue is critical (all black bile) nothing happens.
     /// Returns the newly secreted humor, or null when critical.

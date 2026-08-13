@@ -28,6 +28,30 @@ for (int i = 0; i < args.Length; i++)
         break;
     }
 }
+
+// The save's own seed is resolved here too, for the same reason and under the same rule: it is pure
+// file IO and touches no game state. The world — terrain, where each location sits, and the people
+// inside it — is generated from the master seed at startup, so a run can only be continued if the
+// process boots on the seed that run was played with. Reading it here means Continue rebuilds nothing.
+//
+// --seed still wins outright, which is what keeps every scripted run reproducible; the consequence is
+// that under --seed a save from a different seed is simply unloadable, and Continue greys out.
+{
+    string? savePathOverride = null;
+    bool noSave = false;
+    for (int i = 0; i < args.Length; i++)
+    {
+        if (args[i] == "--save-path" && i + 1 < args.Length) savePathOverride = args[i + 1];
+        if (args[i] == "--no-save") noSave = true;
+    }
+    bool cliActive = System.Array.IndexOf(args, "--cli") >= 0
+                  || System.Array.IndexOf(args, "--cli-script") >= 0;
+    Cathedral.Game.Save.SaveFile.Configure(savePathOverride, noSave, cliActive);
+
+    if (Cathedral.Config.Rng.Seed == null)
+        Cathedral.Config.Rng.Seed = Cathedral.Game.Save.SaveFile.PeekSeed();
+}
+
 Cathedral.GameRng.Initialize(Cathedral.Config.Rng.Seed);
 
 // Check for help option
@@ -141,6 +165,13 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --advance-days <n>                 DEBUG: push the world clock forward <n> days on first arrival at the world");
     Console.WriteLine("                                     map. The clock only moves on travel and work, and a wound takes 100-1000");
     Console.WriteLine("                                     days to close, so this is how a script sees healing without simulating years");
+    Console.WriteLine("  --save-path <file>                 Use <file> as the save instead of %APPDATA%\\Cathedral\\save.json. Saving is");
+    Console.WriteLine("                                     OFF by default under --cli, so a scripted run cannot clobber a real save;");
+    Console.WriteLine("                                     pass this to turn it back on against a file of the script's own");
+    Console.WriteLine("  --no-save                          Disable reading and writing the save entirely");
+    Console.WriteLine("  --black-bile                       DEBUG: fill all four humor queues with black bile after creation, so the");
+    Console.WriteLine("                                     next journey starves the protagonist. The only way a script can stage a");
+    Console.WriteLine("                                     starvation death (old age uses --advance-days, wounds --start-fight)");
     Console.WriteLine("  --grant-mm <id[,id...]>[:lvl]      DEBUG: grant the named modi mentis at <lvl> (default 1) after character");
     Console.WriteLine("                                     creation. Fighting skills are gated behind their modi mentis, so this is what");
     Console.WriteLine("                                     makes a given skill reachable — and level sets a buff's vital-heat cost");
@@ -253,6 +284,12 @@ if (args.Length >= 1 && args[0] == "--verb-audit")
 if (args.Length >= 1 && args[0] == "--outcome-audit")
 {
     Console.WriteLine(Cathedral.Game.Narrative.OutcomeAudit.BuildReport());
+    return;
+}
+
+if (args.Length >= 1 && args[0] == "--save-audit")
+{
+    Cathedral.Game.Save.SaveAudit.Run();
     return;
 }
 
@@ -584,6 +621,10 @@ for (int i = 0; i < args.Length; i++)
         double.TryParse(args[i + 1], System.Globalization.NumberStyles.Float,
                         System.Globalization.CultureInfo.InvariantCulture, out var advDays))
         Cathedral.Config.Debug.AdvanceDays = advDays;
+
+    // --black-bile: sour every humor queue, so the next journey starves the protagonist.
+    if (args[i] == "--black-bile")
+        Cathedral.Config.Debug.BlackBile = true;
 
     // --grant-mm <id[,id...]>[:level]
     if (args[i] == "--grant-mm" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
