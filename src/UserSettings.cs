@@ -112,9 +112,9 @@ public static class UserSettings
 
     // ── Persistence ──────────────────────────────────────────────────────────
 
-    private static string SettingsPath => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "Cathedral", "settings.json");
+    // Named per build (see AppData): a shipped game must not inherit a compute device probed by a
+    // development run, or volumes set while testing.
+    private static string SettingsPath => AppData.PathTo("settings.json");
 
     /// <summary>
     /// Loads settings from disk. Missing or corrupt files silently fall back to defaults.

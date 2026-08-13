@@ -207,9 +207,13 @@ public static class LlamaRuntime
     {
         var build = BuildId ?? "unknown build";
         var backends = DiscoverBackends();
+        // "installed", not the device in use. Without that word the startup line reads
+        // "Using model: … ; vulkan" and looks like a statement about this run — which it is not:
+        // a run started with --cpu prints the same thing, because this describes what is on disk.
+        // Which device the run actually uses is the separate "Starting llama server on …" line.
         var backendText = backends.Count == 0
             ? "no GPU backend installed (CPU only)"
-            : string.Join(", ", backends.Select(b => b.Name));
+            : "backends installed: " + string.Join(", ", backends.Select(b => b.Name));
         return $"llama.cpp {build}; {backendText}";
     }
 }

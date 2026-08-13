@@ -15,10 +15,12 @@ namespace Cathedral.Game.Save;
 /// </summary>
 public static class SaveFile
 {
-    /// <summary>Beside settings.json, so one folder holds everything the game remembers.</summary>
-    private static string DefaultPath => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "Cathedral", "save.json");
+    /// <summary>
+    /// Beside settings.json, so one folder holds everything the game remembers. That folder is
+    /// named per build — see <see cref="AppData"/> — so a shipped game never reads a save left by
+    /// development work.
+    /// </summary>
+    private static string DefaultPath => AppData.PathTo("save.json");
 
     private static string? _pathOverride;
     private static bool _disabled;

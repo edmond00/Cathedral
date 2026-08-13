@@ -69,6 +69,20 @@ public static class LlamaProbe
     {
         if (!Enabled || Cathedral.Game.PlaygroundMode.IsActive) return null;
 
+        // --cpu / --gpu have already decided. Measuring would spend a minute — and, on the GPU
+        // rung, a full benchmark — to produce an answer that BuildDeviceLadder then ignores,
+        // because the forced device outranks both the setting and the probe.
+        //
+        // This is not merely wasteful. Every package re-stages model.gguf, which changes its
+        // timestamp and so invalidates the probe signature; the publish smoke test therefore
+        // re-probed on every release, running GPU inference on a machine whose whole reason for
+        // passing --cpu was to avoid exactly that.
+        if (Config.Debug.ForcedLlmDevice != null)
+        {
+            Console.WriteLine($"Compute device: {Config.Debug.ForcedLlmDevice} (forced on the command line; detection skipped).");
+            return null;
+        }
+
         var signature = LlamaRuntime.ModelSignature();
         if (signature == null) return null;   // no model; the server manager reports that properly
 

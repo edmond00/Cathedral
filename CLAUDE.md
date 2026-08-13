@@ -229,6 +229,25 @@ The zip lands around 2.2 GB, nearly all of it `model.gguf`, which is already-com
 quantised weights and does not shrink. That is over itch.io's browser upload limit, so releases
 go through `publish.ps1`.
 
+### The manual in a release
+
+`package.ps1` runs `python tools/build_manual.py` **before anything else** and stages the result at
+the root of the package, beside the executable. The chapters are the source and the PDF is a build
+artefact, so shipping whatever PDF happened to be in the working tree would eventually ship a
+manual describing rules the game no longer has — with nothing about the file to say so. A build
+failure there stops the package rather than falling back to the stale copy; `-SkipManual` overrides
+that for a machine without Chrome, and says what it costs.
+
+**`publish.ps1` deliberately does not upload it.** butler only ever replaces builds in channels it
+owns, so it cannot touch the PDF that sits on the page — that was uploaded through the web form and
+has no channel. It *could* push the manual as a channel of its own, but itch then serves it as an
+archive rather than a one-click PDF, which is a worse page for a document. So the manual is a
+hand-upload, and `publish.ps1` closes with a reminder naming the freshly built file and its full
+path, because the failure this guards against is shipping a new build against last month's manual.
+
+If that trade ever looks different — automation mattering more than the one-click download — the
+push is one `butler push <pdf> user/game:manual` away.
+
 ### Publishing
 
 ```powershell
@@ -247,16 +266,25 @@ deliberate and is drawn at exactly one line — what a player can see:
 |---|---|
 | window title (`Config.Name.WindowTitle`) | repository, csproj, namespaces |
 | main menu (`Config.Name.GameTitle`, stylised lowercase) | `bin/Debug/Cathedral.exe` |
-| `ProscribedPalimpsest.exe`, staged folder, zip | `%APPDATA%\Cathedral\settings.json` |
-| the itch page | the dev-only launchers (fight area, image-to-text, music PoC) |
+| `ProscribedPalimpsest.exe`, staged folder, zip | the dev-only launchers (fight area, image-to-text, music PoC) |
+| `%APPDATA%\ProscribedPalimpsest\` (save + settings) | `%APPDATA%\Cathedral\` for a development build |
+| the itch page | the repository name and the csproj file name |
 
 **Only the shipped executable is renamed**, by an `AssemblyName` conditioned on the same `Ship`
 flag. `run_tests.sh` guards the suite with `Get-Process -Name Cathedral`, and that guard is what
 stops a leftover run from racing a new one; renaming the development binary would break it
 *silently*, because the guard would simply stop finding anything and read as "all clear".
 
-`%APPDATA%\Cathedral` is left alone on purpose. No player ever sees that path, and renaming it
-would discard every existing install's volumes, dither and probed compute device.
+**The data folder is named per build** (`AppData.FolderName`, conditioned on the same SHIP
+constant): `%APPDATA%\ProscribedPalimpsest` when shipped, `%APPDATA%\Cathedral` in development.
+They shared one folder until it became clear that testing the packaged game was never testing a
+clean install — a save left by a `dotnet run` session lit up Continue in the shipped build, and a
+compute device probed by one was inherited by the other.
+
+There is deliberately **no migration** between them. Copying development data into the shipped
+folder is the coupling this removes; a shipped build starting empty is the point. The cost is that
+the first launch after this change re-probes the compute device, because the new folder has no
+probe result in it.
 
 The shipped name has no space in it. A player sees it in a folder listing either way, and every
 CLI invocation — the whole test driver, any future CI — would otherwise need quoting.

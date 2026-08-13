@@ -19,9 +19,17 @@ HOW IT WORKS
 
 REQUIREMENTS
     Chrome or Edge          required. Found automatically.
-    pypdf + reportlab       optional. Without them you get the same typesetting with no folios,
-                            no running heads and no contents page numbers, and a warning saying so.
-                            pip install pypdf reportlab
+    pypdf + reportlab       required.  pip install pypdf reportlab
+
+                            These were once described here as optional, on the strength of a
+                            degraded path that concatenates the chapters without furniture. That
+                            path only ever worked for a SINGLE chapter — pypdf is what joins
+                            separately rendered PDFs, so with the manual's nine it exits instead.
+                            reportlab is needed alongside it for folios, running heads and the
+                            page numbers in the contents.
+
+                            Note pip installs into whichever interpreter is active. If your
+                            prompt shows a conda environment, that is the one that needs them.
 """
 
 from __future__ import annotations
@@ -615,9 +623,13 @@ def main() -> None:
             return
 
         if not can_stamp:
-            print("\n! pypdf and reportlab are not installed, so this PDF will have no folios,\n"
-                  "  no running heads and no contents page numbers.\n"
-                  "  pip install pypdf reportlab\n")
+            # Deliberately does not promise a finished PDF: from_simple_merge can only produce one
+            # when there is a single chapter, and otherwise exits. Saying "this PDF will have no
+            # folios" here, as it used to, described an outcome that does not happen.
+            print("\n! pypdf and reportlab are not installed, and both are required to assemble\n"
+                  "  a multi-chapter manual.\n"
+                  "  pip install pypdf reportlab\n"
+                  "  (into the interpreter you are running — a conda prompt means that one.)\n")
             from_simple_merge(chapters, args.output)
             return
 

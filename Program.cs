@@ -55,6 +55,19 @@ for (int i = 0; i < args.Length; i++)
 
     if (Cathedral.Config.Rng.Seed == null)
         Cathedral.Config.Rng.Seed = Cathedral.Game.Save.SaveFile.PeekSeed();
+
+    // Say what was found, always. Until now a normal launch said nothing about the save at all —
+    // SaveFile only speaks up when saving is disabled or a save is the wrong version — so log.txt
+    // could not answer the first question anyone asks about the main menu: why is Continue the way
+    // it is? Continue is enabled exactly when a readable save exists, and this is the line that
+    // makes that checkable from a player's log rather than by guessing.
+    if (!Cathedral.Game.Save.SaveFile.Disabled)
+    {
+        var peeked = Cathedral.Game.Save.SaveFile.Read();
+        Console.WriteLine(peeked == null
+            ? $"SaveFile: no readable save at {Cathedral.Game.Save.SaveFile.Path_} — Continue will be greyed out."
+            : $"SaveFile: readable save at {Cathedral.Game.Save.SaveFile.Path_} (seed {peeked.Seed}, day {peeked.Days:F0}) — Continue will be enabled.");
+    }
 }
 
 Cathedral.GameRng.Initialize(Cathedral.Config.Rng.Seed);

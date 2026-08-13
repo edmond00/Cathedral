@@ -26,6 +26,10 @@
     Leave the staged folder without archiving it. Useful when you want to test the build by
     running it in place.
 
+.PARAMETER SkipManual
+    Do not rebuild the PDF manual; ship whatever is already in docs/manual/. Only for a machine
+    without Chrome — the shipped manual is then as old as the last successful build.
+
 .PARAMETER ReadyToRun
     Precompile to native code. Roughly 30% larger, noticeably faster to start. Off by default
     because it makes the build slower and is not needed to verify a package is correct.
@@ -40,7 +44,8 @@ param(
     [string]$Runtime       = "win-x64",
     [switch]$NoModel,
     [switch]$NoZip,
-    [switch]$ReadyToRun
+    [switch]$ReadyToRun,
+    [switch]$SkipManual
 )
 
 $ErrorActionPreference = "Stop"
@@ -51,6 +56,7 @@ $root = $PSScriptRoot
 # renames the executable under the same Ship flag; these two must agree.
 $ShipName  = "ProscribedPalimpsest"
 $ShipExe   = "$ShipName.exe"
+$ManualPdf = "$ShipName-Manual.pdf"
 
 $stage = Join-Path $root (Join-Path $OutputDir $ShipName)
 
@@ -86,6 +92,10 @@ $Payload = @(
 
     # Player-facing documentation for the one thing a player may want to change.
     @{ Path = "models/README.md";                 Required = $false }
+
+    # The manual, rebuilt from docs/manual/*.md just above. At the root rather than in a docs
+    # folder: a player who opens the game's folder should see the game and its rulebook.
+    @{ Path = "docs/manual/$ManualPdf";           Required = $true;  Dest = $ManualPdf }
 )
 
 # Deliberately NOT shipped, recorded here so the reasoning survives:
@@ -99,6 +109,82 @@ $Payload = @(
 #                docs/ is the player manual (design/ is the drafts and development history);
 #                neither is shipped — the manual is published alongside the game, not inside it
 #   *.pdb        debug symbols; suppressed at publish rather than deleted afterwards
+
+# ── 0. The manual ────────────────────────────────────────────────────────────
+#
+# Rebuilt from docs/manual/*.md every time, before anything else. The chapters are the source and
+# the PDF is a build artefact, so shipping whatever PDF happened to be lying in the working tree
+# would eventually ship a manual describing rules the game no longer has — and nothing about the
+# file would say so. A failure here stops the package rather than falling back to the stale copy,
+# for the same reason.
+
+if (-not $SkipManual) {
+    Step "Building the manual"
+
+    # WHICH python matters, and "python" is not the answer. The interpreter first on PATH depends
+    # on the shell: a conda-activated prompt resolves it to the active environment, which is not
+    # the one the manual's dependencies were installed into. That produced a build failure whose
+    # message named the right fix and the wrong environment to apply it in.
+    #
+    # pypdf is NOT optional despite what build_manual.py once claimed: the chapters are rendered
+    # as separate PDFs and pypdf is what joins them, so without it the script exits.
+    #
+    # EVERY python on PATH, not just the first. That distinction is the whole point: in a
+    # conda-activated prompt the environment's interpreter shadows the one the dependencies were
+    # installed into, and both are on PATH. Probing only the first finds the conda one, fails, and
+    # reports a missing package that is in fact installed a few entries further down.
+    # find_spec rather than a plain import, so a missing package returns None instead of
+    # raising: the probe then writes NOTHING to stderr. That matters because redirecting a native
+    # command's stderr with 2>$null in Windows PowerShell 5.1 wraps each line in an ErrorRecord,
+    # which under ErrorActionPreference=Stop aborts the script — the same trap this file already
+    # documents for dotnet publish, walked into a second time.
+    #
+    # Single quotes INSIDE, double quotes outside. PowerShell strips embedded double quotes when
+    # it hands an argument to a native executable, so a probe written with "pypdf" reaches Python
+    # as a bare name and fails with NameError rather than reporting whether the module is there.
+    $probe = "import importlib.util as u, sys; sys.exit(0 if u.find_spec('pypdf') and u.find_spec('reportlab') else 1)"
+    $python = $null
+    $tried = @()
+
+    foreach ($src in (Get-Command python, python3 -All -ErrorAction SilentlyContinue |
+                      Select-Object -ExpandProperty Source -Unique)) {
+        $tried += $src
+        & $src -c $probe
+        if ($LASTEXITCODE -eq 0) { $python = $src; Note "using $src"; break }
+    }
+
+    # The py launcher last: it is absent on plenty of machines, and where it exists it points at
+    # a system install that the loop above has usually already tried.
+    if (-not $python -and (Get-Command py -ErrorAction SilentlyContinue)) {
+        $tried += "py -3"
+        & py -3 -c $probe
+        if ($LASTEXITCODE -eq 0) { $python = "py"; Note "using py -3" }
+    }
+
+    if (-not $python) {
+        Fail @"
+no Python with the manual's dependencies.
+
+Tried, in PATH order: $($tried -join ', ')
+
+The manual needs pypdf (to join the separately rendered chapters — without it the build exits)
+and reportlab (for folios, running heads and contents page numbers), plus Chrome or Edge, which
+it finds by itself. Install them into whichever interpreter you run:
+
+    pip install pypdf reportlab
+
+If your prompt shows a conda environment, that is the one pip will install into, and it is the
+one this script found first. Or pass -SkipManual to ship the PDF already in docs/manual/, which
+will be whatever was built last, however old.
+"@
+    }
+
+    $script = Join-Path $root "tools/build_manual.py"
+    if ($python -eq "py") { & py -3 $script } else { & $python $script }
+    if ($LASTEXITCODE -ne 0) {
+        Fail "the manual failed to build (returned $LASTEXITCODE). See the output above; -SkipManual ships the existing PDF."
+    }
+}
 
 # ── 1. Publish ───────────────────────────────────────────────────────────────
 
@@ -196,7 +282,10 @@ foreach ($item in $Payload) {
         continue
     }
 
-    $dest = Join-Path $stage $item.Path
+    # Dest lets a payload entry land somewhere other than its source path — the manual is
+    # built under docs/manual/ but ships at the root where a player will see it.
+    $relative = if ($item.ContainsKey("Dest")) { $item.Dest } else { $item.Path }
+    $dest = Join-Path $stage $relative
     $destParent = Split-Path $dest -Parent
     if (-not (Test-Path $destParent)) { New-Item -ItemType Directory -Force -Path $destParent | Out-Null }
 
@@ -206,12 +295,13 @@ foreach ($item in $Payload) {
         Copy-Item $src $dest -Force
     }
 
+    $shown = $relative
     $bytes = if (Test-Path $dest -PathType Container) {
         (Get-ChildItem $dest -Recurse -File | Measure-Object Length -Sum).Sum
     } else {
         (Get-Item $dest).Length
     }
-    Note ("{0,-28} {1,8:N1} MB" -f $item.Path, ($bytes / 1MB))
+    Note ("{0,-28} {1,8:N1} MB" -f $shown, ($bytes / 1MB))
 }
 
 # ── 3. Verify before archiving ───────────────────────────────────────────────
@@ -221,7 +311,7 @@ foreach ($item in $Payload) {
 
 Step "Verifying"
 
-$mustExist = @($ShipExe, "assets/fonts/FreeMono.ttf", "models/llama/llama-server.exe")
+$mustExist = @($ShipExe, $ManualPdf, "assets/fonts/FreeMono.ttf", "models/llama/llama-server.exe")
 if (-not $NoModel) { $mustExist += @("models/model.gguf", "models/embeddings/glove.6B.100d.txt") }
 
 $missing = $mustExist | Where-Object { -not (Test-Path (Join-Path $stage $_)) }

@@ -57,7 +57,13 @@ $ErrorActionPreference = "Stop"
 $root = $PSScriptRoot
 
 # Must match $ShipName in package.ps1 and the AssemblyName in the csproj.
-$ShipExe = "ProscribedPalimpsest.exe"
+$ShipExe   = "ProscribedPalimpsest.exe"
+$ManualPdf = "ProscribedPalimpsest-Manual.pdf"
+
+# Named here only so the closing reminder can point at the staged copy. The manual is NOT
+# uploaded by this script: butler can only replace builds in channels it owns, so it cannot
+# update the PDF on the page, and pushing it as a channel would arrive as an archive instead of
+# a one-click download. It stays a hand-upload; see the reminder at the end.
 
 # ── The project this publishes to ────────────────────────────────────────────
 # From the page URL edmond00.itch.io/proscribed: user "edmond00", game slug "proscribed".
@@ -220,13 +226,20 @@ Note ("{0:N0} files, {1:N2} GB" -f $files.Count, (($files | Measure-Object Lengt
 
 if (-not $SkipSmokeTest) {
     Step "Smoke-testing the staged build"
-    Note "launching with no arguments, exactly as a player does"
+    Note "launching with --cpu (packaging check; the GPU path is exercised by playing)"
 
     $outFile = Join-Path $env:TEMP "pp_smoke_out.txt"
     $errFile = Join-Path $env:TEMP "pp_smoke_err.txt"
     Remove-Item $outFile, $errFile -ErrorAction SilentlyContinue
 
-    $proc = Start-Process -FilePath (Join-Path $stage $ShipExe) -WorkingDirectory $stage `
+    # --cpu, deliberately. The smoke test's job is to prove the PACKAGE works — that the runtime
+    # resolves, assets/ and models/ are found, the GGUF loads, a window opens — and none of that
+    # needs the GPU. Running inference on this machine's card has twice coincided with a hard
+    # power-off, so the check that runs on every publish is the one that should not provoke it.
+    #
+    # The cost: the Vulkan path is not exercised here. It is exercised every time the game is
+    # actually played, which is the right place for it.
+    $proc = Start-Process -FilePath (Join-Path $stage $ShipExe) -ArgumentList "--cpu" -WorkingDirectory $stage `
                           -PassThru -RedirectStandardOutput $outFile -RedirectStandardError $errFile
 
     $sawWindow = $false
@@ -283,11 +296,14 @@ if (-not $SkipSmokeTest) {
 #
 # Both reappear every time anyone runs the staged build, so this cleanup is not one-time tidying:
 # without it, whether they ship depends on whether the last person happened to launch the game.
-foreach ($generated in @("logs", "catalyst-models")) {
+#   log.txt          the per-run log GameLog writes beside the executable. Created by the smoke
+#                    test above, and the reason a published build once shipped with 131 KB of
+#                    someone else's session in it.
+foreach ($generated in @("logs", "catalyst-models", "log.txt")) {
     $path = Join-Path $stage $generated
     if (Test-Path $path) {
         Remove-Item $path -Recurse -Force
-        Note "removed $generated/ (created by running the game)"
+        Note "removed $generated (created by running the game)"
     }
 }
 
@@ -338,3 +354,24 @@ Step "Published"
 
 Write-Host "`n   itch processes the build for a minute or two before it is downloadable." -ForegroundColor DarkGray
 Write-Host "   Set the build live on your project page if the channel is not already published." -ForegroundColor DarkGray
+
+# ── The manual is the one thing this script cannot do for you ────────────────
+#
+# butler only ever replaces builds in channels it owns, so it cannot update a file uploaded
+# through the itch web form — and a channel push arrives as an archive rather than a one-click
+# PDF, which is a worse page for a document. So the manual stays a manual step, and this is the
+# reminder that it does. package.ps1 has already rebuilt the PDF from docs/manual/*.md and staged
+# the copy named below, so the file to upload is sitting there, current, and identical to the one
+# inside the game folder.
+
+$manual = Join-Path $stage $ManualPdf
+if (Test-Path $manual) {
+    $age = (Get-Item $manual).LastWriteTime
+    Write-Host "`n   ── Still to do by hand ──────────────────────────────────────────" -ForegroundColor Yellow
+    Write-Host "   Upload the manual on the project page, replacing the previous $ManualPdf." -ForegroundColor Yellow
+    Write-Host "   The current one was rebuilt at $($age.ToString('HH:mm')) and is here:" -ForegroundColor Yellow
+    Write-Host "     $manual" -ForegroundColor Yellow
+    # The dashboard, not a constructed edit URL: itch keys project edit pages by numeric id, not
+    # by slug, so a link built from the target would 404.
+    Write-Host "   Uploads are edited from https://itch.io/dashboard" -ForegroundColor DarkGray
+}
