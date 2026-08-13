@@ -16,6 +16,27 @@ dotnet run                  # main game
 dotnet run -- --help        # all options
 ```
 
+## The player manual
+
+`docs/` holds the player manual and nothing else. `design/` (formerly `docs/`) is drafts, location
+design notes and development history — **mostly deprecated, and never a source for the manual**.
+
+The manual explains the game's **systems**, in the manner of a tabletop rulebook: how a die pool is
+assembled, what an organ score buys, what a wound costs. Not content, not the interface. It is
+derived from the code, chapter by chapter.
+
+**When a change alters a rule a player is subject to, invoke the `manual` skill** — it carries the
+style guide, the chapter map and the procedure. Do not edit `docs/manual/` freehand. Purely internal
+changes (rendering, CLI plumbing, packaging, audits, tests) touch no chapter and need nothing.
+
+`/manual-sync` reconciles the whole manual against `git diff $(cat docs/manual/.synced)..HEAD`, and
+is the right way to catch up after a run of commits rather than after each one.
+
+The Markdown is the source; `python tools/build_manual.py` typesets it into
+`docs/manual/ProscribedPalimpsest-Manual.pdf` (headless Chrome, no install beyond
+`pip install pypdf reportlab` for page numbers). All design lives in that script — never put HTML
+or styling in the chapters.
+
 ## Packaging a release
 
 ```powershell
@@ -738,7 +759,7 @@ one place `Scene` does *not* follow `SceneFactory`, which merges same-named PoIs
 
 Historical note: a corpse used to be an enterable `Spot` holding one PoI per body part, and that was
 the only content the `Spot`/`PoV.InSpot` axis ever had — no factory built one. The axis is gone.
-Nothing in `docs/` ever planned other spot content; the `# spots` sections in the location design
+Nothing in `design/` ever planned other spot content; the `# spots` sections in the location design
 docs use the word in its pre-`c3fef5a` sense, meaning what is now a `PointOfInterest`.
 
 ### Crime: what makes an act illegal, and what it costs

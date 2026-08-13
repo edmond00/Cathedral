@@ -463,3 +463,12 @@ dist/
 .Trashes
 ehthumbs.db
 Thumbs.db
+# Claude Code: the skill and the slash command are shared; the permission
+# allow-list is per-machine and per-user.
+.claude/settings.local.json
+
+# The manual's PDF is a build artifact: `python tools/build_manual.py` remakes it
+# from docs/manual/*.md, and it is rewritten whole on every build. Delete these two
+# lines if you would rather ship the typeset copy from the repo.
+docs/manual/*.pdf
+docs/manual/_html/

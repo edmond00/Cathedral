@@ -7,7 +7,7 @@ namespace Cathedral.Game.Narrative.Work;
 /// <summary>
 /// Singleton catalogue of all <see cref="Job"/>s and the map from a job-giving archetype
 /// (blacksmith, carpenter, …, reeve, farmer, hayward) to the jobs it can offer. Transcribed from
-/// <c>docs/turnips_and_radishes/economy.md</c>.
+/// <c>design/turnips_and_radishes/economy.md</c>.
 ///
 /// Job sampling is deterministic per NPC: <see cref="SampleJobs"/> seeds its RNG from the NPC id
 /// (process-stable FNV-1a, mirroring <c>NpcTradeCatalog</c>), so the same NPC always proposes the

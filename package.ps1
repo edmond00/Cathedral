@@ -95,7 +95,9 @@ $Payload = @(
 #   src/         shaders under src/terminal/Shaders are read from disk IF PRESENT and otherwise
 #                fall back to strings embedded in the renderers, so a shipped build uses the
 #                embedded copies. Keep the two in sync when editing a shader.
-#   cli/ docs/ tools/ logs/ cache/ models_old/ DEPRECATED/   development only
+#   cli/ docs/ design/ tools/ logs/ cache/ models_old/ DEPRECATED/   development only
+#                docs/ is the player manual (design/ is the drafts and development history);
+#                neither is shipped — the manual is published alongside the game, not inside it
 #   *.pdb        debug symbols; suppressed at publish rather than deleted afterwards
 
 # ── 1. Publish ───────────────────────────────────────────────────────────────
