@@ -428,6 +428,31 @@ public static class Config
 
         // Glyph scale relative to cell (1.0 = exact fit, >1.0 = slight overflow for natural look)
         public const float GlyphScale = 1.2f;
+
+        /// <summary>
+        /// Emboldening: the glyph is stroked as well as filled when rastered into the atlas, with a
+        /// pen this fraction of the raster font size wide (0 disables it). FreeMono Regular is a
+        /// hairline face — at the 35px raster its stems are ~2px, and a stem that thin does not
+        /// survive the trip to the screen. The atlas is rastered once at 35px and every cell is
+        /// then MINIFIED to whatever the window gives it (a 100x100 grid in a 1200x900 window is a
+        /// 9px cell; fullscreen on a 4K panel is ~22px), with bilinear filtering and no mipmaps.
+        /// Under heavy minification the stem is smeared across two pixels and reads as a grey
+        /// blur; under light minification it reads as the hairline it really is — which is why the
+        /// text looks THINNER in fullscreen than in a window, though it is larger there.
+        /// Thickening the raster fixes both, and it is the half that matters at large cell sizes,
+        /// where there is little partial coverage for <see cref="GlyphAlphaGamma"/> to work with.
+        /// Above ~0.04 the counters of '@', '8' and '%' start to close at small cell sizes.
+        /// </summary>
+        public const float GlyphStrokeFactor = 0.02f;
+
+        /// <summary>
+        /// Exponent applied to the glyph's alpha in the fragment shader (1.0 disables it). Below 1
+        /// it lifts the partially-covered pixels that minification produces, so an anti-aliased
+        /// stem reads as a stroke rather than as a smudge. This is the half that matters at small
+        /// cell sizes, where a stem is mostly skirt. Kept mild — pushed much below 0.7 the skirt
+        /// stops being an edge and the text turns blocky.
+        /// </summary>
+        public const float GlyphAlphaGamma = 0.75f;
     }
     
     #endregion

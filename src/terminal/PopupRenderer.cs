@@ -243,7 +243,11 @@ namespace Cathedral.Terminal
             // Set glyph scale
             int glyphScaleLoc = GL.GetUniformLocation(_program, "uGlyphScale");
             GL.Uniform1(glyphScaleLoc, Config.Terminal.GlyphScale);
-            
+
+            // Set glyph weight curve
+            int glyphGammaLoc = GL.GetUniformLocation(_program, "uGlyphGamma");
+            GL.Uniform1(glyphGammaLoc, Config.Terminal.GlyphAlphaGamma);
+
             // Bind atlas texture
             GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, _atlas.TextureId);
@@ -490,6 +494,7 @@ in vec4 vBgColor;
 
 uniform sampler2D uGlyphAtlas;
 uniform int uRenderPass;
+uniform float uGlyphGamma;
 
 out vec4 FragColor;
 
@@ -500,11 +505,13 @@ void main()
     } else {
         vec4 atlasTexel = texture(uGlyphAtlas, vUV);
         float glyphAlpha = atlasTexel.r;
-        
-        if (glyphAlpha < 0.1) {
+
+        if (glyphAlpha < 0.02) {
             discard;
         }
-        
+
+        glyphAlpha = pow(glyphAlpha, uGlyphGamma);
+
         FragColor = vec4(vTextColor.rgb, vTextColor.a * glyphAlpha);
     }
 }";

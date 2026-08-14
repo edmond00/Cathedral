@@ -241,6 +241,12 @@ namespace Cathedral.Terminal
                 fontToUse = baseFont.Family.CreateFont(adjustedSize, FontStyle.Regular);
             }
 
+            // Emboldening: stroke the outline as well as filling it. See Config.Terminal
+            // .GlyphStrokeFactor — the raster is minified to the on-screen cell, and FreeMono's
+            // hairline stems do not survive that. Scaled off the font actually used, so a glyph
+            // shrunk by its size factor is not stroked proportionally heavier than its neighbours.
+            float strokeWidth = fontToUse.Size * Cathedral.Config.Terminal.GlyphStrokeFactor;
+
             atlas.Mutate(ctx =>
             {
                 var textOptions = new RichTextOptions(fontToUse)
@@ -251,7 +257,10 @@ namespace Cathedral.Terminal
                 };
 
                 // Use white color for the glyph (we'll tint it with fragment shader)
-                ctx.DrawText(textOptions, glyph.ToString(), Color.White);
+                if (strokeWidth > 0f)
+                    ctx.DrawText(textOptions, glyph.ToString(), Brushes.Solid(Color.White), Pens.Solid(Color.White, strokeWidth));
+                else
+                    ctx.DrawText(textOptions, glyph.ToString(), Color.White);
             });
         }
 
