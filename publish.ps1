@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Uploads a packaged Proscribed Palimpsest build to itch.io with butler.
 

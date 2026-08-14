@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Builds a distributable Proscribed Palimpsest package: a folder with ProscribedPalimpsest.exe
     and everything it needs, and a zip of that folder ready to upload to itch.io.

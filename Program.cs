@@ -200,6 +200,8 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --verb-probe                       Print, per verb, the flags that reach it from a cold start (for writing cli tests) and exit");
     Console.WriteLine("  --crime-audit                      Print the crime audit (contextual verb legality, the morality choice rules,");
     Console.WriteLine("                                     enmity surviving a rebuild and a save) and exit");
+    Console.WriteLine("  --llm-probe-audit                  Re-measure every compute device (prompt-read and generate rates, cost per");
+    Console.WriteLine("                                     request) and print which one wins and why, ignoring the cached result, and exit");
     Console.WriteLine("  --help, -h                         Show this help message");
     return;
 }
@@ -330,6 +332,15 @@ if (args.Length >= 1 && args[0] == "--crime-audit")
 if (args.Length >= 1 && args[0] == "--mm-audit")
 {
     Console.WriteLine(Cathedral.Game.Narrative.ModusMentisRuleValidator.BuildAuditReport());
+    return;
+}
+
+// Compute-device audit: re-run the probe and print what it measured, ignoring the cached answer.
+// The decision used to be invisible — a wrong one showed up as a game that sat on its loading bar,
+// with nothing in the log to say the GPU had been picked on a rate that did not matter.
+if (args.Length >= 1 && args[0] == "--llm-probe-audit")
+{
+    Console.WriteLine(Cathedral.LLM.LlamaProbe.BuildAuditReport());
     return;
 }
 

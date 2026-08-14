@@ -1656,6 +1656,33 @@ but it keeps the cost of that design visible, and makes the next anatomy's pover
 
 Run it after adding a verb, a connector type, or a batch of scene content.
 
+### Checking which compute device the LLM will run on
+
+`--llm-probe-audit` re-runs the first-launch hardware probe and prints the whole comparison, ignoring
+the cached answer and writing nothing back:
+
+```bash
+dotnet run -- --llm-probe-audit
+```
+
+It benchmarks the CPU and every installed GPU backend on **both halves of inference** and prints a
+table of prompt-read rate, generation rate and the derived cost of one representative request, then
+the verdict and the margin. When the CPU wins despite a GPU generating faster, it says so explicitly.
+
+**Both rates matter, and the game is prompt-heavy.** Cathedral answers several-hundred-token prompts
+with a handful of tokens — a persona choice is 4, a critic 20–60 — so prompt processing is most of
+the wait. `LlamaProbe` scores candidates on `WorkloadPromptTokens`/`WorkloadGenTokens` (400/80)
+rather than on either rate alone, and a GPU must beat the CPU by `RequiredGpuSpeedup` to be chosen at
+all, because the GPU path has strictly more ways to fail.
+
+That weighting is not theoretical. A Qualcomm Adreno X1-45 generates at 11.9 tok/s against the same
+machine's CPU at 5.4 — a clear win — while reading prompts at **1.1 tok/s**, twelve times slower than
+that CPU. Scoring generation alone picked Vulkan, and the game then sat on its loading bar
+indefinitely: nothing errored, nothing timed out, the first 495-token batch simply never finished.
+
+Run it after touching `LlamaProbe`, and on any machine where the game is inexplicably slow to
+generate — this is the report that says whether it picked the wrong device and by how much.
+
 ### Checking buildings, scenes and NPC schedules
 
 `--building-audit` generates every location type across 60 location ids and checks the structural

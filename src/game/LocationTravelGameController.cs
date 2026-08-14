@@ -2032,6 +2032,11 @@ public class LocationTravelGameController : IDisposable
             }
             _llmLoadingRenderer.Update(progress, status);
         }
+
+        // Released only now, with the screen composed: the hardware probe waits for this so its
+        // benchmarks run in front of a player who can see what they are for. Last in the method, so
+        // the frame is built before the probe starts competing for the CPU.
+        _llamaServer?.NotifyLoadingScreenVisible();
     }
 
     private void OnEnterMainMenu()

@@ -287,10 +287,22 @@ public class LlamaServerManager : IDisposable
             try { LLMLogger.LogServerInitStart(modelName, resolvedServerPath, resolvedModelPath); } catch { }
 
             // First run on this machine (or the model changed): measure what to run on.
+            //
+            // Held until the loading screen is up. The probe runs two benchmarks that together take
+            // minutes on a slow device, and it used to start before there was a window at all —
+            // so the most expensive wait in the game happened with nothing on screen to explain it,
+            // and then continued behind a screen that said "Loading language model" while no model
+            // was loading. Gated, every second of it is in front of a player who has been told.
+            //
+            // Asked first, because waiting is only free on the runs that would actually probe;
+            // on every other run this would delay the server for a screen it does not need.
+            if (LlamaProbe.IsProbeNeeded())
+                await WaitForLoadingScreenAsync();
+
             // On a thread of its own because the probe is synchronous and can run a benchmark,
             // while this method is deliberately started without being awaited — everything before
             // its first await would otherwise run on the caller's thread, which is the UI's.
-            await Task.Run(() => LlamaProbe.EnsureProbed());
+            await Task.Run(() => LlamaProbe.EnsureProbed(ReportProbeStage));
 
             // Start the server, stepping down the ladder if a device fails.
             var isReady = await StartWithFallbackAsync(resolvedServerPath, resolvedModelPath);
@@ -1804,6 +1816,43 @@ public class LlamaServerManager : IDisposable
         {
             UpdateLoadingStage(0.95f, "Server ready, waiting for first request...");
         }
+    }
+
+    /// <summary>
+    /// How long the probe will wait for the loading screen before going ahead without it. The gate
+    /// is a courtesy, not a dependency: a UI path that never reaches <c>LLMLoading</c> must not be
+    /// able to leave the language model unstarted forever.
+    /// </summary>
+    private const int LoadingScreenWaitMs = 20_000;
+
+    private readonly TaskCompletionSource<bool> _loadingScreenVisible =
+        new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    /// <summary>
+    /// Told by the UI that the loading screen is on screen, releasing the hardware probe. Safe to
+    /// call more than once and from any thread; only the first call does anything.
+    /// </summary>
+    public void NotifyLoadingScreenVisible() => _loadingScreenVisible.TrySetResult(true);
+
+    private async Task WaitForLoadingScreenAsync()
+    {
+        UpdateLoadingStage(0.01f, "Preparing...");
+        var completed = await Task.WhenAny(_loadingScreenVisible.Task, Task.Delay(LoadingScreenWaitMs));
+        if (completed != _loadingScreenVisible.Task)
+            Console.WriteLine("Loading screen did not appear in time; probing anyway.");
+    }
+
+    /// <summary>
+    /// Publishes one line of probe commentary. Unlike <see cref="UpdateLoadingStage"/> this does not
+    /// ratchet progress: nothing is loading yet, and claiming otherwise would put the bar most of
+    /// the way along before the model has been opened. The message and the spinner carry it instead.
+    /// </summary>
+    private void ReportProbeStage(string status)
+    {
+        _loadingStatusMessage = status;
+        var elapsed = _loadingStartTime != DateTime.MinValue
+            ? (DateTime.Now - _loadingStartTime).TotalSeconds : 0;
+        LoadingProgressUpdated?.Invoke(this, new LoadingProgressEventArgs(_loadingProgress, status, elapsed));
     }
 
     private void UpdateLoadingStage(float minProgress, string status)
