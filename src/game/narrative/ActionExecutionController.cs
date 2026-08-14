@@ -561,6 +561,21 @@ public class ActionExecutionController
         // the historical ones a character was generated with.
         var target = action.PreselectedOutcome?.Target;
         var template = action.Verb.SampleFailurePenalty(target, _rng);
+
+        // Verbs author their penalties as HUMAN wounds — a turned ankle, a cut hand, a broken foot —
+        // and the acting member need not be human: a beast narrates and acts for itself after a
+        // Speak-About hand-off. A wound the body does not own penalises nothing (every Affects*
+        // query misses an organ part the anatomy lacks) and is captured into the save verbatim,
+        // where PartyState.Rebuild refuses it and loses the run. So the miss costs no injury rather
+        // than an injury that is not there. Deliberately not translated to a beast equivalent: the
+        // verb named one wound, and inventing a counterpart for it is content, not plumbing.
+        if (template != null && !WoundRegistry.CanBeSufferedBy(template, ActingMember))
+        {
+            Console.WriteLine($"💥 [FAILURE PENALTY] {template.WoundName} is not a wound "
+                + $"{ActingMember.DisplayName} ({ActingMember.AnatomyType}) can suffer — no injury.");
+            template = null;
+        }
+
         WoundInstance? wound = template != null ? WoundInstance.Inflicted(template) : null;
         Console.WriteLine(wound != null
             ? $"💥 [FAILURE PENALTY] {wound.WoundName} ({WoundLocationLabel(wound)}, {wound.Handicap})"

@@ -206,8 +206,25 @@ public class LocationTravelGameController : IDisposable
         : _dialogueAdapter != null ? GameMode.Dialogue
         : _workAdapter != null   ? GameMode.Working
         : _tradeAdapter != null  ? GameMode.Trading
-        : _isInNarrativeMode     ? GameMode.LocationInteraction
+        // Narration covers THREE phases — exploration, childhood and get-up — all of which run on
+        // one _narrativeController with _isInNarrativeMode set. Returning a flat LocationInteraction
+        // for all three is what made the pause menu unusable before the world opens: resuming from
+        // childhood would have entered exploration's mode with childhood's controller underneath.
+        : _isInNarrativeMode     ? _narrativePhase
+        // Not narration, but still not the world: the creation screen and the encounter box are
+        // both full-screen phases the player is in the middle of, each identified by the live
+        // object that draws it.
+        : _protagonistCreationRenderer != null ? GameMode.ProtagonistCreation
+        : _pendingEncounterNpc != null         ? GameMode.EncounterPrompt
         :                          GameMode.WorldView;
+
+    /// <summary>
+    /// Which of the three narrative phases <see cref="_narrativeController"/> is currently running.
+    /// Only meaningful while <see cref="_isInNarrativeMode"/> — the phases are otherwise
+    /// indistinguishable, because they share one controller and differ only in the scene they were
+    /// built from and in which "finished" flag ends them.
+    /// </summary>
+    private GameMode _narrativePhase = GameMode.LocationInteraction;
 
     /// <summary>
     /// ESC in a fight: cancel whatever the player has armed. Returns false when there was nothing
@@ -2953,9 +2970,36 @@ public class LocationTravelGameController : IDisposable
     /// protagonist creation. Reuses the same NarrativeController pipeline as exploration but
     /// with a Reminescence-phase scene.
     /// </summary>
+    /// <summary>
+    /// True when this phase is already running and the mode change is a <b>resume</b> from the pause
+    /// menu rather than a start. Restores the display and leaves the live controller alone.
+    ///
+    /// <para>The phases whose <c>OnEnter</c> builds a scene are not idempotent — a second build
+    /// throws the first away, and with it everything the player did in the phase. Exploration
+    /// carries the same guard inline (<see cref="OnEnterLocationInteraction"/>).</para>
+    /// </summary>
+    private bool ResumeLiveNarrativePhase()
+    {
+        if (!_isInNarrativeMode || _narrativeController == null) return false;
+
+        Console.WriteLine($"LocationTravelGameController: resuming live {_currentMode} phase");
+        _core.SetNarrationMode(true);
+        _core.SetWorldInteractionsEnabled(false);
+        _interface.SetWorldInteractionsEnabled(false);
+        if (_core.Terminal != null) _core.Terminal.Visible = true;
+        return true;
+    }
+
     private void OnEnterChildhoodReminescence()
     {
         Console.WriteLine("LocationTravelGameController: Entered ChildhoodReminescence mode");
+
+        // Resuming from the pause menu, not starting. Building a second scene here would restart
+        // childhood from its first reminescence, discarding whatever the player had already
+        // recovered — which is what the whole phase is for. Exploration has always had this guard
+        // (OnEnterLocationInteraction returns early on _isInNarrativeMode); childhood needed one
+        // the moment Escape could reach the menu from it.
+        if (ResumeLiveNarrativePhase()) return;
 
         // --skip-childhood: random-walk the reminescence catalog, apply outcomes
         // directly to the protagonist, then jump straight to WorldView (bypassing
@@ -3033,6 +3077,7 @@ public class LocationTravelGameController : IDisposable
                 _ambianceEngine);
 
             _isInNarrativeMode = true;
+            _narrativePhase    = GameMode.ChildhoodReminescence;
             _interface.SetWorldInteractionsEnabled(false);
             _core.SetWorldInteractionsEnabled(false);
             _narrativeController.StartObservationPhase();
@@ -3057,6 +3102,10 @@ public class LocationTravelGameController : IDisposable
     private void OnEnterGetUp()
     {
         Console.WriteLine("LocationTravelGameController: Entered GetUp mode");
+
+        // Resuming from the pause menu — see OnEnterChildhoodReminescence.
+        if (ResumeLiveNarrativePhase()) return;
+
         _core.SetNarrationMode(true);
         _core.SetWorldInteractionsEnabled(false);
         _interface.SetWorldInteractionsEnabled(false);
@@ -3112,6 +3161,7 @@ public class LocationTravelGameController : IDisposable
                 _ambianceEngine);
 
             _isInNarrativeMode = true;
+            _narrativePhase    = GameMode.GetUp;
             _interface.SetWorldInteractionsEnabled(false);
             _core.SetWorldInteractionsEnabled(false);
             _narrativeController.StartObservationPhase();
@@ -3279,6 +3329,7 @@ public class LocationTravelGameController : IDisposable
             
             // Mark as active
             _isInNarrativeMode = true;
+            _narrativePhase    = GameMode.LocationInteraction;
             _currentLocationVertex = vertexIndex;
             
             // Disable world map interactions while narration UI is active
@@ -3344,20 +3395,133 @@ public class LocationTravelGameController : IDisposable
     public void CliSaveErase() => Cathedral.Game.Save.SaveFile.Delete();
 
     /// <summary>
-    /// Opens the pause menu, as Escape does.
+    /// Everything Escape does, for every mode, in one place. The launcher's key hook calls this and
+    /// so does the CLI's <c>pause</c>.
     ///
-    /// <para>Needed because Escape is handled in the launcher's own key hook rather than in
-    /// <c>OnKeyDown</c>, so <c>key escape</c> from a script never reaches it and the main menu is
-    /// unreachable under <c>--cli</c> — which makes everything on it (New, Continue, and whether
-    /// either is enabled) untestable. This is the plain case of that handler: every mode that is not
-    /// already the menu opens it as an overlay, and <c>MenuReturnMode</c> is what comes back.</para>
+    /// <para><b>Why it lives here rather than in the key hook.</b> It used to be a chain of
+    /// <c>else if</c>s in <c>LocationTravelModeLauncher</c>, with the CLI keeping a second,
+    /// simplified copy of the rule ("anything that is not the menu opens the menu"). Two copies of a
+    /// mode list is a test that cannot fail: <c>pause</c> opened the menu during childhood
+    /// reminescence, so a script saw a working pause menu in a phase where a player pressing Escape
+    /// got nothing at all. One method, called by both, is what makes <c>pause</c> a test of Escape
+    /// rather than a test of a paraphrase of Escape.</para>
+    ///
+    /// <para><b>Every mode is listed, including the ones that do nothing.</b> The gap this replaced
+    /// was a mode nobody had thought about, not a mode somebody had decided against — so silence is
+    /// not allowed to mean "no". A phase that should not reach the menu says so and says why.</para>
+    ///
+    /// <para>Returns whether Escape did anything, which is what <c>pause</c> reports.</para>
     /// </summary>
-    public bool CliOpenPauseMenu()
+    public bool HandleEscape()
     {
-        if (_currentMode == GameMode.MainMenu) return true;
+        switch (_currentMode)
+        {
+            // ── Escape backs out of something first, and only then pauses ──────────────────
+
+            // A fight backs out of whatever is armed — a selected skill, a move target. With
+            // nothing armed it pauses like everything else; Fighting used to be the one mode with
+            // no way to the menu at all.
+            case GameMode.Fighting:
+                if (CliTryCancelFightSelection())
+                {
+                    Console.WriteLine("ESC pressed - cancelled fight selection");
+                    return true;
+                }
+                return OpenPauseMenu("fight");
+
+            // The three narrative phases. A popup closes first; otherwise the menu opens as an
+            // OVERLAY, without tearing narration down — leaving a scene is the footer LEAVE
+            // button's job, and childhood and get-up have no way out at all until they end.
+            case GameMode.LocationInteraction:
+            case GameMode.ChildhoodReminescence:
+            case GameMode.GetUp:
+                if (CloseNarrativePopup())
+                {
+                    Console.WriteLine("ESC pressed - closed thinking modusMentis popup");
+                    return true;
+                }
+                return OpenPauseMenu("narration");
+
+            // ── Escape pauses, leaving the phase running underneath ───────────────────────
+
+            // None of these are cancelled by pausing: walking out of a conversation is the footer
+            // INTERRUPT button, closing a work or trade session is that menu's LEAVE button, and
+            // the encounter is still waiting to be engaged when the menu is dismissed.
+            case GameMode.Dialogue:        return OpenPauseMenu("dialogue");
+            case GameMode.Working:         return OpenPauseMenu("work menu");
+            case GameMode.Trading:         return OpenPauseMenu("trade menu");
+            case GameMode.EncounterPrompt: return OpenPauseMenu("encounter");
+            case GameMode.WorldView:       return OpenPauseMenu("world");
+
+            // Creation is not a running phase, but it is a screen a player can be stuck on: the
+            // menu is the only place with an Exit button, so without this there is no way to quit
+            // the game from it. Nothing is lost by pausing — the allocation lives on the
+            // protagonist, not in the renderer, so resuming rebuilds the same screen.
+            case GameMode.ProtagonistCreation: return OpenPauseMenu("protagonist creation");
+
+            // ── Escape goes back one screen ───────────────────────────────────────────────
+
+            // Both are opened FROM the main menu and both have a Back button; Escape is the same
+            // press. Settings had no Escape at all, which on a screen whose only exit is one small
+            // button reads as a freeze.
+            case GameMode.ProtagonistManagement:
+            case GameMode.Settings:
+                Console.WriteLine($"ESC pressed - closing {_currentMode}");
+                SetMode(GameMode.MainMenu);
+                return true;
+
+            // ── Escape closes the menu again ──────────────────────────────────────────────
+
+            case GameMode.MainMenu:
+                // Resume whatever the menu was opened over. Before a run has started there is
+                // nothing to resume into, so Escape is inert rather than dropping into an empty
+                // world.
+                if (!_hasGameStarted) return false;
+                Console.WriteLine($"ESC pressed - closing main menu, resuming {MenuReturnMode}");
+                SetMode(MenuReturnMode);
+                return true;
+
+            // ── Deliberately nothing, and why ─────────────────────────────────────────────
+
+            // Nothing to pause and nowhere to go: the menu is not built yet and the model still
+            // has to load whatever the player would do next.
+            case GameMode.LLMLoading:
+                return false;
+
+            // A few seconds of avatar animation that ends by itself. Pausing it would have to
+            // either freeze the journey or abandon it, and neither is worth a mode.
+            case GameMode.Traveling:
+                return false;
+
+            // Death funnels through END RUN on purpose: that button is what clears HasGameStarted,
+            // and reaching the menu around it would leave Continue lit over a dead character. The
+            // save is already erased by TriggerDeath, so nothing is at stake in the extra click.
+            case GameMode.Death:
+                return false;
+
+            // The standalone --dialogue demo launcher, which has no menu behind it.
+            case GameMode.DialogueDemo:
+                return false;
+        }
+
+        return false;
+    }
+
+    /// <summary>Opens the menu over a still-running phase, naming what it was opened over.</summary>
+    private bool OpenPauseMenu(string over)
+    {
+        Console.WriteLine($"ESC pressed - opening pause menu over {over}");
         SetMode(GameMode.MainMenu);
         return _currentMode == GameMode.MainMenu;
     }
+
+    /// <summary>
+    /// The CLI's <c>pause</c>. Escape is handled in the launcher's own key hook rather than in
+    /// <c>OnKeyDown</c>, so <c>key escape</c> from a script never reaches it — this is the same
+    /// call the hook makes, which is what lets a script assert the pause menu is reachable from a
+    /// phase at all.
+    /// </summary>
+    public bool CliOpenPauseMenu() => _currentMode == GameMode.MainMenu || HandleEscape();
 
     /// <summary>
     /// Presses the death screen's END RUN button. The same two writes the click handler makes, so a

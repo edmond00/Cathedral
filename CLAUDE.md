@@ -191,7 +191,7 @@ restores it.
 
 What a player keeps: **arrows** rotate, **Space** re-centres on the protagonist, **Escape** opens
 the pause menu and closes narration popups. Escape is never gated — without it there is no way out
-of a scene.
+of a scene. See "Escape, and the phases it must answer" below for what it does per phase.
 
 Two things to keep in mind when touching that keyboard:
 
@@ -202,6 +202,44 @@ Two things to keep in mind when touching that keyboard:
 - **`--no-developer-keys` makes a development build behave like a shipped one.** Keys cannot be
   driven by `--cli` at all, so this flag plus the `Developer keys: …` line printed at startup is
   the only way to check the shipped keyboard without building and hand-testing a shipped exe.
+
+### Escape, and the phases it must answer
+
+**`LocationTravelGameController.HandleEscape` is the whole rule, and every `GameMode` is listed in
+it — including the ones that deliberately do nothing.** The main menu is the only screen carrying an
+Exit button, so a phase Escape does not answer is a phase from which the game cannot be quit; and
+the gap this replaced was a phase nobody had thought about rather than one somebody had decided
+against. Silence is therefore not allowed to mean "no": a mode that should not reach the menu says
+so, and says why.
+
+| | Escape |
+|---|---|
+| Fighting | cancels the armed skill or move target; pauses when nothing is armed |
+| LocationInteraction, ChildhoodReminescence, GetUp | closes the thinking popup; otherwise pauses **as an overlay**, leaving narration standing |
+| Dialogue, Working, Trading, EncounterPrompt, WorldView | pauses. None of them is cancelled by it — walking out is the footer INTERRUPT / LEAVE / ENGAGE button's job |
+| ProtagonistCreation | pauses. Not a running phase, but a screen with no other way off it |
+| ProtagonistManagement, Settings | back to the main menu — the same press as their Back button |
+| MainMenu | resumes `MenuReturnMode`, or nothing at all before a run has started |
+| LLMLoading, Traveling, Death, DialogueDemo | **nothing, on purpose** — see the reasons on each case |
+
+Three things that had to move with it, and each was its own bug:
+
+- **The CLI's `pause` calls `HandleEscape`.** It used to carry a second, simplified copy of the rule
+  ("anything that is not the menu opens the menu"), which is a test that cannot fail: `pause` opened
+  the menu during childhood reminescence, so a script saw a working pause menu in the one phase
+  where a player pressing Escape got nothing. Two copies of a mode list means the CLI is testing a
+  paraphrase. `cli/system/pause_early_phases.cli` and `pause_later_phases.cli` walk the phases a
+  script can reach.
+- **`MenuReturnMode` covers the narrative phases separately.** Exploration, childhood and get-up all
+  run on one `_narrativeController` with `_isInNarrativeMode` set, and are otherwise
+  indistinguishable — so the flat `LocationInteraction` it used to return would have resumed
+  childhood *into exploration's mode*. `_narrativePhase` records which of the three is live. Two
+  more phases are derived from the object that draws them: `_protagonistCreationRenderer` and
+  `_pendingEncounterNpc`.
+- **`OnEnter…` must distinguish resuming from starting.** Every phase whose `OnEnter` builds a scene
+  throws the previous one away on a second entry — so resuming childhood from the menu would have
+  restarted it from its first reminescence. `ResumeLiveNarrativePhase` is that guard, and it is the
+  same one `OnEnterLocationInteraction` has always carried inline.
 
 **The payload is an allow-list.** Only paths named in `$Payload` are copied, and a missing required
 one fails the build before anything is archived. The tempting alternative — copy the repo, delete
@@ -740,6 +778,26 @@ Only Low and Medium wounds heal, over `wound_healing` days (100–1000, from the
 age: nothing to keep in sync, and correct whenever it happens to be read. The sweep runs on entry to
 the world view, before the old-age check — healing restores HP and lifetime is wound-aware, so a
 heart wound that closed on the journey must not still be counted a line later.
+
+**A wound belongs to an anatomy, and every path that puts one on a body must ask first.**
+`WoundRegistry.CanBeSufferedBy` is that question — the wound counterpart of
+`ModusMentisAnatomy.IsLearnableBy`, matched by **type**, never by `WoundId`, which collides across
+anatomies by design. `WoundRegistry.All` is the *human* catalogue; each anatomy factory owns its own
+through `GetWoundClassMap`, and a beast has no knee, no fingers and not even a `ScarWound`.
+
+The reason it is a rule and not a nicety is that the failure is silent twice over. A human wound on
+a beast **penalises nothing** — every `Affects*` query misses an organ part the anatomy lacks, so it
+costs the one hit point any wound costs and reads, if anyone looks, as a lame leg on an animal with
+no knees. It then goes into the save verbatim, and `PartyState.Rebuild` resolves wounds against the
+body's **own** catalogue and fails closed: one such wound, taken at generation and never noticed,
+makes the whole save unloadable a dozen sessions later.
+
+That is not hypothetical. Global personality traits are dealt to every anatomy and eight of the
+sixty carry a human wound, so roughly **one beast in four** was given one; taming it and saving cost
+the run. `PersonalityTrait.ApplyGameplay` now refuses the wound and logs it, exactly as
+`NpcSkillGrant` refuses an unlearnable skill — expected for a global trait, a content fault for an
+archetype's own, which `--npc-audit` names. There is deliberately no translation to a beast
+equivalent: nothing sensibly maps a missing finger onto a wolf.
 
 ### Verbs, actions and outcomes — the three types, and what each is for
 
@@ -1547,10 +1605,23 @@ same person will differ between visits.
 It also checks that every trait's modus-mentis and organ-part ids resolve (a typo grants nothing,
 silently), that the pools are the intended 60 global + 6 per archetype with no duplicate ids, that
 every skill is filed in a memory module and within its organ-derived cap, that no NPC holds a skill
-its own anatomy cannot learn, that no **archetype-specific** trait offers one (a shepherd trait
-reaching for a beast's scenting teaches nothing — global traits are exempt, being dealt to every
-anatomy), and that sex agrees with the genitories score. It finishes with one fully-generated NPC printed in full, which is the quickest
+its own anatomy cannot learn, that no NPC carries a **wound** its own anatomy does not own, that no
+**archetype-specific** trait offers either (a shepherd trait reaching for a beast's scenting teaches
+nothing — global traits are exempt, being dealt to every anatomy), and that sex agrees with the
+genitories score. It finishes with one fully-generated NPC printed in full, which is the quickest
 way to see whether a trait you just wrote actually reads well on a person.
+
+**Beasts are a second pass, and they are where the anatomy checks earn their keep.** The main sample
+is `SpeakingArchetypes`, a hand-written list of humans, so for a long time the audit generated no
+animal at all — and every anatomy check above was therefore asking a question it could not fail.
+`CheckBeasts` runs the same per-individual checks over every non-human archetype, **found by
+reflection** so a new animal is covered the day it is written. It was vacuous by construction until
+a beast was in the sample: disabling the wound filter turns up 12 warnings across the seven animals,
+which is the way to confirm the check still bites after touching it.
+
+Two things differ for an animal and are handled rather than warned about: a beast archetype has no
+trait pool of its own, so it is dealt the global draw alone (the trait-count check reads the pool
+size rather than a constant), and it carries nothing, so the table drops the items column.
 
 Run it after touching `NpcContentGenerator`, any archetype's generation block, or any trait.
 

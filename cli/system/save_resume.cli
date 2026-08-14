@@ -46,7 +46,7 @@ expect-no-state savefile locations=0
 #
 # The main menu is not reachable from the world map by itself. Escape opens it for a player, but that
 # key is handled in the launcher's own hook rather than in OnKeyDown, so `key escape` never reaches
-# it — hence `pause`, which is the same SetMode the handler makes.
+# it — hence `pause`, which calls the very same HandleEscape the hook does.
 pause
 wait mode MainMenu 20
 inspect menu

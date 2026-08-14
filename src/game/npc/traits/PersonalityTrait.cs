@@ -121,8 +121,26 @@ public class PersonalityTrait
         // HISTORICAL, not inflicted: a trait wound is part of who this person is — the shepherd's
         // scar, the smith's deafness — and must never heal off. Stamping these with the current day
         // instead would quietly erase every NPC's backstory after one long work stint.
-        foreach (var wound in Wounds)
-            body.Wounds.Add(WoundInstance.Historical(wound()));
+        //
+        // Refused when the body does not own the wound, exactly as NpcSkillGrant refuses a skill the
+        // anatomy cannot learn. Expected, not exceptional: global traits are dealt to every anatomy,
+        // and eight of the sixty carry a human wound, so a quarter of every beast in the game used to
+        // be given one. It is inert in play — a wolf's broken knee penalises nothing — which is why
+        // it went unnoticed until it reached a save file, where PartyState.Rebuild resolves against
+        // the beast catalogue, finds no such wound and refuses the whole load. An archetype's OWN
+        // trait naming the wrong anatomy is the real fault, and --npc-audit reports that one by name.
+        foreach (var factory in Wounds)
+        {
+            var wound = factory();
+            if (!WoundRegistry.CanBeSufferedBy(wound, body))
+            {
+                Console.WriteLine(
+                    $"PersonalityTrait '{TraitId}': {body.DisplayName} ({body.AnatomyType}) cannot "
+                    + $"suffer '{wound.WoundName}' — not applied.");
+                continue;
+            }
+            body.Wounds.Add(WoundInstance.Historical(wound));
+        }
 
         foreach (var item in Items)
             NpcBelongings.Give(body, item());

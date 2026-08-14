@@ -29,7 +29,36 @@ public static class WoundRegistry
     /// </para>
     /// </summary>
     public static IEnumerable<Wound> ForAnatomy(PartyMember member)
-        => AnatomyFactoryRegistry.GetFactory(member.AnatomyType).GetWoundClassMap().Values;
+        => ForAnatomy(member.AnatomyType);
+
+    /// <inheritdoc cref="ForAnatomy(PartyMember)"/>
+    public static IEnumerable<Wound> ForAnatomy(AnatomyType anatomy)
+        => AnatomyFactoryRegistry.GetFactory(anatomy).GetWoundClassMap().Values;
+
+    /// <summary>
+    /// True when <paramref name="anatomy"/> owns <paramref name="wound"/> — the wound counterpart of
+    /// <see cref="ModusMentisAnatomy.IsLearnableBy(ModusMentis, AnatomyType)"/>, and the question
+    /// every path that puts a wound on a body must ask first.
+    ///
+    /// <para>
+    /// A wound its anatomy does not own is <b>not a wound</b>. <c>KneeFractureRightWound</c> targets
+    /// an organ part no beast has, so on a wolf every <c>Affects*</c> query misses and the injury
+    /// costs one hit point and nothing else — a lame leg on an animal with no knees, invisible in
+    /// play and impossible to explain. Worse, it is written into the save verbatim, and
+    /// <c>PartyState.Rebuild</c> resolves wounds against the body's <i>own</i> catalogue and fails
+    /// closed: one such wound makes the whole save unloadable, long after the run that produced it.
+    /// </para>
+    ///
+    /// <para>Matched by type rather than by <see cref="Wound.WoundId"/>, which collides across
+    /// anatomies by design — the same char is a human wound in one catalogue and a beast wound in
+    /// the other, so an id comparison would call every mismatch a match.</para>
+    /// </summary>
+    public static bool CanBeSufferedBy(Wound wound, AnatomyType anatomy)
+        => ForAnatomy(anatomy).Any(w => w.GetType() == wound.GetType());
+
+    /// <inheritdoc cref="CanBeSufferedBy(Wound, AnatomyType)"/>
+    public static bool CanBeSufferedBy(Wound wound, PartyMember member)
+        => CanBeSufferedBy(wound, member.AnatomyType);
 
     private static Dictionary<char, Wound> BuildRegistry()
     {

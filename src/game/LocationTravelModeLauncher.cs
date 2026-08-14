@@ -335,75 +335,12 @@ public static class LocationTravelModeLauncher
         {
             if (args.Key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.Escape)
             {
-                if (gameController?.CurrentMode == GameMode.Fighting)
-                {
-                    // ESC during a fight backs out of whatever is armed first — a selected skill,
-                    // a move target. When nothing is armed it opens the pause menu, exactly like
-                    // every other mode. Fighting used to be the one mode with no way to the menu.
-                    if (gameController is LocationTravelGameController ltgc
-                        && !ltgc.CliTryCancelFightSelection())
-                    {
-                        Console.WriteLine("ESC pressed - opening pause menu over fight");
-                        gameController.SetMode(GameMode.MainMenu);
-                    }
-                }
-                else if (gameController?.CurrentMode == GameMode.Dialogue)
-                {
-                    // ESC during dialogue: pause overlay, exactly like narration — the conversation
-                    // is NOT interrupted (walking away is the footer INTERRUPT button's job) and
-                    // resumes when the menu is dismissed (see MenuReturnMode).
-                    Console.WriteLine("ESC pressed - opening pause menu over dialogue");
-                    gameController.SetMode(GameMode.MainMenu);
-                }
-                else if (gameController?.CurrentMode == GameMode.Working
-                         || gameController?.CurrentMode == GameMode.Trading)
-                {
-                    // ESC during the work/trade menu: pause overlay, exactly like narration — the
-                    // session is NOT cancelled (leaving is the menu's LEAVE button's job) and
-                    // resumes when the menu is dismissed (see MenuReturnMode).
-                    Console.WriteLine($"ESC pressed - opening pause menu over {gameController.CurrentMode} menu");
-                    gameController.SetMode(GameMode.MainMenu);
-                }
-                else if (gameController?.CurrentMode == GameMode.MainMenu)
-                {
-                    // ESC in main menu: resume where the menu was opened from (pause-overlay return —
-                    // narration or world). Do nothing before the game has started.
-                    if (gameController is LocationTravelGameController ltgc && ltgc.HasGameStarted)
-                    {
-                        Console.WriteLine($"ESC pressed - closing main menu, resuming {ltgc.MenuReturnMode}");
-                        gameController.SetMode(ltgc.MenuReturnMode);
-                    }
-                }
-                else if (gameController?.CurrentMode == GameMode.ProtagonistManagement)
-                {
-                    // ESC in management menu: return to main menu
-                    Console.WriteLine("ESC pressed - closing management menu");
-                    gameController.SetMode(GameMode.MainMenu);
-                }
-                else if (gameController?.CurrentMode == GameMode.LocationInteraction)
-                {
-                    // Check if in Phase 6 mode with popup open
-                    if (gameController is LocationTravelGameController ltgc)
-                    {
-                        // First try to close popup
-                        if (ltgc.CloseNarrativePopup())
-                        {
-                            Console.WriteLine("ESC pressed - closed thinking modusMentis popup");
-                            return; // Don't exit location, just close popup
-                        }
-
-                        // No popup open: open the main menu as a pause overlay WITHOUT tearing down
-                        // narration. Leaving the scene is done via the in-narration LEAVE/RUNAWAY button.
-                        Console.WriteLine("ESC pressed - opening pause menu over narration");
-                        gameController.SetMode(GameMode.MainMenu);
-                    }
-                }
-                else if (gameController?.CurrentMode == GameMode.WorldView)
-                {
-                    // ESC in world view: open main menu
-                    Console.WriteLine("ESC pressed - opening main menu");
-                    gameController.SetMode(GameMode.MainMenu);
-                }
+                // The whole rule lives in HandleEscape, which is also what the CLI's `pause`
+                // calls. It used to be a chain of else-ifs right here, testing one mode per
+                // branch — so a phase nobody had listed simply swallowed the key, and the CLI's
+                // separate copy of the rule could not notice. See HandleEscape for the per-mode
+                // table, including the modes that deliberately do nothing.
+                gameController?.HandleEscape();
             }
             // F11 is a player control, like Escape, and is never gated by DeveloperKeys: a shipped
             // build that could enter fullscreen and not leave it would be worse than one with no

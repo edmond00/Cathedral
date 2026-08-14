@@ -1,0 +1,44 @@
+# The pause menu must be reachable from EVERY phase a player can be sitting in. The main menu is the
+# only screen carrying an Exit button, so a phase Escape does not answer is a phase from which the
+# game cannot be quit at all.
+#
+# This covers the two phases BEFORE the world opens, which is where the gap was: childhood
+# reminescence swallowed Escape outright. It was untestable as well as broken, because the CLI kept
+# its own simplified copy of the rule ("anything that is not the menu opens the menu") — so `pause`
+# reported a working pause menu in a phase where the key did nothing. `pause` now calls the same
+# HandleEscape the launcher's key hook does, which is what makes this script an assertion about
+# Escape rather than about a paraphrase of it.
+#
+# Deliberately NO --skip-childhood: this script is about the phases that flag skips over.
+#
+# FLAGS: --playground --debug --seed 42 --no-encounters --silent --no-save
+
+wait
+click menu New
+
+# ── Protagonist creation ──────────────────────────────────────────────────────
+# Not a running phase, but a screen a player can be stuck on for a long time. Pausing must cost
+# nothing: the allocation lives on the protagonist, not in the renderer, so Continue rebuilds the
+# same screen rather than dropping into the world.
+wait mode ProtagonistCreation 20
+pause
+wait mode MainMenu 20
+expect-state menu Continue enabled
+click menu Continue
+wait mode ProtagonistCreation 20
+
+# ── Childhood reminescence ────────────────────────────────────────────────────
+# The reported bug: Escape did nothing here at all.
+click continue
+wait mode ChildhoodReminescence 90
+pause
+wait mode MainMenu 20
+
+# And the other half of it — resuming must return to childhood rather than to the world, and must
+# RESUME it rather than rebuild it. MenuReturnMode read a flat LocationInteraction for all three
+# narrative phases, and OnEnterChildhoodReminescence built a second scene on every entry, which
+# together would have restarted childhood from its first reminescence.
+click menu Continue
+wait mode ChildhoodReminescence 30
+
+quit
