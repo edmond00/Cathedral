@@ -1,0 +1,42 @@
+llama.cpp build: b8851
+commit:          e365e658f
+toolchain:       Clang 19.1.5, Windows x86_64
+upstream zip:    llama-b8851-bin-win-cpu-x64.zip
+license:         MIT (https://github.com/ggml-org/llama.cpp/blob/master/LICENSE)
+
+This file is READ BY THE GAME. LlamaRuntime parses the first line to check that any backend
+pack under backends/ was built from the same revision, so keep the "llama.cpp build: bNNNN"
+format if you update this folder.
+
+Mixing backend DLLs across build numbers does not fail cleanly — ggml-base.dll and a backend
+from different revisions share a C++ ABI that is not stable between them, so the symptom is a
+crash inside the backend with no diagnostic. That check exists to turn that into a message.
+
+── what was kept, and why ────────────────────────────────────────────────────────────────
+
+This is a pruned copy of the upstream release. The full zip ships ~20 executables; a game
+needs two, and every extra unsigned .exe is another SmartScreen/antivirus prompt for a player.
+
+kept:
+  llama-server.exe        the only thing the game actually runs
+  llama-bench.exe         the first-run probe measures backends with this
+  llama.dll, llama-common.dll, ggml.dll, ggml-base.dll, mtmd.dll
+  ggml-cpu-*.dll          14 CPU backends, one per microarchitecture — see below
+  libomp140.x86_64.dll    OpenMP runtime the CPU backends link against
+
+dropped:
+  ggml-rpc.dll            the RPC backend, for distributing inference across machines
+  llama-cli/-tts/-imatrix/-quantize/-perplexity/-mtmd-*/-qwen2vl-* and the rest
+
+── do not delete the ggml-cpu-* files ────────────────────────────────────────────────────
+
+They look like duplicates and are not. ggml discovers backends by scanning THIS DIRECTORY at
+startup and loading whichever initialise, then picks the best CPU variant for the host ISA.
+Running llama-server.exe --version prints the choice it made, e.g.
+
+    load_backend: loaded CPU backend from ...\ggml-cpu-skylakex.dll
+
+Keeping only one of them means every player whose CPU does not match that one falls back to
+a slower path, or finds no CPU backend at all. 18 MB is the price of running everywhere.
+
+That same directory scan is how GPU support is added — see backends/README.md.

@@ -83,6 +83,16 @@ $Payload = @(
     # The llama.cpp runtime, including any GPU backend under backends/.
     @{ Path = "models/llama";                     Required = $true  }
 
+    # The native ARM64 runtime, for Windows-on-ARM machines (Snapdragon X and successors).
+    # LlamaRuntime picks this over models/llama when OSArchitecture is Arm64 and it is present,
+    # so shipping it is the whole of ARM64 support — the GAME stays x64 and runs emulated, while
+    # the server it starts runs native. That works because the server is a subprocess spoken to
+    # over HTTP, so its architecture is independent of the game's.
+    #
+    # Worth the 84 MB: measured on a Snapdragon X, native reads prompts 5.6x faster than the same
+    # build emulated (76.1 vs 13.6 tok/s), and prompt reading is most of this game's LLM wait.
+    @{ Path = "models/llama-arm64";               Required = $true  }
+
     # GloVe vectors. WordEmbedding treats these as mandatory and errors out without them.
     @{ Path = "models/embeddings";                Required = $true;  Big = $true }
 
@@ -311,7 +321,8 @@ foreach ($item in $Payload) {
 
 Step "Verifying"
 
-$mustExist = @($ShipExe, $ManualPdf, "assets/fonts/FreeMono.ttf", "models/llama/llama-server.exe")
+$mustExist = @($ShipExe, $ManualPdf, "assets/fonts/FreeMono.ttf", "models/llama/llama-server.exe",
+               "models/llama-arm64/llama-server.exe")
 if (-not $NoModel) { $mustExist += @("models/model.gguf", "models/embeddings/glove.6B.100d.txt") }
 
 $missing = $mustExist | Where-Object { -not (Test-Path (Join-Path $stage $_)) }
@@ -320,9 +331,28 @@ Note ("checked {0} required paths, all present" -f $mustExist.Count)
 
 # The CPU backends are not interchangeable — one per microarchitecture, chosen at runtime by
 # host ISA. Shipping a subset silently gives some players a slower path or none at all.
+#
+# x64 ONLY. The ARM64 toolchain ships a single ggml-cpu.dll because ARM64 has no equivalent
+# microarchitecture fan-out, so applying this count to it would fail a correct package.
 $cpuBackends = (Get-ChildItem (Join-Path $stage "models/llama") -Filter "ggml-cpu-*.dll").Count
 if ($cpuBackends -lt 10) { Fail "only $cpuBackends ggml-cpu-*.dll present; expected the full set" }
-Note "$cpuBackends CPU backends"
+Note "$cpuBackends CPU backends (x64)"
+
+# The ARM64 toolchain is what a Windows-on-ARM machine actually runs; without it those players
+# fall back to the emulated x64 build at roughly a fifth of the prompt-processing speed. Verified
+# by architecture rather than by file count, because shipping the x64 binaries under an arm64
+# folder name would satisfy every other check here and be wrong on exactly the machines it exists
+# for. 0xAA64 is IMAGE_FILE_MACHINE_ARM64 in the PE header.
+$armServer = Join-Path $stage "models/llama-arm64/llama-server.exe"
+$fs = [IO.File]::OpenRead($armServer)
+try {
+    $br = New-Object IO.BinaryReader($fs)
+    $fs.Position = 0x3C
+    $fs.Position = $br.ReadInt32() + 4
+    $machine = $br.ReadUInt16()
+} finally { $fs.Close() }
+if ($machine -ne 0xAA64) { Fail ("models/llama-arm64/llama-server.exe is not ARM64 (machine 0x{0:X})" -f $machine) }
+Note "ARM64 toolchain present and native"
 
 $gpuBackends = Get-ChildItem (Join-Path $stage "models/llama/backends") -Directory -ErrorAction SilentlyContinue |
                Where-Object { (Get-ChildItem $_.FullName -Filter "ggml-*.dll").Count -gt 0 }

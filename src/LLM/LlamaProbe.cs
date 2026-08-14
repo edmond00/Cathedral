@@ -210,6 +210,10 @@ public static class LlamaProbe
         }
 
         report.AppendLine($"Model:    {LlamaRuntime.ModelPath}");
+        // Which toolchain, because it decides what backends even exist to compare: the ARM64 one
+        // ships none, so "no GPU backend installed" on a Snapdragon is the right answer and not a
+        // missing file. Without this line the two are indistinguishable in the report.
+        report.AppendLine($"Runtime:  {LlamaRuntime.LlamaDirectory} ({(LlamaRuntime.IsArm64Toolchain ? "arm64 native" : "x64")})");
         report.AppendLine($"Bench:    -p {BenchPromptTokens} -n {BenchGenTokens}");
         report.AppendLine($"Workload: {WorkloadPromptTokens} prompt + {WorkloadGenTokens} generated tokens per request");
         report.AppendLine($"Rule:     a GPU must be {RequiredGpuSpeedup.ToString("0.##", CultureInfo.InvariantCulture)}x faster than the CPU to be chosen");

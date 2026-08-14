@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
 namespace Cathedral.LLM;
@@ -54,9 +55,10 @@ public static class LlamaRuntime
 
     public const string ServerExecutableName = "llama-server.exe";
     public const string BenchExecutableName  = "llama-bench.exe";
-    private const string LlamaFolderName     = "llama";
-    private const string BackendsFolderName  = "backends";
-    private const string BuildFileName       = "BUILD.txt";
+    private const string LlamaFolderName      = "llama";
+    private const string LlamaArm64FolderName = "llama-arm64";
+    private const string BackendsFolderName   = "backends";
+    private const string BuildFileName        = "BUILD.txt";
 
     /// <summary>
     /// Backend libraries that are not GPU backends and must never be offered as one.
@@ -65,8 +67,54 @@ public static class LlamaRuntime
     /// </summary>
     private static readonly string[] NonBackendPrefixes = { "ggml-cpu", "ggml-base", "ggml-rpc" };
 
-    /// <summary><c>models/llama</c>, or null when the models directory is missing.</summary>
-    public static string? LlamaDirectory => ModelsDirectory.PathTo(LlamaFolderName);
+    private static string? _llamaDirectory;
+    private static bool    _llamaDirectoryResolved;
+
+    /// <summary>
+    /// The llama.cpp toolchain this machine should run: <c>models/llama-arm64</c> on an ARM64 host
+    /// that shipped one, else <c>models/llama</c>. Null when the models directory is missing.
+    ///
+    /// <para><b>An architecture is not a backend, and is not probed.</b> CUDA and Vulkan are plugin
+    /// DLLs loaded into the server at runtime, so they can be measured against each other. An
+    /// architecture is the executable itself — an ARM64 DLL cannot be loaded into an x64 process,
+    /// so there is nothing for <see cref="LlamaProbe"/> to choose between. Nor is there anything to
+    /// decide: native beats emulated on the same silicon every time, measured here at 5.6x reading
+    /// prompts and 2.6x generating. So this is detection, not measurement.</para>
+    ///
+    /// <para><b>This works because the server is a subprocess spoken to over HTTP</b>, not a library
+    /// linked into the game. Its architecture is therefore independent of the game's, and an x64
+    /// build running under emulation can start a native ARM64 server and get the whole speedup
+    /// without the game itself being rebuilt.</para>
+    ///
+    /// <para><b><see cref="RuntimeInformation.OSArchitecture"/>, deliberately, not
+    /// <c>ProcessArchitecture</c>.</b> A shipped x64 build on a Snapdragon reports its own process
+    /// as X64 while the machine is Arm64; the question here is what the hardware is, not how this
+    /// process happens to be running.</para>
+    /// </summary>
+    public static string? LlamaDirectory
+    {
+        get
+        {
+            if (_llamaDirectoryResolved) return _llamaDirectory;
+            _llamaDirectoryResolved = true;
+
+            if (RuntimeInformation.OSArchitecture == Architecture.Arm64)
+            {
+                var native = ModelsDirectory.PathTo(LlamaArm64FolderName);
+                // Presence is the whole condition: a build packaged without the ARM64 toolchain
+                // falls through to the x64 one and runs emulated, which is what it did before.
+                if (native != null && Directory.Exists(native))
+                    return _llamaDirectory = native;
+            }
+
+            return _llamaDirectory = ModelsDirectory.PathTo(LlamaFolderName);
+        }
+    }
+
+    /// <summary>Whether the resolved toolchain is the native ARM64 one. For the startup line.</summary>
+    public static bool IsArm64Toolchain =>
+        LlamaDirectory != null &&
+        Path.GetFileName(LlamaDirectory).Equals(LlamaArm64FolderName, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>The server executable. Null when the models directory is missing.</summary>
     public static string? ServerPath => Combine(LlamaDirectory, ServerExecutableName);
@@ -214,6 +262,9 @@ public static class LlamaRuntime
         var backendText = backends.Count == 0
             ? "no GPU backend installed (CPU only)"
             : "backends installed: " + string.Join(", ", backends.Select(b => b.Name));
-        return $"llama.cpp {build}; {backendText}";
+        // Which toolchain, because on a Snapdragon the difference between native and emulated is
+        // 5.6x on prompt processing — and nothing else in the log would say which one ran.
+        var arch = IsArm64Toolchain ? "arm64 native" : "x64";
+        return $"llama.cpp {build} ({arch}); {backendText}";
     }
 }

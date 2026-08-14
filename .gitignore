@@ -439,15 +439,23 @@ models/llama-*
 models/embeddings/
 catalyst-models/
 
-# The llama.cpp runtime: ~40 MB of third-party binaries, replaced wholesale on an upgrade.
-# Note "models/llama-*" above does NOT cover this — it matches models/llama-old, not models/llama.
-# The two documentation files are kept, since they are what says which build to fetch and how to
-# add a GPU backend to it.
+# The llama.cpp runtime: ~185 MB of third-party binaries across two toolchains, replaced
+# wholesale on an upgrade. Note "models/llama-*" above does NOT cover models/llama itself — it
+# matches models/llama-old and models/llama-arm64. The documentation files are kept, since they
+# are what says which build to fetch and how to add a GPU backend to it.
 models/llama/*
 !models/llama/BUILD.txt
 !models/llama/backends/
 models/llama/backends/*
 !models/llama/backends/README.md
+
+# Same again for the native ARM64 toolchain, which "models/llama-*" above would otherwise swallow
+# whole — including its BUILD.txt. Losing that would leave the two toolchains asymmetric: the x64
+# one recording which upstream build to fetch and the ARM64 one recording nothing, which is the
+# harder of the two to reconstruct because its build number differs (b8746 against b8851).
+!models/llama-arm64/
+models/llama-arm64/*
+!models/llama-arm64/BUILD.txt
 
 # The pre-cleanup models folder, kept locally as an archive (see models/README.md).
 models_old/
