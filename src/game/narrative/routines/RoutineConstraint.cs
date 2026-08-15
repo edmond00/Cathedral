@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Text.Json.Serialization;
 
 namespace Cathedral.Game.Narrative.Routines;
 
@@ -7,11 +8,30 @@ namespace Cathedral.Game.Narrative.Routines;
 /// item, a learned modus mentis, the acting member still being in the party) and may consume a
 /// resource on full replay. This is the extension point for future constraint kinds (e.g. paying
 /// gold): add a subclass implementing <see cref="IsSatisfied"/> and <see cref="Consume"/>.
+///
+/// <para><b>A new subclass must be registered with <c>[JsonDerivedType]</c> below.</b> Routines go
+/// into the save file, and a base class this abstract is the one shape <c>System.Text.Json</c>
+/// cannot handle on its own — it failed in <i>both</i> directions and only one of them was loud. On
+/// write it serialises by the <i>declared</i> type, so a constraint's own fields (an
+/// <see cref="ItemConstraint"/>'s item, an <see cref="ActingMemberConstraint"/>'s member) were
+/// dropped in silence and every saved routine was already unreplayable. On read it throws
+/// <c>NotSupportedException</c> — "Deserialization of interface or abstract types is not supported"
+/// — which <see cref="Cathedral.Game.Save.SaveFile.Read"/> catches as corruption, so a single
+/// recorded routine made the whole save unloadable and Continue greyed out.</para>
+///
+/// <para>The discriminator is the default <c>$type</c> rather than <see cref="Kind"/>, though the
+/// two carry the same values: a discriminator sharing its name with a serialised property is a
+/// hard error inside the serialiser, and <see cref="Kind"/> is overridden per subclass, where
+/// <c>[JsonIgnore]</c> on this declaration does not reach. Every computed member here is therefore
+/// ignored again on each override — they are display, not state.</para>
 /// </summary>
+[JsonPolymorphic]
+[JsonDerivedType(typeof(ItemConstraint), "item")]
+[JsonDerivedType(typeof(ActingMemberConstraint), "acting_member")]
 public abstract class RoutineConstraint
 {
-    /// <summary>Stable discriminator for the constraint kind (used for display/serialization).</summary>
-    public abstract string Kind { get; }
+    /// <summary>Stable discriminator for the constraint kind (used for display).</summary>
+    [JsonIgnore] public abstract string Kind { get; }
 
     /// <summary>Check-only: can this constraint be satisfied right now? Never mutates real state.</summary>
     public abstract bool IsSatisfied(RoutineReplayContext ctx);
@@ -23,10 +43,10 @@ public abstract class RoutineConstraint
     public abstract void Consume(RoutineReplayContext ctx);
 
     /// <summary>Whether this constraint should be surfaced in the replay outcome popup.</summary>
-    public virtual bool ShowInOutcome => false;
+    [JsonIgnore] public virtual bool ShowInOutcome => false;
 
     /// <summary>Outcome popup line (only used when <see cref="ShowInOutcome"/> is true).</summary>
-    public virtual string OutcomeText => "";
+    [JsonIgnore] public virtual string OutcomeText => "";
 }
 
 /// <summary>Requires (and consumes) one instance of an item the acting member holds.</summary>
@@ -38,7 +58,7 @@ public sealed class ItemConstraint : RoutineConstraint
     public ItemConstraint() { }
     public ItemConstraint(string itemId, string itemName) { ItemId = itemId; ItemName = itemName; }
 
-    public override string Kind => "item";
+    [JsonIgnore] public override string Kind => "item";
 
     public override bool IsSatisfied(RoutineReplayContext ctx) => ctx.AvailableItemCount(ItemId) > 0;
 
@@ -55,8 +75,8 @@ public sealed class ItemConstraint : RoutineConstraint
         if (item != null) ctx.ActingMember.RemoveItem(item);
     }
 
-    public override bool ShowInOutcome => true;
-    public override string OutcomeText => $"Used: {ItemName}";
+    [JsonIgnore] public override bool ShowInOutcome => true;
+    [JsonIgnore] public override string OutcomeText => $"Used: {ItemName}";
 }
 
 // There was a ModusMentisConstraint here, requiring the acting member to still hold the skill the
@@ -76,7 +96,7 @@ public sealed class ActingMemberConstraint : RoutineConstraint
     public ActingMemberConstraint() { }
     public ActingMemberConstraint(string memberKey) { MemberKey = memberKey; }
 
-    public override string Kind => "acting_member";
+    [JsonIgnore] public override string Kind => "acting_member";
 
     public override bool IsSatisfied(RoutineReplayContext ctx)
     {

@@ -80,6 +80,17 @@ Three hazards the rebuild is written around, all of which produce quiet wrongnes
 - **Restore order is load-bearing**: organ scores before `InitializeMemory()`, or the modules come out
   the wrong size and every saved slot index lands elsewhere.
 
+And one that reaches past the party, because a field is stored **as-is** rather than captured:
+
+- **An abstract or interface-typed field must declare `[JsonPolymorphic]` and a `[JsonDerivedType]`
+  per subclass.** `System.Text.Json` writes such a field by its *declared* type, so the subclass's own
+  fields go missing in silence, and it refuses to read one back at all — which
+  `SaveFile.Read` catches as corruption, so **one such field makes the entire save unloadable**.
+  `RoutineStep.Constraints` was exactly this: every saved routine lost its constraint data, and the
+  first player to record a routine lost the save. Only `cli/system/routine_record_replay.cli` reaches
+  a routine, so it is the script that carries the `save roundtrip` covering that branch —
+  `save_roundtrip.cli` stacks breadth of party state by flags, and no flag records a routine.
+
 ### The seed is per run, not per process
 
 The world derives from the master seed, and that seed locks before the window opens — so the save's
@@ -451,6 +462,35 @@ a backend pays for the measurement, once.
 It is skipped entirely under `--playground` (no server is started at all), so the test suite never
 pays for it. `--no-llm-probe` skips it otherwise.
 
+### A streamed response must be read to its end
+
+`GenerateConstrainedStringStreamingAsync` **drains past `[DONE]` instead of breaking on it**, and
+that is not tidiness. `[DONE]` is the last thing the caller wants but not the last thing on the
+wire: the chunked body still has its trailing blank line and terminating zero-length chunk to come.
+Breaking there disposed the response stream mid-write, which leaves the connection unusable — and
+because `HttpClient` pools connections, the **next** request fails at the socket with a bare "An
+error occurred while sending the request", naming whatever innocent call happened to come after.
+
+The symptom is a phase dying for no reason, at a rate low enough to look like bad luck: 2 failures
+in 228 requests in the run that reported it. It is diagnosable from `log.txt` only because
+llama-server's `--verbose` output interleaves with ours — a `Reset instance N` printed *before*
+llama's `stream ended` is the signature, and every one of the 40 clean teardowns in that run was
+followed by a working request while 2 of the 7 inverted ones were not. That correlation is now a
+recorded field (`eof=`) in the crash report rather than something to be re-derived by hand.
+
+Two things this depends on:
+
+- **The drain is bounded** (`DrainAfterDoneTimeout`, 5s), and only after `[DONE]` — generation
+  itself may legitimately take minutes. A server that never closes the stream would otherwise turn
+  the drain into a ten-minute hang, which is a worse bargain than the bug being fixed. If it trips,
+  behaviour degrades to what it was before and the trace says `DRAIN-TIMEOUT`.
+- **The response is disposed.** It was not, which held its connection until the finalizer ran.
+
+**None of this path is reachable under `--playground`**, which returns before any request is made —
+so the whole CLI suite runs without ever exercising it. Verifying a change here means a real run
+with a real server, and the check is that every streaming request in the crash report's table reads
+`eof=y`.
+
 ### Failure is a downgrade, not an exit
 
 `StartWithFallbackAsync` walks a ladder — the configured GPU backend, then CPU — and persists the
@@ -489,10 +529,50 @@ worth thousands of files and ~71 KB per request, and it contains the full text o
 model was asked. A shipped build writes none of it: `TryCreateLogDirectory` returns null, which
 switches off every writer downstream because they all already test for a null session directory.
 
-| | `log.txt` | `logs/` tree |
-|---|---|---|
-| development | yes | yes |
-| shipped | yes | **no** |
+| | `log.txt` | `logs/` tree | `log-crash-*.txt` |
+|---|---|---|---|
+| development | yes | yes | on a failed phase |
+| shipped | yes | **no** | on a failed phase |
+
+### When a phase fails: the crash report
+
+A narration phase that cannot finish is **terminal on purpose** — no retry, no way to carry on. That
+is not harshness, it is what produces a usable report: `log.txt` is opened `FileMode.Create`, so a
+tester who plays on for another hour buries the failure in a file that reached 4 MB in 25 minutes,
+and the moment they relaunch to see whether it recurs, the only record of it is gone. Escape still
+reaches the pause menu, so the run can be quit; it cannot be resumed.
+
+**`CrashReport.Capture` is what a failure owes the player.** It writes a diagnostic block through
+`Console.Error` (so it lands in `log.txt`), then copies the whole log to `log-crash-<stamp>.txt`,
+which no later launch will touch, and the error screen names that file and asks for it.
+
+What is in it, and why each line is there — every one answers a question the report that prompted
+this could not:
+
+- **the whole exception chain**, with `SocketError` and `HttpRequestError`. Every transport failure
+  says "An error occurred while sending the request" and nothing else; the code underneath separates
+  a connection reset (a pooled connection reused after the server closed it) from a refusal (the
+  server is gone) from a timeout (it is alive and wedged);
+- **two health probes**, one over the shared `HttpClient` and one over a throwaway with its own
+  pool. A fresh connection succeeding where the pooled one fails says the server is fine and *our
+  connection* was not. That distinction was unanswerable before;
+- **the last 16 requests**, with `eof=` per streaming request — see the note on the drain below —
+  and the idle gap before each, which is what a keep-alive timeout would show up as;
+- **whether this is Wine**, read from `ntdll!wine_get_version`. It was inferable only from a
+  `Z:\home\…` path in an unrelated startup line, which is a poor way to learn the most important
+  fact about a report.
+
+Subsystems add their own sections with `CrashReport.AddProvider(name, () => text)`; a provider that
+throws costs its own section and nothing else. Registering a name twice replaces it.
+
+**`crash-report` in the CLI forces one**, and asserts on its own behalf by reading the preserved copy
+back and failing named on any missing section. That command is the only coverage this code can have:
+a real trigger is an exception a script cannot arrange (the fault it was built for struck twice in
+228 requests), and `--playground` answers every LLM call without making it, so no script can provoke
+one. `cli/system/crash_report.cli`.
+
+`publish.ps1` deletes `log-crash-*.txt` from the staged folder for the same reason it deletes
+`log.txt` — it is a copy of exactly that.
 
 **The console is not the log.** Output that is mechanical repetition goes to `WriteToFileOnly`
 rather than being deleted — the glyph-atlas rebuild (~90 times a session, and a third of everything
@@ -687,6 +767,10 @@ Run `help` for the authoritative list. The essentials:
                             proves what the player was TOLD; this proves what ran — the only way
                             to assert the outcomes that show no chip at all
   expect <text> | expect-not <text>
+  crash-report [text]       force a crash report and preserve log.txt under a name the next launch
+                            cannot overwrite. Asserts on its own behalf — it reads the preserved
+                            copy back and fails naming any missing section, because `expect` scans
+                            the terminal and never sees a file
   quit
 ```
 

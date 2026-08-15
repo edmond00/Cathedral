@@ -30,5 +30,5 @@ public class ClairvoyanceModusMentis : ModusMentis
 
 When observing, you catch flickers: a wrongness in a corner, a ghost of light where there should be none, a presence behind a face. You do not always understand what you have seen, only that it asks to be marked.
 
-Your language is careful and oblique: 'something is here,' 'a shape that is not a shape,' 'the air is wrong by the door.' You report what your eye received without insisting on its meaning. You let the omen be itself.";
+Your language is careful and oblique: 'something is here,' 'a shape that is not a shape,' 'the air is wrong just here.' You report what your eye received without insisting on its meaning. You let the omen be itself.";
 }

@@ -23,10 +23,38 @@ shipped 3B model, native beats the same machine running the x64 build under emul
     prompt read    76.1 tok/s native  vs  13.6 emulated   (5.6x)
     generation     13.8 tok/s native  vs   5.4 emulated   (2.6x)
 
+No llama-common.dll. Upstream introduced that library between this build and b8851, so ../llama
+has one and this folder correctly does not. Nothing here imports it.
+
 Note the build number differs from ../llama (b8851). That is fine and not the hazard the
 backends README warns about: each toolchain carries its own complete set of ggml libraries, so
 nothing is mixed ACROSS folders. What must never differ is a backend under backends/ versus the
 ggml-base.dll beside it in the SAME folder.
+
+── what was kept, and why ────────────────────────────────────────────────────
+
+Pruned the same way as ../llama, and for the same reason: the game runs two executables, and
+every extra unsigned .exe is another SmartScreen/antivirus prompt for a player.
+
+kept:
+  llama-server.exe        the only thing the game actually runs
+  llama-bench.exe         the first-run probe measures backends with this
+  llama.dll, ggml.dll, ggml-base.dll, mtmd.dll
+  ggml-cpu.dll            one, not fourteen — see below
+  libomp140.aarch64.dll   OpenMP runtime the CPU backend links against
+
+dropped:
+  ggml-rpc.dll, rpc-server.exe    distributed inference across machines
+  llama-cli/-tts/-imatrix/-quantize/-perplexity/-mtmd-*/-qwen2vl-* and the rest
+
+That is 22 MB against 84 MB unpruned. Dropping the multimodal CLI front-ends does not cost
+multimodal support: mtmd.dll stays because llama-server.exe imports it directly.
+
+An ARM64 binary cannot be executed on an x64 host, so "does it still start?" is not a check
+available from a dev machine. Verify a re-prune by reading the PE import tables instead: the
+import closure over llama-server.exe and llama-bench.exe must be satisfied by the files above
+plus MSVCP140.dll, which upstream ships in neither architecture's zip and comes from the VC++
+redistributable.
 
 ── differences from the x64 folder ───────────────────────────────────────────
 

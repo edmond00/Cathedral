@@ -73,6 +73,18 @@ namespace Cathedral.Terminal
         public string CurrentGlyphSet => _currentGlyphSet;
         public int GlyphCount => _glyphMap.Count;
 
+        /// <summary>
+        /// Bumped on every rebuild. <b>A rebuild invalidates every UV this atlas has ever handed
+        /// out</b> — the grid is re-laid-out from scratch (its column count is the square root of
+        /// the glyph count), so adding one glyph moves all the others. Anything that caches a
+        /// <see cref="GlyphInfo"/> beyond the call — both terminal renderers cache one per cell in
+        /// a GPU instance buffer — must compare this against the version it built with and rebuild
+        /// when they differ. Without that the cached UVs point into the new layout at the old
+        /// coordinates, which draws the wrong characters until something unrelated dirties the
+        /// buffer.
+        /// </summary>
+        public int Version { get; private set; }
+
         #endregion
 
         #region Font Management
@@ -212,6 +224,7 @@ namespace Cathedral.Terminal
             // Upload to GPU
             _textureId = CreateTexture(atlasImage);
             _currentGlyphSet = cleanGlyphSet;
+            Version++;
 
             Cathedral.GameLog.WriteToFileOnly($"Terminal: Atlas built successfully - {cols}x{rows} grid, {atlasWidth}x{atlasHeight} pixels");
         }
@@ -314,8 +327,13 @@ namespace Cathedral.Terminal
                 return existingGlyph;
             }
 
-            // Add new glyph and rebuild atlas
-            Console.WriteLine($"Terminal: Adding new glyph '{c}' to atlas");
+            // Add new glyph and rebuild atlas. File only, like the two build lines: this fires in
+            // bursts whenever a screen introduces new box-drawing or body-art characters.
+            //
+            // Reaching here mid-fill is what EnsureGlyphs exists to avoid — see Version. A caller
+            // filling a buffer of cached UVs must ensure the whole set FIRST, in one rebuild, or
+            // everything it wrote before this line is left pointing at the old layout.
+            Cathedral.GameLog.WriteToFileOnly($"Terminal: Adding new glyph '{c}' to atlas");
             string newGlyphSet = _currentGlyphSet + c;
             BuildAtlas(newGlyphSet);
 
@@ -339,23 +357,25 @@ namespace Cathedral.Terminal
         }
 
         /// <summary>
-        /// Adds a set of characters to the atlas if not already present
+        /// Adds a set of characters to the atlas if not already present, in <b>one</b> rebuild.
+        /// Returns true when the atlas was rebuilt, which invalidates every UV previously handed
+        /// out — see <see cref="Version"/>.
         /// </summary>
-        public void EnsureGlyphs(string characters)
+        public bool EnsureGlyphs(IEnumerable<char> characters)
         {
-            var newChars = "";
+            HashSet<char>? newChars = null;
             foreach (char c in characters)
             {
-                if (!_glyphMap.ContainsKey(c))
-                {
-                    newChars += c;
-                }
+                if (_glyphMap.ContainsKey(c)) continue;
+                (newChars ??= new HashSet<char>()).Add(c);
             }
 
-            if (!string.IsNullOrEmpty(newChars))
-            {
-                BuildAtlas(_currentGlyphSet + newChars);
-            }
+            if (newChars == null) return false;
+
+            var sb = new System.Text.StringBuilder(_currentGlyphSet);
+            foreach (char c in newChars) sb.Append(c);
+            BuildAtlas(sb.ToString());
+            return true;
         }
 
         #endregion

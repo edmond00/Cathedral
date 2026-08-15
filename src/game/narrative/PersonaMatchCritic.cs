@@ -45,8 +45,8 @@ public static class PersonaMatchCritic
 
     /// <summary>
     /// Creates the critic's slot with its neutral system prompt. Idempotent; safe to call once the
-    /// LLM server is ready (e.g. from <c>SetLlamaServer</c>). Failures are logged and leave the critic
-    /// unready, in which case <see cref="PickAsync"/> falls back to the first option.
+    /// LLM server is ready (e.g. from <c>SetLlamaServer</c>). A failure is logged and leaves the critic
+    /// unready, which <see cref="PickAsync"/> then reports as a failure rather than working around.
     /// </summary>
     public static async Task InitializeAsync(LlamaServerManager llamaServer)
     {
@@ -84,8 +84,15 @@ public static class PersonaMatchCritic
     /// wandered off ("I choose to mark the boy by the wall instead") is silently forced onto option A.</para>
     ///
     /// <para>Callers must pass at most <see cref="MaxOptions"/> options (sample beforehand). In
-    /// playground mode, or when the critic is unavailable, returns a safe index (random / 0) so the
-    /// scene keeps moving.</para>
+    /// playground mode a random index is returned, there being no model to ask.</para>
+    ///
+    /// <para><b>It throws rather than falling back, and that is deliberate.</b> This used to catch
+    /// everything and return <c>0</c>, which reads as robustness and is not: option A is a real
+    /// narrative choice, attributed to the character, indistinguishable from one they made. A run
+    /// that reported "failed to generate observations" turned out to have hit the same transport
+    /// fault eight minutes earlier here — where it was swallowed, the player was told nothing, and
+    /// the persona's decision was quietly replaced. One line in the log is not a report. A failure
+    /// the player can see is worth more than a scene that keeps moving on a substituted answer.</para>
     /// </summary>
     public static async Task<int> PickAsync(
         string context,
@@ -103,32 +110,24 @@ public static class PersonaMatchCritic
         if (PlaygroundMode.IsActive)
             lock (_playgroundRng) return _playgroundRng.Next(options.Count);
 
+        // Not ready is a failure, not a condition to work around. See the note on this method.
         if (!IsReady || _llm == null || !_llm.IsServerReady)
-        {
-            Console.Error.WriteLine("PersonaMatchCritic: not ready — falling back to first option.");
-            return 0;
-        }
+            throw new InvalidOperationException(
+                $"PersonaMatchCritic is not ready (initialized={_initialized}, slot={_slotId}, " +
+                $"serverReady={_llm?.IsServerReady.ToString() ?? "no server"}).");
 
         string prompt  = BuildPrompt(context, personaTitle, reportedQuestion, reasoning, options, lastOptionIsCatchAll);
         string grammar = BuildLetterGrammar(options.Count);
 
-        try
-        {
-            string reply = await _llm.GenerateConstrainedStringAsync(_slotId, prompt, grammar, maxTokens: 4, skipReset: false);
-            int idx = LetterToIndex(reply);
-            if (idx < 0 || idx >= options.Count)
-            {
-                Console.Error.WriteLine($"PersonaMatchCritic: unexpected reply '{reply}' — falling back to first option.");
-                return 0;
-            }
-            return idx;
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"PersonaMatchCritic: pick failed: {ex.Message}");
-            try { _llm.ResetInstance(_slotId); } catch { /* ignore */ }
-            return 0;
-        }
+        string reply = await _llm.GenerateConstrainedStringAsync(_slotId, prompt, grammar, maxTokens: 4, skipReset: false);
+        int idx = LetterToIndex(reply);
+        if (idx < 0 || idx >= options.Count)
+            throw new InvalidOperationException(
+                $"PersonaMatchCritic: reply '{reply}' is not one of the {options.Count} offered letters. " +
+                "The grammar constrains the answer to exactly those, so this means the reply was " +
+                "truncated or the grammar was not applied.");
+
+        return idx;
     }
 
     // ── Prompt / grammar ─────────────────────────────────────────────────────────

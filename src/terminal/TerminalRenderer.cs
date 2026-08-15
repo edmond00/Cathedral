@@ -23,6 +23,8 @@ namespace Cathedral.Terminal
         private int _instanceVbo;
         private TerminalInstance[] _instances;
         private bool _instanceBufferDirty;
+        /// <summary>The <see cref="GlyphAtlas.Version"/> the buffer's UVs were computed against.</summary>
+        private int _atlasVersion = -1;
         private float _darkenFactor = 1.0f;
         
         // Quad geometry (shared for all cells)
@@ -268,12 +270,23 @@ namespace Cathedral.Terminal
 
         private void UpdateInstanceBuffer(Vector2i windowSize)
         {
-            if (!_instanceBufferDirty && !_view.HasChanges)
+            // The atlas version is a third reason to rebuild, alongside the two dirty flags. Every
+            // UV in this buffer is an offset into the atlas's CURRENT layout, and a rebuild re-lays
+            // the whole grid out — so a glyph added by anyone (this terminal, or the popup, which
+            // shares the atlas) leaves the buffer describing the old positions. Without this the
+            // wrong characters are drawn until something unrelated dirties a cell, which is why the
+            // symptom was "it fixes itself when the mouse moves".
+            if (!_instanceBufferDirty && !_view.HasChanges && _atlasVersion == _atlas.Version)
                 return;
+
+            // Ensure the whole frame's glyph set BEFORE reading a single UV, in one rebuild. Filling
+            // the buffer with GetGlyph alone rebuilds part-way through and strands every instance
+            // written before that point in the previous layout.
+            _atlas.EnsureGlyphs(GlyphsInView());
 
             // Calculate terminal layout
             CalculateTerminalLayout(windowSize, out Vector2 terminalSize, out Vector2 cellSize, out Vector2 offset);
-            
+
             // Update instance data for all cells
             int instanceIndex = 0;
             foreach (var (x, y, cell) in _view.EnumerateCells())
@@ -304,9 +317,17 @@ namespace Cathedral.Terminal
             GL.BindBuffer(BufferTarget.ArrayBuffer, _instanceVbo);
             GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, _instances.Length * TerminalInstance.SizeInBytes, _instances);
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
-            
+
             _instanceBufferDirty = false;
+            _atlasVersion = _atlas.Version;
             _view.MarkAllClean();
+        }
+
+        /// <summary>Every character currently on the grid, for a single up-front atlas rebuild.</summary>
+        private IEnumerable<char> GlyphsInView()
+        {
+            foreach (var (_, _, cell) in _view.EnumerateCells())
+                yield return cell.Character;
         }
 
         private void CalculateTerminalLayout(Vector2i windowSize, out Vector2 terminalSize, out Vector2 cellSize, out Vector2 offset)

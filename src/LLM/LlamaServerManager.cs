@@ -198,6 +198,229 @@ public class LlamaServerManager : IDisposable
         }
     }
     
+    // ── Request tracing, for the crash report ────────────────────────────────────
+
+    /// <summary>
+    /// One HTTP request to the server, as the crash report describes it.
+    ///
+    /// <para>This exists because the failure it was written for could only be diagnosed by
+    /// correlating our own log against llama-server's <c>--verbose</c> output and noticing which of
+    /// two lines came first. Recording what we did ourselves — whether the previous stream was read
+    /// to its end, how long the connection had been idle, how many requests preceded it — turns that
+    /// archaeology into a table.</para>
+    /// </summary>
+    private sealed class RequestTrace
+    {
+        public int Seq;
+        public int Slot;
+        public bool Streaming;
+        public int MaxTokens;
+        public DateTime StartedUtc;
+        public double IdleGapMs;          // since the previous request finished: the keep-alive question
+        public double DurationMs;
+        public string Outcome = "in flight";
+        public bool SawDone;
+        public bool DrainedToEof;         // false here on a streaming request is the bug this replaced
+        public bool DrainTimedOut;
+        public int TailBytesAfterDone;
+        public int MalformedChunks;
+        public int ReplyChars;
+
+        public override string ToString()
+        {
+            var detail = Streaming
+                ? $"done={(SawDone ? "y" : "n")} eof={(DrainedToEof ? "y" : "n")} tail={TailBytesAfterDone}B" +
+                  (DrainTimedOut ? " DRAIN-TIMEOUT" : "") +
+                  (MalformedChunks > 0 ? $" malformed={MalformedChunks}" : "")
+                : "buffered";
+            return $"  #{Seq,-4} {StartedUtc:HH:mm:ss.fff} slot={Slot,-2} " +
+                   $"{(Streaming ? "stream" : "oneshot")} maxTok={MaxTokens,-4} " +
+                   $"idle={IdleGapMs,7:F0}ms dur={DurationMs,7:F0}ms reply={ReplyChars,4}c {detail}  → {Outcome}";
+        }
+    }
+
+    /// <summary>
+    /// How many recent requests the crash report carries. The interesting window is small — the
+    /// failure this was written for was caused by the request immediately before it — but a few more
+    /// show whether the run was healthy up to that point.
+    /// </summary>
+    private const int RecentRequestsKept = 16;
+
+    /// <summary>
+    /// How long the tail of a streamed response is given to arrive after <c>[DONE]</c>. Generous —
+    /// it is a few bytes already on the wire — and its only job is to stop a server that never closes
+    /// the stream from turning the drain into a ten-minute hang.
+    /// </summary>
+    private static readonly TimeSpan DrainAfterDoneTimeout = TimeSpan.FromSeconds(5);
+
+    private readonly Queue<RequestTrace> _recentRequests = new();
+    private readonly object _traceLock = new();
+    private int _requestSeq;
+    private DateTime _lastRequestEndedUtc = DateTime.MinValue;
+    private int _failedRequests;
+
+    private RequestTrace StartTrace(int slotId, bool streaming, int maxTokens)
+    {
+        lock (_traceLock)
+        {
+            var now = DateTime.UtcNow;
+            return new RequestTrace
+            {
+                Seq        = ++_requestSeq,
+                Slot       = slotId,
+                Streaming  = streaming,
+                MaxTokens  = maxTokens,
+                StartedUtc = now,
+                IdleGapMs  = _lastRequestEndedUtc == DateTime.MinValue
+                                 ? 0
+                                 : (now - _lastRequestEndedUtc).TotalMilliseconds,
+            };
+        }
+    }
+
+    private void FinishTrace(RequestTrace trace, string outcome)
+    {
+        lock (_traceLock)
+        {
+            var now = DateTime.UtcNow;
+            trace.DurationMs = (now - trace.StartedUtc).TotalMilliseconds;
+            trace.Outcome = outcome;
+            _lastRequestEndedUtc = now;
+            if (outcome.StartsWith("FAILED")) _failedRequests++;
+
+            _recentRequests.Enqueue(trace);
+            while (_recentRequests.Count > RecentRequestsKept) _recentRequests.Dequeue();
+        }
+    }
+
+    /// <summary>
+    /// The LLM section of a crash report: is the server alive, does it still answer, and what were we
+    /// doing just before.
+    ///
+    /// <para><b>The two health probes are the point.</b> One goes through the shared
+    /// <see cref="HttpClient"/> — whose connection pool is the suspect — and one through a throwaway
+    /// client that must open a new connection. A fresh client succeeding where the shared one fails
+    /// says the server is fine and our pooled connection was not; both failing says the server is
+    /// gone. That distinction was unanswerable from the log that prompted this, and it is the first
+    /// thing anyone would want to know.</para>
+    ///
+    /// <para>Bounded: every probe has its own short timeout, because this runs while a player is
+    /// looking at an error screen.</para>
+    /// </summary>
+    private string DescribeForCrashReport()
+    {
+        var sb = new StringBuilder();
+
+        sb.AppendLine($"  Server ready flag:  {_isServerReady}");
+        sb.AppendLine($"  Base URL:           {_baseUrl}");
+        sb.AppendLine($"  Context size:       {_contextSize} per slot");
+        sb.AppendLine($"  Instances (slots):  {_instances.Count}");
+
+        try
+        {
+            if (_llamaProcess == null)
+            {
+                sb.AppendLine("  llama-server:       never started by this process");
+            }
+            else if (_llamaProcess.HasExited)
+            {
+                sb.AppendLine($"  llama-server:       EXITED, code {_llamaProcess.ExitCode}, at {_llamaProcess.ExitTime:HH:mm:ss.fff}");
+            }
+            else
+            {
+                sb.AppendLine($"  llama-server:       alive, pid {_llamaProcess.Id}, up {(DateTime.Now - _llamaProcess.StartTime).TotalMinutes:F1} min");
+            }
+        }
+        catch (Exception ex)
+        {
+            sb.AppendLine($"  llama-server:       (unreadable: {ex.Message})");
+        }
+
+        sb.AppendLine($"  Health, pooled:     {ProbeHealth(_httpClient)}");
+        sb.AppendLine($"  Health, fresh conn: {ProbeHealth(null)}");
+
+        lock (_traceLock)
+        {
+            sb.AppendLine();
+            sb.AppendLine($"  Requests this run:  {_requestSeq} ({_failedRequests} failed)");
+            sb.AppendLine($"  Last {_recentRequests.Count} requests (oldest first):");
+            if (_recentRequests.Count == 0)
+                sb.AppendLine("    (none)");
+            else
+                foreach (var t in _recentRequests)
+                    sb.AppendLine(t.ToString());
+
+            sb.AppendLine();
+            sb.AppendLine("  Reading this table: on a streaming request eof=n means the response body was");
+            sb.AppendLine("  abandoned before its end, which leaves the pooled connection unusable and");
+            sb.AppendLine("  makes the NEXT request fail at the socket. A large idle= before a failure");
+            sb.AppendLine("  points at a keep-alive timeout instead.");
+        }
+
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Asks <c>/health</c> and reports what came back. Pass null to probe over a brand-new connection
+    /// pool, which is what distinguishes a broken connection from a broken server.
+    /// </summary>
+    private string ProbeHealth(HttpClient? client)
+    {
+        HttpClient? throwaway = null;
+        try
+        {
+            if (client == null)
+            {
+                throwaway = new HttpClient
+                {
+                    BaseAddress = new Uri(_baseUrl),
+                    Timeout = TimeSpan.FromSeconds(3)
+                };
+                client = throwaway;
+            }
+
+            var started = DateTime.UtcNow;
+            var probeClient = client;
+
+            // Sync-over-async, but off the calling thread and with a wall-clock cap. The report is a
+            // snapshot taken at one instant, so it has to block — but it is written on the worst path
+            // in the game, and a crash reporter that deadlocks or hangs the window turns a diagnosable
+            // bug into an unreportable freeze. Task.Run keeps the await off whatever thread we were
+            // called on; the Wait bounds it even if the request itself never returns.
+            var probe = Task.Run(async () =>
+            {
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+                using var response = await probeClient.GetAsync("health", cts.Token).ConfigureAwait(false);
+                return $"{(int)response.StatusCode} {response.StatusCode}";
+            });
+
+            if (!probe.Wait(TimeSpan.FromSeconds(5)))
+                return "NO ANSWER within 5s (request still outstanding)";
+
+            var elapsed = (DateTime.UtcNow - started).TotalMilliseconds;
+            return $"{probe.Result} in {elapsed:F0}ms";
+        }
+        catch (Exception ex)
+        {
+            // Unwrap: Task.Wait reports an AggregateException whose message ("One or more errors
+            // occurred") is exactly the kind of uninformative text this whole report exists to replace.
+            var real = ex is AggregateException agg ? agg.Flatten().InnerException ?? ex : ex;
+            var sb = new StringBuilder($"FAILED {real.GetType().Name}: {real.Message}");
+            for (var e = real.InnerException; e != null; e = e.InnerException)
+            {
+                sb.Append($" ← {e.GetType().Name}: {e.Message}");
+                if (e is System.Net.Sockets.SocketException sock) sb.Append($" [{sock.SocketErrorCode}]");
+            }
+            return sb.ToString();
+        }
+        finally
+        {
+            // If the probe timed out it is still running and will fault on this; the task is not
+            // awaited and an unobserved fault is ignored, which is the right cost for a bounded probe.
+            throwaway?.Dispose();
+        }
+    }
+
     public LlamaServerManager(string? baseUrl = null)
     {
         _baseUrl = baseUrl ?? "http://127.0.0.1:8080/";
@@ -206,7 +429,9 @@ public class LlamaServerManager : IDisposable
             BaseAddress = new Uri(_baseUrl),
             Timeout = TimeSpan.FromMinutes(10)
         };
-        
+
+        CrashReport.AddProvider("LLM server", DescribeForCrashReport);
+
         // Register cleanup handlers
         AppDomain.CurrentDomain.ProcessExit += (s, e) => StopServer();
         Console.CancelKeyPress += (s, e) =>
@@ -660,6 +885,7 @@ public class LlamaServerManager : IDisposable
         instance.AddUserMessage(userMessage);
         instance.RequestCount++;
 
+        var trace = StartTrace(slotId, streaming: false, maxTokens);
         var startTime = DateTime.Now;
         var timestamp = startTime.ToString("HH-mm-ss-fff");
 
@@ -711,7 +937,7 @@ public class LlamaServerManager : IDisposable
                 await File.WriteAllTextAsync(Path.Combine(requestLogDir, "gbnf_constraints.txt"), gbnfGrammar ?? "(none — free text)");
             }
 
-            var response = await _httpClient.PostAsJsonAsync("v1/chat/completions", requestData);
+            using var response = await _httpClient.PostAsJsonAsync("v1/chat/completions", requestData);
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
@@ -754,7 +980,14 @@ public class LlamaServerManager : IDisposable
             }
 
             instance.AddAssistantResponse(generated);
+            trace.ReplyChars = generated.Length;
+            FinishTrace(trace, "ok");
             return generated;
+        }
+        catch (Exception ex)
+        {
+            FinishTrace(trace, $"FAILED {ex.GetType().Name}: {ex.Message}");
+            throw;
         }
         finally
         {
@@ -797,6 +1030,7 @@ public class LlamaServerManager : IDisposable
         instance.AddUserMessage(userMessage);
         instance.RequestCount++;
 
+        var trace = StartTrace(slotId, streaming: true, maxTokens);
         var startTime = DateTime.Now;
         var timestamp = startTime.ToString("HH-mm-ss-fff");
 
@@ -853,7 +1087,9 @@ public class LlamaServerManager : IDisposable
             {
                 Content = JsonContent.Create(requestData)
             };
-            var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+            // Disposed, unlike before: an undisposed response holds its connection until the finalizer
+            // gets to it, which is the same pooling hazard the drain below closes.
+            using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
@@ -866,43 +1102,104 @@ public class LlamaServerManager : IDisposable
             using (var stream = await response.Content.ReadAsStreamAsync())
             using (var reader = new StreamReader(stream))
             {
-                string? line;
-                while ((line = await reader.ReadLineAsync()) != null)
+                // Live only once [DONE] has been seen: generation itself may legitimately take
+                // minutes, but the few bytes after [DONE] must not. Draining a stream the server
+                // never ends would otherwise block until the HttpClient timeout (ten minutes) —
+                // trading a rare broken connection for a certain hang, which is a worse bargain than
+                // the bug being fixed. If it trips we simply stop, and the trace records it.
+                CancellationTokenSource? drainCts = null;
+
+                try
                 {
-                    if (!line.StartsWith("data: ")) continue;
-                    var jsonData = line.Substring(6);
-                    if (jsonData == "[DONE]") break;
-
-                    try
+                    while (true)
                     {
-                        using var doc = JsonDocument.Parse(jsonData);
-                        var root = doc.RootElement;
-
-                        if (root.TryGetProperty("usage", out var usageEl))
+                        string? line;
+                        try
                         {
-                            if (usageEl.TryGetProperty("prompt_tokens", out var ptEl)) promptTokens = ptEl.GetInt32();
-                            if (usageEl.TryGetProperty("completion_tokens", out var ctEl)) completionTokens = ctEl.GetInt32();
+                            line = await reader.ReadLineAsync(drainCts?.Token ?? CancellationToken.None);
+                        }
+                        catch (OperationCanceledException) when (drainCts != null)
+                        {
+                            trace.DrainTimedOut = true;
+                            break;
                         }
 
-                        if (root.TryGetProperty("choices", out var choices) && choices.GetArrayLength() > 0)
+                        if (line == null)
                         {
-                            var choice = choices[0];
-                            if (choice.TryGetProperty("delta", out var delta) &&
-                                delta.TryGetProperty("content", out var content))
+                            // ReadLineAsync returning null is the end of the body: drained cleanly.
+                            trace.DrainedToEof = true;
+                            break;
+                        }
+
+                        // Past [DONE] the body holds nothing we want — but it must still be read. See
+                        // the note on the [DONE] branch below.
+                        if (trace.SawDone) { trace.TailBytesAfterDone += line.Length + 1; continue; }
+
+                        if (!line.StartsWith("data: ")) continue;
+                        var jsonData = line.Substring(6);
+                        if (jsonData == "[DONE]")
+                        {
+                            // Read on to EOF rather than breaking out here.
+                            //
+                            // [DONE] is the last thing we care about, but it is not the last thing on
+                            // the wire: the chunked body still has its trailing blank line and
+                            // terminating zero-length chunk to come. Breaking here disposed the
+                            // response stream while the server was still writing them, which leaves
+                            // the connection unusable and — because HttpClient pools connections —
+                            // makes the NEXT request fail at the socket with a bare "An error occurred
+                            // while sending the request", pointing at whatever innocent call happened
+                            // to come after.
+                            //
+                            // That failure was rare (2 of 228 requests in the run that reported it)
+                            // and reads as an LLM fault, not a bookkeeping one. Draining returns the
+                            // connection cleanly; the terminating chunk arrives immediately after
+                            // [DONE], and the timeout below covers a server that never sends it.
+                            trace.SawDone = true;
+                            drainCts = new CancellationTokenSource(DrainAfterDoneTimeout);
+                            continue;
+                        }
+
+                        try
+                        {
+                            using var doc = JsonDocument.Parse(jsonData);
+                            var root = doc.RootElement;
+
+                            if (root.TryGetProperty("usage", out var usageEl))
                             {
-                                var token = content.GetString();
-                                if (!string.IsNullOrEmpty(token))
+                                if (usageEl.TryGetProperty("prompt_tokens", out var ptEl)) promptTokens = ptEl.GetInt32();
+                                if (usageEl.TryGetProperty("completion_tokens", out var ctEl)) completionTokens = ctEl.GetInt32();
+                            }
+
+                            if (root.TryGetProperty("choices", out var choices) && choices.GetArrayLength() > 0)
+                            {
+                                var choice = choices[0];
+                                if (choice.TryGetProperty("delta", out var delta) &&
+                                    delta.TryGetProperty("content", out var content))
                                 {
-                                    sb.Append(token);
-                                    onTokenStreamed?.Invoke(token, slotId);
+                                    var token = content.GetString();
+                                    if (!string.IsNullOrEmpty(token))
+                                    {
+                                        sb.Append(token);
+                                        onTokenStreamed?.Invoke(token, slotId);
+                                    }
                                 }
                             }
                         }
+                        catch (JsonException ex)
+                        {
+                            // Counted rather than merely skipped: a truncated stream otherwise reads
+                            // as a short reply, and the caller sees a bad answer instead of a broken
+                            // one.
+                            trace.MalformedChunks++;
+                            if (trace.MalformedChunks == 1)
+                                Console.Error.WriteLine($"LLM slot {slotId}: malformed stream chunk ignored ({ex.Message}).");
+                            continue;
+                        }
                     }
-                    catch (JsonException)
-                    {
-                        continue; // Skip malformed chunks
-                    }
+                }
+                finally
+                {
+                    drainCts?.Dispose();
                 }
             }
 
@@ -923,7 +1220,14 @@ public class LlamaServerManager : IDisposable
             }
 
             instance.AddAssistantResponse(generated);
+            trace.ReplyChars = generated.Length;
+            FinishTrace(trace, "ok");
             return generated;
+        }
+        catch (Exception ex)
+        {
+            FinishTrace(trace, $"FAILED {ex.GetType().Name}: {ex.Message}");
+            throw;
         }
         finally
         {

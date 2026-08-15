@@ -24,7 +24,9 @@ namespace Cathedral.Terminal
         private int _instanceVbo;
         private TerminalInstance[] _instances;
         private bool _instanceBufferDirty;
-        
+        /// <summary>The <see cref="GlyphAtlas.Version"/> the buffer's UVs were computed against.</summary>
+        private int _atlasVersion = -1;
+
         // Quad geometry (shared for all cells)
         private readonly float[] _quadVertices = {
             // Position   UV
@@ -278,12 +280,19 @@ namespace Cathedral.Terminal
 
         private void UpdateInstanceBuffer(Vector2i windowSize)
         {
-            if (!_instanceBufferDirty && !_view.HasChanges)
+            // The atlas is SHARED with the main terminal, and a rebuild re-lays its whole grid out —
+            // so a glyph the main terminal introduced invalidates these cached UVs too. See
+            // GlyphAtlas.Version.
+            if (!_instanceBufferDirty && !_view.HasChanges && _atlasVersion == _atlas.Version)
                 return;
+
+            // One rebuild up front, before any UV is read — see TerminalRenderer for why filling
+            // with GetGlyph alone strands the instances written before a mid-fill rebuild.
+            _atlas.EnsureGlyphs(GlyphsInView());
 
             // Calculate popup layout
             CalculatePopupLayout(windowSize, out Vector2 cellSize, out Vector2 topLeft);
-            
+
             // Update instance data for all cells
             int instanceIndex = 0;
             foreach (var (x, y, cell) in _view.EnumerateCells())
@@ -314,9 +323,17 @@ namespace Cathedral.Terminal
             GL.BindBuffer(BufferTarget.ArrayBuffer, _instanceVbo);
             GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, _instances.Length * TerminalInstance.SizeInBytes, _instances);
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
-            
+
             _instanceBufferDirty = false;
+            _atlasVersion = _atlas.Version;
             _view.MarkAllClean();
+        }
+
+        /// <summary>Every character currently on the grid, for a single up-front atlas rebuild.</summary>
+        private IEnumerable<char> GlyphsInView()
+        {
+            foreach (var (_, _, cell) in _view.EnumerateCells())
+                yield return cell.Character;
         }
 
         private void CalculatePopupLayout(Vector2i windowSize, out Vector2 cellSize, out Vector2 topLeft)

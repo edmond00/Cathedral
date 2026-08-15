@@ -101,6 +101,46 @@ public static class GameLog
     /// <summary>Writes to both console and log, like an ordinary <c>Console.WriteLine</c>.</summary>
     public static void WriteLine(string line) => Console.WriteLine(line);
 
+    /// <summary>
+    /// Copies the log so far to <paramref name="fileName"/> beside it, so the run's evidence survives
+    /// the next launch.
+    ///
+    /// <para><b>Why this exists.</b> <c>log.txt</c> is opened <c>FileMode.Create</c> — one run, one
+    /// log — which is right for the question "what happened this time" and fatal for a bug report
+    /// written the following day. A player who hits a failure, quits, and starts the game again to
+    /// see whether it recurs has overwritten the only record of it. The copy is taken at the moment
+    /// of failure precisely because that is the last moment it is certain to exist.</para>
+    ///
+    /// <para>Best-effort, like every other log path here: an unwritable folder costs the copy and
+    /// nothing else, and the caller is told so by getting null back.</para>
+    /// </summary>
+    /// <returns>The copy's file name (not its full path — it is what the player is shown), or null.</returns>
+    public static string? PreserveCopy(string fileName)
+    {
+        lock (Gate)
+        {
+            if (_file == null || Path == null) return null;
+            try
+            {
+                _file.Flush();
+                var destination = System.IO.Path.Combine(
+                    System.IO.Path.GetDirectoryName(Path) ?? Environment.CurrentDirectory, fileName);
+
+                // The live log is open FileShare.Read, so it can be copied while still being written.
+                File.Copy(Path, destination, overwrite: true);
+                return fileName;
+            }
+            catch (Exception ex)
+            {
+                // Not through Console.Error: that is teed into the very file this failed to copy, and
+                // the caller reports the failure anyway.
+                try { _file.WriteLine($"GameLog: could not preserve a copy as '{fileName}' ({ex.Message})."); }
+                catch { }
+                return null;
+            }
+        }
+    }
+
     /// <summary>Flushes and closes the file, restoring the plain console.</summary>
     public static void Close()
     {

@@ -1,0 +1,29 @@
+# The crash reporter: does a failed phase actually leave the evidence behind?
+#
+# A narration phase that cannot finish is deliberately terminal — no retry, no way to carry on — so
+# the one thing it owes the player is a file worth sending. `log.txt` is opened FileMode.Create, so
+# the run's log survives only until the next launch: a tester who hits the bug, quits and starts the
+# game again to see whether it recurs has destroyed the only record of it. The copy taken at the
+# moment of failure is what closes that window, and this asserts the copy is really written.
+#
+# Driven by the `crash-report` command rather than by a real failure, because a real one cannot be
+# staged: the fault this was built for was a socket error that struck twice in 228 requests, and
+# --playground answers every LLM call without ever making it, so no script can provoke one. Forcing
+# the report is the only way any of this code is covered at all.
+#
+# The command asserts on its own behalf and fails naming any missing section. It has to: `expect`
+# scans the rendered terminal, and a crash report is written to a file — so a script cannot see it.
+# What it checks is the PRESERVED COPY read back off disk, not the live log, because the copy is the
+# artefact a tester actually sends.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --silent --no-save
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+
+crash-report a forced test report
+
+quit

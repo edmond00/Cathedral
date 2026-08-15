@@ -307,6 +307,14 @@ foreach ($generated in @("logs", "catalyst-models", "log.txt")) {
     }
 }
 
+# log-crash-<stamp>.txt — a copy of log.txt taken when a phase failed, so a tester's evidence
+# survives the next launch. Named per occurrence rather than fixed, so it needs a wildcard; shipping
+# one would be shipping the whole session it copied, which is the exact fault log.txt is deleted for.
+Get-ChildItem -Path $stage -Filter "log-crash-*.txt" -File -ErrorAction SilentlyContinue | ForEach-Object {
+    Remove-Item $_.FullName -Force
+    Note "removed $($_.Name) (a crash report from running the game)"
+}
+
 # ── 6. Version label ─────────────────────────────────────────────────────────
 
 if ([string]::IsNullOrWhiteSpace($UserVersion)) {

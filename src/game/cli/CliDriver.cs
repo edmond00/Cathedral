@@ -242,6 +242,7 @@ public sealed class CliDriver
                 case "expect-no-outcome": CmdExpectOutcome(rest, want: false); break;
                 case "allow-flag-miss": CmdAllowFlagMiss(rest);       break;
                 case "save":        CmdSave(rest);                    break;
+                case "crash-report": CmdCrashReport(rest);            break;
                 case "pause":       Report(_game.CliOpenPauseMenu() ? null : "could not open the pause menu",
                                            "opened the pause menu"); break;
                 case "quit":        CmdQuit();                        break;
@@ -307,6 +308,10 @@ public sealed class CliDriver
                                     `inspect save` / `inspect savefile` with expect-state — `expect`
                                     scans the rendered screen and never sees these
           save write | save erase   force a write / delete the save, bypassing autosave and death
+          crash-report [text]       write a crash report and preserve log.txt under a name the next
+                                    launch will not overwrite, then print that name. The reporter is
+                                    otherwise unreachable from a script: it fires only when a phase
+                                    fails, and --playground never makes the calls that can fail
           allow-flag-miss <flag>    declare that a narrowing flag is expected to match nothing, so
                                     its miss does not fail the run. For scripts that test an ABSENCE
           observe <name|none>       pin what an observation phase may look at, the way `goal` pins
@@ -1212,6 +1217,73 @@ public sealed class CliDriver
     /// exactly when the autosave has not fired since the last change, which is what makes them useful
     /// as two separate assertions.</para>
     /// </summary>
+    /// <summary>
+    /// Forces a crash report, so the reporter itself is testable.
+    ///
+    /// <para>Every real trigger is a phase that failed, and a phase fails on an exception a script
+    /// cannot arrange — the failure this was built for was a socket fault that struck twice in 228
+    /// requests. Worse, <c>--playground</c> replaces every LLM call before it is made, so the whole
+    /// suite runs without ever making a call that could fail. Without this command the crash reporter
+    /// would ship having only ever been exercised by the bug it exists to catch.</para>
+    ///
+    /// <para><b>It asserts on its own behalf</b>, the way <c>save roundtrip</c> does, because the
+    /// thing worth checking is not on screen: <c>expect</c> scans the rendered terminal and a crash
+    /// report is written to a file. So this reads the preserved copy back off disk and fails naming
+    /// the section that is missing — which also proves the copy really contains the diagnosis, rather
+    /// than proving a file of that name exists.</para>
+    /// </summary>
+    private void CmdCrashReport(string[] a)
+    {
+        string what = a.Length > 0 ? string.Join(' ', a) : "a forced test report";
+
+        // A thrown-and-caught exception, so the report exercises the real stack-trace and
+        // inner-exception formatting rather than the "(none)" branch.
+        Exception captured;
+        try { throw new InvalidOperationException($"Forced by the CLI: {what}"); }
+        catch (Exception ex) { captured = ex; }
+
+        string? file = CrashReport.Capture(what, captured);
+        if (file == null)
+        {
+            CliMode.Emit("FAIL: crash report preserved no log (is log.txt open and the folder writable?)");
+            CliMode.HasFailedAssertion = true;
+            return;
+        }
+
+        string contents;
+        try
+        {
+            // Same folder as log.txt, which is where PreserveCopy puts it.
+            var path = System.IO.Path.Combine(Environment.CurrentDirectory, file);
+            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var reader = new StreamReader(stream);
+            contents = reader.ReadToEnd();
+        }
+        catch (Exception ex)
+        {
+            CliMode.Emit($"FAIL: crash report '{file}' could not be read back — {ex.GetType().Name}: {ex.Message}");
+            CliMode.HasFailedAssertion = true;
+            return;
+        }
+
+        // The sections a reader needs, and the ones a refactor would drop in silence. "LLM server" is
+        // contributed by LlamaServerManager rather than by CrashReport, so its absence would mean the
+        // provider mechanism itself has stopped working.
+        string[] required = { "CRASH REPORT", what, "── Exception ──", "InvalidOperationException",
+                              "Stack trace:", "── Environment ──", "Wine:", "── LLM server ──",
+                              "Health, pooled", "Health, fresh conn", "Last" };
+
+        var missing = required.Where(section => !contents.Contains(section)).ToList();
+        if (missing.Count > 0)
+        {
+            CliMode.Emit($"FAIL: crash report '{file}' is missing: {string.Join(", ", missing)}");
+            CliMode.HasFailedAssertion = true;
+            return;
+        }
+
+        CliMode.Emit($"ok: crash report preserved as {file} ({contents.Length} bytes, all sections present)");
+    }
+
     private void CmdSave(string[] a)
     {
         string sub = a.Length > 0 ? a[0].ToLowerInvariant() : "dump";

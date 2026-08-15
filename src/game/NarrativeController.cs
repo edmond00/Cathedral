@@ -767,13 +767,45 @@ public class NarrativeController
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"NarrativeController: Error generating observations: {ex.Message}");
-            Console.Error.WriteLine(ex.StackTrace);
-
             _previewSession.Reset();
             _narrationState.IsLoadingObservations = false;
-            _narrationState.ErrorMessage = $"Failed to generate observations: {ex.Message}";
+            _narrationState.ErrorMessage = ReportPhaseFailure("generating observations", ex);
         }
+    }
+
+    /// <summary>
+    /// The one way a narration phase reports that it could not finish: writes a full crash report,
+    /// preserves the run's log under a name the next launch will not overwrite, and returns the text
+    /// to show the player.
+    ///
+    /// <para><b>The phase stays dead on purpose.</b> There is no retry and no way to continue —
+    /// <see cref="Render"/> draws this message and nothing else, leaving Escape (the pause menu, and
+    /// so the way out) as the only input. A run that could be resumed is a run the player will
+    /// resume, and then <c>log.txt</c> grows for another hour, the failure ends up buried in the
+    /// middle of it, and the next launch truncates it entirely. Stopping is what produces a report
+    /// worth reading.</para>
+    ///
+    /// <para>The message names the preserved file, because a bug report without it costs a round
+    /// trip and usually the log as well.</para>
+    /// </summary>
+    private string ReportPhaseFailure(string what, Exception ex)
+    {
+        string? crashLog = CrashReport.Capture(what, ex);
+
+        // Ordered by what the player needs, because ShowError truncates at the separator line and a
+        // long exception message would otherwise push the one actionable sentence off the screen.
+        var message = $"Something went wrong while {what}. This is a bug, not something you did.";
+        if (crashLog != null)
+            message += $"\n\nPlease send '{crashLog}' from the game's folder to the developer. It holds everything needed to diagnose this.";
+        else if (GameLog.IsOpen)
+            // The copy failed, or this is the fourth failure this run. The live log still has every
+            // report in it — it just will not survive the next launch, so say so.
+            message += $"\n\nPlease send '{GameLog.FileName}' from the game's folder to the developer BEFORE starting the game again — the next launch replaces it.";
+        else
+            message += "\n\nThe game could not write its log (is its folder read-only?), so there is nothing to send. Please describe what you were doing when this happened.";
+        message += "\n\nPress Escape for the menu.";
+        message += $"\n\n{ex.GetType().Name}: {ex.Message}";
+        return message;
     }
 
     /// <summary>
@@ -1098,11 +1130,9 @@ public class NarrativeController
         catch (Exception ex)
         {
             Console.Error.WriteLine($"NarrativeController: Error during thinking phase: {ex.Message}");
-            Console.Error.WriteLine(ex.StackTrace);
-
             _previewSession.Reset();
             _narrationState.IsLoadingThinking = false;
-            _narrationState.ErrorMessage = $"Thinking failed: {ex.Message}";
+            _narrationState.ErrorMessage = ReportPhaseFailure("thinking", ex);
         }
     }
     
@@ -1394,12 +1424,10 @@ public class NarrativeController
         catch (Exception ex)
         {
             Console.Error.WriteLine($"NarrativeController: Error during action execution: {ex.Message}");
-            Console.Error.WriteLine(ex.StackTrace);
-
             _previewSession.Reset();
             _narrationState.IsLoadingAction = false;
             NarrationDiceClear();
-            _narrationState.ErrorMessage = $"VerbAction execution failed: {ex.Message}";
+            _narrationState.ErrorMessage = ReportPhaseFailure("executing an action", ex);
         }
     }
     
@@ -1623,11 +1651,10 @@ public class NarrativeController
         catch (Exception ex)
         {
             Console.Error.WriteLine($"NarrativeController: GetUp outcome generation failed — {ex.Message}");
-            Console.Error.WriteLine(ex.StackTrace);
             _previewSession.Reset();
             _narrationState.IsLoadingAction = false;
             NarrationDiceClear();
-            _narrationState.ErrorMessage = $"GetUp outcome failed: {ex.Message}";
+            _narrationState.ErrorMessage = ReportPhaseFailure("resolving the get-up outcome", ex);
         }
     }
 
@@ -1664,30 +1691,35 @@ public class NarrativeController
         // every other action in the game pays them for it (see CommitOutcomeResult). Appended after
         // the fragment's own grants so a skill the fragment has just taught is already known when
         // its practice report is built.
-        System.Collections.Generic.IReadOnlyList<Outcome> reminescenceReportList;
-        try
-        {
-            var reminescenceReports = new System.Collections.Generic.List<Outcome>(
-                action.Verb.SuccessReports(_scene, _pov, _protagonist, target));
-            foreach (var report in reminescenceReports)
-                report.ApplyTo(OutcomeContext.For(_protagonist, _scene, _pov));
+        // Deliberately uncaught: this used to swallow everything and carry on with an empty report
+        // list, showing a memory that succeeded and granted nothing.
+        //
+        // Today that is merely misleading — every throw on this path happens while the list is being
+        // BUILT (SuccessReports rejects an unregistered modus mentis; ItemGrantOutcome's constructor
+        // reads DisplayName off its item), so nothing has been applied yet and the world is still
+        // consistent. What the catch was hiding was a missing reward, not a corrupt character.
+        //
+        // The reason to remove it anyway is that the ordering which makes it harmless is an accident
+        // nothing enforces. These outcomes are applied one at a time, so the first Apply that throws —
+        // a future one validating an anatomy the way WoundRegistry.CanBeSufferedBy does, say — leaves
+        // the earlier ones already written and the catch would discard every chip for them. Letting it
+        // propagate reaches ExecuteActionPhaseAsync's handler, which writes a crash report and stops
+        // the phase. Stopping is what keeps a half-applied character off disk: autosave fires on entry
+        // to the world map, and a phase that cannot finish never gets there.
+        var reminescenceReports = new System.Collections.Generic.List<Outcome>(
+            action.Verb.SuccessReports(_scene, _pov, _protagonist, target));
+        foreach (var report in reminescenceReports)
+            report.ApplyTo(OutcomeContext.For(_protagonist, _scene, _pov));
 
-            foreach (var chainModusMentis in action.GetModusMentisChain())
-            {
-                var practice = ModusMentisPracticeOutcome.For(_protagonist, chainModusMentis);
-                if (practice == null) continue;
-                practice.ApplyTo(OutcomeContext.For(_protagonist, _scene, _pov));
-                reminescenceReports.Add(practice);
-            }
-
-            reminescenceReportList = reminescenceReports;
-        }
-        catch (Exception ex)
+        foreach (var chainModusMentis in action.GetModusMentisChain())
         {
-            Console.Error.WriteLine($"NarrativeController: REMEMBER verb threw — {ex.Message}");
-            Console.Error.WriteLine(ex.StackTrace);
-            reminescenceReportList = System.Array.Empty<Outcome>();
+            var practice = ModusMentisPracticeOutcome.For(_protagonist, chainModusMentis);
+            if (practice == null) continue;
+            practice.ApplyTo(OutcomeContext.For(_protagonist, _scene, _pov));
+            reminescenceReports.Add(practice);
         }
+
+        System.Collections.Generic.IReadOnlyList<Outcome> reminescenceReportList = reminescenceReports;
 
         // Resolve the action modusMentis (ChildhoodReminescenceModusMentis) from the action.
         // Fall back to ChainModusMentis if ActionModusMentis is unexpectedly null.
@@ -1909,11 +1941,10 @@ public class NarrativeController
         catch (Exception ex)
         {
             Console.Error.WriteLine($"NarrativeController: Outcome generation failed: {ex.Message}");
-            Console.Error.WriteLine(ex.StackTrace);
             _previewSession.Reset();
             _narrationState.IsLoadingAction = false;
             NarrationDiceClear();
-            _narrationState.ErrorMessage = $"Outcome failed: {ex.Message}";
+            _narrationState.ErrorMessage = ReportPhaseFailure("resolving an outcome", ex);
         }
     }
 
@@ -1945,8 +1976,10 @@ public class NarrativeController
     }
 
     /// <summary>
-    /// Applies a resolved action outcome: side-effects (XP/item when <paramref name="deferredCommit"/>),
-    /// outcome reports, the outcome narration block, and any fight/dialogue/transition it triggers.
+    /// Applies a resolved action outcome: the chain's practice XP, outcome reports, the outcome
+    /// narration block, and any fight/dialogue/transition it triggers. <paramref name="deferredCommit"/>
+    /// additionally settles what only the deferred path produced — the speculative branch's narration
+    /// history, and a combined item's consumption.
     /// Called synchronously for Get-Up and via the outcome preview's CONTINUE for the main path.
     /// </summary>
     private void CommitOutcomeResult(ActionExecutionResult result, bool deferredCommit)
@@ -1958,19 +1991,27 @@ public class NarrativeController
         // here and applied with the rest below; a capped modus mentis reports nothing.
         var practiceReports = new System.Collections.Generic.List<Outcome>();
 
+        // Owed on EVERY success, both paths. This sat inside the `deferredCommit` branch below,
+        // which made it unreachable for the one caller that commits synchronously: the Get-Up
+        // phase rolled its dice against the chain's levels, narrated the outcome, and paid the
+        // chain nothing — no XP and no chip to say so. The reminescence phase beside it grants the
+        // same reports by hand for exactly this reason. Deferral is about which BRANCH won (the
+        // roll may still be flipped by a humor), not about whether practice is earned; the two
+        // things below genuinely are deferred, because only the deferred path generates a
+        // speculative second branch or combines an item.
+        if (result.Succeeded)
+            foreach (var chainModusMentis in result.Action.GetModusMentisChain())
+            {
+                var practice = ModusMentisPracticeOutcome.For(_activePartyMember, chainModusMentis);
+                if (practice != null) practiceReports.Add(practice);
+            }
+
         if (deferredCommit)
         {
             // Keep only the chosen branch's narration in the narrator slot history (discard the
             // speculative other branch that was generated during the roll).
             _actionExecutor.OutcomeNarrator.CommitNarrationHistory(result.Succeeded);
 
-            // Commit deferred side-effects for the FINAL (possibly humor-modified) outcome.
-            if (result.Succeeded)
-                foreach (var chainModusMentis in result.Action.GetModusMentisChain())
-                {
-                    var practice = ModusMentisPracticeOutcome.For(_activePartyMember, chainModusMentis);
-                    if (practice != null) practiceReports.Add(practice);
-                }
             if (result.ItemConsumed && result.Action.CombinedItem != null)
             {
                 _activePartyMember.RemoveItem(result.Action.CombinedItem);
@@ -2250,10 +2291,8 @@ public class NarrativeController
         catch (Exception ex)
         {
             Console.Error.WriteLine($"NarrativeController: Error during focus observation: {ex.Message}");
-            Console.Error.WriteLine(ex.StackTrace);
-
             _narrationState.IsLoadingFocusObservation = false;
-            _narrationState.ErrorMessage = $"Focus observation failed: {ex.Message}";
+            _narrationState.ErrorMessage = ReportPhaseFailure("observing in focus", ex);
         }
     }
     
@@ -2362,10 +2401,9 @@ public class NarrativeController
         catch (Exception ex)
         {
             Console.Error.WriteLine($"NarrativeController: Speaking phase error: {ex.Message}");
-            Console.Error.WriteLine(ex.StackTrace);
             _previewSession.Reset();
             _narrationState.IsLoadingSpeaking = false;
-            _narrationState.ErrorMessage = $"Speaking failed: {ex.Message}";
+            _narrationState.ErrorMessage = ReportPhaseFailure("speaking", ex);
         }
     }
 
@@ -3424,9 +3462,13 @@ public class NarrativeController
             foreach (var w in actor.Wounds)
                 outp.Add($"wound {w.WoundName} target={w.TargetId}");
 
+        // xp as well as level: practice is the commonest thing a verb does and the slowest to show,
+        // since a level takes several successes. Without the raw count a script cannot tell a modus
+        // mentis that was paid for its work from one that was not — which is how the Get-Up phase
+        // came to award none at all without a single test noticing.
         if (All("skills"))
             foreach (var m in actor.ModiMentis)
-                outp.Add($"skill {m.ModusMentisId} level={m.Level}");
+                outp.Add($"skill {m.ModusMentisId} level={m.Level} xp={m.CurrentXp}");
 
         if (All("npcs") && _scene != null && _pov != null)
             foreach (var npc in _scene.Npcs)

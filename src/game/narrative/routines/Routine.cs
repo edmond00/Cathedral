@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace Cathedral.Game.Narrative.Routines;
 
@@ -24,7 +25,7 @@ public class RoutineStep
     public string Label { get; set; } = "";
 
     /// <summary>The label to show, falling back to the verbatim for steps recorded before labels existed.</summary>
-    public string DisplayLabel => string.IsNullOrWhiteSpace(Label) ? Verbatim : Label;
+    [JsonIgnore] public string DisplayLabel => string.IsNullOrWhiteSpace(Label) ? Verbatim : Label;
 
     /// <summary>
     /// True when this step relocates the point of view — in space or in time (one of its reports

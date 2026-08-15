@@ -89,7 +89,7 @@ $Payload = @(
     # the server it starts runs native. That works because the server is a subprocess spoken to
     # over HTTP, so its architecture is independent of the game's.
     #
-    # Worth the 84 MB: measured on a Snapdragon X, native reads prompts 5.6x faster than the same
+    # Worth the 22 MB: measured on a Snapdragon X, native reads prompts 5.6x faster than the same
     # build emulated (76.1 vs 13.6 tok/s), and prompt reading is most of this game's LLM wait.
     @{ Path = "models/llama-arm64";               Required = $true  }
 

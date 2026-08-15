@@ -84,12 +84,28 @@ choose 0
 advance 12 180
 regions
 
+# Before and after, because the phase's one silent failure is that it pays the chain nothing.
+# The practice loop in CommitOutcomeResult used to sit inside its `deferredCommit` branch, and
+# Get-Up is the ONLY caller that commits synchronously — so it rolled dice against the chain's
+# levels, narrated the outcome, and awarded no experience at all. Nothing caught it: `inspect
+# skills` reported the level only, and a level takes several successes to move.
+inspect skills
 click action 0
 choose 0
 advance 12 180
 click continue
 advance 20 180
+inspect skills
 
 # What makes this a get_up test rather than an any-verb test.
 expect-verb get_up
+
+# The two halves of what a successful act owes, and they are different outcomes:
+#   vigor  — the lesson the verb teaches of itself (ModusMentisGrantOutcome), newly known here
+#   rote   — a point of practice to a modus mentis that carried the chain, and it stood at xp=0
+#            before the action, so the whole of this value was earned by THIS phase
+# Both values are pinned by --seed 42, as everything in this script is; if the childhood content
+# changes the chain, this fails naming the skill, which is the right way to be told.
+expect-state skills skill vigor level=1 xp=0
+expect-state skills skill rote level=1 xp=1
 quit

@@ -99,5 +99,11 @@ public class LLMLoadingRenderer
         _terminal.CenteredText(titleY + 13,
             "This may take 30–120 seconds on first run",
             Config.Colors.DarkGray35, Config.Colors.Black);
+
+        // Edge rules against the sphere, drawn last so nothing overwrites them. This screen is
+        // opaque black to the terminal's edges exactly like the main menu and the settings screen,
+        // so without them the panel bleeds into the skybox — and this is the FIRST screen a player
+        // ever sees. The two transparent-surround screens (trade, work) deliberately have none.
+        _terminal.DrawSideRails();
     }
 }
