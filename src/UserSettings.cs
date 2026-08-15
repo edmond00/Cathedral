@@ -57,6 +57,24 @@ public static class UserSettings
     /// </summary>
     public static bool Fullscreen { get; set; } = false;
 
+    /// <summary>
+    /// Index into <c>Config.Terminal.GlyphWeightSteps</c> — how heavily the terminal text is drawn.
+    /// A playtester finding the text hard to read is the reason this is a setting: FreeMono is a
+    /// hairline face and how well it survives the trip to a given panel depends on that panel.
+    /// <para>Applied at startup, and the atlas must be re-rastered when it is not the default —
+    /// half of a weight step is baked into the raster rather than shaded. See
+    /// <c>Config.Terminal.ApplyGlyphWeight</c>.</para>
+    /// </summary>
+    public static int GlyphWeight { get; set; } = Config.Terminal.GlyphWeightDefaultStep;
+
+    /// <summary>
+    /// How far a glyph overflows its cell, and so how large the text reads at a fixed grid.
+    /// <para>This is the nearest thing to a text-size setting the terminal can offer: the 100x100
+    /// grid is part of the layout — every renderer hardcodes rows against it — so cell size is
+    /// the window divided by a constant, and only the glyph inside the cell can grow.</para>
+    /// </summary>
+    public static float GlyphScale { get; set; } = Config.Terminal.GlyphScaleDefault;
+
     // ── Language model ───────────────────────────────────────────────────────
     //
     // These take effect at the next launch. The server loads the model once at startup and holds
@@ -135,6 +153,15 @@ public static class UserSettings
             DitherEnabled = dto.DitherEnabled;
             Fullscreen    = dto.Fullscreen;
 
+            // Clamped to exactly the range the Settings screen offers, because this file is
+            // hand-editable and these two can make the game unreadable rather than merely ugly:
+            // a scale of 0 draws no glyphs at all, and a weight index off the end of the ladder
+            // throws inside the renderer. The screen is itself terminal text, so a bad value here
+            // also breaks the one place a player would go to undo it.
+            GlyphWeight = Math.Clamp(dto.GlyphWeight, 0, Config.Terminal.GlyphWeightSteps.Length - 1);
+            GlyphScale  = Math.Clamp(dto.GlyphScale,
+                Config.Terminal.GlyphScaleMin, Config.Terminal.GlyphScaleMax);
+
             LlmDevice     = dto.LlmDevice;
             LlmGpuLayers  = dto.LlmGpuLayers < 0 ? -1 : dto.LlmGpuLayers;
             LlmCpuThreads = Math.Clamp(dto.LlmCpuThreads, 0, 256);
@@ -167,6 +194,8 @@ public static class UserSettings
 
                 DitherEnabled = DitherEnabled,
                 Fullscreen    = Fullscreen,
+                GlyphWeight   = GlyphWeight,
+                GlyphScale    = GlyphScale,
 
                 LlmDevice     = LlmDevice,
                 LlmGpuLayers  = LlmGpuLayers,
@@ -192,6 +221,8 @@ public static class UserSettings
         public int SfxVolume { get; set; } = 100;
         public bool DitherEnabled { get; set; } = true;
         public bool Fullscreen { get; set; } = false;
+        public int GlyphWeight { get; set; } = Config.Terminal.GlyphWeightDefaultStep;
+        public float GlyphScale { get; set; } = Config.Terminal.GlyphScaleDefault;
 
         // Written as "Auto"/"Gpu"/"Cpu" rather than 0/1/2, so the file stays hand-editable and a
         // reordered enum cannot silently change what an existing settings file means.

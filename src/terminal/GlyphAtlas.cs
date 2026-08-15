@@ -149,6 +149,25 @@ namespace Cathedral.Terminal
         #region Atlas Building
 
         /// <summary>
+        /// Re-rasters the glyph set already loaded, for a change in how a glyph is <b>drawn</b>
+        /// rather than in which glyphs there are.
+        ///
+        /// <para><see cref="BuildAtlas"/> alone cannot do this: it early-returns when the set is
+        /// unchanged, which is right for its usual caller and wrong here — the emboldening pen
+        /// (<c>Config.Terminal.GlyphStrokeFactor</c>) is baked into the raster, so every pixel of
+        /// an identical glyph set can be stale. The Settings screen's weight row is the one caller.</para>
+        ///
+        /// <para><see cref="Version"/> is bumped like any rebuild, which is what makes both
+        /// terminal renderers re-lay their instance buffers against the new layout.</para>
+        /// </summary>
+        public void Rebuild()
+        {
+            string glyphSet = _currentGlyphSet;
+            _currentGlyphSet = "";   // defeat BuildAtlas's no-change early return
+            BuildAtlas(glyphSet);
+        }
+
+        /// <summary>
         /// Builds or rebuilds the texture atlas with the specified glyph set
         /// </summary>
         public void BuildAtlas(string glyphSet)

@@ -391,6 +391,19 @@ public class LocationTravelGameController : IDisposable
         if (!Config.PostProcess.DitherModeSetByFlag)
             _core.PostProcess.Enabled = UserSettings.DitherEnabled;
 
+        // Glyph weight and size. The scale is a per-frame uniform, so writing it is the whole of
+        // applying it. The weight is half rastered, so it needs the atlas re-built — and only when
+        // it differs from the default the atlas was built with, which is the common case doing no
+        // work at all. The null-conditional covers both orders this constructor can run in: before
+        // the window loads there is no atlas yet, and the one built later is built with the value
+        // set here, which is equally correct.
+        Config.Terminal.GlyphScale = UserSettings.GlyphScale;
+        if (UserSettings.GlyphWeight != Config.Terminal.GlyphWeightStep)
+        {
+            Config.Terminal.ApplyGlyphWeight(UserSettings.GlyphWeight);
+            _core.Terminal?.Atlas.Rebuild();
+        }
+
         _interface = microworldInterface ?? throw new ArgumentNullException(nameof(microworldInterface));
         
         // Validate narrative world coherence at startup
@@ -2171,6 +2184,26 @@ public class LocationTravelGameController : IDisposable
                         UserSettings.Save();
                     },
 
+                    // Both glyph rows apply at once, and visibly — this screen is terminal text
+                    // drawn through the very atlas and uniforms they change, so the labels under
+                    // the player's cursor redraw at the new setting.
+                    OnGlyphWeightChanged = step =>
+                    {
+                        Config.Terminal.ApplyGlyphWeight(step);
+                        // Half of a weight step is the emboldening pen, which is baked into the
+                        // raster rather than shaded. Without this the gamma half applies alone and
+                        // the row does something subtler than it claims.
+                        _core.Terminal?.Atlas.Rebuild();
+                        UserSettings.GlyphWeight = Config.Terminal.GlyphWeightStep;
+                        UserSettings.Save();
+                    },
+                    OnGlyphScaleChanged = scale =>
+                    {
+                        Config.Terminal.GlyphScale = scale;
+                        UserSettings.GlyphScale = scale;
+                        UserSettings.Save();
+                    },
+
                     // The three language-model rows only persist; nothing is applied here. The
                     // server has already loaded the model for this session, so these take effect
                     // at the next launch and the screen says so.
@@ -2203,25 +2236,41 @@ public class LocationTravelGameController : IDisposable
                 };
             }
 
-            // Sync controls with the current persisted values each time we enter.
-            _settingsMenuRenderer.MusicVolume = UserSettings.MusicVolume;
-            _settingsMenuRenderer.SfxVolume   = UserSettings.SfxVolume;
-            _settingsMenuRenderer.LlmDevice     = UserSettings.LlmDevice;
-            _settingsMenuRenderer.LlmGpuLayers  = UserSettings.LlmGpuLayers;
-            _settingsMenuRenderer.LlmCpuThreads = UserSettings.LlmCpuThreads;
-            // Dither is read back from the renderer rather than from UserSettings, even though it
-            // is persisted now: the renderer is the live truth, so the toggle still shows the real
-            // state after --dither off or an F-key cycle. Those two do not write the setting — a
-            // run overridden at the command line, or mid-session live tuning, is not the player
-            // choosing a default — so the shown state and the saved state can legitimately differ
-            // until the toggle itself is clicked.
-            _settingsMenuRenderer.DitherEnabled = _core.PostProcess.Enabled;
-            // Fullscreen likewise, and for a sharper reason: F11 flips the same switch from
-            // anywhere in the game, so reading the saved value here would show WINDOW on a window
-            // that is plainly fullscreen.
-            _settingsMenuRenderer.Fullscreen = Cathedral.Glyph.WindowMode.IsFullscreen;
-            _settingsMenuRenderer.Render();
+            SyncAndRenderSettingsScreen();
         }
+    }
+
+    /// <summary>
+    /// Pulls every row of the Settings screen from its live source and redraws it.
+    ///
+    /// <para><b>Never render this screen without calling this first.</b> The renderer holds its own
+    /// copy of each value, so a bare <c>Render()</c> redraws whatever it was last told — which is
+    /// how F11 pressed with the screen open came to leave the SCREEN row reading WINDOW over a
+    /// fullscreen window. The call was there; the sync was not, and a redraw that faithfully
+    /// repaints a stale value looks exactly like a fix.</para>
+    ///
+    /// <para>Most rows are read from the thing that actually obeys them rather than from
+    /// <c>UserSettings</c> — the renderer for dither, <c>WindowMode</c> for fullscreen,
+    /// <c>Config.Terminal</c> for the glyph rows. All three can be moved by something that does not
+    /// write the setting (a command-line flag, an F-key, the F11 key), and the screen's job is to
+    /// show the player where the switch is, not where it was last saved. The volumes and the model
+    /// rows have no such second route in, so they come from the store.</para>
+    /// </summary>
+    private void SyncAndRenderSettingsScreen()
+    {
+        if (_settingsMenuRenderer == null) return;
+
+        _settingsMenuRenderer.MusicVolume   = UserSettings.MusicVolume;
+        _settingsMenuRenderer.SfxVolume     = UserSettings.SfxVolume;
+        _settingsMenuRenderer.LlmDevice     = UserSettings.LlmDevice;
+        _settingsMenuRenderer.LlmGpuLayers  = UserSettings.LlmGpuLayers;
+        _settingsMenuRenderer.LlmCpuThreads = UserSettings.LlmCpuThreads;
+        _settingsMenuRenderer.DitherEnabled = _core.PostProcess.Enabled;
+        _settingsMenuRenderer.Fullscreen    = Cathedral.Glyph.WindowMode.IsFullscreen;
+        _settingsMenuRenderer.GlyphWeight   = Config.Terminal.GlyphWeightStep;
+        _settingsMenuRenderer.GlyphScale    = Config.Terminal.GlyphScale;
+
+        _settingsMenuRenderer.Render();
     }
 
     private void OnEnterProtagonistCreation()
@@ -4667,7 +4716,20 @@ public class LocationTravelGameController : IDisposable
         bool now = Cathedral.Glyph.WindowMode.Toggle(_core);
         UserSettings.Fullscreen = now;
         UserSettings.Save();
-        _settingsMenuRenderer?.Render();   // the row, if that screen is up, must not go stale
+
+        // Only when that screen is the one on display, and only through the sync. Both halves of
+        // this were wrong before and each was its own bug:
+        //
+        //   - a bare Render() redrew the renderer's own stale Fullscreen field, so the row went on
+        //     reading WINDOW over a fullscreen window until the player left the screen and came
+        //     back. A faithful repaint of the wrong value is the hardest kind of no-op to see;
+        //   - it was unguarded by mode, and _settingsMenuRenderer is built once and kept. So F11
+        //     pressed anywhere after that screen had been opened even once repainted the whole
+        //     settings screen — Fill() and all — over the live mode, and it stayed there until
+        //     something else happened to redraw.
+        if (_currentMode == GameMode.Settings)
+            SyncAndRenderSettingsScreen();
+
         return now;
     }
 

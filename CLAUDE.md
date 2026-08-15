@@ -600,9 +600,14 @@ to change any permissions.
 ### Settings
 
 `UserSettings` (was `AudioSettings`) is the single persisted store, at
-`%APPDATA%\Cathedral\settings.json` — volumes, the dither toggle, and the compute settings. They
-live together because the file is rewritten whole, not merged: two classes writing it would each
-silently discard the other's fields.
+`%APPDATA%\Cathedral\settings.json` — volumes, the dither toggle, fullscreen, the two glyph
+settings, and the compute settings. They live together because the file is rewritten whole, not
+merged: two classes writing it would each silently discard the other's fields.
+
+The screen is **three groups**: audio (volumes), video (fullscreen, dither, glyph weight, glyph
+size), and language model. Everything in the first two applies at once; nothing in the third does,
+and the boundary is what lets the "changes above take effect at the next launch" note under the
+model rows mean that group rather than the whole screen.
 
 **Dither persists the on/off state only, not which dither.** `PostProcessRenderer.Enabled` is
 derived (`Mode != Off`) and restores whichever mode was last in use, so applying the saved bool at
@@ -614,6 +619,48 @@ menu would silently break `--dither off` for every later run. The Settings scree
 toggle back from the *renderer* rather than from `UserSettings`, so it shows the true live state
 after a flag or an F-key cycle — meaning shown and saved can legitimately differ until the toggle
 itself is clicked.
+
+**Never render the Settings screen except through `SyncAndRenderSettingsScreen`.** The renderer
+holds its own copy of every value, so a bare `Render()` faithfully repaints whatever it was last
+told — which is the hardest kind of no-op to spot, because the call is right there in the diff. F11
+pressed with the screen open did exactly that: the row went on reading WINDOW over a fullscreen
+window until the player left and came back. The same call was also ungated by mode, and the renderer
+is built once and kept, so F11 pressed *anywhere* after that screen had been opened once repainted
+the whole settings screen over the live mode. One helper now owns both halves; anything that changes
+a setting from outside the screen calls it, guarded by `_currentMode == GameMode.Settings`.
+
+Which source each row syncs from is the rule that makes this worth centralising: **read the thing
+that obeys the setting, not the store** — the renderer for dither, `WindowMode` for fullscreen,
+`Config.Terminal` for the glyph rows. All three can be moved by something that never writes the
+setting (a flag, an F-key, F11), and the screen's job is to show where the switch *is*. Volumes and
+the model rows have no second route in, so they come from `UserSettings`.
+
+**A test that touches this screen mutates the developer's real `settings.json`** — there is no
+`--settings-path` the way there is a `--save-path`, so F11 and every row click write straight to
+`%APPDATA%`. That is why no settings script is wired into `run_tests.sh`: an interrupted run would
+leave the next launch fullscreen, and a script asserting the SCREEN row's start state would be flaky
+against whatever the last run left. Verify by hand, or add the flag first.
+
+**The two glyph rows are the player's only lever on how readable the text is, and one of them is
+half-rastered.** `Config.Terminal.GlyphScale` and `GlyphAlphaGamma` are uniforms set on every frame,
+so writing them is the whole of applying them; `GlyphStrokeFactor` is baked into the atlas when a
+glyph is drawn, so a write there must be followed by **`GlyphAtlas.Rebuild()`** — which exists
+because `BuildAtlas` early-returns on an unchanged glyph set, and the set *is* unchanged when only
+the pen width moved. Forget it and the row still does something, just the subtler half of what it
+claims. That is also why the three are no longer `const`.
+
+Stroke and gamma are **one player-facing row**, not two: they are two halves of one fix biting at
+opposite ends of the cell-size range (stroke carries a large cell, gamma a small one), and a player
+cannot tell which half their panel needs. `Config.Terminal.GlyphWeightSteps` owns the pairing and
+its ends are the documented failure modes — past ~0.04 of stroke the counters of `@ 8 %` close, much
+below 0.7 of gamma the text turns blocky. `GlyphWeightStep` is the live truth the screen reads back,
+because there is no reverse lookup from a stroke/gamma pair to a step.
+
+**The grid is not a setting and must not become one.** `GlyphScale` grows the glyph inside its cell
+because cell size is the window divided by `MainWidth`/`MainHeight`, and every renderer hardcodes
+its rows against that 100x100 — the grid is layout. Fullscreen is the player's lever on cell size.
+The scale ceiling is where the quad's overflow shows on box-drawing glyphs (side rails, popup
+frames, the solid volume bars), which fill their cell to the edge where letters do not.
 
 The Settings screen exposes device, GPU layers, threads and re-detect. **All of them apply at the
 next launch**, and the screen says so: the server loads the model once at startup and holds it, so

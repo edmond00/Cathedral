@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using OpenTK.Mathematics;
 
 namespace Cathedral;
@@ -426,8 +427,65 @@ public static class Config
         public const int PopupHeight = 40;
         public const int PopupCellSize = MainCellSize;
 
+        // ── Glyph rendering ──────────────────────────────────────────────────
+        //
+        // The three below are the only knobs the player has over how readable the terminal text
+        // is, and they are the reason none of them is a const: the Settings screen writes them
+        // live. GlyphScale and GlyphAlphaGamma are uniforms set on every frame, so a write here
+        // shows on the next one; GlyphStrokeFactor is baked into the atlas raster and a write
+        // must be followed by GlyphAtlas.Rebuild(). See UserSettings.GlyphWeight for what is
+        // persisted, and SettingsMenuRenderer for the rows.
+        //
+        // The grid itself is deliberately NOT adjustable. Cell size is the window divided by
+        // MainWidth/MainHeight, and every renderer hardcodes its rows and columns against that
+        // 100x100 — the grid is part of the layout, not a setting. Fullscreen is the player's
+        // lever over cell size.
+
+        /// <summary>
+        /// The weight ladder the Settings screen offers, from hairline to heavy.
+        ///
+        /// <para><b>One row, two constants, on purpose.</b>
+        /// <see cref="GlyphStrokeFactor"/> and <see cref="GlyphAlphaGamma"/> are two halves of one
+        /// fix that bite at opposite ends of the cell-size range — the stroke is what carries a
+        /// large cell, where there is little partial coverage for the gamma to lift, and the gamma
+        /// is what carries a small one, where a stem is mostly skirt. A player cannot tell which
+        /// half their panel needs, and offered as two rows the obvious thing to do with them is
+        /// set one against the other. So they move together and the player sees a single weight.</para>
+        ///
+        /// <para>The ends are the documented failure modes rather than arbitrary limits: past
+        /// ~0.04 of stroke the counters of '@', '8' and '%' begin to close at small cell sizes,
+        /// and much below 0.7 of gamma the anti-aliased skirt stops reading as an edge and the
+        /// text turns blocky. A player who walks to either end gets an ugly result, not a broken
+        /// one — which is the right thing for a knob whose whole purpose is to be pushed until it
+        /// looks right on a panel nobody here has seen.</para>
+        ///
+        /// <para>Declared <b>before</b> the three fields below, and that is load-bearing: static
+        /// field initializers run in declaration order, so a table declared after the fields that
+        /// read it is still null when they initialize.</para>
+        /// </summary>
+        public static readonly (string Label, float Stroke, float Gamma)[] GlyphWeightSteps =
+        {
+            ("THIN",   0.000f, 1.00f),
+            ("LIGHT",  0.010f, 0.85f),
+            ("NORMAL", 0.020f, 0.75f),   // the shipped default — see GlyphWeightDefaultStep
+            ("BOLD",   0.030f, 0.68f),
+            ("HEAVY",  0.040f, 0.62f),
+        };
+
+        /// <summary>Index into <see cref="GlyphWeightSteps"/> of the default, unchanged weight.</summary>
+        public const int GlyphWeightDefaultStep = 2;
+
+        // Bounds for the glyph-size row. The ceiling is where the glyph quad's overflow past its
+        // own cell starts to show on the box-drawing UI — the side rails, popup frames and the
+        // solid bars in the Settings screen collide before the letters do, since those glyphs fill
+        // their cell to the edge and letters do not.
+        public const float GlyphScaleDefault = 1.20f;
+        public const float GlyphScaleMin     = 1.00f;
+        public const float GlyphScaleMax     = 1.30f;
+        public const float GlyphScaleStep    = 0.05f;
+
         // Glyph scale relative to cell (1.0 = exact fit, >1.0 = slight overflow for natural look)
-        public const float GlyphScale = 1.2f;
+        public static float GlyphScale = GlyphScaleDefault;
 
         /// <summary>
         /// Emboldening: the glyph is stroked as well as filled when rastered into the atlas, with a
@@ -442,8 +500,11 @@ public static class Config
         /// Thickening the raster fixes both, and it is the half that matters at large cell sizes,
         /// where there is little partial coverage for <see cref="GlyphAlphaGamma"/> to work with.
         /// Above ~0.04 the counters of '@', '8' and '%' start to close at small cell sizes.
+        /// <para><b>Baked into the atlas.</b> Writing this without calling
+        /// <c>GlyphAtlas.Rebuild()</c> changes nothing — the glyph set is unchanged, so the atlas
+        /// does not notice.</para>
         /// </summary>
-        public const float GlyphStrokeFactor = 0.02f;
+        public static float GlyphStrokeFactor = GlyphWeightSteps[GlyphWeightDefaultStep].Stroke;
 
         /// <summary>
         /// Exponent applied to the glyph's alpha in the fragment shader (1.0 disables it). Below 1
@@ -452,7 +513,28 @@ public static class Config
         /// cell sizes, where a stem is mostly skirt. Kept mild — pushed much below 0.7 the skirt
         /// stops being an edge and the text turns blocky.
         /// </summary>
-        public const float GlyphAlphaGamma = 0.75f;
+        public static float GlyphAlphaGamma = GlyphWeightSteps[GlyphWeightDefaultStep].Gamma;
+
+        /// <summary>
+        /// Which <see cref="GlyphWeightSteps"/> entry is live. Config is the truth here rather than
+        /// <c>UserSettings</c>, so the Settings screen shows the real state the same way the dither
+        /// toggle reads back from the renderer — there is no reverse lookup from a stroke/gamma
+        /// pair to a step, and two places free to disagree about which step is current is exactly
+        /// the bug that arrangement invites.
+        /// </summary>
+        public static int GlyphWeightStep { get; private set; } = GlyphWeightDefaultStep;
+
+        /// <summary>
+        /// Applies a weight step, clamped into range. <b>The caller must rebuild the atlas</b> —
+        /// the stroke half of this is rastered, not shaded, so half the change is invisible
+        /// otherwise. Kept the caller's job because at startup there is no atlas yet to rebuild.
+        /// </summary>
+        public static void ApplyGlyphWeight(int step)
+        {
+            GlyphWeightStep   = Math.Clamp(step, 0, GlyphWeightSteps.Length - 1);
+            GlyphStrokeFactor = GlyphWeightSteps[GlyphWeightStep].Stroke;
+            GlyphAlphaGamma   = GlyphWeightSteps[GlyphWeightStep].Gamma;
+        }
     }
     
     #endregion

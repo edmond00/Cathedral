@@ -9,15 +9,23 @@ namespace Cathedral.Game;
 /// Renders and manages the Settings screen on the TerminalHUD. Reached from the main menu; active
 /// only during <see cref="GameMode.Settings"/>.
 ///
-/// <para>Two groups, each under a heading, sharing one column geometry so every label, button and
+/// <para>Three groups, each under a heading, sharing one column geometry so every label, button and
 /// value lines up down the screen:</para>
 /// <list type="bullet">
-/// <item><b>Audio &amp; video</b> — music and SFX volumes as [ - ] / [ + ] steppers, and the dither
-/// toggle. Dither is a post-process shader rather than a sound setting, which is why the heading
-/// names both and not just audio.</item>
+/// <item><b>Audio</b> — music and SFX volumes as [ - ] / [ + ] steppers.</item>
+/// <item><b>Video</b> — fullscreen, dither, and the two glyph rows. This was one "Audio &amp; video"
+/// group holding dither as its only non-sound row; the glyph rows made that heading a list of
+/// unrelated concerns, and the split also puts a boundary between the settings that apply at once
+/// and the model rows below that do not — which the "next launch" note under them relies on being
+/// read as covering that group and not the whole screen.</item>
 /// <item><b>Language model</b> — compute device, GPU layers, thread count and re-detect. Unlike
 /// everything above, none of these apply until the next launch; see the row comments.</item>
 /// </list>
+///
+/// <para>The two glyph rows are live: a click is visible on this screen's own text before the
+/// button is released, which is most of why they are worth having as settings rather than as
+/// constants. What they cannot show is running lowercase prose at a small cell size, which is what
+/// actually breaks — the player has to go back to a narration screen for that.</para>
 /// </summary>
 public class SettingsMenuRenderer
 {
@@ -53,6 +61,22 @@ public class SettingsMenuRenderer
 
     /// <summary>Fired with the new state when the fullscreen toggle is clicked.</summary>
     public Action<bool>? OnFullscreenChanged { get; set; }
+
+    /// <summary>
+    /// Index into <see cref="Config.Terminal.GlyphWeightSteps"/>. Initialize before Render() —
+    /// from <c>Config.Terminal.GlyphWeightStep</c> rather than from the saved setting, which is the
+    /// live truth for the same reason the dither toggle reads back from the renderer.
+    /// </summary>
+    public int GlyphWeight { get; set; } = Config.Terminal.GlyphWeightDefaultStep;
+
+    /// <summary>Fired with the new step when a weight button is clicked.</summary>
+    public Action<int>? OnGlyphWeightChanged { get; set; }
+
+    /// <summary>Glyph size as a fraction of the cell. Initialize before Render().</summary>
+    public float GlyphScale { get; set; } = Config.Terminal.GlyphScaleDefault;
+
+    /// <summary>Fired with the new scale when a size button is clicked.</summary>
+    public Action<float>? OnGlyphScaleChanged { get; set; }
 
     // ── Language model ───────────────────────────────────────────────────────
     //
@@ -105,6 +129,10 @@ public class SettingsMenuRenderer
     private const int CtlThreadsPlus  = 10;
     private const int CtlRedetect     = 11;
     private const int CtlFullscreen   = 12;
+    private const int CtlWeightMinus  = 13;
+    private const int CtlWeightPlus   = 14;
+    private const int CtlSizeMinus    = 15;
+    private const int CtlSizePlus     = 16;
     private int _hoveredControl = -1;
 
     private const int Step = 10; // percent per click
@@ -119,21 +147,28 @@ public class SettingsMenuRenderer
     /// <summary>Ceiling for the manual thread count. Above the core count it only adds contention.</summary>
     private const int MaxCpuThreads = 64;
 
-    // Layout. Two stacks with a heading each, sharing one column geometry so every label,
-    // button and value lines up down the screen.
-    private const int TitleRow         = 28;
-    private const int AudioVideoHeadRow = 34;
+    // Layout. Three stacks with a heading each, sharing one column geometry so every label,
+    // button and value lines up down the screen. Rows are three apart within a group and five
+    // between groups, so the grouping reads without needing a rule drawn between them.
+    //
+    // The stack runs 26 (the title's ornament) to 84 against a 100-row terminal. That is most of
+    // the height it has: one more group wants two columns or a scroll, not another five rows.
+    private const int TitleRow      = 28;
+    private const int AudioHeadRow  = 34;
     private const int MusicRow      = 37;
     private const int SfxRow        = 40;
-    private const int DitherRow     = 43;
-    private const int FullscreenRow = 46;
-    private const int ModelHeadRow  = 51;
-    private const int DeviceRow     = 54;
-    private const int LayersRow     = 57;
-    private const int ThreadsRow    = 60;
-    private const int RedetectRow   = 63;
-    private const int ModelInfoRow  = 66;   // and the two rows below it
-    private const int BackRow       = 72;
+    private const int VideoHeadRow  = 45;
+    private const int FullscreenRow = 48;
+    private const int DitherRow     = 51;
+    private const int WeightRow     = 54;
+    private const int SizeRow       = 57;
+    private const int ModelHeadRow  = 62;
+    private const int DeviceRow     = 65;
+    private const int LayersRow     = 68;
+    private const int ThreadsRow    = 71;
+    private const int RedetectRow   = 74;
+    private const int ModelInfoRow  = 77;   // and the two rows below it
+    private const int BackRow       = 84;
     private const int BarWidth      = 20;
     private const int RowWidth      = 47; // total width of a volume row (see column math below)
     private const string BackLabel = "[ Back ]";
@@ -164,12 +199,17 @@ public class SettingsMenuRenderer
         _terminal.CenteredText(TitleRow, "S E T T I N G S", Config.Colors.BrightYellow, Config.Colors.Black);
         _terminal.CenteredText(TitleRow + 2, ornament, Config.Colors.DarkGray35, Config.Colors.Black);
 
-        // Not "AUDIO": the dither toggle below is a post-process shader, not a sound setting.
-        DrawSectionHeading(AudioVideoHeadRow, "A U D I O   &   V I D E O");
+        DrawSectionHeading(AudioHeadRow, "A U D I O");
         DrawVolumeRow(MusicRow, "MUSIC", MusicVolume, CtlMusicMinus, CtlMusicPlus);
         DrawVolumeRow(SfxRow, "SFX", SfxVolume, CtlSfxMinus, CtlSfxPlus);
-        DrawDitherRow();
+
+        // Coarsest lever first: fullscreen changes the cell size the two glyph rows are tuned
+        // against, so a player who is going to change it should meet it before them.
+        DrawSectionHeading(VideoHeadRow, "V I D E O");
         DrawFullscreenRow();
+        DrawDitherRow();
+        DrawWeightRow();
+        DrawSizeRow();
 
         DrawSectionHeading(ModelHeadRow, "L A N G U A G E   M O D E L");
         DrawDeviceRow();
@@ -262,6 +302,69 @@ public class SettingsMenuRenderer
         _terminal.Text(MinusX + FullscreenW + 1, FullscreenRow, "F11",
             Config.Colors.DarkGray35, Config.Colors.Black);
     }
+
+    /// <summary>
+    /// How heavily the terminal text is drawn, as a named step from THIN to HEAVY.
+    ///
+    /// <para>One row for two constants. The stroke width baked into the atlas and the alpha gamma
+    /// applied in the shader are two halves of one fix, biting at opposite ends of the cell-size
+    /// range — see <see cref="Config.Terminal.GlyphWeightSteps"/>, which owns the pairing. Offered
+    /// as two rows they would mostly be set against each other by a player who has no way to know
+    /// which half their panel needs.</para>
+    /// </summary>
+    private void DrawWeightRow()
+        => DrawNamedStepRow(WeightRow, "WEIGHT",
+            Config.Terminal.GlyphWeightSteps[GlyphWeight].Label,
+            CtlWeightMinus, CtlWeightPlus,
+            canDecrease: GlyphWeight > 0,
+            canIncrease: GlyphWeight < Config.Terminal.GlyphWeightSteps.Length - 1,
+            isDefault: GlyphWeight == Config.Terminal.GlyphWeightDefaultStep);
+
+    /// <summary>
+    /// Glyph size as a percentage of the cell it sits in — the nearest thing to a text-size
+    /// setting the terminal can offer, since the 100x100 grid is layout rather than preference and
+    /// cell size is therefore the window divided by a constant. Shown as a percentage because
+    /// "1.20" is a number about a quad and "120%" is a number about text.
+    /// </summary>
+    private void DrawSizeRow()
+        => DrawNamedStepRow(SizeRow, "SIZE",
+            $"{GlyphScale * 100f:0}%",
+            CtlSizeMinus, CtlSizePlus,
+            canDecrease: GlyphScale > Config.Terminal.GlyphScaleMin + ScaleEpsilon,
+            canIncrease: GlyphScale < Config.Terminal.GlyphScaleMax - ScaleEpsilon,
+            isDefault: MathF.Abs(GlyphScale - Config.Terminal.GlyphScaleDefault) < ScaleEpsilon);
+
+    /// <summary>
+    /// A stepper whose value is a word rather than a bar. Same columns as a volume row, so the
+    /// whole screen still reads as one stack.
+    ///
+    /// <para>The default is marked, and that is not decoration: both settings it serves are
+    /// matters of taste with no right answer, so a player who has walked away from the shipped
+    /// value needs to be able to find it again without reinstalling.</para>
+    /// </summary>
+    private void DrawNamedStepRow(int row, string label, string valueText, int minusCtl, int plusCtl,
+        bool canDecrease, bool canIncrease, bool isDefault)
+    {
+        int startX = RowStartX;
+        _terminal.FillRect(startX, row, RowWidth, 1, ' ', Config.Colors.White, Config.Colors.Black);
+        _terminal.Text(startX, row, label.PadRight(7), Config.Colors.MediumGray60, Config.Colors.Black);
+
+        DrawStepButton(MinusX, row, "[ - ]", minusCtl, canDecrease);
+        DrawStepButton(PlusX, row, "[ + ]", plusCtl, canIncrease);
+
+        _terminal.Text(BarX, row, valueText.PadRight(BarWidth), Config.Colors.White, Config.Colors.Black);
+
+        // Clear of the widest value either row produces ("NORMAL", "120%").
+        if (isDefault)
+            _terminal.Text(BarX + 8, row, "(default)", Config.Colors.DarkGray35, Config.Colors.Black);
+    }
+
+    /// <summary>
+    /// Tolerance for comparing a glyph scale against a bound. The value is stepped by 0.05 and
+    /// compared against ends it is expected to land exactly on, which is not something float
+    /// arithmetic promises — without this the [ + ] button greys out one step early, or never.
+    /// </summary>
+    private const float ScaleEpsilon = 0.001f;
 
     private void DrawSectionHeading(int row, string text)
         => _terminal.CenteredText(row, text, Config.Colors.MediumGray60, Config.Colors.Black);
@@ -413,6 +516,10 @@ public class SettingsMenuRenderer
             case CtlSfxPlus:    SetSfx(SfxVolume + Step); break;
             case CtlDither:     ToggleDither(); break;
             case CtlFullscreen: ToggleFullscreen(); break;
+            case CtlWeightMinus: SetGlyphWeight(GlyphWeight - 1); break;
+            case CtlWeightPlus:  SetGlyphWeight(GlyphWeight + 1); break;
+            case CtlSizeMinus:   SetGlyphScale(GlyphScale - Config.Terminal.GlyphScaleStep); break;
+            case CtlSizePlus:    SetGlyphScale(GlyphScale + Config.Terminal.GlyphScaleStep); break;
             case CtlDevice:     CycleDevice(); break;
             case CtlLayersMinus:  SetGpuLayers(LlmGpuLayers < 0 ? -1 : LlmGpuLayers - LayerStep); break;
             case CtlLayersPlus:   SetGpuLayers(LlmGpuLayers < 0 ? LayerStep : LlmGpuLayers + LayerStep); break;
@@ -476,6 +583,31 @@ public class SettingsMenuRenderer
         Render();
     }
 
+    private void SetGlyphWeight(int step)
+    {
+        int clamped = Math.Clamp(step, 0, Config.Terminal.GlyphWeightSteps.Length - 1);
+        if (clamped == GlyphWeight) return;
+        GlyphWeight = clamped;
+        // The handler applies it and re-rasters the atlas; by the time Render() below draws this
+        // screen it is already drawing it at the new weight.
+        OnGlyphWeightChanged?.Invoke(clamped);
+        Render();
+    }
+
+    private void SetGlyphScale(float value)
+    {
+        float clamped = Math.Clamp(value, Config.Terminal.GlyphScaleMin, Config.Terminal.GlyphScaleMax);
+
+        // Snap to the step grid. Repeatedly adding 0.05f drifts, and the row prints a rounded
+        // percentage — so drift shows first as a button that visibly changes nothing.
+        clamped = MathF.Round(clamped / Config.Terminal.GlyphScaleStep) * Config.Terminal.GlyphScaleStep;
+
+        if (MathF.Abs(clamped - GlyphScale) < ScaleEpsilon) return;
+        GlyphScale = clamped;
+        OnGlyphScaleChanged?.Invoke(clamped);
+        Render();
+    }
+
     private void ToggleDither()
     {
         DitherEnabled = !DitherEnabled;
@@ -529,6 +661,16 @@ public class SettingsMenuRenderer
         {
             if (x >= MinusX && x < MinusX + FullscreenW) return CtlFullscreen;
         }
+        else if (y == WeightRow)
+        {
+            if (x >= MinusX && x < MinusX + BtnW) return CtlWeightMinus;
+            if (x >= PlusX  && x < PlusX + BtnW)  return CtlWeightPlus;
+        }
+        else if (y == SizeRow)
+        {
+            if (x >= MinusX && x < MinusX + BtnW) return CtlSizeMinus;
+            if (x >= PlusX  && x < PlusX + BtnW)  return CtlSizePlus;
+        }
         else if (y == DeviceRow)
         {
             if (x >= MinusX && x < MinusX + DeviceW) return CtlDevice;
@@ -567,6 +709,10 @@ public class SettingsMenuRenderer
         CtlSfxPlus    => "settings:sfx-plus",
         CtlDither     => "settings:dither",
         CtlFullscreen => "settings:fullscreen",
+        CtlWeightMinus => "settings:glyph-weight-minus",
+        CtlWeightPlus  => "settings:glyph-weight-plus",
+        CtlSizeMinus   => "settings:glyph-size-minus",
+        CtlSizePlus    => "settings:glyph-size-plus",
         CtlDevice        => "settings:llm-device",
         CtlLayersMinus   => "settings:llm-layers-minus",
         CtlLayersPlus    => "settings:llm-layers-plus",
