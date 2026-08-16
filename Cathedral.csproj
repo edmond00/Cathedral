@@ -58,6 +58,25 @@
     <None Remove="DEPRECATED\**" />
   </ItemGroup>
 
+  <!--
+    Terminal shaders, embedded so there is exactly ONE copy of each.
+
+    They are read from src/terminal/Shaders/ when that folder is present (so a shader can be edited
+    without a rebuild) and from the assembly otherwise. `src/` is not in the shipped payload, so a
+    package always runs the embedded copy — which is why these were previously duplicated as string
+    literals in both renderers, and why one of those duplicates silently drifted: the shipped build
+    lost `uGlyphScale` and drew its terminal text at the wrong scale for years. See ShaderSource.
+
+    LogicalName keeps the resource named for the file ("Shaders/terminal.vert") rather than for its
+    namespace-mangled path, so the lookup does not move when a folder is renamed. The wildcard means
+    a new shader file is embedded the day it is added, with nothing to remember.
+  -->
+  <ItemGroup>
+    <EmbeddedResource Include="src\terminal\Shaders\*">
+      <LogicalName>Shaders/%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
   <!-- NuGet Package References -->
   <ItemGroup>
     <PackageReference Include="Catalyst" Version="26.3.60" />

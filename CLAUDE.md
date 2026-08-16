@@ -270,9 +270,33 @@ Three things the script knows that are not obvious:
 
 Not shipped, and why: `data/` is design source nothing reads at runtime, `assets/old/` is
 superseded art, and `src/` is unnecessary because the two shaders under `src/terminal/Shaders/` are
-read from disk *only if present* and otherwise fall back to strings embedded in the renderers —
-which means **a shipped build runs the embedded copies**. Keep the two in sync when editing a
-shader, or the release will not look like the dev build.
+**`EmbeddedResource`s** — they travel inside the assembly, so a shipped build has them without the
+folder. `ShaderSource.Load` reads the file from disk when it is there (a shader stays editable
+without a rebuild) and from the manifest otherwise.
+
+**That arrangement replaced three hand-maintained copies, and the story is why it is worth the
+csproj entry.** The shaders used to fall back to string literals in *both* renderers, so the vertex
+shader existed three times: the file, `TerminalRenderer`'s copy, `PopupRenderer`'s. Since `src/` is
+not in the payload, a package ran the copies — and `TerminalRenderer`'s had drifted, missing
+`uGlyphScale` entirely. **Every shipped build drew its main terminal text at scale 1.0 while
+development drew it at 1.2**, and the popup, whose copy was correct, disagreed with the terminal
+beside it. Nothing reported it, because a missing uniform is silent by design:
+`GL.GetUniformLocation` returns -1 and `GL.Uniform1(-1, …)` is a defined no-op, so the value was set
+every frame into nowhere. It surfaced only when the Settings screen made the value changeable and
+the SIZE row did nothing in the package. Drift is now not fixed but impossible — there is one copy.
+
+Two things that outlive the bug:
+
+- **`TerminalRenderer.Uniform(name)` complains once when a lookup returns -1**, which turns that
+  whole class of silent failure into a log line. Worth extending to any renderer that gains a
+  uniform-heavy shader.
+- **Reproduce a shipped build's shader path by renaming `src/terminal/Shaders/`.** That is the only
+  way to exercise it, because `ShipArguments.Filter` strips `--cli-script` and a packaged build
+  therefore cannot be driven by a script at all. Both paths should start the game with no
+  `no uniform` line in the log.
+
+A new shader file needs no code change — the csproj item is a wildcard, and `LogicalName` names the
+resource for the file (`Shaders/terminal.vert`) rather than for its namespace-mangled path.
 
 The zip lands around 2.2 GB, nearly all of it `model.gguf`, which is already-compressed
 quantised weights and does not shrink. That is over itch.io's browser upload limit, so releases
@@ -462,6 +486,44 @@ a backend pays for the measurement, once.
 It is skipped entirely under `--playground` (no server is started at all), so the test suite never
 pays for it. `--no-llm-probe` skips it otherwise.
 
+### A dead pooled connection, and why only POSTs see it
+
+A phase dies for no reason, and the exception says "An error occurred while sending the request" —
+the same sentence as every other transport fault. Underneath it is
+`HttpRequestError.ResponseEnded` / `HttpIOException: The response ended prematurely`, on a request
+that failed in **single-digit milliseconds** with both health probes answering 200. That combination
+means one thing: the request went out on a socket that was already gone. Never a busy server, never
+a slow one.
+
+**`.NET` already recovers from this by itself — but only for requests it may safely replay, and every
+request we make is a POST.** That asymmetry is the whole shape of the bug. Against a server that
+drops the second request on each connection, a GET never fails: `SendWithVersionDetectionAndRetryAsync`
+re-sends it on a fresh connection and nothing is reported. The identical scenario as a POST fails
+every time. **So probing this with a GET proves nothing** — three attempts to reproduce it that way
+came back clean because the runtime was hiding the failure.
+
+Two changes, and it is worth knowing which is which:
+
+- **The retry is the fix** (`IsDeadOnArrival`). Verified against a server that reproduces the failure
+  on demand: 5 of 6 POSTs hit it, the predicate matched every one, the retry recovered every one.
+  It is narrow by design — never a timeout, never an HTTP error status, never `ConnectionRefused`,
+  never mid-stream, once only — and every occurrence is logged and counted in the crash report,
+  because a session quietly retrying twenty times is the same news as one crashing twenty times.
+- **The pool timeout is prevention.** llama-server closes an idle connection after 5 seconds — it
+  says so in every response (`Keep-Alive: timeout=5, max=100`) and a socket probe confirms it at
+  5.02s. `SocketsHttpHandler` ignores that header and defaults to 60, so the pool keeps a supply of
+  dead connections. `LlamaServerManager.PooledConnectionIdleTimeout` is **2 seconds** to remove the
+  supply. Note this is *not* sufficient on its own evidence: 12 POSTs at 7-second gaps against a real
+  server with the 60-second default produced **no** failures here, because `.NET`'s liveness check
+  catches a dead connection on Windows. The reporter's machine was Wine at ~10 FPS, where that check
+  evidently loses its race. **If llama.cpp changes its keep-alive, this must stay below it** — the
+  crash report prints both numbers side by side, the server's read live from the header.
+
+**Do not diagnose this from log ordering.** `[llama]` lines reach `log.txt` through a redirected pipe
+and lag our own writes, so a `Reset instance N` printed before llama's `stream ended` proves nothing
+about what actually happened first. The first diagnosis of this bug was built on exactly that and was
+wrong. The in-process request table is the evidence; the interleaving is not.
+
 ### A streamed response must be read to its end
 
 `GenerateConstrainedStringStreamingAsync` **drains past `[DONE]` instead of breaking on it**, and
@@ -556,6 +618,9 @@ this could not:
 - **two health probes**, one over the shared `HttpClient` and one over a throwaway with its own
   pool. A fresh connection succeeding where the pooled one fails says the server is fine and *our
   connection* was not. That distinction was unanswerable before;
+- **the server's keep-alive terms beside our pool's idle timeout.** Read live from the response
+  header, because the failure they diagnose is the gap between the two numbers and neither means
+  anything alone — see "The connection pool must expire before the server's keep-alive does";
 - **the last 16 requests**, with `eof=` per streaming request — see the note on the drain below —
   and the idle gap before each, which is what a keep-alive timeout would show up as;
 - **whether this is Wine**, read from `ntdll!wine_get_version`. It was inferable only from a

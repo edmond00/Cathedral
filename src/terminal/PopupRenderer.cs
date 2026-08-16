@@ -82,8 +82,8 @@ namespace Cathedral.Terminal
 
         private int CreateProgram()
         {
-            string vertexSource = LoadShaderSource("terminal.vert");
-            string fragmentSource = LoadShaderSource("terminal.frag");
+            string vertexSource = ShaderSource.Load("terminal.vert");
+            string fragmentSource = ShaderSource.Load("terminal.frag");
             
             int vertexShader = CreateShader(ShaderType.VertexShader, vertexSource);
             int fragmentShader = CreateShader(ShaderType.FragmentShader, fragmentSource);
@@ -122,26 +122,6 @@ namespace Cathedral.Terminal
             }
             
             return shader;
-        }
-
-        private string LoadShaderSource(string filename)
-        {
-            string shaderPath = Path.Combine("src", "terminal", "Shaders", filename);
-            if (File.Exists(shaderPath))
-            {
-                return File.ReadAllText(shaderPath);
-            }
-            
-            // Fallback to embedded shaders if files don't exist
-            switch (filename)
-            {
-                case "terminal.vert":
-                    return GetEmbeddedVertexShader();
-                case "terminal.frag":
-                    return GetEmbeddedFragmentShader();
-                default:
-                    throw new FileNotFoundException($"Shader file not found: {shaderPath}");
-            }
         }
 
         private void CreateQuadGeometry()
@@ -459,79 +439,6 @@ namespace Cathedral.Terminal
         {
             _instanceBufferDirty = true;
             _view.MarkAllDirty();
-        }
-
-        #endregion
-
-        #region Embedded Shaders
-
-        private string GetEmbeddedVertexShader()
-        {
-            return @"#version 330 core
-layout(location = 0) in vec2 aLocalPos;
-layout(location = 1) in vec2 aLocalUV;
-layout(location = 2) in vec3 iPosition;
-layout(location = 3) in vec2 iSize;
-layout(location = 4) in vec4 iUvRect;
-layout(location = 5) in vec4 iTextColor;
-layout(location = 6) in vec4 iBgColor;
-
-uniform mat4 uProjection;
-uniform int uRenderPass;
-uniform float uGlyphScale;
-
-out vec2 vUV;
-out vec4 vTextColor;
-out vec4 vBgColor;
-
-void main()
-{
-    float scale = (uRenderPass == 1) ? uGlyphScale : 1.0;
-    vec2 screenPos = iPosition.xy + aLocalPos * iSize * scale;
-    gl_Position = uProjection * vec4(screenPos, 0.0, 1.0);
-    
-    if (uRenderPass == 0) {
-        vUV = vec2(0.0);
-    } else {
-        vUV = vec2(iUvRect.x + aLocalUV.x * iUvRect.z, 
-                   iUvRect.y + aLocalUV.y * iUvRect.w);
-    }
-    
-    vTextColor = iTextColor;
-    vBgColor = iBgColor;
-}";
-        }
-
-        private string GetEmbeddedFragmentShader()
-        {
-            return @"#version 330 core
-in vec2 vUV;
-in vec4 vTextColor;
-in vec4 vBgColor;
-
-uniform sampler2D uGlyphAtlas;
-uniform int uRenderPass;
-uniform float uGlyphGamma;
-
-out vec4 FragColor;
-
-void main()
-{
-    if (uRenderPass == 0) {
-        FragColor = vBgColor;
-    } else {
-        vec4 atlasTexel = texture(uGlyphAtlas, vUV);
-        float glyphAlpha = atlasTexel.r;
-
-        if (glyphAlpha < 0.02) {
-            discard;
-        }
-
-        glyphAlpha = pow(glyphAlpha, uGlyphGamma);
-
-        FragColor = vec4(vTextColor.rgb, vTextColor.a * glyphAlpha);
-    }
-}";
         }
 
         #endregion

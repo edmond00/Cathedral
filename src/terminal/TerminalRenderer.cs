@@ -72,8 +72,8 @@ namespace Cathedral.Terminal
 
         private int CreateProgram()
         {
-            string vertexSource = LoadShaderSource("terminal.vert");
-            string fragmentSource = LoadShaderSource("terminal.frag");
+            string vertexSource = ShaderSource.Load("terminal.vert");
+            string fragmentSource = ShaderSource.Load("terminal.frag");
             
             int vertexShader = CreateShader(ShaderType.VertexShader, vertexSource);
             int fragmentShader = CreateShader(ShaderType.FragmentShader, fragmentSource);
@@ -112,26 +112,6 @@ namespace Cathedral.Terminal
             }
             
             return shader;
-        }
-
-        private string LoadShaderSource(string filename)
-        {
-            string shaderPath = Path.Combine("src", "terminal", "Shaders", filename);
-            if (File.Exists(shaderPath))
-            {
-                return File.ReadAllText(shaderPath);
-            }
-            
-            // Fallback to embedded shaders if files don't exist
-            switch (filename)
-            {
-                case "terminal.vert":
-                    return GetEmbeddedVertexShader();
-                case "terminal.frag":
-                    return GetEmbeddedFragmentShader();
-                default:
-                    throw new FileNotFoundException($"Shader file not found: {shaderPath}");
-            }
         }
 
         private void CreateQuadGeometry()
@@ -233,12 +213,10 @@ namespace Cathedral.Terminal
             GL.Uniform1(darkenLoc, _darkenFactor);
 
             // Set glyph scale
-            int glyphScaleLoc = GL.GetUniformLocation(_program, "uGlyphScale");
-            GL.Uniform1(glyphScaleLoc, Config.Terminal.GlyphScale);
+            GL.Uniform1(Uniform("uGlyphScale"), Config.Terminal.GlyphScale);
 
             // Set glyph weight curve
-            int glyphGammaLoc = GL.GetUniformLocation(_program, "uGlyphGamma");
-            GL.Uniform1(glyphGammaLoc, Config.Terminal.GlyphAlphaGamma);
+            GL.Uniform1(Uniform("uGlyphGamma"), Config.Terminal.GlyphAlphaGamma);
 
             // Bind atlas texture
             GL.ActiveTexture(TextureUnit.Texture0);
@@ -266,6 +244,42 @@ namespace Cathedral.Terminal
             // Restore OpenGL state
             GL.Disable(EnableCap.Blend);
             GL.Enable(EnableCap.DepthTest);
+        }
+
+        /// <summary>Uniform locations, resolved once each — this runs per frame.</summary>
+        private readonly Dictionary<string, int> _uniformLocations = new();
+
+        /// <summary>
+        /// Resolves a uniform's location, reporting once if the shader does not have it.
+        ///
+        /// <para><b>A missing uniform is otherwise completely silent.</b> GL returns -1 and
+        /// <c>GL.Uniform1(-1, …)</c> is defined as a no-op, so the setting simply does nothing —
+        /// no error, no exception, nothing in the log. That is how the embedded fallback vertex
+        /// shader went years without <c>uGlyphScale</c>: the value was set on every frame, into
+        /// nowhere, and the only symptom was that a shipped build drew its terminal text at 1.0
+        /// while the development build drew it at 1.2. Nobody could see it until the Settings
+        /// screen let the value be changed, at which point the row did nothing in the package and
+        /// worked in development.</para>
+        ///
+        /// <para>The shaders are read from <c>src/terminal/Shaders/</c> when present and from the
+        /// embedded strings otherwise, so <b>a shipped build runs the embedded copies</b> — which
+        /// means this warning is one of the few things that can tell the two apart, and the reason
+        /// it is worth the branch. Reproduce a shipped build's shader path in development by
+        /// renaming that folder.</para>
+        /// </summary>
+        private int Uniform(string name)
+        {
+            if (_uniformLocations.TryGetValue(name, out int cached))
+                return cached;
+
+            int location = GL.GetUniformLocation(_program, name);
+            if (location < 0)
+                Console.Error.WriteLine($"Terminal: shader has no uniform '{name}' — "
+                                      + "whatever it controls will silently do nothing. "
+                                      + "The embedded fallback shader has probably drifted from "
+                                      + "src/terminal/Shaders/.");
+            _uniformLocations[name] = location;
+            return location;
         }
 
         private void UpdateInstanceBuffer(Vector2i windowSize)
@@ -381,80 +395,6 @@ namespace Cathedral.Terminal
         {
             CalculateTerminalLayout(windowSize, out Vector2 terminalSize, out Vector2 cellSize, out Vector2 offset);
             return (terminalSize, cellSize, offset);
-        }
-
-        #endregion
-
-        #region Embedded Shaders
-
-        private string GetEmbeddedVertexShader()
-        {
-            return @"#version 330 core
-layout(location = 0) in vec2 aLocalPos;
-layout(location = 1) in vec2 aLocalUV;
-layout(location = 2) in vec3 iPosition;
-layout(location = 3) in vec2 iSize;
-layout(location = 4) in vec4 iUvRect;
-layout(location = 5) in vec4 iTextColor;
-layout(location = 6) in vec4 iBgColor;
-
-uniform mat4 uProjection;
-uniform int uRenderPass;
-
-out vec2 vUV;
-out vec4 vTextColor;
-out vec4 vBgColor;
-
-void main()
-{
-    vec2 screenPos = iPosition.xy + aLocalPos * iSize;
-    gl_Position = uProjection * vec4(screenPos, 0.0, 1.0);
-    
-    if (uRenderPass == 0) {
-        vUV = vec2(0.0);
-    } else {
-        vUV = vec2(iUvRect.x + aLocalUV.x * iUvRect.z, 
-                   iUvRect.y + aLocalUV.y * iUvRect.w);
-    }
-    
-    vTextColor = iTextColor;
-    vBgColor = iBgColor;
-}";
-        }
-
-        private string GetEmbeddedFragmentShader()
-        {
-            return @"#version 330 core
-in vec2 vUV;
-in vec4 vTextColor;
-in vec4 vBgColor;
-
-uniform sampler2D uGlyphAtlas;
-uniform int uRenderPass;
-uniform float uDarkenFactor;
-uniform float uGlyphGamma;
-
-out vec4 FragColor;
-
-void main()
-{
-    if (uRenderPass == 0) {
-        // Apply darken factor to background RGB
-        FragColor = vec4(vBgColor.rgb * uDarkenFactor, vBgColor.a);
-    } else {
-        vec4 atlasTexel = texture(uGlyphAtlas, vUV);
-        float glyphAlpha = atlasTexel.r;
-
-        if (glyphAlpha < 0.02) {
-            discard;
-        }
-
-        glyphAlpha = pow(glyphAlpha, uGlyphGamma);
-
-        // Apply darken factor to text RGB
-        FragColor = vec4(vTextColor.rgb * uDarkenFactor, vTextColor.a * glyphAlpha);
-    }
-}";
         }
 
         #endregion

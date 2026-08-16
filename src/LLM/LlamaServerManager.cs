@@ -222,6 +222,7 @@ public class LlamaServerManager : IDisposable
         public bool SawDone;
         public bool DrainedToEof;         // false here on a streaming request is the bug this replaced
         public bool DrainTimedOut;
+        public bool Retried;          // the send was re-issued after a dead connection
         public int TailBytesAfterDone;
         public int MalformedChunks;
         public int ReplyChars;
@@ -235,7 +236,8 @@ public class LlamaServerManager : IDisposable
                 : "buffered";
             return $"  #{Seq,-4} {StartedUtc:HH:mm:ss.fff} slot={Slot,-2} " +
                    $"{(Streaming ? "stream" : "oneshot")} maxTok={MaxTokens,-4} " +
-                   $"idle={IdleGapMs,7:F0}ms dur={DurationMs,7:F0}ms reply={ReplyChars,4}c {detail}  → {Outcome}";
+                   $"idle={IdleGapMs,7:F0}ms dur={DurationMs,7:F0}ms reply={ReplyChars,4}c {detail}" +
+                   (Retried ? " RETRIED" : "") + $"  → {Outcome}";
         }
     }
 
@@ -258,6 +260,97 @@ public class LlamaServerManager : IDisposable
     private int _requestSeq;
     private DateTime _lastRequestEndedUtc = DateTime.MinValue;
     private int _failedRequests;
+
+    /// <summary>
+    /// The server's own <c>Keep-Alive</c> response header, verbatim, as last seen. Read rather than
+    /// assumed so the crash report compares our pool timeout against what the server actually
+    /// promises today, not against what it promised when this was written.
+    /// </summary>
+    private string? _lastKeepAliveHeader;
+
+    /// <summary>Records the server's advertised keep-alive terms from any response.</summary>
+    private void NoteKeepAlive(HttpResponseMessage response)
+    {
+        if (response.Headers.TryGetValues("Keep-Alive", out var values))
+            _lastKeepAliveHeader = string.Join(", ", values);
+    }
+
+    // ── Retrying a connection that was dead on arrival ───────────────────────────
+
+    private int _connectionRetries;
+
+    /// <summary>
+    /// Whether a failure means <b>the server never saw the request</b> — the only condition under
+    /// which asking again is honest.
+    ///
+    /// <para>The distinction that matters: a fallback <i>invents an answer</i>, a retry <i>re-asks the
+    /// question</i>. Nothing was processed, so there is no state to be inconsistent with and no
+    /// substituted result to mistake for a real one. That is why this is not the kind of silent
+    /// recovery <see cref="Cathedral.Game.Narrative.PersonaMatchCritic"/> had its fallback removed for.</para>
+    ///
+    /// <para><b>`.NET` already does this for us — but only for verbs it may safely replay, and every
+    /// request we make is a POST.</b> That asymmetry is the whole shape of the bug and is why it took
+    /// so long to see. Against a server that drops the second request on each connection, a GET never
+    /// fails: <c>SendWithVersionDetectionAndRetryAsync</c> quietly re-sends it on a fresh connection.
+    /// The identical scenario as a POST fails every time with
+    /// <c>HttpRequestError.ResponseEnded</c> — "The response ended prematurely" — which is exactly
+    /// the exception the crash report carried. So this is not novel behaviour being invented; it is
+    /// the behaviour `.NET` would already apply if it could know a chat completion is safe to repeat.
+    /// It also means <b>probing this with a GET proves nothing</b>: three separate attempts to
+    /// reproduce it that way came back clean because the runtime was hiding the failure.</para>
+    ///
+    /// <para>It is narrow on purpose, and the exclusions are the design:</para>
+    /// <list type="bullet">
+    /// <item><b>Not a timeout.</b> Those arrive as <see cref="TaskCanceledException"/>, not
+    /// <see cref="HttpRequestException"/>, so they cannot reach here — which is right. A server that
+    /// is alive and wedged is a real problem and must surface.</item>
+    /// <item><b>Not an HTTP error status.</b> The 4xx/5xx check happens outside the retry loop, so a
+    /// context-size rejection or a server fault is never re-sent.</item>
+    /// <item><b>Not <c>ConnectionRefused</c>.</b> That means the server itself is gone; re-asking
+    /// only delays the report by one round trip.</item>
+    /// <item><b>Not a mid-stream failure.</b> Only the send is retried. Once headers are in, tokens
+    /// may already have reached the preview, and re-sending would double them.</item>
+    /// </list>
+    /// </summary>
+    private static bool IsDeadOnArrival(Exception ex)
+    {
+        if (ex is not HttpRequestException http) return false;
+
+        // The request went out onto a socket that was already closed: the exact shape of a pooled
+        // connection the server had dropped. Nothing was processed.
+        if (http.HttpRequestError == HttpRequestError.ResponseEnded) return true;
+
+        // A connection that existed and died under us. Refusal is deliberately not in this list.
+        for (var e = ex.InnerException; e != null; e = e.InnerException)
+            if (e is System.Net.Sockets.SocketException sock)
+                return sock.SocketErrorCode is System.Net.Sockets.SocketError.ConnectionReset
+                                            or System.Net.Sockets.SocketError.ConnectionAborted
+                                            or System.Net.Sockets.SocketError.Shutdown;
+
+        return false;
+    }
+
+    /// <summary>
+    /// Counts a retry and says so. <b>Every one is reported</b> — the point of retrying is to spare
+    /// the player a dead run, not to stop anyone finding out. A session quietly retrying twenty times
+    /// is the same news as a session crashing twenty times, and this is how that news arrives:
+    /// a line per occurrence in <c>log.txt</c>, and the total in every crash report.
+    /// </summary>
+    private void NoteConnectionRetry(int slotId, Exception ex, RequestTrace trace)
+    {
+        lock (_traceLock)
+        {
+            _connectionRetries++;
+            trace.Retried = true;
+        }
+
+        Console.Error.WriteLine(
+            $"LLM slot {slotId}: the connection was dead before the request went out " +
+            $"({ex.GetType().Name}: {ex.Message}) — asking again once. The server never saw it, so " +
+            "nothing is lost. If this line is frequent, our pooled-connection idle timeout " +
+            $"({PooledConnectionIdleTimeout.TotalSeconds:F0}s) is no longer below the server's " +
+            $"keep-alive ({_lastKeepAliveHeader ?? "unknown"}).");
+    }
 
     private RequestTrace StartTrace(int slotId, bool streaming, int maxTokens)
     {
@@ -339,10 +432,19 @@ public class LlamaServerManager : IDisposable
         sb.AppendLine($"  Health, pooled:     {ProbeHealth(_httpClient)}");
         sb.AppendLine($"  Health, fresh conn: {ProbeHealth(null)}");
 
+        // The two halves of the keep-alive contract, printed together because their MISMATCH is a
+        // whole class of failure and reading either alone says nothing. The server's figure is taken
+        // live from its own response header rather than assumed, so a llama.cpp upgrade that changes
+        // it shows up here instead of silently invalidating the constant beside it.
+        sb.AppendLine($"  Server keep-alive:  {_lastKeepAliveHeader ?? "(not seen yet)"}");
+        sb.AppendLine($"  Our pool idle max:  {PooledConnectionIdleTimeout.TotalSeconds:F0}s " +
+                      "(MUST be lower than the server's timeout, or the pool holds dead connections)");
+
         lock (_traceLock)
         {
             sb.AppendLine();
-            sb.AppendLine($"  Requests this run:  {_requestSeq} ({_failedRequests} failed)");
+            sb.AppendLine($"  Requests this run:  {_requestSeq} ({_failedRequests} failed, " +
+                          $"{_connectionRetries} retried after a dead connection)");
             sb.AppendLine($"  Last {_recentRequests.Count} requests (oldest first):");
             if (_recentRequests.Count == 0)
                 sb.AppendLine("    (none)");
@@ -351,10 +453,17 @@ public class LlamaServerManager : IDisposable
                     sb.AppendLine(t.ToString());
 
             sb.AppendLine();
-            sb.AppendLine("  Reading this table: on a streaming request eof=n means the response body was");
-            sb.AppendLine("  abandoned before its end, which leaves the pooled connection unusable and");
-            sb.AppendLine("  makes the NEXT request fail at the socket. A large idle= before a failure");
-            sb.AppendLine("  points at a keep-alive timeout instead.");
+            sb.AppendLine("  Reading this table:");
+            sb.AppendLine("    eof=n   on a streaming request means the body was abandoned before its end,");
+            sb.AppendLine("            leaving the connection unusable for whatever request came next.");
+            sb.AppendLine("    idle=   is the gap since the PREVIOUS REQUEST finished — NOT the age of the");
+            sb.AppendLine("            connection this one was handed. A stale-connection failure can show");
+            sb.AppendLine("            idle=1ms while reusing a socket that has been dead for half a minute,");
+            sb.AppendLine("            so a small idle= does NOT rule out a keep-alive problem. Read the long");
+            sb.AppendLine("            gaps EARLIER in the table instead: each one over the server's keep-alive");
+            sb.AppendLine("            timeout leaves another dead connection in the pool.");
+            sb.AppendLine("    dur=    single-digit ms on a failure means the socket was already gone. A busy");
+            sb.AppendLine("            or slow server fails slowly; a dead connection fails instantly.");
         }
 
         return sb.ToString();
@@ -421,10 +530,46 @@ public class LlamaServerManager : IDisposable
         }
     }
 
+    /// <summary>
+    /// How long a connection may sit idle in our pool before we drop it.
+    ///
+    /// <para><b>This must stay below the server's keep-alive timeout, which is 5 seconds.</b>
+    /// llama-server says so in every response — <c>Keep-Alive: timeout=5, max=100</c> — and a socket
+    /// probe confirms it closes an idle connection at 5.02s. `.NET` does not honour that header, and
+    /// <see cref="SocketsHttpHandler.PooledConnectionIdleTimeout"/> defaults to <b>one minute</b>: so
+    /// out of the box the pool holds connections the server destroyed fifty-five seconds earlier.</para>
+    ///
+    /// <para><b>This is prevention, not the fix</b>, and the distinction is worth keeping straight.
+    /// `.NET` checks a pooled connection for liveness before reusing it, and on Windows that check is
+    /// reliable: 12 POSTs spaced 7 seconds apart against a real llama-server, with the 60-second
+    /// default, produced **no** failures. So the mismatch alone is survivable — what it does is keep
+    /// a supply of dead connections in the pool for that check to have to catch. Shrinking the
+    /// timeout below the server's removes the supply, so nothing has to be caught.</para>
+    ///
+    /// <para>The failure needs the close to land inside the check's race window, which did not
+    /// reproduce here but did on the reporter's machine — Wine, at about ten frames a second. Two
+    /// seconds leaves three of margin for exactly that kind of scheduling skew.</para>
+    ///
+    /// <para>The demonstrated fix is the retry; see <see cref="IsDeadOnArrival"/>.</para>
+    /// </summary>
+    private static readonly TimeSpan PooledConnectionIdleTimeout = TimeSpan.FromSeconds(2);
+
     public LlamaServerManager(string? baseUrl = null)
     {
         _baseUrl = baseUrl ?? "http://127.0.0.1:8080/";
-        _httpClient = new HttpClient
+
+        var handler = new SocketsHttpHandler
+        {
+            PooledConnectionIdleTimeout = LlamaServerManager.PooledConnectionIdleTimeout,
+
+            // A backstop for the other half of the server's promise, `max=100`. The server does send
+            // `Connection: close` on the hundredth request and .NET honours that, so this is belt and
+            // braces rather than the fix — but a connection that has lived for minutes is worth
+            // nothing to us, and every one retired early is one that cannot go stale.
+            PooledConnectionLifetime = TimeSpan.FromMinutes(2),
+        };
+
+        _httpClient = new HttpClient(handler)
         {
             BaseAddress = new Uri(_baseUrl),
             Timeout = TimeSpan.FromMinutes(10)
@@ -937,7 +1082,18 @@ public class LlamaServerManager : IDisposable
                 await File.WriteAllTextAsync(Path.Combine(requestLogDir, "gbnf_constraints.txt"), gbnfGrammar ?? "(none — free text)");
             }
 
-            using var response = await _httpClient.PostAsJsonAsync("v1/chat/completions", requestData);
+            // Retried only for a connection that was dead on arrival; see IsDeadOnArrival. The
+            // status check below is deliberately OUTSIDE the loop, so a server that answers with an
+            // error is never asked twice.
+            HttpResponseMessage? sent = null;
+            for (int attempt = 0; ; attempt++)
+            {
+                try { sent = await _httpClient.PostAsJsonAsync("v1/chat/completions", requestData); break; }
+                catch (Exception ex) when (attempt == 0 && IsDeadOnArrival(ex)) { NoteConnectionRetry(slotId, ex, trace); }
+            }
+
+            using var response = sent;
+            NoteKeepAlive(response);
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
@@ -1083,13 +1239,31 @@ public class LlamaServerManager : IDisposable
             }
 
             // Stream: read response headers first so token deltas surface as they arrive.
-            using var request = new HttpRequestMessage(HttpMethod.Post, "v1/chat/completions")
+            //
+            // Retried only for a connection that was dead on arrival; see IsDeadOnArrival. Only the
+            // SEND is inside the loop: with ResponseHeadersRead, a throw here means no header and so
+            // no token has reached onTokenStreamed, which is what makes asking again safe. A failure
+            // while reading the body is never retried — the preview would show the reply twice.
+            //
+            // A fresh HttpRequestMessage per attempt because one cannot be sent twice.
+            HttpRequestMessage? attemptRequest = null;
+            HttpResponseMessage? sent = null;
+            for (int attempt = 0; ; attempt++)
             {
-                Content = JsonContent.Create(requestData)
-            };
+                attemptRequest?.Dispose();
+                attemptRequest = new HttpRequestMessage(HttpMethod.Post, "v1/chat/completions")
+                {
+                    Content = JsonContent.Create(requestData)
+                };
+                try { sent = await _httpClient.SendAsync(attemptRequest, HttpCompletionOption.ResponseHeadersRead); break; }
+                catch (Exception ex) when (attempt == 0 && IsDeadOnArrival(ex)) { NoteConnectionRetry(slotId, ex, trace); }
+            }
+
+            using var request = attemptRequest;
             // Disposed, unlike before: an undisposed response holds its connection until the finalizer
             // gets to it, which is the same pooling hazard the drain below closes.
-            using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+            using var response = sent;
+            NoteKeepAlive(response);
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
