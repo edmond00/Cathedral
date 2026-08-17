@@ -64,7 +64,7 @@ public class NarrationScrollBuffer
         // Create a new block with cleaned text if it was modified, preserving all properties
         var blockToAdd = cleanedText != block.Text
             ? new NarrationBlock(block.Type, block.ModusMentis, cleanedText, block.Keywords, block.Actions, block.ChainOrigin,
-                block.SourceObservationType, block.LinkedOutcome, block.KeywordOutcomeMap, block.Sentences, block.SpeakerName,
+                block.SourceObservationType, block.LinkedOutcome, block.Sentences, block.SpeakerName,
                 block.OutcomeReports, block.DialogueOptions)
             : block;
 
@@ -399,7 +399,8 @@ public class NarrationScrollBuffer
                     int lineEnd = lineStart + lineText.Length;
                     var lineKeywords = new List<string>();
                     var lineOccurrences = new List<int>();
-                    foreach (var (sentStart, sentEnd, kwsWithOffsets) in sentenceRanges)
+                    var lineAnchors = new List<NarrativeAnchor?>();
+                    foreach (var (sentStart, sentEnd, anchor, kwsWithOffsets) in sentenceRanges)
                     {
                         if (sentStart >= lineEnd || sentEnd <= lineStart) continue;
                         foreach (var (kw, absOffset) in kwsWithOffsets)
@@ -410,6 +411,7 @@ public class NarrationScrollBuffer
                                 int occIndexInLine = CountOccurrencesUpTo(lineText, kw, absOffset - lineStart);
                                 lineKeywords.Add(kw);
                                 lineOccurrences.Add(occIndexInLine);
+                                lineAnchors.Add(anchor);
                             }
                         }
                     }
@@ -422,7 +424,8 @@ public class NarrationScrollBuffer
                         IsHistory: false,
                         GlobalActionIndex: -1,
                         SourceBlock: block,
-                        KeywordOccurrenceIndices: lineKeywords.Count > 0 ? lineOccurrences : null
+                        KeywordOccurrenceIndices: lineKeywords.Count > 0 ? lineOccurrences : null,
+                        KeywordAnchors: lineKeywords.Count > 0 ? lineAnchors : null
                     ));
                 }
             }
@@ -548,14 +551,19 @@ public class NarrationScrollBuffer
     }
 
     /// <summary>
-    /// Computes the character range [start, end) of each sentence within blockText,
-    /// and for each keyword finds its absolute char offset within blockText (first occurrence
-    /// inside the sentence range). Returns (start, end, [(keyword, absOffset)]) per sentence.
+    /// Computes the character range [start, end) of each sentence within blockText, and for each
+    /// keyword finds its absolute char offset within blockText (first occurrence inside the sentence
+    /// range). Returns (start, end, anchor, [(keyword, absOffset)]) per sentence.
+    ///
+    /// <para>The anchor is carried through so each rendered occurrence can be wired to the object
+    /// its own sentence was about. Because the offsets are resolved <i>within the sentence range</i>,
+    /// two sentences using the same word produce two distinct offsets and therefore two distinct
+    /// regions — which is what lets both men in a block be clickable as "man".</para>
     /// </summary>
-    private static List<(int Start, int End, List<(string Keyword, int AbsOffset)> Keywords)> ComputeSentenceRanges(
-        string blockText, List<NarrationSentence> sentences)
+    private static List<(int Start, int End, NarrativeAnchor? Anchor, List<(string Keyword, int AbsOffset)> Keywords)>
+        ComputeSentenceRanges(string blockText, List<NarrationSentence> sentences)
     {
-        var ranges = new List<(int, int, List<(string, int)>)>();
+        var ranges = new List<(int, int, NarrativeAnchor?, List<(string, int)>)>();
         int searchFrom = 0;
         foreach (var sentence in sentences)
         {
@@ -576,7 +584,7 @@ public class NarrationScrollBuffer
                 if (kwPos >= 0)
                     kwsWithOffsets.Add((kw, kwPos));
             }
-            ranges.Add((idx, sentEnd, kwsWithOffsets));
+            ranges.Add((idx, sentEnd, sentence.Anchor, kwsWithOffsets));
             searchFrom = sentEnd;
         }
         return ranges;
@@ -841,7 +849,8 @@ public record RenderedLine(
     NarrationBlock? SourceBlock = null,  // The narration block this line comes from (for modusMentis chain tracking)
     List<int>? KeywordOccurrenceIndices = null,  // Parallel to Keywords: which occurrence (0-based) within this line to highlight
     Outcome? Report = null,  // Set only for LineType.Report lines; null for all other types
-    int DialogueOptionIndex = -1  // 0-based index into SourceBlock.DialogueOptions for LineType.DialogueOption lines, -1 otherwise
+    int DialogueOptionIndex = -1,  // 0-based index into SourceBlock.DialogueOptions for LineType.DialogueOption lines, -1 otherwise
+    List<NarrativeAnchor?>? KeywordAnchors = null  // Parallel to Keywords: what each one acts on. Null for blocks with no per-sentence data, which fall back to SourceBlock.LinkedOutcome
 );
 
 /// <summary>

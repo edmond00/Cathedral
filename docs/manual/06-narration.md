@@ -226,6 +226,10 @@ about particular items: everything in a corpse is flesh, and the acts of cutting
 acts of seizing refuse it; everything in the belongings beside it is cloth and steel, and the
 reverse holds.
 
+**A fallen companion leaves the same**, by species and by what they carried, with no distinction
+made for having been of the party. What is cut from a companion who was a beast is what would be cut
+from any beast of that kind.
+
 **A corpse opens the next phase, alone**, each body in the order it fell. Anything the game creates
 during play must be reconciled with the scene's map of what may be attended to before it can be
 observed at all — a thing may exist in an area and still be invisible to attention until that

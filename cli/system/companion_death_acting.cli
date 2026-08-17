@@ -1,0 +1,79 @@
+# The companion who is narrating can die mid-phase, and the narration returns to the protagonist.
+#
+# The sharp edge of the standing death check. After a Speak-About hand-off the companion is the one
+# who observes, deliberates and acts — and therefore the one a failed act's wound penalty lands on
+# (see Chapter VI: every gate consults the acting body). So the member being narrated as is exactly
+# the member who can be killed by the narration, and when they are, the phase is left with nobody to
+# run it.
+#
+# NarrativeController.StartObservationPhaseWithHistory already answers that: an active member no
+# longer in the party hands the narration back to the protagonist. This asserts the two halves
+# together — the companion is really gone, and the session is still usable afterwards, which is what
+# would break if the hand-off were left pointing at a corpse.
+#
+# The hand-off itself is companion_handoff.cli's subject; this repeats it as far as the companion's
+# first act, which is what leaves the footer offering to open another segment rather than to leave
+# the place — killing the cat before it has acted strands the session on a LEAVE, and the return of
+# the narration is then unobservable. See companion_death_wounds.cli for the notice and the body,
+# which are the same here and are not re-asserted.
+#
+# FLAGS: --playground --skip-childhood --fill-party --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+
+expect [KENRYC GREYGATE]
+
+# Speak About: keyword -> "Speak About" -> speaking modus mentis -> companion.
+click keyword 0
+choose 2
+choose 0
+choose 0
+advance 12 180
+
+# The cat has the narration.
+expect [NIGHTHUNTER]
+
+# It takes its turn at the scene — its own observation, deliberation, act and dice.
+strategy succeed
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+# And is killed by what the narration deals out, being the body that was acting.
+wound Nighthunter
+wait 60
+
+# The notice comes up with nothing clicked, over the narration.
+expect Nighthunter
+expect died of their wounds
+click companion-death
+wait 60
+
+# Gone from the party...
+inspect party
+expect-no-state party Nighthunter
+# ...and a body in the room they were narrating in.
+inspect pois
+expect-state pois Nighthunter's Remains
+
+# The session survives them: the next segment opens with the protagonist narrating again, rather
+# than on a member who is no longer in the party.
+click button
+wait 60
+advance 12 180
+expect [KENRYC GREYGATE]
+
+quit

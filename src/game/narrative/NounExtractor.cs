@@ -9,8 +9,10 @@ using Mosaik.Core;
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
-/// English noun extractor. Uses Catalyst POS tagging when initialized,
-/// falling back to rule-based heuristics otherwise.
+/// English word extractor. Uses Catalyst POS tagging when initialized, falling back to rule-based
+/// heuristics otherwise. <see cref="ExtractKeywordCandidates"/> yields the words a narration
+/// keyword may be drawn from — nouns <i>and</i> adjectives, filtered against a stop list.
+///
 /// </summary>
 public static class NounExtractor
 {
@@ -21,7 +23,7 @@ public static class NounExtractor
 
     /// <summary>
     /// Loads the Catalyst English model. Call once from TextSanitizationPipeline initialization.
-    /// Subsequent calls to ExtractNouns will use POS tagging instead of heuristics.
+    /// Subsequent extraction uses POS tagging instead of the rule-based heuristics.
     /// </summary>
     public static async Task InitializeAsync(string modelStoragePath)
     {
@@ -43,27 +45,20 @@ public static class NounExtractor
     // ── Public API ─────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Extracts candidate nouns from the given text.
-    /// Uses Catalyst POS tagging if initialized, rule-based heuristics as fallback.
-    /// Returns distinct lowercase words.
+    /// Extracts the words a narration keyword may be drawn from, paired with their lemma. Uses
+    /// Catalyst POS + lemmatizer when initialized (the English model bundles a lemma lookup),
+    /// falling back to the rule-based nouns with a simple singularizer. Surfaces are distinct,
+    /// lower-cased, and filtered against <see cref="StopWords"/>.
+    ///
+    /// <para><b>Adjectives count, not only nouns.</b> A description's most distinctive word is
+    /// frequently a participle or a qualifier — the <i>smouldering</i> hearth, the <i>sodden</i>
+    /// straw — and restricting candidacy to nouns left those unclickable, so a phase's keyword was
+    /// picked from a thinner and more generic pool than the prose actually offered. The generic
+    /// adjectives ("old", "big", "dark", "warm") are in <see cref="StopWords"/> already and stay
+    /// filtered; they are the adjective equivalent of "time" and nothing is gained by highlighting
+    /// one.</para>
     /// </summary>
-    public static List<string> ExtractNouns(string text)
-    {
-        if (string.IsNullOrWhiteSpace(text))
-            return new List<string>();
-
-        if (_initialized && _pipeline != null)
-            return ExtractNounsCatalyst(text);
-
-        return ExtractNounsRuleBased(text);
-    }
-
-    /// <summary>
-    /// Extracts candidate nouns paired with their lemma. Uses Catalyst POS + lemmatizer when
-    /// initialized (the English model bundles a lemma lookup), falling back to rule-based nouns with
-    /// a simple singularizer. Surfaces are distinct, lower-cased, and filtered like <see cref="ExtractNouns"/>.
-    /// </summary>
-    public static List<(string Surface, string Lemma)> ExtractNounsWithLemmas(string text)
+    public static List<(string Surface, string Lemma)> ExtractKeywordCandidates(string text)
     {
         if (string.IsNullOrWhiteSpace(text))
             return new List<(string, string)>();
@@ -81,7 +76,7 @@ public static class NounExtractor
                 foreach (var span in doc)
                     foreach (var token in span)
                     {
-                        if (token.POS is not (PartOfSpeech.NOUN or PartOfSpeech.PROPN)) continue;
+                        if (token.POS is not (PartOfSpeech.NOUN or PartOfSpeech.PROPN or PartOfSpeech.ADJ)) continue;
                         var surface = token.Value.ToLowerInvariant();
                         if (surface.Length < 3 || StopWords.Contains(surface) || !seen.Add(surface)) continue;
 
@@ -109,45 +104,6 @@ public static class NounExtractor
             return w[..^2];
         if (w.Length > 3 && w.EndsWith("s") && !w.EndsWith("ss")) return w[..^1];
         return w;
-    }
-
-    // ── Catalyst path ──────────────────────────────────────────────────────────
-
-    private static List<string> ExtractNounsCatalyst(string text)
-    {
-        try
-        {
-            var doc = new Document(text, Language.English);
-            _pipeline!.ProcessSingle(doc);
-
-            var nouns = new List<string>();
-            var seen  = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            foreach (var span in doc)
-            {
-                foreach (var token in span)
-                {
-                    if (token.POS is PartOfSpeech.NOUN or PartOfSpeech.PROPN)
-                    {
-                        var lower = token.Value.ToLowerInvariant();
-                        if (lower.Length >= 3 && !StopWords.Contains(lower) && seen.Add(lower))
-                            nouns.Add(lower);
-                    }
-                }
-            }
-
-            if (nouns.Count > 0)
-                return nouns;
-
-            // If Catalyst found nothing, fall back to rule-based
-            Console.WriteLine("NounExtractor: Catalyst found no nouns, falling back to rule-based.");
-            return ExtractNounsRuleBased(text);
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"NounExtractor: Catalyst extraction failed: {ex.Message}");
-            return ExtractNounsRuleBased(text);
-        }
     }
 
     // ── Rule-based fallback ────────────────────────────────────────────────────

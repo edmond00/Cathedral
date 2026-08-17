@@ -6,8 +6,16 @@
 # queue is a state every consumption path already handles, and travel simply cannot pay its vital-heat
 # debt from queues that have nothing left to give.
 #
-# Note this death happens DURING the journey, not on arrival: heat is paid leg by leg as the route is
-# walked, so the run ends between two cells rather than at a destination.
+# This death used to wait for the journey: heat was paid leg by leg, and the run ended between two
+# cells. It no longer waits. Spent humors are now reckoned by the standing check that reckons wounds,
+# so a body with all four queues critical is dead as soon as anything looks at it — and --black-bile
+# sours them at the moment the protagonist is accepted, before the world has been touched. The run
+# therefore ends on reaching the map, with no journey attempted.
+#
+# The leg-by-leg drain is still there and still fires first while a route is being walked, since it
+# notices the queues empty in the same breath as it empties them. What this script now covers is the
+# state being lethal on sight; death_narration_humors.cli covers a body that starves DURING a visit,
+# which is where the save-still-exists assertion moved to.
 #
 # FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --black-bile --allow-reentry --save-path .tmp-cli-save/death-starve.json
 
@@ -15,15 +23,8 @@ wait
 click menu New
 wait mode ProtagonistCreation 20
 click continue
-wait mode WorldView 45
 
-# The autosave fired on the way in, so there IS a save to lose — which is what makes the erase below
-# an assertion rather than a tautology.
-expect-no-state savefile save none
-
-# Any journey at all is unaffordable now.
-travel neighbour
-travel-go
+# No travel, and no click: the check is standing, so reaching the map is enough.
 wait mode Death 45
 expect STARVATION
 expect END RUN

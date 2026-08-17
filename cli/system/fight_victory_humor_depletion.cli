@@ -1,0 +1,71 @@
+# An enemy who bleeds out is as dead as one cut down: a body, and out of play for good.
+#
+# There are two ways to die in a fight and only one of them used to leave a mark. Fighter.IsAlive is
+# `CurrentHp > 0 && !IsHumorDepleted`; NpcEntity.IsAlive reads the hit points alone. So a fighter bled
+# dry by BleedingEffect — which sets IsHumorDepleted once the humor queues go fully critical — was
+# dead for exactly as long as the fight lasted, and alive again at full health the moment the Fighter
+# wrapper was dropped.
+#
+# Nothing about that failed loudly. CheckFightEnd counted them dead and awarded the victory;
+# OnFightCompleted then asked enemy.IsAlive, was told yes, and skipped them. No corpse, no
+# RemoveNpcFromPlay, no DepartedNpcs entry — a fight won against somebody still standing in the room,
+# who the next visit rebuilt from the seed anyway. FightModeAdapter.SettleEnemyDeaths is the fix, and
+# the two assertions below are its two halves: a body left, and the person gone.
+#
+# `fight-deplete` is the humor counterpart of `fight-end`, and it exists for the same reason: the real
+# route is a bleed out-lasting a dozen turns of drain against full queues, and which special effect a
+# blow rolls is not something a script can ask for. It takes `enemies` rather than a name because a
+# narration fight pulls in every nearby NPC with authority, and their names are generated content.
+# `inspect npcs` reports archetype ids, which are not — which is what makes `brewer` assertable.
+#
+# The fight is entered by the attack verb (see cli/verb/attack/success.cli for the flag reasoning).
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --npc-static --start-area "Test Hall" --period dawn --observe-only brewer
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# The man is alive and in the scene before any of this.
+inspect npcs
+expect-state npcs brewer
+
+strategy succeed
+goal attack
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+wait mode Fighting 90
+
+# Everyone on the enemy side bleeds out at once. Nobody's hit points move, so this is the whole of
+# the difference from cli/system/fight_victory_narration.cli.
+fight-deplete enemies
+
+# Depletion ends the fight exactly as wounds do — CheckFightEnd has always honoured it.
+wait mode LocationInteraction 90
+advance 12 180
+
+# Half one: the victory left a body. Before the fix the scene came back with none.
+inspect pois
+expect-state pois Corpse
+
+# Half two: and the man is out of play, not merely off screen. This is the assertion that would
+# still have failed if the corpse were spawned without RemoveNpcFromPlay behind it.
+inspect npcs
+expect-no-state npcs brewer
+
+quit

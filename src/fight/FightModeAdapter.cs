@@ -169,6 +169,45 @@ public class FightModeAdapter
         _state.Result = result;
     }
 
+    /// <summary>
+    /// Carry the fight's verdict on who died back onto the NPCs themselves, once, as the fight ends.
+    ///
+    /// <para><b>There are two ways to die in a fight and only one of them leaves a mark.</b>
+    /// <see cref="Fighter.IsAlive"/> is <c>CurrentHp &gt; 0 &amp;&amp; !IsHumorDepleted</c>, and
+    /// <see cref="NpcEntity.IsAlive"/> reads the hit points alone — so a fighter bled out by
+    /// <see cref="BleedingEffect"/> (which sets <see cref="Fighter.IsHumorDepleted"/> when the humor
+    /// queues go fully critical) is dead for exactly as long as the fight lasts. The moment the
+    /// <c>Fighter</c> wrapper is dropped they are alive again, at full health.</para>
+    ///
+    /// <para>Nothing about that failed loudly. <c>CheckFightEnd</c> counted them dead and awarded the
+    /// victory; <c>NarrativeController.OnFightCompleted</c> then asked <c>enemy.IsAlive</c>, was told
+    /// yes, and skipped them — no corpse, no <c>RemoveNpcFromPlay</c>, no <c>DepartedNpcs</c> entry.
+    /// The player won a fight against somebody still standing in the room, and the next visit rebuilt
+    /// them from the seed regardless.</para>
+    ///
+    /// <para>Run for <em>every</em> result, not just a victory: an enemy who bled out while the party
+    /// fled is no less dead, and the runaway branch's "flag the survivors" pass has to be able to
+    /// tell. Marking is one-way (<see cref="NpcEntity.IsAlive"/>'s setter raises a slain flag), so
+    /// an enemy already dead of wounds is skipped and nothing here can resurrect anybody.</para>
+    ///
+    /// <para>The party half of the same asymmetry is deliberately NOT handled here: a companion who
+    /// bleeds out is still in the party afterwards — but so is one killed outright by wounds, since
+    /// nothing removes a combat-dead companion at all. That is one gap, not two, and it wants a
+    /// decision about what a companion's death should do rather than a line in this method.</para>
+    /// </summary>
+    private void SettleEnemyDeaths()
+    {
+        foreach (var npc in AllEnemyNpcs)
+        {
+            if (!npc.IsAlive) continue; // already dead of wounds — the hit points said so
+            var fighter = _state.Fighters.FirstOrDefault(f => ReferenceEquals(f.Member, npc.Combatant));
+            if (fighter is not { IsAlive: false }) continue;
+            npc.IsAlive = false;
+            _state.AddLog($"{npc.DisplayName} does not rise again.", LogEntryType.Wound);
+            Console.WriteLine($"FightModeAdapter: {npc.DisplayName} died of humor depletion — marked slain");
+        }
+    }
+
     public FightModeAdapter(
         TerminalHUD terminal,
         PopupTerminalHUD? popup,
@@ -319,6 +358,7 @@ public class FightModeAdapter
         // ── Fight ended ───────────────────────────────────────────
         if (_state.IsOver && Result == FightAdapterResult.Ongoing)
         {
+            SettleEnemyDeaths();
             Result = _state.Result switch
             {
                 FightResult.PartyWon => FightAdapterResult.Victory,
@@ -2000,6 +2040,97 @@ public class FightModeAdapter
         ExecuteAction(new Actions.EndTurnAction(active));
         return null;
     }
+
+    /// <summary>
+    /// Bleed a fighter dry (<c>--cli</c> <c>fight-deplete</c>): set <see cref="Fighter.IsHumorDepleted"/>
+    /// and re-evaluate the end condition, exactly as <see cref="BleedingEffect"/>'s last tick does.
+    /// <paramref name="who"/> is a fighter name (prefix, case-insensitive) or <c>enemies</c> for every
+    /// enemy at once. Returns an error string, or null on success.
+    ///
+    /// <para>This is the humor-depletion counterpart of <c>fight-end</c>, and it exists for the same
+    /// reason: the real route is a bleed that has to out-last a dozen turns of drain against queues
+    /// that start full, and which special effect a blow rolls is not something a script can ask for.
+    /// The <em>consequence</em> still needs testing — dying this way and dying of wounds took
+    /// different paths out of the fight, and only one of them left a body.</para>
+    ///
+    /// <para><c>enemies</c> rather than a name is what a script should normally use: a narration
+    /// fight pulls in every NPC with authority nearby, and their names come from the name generator.</para>
+    /// </summary>
+    public string? CliDepleteHumors(string who)
+    {
+        if (_state.IsOver) return "the fight is already over";
+
+        var targets = ResolveCliFighters(who);
+        if (targets.Count == 0) return $"no living fighter matching \"{who}\"";
+
+        foreach (var f in targets)
+        {
+            // Both halves, because a real bleed does both: the queues are actually emptied (which is
+            // what survives the fight and makes PartyMember.CauseOfDeath read Starvation) and the
+            // wrapper flag is raised (which is what CheckFightEnd reads). Setting only the flag would
+            // make this instrument lie for a party fighter — the fight would end and the companion
+            // would walk away in perfect health.
+            foreach (var queue in f.Member.HumorQueues.All)
+                queue.FillWith(new Cathedral.Game.Narrative.BlackBileHumor());
+            f.IsHumorDepleted = true;
+            _state.AddLog($"[cli] {f.DisplayName} collapses — humors fully depleted.", LogEntryType.Wound);
+        }
+
+        // The bleed sets the flag from inside a turn-start pass that is always followed by a
+        // CheckFightEnd; forced from outside one, this is what stands in for it.
+        _state.CheckFightEnd();
+        return null;
+    }
+
+    /// <summary>
+    /// Wound a fighter to death (<c>--cli</c> <c>fight-wound</c>): pile on injuries from their own
+    /// anatomy's catalogue until there are no hit points left, then re-evaluate the end condition.
+    /// Takes the same <paramref name="who"/> vocabulary as <see cref="CliDepleteHumors"/>.
+    ///
+    /// <para>The sibling instrument, and the one that makes a <b>companion's</b> death testable at
+    /// all: <c>fight-end</c> settles the whole fight and cannot single anybody out, and steering an
+    /// enemy's AI onto one party member across enough turns to kill them is not something a script
+    /// can ask for either. Wounds are applied through <see cref="FightResolver.ApplyWound"/> and
+    /// drawn from <see cref="WoundRegistry.ForAnatomy"/>, so a beast is never given a human's knee.</para>
+    /// </summary>
+    public string? CliWoundToDeath(string who)
+    {
+        if (_state.IsOver) return "the fight is already over";
+
+        var targets = ResolveCliFighters(who);
+        if (targets.Count == 0) return $"no living fighter matching \"{who}\"";
+
+        foreach (var f in targets)
+        {
+            var catalogue = WoundRegistry.ForAnatomy(f.Member).ToList();
+            if (catalogue.Count == 0) return $"{f.DisplayName}'s anatomy has no wounds to suffer";
+
+            // Bounded rather than `while (alive)`: CurrentHp is MaxHp minus the wound count, so this
+            // terminates in MaxHp steps — but a catalogue that ever stopped adding would hang the
+            // game rather than fail a test, which is the worse of the two.
+            for (int i = 0; i < f.MaxHp + 8 && f.IsAlive; i++)
+                FightResolver.ApplyWound(f, catalogue[_rng.Next(catalogue.Count)]);
+
+            _state.AddLog($"[cli] {f.DisplayName} falls, cut to pieces.", LogEntryType.Wound);
+        }
+
+        _state.CheckFightEnd();
+        return null;
+    }
+
+    /// <summary>
+    /// Which fighters a <c>--cli</c> instrument means: <c>enemies</c>, <c>companions</c> (the party
+    /// minus whoever the player started as), or a name matched by case-insensitive prefix. Only the
+    /// living are returned — asking twice is a no-op rather than an error.
+    /// </summary>
+    private List<Fighter> ResolveCliFighters(string who) => who.ToLowerInvariant() switch
+    {
+        "enemies"    => _state.Fighters.Where(f => f.Faction == FighterFaction.Enemy && f.IsAlive).ToList(),
+        "companions" => _state.Fighters.Where(f => f.Faction == FighterFaction.Party && f.IsAlive
+                                               && f.Member is not Protagonist).ToList(),
+        _            => _state.Fighters.Where(f => f.IsAlive
+                            && f.DisplayName.StartsWith(who, StringComparison.OrdinalIgnoreCase)).ToList(),
+    };
 
     /// <summary>Click the named fighter's map cell — the target step for a non-self skill.</summary>
     public string? CliClickFighter(string name)

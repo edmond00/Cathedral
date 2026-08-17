@@ -98,11 +98,18 @@ Two things are settled on the traveller's return to the map:
 
 - **Wounds are swept for healing.** Those that have stood their term close, and the health they cost
   is restored.
-- **Age is checked.** A body that has lived out its term dies of old age.
+- **Age is checked.** A body that has lived out its term dies of old age. The protagonist's term
+  ending here ends the run; a companion's is caught by the standing question of [§7](#7-companions-and-their-loss),
+  which needs no particular juncture to be asked at.
 
 The order is deliberate: healing restores what a wound took, and the term of life is itself
 shortened by a wound to the heart, so a heart wound that closed upon the journey must not still be
 counted against the term a moment later.
+
+**This is the whole of what the map settles.** Wounds and spent humors are not waited for here — both
+are reckoned by a standing question, wherever the body happens to be ([Chapter I
+§7](01-anatomy.md#7-wounds)). Age is the one end of a life that keeps to a juncture, because the
+calendar keeps to one.
 
 ## 6. The periods of the day
 
@@ -118,7 +125,7 @@ stands is decided by their schedule against the period; a building's entry is sh
 what may be attempted at all follows from both. Arriving at a place at two different periods is
 arriving at two different places.
 
-## 7. Companions
+## 7. Companions, and their loss
 
 The party is limited by the **heart's** measure — one companion per level of the organ. The limit is
 checked before a destination may be chosen, and a party over strength must be reduced before travel
@@ -126,6 +133,29 @@ is possible.
 
 A protagonist accepted straight out of composition, with a heart at one, sustains a single
 companion.
+
+**A companion may die, and dies as any body does.** Three things end them, and they are the same
+three that end a protagonist:
+
+- **Wounds**, when the hurts borne consume the health the frame affords (see [Chapter I
+  §7](01-anatomy.md#7-wounds));
+- **The humors**, when every queue has gone critical and exertion can no longer be paid for (see
+  [Chapter III §5](03-humors.md#5-black-bile));
+- **Age**, when the years lived reach the term the heart sets.
+
+The question is not asked at any particular juncture. It is standing, and answered from the state of
+the body itself at whatever moment it is put — so a companion who is killed is gone from the party
+at once, and not upon the next return to the map. The one exception is the length of a fight, which
+holds the whole party until it is decided; a companion who falls in one is taken from the party the
+moment it ends, and does not end it by falling ([Chapter VIII
+§8](08-fighting.md#8-the-ending-of-a-fight)).
+
+The loss is **permanent**: they are struck from the party, they no longer count against the heart's
+limit, and nothing restores them. Where they died within a place, they leave a body in the area they
+fell in, on the same terms as any other death ([Chapter VI
+§11](06-narration.md#11-what-a-killing-leaves)) — a beast leaving what may be cut from it, a person
+leaving what they carried. Where they died upon the map, between places, there is no area to hold a
+body and none is left.
 
 ## 8. Arrival
 

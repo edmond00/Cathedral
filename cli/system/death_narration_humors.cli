@@ -1,0 +1,44 @@
+# Humors spent inside a visit end the run there, and do not wait for the next journey.
+#
+# The twin of death_narration_wounds.cli, and the same gap: the three starvation checks were all on
+# the travel path, so a body whose queues went critical indoors stayed upright until a journey drew
+# heat it did not have. The sharpest case was a protagonist who bled out in a fight that a companion
+# then WON — depletion is recorded on the discarded Fighter wrapper, so they walked out of it alive
+# and at full health.
+#
+# `starve` exists because --black-bile can only sour the queues at the moment the protagonist is
+# accepted, which is before the world has been touched: it can stage a body that was always starving,
+# never one that starves partway through. That difference is the whole of what this script tests, and
+# it is also what lets the save assertion below mean something — the autosave has fired by then.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Hall" --period dawn --save-path .tmp-cli-save/death-narration-humors.json
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+
+# The autosave fired on the way in, so there IS a save to lose — which is what makes the erase below
+# an assertion rather than a tautology.
+expect-no-state savefile save none
+
+travel here
+wait mode LocationInteraction 60
+
+# Every queue critical: what a long bleed, or a fight's worth of buffs, arrives at.
+starve protagonist
+
+# No click, no phase boundary, and no journey: the run ends where the body is.
+wait mode Death 45
+expect STARVATION
+expect END RUN
+
+expect-state savefile save none
+
+click end-run
+wait mode MainMenu 20
+inspect menu
+expect-state menu Continue disabled
+
+quit

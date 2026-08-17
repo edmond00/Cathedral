@@ -187,7 +187,14 @@ namespace Cathedral.Terminal
             GL.EnableVertexAttribArray(6);
             GL.VertexAttribPointer(6, 4, VertexAttribPointerType.Float, false, stride, 13 * sizeof(float));
             GL.VertexAttribDivisor(6, 1);
-            
+
+            // Per-glyph quad scale (location 7). Enabled here as well as in TerminalRenderer:
+            // the two share terminal.vert, and a disabled attribute reads as 0 — which would draw
+            // the popup's glyphs at zero size rather than at their cell size.
+            GL.EnableVertexAttribArray(7);
+            GL.VertexAttribPointer(7, 1, VertexAttribPointerType.Float, false, stride, 17 * sizeof(float));
+            GL.VertexAttribDivisor(7, 1);
+
             GL.BindVertexArray(0);
         }
 
@@ -293,7 +300,8 @@ namespace Cathedral.Terminal
                     cellSize,
                     glyphInfo.UvRect,
                     cell.TextColor,
-                    cell.BackgroundColor
+                    cell.BackgroundColor,
+                    Config.GlyphSizeFactors.GetQuadScale(cell.Character)
                 );
                 
                 instanceIndex++;

@@ -229,6 +229,10 @@ public sealed class CliDriver
                 case "goal":        CmdGoal(rest);                    break;
                 case "observe":     CmdObserve(rest);                 break;
                 case "fight-end":   CmdFightEnd(rest);                break;
+                case "fight-deplete": CmdFightDeplete(rest);          break;
+                case "fight-wound": CmdFightWound(rest);              break;
+                case "wound":       CmdWound(rest);                   break;
+                case "starve":      CmdStarve(rest);                  break;
                 case "clock":       CmdClock(rest);                   break;
                 case "wait":        CmdWait(rest);                    break;
                 case "advance":     CmdAdvance(rest);                 break;
@@ -344,6 +348,8 @@ public sealed class CliDriver
           click skill <name>        use a fighting skill by name (see `regions` in a fight)
           click fighter <name>      click a fighter's map cell — the target step for an attack
           click end-turn            end the active fighter's turn (the END TURN button)
+          click engage              the travel encounter prompt's ENGAGE button
+          click companion-death     the companion-death notice's CONTINUE — modal over every mode
           click menu <label>        press a main-menu button (New, Continue, …)
           click button              press the footer button (LEAVE/INTERRUPT/END/CONTINUE)
           click continue            confirm the dice overlay
@@ -368,6 +374,18 @@ public sealed class CliDriver
                                     set before the keyword click it should apply to
           fight-end <victory|death|runaway>
                                     force-resolve a fight to test its transition
+          fight-deplete [enemies|companions|<fighter>]
+                                    bleed a fighter's humors dry — the OTHER way to die in a fight,
+                                    which ends it without touching hit points (default: enemies)
+          fight-wound [enemies|companions|<fighter>]
+                                    wound one fighter to death, which `fight-end` cannot do — the
+                                    only way a script can kill a COMPANION (default: enemies)
+          wound [protagonist|companions|<name>] [n]
+                                    wound a party member OUTSIDE a fight, as a failed act's penalty
+                                    does. No count means enough to kill (default: protagonist)
+          starve [protagonist|companions|<name>]
+                                    sour every humor queue to critical — the other lethal state a
+                                    visit can arrive at (default: protagonist)
           wait [frames]             block until the game settles (no LLM/travel/dice in flight)
           advance [presses] [secs]  settle, then press the preview box's CONTINUE until it is gone
                                     (default up to 8 presses). Use this, not a bare `click continue`,
@@ -427,6 +445,9 @@ public sealed class CliDriver
 
         if (_game.CliFight is { } f)
             sb.Append($" fight[enemy={f.TargetNpc.DisplayName} over={f.IsOver} result={f.Result}]");
+        // Modal over every mode, so a script that does not expect it reads as simply hung.
+        if (_game.CliCompanionDeathShown)
+            sb.Append(" companion-death=shown");
 
         CliMode.Emit(sb.ToString());
     }
@@ -575,6 +596,18 @@ public sealed class CliDriver
             any = true;
         }
 
+        if (_game.CliCompanionDeathShown)
+        {
+            CliMode.Emit("  click companion-death  (CONTINUE — modal over every mode, nothing else answers)");
+            any = true;
+        }
+
+        if (_game.CurrentMode == GameMode.EncounterPrompt)
+        {
+            CliMode.Emit("  click engage  (ENGAGE — the prompt's only button)");
+            any = true;
+        }
+
         if (_game.CurrentMode == GameMode.WorldView)
         {
             CliMode.Emit("  travel <vertex|name>  — see `destinations`");
@@ -640,7 +673,7 @@ public sealed class CliDriver
 
     private void CmdClick(string[] a)
     {
-        if (a.Length == 0) { CliMode.Emit("error: click <keyword|action|option|skill|fighter|end-turn|menu|button|continue|cell> …"); return; }
+        if (a.Length == 0) { CliMode.Emit("error: click <keyword|action|option|skill|fighter|end-turn|engage|menu|button|continue|cell> …"); return; }
 
         switch (a[0].ToLowerInvariant())
         {
@@ -690,6 +723,20 @@ public sealed class CliDriver
                 var f = _game.CurrentMode == GameMode.Fighting ? _game.CliFight : null;
                 if (f == null) { CliMode.Emit("error: not in a fight"); return; }
                 Report(f.CliEndTurn(), "ended the turn");
+                break;
+            }
+            case "companion-death":
+            {
+                // The notice's only button, and it is modal over every mode — a script that cannot
+                // press it cannot get past a companion dying.
+                Report(_game.CliDismissCompanionDeath(), "dismissed the companion-death notice");
+                break;
+            }
+            case "engage":
+            {
+                // The encounter prompt's only button. Without it a staged travel encounter is a
+                // dead end for a script: the prompt goes up and the fight behind it is unreachable.
+                Report(_game.CliEngageEncounter(), "engaged the encounter");
                 break;
             }
             case "fighter":
@@ -1117,6 +1164,35 @@ public sealed class CliDriver
 
         fight.CliForceEnd(result);
         CliMode.Emit($"ok: fight force-ended as {result}");
+    }
+
+    private void CmdFightDeplete(string[] a)
+    {
+        var fight = _game.CliFight;
+        if (fight == null) { CliMode.Emit("error: no fight in progress"); return; }
+        string who = a.Length > 0 ? string.Join(' ', a).Trim('"') : "enemies";
+        Report(fight.CliDepleteHumors(who), $"humors depleted: {who}");
+    }
+
+    private void CmdWound(string[] a)
+    {
+        string who   = a.Length > 0 ? a[0].Trim('"') : "protagonist";
+        int    count = a.Length > 1 && int.TryParse(a[1], out int n) ? n : 0;
+        Report(_game.CliWound(who, count), $"wounded: {who}{(count > 0 ? $" x{count}" : " (mortally)")}");
+    }
+
+    private void CmdStarve(string[] a)
+    {
+        string who = a.Length > 0 ? a[0].Trim('"') : "protagonist";
+        Report(_game.CliStarve(who), $"humors soured: {who}");
+    }
+
+    private void CmdFightWound(string[] a)
+    {
+        var fight = _game.CliFight;
+        if (fight == null) { CliMode.Emit("error: no fight in progress"); return; }
+        string who = a.Length > 0 ? string.Join(' ', a).Trim('"') : "enemies";
+        Report(fight.CliWoundToDeath(who), $"wounded to death: {who}");
     }
 
     /// <summary>

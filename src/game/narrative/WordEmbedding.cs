@@ -22,7 +22,19 @@ public static class WordEmbedding
     /// <summary>Where to obtain the vectors file when it is missing.</summary>
     private const string GloveDownloadUrl = "https://nlp.stanford.edu/data/glove.6B.zip";
 
+    /// <summary>
+    /// How many lines of the vectors file form the centrality pool. The file is written in
+    /// descending frequency order, so the head is ordinary English vocabulary — which is the pool a
+    /// narration sentence's words are actually drawn from, and therefore the right thing to measure
+    /// a word's centrality against. Measuring against the whole 400k file instead would measure
+    /// centrality among rare tokens, numbers and misspellings, which inverts the answer: "time"
+    /// scores as the *least* central word in the file and "pigsty" as the most.
+    /// </summary>
+    private const int CentralityPoolSize = 20000;
+
     private static Dictionary<string, float[]>? _vectors;
+    /// <summary>Mean of the unit vectors of the centrality pool. See <see cref="Centrality"/>.</summary>
+    private static float[]? _poolCentroid;
     private static bool _initialized;
 
     public static bool IsReady => _vectors is { Count: > 0 };
@@ -64,11 +76,45 @@ public static class WordEmbedding
         return dot / (Math.Sqrt(na) * Math.Sqrt(nb));
     }
 
+    /// <summary>
+    /// <paramref name="word"/>'s mean cosine to ordinary English vocabulary — how close it sits to
+    /// <b>everything at once</b>. 0 when the word is unknown, so an absent word is neither rewarded
+    /// nor punished.
+    ///
+    /// <para>This is the correction for <i>hubness</i>. Cosine in a co-occurrence embedding measures
+    /// relatedness, and a frequent, general word is related to everything: measured against the
+    /// 18,499 common words in the pool, "time" and "way" score +0.27 and sit above 99% of the
+    /// vocabulary, while the words this game is made of sit at the far end — "hearth" +0.03, "anvil"
+    /// +0.01, "pallet" −0.04, "pigsty" −0.12. A hub therefore carries a floor of similarity to any
+    /// anchor you ask about, and wins a raw-cosine ranking against a specific word that is genuinely
+    /// closer. Subtracting this baseline from the similarity (see <c>KeywordExtractor</c>) scores a
+    /// candidate on how much closer it is to the anchor <i>than to words in general</i>.</para>
+    ///
+    /// <para>Cheap because the mean of cosines is a cosine with the mean: mean_i(unit(w)·unit(p_i))
+    /// = unit(w)·mean_i(unit(p_i)), so the whole pool collapses to one centroid at load time and a
+    /// query is a single dot product.</para>
+    ///
+    /// <para>Note the obvious alternative — mean-centering the vectors, the usual remedy for GloVe's
+    /// anisotropy — does <b>not</b> work here and was measured making it worse: centred, "wolf" ranks
+    /// <c>time</c> above <c>shadow</c> and <c>fur</c>, promoting the hub from third place to first.</para>
+    /// </summary>
+    public static double Centrality(string word)
+    {
+        var v = GetVector(word);
+        if (v == null || _poolCentroid == null || v.Length != _poolCentroid.Length) return 0;
+        double dot = 0, na = 0;
+        for (int i = 0; i < v.Length; i++) { dot += v[i] * _poolCentroid[i]; na += v[i] * v[i]; }
+        return na == 0 ? 0 : dot / Math.Sqrt(na);
+    }
+
     // ── Loading ──────────────────────────────────────────────────────────────
 
     private static void Load(string path)
     {
         var dict = new Dictionary<string, float[]>(StringComparer.OrdinalIgnoreCase);
+        double[]? centroid = null;
+        int pooled = 0, lineNo = 0;
+
         using var reader = new StreamReader(path);
         string? line;
         bool first = true;
@@ -91,9 +137,51 @@ public static class WordEmbedding
             {
                 if (!float.TryParse(parts[i], NumberStyles.Float, CultureInfo.InvariantCulture, out vec[i - 1])) { ok = false; break; }
             }
-            if (ok) dict[parts[0]] = vec;
+            if (!ok) continue;
+
+            dict[parts[0]] = vec;
+
+            // Accumulate the centrality pool from the frequency-ordered head, taking only plain
+            // alphabetic words: the head also holds punctuation, digits and markup, none of which a
+            // narration sentence competes against.
+            if (lineNo++ < CentralityPoolSize && IsPlainWord(parts[0]))
+            {
+                centroid ??= new double[vec.Length];
+                if (centroid.Length == vec.Length) AddUnit(centroid, vec, ref pooled);
+            }
         }
+
         _vectors = dict;
+        _poolCentroid = pooled > 0 && centroid != null ? Finish(centroid, pooled) : null;
+        if (_poolCentroid == null)
+            Console.Error.WriteLine("WordEmbedding: no centrality pool built — keyword ranking falls back to raw similarity.");
+        else
+            Console.WriteLine($"WordEmbedding: centrality pool of {pooled} common words.");
+    }
+
+    private static bool IsPlainWord(string w)
+    {
+        if (w.Length < 3) return false;
+        foreach (var c in w) if (c is < 'a' or > 'z') return false;
+        return true;
+    }
+
+    /// <summary>Adds <paramref name="vec"/>'s unit vector into the running sum; a zero vector is skipped.</summary>
+    private static void AddUnit(double[] sum, float[] vec, ref int pooled)
+    {
+        double norm = 0;
+        foreach (var f in vec) norm += f * f;
+        if (norm <= 0) return;
+        norm = Math.Sqrt(norm);
+        for (int i = 0; i < vec.Length; i++) sum[i] += vec[i] / norm;
+        pooled++;
+    }
+
+    private static float[] Finish(double[] sum, int pooled)
+    {
+        var result = new float[sum.Length];
+        for (int i = 0; i < sum.Length; i++) result[i] = (float)(sum[i] / pooled);
+        return result;
     }
 
     private static string? ResolveVectorsPath()

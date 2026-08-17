@@ -521,8 +521,12 @@ public class DiceRollComponent
                 bool clickable = canApplyMore && virtue.CanApplyTo(val);
                 if (clickable)
                 {
-                    if (_hoveredDie == i) { color = Config.Colors.Black; bg = Config.Colors.White; }
-                    else                  { color = Config.Colors.White; }
+                    // Three brightnesses rather than an inverted cell, the same cue the organ
+                    // labels below use. A die glyph is drawn over MORE than its own cell
+                    // (Config.GlyphSizeFactors.QuadScales), so a one-cell white background does
+                    // not reach the top and bottom rules of the box — inverted, a hovered die
+                    // lost the outline that makes it read as a die at all.
+                    color = _hoveredDie == i ? Config.Colors.White : Config.Colors.Gray;
                 }
                 else
                 {

@@ -30,7 +30,8 @@ goes, and what it does when it arrives.
 **The World**
 
 5. [Travel](05-travel.md) — the sphere and its cells; the compass of a body's stride; the price of a
-   crossing in days, in heat and in hazard; the calendar and the periods of the day.
+   crossing in days, in heat and in hazard; the calendar and the periods of the day; the party a
+   heart sustains, and the three ways it is lost.
 
 **The Conduct of a Visit**
 
@@ -40,7 +41,8 @@ goes, and what it does when it arrives.
 7. [Social Intercourse](07-social.md) — the ladder of affinity; the single check that settles a
    conversation; introduction, barter and hire.
 8. [Combat](08-fighting.md) — the turn and its cinetic points; mediums and the skills they bear; the
-   attack and defence pools; wounds, status, terrain and flight.
+   attack and defence pools; wounds, status, terrain and flight; the two ways to fall and what
+   decides the field.
 9. [Routines](09-routines.md) — what a session leaves behind, and how it is walked again without
    being lived again.
 

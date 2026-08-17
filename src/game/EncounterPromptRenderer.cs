@@ -47,6 +47,12 @@ public sealed class EncounterPromptRenderer
         => cellY == _btnY && cellX >= _btnX && cellX < _btnX + BtnW;
 
     /// <summary>
+    /// The ENGAGE button's own cell, for <c>--cli</c> to click by name. Null until
+    /// <see cref="Draw"/> has run, since the layout is resolved there.
+    /// </summary>
+    public (int X, int Y)? EngageButtonCell => _btnY > 0 ? (_btnX, _btnY) : null;
+
+    /// <summary>
     /// Draws the encounter prompt. Call again on hover change to refresh button highlight.
     /// </summary>
     /// <summary>

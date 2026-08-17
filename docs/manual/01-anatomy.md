@@ -205,6 +205,22 @@ Three degrees of handicap:
 Health is not a pool that is spent: **current health is the maximum less the count of wounds
 borne.** A body dies when the count reaches the maximum.
 
+**The reckoning is standing, and it is made wherever the body is.** A wound may be dealt at any
+moment of a visit — by a blow struck in a fight, or by the hurt that a failed act sometimes exacts of
+whoever attempted it — and the mortal one ends the protagonist at the instant it is taken, with no
+phase to be finished first and no return to the map to be waited for. A companion so wounded is lost
+to the party at the same instant, on the terms of [Chapter V §7](05-travel.md#7-companions-and-their-loss).
+
+**The exhaustion of the humors is reckoned by the same standing question**, and for the same reason:
+the queues are drawn upon by a bleeding and by every exertion a fight is paid for with, so they may
+be emptied at any moment and in any place. A body whose every queue has gone critical is dead where
+it stands — it does not walk out of the room and it does not wait for the next journey to discover
+that it cannot pay for one (see [Chapter III §5](03-humors.md#5-black-bile)).
+
+**Age alone is not reckoned this way.** It is measured on the return to the map, with the sweep for
+healing that precedes it, and nowhere else — the calendar advancing only by journeys and by labour,
+so there is little within a single visit for a standing question to catch.
+
 Two measures deliberately pass through the wound-aware path rather than round it, so that damage to
 the organ is felt in kind. A medium wound to the **heart** takes real days off a life, and a high
 one collapses the span to its floor — which will kill outright anyone already older than that. A

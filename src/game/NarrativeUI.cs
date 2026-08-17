@@ -293,7 +293,8 @@ public class NarrativeUI : TerminalPanelUI
                         hoveredKeyword,
                         shouldDimThisLine,
                         renderedLine.SourceBlock,
-                        renderedLine.KeywordOccurrenceIndices);
+                        renderedLine.KeywordOccurrenceIndices,
+                        renderedLine.KeywordAnchors);
                     break;
                     
                 case LineType.Action:
@@ -447,7 +448,8 @@ public class NarrativeUI : TerminalPanelUI
         KeywordRegion? hoveredKeyword,
         bool dimContent = false,
         NarrationBlock? sourceBlock = null,
-        List<int>? keywordOccurrenceIndices = null)
+        List<int>? keywordOccurrenceIndices = null,
+        List<NarrativeAnchor?>? keywordAnchors = null)
     {
         if (string.IsNullOrEmpty(text))
             return;
@@ -466,7 +468,13 @@ public class NarrativeUI : TerminalPanelUI
             : _keywordRenderer.ParseNarrationWithKeywords(text, keywords);
         
         int currentX = startX;
-        
+
+        // Segments arrive in text order, so the Nth highlighted occurrence of a word on this line is
+        // the entry whose recorded occurrence index is N. Matching on the word ALONE would be
+        // ambiguous exactly where it now matters — two sentences about two men, wrapped onto one
+        // line, both offering "man" and each acting on a different person.
+        var seenPerKeyword = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
         foreach (var segment in segments)
         {
             if (segment.IsKeyword)
@@ -474,13 +482,19 @@ public class NarrativeUI : TerminalPanelUI
                 // Only highlight keywords if thinking attempts remain and content is not dimmed
                 if (thinkingAttemptsRemaining > 0 && !dimContent)
                 {
-                    // Track keyword region for click detection, including source block for modusMentis chain
+                    string kw = segment.KeywordValue!;
+                    seenPerKeyword.TryGetValue(kw, out int occurrence);
+                    seenPerKeyword[kw] = occurrence + 1;
+
+                    // Track keyword region for click detection, including source block for modusMentis
+                    // chain and the anchor this occurrence acts on.
                     var keywordRegion = new KeywordRegion(
-                        segment.KeywordValue!,
+                        kw,
                         y,
                         currentX,
                         currentX + segment.Text.Length - 1,
-                        sourceBlock);
+                        sourceBlock,
+                        AnchorFor(kw, occurrence, keywords, keywordOccurrenceIndices, keywordAnchors));
                     _keywordRegions.Add(keywordRegion);
                     
                     // Check if this specific region is hovered
@@ -510,7 +524,25 @@ public class NarrativeUI : TerminalPanelUI
             currentX += segment.Text.Length;
         }
     }
-    
+
+    /// <summary>
+    /// The anchor recorded for the <paramref name="occurrence"/>-th appearance of
+    /// <paramref name="keyword"/> on this line. The three lists are parallel, so this finds the
+    /// entry that matches on both word and occurrence index. Null when the block carries no
+    /// per-sentence data, which leaves the click to fall back to the block's single anchor.
+    /// </summary>
+    private static NarrativeAnchor? AnchorFor(
+        string keyword, int occurrence,
+        List<string> keywords, List<int>? occurrenceIndices, List<NarrativeAnchor?>? anchors)
+    {
+        if (anchors == null || occurrenceIndices == null) return null;
+        for (int i = 0; i < keywords.Count && i < occurrenceIndices.Count && i < anchors.Count; i++)
+            if (occurrenceIndices[i] == occurrence
+             && keywords[i].Equals(keyword, StringComparison.OrdinalIgnoreCase))
+                return anchors[i];
+        return null;
+    }
+
     /// <summary>
     /// Get the keyword region under the mouse cursor, or null if none.
     /// </summary>

@@ -113,11 +113,20 @@ public class NarrationState
 }
 
 /// <summary>
-/// A single observation sentence paired with its one assigned keyword.
+/// A single observation sentence, its keyword(s), and the thing they act on.
 /// Stored on an observation NarrationBlock so the scroll buffer can assign each keyword
 /// only to the wrapped lines of its own sentence, preventing cross-sentence highlighting.
+///
+/// <para><b>The anchor lives here, not in a per-block table keyed by the word.</b> It used to be
+/// resolved at click time through a <c>Dictionary&lt;string, NarrativeAnchor&gt;</c>, which can hold
+/// one object per word — so two sentences about two men could not both say "man", and the second
+/// was pushed onto whatever its associated words offered ("thing"). Every object needed a supply of
+/// second-best words purely to keep that table's keys distinct. Carrying the anchor on the sentence
+/// that produced it removes the constraint: the keyword is resolved by <i>which occurrence was
+/// clicked</i>, which the renderer has always known, so identical words in different sentences are
+/// simply different links.</para>
 /// </summary>
-public record NarrationSentence(string Text, List<string> Keywords);
+public record NarrationSentence(string Text, List<string> Keywords, NarrativeAnchor? Anchor = null);
 
 /// <summary>
 /// One selectable player reply carried by a <see cref="NarrationBlockType.DialogueOptions"/> block.
@@ -152,18 +161,12 @@ public class NarrationBlock : ModusMentisChainElement
     public ObservationType? SourceObservationType { get; init; } = null;
 
     /// <summary>
-    /// The concrete outcome this observation sentence is about.
-    /// Each sentence is generated for a specific outcome; clicking its keyword leads directly here.
-    /// For merged multi-sentence blocks, prefer KeywordOutcomeMap instead.
+    /// The concrete outcome this whole block is about, for blocks that are about exactly one thing
+    /// and carry no <see cref="Sentences"/>. A multi-sentence observation puts the anchor on each
+    /// <see cref="NarrationSentence"/> instead, and a click resolves through the region it landed
+    /// on; this is the fallback for everything that has no per-sentence breakdown.
     /// </summary>
     public NarrativeAnchor? LinkedOutcome { get; init; } = null;
-
-    /// <summary>
-    /// Per-keyword outcome map for merged observation blocks (multiple sentences joined into one block).
-    /// Maps each extracted keyword → the NarrativeAnchor that sentence was describing.
-    /// Takes precedence over LinkedOutcome during click resolution.
-    /// </summary>
-    public Dictionary<string, NarrativeAnchor>? KeywordOutcomeMap { get; init; } = null;
 
     /// <summary>
     /// For Speaking blocks: the display name of the character who spoke (e.g., "Protagonist").
@@ -209,7 +212,6 @@ public class NarrationBlock : ModusMentisChainElement
         ModusMentisChainElement? ChainOrigin = null,
         ObservationType? SourceObservationType = null,
         NarrativeAnchor? LinkedOutcome = null,
-        Dictionary<string, NarrativeAnchor>? KeywordOutcomeMap = null,
         List<NarrationSentence>? Sentences = null,
         string? SpeakerName = null,
         IReadOnlyList<Outcome>? OutcomeReports = null,
@@ -223,7 +225,6 @@ public class NarrationBlock : ModusMentisChainElement
         this.ChainOrigin = ChainOrigin;
         this.SourceObservationType = SourceObservationType;
         this.LinkedOutcome = LinkedOutcome;
-        this.KeywordOutcomeMap = KeywordOutcomeMap;
         this.Sentences = Sentences;
         this.SpeakerName = SpeakerName;
         this.OutcomeReports = OutcomeReports;

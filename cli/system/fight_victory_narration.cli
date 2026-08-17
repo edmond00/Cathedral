@@ -1,0 +1,48 @@
+# Winning a fight started from narration hands the scene back, with the body in it.
+#
+# The other half of "does victory end the fight phase". A narration fight returns through
+# NarrativeController.OnFightCompleted rather than through travel: the enemy leaves play, a corpse is
+# spawned into the area, and a fresh narration segment opens on it. Reaching LocationInteraction is
+# only the first half of that — a run that came back to a scene still holding a live enemy would pass
+# a mode check and be wrong, so the corpse is asserted too.
+#
+# The fight is entered by the attack verb (see cli/verb/attack/success.cli for the flag reasoning).
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --npc-static --start-area "Test Hall" --period dawn --observe-only brewer
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal attack
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+wait mode Fighting 90
+fight-end victory
+
+# Back in the scene, and the fight really is over — not merely off screen.
+wait mode LocationInteraction 90
+advance 12 180
+
+# The victory's own consequence: the enemy is out of play and their body is in the area. This is
+# what tells a returned scene apart from an abandoned one.
+inspect pois
+expect-state pois Corpse
+
+quit

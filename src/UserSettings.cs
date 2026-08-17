@@ -75,6 +75,26 @@ public static class UserSettings
     /// </summary>
     public static float GlyphScale { get; set; } = Config.Terminal.GlyphScaleDefault;
 
+    /// <summary>
+    /// Index into <c>Config.GlyphSphere.WorldGlyphWeightSteps</c> — how heavily the glyphs ON THE
+    /// SPHERE are drawn, which is a separate question from the terminal's weight and answered by a
+    /// separate mechanism. The sphere's shaders threshold the atlas rather than blending it, so a
+    /// world step pairs a raster pen with that threshold where the terminal pairs a pen with a
+    /// gamma. See <c>Config.GlyphSphere.WorldGlyphWeightSteps</c>.
+    /// <para>Like the terminal's, half of a step is rastered — the sphere atlas must be rebuilt
+    /// when this is not the default. See <c>GlyphSphereCore.RebuildGlyphAtlasForWeight</c>.</para>
+    /// </summary>
+    public static int WorldGlyphWeight { get; set; } = Config.GlyphSphere.WorldGlyphWeightDefaultStep;
+
+    /// <summary>
+    /// Multiplier on the size of every glyph quad on the sphere.
+    /// <para>Separate from <see cref="GlyphScale"/> because the two are limited by different
+    /// things: a terminal glyph is bounded by its cell, a world glyph only by its neighbours. A
+    /// player who wants larger world glyphs is usually not asking for larger UI text, and one grid
+    /// is layout while the other is a surface.</para>
+    /// </summary>
+    public static float WorldGlyphScale { get; set; } = Config.GlyphSphere.WorldGlyphScaleDefault;
+
     // ── Language model ───────────────────────────────────────────────────────
     //
     // These take effect at the next launch. The server loads the model once at startup and holds
@@ -162,6 +182,11 @@ public static class UserSettings
             GlyphScale  = Math.Clamp(dto.GlyphScale,
                 Config.Terminal.GlyphScaleMin, Config.Terminal.GlyphScaleMax);
 
+            WorldGlyphWeight = Math.Clamp(dto.WorldGlyphWeight,
+                0, Config.GlyphSphere.WorldGlyphWeightSteps.Length - 1);
+            WorldGlyphScale  = Math.Clamp(dto.WorldGlyphScale,
+                Config.GlyphSphere.WorldGlyphScaleMin, Config.GlyphSphere.WorldGlyphScaleMax);
+
             LlmDevice     = dto.LlmDevice;
             LlmGpuLayers  = dto.LlmGpuLayers < 0 ? -1 : dto.LlmGpuLayers;
             LlmCpuThreads = Math.Clamp(dto.LlmCpuThreads, 0, 256);
@@ -197,6 +222,9 @@ public static class UserSettings
                 GlyphWeight   = GlyphWeight,
                 GlyphScale    = GlyphScale,
 
+                WorldGlyphWeight = WorldGlyphWeight,
+                WorldGlyphScale  = WorldGlyphScale,
+
                 LlmDevice     = LlmDevice,
                 LlmGpuLayers  = LlmGpuLayers,
                 LlmCpuThreads = LlmCpuThreads,
@@ -223,6 +251,8 @@ public static class UserSettings
         public bool Fullscreen { get; set; } = false;
         public int GlyphWeight { get; set; } = Config.Terminal.GlyphWeightDefaultStep;
         public float GlyphScale { get; set; } = Config.Terminal.GlyphScaleDefault;
+        public int WorldGlyphWeight { get; set; } = Config.GlyphSphere.WorldGlyphWeightDefaultStep;
+        public float WorldGlyphScale { get; set; } = Config.GlyphSphere.WorldGlyphScaleDefault;
 
         // Written as "Auto"/"Gpu"/"Cpu" rather than 0/1/2, so the file stays hand-editable and a
         // reordered enum cannot silently change what an existing settings file means.

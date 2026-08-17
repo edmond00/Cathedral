@@ -353,6 +353,24 @@ public static class Config
         public static string? StartFight { get; set; } = null;
 
         /// <summary>
+        /// Creature to force a travel encounter with on the <b>final</b> step of the next journey,
+        /// e.g. "wolf". Set by <c>--encounter-on-arrival &lt;creature&gt;</c>. Fires once and clears
+        /// itself. Null means no forced encounter, which is how every ordinary run behaves.
+        ///
+        /// <para>For scripted runs, and it covers a case no other flag reaches. The last step of a
+        /// path raises <c>ProtagonistSteppedToVertex</c> and <c>ProtagonistArrivedAtLocation</c> from
+        /// the <em>same</em> <c>UpdateMovement</c> call, so an encounter rolled there begins with the
+        /// arrival already announced and the interface's path already cleared — the one arrangement
+        /// in which winning the fight has no journey left to finish. It stranded the game in
+        /// <c>Traveling</c> over a cleared terminal, and a random roll reaches it about once in a
+        /// hundred journeys.</para>
+        ///
+        /// <para>Deliberately honoured <b>before</b> <see cref="NoEncounters"/>, so a script can
+        /// suppress the random rolls and still stage this one.</para>
+        /// </summary>
+        public static string? EncounterOnArrival { get; set; } = null;
+
+        /// <summary>
         /// Beast archetype to add to every scene as it is built, e.g. "wolf". Set by
         /// <c>--spawn-beast &lt;name&gt;</c>. Null means add nothing.
         ///
@@ -475,13 +493,30 @@ public static class Config
         /// <summary>Index into <see cref="GlyphWeightSteps"/> of the default, unchanged weight.</summary>
         public const int GlyphWeightDefaultStep = 2;
 
-        // Bounds for the glyph-size row. The ceiling is where the glyph quad's overflow past its
-        // own cell starts to show on the box-drawing UI — the side rails, popup frames and the
-        // solid bars in the Settings screen collide before the letters do, since those glyphs fill
-        // their cell to the edge and letters do not.
+        // Bounds for the glyph-size row.
+        //
+        // The ceiling was 1.30, on the reasoning that box-drawing glyphs fill their cell and so
+        // collide before letters do. Measured against the atlas raster, that is the wrong way
+        // round: in FreeMono a '─' and a '█' are 0.66 cell WIDE, so a popup frame is gapped at
+        // every setting and only goes solid at 1.52 — which is why the borders read as dotted.
+        // The widest letters ('A', 'M') are 0.63 and touch across at 1.59. What genuinely
+        // overlaps is vertical, and it is prose rather than furniture: a 'j' is 0.86 cell tall
+        // against a one-cell row pitch, so a descender reaches the line above at 1.17 — BELOW
+        // the default. Brackets follow at 1.25, 'Q' at 1.35, 'g' and the digits at 1.46.
+        //
+        // So nothing new begins to break between 1.30 and 1.50; the interleaving is already
+        // there at the default and grows smoothly. 1.50 is where two things arrive at once —
+        // horizontal rules finally close up, and letters come within a twentieth of a cell of
+        // touching across — which makes it the honest stopping place rather than an arbitrary
+        // one. Past it, glyphs would begin to merge sideways as well, and that is a different
+        // kind of ugly from tight leading.
+        //
+        // The row is a preference on a panel nobody here has seen, and the same argument the
+        // weight ladder makes applies: a player who walks to the end should get an ugly result,
+        // not a broken one.
         public const float GlyphScaleDefault = 1.20f;
         public const float GlyphScaleMin     = 1.00f;
-        public const float GlyphScaleMax     = 1.30f;
+        public const float GlyphScaleMax     = 1.50f;
         public const float GlyphScaleStep    = 0.05f;
 
         // Glyph scale relative to cell (1.0 = exact fit, >1.0 = slight overflow for natural look)
@@ -543,6 +578,114 @@ public static class Config
     
     public static class GlyphSphere
     {
+        // ── The player's two levers on the world glyphs ───────────────────────────────────────
+        //
+        // The counterparts of Config.Terminal's SIZE and WEIGHT, and deliberately NOT the same two
+        // constants. The sphere is a different pipeline in both halves, so a single pair could not
+        // have served both:
+        //
+        //   SIZE   — a terminal glyph is scaled inside a fixed cell, so its ceiling is the cell.
+        //            A world glyph has no cell: it is a quad on a sphere, and what limits it is
+        //            its neighbours. Below 1.0 the surface opens into gaps between glyphs; above
+        //            it they overlap, which reads as a denser world rather than a broken one.
+        //
+        //   WEIGHT — the terminal blends a glyph's alpha, so its weight is a gamma on that alpha.
+        //            EVERY sphere fragment shader instead thresholds the atlas luminance and is
+        //            fully opaque or discarded ("if (texLuminance > cutoff) … else discard"), so
+        //            there is no alpha here for a gamma to act on at all. The threshold IS the
+        //            weight: lower keeps more of the anti-aliased skirt, which thickens the glyph.
+        //
+        // What the two ladders share is the shape — a stroke baked into the raster paired with a
+        // shader-side term, moved together as one named step, because a player cannot tell which
+        // half their panel needs. See Config.Terminal.GlyphWeightSteps for that argument in full.
+        //
+        // Declared BEFORE the fields that read them, like the terminal ladder: static field
+        // initializers run in declaration order, and a table declared after its readers is still
+        // null when they initialize.
+
+        /// <summary>
+        /// The world-weight ladder: an emboldening pen baked into the sphere atlas, paired with
+        /// the luminance cutoff every sphere fragment shader tests against.
+        ///
+        /// <para><b>NORMAL is exactly what the game drew before this was a setting</b> — no pen at
+        /// all and the 0.1 cutoff that was hardcoded into all nine shaders. That is why the default
+        /// sits in the middle of a ladder whose lighter half needs no stroke: the two steps below
+        /// are reached by raising the cutoff, which eats into the skirt, and only the two above
+        /// have a pen to add. Keeping the shipped look on a named step is what lets a player who
+        /// has wandered off it find their way back.</para>
+        /// </summary>
+        public static readonly (string Label, float Stroke, float Cutoff)[] WorldGlyphWeightSteps =
+        {
+            ("THIN",   0.000f, 0.30f),
+            ("LIGHT",  0.000f, 0.18f),
+            ("NORMAL", 0.000f, 0.10f),   // the shipped look — see WorldGlyphWeightDefaultStep
+            ("BOLD",   0.015f, 0.08f),
+            ("HEAVY",  0.030f, 0.06f),
+        };
+
+        /// <summary>Index into <see cref="WorldGlyphWeightSteps"/> of the default, unchanged weight.</summary>
+        public const int WorldGlyphWeightDefaultStep = 2;
+
+        // Bounds for the world-size row. Unlike the terminal's, this one has no hard edge to run
+        // into — a glyph quad that outgrows its neighbours overlaps them, and the sphere simply
+        // reads as denser. The ends are where it stops being the same picture: below 0.70 the
+        // surface breaks into visible gaps and the terrain stops reading as ground, above 1.60 the
+        // overlap swallows the single-glyph markers (the protagonist, the waypoints) that a player
+        // needs to pick out of it.
+        public const float WorldGlyphScaleDefault = 1.00f;
+        public const float WorldGlyphScaleMin     = 0.70f;
+        public const float WorldGlyphScaleMax     = 1.60f;
+        public const float WorldGlyphScaleStep    = 0.05f;
+
+        /// <summary>
+        /// Live multiplier on every world glyph quad, applied as a shader uniform so a change
+        /// shows on the next frame with no buffer rebuild.
+        ///
+        /// <para><b>Ray picking must read this too.</b> The sphere is clicked by finding the vertex
+        /// nearest the ray within <c>QuadSize * VertexShaderSizeMultiplier</c>, so a drawn size that
+        /// this scales while the pick radius stays fixed puts the hit target out of step with what
+        /// the player can see — bigger glyphs that cannot be clicked at their edges, or smaller ones
+        /// that answer a click on empty ground. <c>GlyphSphereCore.WorldGlyphPickRadius</c> is the
+        /// one place both come from.</para>
+        /// </summary>
+        public static float WorldGlyphScale = WorldGlyphScaleDefault;
+
+        /// <summary>
+        /// Emboldening pen for the sphere atlas, as a fraction of the raster font size (0 disables
+        /// it, which is where the shipped weight sits). <b>Baked into the atlas</b>: writing this
+        /// without calling <c>GlyphSphereCore.RebuildGlyphAtlasForWeight()</c> changes nothing,
+        /// exactly as with the terminal's <c>GlyphStrokeFactor</c>.
+        /// </summary>
+        public static float WorldGlyphStrokeFactor = WorldGlyphWeightSteps[WorldGlyphWeightDefaultStep].Stroke;
+
+        /// <summary>
+        /// The atlas-luminance threshold every sphere fragment shader tests: a texel below it is
+        /// discarded, and one above is drawn fully opaque. Lowering it keeps more of the glyph's
+        /// anti-aliased skirt and so thickens it; raising it pares the glyph back to its core.
+        /// This is the shaded half of a world-weight step, standing where the terminal's alpha
+        /// gamma stands — the sphere has no alpha to apply a gamma to.
+        /// </summary>
+        public static float WorldGlyphCutoff = WorldGlyphWeightSteps[WorldGlyphWeightDefaultStep].Cutoff;
+
+        /// <summary>
+        /// Which <see cref="WorldGlyphWeightSteps"/> entry is live. Config is the truth rather than
+        /// <c>UserSettings</c>, for the reason <c>Config.Terminal.GlyphWeightStep</c> gives: there is
+        /// no reverse lookup from a stroke/cutoff pair back to a step.
+        /// </summary>
+        public static int WorldGlyphWeightStep { get; private set; } = WorldGlyphWeightDefaultStep;
+
+        /// <summary>
+        /// Applies a world-weight step, clamped into range. <b>The caller must rebuild the sphere
+        /// atlas</b> — the pen half is rastered rather than shaded, so half the step is otherwise
+        /// invisible. The caller's job because at startup there is no atlas yet to rebuild.
+        /// </summary>
+        public static void ApplyWorldGlyphWeight(int step)
+        {
+            WorldGlyphWeightStep   = Math.Clamp(step, 0, WorldGlyphWeightSteps.Length - 1);
+            WorldGlyphStrokeFactor = WorldGlyphWeightSteps[WorldGlyphWeightStep].Stroke;
+            WorldGlyphCutoff       = WorldGlyphWeightSteps[WorldGlyphWeightStep].Cutoff;
+        }
+
         // Sphere geometry
         public const float QuadSize = 0.3f; // Size of each glyph quad on the sphere
         public const float VertexShaderSizeMultiplier = 2.0f; // Multiplier used in vertex shader
@@ -1123,6 +1266,21 @@ public static class Config
         /// </summary>
         public const int ObservationTwoKeywordsThreshold = 400;
 
+        /// <summary>
+        /// How related to the observed object a word must be before it is treated as an equally good
+        /// handle on it. Every candidate at or above this score goes into a pool the keyword is drawn
+        /// uniformly from; below it, the best-scoring word is simply taken. Scored by
+        /// <c>KeywordExtractor</c> as similarity minus centrality, so this is on that scale.
+        ///
+        /// <para>0.25 measured as the point that admits the words genuinely about the object and
+        /// excludes the merely co-occurring: a hearth's pool is <c>hearth, stone</c>, a roof's is
+        /// <c>roof, thatch, slope, sky</c>, an anvil's is <c>anvil, hammer</c>. At 0.15 the marginal
+        /// ones creep in (<c>village</c> for a roof); at 0.35 most objects collapse to one choice and
+        /// the sampling stops doing anything. A pool of one is a correct outcome, not a failure —
+        /// a pallet lying in straw has nothing else in the sentence that is about the pallet.</para>
+        /// </summary>
+        public const double KeywordSamplingThreshold = 0.25;
+
         /// <summary>Length clause used for single-sentence rewrites (the default).</summary>
         private const string OneSentenceClause = "Answer in one short sentence and stop.";
 
@@ -1323,8 +1481,29 @@ public static class Config
     #region Glyph Size Factors
     
     /// <summary>
-    /// Per-glyph font size multipliers for special characters that need different sizing.
-    /// Glyphs not in this dictionary use 1.0 (normal size).
+    /// Per-glyph sizing for characters that need to read larger than ordinary text.
+    ///
+    /// <para><b>There are two knobs and they do different things.</b> <see cref="Factors"/> is the
+    /// <i>raster</i> size — the point size the glyph is drawn at inside its atlas cell.
+    /// <see cref="QuadScales"/> is the <i>quad</i> size — how much of the screen that cell is
+    /// stretched over, on top of <see cref="Terminal.GlyphScale"/>. Glyphs in neither dictionary
+    /// are 1.0 in both.</para>
+    ///
+    /// <para><b>The raster factor has a hard ceiling and it is not obvious.</b> The atlas cell is
+    /// 35px and the glyph is centred in it; ink drawn past the cell edge is simply not sampled —
+    /// the UV rect <i>is</i> the cell — and it bleeds into the neighbouring atlas cell, whose
+    /// 2px padding it also overruns. So the factor stops buying size at the point the ink fills
+    /// the cell and starts quietly cropping instead. That is where the dice faces were: at 2.0
+    /// each die was drawn 3px taller than its cell and lost the bottom rule of its box, which
+    /// reads on screen as a die with a broken outline. They fit at 1.80, the side views at 1.60,
+    /// at every weight on <see cref="Terminal.GlyphWeightSteps"/> — the emboldening pen widens
+    /// the ink, so the ceiling is lowest at HEAVY and that is the one to check against.</para>
+    ///
+    /// <para>Past that ceiling the only way to make a glyph bigger is to give it a bigger quad,
+    /// which is what <see cref="QuadScales"/> is for. It costs nothing but it does overflow the
+    /// cell on screen, so it suits a glyph standing in space of its own — the dice sit two cells
+    /// apart in their grid — and not one set in a line of prose. The difficulty glyphs below are
+    /// deliberately raster-only for that reason: they are printed mid-sentence.</para>
     /// </summary>
     public static class GlyphSizeFactors
     {
@@ -1333,39 +1512,75 @@ public static class Config
             { '∅', 1.5f },
             { '⎆', 1.7f },
 
-            // Dice faces - make them 30% larger
-            { '⚀', 2f },
-            { '⚁', 2f },
-            { '⚂', 2f },
-            { '⚃', 2f },
-            { '⚄', 2f },
-            { '⚅', 2f },
-            
-            // Dice rolling animation glyphs
-            { '⬖', 1.7f },
-            { '⬗', 1.7f },
-            { '⬘', 1.7f },
-            { '⬙', 1.7f },
-            
-            // Difficulty indicators - slightly larger
-            { '①', 1.3f },
-            { '②', 1.3f },
-            { '③', 1.3f },
-            { '④', 1.3f },
-            { '⑤', 1.3f },
-            { '⑥', 1.3f },
-            { '⑦', 1.3f },
-            { '⑧', 1.3f },
-            { '⑨', 1.3f },
-            { '⑩', 1.3f },
+            // Dice faces — the largest raster that still fits the atlas cell at every glyph
+            // weight. Their on-screen size comes from QuadScales, not from here.
+            { '⚀', 1.8f },
+            { '⚁', 1.8f },
+            { '⚂', 1.8f },
+            { '⚃', 1.8f },
+            { '⚄', 1.8f },
+            { '⚅', 1.8f },
+
+            // Dice side views (the tumbling animation). 1.60 puts the same amount of ink in the
+            // cell as a face at 1.80, so a die does not pulse in size as it rolls.
+            { '⬖', 1.6f },
+            { '⬗', 1.6f },
+            { '⬘', 1.6f },
+            { '⬙', 1.6f },
+
+            // Difficulty indicators — 1.40 is the ceiling, and they get no quad scale. Unlike a
+            // die, one of these OPENS AN ACTION LINE ("⑤ [STEALTH ⟐⟐] …") and action lines stack,
+            // so a glyph drawn past its cell would meet the numeral of the line above it. The
+            // raster is the whole budget here; it stops where the cell does.
+            { '①', 1.4f },
+            { '②', 1.4f },
+            { '③', 1.4f },
+            { '④', 1.4f },
+            { '⑤', 1.4f },
+            { '⑥', 1.4f },
+            { '⑦', 1.4f },
+            { '⑧', 1.4f },
+            { '⑨', 1.4f },
+            { '⑩', 1.4f },
         };
-        
+
         /// <summary>
-        /// Gets the size factor for a glyph. Returns 1.0 for normal-sized glyphs.
+        /// Per-glyph multiplier on the glyph quad, applied on top of
+        /// <see cref="Terminal.GlyphScale"/> — so the glyph is drawn over more of the screen than
+        /// its cell. Only the ten dice glyphs use it: the roll is the one place the player is
+        /// asked to read a glyph rather than a word, and pips a pixel across at a 10px cell are
+        /// not readable. They stand two cells apart in their grid, which is what makes the
+        /// overflow safe.
+        /// </summary>
+        public static readonly Dictionary<char, float> QuadScales = new()
+        {
+            { '⚀', 1.35f },
+            { '⚁', 1.35f },
+            { '⚂', 1.35f },
+            { '⚃', 1.35f },
+            { '⚄', 1.35f },
+            { '⚅', 1.35f },
+
+            { '⬖', 1.35f },
+            { '⬗', 1.35f },
+            { '⬘', 1.35f },
+            { '⬙', 1.35f },
+        };
+
+        /// <summary>
+        /// Gets the raster size factor for a glyph. Returns 1.0 for normal-sized glyphs.
         /// </summary>
         public static float GetFactor(char c)
         {
             return Factors.TryGetValue(c, out float factor) ? factor : 1.0f;
+        }
+
+        /// <summary>
+        /// Gets the quad multiplier for a glyph. Returns 1.0 for glyphs drawn at cell size.
+        /// </summary>
+        public static float GetQuadScale(char c)
+        {
+            return QuadScales.TryGetValue(c, out float scale) ? scale : 1.0f;
         }
     }
     

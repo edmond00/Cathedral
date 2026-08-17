@@ -21,11 +21,16 @@ namespace Cathedral.Game.Npc.Corpse;
 /// </summary>
 public class CorpsePointOfInterest : PointOfInterest
 {
-    /// <summary>The entity whose death produced this body.</summary>
-    public INpcEntity NpcEntity { get; }
+    /// <summary>
+    /// The entity whose death produced this body, or <c>null</c> for a body that was never a scene
+    /// NPC — a <b>companion</b>, who is a bare <see cref="Narrative.PartyMember"/>: recruiting drops
+    /// the <c>NpcEntity</c> that wrapped them and only the combatant walks away with the party.
+    /// Nothing on the narration path reads this; it is the debug window's label.
+    /// </summary>
+    public INpcEntity? NpcEntity { get; }
 
     public CorpsePointOfInterest(
-        INpcEntity npcEntity,
+        INpcEntity? npcEntity,
         string displayName,
         List<string> descriptions,
         List<ItemElement>? parts = null,

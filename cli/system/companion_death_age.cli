@@ -1,0 +1,47 @@
+# A companion who dies of old age mid-visit is buried where they stand.
+#
+# The OldAge arm of PartyMember.CauseOfDeath. This was the ONLY death a companion could suffer before
+# — CheckOldAgeDeaths removed them and raised the notice — but it did so only at the world map, and
+# only for age. Folding it into SettleCompanionDeaths is what gave the other two causes a route, and
+# this script is what makes sure the fold did not cost old age anything: the notice still names the
+# age reached, and the body is now left as well, which it never used to be.
+#
+# The clock is pushed from inside the location rather than with --advance-days, for two reasons. The
+# body needs an area to lie in, and there is none on the world map. And a cat outlives a person: at
+# this seed Nighthunter's span runs past 48,000 days while a protagonist's heart tops out at 43,200 —
+# so on the world map the protagonist's own old-age check (which runs first, and ends the run) would
+# always fire before the cat's. Inside a session that check does not run, which is what leaves the
+# companion's death reachable on its own.
+#
+# FLAGS: --playground --skip-childhood --fill-party --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Hall" --period dawn
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+inspect party
+expect-state party Nighthunter
+
+# Well past the cat's span. `clock` is the only way to move the world clock from inside a visit —
+# it otherwise advances on travel arrival and work stints alone.
+clock 45000
+wait 30
+
+# The sweep runs every tick outside a fight, so the notice comes up without anything being clicked.
+expect Nighthunter
+expect died at
+
+click companion-death
+wait 60
+advance 12 180
+
+inspect party
+expect-no-state party Nighthunter
+inspect pois
+expect-state pois Nighthunter's Remains
+
+quit

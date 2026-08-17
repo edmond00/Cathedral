@@ -962,12 +962,15 @@ public class NarrativeController
     }
 
     /// <summary>
-    /// Execute thinking phase with selected modusMentis and keyword (async).
+    /// Execute thinking phase for the clicked keyword occurrence (async). Takes the region rather
+    /// than the word: the region is what knows which occurrence was clicked, and therefore which
+    /// object it acts on when two sentences of a block use the same word.
     /// </summary>
-    private async Task ExecuteThinkingPhaseAsync(ModusMentis thinkingModusMentis, string keyword)
+    private async Task ExecuteThinkingPhaseAsync(ModusMentis thinkingModusMentis, KeywordRegion keywordRegion)
     {
-        // Get the source observation block from the hovered keyword (for modusMentis chain tracking)
-        var sourceObservationBlock = _narrationState.HoveredKeyword?.SourceBlock;
+        string keyword = keywordRegion.Keyword;
+        // Source observation block, for modusMentis chain tracking
+        var sourceObservationBlock = keywordRegion.SourceBlock;
 
         try
         {
@@ -975,13 +978,7 @@ public class NarrativeController
 
             _previewSession.Reset();
 
-            // Resolve the outcome linked to the clicked keyword via KeywordOutcomeMap or LinkedOutcome
-            NarrativeAnchor? targetOutcome = null;
-            if (sourceObservationBlock?.KeywordOutcomeMap?.TryGetValue(keyword, out var kmo) == true)
-                targetOutcome = kmo;
-            else
-                targetOutcome = sourceObservationBlock?.LinkedOutcome;
-
+            var targetOutcome = keywordRegion.ResolvedAnchor;
             if (targetOutcome == null)
             {
                 throw new Exception($"No outcome found for keyword '{keyword}'");
@@ -2321,19 +2318,12 @@ public class NarrativeController
         KeywordRegion keywordRegion)
     {
         string keyword = keywordRegion.Keyword;
-        var sourceBlock = keywordRegion.SourceBlock;
 
         try
         {
             Console.WriteLine($"NarrativeController: Speaking phase — skill={speakingModusMentis.DisplayName}, companion={companion.DisplayName}, keyword='{keyword}'");
 
-            // Resolve the outcome linked to this keyword
-            NarrativeAnchor? linkedOutcome = null;
-            if (sourceBlock?.KeywordOutcomeMap?.TryGetValue(keyword, out var ko) == true)
-                linkedOutcome = ko;
-            else
-                linkedOutcome = sourceBlock?.LinkedOutcome;
-
+            var linkedOutcome = keywordRegion.ResolvedAnchor;
             if (linkedOutcome == null)
             {
                 Console.Error.WriteLine($"NarrativeController: Speaking — no outcome found for keyword '{keyword}'");
@@ -2693,8 +2683,8 @@ public class NarrativeController
                 // Get the keyword that was clicked (stored before popup appeared)
                 else if (_narrationState.HoveredKeyword != null)
                 {
-                    string keyword = _narrationState.HoveredKeyword.Keyword;
-                    var sourceBlock = _narrationState.HoveredKeyword.SourceBlock;
+                    var clickedRegion = _narrationState.HoveredKeyword;
+                    string keyword = clickedRegion.Keyword;
 
                     // Check if we're selecting an observation modusMentis or thinking modusMentis
                     if (_narrationState.IsSelectingObservationModusMentis)
@@ -2704,13 +2694,7 @@ public class NarrativeController
                         _narrationState.LoadingMessage = ObservationLoadingMessage();
                         _narrationState.IsSelectingObservationModusMentis = false;
 
-                        // Resolve focus outcome: prefer KeywordOutcomeMap, then LinkedOutcome, then keyword lookup
-                        NarrativeAnchor? focusOutcome = null;
-                        if (sourceBlock?.KeywordOutcomeMap?.TryGetValue(keyword, out var fko) == true)
-                            focusOutcome = fko;
-                        else
-                            focusOutcome = sourceBlock?.LinkedOutcome;
-
+                        var focusOutcome = clickedRegion.ResolvedAnchor;
                         if (focusOutcome != null)
                             _ = ExecuteFocusObservationAsync(selectedModusMentis, focusOutcome);
                         else
@@ -2721,7 +2705,7 @@ public class NarrativeController
                         // Thinking phase
                         _narrationState.IsLoadingThinking = true;
                         _narrationState.LoadingMessage = Config.LoadingMessages.ThinkingDeeply;
-                        _ = ExecuteThinkingPhaseAsync(selectedModusMentis, keyword);
+                        _ = ExecuteThinkingPhaseAsync(selectedModusMentis, clickedRegion);
                     }
                 }
             }
@@ -3090,8 +3074,8 @@ public class NarrativeController
         // Get the keyword that was clicked (stored before popup appeared)
         if (_narrationState.HoveredKeyword == null) return;
 
-        string keyword = _narrationState.HoveredKeyword.Keyword;
-        var sourceBlock = _narrationState.HoveredKeyword.SourceBlock;
+        var clickedRegion = _narrationState.HoveredKeyword;
+        string keyword = clickedRegion.Keyword;
 
         // Check if we're selecting an observation modusMentis or thinking modusMentis
         if (_narrationState.IsSelectingObservationModusMentis)
@@ -3101,13 +3085,7 @@ public class NarrativeController
             _narrationState.LoadingMessage = ObservationLoadingMessage();
             _narrationState.IsSelectingObservationModusMentis = false;
 
-            // Resolve focus outcome: prefer KeywordOutcomeMap, then LinkedOutcome, then keyword lookup
-            NarrativeAnchor? focusOutcome = null;
-            if (sourceBlock?.KeywordOutcomeMap?.TryGetValue(keyword, out var fko) == true)
-                focusOutcome = fko;
-            else
-                focusOutcome = sourceBlock?.LinkedOutcome;
-
+            var focusOutcome = clickedRegion.ResolvedAnchor;
             if (focusOutcome != null)
                 _ = ExecuteFocusObservationAsync(selectedModusMentis, focusOutcome);
             else
@@ -3118,7 +3096,7 @@ public class NarrativeController
             // Thinking phase
             _narrationState.IsLoadingThinking = true;
             _narrationState.LoadingMessage = Config.LoadingMessages.ThinkingDeeply;
-            _ = ExecuteThinkingPhaseAsync(selectedModusMentis, keyword);
+            _ = ExecuteThinkingPhaseAsync(selectedModusMentis, clickedRegion);
         }
     }
 

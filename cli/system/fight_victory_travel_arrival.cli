@@ -1,0 +1,38 @@
+# Winning a travel encounter that fired on the journey's LAST step finishes the journey.
+#
+# This is the softlock a playtester reported as "the game froze after we killed a wolf": the travel
+# progress box left standing over a black screen, with nothing but the pause menu to escape by.
+#
+# The last step of a path raises ProtagonistSteppedToVertex and ProtagonistArrivedAtLocation from the
+# SAME MicroworldInterface.UpdateMovement call, and clears the path between the two. So an encounter
+# rolled there begins with the arrival ALREADY announced — and OnProtagonistArrived dropped it,
+# because the mode had just become EncounterPrompt. Win the fight, and travel resumes onto a path
+# that no longer exists: Traveling for ever. LocationInteraction below is the whole assertion.
+#
+# --encounter-on-arrival stages exactly that step; a random roll reaches it about once in a hundred
+# journeys, which is why the flag exists. It is honoured ahead of --no-encounters, so the random
+# rolls stay off and this one still fires.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --encounter-on-arrival wolf
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+
+# Somewhere, anywhere — the destination does not matter, only that the trip ends.
+travel neighbour
+travel-go
+
+wait mode EncounterPrompt 90
+click engage
+wait mode Fighting 90
+
+fight-end victory
+
+# The journey finishes itself: the held arrival is delivered and the location opens.
+# Before the fix this sat in Traveling until the run timed out.
+wait mode LocationInteraction 90
+
+quit

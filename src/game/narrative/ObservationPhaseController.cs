@@ -42,7 +42,6 @@ public class ObservationPhaseController
     private readonly ObservationExecutor _observationExecutor;
     private readonly PersonaRewriter _rewriter;
     private readonly PersonaChoiceSelector _selector;
-    private readonly KeywordRenderer _keywordRenderer;
     private readonly WorldContext? _worldContext;
     private readonly Random _random = GameRng.Stream("observation-phase");
 
@@ -61,7 +60,6 @@ public class ObservationPhaseController
         _observationExecutor = new ObservationExecutor(llamaServer, slotManager);
         _rewriter            = new PersonaRewriter(llamaServer);
         _selector            = new PersonaChoiceSelector(llamaServer);
-        _keywordRenderer     = new KeywordRenderer();
         _worldContext        = worldContext;
     }
 
@@ -120,7 +118,6 @@ public class ObservationPhaseController
         _observationExecutor.ResetSlot(slotId);
 
         var allKeywords = new List<string>();
-        var keywordOutcomeMap = new Dictionary<string, NarrativeAnchor>(StringComparer.OrdinalIgnoreCase);
         var sentences = new List<NarrationSentence>();
 
         string? overall = _worldContext?.GenerateContextDescription(locationId);
@@ -143,12 +140,12 @@ public class ObservationPhaseController
         }
         else
         {
-            var firstText = await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, first, withTransition: false, locationId, ledger, ct, isReminescence: isReminescence, innerThought: firstThought, part: part);
+            var firstText = await AppendObservationAsync(sentences, allKeywords, slotId, modusMentis, first, withTransition: false, locationId, ledger, ct, isReminescence: isReminescence, innerThought: firstThought, part: part);
 
             // Second (and possibly third) observation, gated on how long the first one(s) ran — see the
             // length rules in AppendFollowUpObservationsAsync. The candidate pool is the deduplicated
             // set; objects already observed are excluded from every follow-up choice.
-            await AppendFollowUpObservationsAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis,
+            await AppendFollowUpObservationsAsync(sentences, allKeywords, slotId, modusMentis,
                 candidates, new List<NarrativeAnchor> { first }, firstText, locationId, ledger, ct, isReminescence, overall, area, part);
         }
 
@@ -166,7 +163,6 @@ public class ObservationPhaseController
             Keywords: allKeywords,
             Actions: null,
             SourceObservationType: ObservationType.Overall,
-            KeywordOutcomeMap: keywordOutcomeMap,
             Sentences: sentences
         );
 
@@ -253,11 +249,10 @@ public class ObservationPhaseController
             return await BuildNotInterestedBlockAsync(slotId, observationModusMentis, focusPhrase, isReminescence, ct, innerThought: focusThought, preview: preview, commit: commit, part: part);
 
         var allKeywords = new List<string>();
-        var keywordOutcomeMap = new Dictionary<string, NarrativeAnchor>(StringComparer.OrdinalIgnoreCase);
         var sentences = new List<NarrationSentence>();
 
         // 1. Observe the clicked object (no transition) — it is always the first observation.
-        var firstText = await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis, focusOutcome, withTransition: false, locationId, ledger, ct, isReminescence: isReminescence, innerThought: focusThought, part: part);
+        var firstText = await AppendObservationAsync(sentences, allKeywords, slotId, observationModusMentis, focusOutcome, withTransition: false, locationId, ledger, ct, isReminescence: isReminescence, innerThought: focusThought, part: part);
 
         // 2. A second (and possibly third) object, reached via a transition and gated on the same length
         //    rules as the overall phase (see AppendFollowUpObservationsAsync). The candidate pool drops
@@ -267,7 +262,7 @@ public class ObservationPhaseController
         var followUpCandidates = DeduplicateByName(
             ObserveOnlyFilter(ledger.Remaining(currentNode.GetAllDirectConcreteOutcomes()))
                 .Where(o => !GetNeutralName(o).Equals(focusName, StringComparison.OrdinalIgnoreCase)));
-        await AppendFollowUpObservationsAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis,
+        await AppendFollowUpObservationsAsync(sentences, allKeywords, slotId, observationModusMentis,
             followUpCandidates, new List<NarrativeAnchor> { focusOutcome }, firstText, locationId, ledger, ct, isReminescence, overall, area, part);
 
         if (sentences.Count == 0)
@@ -284,7 +279,6 @@ public class ObservationPhaseController
             Keywords: allKeywords,
             Actions: null,
             SourceObservationType: ObservationType.Focus,
-            KeywordOutcomeMap: keywordOutcomeMap,
             Sentences: sentences
         );
 
@@ -314,7 +308,6 @@ public class ObservationPhaseController
     private async Task<string?> AppendObservationAsync(
         List<NarrationSentence> sentences,
         List<string> allKeywords,
-        Dictionary<string, NarrativeAnchor> keywordOutcomeMap,
         int slotId,
         ModusMentis modusMentis,
         NarrativeAnchor outcome,
@@ -346,24 +339,21 @@ public class ObservationPhaseController
                 neutral = $"{neutral} {trailingNeutral.Trim()}";
             var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, innerThought: innerThought, preview: sink, ct: ct);
 
-            // Keywords are chosen by rule from the final (sanitized) text — the noun(s) most related to
-            // the object. A long observation gets two distinct keywords, both mapped to this same object
-            // so either click does the same thing; a normal-length one keeps a single keyword.
+            // Keywords are chosen by rule from the final (sanitized) text — the word(s) most related
+            // to the object. A long observation gets two distinct keywords, both linked to this same
+            // object so either click does the same thing; a normal-length one keeps a single keyword.
             //
-            // Words already claimed by an earlier object of this block are excluded: the block maps a
-            // keyword to exactly ONE anchor, so a repeated word left the later sentence clickable but
-            // wired to the earlier object.
+            // Nothing is withheld because another object of this block already used it. The anchor
+            // rides on the sentence, so two sentences about two men are both clickable as "man",
+            // each acting on its own. Withholding was needed only while the click resolved through a
+            // table keyed by the word, which could hold one object per word.
             int wanted = text.Length > Config.Narrative.ObservationTwoKeywordsThreshold ? 2 : 1;
             var kws = KeywordExtractor.ExtractKeywords(text, GetReferenceLemma(outcome), wanted,
-                                                       ownName: GetNeutralName(outcome),
-                                                       exclude: keywordOutcomeMap.Keys);
-            sentences.Add(new NarrationSentence(text, kws));
+                                                       ownName: GetNeutralName(outcome));
+            sentences.Add(new NarrationSentence(text, kws, outcome));
             ledger.Observe(outcome);
             foreach (var kw in kws)
-            {
                 allKeywords.Add(kw);
-                keywordOutcomeMap[kw] = outcome;
-            }
             Console.WriteLine($"ObservationPhaseController: Observed '{outcome.DisplayName}' (keywords: {string.Join(", ", kws)})");
             return text;
         }
@@ -398,7 +388,6 @@ public class ObservationPhaseController
     private async Task AppendFollowUpObservationsAsync(
         List<NarrationSentence> sentences,
         List<string> allKeywords,
-        Dictionary<string, NarrativeAnchor> keywordOutcomeMap,
         int slotId,
         ModusMentis modusMentis,
         List<NarrativeAnchor> candidates,
@@ -431,7 +420,7 @@ public class ObservationPhaseController
                 return;
             }
 
-            secondText = await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, second, withTransition: true, locationId, ledger, ct, isReminescence: isReminescence, innerThought: secondThought, part: part);
+            secondText = await AppendObservationAsync(sentences, allKeywords, slotId, modusMentis, second, withTransition: true, locationId, ledger, ct, isReminescence: isReminescence, innerThought: secondThought, part: part);
             observed.Add(second);
         }
 
@@ -450,7 +439,7 @@ public class ObservationPhaseController
                 return;
             }
 
-            await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, third, withTransition: true, locationId, ledger, ct, isReminescence: isReminescence, innerThought: thirdThought, part: part);
+            await AppendObservationAsync(sentences, allKeywords, slotId, modusMentis, third, withTransition: true, locationId, ledger, ct, isReminescence: isReminescence, innerThought: thirdThought, part: part);
         }
     }
 
@@ -512,7 +501,6 @@ public class ObservationPhaseController
         _observationExecutor.ResetSlot(slotId);
 
         var allKeywords = new List<string>();
-        var keywordOutcomeMap = new Dictionary<string, NarrativeAnchor>(StringComparer.OrdinalIgnoreCase);
         var sentences = new List<NarrationSentence>();
 
         var part = preview?.BeginAccumulatingPart(PreviewTitles.For(observationModusMentis));
@@ -520,7 +508,7 @@ public class ObservationPhaseController
         // Exactly one observation, of the NPC, whatever its length — no follow-up choice. It still goes
         // on the ledger, so a later request this phase reaches for something other than the person just
         // spoken to.
-        await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis, npcOutcome, withTransition: false, locationId, ledger, ct, isReminescence: false, innerThought: null, part: part);
+        await AppendObservationAsync(sentences, allKeywords, slotId, observationModusMentis, npcOutcome, withTransition: false, locationId, ledger, ct, isReminescence: false, innerThought: null, part: part);
 
         if (sentences.Count == 0)
         {
@@ -536,7 +524,6 @@ public class ObservationPhaseController
             Keywords: allKeywords,
             Actions: null,
             SourceObservationType: ObservationType.Focus,
-            KeywordOutcomeMap: keywordOutcomeMap,
             Sentences: sentences);
 
         Console.WriteLine($"ObservationPhaseController: Post-dialogue observation complete ({allKeywords.Count} keywords)");
@@ -585,14 +572,13 @@ public class ObservationPhaseController
         _observationExecutor.ResetSlot(slotId);
 
         var allKeywords = new List<string>();
-        var keywordOutcomeMap = new Dictionary<string, NarrativeAnchor>(StringComparer.OrdinalIgnoreCase);
         var sentences = new List<NarrationSentence>();
 
         var part = preview?.BeginAccumulatingPart(PreviewTitles.For(observationModusMentis));
 
         for (int i = 0; i < corpseOutcomes.Count; i++)
         {
-            await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId,
+            await AppendObservationAsync(sentences, allKeywords, slotId,
                 observationModusMentis, corpseOutcomes[i], withTransition: i > 0, locationId, ledger, ct,
                 isReminescence: false, innerThought: null, part: part);
         }
@@ -611,7 +597,6 @@ public class ObservationPhaseController
             Keywords: allKeywords,
             Actions: null,
             SourceObservationType: ObservationType.Overall,
-            KeywordOutcomeMap: keywordOutcomeMap,
             Sentences: sentences);
 
         Console.WriteLine($"ObservationPhaseController: Corpse observation complete ({sentences.Count} sentences, {allKeywords.Count} keywords)");
@@ -656,14 +641,13 @@ public class ObservationPhaseController
         _observationExecutor.ResetSlot(slotId);
 
         var allKeywords = new List<string>();
-        var keywordOutcomeMap = new Dictionary<string, NarrativeAnchor>(StringComparer.OrdinalIgnoreCase);
         var sentences = new List<NarrationSentence>();
 
         var part = preview?.BeginAccumulatingPart(PreviewTitles.For(observationModusMentis));
 
         // Exactly one observation, of the enemy, whatever its length — no follow-up choice. The
         // threat-caution sentence rides into the same rewrite as the observation itself.
-        await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis,
+        await AppendObservationAsync(sentences, allKeywords, slotId, observationModusMentis,
             threatOutcome, withTransition: false, locationId, ledger, ct, isReminescence: false, innerThought: null,
             part: part, trailingNeutral: NeutralNarration.ThreatCaution());
 
@@ -681,7 +665,6 @@ public class ObservationPhaseController
             Keywords: allKeywords,
             Actions: null,
             SourceObservationType: ObservationType.Overall,
-            KeywordOutcomeMap: keywordOutcomeMap,
             Sentences: sentences);
 
         Console.WriteLine($"ObservationPhaseController: Threat observation complete ({allKeywords.Count} keywords)");
@@ -856,7 +839,6 @@ public class ObservationPhaseController
             Keywords: new List<string>(),
             Actions: null,
             SourceObservationType: ObservationType.Focus,
-            KeywordOutcomeMap: new Dictionary<string, NarrativeAnchor>(StringComparer.OrdinalIgnoreCase),
             Sentences: new List<NarrationSentence> { new(text, new List<string>()) }
         );
         var resultBlocks = new List<NarrationBlock> { block };
@@ -944,20 +926,6 @@ public class ObservationPhaseController
          : outcome.DisplayName;
 
     /// <summary>
-    /// Formats narration blocks for terminal display with keyword highlighting.
-    /// </summary>
-    public string FormatNarrationBlockForDisplay(NarrationBlock block, bool keywordsEnabled = true)
-    {
-        var formattedText = _keywordRenderer.FormatForTerminal(
-            block.Text,
-            block.Keywords ?? new List<string>(),
-            keywordsEnabled
-        );
-
-        return $"[{block.ModusMentis.DisplayName}]\n{formattedText}\n";
-    }
-
-    /// <summary>
     /// Gets all unique keywords from a list of narration blocks.
     /// </summary>
     public List<string> GetAllKeywords(List<NarrationBlock> blocks)
@@ -1031,23 +999,17 @@ public class ObservationPhaseController
                     partyWords.Add(w.Trim('.', ',', '\'', '"'));
 
             var allExtractedKeywords = new List<string>();
-            var speakingKeywordOutcomeMap = new Dictionary<string, NarrativeAnchor>(StringComparer.OrdinalIgnoreCase);
             string? kw = KeywordExtractor
                 .ExtractKeywords(spoken, GetReferenceLemma(linkedOutcome), KeywordCandidatesForSpeaking)
                 .FirstOrDefault(k => !partyWords.Contains(k));
             if (kw != null)
-            {
                 allExtractedKeywords.Add(kw);
-                speakingKeywordOutcomeMap[kw] = linkedOutcome;
-            }
             else
-            {
                 Console.Error.WriteLine("ObservationPhaseController: Speaking line yielded no keyword — the companion will have nothing to click.");
-            }
 
             // One sentence covering the whole address; the renderer highlights only where the keyword
             // appears within it.
-            var speakingSentences = new List<NarrationSentence> { new NarrationSentence(spoken, allExtractedKeywords) };
+            var speakingSentences = new List<NarrationSentence> { new NarrationSentence(spoken, allExtractedKeywords, linkedOutcome) };
 
             var block = new NarrationBlock(
                 Type: NarrationBlockType.Speaking,
@@ -1057,7 +1019,6 @@ public class ObservationPhaseController
                 Actions: null,
                 ChainOrigin: null,
                 LinkedOutcome: linkedOutcome,
-                KeywordOutcomeMap: speakingKeywordOutcomeMap.Count > 0 ? speakingKeywordOutcomeMap : null,
                 Sentences: speakingSentences,
                 SpeakerName: actingMember.DisplayName
             );

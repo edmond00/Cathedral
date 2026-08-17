@@ -56,7 +56,11 @@ therefore be well fuelled or poisoned by what it has taken in, and the queue rec
 for forty-nine places.
 
 **When every queue is critical, exertion can no longer be paid for, and the body dies of
-starvation.** This is the one way the humoral system kills outright.
+starvation.** This is the one way the humoral system kills outright, and it is reckoned wherever the
+body is: upon the road, where heat is drawn leg by leg and the last of it is missed in the drawing;
+and equally within a place, where a bleeding or a fight's worth of exertion may empty the queues just
+as thoroughly. There is no waiting for a journey to prove what the queues already say (see [Chapter I
+§7](01-anatomy.md#7-wounds)).
 
 ## 4. The transmuting virtues
 

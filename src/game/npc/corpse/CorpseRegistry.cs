@@ -115,6 +115,49 @@ public static class CorpseRegistry
     }
 
     /// <summary>
+    /// The remains of a fallen <b>companion</b>: the same body and belongings an NPC of that species
+    /// would leave, built from the <see cref="PartyMember"/> directly.
+    ///
+    /// <para>It needs its own entry point because a companion is not an <see cref="NpcEntity"/> —
+    /// recruiting moves the <see cref="EnemyCombatant"/> into the party and drops the wrapper, so
+    /// there is no <c>Archetype</c> to read the species off and no <c>Combatant</c> property to
+    /// reach the pack through. Both come straight off the member instead, and the resulting
+    /// <see cref="CorpsePointOfInterest"/> carries no entity at all.</para>
+    ///
+    /// <para>Everything downstream is identical — the body is <c>cut</c>, the belongings are
+    /// <c>grab</c>bed — because those verbs gate on the PoI's <em>type</em>, not on who it was.</para>
+    /// </summary>
+    public static List<PointOfInterest> CreateForCompanion(PartyMember member)
+    {
+        var template = _templates.GetValueOrDefault(member.Species.GetType());
+
+        var remains = new List<PointOfInterest>
+        {
+            new CorpsePointOfInterest(
+                npcEntity:    null,
+                displayName:  $"{member.DisplayName}'s Remains",
+                descriptions: new() { template?.Description ?? $"the body of {member.DisplayName}, cooling on the ground" },
+                parts:        template?.PartFactory() ?? new(),
+                moods:        CorpseMoods),
+        };
+
+        // Same rule as an NPC's: only a human leaves a separate pile of gear, and never an empty one.
+        if (member.Species is HumanSpecies)
+        {
+            var items = member.GetAllItems();
+            if (items.Count > 0)
+                remains.Add(new PointOfInterest(
+                    displayName:    $"{member.DisplayName}'s Belongings",
+                    referenceLemma: "belongings",
+                    descriptions:   new() { $"the clothes and gear {member.DisplayName} will not be needing" },
+                    items:          items.Select(i => new ItemElement(i)).ToList(),
+                    moods:          new[] { "disarranged", "still-warm", "unclaimed" }));
+        }
+
+        return remains;
+    }
+
+    /// <summary>
     /// The remains of a shallow NPC — one body, never any belongings. Called by
     /// <see cref="ShallowNpcArchetype.CreateCorpse"/>, which supplies what the species leaves.
     /// </summary>

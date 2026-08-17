@@ -665,12 +665,12 @@ to change any permissions.
 ### Settings
 
 `UserSettings` (was `AudioSettings`) is the single persisted store, at
-`%APPDATA%\Cathedral\settings.json` — volumes, the dither toggle, fullscreen, the two glyph
+`%APPDATA%\Cathedral\settings.json` — volumes, the dither toggle, fullscreen, the four glyph
 settings, and the compute settings. They live together because the file is rewritten whole, not
 merged: two classes writing it would each silently discard the other's fields.
 
-The screen is **three groups**: audio (volumes), video (fullscreen, dither, glyph weight, glyph
-size), and language model. Everything in the first two applies at once; nothing in the third does,
+The screen is **three groups**: audio (volumes), video (fullscreen, dither, and the glyph block),
+and language model. Everything in the first two applies at once; nothing in the third does,
 and the boundary is what lets the "changes above take effect at the next launch" note under the
 model rows mean that group rather than the whole screen.
 
@@ -713,6 +713,46 @@ glyph is drawn, so a write there must be followed by **`GlyphAtlas.Rebuild()`** 
 because `BuildAtlas` early-returns on an unchanged glyph set, and the set *is* unchanged when only
 the pen width moved. Forget it and the row still does something, just the subtler half of what it
 claims. That is also why the three are no longer `const`.
+
+**Size and weight are asked twice — of the UI and of the world — and the two pairs are separate
+mechanisms, not one applied to two surfaces.** The screen shows them as a 2x2 block (SIZE and
+WEIGHT down the side, `U I` and `W O R L D` across), because the first thing a player needs to
+settle is which surface they mean. Underneath, both halves differ:
+
+- **size** — a terminal glyph is scaled inside a fixed cell, so `GlyphScale`'s ceiling is that
+  cell. A world glyph has no cell; it is a quad on a sphere bounded only by its neighbours, so
+  `WorldGlyphScale` is a uniform on the quad and its ends are where the surface gaps (0.70) or
+  swallows its own markers (1.60);
+- **weight** — the terminal blends alpha, so its weight is a gamma on that alpha. **Every sphere
+  fragment shader thresholds the atlas luminance instead** (`if (texLuminance > cutoff) … else
+  discard`) and is fully opaque or gone, so there is no alpha there for a gamma to act on. The
+  threshold *is* the weight, and `WorldGlyphWeightSteps` pairs it with a raster pen the sphere
+  atlas did not previously have at all. NORMAL reproduces the old hardcoded `0.1` exactly.
+
+**`WorldGlyphScale` is read by ray picking as well as by the shader**, through
+`GlyphSphereCore.WorldGlyphPickRadius`. A vertex is picked by proximity within
+`QuadSize * VertexShaderSizeMultiplier`, so a scaled drawing against a fixed radius means clicks
+stop matching the picture — and picking is the one thing `--cli` cannot check, since a script
+injects a vertex index and never runs that maths. One property feeds both.
+
+**Shader sources must stay ASCII.** An em dash in a `//` comment inside the sphere's vertex shader
+took the game down at startup with `VS compile: error C0000: syntax error, unexpected $end at token
+"<EOF>"`. GLSL tokenizers reject the non-ASCII bytes even inside a comment, and report it at the end
+of the source rather than at the offending line — so the message points nowhere near the cause.
+
+**The clouds follow the world pair** and take the cutoff live, but their atlas is built once at
+startup and is not re-rastered, so the pen half of a weight change reaches them at the next launch.
+A decorative layer was not judged worth a mid-frame rebuild; the sphere's own atlas, which carries
+everything a player reads, is rebuilt properly through `RebuildGlyphAtlasForWeight`.
+
+**A glyph can also be drawn larger than its cell without touching any setting**, through
+`Config.GlyphSizeFactors`. Two knobs there, and the distinction is the trap: `Factors` is the
+*raster* size inside the 35px atlas cell, and it stops buying anything once the ink fills that cell
+— past which it silently crops the glyph and bleeds into the neighbouring cell. The dice faces sat
+past it for a long time, drawn 3px taller than their cell and missing the bottom rule of the box.
+`QuadScales` is the way past that ceiling: it stretches the cell over more of the screen, so it
+suits a glyph standing in space of its own (the dice sit two cells apart) and not one set in prose
+— which is why the difficulty numerals, which open action lines, are raster-only.
 
 Stroke and gamma are **one player-facing row**, not two: they are two halves of one fix biting at
 opposite ends of the cell-size range (stroke carries a large cell, gamma a small one), and a player
@@ -766,6 +806,7 @@ from the game's (very chatty) diagnostic logging on the same stdout.
 | `--period <name>` | Pins the arrival time of day (`dawn`…`night`) instead of drawing one at random. Needed for anything period-gated: every building's entry door shuts at `night`, and a random draw reaches that one visit in six. |
 | `--fill-party` | Fills the companion roster to its heart-derived ceiling (`max_companions`) right after the childhood phase, with NPCs generated from random archetypes — the **last** slot a beast, every slot before it a human. Recruiting even one companion in play takes a conversation and a check (or an appease *and* a tame), which is a long approach for anything that just needs a populated party. Note the ceiling is the *heart* score, and a protagonist accepted straight out of creation has a heart of 1 — so a plain script gets one beast and nothing else. For humans too, raise the heart first (`click cell 94 24` on the creation screen bumps it, four presses reaching 5). |
 | `--start-fight <creature>` | Drops straight into a fight on reaching the world map (`wolf`, `bear`, `bandit`, `brigand`). **The only way a script can reach fight mode at all** — the real routes in are a random travel encounter (which every script disables with `--no-encounters`, precisely because it fires unpredictably) and provoking a location NPC through a conversation and a check. |
+| `--encounter-on-arrival <creature>` | Forces a travel encounter on the **final step** of the next journey, once. `--start-fight` reaches a fight with no journey under it and a random roll almost always fires mid-path; this reaches the third case, and it is the one that broke. The last step raises `ProtagonistSteppedToVertex` and `ProtagonistArrivedAtLocation` from **one** `UpdateMovement` call and clears the path between them, so the fight begins with the arrival already announced and nothing left to walk. Honoured **ahead of** `--no-encounters`, so a script can suppress the random rolls and still stage this one. |
 | `--grant-mm <id[,id…]>[:lvl]` | Grants the named modi mentis at `lvl` (default 1) after character creation. Fighting skills are gated behind their modi mentis, so this is what makes a given skill reachable — and since a **buff's cost falls as its level rises**, it is also how you exercise both ends of that curve. Unknown ids are reported on stderr. |
 | `--spawn-beast <name>` | Puts a beast (`wolf`, `boar`, `bear`, `black bear`, `stray dog`, `fox`, `cat`) in the **opening area** of every scene, at every period, flagged an enemy by the same first-contact pass that flags a rolled one. Everything a script does *to* a beast — appease, tame, track — starts with one being where the script opens, and no factory guarantees that: a wolf is rolled 10–20% of the time, a boar 25–40%, and whichever is rolled then roams between areas with the hour. Follows `--start-area`, since it spawns into whichever area narration opens in. |
 | `--goal-only <verb-id>` | Forces the playground's goal choice onto one verb. `--playground` replaces the persona's "what do you want to do?" with a **uniform draw over every goal the observed object offers**, so a script meaning to `appease` a beast — and then `tame` it — is otherwise picking out of a dozen. The CLI's `goal` command sets the same switch, which is what a script that needs two different goals in one run should use. Inert when no goal in a phase matches, which then draws as usual. |
@@ -823,6 +864,9 @@ Run `help` for the authoritative list. The essentials:
                             and you follow with `click fighter`
   click fighter <name>      a fighter's map cell — the target step for an attack
   click end-turn            the fight's END TURN button
+  click engage              the travel encounter prompt's ENGAGE button — its only button, so
+                            without this a staged encounter is a dead end and the fight behind
+                            it is unreachable
   click button              the footer button (LEAVE / INTERRUPT / END / CONTINUE)
   choose <n>                answer the visible popup by index
   travel here               enter the location the avatar is standing on — what most scripts
@@ -861,6 +905,21 @@ Run `help` for the authoritative list. The essentials:
                             Same switch as `--goal-only`; a command because a script that
                             appeases a beast and then tames it needs two different goals
   fight-end <victory|death|runaway>
+  fight-deplete [enemies|companions|<fighter>]
+                            bleed a fighter's humors dry — the OTHER way to die in a fight, which
+                            ends it without touching hit points. Takes `enemies` rather than a
+                            name because a narration fight pulls in every nearby NPC with
+                            authority and their names are generated content
+  fight-wound [enemies|companions|<fighter>]
+                            wound one fighter to death. The only way a script can kill a COMPANION
+                            — `fight-end` settles the whole fight and cannot single anybody out
+  wound [protagonist|companions|<name>] [n]
+                            wound a party member OUTSIDE a fight, as a failed act's penalty does.
+                            No count means enough to kill. A wound is SAMPLED one slot in five, so
+                            a script cannot ask a failed act to injure anybody on demand
+  click companion-death     the companion-death notice's CONTINUE. Modal over every mode, so a
+                            script that does not press it cannot get past a companion dying;
+                            `state` reports `companion-death=shown`
   advance [presses] [secs]  settle, then press the preview box's CONTINUE until it is gone.
                             USE THIS, not a bare `click continue`, to get from a keyword click
                             to the action list — see the trap below
@@ -955,6 +1014,170 @@ A "this turn" effect expires in `Fighter.EndTurn`, not `StartTurn`: the start-of
 comes round after every other fighter has acted, which would stretch it to a full round. Cold Blood
 genuinely wants the round (it fires while enemies attack) and so leaves `OnTurnEnd` alone; Blood
 Lust lasts the whole fight and expires nowhere.
+
+### Winning a fight: what the victory has to hand back
+
+`FightState.CheckFightEnd` is faction arithmetic and nothing more — the last living `Enemy` falling
+is `PartyWon`, however many `Party` fighters are standing. **Companions are `FighterFaction.Party`
+and `IsPlayerControlled`**, added by `BuildFighters` straight from `Protagonist.CompanionParty`, so a
+companion neither prolongs a fight nor is waited on. `cli/system/fight_victory_companion.cli` plays a
+kill out blow by blow rather than calling `fight-end victory`, because the forced end sets the result
+directly and never evaluates the condition at all.
+
+**What the victory returns *to* is the part that is easy to get wrong, and there are three cases.**
+`OnFightCompleted`'s travel branch answers all three, and answering only the middle one is what
+produced a reported softlock — the travel progress box left standing over a black screen:
+
+| | after victory |
+|---|---|
+| encounter **mid-journey** | resume travel — the path is still there to walk |
+| encounter on the journey's **final step** | deliver the held arrival (`_pendingArrivalVertex`) and finish the journey |
+| **no journey at all** (`--start-fight`) | back to the world view |
+
+The middle case is the trap. `MicroworldInterface.UpdateMovement` raises `ProtagonistSteppedToVertex`
+— which is where the encounter roll lives — and `ProtagonistArrivedAtLocation` from the **same call**,
+with `_currentPath` nulled between the two. So the arrival is announced while the mode has already
+become `EncounterPrompt`, `OnProtagonistArrived` refuses it (it only answers from `Traveling`), and
+resuming travel afterwards resumes onto a path that no longer exists: `Traveling` for ever, with only
+the pause menu to leave by. The arrival is therefore **held rather than dropped** and delivered once
+the encounter settles; the runaway and death branches clear it, because both end the journey.
+
+**There are two ways to die in a fight, and only one of them used to leave a mark.**
+`Fighter.IsAlive` is `CurrentHp > 0 && !IsHumorDepleted`, while `NpcEntity.IsAlive` reads the hit
+points alone — so a fighter bled out by `BleedingEffect` (which raises `IsHumorDepleted` when the
+humor queues go fully critical) was dead for exactly as long as the fight lasted, and alive again at
+full health the moment the `Fighter` wrapper was dropped. `CheckFightEnd` counted them dead and
+awarded the victory; `OnFightCompleted` then asked `enemy.IsAlive`, was told yes, and skipped them.
+No corpse, no `RemoveNpcFromPlay`, no `DepartedNpcs` entry — a fight won against somebody still
+standing in the room, whom the next visit rebuilt from the seed regardless.
+
+`FightModeAdapter.SettleEnemyDeaths` carries the fight's verdict back onto the NPCs, once, as the
+fight ends, and for **every** result rather than only a victory: an enemy who bled out while the
+party fled is no less dead. Marking is one-way, so nothing there can resurrect anybody.
+
+`fight-deplete` is the CLI counterpart of `fight-end` for this, and exists for the same reason: the
+real route is a bleed out-lasting a dozen turns of drain against full queues, and which special
+effect a blow rolls is not something a script can ask for.
+`cli/system/fight_victory_humor_depletion.cli` asserts both halves — a body left, and the man gone —
+because spawning the corpse without the removal behind it would satisfy the first alone.
+
+### Death, and where it is reckoned
+
+`TriggerDeath` is the funnel for every cause, and it now **tears down a live narrative session**
+before switching mode. That is not tidiness: `Update` enters its narration branch on
+`_isInNarrativeMode` rather than on the mode, so a session left standing repaints itself over the
+death screen every frame. `ExitNarrativeMode` and `TriggerDeath` share `TearDownNarrativeSession`,
+which is everything except the mode change.
+
+**A fight lost is a run lost, wherever it was fought.** The narration branch of `OnFightCompleted`
+used to answer a `Death` result with `ExitNarrativeMode()` — so the travel encounter was the only
+lethal fight in the game, and a fight picked inside a location could be lost at no cost at all, the
+protagonist walking out at zero hit points and playing on.
+
+**Wounds and spent humors are reckoned continuously; age is reckoned on the map.**
+`SettleProtagonistDeath` runs on the same tick as the companion sweep and reads `CauseOfDeath`,
+taking every arm except `OldAge`. Both of the causes it takes are dealt at arbitrary moments of a
+visit and neither had a check that covered those moments:
+
+- a **wound** arrives from a blow or from the penalty a failed act *samples* — no check existed at
+  all, so a mortal one left the protagonist playing on at zero health;
+- the **humors** are spent by bleeding and by every buff a fight is paid for with, and all three
+  starvation checks were on the travel path — so a body whose queues went critical indoors stayed
+  upright until the next journey drew heat it did not have. Worse, a protagonist who bled out in a
+  fight a companion then *won* walked away alive and at full health, because depletion is recorded on
+  the discarded `Fighter` wrapper and nothing outside the fight reads it.
+
+**Age stays where it is** (`CheckOldAgeDeaths`, on the world-view entry, after the healing sweep).
+Sweeping it continuously would end the run mid-visit the moment the clock crossed the term — and
+since a beast outlives a person, it would also make a companion's death by age unreachable, the
+protagonist always falling first. There is little for a standing check to catch anyway: only a work
+stint moves the calendar inside a visit. Companions are swept on all three, because their death ends
+nothing.
+
+The travel-path starvation checks are left in place and still fire first while a route is walked:
+the drain notices the queues empty in the same breath as it empties them.
+
+**One consequence to know.** `--black-bile` sours the queues at the moment the protagonist is
+accepted, so that state is now lethal on sight — the run ends on reaching the world map, with no
+journey attempted. `death_starvation.cli` used to prove the death happened *between two cells* and
+cannot any more; it asserts the new behaviour instead. The leg-by-leg drain therefore has no
+dedicated test now, which would need a way to stage a *nearly* critical body.
+
+| | |
+|---|---|
+| `wound [protagonist\|companions\|<name>] [n]` | the narration counterpart of `fight-wound`. A wound is sampled one slot in five, so a script cannot ask a failed act to injure anybody, let alone three times on one body |
+| `starve [protagonist\|companions\|<name>]` | its humoral twin, and why it is a command and not a flag: `--black-bile` can only sour the queues before the world has been touched, so it stages a body that was *always* starving, never one that starves partway through — which is also what lets `death_narration_humors.cli` assert that a save existed and was erased |
+
+`death_narration_wounds.cli`, `death_narration_humors.cli` and `death_narration_fight.cli` are the
+three new routes to the death screen, kept alongside `death_wounds.cli` and `death_starvation.cli`
+because they reach `TriggerDeath` down different paths — and the difference between the paths *was*
+the bug.
+
+### When a companion dies
+
+**Companions could not really die.** `CompanionParty.Remove` was reached by the old-age check and by
+the heart-ceiling overflow and by nothing else, so a companion cut down in a fight walked out of it
+at zero hit points and stayed in the party for ever — counted against the heart ceiling, handed the
+narration by Speak About, turning up in the next fight with nothing left to lose. One bled dry was
+not even dead, for the reason above.
+
+**One question, asked in one place.** `PartyMember.CauseOfDeath` returns `Wounds`, `Starvation` or
+`OldAge` — or null — and all three are **derived**: hit points are `MaxHp` minus the wound count, a
+fully-critical humor set is a state every consumption path already produces, and old age is the clock
+against `GetLifetimeDays()`. So a member is dead the moment they are, whenever the question happens
+to be asked, with nothing to keep in sync. `LocationTravelGameController.SettleCompanionDeaths` asks
+it, and `CheckOldAgeDeaths` now delegates its companion half to the same funnel.
+
+Three things about it that are load-bearing:
+
+- **It is swept every tick, not called at each place a companion can be killed** — because those are
+  not a closed set. A fight is the obvious one, but a failed action's wound penalty lands on whoever
+  is *acting*, which after a Speak-About hand-off is the companion, and the humors drain on their
+  own. Derived state makes the per-tick cost a few property reads, and makes it impossible for
+  whatever kills somebody next to forget to call it.
+- **Never while a fight is running.** The fight holds `Fighter` wrappers over these members; pulling
+  one out of the party mid-swing leaves a fighter on the board belonging to nobody. `Update` gates
+  the sweep on the mode, and it fires within a tick of the fight handing back. A dead companion
+  therefore does *not* end the fight — `CheckFightEnd` is faction arithmetic and the protagonist is
+  still standing.
+- **The body is only left when there is a scene to leave it in.** A travel encounter and the old-age
+  check both happen on the world map, where there is no area and no observation graph; there the
+  notice is the whole of the news, which is what it always was.
+
+`CorpseRegistry.CreateForCompanion` is a second entry point because **a companion is not an
+`NpcEntity`** — recruiting moves the `EnemyCombatant` into the party and drops the wrapper, so there
+is no `Archetype` to read the species off and no `Combatant` to reach the pack through. Both come
+off the `PartyMember` instead, and `CorpsePointOfInterest.NpcEntity` is nullable for exactly this
+body. Everything downstream is unchanged, because `cut` and `grab` gate on the PoI's **type**.
+
+**`CompanionDeathBox` is now modal over every mode**, gated at the top of `Update` rather than under
+`_currentMode == GameMode.WorldView`. Old age was raised at the world map and nowhere else; a
+companion now falls in a narration fight, and narration redraws itself every frame — a box gated
+below the mode dispatch would be painted over before it was read. Dismissing it calls
+`RedrawCurrentMode`, **not** `OnEnterWorldView`: the box can come up mid-session, and repainting the
+map over a scene the player has not left is the bug that swap prevents. `RedrawCurrentMode` shares
+`SetMode`'s mode-entry switch (`RunModeEnter`) because `SetMode` early-returns on an unchanged mode,
+which is right for a transition and useless for an overlay.
+
+| | |
+|---|---|
+| `fight-wound [enemies\|companions\|<fighter>]` | wound one fighter to death. **The only way a script can kill a companion** — `fight-end` settles the whole fight and cannot single anybody out, and steering the enemy AI onto one party member for long enough is not something a script can ask for |
+| `fight-deplete` | the same, by humors |
+| `click companion-death` | the notice's CONTINUE. Modal over every mode, so a script that cannot press it cannot get past a companion dying; `state` reports `companion-death=shown` for the same reason |
+
+`cli/system/companion_death_wounds.cli`, `_humors.cli` and `_age.cli` cover the three causes — one
+each, because only the funnel is shared, not how each death is arrived at. The humors script asserts
+the notice names the *humors*, since a companion at full hit points reading as unhurt is exactly the
+failure. The age script pushes the clock from **inside** a location: the body needs an area to lie
+in, and a cat outlives a person (Nighthunter's span runs past 48,000 days against a heart's 43,200
+ceiling), so on the world map the protagonist's own old-age check would always fire first.
+
+`--encounter-on-arrival` exists to stage precisely that step — a random roll lands on the last cell
+of a path about once in a hundred journeys, which is a bug that reaches players and not tests.
+`cli/system/fight_victory_travel_arrival.cli` and `fight_victory_travel_dropin.cli` are the two
+travel cases; `fight_victory_narration.cli` is the fourth route out, which returns through
+`NarrativeController.OnFightCompleted` instead and is asserted on the **corpse**, since a scene
+re-entered with the enemy still in it would pass a mode check and be wrong.
 
 ### Wounds and healing
 
@@ -1669,11 +1892,13 @@ did — so the failure branch of a tree is finally testable. Verb tests pass `--
 assert about their verb; `cli/_systems/dialogue_*.cli` drive a real tree and assert on the branch's
 success vs failure replica.
 
-**`click keyword <n>` for pinned phases.** Which word an observation highlights comes from the prose
-(under `--playground` the object's own noun), not from its display name, so a test that has pinned the
-phase with `--observe-only` still cannot spell the handle — `"Brew Barrel"` is not `barrel`. Clicking
-by index means "whatever this phase opened on". Name-matching stays right for hand-written scripts:
-it reads as intent and survives reordering.
+**`click keyword <n>` for pinned phases.** Which word an observation highlights comes from the prose,
+not from the display name: the object's own word is preferred, so `"Brew Barrel"` usually highlights
+`barrel` — but only when the persona wrote that word and the POS tagger read it as a noun, and
+neither is a script's to guarantee. (Catalyst loads on a background task, so a script that runs
+early gets the rule-based fallback and a different word.) Clicking by index means "whatever this
+phase opened on". Name-matching stays right for hand-written scripts: it reads as intent and
+survives reordering.
 
 ### Extending the CLI for a new feature
 
@@ -2000,10 +2225,12 @@ description path.
   while the game becomes unclickable. Keep one manual click-through in your release routine.
 - **Narration quality**: `--playground` produces placeholder prose. A passing script proves flow,
   state and layout — never that the prompts still produce good writing.
-- **Which keyword a real observation offers**: under `--playground` the clickable keyword is the
-  object's **own** noun (`pig` for the pig), because placeholder prose is one frame reused for every
-  object and the real rule — pick the noun most *associated* with it, excluding its own — ranked the
-  frame's vocabulary instead. Every observation in a phase came out as "attention", a block maps a
-  keyword to the first outcome that claims it, and so **only the first object observed was ever
-  clickable**. Scripts can now click any observed object by name; what a real run highlights is still
-  a different word, and only a real run shows it.
+- **The keyword ranking.** The *first* keyword is the object's own word wherever the prose contains
+  it (`pig` for the pig), so that much is the same under `--playground` and is scriptable. What a
+  script cannot see is the ranking behind it — the second keyword of a long observation, and the
+  whole of any sentence that named its object some other way. Two reasons: placeholder prose is one
+  frame reused for every object, so there is no real vocabulary to rank; and the ~6s `WordEmbedding`
+  load, which a real run hides behind the model load (it is started in the controller's constructor
+  precisely so it can), has nothing to hide behind under `--playground` — a script reaches its first
+  observation in ~2s and ranks by word length instead. That second one is inherent to the mode, not
+  a defect. Verify a ranking change against the vectors directly, not through a script.

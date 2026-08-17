@@ -257,6 +257,51 @@ namespace Cathedral.Glyph
             }
         }
         
+        /// <summary>
+        /// The radius, in world units, within which a ray is taken to have hit a vertex's glyph.
+        ///
+        /// <para><b>This is the drawn size, and it has to stay that way.</b> The vertex shader
+        /// scales each quad by <c>QuadSize * VertexShaderSizeMultiplier * WorldGlyphScale</c>, and
+        /// the world is clicked by finding the nearest vertex inside this radius — so the moment
+        /// the size became a player setting, a fixed radius here would mean the hit target no
+        /// longer matched the picture: enlarged glyphs unclickable at their edges, shrunken ones
+        /// answering clicks on bare ground between them. Both are silent, and neither is reachable
+        /// by a CLI script, which injects a vertex index and never runs the picking maths at all.</para>
+        /// </summary>
+        public static float WorldGlyphPickRadius
+            => Config.GlyphSphere.QuadSize
+             * Config.GlyphSphere.VertexShaderSizeMultiplier
+             * Config.GlyphSphere.WorldGlyphScale;
+
+        /// <summary>
+        /// Sets the two uniforms the world-glyph settings drive, on whichever program is about to
+        /// draw. Every sphere program shares one vertex shader and thresholds the atlas the same
+        /// way, so both apply to all of them — including the debug variants, which would otherwise
+        /// draw at a different size from the game the moment a player touched the size row.
+        ///
+        /// <para>Both lookups are guarded: <c>GL.Uniform1(-1, …)</c> is a defined no-op, but a
+        /// missing uniform is then completely silent, which is the failure the terminal renderer
+        /// grew a warning for. Here the shaders are built from strings in this same file, so a
+        /// missing one means an edit went astray rather than a build drifting.</para>
+        /// </summary>
+        private void SetWorldGlyphUniforms(int shaderProgram)
+        {
+            int scaleLoc = GL.GetUniformLocation(shaderProgram, "uGlyphScale");
+            if (scaleLoc >= 0) GL.Uniform1(scaleLoc, Config.GlyphSphere.WorldGlyphScale);
+
+            int cutoffLoc = GL.GetUniformLocation(shaderProgram, "uGlyphCutoff");
+            if (cutoffLoc >= 0) GL.Uniform1(cutoffLoc, Config.GlyphSphere.WorldGlyphCutoff);
+        }
+
+        /// <summary>
+        /// Re-rasters the sphere atlas at the current world weight, for a change in how a glyph is
+        /// <b>drawn</b> rather than in which glyphs there are — the counterpart of
+        /// <c>GlyphAtlas.Rebuild()</c>, and needed for the same reason: the emboldening pen is
+        /// baked into the raster, so the Settings screen's world WEIGHT row would otherwise apply
+        /// its cutoff half alone and do something subtler than it claims.
+        /// </summary>
+        public void RebuildGlyphAtlasForWeight() => RebuildGlyphAtlas(currentGlyphSet);
+
         private void RebuildGlyphAtlas(string glyphSet)
         {
             Cathedral.GameLog.WriteToFileOnly($"Rebuilding atlas with glyphs: \"{glyphSet}\"");
@@ -880,7 +925,9 @@ namespace Cathedral.Glyph
                 int projLoc = GL.GetUniformLocation(currentWorldProgram, "uProj");
                 GL.UniformMatrix4(viewLoc, false, ref view);
                 GL.UniformMatrix4(projLoc, false, ref proj);
-                
+
+                SetWorldGlyphUniforms(currentWorldProgram);
+
                 int texLoc = GL.GetUniformLocation(currentWorldProgram, "uAtlas");
                 if (texLoc >= 0)
                 {
@@ -913,7 +960,9 @@ namespace Cathedral.Glyph
                 int projLoc = GL.GetUniformLocation(currentUIProgram, "uProj");
                 GL.UniformMatrix4(viewLoc, false, ref view);
                 GL.UniformMatrix4(projLoc, false, ref proj);
-                
+
+                SetWorldGlyphUniforms(currentUIProgram);
+
                 int texLoc = GL.GetUniformLocation(currentUIProgram, "uAtlas");
                 if (texLoc >= 0)
                 {
@@ -1093,7 +1142,7 @@ namespace Cathedral.Glyph
                 Vector3 vertexPos = vertices[i].Position;
                 float dist = Vector3.Distance(intersectionPoint, vertexPos);
                 
-                float maxDist = Config.GlyphSphere.QuadSize * Config.GlyphSphere.VertexShaderSizeMultiplier;
+                float maxDist = WorldGlyphPickRadius;
                 if (dist <= maxDist && dist < closestDist)
                 {
                     closestDist = dist;
@@ -1571,6 +1620,11 @@ namespace Cathedral.Glyph
                     fontToUse = fallbackFont;
                 }
 
+                // Emboldening, the rastered half of a world-weight step. Zero at the shipped
+                // weight, so this draws exactly what it always did until the player asks for
+                // more. Scaled off the font actually in use, like the terminal's pen.
+                float strokeWidth = fontToUse.Size * Config.GlyphSphere.WorldGlyphStrokeFactor;
+
                 atlas.Mutate(ctx =>
                 {
                     var textOptions = new RichTextOptions(fontToUse)
@@ -1579,7 +1633,10 @@ namespace Cathedral.Glyph
                         HorizontalAlignment = HorizontalAlignment.Center,
                         VerticalAlignment = VerticalAlignment.Center
                     };
-                    ctx.DrawText(textOptions, glyph, Color.White);
+                    if (strokeWidth > 0f)
+                        ctx.DrawText(textOptions, glyph, Brushes.Solid(Color.White), Pens.Solid(Color.White, strokeWidth));
+                    else
+                        ctx.DrawText(textOptions, glyph, Color.White);
                 });
 
                 infos[i] = new GlyphInfo
@@ -2075,13 +2132,14 @@ layout(location = 7) in vec4 iColor;
 
 uniform mat4 uView;
 uniform mat4 uProj;
+uniform float uGlyphScale;   // Config.GlyphSphere.WorldGlyphScale, the world SIZE row
 
 out vec2 vUv;
 out vec4 vColor;
 
 void main()
 {{
-    vec3 worldPos = iPos + (iRight * aLocalPos.x + iUp * aLocalPos.y) * iSize * {Config.GlyphSphere.VertexShaderSizeMultiplier};
+    vec3 worldPos = iPos + (iRight * aLocalPos.x + iUp * aLocalPos.y) * iSize * {Config.GlyphSphere.VertexShaderSizeMultiplier} * uGlyphScale;
     gl_Position = uProj * uView * vec4(worldPos, 1.0);
     vUv = vec2(iUvRect.x + aLocalUV.x * iUvRect.z, iUvRect.y + aLocalUV.y * iUvRect.w);
     vColor = iColor;
@@ -2094,13 +2152,14 @@ in vec4 vColor;
 out vec4 FragColor;
 
 uniform sampler2D uAtlas;
+uniform float uGlyphCutoff;   // Config.GlyphSphere.WorldGlyphCutoff, the world WEIGHT row
 
 void main()
 {
     vec4 texSample = texture(uAtlas, vUv);
     float luminance = dot(texSample.rgb, vec3(0.299, 0.587, 0.114));
     
-    if (luminance > 0.1) {
+    if (luminance > uGlyphCutoff) {
         FragColor = vec4(vColor.rgb, 1.0);
     } else {
         discard;
@@ -2113,6 +2172,7 @@ in vec2 vUv;
 in vec4 vColor;
 out vec4 FragColor;
 uniform sampler2D uAtlas;
+uniform float uGlyphCutoff;   // Config.GlyphSphere.WorldGlyphCutoff, the world WEIGHT row
 void main() { FragColor = vColor; }";
 
         private readonly string debugFragmentSrc2 = @"
@@ -2121,10 +2181,11 @@ in vec2 vUv;
 in vec4 vColor;
 out vec4 FragColor;
 uniform sampler2D uAtlas;
+uniform float uGlyphCutoff;   // Config.GlyphSphere.WorldGlyphCutoff, the world WEIGHT row
 void main() {
     vec4 texSample = texture(uAtlas, vUv);
     float luminance = dot(texSample.rgb, vec3(0.299, 0.587, 0.114));
-    if (luminance > 0.1) { FragColor = vec4(1.0, 1.0, 1.0, 1.0); } else { discard; }
+    if (luminance > uGlyphCutoff) { FragColor = vec4(1.0, 1.0, 1.0, 1.0); } else { discard; }
 }";
 
         private readonly string debugFragmentSrc3 = @"
@@ -2133,12 +2194,13 @@ in vec2 vUv;
 in vec4 vColor;
 out vec4 FragColor;
 uniform sampler2D uAtlas;
+uniform float uGlyphCutoff;   // Config.GlyphSphere.WorldGlyphCutoff, the world WEIGHT row
 void main() {
     vec4 texSample = texture(uAtlas, vUv);
     float luminance = dot(texSample.rgb, vec3(0.299, 0.587, 0.114));
     vec2 grid = abs(fract(vUv * 10.0) - 0.5);
     float line = smoothstep(0.0, 0.05, min(grid.x, grid.y));
-    if (luminance > 0.1) { FragColor = vec4(mix(vec3(1.0, 0.0, 0.0), vColor.rgb, line), 1.0); } else { discard; }
+    if (luminance > uGlyphCutoff) { FragColor = vec4(mix(vec3(1.0, 0.0, 0.0), vColor.rgb, line), 1.0); } else { discard; }
 }";
 
         private readonly string debugFragmentSrc4 = @"
@@ -2147,11 +2209,12 @@ in vec2 vUv;
 in vec4 vColor;
 out vec4 FragColor;
 uniform sampler2D uAtlas;
+uniform float uGlyphCutoff;   // Config.GlyphSphere.WorldGlyphCutoff, the world WEIGHT row
 void main() {
     vec4 texSample = texture(uAtlas, vUv);
     float texLuminance = dot(texSample.rgb, vec3(0.299, 0.587, 0.114));
     
-    if (texLuminance > 0.1) {
+    if (texLuminance > uGlyphCutoff) {
         // Compute luminosity of the original vertex color
         float colorLuminance = dot(vColor.rgb, vec3(0.299, 0.587, 0.114));
         // Use the luminosity as a grayscale value
@@ -2167,11 +2230,12 @@ in vec2 vUv;
 in vec4 vColor;
 out vec4 FragColor;
 uniform sampler2D uAtlas;
+uniform float uGlyphCutoff;   // Config.GlyphSphere.WorldGlyphCutoff, the world WEIGHT row
 void main() {
     vec4 texSample = texture(uAtlas, vUv);
     float texLuminance = dot(texSample.rgb, vec3(0.299, 0.587, 0.114));
 
-    if (texLuminance > 0.1) {
+    if (texLuminance > uGlyphCutoff) {
         float colorLuminance = dot(vColor.rgb, vec3(0.299, 0.587, 0.114));
 
         if (vColor.a > 3.5) {
@@ -2203,11 +2267,12 @@ in vec2 vUv;
 in vec4 vColor;
 out vec4 FragColor;
 uniform sampler2D uAtlas;
+uniform float uGlyphCutoff;   // Config.GlyphSphere.WorldGlyphCutoff, the world WEIGHT row
 void main() {
     vec4 texSample = texture(uAtlas, vUv);
     float texLuminance = dot(texSample.rgb, vec3(0.299, 0.587, 0.114));
     
-    if (texLuminance > 0.1) {
+    if (texLuminance > uGlyphCutoff) {
         // Compute luminosity of the original vertex color
         float colorLuminance = dot(vColor.rgb, vec3(0.299, 0.587, 0.114));
         // Map luminosity to yellow scale: dark yellow (0.4, 0.4, 0.0) to bright yellow (1.0, 1.0, 0.0)
@@ -2227,12 +2292,13 @@ in vec2 vUv;
 in vec4 vColor;
 out vec4 FragColor;
 uniform sampler2D uAtlas;
+uniform float uGlyphCutoff;   // Config.GlyphSphere.WorldGlyphCutoff, the world WEIGHT row
 uniform float uDarkeningFactor;
 void main() {
     vec4 texSample = texture(uAtlas, vUv);
     float texLuminance = dot(texSample.rgb, vec3(0.299, 0.587, 0.114));
 
-    if (texLuminance > 0.1) {
+    if (texLuminance > uGlyphCutoff) {
         float colorLuminance = dot(vColor.rgb, vec3(0.299, 0.587, 0.114));
 
         if (vColor.a > 3.5) {

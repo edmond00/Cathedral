@@ -451,10 +451,21 @@ public static class ClickableRegionExtensions
 }
 
 /// <summary>
-/// Represents a clickable keyword region in the terminal.
+/// Represents a clickable keyword region in the terminal — one per highlighted <b>occurrence</b>.
+///
+/// <para><paramref name="Anchor"/> is what the click acts on, carried here rather than looked up
+/// from the word. The region already knows which occurrence it is, down to the cell; resolving the
+/// object from the word threw that away and forced every keyword in a block to be unique. Falls
+/// back to <see cref="NarrationBlock.LinkedOutcome"/> when null, which covers blocks with no
+/// per-sentence breakdown.</para>
 /// </summary>
-public record KeywordRegion(string Keyword, int Y, int StartX, int EndX, NarrationBlock? SourceBlock = null) : IClickableRegion
+public record KeywordRegion(string Keyword, int Y, int StartX, int EndX, NarrationBlock? SourceBlock = null,
+                            NarrativeAnchor? Anchor = null) : IClickableRegion
 {
+    /// <summary>What a click here acts on: this occurrence's anchor, else the block's single one.</summary>
+    public NarrativeAnchor? ResolvedAnchor => Anchor ?? SourceBlock?.LinkedOutcome;
+
+
     /// <summary>
     /// Starting Y coordinate (same as Y for single-line regions).
     /// </summary>

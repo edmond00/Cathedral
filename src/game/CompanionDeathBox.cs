@@ -108,6 +108,12 @@ public class CompanionDeathBox
     public bool OnMouseClick(int x, int y)
         => y == _continueY && x >= _continueX && x < _continueX + _continueW;
 
+    /// <summary>
+    /// The CONTINUE button's own cell, for <c>--cli</c> to click by name. Null until
+    /// <see cref="Render"/> has run, since the layout is resolved there.
+    /// </summary>
+    public (int X, int Y)? ContinueButtonCell => _continueY > 0 ? (_continueX, _continueY) : null;
+
     private void CenteredInBox(int y, string text, Vector4 fg, Vector4 bg)
     {
         int x = _boxX + (_boxW - text.Length) / 2;

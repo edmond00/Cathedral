@@ -8,6 +8,7 @@ layout(location = 3) in vec2 iSize;        // Cell size in pixels
 layout(location = 4) in vec4 iUvRect;      // Glyph atlas UV rect
 layout(location = 5) in vec4 iTextColor;   // Character color
 layout(location = 6) in vec4 iBgColor;     // Background color
+layout(location = 7) in float iGlyphScale; // Per-glyph quad multiplier (1.0 for ordinary text)
 
 uniform mat4 uProjection;  // Orthographic projection for HUD
 uniform int uRenderPass;   // 0=background, 1=glyph
@@ -20,7 +21,9 @@ out vec4 vBgColor;
 void main()
 {
     // Convert to screen space (position is already in screen coordinates)
-    float scale = (uRenderPass == 1) ? uGlyphScale : 1.0;
+    // The background quad is always exactly one cell; only the glyph pass is scaled, and a few
+    // glyphs (the dice) ask for more of the screen than their cell through iGlyphScale.
+    float scale = (uRenderPass == 1) ? uGlyphScale * iGlyphScale : 1.0;
     vec2 screenPos = iPosition.xy + aLocalPos * iSize * scale;
     gl_Position = uProjection * vec4(screenPos, 0.0, 1.0);
     

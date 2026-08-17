@@ -125,6 +125,34 @@ public abstract class PartyMember
     /// <summary>True once this member has lived out their full lifetime and should die of old age.</summary>
     public bool IsDeadOfOldAge() => GetAgeDays() >= GetLifetimeDays();
 
+    /// <summary>
+    /// What has killed this member, or null while they live — the single question anything sweeping
+    /// the party for its dead should ask.
+    ///
+    /// <para><b>All three causes are derived, and none of them is a flag anybody sets.</b> Hit points
+    /// are <see cref="MaxHp"/> minus the wound count, a fully-critical humor set is a state every
+    /// consumption path already produces, and old age is the clock against
+    /// <see cref="GetLifetimeDays"/> — so a member is dead the moment they are, whenever the question
+    /// happens to be asked, with nothing to keep in sync.</para>
+    ///
+    /// <para>They are ordered by what a reader would call it rather than by which came first: a body
+    /// with no hit points left died of its wounds even if the humors were also spent.</para>
+    ///
+    /// <para>Note this is deliberately <em>not</em> what ends a fight — <see cref="Fight.Fighter"/>
+    /// keeps its own <c>IsAlive</c>, because a fighter's humor depletion is recorded on the wrapper
+    /// and the fight must not consult the world mid-swing. The two agree once the fight is over,
+    /// which is what <c>FightModeAdapter.SettleEnemyDeaths</c> and the companion sweep both rely
+    /// on.</para>
+    /// </summary>
+    public Cathedral.Game.DeathCause? CauseOfDeath =>
+        CurrentHp <= 0                ? Cathedral.Game.DeathCause.Wounds
+      : HumorQueues.IsFullyCritical   ? Cathedral.Game.DeathCause.Starvation
+      : IsDeadOfOldAge()              ? Cathedral.Game.DeathCause.OldAge
+      : null;
+
+    /// <inheritdoc cref="CauseOfDeath"/>
+    public bool IsDead => CauseOfDeath != null;
+
     // ── Species & anatomy ─────────────────────────────────────────
     /// <summary>The species of this party member (determines anatomy type and art folder).</summary>
     public Species Species { get; }

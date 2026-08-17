@@ -428,7 +428,18 @@ public class SyntheticNpcObservationObject : ObservationObject, INpcContextLabel
 
     public override string NeutralPhrase => Label;
 
-    public override string ReferenceLemma => "person";          // names aren't in the embedding vocab
+    /// <summary>
+    /// The keyword-similarity anchor for a person. A name has no vector, so it cannot be one; this
+    /// is the generic stand-in every NPC shares.
+    ///
+    /// <para><b>"body", not "person"</b>, measured against a person-vocabulary. "person" is itself a
+    /// hub — its four best-scoring words are <c>thing</c>, <c>moment</c>, <c>way</c>, <c>time</c>,
+    /// so the best word it could offer for a human being was "thing". "body" ranks
+    /// <c>hair, coat, hands, eyes, shoulders, scar</c> and puts a third as many hub words in the
+    /// sampling pool. The archetype ids are worse than either — GloVe reads them as surnames and
+    /// brands, so "smith" also ranks "time" first and "plowman" scores everything below zero.</para>
+    /// </summary>
+    public override string ReferenceLemma => "body";
 
     /// <inheritdoc/>
     /// <remarks>

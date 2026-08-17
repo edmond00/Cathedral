@@ -644,8 +644,11 @@ public class SceneDebugWindow : Form
         {
             lines.Add("");
             lines.Add(poi is CorpsePointOfInterest ? "─── Corpse Info ───" : "─── Point of Interest Info ───");
+            // A companion's body has no NpcEntity behind it — see CorpsePointOfInterest.NpcEntity.
             if (poi is CorpsePointOfInterest corpse)
-                lines.Add($"  Was: {corpse.NpcEntity.DisplayName} ({corpse.NpcEntity.SpeciesName})");
+                lines.Add(corpse.NpcEntity is { } was
+                    ? $"  Was: {was.DisplayName} ({was.SpeciesName})"
+                    : "  Was: a companion");
             lines.Add($"  Items: {string.Join(", ", poi.Items.Select(i => i.DisplayName))}");
         }
         else if (element is SceneNpc npc)

@@ -149,6 +149,15 @@ public class LocationTravelGameController : IDisposable
     private Cathedral.Game.Npc.NpcEntity? _pendingEncounterNpc;
     private string? _pendingEncounterCreatureName;
 
+    /// <summary>
+    /// The vertex an arrival was announced for while the mode had already left
+    /// <see cref="GameMode.Traveling"/> — an encounter rolled on the journey's <em>final</em> step.
+    /// -1 when there is none. Delivered by <see cref="OnFightCompleted"/> once the encounter is
+    /// settled; see the comment in <see cref="OnProtagonistArrived"/> for why it cannot simply be
+    /// re-fired by the interface.
+    /// </summary>
+    private int _pendingArrivalVertex = -1;
+
     // Maps BiomeTravelDatabase creature names to the archetype that spawns them.
     // Creature names without a fight-capable archetype (e.g. "blizzard") are absent and skipped.
     private static readonly Dictionary<string, Func<Cathedral.Game.Npc.NamedNpcArchetype>> TravelEncounterArchetypes = new()
@@ -180,7 +189,19 @@ public class LocationTravelGameController : IDisposable
     // Local LLM server; when set, narrative generation is enabled. Null = no LLM (fallback narration).
     private LlamaServerManager? _llamaServer;
     private ItemUseCritic? _criticEvaluator;
-    
+
+    /// <summary>Where the Catalyst English models are stored — beside the executable.</summary>
+    private static string CatalystModelPath
+        => System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "catalyst-models");
+
+    /// <summary>
+    /// The POS tagger and the word vectors, started in the constructor because neither needs the
+    /// LLM server. Awaited by the sanitization task in <see cref="SetLlamaServer"/> so the two do
+    /// not enter Catalyst's initialisation concurrently. See the constructor for what starting it
+    /// from <c>SetLlamaServer</c> instead used to cost.
+    /// </summary>
+    private readonly Task? _keywordInitTask;
+
     // Events
     public event Action<GameMode, GameMode>? ModeChanged;
     public event Action<LocationInstanceState>? LocationExited;
@@ -256,6 +277,118 @@ public class LocationTravelGameController : IDisposable
 
     /// <summary>The world/travel interface, for world-state reporting and travel commands.</summary>
     public MicroworldInterface CliWorld => _interface;
+
+    /// <summary>
+    /// Press the encounter prompt's ENGAGE button. Returns an error string, or null on success.
+    ///
+    /// <para>ENGAGE is the encounter's only button, so without this a script that stages an
+    /// encounter can never get past the prompt — and the fight it was staging is unreachable.</para>
+    /// </summary>
+    public string? CliEngageEncounter()
+    {
+        if (_currentMode != GameMode.EncounterPrompt) return "not at an encounter prompt";
+        if (_encounterPromptRenderer?.EngageButtonCell is not { } cell) return "no engage button drawn";
+        OnTerminalCellClicked(cell.X, cell.Y);
+        return null;
+    }
+
+    /// <summary>
+    /// True while the companion-death notice is up. It is modal over every mode, so a script that
+    /// does not know it can appear will sit clicking at a screen that is answering nothing —
+    /// `state` reports it for exactly that reason.
+    /// </summary>
+    public bool CliCompanionDeathShown => _companionDeathBox != null;
+
+    /// <summary>
+    /// Wound a party member outside a fight (<c>--cli</c> <c>wound</c>), from their own anatomy's
+    /// catalogue, as a failed act's penalty does. <paramref name="who"/> is <c>protagonist</c>,
+    /// <c>companions</c>, or a name matched by prefix; <paramref name="count"/> of 0 means "enough to
+    /// kill". Returns an error string, or null on success.
+    ///
+    /// <para>The narration counterpart of <c>fight-wound</c>, and needed for the same reason at one
+    /// remove: a wound is <em>sampled</em> from a verb's failure penalties, one slot in five, so
+    /// whether a given failed act injures anybody is not something a script can ask for — and
+    /// stacking three of them on one body to reach zero health is not something it can ask for
+    /// three times. The <em>consequence</em> is what wants testing: a mortal wound taken in
+    /// narration ends the run, and one taken by the companion who is narrating takes them out of the
+    /// party mid-visit.</para>
+    /// </summary>
+    public string? CliWound(string who, int count)
+    {
+        if (_protagonist == null) return "no protagonist";
+
+        var targets = who.ToLowerInvariant() switch
+        {
+            "protagonist" => new List<Cathedral.Game.Narrative.PartyMember> { _protagonist },
+            "companions"  => _protagonist.CompanionParty.ToList(),
+            _             => _protagonist.EveryMember
+                                 .Where(m => m.DisplayName.StartsWith(who, StringComparison.OrdinalIgnoreCase))
+                                 .ToList(),
+        };
+        if (targets.Count == 0) return $"no party member matching \"{who}\"";
+
+        foreach (var member in targets)
+        {
+            var catalogue = Cathedral.Game.Narrative.WoundRegistry.ForAnatomy(member).ToList();
+            if (catalogue.Count == 0) return $"{member.DisplayName}'s anatomy has no wounds to suffer";
+
+            // Bounded even when asked for "enough to kill": health is MaxHp minus the wound count,
+            // so this terminates — but a catalogue that ever stopped adding would hang the game
+            // rather than fail a test.
+            int wanted = count > 0 ? count : member.CurrentHp;
+            for (int i = 0; i < wanted && i < member.MaxHp + 8; i++)
+            {
+                var wound = catalogue[GameRng.Stream("cli-wound").Next(catalogue.Count)];
+                member.Wounds.Add(Cathedral.Game.Narrative.WoundInstance.Inflicted(wound));
+            }
+            Console.WriteLine($"[cli] wounded {member.DisplayName} — hp now {member.CurrentHp}/{member.MaxHp}");
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Sour a party member's humors to fully critical (<c>--cli</c> <c>starve</c>), the state a long
+    /// bleed or a fight's worth of buffs arrives at. Same <paramref name="who"/> vocabulary as
+    /// <see cref="CliWound"/>. Returns an error string, or null on success.
+    ///
+    /// <para>The humoral twin of <c>wound</c>, and the reason it is a command rather than a flag:
+    /// <c>--black-bile</c> sours the queues at the moment the protagonist is accepted, which is
+    /// before the world has been touched — so it can only ever stage a body that was <em>always</em>
+    /// starving. What wants testing is a body that starves <em>during</em> a visit, after a save has
+    /// been written and with a scene standing around it.</para>
+    /// </summary>
+    public string? CliStarve(string who)
+    {
+        if (_protagonist == null) return "no protagonist";
+
+        var targets = who.ToLowerInvariant() switch
+        {
+            "protagonist" => new List<Cathedral.Game.Narrative.PartyMember> { _protagonist },
+            "companions"  => _protagonist.CompanionParty.ToList(),
+            _             => _protagonist.EveryMember
+                                 .Where(m => m.DisplayName.StartsWith(who, StringComparison.OrdinalIgnoreCase))
+                                 .ToList(),
+        };
+        if (targets.Count == 0) return $"no party member matching \"{who}\"";
+
+        foreach (var member in targets)
+        {
+            foreach (var queue in member.HumorQueues.All)
+                queue.FillWith(new Cathedral.Game.Narrative.BlackBileHumor());
+            Console.WriteLine($"[cli] soured {member.DisplayName}'s humors — every queue critical");
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Press the companion-death notice's CONTINUE. Returns an error string, or null on success.
+    /// </summary>
+    public string? CliDismissCompanionDeath()
+    {
+        if (_companionDeathBox?.ContinueButtonCell is not { } cell) return "no companion-death notice is up";
+        OnTerminalCellClicked(cell.X, cell.Y);
+        return null;
+    }
 
     /// <summary>The vertex the protagonist currently occupies.</summary>
     public int CliAvatarVertex => _interface.GetAvatarVertex();
@@ -404,6 +537,18 @@ public class LocationTravelGameController : IDisposable
             _core.Terminal?.Atlas.Rebuild();
         }
 
+        // The same two for the sphere, and the same shape of rule: the scale is a per-frame
+        // uniform, the weight is half rastered. The sphere atlas differs from the terminal's in
+        // one respect that matters here — it always exists by now, being built during the core's
+        // own construction, so there is no null case to cover and the rebuild is unconditional
+        // once the step differs.
+        Config.GlyphSphere.WorldGlyphScale = UserSettings.WorldGlyphScale;
+        if (UserSettings.WorldGlyphWeight != Config.GlyphSphere.WorldGlyphWeightStep)
+        {
+            Config.GlyphSphere.ApplyWorldGlyphWeight(UserSettings.WorldGlyphWeight);
+            _core.RebuildGlyphAtlasForWeight();
+        }
+
         _interface = microworldInterface ?? throw new ArgumentNullException(nameof(microworldInterface));
         
         // Validate narrative world coherence at startup
@@ -425,7 +570,23 @@ public class LocationTravelGameController : IDisposable
         
         // The LLM server is attached later via SetLlamaServer() once it is ready.
         _llamaServer = null;
-        
+
+        // Catalyst and the word vectors are started HERE rather than from SetLlamaServer, because
+        // neither of them needs the server — and being started from there meant they did not begin
+        // until it was ready, which is the same instant the loading screen is dismissed and the
+        // player is let in. So the minutes spent loading the model overlapped none of this work,
+        // and the first ~10 seconds of PLAY ran without it: measured on a --playground run, the
+        // first observation lands 2.3s after the server is attached and the vectors are ready at
+        // 9.8s. A keyword chosen in that window is chosen by the fallbacks — rule-based candidates
+        // instead of POS tagging, and longest-surface instead of the similarity ranking — so the
+        // same scene gives a different keyword depending on how fast the player got there.
+        //
+        // A real session usually won that race (reaching an observation costs several real LLM
+        // calls); a --playground one loses it every time, which is every script in the suite. So
+        // the effect was invisible where it was measurable and unpredictable where it was not.
+        _keywordInitTask = Task.Run(() =>
+            Cathedral.Game.Narrative.KeywordExtractor.InitializeAsync(CatalystModelPath));
+
         // Initialize with WorldView as default (SetMode(MainMenu) will transition properly)
         _currentMode = GameMode.WorldView;
         
@@ -497,6 +658,37 @@ public class LocationTravelGameController : IDisposable
                 _llmLoadingRenderer?.Update(1.0f, "Model loaded!");
                 SetMode(GameMode.MainMenu);
             }
+            return;
+        }
+
+        // ── Companion deaths ──────────────────────────────────────────────────
+        // Swept here rather than at each of the places a companion can be killed, because those are
+        // not a closed set: a fight is the obvious one, but a failed action's wound penalty lands on
+        // whoever is acting — which after a Speak-About hand-off is the companion — and the humors
+        // drain on their own. Derived state answers the question at any moment
+        // (PartyMember.CauseOfDeath), so asking every tick costs a few property reads and cannot be
+        // forgotten by whatever kills somebody next.
+        //
+        // NOT during a fight: the fight holds Fighter wrappers over these members and pulling one out
+        // of the party mid-swing would leave a fighter on the board belonging to nobody. It hands
+        // back within a tick of the fight ending. Not on the death screen either — the run is over
+        // and the party's losses are no longer news.
+        if (_hasGameStarted && _companionDeathBox == null
+            && _currentMode != GameMode.Fighting && _currentMode != GameMode.Death)
+        {
+            // The protagonist first: their death ends the run, and reporting a companion's loss to
+            // somebody who is themselves dead is a box nobody will read.
+            if (SettleProtagonistDeath()) return;
+            SettleCompanionDeaths();
+        }
+
+        // The notice is modal over EVERY mode, not just the world view where old age used to raise
+        // it: a companion now falls in a narration fight too, and the narration redraws itself every
+        // frame, so a box gated below the mode dispatch would be painted over before it was read.
+        if (_companionDeathBox != null)
+        {
+            _companionDeathBox.Render();
+            UpdatePopupTerminal();
             return;
         }
 
@@ -672,14 +864,7 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
-        // Old-age notice owns the screen until dismissed — it is checked before the removal gate
-        // because a companion who just died also frees a party slot.
-        if (_currentMode == GameMode.WorldView && _companionDeathBox != null)
-        {
-            _companionDeathBox.Render();
-            UpdatePopupTerminal();
-            return;
-        }
+        // (The companion-death notice is handled at the top of Update, modal over every mode.)
 
         // Companion-removal overlay owns the screen until confirmed — redraw it and
         // skip the travel UI underneath.
@@ -865,16 +1050,35 @@ public class LocationTravelGameController : IDisposable
             }
         });
 
-        // Text sanitization pipeline (3-layer anachronism/entity filter)
+        // Text sanitization pipeline (3-layer anachronism/entity filter). This one genuinely needs
+        // the server — Layer 1 is a rewriter slot — so it stays here.
         _ = Task.Run(async () =>
         {
+            // Two try blocks, not one, because these are two independent subsystems and either can
+            // fail without the other being affected — the arrangement they replaced ran them in one
+            // block, so a sanitizer failure skipped the keyword init entirely and the run continued
+            // with no POS tagger and no vectors, reported under the sanitizer's name.
             try
             {
-                var modelPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "catalyst-models");
-                await TextSanitizationPipeline.InitializeAsync(modelPath, llamaServer);
-                Console.WriteLine("LocationTravelGameController: TextSanitizationPipeline initialized");
-                await Cathedral.Game.Narrative.KeywordExtractor.InitializeAsync(modelPath);
+                // Await the keyword init started in the constructor rather than racing it. Both
+                // paths call NounExtractor.InitializeAsync, whose _initialized guard is set only
+                // after the await completes and is not thread-safe, so two concurrent callers would
+                // both pass it and register English models into Catalyst's global Storage.Current
+                // twice. Sequenced, the second call finds the guard set and returns at once — and
+                // by now the constructor's task has had the whole model load to finish in, so this
+                // await is normally free.
+                if (_keywordInitTask != null) await _keywordInitTask;
                 Console.WriteLine("LocationTravelGameController: KeywordExtractor initialized");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"LocationTravelGameController: Failed to initialize KeywordExtractor - {ex.Message}");
+            }
+
+            try
+            {
+                await TextSanitizationPipeline.InitializeAsync(CatalystModelPath, llamaServer);
+                Console.WriteLine("LocationTravelGameController: TextSanitizationPipeline initialized");
             }
             catch (Exception ex)
             {
@@ -921,16 +1125,19 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     private void OnTerminalCellClicked(int x, int y)
     {
-        // Old-age notice is modal: CONTINUE dismisses it and resumes entering the world view,
-        // which re-runs the remaining WorldView gates (e.g. companion capacity) from the top.
-        if (_currentMode == GameMode.WorldView && _companionDeathBox != null)
+        // The companion-death notice is modal over every mode and swallows every click until its
+        // CONTINUE is pressed. Dismissing re-enters the current mode rather than the world view: the
+        // box can now come up in the middle of a narration session, and OnEnterWorldView there would
+        // repaint the map over a scene the player has not left.
+        if (_companionDeathBox != null)
         {
             if (_companionDeathBox.OnMouseClick(x, y))
             {
                 _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
                 _companionDeathBox = null;
                 _core.Terminal?.Clear();
-                OnEnterWorldView();
+                if (_currentMode == GameMode.WorldView) OnEnterWorldView();
+                else                                    RedrawCurrentMode();
             }
             return;
         }
@@ -1249,8 +1456,8 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     private void OnTerminalCellHovered(int x, int y)
     {
-        // Old-age notice is modal: route hover to it and play a tick on change.
-        if (_currentMode == GameMode.WorldView && _companionDeathBox != null)
+        // The companion-death notice is modal over every mode: route hover to it, tick on change.
+        if (_companionDeathBox != null)
         {
             if (_companionDeathBox.OnMouseMove(x, y))
                 _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
@@ -1493,7 +1700,26 @@ public class LocationTravelGameController : IDisposable
             _core.SetCloudSpeedMultiplier(1.0f);
 
         Console.WriteLine($"LocationTravelGameController: Mode changed: {oldMode} ↁE{newMode}");
-        
+
+        RunModeEnter(newMode);
+
+        ModeChanged?.Invoke(oldMode, newMode);
+    }
+
+    /// <summary>
+    /// Repaint the mode already running, without a transition.
+    ///
+    /// <para><see cref="SetMode"/> returns early when the mode is unchanged, which is right for a
+    /// transition and useless for an overlay: a modal box drawn over a live phase leaves that phase's
+    /// pixels to be restored when the box is dismissed, and the phase never changed. Every
+    /// <c>OnEnter…</c> is written to be safe on re-entry already — that is what the pause menu's
+    /// resume depends on — so this is the same call the menu makes, minus the mode change.</para>
+    /// </summary>
+    private void RedrawCurrentMode() => RunModeEnter(_currentMode);
+
+    /// <summary>The mode-specific setup half of <see cref="SetMode"/>, shared with the repaint.</summary>
+    private void RunModeEnter(GameMode newMode)
+    {
         // Handle mode-specific setup
         switch (newMode)
         {
@@ -1561,8 +1787,6 @@ public class LocationTravelGameController : IDisposable
                 OnEnterEncounterPrompt();
                 break;
         }
-
-        ModeChanged?.Invoke(oldMode, newMode);
     }
 
     /// <summary>
@@ -1845,6 +2069,18 @@ public class LocationTravelGameController : IDisposable
             _interface.MovementPaused  = true;
         }
 
+        // --encounter-on-arrival: stage an encounter on the journey's LAST step, which is the one
+        // arrangement a random roll almost never produces and the one that used to strand the run.
+        // Ahead of --no-encounters on purpose, so a script can suppress the random rolls and still
+        // ask for this one; fires once and clears itself.
+        if (Config.Debug.EncounterOnArrival is { } staged && _tripCellsTraveled >= _tripTotalCells)
+        {
+            Config.Debug.EncounterOnArrival = null;
+            if (!StartTravelEncounter(staged))
+                DebugFlagAudit.Miss("--encounter-on-arrival", staged, "no encounter — the journey ended normally");
+            return;
+        }
+
         // Roll for encounters. First hit wins; remaining entries are skipped.
         // --no-encounters skips the roll entirely, for scripted runs that are testing something else.
         if (Config.Debug.NoEncounters) return;
@@ -1869,6 +2105,13 @@ public class LocationTravelGameController : IDisposable
         // the death screen cannot leave a save that outlives the character.
         Cathedral.Game.Save.SaveFile.Delete();
 
+        // A death can now happen INSIDE a visit — a lost fight, or a wound taken on a failed act —
+        // and a narration session left standing would go on drawing itself over the death screen
+        // every frame, because Update's narrative branch is entered on _isInNarrativeMode and not on
+        // the mode. Torn down here rather than at each call site: this is the funnel, and the next
+        // cause of death added should not have to remember.
+        if (_isInNarrativeMode) TearDownNarrativeSession();
+
         _deathCause = cause;
         _interface.MovementPaused = true;
         SetMode(GameMode.Death);
@@ -1881,7 +2124,19 @@ public class LocationTravelGameController : IDisposable
     public void OnProtagonistArrived(int vertexIndex)
     {
         if (_currentMode != GameMode.Traveling)
+        {
+            // An encounter rolled on the journey's LAST step is announced from inside the same
+            // MicroworldInterface.UpdateMovement call that announces the arrival: the step event
+            // switches the mode to EncounterPrompt, and the arrival event follows immediately —
+            // with the interface's path already cleared between the two.
+            //
+            // Dropping the arrival here left nothing able to finish the journey. The fight ends,
+            // OnFightCompleted resumes travel, and there is no path left to walk: the game sits in
+            // Traveling for ever over a cleared terminal, which is a black screen and no way out
+            // but the pause menu. So the arrival is kept and delivered once the encounter settles.
+            if (_inTravelEncounter) _pendingArrivalVertex = vertexIndex;
             return;
+        }
 
         Console.WriteLine($"LocationTravelGameController: Protagonist arrived at vertex {vertexIndex}");
 
@@ -2204,6 +2459,27 @@ public class LocationTravelGameController : IDisposable
                         UserSettings.Save();
                     },
 
+                    // The world rows apply at once too, but the player cannot see it from here —
+                    // the sphere is behind this screen. Nothing is deferred all the same: a setting
+                    // that waited for the next launch would be indistinguishable from one that did
+                    // not work, since neither shows anything until the screen is closed.
+                    OnWorldGlyphWeightChanged = step =>
+                    {
+                        Config.GlyphSphere.ApplyWorldGlyphWeight(step);
+                        // Same trap as the terminal's weight: the pen half is rastered into the
+                        // atlas, so without this only the cutoff half applies and the row does
+                        // something subtler than it claims.
+                        _core.RebuildGlyphAtlasForWeight();
+                        UserSettings.WorldGlyphWeight = Config.GlyphSphere.WorldGlyphWeightStep;
+                        UserSettings.Save();
+                    },
+                    OnWorldGlyphScaleChanged = scale =>
+                    {
+                        Config.GlyphSphere.WorldGlyphScale = scale;
+                        UserSettings.WorldGlyphScale = scale;
+                        UserSettings.Save();
+                    },
+
                     // The three language-model rows only persist; nothing is applied here. The
                     // server has already loaded the model for this session, so these take effect
                     // at the next launch and the screen says so.
@@ -2269,6 +2545,11 @@ public class LocationTravelGameController : IDisposable
         _settingsMenuRenderer.Fullscreen    = Cathedral.Glyph.WindowMode.IsFullscreen;
         _settingsMenuRenderer.GlyphWeight   = Config.Terminal.GlyphWeightStep;
         _settingsMenuRenderer.GlyphScale    = Config.Terminal.GlyphScale;
+
+        // Read from Config rather than UserSettings for the same reason as the two rows above: it
+        // is what the sphere actually obeys, and the screen's job is to show where the switch is.
+        _settingsMenuRenderer.WorldGlyphWeight = Config.GlyphSphere.WorldGlyphWeightStep;
+        _settingsMenuRenderer.WorldGlyphScale  = Config.GlyphSphere.WorldGlyphScale;
 
         _settingsMenuRenderer.Render();
     }
@@ -2680,16 +2961,94 @@ public class LocationTravelGameController : IDisposable
             return true;
         }
 
-        var departed = _protagonist.CompanionParty.Where(c => c.IsDeadOfOldAge()).ToList();
-        if (departed.Count == 0) return false;
+        // Companions are swept by cause rather than by old age alone — see SettleCompanionDeaths.
+        return SettleCompanionDeaths();
+    }
+
+    /// <summary>
+    /// Drops every companion who has died, leaves their body where the party is standing, and puts
+    /// the news on screen. Returns true when anyone fell — the caller's cue that a modal box now owns
+    /// the screen. Safe and free to call on any tick: it finds nobody once it has run.
+    ///
+    /// <para><b>One funnel for all three causes, because there was very nearly none.</b> Old age was
+    /// the only death a companion could actually suffer: <c>CompanionParty.Remove</c> was reached by
+    /// the age check and the heart-ceiling overflow and by nothing else, so a companion cut down in a
+    /// fight walked out of it at zero hit points and stayed in the party for ever — and one bled dry
+    /// was not even dead, since humor depletion lived on the discarded <c>Fighter</c> wrapper.
+    /// <see cref="PartyMember.CauseOfDeath"/> now answers all three from derived state, so this asks
+    /// one question instead of enumerating the ways it could have been asked.</para>
+    ///
+    /// <para><b>Never while a fight is running.</b> The fight holds its own <c>Fighter</c> wrappers
+    /// over these members; pulling one out of the party mid-swing would leave a fighter on the board
+    /// belonging to nobody. The sweep is gated on the mode in <see cref="Update"/> and runs the
+    /// instant the fight hands back.</para>
+    ///
+    /// <para>The body is only left when there is a scene to leave it in. A travel encounter and the
+    /// old-age check both happen on the world map, where there is no area and no observation graph —
+    /// there the box is the whole of the news, which is what it always was.</para>
+    /// </summary>
+    /// <summary>
+    /// Ends the run if the protagonist is dead of <b>wounds</b> or of <b>spent humors</b>. Returns
+    /// true when it did.
+    ///
+    /// <para>Both are dealt at arbitrary moments of a visit and neither had a check that covered
+    /// those moments. A wound arrives from a blow or from the penalty a failed act samples — there
+    /// was no check for it at all, so a mortal one left the protagonist playing on at zero health.
+    /// The humors are spent by bleeding and by every buff paid for in a fight, and the three checks
+    /// that existed were all on the travel path — so a body whose queues went critical indoors stayed
+    /// upright until the next journey drew heat it did not have. Worse, a protagonist who bled out in
+    /// a fight that a companion then <em>won</em> walked out of it alive and untouched, because
+    /// depletion is recorded on the discarded <c>Fighter</c> wrapper.</para>
+    ///
+    /// <para><b>Age is the exception, and stays on the world map.</b> Sweeping it here would end the
+    /// run mid-visit the moment the clock crossed the term — and since a beast outlives a person, it
+    /// would also make a companion's death by age unreachable, the protagonist always falling first.
+    /// Companions are swept on all three (<see cref="SettleCompanionDeaths"/>) because their death
+    /// ends nothing.</para>
+    ///
+    /// <para>The travel-path starvation checks are left in place and still fire first while a journey
+    /// is being walked: heat is drawn leg by leg there, and the drain notices the queues empty in the
+    /// same breath as it empties them.</para>
+    /// </summary>
+    private bool SettleProtagonistDeath()
+    {
+        var cause = _protagonist?.CauseOfDeath;
+        if (cause is null or DeathCause.OldAge) return false;
+
+        Console.WriteLine($"LocationTravelGameController: Protagonist died — {cause}");
+        TriggerDeath(cause.Value);
+        return true;
+    }
+
+    private bool SettleCompanionDeaths()
+    {
+        if (_protagonist == null || _core.Terminal == null) return false;
+
+        var fallen = _protagonist.CompanionParty.Where(c => c.IsDead).ToList();
+        if (fallen.Count == 0) return false;
+
+        var scene = _narrativeController?.Scene;
+        var area  = _narrativeController?.CurrentPoV?.Where;
 
         var lines = new List<string>();
-        foreach (var companion in departed)
+        foreach (var companion in fallen)
         {
-            int age = (int)Math.Round(companion.GetAgeDays());
-            Console.WriteLine($"LocationTravelGameController: Companion '{companion.DisplayName}' died of old age at {age} d");
-            lines.Add($"{companion.DisplayName} — died at {age} days");
+            var cause = companion.CauseOfDeath;
             _protagonist.CompanionParty.Remove(companion);
+
+            lines.Add(cause switch
+            {
+                DeathCause.OldAge     => $"{companion.DisplayName} — died at {(int)Math.Round(companion.GetAgeDays())} days",
+                DeathCause.Starvation => $"{companion.DisplayName} — bled out, humors spent",
+                _                     => $"{companion.DisplayName} — died of their wounds",
+            });
+            Console.WriteLine($"LocationTravelGameController: Companion '{companion.DisplayName}' died — {cause}");
+
+            // The same door an enemy's body comes through, so the corpse is observable, cuttable and
+            // queued to open the next narration phase without any of that knowing whose it is.
+            if (scene != null && area != null)
+                foreach (var remains in Cathedral.Game.Npc.Corpse.CorpseRegistry.CreateForCompanion(companion))
+                    scene.AddPointOfInterestToArea(area, remains);
         }
 
         // Modal overlay: transparent backdrop (world visible behind) but clicks are captured.
@@ -3761,6 +4120,7 @@ public class LocationTravelGameController : IDisposable
         _inTravelEncounter = false;
         _pendingEncounterNpc = null;
         _pendingEncounterCreatureName = null;
+        _pendingArrivalVertex = -1;
 
         // Discard any modal overlay left over from the previous run.
         _companionDeathBox = null;
@@ -3862,10 +4222,11 @@ public class LocationTravelGameController : IDisposable
     /// Movement stays paused; on fight end the travel resumes or death is triggered.
     /// Creature names with no fight-capable archetype are silently ignored.
     /// </summary>
-    private void StartTravelEncounter(string creatureName)
+    /// <returns>True when the prompt was opened; false when nothing could be staged.</returns>
+    private bool StartTravelEncounter(string creatureName)
     {
-        if (_core.Terminal == null || _protagonist == null) return;
-        if (!TravelEncounterArchetypes.TryGetValue(creatureName, out var archetypeFactory)) return;
+        if (_core.Terminal == null || _protagonist == null) return false;
+        if (!TravelEncounterArchetypes.TryGetValue(creatureName, out var archetypeFactory)) return false;
 
         var archetype = archetypeFactory();
         var npc = archetype.Spawn(_travelRng, _consumptionBiome);
@@ -3878,6 +4239,7 @@ public class LocationTravelGameController : IDisposable
 
         Console.WriteLine($"LocationTravelGameController: Travel encounter — {npc.DisplayName} ({creatureName}) in {_consumptionBiome}");
         SetMode(GameMode.EncounterPrompt);
+        return true;
     }
 
     /// <summary>
@@ -4385,13 +4747,17 @@ public class LocationTravelGameController : IDisposable
 
             if (result == FightAdapterResult.Death)
             {
+                _pendingArrivalVertex = -1;
                 TriggerDeath(DeathCause.Wounds);
                 return;
             }
 
             if (result == FightAdapterResult.Runaway)
             {
-                // Abandon the in-flight travel and let the player pick a new destination.
+                // Abandon the in-flight travel and let the player pick a new destination. Any
+                // arrival held over the fight goes with it — fleeing ends the journey, and the
+                // avatar is standing on the vertex either way.
+                _pendingArrivalVertex = -1;
                 _interface.MovementPaused = true;
                 _interface.CancelTravel();
                 ClearTravelPlan();
@@ -4399,7 +4765,33 @@ public class LocationTravelGameController : IDisposable
                 return;
             }
 
-            // Victory: resume travel. If VH consumption is still pending,
+            // Victory, and the encounter interrupted the journey's final step: the arrival was
+            // announced while the mode had already left Traveling and was held rather than lost.
+            // Deliver it now — this is the branch that enters the location that was travelled to.
+            if (_pendingArrivalVertex >= 0)
+            {
+                int arrival = _pendingArrivalVertex;
+                _pendingArrivalVertex = -1;
+                // OnProtagonistArrived only answers while the mode is Traveling, which is also what
+                // the ordinary path arrives from, so the journey ends exactly as it would have.
+                SetMode(GameMode.Traveling);
+                _interface.MovementPaused = false;
+                OnProtagonistArrived(arrival);
+                return;
+            }
+
+            // Victory with no path left to walk — a --start-fight drop-in, or travel cancelled
+            // under the fight. Traveling renders nothing and would never end, so go back to the
+            // world view rather than resuming a journey that is not happening.
+            if (!_interface.IsAvatarMoving())
+            {
+                _interface.MovementPaused = false;
+                ClearTravelPlan();
+                SetMode(GameMode.WorldView);
+                return;
+            }
+
+            // Victory mid-journey: resume travel. If VH consumption is still pending,
             // Update() will keep movement paused until the debt is cleared.
             SetMode(GameMode.Traveling);
             if (!_consumptionActive)
@@ -4419,8 +4811,12 @@ public class LocationTravelGameController : IDisposable
 
         if (result == FightAdapterResult.Death)
         {
-            Console.WriteLine("LocationTravelGameController: Player died, exiting to world view");
-            ExitNarrativeMode();
+            // A fight lost is a run lost, wherever it was fought. This used to exit to the world view
+            // instead — so the one lethal fight in the game was the travel encounter, and a fight
+            // picked inside a location could be lost at no cost at all, the protagonist walking out
+            // of it at zero hit points and playing on. TriggerDeath tears the session down itself.
+            Console.WriteLine("LocationTravelGameController: Player was killed in a narration fight");
+            TriggerDeath(DeathCause.Wounds);
             return;
         }
 
@@ -4650,7 +5046,23 @@ public class LocationTravelGameController : IDisposable
     {
         if (!_isInNarrativeMode)
             return;
-        
+
+        TearDownNarrativeSession();
+        SetMode(GameMode.WorldView);
+    }
+
+    /// <summary>
+    /// Ends the narration session and hands the world back, without deciding where the player goes
+    /// next. <see cref="ExitNarrativeMode"/> follows it with the world view; <see cref="TriggerDeath"/>
+    /// follows it with the death screen.
+    ///
+    /// <para>Split out because a death inside a visit needs every one of these writes and none of the
+    /// mode change: <c>Update</c> enters its narration branch on <see cref="_isInNarrativeMode"/>
+    /// rather than on the mode, so a session left standing repaints itself over whatever replaced
+    /// it.</para>
+    /// </summary>
+    private void TearDownNarrativeSession()
+    {
         Console.WriteLine("LocationTravelGameController: Exiting Phase 6 mode");
 
         // Save any routine recorded during this narration session before tearing it down.
@@ -4663,8 +5075,6 @@ public class LocationTravelGameController : IDisposable
         _isInNarrativeMode = false;
         _narrativeController = null;
         _currentLocationVertex = -1;
-
-        SetMode(GameMode.WorldView);
     }
 
     /// <summary>

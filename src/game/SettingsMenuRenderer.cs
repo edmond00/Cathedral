@@ -78,6 +78,29 @@ public class SettingsMenuRenderer
     /// <summary>Fired with the new scale when a size button is clicked.</summary>
     public Action<float>? OnGlyphScaleChanged { get; set; }
 
+    // ── World glyphs ─────────────────────────────────────────────────────────
+    //
+    // The same two questions asked of the sphere, and they are separate settings rather than one
+    // pair applied twice because the two pipelines answer them differently: a terminal glyph is
+    // bounded by its cell and blended, a world glyph is bounded by its neighbours and thresholded.
+    // A player wanting a legible world map is usually not asking for larger UI text either.
+
+    /// <summary>
+    /// Index into <see cref="Config.GlyphSphere.WorldGlyphWeightSteps"/>. Initialize before
+    /// Render() — from <c>Config.GlyphSphere.WorldGlyphWeightStep</c>, the live truth, for the same
+    /// reason the UI weight row reads back from Config rather than from the saved setting.
+    /// </summary>
+    public int WorldGlyphWeight { get; set; } = Config.GlyphSphere.WorldGlyphWeightDefaultStep;
+
+    /// <summary>Fired with the new step when a world weight button is clicked.</summary>
+    public Action<int>? OnWorldGlyphWeightChanged { get; set; }
+
+    /// <summary>Multiplier on every world glyph quad. Initialize before Render().</summary>
+    public float WorldGlyphScale { get; set; } = Config.GlyphSphere.WorldGlyphScaleDefault;
+
+    /// <summary>Fired with the new scale when a world size button is clicked.</summary>
+    public Action<float>? OnWorldGlyphScaleChanged { get; set; }
+
     // ── Language model ───────────────────────────────────────────────────────
     //
     // Every row below takes effect at the NEXT LAUNCH, and the screen says so. The server loads
@@ -133,6 +156,10 @@ public class SettingsMenuRenderer
     private const int CtlWeightPlus   = 14;
     private const int CtlSizeMinus    = 15;
     private const int CtlSizePlus     = 16;
+    private const int CtlWorldSizeMinus   = 17;
+    private const int CtlWorldSizePlus    = 18;
+    private const int CtlWorldWeightMinus = 19;
+    private const int CtlWorldWeightPlus  = 20;
     private int _hoveredControl = -1;
 
     private const int Step = 10; // percent per click
@@ -160,14 +187,20 @@ public class SettingsMenuRenderer
     private const int VideoHeadRow  = 45;
     private const int FullscreenRow = 48;
     private const int DitherRow     = 51;
-    private const int WeightRow     = 54;
-    private const int SizeRow       = 57;
-    private const int ModelHeadRow  = 62;
-    private const int DeviceRow     = 65;
-    private const int LayersRow     = 68;
-    private const int ThreadsRow    = 71;
-    private const int RedetectRow   = 74;
-    private const int ModelInfoRow  = 77;   // and the two rows below it
+    // The four glyph settings are a 2x2 block rather than four rows: SIZE and WEIGHT down the
+    // side, UI and WORLD across. Two rows instead of four, and the pairing is the point — the
+    // question a player has is "is this about the text or about the world?", which a column
+    // heading answers once for both rows and a stack of four prefixed labels never quite does.
+    private const int GlyphHeadRow  = 54;   // the U I / W O R L D column headings
+    private const int SizeRow       = 56;
+    private const int WeightRow     = 58;
+    private const int GlyphNoteRow  = 60;   // what a dimmed value means
+    private const int ModelHeadRow  = 64;
+    private const int DeviceRow     = 67;
+    private const int LayersRow     = 70;
+    private const int ThreadsRow    = 73;
+    private const int RedetectRow   = 76;
+    private const int ModelInfoRow  = 79;   // and the row below it
     private const int BackRow       = 84;
     private const int BarWidth      = 20;
     private const int RowWidth      = 47; // total width of a volume row (see column math below)
@@ -208,8 +241,7 @@ public class SettingsMenuRenderer
         DrawSectionHeading(VideoHeadRow, "V I D E O");
         DrawFullscreenRow();
         DrawDitherRow();
-        DrawWeightRow();
-        DrawSizeRow();
+        DrawGlyphBlock();
 
         DrawSectionHeading(ModelHeadRow, "L A N G U A G E   M O D E L");
         DrawDeviceRow();
@@ -303,60 +335,100 @@ public class SettingsMenuRenderer
             Config.Colors.DarkGray35, Config.Colors.Black);
     }
 
+    // ── The glyph block: SIZE and WEIGHT × UI and WORLD ──────────────────────
+    //
+    // Four steppers on two rows. Each half is
+    //     label(6) sp [ - ](5) sp value(7) sp [ + ](5)  =  26
+    // and the two halves sit GlyphColGap apart, so the block is wider than the 47-column rows
+    // above it but still centred on the same axis.
+    private const int GlyphHalfW  = 26;
+    private const int GlyphColGap = 6;
+    private const int GlyphBlockW = GlyphHalfW * 2 + GlyphColGap;
+
+    private int GlyphLeftX  => (_terminal.Width - GlyphBlockW) / 2;
+    private int GlyphRightX => GlyphLeftX + GlyphHalfW + GlyphColGap;
+
+    // Offsets within a half.
+    private const int GlyphMinusDx = 7;
+    private const int GlyphValueDx = 13;
+    private const int GlyphPlusDx  = 21;
+
     /// <summary>
-    /// How heavily the terminal text is drawn, as a named step from THIN to HEAVY.
+    /// The two glyph rows, each split between the UI and the world.
     ///
-    /// <para>One row for two constants. The stroke width baked into the atlas and the alpha gamma
-    /// applied in the shader are two halves of one fix, biting at opposite ends of the cell-size
-    /// range — see <see cref="Config.Terminal.GlyphWeightSteps"/>, which owns the pairing. Offered
-    /// as two rows they would mostly be set against each other by a player who has no way to know
-    /// which half their panel needs.</para>
+    /// <para><b>Why one block rather than four rows.</b> SIZE and WEIGHT are the same two questions
+    /// asked twice, and the thing a player needs to know first is which of the two surfaces they
+    /// are about to change. A column heading answers that once for both rows; four stacked rows
+    /// with prefixed labels ("UI SIZE", "WORLD SIZE"…) make the reader parse the same distinction
+    /// four times and cost twice the height on a stack that is already most of the screen.</para>
+    ///
+    /// <para>The pairing within a row is the same argument
+    /// <see cref="Config.Terminal.GlyphWeightSteps"/> makes about a weight step being two constants:
+    /// a player cannot say in advance which surface needs the change, so both are put in front of
+    /// them side by side rather than one being buried.</para>
     /// </summary>
-    private void DrawWeightRow()
-        => DrawNamedStepRow(WeightRow, "WEIGHT",
+    private void DrawGlyphBlock()
+    {
+        DrawColumnHeading(GlyphLeftX,  "U I");
+        DrawColumnHeading(GlyphRightX, "W O R L D");
+
+        DrawStepperHalf(GlyphLeftX, SizeRow, "SIZE", $"{GlyphScale * 100f:0}%",
+            CtlSizeMinus, CtlSizePlus,
+            canDecrease: GlyphScale > Config.Terminal.GlyphScaleMin + ScaleEpsilon,
+            canIncrease: GlyphScale < Config.Terminal.GlyphScaleMax - ScaleEpsilon,
+            isDefault: MathF.Abs(GlyphScale - Config.Terminal.GlyphScaleDefault) < ScaleEpsilon);
+
+        DrawStepperHalf(GlyphLeftX, WeightRow, "WEIGHT",
             Config.Terminal.GlyphWeightSteps[GlyphWeight].Label,
             CtlWeightMinus, CtlWeightPlus,
             canDecrease: GlyphWeight > 0,
             canIncrease: GlyphWeight < Config.Terminal.GlyphWeightSteps.Length - 1,
             isDefault: GlyphWeight == Config.Terminal.GlyphWeightDefaultStep);
 
-    /// <summary>
-    /// Glyph size as a percentage of the cell it sits in — the nearest thing to a text-size
-    /// setting the terminal can offer, since the 100x100 grid is layout rather than preference and
-    /// cell size is therefore the window divided by a constant. Shown as a percentage because
-    /// "1.20" is a number about a quad and "120%" is a number about text.
-    /// </summary>
-    private void DrawSizeRow()
-        => DrawNamedStepRow(SizeRow, "SIZE",
-            $"{GlyphScale * 100f:0}%",
-            CtlSizeMinus, CtlSizePlus,
-            canDecrease: GlyphScale > Config.Terminal.GlyphScaleMin + ScaleEpsilon,
-            canIncrease: GlyphScale < Config.Terminal.GlyphScaleMax - ScaleEpsilon,
-            isDefault: MathF.Abs(GlyphScale - Config.Terminal.GlyphScaleDefault) < ScaleEpsilon);
+        DrawStepperHalf(GlyphRightX, SizeRow, "SIZE", $"{WorldGlyphScale * 100f:0}%",
+            CtlWorldSizeMinus, CtlWorldSizePlus,
+            canDecrease: WorldGlyphScale > Config.GlyphSphere.WorldGlyphScaleMin + ScaleEpsilon,
+            canIncrease: WorldGlyphScale < Config.GlyphSphere.WorldGlyphScaleMax - ScaleEpsilon,
+            isDefault: MathF.Abs(WorldGlyphScale - Config.GlyphSphere.WorldGlyphScaleDefault) < ScaleEpsilon);
+
+        DrawStepperHalf(GlyphRightX, WeightRow, "WEIGHT",
+            Config.GlyphSphere.WorldGlyphWeightSteps[WorldGlyphWeight].Label,
+            CtlWorldWeightMinus, CtlWorldWeightPlus,
+            canDecrease: WorldGlyphWeight > 0,
+            canIncrease: WorldGlyphWeight < Config.GlyphSphere.WorldGlyphWeightSteps.Length - 1,
+            isDefault: WorldGlyphWeight == Config.GlyphSphere.WorldGlyphWeightDefaultStep);
+
+        // The default marker moved from an "(default)" tag beside each value to the value's own
+        // colour, because four of them would not fit beside four steppers — and one legend for the
+        // block says the same thing in a quarter of the room. It still has to be said: every one of
+        // these is a matter of taste with no right answer, so a player who has wandered off the
+        // shipped value needs a way to recognise it again.
+        _terminal.CenteredText(GlyphNoteRow, "a dimmed value is the shipped default",
+            Config.Colors.DarkGray35, Config.Colors.Black);
+    }
+
+    /// <summary>A heading centred over one half of the glyph block.</summary>
+    private void DrawColumnHeading(int x, string text)
+        => _terminal.Text(x + (GlyphHalfW - text.Length) / 2, GlyphHeadRow, text,
+            Config.Colors.MediumGray60, Config.Colors.Black);
 
     /// <summary>
-    /// A stepper whose value is a word rather than a bar. Same columns as a volume row, so the
-    /// whole screen still reads as one stack.
+    /// One stepper occupying half the glyph block: label, [ - ], value, [ + ].
     ///
-    /// <para>The default is marked, and that is not decoration: both settings it serves are
-    /// matters of taste with no right answer, so a player who has walked away from the shipped
-    /// value needs to be able to find it again without reinstalling.</para>
+    /// <para>The value is drawn dim when it is the shipped default and bright when it is not, which
+    /// is the whole of the default marker — see the legend drawn under the block.</para>
     /// </summary>
-    private void DrawNamedStepRow(int row, string label, string valueText, int minusCtl, int plusCtl,
-        bool canDecrease, bool canIncrease, bool isDefault)
+    private void DrawStepperHalf(int x, int row, string label, string valueText,
+        int minusCtl, int plusCtl, bool canDecrease, bool canIncrease, bool isDefault)
     {
-        int startX = RowStartX;
-        _terminal.FillRect(startX, row, RowWidth, 1, ' ', Config.Colors.White, Config.Colors.Black);
-        _terminal.Text(startX, row, label.PadRight(7), Config.Colors.MediumGray60, Config.Colors.Black);
+        _terminal.FillRect(x, row, GlyphHalfW, 1, ' ', Config.Colors.White, Config.Colors.Black);
+        _terminal.Text(x, row, label.PadRight(6), Config.Colors.MediumGray60, Config.Colors.Black);
 
-        DrawStepButton(MinusX, row, "[ - ]", minusCtl, canDecrease);
-        DrawStepButton(PlusX, row, "[ + ]", plusCtl, canIncrease);
+        DrawStepButton(x + GlyphMinusDx, row, "[ - ]", minusCtl, canDecrease);
+        DrawStepButton(x + GlyphPlusDx,  row, "[ + ]", plusCtl,  canIncrease);
 
-        _terminal.Text(BarX, row, valueText.PadRight(BarWidth), Config.Colors.White, Config.Colors.Black);
-
-        // Clear of the widest value either row produces ("NORMAL", "120%").
-        if (isDefault)
-            _terminal.Text(BarX + 8, row, "(default)", Config.Colors.DarkGray35, Config.Colors.Black);
+        _terminal.Text(x + GlyphValueDx, row, valueText.PadRight(7),
+            isDefault ? Config.Colors.DarkGray35 : Config.Colors.White, Config.Colors.Black);
     }
 
     /// <summary>
@@ -520,6 +592,10 @@ public class SettingsMenuRenderer
             case CtlWeightPlus:  SetGlyphWeight(GlyphWeight + 1); break;
             case CtlSizeMinus:   SetGlyphScale(GlyphScale - Config.Terminal.GlyphScaleStep); break;
             case CtlSizePlus:    SetGlyphScale(GlyphScale + Config.Terminal.GlyphScaleStep); break;
+            case CtlWorldWeightMinus: SetWorldGlyphWeight(WorldGlyphWeight - 1); break;
+            case CtlWorldWeightPlus:  SetWorldGlyphWeight(WorldGlyphWeight + 1); break;
+            case CtlWorldSizeMinus:   SetWorldGlyphScale(WorldGlyphScale - Config.GlyphSphere.WorldGlyphScaleStep); break;
+            case CtlWorldSizePlus:    SetWorldGlyphScale(WorldGlyphScale + Config.GlyphSphere.WorldGlyphScaleStep); break;
             case CtlDevice:     CycleDevice(); break;
             case CtlLayersMinus:  SetGpuLayers(LlmGpuLayers < 0 ? -1 : LlmGpuLayers - LayerStep); break;
             case CtlLayersPlus:   SetGpuLayers(LlmGpuLayers < 0 ? LayerStep : LlmGpuLayers + LayerStep); break;
@@ -608,6 +684,37 @@ public class SettingsMenuRenderer
         Render();
     }
 
+    /// <summary>
+    /// The world's weight step. Unlike its UI counterpart the change is not visible on this screen
+    /// — the sphere is behind it — so the player is expected to go back and look. That is also why
+    /// the handler must rebuild the sphere atlas rather than leaving it to the next rebuild: there
+    /// is no repaint here that would pick it up.
+    /// </summary>
+    private void SetWorldGlyphWeight(int step)
+    {
+        int clamped = Math.Clamp(step, 0, Config.GlyphSphere.WorldGlyphWeightSteps.Length - 1);
+        if (clamped == WorldGlyphWeight) return;
+        WorldGlyphWeight = clamped;
+        OnWorldGlyphWeightChanged?.Invoke(clamped);
+        Render();
+    }
+
+    private void SetWorldGlyphScale(float value)
+    {
+        float clamped = Math.Clamp(value,
+            Config.GlyphSphere.WorldGlyphScaleMin, Config.GlyphSphere.WorldGlyphScaleMax);
+
+        // Snapped to the step grid for the reason the UI scale is: repeated float addition drifts,
+        // and the row prints a rounded percentage, so drift shows up as a button doing nothing.
+        clamped = MathF.Round(clamped / Config.GlyphSphere.WorldGlyphScaleStep)
+                * Config.GlyphSphere.WorldGlyphScaleStep;
+
+        if (MathF.Abs(clamped - WorldGlyphScale) < ScaleEpsilon) return;
+        WorldGlyphScale = clamped;
+        OnWorldGlyphScaleChanged?.Invoke(clamped);
+        Render();
+    }
+
     private void ToggleDither()
     {
         DitherEnabled = !DitherEnabled;
@@ -640,6 +747,18 @@ public class SettingsMenuRenderer
         Render();
     }
 
+    /// <summary>
+    /// The [ - ] / [ + ] of one half of the glyph block, or -1 when the cursor is elsewhere on the
+    /// row. Both halves of a row are tested against this in turn, so the two columns cannot drift
+    /// apart from the offsets <see cref="DrawStepperHalf"/> draws them at.
+    /// </summary>
+    private static int GlyphHalfHit(int x, int halfX, int minusCtl, int plusCtl)
+    {
+        if (x >= halfX + GlyphMinusDx && x < halfX + GlyphMinusDx + BtnW) return minusCtl;
+        if (x >= halfX + GlyphPlusDx  && x < halfX + GlyphPlusDx + BtnW)  return plusCtl;
+        return -1;
+    }
+
     /// <summary>Returns the control index under (x, y), or -1.</summary>
     public int GetControlAtPosition(int x, int y)
     {
@@ -661,15 +780,17 @@ public class SettingsMenuRenderer
         {
             if (x >= MinusX && x < MinusX + FullscreenW) return CtlFullscreen;
         }
-        else if (y == WeightRow)
-        {
-            if (x >= MinusX && x < MinusX + BtnW) return CtlWeightMinus;
-            if (x >= PlusX  && x < PlusX + BtnW)  return CtlWeightPlus;
-        }
         else if (y == SizeRow)
         {
-            if (x >= MinusX && x < MinusX + BtnW) return CtlSizeMinus;
-            if (x >= PlusX  && x < PlusX + BtnW)  return CtlSizePlus;
+            int hit = GlyphHalfHit(x, GlyphLeftX, CtlSizeMinus, CtlSizePlus);
+            if (hit >= 0) return hit;
+            return GlyphHalfHit(x, GlyphRightX, CtlWorldSizeMinus, CtlWorldSizePlus);
+        }
+        else if (y == WeightRow)
+        {
+            int hit = GlyphHalfHit(x, GlyphLeftX, CtlWeightMinus, CtlWeightPlus);
+            if (hit >= 0) return hit;
+            return GlyphHalfHit(x, GlyphRightX, CtlWorldWeightMinus, CtlWorldWeightPlus);
         }
         else if (y == DeviceRow)
         {

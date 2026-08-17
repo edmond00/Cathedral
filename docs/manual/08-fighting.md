@@ -153,7 +153,34 @@ Walking away ends the fight and nothing else. Enmity persists — the person who
 still an enemy on your next visit, still an armed presence in the room, and any failed act before
 them starts it again.
 
-## 8. Vital heat in combat
+## 8. The ending of a fight
+
+A fight ends when one side has nobody left standing. Every member of the party counts for the party,
+and every enemy for the other side; nothing else is weighed, and no count of the fallen decides it
+short of the last of them.
+
+Two things follow that are easily mistaken. **A companion's fall does not end a fight** while
+anybody else of the party still stands — and neither does the protagonist's, a surviving companion
+carrying the fight on alone. And where the last of both sides falls together, the field is reckoned
+to the enemy.
+
+**There are two ways to fall, and they are counted alike.** A body whose hurts have consumed its
+health is finished; so is one whose every humoral queue has gone critical, which is the ordinary end
+of a bleeding left to run (see [Chapter III §5](03-humors.md#5-black-bile)).
+The second leaves a body in perfect health, and it is no less dead for it.
+
+The dead do not rise afterwards. Each leaves a corpse where they fell, on the terms of [Chapter VI
+§11](06-narration.md#11-what-a-killing-leaves), and an enemy who falls is lost to that place for
+good, on the terms of [Chapter VI §9](06-narration.md#9-what-a-place-remembers). A companion who
+falls is lost to the party for good, on the terms of [Chapter V
+§7](05-travel.md#7-companions-and-their-loss).
+
+**A fight lost is a run lost, wherever it was fought.** The field going to the enemy is the death of
+the protagonist, and it is reckoned the same whether the quarrel was met upon the road or picked
+inside a place. Fleeing is therefore not a lesser victory but the only alternative to the wager, and
+the cost of walking away — an enmity that outlasts the visit — is the price of not having made it.
+
+## 9. Vital heat in combat
 
 Every cost in heat is paid the same way: humors are consumed in rotation from the four queues until
 the charge is met (see [Chapter III §3](03-humors.md#3-vital-heat)). Combat is therefore, over its

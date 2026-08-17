@@ -1,0 +1,28 @@
+# Winning a travel fight with no journey under it returns to the world view.
+#
+# The sibling of fight_victory_travel_arrival.cli, reached from the other end: --start-fight drops
+# into a fight on arrival at the world map, so there is no path in flight at all. The victory branch
+# used to resume travel unconditionally, which parked the game in Traveling with no path to walk and
+# no travel box even drawn — a black screen.
+#
+# Both cases are the same mistake ("victory means carry on walking"), and both are asserted because
+# the fix has two arms: deliver a held arrival, else fall back to the world view.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --start-fight wolf
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+
+# --start-fight fires on arrival at the world map, before the view becomes interactive.
+wait mode Fighting 90
+
+fight-end victory
+
+wait mode WorldView 60
+# Idle, not merely in the right mode: a stranded Traveling never settles either, and `state` reports
+# the mode of a game that has stopped answering exactly as it reports a working one.
+wait 30
+
+quit

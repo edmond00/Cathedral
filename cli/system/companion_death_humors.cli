@@ -1,0 +1,69 @@
+# A companion bled dry leaves the party, and leaves a body — the same as one cut down.
+#
+# The Starvation arm of PartyMember.CauseOfDeath, and the one that was wrong twice over. Humor
+# depletion is recorded on the Fighter wrapper (Fighter.IsHumorDepleted), which the fight throws away,
+# so a bled-out companion was not dead by any measure the world could read — and nothing removed a
+# dead companion from the party anyway. What survives the fight is the humor queues themselves, which
+# really are empty, so the sweep reads Starvation off state that was there all along.
+#
+# See companion_death_wounds.cli for the shared half of this (the modal notice, the body, the party
+# removal) and for why `fight-wound` and `fight-deplete` exist at all. What is asserted here and
+# nowhere else is the CAUSE: the notice must say the humors, not the wounds, because getting the two
+# confused is exactly the failure — a companion at full hit points reading as unhurt.
+#
+# FLAGS: --playground --skip-childhood --fill-party --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Hall" --period dawn --observe-only brewer --auto-dialogue
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+inspect party
+expect-state party Nighthunter
+
+strategy succeed
+goal attack
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+wait mode Fighting 90
+
+# Humors, not hit points: `fight-deplete` empties the queues the way a terminal bleed does and raises
+# the wrapper flag the way BleedingEffect's last tick does. The companion's hit points never move.
+fight-deplete Nighthunter
+wait 20
+
+# Still a fight — one dead party member is not a defeat while the protagonist stands.
+wait mode Fighting 20
+
+fight-end victory
+wait 90
+
+# Named by what actually killed them. A wounds line here would mean the cause was guessed from the
+# fact of the death rather than read off the body.
+expect Nighthunter
+expect bled out, humors spent
+
+click companion-death
+wait 60
+advance 12 180
+
+inspect party
+expect-no-state party Nighthunter
+inspect pois
+expect-state pois Nighthunter's Remains
+
+quit
