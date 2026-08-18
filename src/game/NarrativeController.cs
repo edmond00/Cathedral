@@ -69,6 +69,16 @@ public class NarrativeController
     
     // Pending fight/dialogue transitions (set by OnDiceRollContinue, consumed by game controller)
     private FightTriggerOutcome? _pendingFightOutcome = null;
+
+    /// <summary>
+    /// A fight that has been decided but not yet entered, waiting on the CONTINUE press that closes
+    /// the segment. <see cref="_pendingFightOutcome"/> is read by the game controller on the very next
+    /// tick, so anything written there switches mode before a frame is drawn — which is right for a
+    /// fight the player was dragged into and wrong for one they started, since the outcome chips
+    /// (what the first blow was, what it broke, what it taught) are the only account they get of the
+    /// swing and the fight screen paints over the narration that carries them.
+    /// </summary>
+    private FightTriggerOutcome? _deferredFightOutcome = null;
     private DialogueTriggerOutcome? _pendingDialogueOutcome = null;
 
     // Continuity context captured when a dialogue becomes pending and consumed by the next observation
@@ -1929,7 +1939,7 @@ public class NarrativeController
             var part = _previewSession.BeginPart(title);
             // Gather the verb's outcome reports up-front so their verbatims can be woven into the
             // narration; the same instances are reused at commit time (see CommitOutcomeResult).
-            var verbReports = GatherVerbReports(eval.Action.PreselectedOutcome, succeeded);
+            var verbReports = GatherVerbReports(eval.Action.PreselectedOutcome, succeeded, eval.Action.CombinedItem);
             var result = await _actionExecutor.PrepareSingleOutcomeAsync(eval, succeeded, verbReports, part.Sink, CancellationToken.None);
             _narrationState.IsLoadingAction = false;
             part.AttachCommit(() => CommitOutcomeResult(result, deferredCommit: true));
@@ -1948,10 +1958,13 @@ public class NarrativeController
 
     /// <summary>
     /// Gathers the verb-specific outcome reports for a resolved action. Success reports carry the
-    /// chosen <see cref="VerbAction"/> (so verbs that expanded into several actions read their variant);
-    /// failure reports use the target-only overload. Returns an empty list for non-verb outcomes.
+    /// chosen <see cref="VerbAction"/> (so verbs that expanded into several actions read their variant)
+    /// and the implement the player combined, if any — which only <c>attack</c> reads, since which
+    /// weapon is in the hand decides which blow can be thrown. Failure reports use the target-only
+    /// overload. Returns an empty list for non-verb outcomes.
     /// </summary>
-    private System.Collections.Generic.IReadOnlyList<Outcome> GatherVerbReports(INarratable? outcome, bool succeeded)
+    private System.Collections.Generic.IReadOnlyList<Outcome> GatherVerbReports(INarratable? outcome, bool succeeded,
+                                                                                Item? tool = null)
     {
         if (outcome is VerbAction verbTarget && _scene != null && _pov != null && verbTarget.Target != null)
         {
@@ -1960,7 +1973,7 @@ public class NarrativeController
                 return verb.FailureReports(_scene, _pov, _activePartyMember, verbTarget.Target);
 
             var reports = new System.Collections.Generic.List<Outcome>(
-                verb.SuccessReports(_scene, _pov, _activePartyMember, verbTarget.Target, verbTarget));
+                verb.SuccessReports(_scene, _pov, _activePartyMember, verbTarget.Target, verbTarget, tool));
 
             // Doing a thing is how the thing is learned. Appended last so the lesson reads as the
             // consequence of whatever the verb actually did, not as its headline.
@@ -2024,7 +2037,7 @@ public class NarrativeController
         {
             // Fallback (e.g. Get-Up): no reports were pre-gathered, so build them now.
             allReports = new System.Collections.Generic.List<Outcome>();
-            allReports.AddRange(GatherVerbReports(result.ActualOutcome, result.Succeeded));
+            allReports.AddRange(GatherVerbReports(result.ActualOutcome, result.Succeeded, result.Action?.CombinedItem));
             allReports.AddRange(result.LlmDecidedReports);
         }
 
@@ -2106,6 +2119,38 @@ public class NarrativeController
         NarrationDiceClear();
         _ambianceEngine?.SetFilter(MusicFilter.None);
 
+        // === A FIGHT ASKED FOR BY THE ACTION ITSELF ===
+        // Hoisted above the failure ladder below, and read off the scene rather than off the outcome,
+        // because a report is what asks for it (FightTriggerOutcome.Apply writes the request) and
+        // reports are applied for both a success and a failure. Two things follow, both deliberate:
+        //
+        //  - a fight the player STARTED outranks the one their failure invited. Swing at somebody and
+        //    miss in front of a witness, and the brawl you began is the story, not the trespass
+        //    conversation the miss would otherwise have opened;
+        //  - the request cannot outlive the action that made it. Left on the scene while an early
+        //    return took some other branch, it would open a fight two actions later, against whoever
+        //    it happened to name.
+        //
+        // Deferred to the CONTINUE rather than raised now: the chips are the only account the player
+        // gets of what the blow did, and the fight screen replaces the narration the frame it opens.
+        if (_scene?.PendingFightRequest is { } fightRequest)
+        {
+            _scene.PendingFightRequest = null;
+            _deferredFightOutcome = new FightTriggerOutcome(fightRequest.Npc, $"attack on {fightRequest.Npc.DisplayName}")
+            {
+                EnemyInitiative = !result.Succeeded,
+            };
+            Console.WriteLine($"NarrativeController: fight with {fightRequest.Npc.DisplayName} held for CONTINUE"
+                            + (result.Succeeded ? "" : " (missed — enemy initiative)"));
+            _narrationState.PendingTransitionNode = null;
+            _narrationState.ShouldExitOnContinue  = false;
+            _narrationState.ShowContinueButton    = true;
+            _pendingSegmentLabel                  = SegmentLabelFor(result);
+            _pendingSegmentSucceeded              = result.Succeeded;
+            if (_pov != null) SceneDebugManager.UpdatePoV(_pov);
+            return;
+        }
+
         // === FAILURE-PATH SOCIAL CONSEQUENCE ===
         // Three rungs of one ladder, decided deterministically by the executor from effective
         // proximity (no LLM). At most one is set. See ActionExecutionController.FailureConsequences.
@@ -2145,13 +2190,10 @@ public class NarrativeController
         }
 
         // Handle outcome based on type - show continue button for next step
-        if (result.ActualOutcome is FightTriggerOutcome fightOutcome)
-        {
-            Console.WriteLine($"NarrativeController: Fight outcome with {fightOutcome.Target.DisplayName}, signaling fight mode");
-            _pendingFightOutcome = fightOutcome;
-            // Don't show continue button - the game controller will detect the pending fight and switch modes
-        }
-        else if (result.ActualOutcome is VerbAction verbOutcome && _scene != null && _pov != null)
+        // A fight needs no arm here: every route to one goes through scene.PendingFightRequest, which
+        // is answered above — including an outcome that IS a FightTriggerOutcome, since it writes the
+        // request from its own Apply like any other report.
+        if (result.ActualOutcome is VerbAction verbOutcome && _scene != null && _pov != null)
         {
             Console.WriteLine($"NarrativeController: Verb outcome '{verbOutcome.Verb.VerbId}' on '{verbOutcome.Target?.DisplayName}', reports already applied");
             SceneDebugManager.UpdatePoV(_pov);
@@ -2163,16 +2205,6 @@ public class NarrativeController
                 _scene.PendingDialogueRequest = null;
                 SetPendingDialogue(new Cathedral.Game.Scene.DialogueTriggerOutcome(req.Npc, req.TreeId), result.Action);
                 Console.WriteLine($"NarrativeController: Dialogue verb triggered tree '{req.TreeId}' with {req.Npc.DisplayName}");
-                return;
-            }
-
-            // Check if the verb requested a fight (e.g. AttackVerb)
-            if (_scene.PendingFightRequest != null)
-            {
-                var req = _scene.PendingFightRequest;
-                _scene.PendingFightRequest = null;
-                _pendingFightOutcome = new FightTriggerOutcome(req.Npc, $"attack on {req.Npc.DisplayName}");
-                Console.WriteLine($"NarrativeController: Attack verb triggered fight with {req.Npc.DisplayName}");
                 return;
             }
 
@@ -3462,6 +3494,13 @@ public class NarrativeController
                 outp.Add($"npc {npc.Entity.Archetype.ArchetypeId} alive={npc.Entity.IsAlive}"
                        + (ent != null ? $" affinity={ent.AffinityTable.GetLevel(key)}"
                                       + $" enemy={ent.AffinityTable.IsEnemy(key)}"
+                                      // What a blow does to them. Hit points are derived from the
+                                      // wound count, so the pair is one fact read two ways — but a
+                                      // test asserting the first blow landed needs the count, and
+                                      // one asserting it was withheld from a dying man needs the
+                                      // hit points. Nothing else surfaces either.
+                                      + $" hp={ent.Combatant.CurrentHp}/{ent.Combatant.MaxHp}"
+                                      + $" wounds={ent.Combatant.Wounds.Count}"
                                       // What a conversation's outcomes write. None of it is visible
                                       // any other way, and it is the whole state change of half the
                                       // catalogue: join_party, alms, the trade and job menus, the
@@ -3596,6 +3635,14 @@ public class NarrativeController
         _pendingFightOutcome    = null;
         _pendingDialogueOutcome = null;
     }
+
+    /// <summary>
+    /// Whether a fight has been decided and is waiting on the CONTINUE press — read by the CLI's
+    /// <c>state</c>, since a held fight is indistinguishable on screen from an ordinary resolved
+    /// action and a script that does not press CONTINUE would sit out its timeout wondering why
+    /// Fighting never arrived.
+    /// </summary>
+    public bool HasDeferredFight => _deferredFightOutcome != null;
 
     /// <summary>
     /// Saves any routine still being recorded for this session. Called by the game controller when
@@ -3807,6 +3854,18 @@ public class NarrativeController
 
     private void HandleContinueClicked()
     {
+        // A fight held back so its opening blow could be read (see _deferredFightOutcome). First,
+        // because the segment it closes is the one the fight itself will grey into history.
+        if (_deferredFightOutcome != null)
+        {
+            Console.WriteLine($"NarrativeController: CONTINUE — entering the held fight with {_deferredFightOutcome.Target.DisplayName}");
+            _pendingFightOutcome  = _deferredFightOutcome;
+            _deferredFightOutcome = null;
+            _pendingSegmentLabel     = null;
+            _pendingSegmentSucceeded = true;
+            return;
+        }
+
         // Get-Up success transition: protagonist risen, world travel begins.
         if (_scene != null && _scene.PendingGetUpTransition)
         {
@@ -4269,6 +4328,7 @@ public class NarrativeController
                     ToolCombinationGate.NoProficiency => ToolFailureKind.NoProficiency,
                     ToolCombinationGate.NotItsPurpose => ToolFailureKind.NotItsPurpose,
                     ToolCombinationGate.ExcludedVerb  => ToolFailureKind.Senseless,
+                    ToolCombinationGate.NotAWeapon    => ToolFailureKind.NotAWeapon,
                     _                                 => ToolFailureKind.None,
                 };
                 Console.WriteLine($"NarrativeController: Settled without a critic call — {gate}.");

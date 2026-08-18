@@ -39,6 +39,9 @@ advance 12 180
 click continue
 advance 12 180
 
+# The landed attack HOLDS the fight so its first blow can be read (see "Opening a fight: the first
+# blow"). The fight opens on the press that closes the segment, not on the swing.
+click button
 wait mode Fighting 90
 
 # Humors, not hit points: `fight-deplete` empties the queues the way a terminal bleed does and raises

@@ -1,6 +1,8 @@
 # attack — fail
 #
-# The attack verb attempted and missed: the checks pass, the dice do not, and the outcome block reports FAILURE.
+# The attack verb attempted and missed: the checks pass, the dice do not, and the outcome block
+# reports FAILURE. The fight still starts — a swing seen is a swing seen — but it starts with the
+# enemy holding the initiative and with nothing struck and nothing learned.
 #
 # Reached in 12/12 of the sampled location ids (see --verb-probe). --location-type and
 # --location-id decide the whole scene, so this does not depend on world generation; --npc-static
@@ -35,11 +37,20 @@ advance 12 180
 
 expect FAILURE
 
-# What makes this a attack test rather than an any-verb test: SUCCESS/FAILURE is the outcome banner
+# What makes this an attack test rather than an any-verb test: SUCCESS/FAILURE is the outcome banner
 # of every verb alike, so only this can tell them apart.
 expect-verb attack
-# The failure assertion that means something: the verb's own consequence did NOT happen.
-# Asserting the wound instead would be flaky — FailurePenalties samples one slot in five,
-# so most failures injure nobody.
-expect-no-outcome fight_trigger
+
+# The failure assertion that means something: no blow landed. The fight is the miss's consequence
+# and happens either way, so it is first_blow — not fight_trigger — that separates a hit from a miss.
+expect-no-outcome first_blow
+expect-not First blow:
+# Nothing was struck, so nothing was learned. The lesson rides on the blow.
+expect-no-outcome modus_mentis_grant
+# And nobody in the scene is carrying a mark: read as a negative over every NPC at once, so it does
+# not depend on which of them the phase happened to open on or on the order of the fields.
+expect-no-state npcs wounds=1
+
+click button
+wait mode Fighting 60
 quit

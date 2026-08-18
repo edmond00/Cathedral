@@ -1015,6 +1015,70 @@ comes round after every other fighter has acted, which would stretch it to a ful
 genuinely wants the round (it fires while enemies attack) and so leaves `OnTurnEnd` alone; Blood
 Lust lasts the whole fight and expires nowhere.
 
+### Opening a fight: the first blow
+
+**`attack` used to be a doorway and nothing else.** It rolled, it printed nothing a player could
+read, and the fight began with both sides untouched — so the one thing the verb was *for*, hitting
+somebody, happened only after the fight screen had replaced the narration. `FirstBlowOutcome` is the
+swing itself, and it is assembled in three steps that each answer a different question.
+
+**What can this body strike with?** `FirstBlow.MediumsFor` gathers fighting mediums, and **an
+implement replaces the body rather than adding to it**: a combined weapon is the whole list (a man
+who draws a sword is not also kicking), and empty hands offer every organ medium the anatomy owns
+plus the body-part mediums (`upper_limbs` — seize, chokehold), each needing a score above zero and no
+High-handicap wound. Note it reads the **combined** item, never the equipped one — the weapon on your
+belt is not the weapon in the blow unless the player put it there, and choosing to is what the tool
+combination is for.
+
+**Which blows does that allow?** Every medium's skill list, minus everything that is not
+`FightingSkillEffect.Attack` (viscera is all buffs, legs all movement and guard) and everything this
+body could never keep the lesson of. **An unlearned skill is a candidate** — requiring the modus
+mentis would mean somebody who has never fought cannot throw a punch, which is backwards: the first
+blow is where the punch is learned. What is required is that the lesson could be *held*
+(`ModusMentisAnatomy.IsLearnableBy`), so a body is never taught something its anatomy caps at level 1
+for ever.
+
+**Then one is drawn uniformly, and it decides three things at once**: the blow that lands, the wound
+it leaves (`FightResolver.PickWound` against a pre-rolled hit location, exactly as `SkillAction` does
+it — but **armour is not consulted**, since armour buys defence *dice* and there is no roll here), and
+**what the verb teaches**. That last one is why `AttackVerb.GrantedModusMentisId` returns null: a
+punch teaches Brawling and a chop teaches the axe, so the lesson cannot be declared per verb the way
+every other verb declares its. `--verb-audit` names attack in its `TeachesPerBlow` exemption, since a
+verb teaching nothing is otherwise exactly the dead content it exists to catch.
+
+Four rules the rest of it depends on:
+
+- **The verb dice are the only dice.** A landed `attack` is an automatic hit; there is no second roll
+  against the target's defence. The verb was hard enough to reach.
+- **A first blow can never kill.** A target down to its last hit point turns it aside — the lesson is
+  still learned and the fight still begins, but no wound is dealt. Without that a corpse would be left
+  standing: `NpcEntity.IsAlive` reads the hit points, so a body killed here would be dead with no
+  `RemoveNpcFromPlay`, no corpse, and a fight opening against somebody already gone. Killing outright
+  is `slay`'s job, at a difficulty of its own.
+- **A miss still starts the fight, and costs the initiative.** `FailureReports` returns a
+  `FightTriggerOutcome` with `EnemyInitiative`. Attack was the only crime whose victim could not tell
+  it had been attempted.
+- **The fight waits for CONTINUE.** `_deferredFightOutcome` holds it until the press that closes the
+  segment, because `_pendingFightOutcome` is read by the game controller on the very next tick — and
+  the chips (what the blow was, what it broke, what it taught) are the whole account of the swing,
+  painted over by the fight screen the frame it opens. `state` reports `fight-held=yes`, since on
+  screen a held fight is indistinguishable from an ordinary resolved action and a script that presses
+  nothing would sit out its timeout.
+
+**Effects outlive the narration.** Twelve attack skills carry a `FightStatusEffect` — Trip knocks
+down, Flesh Tear starts bleeding — and a `FightStatusEffect` is meaningless without the `Fighter` it
+hangs on, which does not exist until the arena is built. They ride on `NpcEntity.CarriedFightEffects`
+and are drained by `FightModeAdapter.ApplyCarriedEffects` *after* the `FightState` is constructed
+(`OnApply` logs, and a pushback needs the arena) and cleared as they are applied. Carried on the
+individual, so a blow struck at one person cannot land on whoever the fight brings in with them.
+
+**Shallow wildlife takes the same first two steps and neither of the last two**: no anatomy to wound
+and no fight to have, so the blow kills and narration carries on. The kill itself is the ordinary
+`NpcSlaynOutcome` reported beside it, which is what spawns the carcass.
+
+`cli/verb/attack/` holds all three arms — the landed blow, the miss, and the chicken — and
+`cli/outcome/first_blow/` proves the wound is really on the man.
+
 ### Winning a fight: what the victory has to hand back
 
 `FightState.CheckFightEnd` is faction arithmetic and nothing more — the last living `Enemy` falling
@@ -1329,13 +1393,25 @@ the `hasItems` gate in `HandleClick`.
 | gate | when | costs |
 |---|---|---|
 | `NoProficiency` | hands band is None | a point, no request made |
+| `MadeForIt` | `Verb.UsesFightingMedium` and the item is an `IWeaponItem` | nothing, no request made |
+| `NotAWeapon` | `Verb.UsesFightingMedium` and it is not | a point, no request made |
 | `MadeForIt` | item is the verb's reference tool, **or** names it in `Item.MadeForVerbIds` | nothing, no request made |
 | `NotItsPurpose` | item declares `MadeForVerbIds` and this verb is not among them | a point, no request made |
 | `ExcludedVerb` | `ToolUse == Excluded` and the item is not made for it | a point, no request made |
 | `AskTheCritic` | everything else | a point **iff** refused |
 
-Proficiency first because a body that can use nothing can also not use the thing it was handed. The
-item's own purpose next, and it settles the matter **both ways** before the verb's category is
+Proficiency first because a body that can use nothing can also not use the thing it was handed — and
+**that one line is the whole of the rule that hands with no craft in them may use no implement at
+all, for any verb**: `ToolUsageProficiencyStat` reads `DerivedStat.GetValue`, which returns the worst
+value both for a score of 0 and for an organ disabled by a High-handicap wound, and the worst value
+is `None`.
+
+A verb struck with a **fighting medium** next, because for `attack` the question is not what the
+implement was made for but whether it is a weapon — and the set of things one fights with is closed,
+so both directions are settled with no request made. A sword is what attacking is done with whatever
+its `MadeForVerbIds` say, and no argument about a lantern's heft makes it a weapon.
+
+The item's own purpose next, and it settles the matter **both ways** before the verb's category is
 consulted at all — `MadeForIt` and `NotItsPurpose` are one declaration read in its two directions.
 
 **`ToolUsageProficiencyStat` replaced `ToolUsageCapStat`, and the replacement is the opposite end of
@@ -1942,15 +2018,18 @@ every `success.cli` also asserts the chip its outcome puts in the outcome block:
 | `TinyCreatureRemovedOutcome` | `Caught:` / `Crushed:` | catch, crush |
 | `CoinGrantOutcome` | `Coins received:` | pickpocket |
 | `DialogueTriggerOutcome` | `Conversation:` | the eleven verbs that open one |
+| `FirstBlowOutcome` | `First blow:` | attack |
 | the modus mentis grant | `Modus mentis` | examine, listen, smell, contemplate — no scene outcome of their own |
 
 Match the **prefix** only; what follows is a name or a room and moves with the content. `Modus mentis`
 is deliberately cut short of its noun: a first grant reads `acquired`, a repeat reads `learned`
 (`ModusMentisPracticeOutcome`, whose `ShowInUI` is false when nothing moved).
 
-Four verbs assert something else instead, and for a reason: **`attack`** lands in a fight, and the
-fight screen replaces the narration before any chip can be read — `wait mode Fighting` is its
-assertion. **`get_up`** and **`remember`** are phase transitions. **`ignore`** does nothing by design.
+Three verbs assert something else instead, and for a reason: **`get_up`** and **`remember`** are
+phase transitions, and **`ignore`** does nothing by design. **`attack`** used to be a fourth — the
+fight screen replaced the narration before any chip could be read, so `wait mode Fighting` was the
+only assertion available. It now holds the fight for the CONTINUE, so its chips are readable like
+anything else and `wait mode Fighting` comes *after* that press.
 
 **Put the assertion after the verb under test, not after the setup.** `expect` scans the whole
 terminal, greyed history included, so a chip left by an earlier action reads exactly like the one you

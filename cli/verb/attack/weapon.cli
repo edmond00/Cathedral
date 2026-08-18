@@ -1,0 +1,64 @@
+# attack — struck with a weapon
+#
+# The third arm, and neither a success nor a failure of the roll: it is the tool gate. A verb struck
+# with a fighting medium takes a weapon without a critic call and refuses anything else without one
+# either, and the weapon then REPLACES the body — the blow is drawn from the axe's own skill list
+# rather than from the hands and feet the same character would otherwise have used.
+#
+# The reference-tool comparison matters here: an ordinary Optional verb would put a battle axe to the
+# item-use critic, which under --playground picks its verdict at random and would make this a coin
+# flip. `Verb.UsesFightingMedium` is what settles it in code instead.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-item battle_axe --location-type test --location-id 0 --start-area "Test Hall" --period dawn --observe-only "brewer"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal attack
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+
+# Combining does not execute: it rewrites the action to include the weapon and offers THAT as a new
+# button. Executing the reformulated one is what puts CombinedItem on the action, which is how the
+# blow learns which weapon is in the hand.
+click action 0
+choose 1
+regions
+choose 0
+advance 12 180
+regions
+click action 1
+choose 0
+
+advance 12 180
+click continue
+advance 12 180
+click continue
+advance 12 180
+
+expect SUCCESS
+expect-verb attack
+expect-outcome first_blow
+
+# Chop is an axe skill and belongs to no organ medium, so its name in the chip is the proof that the
+# weapon supplied the blow rather than the body. Battlecraft is the modus mentis behind it — the
+# lesson follows the blow, which is the whole reason attack declares none of its own.
+expect First blow: Chop
+expect Modus mentis learned: Battlecraft
+
+# And it landed on him like any other first blow.
+expect-state npcs brewer alive=True affinity=Stranger enemy=False hp=4/5 wounds=1
+
+click button
+wait mode Fighting 60
+quit

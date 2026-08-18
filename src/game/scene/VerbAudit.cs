@@ -126,6 +126,15 @@ public static class VerbAudit
     // ── Declaration checks (registry only, no scenes needed) ──────────────────
 
     /// <summary>
+    /// Verbs that declare no lesson because theirs is decided per execution rather than per verb, and
+    /// granted by their own reports. Only <c>attack</c>: what a blow teaches is the modus mentis of
+    /// the fighting skill the first blow drew, which is not knowable until the swing is resolved —
+    /// see <c>FirstBlowOutcome</c>. Everything not named here that teaches nothing is the dead-content
+    /// fault this audit exists to catch.
+    /// </summary>
+    private static readonly HashSet<string> TeachesPerBlow = new() { "attack" };
+
+    /// <summary>
     /// Checks what every verb <i>declares</i>, independently of whether any scene offers it: that it
     /// teaches something, that what it teaches exists, and that the tools it demands exist. All three
     /// fail silently at runtime — an unresolvable lesson grants nothing and an unresolvable tool makes
@@ -141,7 +150,10 @@ public static class VerbAudit
         {
             var mmId = verb.GrantedModusMentisId(null);
             if (string.IsNullOrWhiteSpace(mmId))
-                warnings.Add($"verb '{verb.VerbId}' teaches no modus mentis — succeeding at it grants nothing");
+            {
+                if (!TeachesPerBlow.Contains(verb.VerbId))
+                    warnings.Add($"verb '{verb.VerbId}' teaches no modus mentis — succeeding at it grants nothing");
+            }
             else
             {
                 teaching++;

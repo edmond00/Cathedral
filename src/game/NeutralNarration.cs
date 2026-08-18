@@ -236,6 +236,17 @@ public static class NeutralNarration
          + "There is no craft left in my hands — no implement will answer to them.";
 
     /// <summary>
+    /// Neutral sentence for an implement raised as a weapon that is not one. Distinct from
+    /// <see cref="ItemCombinationNotItsPurpose"/>, which is about what a thing was made for: this is
+    /// about what a blow is. A lantern was made for other work and could still be swung at a head —
+    /// what refuses it is that fighting is done with weapons and with the body, and the body is
+    /// already in the swing.
+    /// </summary>
+    public static string ItemCombinationNotAWeapon(string itemWithArticle)
+        => $"I had {FirstPerson(itemWithArticle)} in my hand and no use for it here. "
+         + "This is settled with a weapon or with the body, and that is neither.";
+
+    /// <summary>
     /// Neutral sentence for the middle case: the implement could be made to serve, and this body is
     /// not the one to make it. The critic passed a verdict the hands could not reach, so the
     /// wording must credit the idea and refuse the execution.

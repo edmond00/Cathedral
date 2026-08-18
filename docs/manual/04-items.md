@@ -171,6 +171,13 @@ opened with, and remains an ordinary candidate for anything else.
 
 Nothing declares which implements are of which sort; it is learned by holding one up to a thing.
 
+**The act of striking somebody asks a different question altogether.** A blow is not work an
+implement assists with; it is struck *through* a medium, and the things one fights through are a
+closed set — a weapon, or the body. So no judgement is passed there: a weapon offered to a blow is
+accepted whatever else it was made for, and anything that is not a weapon is refused, however
+ingenious the case for it. Which weapon is taken up decides which blow can be thrown, for which see
+[Chapter VIII §5](08-fighting.md#5-the-opening-blow).
+
 ### Proficiency
 
 Whether a combination is accepted at all is governed by the **hands'** measure, which yields four
@@ -214,7 +221,7 @@ Whence: a weapon is not simply better or worse than another. Two weapons of the 
 different categories offer different things to do, and what a fighter can do with one is decided by
 what they have learned as much as by what they carry.
 
-A weapon must be held in a hand to serve as a medium; one in a pack is a burden and nothing else.
+A weapon must be held in a hand to serve as a medium within a fight; one in a pack is a burden and nothing else. For the blow that *begins* a fight the test is different and stricter: the medium is the weapon combined with the act, and a weapon carried but not taken up counts for nothing (see [Chapter VIII §5](08-fighting.md#5-the-opening-blow)).
 
 ## 9. Garments
 

@@ -32,10 +32,14 @@ advance 12 180
 click continue
 advance 12 180
 
-# There is no outcome banner to assert on. A landed attack does not report SUCCESS and hand the
-# turn back — it starts a fight, and the fight screen replaces the narration before the banner can
-# be read. Reaching Fighting IS the success, and it is the assertion this test wants: cli/attack/
-# fail.cli is the one that stays in narration and reports FAILURE.
+# The fight is decided but HELD, waiting on the press that closes the segment — so that the first
+# blow's chips can be read before the fight screen paints over them. `state` says fight-held=yes;
+# `expect-outcome fight_trigger` already passes here, because the outcome ran (it wrote the request
+# on the scene) even though the mode has not changed yet.
+expect-outcome fight_trigger
+
+# The press, and only now the fight.
+click button
 wait mode Fighting 60
 
 # What makes this an attack test rather than an any-verb test: every verb alike can enter a fight

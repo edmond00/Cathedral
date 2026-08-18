@@ -175,10 +175,11 @@ public class OutcomeNarrator
     /// <summary>
     /// Narrates why a combined item cannot be used for the action, in the action Modus Mentis's voice.
     ///
-    /// <para><paramref name="kind"/> chooses the neutral sentence, and the four are genuinely
-    /// different pieces of news — the implement is wrong, the act admits of no implement, the hands
-    /// have no craft in them, or the idea was sound and the hands were not. Collapsing them into one
-    /// "it did not work" leaves the rewrite to invent which, and it invents the flattering one.</para>
+    /// <para><paramref name="kind"/> chooses the neutral sentence, and they are genuinely different
+    /// pieces of news — the implement is wrong, the act admits of no implement, the act is a blow and
+    /// the thing is no weapon, the hands have no craft in them, or the idea was sound and the hands
+    /// were not. Collapsing them into one "it did not work" leaves the rewrite to invent which, and
+    /// it invents the flattering one.</para>
     ///
     /// <para>Only <see cref="ToolFailureKind.WrongTool"/> carries the critic's own reason, because it
     /// is the only kind an LLM was asked about.</para>
@@ -199,6 +200,7 @@ public class OutcomeNarrator
             ToolFailureKind.NotItsPurpose => NeutralNarration.ItemCombinationNotItsPurpose(display, item.WithArticle()),
             ToolFailureKind.NoProficiency => NeutralNarration.ItemCombinationNoProficiency(item.WithArticle()),
             ToolFailureKind.BeyondSkill   => NeutralNarration.ItemCombinationBeyondSkill(display, item.WithArticle()),
+            ToolFailureKind.NotAWeapon    => NeutralNarration.ItemCombinationNotAWeapon(item.WithArticle()),
             _                             => NeutralNarration.ItemCombinationFailure(display, item.WithArticle()),
         };
         if (kind == ToolFailureKind.WrongTool && !string.IsNullOrWhiteSpace(criticReason))

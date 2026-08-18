@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Npc.Corpse;
@@ -131,6 +132,20 @@ public class NpcEntity : INpcEntity
     /// after dialogue ends to transition into fight mode.
     /// </summary>
     public bool FightRequestedByDialogue { get; set; }
+
+    /// <summary>
+    /// Status effects dealt to this NPC <b>before</b> the fight exists, waiting to be put on their
+    /// <c>Fighter</c> the moment one is built — a knockdown from a trip that opened the fight, the
+    /// bleeding a torn throat started. <c>FightModeAdapter</c> drains it as it wraps them, so it is
+    /// empty again by the second fight.
+    ///
+    /// <para>It lives here rather than on the fight request because the blow is struck several
+    /// reports before the request is made (see <c>FirstBlowOutcome</c>), and because a
+    /// <c>FightStatusEffect</c> is meaningless without the <c>Fighter</c> it hangs on — which does
+    /// not exist until the arena is built. Carried on the individual, so a blow struck at one person
+    /// cannot land on whoever the fight happens to bring in with them.</para>
+    /// </summary>
+    public List<Fight.FightStatusEffect> CarriedFightEffects { get; } = new();
 
     // ── Trade ───────────────────────────────────────────────────────────────────
 

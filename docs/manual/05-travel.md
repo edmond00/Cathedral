@@ -148,7 +148,7 @@ the body itself at whatever moment it is put — so a companion who is killed is
 at once, and not upon the next return to the map. The one exception is the length of a fight, which
 holds the whole party until it is decided; a companion who falls in one is taken from the party the
 moment it ends, and does not end it by falling ([Chapter VIII
-§8](08-fighting.md#8-the-ending-of-a-fight)).
+§8](08-fighting.md#9-the-ending-of-a-fight)).
 
 The loss is **permanent**: they are struck from the party, they no longer count against the heart's
 limit, and nothing restores them. Where they died within a place, they leave a body in the area they

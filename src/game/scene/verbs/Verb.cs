@@ -218,7 +218,15 @@ public abstract class Verb
     /// read <see cref="VerbAction.Variant"/> (e.g. which job was requested). Defaults to the
     /// target-only overload.
     /// </summary>
-    public virtual IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target, VerbAction view)
+    /// <param name="tool">
+    /// The implement the player combined with the action, or null for bare hands. Almost no verb
+    /// reads it — a combined tool's effect is normally the die it lends the chain, which is settled
+    /// long before this — but <c>attack</c> does, because <i>which</i> weapon struck decides which
+    /// blow can be thrown at all. Null everywhere the reports are re-derived outside a live action
+    /// (the outcome audit, a routine replay), which reads correctly as bare hands.
+    /// </param>
+    public virtual IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target,
+                                                        VerbAction view, Item? tool = null)
         => SuccessReports(scene, pov, actor, target);
 
     /// <summary>
@@ -365,6 +373,20 @@ public abstract class Verb
 
     /// <summary>Whether this verb cannot be attempted with bare hands.</summary>
     public bool RequiresTool => ToolUse == ToolUsage.Required;
+
+    /// <summary>
+    /// Whether this verb is struck with a <b>fighting medium</b> — an organ or a weapon — rather than
+    /// worked at with an implement. Only <c>attack</c> is, and what it changes is the whole tool
+    /// question: for such a verb a weapon is accepted without a critic call (a sword is what one
+    /// attacks with; asking an LLM to confirm it is a request spent to be told the obvious) and
+    /// anything that is not a weapon is refused without one either, however clever the case for it.
+    ///
+    /// <para>Declared here rather than tested by <see cref="VerbId"/> in each place that cares,
+    /// because three layers read it: <c>ToolCombinationRules.Resolve</c> for the two gates above,
+    /// <c>FirstBlowMediumRule</c> for whether the body has anything to strike with at all, and the
+    /// verb's own reports for the blow that lands.</para>
+    /// </summary>
+    public virtual bool UsesFightingMedium => false;
 
     /// <summary>
     /// What the body must be able to do for this verb, <b>including what its tool rule implies</b>.

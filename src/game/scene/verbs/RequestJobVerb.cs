@@ -46,7 +46,7 @@ public class RequestJobVerb : DialogueVerb
             yield return new VerbAction(this, $"meet {NpcPronoun(target)} to request to work as {job.WithArticle()}", target, variant: job);
     }
 
-    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target, VerbAction view)
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target, VerbAction view, Item? tool = null)
     {
         if (target is not SceneNpc sceneNpc || sceneNpc.Entity is not NpcEntity npc || view.Variant is not Job job)
             return System.Array.Empty<Outcome>();

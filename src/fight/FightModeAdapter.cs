@@ -260,6 +260,11 @@ public class FightModeAdapter
         _state = new FightState(area, fighters);
         _state.AddLog(enemyInitiative ? "The enemy strikes first!" : "Fight begins!", LogEntryType.Normal);
 
+        // Anything already done to them before the arena existed — the first blow's knockdown, the
+        // bleeding its cut started. Applied here rather than in BuildFighters because OnApply wants
+        // the state (it logs, and a pushback needs the arena) and the state wants the fighters.
+        ApplyCarriedEffects(fighters, allEnemies);
+
         // Render initial arena terrain
         FightAreaRenderer.Render(_terminal, area, "fight", 0);
 
@@ -276,6 +281,36 @@ public class FightModeAdapter
         FullRedraw();
 
         Console.WriteLine($"FightModeAdapter: Fight started against {targetNpc.DisplayName}");
+    }
+
+    /// <summary>
+    /// Puts each enemy's <see cref="NpcEntity.CarriedFightEffects"/> onto their fighter and clears
+    /// the carrier, so a blow struck in narration is still in force when the fight opens.
+    ///
+    /// <para>The source is the protagonist's fighter — the one who struck — because an effect may
+    /// read it (a pushback needs the direction the blow came from). An effect that expires the
+    /// moment it applies is dropped, exactly as <c>FightResolver.ResolveAttack</c> drops it.</para>
+    /// </summary>
+    private void ApplyCarriedEffects(List<Fighter> fighters, IReadOnlyList<NpcEntity> enemies)
+    {
+        var source = fighters.FirstOrDefault(f => f.IsPlayerControlled);
+        if (source == null || _state == null) return;
+
+        foreach (var enemy in enemies)
+        {
+            if (enemy.CarriedFightEffects.Count == 0) continue;
+
+            var target = fighters.FirstOrDefault(f => ReferenceEquals(f.Member, enemy.Combatant));
+            if (target != null)
+                foreach (var effect in enemy.CarriedFightEffects)
+                {
+                    target.ActiveEffects.Add(effect);
+                    effect.OnApply(target, source, _state, _rng);
+                    if (effect.IsExpired) target.ActiveEffects.Remove(effect);
+                }
+
+            enemy.CarriedFightEffects.Clear();
+        }
     }
 
     private static List<Fighter> BuildFighters(Protagonist protagonist, NpcEntity npc, IReadOnlyList<NpcEntity> allies)

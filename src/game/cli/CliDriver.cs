@@ -426,6 +426,10 @@ public sealed class CliDriver
             // a script finds nothing clickable. Say so here rather than leaving it to be guessed.
             var pv = n.CliPreview();
             sb.Append($" preview={(pv.Active ? (pv.Complete ? "ready" : "generating") : "none")}");
+            // A fight decided but held for the CONTINUE that shows its opening blow. On screen it is
+            // an ordinary resolved action, so a script waiting on `wait mode Fighting` without
+            // pressing CONTINUE would sit out its whole timeout with nothing to say why.
+            if (n.HasDeferredFight) sb.Append(" fight-held=yes");
             sb.Append($" history={n.ScrollBuffer.HistoryLineCount} total={n.ScrollBuffer.TotalLines}");
             sb.Append($" scroll={n.ScrollBuffer.ScrollOffset}");
             if (s.Error != null) sb.Append($" error=\"{s.Error}\"");

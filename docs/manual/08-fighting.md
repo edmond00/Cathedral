@@ -97,7 +97,50 @@ turn.
 **No self-targeted roll can ever produce a wound.** The one self-targeted skill that still rolls is
 the feint — someone must be convinced — and its sixes become bonus attack dice rather than injury.
 
-## 5. The exchange
+## 5. The opening blow
+
+A fight begun by striking somebody begins with the blow that struck them. It is not thrown within
+the fight, and it obeys none of the machinery above: no turn, no cinetic points, no defence pool.
+
+**What the body may strike with is gathered first.** Where an implement was combined with the act,
+that implement is the whole of it — a weapon and nothing else will serve, and one merely carried
+does not count, only one deliberately taken up. Where none was, every medium the body owns is
+gathered instead: each organ medium and each region medium that scores above nought and is not
+disabled by a High wound.
+
+**From those mediums, every attacking skill they bear is a candidate** — including skills not yet
+learned, provided the anatomy could hold the modus mentis behind them. Guards, postures, buffs and
+movements are set aside; only what strikes is eligible. Whence a body with no working medium, or one
+holding an implement whose kind bears no attacking skill at all, cannot strike, and the act is
+refused before the dice by a rule of action ([Chapter VI §6](06-narration.md#6-the-two-families-of-rule)).
+
+**One candidate is drawn at random, and it settles two things at once.**
+
+- **The blow.** It lands without a second roll: the dice already cast for the act are the only dice,
+  and armour does not turn it, armour being a contribution to a defence pool that is never assembled
+  here. The wound is drawn from the pool the place struck allows, as §6 describes, and any state the
+  skill carries — a knocking down, a bleeding — is already in force when the fight opens.
+- **What is learned.** The lesson of a blow is the modus mentis behind the skill drawn, not a fixed
+  lesson of striking: an unarmed blow teaches the art of the fist, a blow with an axe the craft of
+  arms. This is the one manner of acting whose lesson is not settled in advance of the doing.
+
+The blow is struck and its consequences taken **before** the fight opens, so the fight begins
+against a body already marked.
+
+**A first blow can never kill.** Where the body struck stands at its last point of health, the blow
+is turned aside: no wound is dealt, the lesson is learned regardless, and the fight begins as it
+would have. Killing outright is a different act, of a difficulty of its own, and requires an edge
+([Chapter VI §11](06-narration.md#11-what-a-killing-leaves)).
+
+**A blow that misses still begins the fight**, and the miss is paid for: the one struck at holds the
+initiative, acting before the party regardless of the order the dice of initiative would have set.
+Nothing is learned from a swing that found nothing.
+
+**Against a beast too slight to fight** — the small wildlife that has no anatomy to wound and no
+fight to give — the blow simply kills, and narration continues. The gathering of mediums, the
+drawing of a skill and the lesson are the same; only what follows differs.
+
+## 6. The exchange
 
 A blow is settled by comparing two counts of sixes.
 
@@ -126,7 +169,7 @@ instead, through the **viscera's** measure of healing.
 A blow that lands also **teaches**: every modus mentis contributing to the skill gains a point of
 experience, save those already at their ceiling.
 
-## 6. States
+## 7. States
 
 A landed blow may apply a **status** to the target. States are of three lifetimes, and the
 distinction matters:
@@ -139,7 +182,7 @@ distinction matters:
 
 Certain states **stack** rather than duplicating: a second bleeding deepens the first.
 
-## 7. Falling, learning, and flight
+## 8. Falling, learning, and flight
 
 **Knockdown.** A fighter on the ground rolls the **pineal gland's** measure in dice at the start of
 their turn and needs one six to rise.
@@ -153,7 +196,7 @@ Walking away ends the fight and nothing else. Enmity persists — the person who
 still an enemy on your next visit, still an armed presence in the room, and any failed act before
 them starts it again.
 
-## 8. The ending of a fight
+## 9. The ending of a fight
 
 A fight ends when one side has nobody left standing. Every member of the party counts for the party,
 and every enemy for the other side; nothing else is weighed, and no count of the fallen decides it
@@ -180,7 +223,7 @@ the protagonist, and it is reckoned the same whether the quarrel was met upon th
 inside a place. Fleeing is therefore not a lesser victory but the only alternative to the wager, and
 the cost of walking away — an enmity that outlasts the visit — is the price of not having made it.
 
-## 9. Vital heat in combat
+## 10. Vital heat in combat
 
 Every cost in heat is paid the same way: humors are consumed in rotation from the four queues until
 the charge is met (see [Chapter III §3](03-humors.md#3-vital-heat)). Combat is therefore, over its

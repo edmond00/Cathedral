@@ -188,6 +188,11 @@ A failed act costs, in order:
 3. **A social consequence**, read off effective proximity as §7 describes: at most one of caught,
    attacked, or approached. These are three rungs of one ladder, not a set of independent flags.
 
+A blow aimed at somebody is the exception to the whole of the above, and the exception is worth
+stating: **a swing that misses begins the fight regardless**, and the ladder does not run, a quarrel
+one has started outranking any consequence one's clumsiness invited. What the miss costs is the
+initiative. See [Chapter VIII §5](08-fighting.md#5-the-opening-blow).
+
 ## 9. What a place remembers
 
 Because a scene is rebuilt identically on every arrival, only what is expressly recorded survives.

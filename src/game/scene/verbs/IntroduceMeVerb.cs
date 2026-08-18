@@ -48,7 +48,7 @@ public class IntroduceMeVerb : DialogueVerb
             ? $"ask {NpcName(target)} to present me to {third.DisplayName}"
             : $"ask {NpcName(target)} for an introduction";
 
-    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target, VerbAction view)
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target, VerbAction view, Item? tool = null)
     {
         if (target is not SceneNpc sceneNpc || sceneNpc.Entity is not NpcEntity speaker) return System.Array.Empty<Outcome>();
         if (view.Variant is not NpcEntity third) return System.Array.Empty<Outcome>();

@@ -23,6 +23,7 @@ public static class ActionRulesChecker
         new IllegalActionVisualWitnessRule(),
         new UnderThreatImpossibleRule(),
         new RequiredToolRule(),
+        new FirstBlowMediumRule(),
         new InventoryCapacityRule(),
     };
 

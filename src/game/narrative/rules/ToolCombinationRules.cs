@@ -6,7 +6,7 @@ namespace Cathedral.Game.Narrative.Rules;
 
 /// <summary>
 /// Why a combination was refused, which decides the neutral sentence the acting modus mentis is
-/// given to rewrite. Four refusals, four pieces of news: told only that "it did not work", the
+/// given to rewrite. Each refusal is its own piece of news: told only that "it did not work", the
 /// rewrite picks whichever explanation flatters the character.
 /// </summary>
 public enum ToolFailureKind
@@ -23,6 +23,8 @@ public enum ToolFailureKind
     NoProficiency,
     /// <summary>The implement would serve, and these hands are not practised enough to make it.</summary>
     BeyondSkill,
+    /// <summary>The act is a blow, and the thing held is not a weapon.</summary>
+    NotAWeapon,
 }
 
 /// <summary>What combining this implement with this act comes to, before anything is asked of the critic.</summary>
@@ -40,6 +42,9 @@ public enum ToolCombinationGate
     /// <summary>The act admits of no implement, and this one carries no exception for it.</summary>
     ExcludedVerb,
 
+    /// <summary>The act is struck with a fighting medium, and this implement is no weapon.</summary>
+    NotAWeapon,
+
     /// <summary>Nothing settles it here; the critic must judge the implement.</summary>
     AskTheCritic,
 }
@@ -47,13 +52,18 @@ public enum ToolCombinationGate
 /// <summary>
 /// The whole of what is decided about a combined implement <b>without an LLM</b>, in one place.
 ///
-/// <para>Three of the four gates end the matter before a request is made, which is most of the point:
+/// <para>Every gate but one ends the matter before a request is made, which is most of the point:
 /// the critic used to be asked whether an axe helps one listen to birdsong, and the answer was a
 /// second or two of inference to reach a conclusion the category already carried.</para>
 ///
 /// <para><b>The order is load-bearing.</b> Proficiency is asked first because a body that can use
-/// nothing can also not use the thing it was handed, purpose or no. The implement's own purpose is
-/// asked next and settles the matter both ways — a thing made for one work serves that work without
+/// nothing can also not use the thing it was handed, purpose or no — and that one line is the whole
+/// of the rule that hands with no craft in them (score 0, or disabled by a High-handicap wound) may
+/// use no implement at all, for any verb: <c>ToolUsageProficiencyStat</c> reads
+/// <c>DerivedStat.GetValue</c>, which already degrades a wound-disabled organ to its worst value.
+/// A verb struck with a fighting medium is asked next, because for such a verb the question is not
+/// what the implement was made for but whether it is a weapon. The implement's own purpose follows,
+/// and settles the matter both ways — a thing made for one work serves that work without
 /// argument and no other work at all — which is why it comes before the verb's category: the
 /// exception to an excluded act and the refusal of a specialised implement are one declaration read
 /// in its two directions.</para>
@@ -86,6 +96,16 @@ public static class ToolCombinationRules
     public static ToolCombinationGate Resolve(Verb? verb, Item item, ToolProficiency proficiency)
     {
         if (proficiency == ToolProficiency.None) return ToolCombinationGate.NoProficiency;
+
+        // A blow is struck with a fighting medium, and the set of things one strikes with is closed:
+        // a weapon, or the body. So both directions are settled here without a critic call — a sword
+        // is what attacking is done with whatever its MadeForVerbIds say, and no argument about a
+        // lantern's heft makes it a weapon. See Verb.UsesFightingMedium.
+        if (verb?.UsesFightingMedium == true)
+            return item is Cathedral.Fight.IWeaponItem
+                ? ToolCombinationGate.MadeForIt
+                : ToolCombinationGate.NotAWeapon;
+
         if (IsMadeFor(verb, item))               return ToolCombinationGate.MadeForIt;
         if (IsMadeForOtherWork(verb, item))      return ToolCombinationGate.NotItsPurpose;
         if (verb?.ToolUse == ToolUsage.Excluded) return ToolCombinationGate.ExcludedVerb;
