@@ -32,6 +32,14 @@ public abstract class DialogueVerb : Verb
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
 
     /// <summary>
+    /// No implement bears on speech, so the whole family is excluded here rather than twelve times
+    /// over. The roll only <i>opens</i> the conversation — everything that follows is the tree's, and
+    /// a tree cannot see what was in the speaker's hand. Lending dice to "may I be presented to your
+    /// master" for holding an axe is the clearest nonsense the combination could produce.
+    /// </summary>
+    public override ToolUsage ToolUse => ToolUsage.Excluded;
+
+    /// <summary>
     /// Approaching someone and opening your mouth is the same skill whatever you then say, so every
     /// dialogue verb teaches social interaction. What the <i>conversation</i> teaches is the tree's
     /// business — see <see cref="DialogueTree.GrantedModusMentisId"/>, applied at the resolution.

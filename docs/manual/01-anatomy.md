@@ -169,7 +169,7 @@ value** — which for most is a floor, and for a duration or a price is a ceilin
 | Humor Modifier Limit | viscera | score, never below 1 |
 | Gender | genitories | as stamped at generation; else derived from the score |
 | Natural Attack | genitories | score, in dice |
-| Tool Usage Cap | hands | score |
+| Tool Usage Proficiency | hands | four bands — None at nought, Low at 1–2, Medium at 3–4, High at 5–6 |
 | Move Speed | legs | by table — 1, 2, 4, 6, 8 cells per cinetic point at scores 0 to 4 |
 | Runaway Dice | feet | score, never below 1 |
 | Equilibrium | feet | score, never below 1 |

@@ -23,6 +23,15 @@ public class CutVerb : Verb
     /// <summary>Butchering a carcass is knife work. No hands, no verb.</summary>
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
 
+    /// <summary>
+    /// And no knife, no verb either. Taking a hide off a carcass or a fang out of a jaw with bare
+    /// fingers is not a hard act, it is not an act — which the doc comment above had asserted for as
+    /// long as the verb has existed while the code let it be done empty-handed.
+    /// </summary>
+    public override ToolUsage ToolUse => ToolUsage.Required;
+
+    public override IReadOnlyList<string> ReferenceToolIds => new[] { "knife" };
+
     /// <summary>What a success teaches: taking a body apart.</summary>
     public override string? GrantedModusMentisId(Element? target) => "butchery";
 

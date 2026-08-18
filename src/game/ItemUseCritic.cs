@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -10,10 +10,14 @@ using Cathedral.LLM;
 namespace Cathedral.Game;
 
 /// <summary>
-/// The Item-Use Critic: a small LLM scoped to judging how the player's <b>items</b> figure in an
-/// action — whether a combined item meaningfully helps accomplish the action, and whether it is
-/// consumed in the process. It answers via enum-choice decision trees (GBNF-constrained), picking one
-/// choice per node. Stateless — the slot is reset after every evaluation.
+/// The Item-Use Critic: a small LLM scoped to one question — whether a combined item can serve the
+/// action it was offered to, and to what degree. It answers via enum-choice decision trees
+/// (GBNF-constrained), picking one choice per node. Stateless — the slot is reset after every
+/// evaluation.
+///
+/// <para>The degree it returns is not a verdict: <c>ToolCombinationRules</c> decides which degrees
+/// the acting body's hands can act upon. The critic judges the implement and is told nothing about
+/// who holds it, which is what keeps its question answerable.</para>
 ///
 /// This is all the critic does now. Plausibility, difficulty, wounds, witnesses and threats moved out:
 /// to the modus-mentis persona-fit enum, to per-verb penalty lists, and to deterministic coded rules.
@@ -265,9 +269,8 @@ public class ItemUseCritic : IDisposable
         }
     }
 
-    private static string GetCriticSystemPrompt() => @"You are the ITEM-USE CRITIC. You judge only how a tool or object figures in an action:
-- whether an item meaningfully helps the character accomplish the action (versus bare hands), and
-- whether the item is consumed, destroyed, or used up in doing so.
+    private static string GetCriticSystemPrompt() => @"You are the ITEM-USE CRITIC. You judge only one thing:
+- whether a tool or object meaningfully helps the character accomplish an action, and how well.
 
 Guidelines:
 - Reason concretely about the item's physical properties and how it would actually be used.

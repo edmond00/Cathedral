@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Scene.Reminescence;
@@ -15,6 +15,9 @@ public class RememberVerb : Verb
     public override string VerbId         => "remember";
     public override string DisplayName    => "Remember";
     public override int    BaseDifficulty => 0;
+
+    /// <summary>A phase transition inward. Nothing in the hands reaches what is being reached for.</summary>
+    public override ToolUsage ToolUse => ToolUsage.Excluded;
 
     /// <summary>What a success teaches: reaching back into your own childhood.</summary>
     public override string? GrantedModusMentisId(Element? target) => "introspection";

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Routines;
@@ -20,6 +20,9 @@ public class TrackVerb : Verb
     public override string VerbId         => "track";
     public override string DisplayName    => "Track";
     public override int    BaseDifficulty => 3;
+
+    /// <summary>Reading sign off the ground - perception, and so of a piece with the senses. What finds a trail is an eye and a memory for what a print means.</summary>
+    public override ToolUsage ToolUse => ToolUsage.Excluded;
 
     /// <summary>What a success teaches: reading sign, and what it says about where something went.</summary>
     public override string? GrantedModusMentisId(Element? target) => "spoor_reading";
@@ -80,6 +83,9 @@ public class StalkVerb : Verb
     public override string VerbId         => "stalk";
     public override string DisplayName    => "Stalk";
     public override int    BaseDifficulty => 4;
+
+    /// <summary>Moving unseen behind somebody. Nothing held makes a footfall quieter, and a full hand makes it louder.</summary>
+    public override ToolUsage ToolUse => ToolUsage.Excluded;
 
     /// <summary>Following a stranger about for a day is a crime wherever it is done.</summary>
     protected override bool IsIllegalFor(Scene scene, PoV pov, Element? target, PartyMember? actor) => true;

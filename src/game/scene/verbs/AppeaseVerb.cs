@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Npc;
@@ -17,6 +17,9 @@ public class AppeaseVerb : Verb
     public override string VerbId         => "appease";
     public override string DisplayName    => "Appease";
     public override int    BaseDifficulty => 3;
+
+    /// <summary>As TAME, and for the same reason: an implement brandished at something already hostile is not what settles it.</summary>
+    public override ToolUsage ToolUse => ToolUsage.Excluded;
 
     /// <summary>What a success teaches: reading an animal well enough to calm it.</summary>
     public override string? GrantedModusMentisId(Element? target) => "beast_sense";

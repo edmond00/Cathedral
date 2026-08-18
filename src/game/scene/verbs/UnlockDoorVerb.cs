@@ -19,6 +19,21 @@ public class UnlockDoorVerb : Verb
     /// <summary>Picks, wards and a lock to work. No hands, no verb.</summary>
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
 
+    /// <summary>
+    /// And no pick, no verb. A ward is not turned with a fingertip: something slim and stiff has to
+    /// go into the keyway, and the doc comment above has said so since the verb was written while
+    /// the code let a lock be picked with nothing at all.
+    /// </summary>
+    public override ToolUsage ToolUse => ToolUsage.Required;
+
+    /// <summary>
+    /// Two, so the verb is not gated on one item's luck: a hairpin is bent into a pick and comes out
+    /// of a childhood or off a farmhand, while a bone needle can simply be bought. Anything else
+    /// slim enough — a nail, the point of a knife — still gets its hearing from the substitution
+    /// critic, which is exactly what a reference tool is for.
+    /// </summary>
+    public override IReadOnlyList<string> ReferenceToolIds => new[] { "hairpin", "bone_needle" };
+
     /// <summary>What a success teaches: forcing a lock teaches locks.</summary>
     public override string? GrantedModusMentisId(Element? target) => "lockpicking";
 

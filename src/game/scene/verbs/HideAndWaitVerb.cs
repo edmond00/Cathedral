@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Routines;
@@ -21,6 +21,9 @@ public class HideAndWaitVerb : Verb
     public override string VerbId         => "hide_and_wait";
     public override string DisplayName    => "Hide and Wait";
     public override int    BaseDifficulty => 2;
+
+    /// <summary>Keeping out of sight while the hour passes. What would conceal a body is a garment, and garments are not combinable at all.</summary>
+    public override ToolUsage ToolUse => ToolUsage.Excluded;
 
     /// <summary>What a success teaches: being somewhere without being seen there.</summary>
     public override string? GrantedModusMentisId(Element? target) => "stealth";

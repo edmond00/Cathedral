@@ -116,6 +116,21 @@ public sealed class ReadingLenses : WearableItem
 
     public override IReadOnlyList<SocialCategory> DialogueAppeal =>
         new[] { SocialCategory.Bourgeois, SocialCategory.Religious, SocialCategory.Aristocrat };
+
+    /// <summary>
+    /// Ground glass raised to the eye is the one implement that bears on looking closely, and so the
+    /// case the whole exception mechanism was built for: EXAMINE is excluded as a category — no
+    /// implement sharpens an eye — and these are the exception that proves it rather than the
+    /// counter-example that would sink it.
+    ///
+    /// <para>They are a garment by category, which is why <c>GetCombinableItems</c> admits anything
+    /// declaring an exception regardless of category. Nothing about them is shown in the pack: a
+    /// player finds this by holding them up to something.</para>
+    /// </summary>
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "examine" };
+
+    /// <summary>Ground lenses, not a jeweller's loupe: enough to see by, not enough to see far.</summary>
+    public override int UsageLevel => 3;
 }
 
 public sealed class LinenBlindfold : WearableItem

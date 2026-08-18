@@ -107,6 +107,39 @@ public abstract class Item
     /// </summary>
     public virtual int UsageLevel => 1;
 
+    /// <summary>
+    /// The acts this item is <b>made for</b> — and, when non-empty, <b>the only acts it may be used
+    /// for at all</b>. Empty (the default) means a general implement, judged on its merits against
+    /// whatever it is offered to.
+    ///
+    /// <para>The declaration cuts both ways, and the second edge is the sharper one:</para>
+    /// <list type="bullet">
+    /// <item><b>Accepted here, without argument.</b> A combination against a listed verb skips the
+    ///   item-use critic entirely — the only thing that can still refuse it is a body of
+    ///   <see cref="ToolProficiency.None"/>, which can use nothing for anything. This is also the
+    ///   <b>only</b> way past <see cref="Scene.Verbs.ToolUsage.Excluded"/>: a glass ground to
+    ///   magnify is why EXAMINE can be excluded as a category and still admit the one implement
+    ///   that genuinely bears on it.</item>
+    /// <item><b>Refused everywhere else, without argument.</b> A thing made for one work is not a
+    ///   general tool that happens to be good at it. Lenses cannot break ore out of a seam, and
+    ///   asking a critic whether they might is a request spent to be told what the declaration
+    ///   already said.</item>
+    /// </list>
+    ///
+    /// <para>So this is for <b>single-purpose</b> implements only. A rope, a knife, an axe are
+    /// general: they serve a dozen acts nobody has enumerated, and declaring three of them here
+    /// would forbid the other nine. When in doubt, leave it empty and let the critic judge.</para>
+    ///
+    /// <para>Deliberately <b>not shown in the inventory panel</b>. An implement that announced the
+    /// acts it was good for would turn the narration phase into a list to be read off, where the
+    /// whole of the phase is working out what to try. A player learns this by trying it.</para>
+    ///
+    /// <para>A verb's own <c>ReferenceToolIds</c> is a different declaration, made from the verb's
+    /// side, and carries no exclusivity: a knife is what CUT is done with, and is still an ordinary
+    /// candidate for everything else.</para>
+    /// </summary>
+    public virtual IReadOnlyList<string> MadeForVerbIds => System.Array.Empty<string>();
+
 
     /// <summary>
     /// The article/determiner that precedes this item's lowercased name when it is mentioned

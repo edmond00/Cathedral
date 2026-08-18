@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Scene;
@@ -84,7 +84,7 @@ public class RoutineRecorder
     /// has stopped for the session.
     /// </summary>
     public void OnVerbSucceeded(ParsedNarrativeAction action, Scene.Scene scene, PoV povBeforeMove,
-        PartyMember actingMember, bool itemConsumed, IReadOnlyList<Outcome> reports)
+        PartyMember actingMember, IReadOnlyList<Outcome> reports)
     {
         if (!_recording) return;
 
@@ -125,7 +125,7 @@ public class RoutineRecorder
             VariantKey       = verb.RoutineVariantKey(action.PreselectedOutcome) ?? "",
             // Recorded, not required — see RoutineStep.ActionModusMentisId.
             ActionModusMentisId = action.ActionModusMentisId ?? "",
-            Constraints      = BuildConstraints(action, actingMember, itemConsumed),
+            Constraints      = BuildConstraints(action, actingMember),
             RepositionsPointOfView = reports.Any(r => r.RoutineChainEffect.Repositions()),
         };
 
@@ -228,14 +228,16 @@ public class RoutineRecorder
     /// line in the routine's requirements list, and the skill you happened to use is neither.</para>
     /// </summary>
     private static List<RoutineConstraint> BuildConstraints(ParsedNarrativeAction action,
-        PartyMember actingMember, bool itemConsumed)
+        PartyMember actingMember)
     {
         var constraints = new List<RoutineConstraint>
         {
             new ActingMemberConstraint(actingMember.DisplayName),
         };
 
-        if (itemConsumed && action.CombinedItem != null)
+        // Every combined implement, not merely one judged used up: the step cannot be walked
+        // without it either way. See ItemConstraint, which no longer spends what it requires.
+        if (action.CombinedItem != null)
             constraints.Add(new ItemConstraint(action.CombinedItem.ItemId, action.CombinedItem.DisplayName));
 
         return constraints;

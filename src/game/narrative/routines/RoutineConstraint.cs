@@ -49,7 +49,23 @@ public abstract class RoutineConstraint
     [JsonIgnore] public virtual string OutcomeText => "";
 }
 
-/// <summary>Requires (and consumes) one instance of an item the acting member holds.</summary>
+/// <summary>
+/// Requires — but does not spend — the implement the step was recorded with. The acting member must
+/// still hold one, or the step is unreplayable.
+///
+/// <para>This used to consume the item, and was recorded only when an LLM critic judged that the
+/// original act had used it up. Both halves are gone. Only tools, weapons and items declaring
+/// themselves made for an act may be combined at all, and none of those is spent by being used, so
+/// there is no longer a question to ask — see the note where the consumption tree was, in
+/// <c>CriticTrees</c>.</para>
+///
+/// <para>The constraint is therefore recorded for <b>every</b> combined implement rather than for
+/// the rare judged-consumed one, which is what it should always have meant: replaying "work the
+/// seam for ore" without a pick is not a routine that can be walked, whether or not the first pick
+/// survived. <see cref="Consume"/> is left doing nothing rather than removed, because the base
+/// class calls it for every constraint and a requirement that costs nothing is exactly what this
+/// now is.</para>
+/// </summary>
 public sealed class ItemConstraint : RoutineConstraint
 {
     public string ItemId { get; set; } = "";
@@ -62,18 +78,12 @@ public sealed class ItemConstraint : RoutineConstraint
 
     public override bool IsSatisfied(RoutineReplayContext ctx) => ctx.AvailableItemCount(ItemId) > 0;
 
-    public override void Consume(RoutineReplayContext ctx)
-    {
-        if (ctx.DryRun)
-        {
-            ctx.VirtualLedger.TryGetValue(ItemId, out int spent);
-            ctx.VirtualLedger[ItemId] = spent + 1;
-            return;
-        }
-
-        var item = ctx.ActingMember.GetAllItems().FirstOrDefault(i => i.ItemId == ItemId);
-        if (item != null) ctx.ActingMember.RemoveItem(item);
-    }
+    /// <summary>
+    /// Nothing. The implement is required, not spent — and the virtual ledger is deliberately left
+    /// untouched, so two steps of one routine may both call for the same knife and one knife
+    /// satisfies both.
+    /// </summary>
+    public override void Consume(RoutineReplayContext ctx) { }
 
     [JsonIgnore] public override bool ShowInOutcome => true;
     [JsonIgnore] public override string OutcomeText => $"Used: {ItemName}";

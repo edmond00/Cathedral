@@ -99,7 +99,7 @@ public abstract class Verb
     /// passes the capability test.</para>
     /// </summary>
     public bool IsPossible(Scene scene, PoV pov, Element target, PartyMember? actor = null)
-        => (actor?.Can(RequiredCapabilities) ?? true) && IsPossibleFor(scene, pov, target, actor);
+        => (actor?.Can(EffectiveCapabilities) ?? true) && IsPossibleFor(scene, pov, target, actor);
 
     /// <summary>The verb's own condition: scene state, target shape, affinity, schedule, tools.</summary>
     protected abstract bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null);
@@ -331,15 +331,32 @@ public abstract class Verb
     // ── Tool requirements ──────────────────────────────────────────────────────
 
     /// <summary>
-    /// The <c>ItemId</c>s of the tools this verb is normally done with. Empty (the default) means the
-    /// verb needs no tool and bare hands are fine.
+    /// Whether an implement may be combined with this verb, and whether one is obligatory.
+    /// Default <see cref="Scene.Verbs.ToolUsage.Optional"/>.
     ///
-    /// <para>When non-empty the verb becomes <b>impossible without a combined item</b> — you cannot
-    /// mine a seam by hand — and the item the player did combine is put to the item-use critic, which
-    /// decides whether it is one of these tools, could stand in for one, or could not. Listing several
-    /// ids means any of them serves outright (a rod or a net will both catch fish); anything else is
-    /// the critic's judgement call, which is the point: a rock hammer is not a pickaxe but a player
-    /// who reaches for one has earned the attempt.</para>
+    /// <para>The question is mechanical rather than aesthetic: a combined item joins the die chain as
+    /// its leaf, so the test is "can holding a thing change how well this goes?". Where the answer is
+    /// structurally no — speech, the senses, thought, waiting, walking on the flat — the verb is
+    /// <see cref="Scene.Verbs.ToolUsage.Excluded"/> and any combination attempted against it fails
+    /// without troubling the critic.</para>
+    ///
+    /// <para>Excluded is <b>not</b> the same as unofferable. The "Use Tool" row is greyed only when
+    /// nothing combinable is carried at all, so the attempt is always available and always costs a
+    /// noetic point when it fails. Choosing sensibly is the player's part of the bargain — and an
+    /// implement may carry an exception for a particular excluded verb (see
+    /// <c>Item.MadeForVerbIds</c>), which is what lets a glass be raised to the eye.</para>
+    /// </summary>
+    public virtual ToolUsage ToolUse => ToolUsage.Optional;
+
+    /// <summary>
+    /// The <c>ItemId</c>s of the tools this verb is normally done with. Read only when
+    /// <see cref="ToolUse"/> is <see cref="Scene.Verbs.ToolUsage.Required"/>, and mandatory there —
+    /// <c>--verb-audit</c> fails a Required verb that names none.
+    ///
+    /// <para>A Required verb is <b>impossible without a combined item</b> — you cannot mine a seam by
+    /// hand — and an item that is not one of these is put to the item-use critic, which decides
+    /// whether it could stand in. Listing several ids means any of them serves outright (a rod or a
+    /// net will both catch fish). An item named here needs no critic call at all: it is the tool.</para>
     ///
     /// <para>Ids are matched against <c>ItemRegistry</c>; <c>--verb-audit</c> resolves every one, since
     /// a typo here makes the verb permanently impossible rather than merely wrong.</para>
@@ -347,7 +364,21 @@ public abstract class Verb
     public virtual IReadOnlyList<string> ReferenceToolIds => System.Array.Empty<string>();
 
     /// <summary>Whether this verb cannot be attempted with bare hands.</summary>
-    public bool RequiresTool => ReferenceToolIds.Count > 0;
+    public bool RequiresTool => ToolUse == ToolUsage.Required;
+
+    /// <summary>
+    /// What the body must be able to do for this verb, <b>including what its tool rule implies</b>.
+    /// A Required verb cannot be performed without combining an implement, and combining one is
+    /// handcraft — so the capability follows from the category rather than being restated on each
+    /// verb, exactly as the anatomy gate itself is applied once in <see cref="IsPossible"/> rather
+    /// than trusted to every call site.
+    ///
+    /// <para>Without this a beast would be <i>offered</i> <c>slay</c> and then refused by
+    /// <c>RequiredToolRule</c> at the cost of a noetic point, every time — a withholding dressed up
+    /// as a refusal, which is the distinction the two rule families exist to keep.</para>
+    /// </summary>
+    public AnatomyCapability EffectiveCapabilities
+        => RequiredCapabilities | (RequiresTool ? AnatomyCapability.Handcraft : AnatomyCapability.None);
 
     // ── Learning ───────────────────────────────────────────────────────────────
 

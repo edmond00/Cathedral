@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Scene.Building;
@@ -14,6 +14,9 @@ public class FollowPathVerb : Verb
     public override string VerbId         => "follow_path";
     public override string DisplayName    => "Follow";
     public override int    BaseDifficulty => 1;
+
+    /// <summary>Following a path that is already there. Walking is walking.</summary>
+    public override ToolUsage ToolUse => ToolUsage.Excluded;
 
     /// <summary>What a success teaches: a path read and followed is terrain understood.</summary>
     public override string? GrantedModusMentisId(Element? target) => "topographia";

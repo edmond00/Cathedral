@@ -817,7 +817,7 @@ from the game's (very chatty) diagnostic logging on the same stdout.
 | `--location-id <n>` | Builds every scene as location id `n`. A scene is a pure function of its id (`CreateSeededRandom(locationId)`), so the id decides the layout, the room names, the objects and the people — a village rolls a Chain or a Hub with entirely different rooms. Together with `--location-type` it determines the whole scene, which is what makes `--verb-probe`'s reported rooms actually exist in the run. |
 | `--npc-static` | Pins every NPC to the area they spend most of the day in, instead of following their schedule. Where somebody stands at a given hour is drawn from the location seed across six periods, so an NPC verb's test cannot otherwise name the room — and a test that names the wrong one finds it empty. `--verb-probe` sets the same flag, so its rooms and the run's agree by construction. |
 | `--auto-dialogue` | Settles every conversation as an immediate success instead of holding one. A dozen verbs only *open* a dialogue and the tree decides what follows, so without this a **verb** test has to walk somebody else's tree to reach its own assertion — and breaks whenever that tree is re-authored. `DialogueAutoResolve` performs exactly the writes a won conversation makes, so nothing reading the world afterwards can tell. The trees themselves are covered by `cli/_systems/dialogue_*.cli`. |
-| `--grant-item <id[,id…]>` | Puts named items in the starting pack (`axe`, `pick`, `shovel`, `fishing_rod`…). Five verbs are tool-gated and `RequiredToolRule` refuses them outright without one; the starting kit is random, so their success test is unwritable otherwise. Note the rule accepts only `Action.CombinedItem` — **carrying** the tool is not enough, the script must combine it with the action (`click action 0` → `choose 1` → pick the item → `click action 1`). |
+| `--grant-item <id[,id…]>` | Puts named items in the starting pack (`axe`, `pick`, `shovel`, `fishing_rod`, `knife`…). Seven verbs are `ToolUsage.Required` and `RequiredToolRule` refuses them outright without one; the starting kit is random, so their success test is unwritable otherwise. Note the rule accepts only `Action.CombinedItem` — **carrying** the tool is not enough, the script must combine it with the action (`click action 0` → `choose 1` → pick the item → `click action 1`). Grant the verb's own **reference tool**, which auto-passes with no critic call: under `--playground` the item critic picks its verdict at random, so a substitute makes the test a coin flip. |
 
 A typical invocation:
 
@@ -1271,11 +1271,12 @@ budget reaches, and they were designed together — changing one alone re-breaks
   room and still have attempts left, so nothing had to be chosen over anything else. Rounded up
   because flooring lands a starting character on exactly 1, which buys the one thought and nothing
   else — no focus observation, no Speak-About hand-off (that spends the speaker's own point).
-- **Combining a tool costs nothing.** It is part of the action already on screen, and only one item
-  may ever be combined with it. Charging a point made the five tool-gated verbs (`dig`, `mine`,
-  `fish`, `cut_wood`, `break`) *impossible* once the pool shrank: the thinking phase that produces
-  the action spends the point "Use Tool" then wants, so the option was offered and permanently
-  greyed out.
+- **An accepted tool costs nothing; a refused one costs a point.** Combining is part of the action
+  already on screen, and only one item may ever be combined with it. Charging for the *accepted*
+  case made the tool-gated verbs (`dig`, `mine`, `fish`, `cut_wood`, `break`) *impossible* once the
+  pool shrank: the thinking phase that produces the action spends the point "Use Tool" then wants,
+  so the option was offered and permanently greyed out. Charging for the refusal is what pays for
+  never greying the row by verb — see "Tools: the three categories" below.
 - **A failed action does not refill it.** `CloseNarrationSegment(refillNoetic:)` is false on exactly
   one path — the CONTINUE that closes a segment after a failed action (`_pendingSegmentSucceeded`).
   Refilling there meant a miss cost nothing, since the very next press handed the whole budget back.
@@ -1303,6 +1304,88 @@ doing" line in the thinking modus mentis's voice.
 `ThinkingAttemptsRemaining > 0`, so at zero the footer LEAVE button is the way out. That is the
 intended shape, not an oversight — but it is why LEAVE must stay ungated by anything except a Visual
 threat.
+
+### Tools: the three categories, and the four gates
+
+`Verb.ToolUse` is `Excluded` / `Optional` / `Required`, and the test that assigns it is **mechanical,
+not aesthetic**: a combined item joins the die chain as its leaf, so the question is "can holding a
+thing change how well this goes?". Speech, the senses, thought, waiting and walking on the flat all
+answer no structurally — 31 verbs are `Excluded`, 14 `Optional`, 8 `Required`.
+
+**`Required` implies `Handcraft`.** `Verb.EffectiveCapabilities` ORs it in, and `IsPossible` and the
+audit's anatomy table both read *that* rather than `RequiredCapabilities`. Without it a beast is
+offered `slay`, refused by `RequiredToolRule`, and charged a noetic point for a refusal it could
+never have avoided — a withholding dressed as a refusal, which is the whole `ChoiceRulesChecker` /
+`ActionRulesChecker` distinction. Read the declared half anywhere and the beast comes out able to
+slay; that was the bug the audit fix caught.
+
+**The "Use Tool" row is greyed only when nothing combinable is carried** — never by category. An
+excluded verb still accepts the attempt and still fails it, at the cost of a point. That is the
+bargain: the player is trusted to choose, and pays for choosing badly. Do not add a category test at
+the `hasItems` gate in `HandleClick`.
+
+`ToolCombinationRules.Resolve` is the whole pre-LLM ladder, and **the order is load-bearing**:
+
+| gate | when | costs |
+|---|---|---|
+| `NoProficiency` | hands band is None | a point, no request made |
+| `MadeForIt` | item is the verb's reference tool, **or** names it in `Item.MadeForVerbIds` | nothing, no request made |
+| `NotItsPurpose` | item declares `MadeForVerbIds` and this verb is not among them | a point, no request made |
+| `ExcludedVerb` | `ToolUse == Excluded` and the item is not made for it | a point, no request made |
+| `AskTheCritic` | everything else | a point **iff** refused |
+
+Proficiency first because a body that can use nothing can also not use the thing it was handed. The
+item's own purpose next, and it settles the matter **both ways** before the verb's category is
+consulted at all — `MadeForIt` and `NotItsPurpose` are one declaration read in its two directions.
+
+**`ToolUsageProficiencyStat` replaced `ToolUsageCapStat`, and the replacement is the opposite end of
+the same organ.** The cap clamped the dice a tool lent; the band decides whether the combination
+happens at all. Keeping both taxed hands twice for one act, so **the item now lends its whole
+`UsageLevel`**. Bands: 0 → None, 1–2 → Low, 3–4 → Medium, 5–6 → High. What each band clears is
+`ToolCombinationRules.Threshold` — `is_the_tool`/`clearly_helps` at Low, `serves_well`/
+`plausibly_helps` at Medium, `serves_poorly`/`detoured_use` at High, and anything absent from the
+table never clears. **A re-authored critic tree that introduces a choice id fails closed**, which is
+why the table is a lookup rather than a switch with a default.
+
+**Five refusals, five neutral sentences** (`ToolFailureKind`). Told only "it did not work", the
+acting modus mentis rewrites it as whichever near-miss flatters the character — so the wording
+distinguishes the wrong implement, the act that admits none, the implement made for other work, the
+hand with no craft in it, and the sound idea beyond an unpractised hand. Only `WrongTool` carries
+the critic's own reason, because it is the only one an LLM was asked about.
+
+**`Item.MadeForVerbIds` forbids as much as it permits, and that is the point.** A declaration means
+"accepted for these acts without argument, refused for every other, also without argument" — a glass
+ground to magnify cannot break ore out of a seam, and asking a critic whether it might is a request
+spent to be told what the declaration already said. So it is for **single-purpose** implements only:
+`Rope` deliberately declares nothing, because naming the four climbs would forbid the dozen other
+things a rope does. When in doubt, leave it empty and let the critic judge.
+
+A verb's `ReferenceToolIds` is the *other* side of the same idea and carries **no** exclusivity — a
+knife is what `cut` is done with and is still an ordinary candidate for everything else. Only the
+item-side list bars.
+
+It is deliberately **not rendered anywhere**: an implement announcing what it was good for would
+turn the phase into a list to be read off. It is also the only road into an excluded verb, which is
+why `GetCombinableItems` admits **any** item declaring one regardless of category — reading lenses
+are a garment, and are the case the mechanism exists for. `--item-audit` resolves every id, prints
+how many verbs each declaration bars, and flags a pairing already implied by `ReferenceToolIds`
+(redundant on the accepting side, and *not* harmless on the other).
+
+**A combined implement is never consumed, and there is no longer a question about it.** An LLM
+critic used to be asked "was this item used up?" after every successful combination. Since only
+tools, weapons and special-use items are combinable and none of those is spent by being used, it
+spent a request to answer "no" nearly every time — and the times it said yes were simply wrong, as
+when it destroyed the knife a carcass had just been opened with. Under `--playground`, where every
+critic choice is drawn at random, it also cost a script combining twice its tool about half the
+time. If a consumable ever becomes combinable this comes back as a **property of the item**, not as
+a question.
+
+That removal left `ItemConstraint` with no producer, so it changed meaning rather than being
+deleted: it is now recorded for **every** combined implement and **requires without spending** it.
+That is what it should always have meant — replaying "work the seam for ore" without a pick is not
+a routine that can be walked, whether or not the first pick survived. `Consume` is deliberately a
+no-op rather than removed (the base class calls it for every constraint), and it leaves the virtual
+ledger alone so two steps of one routine can both call for the same knife.
 
 ### Checking the outcome catalogue
 
@@ -2136,15 +2219,24 @@ Then it warns about the things that are silent at runtime:
   its target yet;
 - a verb that teaches no modus mentis, or teaches one that does not resolve in `ModusMentisRegistry`
   (a typo grants nothing, silently — the same failure `--npc-audit` guards for in traits);
-- a `ReferenceToolIds` entry no item matches, which makes a tool-gated verb permanently *impossible*
-  rather than merely hard;
+- a `ReferenceToolIds` entry no item matches, which makes a `Required` verb permanently *impossible*
+  rather than merely hard — and the two ways that declaration can fall out of step with `ToolUse`:
+  `Required` naming no tool (refused always, satisfiable never) and a non-`Required` verb naming
+  tools nothing reads;
 - a scale point or cliff whose **top** area holds nothing — a climb that costs a roll and arrives
   somewhere with no points of interest at all. This replaced a check that counted landmark areas,
   which the landscape refactor made meaningless.
 
+It also prints the **implement categories** — the counts, the `Required` verbs with their reference
+tools, and the `Excluded` list in full. That last one is printed rather than counted because it is
+the only declaration in this audit that is pure judgement; every other warning here has an answer the
+code can check, so the only review the exclusions can get is a reader running an eye down them.
+
 It closes with the **anatomy** table: what each anatomy may attempt and what its body rules out
-(`Verb.RequiredCapabilities`). Never a warning — a beast barred from 25 of 54 verbs is the design —
-but it keeps the cost of that design visible, and makes the next anatomy's poverty one line to read.
+(`Verb.EffectiveCapabilities` — *not* `RequiredCapabilities`, which omits the handcraft a `Required`
+verb implies and reports a beast as able to `slay`). Never a warning — a beast barred from 26 of 53
+verbs is the design — but it keeps the cost of that design visible, and makes the next anatomy's
+poverty one line to read.
 
 Run it after adding a verb, a connector type, or a batch of scene content.
 

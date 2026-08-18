@@ -68,6 +68,7 @@ public static class ItemAudit
         warnings.AddRange(CheckWeights(items, sb));
         warnings.AddRange(CheckHitLocationDistribution(sb));
         warnings.AddRange(CheckSkillLocalizations(sb));
+        warnings.AddRange(CheckSpecialUses(items, sb));
 
         sb.AppendLine();
         if (warnings.Count == 0)
@@ -597,6 +598,61 @@ public static class ItemAudit
     /// fighting skills — it is a stick with a name. Also reports per-category counts, since a
     /// category with one weapon gives the player no choice within that medium.
     /// </summary>
+    /// <summary>
+    /// The single-purpose implements — <see cref="Item.MadeForVerbIds"/>. Nothing about them reaches
+    /// the player, which is the design and also why they need auditing: an id that resolves to no
+    /// verb grants nothing and says nothing, exactly as a mistyped modus mentis id does.
+    ///
+    /// <para><b>The declaration forbids as much as it permits</b>, so the list printed here is the
+    /// whole of what each of these items can ever be used for — every other act refuses it outright.
+    /// An unregistered id is therefore doubly bad: it opens nothing and it closes everything.</para>
+    ///
+    /// <para>A pairing with a verb that already names the item as its own reference tool is
+    /// redundant on the accepting side — <c>ToolCombinationRules.IsMadeFor</c> implies it — but not
+    /// harmless, because declaring it here bars the item from every other act. Reported as a fault
+    /// rather than as noise for that reason.</para>
+    /// </summary>
+    private static List<string> CheckSpecialUses(IReadOnlyList<Item> items, StringBuilder sb)
+    {
+        var warnings = new List<string>();
+        var verbs    = Scene.Verbs.VerbRegistry.Instance.GetAll().ToDictionary(v => v.VerbId);
+        var declaring = items.Where(i => i.MadeForVerbIds.Count > 0)
+                             .OrderBy(i => i.ItemId).ToList();
+        int total = verbs.Count;
+
+        sb.AppendLine("── Single-purpose implements ─────────────────────────────────────────");
+        sb.AppendLine("  (accepted for these acts without a critic call; refused for every other)");
+        if (declaring.Count == 0)
+            sb.AppendLine("  none — every excluded verb is closed to every implement.");
+
+        foreach (var item in declaring)
+        {
+            var rendered = new List<string>();
+            foreach (var verbId in item.MadeForVerbIds)
+            {
+                if (!verbs.TryGetValue(verbId, out var verb))
+                {
+                    warnings.Add($"item '{item.ItemId}' is made for verb '{verbId}', which is not "
+                               + "registered — it opens nothing, and the declaration still bars the "
+                               + "item from every act that does exist");
+                    rendered.Add($"{verbId} (?)");
+                    continue;
+                }
+
+                if (verb.ReferenceToolIds.Contains(item.ItemId))
+                    warnings.Add($"item '{item.ItemId}' is made for '{verbId}', which already names it "
+                               + "as its reference tool — the pairing is implied, and declaring it "
+                               + "here additionally bars the item from every other act");
+
+                rendered.Add($"{verbId} [{verb.ToolUse}]");
+            }
+            sb.AppendLine($"  {item.ItemId,-18} lv.{item.UsageLevel}  {string.Join(", ", rendered)}"
+                        + $"   (barred from the other {total - item.MadeForVerbIds.Count})");
+        }
+        sb.AppendLine();
+        return warnings;
+    }
+
     private static List<string> CheckWeapons(IReadOnlyList<Item> items, StringBuilder sb)
     {
         var warnings = new List<string>();

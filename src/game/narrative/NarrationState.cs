@@ -287,10 +287,11 @@ public class ParsedNarrativeAction : ModusMentisChainElement
     public string Keyword { get; set; } = "";                 // Keyword this action relates to
 
     /// <summary>
-    /// Item combined with this action via right-click item selection.
+    /// Item combined with this action via the action popup's "Use Tool" row.
     /// Null when no item is combined. When set, the action text has been reformulated
     /// by the action modusMentis to incorporate the item, and dice rolls receive a bonus
-    /// equal to the item's UsageLevel capped by the hands-derived "tool_usage_cap" stat.
+    /// equal to the item's whole UsageLevel. The hands bear on <i>whether</i> a combination is
+    /// permitted (<see cref="ToolUsageProficiencyStat"/>) rather than on how much it lends.
     /// </summary>
     public Item? CombinedItem { get; set; } = null;
 

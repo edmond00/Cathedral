@@ -69,8 +69,8 @@ public class ActionExecutionController
     /// <summary>
     /// The party member currently performing actions. Defaults to the protagonist but is
     /// reassigned by <see cref="NarrativeController"/> whenever a companion becomes the active
-    /// party member (after a "Speak About"), so skill resolution, organ scores, XP, wounds, and
-    /// item consumption all operate on whoever is actually acting.
+    /// party member (after a "Speak About"), so skill resolution, organ scores, XP and wounds all
+    /// operate on whoever is actually acting.
     /// </summary>
     public PartyMember ActingMember { get; set; }
     private readonly ItemUseCritic _criticEvaluator;
@@ -81,7 +81,7 @@ public class ActionExecutionController
     /// <summary>Exposes the outcome narrator for item combination failure narration.</summary>
     public OutcomeNarrator OutcomeNarrator => _outcomeNarrator;
 
-    /// <summary>Exposes the item-use critic for item appropriateness / consumption checks.</summary>
+    /// <summary>Exposes the item-use critic for the item-appropriateness judgement.</summary>
     public ItemUseCritic ItemUseCritic => _criticEvaluator;
 
     public ActionExecutionController(
@@ -231,25 +231,8 @@ public class ActionExecutionController
                 if (practice != null) llmDecidedReports.Add(practice);
             }
 
-        // === ITEM CONSUMPTION CHECK (item critic) ===
-        if (action.CombinedItem != null)
-        {
-            Console.WriteLine($"🧪 [ITEM CONSUMPTION] Checking if {action.CombinedItem.ItemId} was consumed...");
-            string itemContext = $"{action.CombinedItem.DisplayName} ({action.CombinedItem.Description})";
-            var goalDescription3 = action.PreselectedOutcome?.ToNaturalLanguageString() ?? "";
-            var consumptionCriticContext = new CriticContext(currentNode, _worldContext, _locationId, goalDescription3);
-            var consumptionTree = CriticTrees.BuildItemConsumptionTree(action.ActionText, itemContext, consumptionCriticContext);
-            var consumptionResult = await _criticEvaluator.EvaluateTreeAsync(consumptionTree);
-            if (CriticTrees.IsItemConsumedFromResult(consumptionResult))
-            {
-                ActingMember.RemoveItem(action.CombinedItem);
-                Console.WriteLine($"   Item consumed and removed: {action.CombinedItem.ItemId}");
-            }
-            else
-            {
-                Console.WriteLine($"   Item retained: {action.CombinedItem.ItemId}");
-            }
-        }
+        // A combined implement survives being used. Nothing combinable is a consumable — see the
+        // note where the consumption tree used to be, in CriticTrees.
 
         // Generate narration — the wound (if any) contributes its Verbatim to the consequence list.
         string narration = await _outcomeNarrator.NarrateOutcomeAsync(
@@ -285,8 +268,8 @@ public class ActionExecutionController
     /// PHASE 2 (post-dice variant): compute ONLY the actual outcome once the final (possibly
     /// humor-modified) success/failure is known, streaming its narration into <paramref name="preview"/>
     /// like every other text. No game-state side-effects are applied here; the caller commits them on
-    /// the preview's CONTINUE. Item consumption is decided regardless of success (it does not depend on
-    /// the outcome); the failure branch also samples the wound and resolves witness/threat consequences.
+    /// the preview's CONTINUE. The failure branch also samples the wound and resolves witness/threat
+    /// consequences.
     /// </summary>
     public async Task<ActionExecutionResult> PrepareSingleOutcomeAsync(
         ActionEvaluationResult evalResult, bool succeeded,
@@ -300,18 +283,6 @@ public class ActionExecutionController
         double difficultyScore = evalResult.DifficultyScore;
         int difficultyLevel = evalResult.DifficultyLevel;
         var currentNode = evalResult.CurrentNode;
-
-        // ── Item consumption decision (independent of the dice outcome) ──
-        bool itemConsumed = false;
-        if (action.CombinedItem != null)
-        {
-            string itemContext = $"{action.CombinedItem.DisplayName} ({action.CombinedItem.Description})";
-            var goalDesc = action.PreselectedOutcome?.ToNaturalLanguageString() ?? "";
-            var consumptionCtx = new CriticContext(currentNode, _worldContext, _locationId, goalDesc);
-            var consumptionTree = CriticTrees.BuildItemConsumptionTree(action.ActionText, itemContext, consumptionCtx);
-            var consumptionResult = await _criticEvaluator.EvaluateTreeAsync(consumptionTree);
-            itemConsumed = CriticTrees.IsItemConsumedFromResult(consumptionResult);
-        }
 
         if (succeeded)
         {
@@ -337,7 +308,6 @@ public class ActionExecutionController
                 Narration = narration,
                 FailureWound = null,
                 IsPlausibilityFailure = false,
-                ItemConsumed = itemConsumed,
             };
         }
         else
@@ -380,7 +350,6 @@ public class ActionExecutionController
                 CaughtByWitness = consequences.CaughtBy,
                 FightWithEnemy  = consequences.FightWith,
                 NpcDrawnIn      = consequences.DrawnIn,
-                ItemConsumed = itemConsumed,
             };
         }
     }
@@ -395,9 +364,8 @@ public class ActionExecutionController
     /// PHASE 2 (humor-modifier variant): pre-compute BOTH the success and failure outcomes for an
     /// action during the dice animation, generating both narration texts and the failure wound /
     /// witness / threat data, but applying NO game-state side-effects. The caller commits the
-    /// chosen branch's side-effects at the dice-roll Continue step (XP, wound reports, item
-    /// consumption, witness/threat) based on the final (possibly humor-modified) result.
-    /// Item consumption is decided once (it does not depend on success/failure).
+    /// chosen branch's side-effects at the dice-roll Continue step (XP, wound reports,
+    /// witness/threat) based on the final (possibly humor-modified) result.
     /// </summary>
     public async Task<(ActionExecutionResult success, ActionExecutionResult failure)>
         PrepareDualOutcomesAsync(ActionEvaluationResult evalResult, CancellationToken cancellationToken = default)
@@ -408,18 +376,6 @@ public class ActionExecutionController
         double difficultyScore = evalResult.DifficultyScore;
         int difficultyLevel = evalResult.DifficultyLevel;
         var currentNode = evalResult.CurrentNode;
-
-        // ── Item consumption decision (independent of the dice outcome) ──
-        bool itemConsumed = false;
-        if (action.CombinedItem != null)
-        {
-            string itemContext = $"{action.CombinedItem.DisplayName} ({action.CombinedItem.Description})";
-            var goalDesc = action.PreselectedOutcome?.ToNaturalLanguageString() ?? "";
-            var consumptionCtx = new CriticContext(currentNode, _worldContext, _locationId, goalDesc);
-            var consumptionTree = CriticTrees.BuildItemConsumptionTree(action.ActionText, itemContext, consumptionCtx);
-            var consumptionResult = await _criticEvaluator.EvaluateTreeAsync(consumptionTree);
-            itemConsumed = CriticTrees.IsItemConsumedFromResult(consumptionResult);
-        }
 
         // ── Failure branch data: sampled wound + deterministic witness/threat consequences ──
         var consequences = ResolveFailureConsequences(evalResult);
@@ -456,7 +412,6 @@ public class ActionExecutionController
             Narration = successNarration,
             FailureWound = null,
             IsPlausibilityFailure = false,
-            ItemConsumed = itemConsumed,
         };
 
         var failure = new ActionExecutionResult
@@ -475,7 +430,6 @@ public class ActionExecutionController
             CaughtByWitness = consequences.CaughtBy,
             FightWithEnemy  = consequences.FightWith,
             NpcDrawnIn      = consequences.DrawnIn,
-            ItemConsumed = itemConsumed,
         };
 
         return (success, failure);
@@ -710,11 +664,6 @@ public class ActionExecutionResult
     /// </summary>
     public bool IsPlausibilityFailure { get; set; }
 
-    /// <summary>
-    /// When a combined item was used, whether the LLM decided it should be consumed.
-    /// Applied lazily at the dice-roll Continue step (so it commits only for the chosen outcome).
-    /// </summary>
-    public bool ItemConsumed { get; set; }
 
     /// <summary>
     /// The witness who <b>saw</b> a failed crime, if any — the caught-red-handed confrontation.

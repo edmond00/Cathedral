@@ -28,6 +28,9 @@ public abstract class ExtractionVerb : Verb
     /// </summary>
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
 
+    /// <summary>Declared once for the family: none of the four can be attempted bare-handed.</summary>
+    public override ToolUsage ToolUse => ToolUsage.Required;
+
     /// <summary>The kind of point of interest this verb works on.</summary>
     protected abstract bool Accepts(PointOfInterest poi);
 
@@ -178,6 +181,9 @@ public class BreakVerb : Verb
 
     /// <summary>A hammer or an axe swung at a thing. No hands, no verb.</summary>
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
+
+    /// <summary>Breaking a thing up takes something heavier than a fist.</summary>
+    public override ToolUsage ToolUse => ToolUsage.Required;
 
     /// <summary>
     /// Wrecking somebody's property is a crime; wrecking a thing standing in a public place is only

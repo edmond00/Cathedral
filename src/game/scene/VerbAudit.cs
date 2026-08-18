@@ -149,15 +149,62 @@ public static class VerbAudit
                     warnings.Add($"verb '{verb.VerbId}' teaches '{mmId}', which no modus mentis answers to");
             }
 
-            if (!verb.RequiresTool) continue;
+            // A verb naming reference tools it does not require is a category that was changed on one
+            // side only: the ids are read nowhere, so the verb quietly stops being gated and the
+            // audit's tool-resolution check below stops covering it.
+            if (!verb.RequiresTool)
+            {
+                if (verb.ReferenceToolIds.Count > 0)
+                    warnings.Add($"verb '{verb.VerbId}' is {verb.ToolUse} yet names reference tools "
+                               + $"({string.Join(", ", verb.ReferenceToolIds)}) — nothing reads them; "
+                               + "it is Required that makes a tool obligatory");
+                continue;
+            }
+
             gated++;
+            // The inverse, and the worse of the two: Required with nothing named refuses every
+            // attempt ("I would need a tool for that") and can never be satisfied by anything.
+            if (verb.ReferenceToolIds.Count == 0)
+                warnings.Add($"verb '{verb.VerbId}' is Required but names no reference tool — "
+                           + "RequiredToolRule refuses it and no item can ever answer");
+
             foreach (var toolId in verb.ReferenceToolIds.Where(t => !itemIds.Contains(t)))
                 warnings.Add($"verb '{verb.VerbId}' requires tool '{toolId}', which no item answers to — the verb can never be performed");
         }
 
+        int excluded = verbs.Count(v => v.ToolUse == ToolUsage.Excluded);
+        int optional = verbs.Count(v => v.ToolUse == ToolUsage.Optional);
+
         sb.AppendLine("--- VERB DECLARATIONS ---");
-        sb.AppendLine($"  {verbs.Count} verb(s) registered; {teaching} teach a modus mentis; {gated} require a tool");
+        sb.AppendLine($"  {verbs.Count} verb(s) registered; {teaching} teach a modus mentis");
+        sb.AppendLine($"  implements: {excluded} excluded, {optional} optional, {gated} required");
         sb.AppendLine();
+
+        // The excluded list is worth printing in full rather than counted. It is the one declaration
+        // here that is pure judgement — every other warning in this audit has a right answer the code
+        // can check — so the only review it can get is a reader running an eye down it.
+        sb.AppendLine("--- IMPLEMENTS: EXCLUDED ---");
+        sb.AppendLine("  (no implement may be combined; only an item MADE FOR one of these gets in)");
+        foreach (var line in Chunk(verbs.Where(v => v.ToolUse == ToolUsage.Excluded).Select(v => v.VerbId), 5))
+            sb.AppendLine($"      {line}");
+        sb.AppendLine();
+
+        sb.AppendLine("--- IMPLEMENTS: REQUIRED ---");
+        foreach (var verb in verbs.Where(v => v.ToolUse == ToolUsage.Required))
+            sb.AppendLine($"      {verb.VerbId,-12} {string.Join(" / ", verb.ReferenceToolIds)}");
+        sb.AppendLine();
+    }
+
+    /// <summary>Groups ids into fixed-width rows, for a list read rather than scanned.</summary>
+    private static IEnumerable<string> Chunk(IEnumerable<string> ids, int perRow)
+    {
+        var row = new List<string>();
+        foreach (var id in ids)
+        {
+            row.Add(id.PadRight(24));
+            if (row.Count == perRow) { yield return string.Concat(row).TrimEnd(); row.Clear(); }
+        }
+        if (row.Count > 0) yield return string.Concat(row).TrimEnd();
     }
 
     // ── Per-factory coverage sweep ────────────────────────────────────────────
@@ -503,8 +550,11 @@ public static class VerbAudit
         sb.AppendLine("--- ANATOMY ---");
         foreach (var anatomy in ModusMentisAnatomy.AllAnatomies)
         {
+            // EffectiveCapabilities, not RequiredCapabilities: a Required verb implies handcraft
+            // whether or not it says so, and reading the declared half here would report a beast as
+            // able to SLAY — which is precisely the gap this audit exists to make visible.
             var caps    = AnatomyFactoryRegistry.GetFactory(anatomy).Capabilities;
-            var blocked = verbs.Where(v => (caps & v.RequiredCapabilities) != v.RequiredCapabilities)
+            var blocked = verbs.Where(v => (caps & v.EffectiveCapabilities) != v.EffectiveCapabilities)
                                .Select(v => v.VerbId).ToList();
 
             sb.AppendLine($"  {anatomy,-6} can [{caps}] — {verbs.Count - blocked.Count}/{verbs.Count} verbs");

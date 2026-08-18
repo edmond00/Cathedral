@@ -7,7 +7,12 @@
 # pins people to one room; --observe-only pins the phase to one object, which is why the keyword is
 # clicked by index (which word the prose highlights is not something a test can know).
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Hall" --period dawn --observe-only "brewer"
+# Slay is a Required verb: a knife must be COMBINED with the action, not merely carried. Since the
+# knife is slay's own reference tool the combination is accepted without a critic call at all
+# (ToolCombinationRules.IsMadeFor), which is what makes this deterministic — under --playground the
+# item critic picks its verdict at random, so a substitute would pass or fail by seed.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-item knife --location-type test --location-id 0 --start-area "Test Hall" --period dawn --observe-only "brewer"
 
 wait
 click menu New
@@ -28,6 +33,15 @@ advance 12 180
 regions
 
 click action 0
+choose 1
+regions
+choose 0
+advance 12 180
+
+# Combining does not execute: it rewrites the action to include the tool and offers THAT as a new
+# button. Executing the reformulated one is what puts CombinedItem on the action.
+regions
+click action 1
 choose 0
 advance 12 180
 click continue

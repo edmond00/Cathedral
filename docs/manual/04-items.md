@@ -134,20 +134,68 @@ nought or are disabled by a High wound. This is the whole of what the teeth do o
 
 ## 7. Implements
 
-An item of the **tool** or **weapon** category may be combined with an act during narration, and
-lends **bonus dice equal to its level of use**, which runs from one to ten. Higher levels denote
-more specialised or potent implements.
+An item of the **tool** or **weapon** category may be combined with an act during narration — a
+weapon being a tool also, if a specialised and often clumsy one — and lends **bonus dice equal to
+its level of use**, which runs from one to ten. Higher levels denote more specialised or potent
+implements. The level is lent whole: nothing abates it, and a fine implement in an unpractised hand
+lends exactly what it lends in a practised one. An item made for some single act may be combined
+whatever its category, of which more below.
 
-Two constraints govern this:
+Only one implement may be combined with any act.
 
-- The lent level is capped by the **hands'** measure. A steady hand draws the full potency of a
-  specialised implement; a weak or wounded one clamps the benefit however fine the implement. A hand
-  disabled by a High wound caps at nought, and a combined implement then lends nothing.
-- Certain acts are **gated** upon a particular implement and are refused outright without one. For
-  these it is not enough to carry the thing: it must be combined with the act.
+### The three standings of an act
 
-Only one implement may be combined with any act. Combination itself costs no noetic point — it is
-part of the act already chosen (see [Chapter VI](06-narration.md)).
+Every manner of acting stands in one of three relations to implements, and the relation is fixed —
+it does not vary with the thing acted upon.
+
+- Most admit an implement without requiring one. The work can be done with the hands, and a thing
+  in them may make it go better.
+- Some **admit none at all**. Where an act is speech, or the turning of a sense upon something, or
+  thought, or waiting, or walking upon level ground, there is no work for a held thing to bear
+  upon, and an implement offered to such an act is refused.
+- Some **require one**, and are refused outright without it. For these it is not enough to carry
+  the thing: it must be combined with the act. Ore is not taken from rock, nor a hide from a
+  carcass, with the fingers.
+
+It is to be observed that an implement may be **made for** a particular act. Two sorts are: the
+implement a required act calls for, and the thing whose whole purpose is some single work. Such a
+pairing is accepted without further question, and the second sort is the one road by which an
+implement reaches an act that admits none.
+
+**A thing made for one work is good for no other.** The single-purpose implement is refused
+everywhere outside its purpose, as flatly as it is accepted within it: ground lenses will not break
+ore out of a seam, and no measure of resolve or dexterity will make them. This is the price of the
+privilege, and it is what keeps a specialised thing from being simply better than a general one.
+The implement a *required* act calls for is under no such restriction — a knife is what a carcass is
+opened with, and remains an ordinary candidate for anything else.
+
+Nothing declares which implements are of which sort; it is learned by holding one up to a thing.
+
+### Proficiency
+
+Whether a combination is accepted at all is governed by the **hands'** measure, which yields four
+bands: None, Low, Medium and High (see [Chapter I §6](01-anatomy.md#6-the-derived-measures)).
+
+The offered implement is weighed against the act, and the verdict returned is of a degree — that
+the implement is the very thing, that it is another thing which would nonetheless serve properly,
+or that it might be made to serve clumsily. **The band decides which degrees suffice.**
+
+| Verdict | Accepted at |
+|---|---|
+| The implement is the thing the work is done with | Low, Medium, High |
+| Another thing, which would do the work properly | Medium, High |
+| It could be made to serve, clumsily and with difficulty | High |
+| It cannot do this work, however handled | never |
+
+Whence a practised hand is not one that draws more from an implement, but one that can make more
+things serve as implements. A body at **None** — its hands at nought, or disabled by a High wound —
+can use nothing for anything, however well chosen.
+
+**A refused combination costs a noetic point** (see [Chapter VI](06-narration.md#3-the-phase-and-its-budget)),
+and this is true of every refusal alike: the wrong implement, an act that admits none, an implement
+held to work it was not made for, and a hand too unpractised for the verdict returned. An accepted
+one costs nothing, being part of an act already deliberated upon. Choosing well is therefore the
+whole of the economy here.
 
 ## 8. Weapons
 

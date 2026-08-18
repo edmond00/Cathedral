@@ -26,6 +26,16 @@ public abstract class SensoryVerb : Verb
     public override int BaseDifficulty => 1;
 
     /// <summary>
+    /// Turning a sense upon something produces no state change at all — the narration is the whole
+    /// outcome — so there is nothing for an implement to make go better. Declared once for the four.
+    ///
+    /// <para>This is the exclusion that most wants an exception, and it is what
+    /// <c>Item.MadeForVerbIds</c> is for: a glass ground to magnify bears on EXAMINE and on
+    /// nothing else, and says so from the item's side rather than by softening the category.</para>
+    /// </summary>
+    public override ToolUsage ToolUse => ToolUsage.Excluded;
+
+    /// <summary>
     /// Where this sense can be turned: on a point of interest in the current area, or in the spot the
     /// character is standing in. Both are needed — half the interesting objects in a building are
     /// inside a spot rather than loose in the room.

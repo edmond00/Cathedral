@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Routines;
 
@@ -13,6 +13,9 @@ public class MoveToAreaVerb : Verb
     public override string VerbId         => "move";
     public override string DisplayName    => "Move";
     public override int    BaseDifficulty => 1;
+
+    /// <summary>Walking from one room to the next. Nothing carried makes a body better at it, and at difficulty 1 the dice an implement would lend are spent on a roll already won.</summary>
+    public override ToolUsage ToolUse => ToolUsage.Excluded;
 
     /// <summary>What a success teaches: walking somewhere on purpose is the whole of wayfaring.</summary>
     public override string? GrantedModusMentisId(Element? target) => "wayfaring";

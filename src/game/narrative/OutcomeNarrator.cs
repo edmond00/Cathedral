@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Cathedral;
 using Cathedral.Game.Narrative.Preview;
+using Cathedral.Game.Narrative.Rules;
 using Cathedral.LLM;
 
 namespace Cathedral.Game.Narrative;
@@ -173,17 +174,34 @@ public class OutcomeNarrator
 
     /// <summary>
     /// Narrates why a combined item cannot be used for the action, in the action Modus Mentis's voice.
+    ///
+    /// <para><paramref name="kind"/> chooses the neutral sentence, and the four are genuinely
+    /// different pieces of news — the implement is wrong, the act admits of no implement, the hands
+    /// have no craft in them, or the idea was sound and the hands were not. Collapsing them into one
+    /// "it did not work" leaves the rewrite to invent which, and it invents the flattering one.</para>
+    ///
+    /// <para>Only <see cref="ToolFailureKind.WrongTool"/> carries the critic's own reason, because it
+    /// is the only kind an LLM was asked about.</para>
     /// </summary>
     public async Task<string> NarrateItemCombinationFailureAsync(
         ParsedNarrativeAction action,
         Item item,
         ModusMentis actionModusMentis,
         string criticReason = "",
+        ToolFailureKind kind = ToolFailureKind.WrongTool,
         CancellationToken cancellationToken = default,
         ILlmPreviewSink? preview = null)
     {
-        string neutral = NeutralNarration.ItemCombinationFailure(ActionDisplay(action), item.WithArticle());
-        if (!string.IsNullOrWhiteSpace(criticReason))
+        string display = ActionDisplay(action);
+        string neutral = kind switch
+        {
+            ToolFailureKind.Senseless     => NeutralNarration.ItemCombinationSenseless(display, item.WithArticle()),
+            ToolFailureKind.NotItsPurpose => NeutralNarration.ItemCombinationNotItsPurpose(display, item.WithArticle()),
+            ToolFailureKind.NoProficiency => NeutralNarration.ItemCombinationNoProficiency(item.WithArticle()),
+            ToolFailureKind.BeyondSkill   => NeutralNarration.ItemCombinationBeyondSkill(display, item.WithArticle()),
+            _                             => NeutralNarration.ItemCombinationFailure(display, item.WithArticle()),
+        };
+        if (kind == ToolFailureKind.WrongTool && !string.IsNullOrWhiteSpace(criticReason))
             neutral = $"{neutral} {criticReason}";
 
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);

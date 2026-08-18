@@ -15,7 +15,11 @@
 # `goal` is set twice for the same reason cli/tame/success.cli sets it twice: two different verbs in
 # one run, and the playground's goal draw is otherwise uniform over everything the object offers.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon --observe-only "chicken"
+# Both halves are Required verbs now, so the knife is combined TWICE — once to make the corpse and
+# once to open it. It is the reference tool of both, so neither combination reaches the item critic
+# (which picks at random under --playground and would otherwise decide this test by seed).
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-item knife --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon --observe-only "chicken"
 
 wait
 click menu New
@@ -36,6 +40,12 @@ choose 0
 choose 0
 advance 12 180
 click action 0
+choose 1
+regions
+choose 0
+advance 12 180
+regions
+click action 1
 choose 0
 advance 12 180
 click continue
@@ -58,6 +68,12 @@ advance 12 180
 regions
 
 click action 0
+choose 1
+regions
+choose 0
+advance 12 180
+regions
+click action 1
 choose 0
 advance 12 180
 click continue

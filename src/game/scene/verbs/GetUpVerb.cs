@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 
 namespace Cathedral.Game.Scene.Verbs;
@@ -15,6 +15,9 @@ public sealed class GetUpVerb : Verb
     public override string VerbId         => "get_up";
     public override string DisplayName    => "GET UP";
     public override int    BaseDifficulty => 1;
+
+    /// <summary>A phase transition. There is no act here yet for an implement to lend dice to.</summary>
+    public override ToolUsage ToolUse => ToolUsage.Excluded;
 
     /// <summary>What a success teaches: getting a body up and moving.</summary>
     public override string? GrantedModusMentisId(Element? target) => "vigor";

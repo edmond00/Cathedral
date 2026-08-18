@@ -206,6 +206,44 @@ public static class NeutralNarration
     public static string ItemCombinationFailure(string actionDisplay, string itemWithArticle)
         => $"I tried to use {FirstPerson(itemWithArticle)} to {FirstPerson(actionDisplay)}, but it did not work.";
 
+    /// <summary>
+    /// Neutral sentence for an implement combined with an act no implement bears upon — a tool held
+    /// out at a conversation, at a smell, at the act of sitting still. Distinct from
+    /// <see cref="ItemCombinationFailure"/>, which is a real attempt the critic judged and refused:
+    /// this one was never a question, and the wording has to say so, or the acting modus mentis
+    /// rewrites it as a near miss.
+    /// </summary>
+    public static string ItemCombinationSenseless(string actionDisplay, string itemWithArticle)
+        => $"I thought to use {FirstPerson(itemWithArticle)} to {FirstPerson(actionDisplay)}, "
+         + "and saw at once there is no sense in it — that is not a thing an implement bears upon.";
+
+    /// <summary>
+    /// Neutral sentence for a single-purpose implement held to work it was not made for — lenses at
+    /// an ore seam. Distinct from <see cref="ItemCombinationSenseless"/>: the act is a real one that
+    /// some implement would serve, and this is simply not that implement.
+    /// </summary>
+    public static string ItemCombinationNotItsPurpose(string actionDisplay, string itemWithArticle)
+        => $"I weighed {FirstPerson(itemWithArticle)} in my hand and set it aside. "
+         + $"It was made for other work than to {FirstPerson(actionDisplay)}, and will do no other.";
+
+    /// <summary>
+    /// Neutral sentence for a body whose hands have no craft in them at all (Tool Usage Proficiency
+    /// of None — an absent or disabled organ). The fault is the hand, not the implement and not the
+    /// act, and the sentence names the hand so the rewrite cannot blame the wrong thing.
+    /// </summary>
+    public static string ItemCombinationNoProficiency(string itemWithArticle)
+        => $"I turned {FirstPerson(itemWithArticle)} over and could do nothing with it. "
+         + "There is no craft left in my hands — no implement will answer to them.";
+
+    /// <summary>
+    /// Neutral sentence for the middle case: the implement could be made to serve, and this body is
+    /// not the one to make it. The critic passed a verdict the hands could not reach, so the
+    /// wording must credit the idea and refuse the execution.
+    /// </summary>
+    public static string ItemCombinationBeyondSkill(string actionDisplay, string itemWithArticle)
+        => $"I could see how {FirstPerson(itemWithArticle)} might be made to {FirstPerson(actionDisplay)}, "
+         + "but not by hands as unpractised as mine.";
+
     // ── Reminescence outcome ───────────────────────────────────────────────────
 
     /// <summary>

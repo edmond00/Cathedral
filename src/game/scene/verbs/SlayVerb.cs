@@ -20,6 +20,19 @@ public class SlayVerb : Verb
     public override string? GrantedModusMentisId(Element? target) => "low_blow";
 
     /// <summary>
+    /// Killing somebody outright, without the fight that ATTACK opens, takes a blade in the hand.
+    ///
+    /// <para>This costs a beast the verb entirely, which is deliberate: <c>Required</c> implies
+    /// <see cref="AnatomyCapability.Handcraft"/> through <c>EffectiveCapabilities</c>, so a wolf is
+    /// never <i>offered</i> SLAY rather than being offered it and charged a noetic point for a
+    /// refusal it could never have avoided. ATTACK remains, and a wolf that means to kill something
+    /// fights it.</para>
+    /// </summary>
+    public override ToolUsage ToolUse => ToolUsage.Required;
+
+    public override IReadOnlyList<string> ReferenceToolIds => new[] { "knife" };
+
+    /// <summary>
     /// Killing is a crime — unless the one being killed already counts you an enemy. Finishing
     /// somebody who has declared for your death is not what a witness would call murder.
     /// </summary>

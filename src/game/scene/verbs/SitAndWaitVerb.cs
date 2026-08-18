@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Routines;
 
@@ -19,6 +19,9 @@ public class SitAndWaitVerb : Verb
     public override string VerbId         => "sit_and_wait";
     public override string DisplayName    => "Sit and Wait";
     public override int    BaseDifficulty => 1;
+
+    /// <summary>Sitting still. There is no work here for a thing to be held against.</summary>
+    public override ToolUsage ToolUse => ToolUsage.Excluded;
 
     /// <summary>What a success teaches: letting time pass without filling it.</summary>
     public override string? GrantedModusMentisId(Element? target) => "patience";

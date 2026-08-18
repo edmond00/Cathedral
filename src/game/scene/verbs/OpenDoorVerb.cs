@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Scene.Building;
@@ -18,6 +18,9 @@ public class OpenDoorVerb : Verb
     public override string VerbId         => "open_door";
     public override string DisplayName    => "Open";
     public override int    BaseDifficulty => 1;
+
+    /// <summary>Pushing an unlocked door open. Forcing a shut one is BREAK and picking a fastened one is UNLOCK DOOR; both take implements, and this is neither.</summary>
+    public override ToolUsage ToolUse => ToolUsage.Excluded;
 
     /// <summary>A latch, a handle, a bar to lift. No hands, no verb.</summary>
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;

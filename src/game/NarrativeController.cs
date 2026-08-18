@@ -9,6 +9,7 @@ using Cathedral.Game.Dialogue.Tree.Trees;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Preview;
 using Cathedral.Game.Narrative.Routines;
+using Cathedral.Game.Narrative.Rules;
 using Cathedral.Game.Npc;
 using Cathedral.Game.Scene;
 using Cathedral.Game.Scene.Verbs;
@@ -1975,8 +1976,8 @@ public class NarrativeController
     /// <summary>
     /// Applies a resolved action outcome: the chain's practice XP, outcome reports, the outcome
     /// narration block, and any fight/dialogue/transition it triggers. <paramref name="deferredCommit"/>
-    /// additionally settles what only the deferred path produced — the speculative branch's narration
-    /// history, and a combined item's consumption.
+    /// additionally settles what only the deferred path produced — the speculative branch's
+    /// narration history.
     /// Called synchronously for Get-Up and via the outcome preview's CONTINUE for the main path.
     /// </summary>
     private void CommitOutcomeResult(ActionExecutionResult result, bool deferredCommit)
@@ -2008,12 +2009,6 @@ public class NarrativeController
             // Keep only the chosen branch's narration in the narrator slot history (discard the
             // speculative other branch that was generated during the roll).
             _actionExecutor.OutcomeNarrator.CommitNarrationHistory(result.Succeeded);
-
-            if (result.ItemConsumed && result.Action.CombinedItem != null)
-            {
-                _activePartyMember.RemoveItem(result.Action.CombinedItem);
-                Console.WriteLine($"NarrativeController: Item consumed — {result.Action.CombinedItem.ItemId}");
-            }
         }
 
         // Collect all outcome reports: verb-specific + LLM-decided (wound).
@@ -2043,7 +2038,7 @@ public class NarrativeController
         if (result.Succeeded && _recorder != null && _scene != null && _pov != null
             && result.ActualOutcome is VerbAction)
         {
-            _recorder.OnVerbSucceeded(result.Action, _scene, _pov, _activePartyMember, result.ItemConsumed, allReports);
+            _recorder.OnVerbSucceeded(result.Action, _scene, _pov, _activePartyMember, allReports);
         }
 
         // Remember where and when we were before reports apply. The area drives continuing narration
@@ -3417,6 +3412,16 @@ public class NarrativeController
             outp.Add($"coins gold={_protagonist.Party.Gold} silver={_protagonist.Party.Silver} "
                    + $"copper={_protagonist.Party.Copper}");
 
+        // The phase's budget, and the acting body's implement band. Both appear in the `state` line
+        // too, but `state` only emits — `expect` scans the rendered terminal and never sees it, so
+        // this is the seam that makes them assertable, exactly as `inspect menu` is for a greyed
+        // button. The budget is what proves a refused combination was CHARGED for: the refusal
+        // narration reads much like any other failure, so nothing on screen distinguishes a
+        // combination that cost a point from one that did not.
+        if (All("noetic"))
+            outp.Add($"noetic points={_narrationState.ThinkingAttemptsRemaining}/{actor.MaxNoeticPoints} "
+                   + $"tool_proficiency={ToolUsageProficiencyStat.Of(actor)}");
+
         if (All("where"))
             outp.Add($"where area=\"{_pov?.Where.DisplayName ?? "-"}\" period={_pov?.When.ToString() ?? "-"} "
                    + $"day={(int)Cathedral.Game.Narrative.GameClock.Days}");
@@ -4134,10 +4139,16 @@ public class NarrativeController
     }
 
     /// <summary>
-    /// The tools that may be combined with an action. Only <see cref="ItemCategory.Tool"/> and
+    /// The tools that may be combined with an action. <see cref="ItemCategory.Tool"/> and
     /// <see cref="ItemCategory.Weapon"/> qualify — a weapon is a tool too, just a specialised and
     /// often clumsy one (see <c>WeaponItem.UsageLevel</c>). Garments, food and raw material are
     /// excluded: they are things you wear, eat or own, not things you work with.
+    ///
+    /// <para><b>Plus anything declaring <see cref="Item.MadeForVerbIds"/>, whatever its
+    /// category.</b> An item made for an act is by definition something you work with, and the
+    /// exception would otherwise be unreachable for everything that is not already a tool — which is
+    /// most of what wants one. Reading lenses are a garment by category and are the whole reason the
+    /// mechanism exists.</para>
     ///
     /// Location is deliberately not a factor — anything carried is usable, whether it is in hand
     /// or at the bottom of a pack. A container holding something is excluded, since combining it
@@ -4146,7 +4157,8 @@ public class NarrativeController
     private List<Item> GetCombinableItems()
     {
         return _activePartyMember.GetAllItems()
-            .Where(i => i.Category is ItemCategory.Tool or ItemCategory.Weapon)
+            .Where(i => i.Category is ItemCategory.Tool or ItemCategory.Weapon
+                     || i.MadeForVerbIds.Count > 0)
             .Where(i => i is not IContainer c || c.Contents.Count == 0)
             .ToList();
     }
@@ -4196,27 +4208,86 @@ public class NarrativeController
             string itemContext = $"{item.DisplayName} ({item.Description})";
             Console.WriteLine($"NarrativeController: Item combination — action='{action.DisplayText}', item='{itemContext}'");
 
-            // Build critic context
-            var goalDescription = action.PreselectedOutcome?.ToNaturalLanguageString() ?? "";
-            var criticContext = new CriticContext(_currentNode, _worldContext, _locationId, goalDescription);
-            criticContext.CombinedItemContext = itemContext;
+            var gatedVerb    = action.PreselectedOutcome?.Verb;
+            var proficiency  = ToolUsageProficiencyStat.Of(_activePartyMember);
+            var gate         = ToolCombinationRules.Resolve(gatedVerb, item, proficiency);
+            Console.WriteLine($"NarrativeController: Tool gate — proficiency={proficiency}, verb={gatedVerb?.VerbId ?? "none"} ({gatedVerb?.ToolUse.ToString() ?? "n/a"}), gate={gate}");
 
-            // === CRITIC: can the item help? (single pass, neutral goal-based phrasing) ===
-            // A tool-gated verb asks a different question: not "does this beat bare hands" (bare hands
-            // are not an option there) but "can this do the work of the tool this needs".
-            var gatedVerb = action.PreselectedOutcome?.Verb;
-            var appropriatenessTree = gatedVerb is { RequiresTool: true }
-                ? CriticTrees.BuildToolSubstitutionTree(
-                      goalDescription, CriticTrees.ToolPhrase(gatedVerb.ReferenceToolIds),
-                      item.DisplayName, criticContext)
-                : CriticTrees.BuildItemAppropriatenessTree(goalDescription, item.DisplayName, criticContext);
-            var appropriatenessResult = await _actionExecutor.ItemUseCritic.EvaluateTreeAsync(appropriatenessTree);
-            bool appropriatenessSuccess = appropriatenessResult.OverallSuccess;
-            Console.WriteLine($"NarrativeController: Item appropriateness ({(gatedVerb is { RequiresTool: true } ? "tool substitution" : "neutral")}): {(appropriatenessSuccess ? "success" : "fail")}");
+            // Three of the four gates settle it here, with no request made at all. The fourth is the
+            // only one that was ever worth a critic call.
+            //
+            // How the refusal is worded is decided alongside it, because the four failures are four
+            // different pieces of news and a single "it did not work" makes the acting modus mentis
+            // invent which one it was.
+            bool appropriatenessSuccess;
+            ToolFailureKind failureKind = ToolFailureKind.None;
+            string criticReason = "";
 
-            // No noetic cost: see the "Use Tool" gate in HandleClick. Combining an item is part of the
-            // action the player already paid to think of, and charging for it made every tool-gated
-            // verb impossible once the pool was cut to a third.
+            if (gate == ToolCombinationGate.AskTheCritic)
+            {
+                var goalDescription = action.PreselectedOutcome?.ToNaturalLanguageString() ?? "";
+                var criticContext = new CriticContext(_currentNode, _worldContext, _locationId, goalDescription);
+                criticContext.CombinedItemContext = itemContext;
+
+                // A required verb asks a different question: not "does this beat bare hands" (bare
+                // hands are not an option there) but "can this do the work of the tool this needs".
+                var appropriatenessTree = gatedVerb is { RequiresTool: true }
+                    ? CriticTrees.BuildToolSubstitutionTree(
+                          goalDescription, CriticTrees.ToolPhrase(gatedVerb.ReferenceToolIds),
+                          item.DisplayName, criticContext)
+                    : CriticTrees.BuildItemAppropriatenessTree(goalDescription, item.DisplayName, criticContext);
+                var appropriatenessResult = await _actionExecutor.ItemUseCritic.EvaluateTreeAsync(appropriatenessTree);
+
+                // The critic judges the implement; the body judges itself. A verdict it returns as
+                // passing may still be out of this body's reach, and that is a different refusal from
+                // "wrong tool" — the wording has to distinguish them or the rewrite blames the item.
+                string verdict = appropriatenessResult.Trace.LastOrDefault()?.ChosenId ?? "";
+                bool itemAcceptable = appropriatenessResult.OverallSuccess;
+                appropriatenessSuccess = itemAcceptable
+                                      && ToolCombinationRules.VerdictClears(verdict, proficiency);
+
+                if (!appropriatenessSuccess)
+                {
+                    // The item passed and the hands did not: a different refusal from "wrong tool",
+                    // and the one the player can do something about by taking a level.
+                    failureKind  = itemAcceptable ? ToolFailureKind.BeyondSkill : ToolFailureKind.WrongTool;
+                    criticReason = appropriatenessResult.CombinedFailureReason;
+                    Console.WriteLine($"NarrativeController: Item verdict '{verdict}' needs "
+                        + $"{ToolCombinationRules.RequiredFor(verdict)?.ToString() ?? "a band no body reaches"}"
+                        + $", body has {proficiency} → {failureKind}");
+                }
+                else
+                {
+                    Console.WriteLine($"NarrativeController: Item verdict '{verdict}' cleared at {proficiency}.");
+                }
+            }
+            else
+            {
+                appropriatenessSuccess = gate == ToolCombinationGate.MadeForIt;
+                failureKind = gate switch
+                {
+                    ToolCombinationGate.NoProficiency => ToolFailureKind.NoProficiency,
+                    ToolCombinationGate.NotItsPurpose => ToolFailureKind.NotItsPurpose,
+                    ToolCombinationGate.ExcludedVerb  => ToolFailureKind.Senseless,
+                    _                                 => ToolFailureKind.None,
+                };
+                Console.WriteLine($"NarrativeController: Settled without a critic call — {gate}.");
+            }
+
+            // A failed combination costs a noetic point; an accepted one is free, being part of the
+            // act already paid for. Charging for the accepted case is what made every required verb
+            // impossible once the pool was cut to a third of the encephalon. Choosing an implement
+            // that can actually serve is the player's side of that bargain.
+            //
+            // Exempt in childhood and get-up for the same reason every other spend is: those phases
+            // do not run on the pool at all, and both of their verbs are Excluded — so without this
+            // they would be the one place a combination could be charged for in a budget that is
+            // not being kept. The counter is not saved here; only the Speak-About hand-off persists
+            // it, because that is the only point at which the acting member changes.
+            bool phaseKeepsBudget = _scene?.Phase != NarrationPhase.ChildhoodReminescence
+                                 && _scene?.Phase != NarrationPhase.GetUp;
+            if (!appropriatenessSuccess && phaseKeepsBudget && _narrationState.ThinkingAttemptsRemaining > 0)
+                _narrationState.ThinkingAttemptsRemaining--;
 
             if (appropriatenessSuccess)
             {
@@ -4239,16 +4310,13 @@ public class NarrativeController
                     reformulatedText = action.DisplayText;
 
                 // ── Step 3: build the combined action ────────────────────────────
-                // Chain leaf: a synthetic ModusMentis carrying item name + effective usage level so that:
+                // Chain leaf: a synthetic ModusMentis carrying item name + usage level so that:
                 //   - the action button shows [ItemName ◼◼] instead of [ActionSkill ◼◼◼]
-                //   - GetTotalModusMentisLevel() = obs.Level + thinking.Level + action.Level + effectiveUsage (no repetition)
-                // The item's UsageLevel is capped by the hands-derived "tool_usage_cap" stat so that
-                // characters with stronger (or unwounded) hands extract more bonus from potent tools.
-                int usageCap = _activePartyMember.DerivedStats
-                    .First(s => s.Name == "tool_usage_cap").GetValue(_activePartyMember);
-                int effectiveUsageLevel = System.Math.Min(item.UsageLevel, usageCap);
-                Console.WriteLine($"NarrativeController: Item usage level {item.UsageLevel} capped to {effectiveUsageLevel} (hands cap {usageCap}).");
-                var itemModusMentis = new SyntheticItemModusMentis(item.ItemId, item.DisplayName, effectiveUsageLevel);
+                //   - GetTotalModusMentisLevel() = obs.Level + thinking.Level + action.Level + usage
+                // The level is the implement's own, whole. The hands had their say already, and it
+                // was a harder one: the proficiency band decided whether this combination was allowed
+                // to happen at all. Capping the dice on top of that taxed one organ twice for one act.
+                var itemModusMentis = new SyntheticItemModusMentis(item.ItemId, item.DisplayName, item.UsageLevel);
 
                 var combinedAction = new ParsedNarrativeAction
                 {
@@ -4299,13 +4367,13 @@ public class NarrativeController
             }
             else
             {
-                Console.WriteLine($"NarrativeController: Item '{item.ItemId}' rejected — narrating failure.");
+                Console.WriteLine($"NarrativeController: Item '{item.ItemId}' rejected ({failureKind}) — narrating failure.");
 
                 // The failure explanation streams into a preview box.
                 _previewSession.Reset();
                 var itemFailPart = _previewSession.BeginPart(PreviewTitles.For(actionModusMentis));
                 string failureNarration = await _actionExecutor.OutcomeNarrator.NarrateItemCombinationFailureAsync(
-                    action, item, actionModusMentis, appropriatenessResult.CombinedFailureReason, preview: itemFailPart?.Sink);
+                    action, item, actionModusMentis, criticReason, failureKind, preview: itemFailPart?.Sink);
 
                 var failureBlock = new NarrationBlock(
                     Type: NarrationBlockType.Outcome,

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Routines;
 
@@ -22,6 +22,9 @@ public class VoyageTowardVerb : Verb
     public override string VerbId         => "voyage_toward";
     public override string DisplayName    => "Voyage Toward";
     public override int    BaseDifficulty => 2;
+
+    /// <summary>A long walk down a road already seen from the height. The climb that earned the sight is where an implement told.</summary>
+    public override ToolUsage ToolUse => ToolUsage.Excluded;
 
     /// <summary>What a success teaches: holding a bearing across ground you have only seen from afar.</summary>
     public override string? GrantedModusMentisId(Element? target) => "voyage";

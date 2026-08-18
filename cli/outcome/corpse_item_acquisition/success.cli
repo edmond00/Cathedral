@@ -4,7 +4,11 @@
 # real: the world is inspected before and after, and it moved. The verb script runs in full
 # here — the two overlap on purpose, same scenario, different question.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon --observe-only "chicken"
+# Slay and cut are Required verbs: the knife must be COMBINED with the action, not merely
+# carried. It is the reference tool of both, so neither combination reaches the item critic
+# (which picks at random under --playground).
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-item knife --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon --observe-only "chicken"
 
 wait
 click menu New
@@ -28,6 +32,12 @@ choose 0
 choose 0
 advance 12 180
 click action 0
+choose 1
+regions
+choose 0
+advance 12 180
+regions
+click action 1
 choose 0
 advance 12 180
 click continue
@@ -50,6 +60,12 @@ advance 12 180
 regions
 
 click action 0
+choose 1
+regions
+choose 0
+advance 12 180
+regions
+click action 1
 choose 0
 advance 12 180
 click continue

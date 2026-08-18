@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Scene.Building;
@@ -14,6 +14,9 @@ public class GoUpStairsVerb : Verb
     public override string VerbId         => "go_up_stairs";
     public override string DisplayName    => "Go Up";
     public override int    BaseDifficulty => 1;
+
+    /// <summary>A stair is built to be walked up. The climbs, which are not, keep their implements.</summary>
+    public override ToolUsage ToolUse => ToolUsage.Excluded;
 
     /// <summary>What a success teaches: stairs are footing.</summary>
     public override string? GrantedModusMentisId(Element? target) => "surefoot";

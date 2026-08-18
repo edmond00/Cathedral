@@ -76,27 +76,38 @@ public class LLMLoadingRenderer
             Config.Colors.White, Config.Colors.Black);
 
         // ── Progress bar ─────────────────────────────────────────────────────
+        // Drawn in four pieces rather than as one centred string: the filled part is yellow and
+        // the remainder grey, so the bar reads as a track being consumed rather than as one block.
         int filled    = (int)(_progress * ProgressBarWidth);
         int remaining = ProgressBarWidth - filled;
-        string bar    = "[" + new string('\u2588', filled) + new string('\u2591', remaining) + "]";
         int pct       = (int)(_progress * 100);
 
-        _terminal.CenteredText(titleY + 6, bar,
-            Config.NarrativeUI.LoadingColor, Config.Colors.Black);
+        int barY = titleY + 6;
+        int barX = termW / 2 - (ProgressBarWidth + 2) / 2;
 
+        _terminal.Text(barX, barY, "[",
+            Config.Colors.DarkGray35, Config.Colors.Black);
+        _terminal.Text(barX + 1, barY, new string('\u2588', filled),
+            Config.NarrativeUI.LoadingColor, Config.Colors.Black);
+        _terminal.Text(barX + 1 + filled, barY, new string('\u2591', remaining),
+            Config.Colors.DarkGray35, Config.Colors.Black);
+        _terminal.Text(barX + 1 + ProgressBarWidth, barY, "]",
+            Config.Colors.DarkGray35, Config.Colors.Black);
+
+        // One blank row between the bar and the percentage, which otherwise crowd each other.
         string pctText = $"{pct}%";
-        _terminal.CenteredText(titleY + 7, pctText,
+        _terminal.CenteredText(titleY + 8, pctText,
             Config.Colors.DarkGray35, Config.Colors.Black);
 
         // ── Status message ───────────────────────────────────────────────────
         string status = _statusMessage.Length > termW - 4
             ? _statusMessage[..(termW - 7)] + "..."
             : _statusMessage;
-        _terminal.CenteredText(titleY + 10, status,
+        _terminal.CenteredText(titleY + 11, status,
             Config.Colors.Gray, Config.Colors.Black);
 
         // ── Hint ─────────────────────────────────────────────────────────────
-        _terminal.CenteredText(titleY + 13,
+        _terminal.CenteredText(titleY + 14,
             "This may take 30–120 seconds on first run",
             Config.Colors.DarkGray35, Config.Colors.Black);
 

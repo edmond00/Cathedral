@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Routines;
@@ -22,6 +22,9 @@ public class TameVerb : Verb
     public override string VerbId         => "tame";
     public override string DisplayName    => "Tame";
     public override int    BaseDifficulty => 4;
+
+    /// <summary>Winning an animal over. The combinable categories are tool and weapon, and showing a wary beast either argues the other way. Were food ever made combinable, this is the first entry to revisit.</summary>
+    public override ToolUsage ToolUse => ToolUsage.Excluded;
 
     /// <summary>Handling an animal into accepting a handler. No hands, no verb.</summary>
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;

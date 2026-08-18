@@ -46,15 +46,18 @@ spent by each of the following:
 - an **observation** beyond the phase's opening one;
 - a **deliberation**;
 - an act **refused by a coded rule** (§6);
-- an act found **implausible**.
+- an act found **implausible**;
+- an implement **offered to an act and refused** (see [Chapter IV §7](04-items.md#7-implements)).
 
 The pool **refills at every phase boundary but one**: it is *not* refilled by the boundary that
 closes a phase after an act has failed upon the dice. A miss must cost something; were the budget
 handed back, the very next attempt would be free.
 
-Two things are deliberately outside the budget. **Combining an implement costs nothing** — it is
-part of an act already chosen. And **a successful act's own resolution** costs nothing beyond the
-deliberation that produced it.
+Two things are deliberately outside the budget. **An implement accepted costs nothing** — it is
+part of an act already deliberated upon, and to charge for it would put the acts that require an
+implement beyond a small pool altogether. Only the refusal is charged, and the reckoning is
+therefore not upon reaching for a thing but upon reaching for the wrong one. And **a successful
+act's own resolution** costs nothing beyond the deliberation that produced it.
 
 A body that has spent the pool without succeeding can only leave. That is the intended shape, and it
 is why departure is never gated on anything except an armed presence in the room.
@@ -91,8 +94,9 @@ Its answer is a goal, and the goal produces the act.
 of assent map to a modifier upon the difficulty, and its refusal cancels the act outright.
 
 **The die pool is the sum of the levels of every modus mentis in the chain** — the one that
-observed, the one that deliberated, the one that acts — together with the level of any implement
-combined, capped as [Chapter IV §5](04-items.md#7-implements) describes. Never fewer than one die.
+observed, the one that deliberated, the one that acts — together with the whole level of any
+implement combined, for which see [Chapter IV §7](04-items.md#7-implements). Never fewer than one
+die.
 
 **The difficulty is the number of sixes required**, from one to ten: the difficulty inherent in that
 manner of acting upon that thing, adjusted by the acting modus mentis's degree of willingness.
@@ -225,6 +229,11 @@ A human additionally leaves a separate holding of what they carried. The divisio
 about particular items: everything in a corpse is flesh, and the acts of cutting take it while the
 acts of seizing refuse it; everything in the belongings beside it is cloth and steel, and the
 reverse holds.
+
+**Cutting requires a blade combined with the act** ([Chapter IV §7](04-items.md#7-implements)), as
+does the killing that yields a body without a fight. A carcass is opened with an edge or not at all,
+and a body lacking the hands to hold one is barred from both acts entirely rather than being offered
+them and refused.
 
 **A fallen companion leaves the same**, by species and by what they carried, with no distinction
 made for having been of the party. What is cut from a companion who was a beast is what would be cut

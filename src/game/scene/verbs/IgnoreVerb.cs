@@ -1,4 +1,4 @@
-using Cathedral.Game.Narrative;
+﻿using Cathedral.Game.Narrative;
 
 namespace Cathedral.Game.Scene.Verbs;
 
@@ -22,6 +22,9 @@ public sealed class IgnoreVerb : Verb
     public override string VerbId         => "ignore";
     public override string DisplayName    => "Ignore and Move On";
     public override int    BaseDifficulty => 1;
+
+    /// <summary>Does nothing, by design. An implement combined with doing nothing is doing nothing with an implement.</summary>
+    public override ToolUsage ToolUse => ToolUsage.Excluded;
 
     /// Always possible — the player can always choose not to act.
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null) => true;

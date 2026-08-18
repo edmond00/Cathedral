@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Routines;
@@ -18,6 +18,9 @@ public class SwimAcrossVerb : Verb
     public override string VerbId         => "swim_across";
     public override string DisplayName    => "Swim Across";
     public override int    BaseDifficulty => 5;
+
+    /// <summary>Everything carried hinders a swimmer. An implement here is ballast, and asking whether it helps invites the answer that it does.</summary>
+    public override ToolUsage ToolUse => ToolUsage.Excluded;
 
     /// <summary>What a success teaches: staying up and moving in open water.</summary>
     public override string? GrantedModusMentisId(Element? target) => "natation";

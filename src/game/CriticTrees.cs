@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Narrative;
@@ -55,7 +55,7 @@ public class CriticContext
 
 /// <summary>
 /// Factory for the Item-Use Critic's evaluation trees. The critic LLM is now scoped to judging
-/// whether an item helps accomplish an action and whether it is consumed; all other adjudication
+/// whether an item helps accomplish an action; all other adjudication
 /// (plausibility, difficulty, wounds, witnesses, threats) has moved to the modus-mentis persona-fit
 /// enum and to deterministic coded rules. A couple of pure helpers used by the difficulty/movement
 /// display also live here.
@@ -90,7 +90,16 @@ public static class CriticTrees
 
     /// <summary>
     /// Asks the LLM critic whether a combined item can plausibly help realise an action, using a
-    /// neutral goal-based phrasing. "clearly_helps", "plausibly_helps", and "detoured_use" pass.
+    /// neutral goal-based phrasing.
+    ///
+    /// <para>The three non-failure choices are <b>degrees, not a pass</b>: which of them the acting
+    /// body may act upon is decided afterwards by its hands, in
+    /// <c>ToolCombinationRules.VerdictClears</c> — clearly at Low, plausibly at Medium, detoured at
+    /// High. The critic judges the implement and knows nothing of who is holding it, which is what
+    /// keeps this question answerable at all.</para>
+    ///
+    /// <para><b>A new choice id must be added to that threshold table</b>, or it fails closed and
+    /// no body will ever clear it.</para>
     /// </summary>
     public static CriticNode BuildItemAppropriatenessTree(string goalText, string itemName, CriticContext context)
     {
@@ -121,8 +130,12 @@ public static class CriticTrees
     /// rather than against nothing. Naming it is the whole difference: "could a rock hammer do the
     /// work of a pickaxe" is answerable, where "does a rock hammer help" is not.</para>
     ///
-    /// <para>The first three choices pass. <c>serves_poorly</c> passes deliberately — improvising a
-    /// tool should be allowed and then punished by the dice, not forbidden.</para>
+    /// <para>The first three choices are degrees rather than a pass, and are keyed to the same
+    /// bands as the neutral tree's — <c>is_the_tool</c> with <c>clearly_helps</c> at Low,
+    /// <c>serves_well</c> with <c>plausibly_helps</c> at Medium, <c>serves_poorly</c> with
+    /// <c>detoured_use</c> at High. <c>serves_poorly</c> is deliberately not a refusal: improvising
+    /// a tool should be allowed to a practised hand and then punished by the dice, not forbidden
+    /// outright. See <c>ToolCombinationRules</c>.</para>
     /// </summary>
     public static CriticNode BuildToolSubstitutionTree(string goalText, string referenceToolPhrase,
                                                        string itemName, CriticContext context)
@@ -161,30 +174,19 @@ public static class CriticTrees
 
     #endregion
 
-    #region Item Consumption Tree
-
-    /// <summary>
-    /// Asks the LLM critic whether an item was consumed while performing an action.
-    /// "definitely_consumed" and "probably_consumed" map to consumed = true.
-    /// </summary>
-    public static CriticNode BuildItemConsumptionTree(string actionText, string itemContext, CriticContext context)
-    {
-        return new CriticNode(
-            name: "ItemConsumption",
-            question: $"{context.BuildPreamble()}\n\nThe {Config.Narrative.PlayerName} performed: \"{actionText}\"\nUsing: {itemContext}.\n\nWas {itemContext} consumed, destroyed, or used up in the process?",
-            choices: new List<CriticChoice>
-            {
-                new("definitely_consumed",    "the item was certainly used up or destroyed"),
-                new("probably_consumed",      "the item was very likely consumed or rendered unusable"),
-                new("possibly_consumed",      "the item might have been partially consumed"),
-                new("probably_not_consumed",  "the item was probably not consumed"),
-                new("definitely_not_consumed","the item was not consumed and is still intact"),
-            });
-    }
-
-    /// <summary>Returns true when the critic decided the item was consumed.</summary>
-    public static bool IsItemConsumedFromResult(CriticTreeResult result) =>
-        result.FinalChosenId is "definitely_consumed" or "probably_consumed";
-
-    #endregion
+    // There was an Item Consumption Tree here, asked after every successful combination: "was this
+    // item used up in the process?". It is gone, because the question no longer has two answers.
+    //
+    // What may be combined with an act is a tool, a weapon, or an item declaring itself made for
+    // some single act — and none of those is spent by being used. A pick is not eaten by a seam. So
+    // the tree spent a request per successful combination to arrive at "no" nearly every time, and
+    // the times it did not were the interesting ones only in the sense that they were wrong: it
+    // destroyed the knife a carcass had just been opened with often enough to matter.
+    //
+    // It was worse than a wasted request under --playground, where every critic choice is drawn at
+    // random: a script combining a tool twice lost it to the first use about half the time, which
+    // is a test failing for a reason with nothing to do with what it tested.
+    //
+    // Should a consumable ever become combinable, this comes back — but it comes back as a property
+    // of the item, answerable without asking anybody.
 }
