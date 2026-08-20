@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Routines;
 
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
@@ -12,6 +14,14 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public class GatherVerb : Verb
 {
+    /// <summary>What is being gathered, which the patch does not usually declare.</summary>
+    public override IEnumerable<ModusMentis> Lessons(LessonContext ctx)
+    {
+        if (ctx.Holder is HerbPointOfInterest) yield return Mm<SimplingModusMentis>();
+        if (ctx.Holder is BushPointOfInterest) yield return Mm<BerryingModusMentis>();
+        // The target's own declaration, then this verb's default — always last, always visible.
+        foreach (var m in base.Lessons(ctx)) yield return m;
+    }
     public override string VerbId         => "gather";
     public override string DisplayName    => "Gather";
     public override int    BaseDifficulty => 1;

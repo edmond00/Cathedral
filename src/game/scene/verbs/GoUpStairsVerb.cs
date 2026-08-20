@@ -18,8 +18,9 @@ public class GoUpStairsVerb : Verb
     /// <summary>A stair is built to be walked up. The climbs, which are not, keep their implements.</summary>
     public override ToolUsage ToolUse => ToolUsage.Excluded;
 
-    /// <summary>What a success teaches: stairs are footing.</summary>
-    public override string? GrantedModusMentisId(Element? target) => "surefoot";
+    /// <summary>Four limbs are sure-footed; two are balanced. Surefoot names a beast's limbs, so a person falls through.</summary>
+    public override IReadOnlyList<string> GrantedModusMentisIds(Element? target)
+        => new[] { "surefoot", "balance" };
 
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {

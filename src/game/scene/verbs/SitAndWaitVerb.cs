@@ -2,6 +2,8 @@
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Routines;
 
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
@@ -16,6 +18,16 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public class SitAndWaitVerb : Verb
 {
+    /// <summary>Waiting takes its lesson from where the waiting is done.</summary>
+    public override IEnumerable<ModusMentis> Lessons(LessonContext ctx)
+    {
+        if (ctx.Hostile == ThreatLevel.Visual) yield return Mm<SelfCommandModusMentis>();
+        if (ctx.Pov.Where is HallArea or GreenArea) yield return Mm<GossipModusMentis>();
+        if (ctx.Pov.Where is MarketArea or SquareArea) yield return Mm<StreetwiseModusMentis>();
+        if (ctx.Pov.Where is MeadowArea or CropArea or GrasslandArea) yield return Mm<WhistlingModusMentis>();
+        // The target's own declaration, then this verb's default — always last, always visible.
+        foreach (var m in base.Lessons(ctx)) yield return m;
+    }
     public override string VerbId         => "sit_and_wait";
     public override string DisplayName    => "Sit and Wait";
     public override int    BaseDifficulty => 1;

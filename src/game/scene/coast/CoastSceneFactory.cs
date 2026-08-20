@@ -173,54 +173,48 @@ public class CoastSceneFactory : SceneFactory
 
     // ── Area builders ────────────────────────────────────────────────────────
 
-    private static Area BuildSandyBeach() => new(
+    private static Area BuildSandyBeach() => new BeachArea(
         displayName: "Sandy Beach",
-        referenceLemma: "beach",
         contextDescription: "on the sandy beach",
         transitionDescription: "step onto the sandy beach",
         descriptions: new() { "A wide sweep of pale sand running down to the surf-line" },
         moods: new[] { "open", "sun-warmed", "salt-stained", "wide" }
     );
 
-    private static Area BuildRockyShore() => new(
+    private static Area BuildRockyShore() => new ShoreArea(
         displayName: "Rocky Shore",
-        referenceLemma: "shore",
         contextDescription: "on the rocky shore",
         transitionDescription: "pick a way along the rocky shore",
         descriptions: new() { "A foreshore of black stones and barnacled boulders, slick with weed" },
         moods: new[] { "slick", "barnacled", "uneven", "salt-bitten" }
     );
 
-    private static Area BuildCliffBase() => new(
+    private static Area BuildCliffBase() => new CliffArea(
         displayName: "Cliff Base",
-        referenceLemma: "cliff",
         contextDescription: "at the cliff base",
         transitionDescription: "approach the cliff base",
         descriptions: new() { "The sea breaks against towering cliffs, spray reaching where you stand" },
         moods: new[] { "loud", "wet", "looming", "echoing" }
     );
 
-    private static Area BuildCliffTop() => new(
+    private static Area BuildCliffTop() => new CliffArea(
         displayName: "Cliff Top",
-        referenceLemma: "cliff",
         contextDescription: "on the cliff top",
         transitionDescription: "step onto the cliff top",
         descriptions: new() { "An exposed grassy edge above a long fall, the sea wrinkling far below" },
         moods: new[] { "exposed", "high", "windy", "vast" }
     );
 
-    private static Area BuildTidePoolZone() => new(
+    private static Area BuildTidePoolZone() => new PoolArea(
         displayName: "Tide Pool Zone",
-        referenceLemma: "pool",
         contextDescription: "among the tide pools",
         transitionDescription: "step among the tide pools",
         descriptions: new() { "A scatter of tide pools cupped in the rocks, full of small life" },
         moods: new[] { "still", "salty", "shimmering", "small" }
     );
 
-    private static Area BuildEstuaryFlat() => new(
+    private static Area BuildEstuaryFlat() => new EstuaryArea(
         displayName: "Estuary Flat",
-        referenceLemma: "estuary",
         contextDescription: "on the estuary flat",
         transitionDescription: "wade onto the estuary flat",
         descriptions: new() { "A wide muddy flat where the river spreads into the sea, wading birds at work" },
@@ -241,9 +235,8 @@ public class CoastSceneFactory : SceneFactory
             case "Rocky Shore":
                 area.PointsOfInterest.Add(BuildKelpBed());
                 area.PointsOfInterest.Add(BuildTidePool());
-                area.PointsOfInterest.Add(new PointOfInterest(
-                    displayName: "Rock Crevice",
-                    referenceLemma: "crevice",
+                area.PointsOfInterest.Add(new CrevicePointOfInterest(
+            displayName: "Rock Crevice",
                     descriptions: new() { "A narrow crevice between rocks, weed-fringed and damp" },
                     items: new()
                     {
@@ -251,16 +244,15 @@ public class CoastSceneFactory : SceneFactory
                         new ItemElement(new Flint()),
                     },
                     moods: new[] { "narrow", "wet", "barnacled" }
-                ) { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "stonework", ["listen"] = "keen_ear" } });
+                ) { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "stonework", ["listen"] = "hollow_ear" } });
                 break;
             case "Cliff Base":
                 area.PointsOfInterest.Add(TerrainSubfactory.BuildRockFace());
                 area.PointsOfInterest.Add(BuildKelpBed());
                 break;
             case "Cliff Top":
-                area.PointsOfInterest.Add(new PointOfInterest(
-                    displayName: "Seabird Nest",
-                    referenceLemma: "nest",
+                area.PointsOfInterest.Add(new NestPointOfInterest(
+            displayName: "Seabird Nest",
                     descriptions: new() { "A jumble of stick and weed lodged on a ledge, eggs glinting in the cup" },
                     items: new()
                     {
@@ -269,7 +261,7 @@ public class CoastSceneFactory : SceneFactory
                         new ItemElement(new Feather()),
                     },
                     moods: new[] { "high", "salt-stained", "noisy" }
-                ) { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "husbandry", ["listen"] = "keen_ear" } });
+                ) { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "husbandry", ["listen"] = "beast_call" } });
                 area.PointsOfInterest.Add(TerrainSubfactory.BuildLichenCrust());
                 break;
             case "Tide Pool Zone":
@@ -277,9 +269,8 @@ public class CoastSceneFactory : SceneFactory
                 area.PointsOfInterest.Add(BuildTidePool());
                 break;
             case "Estuary Flat":
-                area.PointsOfInterest.Add(new PointOfInterest(
-                    displayName: "Mud Flat",
-                    referenceLemma: "mud",
+                area.PointsOfInterest.Add(new MudPointOfInterest(
+            displayName: "Mud Flat",
                     descriptions: new() { "A glistening mud flat marked with wading-bird tracks" },
                     items: new()
                     {
@@ -288,10 +279,9 @@ public class CoastSceneFactory : SceneFactory
                         new ItemElement(new Reed()),
                     },
                     moods: new[] { "glistening", "soft", "tidal" }
-                ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "drainage", ["smell"] = "scenting" } });
-                area.PointsOfInterest.Add(new PointOfInterest(
-                    displayName: "Willow Bank",
-                    referenceLemma: "willow",
+                ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "drainage", ["smell"] = "taint_sense" } });
+                area.PointsOfInterest.Add(new WillowPointOfInterest(
+            displayName: "Willow Bank",
                     descriptions: new() { "A willow leans over the muddy bank, its branches trailing the water" },
                     items: new()
                     {
@@ -304,9 +294,8 @@ public class CoastSceneFactory : SceneFactory
         }
     }
 
-    private PointOfInterest BuildDriftwoodPile() => new(
+    private PointOfInterest BuildDriftwoodPile() => new DriftwoodPointOfInterest(
         displayName: "Driftwood Pile",
-        referenceLemma: "driftwood",
         descriptions: new() { "A heap of bleached driftwood pushed up by storm and tide" },
         items: new()
         {
@@ -315,11 +304,10 @@ public class CoastSceneFactory : SceneFactory
             new ItemElement(new RopeFragment()),
         },
         moods: new[] { "bleached", "salt-stained", "tangled" }
-    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["smell"] = "scenting" } };
+    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["smell"] = "petrichor" } };
 
-    private PointOfInterest BuildKelpBed() => new(
+    private PointOfInterest BuildKelpBed() => new KelpPointOfInterest(
         displayName: "Kelp Bed",
-        referenceLemma: "kelp",
         descriptions: new() { "A heap of dark kelp washed up on the stones" },
         items: new()
         {
@@ -327,11 +315,10 @@ public class CoastSceneFactory : SceneFactory
             new ItemElement(new Seaweed()),
         },
         moods: new[] { "slick", "salt-fragrant", "dark" }
-    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "forage_lore", ["smell"] = "scenting" } };
+    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "forage_lore", ["smell"] = "petrichor" } };
 
-    private PointOfInterest BuildTidePool() => new(
+    private PointOfInterest BuildTidePool() => new PoolPointOfInterest(
         displayName: "Tide Pool",
-        referenceLemma: "pool",
         descriptions: new() { "A small still pool cupped in the rock, anemones at the bottom" },
         items: new()
         {
@@ -341,7 +328,7 @@ public class CoastSceneFactory : SceneFactory
             new ItemElement(new Rock()),
         },
         moods: new[] { "still", "salt-bright", "small" }
-    ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "anglery", ["listen"] = "keen_ear", ["smell"] = "scenting" } };
+    ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "anglery", ["listen"] = "water_voice", ["smell"] = "brine_sense" } };
 
     private PointOfInterest BuildStrandedNet()
     {
@@ -352,9 +339,8 @@ public class CoastSceneFactory : SceneFactory
             FishKind.Cod      => new ItemElement(new Cod()),
             _                 => new ItemElement(new Mackerel()),
         };
-        return new PointOfInterest(
+        return new NetPointOfInterest(
             displayName: "Stranded Net",
-            referenceLemma: "net",
             descriptions: new() { "A torn fishing net half-buried in sand, a dead fish still tangled in its mesh" },
             items: new()
             {

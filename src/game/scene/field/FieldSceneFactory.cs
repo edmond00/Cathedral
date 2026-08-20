@@ -179,9 +179,8 @@ public class FieldSceneFactory : SceneFactory
             _               => $"A long strip of {_crop.ToString().ToLowerInvariant()} running off into the haze, ears nodding",
         };
 
-        var area = new Area(
+        var area = new CropArea(
             displayName: name,
-            referenceLemma: "crop",
             contextDescription: $"walking the {name.ToLowerInvariant()}",
             transitionDescription: $"step onto the {name.ToLowerInvariant()}",
             descriptions: new() { desc },
@@ -192,18 +191,16 @@ public class FieldSceneFactory : SceneFactory
         var cropItems = _crop == GrainCrop.Flax
             ? new List<ItemElement> { new ItemElement(new Flax()), new ItemElement(new Flax()) }
             : new List<ItemElement> { new ItemElement(new Grain()), new ItemElement(new Grain()), new ItemElement(new Straw()) };
-        area.PointsOfInterest.Add(new PointOfInterest(
+        area.PointsOfInterest.Add(new CropPointOfInterest(
             displayName: "Crop Row",
-            referenceLemma: "crop",
             descriptions: new() { _crop == GrainCrop.Flax ? "A row of pale flax stems, ready for harvest" : "A row of grain stems, ears heavy" },
             items: cropItems,
             moods: new[] { "long", "rustling", "ripe" }
-        ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "harvestry", ["listen"] = "keen_ear", ["smell"] = "scenting" } });
+        ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "harvestry", ["listen"] = "insect_chorus", ["smell"] = "petrichor" } });
 
         // Scarecrow
-        area.PointsOfInterest.Add(new PointOfInterest(
+        area.PointsOfInterest.Add(new ScarecrowPointOfInterest(
             displayName: "Scarecrow",
-            referenceLemma: "scarecrow",
             descriptions: new() { "A straw-stuffed figure on a pole, hat slumped, sleeves blowing" },
             items: new()
             {
@@ -214,9 +211,8 @@ public class FieldSceneFactory : SceneFactory
         ) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "peasantry", ["contemplate"] = "aesthetic" } });
 
         // Tool Rest with sickle and rake
-        area.PointsOfInterest.Add(new PointOfInterest(
+        area.PointsOfInterest.Add(new ToolPointOfInterest(
             displayName: "Tool Rest",
-            referenceLemma: "tool",
             descriptions: new() { "A wooden bench at the field-edge with tools leaning against it" },
             items: new()
             {
@@ -231,9 +227,8 @@ public class FieldSceneFactory : SceneFactory
 
     private static Area BuildVegetableBeds(Random rng)
     {
-        var area = new Area(
+        var area = new VegetableArea(
             displayName: "Vegetable Beds",
-        referenceLemma: "vegetable",
             contextDescription: "in the field's vegetable beds",
             transitionDescription: "step into the vegetable beds",
             descriptions: new() { "A cluster of raised beds, each row planted with a different crop" },
@@ -256,9 +251,8 @@ public class FieldSceneFactory : SceneFactory
 
     private static Area BuildHerbPatch(Random rng)
     {
-        var area = new Area(
+        var area = new HerbArea(
             displayName: "Herb Patch",
-        referenceLemma: "herb",
             contextDescription: "in the herb patch",
             transitionDescription: "step into the herb patch",
             descriptions: new() { "A small fragrant patch of cultivated herbs at the field's quieter end" },
@@ -279,18 +273,16 @@ public class FieldSceneFactory : SceneFactory
 
     private static Area BuildFallowGround()
     {
-        var area = new Area(
+        var area = new GroundArea(
             displayName: "Fallow Ground",
-        referenceLemma: "ground",
             contextDescription: "on the fallow ground",
             transitionDescription: "walk onto the fallow ground",
             descriptions: new() { "A resting strip of unworked land, weeds and grass reclaiming the furrows" },
             moods: new[] { "weedy", "still", "loose-soiled", "quiet" }
         );
 
-        area.PointsOfInterest.Add(new PointOfInterest(
+        area.PointsOfInterest.Add(new MarkerPointOfInterest(
             displayName: "Stone Marker",
-            referenceLemma: "marker",
             descriptions: new() { "A flat stone set in the earth, marking a boundary" },
             items: new() { new ItemElement(new Rock()) },
             moods: new[] { "low", "weathered", "deliberate" }
@@ -301,18 +293,16 @@ public class FieldSceneFactory : SceneFactory
 
     private static Area BuildIrrigationDitch()
     {
-        var area = new Area(
+        var area = new DitchArea(
             displayName: "Irrigation Ditch",
-        referenceLemma: "ditch",
             contextDescription: "at the irrigation ditch",
             transitionDescription: "follow the ditch's edge",
             descriptions: new() { "A shallow ditch cut into the field's edge, water running slowly along it" },
             moods: new[] { "wet", "muddy", "low", "cool" }
         );
 
-        area.PointsOfInterest.Add(new PointOfInterest(
+        area.PointsOfInterest.Add(new DitchPointOfInterest(
             displayName: "Ditch Bank",
-            referenceLemma: "ditch",
             descriptions: new() { "A muddy slope where the ditch's water meets the worked soil" },
             items: new()
             {
@@ -320,118 +310,105 @@ public class FieldSceneFactory : SceneFactory
                 new ItemElement(new Reed()),
             },
             moods: new[] { "muddy", "wet", "cool" }
-        ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "drainage", ["smell"] = "scenting" } });
+        ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "drainage", ["smell"] = "taint_sense" } });
 
         return area;
     }
 
     // ── Vegetable mound PoIs ─────────────────────────────────────────────────
 
-    private static PointOfInterest BuildTurnipMound() => new(
+    private static PointOfInterest BuildTurnipMound() => new TurnipPointOfInterest(
         displayName: "Turnip Mound",
-        referenceLemma: "turnip",
         descriptions: new() { "A raised mound of turnips, white shoulders pushing through the soil" },
         items: new() { new ItemElement(new Turnip()), new ItemElement(new Turnip()) },
         moods: new[] { "earthy", "rounded" }
-    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "seed_lore", ["smell"] = "scenting" } };
+    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "seed_lore", ["smell"] = "petrichor" } };
 
-    private static PointOfInterest BuildRadishMound() => new(
+    private static PointOfInterest BuildRadishMound() => new RadishPointOfInterest(
         displayName: "Radish Mound",
-        referenceLemma: "radish",
         descriptions: new() { "A row of radishes, red shoulders showing through" },
         items: new() { new ItemElement(new Radish()), new ItemElement(new Radish()) },
         moods: new[] { "neat", "earthy", "red-topped" }
-    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "seed_lore", ["smell"] = "scenting" } };
+    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "seed_lore", ["smell"] = "petrichor" } };
 
-    private static PointOfInterest BuildParsnipMound() => new(
+    private static PointOfInterest BuildParsnipMound() => new ParsnipPointOfInterest(
         displayName: "Parsnip Mound",
-        referenceLemma: "parsnip",
         descriptions: new() { "A mound of parsnips, leaves dark and feathery above the soil" },
         items: new() { new ItemElement(new Parsnip()), new ItemElement(new Parsnip()) },
         moods: new[] { "rounded", "dark-leaved" }
-    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "seed_lore", ["smell"] = "scenting" } };
+    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "seed_lore", ["smell"] = "petrichor" } };
 
-    private static PointOfInterest BuildOnionMound() => new(
+    private static PointOfInterest BuildOnionMound() => new OnionPointOfInterest(
         displayName: "Onion Mound",
-        referenceLemma: "onion",
         descriptions: new() { "A mound of onions, paper-skinned tops nodding in the wind" },
         items: new() { new ItemElement(new Onion()), new ItemElement(new Onion()) },
         moods: new[] { "papery", "yellowing" }
-    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "seed_lore", ["smell"] = "scenting" } };
+    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "seed_lore", ["smell"] = "petrichor" } };
 
-    private static PointOfInterest BuildLeekMound() => new(
+    private static PointOfInterest BuildLeekMound() => new LeekPointOfInterest(
         displayName: "Leek Mound",
-        referenceLemma: "leek",
         descriptions: new() { "A row of leeks standing tall, dark-green leaves above the soil" },
         items: new() { new ItemElement(new Leek()), new ItemElement(new Leek()) },
         moods: new[] { "tall", "dark-leaved" }
-    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "seed_lore", ["smell"] = "scenting" } };
+    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "seed_lore", ["smell"] = "petrichor" } };
 
-    private static PointOfInterest BuildCabbageMound() => new(
+    private static PointOfInterest BuildCabbageMound() => new CabbagePointOfInterest(
         displayName: "Cabbage Mound",
-        referenceLemma: "cabbage",
         descriptions: new() { "A bed of cabbages, leaves curling tight around their cores" },
         items: new() { new ItemElement(new Cabbage()), new ItemElement(new Cabbage()) },
         moods: new[] { "rounded", "green" }
-    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "tillage", ["smell"] = "scenting" } };
+    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "tillage", ["smell"] = "petrichor" } };
 
-    private static PointOfInterest BuildPeaMound() => new(
+    private static PointOfInterest BuildPeaMound() => new PeaPointOfInterest(
         displayName: "Pea Mound",
-        referenceLemma: "pea",
         descriptions: new() { "A row of pea-vines climbing wooden stakes, pods hanging plump" },
         items: new() { new ItemElement(new Pea()), new ItemElement(new Pea()) },
         moods: new[] { "climbing", "tangled" }
-    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "tillage", ["smell"] = "scenting" } };
+    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "tillage", ["smell"] = "petrichor" } };
 
-    private static PointOfInterest BuildBeetrootMound() => new(
+    private static PointOfInterest BuildBeetrootMound() => new BeetrootPointOfInterest(
         displayName: "Beetroot Mound",
-        referenceLemma: "beetroot",
         descriptions: new() { "A mound of beetroots, stained-leaf tops above the dark earth" },
         items: new() { new ItemElement(new Beetroot()), new ItemElement(new Beetroot()) },
         moods: new[] { "dark-leaved", "earthy" }
-    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "seed_lore", ["smell"] = "scenting" } };
+    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "seed_lore", ["smell"] = "petrichor" } };
 
     // ── Herb clump PoIs ──────────────────────────────────────────────────────
 
-    private static PointOfInterest BuildThymeClump() => new(
+    private static PointOfInterest BuildThymeClump() => new ThymePointOfInterest(
         displayName: "Thyme Clump",
-        referenceLemma: "thyme",
         descriptions: new() { "A low-clinging clump of thyme, fragrant in the warmth" },
         items: new() { new ItemElement(new Thyme()) },
         moods: new[] { "fragrant", "low", "woody" }
-    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore", ["smell"] = "scenting", ["contemplate"] = "aesthetic" } };
+    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore", ["smell"] = "apothecary_nose", ["contemplate"] = "aesthetic" } };
 
-    private static PointOfInterest BuildSageClump() => new(
+    private static PointOfInterest BuildSageClump() => new SagePointOfInterest(
         displayName: "Sage Clump",
-        referenceLemma: "sage",
         descriptions: new() { "A spreading bush of sage, soft grey-green leaves" },
         items: new() { new ItemElement(new Sage()) },
         moods: new[] { "spreading", "grey-green", "soft" }
-    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore", ["smell"] = "scenting", ["contemplate"] = "aesthetic" } };
+    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore", ["smell"] = "apothecary_nose", ["contemplate"] = "aesthetic" } };
 
-    private static PointOfInterest BuildMintClump() => new(
+    private static PointOfInterest BuildMintClump() => new MintPointOfInterest(
         displayName: "Mint Clump",
-        referenceLemma: "mint",
         descriptions: new() { "A vigorous patch of mint, leaves bright green and cool" },
         items: new() { new ItemElement(new Mint()) },
         moods: new[] { "vigorous", "bright", "cool" }
-    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore", ["smell"] = "scenting", ["contemplate"] = "aesthetic" } };
+    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore", ["smell"] = "apothecary_nose", ["contemplate"] = "aesthetic" } };
 
-    private static PointOfInterest BuildChamomileClump() => new(
+    private static PointOfInterest BuildChamomileClump() => new ChamomilePointOfInterest(
         displayName: "Chamomile Clump",
-        referenceLemma: "chamomile",
         descriptions: new() { "A scatter of low chamomile, white-petalled and golden-centred" },
         items: new() { new ItemElement(new Chamomile()) },
         moods: new[] { "low", "fragrant", "white-flowered" }
-    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore", ["smell"] = "scenting", ["contemplate"] = "aesthetic" } };
+    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore", ["smell"] = "apothecary_nose", ["contemplate"] = "aesthetic" } };
 
-    private static PointOfInterest BuildWormwoodClump() => new(
+    private static PointOfInterest BuildWormwoodClump() => new WormwoodPointOfInterest(
         displayName: "Wormwood Clump",
-        referenceLemma: "wormwood",
         descriptions: new() { "A stand of wormwood, silvered leaves and bitter scent" },
         items: new() { new ItemElement(new Wormwood()) },
         moods: new[] { "silvered", "bitter", "tall" }
-    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore", ["smell"] = "scenting", ["contemplate"] = "aesthetic" } };
+    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore", ["smell"] = "apothecary_nose", ["contemplate"] = "aesthetic" } };
 
     // ── NPC construction ────────────────────────────────────────────────────
 

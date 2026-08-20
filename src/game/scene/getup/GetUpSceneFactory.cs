@@ -19,9 +19,8 @@ public sealed class GetUpSceneFactory : SceneFactory
 
     protected override void BuildSections(Random rng, int locationId, Scene scene)
     {
-        var area = new Area(
+        var area = new TreeArea(
             displayName:           "Under the Tree",
-            referenceLemma:        "tree",
             contextDescription:    "resting at the foot of a lone tree on an open plain",
             transitionDescription: "sink back down under the tree",
             descriptions: new List<string>

@@ -3,6 +3,8 @@ using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Npc;
 
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
@@ -14,6 +16,7 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public class AppeaseVerb : Verb
 {
+
     public override string VerbId         => "appease";
     public override string DisplayName    => "Appease";
     public override int    BaseDifficulty => 3;

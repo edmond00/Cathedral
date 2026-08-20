@@ -3,6 +3,8 @@ using System.Linq;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Routines;
 
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
@@ -18,6 +20,14 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public class HideAndWaitVerb : Verb
 {
+    /// <summary>Hiding while something hunts is a different lesson from hiding because it seemed wise.</summary>
+    public override IEnumerable<ModusMentis> Lessons(LessonContext ctx)
+    {
+        if (ctx.Hostile != ThreatLevel.None) yield return Mm<InstinctModusMentis>();
+        if (ctx.Target is HollowPointOfInterest or ReedPointOfInterest || ctx.Pov.Where is ThicketArea) yield return Mm<StillnessModusMentis>();
+        // The target's own declaration, then this verb's default — always last, always visible.
+        foreach (var m in base.Lessons(ctx)) yield return m;
+    }
     public override string VerbId         => "hide_and_wait";
     public override string DisplayName    => "Hide and Wait";
     public override int    BaseDifficulty => 2;

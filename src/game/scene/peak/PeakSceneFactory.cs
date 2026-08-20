@@ -146,63 +146,56 @@ public class PeakSceneFactory : SceneFactory
     /// A sheltered hollow under the approach, reachable only by the cliff. Being hard to get into is
     /// the whole of its character — it is out of the wind and out of everyone's way.
     /// </summary>
-    private static Area BuildCirqueBasin() => new(
+    private static Area BuildCirqueBasin() => new BasinArea(
         displayName: "Cirque Basin",
-        referenceLemma: "basin",
         contextDescription: "down in the cirque basin",
         transitionDescription: "drop into the cirque basin",
         descriptions: new() { "A bowl of still air and old snow scooped out beneath the cliff, walled on three sides" },
         moods: new[] { "still", "sheltered", "cold", "hidden" }
     );
 
-    private static Area BuildSummitApproach() => new(
+    private static Area BuildSummitApproach() => new SummitArea(
         displayName: "Summit Approach",
-        referenceLemma: "summit",
         contextDescription: "on the summit approach",
         transitionDescription: "begin the summit approach",
         descriptions: new() { "A steep, exposed run of rock and scree leading toward the high places" },
         moods: new[] { "steep", "exposed", "wind-bitten", "thin-aired" }
     );
 
-    private static Area BuildRidge() => new(
+    private static Area BuildRidge() => new RidgeArea(
         displayName: "Ridge",
-        referenceLemma: "ridge",
         contextDescription: "on the narrow ridge",
         transitionDescription: "step onto the ridge",
         descriptions: new() { "A narrow exposed spine of rock with steep falls on either side" },
         moods: new[] { "narrow", "vertiginous", "wind-howling", "thin-aired" }
     );
 
-    private static Area BuildSummitPlateau() => new(
+    private static Area BuildSummitPlateau() => new PlateauArea(
         displayName: "Summit Plateau",
-        referenceLemma: "plateau",
         contextDescription: "on the summit plateau",
         transitionDescription: "step onto the summit plateau",
         descriptions: new() { "A flat-topped summit, exposed to the sky on every side" },
         moods: new[] { "flat", "exposed", "vast", "wind-scoured" }
     );
 
-    private static Area BuildWindsweptLedge() => new(
+    private static Area BuildWindsweptLedge() => new LedgeArea(
         displayName: "Windswept Ledge",
-        referenceLemma: "ledge",
         contextDescription: "on the windswept ledge",
         transitionDescription: "step onto the windswept ledge",
         descriptions: new() { "A jutting shelf of rock overlooking the world below" },
         moods: new[] { "exposed", "vast", "vertiginous", "wind-bitten" }
     );
 
-    private static Area BuildIceShelf() => new(
+    private static Area BuildIceShelf() => new IceArea(
         displayName: "Ice Shelf",
-        referenceLemma: "ice",
         contextDescription: "on the ice shelf",
         transitionDescription: "step onto the ice shelf",
         descriptions: new() { "A frozen shelf of ice glittering against rock and sky" },
         moods: new[] { "frozen", "glittering", "still", "thin-aired" }
     );
 
-    private static Area BuildScreeGully() => new(
+    private static Area BuildScreeGully() => new GullyArea(
         displayName: "Scree Gully",
-        referenceLemma: "gully",
         contextDescription: "in the scree gully",
         transitionDescription: "descend into the scree gully",
         descriptions: new() { "A steep loose-rock channel cutting down the side of the peak" },

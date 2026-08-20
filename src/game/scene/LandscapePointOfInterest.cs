@@ -52,12 +52,15 @@ public class LandscapePointOfInterest : ConnectorPointOfInterest
                moods ?? new[] { "far-off", "hazed", "small with distance" },
                isNatural: true)
     {
-        // Worth looking at properly — reading a country at a distance is what topographia is — and
-        // worth sitting with, because it is a view. Nothing to smell or hear from this far away.
+        // Worth looking at properly and worth sitting with, because it is a view. Nothing to smell
+        // or hear from this far away.
+        //
+        // No examine declaration: EXAMINE has a landscape branch of its own teaching cartography,
+        // which is ahead of anything declared here, so a topographia declared here would only ever
+        // have read as a promise. Topographia is reached by asking somebody about the country.
         Senses = SensoryProfile.Beautiful;
         VerbModiMentis = new Dictionary<string, string>
         {
-            ["examine"]        = "topographia",
             ["contemplate"]    = "aesthetic",
             ["voyage_toward"]  = "voyage",
         };

@@ -3,6 +3,8 @@ using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Scene.Building;
 
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
@@ -11,6 +13,13 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public class FollowPathVerb : Verb
 {
+    /// <summary>A worn lane is also an account of whose land it runs through.</summary>
+    public override IEnumerable<ModusMentis> Lessons(LessonContext ctx)
+    {
+        if (ctx.Pov.Where is LaneArea or WalkArea or RowArea) yield return Mm<MarchstoneModusMentis>();
+        // The target's own declaration, then this verb's default — always last, always visible.
+        foreach (var m in base.Lessons(ctx)) yield return m;
+    }
     public override string VerbId         => "follow_path";
     public override string DisplayName    => "Follow";
     public override int    BaseDifficulty => 1;
@@ -19,7 +28,12 @@ public class FollowPathVerb : Verb
     public override ToolUsage ToolUse => ToolUsage.Excluded;
 
     /// <summary>What a success teaches: a path read and followed is terrain understood.</summary>
-    public override string? GrantedModusMentisId(Element? target) => "topographia";
+    /// <summary>
+    /// What a success teaches: following a way that is worn rather than marked. <c>topographia</c>
+    /// used to serve this, examining a landscape and asking about a district all at once, which made
+    /// the most-walked verb in the game teach the same word as reading a horizon.
+    /// </summary>
+    public override string? GrantedModusMentisId(Element? target) => "trailcraft";
 
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {

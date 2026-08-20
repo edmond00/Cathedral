@@ -4,6 +4,8 @@ using Cathedral.Game.Npc;
 
 using Cathedral.Game.Narrative;
 
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Dialogue.Tree.Trees;
 
 /// <summary>
@@ -70,6 +72,17 @@ public static class CaughtRedHandedTreeFactory
         public override string AssociatedVerbId => "";   // triggered programmatically, not by a verb
         public override NpcLineNode EntryNode   => _entry;
 
+        /// <summary>
+        /// What being caught teaches. Talking your way out of it is a face kept level while somebody
+        /// accuses you of something you did; the harder branches are the ones where the face is all
+        /// there is, and where refusing to be made small in front of witnesses is the whole play.
+        /// </summary>
+        protected override IEnumerable<string> AdditionalGrantedModusMentisIds(NpcEntity npc, ResolutionNode resolution)
+        {
+            yield return "stoneface";
+            // Which of the two depends on the branch walked, not on how deep it was — a resolution
+        }
+
         public override IReadOnlyList<Outcome> SuccessOutcomes { get; }
         public override IReadOnlyList<Outcome> FailureOutcomes { get; }
 
@@ -100,13 +113,17 @@ public static class CaughtRedHandedTreeFactory
             // A branch end on the hard ladder. `depth` is how many player replies reached it.
             ResolutionNode End(string id, int depth,
                               string success, string successIndirect,
-                              string failure, string failureIndirect) => new(
+                              string failure, string failureIndirect,
+                              params System.Type[] lessons) => new(
                 nodeId:                 id,
                 difficulty:             BranchDifficulty.Hard(depth),
                 successReplica:         success,
                 successReplicaIndirect: successIndirect,
                 failureReplica:         failure,
-                failureReplicaIndirect: failureIndirect);
+                failureReplicaIndirect: failureIndirect,
+                mode:                   ResolutionMode.DiceCheck,
+                topic:                  null,
+                lessons:                lessons);
 
             // A branch end that cannot be won — the provoke route. The success line is never spoken.
             ResolutionNode Doomed(string id, string failure, string failureIndirect) => new(
@@ -135,31 +152,36 @@ public static class CaughtRedHandedTreeFactory
                 "You said it without my having to drag it out of you. That counts for something. Go.",
                 "I tell {you:name} that saying it without my dragging it out counts for something, and let them go.",
                 "You admit it to my face and expect mercy. Stand and answer for it.",
-                "I tell {you:name} they admit it and expect mercy, and demand they stand and answer.");
+                "I tell {you:name} they admit it and expect mercy, and demand they stand and answer.",
+                    typeof(PlainDealingModusMentis));
 
             var apologyRestoreResult = End("apology_restore", 3,
                 "Put it back and I will say I was looking elsewhere. Move.",
                 "I tell {you:name} to put it back, and that I will claim I was looking elsewhere.",
                 "You would hand it over now. No. It is settled by force or not at all.",
-                "I tell {you:name} it is too late, and that this is settled by force or not at all.");
+                "I tell {you:name} it is too late, and that this is settled by force or not at all.",
+                    typeof(OathmakingModusMentis));
 
             var apologyNoExcuseResult = End("apology_no_excuse", 3,
                 "No excuse offered at all. That is the first honest thing anyone has said to me here. Go.",
                 "I tell {you:name} that no excuse at all is the first honest thing anyone has said to me here.",
                 "Honest and still guilty. Honesty will not save you. Face me.",
-                "I tell {you:name} honesty will not save them, and to face me.");
+                "I tell {you:name} honesty will not save them, and to face me.",
+                    typeof(HumilityModusMentis));
 
             var apologyNothingLeftResult = End("apology_nothing_left", 4,
                 "I have been at the end of things myself. Go, before I change my mind, and do not come back to this door.",
                 "I tell {you:name} I have been at the end of things myself, and to go before I change my mind.",
                 "Do not make me the villain in this. Draw.",
-                "I tell {you:name} not to make me the villain, and to draw.");
+                "I tell {you:name} not to make me the villain, and to draw.",
+                    typeof(WeepingModusMentis));
 
             var apologyNoDefenceResult = End("apology_no_defence", 4,
                 "You will not even argue your own case. That is either shame or honesty, and I am tired enough to call it honesty. Go.",
                 "I tell {you:name} that refusing to argue their case is either shame or honesty, and that I will call it honesty.",
                 "You will not defend yourself with words. Then defend yourself properly.",
-                "I tell {you:name} that if they will not defend themselves with words they may do it properly.");
+                "I tell {you:name} that if they will not defend themselves with words they may do it properly.",
+                    typeof(PrideModusMentis), typeof(StonefaceModusMentis));
 
             // The witness is wavering — the one place in this tree where a fourth reply exists.
             var apologyWeighing = new NpcLineNode(
@@ -224,25 +246,29 @@ public static class CaughtRedHandedTreeFactory
                 "You have an answer for it, and it holds together. I will say no more.",
                 "I allow that {you:name} has an answer for it that holds together, and let it be.",
                 "That story is too well made. You had it ready. Face me.",
-                "I tell {you:name} the story is too well made, and to face me.");
+                "I tell {you:name} the story is too well made, and to face me.",
+                    typeof(MythomaniaModusMentis));
 
             var lieConfidentResult = End("lie_confident", 3,
                 "You are either honest or the coolest liar I have met. I will take the first. Go.",
                 "I tell {you:name} they are either honest or the coolest liar I have met, and that I will take the first.",
                 "You stand there without shame. Then stand and fight.",
-                "I tell {you:name} they stand there without shame, and to stand and fight.");
+                "I tell {you:name} they stand there without shame, and to stand and fight.",
+                    typeof(MasqueradeModusMentis), typeof(GrimaceryModusMentis));
 
             var lieMistakenResult = End("lie_mistaken", 3,
                 "It was dim, I will grant you that. Perhaps I misread it. Go on.",
                 "I grant {you:name} that it was dim and I may have misread it.",
                 "Do not tell me what I saw. Draw.",
-                "I tell {you:name} not to tell me what I saw, and to draw.");
+                "I tell {you:name} not to tell me what I saw, and to draw.",
+                    typeof(DramaturgyModusMentis));
 
             var lieSomeoneElseResult = End("lie_someone_else", 3,
                 "Someone else, then. I will be watching either way.",
                 "I allow that it was someone else, and tell {you:name} I will be watching either way.",
                 "You would blame a stranger to save yourself. Then answer to me.",
-                "I tell {you:name} they would blame a stranger to save themselves, and to answer to me.");
+                "I tell {you:name} they would blame a stranger to save themselves, and to answer to me.",
+                    typeof(SpiteModusMentis));
 
             var lieDetails = new NpcLineNode(
                 nodeId:          "lie_details",
@@ -304,13 +330,15 @@ public static class CaughtRedHandedTreeFactory
                 "Sent, were you. Then it is whoever sent you I want, not you. Go, and think about who you work for.",
                 "I tell {you:name} it is whoever sent them I want, and to think about who they work for.",
                 "Then I will start with the one standing in front of me. Draw.",
-                "I tell {you:name} I will start with the one in front of me, and to draw.");
+                "I tell {you:name} I will start with the one in front of me, and to draw.",
+                    typeof(MimicryModusMentis));
 
             var deflectPermissionResult = End("deflect_permission", 3,
                 "You thought you had leave. That is a fool's mistake, not a thief's. Go, and ask next time.",
                 "I tell {you:name} that is a fool's mistake and not a thief's, and to ask next time.",
                 "Do not insult me with that. You will answer for it properly.",
-                "I tell {you:name} not to insult me, and that they will answer for it properly.");
+                "I tell {you:name} not to insult me, and that they will answer for it properly.",
+                    typeof(SharpPracticeModusMentis));
 
             var deflectExplain = new NpcLineNode(
                 nodeId:          "deflect_explain",
@@ -346,7 +374,8 @@ public static class CaughtRedHandedTreeFactory
                         "You caught yourself out before I had to. That is worth something. Go.",
                         "I tell {you:name} that catching themselves out before I had to is worth something.",
                         "You admit it and expect that to save you. Stand and answer.",
-                        "I tell {you:name} that admitting it will not save them, and to stand and answer.")));
+                        "I tell {you:name} that admitting it will not save them, and to stand and answer.",
+                    typeof(BearingModusMentis))));
 
             // ══════════════════════════════════════════════════════════════
             //  D — provoke them (every end forced to failure)

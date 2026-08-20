@@ -47,9 +47,11 @@ expect-no-outcome first_blow
 expect-not First blow:
 # Nothing was struck, so nothing was learned. The lesson rides on the blow.
 expect-no-outcome modus_mentis_grant
-# And nobody in the scene is carrying a mark: read as a negative over every NPC at once, so it does
-# not depend on which of them the phase happened to open on or on the order of the fields.
-expect-no-state npcs wounds=1
+# And the man swung at is unmarked. Asserted on the TARGET rather than as a negative over every NPC,
+# which is what this used to be: an NPC can be generated carrying a wound (a personality trait deals
+# historical scars, and the plowman in this scene has one), so "nobody is wounded" was never a
+# statement about the blow -- it passed only for as long as no archetype here happened to roll one.
+expect-state npcs brewer alive=True affinity=Stranger enemy=False hp=6/6 wounds=0
 
 click button
 wait mode Fighting 60

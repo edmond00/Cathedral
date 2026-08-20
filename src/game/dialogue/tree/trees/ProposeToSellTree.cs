@@ -5,6 +5,8 @@ using Cathedral.Game.Npc.Trade;
 
 using Cathedral.Game.Narrative;
 
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Dialogue.Tree.Trees;
 
 /// <summary>
@@ -39,6 +41,17 @@ public class ProposeToSellTree : DialogueTree
     // Success opens the sell menu; a routine bakes in that success so replaying opens trade directly.
     public override DialogueRoutineBehavior RoutineBehavior => DialogueRoutineBehavior.IncludeSuccess;
 
+
+    /// <summary>
+    /// Selling teaches the harder half of trade: what is not mentioned, and how coin is tested when
+    /// somebody has an interest in it not being.
+    /// </summary>
+    protected override IEnumerable<string> AdditionalGrantedModusMentisIds(NpcEntity npc, ResolutionNode resolution)
+    {
+        yield return "sharp_practice";
+        yield return "coin_eye";
+    }
+
     public override IReadOnlyList<Outcome> SuccessOutcomes => new Outcome[]
     {
         new OpenTradeMenuOutcome(TradeMode.Sell),
@@ -49,13 +62,17 @@ public class ProposeToSellTree : DialogueTree
     /// <summary>A branch end. Getting a look at your goods is a low-stakes ask.</summary>
     private static ResolutionNode End(string id, int depth,
                                       string success, string successIndirect,
-                                      string failure, string failureIndirect) => new(
+                                      string failure, string failureIndirect,
+                                      params System.Type[] lessons) => new(
         nodeId:                 id,
         difficulty:             BranchDifficulty.Easy(depth),
         successReplica:         success,
         successReplicaIndirect: successIndirect,
         failureReplica:         failure,
-        failureReplicaIndirect: failureIndirect);
+        failureReplicaIndirect: failureIndirect,
+        mode:                   ResolutionMode.DiceCheck,
+        topic:                  null,
+        lessons:                lessons);
 
     // ══════════════════════════════════════════════════════════════════════════
     //  A — offer plainly (deepest)
@@ -74,7 +91,8 @@ public class ProposeToSellTree : DialogueTree
                 "Let me see it, then. I will not turn away a fair deal.",
                 "I ask {you:name} to let me see it, since I will not turn away a fair deal.",
                 "I am not buying today. Keep your goods.",
-                "I tell {you:name} I am not buying today.")),
+                "I tell {you:name} I am not buying today.",
+                typeof(BargainingModusMentis))),
 
         new PlayerOption("offer_say_condition", "speak to the condition of it before the price",
             "It is sound. You will see the state of it for yourself.",
@@ -99,7 +117,8 @@ public class ProposeToSellTree : DialogueTree
                 "You pointed it out yourself. That is worth more than the fault costs you. Show me the lot.",
                 "I tell {you:name} pointing it out themselves is worth more than the fault costs them.",
                 "So there is something, and you would have let me find it. No sale.",
-                "I tell {you:name} they would have let me find it, and refuse the sale.")),
+                "I tell {you:name} they would have let me find it, and refuse the sale.",
+                typeof(PlainDealingModusMentis))),
 
         new PlayerOption("condition_stand_by", "say honestly there is nothing wrong with it",
             "Nothing. Look it over as long as you like.",
@@ -108,7 +127,8 @@ public class ProposeToSellTree : DialogueTree
                 "A man who invites inspection is usually telling the truth. Set it out.",
                 "I tell {you:name} a man who invites inspection is usually telling the truth, and to set it out.",
                 "They all say that. I have been at this too long to take confidence for proof.",
-                "I tell {you:name} I have been at this too long to take confidence for proof.")));
+                "I tell {you:name} I have been at this too long to take confidence for proof.",
+                typeof(StonefaceModusMentis))));
 
     private static NpcLineNode OfferTerms() => new(
         nodeId:          "offer_terms",
@@ -123,7 +143,8 @@ public class ProposeToSellTree : DialogueTree
                 "Then we will get on. Set it out and let me see what you have brought.",
                 "I ask {you:name} to set it out so I can see what they brought.",
                 "It suits you. It does not suit me to buy today. Good day.",
-                "I tell {you:name} it does not suit me to buy today.")),
+                "I tell {you:name} it does not suit me to buy today.",
+                typeof(CourtesyModusMentis))),
 
         new PlayerOption("terms_push_back", "push back on being the one who takes the risk",
             "Your price and no promises. So the risk is mine and the choosing is yours.",
@@ -143,7 +164,8 @@ public class ProposeToSellTree : DialogueTree
                 "Said, and taken. Set it out, and I will look harder than usual in your favour.",
                 "I ask {you:name} to set it out, and promise to look harder than usual in their favour.",
                 "Wanting it said has cost you the deal. Good day.",
-                "I tell {you:name} wanting it said has cost them the deal.")),
+                "I tell {you:name} wanting it said has cost them the deal.",
+                typeof(HumilityModusMentis))),
 
         new PlayerOption("push_ask_fair", "ask what would make it fairer",
             "Then what would make it even? I would rather find that than argue.",
@@ -152,7 +174,8 @@ public class ProposeToSellTree : DialogueTree
                 "Name the price you would walk away at, and I will not cross it. Let us trade.",
                 "I tell {you:name} to name the price they would walk away at, and that I will not cross it.",
                 "Trade is not even and never was. If you want fair, farm.",
-                "I tell {you:name} that trade is not even and never was.")));
+                "I tell {you:name} that trade is not even and never was.",
+                typeof(ThriftModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  B — appeal to what they need (rich)
@@ -171,7 +194,8 @@ public class ProposeToSellTree : DialogueTree
                 "That earns you a look, at least. Show me.",
                 "I tell {you:name} that earns them a look, and ask to be shown.",
                 "Save the sweet talk. I have no need of your goods.",
-                "I tell {you:name} to save the sweet talk.")),
+                "I tell {you:name} to save the sweet talk.",
+                typeof(SharpPracticeModusMentis))),
 
         new PlayerOption("flatter_drop_it", "drop the pitch and speak straight",
             "Then I will drop it. I have {you:goods} and I would like it sold.",
@@ -196,7 +220,8 @@ public class ProposeToSellTree : DialogueTree
                 "That I can do. Set it down and you will get an honest number, high or low.",
                 "I tell {you:name} to set it down for an honest number, high or low.",
                 "I will tell you straight now: nothing, to me, today.",
-                "I tell {you:name} straight that it is worth nothing to me today.")),
+                "I tell {you:name} straight that it is worth nothing to me today.",
+                typeof(PhysiognomyModusMentis))),
 
         new PlayerOption("straight_apologise", "apologise for opening with the patter",
             "Sorry for the patter. It is a habit from busier markets.",
@@ -205,7 +230,8 @@ public class ProposeToSellTree : DialogueTree
                 "No harm. It is how it is done elsewhere. Let me see it.",
                 "I tell {you:name} there is no harm, and ask to see it.",
                 "Habits like that are why I distrust travelling sellers. Move on.",
-                "I tell {you:name} habits like that are why I distrust travelling sellers.")));
+                "I tell {you:name} habits like that are why I distrust travelling sellers.",
+                typeof(EmpathyModusMentis))));
 
     private static NpcLineNode FlatterNeed() => new(
         nodeId:          "flatter_need",
@@ -220,7 +246,8 @@ public class ProposeToSellTree : DialogueTree
                 "Then you are worth knowing. Come, and while I look at what you brought I will tell you the list.",
                 "I tell {you:name} they are worth knowing, and offer the list while I look at what they brought.",
                 "And have you buy them up and sell them back to me dear? No.",
-                "I ask {you:name} whether they mean to buy them up and sell them back to me dear.")),
+                "I ask {you:name} whether they mean to buy them up and sell them back to me dear.",
+                typeof(InquiryModusMentis))),
 
         new PlayerOption("need_offer_watch", "offer to keep an eye out on your travels",
             "Then I will watch for them. No promises, and no charge for looking.",
@@ -229,7 +256,8 @@ public class ProposeToSellTree : DialogueTree
                 "No charge for looking. I will take that, and a look at your goods too. Set them out.",
                 "I accept, and ask {you:name} to set out their goods as well.",
                 "I have heard that from a dozen travellers. None of them came back.",
-                "I tell {you:name} a dozen travellers have said that and none came back.")));
+                "I tell {you:name} a dozen travellers have said that and none came back.",
+                typeof(ScrutinyModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  C — name your goods first (short)
@@ -248,7 +276,8 @@ public class ProposeToSellTree : DialogueTree
                 "You are letting me open. Set it out and I will give you a number.",
                 "I ask {you:name} to set it out and I will give them a number.",
                 "I will name nothing. Bring me a price or bring me nothing.",
-                "I tell {you:name} to bring me a price or bring me nothing.")),
+                "I tell {you:name} to bring me a price or bring me nothing.",
+                typeof(BoastingModusMentis))),
 
         new PlayerOption("named_state_price", "state your price and stand by it",
             "I have a figure in mind and I will not go far under it. But I will hear you.",
@@ -262,7 +291,8 @@ public class ProposeToSellTree : DialogueTree
                 "It is, and you have just told me so, which costs you. But I will deal. Set it down.",
                 "I tell {you:name} that telling me costs them, but that I will deal.",
                 "If you need it gone you will take any offer. It will not be mine.",
-                "I tell {you:name} that if they need it gone they will take any offer.")));
+                "I tell {you:name} that if they need it gone they will take any offer.",
+                typeof(WheedlingModusMentis))));
 
     private static NpcLineNode NamedPrice() => new(
         nodeId:          "named_price",
@@ -277,7 +307,8 @@ public class ProposeToSellTree : DialogueTree
                 "A seller who will walk away is rare, and it makes me want to look. Set it out.",
                 "I tell {you:name} a seller who will walk away is rare, and ask them to set it out.",
                 "Then we part. Good day.",
-                "I tell {you:name} that then we part.")),
+                "I tell {you:name} that then we part.",
+                typeof(PrideModusMentis))),
 
         new PlayerOption("price_invite_counter", "invite them to counter",
             "Then tell me how far off. I would rather meet you than argue.",
@@ -286,7 +317,8 @@ public class ProposeToSellTree : DialogueTree
                 "That is how a bargain should go and rarely does. Let us find the middle.",
                 "I tell {you:name} that is how a bargain should go, and propose we find the middle.",
                 "I would rather not meet you at all today. Try the next stall.",
-                "I tell {you:name} to try the next stall.")));
+                "I tell {you:name} to try the next stall.",
+                typeof(DisputationModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  D — ask what they are short of (short)
@@ -305,7 +337,8 @@ public class ProposeToSellTree : DialogueTree
                 "Then let us not stand about. Set it down and we will settle it.",
                 "I tell {you:name} to set it down so we can settle it.",
                 "With you now, and mine by evening. I am not buying.",
-                "I tell {you:name} I am not buying.")),
+                "I tell {you:name} I am not buying.",
+                typeof(StreetwiseModusMentis))),
 
         new PlayerOption("needs_ask_when", "ask when they are usually short",
             "When are you usually short? I would sooner come at the right time.",
@@ -319,7 +352,8 @@ public class ProposeToSellTree : DialogueTree
                 "One household, and unreliable, which is why I am listening to you. Show me what you have.",
                 "I tell {you:name} it is one household and unreliable, which is why I am listening.",
                 "My suppliers are my business. Are you selling or surveying?",
-                "I tell {you:name} my suppliers are my business.")));
+                "I tell {you:name} my suppliers are my business.",
+                typeof(GossipModusMentis))));
 
     private static NpcLineNode NeedsWhen() => new(
         nodeId:          "needs_when",
@@ -334,7 +368,8 @@ public class ProposeToSellTree : DialogueTree
                 "You plan further ahead than this afternoon. Come, and let me see what you brought today as well.",
                 "I tell {you:name} they plan further ahead than this afternoon, and ask to see today's goods too.",
                 "Come then, and I will deal with whoever is standing there. It may not be you.",
-                "I tell {you:name} I will deal with whoever is standing there, who may not be them.")),
+                "I tell {you:name} I will deal with whoever is standing there, who may not be them.",
+                typeof(OathmakingModusMentis))),
 
         new PlayerOption("when_sell_now", "point out you are here now, which is worth something",
             "I am here now, though. That is worth more than a promise about autumn.",
@@ -343,7 +378,8 @@ public class ProposeToSellTree : DialogueTree
                 "It is. Goods in hand beat a promise. Set them out.",
                 "I agree that goods in hand beat a promise, and ask {you:name} to set them out.",
                 "Here now and gone tomorrow. That is the trouble with travelling sellers.",
-                "I tell {you:name} they are here now and gone tomorrow.")));
+                "I tell {you:name} they are here now and gone tomorrow.",
+                typeof(EnterpriseModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  Entry

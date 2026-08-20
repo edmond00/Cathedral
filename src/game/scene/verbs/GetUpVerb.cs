@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
@@ -12,6 +14,7 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public sealed class GetUpVerb : Verb
 {
+
     public override string VerbId         => "get_up";
     public override string DisplayName    => "GET UP";
     public override int    BaseDifficulty => 1;

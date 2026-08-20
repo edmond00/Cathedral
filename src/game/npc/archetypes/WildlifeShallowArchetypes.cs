@@ -28,9 +28,32 @@ public abstract class GenericShallowArchetype : ShallowNpcArchetype
             parts:        BuildCorpseDrops());
 }
 
+
+/// <summary>
+/// A bird: worth looking at, worth looking at twice, and above all worth hearing. The birds are the
+/// reason the sensory gate was widened to reach creatures at all — a wood full of larks in which the
+/// only thing you could listen to was the tree they sat in.
+/// </summary>
+public abstract class BirdShallowArchetype : GenericShallowArchetype
+{
+    public override SensoryProfile Senses => SensoryProfile.FullyAlive;
+
+    public override System.Collections.Generic.IReadOnlyDictionary<string, string>? VerbModiMentis
+        => SingingCreatureSenses;
+}
+
+/// <summary>A mammal small enough to be scenery: seen and smelled, seldom heard.</summary>
+public abstract class SmallMammalShallowArchetype : GenericShallowArchetype
+{
+    public override SensoryProfile Senses => new(Examine: true, Contemplate: true, Smell: true);
+
+    public override System.Collections.Generic.IReadOnlyDictionary<string, string>? VerbModiMentis
+        => CreatureSenses;
+}
+
 // ── Small mammals ────────────────────────────────────────────────────────────
 
-public class HareArchetype : GenericShallowArchetype
+public class HareArchetype : SmallMammalShallowArchetype
 {
     public override string ArchetypeId     => "hare";
     public override string TypeDisplayName => "Hare";
@@ -47,7 +70,7 @@ public class HareArchetype : GenericShallowArchetype
     };
 }
 
-public class SnowHareArchetype : GenericShallowArchetype
+public class SnowHareArchetype : SmallMammalShallowArchetype
 {
     public override string ArchetypeId     => "snow_hare";
     public override string TypeDisplayName => "Snow Hare";
@@ -64,7 +87,7 @@ public class SnowHareArchetype : GenericShallowArchetype
     };
 }
 
-public class SquirrelArchetype : GenericShallowArchetype
+public class SquirrelArchetype : SmallMammalShallowArchetype
 {
     public override string ArchetypeId     => "squirrel";
     public override string TypeDisplayName => "Squirrel";
@@ -77,7 +100,7 @@ public class SquirrelArchetype : GenericShallowArchetype
     protected override List<ItemElement> BuildCorpseDrops() => new();
 }
 
-public class WoodMouseArchetype : GenericShallowArchetype
+public class WoodMouseArchetype : SmallMammalShallowArchetype
 {
     public override string ArchetypeId     => "wood_mouse";
     public override string TypeDisplayName => "Wood Mouse";
@@ -90,7 +113,7 @@ public class WoodMouseArchetype : GenericShallowArchetype
     protected override List<ItemElement> BuildCorpseDrops() => new();
 }
 
-public class MarmotArchetype : GenericShallowArchetype
+public class MarmotArchetype : SmallMammalShallowArchetype
 {
     public override string ArchetypeId     => "marmot";
     public override string TypeDisplayName => "Marmot";
@@ -103,7 +126,7 @@ public class MarmotArchetype : GenericShallowArchetype
     protected override List<ItemElement> BuildCorpseDrops() => new();
 }
 
-public class BatArchetype : GenericShallowArchetype
+public class BatArchetype : SmallMammalShallowArchetype
 {
     public override string ArchetypeId     => "bat";
     public override string TypeDisplayName => "Bat";
@@ -116,7 +139,7 @@ public class BatArchetype : GenericShallowArchetype
     protected override List<ItemElement> BuildCorpseDrops() => new();
 }
 
-public class RatArchetype : GenericShallowArchetype
+public class RatArchetype : SmallMammalShallowArchetype
 {
     public override string ArchetypeId     => "rat";
     public override string TypeDisplayName => "Rat";
@@ -129,7 +152,7 @@ public class RatArchetype : GenericShallowArchetype
     protected override List<ItemElement> BuildCorpseDrops() => new();
 }
 
-public class BadgerArchetype : GenericShallowArchetype
+public class BadgerArchetype : SmallMammalShallowArchetype
 {
     public override string ArchetypeId     => "badger";
     public override string TypeDisplayName => "Badger";
@@ -147,7 +170,7 @@ public class BadgerArchetype : GenericShallowArchetype
 
 // ── Birds ───────────────────────────────────────────────────────────────────
 
-public class CrowArchetype : GenericShallowArchetype
+public class CrowArchetype : BirdShallowArchetype
 {
     public override string ArchetypeId     => "crow";
     public override string TypeDisplayName => "Crow";
@@ -164,7 +187,7 @@ public class CrowArchetype : GenericShallowArchetype
     };
 }
 
-public class LarkArchetype : GenericShallowArchetype
+public class LarkArchetype : BirdShallowArchetype
 {
     public override string ArchetypeId     => "lark";
     public override string TypeDisplayName => "Lark";
@@ -180,7 +203,7 @@ public class LarkArchetype : GenericShallowArchetype
     };
 }
 
-public class SparrowArchetype : GenericShallowArchetype
+public class SparrowArchetype : BirdShallowArchetype
 {
     public override string ArchetypeId     => "sparrow";
     public override string TypeDisplayName => "Sparrow";
@@ -196,7 +219,7 @@ public class SparrowArchetype : GenericShallowArchetype
     };
 }
 
-public class RobinArchetype : GenericShallowArchetype
+public class RobinArchetype : BirdShallowArchetype
 {
     public override string ArchetypeId     => "robin";
     public override string TypeDisplayName => "Robin";
@@ -212,7 +235,7 @@ public class RobinArchetype : GenericShallowArchetype
     };
 }
 
-public class WoodpeckerArchetype : GenericShallowArchetype
+public class WoodpeckerArchetype : BirdShallowArchetype
 {
     public override string ArchetypeId     => "woodpecker";
     public override string TypeDisplayName => "Woodpecker";
@@ -229,7 +252,7 @@ public class WoodpeckerArchetype : GenericShallowArchetype
     };
 }
 
-public class OwlArchetype : GenericShallowArchetype
+public class OwlArchetype : BirdShallowArchetype
 {
     public override string ArchetypeId     => "owl";
     public override string TypeDisplayName => "Owl";
@@ -246,7 +269,7 @@ public class OwlArchetype : GenericShallowArchetype
     };
 }
 
-public class EagleArchetype : GenericShallowArchetype
+public class EagleArchetype : BirdShallowArchetype
 {
     public override string ArchetypeId     => "eagle";
     public override string TypeDisplayName => "Eagle";
@@ -264,7 +287,7 @@ public class EagleArchetype : GenericShallowArchetype
     };
 }
 
-public class RavenArchetype : GenericShallowArchetype
+public class RavenArchetype : BirdShallowArchetype
 {
     public override string ArchetypeId     => "raven";
     public override string TypeDisplayName => "Raven";
@@ -281,7 +304,7 @@ public class RavenArchetype : GenericShallowArchetype
     };
 }
 
-public class SeagullArchetype : GenericShallowArchetype
+public class SeagullArchetype : BirdShallowArchetype
 {
     public override string ArchetypeId     => "seagull";
     public override string TypeDisplayName => "Seagull";

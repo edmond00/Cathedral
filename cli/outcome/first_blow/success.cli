@@ -20,7 +20,7 @@ travel here
 wait mode LocationInteraction 60
 
 # Untouched before the swing — asserted, so the change below is a change and not a starting state.
-expect-state npcs brewer alive=True affinity=Stranger enemy=False hp=5/5 wounds=0
+expect-state npcs brewer alive=True affinity=Stranger enemy=False hp=6/6 wounds=0
 
 strategy succeed
 goal attack
@@ -41,5 +41,5 @@ expect First blow:
 expect-outcome first_blow
 
 # The world, not the chip: a wound on his body and a hit point off it.
-expect-state npcs brewer alive=True affinity=Stranger enemy=False hp=4/5 wounds=1
+expect-state npcs brewer alive=True affinity=Stranger enemy=False hp=5/6 wounds=1
 quit

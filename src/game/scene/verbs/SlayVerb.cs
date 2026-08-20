@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>

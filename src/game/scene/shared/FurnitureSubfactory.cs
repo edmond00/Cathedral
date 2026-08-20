@@ -61,8 +61,8 @@ public static class FurnitureSubfactory
             },
             Setting.Highland => new[]
             {
-                ("Sheltered Ledge", "ledge",  "A shelf of rock out of the wind, worn hollow by whoever sat here before", new[] { "sheltered", "wind-scoured", "cold" }),
-                ("Boulder Seat",    "boulder","A boulder with one side split away flat, at the height of a chair", new[] { "split", "grey", "bare" }),
+                ("Sheltered Ledge", "ledge", "A shelf of rock out of the wind, worn hollow by whoever sat here before", new[] { "sheltered", "wind-scoured", "cold" }),
+                ("Boulder Seat",    "boulder", "A boulder with one side split away flat, at the height of a chair", new[] { "split", "grey", "bare" }),
             },
             _ => new[]
             {
@@ -391,36 +391,45 @@ public static class FurnitureSubfactory
     {
         if (rng.NextDouble() > chance) return null;
 
-        (ScaleKind Kind, string TopName, string TopLemma, string TopDesc, string ClimbName, string ClimbDesc) spec =
+        // The climbed-to place carries its own constructor rather than a lemma string, so the kind of
+        // vantage a lesson asks about is checked by the compiler.
+        (ScaleKind Kind, string TopName, string TopLemma,
+         System.Func<string, string, string, List<string>, string[], Area> Build,
+         string TopDesc, string ClimbName, string ClimbDesc) spec =
             setting switch
             {
                 Setting.Settlement => (ScaleKind.Wall, "Rooftop", "roof",
+                    (n, c, t, d, m) => new RoofArea(n, c, t, d, m),
                     "A pitch of thatch and battens with the whole street laid out below it",
                     "House Wall", "A wall of coursed stone with gaps enough for fingers and boot-toes, going up to the eaves"),
                 Setting.Farmland => (ScaleKind.Stack, "Barn Loft", "loft",
+                    (n, c, t, d, m) => new LoftArea(n, c, t, d, m),
                     "The open floor above the threshing bay, half-filled with last year's straw",
                     "Loft Ladder", "A ladder of pegged rungs going up into the dark under the roof"),
                 Setting.Woodland => (ScaleKind.Tree, "Canopy", "canopy",
+                    (n, c, t, d, m) => new CanopyArea(n, c, t, d, m),
                     "A fork high in a great tree, wide enough to sit in, with the wood spread out beneath",
                     "Great Oak", "An oak thick enough that the lowest limbs are already above head height"),
                 Setting.Water => (ScaleKind.Wall, "Headland", "headland",
+                    (n, c, t, d, m) => new HeadlandArea(n, c, t, d, m),
                     "A shelf of turf at the top of the rock, with the whole bay opened out below",
                     "Rock Stair", "A break in the rock where the strata step up, wet most of the way"),
                 Setting.Underground => (ScaleKind.Ladder, "Upper Gallery", "gallery",
+                    (n, c, t, d, m) => new GalleryArea(n, c, t, d, m),
                     "A worked-out gallery above the main level, its floor the roof of the workings below",
                     "Timber Stage", "A stage of props and planks going up the shaft wall, creaking under nothing at all"),
                 _ => (ScaleKind.Wall, "Crag Head", "crag",
+                    (n, c, t, d, m) => new CragArea(n, c, t, d, m),
                     "A bare shoulder of rock standing clear of everything around it",
                     "Rock Step", "A run of blocky rock, holds good but the whole of it leaning outward"),
             };
 
-        var top = new Area(
-            displayName:           spec.TopName,
-            referenceLemma:        spec.TopLemma,
-            contextDescription:    $"up on the {spec.TopLemma}",
-            transitionDescription: $"pull yourself onto the {spec.TopLemma}",
-            descriptions:          new List<string> { spec.TopDesc },
-            moods:                 new[] { "airy", "exposed", "quiet", "high" });
+        var top = spec.Build(
+            spec.TopName,
+            $"up on the {spec.TopLemma}",
+            $"pull yourself onto the {spec.TopLemma}",
+            new List<string> { spec.TopDesc },
+            new[] { "airy", "exposed", "quiet", "high" });
 
         new ScalePointOfInterest(
             bottom, top, spec.Kind, spec.ClimbName,
@@ -447,9 +456,8 @@ public static class FurnitureSubfactory
     {
         if (rng.NextDouble() > chance) return null;
 
-        var crown = new Area(
+        var crown = new CrownArea(
             displayName:           "Giant Tree Crown",
-            referenceLemma:        "crown",
             contextDescription:    "up in the crown of the giant tree",
             transitionDescription: "haul yourself into the crown",
             descriptions:          new List<string>

@@ -18,8 +18,9 @@ public class GoDownStairsVerb : Verb
     /// <summary>As going up: a stair asks nothing of the hands.</summary>
     public override ToolUsage ToolUse => ToolUsage.Excluded;
 
-    /// <summary>What a success teaches: stairs are footing, and going down is the harder half.</summary>
-    public override string? GrantedModusMentisId(Element? target) => "surefoot";
+    /// <summary>Four limbs are sure-footed; two are balanced. Surefoot names a beast's limbs, so a person falls through.</summary>
+    public override IReadOnlyList<string> GrantedModusMentisIds(Element? target)
+        => new[] { "surefoot", "balance" };
 
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {

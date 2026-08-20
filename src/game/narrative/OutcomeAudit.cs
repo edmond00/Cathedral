@@ -110,7 +110,7 @@ public static class OutcomeAudit
                             // Every successful verb teaches a modus mentis, and the grant is applied
                             // by NarrativeController rather than by the verb — which is why the two
                             // most common outcomes in the game were missing from this table entirely.
-                            if (verb.ResolveGrantedModusMentisId(target) != null)
+                            if (verb.Lessons(new Scene.Verbs.LessonContext(scene, pov, actor, target)).Any())
                             {
                                 Record(producedBy, typeof(ModusMentisGrantOutcome),    verb.VerbId);
                                 Record(producedBy, typeof(ModusMentisPracticeOutcome), verb.VerbId);

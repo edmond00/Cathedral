@@ -3,6 +3,8 @@ using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Scene.Building;
 
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
@@ -14,8 +16,9 @@ public abstract class ScaleVerbBase : Verb
 {
     public override int BaseDifficulty => 4;
 
-    /// <summary>What a success teaches: getting a body up something using hands and feet.</summary>
-    public override string? GrantedModusMentisId(Element? target) => "clambering";
+    /// <summary>A beast hooks its claws in; a body with arms hauls itself. Beast first: clambering names claws, which no human owns, so a person falls through to scaling.</summary>
+    public override IReadOnlyList<string> GrantedModusMentisIds(Element? target)
+        => new[] { "clambering", "scaling" };
 
     public override int DifficultyFor(Element? target)
         => target is ScalePointOfInterest scale ? scale.Difficulty : BaseDifficulty;
@@ -38,6 +41,14 @@ public abstract class ScaleVerbBase : Verb
 /// <summary>Climbs a <see cref="ScalePointOfInterest"/> from its foot to the place above.</summary>
 public class ScaleUpVerb : ScaleVerbBase
 {
+    /// <summary>A height reached in order to look from it.</summary>
+    public override IEnumerable<ModusMentis> Lessons(LessonContext ctx)
+    {
+        if (ctx.Target is ScalePointOfInterest { TopArea: CrownArea or CanopyArea or HeadlandArea }) yield return Mm<VantageModusMentis>();
+
+        // The target's own declaration, then this verb's default — always last, always visible.
+        foreach (var m in base.Lessons(ctx)) yield return m;
+    }
     public override string VerbId      => "scale_up";
     public override string DisplayName => "Scale";
 
@@ -61,6 +72,7 @@ public class ScaleUpVerb : ScaleVerbBase
 /// </summary>
 public class ScaleDownVerb : ScaleVerbBase
 {
+
     public override string VerbId      => "scale_down";
     public override string DisplayName => "Climb Back Down";
 

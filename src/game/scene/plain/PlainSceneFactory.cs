@@ -157,63 +157,56 @@ public class PlainSceneFactory : SceneFactory
 
     // ── Area builders ────────────────────────────────────────────────────────
 
-    private static Area BuildGrassland() => new(
+    private static Area BuildGrassland() => new GrasslandArea(
         displayName: "Grassland",
-        referenceLemma: "grassland",
         contextDescription: "crossing the open grassland",
         transitionDescription: "move into the grassland",
         descriptions: new() { "Open wind-swept grassland, the sky vast and unbroken above" },
         moods: new[] { "vast", "windy", "yellowed", "rustling", "open" }
     );
 
-    private static Area BuildMeadow() => new(
+    private static Area BuildMeadow() => new MeadowArea(
         displayName: "Meadow",
-        referenceLemma: "meadow",
         contextDescription: "wandering through the meadow",
         transitionDescription: "move into the meadow",
         descriptions: new() { "A sheltered meadow speckled with wildflowers and the hum of bees" },
         moods: new[] { "sunlit", "fragrant", "soft", "quiet", "windless" }
     );
 
-    private static Area BuildHeath() => new(
+    private static Area BuildHeath() => new HeathArea(
         displayName: "Heath",
-        referenceLemma: "heath",
         contextDescription: "crossing the dry heath",
         transitionDescription: "move into the heath",
         descriptions: new() { "A dry stretch of scrub and heather, broken by stands of gorse" },
         moods: new[] { "dry", "scrubby", "purple", "wind-bent", "low" }
     );
 
-    private static Area BuildHill() => new(
+    private static Area BuildHill() => new HillArea(
         displayName: "Hill",
-        referenceLemma: "hill",
         contextDescription: "climbing the open hill",
         transitionDescription: "move up onto the hill",
         descriptions: new() { "A gentle rise of grass and stone, exposed to the wind" },
         moods: new[] { "windswept", "exposed", "rolling", "bare", "open" }
     );
 
-    private static Area BuildValley() => new(
+    private static Area BuildValley() => new ValleyArea(
         displayName: "Valley",
-        referenceLemma: "valley",
         contextDescription: "descending into the valley",
         transitionDescription: "descend into the valley",
         descriptions: new() { "A shallow damp depression sheltered from the wind" },
         moods: new[] { "sheltered", "damp", "lush", "shadowed", "still" }
     );
 
-    private static Area BuildHedgerow() => new(
+    private static Area BuildHedgerow() => new HedgerowArea(
         displayName: "Hedgerow",
-        referenceLemma: "hedgerow",
         contextDescription: "walking along the hedgerow",
         transitionDescription: "move along the hedgerow",
         descriptions: new() { "A long thorny hedgerow standing between two open stretches" },
         moods: new[] { "tangled", "thorny", "dense", "narrow", "shaded" }
     );
 
-    private static Area BuildBoggyGround() => new(
+    private static Area BuildBoggyGround() => new BogArea(
         displayName: "Boggy Ground",
-        referenceLemma: "bog",
         contextDescription: "wading through boggy ground",
         transitionDescription: "step into the boggy ground",
         descriptions: new() { "Soft wet ground beneath a tangle of reeds and rushes" },

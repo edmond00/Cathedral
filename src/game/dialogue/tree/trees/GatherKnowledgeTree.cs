@@ -48,7 +48,7 @@ public class GatherKnowledgeTree : DialogueTree
     /// (<c>NamedNpcArchetype.TradeModusMentisId</c>); the lie of the land is the lie of the land
     /// whoever describes it; and who-is-who in a place is streetwise wherever the place is.
     /// </summary>
-    public override IEnumerable<string> AdditionalGrantedModusMentisIds(NpcEntity npc, ResolutionNode resolution)
+    protected override IEnumerable<string> AdditionalGrantedModusMentisIds(NpcEntity npc, ResolutionNode resolution)
     {
         string? id = resolution.Topic switch
         {
@@ -59,6 +59,23 @@ public class GatherKnowledgeTree : DialogueTree
         };
 
         if (id != null) yield return id;
+
+        // The substance of the answer is one thing; the shape of the asking is another, and it
+        // differs by topic. Asking about a place gets you the arrangements as well as the ground;
+        // asking about people is gossip however politely it is put; and a learned person answers in
+        // a register that has to be met.
+        string? manner = resolution.Topic switch
+        {
+            TopicPlace  => "marchstone",
+            TopicPeople => "gossip",
+            _           => null,
+        };
+        if (manner != null) yield return manner;
+
+        if ((npc.Archetype as NamedNpcArchetype)?.AuthorityLevel > 0)
+            yield return resolution.Topic == TopicPeople ? "lineage_lore" : "disputation";
+        else
+            yield return "open_mindedness";
     }
 
     /// <summary>Being treated as somebody worth asking is not nothing.</summary>

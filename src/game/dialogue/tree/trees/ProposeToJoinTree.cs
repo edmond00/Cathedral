@@ -30,6 +30,14 @@ public class ProposeToJoinTree : DialogueTree
     /// <summary>What succeeding at this teaches: asking somebody for everything and being told yes.</summary>
     public override string? GrantedModusMentisId => "friendship";
 
+
+    /// <summary>Asking somebody to throw in with you is a promise made and a promise expected.</summary>
+    protected override IEnumerable<string> AdditionalGrantedModusMentisIds(NpcEntity npc, ResolutionNode resolution)
+    {
+        yield return "oathmaking";
+        yield return "loyalty";
+    }
+
     public override IReadOnlyList<Outcome> SuccessOutcomes => new Outcome[]
     {
         new JoinPartyOutcome(),

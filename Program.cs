@@ -138,6 +138,8 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("                                     about the verb rather than walk somebody else's tree");
     Console.WriteLine("  --npc-static                       DEBUG: pin every NPC to one area all day instead of following their schedule.");
     Console.WriteLine("  --silent                           DEBUG: open no audio device — no music, no sound effects. Used by the test suite.");
+    Console.WriteLine("  --hidden                           DEBUG: create the window without showing it — no window on screen, no focus");
+    Console.WriteLine("                                     taken. The GL context and every mode still run. Used by the test suite.");
     Console.WriteLine("                                     Where somebody stands at a given hour is drawn from the location seed, so an");
     Console.WriteLine("                                     NPC verb's test cannot otherwise name the room");
     Console.WriteLine("  --location-id <n>                  DEBUG: build every scene as location id <n>, whatever vertex you stand on.");
@@ -201,6 +203,8 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("                                     unresolvable modus-mentis and tool ids, landmark counts) and exit");
     Console.WriteLine("  --outcome-audit                    Print the outcome catalogue (every consequence, who produces it, what produces nothing) and exit");
     Console.WriteLine("  --verb-probe                       Print, per verb, the flags that reach it from a cold start (for writing cli tests) and exit");
+    Console.WriteLine("  --mm-reach-csv [path]              Write one CSV row per modus mentis: which of the five routes reaches it (childhood,");
+    Console.WriteLine("                                     fight, action, dialogue, work) and which bodies can hold it (default mm_reachability.csv) and exit");
     Console.WriteLine("  --crime-audit                      Print the crime audit (contextual verb legality, the morality choice rules,");
     Console.WriteLine("                                     enmity surviving a rebuild and a save) and exit");
     Console.WriteLine("  --llm-probe-audit                  Re-measure every compute device (prompt-read and generate rates, cost per");
@@ -243,6 +247,10 @@ if (args.Any(a => a == "--npc-static")) Cathedral.Config.Debug.NpcStatic = true;
 
 // --silent: open no audio device. The test suite passes this on every script.
 if (args.Any(a => a == "--silent")) Cathedral.Config.Debug.Silent = true;
+
+// --hidden: create the window without showing it. What run_tests.sh uses so a suite run does not put
+// a hundred windows on screen and take the keyboard focus a hundred times.
+if (args.Any(a => a == "--hidden")) Cathedral.Config.Debug.HiddenWindow = true;
 
 // --npc-hostile: every NPC counts the protagonist an enemy from the start.
 if (args.Any(a => a == "--npc-hostile")) Cathedral.Config.Debug.NpcHostile = true;
@@ -319,6 +327,21 @@ if (args.Length >= 1 && args[0] == "--save-audit")
 if (args.Length >= 1 && args[0] == "--verb-probe")
 {
     Console.WriteLine(Cathedral.Game.Scene.VerbProbe.BuildReport());
+    return;
+}
+
+// Modus-mentis reachability: one CSV row per modus mentis, saying which of the five routes a player
+// can actually reach it by — childhood, fight, action, dialogue, work — and which bodies can hold
+// the lesson. The question the mm-grants skill raises and cannot settle, since reading the verbs
+// route of five. Headless: no LLM, no window.
+if (args.Length >= 1 && args[0] == "--mm-reach-csv")
+{
+    string reachPath = args.Length >= 2 && !args[1].StartsWith("--") ? args[1] : "mm_reachability.csv";
+    string reachCsv  = Cathedral.Game.Narrative.MmReachAudit.BuildCsv(out string reachSummary);
+    System.IO.File.WriteAllText(reachPath, reachCsv, new System.Text.UTF8Encoding(true));
+    Console.WriteLine();
+    Console.WriteLine(reachSummary);
+    Console.WriteLine($"[mm-reach-csv] written to {System.IO.Path.GetFullPath(reachPath)}");
     return;
 }
 
@@ -476,9 +499,16 @@ if (args.Any(a => a == "--playground"))
 if (args.Any(a => a == "--debug"))
 {
     Cathedral.Game.DebugMode.IsActive = true;
-    Cathedral.Game.DebugMode.ShowViewers = true;
+
+    // The viewers are windows, and --hidden means no windows. This matters because every CLI script
+    // passes --debug — it is what `strategy` needs — so without this a suite run opens the graph and
+    // LLM viewers a hundred-odd times over, which is the thing --hidden exists to stop.
+    Cathedral.Game.DebugMode.ShowViewers = !Cathedral.Config.Debug.HiddenWindow;
+
     Console.ForegroundColor = ConsoleColor.Yellow;
     Console.WriteLine("*** DEBUG MODE ACTIVE ***");
+    if (Cathedral.Config.Debug.HiddenWindow)
+        Console.WriteLine("Viewers suppressed by --hidden.");
     if (args.Any(a => a == "--cli" || a == "--cli-script"))
         Console.WriteLine("Combined with --cli: outcomes follow the preset `strategy` (no console prompts).");
     else
@@ -510,10 +540,14 @@ if (args.Any(a => a == "--cli") || args.Any(a => a == "--cli-script"))
 // Check for --view flag: viewers only, no console overriding
 if (args.Any(a => a == "--view"))
 {
-    Cathedral.Game.DebugMode.ShowViewers = true;
+    // --hidden wins: asking for both is contradictory, and the one that says "put nothing on screen"
+    // is the more specific instruction. Said out loud, because a silently ignored --view is worse.
+    Cathedral.Game.DebugMode.ShowViewers = !Cathedral.Config.Debug.HiddenWindow;
     Console.ForegroundColor = ConsoleColor.Cyan;
     Console.WriteLine("*** VIEW MODE ACTIVE ***");
-    Console.WriteLine("LLM and scene viewers will open. No console decision overriding.");
+    Console.WriteLine(Cathedral.Config.Debug.HiddenWindow
+        ? "Viewers suppressed by --hidden, which overrides --view."
+        : "LLM and scene viewers will open. No console decision overriding.");
     Console.ResetColor();
     Console.WriteLine();
 }

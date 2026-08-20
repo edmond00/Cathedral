@@ -4,6 +4,8 @@ using Cathedral.Game.Npc;
 
 using Cathedral.Game.Narrative;
 
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Dialogue.Tree.Trees;
 
 /// <summary>
@@ -40,6 +42,25 @@ public class MeetStrangerTree : DialogueTree
     /// <summary>What succeeding at this conversation teaches: a first meeting carried off well.</summary>
     public override string? GrantedModusMentisId => "hospitality";
 
+
+    /// <summary>
+    /// How the meeting was carried off. Somebody with authority is met correctly or not at all, so
+    /// the lesson there is the form; between equals it is the ordinary courtesy that costs nothing
+    /// and is noticed by everybody. A meeting won on a short branch was carried by presence rather
+    /// than by conversation, which is its own thing.
+    /// </summary>
+    protected override IEnumerable<string> AdditionalGrantedModusMentisIds(NpcEntity npc, ResolutionNode resolution)
+    {
+        // Deference is genuinely about rank — it is a fact about who is being addressed rather than
+        // about anything said, so it is the one place the listener still decides. Everything else
+        // this conversation could teach is decided by the branch walked.
+        if (Authority(npc) > 0) yield return "deference";
+    }
+
+    /// <summary>Authority of the person being spoken to; 0 for anyone who holds none.</summary>
+    private static int Authority(NpcEntity npc)
+        => (npc.Archetype as NamedNpcArchetype)?.AuthorityLevel ?? 0;
+
     public override IReadOnlyList<Outcome> SuccessOutcomes => new Outcome[]
     {
         new AffinityTransitionOutcome(AffinityLevel.DistantAcquaintance),
@@ -55,13 +76,17 @@ public class MeetStrangerTree : DialogueTree
     /// <summary>A branch end. <paramref name="depth"/> is how many player replies reached it.</summary>
     private static ResolutionNode End(string id, int depth,
                                       string success, string successIndirect,
-                                      string failure, string failureIndirect) => new(
+                                      string failure, string failureIndirect,
+                                      params System.Type[] lessons) => new(
         nodeId:                 id,
         difficulty:             BranchDifficulty.Easy(depth),
         successReplica:         success,
         successReplicaIndirect: successIndirect,
         failureReplica:         failure,
-        failureReplicaIndirect: failureIndirect);
+        failureReplicaIndirect: failureIndirect,
+        mode:                   ResolutionMode.DiceCheck,
+        topic:                  null,
+        lessons:                lessons);
 
     // The whole tree is built through static methods rather than static fields: a field graph would
     // depend on textual initialisation order, and this one is too large to keep straight by eye.
@@ -83,7 +108,8 @@ public class MeetStrangerTree : DialogueTree
                 "Then you are no trouble to anyone. Safe travelling.",
                 "I wish them safe travelling.",
                 "You stopped to bother me on your way. Good day.",
-                "I tell them they stopped to bother me on their way.")),
+                "I tell them they stopped to bother me on their way.",
+                typeof(CourtesyModusMentis))),
 
         new PlayerOption("stopping_awhile", "say you mean to stop a while and would like to know the place",
             "Stopping, at least long enough to learn the place.",
@@ -108,7 +134,8 @@ public class MeetStrangerTree : DialogueTree
                 "You have made a start with me. Come back and I will name the others.",
                 "I tell them to come back and I will name the others.",
                 "You are sizing the place up already. I will keep my list to myself.",
-                "I tell them they are sizing the place up already.")),
+                "I tell them they are sizing the place up already.",
+                typeof(StreetwiseModusMentis))),
 
         new PlayerOption("offer_hands", "offer that you are willing to work while you are here",
             "I can work, if there is work needing doing.",
@@ -117,7 +144,8 @@ public class MeetStrangerTree : DialogueTree
                 "Willing workers are wanted here more than fine names. We will see what comes up.",
                 "I tell them willing workers are wanted here more than fine names.",
                 "Everyone says that on the first day. I do not believe it yet.",
-                "I tell them everyone says that on the first day.")));
+                "I tell them everyone says that on the first day.",
+                typeof(HardLaborModusMentis))));
 
     private static NpcLineNode WarmTheirDay() => new(
         nodeId:          "warm_their_day",
@@ -132,7 +160,8 @@ public class MeetStrangerTree : DialogueTree
                 "It is. Few people say so. Thank you.",
                 "I tell them few people say so, and thank them.",
                 "Do not pity me. I have done it thirty years and will do thirty more.",
-                "I tell them not to pity me, since I have done it thirty years.")),
+                "I tell them not to pity me, since I have done it thirty years.",
+                typeof(DiligenceModusMentis))),
 
         new PlayerOption("ask_about_craft", "ask them to tell you more about their trade",
             "I know little about {npc:craft}. Tell me about it.",
@@ -152,7 +181,8 @@ public class MeetStrangerTree : DialogueTree
                 "Badly, for years, until one day it was not badly. I am glad to be asked.",
                 "I tell them I learned it badly for years until one day it was not badly.",
                 "That is a long story, and I do not know you well enough to tell it.",
-                "I tell them it is a long story and I do not know them well enough to tell it.")),
+                "I tell them it is a long story and I do not know them well enough to tell it.",
+                typeof(RoteModusMentis))),
 
         new PlayerOption("admire_plainly", "say plainly that it is a skill worth having",
             "That is a skill worth having. Few could do it.",
@@ -161,7 +191,8 @@ public class MeetStrangerTree : DialogueTree
                 "You put that well. I am glad we met.",
                 "I tell them they put that well and I am glad we met.",
                 "Keep it. Praise from a stranger is worth nothing.",
-                "I tell them praise from a stranger is worth nothing.")));
+                "I tell them praise from a stranger is worth nothing.",
+                typeof(JourneymanEyeModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  B — asked who they are
@@ -185,7 +216,8 @@ public class MeetStrangerTree : DialogueTree
                 "That is fine. Half the people here will not give a name either.",
                 "I tell them half the people here will not give a name either.",
                 "You will not say. Then we have nothing more to discuss.",
-                "I tell them that since they will not say, we have nothing more to discuss.")));
+                "I tell them that since they will not say, we have nothing more to discuss.",
+                typeof(MasqueradeModusMentis))));
 
     private static NpcLineNode NamesExchanged() => new(
         nodeId:          "names_exchanged",
@@ -200,7 +232,8 @@ public class MeetStrangerTree : DialogueTree
                 "{npc:job}. You will find me at {npc:workplace} most days. Come by.",
                 "I tell {you:name} I am {npc:job}, and to find me at {npc:workplace} most days.",
                 "You ask a great many questions for someone who arrived an hour ago.",
-                "I tell {you:name} they ask a great many questions for someone who arrived an hour ago.")),
+                "I tell {you:name} they ask a great many questions for someone who arrived an hour ago.",
+                typeof(BearingModusMentis))),
 
         new PlayerOption("say_glad", "say you are glad to have met them",
             "I am glad to have met you properly.",
@@ -209,7 +242,8 @@ public class MeetStrangerTree : DialogueTree
                 "And I you. A new face is an event in a place this small. Farewell.",
                 "I tell {you:name} a new face is an event in a place this small.",
                 "We will see whether either of us stays glad about it.",
-                "I tell {you:name} we will see whether either of us stays glad about it.")));
+                "I tell {you:name} we will see whether either of us stays glad about it.",
+                typeof(GregariousnessModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  C — introduced yourself first
@@ -228,7 +262,8 @@ public class MeetStrangerTree : DialogueTree
                 "Courteous, and you know when to stop. That is rare. Until next time.",
                 "I tell {you:name} that knowing when to stop is rare.",
                 "Then keep walking.",
-                "I tell {you:name} to keep walking.")),
+                "I tell {you:name} to keep walking.",
+                typeof(ComelinessModusMentis))),
 
         new PlayerOption("ask_how_long", "ask how long they have been here",
             "How long have you done that?",
@@ -248,7 +283,8 @@ public class MeetStrangerTree : DialogueTree
                 "That is a kind way to put it. Most would say stuck. Well met, {you:name}.",
                 "I tell {you:name} that is a kind way to put it, since most would say stuck.",
                 "Settled is a polite word for it, and I do not care for polite words.",
-                "I tell {you:name} that settled is a polite word for it, and I dislike polite words.")),
+                "I tell {you:name} that settled is a polite word for it, and I dislike polite words.",
+                typeof(HomingModusMentis))),
 
         new PlayerOption("say_envy", "admit you envy having a place of your own",
             "I have never had a place of my own that long. I envy it.",
@@ -257,7 +293,8 @@ public class MeetStrangerTree : DialogueTree
                 "Do not envy it too much, though I would not trade it. Come and talk again.",
                 "I tell {you:name} not to envy it too much, and to come and talk again.",
                 "Envy it if you like. That does not make us friends.",
-                "I tell {you:name} that envying it does not make us friends.")));
+                "I tell {you:name} that envying it does not make us friends.",
+                typeof(VanitasModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  D — asked about the place
@@ -276,7 +313,8 @@ public class MeetStrangerTree : DialogueTree
                 "{npc:opinion_neighbours} You will get on well enough if you do not give yourself airs.",
                 "I tell them of my neighbours that {npc:opinion_neighbours}, and that they will get on if they do not give themselves airs.",
                 "You will find out. I will not form your opinion for you.",
-                "I tell them they will find out, and that I will not form their opinion for them.")),
+                "I tell them they will find out, and that I will not form their opinion for them.",
+                typeof(GossipModusMentis))),
 
         new PlayerOption("ask_the_road", "ask about the road and who comes down it",
             "Do many people come down that road?",
@@ -290,7 +328,8 @@ public class MeetStrangerTree : DialogueTree
                 "Nothing, so long as you take nothing that is not yours.",
                 "I tell them nothing, so long as they take nothing that is not theirs.",
                 "A newcomer asking what is worth watching. Move along.",
-                "I tell them to move along.")));
+                "I tell them to move along.",
+                typeof(CautionModusMentis))));
 
     private static NpcLineNode PlaceTheRoad() => new(
         nodeId:          "place_the_road",
@@ -305,7 +344,8 @@ public class MeetStrangerTree : DialogueTree
                 "A stranger's word is worth little, but you gave it plainly, and that counts.",
                 "I tell them a stranger's word is worth little, but that they gave it plainly.",
                 "Everyone says that.",
-                "I tell them everyone says that.")),
+                "I tell them everyone says that.",
+                typeof(PlainDealingModusMentis))),
 
         new PlayerOption("ask_news", "ask what news the road has brought lately",
             "What news have they brought lately?",
@@ -314,7 +354,8 @@ public class MeetStrangerTree : DialogueTree
                 "Little, and half of it invented. Sit with me sometime and I will tell you the true half.",
                 "I tell them it is little and half invented, and invite them to sit with me for the true half.",
                 "I share news with people I know. Come back when you are one.",
-                "I tell them I share news with people I know.")));
+                "I tell them I share news with people I know.",
+                typeof(VagabondageModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  E — kept your distance
@@ -333,7 +374,8 @@ public class MeetStrangerTree : DialogueTree
                 "So am I. No offence taken. Go safely.",
                 "I tell them I am the same, and wish them a safe road.",
                 "I am quick with strangers, and I am done.",
-                "I tell them I am quick with strangers, and that I am done.")),
+                "I tell them I am quick with strangers, and that I am done.",
+                typeof(HumilityModusMentis))),
 
         new PlayerOption("state_business", "state your business plainly instead",
             "Then I will be plain. I am new here and taking the measure of the place.",
@@ -353,7 +395,8 @@ public class MeetStrangerTree : DialogueTree
                 "By whether people look you in the eye. Here they mostly do. You will manage.",
                 "I tell them to measure it by whether people look them in the eye, and that here they mostly do.",
                 "I am not you, and I will not think for you.",
-                "I tell them I will not think for them.")),
+                "I tell them I will not think for them.",
+                typeof(PhysiognomyModusMentis))),
 
         new PlayerOption("leave_it_there", "say you have taken enough of their time",
             "I have taken enough of your day. Thank you for talking.",
@@ -362,7 +405,8 @@ public class MeetStrangerTree : DialogueTree
                 "That is good manners. Come by again, when I have more time.",
                 "I tell them that is good manners, and to come by again when I have more time.",
                 "You took too much of it a while ago. Go on.",
-                "I tell them they took too much of it a while ago.")));
+                "I tell them they took too much of it a while ago.",
+                typeof(MisanthropyModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  Entry

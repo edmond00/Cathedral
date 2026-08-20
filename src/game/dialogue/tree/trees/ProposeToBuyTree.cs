@@ -5,6 +5,8 @@ using Cathedral.Game.Npc.Trade;
 
 using Cathedral.Game.Narrative;
 
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Dialogue.Tree.Trees;
 
 /// <summary>
@@ -39,6 +41,9 @@ public class ProposeToBuyTree : DialogueTree
     // Success opens the buy menu; a routine bakes in that success so replaying opens trade directly.
     public override DialogueRoutineBehavior RoutineBehavior => DialogueRoutineBehavior.IncludeSuccess;
 
+
+
+
     public override IReadOnlyList<Outcome> SuccessOutcomes => new Outcome[]
     {
         new OpenTradeMenuOutcome(TradeMode.Buy),
@@ -49,13 +54,17 @@ public class ProposeToBuyTree : DialogueTree
     /// <summary>A branch end. Opening a stall is not high-stakes, so the easy ladder applies.</summary>
     private static ResolutionNode End(string id, int depth,
                                       string success, string successIndirect,
-                                      string failure, string failureIndirect) => new(
+                                      string failure, string failureIndirect,
+                                      params System.Type[] lessons) => new(
         nodeId:                 id,
         difficulty:             BranchDifficulty.Easy(depth),
         successReplica:         success,
         successReplicaIndirect: successIndirect,
         failureReplica:         failure,
-        failureReplicaIndirect: failureIndirect);
+        failureReplicaIndirect: failureIndirect,
+        mode:                   ResolutionMode.DiceCheck,
+        topic:                  null,
+        lessons:                lessons);
 
     // ══════════════════════════════════════════════════════════════════════════
     //  A — ask plainly what they have (deepest)
@@ -74,7 +83,8 @@ public class ProposeToBuyTree : DialogueTree
                 "Take a look, then. I charge fair prices.",
                 "I tell {you:name} to take a look, and that I charge fair prices.",
                 "There is nothing here for you today. Move along.",
-                "I tell {you:name} there is nothing here for them today.")),
+                "I tell {you:name} there is nothing here for them today.",
+                typeof(ScrutinyModusMentis))),
 
         new PlayerOption("wares_ask_best", "ask which of it is their best work",
             "Which of it is the best you have made? Not the dearest, the best.",
@@ -99,7 +109,8 @@ public class ProposeToBuyTree : DialogueTree
                 "You have an eye for it. Everything is out. Come and look.",
                 "I tell {you:name} they have an eye for it, and that everything is out.",
                 "It is not for showing to people who will not buy. Off with you.",
-                "I tell {you:name} it is not for showing to people who will not buy.")),
+                "I tell {you:name} it is not for showing to people who will not buy.",
+                typeof(JourneymanEyeModusMentis))),
 
         new PlayerOption("best_say_understand", "say you understand not wanting to part with it",
             "Then I will not press you on that one. A maker may keep something back.",
@@ -108,7 +119,8 @@ public class ProposeToBuyTree : DialogueTree
                 "That is a decent thing to say to a tradesman. Come and see what I will sell.",
                 "I tell {you:name} that is a decent thing to say to a tradesman, and to come and see what I will sell.",
                 "Do not tell me what I may do. Look or leave.",
-                "I tell {you:name} not to tell me what I may do.")));
+                "I tell {you:name} not to tell me what I may do.",
+                typeof(ThriftModusMentis))));
 
     private static NpcLineNode WaresLasting() => new(
         nodeId:          "wares_lasting",
@@ -123,7 +135,8 @@ public class ProposeToBuyTree : DialogueTree
                 "Then I will not waste your time with the cheap end. Come.",
                 "I tell {you:name} I will not waste their time with the cheap end.",
                 "Everyone says that until they hear the price. Come back with the coin.",
-                "I tell {you:name} everyone says that until they hear the price.")),
+                "I tell {you:name} everyone says that until they hear the price.",
+                typeof(WearReadingModusMentis))),
 
         new PlayerOption("lasting_ask_cheap", "ask honestly what the cheap end is like",
             "And the affordable sort. Is it honest work, or is it poor?",
@@ -143,7 +156,8 @@ public class ProposeToBuyTree : DialogueTree
                 "I would rather sell you the right thing once than the wrong thing twice. Come and look properly.",
                 "I tell {you:name} I would rather sell the right thing once than the wrong thing twice.",
                 "Honesty does not feed me. Are you buying or admiring?",
-                "I ask {you:name} whether they are buying or admiring.")),
+                "I ask {you:name} whether they are buying or admiring.",
+                typeof(PlainDealingModusMentis))),
 
         new PlayerOption("cheap_take_it", "say the honest cheap sort is exactly what you need",
             "Then the honest sort is what I need. I have not the coin for better.",
@@ -152,7 +166,8 @@ public class ProposeToBuyTree : DialogueTree
                 "There is no shame in knowing your purse. Come, I will see you right.",
                 "I tell {you:name} there is no shame in knowing your purse, and that I will see them right.",
                 "Then you are browsing, not buying. I have customers.",
-                "I tell {you:name} they are browsing, not buying.")));
+                "I tell {you:name} they are browsing, not buying.",
+                typeof(SharpPracticeModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  B — praise their craft (rich)
@@ -171,7 +186,8 @@ public class ProposeToBuyTree : DialogueTree
                 "Go on, then. See what catches your eye.",
                 "I tell {you:name} to see what catches their eye.",
                 "Flattery will not open my stall. Off with you.",
-                "I tell {you:name} that flattery will not open my stall.")),
+                "I tell {you:name} that flattery will not open my stall.",
+                typeof(ComelinessModusMentis))),
 
         new PlayerOption("flatter_name_detail", "point out a specific thing you noticed",
             "The finish on it. That does not come from hurrying.",
@@ -196,7 +212,8 @@ public class ProposeToBuyTree : DialogueTree
                 "Half of it, and it earns me nothing, which is why I like being asked. Come, look at the rest.",
                 "I tell {you:name} it is half of it and earns me nothing, which is why I like being asked.",
                 "Long enough that I would rather be doing it than talking. Buy or go.",
-                "I tell {you:name} I would rather be doing it than talking about it.")),
+                "I tell {you:name} I would rather be doing it than talking about it.",
+                typeof(PatienceModusMentis))),
 
         new PlayerOption("detail_say_worth", "say it is worth paying for",
             "It is worth paying for. I would not haggle you down on that part.",
@@ -205,7 +222,8 @@ public class ProposeToBuyTree : DialogueTree
                 "Then we will do business gladly. Everything is out. Take your time.",
                 "I tell {you:name} everything is out, and to take their time.",
                 "You will haggle. You all haggle. Spare me the preamble.",
-                "I tell {you:name} they will haggle as they all do.")));
+                "I tell {you:name} they will haggle as they all do.",
+                typeof(HallmarkModusMentis))));
 
     private static NpcLineNode FlatterLearn() => new(
         nodeId:          "flatter_learn",
@@ -220,7 +238,8 @@ public class ProposeToBuyTree : DialogueTree
                 "It does. You have earned a proper look at the stock.",
                 "I tell {you:name} they have earned a proper look at the stock.",
                 "It was hard. That does not make my prices lower.",
-                "I tell {you:name} that a hard road does not make my prices lower.")),
+                "I tell {you:name} that a hard road does not make my prices lower.",
+                typeof(CourtesyModusMentis))),
 
         new PlayerOption("learn_ask_apprentice", "ask whether they have anyone learning it from them",
             "Is anyone learning it from you now?",
@@ -229,7 +248,8 @@ public class ProposeToBuyTree : DialogueTree
                 "One, and slow, and I was slower. Few think to ask. Come, let us trade.",
                 "I tell {you:name} there is one and slow, that I was slower, and that few think to ask.",
                 "That is my business, not yours. Are you buying?",
-                "I tell {you:name} that is my business, and ask whether they are buying.")));
+                "I tell {you:name} that is my business, and ask whether they are buying.",
+                typeof(RoteModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  C — ask after one particular thing (short)
@@ -248,7 +268,8 @@ public class ProposeToBuyTree : DialogueTree
                 "The right thing for the work. Come, and I will match you to it.",
                 "I tell {you:name} I will match them to the right thing for the work.",
                 "Then find a stall that stocks it. This one does not.",
-                "I tell {you:name} to find a stall that stocks it.")),
+                "I tell {you:name} to find a stall that stocks it.",
+                typeof(DiligenceModusMentis))),
 
         new PlayerOption("specific_for_road", "say it is for the road ahead",
             "It is for travelling. Something that will not break far from a repair.",
@@ -262,7 +283,8 @@ public class ProposeToBuyTree : DialogueTree
                 "An honest customer. Come, and I will not sell you what you cannot use.",
                 "I tell {you:name} they are an honest customer, and that I will not sell them what they cannot use.",
                 "I am a tradesman, not a nursemaid. Come back when you know your own mind.",
-                "I tell {you:name} I am a tradesman, not a nursemaid.")));
+                "I tell {you:name} I am a tradesman, not a nursemaid.",
+                typeof(OpenMindednessModusMentis))));
 
     private static NpcLineNode SpecificRoad() => new(
         nodeId:          "specific_road",
@@ -277,7 +299,8 @@ public class ProposeToBuyTree : DialogueTree
                 "I keep that sort at the back. Come.",
                 "I tell {you:name} I keep that sort at the back.",
                 "Then you want a stall that outfits travellers. This one supplies a village.",
-                "I tell {you:name} this stall supplies a village, not travellers.")),
+                "I tell {you:name} this stall supplies a village, not travellers.",
+                typeof(VagabondageModusMentis))),
 
         new PlayerOption("road_ask_advice", "ask what they would take, in your place",
             "If you were the one leaving here, what would you carry?",
@@ -286,7 +309,8 @@ public class ProposeToBuyTree : DialogueTree
                 "Two things, both plain, both mine. Come, I will put them in your hand.",
                 "I tell {you:name} I would take two things, both plain and both mine.",
                 "I would not be leaving at all. That is my advice, and it is free.",
-                "I tell {you:name} I would not be leaving at all, and that the advice is free.")));
+                "I tell {you:name} I would not be leaving at all, and that the advice is free.",
+                typeof(MarchstoneModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  D — talk money before goods (short)
@@ -305,7 +329,8 @@ public class ProposeToBuyTree : DialogueTree
                 "Sensible. Most decide first and argue afterwards. Come, prices and all.",
                 "I tell {you:name} that is sensible, since most decide first and argue afterwards.",
                 "Careful or poor, it is the same walk out of my stall.",
-                "I tell {you:name} careful or poor is the same walk out of my stall.")),
+                "I tell {you:name} careful or poor is the same walk out of my stall.",
+                typeof(CoinEyeModusMentis))),
 
         new PlayerOption("coin_say_poor", "admit your purse is light",
             "Poor, then. My purse is light and I will not waste your day pretending.",
@@ -319,7 +344,8 @@ public class ProposeToBuyTree : DialogueTree
                 "At least you say so first. Come, let us argue over the stock.",
                 "I tell {you:name} at least they say so first, and to come and argue over the stock.",
                 "Then we will save each other the trouble. Good day.",
-                "I tell {you:name} we will save each other the trouble.")));
+                "I tell {you:name} we will save each other the trouble.",
+                typeof(BargainingModusMentis))));
 
     private static NpcLineNode CoinPoor() => new(
         nodeId:          "coin_poor",
@@ -334,7 +360,8 @@ public class ProposeToBuyTree : DialogueTree
                 "A fair amount, if you are not proud about it. I will show you what you can have.",
                 "I tell {you:name} there is a fair amount if they are not proud about it.",
                 "Nothing. That is the honest answer. Come back with coin.",
-                "I tell {you:name} nothing is, and to come back with coin.")),
+                "I tell {you:name} nothing is, and to come back with coin.",
+                typeof(HumilityModusMentis))),
 
         new PlayerOption("poor_offer_later", "offer to come back when you can pay properly",
             "Then I will come back when I can pay you properly. I will not ask for credit.",
@@ -343,7 +370,8 @@ public class ProposeToBuyTree : DialogueTree
                 "Not asking is what gets you offered. Come, we will find something you can take today.",
                 "I tell {you:name} not asking is what gets you offered, and that we will find something for today.",
                 "Do that. Come back with a heavier purse and we will talk.",
-                "I tell {you:name} to come back with a heavier purse.")));
+                "I tell {you:name} to come back with a heavier purse.",
+                typeof(ForesightModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  Entry

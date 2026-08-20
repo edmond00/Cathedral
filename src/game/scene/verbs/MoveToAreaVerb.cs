@@ -2,6 +2,8 @@
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Routines;
 
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
@@ -10,6 +12,19 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public class MoveToAreaVerb : Verb
 {
+    /// <summary>Walking is the most general act there is, so this is where the broad dispositions
+    /// belong — the ones that are about the person rather than about any particular craft.</summary>
+    public override IEnumerable<ModusMentis> Lessons(LessonContext ctx)
+    {
+        if (ctx.Target is HearthPointOfInterest) yield return Mm<HomingModusMentis>();
+        if (ctx.IsPrivate) yield return Mm<TerritorialityModusMentis>();
+        if (ctx.Target is TunnelArea or GalleryArea) yield return Mm<CuriosityModusMentis>();
+        if (ctx.Hostile == ThreatLevel.Visual) yield return Mm<RecklessnessModusMentis>();
+        if (ctx.Night) yield return Mm<ResolveModusMentis>();
+
+        // The target's own declaration, then this verb's default — always last, always visible.
+        foreach (var m in base.Lessons(ctx)) yield return m;
+    }
     public override string VerbId         => "move";
     public override string DisplayName    => "Move";
     public override int    BaseDifficulty => 1;

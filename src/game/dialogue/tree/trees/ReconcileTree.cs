@@ -4,6 +4,8 @@ using Cathedral.Game.Npc;
 
 using Cathedral.Game.Narrative;
 
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Dialogue.Tree.Trees;
 
 /// <summary>
@@ -47,6 +49,23 @@ public class ReconcileTree : DialogueTree
     /// enemy — is stepped one rung up instead, since Suspicious grants fewer dice than the state
     /// they were already in and a won conversation must not leave the player worse off.
     /// </summary>
+
+    /// <summary>
+    /// Talking somebody down. The negotiation is the skill; stopping short of what you were entitled
+    /// to take is the other thing, and only the harder branches reach it.
+    /// </summary>
+    protected override IEnumerable<string> AdditionalGrantedModusMentisIds(NpcEntity npc, ResolutionNode resolution)
+    {
+        yield return "parley";
+        yield return TargetWasHostile(npc) ? "mercy" : "empathy";
+    }
+
+    /// <summary>Whether this was a real quarrel — the thing mercy is measured against.</summary>
+    private static bool TargetWasHostile(NpcEntity npc)
+    {
+        try { return npc.AffinityTable.GetRawEnemies().Count > 0; } catch { return false; }
+    }
+
     public override IReadOnlyList<Outcome> SuccessOutcomes => new Outcome[]
     {
         new SuspiciousAffinityOutcome(onlyWhenHostile: true),
@@ -61,13 +80,17 @@ public class ReconcileTree : DialogueTree
     /// <summary>A branch end. Hostility is a hard check at every depth.</summary>
     private static ResolutionNode End(string id, int depth,
                                       string success, string successIndirect,
-                                      string failure, string failureIndirect) => new(
+                                      string failure, string failureIndirect,
+                                      params System.Type[] lessons) => new(
         nodeId:                 id,
         difficulty:             BranchDifficulty.Hard(depth),
         successReplica:         success,
         successReplicaIndirect: successIndirect,
         failureReplica:         failure,
-        failureReplicaIndirect: failureIndirect);
+        failureReplicaIndirect: failureIndirect,
+        mode:                   ResolutionMode.DiceCheck,
+        topic:                  null,
+        lessons:                lessons);
 
     // ══════════════════════════════════════════════════════════════════════════
     //  A — apologise (deepest)
@@ -86,7 +109,8 @@ public class ReconcileTree : DialogueTree
                 "I will let it lie for now. Do not make me regret it.",
                 "I tell {you:name} I will let it lie for now, and not to make me regret it.",
                 "Those are empty words. If you want a reckoning, you will have one.",
-                "I tell {you:name} that if they want a reckoning they will have one.")),
+                "I tell {you:name} that if they want a reckoning they will have one.",
+                typeof(MercyModusMentis))),
 
         new PlayerOption("name_the_wrong", "name exactly what you did wrong",
             "I was in the wrong, and I know which part was worst.",
@@ -111,7 +135,8 @@ public class ReconcileTree : DialogueTree
                 "That was it. I did not think you knew that. We will let it lie.",
                 "I tell {you:name} that was it, that I did not think they knew, and that we will let it lie.",
                 "Knowing it changes nothing. You still did it.",
-                "I tell {you:name} that knowing it changes nothing.")),
+                "I tell {you:name} that knowing it changes nothing.",
+                typeof(HumilityModusMentis))),
 
         new PlayerOption("ask_what_worst", "ask them which part cut deepest",
             "You tell me which part was worst. I would rather hear it than guess.",
@@ -120,7 +145,8 @@ public class ReconcileTree : DialogueTree
                 "That you did not come back afterwards. Now you have. That is enough.",
                 "I tell {you:name} it was that they did not come back afterwards, and that now they have it is enough.",
                 "You want me to do the work of your own conscience. Get out.",
-                "I tell {you:name} they want me to do the work of their own conscience.")));
+                "I tell {you:name} they want me to do the work of their own conscience.",
+                typeof(HearkeningModusMentis))));
 
     private static NpcLineNode ApologyTheirSide() => new(
         nodeId:          "apology_their_side",
@@ -135,7 +161,8 @@ public class ReconcileTree : DialogueTree
                 "No excuses. I had expected a speech. We will leave it there.",
                 "I tell {you:name} I had expected a speech, and that we will leave it there.",
                 "No excuses, and no change either. You have said nothing.",
-                "I tell {you:name} there is no change either, and that they have said nothing.")),
+                "I tell {you:name} there is no change either, and that they have said nothing.",
+                typeof(EmpathyModusMentis))),
 
         new PlayerOption("say_what_changed", "say what would be different now",
             "It would not happen the same way twice. I cannot prove that standing here. I can only start.",
@@ -155,7 +182,8 @@ public class ReconcileTree : DialogueTree
                 "Then come back. I will not promise what I say when you do, but come back.",
                 "I tell {you:name} to come back, though I will not promise what I say when they do.",
                 "You will come back and I will still remember. Save yourself the walk.",
-                "I tell {you:name} I will still remember, and to save themselves the walk.")),
+                "I tell {you:name} I will still remember, and to save themselves the walk.",
+                typeof(PatienceModusMentis))),
 
         new PlayerOption("offer_now", "offer to do something for them today, before anything is settled",
             "It means asking what you need done today, before you have forgiven anything.",
@@ -164,7 +192,8 @@ public class ReconcileTree : DialogueTree
                 "There is something. And you asked before I had softened, which is what decides it. We are not enemies.",
                 "I tell {you:name} their asking before I had softened is what decides it, and that we are not enemies.",
                 "You would buy your way out with a day's work. I am not for sale that cheaply.",
-                "I tell {you:name} I am not for sale that cheaply.")));
+                "I tell {you:name} I am not for sale that cheaply.",
+                typeof(OathmakingModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  B — explain it was a misunderstanding (rich)
@@ -183,7 +212,8 @@ public class ReconcileTree : DialogueTree
                 "Perhaps I judged you too quickly. We will leave it there.",
                 "I tell {you:name} I may have judged them too quickly, and that we will leave it there.",
                 "You put it well, but I am not convinced. Draw your weapon.",
-                "I tell {you:name} I am not convinced, and to draw.")),
+                "I tell {you:name} I am not convinced, and to draw.",
+                typeof(PlainDealingModusMentis))),
 
         new PlayerOption("explain_witness", "point out that whoever told them was not there",
             "Whoever told you that story was not standing where I was standing.",
@@ -208,7 +238,8 @@ public class ReconcileTree : DialogueTree
                 "At least you know it. That is more honesty than the story had. We will let this rest.",
                 "I tell {you:name} that is more honesty than the story had, and that we will let it rest.",
                 "No reason at all. So why are you still talking?",
-                "I ask {you:name} why they are still talking, then.")),
+                "I ask {you:name} why they are still talking, then.",
+                typeof(OpenMindednessModusMentis))),
 
         new PlayerOption("explain_invite_check", "invite them to go and ask someone who was there",
             "Then do not take my word. Ask someone who was there, and I will wait.",
@@ -217,7 +248,8 @@ public class ReconcileTree : DialogueTree
                 "A liar does not invite checking. I will ask, and until then we are not at war.",
                 "I tell {you:name} a liar does not invite checking, and that until I have asked we are not at war.",
                 "I will ask, and when the answer goes against you, I will come and find you.",
-                "I tell {you:name} that when the answer goes against them I will come and find them.")));
+                "I tell {you:name} that when the answer goes against them I will come and find them.",
+                typeof(DisputationModusMentis))));
 
     private static NpcLineNode ExplainAdmitPart() => new(
         nodeId:          "explain_admit",
@@ -232,7 +264,8 @@ public class ReconcileTree : DialogueTree
                 "That was the part that stung. Owning it costs you something. It is done.",
                 "I tell {you:name} that was the part that stung, and that owning it costs them something.",
                 "Your temper. And what stops it happening again? Nothing.",
-                "I ask {you:name} what stops their temper next time, and answer that nothing does.")),
+                "I ask {you:name} what stops their temper next time, and answer that nothing does.",
+                typeof(SelfCommandModusMentis))),
 
         new PlayerOption("explain_own_silence", "own the part where you said nothing afterward",
             "The part where I said nothing afterwards and let you think the worst.",
@@ -241,7 +274,8 @@ public class ReconcileTree : DialogueTree
                 "That was worse than the thing itself, and you knew it. We will start again.",
                 "I tell {you:name} that was worse than the thing itself, and that we will start again.",
                 "You let it stand for weeks. Do not expect me to undo that in a minute.",
-                "I tell {you:name} they let it stand for weeks.")));
+                "I tell {you:name} they let it stand for weeks.",
+                typeof(StonefaceModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  C — offer amends (short)
@@ -260,7 +294,8 @@ public class ReconcileTree : DialogueTree
                 "Work, not words. I can weigh that. Come at first light and we will call it settled.",
                 "I tell {you:name} work I can weigh, and to come at first light.",
                 "Your work is worth less than what you cost me. Try again, or do not.",
-                "I tell {you:name} their work is worth less than what they cost me.")),
+                "I tell {you:name} their work is worth less than what they cost me.",
+                typeof(HardLaborModusMentis))),
 
         new PlayerOption("amends_ask_what", "ask them to name what would settle it",
             "You name it. Whatever settles this, I will hear it.",
@@ -274,7 +309,8 @@ public class ReconcileTree : DialogueTree
                 "Keep your goods. But you offered them without haggling, and that counts. We will leave it.",
                 "I tell {you:name} to keep their goods, but that offering without haggling counts.",
                 "You think this is about property. You understand nothing.",
-                "I tell {you:name} they understand nothing if they think this is about property.")));
+                "I tell {you:name} they understand nothing if they think this is about property.",
+                typeof(ThriftModusMentis))));
 
     private static NpcLineNode AmendsNamed() => new(
         nodeId:          "amends_named",
@@ -289,7 +325,8 @@ public class ReconcileTree : DialogueTree
                 "Then we understand each other. That is not friendship, but it will do for peace.",
                 "I tell {you:name} we understand each other, and that it will do for peace.",
                 "Then there is nothing here for either of us. Go.",
-                "I tell {you:name} there is nothing here for either of us.")),
+                "I tell {you:name} there is nothing here for either of us.",
+                typeof(WeepingModusMentis))),
 
         new PlayerOption("amends_offer_next", "offer the nearest thing you can give",
             "Then take the nearest thing I have: it will not happen again, and I will prove it.",
@@ -298,7 +335,8 @@ public class ReconcileTree : DialogueTree
                 "I will take the nearest thing and watch what you do with it.",
                 "I tell {you:name} I will take the nearest thing and watch what they do with it.",
                 "Promises about the future from a man who ruined the past. No.",
-                "I tell {you:name} promises about the future are worth nothing from them.")));
+                "I tell {you:name} promises about the future are worth nothing from them.",
+                typeof(ForesightModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  D — stand your ground (short)
@@ -317,7 +355,8 @@ public class ReconcileTree : DialogueTree
                 "Peace without pardon. That is an honest thing to ask for. Let us stop it.",
                 "I tell {you:name} peace without pardon is an honest thing to ask for, and that we will stop it.",
                 "You will stop it when I say it is stopped, and I have not.",
-                "I tell {you:name} they will stop it when I say it is stopped.")),
+                "I tell {you:name} they will stop it when I say it is stopped.",
+                typeof(ParleyModusMentis))),
 
         new PlayerOption("stand_both_wrong", "point out that neither of you came out of it clean",
             "Neither of us came out of that clean, and we both know it.",
@@ -331,7 +370,8 @@ public class ReconcileTree : DialogueTree
                 "Yes, I am tired of it. Enough. It is done.",
                 "I admit I am tired of it too, and that it is done.",
                 "I will carry it as long as it takes. Do not mistake me for you.",
-                "I tell {you:name} I will carry it as long as it takes.")));
+                "I tell {you:name} I will carry it as long as it takes.",
+                typeof(EnduranceModusMentis))));
 
     private static NpcLineNode StandBothWrong() => new(
         nodeId:          "stand_both_wrong",
@@ -346,7 +386,8 @@ public class ReconcileTree : DialogueTree
                 "Once, and then you left it alone. That is what decides it. Both of us, then.",
                 "I tell {you:name} that saying it once and leaving it alone is what decides it.",
                 "You said it once, and I will answer once: get out of my sight.",
-                "I tell {you:name} to get out of my sight.")),
+                "I tell {you:name} to get out of my sight.",
+                typeof(PrideModusMentis))),
 
         new PlayerOption("stand_ask_theirs", "ask what they would name as their own part",
             "What was your part? Name it, and I will name mine after.",
@@ -355,7 +396,8 @@ public class ReconcileTree : DialogueTree
                 "I let it fester instead of coming to you. There, I have said it. We are even enough.",
                 "I admit I let it fester instead of coming to them, and that we are even enough.",
                 "Mine was trusting you at all, and I have corrected it.",
-                "I tell {you:name} my part was trusting them at all, and that I have corrected it.")));
+                "I tell {you:name} my part was trusting them at all, and that I have corrected it.",
+                typeof(GrudgekeepingModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  Entry

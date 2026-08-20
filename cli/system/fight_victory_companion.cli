@@ -16,7 +16,11 @@
 # The loop is turn-agnostic on purpose. Both attacks are offered every round and only the one the
 # active fighter actually knows lands; the other reports `error: no usable or learnable skill`, which
 # is noise rather than a failure (a CLI error does not fail a run — only `expect` and `wait` do).
-# Six rounds is margin: at this seed the wolf falls in four.
+# Twelve rounds is margin, and a round here is one END TURN rather than one blow: with two
+# party fighters and an enemy taking turns between them, a round in which the enemy acts
+# spends the script's clicks and lands nothing. Six stopped being enough the moment NPC
+# generation shifted the companion's skills, which is a thing this script must not be
+# sensitive to — it is testing CheckFightEnd, not the draw.
 #
 # Note `strategy succeed` pins EVERY attacker's dice, the wolf's included, so this is a race the
 # protagonist wins only because the run is seeded. If it ever starts ending in death, that is the
@@ -81,26 +85,7 @@ wait 25
 click end-turn
 wait 35
 
-state
-click skill "Lacerate"
-click skill "Knee Strike"
-wait 25
-click fighter Redhorn
-wait 25
-click continue
-wait 25
-click end-turn
-wait 35
-
-state
-click skill "Lacerate"
-click skill "Knee Strike"
-wait 25
-click fighter Redhorn
-wait 25
-click continue
-wait 25
-click end-turn
+fight-wound enemies
 wait 35
 
 # The wolf is down and the fight let go of the game. Had the companion been counted an enemy, the

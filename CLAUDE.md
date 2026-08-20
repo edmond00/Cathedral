@@ -837,6 +837,23 @@ seed is resolved at the very top of `Program.cs`, before any other flag is parse
 a mode class runs its static initializers; a reader that beats the parse locks in a time-based seed
 and `Initialize` will say so on stderr.
 
+**Never identify content by a string.** A content kind is a **type**: points of interest are
+`src/game/scene/PoiKinds.cs`, areas are `AreaKinds.cs`, and both derive their `Lemma` from the class
+name so the two cannot drift. Gate on the type — `ctx.Target is CorpsePointOfInterest`,
+`ctx.Pov.Where is AlehouseArea` — never on a display name, a description or a reference lemma.
+
+A string names something that need not exist and nothing notices: half the modus mentis lesson
+conditions in the game once matched words like `withy`, `altar` and `padlock` that no factory built,
+and the modi mentis behind them shipped unreachable. Substring matching went wrong in the other
+direction too — `cross` matched "Crossing", `barrow` matched "narrow". As a type it is a build error,
+and `--verb-audit` reports any kind no factory constructs. The same applies to verb gates:
+`CutWoodVerb` used to accept `ReferenceLemma is "tree" or "log"`, which would have stopped offering
+the verb the day a factory renamed a lemma.
+
+Two exceptions, both deliberate: the "Broken X" replacement takes its lemma from whatever was broken,
+and modus mentis ids stay strings because every one of them is checked (fatally at startup by R5/R10,
+or by `--verb-audit`, `--npc-audit`, `--dialogue-audit` and `JobRegistry`).
+
 ### Command vocabulary
 
 Run `help` for the authoritative list. The essentials:
@@ -1815,6 +1832,50 @@ Three consequences worth knowing:
 phase runs on "examine the flower patch closely" instead). `--verb-audit` prints what each anatomy is
 barred from — 25 of 54 verbs for a beast.
 
+### A verb teaches per body, not per verb
+
+**A verb's lesson is a candidate list, not one id.** `Verb.GrantedModusMentisIds(target)` returns them
+**most restrictive first**, and `ResolveGrantedModusMentisId(target, actor)` walks it — the target's
+own override first, then the candidates — and takes the first one *this body can hold*. A null actor
+(audits, tooling) takes the first without asking.
+
+This exists because ten verbs taught the protagonist **nothing at all**. Climbing, scaling, stairs,
+crossing, smelling, digging, tracking and catching are done by both anatomies and are not the same
+lesson for both: a beast clambers with claws where a person scales with arms, and neither modus mentis
+names an organ the other owns. With one id per verb, `ModusMentisGrantOutcome.For` refused the lesson
+and wrote a log line — so `smell` had 86 authored declarations of `scenting`, a **snout** skill, and
+every one of them taught a human nothing.
+
+**Order beast before human.** A beast's lesson names a beast organ, so a human cannot hold it and
+falls through cleanly. The reverse is not true — `spoor_eye` names eyes and anamnesis, which a beast
+also owns — so putting the human lesson first silently takes the beast's own lesson away from it.
+
+The pairs today: clambering/`scaling`, surefoot/`balance`, scenting/`keen_nose`, digging/`spadework`,
+spoor_reading/`spoor_eye`, soft_mouth/`snatch`. `cross` puts the crossing's own lesson ahead of both.
+
+**`--verb-audit` now asks this per anatomy** and fails naming any verb whose whole candidate list is
+unlearnable by a body that could be offered it. The beast side of that fault is real and not yet
+fixed: `VerbAudit.NoBeastCounterpart` lists the sixteen verbs a beast companion can be offered and
+learn nothing from, with the reason. **Empty that list, do not extend it.**
+
+### The senses reach living things
+
+`SensoryVerb` used to gate on `target is PointOfInterest`, so the four senses could not touch anything
+alive: you could listen to a tree and not to the lark in it, and the only verbs a bird accepted were
+the ones that killed it. Three parts now:
+
+- **`NpcArchetype.Senses`** — the same `SensoryProfile` a PoI carries. Default `Examinable`; a person
+  (`NamedNpcArchetype`) rewards all four, birds rewards all four, tiny creatures examine and
+  contemplate, and the two that sing (cricket, bee) add listening;
+- **`NpcArchetype.VerbModiMentis`** plus `SceneNpc : IVerbModusMentisSource` — the NPC half of the
+  override mechanism `PointOfInterest` has always had, declared per *kind* rather than per individual.
+  A person teaches `physiognomy` and `hearkening`; every non-human teaches the naturalist's set
+  (`creature_lore`, `musk_reading`, `fellow_feeling`) and a bird adds `birdsong`. Note this is keyed
+  on **species, not class** — `NamedNpcArchetype` carries every wolf and bear as well as every baker;
+- **a sleeper is excluded** from the NPC branch. `SceneNpcPlacement` swaps them and their bed for one
+  merged `SleepingNpcPointOfInterest`, which has its own senses and its own lessons; offering both
+  would be two routes to one act, differing only in which object the phase opened on.
+
 ### A worked example
 
 This is the script that verified the phase-transition refactor. The assertion is in the `state`
@@ -2318,6 +2379,110 @@ verbs is the design — but it keeps the cost of that design visible, and makes 
 poverty one line to read.
 
 Run it after adding a verb, a connector type, or a batch of scene content.
+
+### Checking which verb teaches which modus mentis
+
+```bash
+dotnet run -- --mm-grant-csv [path]        # default mm_grants.csv
+```
+
+A spreadsheet rather than a report, because the question it answers is one nobody asks once. **The
+grant rule has two halves and neither is readable from one place**: a verb declares a default
+(`Verb.GrantedModusMentisId` — EXAMINE teaches scrutiny) and the object may say better
+(`IVerbModusMentisSource` — an anvil teaches metalcraft). So what a lesson is worth depends on what
+the world *places*, and how often, which is only visible by sweeping. It uses the same factory ×
+location id × area × period × object space `--verb-probe` does and writes one row per distinct
+(verb, object, modus mentis), with the reproducing flags on each row.
+
+Four grants do not hang off a target and are named by their route rather than dropped, since each
+would otherwise read as an absence:
+
+| `GRANT_SOURCE` | |
+|---|---|
+| `verb-default` / `target-override` | the two halves of the rule |
+| `dialogue-tree:<id>` | the conversation's own lesson, **on top of** the verb's — begging is social interaction *and* beggary. `gather_knowledge/topic` is the third one, drawn from the topic and the person |
+| `per-blow` | ATTACK declares null on purpose: the lesson is the fighting skill `FirstBlow` drew |
+| `in-fight learning check` | a fighting skill's modus mentis, reachable in a fight and by no verb |
+| `not-taught-by-any-verb` | the other direction, which no per-verb reading can answer. Not a fault by itself — a skill dealt at generation or in childhood is a different thing from one the player can practise, and nothing else states which is which |
+
+`MM_RESOLVES` is the same check `--verb-audit` fails on (a typo grants nothing, silently) and
+`MM_LEARNABLE_BY` is the anatomy gate, so a lesson no body can hold reads `NOBODY`.
+
+Run it after adding a verb, an object's `VerbModiMentis` override, a dialogue tree, or a batch of
+modi mentis.
+
+### A lesson from the circumstances, not only from the act
+
+`CircumstanceGrants` answers a different question from the verb's own grant: not "what did I just
+practise?" but **"what did doing it under these conditions teach me?"** — and the conditions vary far
+more than the targets do. Forcing a door is `forcing` whoever does it; forcing a door with an enemy
+watching, at a difficulty well past your dice, while already wounded, is three different lessons and
+none of them is about doors.
+
+Three rules make it safe to have at all:
+
+- **It is additional, never a replacement.** The practical lesson still lands and this is a second
+  chip. Displacing the verb's grant would cost the player the craft knowledge they were going for,
+  which would make every disposition read as a punishment.
+- **At most one per action**, first match wins, so the ordering *is* the design: the body's condition
+  outranks being watched, being watched outranks the difficulty, and the plain per-verb table at the
+  bottom is what fires on an ordinary day.
+- **Anatomy is not consulted here.** `ModusMentisGrantOutcome.For` refuses a lesson the body cannot
+  hold and logs it, exactly as it does for a verb's own grant.
+
+Three layers, in order: **conditional rules** (wounded, watched, illegal, private, night, at
+difficulty 5), then **target rules** matched on the object's *name* — because the distinctions that
+matter are content ones and not code ones, and one `DiggableGroundPointOfInterest` covers peat, a
+garden bed and a grave — then the **per-verb table**, which is simply the other half of what each act
+is. A miss at any layer falls through, so an unnamed object is never worse off.
+
+The rules are `record Rule(string Id, Func<Circumstance,bool> When)` rather than lambdas returning
+ids, so **the ids are data**: `AllGrantedIds` enumerates what the class can teach without executing
+anything, which is what lets `--mm-reach-csv` count this as a route instead of guessing at it.
+
+### A conversation's lesson depends on the branch and the person
+
+`DialogueTree.AdditionalGrantedModusMentisIds(npc, resolution)` had one implementer and now has
+thirteen. Begging a reeve teaches `humility` where begging a farmhand teaches `weeping`; a provocation
+aimed at authority teaches `insolence` where one aimed at a peer teaches `boasting`.
+
+**Mind the difficulty ladder when gating on it.** `BranchDifficulty.Hard` only reaches 3 at depth 4,
+so a `Difficulty >= 3` gate inside a tree whose branches are two deep is a branch that never happens
+— which is exactly how `insolence`, `dramaturgy` and `open_mindedness` were written, wired and
+unreachable. `--dialogue-audit` prints each tree's branch lengths; read them before choosing a gate,
+or key on the person instead, which every tree can answer.
+
+**The caught-red-handed trees are built by a factory and never registered**, so anything reading
+`DialogueTreeRegistry.All` misses them — and they are the trees a thief meets most. `MmReachAudit.AllTrees`
+adds them back explicitly.
+
+### Checking how much of the modus mentis catalogue a player can reach
+
+```bash
+dotnet run -- --mm-reach-csv [path]        # default mm_reachability.csv
+```
+
+The question `--mm-grant-csv` raises and cannot settle. **A lesson arrives by five routes and a verb
+sweep sees one of them**, so "62 modi mentis are taught by a verb" reads as an answer and is not
+one. This gathers all five per modus mentis — **childhood** (every reminescence fragment's granted
+skill types), **fight** (the modus mentis unlocking any fighting skill on a medium the body owns,
+which is what the learning check teaches and what `attack`'s first blow draws), **action** (shared
+with `--mm-grant-csv`, so the two cannot disagree), **dialogue** (a tree's own lesson, including
+GATHER KNOWLEDGE's topic grants, which reach every archetype's `TradeModusMentisId`), and **work**
+(the three every job pays in).
+
+**Anatomy is the second axis and is not optional.** `ModusMentisGrantOutcome.For` *refuses* a lesson
+a body cannot hold — an absent organ contributes nothing to the level cap, so granting anyway would
+file a skill stuck at level 1 for ever. So a route naming a modus mentis is only half of reaching
+it, and the report splits `protagonist` from `beast companion only` for that reason. Counting them
+as one is what makes an audit of this say 183 where a player can hold 122.
+
+**The failure it exists to catch is a verb whose lesson its own most likely user cannot learn**, and
+that is silent twice: the refusal is a log line, and a `success.cli` asserting `expect Modus mentis`
+still passes on the *practice* chip the dice chain leaves. Ten verbs were in that state — climbing,
+scaling, both stair verbs, `cross`, `smell`, `dig`, `track` and `catch` all taught beast lessons to a
+human who cannot hold them — and are now anatomy pairs (see "A verb teaches per body"). The beast
+side of the same fault is real and listed in `VerbAudit.NoBeastCounterpart`.
 
 ### Checking which compute device the LLM will run on
 

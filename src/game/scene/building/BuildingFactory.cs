@@ -122,9 +122,8 @@ public static class BuildingFactory
         // What a roof is for is the view: the caller hangs a landscape per outdoor area on it, so the
         // climb buys a road to anywhere else outside. It is also where a slip-in belongs (a chimney is
         // reached from a roof), which is why this runs before the doors.
-        var roof = new Area(
+        var roof = new RoofArea(
             displayName:           $"{spec.BuildingName} Roof",
-            referenceLemma:        "roof",
             contextDescription:    $"up on the roof of the {spec.BuildingName.ToLowerInvariant()}",
             transitionDescription: "pull yourself over the eaves",
             descriptions:          new List<string>

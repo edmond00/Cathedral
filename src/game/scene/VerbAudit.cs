@@ -38,7 +38,7 @@ namespace Cathedral.Game.Scene;
 /// verb that only exists at night is still a verb the object has. Run after adding a verb, a
 /// connector, or a batch of scene content.</para>
 /// </summary>
-public static class VerbAudit
+public static partial class VerbAudit
 {
     private const int SampleSize = 40;
 
@@ -80,6 +80,8 @@ public static class VerbAudit
                       $"≥3 on {TargetThreePlusVerbs:P0}, a sense on {TargetSensory:P0}");
 
         AuditDeadVerbs(sb, warnings, everOffered);
+        AuditUnbuiltKinds(sb, warnings);
+        AuditVerbTargets(sb, warnings);
         AuditAnatomyReach(sb);
 
         sb.AppendLine();
@@ -115,6 +117,162 @@ public static class VerbAudit
         yield return ("PEAK",     id => new Peak.PeakSceneFactory().Build(id));
     }
 
+    /// <summary>
+    /// Whether this anatomy could ever be offered the verb at all — the capability half of
+    /// <see cref="Verb.IsPossible"/>. A beast is not offered <c>unlock_door</c>, so a lesson it
+    /// cannot hold there is no fault.
+    /// </summary>
+    private static bool CanBeAttemptedBy(Verb verb, AnatomyType anatomy)
+    {
+        var caps = AnatomyFactoryRegistry.GetFactory(anatomy).Capabilities;
+        return (caps & verb.EffectiveCapabilities) == verb.EffectiveCapabilities;
+    }
+
+    /// <summary>
+    /// Every type each verb was actually offered against — its target's, the area's, and the holder's
+    /// where the target was an item the verb could take. Read by the unreachable-lesson check.
+    /// </summary>
+    private static readonly Dictionary<string, HashSet<Type>> ReachableTypes = new(StringComparer.Ordinal);
+
+    private static HashSet<Type> Reachable(string verbId)
+        => ReachableTypes.TryGetValue(verbId, out var set) ? set : ReachableTypes[verbId] = new HashSet<Type>();
+
+    /// <summary>What each verb was ever seen to actually grant, as against merely offer.</summary>
+    private static readonly Dictionary<string, HashSet<string>> GrantedMm = new(StringComparer.Ordinal);
+
+    private static HashSet<string> Granted(string verbId)
+        => GrantedMm.TryGetValue(verbId, out var set) ? set : GrantedMm[verbId] = new HashSet<string>(StringComparer.Ordinal);
+
+    /// <summary>
+    /// A verb's own default that <b>never wins</b>. <c>Lessons</c> yields candidates in order and the
+    /// first the body can hold is granted, so a branch matching everything the verb is ever offered
+    /// on hides the default completely — the verb still declares it, both audits still report it as
+    /// reachable, and no player ever learns it.
+    ///
+    /// <para>Reported separately from the reachability check because the fault is the opposite shape:
+    /// there the lesson named content the verb never meets, here it names content the verb
+    /// <i>always</i> meets. BREAK is only ever offered on breakables, so a branch testing for one
+    /// leaves <c>brute_force</c> dead.</para>
+    /// </summary>
+    /// <summary>Every (verb, declared lesson) an object was seen to declare, with one object's name.</summary>
+    private static readonly Dictionary<(string Verb, string Mm), string> DeclaredSeen = new();
+
+    /// <summary>The subset of those that were ever actually granted.</summary>
+    private static readonly HashSet<(string Verb, string Mm)> DeclaredWon = new();
+
+    /// <summary>
+    /// An object's own <see cref="IVerbModusMentisSource"/> declaration that <b>never wins</b>.
+    ///
+    /// <para>The same shape of fault as <see cref="CheckDefaultsCanWin"/> one layer up:
+    /// <c>base.Lessons</c> yields the declaration ahead of the verb's default but behind every
+    /// branch, so a branch testing for the very type that declares it silences the declaration.
+    /// The object still promises the lesson and no player is ever taught it — the psalter declared
+    /// <c>decipher</c> from behind EXAMINE's philosophy branch, and the toll board <c>tallycraft</c>
+    /// from behind algebraic_analysis.</para>
+    /// </summary>
+    private static void CheckDeclarationsCanWin(List<string> warnings)
+    {
+        foreach (var (key, sample) in DeclaredSeen.OrderBy(kv => kv.Key.Verb, StringComparer.Ordinal))
+        {
+            if (DeclaredWon.Contains(key)) continue;
+            // Verb and lesson unquoted, so the by-kind grouping keeps each pairing separate — the
+            // whole value of this warning is WHICH declaration is dead.
+            warnings.Add($"{key.Verb} → {key.Mm} is declared (e.g. by '{sample}') but a branch of that "
+                       + "verb always matches first, so the declaration is never granted");
+        }
+    }
+
+    private static void CheckDefaultsCanWin(List<string> warnings)
+    {
+        foreach (var verb in VerbRegistry.Instance.GetAll())
+        {
+            if (!GrantedMm.TryGetValue(verb.VerbId, out var won) || won.Count == 0) continue;
+
+            var defaults = verb.GrantedModusMentisIds(null);
+            if (defaults.Count == 0 || defaults.Any(won.Contains)) continue;
+
+            warnings.Add($"verb '{verb.VerbId}' declares [{string.Join(", ", defaults)}] as its default "
+                       + "but a branch always matches first, so the default is never granted");
+        }
+    }
+
+    /// <summary>Prints what each verb can actually be turned on, so a lesson naming a type it never sees is visible.</summary>
+    private static void AuditVerbTargets(StringBuilder sb, List<string> warnings)
+    {
+        CheckLessonsCanBeReached(warnings);
+        CheckDefaultsCanWin(warnings);
+        CheckDeclarationsCanWin(warnings);
+
+        sb.AppendLine();
+        sb.AppendLine("── what each verb was actually seen to grant ──");
+        foreach (var (v, mms) in GrantedMm.OrderBy(kv => kv.Key, StringComparer.Ordinal))
+            sb.AppendLine($"     {v,-16} {string.Join(" ", mms.OrderBy(m => m, StringComparer.Ordinal))}");
+        sb.AppendLine();
+        sb.AppendLine("── target kinds each verb is offered on ──");
+        foreach (var (verbId, types) in ReachableTypes.OrderBy(kv => kv.Key, StringComparer.Ordinal))
+        {
+            var names = types.Select(t => t.Name.Replace("PointOfInterest", "").Replace("Area", "~"))
+                             .Where(n => n.Length > 0)
+                             .OrderBy(n => n, StringComparer.Ordinal)
+                             .ToList();
+            sb.AppendLine($"     {verbId,-18} {string.Join(" ", names)}");
+        }
+    }
+
+    /// <summary>
+    /// Content kinds that exist as a type and that <b>no factory ever builds</b> — the same question
+    /// <c>--outcome-audit</c> asks of an <c>Outcome</c> nothing produces, now askable of the world's
+    /// furniture because the kinds are types rather than strings.
+    ///
+    /// <para>This is what a hand-maintained list of assumed words was standing in for. A kind that
+    /// exists in code and nowhere in the world is either content somebody meant to place and did
+    /// not, or a type left behind by a lesson that was deleted — and both are worth a line.</para>
+    /// </summary>
+    private static void AuditUnbuiltKinds(StringBuilder sb, List<string> warnings)
+    {
+        var declared = typeof(PointOfInterest).Assembly.GetTypes()
+            .Where(t => t.IsClass && !t.IsAbstract && typeof(PointOfInterest).IsAssignableFrom(t))
+            .ToList();
+
+        // A kind is "built" if the sweep saw one, or saw any subclass of it — a Grave counts as a
+        // DiggableGround having been built.
+        var unbuilt = declared
+            .Where(t => !SeenKinds.Any(seen => t.IsAssignableFrom(seen)))
+            .Select(t => t.Name)
+            .OrderBy(n => n, StringComparer.Ordinal)
+            .ToList();
+
+        sb.AppendLine();
+        sb.AppendLine($"── content kinds: {declared.Count} declared, {declared.Count - unbuilt.Count} built by some factory ──");
+        for (int i = 0; i < unbuilt.Count; i += 4)
+            sb.AppendLine("     " + string.Join("  ", unbuilt.Skip(i).Take(4)));
+
+        foreach (var name in unbuilt.Where(n => !NotPlacedByAFactory.ContainsKey(n)))
+            warnings.Add($"content kind '{name}' exists as a type but no sampled factory ever builds one");
+    }
+
+    /// <summary>
+    /// Kinds that legitimately no factory builds, with the reason. Two sorts: things the game spawns
+    /// during play rather than placing at build, and things that belong to the phases this sweep does
+    /// not cover. Everything not named here that goes unbuilt is content somebody meant to place.
+    ///
+    /// <para>Kept as a table rather than a bare list because the reason is the useful half — a name
+    /// on a silent exemption list is indistinguishable from an oversight a year later.</para>
+    /// </summary>
+    private static readonly Dictionary<string, string> NotPlacedByAFactory = new()
+    {
+        ["CorpsePointOfInterest"]      = "spawned by a kill, never placed at build",
+        ["SleepingNpcPointOfInterest"] = "created per night by SceneNpcPlacement, merging a sleeper with their bed",
+        ["FragmentPointOfInterest"]    = "childhood reminescence only, which this sweep does not build",
+        ["GetUpPointOfInterest"]       = "the get-up phase only, likewise",
+        ["BellPointOfInterest"]        = "test location only — --verb-audit deliberately does not sweep it",
+        ["MiddenPointOfInterest"]      = "test location only, likewise",
+    };
+
+    /// <summary>Every kind the sweep actually constructed, for the check above.</summary>
+    private static readonly HashSet<Type> SeenKinds = new();
+
+
     /// <summary>Strips ids and quoted names so the same fault at 40 locations counts as one kind.</summary>
     private static string Kind(string warning)
     {
@@ -135,6 +293,28 @@ public static class VerbAudit
     private static readonly HashSet<string> TeachesPerBlow = new() { "attack" };
 
     /// <summary>
+    /// Verbs whose lesson no <b>beast</b> body can hold, and for which no beast counterpart has been
+    /// written yet. Listed rather than warned about, because the gap is known and its fix is content
+    /// design rather than a bug: see <c>design/mm_expansion_proposal.md</c>.
+    ///
+    /// <para>They matter because a beast companion narrates after a Speak-About hand-off — it
+    /// observes, thinks and acts like anybody else — so every one of these is a verb a wolf or a cat
+    /// can be offered and learn nothing from. The human side of exactly this fault was ten verbs
+    /// deep and had been shipping unnoticed, so the list is kept explicit and countable instead of
+    /// being allowed back into silence.</para>
+    ///
+    /// <para><b>Empty this list, do not extend it.</b> A verb added here should be a verb somebody
+    /// has decided a beast should learn nothing from, with the reason written down.</para>
+    /// </summary>
+    private static readonly HashSet<string> NoBeastCounterpart = new()
+    {
+        "appease", "contemplate", "crush", "follow_path", "get_up", "hide_and_wait",
+        "move", "murder", "remember", "slip_into", "steal", "pickpocket", "sit_and_wait",
+        "stalk", "swim_across", "voyage_toward",
+    };
+
+
+    /// <summary>
     /// Checks what every verb <i>declares</i>, independently of whether any scene offers it: that it
     /// teaches something, that what it teaches exists, and that the tools it demands exist. All three
     /// fail silently at runtime — an unresolvable lesson grants nothing and an unresolvable tool makes
@@ -148,8 +328,11 @@ public static class VerbAudit
 
         foreach (var verb in verbs)
         {
-            var mmId = verb.GrantedModusMentisId(null);
-            if (string.IsNullOrWhiteSpace(mmId))
+            // The whole candidate list, not the single default: a verb that teaches one lesson to a
+            // beast and another to a person declares GrantedModusMentisIds and leaves the singular
+            // accessor null, and reading only that reported ten working verbs as teaching nothing.
+            var mmIds = verb.GrantedModusMentisIds(null);
+            if (mmIds.Count == 0)
             {
                 if (!TeachesPerBlow.Contains(verb.VerbId))
                     warnings.Add($"verb '{verb.VerbId}' teaches no modus mentis — succeeding at it grants nothing");
@@ -157,8 +340,27 @@ public static class VerbAudit
             else
             {
                 teaching++;
-                if (ModusMentisRegistry.Instance.GetModusMentis(mmId) == null)
-                    warnings.Add($"verb '{verb.VerbId}' teaches '{mmId}', which no modus mentis answers to");
+                foreach (var mmId in mmIds)
+                    if (ModusMentisRegistry.Instance.GetModusMentis(mmId) == null)
+                        warnings.Add($"verb '{verb.VerbId}' teaches '{mmId}', which no modus mentis answers to");
+            }
+
+            // A verb whose candidates no single anatomy can hold teaches that anatomy nothing at all,
+            // silently — ModusMentisGrantOutcome refuses the lesson and writes a log line nobody
+            // reads. This is the check that was missing when climb, cross, stairs, smell, dig, track
+            // and catch all taught the protagonist nothing for as long as they have existed.
+            foreach (var anatomy in System.Enum.GetValues<AnatomyType>())
+            {
+                if (mmIds.Count == 0) break;
+                bool anyLearnable = mmIds
+                    .Select(id => ModusMentisRegistry.Instance.GetModusMentis(id))
+                    .Any(mm => mm != null && ModusMentisAnatomy.IsLearnableBy(mm, anatomy));
+
+                if (anatomy == AnatomyType.Beast && NoBeastCounterpart.Contains(verb.VerbId)) continue;
+
+                if (!anyLearnable && CanBeAttemptedBy(verb, anatomy))
+                    warnings.Add($"verb '{verb.VerbId}' teaches {anatomy} nothing — "
+                               + $"[{string.Join(", ", mmIds)}] names no source a {anatomy} body owns");
             }
 
             // A verb naming reference tools it does not require is a category that was changed on one
@@ -265,10 +467,68 @@ public static class VerbAudit
 
             foreach (var area in scene.AllAreas)
             {
+
                 foreach (var observable in Observables(area, scene))
                 {
+                    if (observable is PointOfInterest p) SeenKinds.Add(p.GetType());
+
+                    // Exercise the lessons so a branch that throws is caught here rather than in play.
+                    // Every period, because the hour changes which branch is reached.
+                    foreach (TimePeriod period in Enum.GetValues<TimePeriod>())
+                    foreach (var verb in scene.Verbs)
+                    {
+                        var ctx = new LessonContext(scene, new PoV(area, period), actor, observable);
+                        try { verb.Lessons(ctx).ToList(); } catch { }
+
+                        // What the verb would ACTUALLY grant here — the first candidate a body can
+                        // hold, not every candidate offered. Only where the verb is genuinely
+                        // offered: asking what BREAK would teach about a tree it can never break
+                        // records the default as reachable when it is not.
+                        try
+                        {
+                            if (verb.IsPossible(scene, new PoV(area, period), observable, actor))
+                            {
+                                var won = verb.ResolveLesson(ctx);
+                                if (won != null) Granted(verb.VerbId).Add(won.ModusMentisId);
+
+                                // What this object DECLARES for this verb, against what it actually
+                                // taught. base.Lessons yields the declaration before the verb default
+                                // but after every branch, so a branch matching the object's own type
+                                // silences the declaration completely.
+                                var declared = (observable as IVerbModusMentisSource)?.ModusMentisFor(verb.VerbId);
+
+                                // A declaration this body cannot HOLD is a different thing entirely
+                                // and is correct by design — footprints declare the beast's
+                                // spoor_reading, and a human is meant to fall past it.
+                                var declaredMm = declared == null
+                                    ? null
+                                    : ModusMentisRegistry.Instance.GetModusMentis(declared);
+                                if (declaredMm != null && ModusMentisAnatomy.IsLearnableBy(declaredMm, actor))
+                                {
+                                    DeclaredSeen[(verb.VerbId, declared!)] = observable.DisplayName;
+                                    if (won?.ModusMentisId == declared)
+                                        DeclaredWon.Add((verb.VerbId, declared!));
+                                }
+                            }
+                        }
+                        catch { }
+                    }
+
                     var offered = OfferedVerbIds(scene, area, observable, actor);
                     foreach (var verbId in offered) everOffered.Add(verbId);
+
+                    // What each verb is ever offered ON. A lesson names a type; if the verb's own
+                    // gate never admits that type, the lesson cannot fire however much of the content
+                    // the world contains — see AuditUnreachableLessons.
+                    foreach (var verbId in offered)
+                    {
+                        Reachable(verbId).Add(observable.GetType());
+                        Reachable(verbId).Add(area.GetType());
+                        if (observable is PointOfInterest holder)
+                            foreach (var item in holder.Items)
+                                if (OfferedVerbIds(scene, area, item, actor).Contains(verbId))
+                                    Reachable(verbId).Add(holder.GetType());
+                    }
 
                     counts.Add(offered.Count);
                     if (offered.Overlaps(SensoryVerbIds)) sensoryCovered++;
@@ -467,7 +727,16 @@ public static class VerbAudit
     /// </summary>
     private static void CheckTargetOverrides(List<string> warnings, string label, int id, Element observable)
     {
-        if (observable is not PointOfInterest { VerbModiMentis: { } overrides }) return;
+        // Both halves of IVerbModusMentisSource: an object's own declaration and a creature's,
+        // the latter declared per archetype. Reading only the first left every person's and every
+        // beast's lesson unchecked, which is where the mechanism is newest and least trodden.
+        var overrides = observable switch
+        {
+            PointOfInterest { VerbModiMentis: { } poi } => poi,
+            SceneNpc npc                                => npc.Entity.Archetype.VerbModiMentis,
+            _                                           => null,
+        };
+        if (overrides == null) return;
 
         foreach (var (verbId, mmId) in overrides)
         {
@@ -476,6 +745,14 @@ public static class VerbAudit
 
             if (ModusMentisRegistry.Instance.GetModusMentis(mmId) == null)
                 warnings.Add($"{label} {id}: '{observable.DisplayName}' teaches '{mmId}' for '{verbId}', which no modus mentis answers to");
+
+            // A lesson declared for a sense the object does not reward is never consulted: the verb
+            // is not even offered. The declaration reads as content and does nothing — nine objects
+            // declared what contemplating them teaches while rewarding only examine and listen.
+            if (SensoryVerbIds.Contains(verbId)
+                && observable is PointOfInterest poi && !poi.RewardsSense(verbId))
+                warnings.Add($"{label} {id}: '{observable.DisplayName}' declares a lesson for '{verbId}' "
+                           + "but its SensoryProfile does not reward that sense, so the verb is never offered on it");
         }
     }
 

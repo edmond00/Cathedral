@@ -1978,12 +1978,32 @@ public class NarrativeController
             // Doing a thing is how the thing is learned. Appended last so the lesson reads as the
             // consequence of whatever the verb actually did, not as its headline.
             var lesson = ModusMentisGrantOutcome.For(
-                _activePartyMember, verb.ResolveGrantedModusMentisId(verbTarget.Target));
+                _activePartyMember, ChooseLesson(verb, verbTarget.Target)?.ModusMentisId);
             if (lesson != null) reports.Add(lesson);
 
             return reports;
         }
         return System.Array.Empty<Outcome>();
+    }
+
+
+    /// <summary>
+    /// The one lesson this action teaches. The whole decision belongs to the verb — see
+    /// <see cref="Verb.ResolveLesson"/>, which asks the verb's own contextual answer first, then the
+    /// target's declaration, then the verb's defaults, skipping whatever this body cannot hold.
+    /// </summary>
+    private ModusMentis? ChooseLesson(Verb verb, Element target)
+    {
+        var threat = ThreatLevel.None;
+        if (_protagonist != null)
+        {
+            try { threat = ThreatSelector.ComputeContext(_scene!, _pov!, _protagonist).Level; } catch { }
+        }
+
+        return verb.ResolveLesson(new LessonContext(_scene!, _pov!, _activePartyMember!, target)
+        {
+            Hostile = threat,
+        });
     }
 
     /// <summary>

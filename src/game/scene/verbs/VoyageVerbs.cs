@@ -2,6 +2,8 @@
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Routines;
 
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
@@ -19,6 +21,13 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public class VoyageTowardVerb : Verb
 {
+    /// <summary>Three reasons to set out for something visible from here.</summary>
+    public override IEnumerable<ModusMentis> Lessons(LessonContext ctx)
+    {
+        if (ctx.Night) yield return Mm<WanderlustModusMentis>();
+        // The target's own declaration, then this verb's default — always last, always visible.
+        foreach (var m in base.Lessons(ctx)) yield return m;
+    }
     public override string VerbId         => "voyage_toward";
     public override string DisplayName    => "Voyage Toward";
     public override int    BaseDifficulty => 2;

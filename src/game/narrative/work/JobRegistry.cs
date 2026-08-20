@@ -35,6 +35,9 @@ public sealed class JobRegistry
     /// <summary>The job with the given id, or null.</summary>
     public Job? GetById(string id) => _jobsById.GetValueOrDefault(id);
 
+    /// <summary>Every job in the catalogue. What the audits read to see which lessons work buys.</summary>
+    public IEnumerable<Job> All => _jobsById.Values;
+
     /// <summary>
     /// Deterministically samples up to <paramref name="count"/> distinct jobs the given archetype
     /// offers, seeded by <paramref name="npcId"/> so the same NPC always yields the same set.

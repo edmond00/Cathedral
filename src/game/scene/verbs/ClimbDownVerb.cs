@@ -3,6 +3,8 @@ using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Scene.Building;
 
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
@@ -12,12 +14,14 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public class ClimbDownVerb : Verb
 {
+
     public override string VerbId      => "climb_down";
     public override string DisplayName => "Climb Down";
     public override int    BaseDifficulty => 6;
 
-    /// <summary>What a success teaches: hand and foot on rock.</summary>
-    public override string? GrantedModusMentisId(Element? target) => "clambering";
+    /// <summary>Claws or arms — see <see cref="Verb.GrantedModusMentisIds"/> for why the beast lesson comes first.</summary>
+    public override IReadOnlyList<string> GrantedModusMentisIds(Element? target)
+        => new[] { "clambering", "scaling" };
 
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {

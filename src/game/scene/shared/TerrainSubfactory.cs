@@ -14,9 +14,8 @@ public static class TerrainSubfactory
 {
     // ── Trees ────────────────────────────────────────────────────────────────
 
-    public static PointOfInterest BuildOakTree() => new(
+    public static PointOfInterest BuildOakTree() => new TreePointOfInterest(
         displayName: "Oak Tree",
-        referenceLemma: "tree",
         descriptions: new() { "A broad-crowned oak with deep-fissured bark and heavy boughs" },
         items: new()
         {
@@ -27,11 +26,10 @@ public static class TerrainSubfactory
         },
         moods: new[] { "ancient", "broad-crowned", "spreading", "weathered", "rough-barked" },
         isNatural: true
-    ) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["listen"] = "keen_ear" } };
+    ) { Senses = new SensoryProfile(Examine: true, Contemplate: true, Listen: true), VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["listen"] = "birdsong" } };
 
-    public static PointOfInterest BuildBeechTree() => new(
+    public static PointOfInterest BuildBeechTree() => new TreePointOfInterest(
         displayName: "Beech Tree",
-        referenceLemma: "tree",
         descriptions: new() { "A tall pale beech, smooth-trunked and deep-rooted" },
         items: new()
         {
@@ -42,11 +40,10 @@ public static class TerrainSubfactory
         },
         moods: new[] { "tall", "smooth", "pale", "still", "shaded" },
         isNatural: true
-    ) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["listen"] = "keen_ear" } };
+    ) { Senses = new SensoryProfile(Examine: true, Contemplate: true, Listen: true), VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["listen"] = "birdsong" } };
 
-    public static PointOfInterest BuildAshTree() => new(
+    public static PointOfInterest BuildAshTree() => new TreePointOfInterest(
         displayName: "Ash Tree",
-        referenceLemma: "tree",
         descriptions: new() { "A grey-trunked ash with feather-leaved branches" },
         items: new()
         {
@@ -56,11 +53,10 @@ public static class TerrainSubfactory
         },
         moods: new[] { "tall", "grey", "fluttering", "open-canopied" },
         isNatural: true
-    ) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["listen"] = "keen_ear" } };
+    ) { Senses = new SensoryProfile(Examine: true, Contemplate: true, Listen: true), VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["listen"] = "birdsong" } };
 
-    public static PointOfInterest BuildBirchTree() => new(
+    public static PointOfInterest BuildBirchTree() => new TreePointOfInterest(
         displayName: "Birch Tree",
-        referenceLemma: "tree",
         descriptions: new() { "A slender silver-skinned birch, papery bark peeling in strips" },
         items: new()
         {
@@ -70,11 +66,10 @@ public static class TerrainSubfactory
         },
         moods: new[] { "slender", "silver-barked", "papery", "trembling", "pale" },
         isNatural: true
-    ) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["listen"] = "keen_ear" } };
+    ) { Senses = new SensoryProfile(Examine: true, Contemplate: true, Listen: true), VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["listen"] = "birdsong" } };
 
-    public static PointOfInterest BuildPineTree() => new(
+    public static PointOfInterest BuildPineTree() => new TreePointOfInterest(
         displayName: "Pine Tree",
-        referenceLemma: "tree",
         descriptions: new() { "A tall dark pine, resinous and heavy-needled" },
         items: new()
         {
@@ -86,11 +81,10 @@ public static class TerrainSubfactory
         },
         moods: new[] { "tall", "resinous", "dark", "wind-bent", "dense" },
         isNatural: true
-    ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["smell"] = "scenting" } };
+    ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["smell"] = "petrichor" } };
 
-    public static PointOfInterest BuildYewTree() => new(
+    public static PointOfInterest BuildYewTree() => new TreePointOfInterest(
         displayName: "Yew Tree",
-        referenceLemma: "tree",
         descriptions: new() { "A squat dark yew with reddish bark and a heavy, low canopy" },
         items: new()
         {
@@ -101,9 +95,8 @@ public static class TerrainSubfactory
         isNatural: true
     ) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["contemplate"] = "iconography" } };
 
-    public static PointOfInterest BuildHawthornTree() => new(
+    public static PointOfInterest BuildHawthornTree() => new TreePointOfInterest(
         displayName: "Hawthorn Tree",
-        referenceLemma: "tree",
         descriptions: new() { "A thorny hawthorn standing alone, branches red with berries" },
         items: new()
         {
@@ -114,11 +107,10 @@ public static class TerrainSubfactory
         },
         moods: new[] { "thorny", "wind-bent", "small", "tangled", "lonely" },
         isNatural: true
-    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "hedgecraft", ["smell"] = "scenting" } };
+    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "hedgecraft", ["smell"] = "petrichor" } };
 
-    public static PointOfInterest BuildWillowTree() => new(
+    public static PointOfInterest BuildWillowTree() => new TreePointOfInterest(
         displayName: "Willow Tree",
-        referenceLemma: "tree",
         descriptions: new() { "A weeping willow, long fronds trailing toward the wet ground" },
         items: new()
         {
@@ -127,11 +119,10 @@ public static class TerrainSubfactory
         },
         moods: new[] { "weeping", "trailing", "soft", "damp", "shaded" },
         isNatural: true
-    ) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["listen"] = "keen_ear" } };
+    ) { Senses = new SensoryProfile(Examine: true, Contemplate: true, Listen: true), VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["listen"] = "birdsong" } };
 
-    public static PointOfInterest BuildElderTree() => new(
+    public static PointOfInterest BuildElderTree() => new TreePointOfInterest(
         displayName: "Elder Tree",
-        referenceLemma: "tree",
         descriptions: new() { "A spreading elder, dark umbels of berries weighing the branches" },
         items: new()
         {
@@ -141,11 +132,10 @@ public static class TerrainSubfactory
         },
         moods: new[] { "shrubby", "fragrant", "spreading", "old" },
         isNatural: true
-    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore", ["smell"] = "scenting" } };
+    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore", ["smell"] = "apothecary_nose" } };
 
-    public static PointOfInterest BuildAppleTree() => new(
+    public static PointOfInterest BuildAppleTree() => new TreePointOfInterest(
         displayName: "Apple Tree",
-        referenceLemma: "tree",
         descriptions: new() { "A gnarled old apple tree, branches heavy with fruit" },
         items: new()
         {
@@ -156,11 +146,10 @@ public static class TerrainSubfactory
         },
         moods: new[] { "gnarled", "laden", "shaded", "sweet", "old" },
         isNatural: true
-    ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "ripelore", ["smell"] = "scenting", ["listen"] = "keen_ear" } };
+    ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "ripelore", ["smell"] = "bouquet", ["listen"] = "insect_chorus" } };
 
-    public static PointOfInterest BuildPearTree() => new(
+    public static PointOfInterest BuildPearTree() => new TreePointOfInterest(
         displayName: "Pear Tree",
-        referenceLemma: "tree",
         descriptions: new() { "A pear tree with narrow leaves and pale-green hanging fruit" },
         items: new()
         {
@@ -170,11 +159,10 @@ public static class TerrainSubfactory
         },
         moods: new[] { "narrow-leaved", "laden", "tall", "ordered" },
         isNatural: true
-    ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "ripelore", ["smell"] = "scenting", ["listen"] = "keen_ear" } };
+    ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "ripelore", ["smell"] = "bouquet", ["listen"] = "insect_chorus" } };
 
-    public static PointOfInterest BuildPlumTree() => new(
+    public static PointOfInterest BuildPlumTree() => new TreePointOfInterest(
         displayName: "Plum Tree",
-        referenceLemma: "tree",
         descriptions: new() { "A plum tree, branches crowded with dusty-bloomed fruit" },
         items: new()
         {
@@ -184,11 +172,10 @@ public static class TerrainSubfactory
         },
         moods: new[] { "crowded", "fruited", "low", "spreading" },
         isNatural: true
-    ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "ripelore", ["smell"] = "scenting", ["listen"] = "keen_ear" } };
+    ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "ripelore", ["smell"] = "bouquet", ["listen"] = "insect_chorus" } };
 
-    public static PointOfInterest BuildCherryTree() => new(
+    public static PointOfInterest BuildCherryTree() => new TreePointOfInterest(
         displayName: "Cherry Tree",
-        referenceLemma: "tree",
         descriptions: new() { "A cherry tree, leaves dark, branches studded with glossy red fruit" },
         items: new()
         {
@@ -198,13 +185,12 @@ public static class TerrainSubfactory
         },
         moods: new[] { "dark-leaved", "laden", "modest", "tidy" },
         isNatural: true
-    ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "ripelore", ["smell"] = "scenting", ["listen"] = "keen_ear" } };
+    ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "ripelore", ["smell"] = "bouquet", ["listen"] = "insect_chorus" } };
 
     // ── Cut / fallen wood ────────────────────────────────────────────────────
 
-    public static PointOfInterest BuildFelledLog() => new(
+    public static PointOfInterest BuildFelledLog() => new LogPointOfInterest(
         displayName: "Felled Log",
-        referenceLemma: "log",
         descriptions: new() { "A heavy log lying on its side, axe-marks fresh at one end" },
         items: new()
         {
@@ -214,11 +200,10 @@ public static class TerrainSubfactory
         },
         moods: new[] { "fresh-cut", "heavy", "split", "wood-scented" },
         isNatural: true
-    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["smell"] = "scenting" } };
+    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["smell"] = "petrichor" } };
 
-    public static PointOfInterest BuildTreeStump() => new(
+    public static PointOfInterest BuildTreeStump() => new StumpPointOfInterest(
         displayName: "Tree Stump",
-        referenceLemma: "stump",
         descriptions: new() { "A weathered stump where a tree once stood, moss creeping over the bark" },
         items: new()
         {
@@ -229,9 +214,8 @@ public static class TerrainSubfactory
         isNatural: true
     ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft" } };
 
-    public static PointOfInterest BuildDeadfall() => new(
+    public static PointOfInterest BuildDeadfall() => new DeadfallPointOfInterest(
         displayName: "Deadfall Pile",
-        referenceLemma: "deadfall",
         descriptions: new() { "A heap of broken branches and fallen wood at the base of a hollow" },
         items: new()
         {
@@ -241,13 +225,12 @@ public static class TerrainSubfactory
         },
         moods: new[] { "tangled", "dry", "weathered", "splintered" },
         isNatural: true
-    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "mycology", ["smell"] = "scenting" } };
+    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "mycology", ["smell"] = "taint_sense" } };
 
     // ── Rock features ────────────────────────────────────────────────────────
 
-    public static PointOfInterest BuildBoulder() => new(
+    public static PointOfInterest BuildBoulder() => new BoulderPointOfInterest(
         displayName: "Boulder",
-        referenceLemma: "boulder",
         descriptions: new() { "A great half-buried boulder, the stone pitted and ringed with lichen" },
         items: new()
         {
@@ -259,9 +242,8 @@ public static class TerrainSubfactory
         isNatural: true
     ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "stonework" } };
 
-    public static PointOfInterest BuildRockOutcrop() => new(
+    public static PointOfInterest BuildRockOutcrop() => new RockPointOfInterest(
         displayName: "Rock Outcrop",
-        referenceLemma: "rock",
         descriptions: new() { "A jut of bedrock breaking through the slope, edges sharp" },
         items: new()
         {
@@ -274,9 +256,8 @@ public static class TerrainSubfactory
         isNatural: true
     ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "stonework" } };
 
-    public static PointOfInterest BuildRockFace() => new(
+    public static PointOfInterest BuildRockFace() => new RockPointOfInterest(
         displayName: "Rock Face",
-        referenceLemma: "rock",
         descriptions: new() { "A sheer face of bedrock, fissured and wet in places" },
         items: new()
         {
@@ -288,9 +269,8 @@ public static class TerrainSubfactory
         isNatural: true
     ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "stonework" } };
 
-    public static PointOfInterest BuildFallenRocks() => new(
+    public static PointOfInterest BuildFallenRocks() => new RockPointOfInterest(
         displayName: "Fallen Rocks",
-        referenceLemma: "rock",
         descriptions: new() { "A scatter of broken stone tumbled down from above" },
         items: new()
         {
@@ -301,9 +281,8 @@ public static class TerrainSubfactory
         isNatural: true
     ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "stonework" } };
 
-    public static PointOfInterest BuildCrevice() => new(
+    public static PointOfInterest BuildCrevice() => new CrevicePointOfInterest(
         displayName: "Crevice",
-        referenceLemma: "crevice",
         descriptions: new() { "A narrow crevice between rocks, dark and deep" },
         items: new()
         {
@@ -311,11 +290,10 @@ public static class TerrainSubfactory
         },
         moods: new[] { "narrow", "dark", "deep", "echoing" },
         isNatural: true
-    ) { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "stonework", ["listen"] = "keen_ear" } };
+    ) { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "stonework", ["listen"] = "hollow_ear" } };
 
-    public static PointOfInterest BuildCairn() => new(
+    public static PointOfInterest BuildCairn() => new CairnPointOfInterest(
         displayName: "Cairn",
-        referenceLemma: "cairn",
         descriptions: new() { "A pile of stones left by past travellers, carefully balanced" },
         items: new()
         {
@@ -328,9 +306,8 @@ public static class TerrainSubfactory
 
     // ── Water ────────────────────────────────────────────────────────────────
 
-    public static PointOfInterest BuildStreamBank() => new(
+    public static PointOfInterest BuildStreamBank() => new StreamPointOfInterest(
         displayName: "Stream Bank",
-        referenceLemma: "stream",
         descriptions: new() { "A muddy bank where the stream cuts the earth, watercress in the slow eddy" },
         items: new()
         {
@@ -340,11 +317,10 @@ public static class TerrainSubfactory
         },
         moods: new[] { "muddy", "wet", "cool", "slick" },
         isNatural: true
-    ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "drainage", ["listen"] = "keen_ear", ["smell"] = "scenting" } };
+    ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "drainage", ["listen"] = "water_voice", ["smell"] = "taint_sense" } };
 
-    public static PointOfInterest BuildGorgePool() => new(
+    public static PointOfInterest BuildGorgePool() => new PoolPointOfInterest(
         displayName: "Gorge Pool",
-        referenceLemma: "pool",
         descriptions: new() { "A still dark pool at the base of a gorge, edged with wet stone" },
         items: new()
         {
@@ -353,13 +329,12 @@ public static class TerrainSubfactory
         },
         moods: new[] { "still", "dark", "cold", "wet" },
         isNatural: true
-    ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "drainage", ["listen"] = "keen_ear" } };
+    ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "drainage", ["listen"] = "water_voice" } };
 
     // ── Vegetation patches ───────────────────────────────────────────────────
 
-    public static PointOfInterest BuildFlowerPatch() => new(
+    public static PointOfInterest BuildFlowerPatch() => new FlowerPointOfInterest(
         displayName: "Flower Patch",
-        referenceLemma: "flower",
         descriptions: new() { "A sprawl of wildflowers in colour-clusters, bees moving between them" },
         items: new()
         {
@@ -370,11 +345,10 @@ public static class TerrainSubfactory
         },
         moods: new[] { "bright", "fragrant", "scattered", "vivid" },
         isNatural: true
-    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore", ["smell"] = "scenting", ["contemplate"] = "aesthetic" } };
+    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore", ["smell"] = "apothecary_nose", ["contemplate"] = "aesthetic" } };
 
-    public static PointOfInterest BuildBerryBush() => new(
+    public static PointOfInterest BuildBerryBush() => new BushPointOfInterest(
         displayName: "Berry Bush",
-        referenceLemma: "bush",
         descriptions: new() { "A thorny bush heavy with dark drupelets" },
         items: new()
         {
@@ -384,11 +358,10 @@ public static class TerrainSubfactory
         },
         moods: new[] { "thorny", "dense", "fruited", "tangled" },
         isNatural: true
-    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "ripelore", ["smell"] = "scenting" } };
+    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "ripelore", ["smell"] = "bouquet" } };
 
-    public static PointOfInterest BuildBilberryBush() => new(
+    public static PointOfInterest BuildBilberryBush() => new BushPointOfInterest(
         displayName: "Bilberry Bush",
-        referenceLemma: "bush",
         descriptions: new() { "A low bilberry bush studded with small dark fruit" },
         items: new()
         {
@@ -397,11 +370,10 @@ public static class TerrainSubfactory
         },
         moods: new[] { "low", "tangled", "fruited", "dusky" },
         isNatural: true
-    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "ripelore", ["smell"] = "scenting" } };
+    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "ripelore", ["smell"] = "bouquet" } };
 
-    public static PointOfInterest BuildSloeBush() => new(
+    public static PointOfInterest BuildSloeBush() => new BushPointOfInterest(
         displayName: "Sloe Bush",
-        referenceLemma: "bush",
         descriptions: new() { "A blackthorn covered with hard blue-black sloes" },
         items: new()
         {
@@ -410,11 +382,10 @@ public static class TerrainSubfactory
         },
         moods: new[] { "thorny", "blue-black", "wind-bent", "wild" },
         isNatural: true
-    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "ripelore", ["smell"] = "scenting" } };
+    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "ripelore", ["smell"] = "bouquet" } };
 
-    public static PointOfInterest BuildMushroomCluster() => new(
+    public static PointOfInterest BuildMushroomCluster() => new MushroomPointOfInterest(
         displayName: "Mushroom Cluster",
-        referenceLemma: "mushroom",
         descriptions: new() { "A cluster of cap-and-stem mushrooms half-hidden in leaf-litter" },
         items: new()
         {
@@ -423,11 +394,10 @@ public static class TerrainSubfactory
         },
         moods: new[] { "earthy", "damp", "hidden", "small" },
         isNatural: true
-    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "mycology", ["smell"] = "scenting", ["contemplate"] = "aesthetic" } };
+    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "mycology", ["smell"] = "taint_sense", ["contemplate"] = "aesthetic" } };
 
-    public static PointOfInterest BuildUndergrowthPatch() => new(
+    public static PointOfInterest BuildUndergrowthPatch() => new UndergrowthPointOfInterest(
         displayName: "Undergrowth Patch",
-        referenceLemma: "undergrowth",
         descriptions: new() { "A snarled patch of low growth, ferns and brambles tangled together" },
         items: new()
         {
@@ -438,11 +408,10 @@ public static class TerrainSubfactory
         },
         moods: new[] { "tangled", "low", "shaded", "snarled" },
         isNatural: true
-    ) { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "forage_lore", ["listen"] = "keen_ear" } };
+    ) { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "forage_lore", ["listen"] = "birdsong" } };
 
-    public static PointOfInterest BuildReedBed() => new(
+    public static PointOfInterest BuildReedBed() => new ReedPointOfInterest(
         displayName: "Reed Bed",
-        referenceLemma: "reed",
         descriptions: new() { "A stand of tall reeds growing out of the soft wet ground" },
         items: new()
         {
@@ -452,11 +421,10 @@ public static class TerrainSubfactory
         },
         moods: new[] { "tall", "rustling", "wet", "papery" },
         isNatural: true
-    ) { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "knotwork", ["listen"] = "keen_ear" } };
+    ) { Senses = new SensoryProfile(Examine: true, Contemplate: true, Listen: true), VerbModiMentis = new Dictionary<string, string> { ["examine"] = "knotwork", ["listen"] = "forge_ear", ["contemplate"] = "journeyman_eye" } };
 
-    public static PointOfInterest BuildMossBank() => new(
+    public static PointOfInterest BuildMossBank() => new MossPointOfInterest(
         displayName: "Moss Bank",
-        referenceLemma: "moss",
         descriptions: new() { "A thick cushion of moss spread over rock and root" },
         items: new()
         {
@@ -465,11 +433,10 @@ public static class TerrainSubfactory
         },
         moods: new[] { "soft", "damp", "green", "thick" },
         isNatural: true
-    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore", ["smell"] = "scenting" } };
+    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore", ["smell"] = "apothecary_nose" } };
 
-    public static PointOfInterest BuildAlpineHerbPatch() => new(
+    public static PointOfInterest BuildAlpineHerbPatch() => new HerbPointOfInterest(
         displayName: "Alpine Herb Patch",
-        referenceLemma: "herb",
         descriptions: new() { "A small clutch of fragrant herbs sheltered in a hollow" },
         items: new()
         {
@@ -479,11 +446,10 @@ public static class TerrainSubfactory
         },
         moods: new[] { "fragrant", "small", "sheltered", "rare" },
         isNatural: true
-    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore", ["smell"] = "scenting", ["contemplate"] = "aesthetic" } };
+    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore", ["smell"] = "apothecary_nose", ["contemplate"] = "aesthetic" } };
 
-    public static PointOfInterest BuildLichenCrust() => new(
+    public static PointOfInterest BuildLichenCrust() => new LichenPointOfInterest(
         displayName: "Lichen Crust",
-        referenceLemma: "lichen",
         descriptions: new() { "A papery crust of grey-green lichen spread across the stone" },
         items: new()
         {
@@ -494,9 +460,8 @@ public static class TerrainSubfactory
         isNatural: true
     ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore" } };
 
-    public static PointOfInterest BuildShelteredHollow() => new(
+    public static PointOfInterest BuildShelteredHollow() => new HollowPointOfInterest(
         displayName: "Sheltered Hollow",
-        referenceLemma: "hollow",
         descriptions: new() { "A small hollow out of the wind, rare alpine herbs growing in the lee" },
         items: new()
         {
@@ -505,11 +470,10 @@ public static class TerrainSubfactory
         },
         moods: new[] { "sheltered", "rare", "small", "still" },
         isNatural: true
-    ) { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "bushcraft", ["listen"] = "keen_ear" } };
+    ) { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "bushcraft", ["listen"] = "birdsong" } };
 
-    public static PointOfInterest BuildIceFormation() => new(
+    public static PointOfInterest BuildIceFormation() => new IcePointOfInterest(
         displayName: "Ice Formation",
-        referenceLemma: "ice",
         descriptions: new() { "A wind-carved sculpture of ice glittering in the cold light" },
         items: new(),
         moods: new[] { "glittering", "wind-carved", "frozen", "still" },

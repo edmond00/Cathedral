@@ -3,6 +3,8 @@ using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Scene.Building;
 
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
@@ -15,6 +17,7 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public class OpenDoorVerb : Verb
 {
+
     public override string VerbId         => "open_door";
     public override string DisplayName    => "Open";
     public override int    BaseDifficulty => 1;

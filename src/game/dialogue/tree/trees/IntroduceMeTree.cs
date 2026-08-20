@@ -35,6 +35,17 @@ public class IntroduceMeTree : DialogueTree
     /// <summary>What succeeding teaches: getting into a room on somebody else's word.</summary>
     public override string? GrantedModusMentisId => "high_society_manners";
 
+
+    /// <summary>
+    /// Being passed on to somebody else: what it takes to ask for it, and what it takes to be worth
+    /// the asking.
+    /// </summary>
+    protected override IEnumerable<string> AdditionalGrantedModusMentisIds(NpcEntity npc, ResolutionNode resolution)
+    {
+        yield return "intercession";
+        yield return "dramaturgy";
+    }
+
     public override IReadOnlyList<Outcome> SuccessOutcomes => new Outcome[]
     {
         new IntroductionGrantedOutcome(),

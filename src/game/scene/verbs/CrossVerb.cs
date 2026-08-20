@@ -3,6 +3,8 @@ using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Scene.Building;
 
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
@@ -15,13 +17,26 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public class CrossVerb : Verb
 {
+    /// <summary>Wading is its own skill, distinct from the crossing's own lesson.</summary>
+    public override IEnumerable<ModusMentis> Lessons(LessonContext ctx)
+    {
+        // The target's own declaration, then this verb's default — always last, always visible.
+        foreach (var m in base.Lessons(ctx)) yield return m;
+    }
     public override string VerbId         => "cross";
     public override string DisplayName    => "Cross";
     public override int    BaseDifficulty => 4;
 
-    /// <summary>What a success teaches: depends on what the obstacle asked of you — see the crossing.</summary>
-    public override string? GrantedModusMentisId(Element? target)
-        => target is CrossingPointOfInterest crossing ? crossing.ModusMentisId : "surefoot";
+    /// <summary>
+    /// What a success teaches: what the obstacle asked of you first — a trunk wants vaulting, brambles
+    /// want hedgecraft — and failing that, whichever of the two footing lessons this body can hold.
+    /// A crossing's own default is <c>surefoot</c>, which names a beast's limbs, so a person walking
+    /// through mud falls through to balance rather than learning nothing.
+    /// </summary>
+    public override IReadOnlyList<string> GrantedModusMentisIds(Element? target)
+        => target is CrossingPointOfInterest crossing
+            ? new[] { crossing.ModusMentisId, "surefoot", "balance" }
+            : new[] { "surefoot", "balance" };
 
     public override int DifficultyFor(Element? target)
         => target is CrossingPointOfInterest crossing ? crossing.Difficulty : BaseDifficulty;

@@ -3,6 +3,8 @@ using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Scene.Building;
 
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
@@ -15,6 +17,7 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public class SlipIntoVerb : Verb
 {
+
     public override string VerbId         => "slip_into";
     public override string DisplayName    => "Slip Into";
     public override int    BaseDifficulty => 5;

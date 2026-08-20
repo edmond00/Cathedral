@@ -53,8 +53,26 @@ public class VillageSceneFactory : SceneFactory
         int lanes = rng.Next(1, 4);
         foreach (var idx in SampleUniqueIndices(rng, LanePool.Length, lanes))
         {
-            var (name, lemma, context, transition, description, moods) = LanePool[idx];
-            outdoorAreas.Add(new Area(name, lemma, context, transition, new() { description }, moods));
+            var (name, build, context, transition, description, moods) = LanePool[idx];
+            var lane = build(name, context, transition, new List<string> { description }, moods);
+
+            // The church walk runs past a churchyard, which is the only ground in the game anybody
+            // is buried in. Without it grave-digging and standing over a grave were lessons keyed to
+            // content that had never been built.
+            if (name == "Church Walk")
+            {
+                lane.PointsOfInterest.Add(new GravePointOfInterest(
+                    displayName: "Churchyard Ground",
+                    descriptions: new() { "Uneven turf inside the low wall, humped where the parish has been buried and buried again" },
+                    // DIG refuses a point of interest with nothing left in it, so ground with no
+                    // spoil is ground nobody can open. Turf is what a grave-digger actually lifts.
+                    items: new() { new ItemElement(new Clay()), new ItemElement(new Clay()) },
+                    moods: new[] { "humped", "quiet", "green", "settled" }
+                ) { Senses = SensoryProfile.Beautiful,
+                    VerbModiMentis = new Dictionary<string, string> { ["contemplate"] = "elegy" } });
+            }
+
+            outdoorAreas.Add(lane);
         }
 
         var outdoors = new Section(
@@ -166,29 +184,35 @@ public class VillageSceneFactory : SceneFactory
     /// many streets it has and which ones vary. Deliberately no "market": business is done at a
     /// workshop counter, and a place called the market end implied trade happened there.
     /// </summary>
-    private static readonly (string Name, string Lemma, string Context, string Transition, string Description, string[] Moods)[] LanePool =
+    /// <summary>
+    /// The outdoor ways a village may roll. Each entry carries its own <b>constructor</b> rather than
+    /// a lemma string: the kind of way is what a lesson asks about, and a table of strings put that
+    /// one indirection away from the compiler.
+    /// </summary>
+    private static readonly (string Name, System.Func<string, string, string, List<string>, string[], Area> Build,
+                             string Context, string Transition, string Description, string[] Moods)[] LanePool =
     {
-        ("Craft Row", "row", "on the village craft row", "walk down the craft row",
+        ("Craft Row", (n, c, t, d, m) => new RowArea(n, c, t, d, m), "on the village craft row", "walk down the craft row",
          "A rutted lane with workshop doors down both sides, loud with hammering and sawing",
          new[] { "noisy", "narrow", "busy", "rutted", "smoky" }),
 
-        ("Mill Lane", "lane", "on mill lane", "walk down mill lane",
+        ("Mill Lane", (n, c, t, d, m) => new LaneArea(n, c, t, d, m), "on mill lane", "walk down mill lane",
          "A broad cart-track worn into ruts by loaded waggons, pale with spilled flour",
          new[] { "broad", "dusty", "trafficked", "flour-pale" }),
 
-        ("Church Walk", "walk", "on the church walk", "walk along the church walk",
+        ("Church Walk", (n, c, t, d, m) => new WalkArea(n, c, t, d, m), "on the church walk", "walk along the church walk",
          "A quieter way of packed earth, running past a low wall and a leaning yew",
          new[] { "quiet", "shaded", "walled", "still", "green" }),
 
-        ("Back Lane", "lane", "on the back lane", "slip into the back lane",
+        ("Back Lane", (n, c, t, d, m) => new LaneArea(n, c, t, d, m), "on the back lane", "slip into the back lane",
          "A narrow way behind the houses, muddy underfoot and hung with washing",
          new[] { "narrow", "muddy", "close", "overlooked", "dim" }),
 
-        ("Waterside", "waterside", "on the waterside", "walk down to the waterside",
+        ("Waterside", (n, c, t, d, m) => new WatersideArea(n, c, t, d, m), "on the waterside", "walk down to the waterside",
          "A soft-verged track along the stream, alder-shaded and loud with water",
          new[] { "damp", "green", "murmuring", "soft-verged", "cool" }),
 
-        ("Green Edge", "green", "at the village green's edge", "walk out to the green's edge",
+        ("Green Edge", (n, c, t, d, m) => new GreenArea(n, c, t, d, m), "at the village green's edge", "walk out to the green's edge",
          "The open edge of the village where the grazing begins, fenced with hurdles",
          new[] { "open", "grassy", "windy", "wide", "hurdle-fenced" }),
     };
@@ -236,31 +260,28 @@ public class VillageSceneFactory : SceneFactory
 
     private static Area BuildSquare(Random rng)
     {
-        var square = new Area(
+        var square = new SquareArea(
             displayName: "Square",
-            referenceLemma: "square",
             contextDescription: "in the village square",
             transitionDescription: "step into the village square",
             descriptions: new() { "An open dirt square at the heart of the village, foot-traffic crossing every direction" },
             moods: new[] { "open", "noisy", "central", "muddy", "well-trodden" }
         );
 
-        square.PointsOfInterest.Add(new PointOfInterest(
+        square.PointsOfInterest.Add(new WellPointOfInterest(
             displayName: "Well",
-            referenceLemma: "well",
             descriptions: new() { "A stone-rimmed well at the centre of the square, a wooden bucket on its rope" },
             items: new()
             {
                 new ItemElement(new Rope()),
             },
             moods: new[] { "central", "stone-rimmed", "deep", "echoing" }
-        ) { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "drainage", ["listen"] = "keen_ear" } });
+        ) { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "drainage", ["listen"] = "water_voice" } });
 
         if (rng.NextDouble() < 0.40)
         {
-            square.PointsOfInterest.Add(new PointOfInterest(
-                displayName: "Market Stall",
-                referenceLemma: "stall",
+            square.PointsOfInterest.Add(new StallPointOfInterest(
+            displayName: "Market Stall",
                 descriptions: new() { "A trestle market-stall set out with goods for sale" },
                 items: new()
                 {
@@ -269,24 +290,39 @@ public class VillageSceneFactory : SceneFactory
                     new ItemElement(new Cloth()),
                 },
                 moods: new[] { "bright", "cluttered", "bargain-shouted" }
-            ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "bargaining", ["listen"] = "keen_ear", ["smell"] = "scenting" } });
+            ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "bargaining", ["listen"] = "crowd_murmur", ["smell"] = "keen_nose" } });
         }
+
+        // Two fixtures every village of this period had and this one did not: a cross to swear on
+        // and a set of stocks to be put in. Both are placed unconditionally — they are what a square
+        // IS, and they are also what makes reverence, pilgrimage and severity reachable at all.
+        square.PointsOfInterest.Add(new CrossPointOfInterest(
+            displayName: "Wayside Cross",
+            descriptions: new() { "A weathered stone cross on a stepped base, its carving worn almost smooth" },
+            moods: new[] { "worn", "still", "old", "leaned-on" }
+        ) { Senses = SensoryProfile.Beautiful, IsNatural = false,
+            VerbModiMentis = new Dictionary<string, string> { ["examine"] = "iconography" } });
+
+        square.PointsOfInterest.Add(new StocksPointOfInterest(
+            displayName: "Village Stocks",
+            descriptions: new() { "A set of oak stocks beside the cross, the leg-holes polished by use" },
+            moods: new[] { "grim", "public", "weathered", "waiting" }
+        ) { Senses = SensoryProfile.Beautiful,
+            VerbModiMentis = new Dictionary<string, string> { ["examine"] = "wear_reading" } });
 
         return square;
     }
 
-    private static Area BuildCraftRow() => new(
+    private static Area BuildCraftRow() => new RowArea(
         displayName: "Craft Row",
-        referenceLemma: "row",
         contextDescription: "on the village craft row",
         transitionDescription: "walk down the craft row",
         descriptions: new() { "A rutted lane with workshop doors down both sides, loud with hammering and sawing" },
         moods: new[] { "noisy", "narrow", "busy", "rutted", "smoky" }
     );
 
-    private static Area BuildMarketEnd() => new(
+    private static Area BuildMarketEnd() => new MarketArea(
         displayName: "Market End",
-        referenceLemma: "market",
         contextDescription: "at the market end of the village",
         transitionDescription: "walk down to the market end",
         descriptions: new() { "The working end of the village, where carts are loaded and sacks come and go" },

@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Dialogue.Tree.Trees;
 
 /// <summary>
@@ -26,7 +28,8 @@ public partial class StrengthenRelationshipTree
                 "That is someone I can talk to. Sit down sometime and I will prove it.",
                 "I tell {you:name} that is someone I can talk to, and to sit down sometime.",
                 "Easy to say when you are not the one cooking it.",
-                "I tell {you:name} it is easy to say when they are not the one cooking.")),
+                "I tell {you:name} it is easy to say when they are not the one cooking.",
+                typeof(AbstinenceModusMentis))),
 
         new PlayerOption("food_ask_best", "ask what the best thing they ever ate was",
             "What is the best thing you have ever eaten?",
@@ -51,7 +54,8 @@ public partial class StrengthenRelationshipTree
                 "No, it was not. You notice things. I like that in a person.",
                 "I admit it was not, and tell {you:name} they notice things.",
                 "It was about the meat. Do not make it into something else.",
-                "I tell {you:name} it was about the meat and not to make it into something else.")),
+                "I tell {you:name} it was about the meat and not to make it into something else.",
+                typeof(RecollectionModusMentis))),
 
         new PlayerOption("food_share_own", "tell them the best thing you ever ate",
             "Mine was bread from a fire I built myself, after two days without eating.",
@@ -60,7 +64,8 @@ public partial class StrengthenRelationshipTree
                 "Hunger makes anything taste better, and it is a poor way to meet good bread. I know that one.",
                 "I tell {you:name} hunger makes anything taste better, and that I know that one.",
                 "Everyone has a hunger story. I have heard a hundred.",
-                "I tell {you:name} everyone has a hunger story and I have heard a hundred.")));
+                "I tell {you:name} everyone has a hunger story and I have heard a hundred.",
+                typeof(HospitalityModusMentis))));
 
     private static NpcLineNode FoodLean() => new(
         nodeId:          "food_lean",
@@ -75,7 +80,8 @@ public partial class StrengthenRelationshipTree
                 "Nettle tops in spring, and never let the pot go empty. That is worth more than it sounds.",
                 "I tell {you:name} it is nettle tops in spring and never letting the pot go empty.",
                 "The trick is being hungry enough not to care. You will learn it free.",
-                "I tell {you:name} the trick is being hungry enough not to care.")),
+                "I tell {you:name} the trick is being hungry enough not to care.",
+                typeof(ThriftModusMentis))),
 
         new PlayerOption("food_offer_share", "offer to bring something to the pot next time",
             "Next time I have something worth adding, I will bring it to your pot.",
@@ -84,7 +90,8 @@ public partial class StrengthenRelationshipTree
                 "Then you will be welcome at it. That is how it should work, and mostly does not.",
                 "I tell {you:name} they will be welcome at it, and that this is how it should work.",
                 "I do not need charity, and I would not know what to do with it.",
-                "I tell {you:name} I do not need charity.")));
+                "I tell {you:name} I do not need charity.",
+                typeof(TrenchermanModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  Kin — rich
@@ -103,7 +110,8 @@ public partial class StrengthenRelationshipTree
                 "That is kindly meant and I take it as such. Farewell, {you:name}.",
                 "I tell {you:name} that is kindly meant, and bid them farewell.",
                 "That is asked and answered, then.",
-                "I tell {you:name} that is asked and answered.")),
+                "I tell {you:name} that is asked and answered.",
+                typeof(LoyaltyModusMentis))),
 
         new PlayerOption("kin_ask_young", "ask after the young ones",
             "And the children? Growing quickly, I expect.",
@@ -128,7 +136,8 @@ public partial class StrengthenRelationshipTree
                 "I am. I would not say it to their face. Good of you to notice.",
                 "I admit that I am, and thank {you:name} for noticing.",
                 "Do not put words in my mouth. I said what I said.",
-                "I tell {you:name} not to put words in my mouth.")),
+                "I tell {you:name} not to put words in my mouth.",
+                typeof(LineageLoreModusMentis))),
 
         new PlayerOption("kin_ask_future", "ask what they hope for the young ones",
             "What do you hope for them?",
@@ -137,7 +146,8 @@ public partial class StrengthenRelationshipTree
                 "Something easier than this. Every parent here would say the same and none of them say it aloud.",
                 "I tell {you:name} I hope for something easier than this, and that no parent here says it aloud.",
                 "Hope is a luxury. They will get what there is, as I did.",
-                "I tell {you:name} hope is a luxury, and they will get what there is.")));
+                "I tell {you:name} hope is a luxury, and they will get what there is.",
+                typeof(ForesightModusMentis))));
 
     private static NpcLineNode KinOld() => new(
         nodeId:          "kin_old",
@@ -152,7 +162,8 @@ public partial class StrengthenRelationshipTree
                 "No. And I will be the same, and worse. It is good to laugh at it with someone.",
                 "I tell {you:name} I will be the same and worse, and that it is good to laugh at it with someone.",
                 "It is not funny from where I stand.",
-                "I tell {you:name} it is not funny from where I stand.")),
+                "I tell {you:name} it is not funny from where I stand.",
+                typeof(BanterModusMentis))),
 
         new PlayerOption("kin_ask_learned", "ask what they learned from them",
             "What did you learn from them that stayed with you?",
@@ -161,7 +172,8 @@ public partial class StrengthenRelationshipTree
                 "How to keep going when there is no reason to. I have used it every year since.",
                 "I tell {you:name} I learned to keep going when there is no reason to.",
                 "Bruises and bad habits. Let us leave it there.",
-                "I tell {you:name} it was bruises and bad habits.")));
+                "I tell {you:name} it was bruises and bad habits.",
+                typeof(RoteModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  Rest — short
@@ -180,7 +192,8 @@ public partial class StrengthenRelationshipTree
                 "It is. People make it complicated and it is not. Good to hear someone say so.",
                 "I tell {you:name} people make it complicated and it is not.",
                 "It is an evening. It does not need admiring.",
-                "I tell {you:name} it is an evening and does not need admiring.")),
+                "I tell {you:name} it is an evening and does not need admiring.",
+                typeof(PatienceModusMentis))),
 
         new PlayerOption("rest_ask_feast", "ask about the feast days here",
             "And the feast days? How are they kept here?",
@@ -194,7 +207,8 @@ public partial class StrengthenRelationshipTree
                 "Deeply. It is the one thing this life gives for nothing.",
                 "I tell {you:name} I sleep deeply, and that it is the one thing this life gives for nothing.",
                 "That is a strange thing to ask.",
-                "I tell {you:name} that is a strange thing to ask.")));
+                "I tell {you:name} that is a strange thing to ask.",
+                typeof(DreamloreModusMentis))));
 
     private static NpcLineNode RestFeast() => new(
         nodeId:          "rest_feast",
@@ -209,7 +223,8 @@ public partial class StrengthenRelationshipTree
                 "There would. Come, and bring nothing but yourself. That is the rule.",
                 "I tell {you:name} there would be, and to bring nothing but themselves.",
                 "It is for the people of this place. You would stand out.",
-                "I tell {you:name} it is for the people of this place and they would stand out.")),
+                "I tell {you:name} it is for the people of this place and they would stand out.",
+                typeof(GregariousnessModusMentis))),
 
         new PlayerOption("rest_ask_songs", "ask what gets sung at them",
             "What is sung at them?",
@@ -218,7 +233,8 @@ public partial class StrengthenRelationshipTree
                 "{npc:opinion_stories} You would know the chorus by the third round. Everyone does.",
                 "I tell {you:name} that {npc:opinion_stories}, and that they would know the chorus by the third round.",
                 "Songs are for the night itself, not for explaining to strangers in daylight.",
-                "I tell {you:name} songs are for the night itself, not for explaining in daylight.")));
+                "I tell {you:name} songs are for the night itself, not for explaining in daylight.",
+                typeof(SolfegeModusMentis), typeof(PoetryModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  Health — deepest branch in the tree
@@ -237,7 +253,8 @@ public partial class StrengthenRelationshipTree
                 "It was kind of you to ask after me. It means more than you know. Farewell.",
                 "I tell {you:name} it was kind of them to ask, and bid them farewell.",
                 "I have no time for idle talk today.",
-                "I tell {you:name} I have no time for idle talk today.")),
+                "I tell {you:name} I have no time for idle talk today.",
+                typeof(EmpathyModusMentis))),
 
         new PlayerOption("health_ask_remedy", "ask what they do about it",
             "Do you do anything for it, or do you just carry it?",
@@ -262,7 +279,8 @@ public partial class StrengthenRelationshipTree
                 "You are not the first to say it. You may be the first I listen to.",
                 "I tell {you:name} they may be the first I listen to.",
                 "I will decide what I do with my own body, thank you.",
-                "I tell {you:name} I will decide what I do with my own body.")),
+                "I tell {you:name} I will decide what I do with my own body.",
+                typeof(MercyModusMentis))),
 
         new PlayerOption("health_ask_worse", "ask whether it is getting worse",
             "Is it worse than it was last year?",
@@ -271,7 +289,8 @@ public partial class StrengthenRelationshipTree
                 "It is. I have not said that to anyone. Do not make anything of it.",
                 "I admit to {you:name} that it is, and ask them not to make anything of it.",
                 "That is not a question you get to ask.",
-                "I tell {you:name} that is not a question they get to ask.")));
+                "I tell {you:name} that is not a question they get to ask.",
+                typeof(CondolenceModusMentis))));
 
     private static NpcLineNode HealthPress() => new(
         nodeId:          "health_press",
@@ -286,7 +305,8 @@ public partial class StrengthenRelationshipTree
                 "Then you have done more than most. That is enough.",
                 "I tell {you:name} they have done more than most, and that it is enough.",
                 "Good. Then we will say no more about it, and you can be on your way.",
-                "I tell {you:name} we will say no more about it.")),
+                "I tell {you:name} we will say no more about it.",
+                typeof(HearkeningModusMentis))),
 
         new PlayerOption("health_ask_fear", "ask what they are afraid it means",
             "What are you afraid it is the start of?",
@@ -306,7 +326,8 @@ public partial class StrengthenRelationshipTree
                 "I will hold you to that, {you:name}.",
                 "I tell {you:name} I will hold them to that.",
                 "Words. Everyone is brave about someone else's bad year.",
-                "I tell {you:name} everyone is brave about someone else's bad year.")),
+                "I tell {you:name} everyone is brave about someone else's bad year.",
+                typeof(OathmakingModusMentis))),
 
         new PlayerOption("health_say_not_yet", "point out that day is not today",
             "Perhaps. But it is not today, and you are still standing here talking to me.",
@@ -315,5 +336,6 @@ public partial class StrengthenRelationshipTree
                 "No, it is not today. I needed someone to say that aloud. Thank you.",
                 "I agree it is not today, and thank {you:name} for saying it aloud.",
                 "Do not do the cheerful thing at me. I have had it from everyone.",
-                "I tell {you:name} not to do the cheerful thing at me.")));
+                "I tell {you:name} not to do the cheerful thing at me.",
+                typeof(StonefaceModusMentis))));
 }

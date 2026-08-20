@@ -4,6 +4,8 @@ using Cathedral.Game.Npc;
 
 using Cathedral.Game.Narrative;
 
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Dialogue.Tree.Trees;
 
 /// <summary>
@@ -30,6 +32,17 @@ public class BegForCoinTree : DialogueTree
     public override string? GrantedModusMentisId => "beggary";
 
     /// <summary>A couple of coppers, paid out by the controller once the conversation closes.</summary>
+
+    /// <summary>
+    /// Begging teaches two quite different things depending on how it is done: the persistence that
+    /// makes giving cheaper than refusing, or the small-making that gets past a hard door.
+    /// </summary>
+    protected override IEnumerable<string> AdditionalGrantedModusMentisIds(NpcEntity npc, ResolutionNode resolution)
+    {
+        yield return "wheedling";
+    }
+
+
     public override IReadOnlyList<Outcome> SuccessOutcomes => new Outcome[]
     {
         new AlmsOutcome(2),
@@ -42,15 +55,24 @@ public class BegForCoinTree : DialogueTree
 
     private static ResolutionNode End(string id, int depth,
                                       string success, string successIndirect,
-                                      string failure, string failureIndirect) => new(
+                                      string failure, string failureIndirect,
+                                      params System.Type[] lessons) => new(
         nodeId:                 id,
         difficulty:             BranchDifficulty.Easy(depth),
         successReplica:         success,
         successReplicaIndirect: successIndirect,
         failureReplica:         failure,
-        failureReplicaIndirect: failureIndirect);
+        failureReplicaIndirect: failureIndirect,
+        mode:                   ResolutionMode.DiceCheck,
+        topic:                  null,
+        lessons:                lessons);
 
-    private static NpcLineNode Pressed(string prefix) => new(
+    /// <summary>
+    /// The refusal, and the two ways of answering it. The lessons come from the caller because the
+    /// two endings are shared by all three approaches: accepting a refusal after offering to WORK
+    /// for the coin is not the same act as accepting one after asking for it outright.
+    /// </summary>
+    private static NpcLineNode Pressed(string prefix, System.Type accepted, System.Type hungry) => new(
         nodeId:          $"{prefix}_pressed",
         replica:         "I have little enough myself.",
         replicaIndirect: "I tell them I have little enough myself.",
@@ -63,7 +85,8 @@ public class BegForCoinTree : DialogueTree
                 "Here. It is not much. Do not tell anyone I gave it.",
                 "I give them a little and ask them not to tell anyone.",
                 "Then you understand why the answer is no.",
-                "I tell them they understand why the answer is no.")),
+                "I tell them they understand why the answer is no.",
+                accepted)),
 
         new PlayerOption($"{prefix}_say_hungry", "tell them plainly that I have not eaten",
             "I have not eaten today.",
@@ -72,7 +95,8 @@ public class BegForCoinTree : DialogueTree
                 "That I can do something about. Take it.",
                 "I tell them that much I can do something about, and give them a coin.",
                 "Nor have half the people in this place.",
-                "I tell them half the people here have not eaten either.")));
+                "I tell them half the people here have not eaten either.",
+                hungry)));
 
     private static readonly NpcLineNode Approach = new(
         nodeId:          "approach",
@@ -83,17 +107,17 @@ public class BegForCoinTree : DialogueTree
         new PlayerOption("ask_plain", "ask plainly for a coin",
             "A coin, if you have one to spare.",
             "I ask them plainly for a coin if they have one to spare.",
-            Pressed("plain")),
+            Pressed("plain", typeof(HumilityModusMentis), typeof(WeepingModusMentis))),
 
         new PlayerOption("ask_for_work_first", "offer to do something for it first",
             "I will carry or fetch for you. A coin for the work.",
             "I offer to carry or fetch for them in return for a coin.",
-            Pressed("work")),
+            Pressed("work", typeof(EnterpriseModusMentis), typeof(HardLaborModusMentis))),
 
         new PlayerOption("say_nothing_much", "make little of it and ask anyway",
             "Nothing much. A coin, if it is no trouble.",
             "I make little of it and ask for a coin if it is no trouble.",
-            Pressed("light")));
+            Pressed("light", typeof(MasqueradeModusMentis), typeof(DramaturgyModusMentis))));
 
     public override NpcLineNode EntryNode => Approach;
 

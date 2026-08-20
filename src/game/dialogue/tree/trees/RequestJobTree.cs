@@ -4,6 +4,8 @@ using Cathedral.Game.Npc;
 
 using Cathedral.Game.Narrative;
 
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Dialogue.Tree.Trees;
 
 /// <summary>
@@ -44,6 +46,20 @@ public class RequestJobTree : DialogueTree
     // Success opens the work menu; a routine bakes in that success so replaying opens work directly.
     public override DialogueRoutineBehavior RoutineBehavior => DialogueRoutineBehavior.IncludeSuccess;
 
+
+    /// <summary>
+    /// Asking for work is bearing before it is anything else - and before somebody with authority,
+    /// the correct form as well.
+    /// </summary>
+    protected override IEnumerable<string> AdditionalGrantedModusMentisIds(NpcEntity npc, ResolutionNode resolution)
+    {
+        if (Authority(npc) > 0) yield return "deference";
+    }
+
+    /// <summary>Authority of the person being spoken to; 0 for anyone who holds none.</summary>
+    private static int Authority(NpcEntity npc)
+        => (npc.Archetype as NamedNpcArchetype)?.AuthorityLevel ?? 0;
+
     public override IReadOnlyList<Outcome> SuccessOutcomes => new Outcome[]
     {
         new OpenJobMenuOutcome(),
@@ -54,13 +70,17 @@ public class RequestJobTree : DialogueTree
     /// <summary>A branch end. Being taken on is a hard check at every depth.</summary>
     private static ResolutionNode End(string id, int depth,
                                       string success, string successIndirect,
-                                      string failure, string failureIndirect) => new(
+                                      string failure, string failureIndirect,
+                                      params System.Type[] lessons) => new(
         nodeId:                 id,
         difficulty:             BranchDifficulty.Hard(depth),
         successReplica:         success,
         successReplicaIndirect: successIndirect,
         failureReplica:         failure,
-        failureReplicaIndirect: failureIndirect);
+        failureReplicaIndirect: failureIndirect,
+        mode:                   ResolutionMode.DiceCheck,
+        topic:                  null,
+        lessons:                lessons);
 
     // ══════════════════════════════════════════════════════════════════════════
     //  A — ask plainly (deepest)
@@ -79,7 +99,8 @@ public class RequestJobTree : DialogueTree
                 "You look like a worker. Come, there is work for willing hands.",
                 "I tell {you:name} they look like a worker, and that there is work for willing hands.",
                 "I have nothing for you today. Try elsewhere.",
-                "I tell {you:name} I have nothing for them today.")),
+                "I tell {you:name} I have nothing for them today.",
+                typeof(BearingModusMentis))),
 
         new PlayerOption("plain_ask_days", "ask what the days actually look like",
             "What does a day of it involve?",
@@ -104,7 +125,8 @@ public class RequestJobTree : DialogueTree
                 "Then you will do. I would rather have a hand who is used to it.",
                 "I tell {you:name} they will do, since I would rather have a hand who is used to it.",
                 "Everyone claims to have worked worse. I have heard it too often.",
-                "I tell {you:name} everyone claims to have worked worse.")),
+                "I tell {you:name} everyone claims to have worked worse.",
+                typeof(EnduranceModusMentis))),
 
         new PlayerOption("days_ask_learn", "ask whether you would learn anything from it",
             "Would I learn anything from it that I do not already know?",
@@ -113,7 +135,8 @@ public class RequestJobTree : DialogueTree
                 "You would. Nobody asks me that; they ask about the pay. I will take you on.",
                 "I tell {you:name} they would, and that nobody asks me that but only about the pay.",
                 "You would come out of it tired. That is all I promise.",
-                "I tell {you:name} they would come out of it tired, and that is all I promise.")));
+                "I tell {you:name} they would come out of it tired, and that is all I promise.",
+                typeof(RoteModusMentis))));
 
     private static NpcLineNode PlainWhyOpen() => new(
         nodeId:          "plain_why_open",
@@ -128,7 +151,8 @@ public class RequestJobTree : DialogueTree
                 "We will see whether the work matches the promise. There is work to be had.",
                 "I tell {you:name} we will see whether the work matches the promise.",
                 "So did he, until the morning he was not there.",
-                "I tell {you:name} that so did he, until the morning he was not there.")),
+                "I tell {you:name} that so did he, until the morning he was not there.",
+                typeof(LoyaltyModusMentis))),
 
         new PlayerOption("why_ask_what_broke", "ask what drove them off",
             "What drove him off? I would rather know before I take it on.",
@@ -148,7 +172,8 @@ public class RequestJobTree : DialogueTree
                 "I have had time to think about it. Come, and I will try to do better this time.",
                 "I tell {you:name} I have had time to think about it, and will try to do better this time.",
                 "Fairly told, and none of your business. Are you working or judging?",
-                "I ask {you:name} whether they are working or judging.")),
+                "I ask {you:name} whether they are working or judging.",
+                typeof(PlainDealingModusMentis))),
 
         new PlayerOption("broke_ask_patience", "ask whether the patience is there now",
             "Is the patience there now? I would rather know what I am walking into.",
@@ -157,7 +182,8 @@ public class RequestJobTree : DialogueTree
                 "That is a fair question and a hard one to answer. Some days. Start tomorrow.",
                 "I tell {you:name} it is there some days, and to start tomorrow.",
                 "You will take the post as it is or leave it. I will not be questioned in my own yard.",
-                "I tell {you:name} I will not be questioned in my own yard.")));
+                "I tell {you:name} I will not be questioned in my own yard.",
+                typeof(PatienceModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  B — show you are willing and able (rich)
@@ -176,7 +202,8 @@ public class RequestJobTree : DialogueTree
                 "We will see whether the work matches the promise. There is work to be had.",
                 "I tell {you:name} we will see whether the work matches the promise.",
                 "Willing or not, I have nothing for you just now.",
-                "I tell {you:name} I have nothing for them just now.")),
+                "I tell {you:name} I have nothing for them just now.",
+                typeof(DiligenceModusMentis))),
 
         new PlayerOption("willing_name_experience", "name what you have actually done",
             "Then I will be plainer. This is the work I have actually done.",
@@ -201,7 +228,8 @@ public class RequestJobTree : DialogueTree
                 "That is the answer I wanted. Start when you like.",
                 "I tell {you:name} that is the answer I wanted, and to start when they like.",
                 "No pride and no standards. I will pass.",
-                "I tell {you:name} that no pride means no standards.")),
+                "I tell {you:name} that no pride means no standards.",
+                typeof(PrideModusMentis))),
 
         new PlayerOption("exp_want_foot_in", "say you want a foot in the door here",
             "I would take it to get a start here. I will not pretend otherwise.",
@@ -210,7 +238,8 @@ public class RequestJobTree : DialogueTree
                 "You are honest about your own scheming. I can work with that. The post is yours.",
                 "I tell {you:name} the post is theirs, since I can work with honest scheming.",
                 "A start here, and gone the moment something better comes. No.",
-                "I tell {you:name} they would be gone the moment something better came.")));
+                "I tell {you:name} they would be gone the moment something better came.",
+                typeof(HumilityModusMentis))));
 
     private static NpcLineNode WillingGreen() => new(
         nodeId:          "willing_green",
@@ -225,7 +254,8 @@ public class RequestJobTree : DialogueTree
                 "Once, with your own pay against it. That is a wager I will take.",
                 "I tell {you:name} that is a wager I will take.",
                 "I have no time to teach. Come back when someone else has trained you.",
-                "I tell {you:name} I have no time to teach.")),
+                "I tell {you:name} I have no time to teach.",
+                typeof(OpenMindednessModusMentis))),
 
         new PlayerOption("green_offer_low", "offer to be paid less until you are worth it",
             "Pay me under the rate until I am worth it. I will not argue the difference.",
@@ -234,7 +264,8 @@ public class RequestJobTree : DialogueTree
                 "Under the rate by your own asking. You will be on full pay sooner than you think.",
                 "I tell {you:name} they will be on full pay sooner than they think.",
                 "If you will work for under, you will work for anyone. That tells me what you are worth.",
-                "I tell {you:name} that someone who will work for under will work for anyone.")));
+                "I tell {you:name} that someone who will work for under will work for anyone.",
+                typeof(ObedienceModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  C — ask about the post itself (short)
@@ -253,7 +284,8 @@ public class RequestJobTree : DialogueTree
                 "As long as you will give, and no less than a few days. We will settle it inside.",
                 "I tell {you:name} as long as they will give, and no less than a few days.",
                 "Longer than you would give, by the sound of you. Off with you.",
-                "I tell {you:name} it would be longer than they would give.")),
+                "I tell {you:name} it would be longer than they would give.",
+                typeof(HardLaborModusMentis))),
 
         new PlayerOption("post_ask_pay_fair", "ask whether the pay is what others get",
             "Is that what the others get, or is that the newcomer's rate?",
@@ -267,7 +299,8 @@ public class RequestJobTree : DialogueTree
                 "Now, if you are up to it. Come along.",
                 "I tell {you:name} they may start now if they are up to it.",
                 "You can start looking elsewhere. I have nothing.",
-                "I tell {you:name} they can start looking elsewhere.")));
+                "I tell {you:name} they can start looking elsewhere.",
+                typeof(ForesightModusMentis))));
 
     private static NpcLineNode PostPayFair() => new(
         nodeId:          "post_pay_fair",
@@ -282,7 +315,8 @@ public class RequestJobTree : DialogueTree
                 "You will find that I keep it. Come, there is work waiting.",
                 "I tell {you:name} they will find that I keep it.",
                 "You take my word and question it in the same breath. No.",
-                "I tell {you:name} they take my word and question it in the same breath.")),
+                "I tell {you:name} they take my word and question it in the same breath.",
+                typeof(OathmakingModusMentis))),
 
         new PlayerOption("pay_say_why_ask", "explain why you asked",
             "I ask because I was paid the newcomer's rate for a year once.",
@@ -291,7 +325,8 @@ public class RequestJobTree : DialogueTree
                 "Then someone used you badly. Not here. The rate is the rate.",
                 "I tell {you:name} someone used them badly, and that the rate is the rate here.",
                 "Then take it up with whoever did that, not with me.",
-                "I tell {you:name} to take it up with whoever did that.")));
+                "I tell {you:name} to take it up with whoever did that.",
+                typeof(ThriftModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  D — offer a day for nothing (short)
@@ -310,7 +345,8 @@ public class RequestJobTree : DialogueTree
                 "Then I will watch. Come at first light and do not be late. That is the whole test.",
                 "I tell {you:name} to come at first light and not be late, since that is the whole test.",
                 "I have seen confidence. It is endurance I am short of. Move along.",
-                "I tell {you:name} it is endurance I am short of, not confidence.")),
+                "I tell {you:name} it is endurance I am short of, not confidence.",
+                typeof(BoastingModusMentis))),
 
         new PlayerOption("trial_admit_need", "admit you need the work",
             "Desperation, then. I need the work and I would rather earn it than beg.",
@@ -324,7 +360,8 @@ public class RequestJobTree : DialogueTree
                 "No argument either way. I can agree to that. Come, then.",
                 "I tell {you:name} I can agree to no argument either way.",
                 "You say that now. They always find something to say afterwards.",
-                "I tell {you:name} they always find something to say afterwards.")));
+                "I tell {you:name} they always find something to say afterwards.",
+                typeof(CourtesyModusMentis))));
 
     private static NpcLineNode TrialNeed() => new(
         nodeId:          "trial_need",
@@ -339,7 +376,8 @@ public class RequestJobTree : DialogueTree
                 "I do. The work is yours, and we will say nothing more about how it started.",
                 "I tell {you:name} the work is theirs, and that we will say no more about how it started.",
                 "Knowing it does not oblige me. I have a holding to run.",
-                "I tell {you:name} that knowing it does not oblige me.")),
+                "I tell {you:name} that knowing it does not oblige me.",
+                typeof(GregariousnessModusMentis))),
 
         new PlayerOption("need_press_case", "press your case while they are listening",
             "Then take me on. Nobody will work harder for the first month.",
@@ -348,7 +386,8 @@ public class RequestJobTree : DialogueTree
                 "The first month. We will see about the second. You are taken on.",
                 "I tell {you:name} we will see about the second month, and that they are taken on.",
                 "The first month, and then what? I need hands, not enthusiasm.",
-                "I tell {you:name} I need hands, not enthusiasm.")));
+                "I tell {you:name} I need hands, not enthusiasm.",
+                typeof(WheedlingModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  Entry

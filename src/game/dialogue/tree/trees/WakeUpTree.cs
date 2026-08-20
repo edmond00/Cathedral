@@ -32,6 +32,13 @@ public class WakeUpTree : DialogueTree
     public override string? GrantedModusMentisId => "murmur";
 
     /// <summary>Woken and willing to talk. The verb itself has already roused them.</summary>
+
+    /// <summary>Waking somebody who did not choose to be woken is a lesson in going carefully.</summary>
+    protected override IEnumerable<string> AdditionalGrantedModusMentisIds(NpcEntity npc, ResolutionNode resolution)
+    {
+        yield return "caution";
+    }
+
     public override IReadOnlyList<Outcome> SuccessOutcomes => new Outcome[]
     {
         new SuspiciousAffinityOutcome(),

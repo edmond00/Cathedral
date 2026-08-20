@@ -4,6 +4,8 @@ using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Scene.Building;
 
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
@@ -15,6 +17,14 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public class SwimAcrossVerb : Verb
 {
+    /// <summary>Swimming teaches swimming. In the dark it teaches a colder version of it.</summary>
+    public override IEnumerable<ModusMentis> Lessons(LessonContext ctx)
+    {
+        if (ctx.Night) yield return Mm<MoonwaterModusMentis>();
+
+        // The target's own declaration, then this verb's default — always last, always visible.
+        foreach (var m in base.Lessons(ctx)) yield return m;
+    }
     public override string VerbId         => "swim_across";
     public override string DisplayName    => "Swim Across";
     public override int    BaseDifficulty => 5;

@@ -71,6 +71,9 @@ public static class SaveAudit
             ["AffinityKey"]    = "the display name, or a constant for the protagonist",
             ["MaxHp"]          = "from the trunk score",
             ["CurrentHp"]      = "MaxHp minus the wound count",
+            ["IsDead"]         = "CauseOfDeath having an answer",
+            ["CauseOfDeath"]   = "hit points, the humor queues and the clock — derived on purpose, "
+                               + "so a member is dead the moment they are, with nothing to keep in sync",
             ["MaxNoeticPoints"]= "from the encephalon score",
             ["MaxCarryWeight"] = "from the backbone score",
             ["CurrentWeight"]  = "summed from what is carried",

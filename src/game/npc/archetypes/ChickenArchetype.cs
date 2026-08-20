@@ -13,6 +13,14 @@ namespace Cathedral.Game.Npc.Archetypes;
 /// </summary>
 public class ChickenArchetype : ShallowNpcArchetype
 {
+
+    /// <summary>Livestock: seen, heard and — being livestock — smelled.</summary>
+    public override SensoryProfile Senses => SensoryProfile.FullyAlive;
+
+    /// <summary>An animal, so the naturalist's lessons rather than the object ones.</summary>
+    public override System.Collections.Generic.IReadOnlyDictionary<string, string>? VerbModiMentis
+        => CreatureSenses;
+
     public override string ArchetypeId     => "chicken";
     public override string TypeDisplayName => "Chicken";
 

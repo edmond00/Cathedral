@@ -80,7 +80,11 @@ public class DoorPointOfInterest : ConnectorPointOfInterest, IContextualDescript
         : base(frontArea, backArea, displayName, "door", descriptions)
     {
         StateProperties.Add(initialState);
-    }
+    
+        // A door rewards a close look: it is how the lock, the hinges and the state of the frame are
+        // learned, and it is the only route to the lesson about a lock's mechanism.
+        Senses = SensoryProfile.Examinable;
+}
 
     /// <summary>
     /// Lock state as the world actually behaves, which is what both door verbs and the description

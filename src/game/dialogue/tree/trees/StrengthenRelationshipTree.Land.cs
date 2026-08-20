@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Dialogue.Tree.Trees;
 
 /// <summary>
@@ -25,7 +27,8 @@ public partial class StrengthenRelationshipTree
                 "There is not. It is good to talk to someone who knows that.",
                 "I tell {you:name} it is good to talk to someone who knows that.",
                 "Yes. Was that all you wanted?",
-                "I ask {you:name} whether that was all they wanted.")),
+                "I ask {you:name} whether that was all they wanted.",
+                typeof(WeatherEarModusMentis))),
 
         new PlayerOption("weather_ask_worst", "ask about the worst weather they remember",
             "What is the worst weather you have seen?",
@@ -50,7 +53,8 @@ public partial class StrengthenRelationshipTree
                 "Badly, and together. That is how anyone comes through anything here.",
                 "I tell {you:name} we came through it badly and together, as anyone does here.",
                 "We came through it. That is all there is to say.",
-                "I tell {you:name} we came through it, and that is all there is to say.")),
+                "I tell {you:name} we came through it, and that is all there is to say.",
+                typeof(PetrichorModusMentis))),
 
         new PlayerOption("weather_share_own", "offer a hard season of your own",
             "I have had a season or two like that. You learn what you can do without.",
@@ -74,7 +78,8 @@ public partial class StrengthenRelationshipTree
                 "If the birds go quiet all at once, get under cover. That is the one I would give away.",
                 "I tell {you:name} that if the birds go quiet all at once they should get under cover.",
                 "It is not something to hand over. Watch the sky for twenty years as I did.",
-                "I tell {you:name} to watch the sky for twenty years as I did.")),
+                "I tell {you:name} to watch the sky for twenty years as I did.",
+                typeof(SkyReadingModusMentis))),
 
         new PlayerOption("weather_mention_omens", "ask whether they hold with signs and omens",
             "Do you believe in the old signs that people swear by?",
@@ -83,7 +88,8 @@ public partial class StrengthenRelationshipTree
                 "{npc:opinion_omens} Now you know something about me that most do not.",
                 "I tell {you:name} that of the old signs I think {npc:opinion_omens}.",
                 "That is a question for someone with time to waste. I have none today.",
-                "I tell {you:name} that is a question for someone with time to waste.")));
+                "I tell {you:name} that is a question for someone with time to waste.",
+                typeof(WindReadingModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  Seasons — short
@@ -102,7 +108,8 @@ public partial class StrengthenRelationshipTree
                 "The turn into the long days. Everything is still ahead and nothing has gone wrong yet.",
                 "I tell {you:name} it is the turn into the long days, when nothing has gone wrong yet.",
                 "The part where people leave me to get on with it.",
-                "I tell {you:name} it is the part where people leave me to get on with it.")),
+                "I tell {you:name} it is the part where people leave me to get on with it.",
+                typeof(QuickeningModusMentis))),
 
         new PlayerOption("seasons_hardest", "ask which part they dread",
             "Which part do you dread?",
@@ -116,7 +123,8 @@ public partial class StrengthenRelationshipTree
                 "That is exactly it, and I have never heard it put so plainly. You are good company.",
                 "I tell {you:name} I have never heard it put so plainly, and that they are good company.",
                 "Speak for yourself. My years are long enough.",
-                "I tell {you:name} to speak for themselves, since my years are long enough.")));
+                "I tell {you:name} to speak for themselves, since my years are long enough.",
+                typeof(ForesightModusMentis))));
 
     private static NpcLineNode SeasonsHardest() => new(
         nodeId:          "seasons_hardest",
@@ -131,7 +139,8 @@ public partial class StrengthenRelationshipTree
                 "Company, mostly. Which is my way of thanking you for stopping.",
                 "I tell {you:name} it is company, and thank them for stopping.",
                 "I get through it. I do not need it examined.",
-                "I tell {you:name} I get through it and do not need it examined.")),
+                "I tell {you:name} I get through it and do not need it examined.",
+                typeof(EnduranceModusMentis))),
 
         new PlayerOption("seasons_offer_company", "offer to come by more often through the dark months",
             "Then I will come by more often through the dark months, if you do not mind.",
@@ -140,7 +149,8 @@ public partial class StrengthenRelationshipTree
                 "I would not mind at all. See that you hold to it.",
                 "I tell {you:name} I would not mind at all, and to hold to it.",
                 "Do not make promises about winter in the summer. Nobody keeps them.",
-                "I tell {you:name} not to make promises about winter in the summer.")));
+                "I tell {you:name} not to make promises about winter in the summer.",
+                typeof(GregariousnessModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  Harvest — rich
@@ -159,7 +169,8 @@ public partial class StrengthenRelationshipTree
                 "Say that again in three months and I will buy you a drink on it.",
                 "I tell {you:name} to say that again in three months and I will buy them a drink.",
                 "Wishing does not fill a barn. But thank you.",
-                "I tell {you:name} wishing does not fill a barn.")),
+                "I tell {you:name} wishing does not fill a barn.",
+                typeof(HarvestryModusMentis))),
 
         new PlayerOption("harvest_ask_lean", "ask what happens in a lean year",
             "What happens in a bad year?",
@@ -184,7 +195,8 @@ public partial class StrengthenRelationshipTree
                 "Barely, and by borrowing, which is why I am careful whom I refuse.",
                 "I tell {you:name} it is barely, and by borrowing, which is why I am careful whom I refuse.",
                 "You have never gone hungry. It shows.",
-                "I tell {you:name} they have never gone hungry and it shows.")),
+                "I tell {you:name} they have never gone hungry and it shows.",
+                typeof(ThriftModusMentis))),
 
         new PlayerOption("harvest_offer_help", "say you would help if it came to that",
             "If a third year comes, you will not carry it alone. I will see to that.",
@@ -193,7 +205,8 @@ public partial class StrengthenRelationshipTree
                 "That is a serious thing to say to someone. I will remember you said it.",
                 "I tell {you:name} that is a serious thing to say, and that I will remember they said it.",
                 "Easy words. Everyone is generous in a good year.",
-                "I tell {you:name} everyone is generous in a good year.")));
+                "I tell {you:name} everyone is generous in a good year.",
+                typeof(HardLaborModusMentis))));
 
     private static NpcLineNode HarvestShare() => new(
         nodeId:          "harvest_share",
@@ -208,7 +221,8 @@ public partial class StrengthenRelationshipTree
                 "Fair is not a useful word out here. But since you asked straight: no.",
                 "I tell {you:name} fair is not a useful word out here, but that since they asked straight, no.",
                 "Be careful. That is the sort of question that gets a person talked about.",
-                "I warn {you:name} that this is the sort of question that gets a person talked about.")),
+                "I warn {you:name} that this is the sort of question that gets a person talked about.",
+                typeof(PlainDealingModusMentis))),
 
         new PlayerOption("harvest_talk_prices", "ask what it fetches when they do sell",
             "What does it fetch when you take it to sell?",
@@ -217,7 +231,8 @@ public partial class StrengthenRelationshipTree
                 "{npc:opinion_trade} You have a head for this. I will talk trade with you any day.",
                 "I tell {you:name} that of trade I think {npc:opinion_trade}, and that they have a head for it.",
                 "Prices. Now you sound like every buyer who has tried to cheat me.",
-                "I tell {you:name} they sound like every buyer who has tried to cheat me.")));
+                "I tell {you:name} they sound like every buyer who has tried to cheat me.",
+                typeof(BargainingModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  Water — short
@@ -236,7 +251,8 @@ public partial class StrengthenRelationshipTree
                 "Never the right amount. That is exactly it. You have been paying attention.",
                 "I tell {you:name} that is exactly it, and that they have been paying attention.",
                 "Everyone says that. It is not clever the fiftieth time.",
-                "I tell {you:name} it is not clever the fiftieth time.")),
+                "I tell {you:name} it is not clever the fiftieth time.",
+                typeof(DrainageModusMentis))),
 
         new PlayerOption("water_ask_flood", "ask whether it has ever come up badly",
             "Has it ever risen where it should not?",
@@ -250,7 +266,8 @@ public partial class StrengthenRelationshipTree
                 "The spring above the old wall. Not the low well, which is fit for animals only.",
                 "I tell {you:name} it is the spring above the old wall, not the low well.",
                 "Guess wrong, then. It will teach you faster than I would.",
-                "I tell {you:name} to guess wrong, since it will teach them faster than I would.")));
+                "I tell {you:name} to guess wrong, since it will teach them faster than I would.",
+                typeof(TaintSenseModusMentis))));
 
     private static NpcLineNode WaterFlood() => new(
         nodeId:          "water_flood",
@@ -265,7 +282,8 @@ public partial class StrengthenRelationshipTree
                 "Mud in everything, and everyone alive. You learn what to want first.",
                 "I tell {you:name} there was mud in everything and everyone alive, and that you learn what to want first.",
                 "Mud and ruin. I would rather not go through it again for your curiosity.",
-                "I tell {you:name} I would rather not go through it again for their curiosity.")),
+                "I tell {you:name} I would rather not go through it again for their curiosity.",
+                typeof(WaterVoiceModusMentis))),
 
         new PlayerOption("water_say_sorry", "say plainly that must have been a terrible night",
             "That is a night nobody should have had.",
@@ -274,5 +292,6 @@ public partial class StrengthenRelationshipTree
                 "No. But we had it, and we are still here. Thank you for saying so.",
                 "I tell {you:name} we had it and are still here, and thank them for saying so.",
                 "It was a long time ago. I do not need consoling now.",
-                "I tell {you:name} it was long ago and I do not need consoling.")));
+                "I tell {you:name} it was long ago and I do not need consoling.",
+                typeof(EmpathyModusMentis))));
 }

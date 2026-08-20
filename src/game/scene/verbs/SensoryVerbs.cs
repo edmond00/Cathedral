@@ -1,6 +1,10 @@
 using System.Collections.Generic;
+using System.Linq;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Npc.Corpse;
 using Cathedral.Game.Narrative.Routines;
+
+using Cathedral.Game.Narrative.ModiMentis;
 
 namespace Cathedral.Game.Scene.Verbs;
 
@@ -42,10 +46,36 @@ public abstract class SensoryVerb : Verb
     /// </summary>
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
+        if (target is SceneNpc npc) return CanSense(scene, pov, npc);
+
         if (target is not PointOfInterest poi) return false;
         if (!poi.RewardsSense(VerbId)) return false;
 
         return pov.Where.PointsOfInterest.Contains(poi);
+    }
+
+    /// <summary>
+    /// Whether a sense can be turned on a living thing: it is alive, it is here now, and its kind
+    /// rewards this sense (<see cref="Npc.NpcArchetype.Senses"/>).
+    ///
+    /// <para>This branch is why the senses reach anything alive at all. The gate used to be
+    /// <c>target is not PointOfInterest → false</c>, so a scene's birds, insects, beasts and people
+    /// were the only observables in the game that could not be examined, listened to or smelled —
+    /// you could listen to the tree and not to the lark in it, and the only verbs a bird accepted
+    /// were the ones that killed it.</para>
+    ///
+    /// <para>A sleeper is excluded because they are not observable as themselves: <c>SceneNpcPlacement</c>
+    /// swaps them and their bed for one merged <see cref="SleepingNpcPointOfInterest"/>, which carries
+    /// its own senses and its own lessons. Both routes offered at once would be two ways to the same
+    /// act, differing only in which object the phase happened to open on.</para>
+    /// </summary>
+    private bool CanSense(Scene scene, PoV pov, SceneNpc npc)
+    {
+        if (!npc.IsAlive) return false;
+        if (!npc.Entity.Archetype.Senses.Rewards(VerbId)) return false;
+        if (npc.IsSleeping(scene, pov)) return false;
+
+        return scene.GetNpcsAt(pov.Where, pov.When).Any(n => n.Id == npc.Id);
     }
 
     // No SuccessReports: the narration is the outcome. The modus-mentis grant is appended by the
@@ -64,6 +94,26 @@ public abstract class SensoryVerb : Verb
 /// </summary>
 public class ExamineVerb : SensoryVerb
 {
+    /// <summary>Looking closely is usually the object's own lesson. Two cases are not about the object at all.</summary>
+    public override IEnumerable<ModusMentis> Lessons(LessonContext ctx)
+    {
+        if (ctx.Hostile == ThreatLevel.Audio) yield return Mm<GutFeelingModusMentis>();
+        if (ctx.Target is CorpsePointOfInterest) yield return Mm<GravesightModusMentis>();
+        if (ctx.Target is LandscapePointOfInterest) yield return Mm<CartographyModusMentis>();
+        if (ctx.Target is StreamPointOfInterest or PoolPointOfInterest) yield return Mm<WaterlineModusMentis>();
+        if (ctx.Target is ClothPointOfInterest) yield return Mm<WeaveReadingModusMentis>();
+        if (ctx.Target is AnvilPointOfInterest) yield return Mm<HallmarkModusMentis>();
+        if (ctx.Target is TollPointOfInterest) yield return Mm<AlgebraicAnalysisModusMentis>();
+        if (ctx.Target is CradlePointOfInterest) yield return Mm<MidwiferyModusMentis>();
+        if (ctx.Target is Building.DoorPointOfInterest) yield return Mm<KeywiseModusMentis>();
+        if (ctx.Target is HivePointOfInterest) yield return Mm<SwarmSenseModusMentis>();
+        if (ctx.Target is BreadPointOfInterest) yield return Mm<DoughcraftModusMentis>();
+        if (ctx.Target is PalletPointOfInterest or BedrollPointOfInterest) yield return Mm<WearReadingModusMentis>();
+        if (ctx.Target is MarkerPointOfInterest) yield return Mm<ProvenanceModusMentis>();
+
+        // The target's own declaration, then this verb's default — always last, always visible.
+        foreach (var m in base.Lessons(ctx)) yield return m;
+    }
     public override string VerbId      => "examine";
     public override string DisplayName => "Examine";
 
@@ -80,6 +130,26 @@ public class ExamineVerb : SensoryVerb
 /// </summary>
 public class ContemplateVerb : SensoryVerb
 {
+    /// <summary>The verb whose lesson depends most on what the thing MEANS, which is not what it is.</summary>
+    public override IEnumerable<ModusMentis> Lessons(LessonContext ctx)
+    {
+        if (ctx.Hostile == ThreatLevel.Audio) yield return Mm<GutFeelingModusMentis>();
+        if (ctx.Pov.Where is ChamberArea or ShaftArea or DenArea) yield return Mm<DreadModusMentis>();
+        if (ctx.Target is CorpsePointOfInterest or GravePointOfInterest) yield return Mm<ElegyModusMentis>();
+        if (ctx.Target is LandscapePointOfInterest) yield return Mm<AweModusMentis>();
+        if (ctx.Target is PsalterPointOfInterest) yield return Mm<PietyModusMentis>();
+        if (ctx.Target is CrossPointOfInterest) yield return Mm<ReverenceModusMentis>();
+        if (ctx.Target is StocksPointOfInterest) yield return Mm<SeverityModusMentis>();
+        if (ctx.Target is CairnPointOfInterest) yield return Mm<SuperstitionModusMentis>();
+        if (ctx.Target is LambPointOfInterest) yield return Mm<QuickeningModusMentis>();
+        if (ctx.Target is BenchPointOfInterest or LoomPointOfInterest or AnvilPointOfInterest or WorkbenchPointOfInterest) yield return Mm<JourneymanEyeModusMentis>();
+        if (ctx.Target is BreadPointOfInterest or TablePointOfInterest) yield return Mm<AbstinenceModusMentis>();
+        if (ctx.Target is PalletPointOfInterest) yield return Mm<ContinenceModusMentis>();
+        if (ctx.IsPrivate) yield return Mm<HearthlongingModusMentis>();
+
+        // The target's own declaration, then this verb's default — always last, always visible.
+        foreach (var m in base.Lessons(ctx)) yield return m;
+    }
     public override string VerbId      => "contemplate";
     public override string DisplayName => "Contemplate";
 
@@ -93,6 +163,18 @@ public class ContemplateVerb : SensoryVerb
 /// <summary>Stands still and listens: birdsong, water, a forge, the sound a building makes.</summary>
 public class ListenVerb : SensoryVerb
 {
+    /// <summary>What a place sounds like depends more on the hour and the ground than on the object.</summary>
+    public override IEnumerable<ModusMentis> Lessons(LessonContext ctx)
+    {
+        if (ctx.Hostile == ThreatLevel.Audio) yield return Mm<GutFeelingModusMentis>();
+        if (ctx.Night) yield return Mm<NightEarModusMentis>();
+        if (ctx.Outdoors && ctx.Pov.Where is HeathArea or CragArea or RidgeArea) yield return Mm<WeatherEarModusMentis>();
+        if (ctx.Target is HivePointOfInterest) yield return Mm<SwarmSenseModusMentis>();
+        if (ctx.Pov.Where is RoofArea) yield return Mm<TimberEarModusMentis>();
+
+        // The target's own declaration, then this verb's default — always last, always visible.
+        foreach (var m in base.Lessons(ctx)) yield return m;
+    }
     public override string VerbId      => "listen";
     public override string DisplayName => "Listen";
 
@@ -106,11 +188,25 @@ public class ListenVerb : SensoryVerb
 /// <summary>Takes in a smell — the sense that carries the most and is asked for the least.</summary>
 public class SmellVerb : SensoryVerb
 {
+    /// <summary>Mostly the object's business; the exceptions are a body in the room and a kitchen.</summary>
+    public override IEnumerable<ModusMentis> Lessons(LessonContext ctx)
+    {
+        if (ctx.Hostile == ThreatLevel.Audio) yield return Mm<GutFeelingModusMentis>();
+        if (ctx.Target is CorpsePointOfInterest) yield return Mm<CharnelSenseModusMentis>();
+        if (ctx.Target is BreadPointOfInterest) yield return Mm<RelishModusMentis>();
+        // The target's own declaration, then this verb's default — always last, always visible.
+        foreach (var m in base.Lessons(ctx)) yield return m;
+    }
     public override string VerbId      => "smell";
     public override string DisplayName => "Smell";
 
-    /// <summary>What a success teaches by default: reading a place by its smell.</summary>
-    public override string? GrantedModusMentisId(Element? target) => "scenting";
+    /// <summary>
+    /// What a success teaches by default: reading a place by its smell. Two lessons, because the two
+    /// anatomies do not smell the same way — a snout follows, a nose remembers. Beast first, since
+    /// scenting names a snout and keen_nose names a nose.
+    /// </summary>
+    public override IReadOnlyList<string> GrantedModusMentisIds(Element? target)
+        => new[] { "scenting", "keen_nose" };
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"breathe in the smell of {DefiniteTarget(target)}";

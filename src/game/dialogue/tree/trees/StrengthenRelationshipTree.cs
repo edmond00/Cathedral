@@ -53,6 +53,19 @@ public partial class StrengthenRelationshipTree : DialogueTree
     // starts the chat directly (its success is rolled live each time).
     public override DialogueRoutineBehavior RoutineBehavior => DialogueRoutineBehavior.IncludeTrigger;
 
+
+    /// <summary>
+    /// What deepening an acquaintance consisted of. Easy talk between equals is one thing, sitting
+    /// with somebody's trouble is another, and the two are not interchangeable.
+    /// </summary>
+    protected override IEnumerable<string> AdditionalGrantedModusMentisIds(NpcEntity npc, ResolutionNode resolution)
+    {
+        // What deepening an acquaintance consisted of is the BRANCH's business, not the depth's —
+        // a branch declares its own lesson through ResolutionNode.Lessons. What is true of every
+        // successful one is that you were easier company afterwards.
+        yield return "gregariousness";
+    }
+
     public override IReadOnlyList<Outcome> SuccessOutcomes => new Outcome[]
     {
         new AffinityIncrementOutcome(+1, AffinityLevel.AnnoyingAcquaintance, AffinityLevel.CloseFriend),
@@ -70,15 +83,25 @@ public partial class StrengthenRelationshipTree : DialogueTree
     /// difficulty (see <see cref="BranchDifficulty"/>) — the pool grows with depth, so the target
     /// must too.
     /// </summary>
+    /// <summary>
+    /// One ending. <paramref name="lessons"/> is what <b>this branch</b> teaches, as modus mentis
+    /// types — the branch knows what the conversation was about and the depth does not, which is why
+    /// the lesson used to be inferred from <c>Difficulty</c> and came out the same for a talk about a
+    /// dying wife and a talk about the weather.
+    /// </summary>
     private static ResolutionNode End(string id, int depth,
                                       string success, string successIndirect,
-                                      string failure, string failureIndirect) => new(
+                                      string failure, string failureIndirect,
+                                      params System.Type[] lessons) => new(
         nodeId:                 id,
         difficulty:             BranchDifficulty.Easy(depth),
         successReplica:         success,
         successReplicaIndirect: successIndirect,
         failureReplica:         failure,
-        failureReplicaIndirect: failureIndirect);
+        failureReplicaIndirect: failureIndirect,
+        mode:                   ResolutionMode.DiceCheck,
+        topic:                  null,
+        lessons:                lessons);
 
     // ── Entry ──────────────────────────────────────────────────────────────────
 

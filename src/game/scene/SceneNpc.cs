@@ -8,8 +8,16 @@ namespace Cathedral.Game.Scene;
 /// Wraps an <see cref="INpcEntity"/> with Element identity and scene registration.
 /// Supports both named (<see cref="NpcEntity"/>) and shallow (<see cref="ShallowNpcEntity"/>) entities.
 /// </summary>
-public class SceneNpc : Element
+public class SceneNpc : Element, IVerbModusMentisSource
 {
+    /// <summary>
+    /// What this creature teaches for a given verb — delegated to the archetype, so the declaration
+    /// sits with the kind rather than with each spawned individual. The NPC half of the mechanism a
+    /// <see cref="PointOfInterest"/> has always had; without it no bird, beast or person could say
+    /// that looking at it teaches anything but the verb's own default.
+    /// </summary>
+    public string? ModusMentisFor(string verbId) => Entity.Archetype.ModusMentisFor(verbId);
+
     public override string DisplayName => Entity.DisplayName;
     public override List<string> Descriptions { get; }
 

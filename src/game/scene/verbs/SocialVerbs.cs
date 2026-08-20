@@ -5,6 +5,8 @@ using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Npc;
 
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
@@ -208,6 +210,8 @@ public class GatherKnowledgeVerb : SocialDialogueVerb
 /// </summary>
 public class PickpocketVerb : Verb
 {
+
+
     public override string VerbId         => "pickpocket";
     public override string DisplayName    => "Pickpocket";
     public override int    BaseDifficulty => 5;
@@ -219,7 +223,12 @@ public class PickpocketVerb : Verb
     protected override bool IsIllegalFor(Scene scene, PoV pov, Element? target, PartyMember? actor) => true;
 
     /// <summary>What a success teaches: taking from a person without them knowing.</summary>
-    public override string? GrantedModusMentisId(Element? target) => "petty_thief";
+    /// <summary>
+    /// What lifting a purse teaches. Not <c>petty_thief</c>, which STEAL keeps: taking from a shelf
+    /// and taking from a body that is still wearing it are different trades, and only one of them is
+    /// mostly about the crowd.
+    /// </summary>
+    public override string? GrantedModusMentisId(Element? target) => "cutpurse";
 
     /// <summary>
     /// A sleeper's pockets are a great deal easier than a waking man's — difficulty 2 against 5.

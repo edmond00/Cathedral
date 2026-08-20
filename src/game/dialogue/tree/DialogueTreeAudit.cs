@@ -67,6 +67,7 @@ public static class DialogueTreeAudit
         }
 
         warnings.AddRange(CheckTokensExpand(trees));
+        warnings.AddRange(CheckLessonsResolve(trees));
 
         sb.AppendLine();
         if (warnings.Count == 0)
@@ -166,6 +167,56 @@ public static class DialogueTreeAudit
     /// archetypes are plain classes with no registry, and an audit that silently skipped a new one
     /// would be worse than no audit.
     /// </summary>
+    /// <summary>
+    /// Every modus mentis a tree teaches must resolve. A tree's lesson is a bare string id, and an
+    /// unresolvable one teaches nothing at all while the conversation still reads as a success — the
+    /// same silent failure a mistyped trait id makes, and until this existed nothing looked for it on
+    /// the dialogue side at all.
+    ///
+    /// <para>The per-branch lessons are sampled rather than declared, since
+    /// <see cref="DialogueTree.AdditionalGrantedModusMentisIds"/> takes the person and the branch.
+    /// A tree whose branch grants cannot be reached by the sample is not reported: that is the
+    /// reachability audit's question, not this one's.</para>
+    /// </summary>
+    private static IEnumerable<string> CheckLessonsResolve(IEnumerable<DialogueTree> trees)
+    {
+        foreach (var tree in trees)
+        {
+            var ids = new List<string?> { tree.GrantedModusMentisId };
+
+            foreach (var npc in SpeakingArchetypes().Take(2)
+                         .Select(a => { try { return a.Spawn(new Random(11), "audit"); } catch { return null; } })
+                         .Where(n => n != null))
+            foreach (var resolution in ResolutionsOf(tree))
+            {
+                try { ids.AddRange(tree.LessonsFor(npc!, resolution)); } catch { }
+            }
+
+            foreach (var id in ids.Distinct())
+                if (!string.IsNullOrEmpty(id)
+                    && Narrative.ModusMentisRegistry.Instance.GetModusMentis(id) == null)
+                    yield return $"  {tree.TreeId}: teaches '{id}', which no modus mentis answers to";
+        }
+    }
+
+    /// <summary>Every resolution a tree contains, walked from its entry node.</summary>
+    private static IEnumerable<ResolutionNode> ResolutionsOf(DialogueTree tree)
+    {
+        var seen  = new HashSet<string>();
+        var stack = new Stack<DialogueNode>();
+        try { stack.Push(tree.EntryNode); } catch { yield break; }
+
+        while (stack.Count > 0)
+        {
+            var node = stack.Pop();
+            if (node == null || !seen.Add(node.NodeId)) continue;
+            if (node is ResolutionNode r) { yield return r; continue; }
+            if (node is NpcLineNode line)
+                foreach (var opt in line.Options)
+                    if (opt.Next != null) stack.Push(opt.Next);
+        }
+    }
+
     private static IEnumerable<NamedNpcArchetype> SpeakingArchetypes() => new NamedNpcArchetype[]
     {
         // Workshop crafts

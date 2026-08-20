@@ -169,54 +169,48 @@ public class ForestSceneFactory : SceneFactory
 
     // ── Area builders ────────────────────────────────────────────────────────
 
-    private static Area BuildClearing() => new(
+    private static Area BuildClearing() => new ClearingArea(
         displayName: "Clearing",
-        referenceLemma: "clearing",
         contextDescription: "in the forest clearing",
         transitionDescription: "step into the clearing",
         descriptions: new() { "An open patch among the trees, sunlight reaching the forest floor" },
         moods: new[] { "open", "sunlit", "quiet", "wide" }
     );
 
-    private static Area BuildThicket() => new(
+    private static Area BuildThicket() => new ThicketArea(
         displayName: "Thicket",
-        referenceLemma: "thicket",
         contextDescription: "pushing through the thicket",
         transitionDescription: "force into the thicket",
         descriptions: new() { "A dense tangle of saplings, brambles, and low growth" },
         moods: new[] { "dense", "snarled", "shadowed", "low" }
     );
 
-    private static Area BuildOldGrowth() => new(
+    private static Area BuildOldGrowth() => new GroveArea(
         displayName: "Old Growth",
-        referenceLemma: "grove",
         contextDescription: "among the great trees of the old growth",
         transitionDescription: "step into the old growth",
         descriptions: new() { "Massive ancient trees stand close together, undergrowth sparse beneath" },
         moods: new[] { "ancient", "still", "vaulted", "dark", "spacious" }
     );
 
-    private static Area BuildStreamside() => new(
+    private static Area BuildStreamside() => new StreamArea(
         displayName: "Streamside",
-        referenceLemma: "stream",
         contextDescription: "beside a forest stream",
         transitionDescription: "follow the stream's edge",
         descriptions: new() { "A creek winds through the wood, mud-banked and clear-running" },
         moods: new[] { "wet", "cool", "running", "muddy" }
     );
 
-    private static Area BuildDeadwoodPatch() => new(
+    private static Area BuildDeadwoodPatch() => new DeadwoodArea(
         displayName: "Deadwood Patch",
-        referenceLemma: "deadwood",
         contextDescription: "in the deadwood patch",
         transitionDescription: "step into the deadwood patch",
         descriptions: new() { "Fallen and rotting trees lie heaped where storms felled them" },
         moods: new[] { "rotting", "fungal", "still", "tangled" }
     );
 
-    private static Area BuildSlopeSection() => new(
+    private static Area BuildSlopeSection() => new SlopeArea(
         displayName: "Slope Section",
-        referenceLemma: "slope",
         contextDescription: "on the forested slope",
         transitionDescription: "climb the forested slope",
         descriptions: new() { "The forest climbs a hillside, roots breaking through the loose soil" },

@@ -217,6 +217,25 @@ public static class Config
         /// <para>Inert at its default of false.</para>
         /// </summary>
         public static bool Silent { get; set; } = false;
+
+        /// <summary>
+        /// Opens the game window but never shows it. Set by <c>--hidden</c>; <c>run_tests.sh</c>
+        /// passes it on every script, for the same reason it passes <c>--silent</c>: a full run
+        /// launches the game a hundred-odd times, and each launch otherwise puts a window on screen
+        /// and takes the keyboard focus off whatever the developer was doing.
+        ///
+        /// <para>Implemented as <c>StartVisible = false</c> on the window rather than as a minimised
+        /// state. The GL context is created either way, so rendering, the glyph atlas and every mode
+        /// still run exactly as they do in a visible run - and <c>dump</c> reads the terminal cell
+        /// grid on the CPU rather than the framebuffer, so nothing a script asserts on depends on the
+        /// window being mapped. Minimising instead would leave frame presentation at the driver's
+        /// discretion, which is a difference between test and play for no gain.</para>
+        ///
+        /// <para>Deliberately not implied by <c>--cli</c>: watching a script drive the game is how
+        /// most CLI problems get diagnosed, and taking that away by default would be a poor trade.
+        /// Inert at its default of false.</para>
+        /// </summary>
+        public static bool HiddenWindow { get; set; } = false;
         /// <summary>
         /// Settles every dialogue as an immediate success instead of holding it. Set by
         /// <c>--auto-dialogue</c>.

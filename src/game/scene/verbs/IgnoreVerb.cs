@@ -1,4 +1,6 @@
-﻿using Cathedral.Game.Narrative;
+﻿using System.Collections.Generic;
+using Cathedral.Game.Narrative;
+using Cathedral.Game.Narrative.ModiMentis;
 
 namespace Cathedral.Game.Scene.Verbs;
 
@@ -12,6 +14,17 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public sealed class IgnoreVerb : Verb
 {
+
+    /// <summary>Turning away from a person is a verdict; turning away from a barrel is not.</summary>
+    public override IEnumerable<ModusMentis> Lessons(LessonContext ctx)
+    {
+        if (ctx.TargetIsPerson) yield return Mm<MisanthropyModusMentis>();
+
+        // The target's own declaration, then this verb's default — always last, always visible.
+        foreach (var m in base.Lessons(ctx)) yield return m;
+    }
+
+
     public static readonly IgnoreVerb Instance = new();
 
     /// Canonical text shown in the GOAL prompt and used for matching.

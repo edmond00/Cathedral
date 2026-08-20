@@ -155,63 +155,56 @@ public class CaveSceneFactory : SceneFactory
 
     // ── Area builders ────────────────────────────────────────────────────────
 
-    private static Area BuildEntranceHall() => new(
+    private static Area BuildEntranceHall() => new EntranceArea(
         displayName: "Entrance Hall",
-        referenceLemma: "entrance",
         contextDescription: "in the cave's entrance hall",
         transitionDescription: "step into the cave entrance",
         descriptions: new() { "The cave mouth opens into a wide low chamber lit by daylight from outside" },
         moods: new[] { "dim", "echoing", "cool", "damp", "wide" }
     );
 
-    private static Area BuildMainShaft() => new(
+    private static Area BuildMainShaft() => new ShaftArea(
         displayName: "Main Shaft",
-        referenceLemma: "shaft",
         contextDescription: "in the main shaft",
         transitionDescription: "descend into the main shaft",
         descriptions: new() { "A long passage cut deep into the rock, the air close and damp" },
         moods: new[] { "narrow", "dark", "damp", "low-roofed", "echoing" }
     );
 
-    private static Area BuildOreChamber() => new(
+    private static Area BuildOreChamber() => new ChamberArea(
         displayName: "Ore Chamber",
-        referenceLemma: "chamber",
         contextDescription: "in the ore chamber",
         transitionDescription: "step into the ore chamber",
         descriptions: new() { "A wider chamber where a vein of iron ore breaks through the rock" },
         moods: new[] { "iron-stained", "rough-walled", "cool", "lantern-lit" }
     );
 
-    private static Area BuildCoalSeam() => new(
+    private static Area BuildCoalSeam() => new SeamArea(
         displayName: "Coal Seam",
-        referenceLemma: "seam",
         contextDescription: "at the coal seam",
         transitionDescription: "step to the coal seam",
         descriptions: new() { "A glittering black seam of coal cuts across the chamber wall" },
         moods: new[] { "black", "glittering", "soot-covered", "close" }
     );
 
-    private static Area BuildUndergroundPool() => new(
+    private static Area BuildUndergroundPool() => new PoolArea(
         displayName: "Underground Pool",
-        referenceLemma: "pool",
         contextDescription: "by the underground pool",
         transitionDescription: "approach the underground pool",
         descriptions: new() { "A still dark pool fed by water seeping through the rock" },
         moods: new[] { "still", "dark", "wet", "cold", "echoing" }
     );
 
-    private static Area BuildCollapsedTunnel() => new(
+    private static Area BuildCollapsedTunnel() => new TunnelArea(
         displayName: "Collapsed Tunnel",
-        referenceLemma: "tunnel",
         contextDescription: "at the collapsed tunnel",
         transitionDescription: "approach the collapsed tunnel",
         descriptions: new() { "A dead-end of fallen rock and rubble, the way blocked" },
         moods: new[] { "dead-end", "rubble", "still", "warning" }
     );
 
-    private static Area BuildSideAlcove() => new(
+    private static Area BuildSideAlcove() => new AlcoveArea(
         displayName: "Side Alcove",
-        referenceLemma: "alcove",
         contextDescription: "in the side alcove",
         transitionDescription: "step into the side alcove",
         descriptions: new() { "A small offshoot from the main shaft, the air still and silent" },
@@ -226,9 +219,8 @@ public class CaveSceneFactory : SceneFactory
         {
             case "Entrance Hall":
                 area.PointsOfInterest.Add(TerrainSubfactory.BuildRockFace());
-                area.PointsOfInterest.Add(new PointOfInterest(
-                    displayName: "Tool Cache",
-                    referenceLemma: "tool",
+                area.PointsOfInterest.Add(new ToolPointOfInterest(
+            displayName: "Tool Cache",
                     descriptions: new() { "A cache of mining tools propped in the rock" },
                     items: new()
                     {
@@ -243,18 +235,16 @@ public class CaveSceneFactory : SceneFactory
             case "Main Shaft":
                 area.PointsOfInterest.Add(TerrainSubfactory.BuildRockFace());
                 if (rng.NextDouble() < 0.5)
-                    area.PointsOfInterest.Add(new PointOfInterest(
-                        displayName: "Bat Roost",
-                        referenceLemma: "roost",
+                    area.PointsOfInterest.Add(new RoostPointOfInterest(
+            displayName: "Bat Roost",
                         descriptions: new() { "A high hollow in the rock alive with the wing-flutter of bats" },
                         moods: new[] { "high", "rustling", "fetid" }
-                    ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "beast_sense", ["listen"] = "keen_ear", ["smell"] = "scenting" } });
+                    ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "beast_sense", ["listen"] = "beast_call", ["smell"] = "musk_reading" } });
                 break;
 
             case "Ore Chamber":
-                area.PointsOfInterest.Add(new PointOfInterest(
-                    displayName: "Ore Vein",
-                    referenceLemma: "ore",
+                area.PointsOfInterest.Add(new OrePointOfInterest(
+            displayName: "Ore Vein",
                     descriptions: new() { "A bright streak of iron ore exposed by recent picking" },
                     items: new()
                     {
@@ -267,9 +257,8 @@ public class CaveSceneFactory : SceneFactory
                 break;
 
             case "Coal Seam":
-                area.PointsOfInterest.Add(new PointOfInterest(
-                    displayName: "Coal Seam Deposit",
-                    referenceLemma: "coal",
+                area.PointsOfInterest.Add(new CoalPointOfInterest(
+            displayName: "Coal Seam Deposit",
                     descriptions: new() { "A dense seam of coal, freshly worked at one end" },
                     items: new()
                     {
@@ -285,9 +274,8 @@ public class CaveSceneFactory : SceneFactory
                 break;
 
             case "Collapsed Tunnel":
-                area.PointsOfInterest.Add(new PointOfInterest(
-                    displayName: "Rubble Pile",
-                    referenceLemma: "rubble",
+                area.PointsOfInterest.Add(new RubblePointOfInterest(
+            displayName: "Rubble Pile",
                     descriptions: new() { "A heap of broken stone where the tunnel collapsed" },
                     items: new()
                     {

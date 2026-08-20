@@ -16,19 +16,17 @@ public static class CampSubfactory
     {
         return new List<PointOfInterest>
         {
-            new PointOfInterest(
-                displayName: "Bedroll",
-                referenceLemma: "bedroll",
+            new BedrollPointOfInterest(
+            displayName: "Bedroll",
                 descriptions: new() { "A rolled bedroll of coarse cloth, half-unrolled by a tree-root" },
                 items: new()
                 {
                     new ItemElement(new Cloth()),
                 },
                 moods: new[] { "rolled", "dirty", "low" }
-            ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "bushcraft", ["smell"] = "scenting" } },
-            new PointOfInterest(
-                displayName: "Fire Pit",
-                referenceLemma: "fire",
+            ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "bushcraft", ["smell"] = "petrichor" } },
+            new FirePointOfInterest(
+            displayName: "Fire Pit",
                 descriptions: new() { "A blackened ring of stones with the cooled remains of a small fire" },
                 items: new()
                 {
@@ -36,10 +34,9 @@ public static class CampSubfactory
                     new ItemElement(new Twig()),
                 },
                 moods: new[] { "blackened", "circular", "cold" }
-            ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "firecraft", ["listen"] = "keen_ear", ["smell"] = "scenting" } },
-            new PointOfInterest(
-                displayName: "Sack",
-                referenceLemma: "sack",
+            ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "firecraft", ["listen"] = "forge_ear", ["smell"] = "smoke_reading", ["contemplate"] = "journeyman_eye" } },
+            new SackPointOfInterest(
+            displayName: "Sack",
                 descriptions: new() { "A heavy sack leaning against a stump, holding the day's gathered wood" },
                 items: new()
                 {
@@ -56,19 +53,17 @@ public static class CampSubfactory
     {
         return new List<PointOfInterest>
         {
-            new PointOfInterest(
-                displayName: "Bedroll",
-                referenceLemma: "bedroll",
+            new BedrollPointOfInterest(
+            displayName: "Bedroll",
                 descriptions: new() { "A bedroll spread on the cave floor near the entrance light" },
                 items: new()
                 {
                     new ItemElement(new Cloth()),
                 },
                 moods: new[] { "rolled", "dirt-darkened", "low" }
-            ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "bushcraft", ["smell"] = "scenting" } },
-            new PointOfInterest(
-                displayName: "Lantern Hook",
-                referenceLemma: "lantern",
+            ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "bushcraft", ["smell"] = "petrichor" } },
+            new LanternPointOfInterest(
+            displayName: "Lantern Hook",
                 descriptions: new() { "An iron hook driven into the rock, a lantern hanging from it" },
                 items: new()
                 {
@@ -76,9 +71,8 @@ public static class CampSubfactory
                 },
                 moods: new[] { "iron", "hanging", "soot-blackened" }
             ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "firecraft" } },
-            new PointOfInterest(
-                displayName: "Ore Pile",
-                referenceLemma: "ore",
+            new OrePointOfInterest(
+            displayName: "Ore Pile",
                 descriptions: new() { "A small heap of iron ore staged for hauling out to the village" },
                 items: new()
                 {
@@ -95,19 +89,17 @@ public static class CampSubfactory
     {
         return new List<PointOfInterest>
         {
-            new PointOfInterest(
-                displayName: "Bedroll",
-                referenceLemma: "bedroll",
+            new BedrollPointOfInterest(
+            displayName: "Bedroll",
                 descriptions: new() { "A salt-stiff bedroll laid above the tide-line, cloth still damp" },
                 items: new()
                 {
                     new ItemElement(new Cloth()),
                 },
                 moods: new[] { "salt-stiff", "low", "rolled" }
-            ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "bushcraft", ["smell"] = "scenting" } },
-            new PointOfInterest(
-                displayName: "Drying Frame",
-                referenceLemma: "frame",
+            ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "bushcraft", ["smell"] = "petrichor" } },
+            new FramePointOfInterest(
+            displayName: "Drying Frame",
                 descriptions: new() { "A wooden frame strung with split fish drying in the wind" },
                 items: new()
                 {
@@ -115,10 +107,9 @@ public static class CampSubfactory
                     new ItemElement(new Herring()),
                 },
                 moods: new[] { "wind-rocked", "fragrant", "tall" }
-            ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "anglery", ["smell"] = "scenting" } },
-            new PointOfInterest(
-                displayName: "Net Pile",
-                referenceLemma: "net",
+            ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "anglery", ["smell"] = "brine_sense" } },
+            new NetPointOfInterest(
+            displayName: "Net Pile",
                 descriptions: new() { "A bundle of mended net heaped at the edge of the camp" },
                 items: new()
                 {

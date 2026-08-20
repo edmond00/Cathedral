@@ -124,6 +124,10 @@ run_cli() {
         # --start-area "Craft Row" is two arguments, not three.
         local -a argv
         eval "argv=($flags)"
+        # --hidden for the same reason as --silent: a full run is a hundred-odd windows appearing
+        # on screen, each taking the keyboard focus off whatever else is being done. The window and
+        # its GL context are still created, so nothing about what is under test changes.
+        #
         # --silent is added here rather than in every header: a full run launches the game a
         # hundred-odd times, and without it that is an hour of overlapping music from windows
         # nobody is watching. No script has a reason to want sound, so none of them gets a say.
@@ -132,7 +136,7 @@ run_cli() {
         # standing on — arriving somewhere opens it, so a visit costs a journey — but every script
         # gets into a location with `travel here`, and the spawn vertex is the only one it can name
         # without knowing what the seed generated. No script is testing that refusal.
-        timeout $((CLI_TIMEOUT + 60)) dotnet run --no-build -- "${argv[@]}" --silent --allow-reentry \
+        timeout $((CLI_TIMEOUT + 60)) dotnet run --no-build -- "${argv[@]}" --silent --hidden --allow-reentry \
             --cli-timeout "$CLI_TIMEOUT" --cli-script "$s" > "$log" 2>&1
         local code=$?
 

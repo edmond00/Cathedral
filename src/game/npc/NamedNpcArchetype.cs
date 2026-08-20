@@ -16,6 +16,30 @@ public abstract class NamedNpcArchetype : NpcArchetype
     public abstract Species Species { get; }
 
     /// <summary>
+    /// A person rewards every sense: their face and hands say what they do, they are worth looking at,
+    /// they make noise, and in this century they smell of their trade. The richest observable in any
+    /// room, and until the sensory gate reached NPCs the only one the four senses could not touch.
+    /// </summary>
+    public override Scene.SensoryProfile Senses => Scene.SensoryProfile.FullyAlive;
+
+    /// <summary>
+    /// What the senses learn here, split by what is being sensed. A person is read off their face and
+    /// heard as somebody (<c>physiognomy</c>, <c>hearkening</c> — the latter written, validated and
+    /// unreachable until senses could be turned on a person at all). A wolf or a bear is not: it is a
+    /// creature, and the lessons are the naturalist's, which is why this is keyed on the species and
+    /// not on the class. <c>NamedNpcArchetype</c> carries every beast in the game as well as every
+    /// person.
+    /// </summary>
+    public override System.Collections.Generic.IReadOnlyDictionary<string, string>? VerbModiMentis
+        => Species.AnatomyType == Narrative.AnatomyType.Human ? PersonSenses : CreatureSenses;
+
+    private static readonly System.Collections.Generic.Dictionary<string, string> PersonSenses = new()
+    {
+        ["examine"] = "physiognomy",
+        ["listen"]  = "hearkening",
+    };
+
+    /// <summary>
     /// Whether spawned NPCs start as enemies of the protagonist (e.g. bears, wolves, boars).
     /// When true, the enemy flag is set in each spawned NPC's AffinityTable at scene
     /// initialization (see the scene-build loop in the game controller).

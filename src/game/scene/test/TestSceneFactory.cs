@@ -203,7 +203,8 @@ public sealed class TestSceneFactory : SceneFactory
     ///
     /// <para>The types matter more than the names. A verb gates on a <i>subclass</i> or on a
     /// reference lemma — <c>dig</c> wants a <see cref="DiggableGroundPointOfInterest"/>, <c>mine</c>
-    /// an <see cref="OreVeinPointOfInterest"/>, <c>cut_wood</c> a lemma of "tree"/"log"/"stump", and
+    /// an <see cref="OreVeinPointOfInterest"/>, <c>cut_wood</c> a <see cref="TreePointOfInterest"/>
+    /// or one of its three companions, and
     /// every extraction verb also wants the target to still hold items. A plain
     /// <c>PointOfInterest</c> named "Test Ore Seam" looks right and is offered to nobody, which is
     /// how the first draft of this file covered 25 verbs instead of 53.</para>
@@ -220,15 +221,20 @@ public sealed class TestSceneFactory : SceneFactory
             new List<string> { "A seam of dull metal running through the stone" },
             new List<ItemElement> { new(new IronOre()), new(new IronOre()) }));
 
-        // cut_wood gates on the LEMMA, not a subclass — "tree", "log", "stump" or "deadfall".
-        wood.PointsOfInterest.Add(Poi_("Test Timber Tree", "tree",
-            "A straight tree of a size worth felling",
-            new List<ItemElement> { new(new Log()), new(new Log()) }));
+        // cut_wood accepts four wooded KINDS — a tree, a log, a stump or a deadfall. It gated on the
+        // reference lemma once; a plain PointOfInterest carrying the word "tree" is offered to nobody
+        // now, which is exactly what a type is for.
+        wood.PointsOfInterest.Add(new TreePointOfInterest("Test Timber Tree",
+            new List<string> { "A straight tree of a size worth felling" },
+            new List<ItemElement> { new(new Log()), new(new Log()) },
+            isNatural: true) { Senses = SensoryProfile.Examinable });
 
-        // gather / grab: an ordinary PoI holding something loose.
-        field.PointsOfInterest.Add(Poi_("Test Berry Bush", "bush",
-            "A bramble heavy with fruit",
-            new List<ItemElement> { new(new HawthornBerry()), new(new HawthornBerry()) }));
+        // gather / grab: something growing, holding something loose. A BUSH rather than a plain PoI
+        // so GATHER's berrying lesson is reachable here too.
+        field.PointsOfInterest.Add(new BushPointOfInterest("Test Berry Bush",
+            new List<string> { "A bramble heavy with fruit" },
+            new List<ItemElement> { new(new HawthornBerry()), new(new HawthornBerry()) },
+            isNatural: true) { Senses = SensoryProfile.Examinable });
 
         // Sitting, hiding, breaking — each its own type, and each what its verb looks for.
         yard.PointsOfInterest.Add(new SitSpotPointOfInterest("Test Bench", "bench",
@@ -248,11 +254,12 @@ public sealed class TestSceneFactory : SceneFactory
             "A banded chest at the foot of the bed",
             new List<ItemElement> { new(new IronBar()) }, natural: false));
 
-        // The bed, and it must answer to the lemma "pallet" — BuildingRooms.BedsIn keys on that, and
-        // SceneNpc.IsSleeping refuses to put anybody to bed in a room BedsIn calls empty. Without it
-        // the weaver stands in this room all night and murder / wake_up are offered on nobody.
-        room.PointsOfInterest.Add(Poi_("Test Pallet", "pallet",
-            "A straw pallet along the wall, blankets thrown back", natural: false));
+        // The bed, and it must be a PalletPointOfInterest — BuildingRooms.BedsIn selects that TYPE,
+        // and SceneNpc.IsSleeping refuses to put anybody to bed in a room BedsIn calls empty. Without
+        // it the weaver stands in this room all night and murder / wake_up are offered on nobody.
+        room.PointsOfInterest.Add(new PalletPointOfInterest("Test Pallet",
+            new List<string> { "A straw pallet along the wall, blankets thrown back" })
+            { Senses = SensoryProfile.Examinable });
 
         // grab wants a MADE thing in a PUBLIC area — natural is gather's, private is steal's. The
         // chest above is neither, being in the private room.
@@ -262,12 +269,12 @@ public sealed class TestSceneFactory : SceneFactory
 
         // Something to listen to and something to smell: listen and smell gate on the sensory
         // profile, so a thing with the wrong one is prose and nothing else.
-        yard.PointsOfInterest.Add(new PointOfInterest("Test Bell", "bell",
+        yard.PointsOfInterest.Add(new BellPointOfInterest("Test Bell",
             new List<string> { "A bell on a post, swinging and sounding in any wind at all" },
             null, new[] { "ringing", "bright" }, false)
         { Senses = SensoryProfile.Audible });
 
-        yard.PointsOfInterest.Add(new PointOfInterest("Test Midden", "midden",
+        yard.PointsOfInterest.Add(new MiddenPointOfInterest("Test Midden",
             new List<string> { "A heap of kitchen waste going over, and announcing it" },
             null, new[] { "rank", "warm" }, true)
         { Senses = SensoryProfile.Odorous });

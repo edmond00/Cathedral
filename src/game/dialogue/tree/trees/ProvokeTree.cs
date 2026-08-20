@@ -4,6 +4,8 @@ using Cathedral.Game.Npc;
 
 using Cathedral.Game.Narrative;
 
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Dialogue.Tree.Trees;
 
 /// <summary>
@@ -35,6 +37,22 @@ public class ProvokeTree : DialogueTree
     public override string? GrantedModusMentisId => "invective";
 
     /// <summary>The goad landed. They come at you, and they come alone.</summary>
+
+    /// <summary>
+    /// What the goading actually was. A hard provocation is the unsayable thing said to the face; an
+    /// easy one is noise, and noise is a performance skill.
+    /// </summary>
+    protected override IEnumerable<string> AdditionalGrantedModusMentisIds(NpcEntity npc, ResolutionNode resolution)
+    {
+        // What the goading WAS is the branch's business. Provoking somebody who holds authority is
+        // still its own thing, because the risk is different.
+        if (Authority(npc) > 0) yield return "rhetoric";
+    }
+
+    /// <summary>Authority of the person being spoken to; 0 for anyone who holds none.</summary>
+    private static int Authority(NpcEntity npc)
+        => (npc.Archetype as NamedNpcArchetype)?.AuthorityLevel ?? 0;
+
     public override IReadOnlyList<Outcome> SuccessOutcomes => new Outcome[]
     {
         new FightRequestOutcome(personal: true),
@@ -48,15 +66,25 @@ public class ProvokeTree : DialogueTree
 
     private static ResolutionNode End(string id, int depth,
                                       string success, string successIndirect,
-                                      string failure, string failureIndirect) => new(
+                                      string failure, string failureIndirect,
+                                      params System.Type[] lessons) => new(
         nodeId:                 id,
         difficulty:             BranchDifficulty.Hard(depth),
         successReplica:         success,
         successReplicaIndirect: successIndirect,
         failureReplica:         failure,
-        failureReplicaIndirect: failureIndirect);
+        failureReplicaIndirect: failureIndirect,
+        mode:                   ResolutionMode.DiceCheck,
+        topic:                  null,
+        lessons:                lessons);
 
-    private static NpcLineNode Warned(string prefix) => new(
+    /// <summary>
+    /// The warning, and the two ways past it. <paramref name="pressed"/> and <paramref name="mocked"/>
+    /// are what each teaches: the two endings are shared by all three insult subjects, so the lesson
+    /// belongs to the caller — pressing an insult about somebody's WORK is not the same act as
+    /// pressing one about their STANDING.
+    /// </summary>
+    private static NpcLineNode Warned(string prefix, System.Type pressed, System.Type mocked) => new(
         nodeId:          $"{prefix}_warned",
         replica:         "You want to be careful how you go on.",
         replicaIndirect: "I warn them to be careful how they go on.",
@@ -69,7 +97,8 @@ public class ProvokeTree : DialogueTree
                 "Right. Outside, then. Now.",
                 "I tell them to come outside, now.",
                 "No. You are not worth the trouble.",
-                "I tell them they are not worth the trouble.")),
+                "I tell them they are not worth the trouble.",
+                pressed)),
 
         new PlayerOption($"{prefix}_mock", "laugh at the warning",
             "That is the best you have?",
@@ -78,7 +107,8 @@ public class ProvokeTree : DialogueTree
                 "You will find out what the best I have is.",
                 "I tell them they will find out what the best I have is.",
                 "Laugh, then. Laugh on your own.",
-                "I tell them to laugh on their own.")));
+                "I tell them to laugh on their own.",
+                mocked)));
 
     private static readonly NpcLineNode Opening = new(
         nodeId:          "opening",
@@ -89,17 +119,17 @@ public class ProvokeTree : DialogueTree
         new PlayerOption("say_yes", "say yes, and hold their eye",
             "It was. And you know it was true.",
             "I say it was meant for them, and that they know it was true.",
-            Warned("yes")),
+            Warned("yes", typeof(NerveModusMentis), typeof(BoastingModusMentis))),
 
         new PlayerOption("insult_work", "say something about their work",
             "I have seen better done by children.",
             "I tell them I have seen better done by children.",
-            Warned("work")),
+            Warned("work", typeof(InsolenceModusMentis), typeof(SenseOfHumorModusMentis))),
 
         new PlayerOption("insult_standing", "say something about their standing here",
             "Nobody in this place would miss you.",
             "I tell them nobody here would miss them.",
-            Warned("standing")));
+            Warned("standing", typeof(PrideModusMentis), typeof(MisanthropyModusMentis))));
 
     public override NpcLineNode EntryNode => Opening;
 

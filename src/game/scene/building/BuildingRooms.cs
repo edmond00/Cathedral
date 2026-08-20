@@ -33,9 +33,8 @@ public static class BuildingRooms
         // which building it is in, where "in the bedroom" would read the same in every house.
         var lower   = name.ToLowerInvariant();
 
-        return new Area(
+        return NewRoom(role,
             displayName:           name,
-            referenceLemma:        RoleLemma(role),
             contextDescription:    $"in the {lower}",
             transitionDescription: $"step into the {lower}",
             descriptions:          new() { RoleDescription(role, kind, matWord) },
@@ -54,15 +53,22 @@ public static class BuildingRooms
         _                   => "Landing",
     };
 
-    private static string RoleLemma(RoomRole role) => role switch
+    /// <summary>
+    /// The typed room for a role. Replaced a <c>RoleLemma</c> switch that returned a bare string:
+    /// the role enum was already a closed vocabulary and the lemma threw that away, so a lesson
+    /// asking about a kitchen had to match the word rather than the room.
+    /// </summary>
+    private static Area NewRoom(RoomRole role, string displayName, string contextDescription,
+                                string transitionDescription, List<string> descriptions,
+                                string[]? moods = null, bool isPrivate = false) => role switch
     {
-        RoomRole.PublicHall => "hall",
-        RoomRole.Bedroom    => "bedroom",
-        RoomRole.Dormitory  => "dormitory",
-        RoomRole.Kitchen    => "kitchen",
-        RoomRole.Pantry     => "pantry",
-        RoomRole.Store      => "store",
-        _                   => "landing",
+        RoomRole.PublicHall => new HallArea(displayName, contextDescription, transitionDescription, descriptions, moods, isPrivate),
+        RoomRole.Bedroom    => new BedroomArea(displayName, contextDescription, transitionDescription, descriptions, moods, isPrivate),
+        RoomRole.Dormitory  => new DormitoryArea(displayName, contextDescription, transitionDescription, descriptions, moods, isPrivate),
+        RoomRole.Kitchen    => new KitchenArea(displayName, contextDescription, transitionDescription, descriptions, moods, isPrivate),
+        RoomRole.Pantry     => new PantryArea(displayName, contextDescription, transitionDescription, descriptions, moods, isPrivate),
+        RoomRole.Store      => new StoreArea(displayName, contextDescription, transitionDescription, descriptions, moods, isPrivate),
+        _                   => new LandingArea(displayName, contextDescription, transitionDescription, descriptions, moods, isPrivate),
     };
 
     private static string RoleDescription(RoomRole role, BuildingKind kind, string mat) => role switch
@@ -128,7 +134,7 @@ public static class BuildingRooms
     /// dormitory with three pallets sleeps exactly three people.
     /// </summary>
     public static IEnumerable<PointOfInterest> BedsIn(Area room)
-        => room.PointsOfInterest.Where(p => p.ReferenceLemma == "pallet");
+        => room.PointsOfInterest.OfType<PalletPointOfInterest>();
 
     private static void PopulateHall(Area area, Random rng)
     {
@@ -225,6 +231,28 @@ public static class BuildingRooms
     /// One pallet per sleeper is the rule the whole roster/bed pairing rests on — a room with fewer
     /// pallets than occupants is exactly the anonymous-dormitory problem this replaces.
     /// </summary>
+    /// <summary>
+    /// A cradle. Households of this period had them and this one did not, which left midwifery — a
+    /// modus mentis the game has always shipped — keyed to furniture that was never built.
+    /// </summary>
+    private static PointOfInterest BuildCradle() => new CradlePointOfInterest(
+        displayName: "Cradle",
+        descriptions: new() { "A hollowed wooden cradle on rockers, a folded blanket inside it" },
+        moods: new[] { "small", "worn", "quiet", "rocked-smooth" }
+    ) { Senses = SensoryProfile.Beautiful,
+        VerbModiMentis = new Dictionary<string, string> { ["examine"] = "midwifery" } };
+
+    /// <summary>
+    /// A psalter — the one book a household of this station plausibly owns, and the only written
+    /// thing in the game. Philosophy and the lettered lessons had nothing to be read off.
+    /// </summary>
+    private static PointOfInterest BuildPsalter() => new PsalterPointOfInterest(
+        displayName: "Psalter",
+        descriptions: new() { "A small psalter on the chest, its boards scuffed and its clasp long gone" },
+        moods: new[] { "worn", "thumbed", "precious", "dim" }
+    ) { Senses = SensoryProfile.Beautiful,
+        VerbModiMentis = new Dictionary<string, string> { ["examine"] = "decipher", ["contemplate"] = "piety" } };
+
     private static void PopulateSleeping(Area area, Random rng, int beds)
     {
         for (int i = 0; i < Math.Max(1, beds); i++)
@@ -240,6 +268,8 @@ public static class BuildingRooms
             BuildPrayerStool,
             () => BuildClothesPegs(rng),
             BuildRushLight,
+            BuildCradle,
+            BuildPsalter,
         }, rng.Next(1, 3)))
             area.PointsOfInterest.Add(poi);
     }
@@ -297,49 +327,49 @@ public static class BuildingRooms
 
     // ── Furniture builders ────────────────────────────────────────────────────
 
-    private static PointOfInterest BuildHearth() => new(
-        displayName: "Stone Hearth", referenceLemma: "hearth",
+    private static PointOfInterest BuildHearth() => new HearthPointOfInterest(
+        displayName: "Stone Hearth",
         descriptions: new() { "A wide stone hearth, ash-grey and cold between meals" },
-        moods: new[] { "cold", "grey", "wide", "sooty", "still" }) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "firecraft", ["listen"] = "keen_ear", ["smell"] = "scenting" } };
+        moods: new[] { "cold", "grey", "wide", "sooty", "still" }) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "firecraft", ["listen"] = "forge_ear", ["smell"] = "smoke_reading", ["contemplate"] = "journeyman_eye" } };
 
-    private static PointOfInterest BuildTrestleTable() => new(
-        displayName: "Trestle Table", referenceLemma: "table",
+    private static PointOfInterest BuildTrestleTable() => new TablePointOfInterest(
+        displayName: "Trestle Table",
         descriptions: new() { "A long trestle table of rough wood, benches tucked beneath" },
-        moods: new[] { "worn", "scarred", "long", "simple", "communal" }) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "whittlecraft" } };
+        moods: new[] { "worn", "scarred", "long", "simple", "communal" }) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "whittlecraft" } };
 
-    private static PointOfInterest BuildBenchRow() => new(
-        displayName: "Bench Row", referenceLemma: "bench",
+    private static PointOfInterest BuildBenchRow() => new BenchPointOfInterest(
+        displayName: "Bench Row",
         descriptions: new() { "A row of low benches along the wall, polished by use" },
         moods: new[] { "low", "worn", "smooth", "waiting" }) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "whittlecraft" } };
 
-    private static PointOfInterest BuildCookingHearth() => new(
-        displayName: "Cooking Hearth", referenceLemma: "hearth",
+    private static PointOfInterest BuildCookingHearth() => new HearthPointOfInterest(
+        displayName: "Cooking Hearth",
         descriptions: new() { "A clay-rimmed cooking hearth with an iron hook and suspended pot" },
-        moods: new[] { "warm", "sooty", "smoky", "active", "dim" }) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "firecraft", ["listen"] = "keen_ear", ["smell"] = "scenting" } };
+        moods: new[] { "warm", "sooty", "smoky", "active", "dim" }) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "firecraft", ["listen"] = "forge_ear", ["smell"] = "smoke_reading", ["contemplate"] = "journeyman_eye" } };
 
     private static PointOfInterest BuildKitchenShelf(Random rng)
     {
         var items = new List<ItemElement> { new(new Herb()) };
         if (rng.NextDouble() < 0.60) items.Add(new(new WoodenBowl()));
-        return new PointOfInterest("Kitchen Shelf", "shelf",
+        return new ShelfPointOfInterest("Kitchen Shelf",
             new() { "Rough wooden shelves holding crockery, a salt block, and hanging herbs" },
-            items, new[] { "cluttered", "fragrant", "dim", "crammed" }) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "peasantry", ["smell"] = "scenting" } };
+            items, new[] { "cluttered", "fragrant", "dim", "crammed" }) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "peasantry", ["smell"] = "taint_sense" } };
     }
 
     private static PointOfInterest BuildStorageBarrel(params ItemElement[] items)
     {
-        var poi = new PointOfInterest("Storage Barrel", "barrel",
+        var poi = new BarrelPointOfInterest("Storage Barrel",
             new() { "A wide oak barrel, banded in iron, sealed with a waxed stopper" },
-            moods: new[] { "heavy", "solid", "dim", "full", "old" }) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "cellarcraft", ["smell"] = "scenting" } };
+            moods: new[] { "heavy", "solid", "dim", "full", "old" }) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "cellarcraft", ["smell"] = "bouquet" } };
         poi.Items.AddRange(items);
         return poi;
     }
 
     private static PointOfInterest BuildStorageShelf(params ItemElement[] items)
     {
-        var poi = new PointOfInterest("Storage Shelf", "shelf",
+        var poi = new ShelfPointOfInterest("Storage Shelf",
             new() { "Sagging wooden shelves stacked with sacks and provisions" },
-            moods: new[] { "cluttered", "low", "dim", "heavy" }) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "peasantry", ["smell"] = "scenting" } };
+            moods: new[] { "cluttered", "low", "dim", "heavy" }) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "peasantry", ["smell"] = "taint_sense" } };
         poi.Items.AddRange(items);
         return poi;
     }
@@ -348,9 +378,9 @@ public static class BuildingRooms
     {
         var pool  = new Func<Item>[] { () => new Cheese(), () => new Egg(), () => new Bread() };
         var items = new List<ItemElement> { new(pool[rng.Next(pool.Length)]()) };
-        return new PointOfInterest("Cold Shelf", "shelf",
+        return new ShelfPointOfInterest("Cold Shelf",
             new() { "A low stone shelf in the coolest corner, used for perishables" },
-            items, new[] { "cool", "dim", "quiet", "still" }) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "peasantry", ["smell"] = "scenting" } };
+            items, new[] { "cool", "dim", "quiet", "still" }) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "peasantry", ["smell"] = "taint_sense" } };
     }
 
     private static PointOfInterest BuildToolCorner(Random rng)
@@ -358,7 +388,7 @@ public static class BuildingRooms
         var items = new List<ItemElement> { new(new Rope()) };
         if (rng.NextDouble() < 0.50) items.Add(new(new Hammer()));
         if (rng.NextDouble() < 0.40) items.Add(new(new Knife()));
-        return new PointOfInterest("Tool Corner", "tool",
+        return new ToolPointOfInterest("Tool Corner",
             new() { "Hand tools leaning in a corner, hafts up, blades furred with old rust" },
             items, new[] { "cluttered", "iron-smelling", "dim", "propped" }) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "whittlecraft" } };
     }
@@ -367,9 +397,9 @@ public static class BuildingRooms
     {
         var items = new List<ItemElement> { new(new Log()) };
         if (rng.NextDouble() < 0.50) items.Add(new(new Twig()));
-        return new PointOfInterest("Firewood Stack", "firewood",
+        return new FirewoodPointOfInterest("Firewood Stack",
             new() { "Split logs stacked to the roofline, the bottom course gone soft with damp" },
-            items, new[] { "stacked", "dry", "resinous", "heavy" }) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["smell"] = "scenting" } };
+            items, new[] { "stacked", "dry", "resinous", "heavy" }) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["smell"] = "petrichor" } };
     }
 
     /// <summary>A pallet. Named per sleeper in a shared room so each is its own observation.</summary>
@@ -377,16 +407,16 @@ public static class BuildingRooms
     {
         var items = new List<ItemElement> { new(new Straw()) };
         if (rng.NextDouble() < 0.40) items.Add(new(new WoolCap()));
-        return new PointOfInterest(
-            total > 1 ? $"Straw Pallet ({PositionWord(index)})" : "Straw Pallet", "pallet",
+        return new PalletPointOfInterest(
+            total > 1 ? $"Straw Pallet ({PositionWord(index)})" : "Straw Pallet",
             new() { "A straw-stuffed pallet on a low wooden frame — a sleeping place" },
-            items, new[] { "sparse", "low", "quiet", "lumpy", "still" }) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "peasantry", ["smell"] = "scenting" } };
+            items, new[] { "sparse", "low", "quiet", "lumpy", "still" }) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "peasantry", ["smell"] = "taint_sense" } };
     }
 
     private static PointOfInterest BuildChest(Random rng, int index, int total)
     {
-        var poi = new PointOfInterest(
-            total > 1 ? $"Wooden Chest ({PositionWord(index)})" : "Wooden Chest", "chest",
+        var poi = new ChestPointOfInterest(
+            total > 1 ? $"Wooden Chest ({PositionWord(index)})" : "Wooden Chest",
             new() { "A sturdy chest with a hasp lock, sitting at the foot of the bed" },
             moods: new[] { "battered", "solid", "quiet", "closed" }) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "whittlecraft" } };
         poi.Items.AddRange(PickFromPool(rng, ChestPool(), 0, 2));
@@ -404,19 +434,19 @@ public static class BuildingRooms
         _ => $"no. {index + 1}",
     };
 
-    private static PointOfInterest BuildCandleStand() => new(
-        displayName: "Candle Stand", referenceLemma: "candle",
+    private static PointOfInterest BuildCandleStand() => new CandlePointOfInterest(
+        displayName: "Candle Stand",
         descriptions: new() { "A tall wooden post with an iron spike for a candle, black with old wax" },
         items: new() { new ItemElement(new Candle()) },
-        moods: new[] { "dim", "waxy", "quiet", "old" }) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "firecraft", ["smell"] = "scenting" } };
+        moods: new[] { "dim", "waxy", "quiet", "old" }) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "firecraft", ["smell"] = "smoke_reading" } };
 
-    private static PointOfInterest BuildSpinningWheel() => new(
-        displayName: "Spinning Wheel", referenceLemma: "wheel",
+    private static PointOfInterest BuildSpinningWheel() => new WheelPointOfInterest(
+        displayName: "Spinning Wheel",
         descriptions: new() { "A worn wooden spinning wheel in the corner, the spindle dusty from disuse" },
-        moods: new[] { "quiet", "worn", "still", "dusty", "old" }) { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "threadwork", ["listen"] = "keen_ear" } };
+        moods: new[] { "quiet", "worn", "still", "dusty", "old" }) { Senses = new SensoryProfile(Examine: true, Contemplate: true, Listen: true), VerbModiMentis = new Dictionary<string, string> { ["examine"] = "threadwork", ["listen"] = "forge_ear", ["contemplate"] = "journeyman_eye" } };
 
-    private static PointOfInterest BuildRushMat() => new(
-        displayName: "Rush Mat", referenceLemma: "mat",
+    private static PointOfInterest BuildRushMat() => new MatPointOfInterest(
+        displayName: "Rush Mat",
         descriptions: new() { "A woven mat of dried rushes by the door, muddy at the edges" },
         moods: new[] { "flat", "earthy", "dry", "worn" }) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "knotwork" } };
 
@@ -424,46 +454,46 @@ public static class BuildingRooms
     {
         var items = new List<ItemElement> { new(new Herb()) };
         if (rng.NextDouble() < 0.50) items.Add(new(new Onion()));
-        return new PointOfInterest("Hanging Herbs", "herb",
+        return new HerbPointOfInterest("Hanging Herbs",
             new() { "Bundles of dried herbs and roots strung from a rafter, rustling in the draught" },
-            items, new[] { "fragrant", "dim", "rustic", "dry", "dangling" }) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore", ["smell"] = "scenting", ["contemplate"] = "aesthetic" } };
+            items, new[] { "fragrant", "dim", "rustic", "dry", "dangling" }) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore", ["smell"] = "apothecary_nose", ["contemplate"] = "aesthetic" } };
     }
 
     private static PointOfInterest BuildSaltingBarrel(Random rng)
     {
         var items = new List<ItemElement> { new(new DriedMeat()) };
         if (rng.NextDouble() < 0.50) items.Add(new(new Tallow()));
-        return new PointOfInterest("Salting Barrel", "barrel",
+        return new BarrelPointOfInterest("Salting Barrel",
             new() { "A wide barrel of dark brine in which cuts of meat are preserved" },
-            items, new[] { "pungent", "dim", "dark", "heavy", "close" }) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "cellarcraft", ["smell"] = "scenting" } };
+            items, new[] { "pungent", "dim", "dark", "heavy", "close" }) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "cellarcraft", ["smell"] = "bouquet" } };
     }
 
-    private static PointOfInterest BuildMortarAndPestle() => new(
-        displayName: "Mortar and Pestle", referenceLemma: "mortar",
+    private static PointOfInterest BuildMortarAndPestle() => new MortarPointOfInterest(
+        displayName: "Mortar and Pestle",
         descriptions: new() { "A heavy stone mortar and pestle, stained dark with ground herbs and spices" },
-        moods: new[] { "heavy", "old", "stained", "solid" }) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore", ["smell"] = "scenting" } };
+        moods: new[] { "heavy", "old", "stained", "solid" }) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore", ["smell"] = "apothecary_nose" } };
 
     private static PointOfInterest BuildButcherBlock(Random rng)
     {
         var items = new List<ItemElement>();
         if (rng.NextDouble() < 0.40) items.Add(new(new Knife()));
-        return new PointOfInterest("Butcher Block", "block",
+        return new BlockPointOfInterest("Butcher Block",
             new() { "A thick scarred chopping block of end-grain wood, stained dark" },
             items, new[] { "scarred", "heavy", "dark", "old", "solid" }) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "butchery" } };
     }
 
-    private static PointOfInterest BuildWashstand() => new(
-        displayName: "Washstand", referenceLemma: "washstand",
+    private static PointOfInterest BuildWashstand() => new WashstandPointOfInterest(
+        displayName: "Washstand",
         descriptions: new() { "A low wooden stand holding a clay basin and ewer for washing" },
         moods: new[] { "low", "plain", "cold", "damp", "sparse" }) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "grooming" } };
 
-    private static PointOfInterest BuildChamberPot() => new(
-        displayName: "Chamber Pot", referenceLemma: "pot",
+    private static PointOfInterest BuildChamberPot() => new PotPointOfInterest(
+        displayName: "Chamber Pot",
         descriptions: new() { "A glazed clay chamber pot tucked under the bed" },
-        moods: new[] { "plain", "utilitarian", "dim", "quiet" }) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "peasantry", ["smell"] = "scenting" } };
+        moods: new[] { "plain", "utilitarian", "dim", "quiet" }) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "peasantry", ["smell"] = "taint_sense" } };
 
-    private static PointOfInterest BuildPrayerStool() => new(
-        displayName: "Prayer Stool", referenceLemma: "stool",
+    private static PointOfInterest BuildPrayerStool() => new StoolPointOfInterest(
+        displayName: "Prayer Stool",
         descriptions: new() { "A simple kneeling stool worn smooth in the middle from long use" },
         moods: new[] { "quiet", "worn", "plain", "still", "humble" }) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "iconography", ["contemplate"] = "meditation" } };
 
@@ -472,14 +502,14 @@ public static class BuildingRooms
         var items = new List<ItemElement>();
         if (rng.NextDouble() < 0.60) items.Add(new(new WoolCloak()));
         if (rng.NextDouble() < 0.50) items.Add(new(new LinenTunic()));
-        return new PointOfInterest("Clothes Pegs", "peg",
+        return new PegPointOfInterest("Clothes Pegs",
             new() { "A row of wooden pegs hammered into the wall for hanging clothes" },
             items, new[] { "plain", "bare", "utilitarian", "dim" }) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "threadwork" } };
     }
 
-    private static PointOfInterest BuildRushLight() => new(
-        displayName: "Rush Light", referenceLemma: "light",
+    private static PointOfInterest BuildRushLight() => new LightPointOfInterest(
+        displayName: "Rush Light",
         descriptions: new() { "A tallow rush-light on an iron spike, the wick pinched and black" },
         items: new() { new ItemElement(new Candle()) },
-        moods: new[] { "dim", "sooty", "cold", "plain" }) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "firecraft", ["smell"] = "scenting" } };
+        moods: new[] { "dim", "sooty", "cold", "plain" }) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "firecraft", ["smell"] = "smoke_reading" } };
 }

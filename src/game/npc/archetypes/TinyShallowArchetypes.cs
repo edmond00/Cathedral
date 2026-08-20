@@ -26,6 +26,23 @@ public abstract class TinyShallowArchetype : ShallowNpcArchetype
     public override bool IsTiny => true;
 
     /// <summary>
+    /// Small enough that a close look and a long look are all it offers. The two that make a noise
+    /// (cricket, bee) widen this themselves; nothing this size is worth smelling.
+    /// </summary>
+    public override SensoryProfile Senses => new(Examine: true, Contemplate: true);
+
+    /// <summary>The naturalist's lessons rather than the object ones: this is a life, not a mechanism.</summary>
+    public override System.Collections.Generic.IReadOnlyDictionary<string, string>? VerbModiMentis
+        => TinyCreatureSenses;
+
+    /// <summary><see cref="NpcArchetype.CreatureSenses"/> without the smell, which nothing this small has.</summary>
+    private static readonly System.Collections.Generic.Dictionary<string, string> TinyCreatureSenses = new()
+    {
+        ["examine"]     = "creature_lore",
+        ["contemplate"] = "fellow_feeling",
+    };
+
+    /// <summary>
     /// A tiny creature leaves no body worth crossing a room for, so it leaves none at all: an empty
     /// list, and nothing is added to the area. Stepping on a beetle does not furnish a room with a
     /// carcass, and an empty corpse PoI would be an observation offering only IGNORE.
@@ -101,6 +118,9 @@ public class CockroachArchetype : TinyShallowArchetype
 
 public class CricketArchetype : TinyShallowArchetype
 {
+    /// <summary>One of the two tiny things with a voice: audible as well as visible.</summary>
+    public override SensoryProfile Senses => new(Examine: true, Contemplate: true, Listen: true);
+
     public override string ArchetypeId     => "cricket";
     public override string TypeDisplayName => "Cricket";
     protected override string ComposeObservationHint(Random rng, string nodeContext) => Compose(rng,
@@ -113,6 +133,9 @@ public class CricketArchetype : TinyShallowArchetype
 
 public class BeeArchetype : TinyShallowArchetype
 {
+    /// <summary>One of the two tiny things with a voice: audible as well as visible.</summary>
+    public override SensoryProfile Senses => new(Examine: true, Contemplate: true, Listen: true);
+
     public override string ArchetypeId     => "bee";
     public override string TypeDisplayName => "Bee";
     protected override string ComposeObservationHint(Random rng, string nodeContext) => Compose(rng,

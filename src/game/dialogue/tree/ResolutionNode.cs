@@ -69,10 +69,12 @@ public class ResolutionNode : DialogueNode
         string         failureReplica,
         string         failureReplicaIndirect,
         ResolutionMode mode = ResolutionMode.DiceCheck,
-        string?        topic = null)
+        string?        topic = null,
+        params System.Type[] lessons)
         : base(nodeId)
     {
         Topic                  = topic;
+        Lessons                = lessons ?? System.Array.Empty<System.Type>();
         Difficulty             = System.Math.Max(1, difficulty);
         SuccessReplica         = successReplica;
         SuccessReplicaIndirect = successReplicaIndirect;
@@ -90,4 +92,18 @@ public class ResolutionNode : DialogueNode
     /// cannot know which branch was walked without being told.</para>
     /// </summary>
     public string? Topic { get; }
+
+    /// <summary>
+    /// What <b>this branch</b> teaches, as modus mentis types — <c>typeof(CondolenceModusMentis)</c>.
+    ///
+    /// <para>The branch is the unit that knows what a conversation was about, and until this existed
+    /// nothing could say so: a tree could only infer it from <see cref="Difficulty"/>, which is
+    /// derived from depth by a ladder that produces 1, 2 or 3. Fifty-eight authored endings of
+    /// STRENGTHEN RELATIONSHIP collapsed into two buckets, so a branch about a dead wife and one
+    /// about the harvest taught the same thing.</para>
+    ///
+    /// <para>Types rather than ids, so a lesson that does not exist fails to compile. Empty on every
+    /// branch nobody has written a lesson for, which falls through to whatever the tree grants.</para>
+    /// </summary>
+    public System.Collections.Generic.IReadOnlyList<System.Type> Lessons { get; }
 }

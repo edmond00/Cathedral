@@ -5,6 +5,8 @@ using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Npc;
 using Cathedral.Game.Scene.Building;
 
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
@@ -17,6 +19,7 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public class TrackVerb : Verb
 {
+
     public override string VerbId         => "track";
     public override string DisplayName    => "Track";
     public override int    BaseDifficulty => 3;
@@ -24,8 +27,9 @@ public class TrackVerb : Verb
     /// <summary>Reading sign off the ground - perception, and so of a piece with the senses. What finds a trail is an eye and a memory for what a print means.</summary>
     public override ToolUsage ToolUse => ToolUsage.Excluded;
 
-    /// <summary>What a success teaches: reading sign, and what it says about where something went.</summary>
-    public override string? GrantedModusMentisId(Element? target) => "spoor_reading";
+    /// <summary>A beast tracks by nose, a person by sign. Beast first: spoor_reading names a snout, and spoor_eye names eyes and anamnesis, which a beast also owns — so the other order would take the beast's own lesson away from it.</summary>
+    public override IReadOnlyList<string> GrantedModusMentisIds(Element? target)
+        => new[] { "spoor_reading", "spoor_eye" };
 
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
         => Destination(scene, pov, target) != null;
@@ -80,6 +84,7 @@ public class TrackVerb : Verb
 /// </summary>
 public class StalkVerb : Verb
 {
+
     public override string VerbId         => "stalk";
     public override string DisplayName    => "Stalk";
     public override int    BaseDifficulty => 4;

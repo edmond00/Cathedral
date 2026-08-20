@@ -45,8 +45,17 @@ public static class LocationTravelModeLauncher
             Flags = ContextFlags.Default,
             API = ContextAPI.OpenGL,
             APIVersion = new Version(3, 3),
-            WindowBorder = WindowBorder.Resizable
+            WindowBorder = WindowBorder.Resizable,
+
+            // --hidden: the window is created and never mapped. The GL context exists, so every
+            // renderer runs as it always does; what is gone is the window on screen and the focus it
+            // takes. See Config.Debug.HiddenWindow for why this rather than minimising.
+            StartVisible = !Cathedral.Config.Debug.HiddenWindow,
+            StartFocused = !Cathedral.Config.Debug.HiddenWindow
         };
+
+        if (Cathedral.Config.Debug.HiddenWindow)
+            Console.WriteLine("Window: hidden (--hidden) — created but never shown; rendering runs as normal.");
 
         using var core = new GlyphSphereCore(GameWindowSettings.Default, native, camera);
         var microworldInterface = new MicroworldInterface(core);

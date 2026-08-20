@@ -419,13 +419,79 @@ public abstract class Verb
     public virtual string? GrantedModusMentisId(Element? target) => null;
 
     /// <summary>
-    /// The modus mentis actually taught by this verb against <paramref name="target"/>: the target's
-    /// per-verb override when it has one, otherwise <see cref="GrantedModusMentisId"/>.
+    /// Every lesson this verb could teach for <paramref name="target"/>, <b>most restrictive first</b>
+    /// — the ordered candidate list <see cref="ResolveGrantedModusMentisId"/> walks until it finds one
+    /// the acting body can hold. Defaults to the single <see cref="GrantedModusMentisId"/>.
+    ///
+    /// <para>This exists because climbing, digging, smelling, tracking and catching are done by both
+    /// anatomies and are not the <i>same lesson</i> for both: a beast clambers with claws and a person
+    /// scales with arms, and neither modus mentis names an organ the other owns. Declaring one id
+    /// meant one of the two learned nothing at all — which is what the game shipped, for ten verbs,
+    /// with only a log line to say so.</para>
+    ///
+    /// <para><b>Order beast before human.</b> A beast's lesson names a beast organ, so a human cannot
+    /// hold it and falls through; a human's lesson often names organs a beast also owns (eyes,
+    /// anamnesis), so putting it first would take the beast's own lesson away from it.</para>
     /// </summary>
-    public string? ResolveGrantedModusMentisId(Element? target)
-        => (target as IVerbModusMentisSource)?.ModusMentisFor(VerbId)
-           ?? GrantedModusMentisId(target);
+    public virtual IReadOnlyList<string> GrantedModusMentisIds(Element? target)
+        => GrantedModusMentisId(target) is { } id ? new[] { id } : System.Array.Empty<string>();
 
+    /// <summary>
+    /// Every lesson this act could teach here, <b>most specific first</b>. The base walks the list
+    /// and grants the first one the acting body can hold.
+    ///
+    /// <para>This is the only place a verb says what it teaches. It replaced a pair of methods — a
+    /// contextual one that could return null to "fall through" to a separate default — and the pair
+    /// was the bug: nine verbs ended a chain with an unconditional answer, and their own defaults
+    /// became unreachable while both audits went on reporting them as reachable. With one method the
+    /// default is the last line you read, so a shadowed default is visible rather than inferable.</para>
+    ///
+    /// <para>Override to add cases, and <b>end with <c>base.Lessons(ctx)</c></b>, which yields what
+    /// the target itself declares and then the verb's own default:</para>
+    /// <code>
+    /// public override IEnumerable&lt;ModusMentis&gt; Lessons(LessonContext ctx)
+    /// {
+    ///     if (ctx.Night) yield return Mm&lt;MoonwaterModusMentis&gt;();
+    ///     foreach (var m in base.Lessons(ctx)) yield return m;   // natation
+    /// }
+    /// </code>
+    ///
+    /// <para>Two rules for what goes here. <b>A specific verb teaches its own act</b> — swimming
+    /// teaches swimming, and the broad dispositions (resolve, recklessness, nerve) belong to the
+    /// general verbs like MOVE, or to a conversation. And <b>the body's injuries are not consulted</b>:
+    /// a lesson is what the act was, not what state the actor happened to be in.</para>
+    /// </summary>
+    public virtual IEnumerable<ModusMentis> Lessons(LessonContext ctx)
+    {
+        var declared = (ctx.Target as IVerbModusMentisSource)?.ModusMentisFor(VerbId);
+        if (declared != null)
+        {
+            var mm = ModusMentisRegistry.Instance.GetModusMentis(declared);
+            if (mm != null) yield return mm;
+        }
+
+        foreach (var id in GrantedModusMentisIds(ctx.Target))
+        {
+            var mm = ModusMentisRegistry.Instance.GetModusMentis(id);
+            if (mm != null) yield return mm;
+        }
+    }
+
+    /// <summary>The registered template for a modus mentis, by type — compile-checked, so a lesson
+    /// cannot be misspelt into silence the way a string id could.</summary>
+    protected static ModusMentis Mm<T>() where T : ModusMentis, new()
+        => ModusMentisRegistry.Instance.GetModusMentis(typeof(T)) ?? new T();
+
+    /// <summary>
+    /// The one lesson this action teaches: the first candidate the acting body can hold.
+    /// Sealed — the order is the design, and it lives in <see cref="Lessons"/> where it can be read.
+    /// </summary>
+    public ModusMentis? ResolveLesson(LessonContext ctx)
+    {
+        foreach (var mm in Lessons(ctx))
+            if (ctx.Actor == null || ModusMentisAnatomy.IsLearnableBy(mm, ctx.Actor)) return mm;
+        return null;
+    }
     // ── Failure penalties ──────────────────────────────────────────────────────
     // Replaces the former LLM failure-outcome critic tree: instead of asking the critic which body
     // part is wounded, each verb declares the injuries a failure can cause and one is sampled.

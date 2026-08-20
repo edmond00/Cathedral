@@ -30,9 +30,8 @@ public sealed class ReminescenceSceneFactory : SceneFactory
     {
         // The reminescence "place" is not a real location — the area display name is shown
         // to the player as "Reminescence" and POIs are read as fragments.
-        var area = new Area(
+        var area = new MemoryArea(
             displayName:           "Reminescence",
-            referenceLemma:        "memory",
             contextDescription:    "remembering fragments of your childhood",
             transitionDescription: "drift back into the memory",
             descriptions:          new List<string>(_data.ContentLines),

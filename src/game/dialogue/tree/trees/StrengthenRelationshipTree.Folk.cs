@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Dialogue.Tree.Trees;
 
 /// <summary>
@@ -26,7 +28,8 @@ public partial class StrengthenRelationshipTree
                 "There is not. And it is a rare person who says so without wanting something. Good day to you.",
                 "I tell {you:name} few say so without wanting something, and bid them good day.",
                 "Everyone praises work they would never do themselves.",
-                "I tell {you:name} everyone praises work they would never do.")),
+                "I tell {you:name} everyone praises work they would never do.",
+                typeof(JourneymanEyeModusMentis))),
 
         new PlayerOption("work_ask_hardest", "ask what the hardest part of it is",
             "What is the worst part of it, honestly?",
@@ -51,7 +54,8 @@ public partial class StrengthenRelationshipTree
                 "Every winter. Then spring comes and my hands start before I have decided anything. I have said too much.",
                 "I admit I do every winter, and that come spring my hands start before I have decided anything.",
                 "And do what? That is a question for people with choices.",
-                "I ask {you:name} what else I would do, since that is a question for people with choices.")),
+                "I ask {you:name} what else I would do, since that is a question for people with choices.",
+                typeof(DiligenceModusMentis))),
 
         new PlayerOption("work_say_seen", "say you had not thought about it that way",
             "I had not thought of the not-ending as the hard part.",
@@ -75,7 +79,8 @@ public partial class StrengthenRelationshipTree
                 "Come by {npc:workplace} and I will. Nobody has ever asked before.",
                 "I tell {you:name} to come by {npc:workplace}, and that nobody has ever asked before.",
                 "It is not for showing off. Look about you and you will walk past it.",
-                "I tell {you:name} it is not for showing off, and they will walk past it.")),
+                "I tell {you:name} it is not for showing off, and they will walk past it.",
+                typeof(HardLaborModusMentis))),
 
         new PlayerOption("work_ask_taught", "ask who taught them",
             "Who taught you to do it that well?",
@@ -84,7 +89,8 @@ public partial class StrengthenRelationshipTree
                 "Someone who is dead now, and who never had a kind word for my work. I still hear them.",
                 "I tell {you:name} it was someone dead now who never had a kind word for my work.",
                 "That is mine. I will not hand it over for the asking.",
-                "I tell {you:name} that is mine and I will not hand it over for the asking.")));
+                "I tell {you:name} that is mine and I will not hand it over for the asking.",
+                typeof(ObedienceModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  Beasts — rich
@@ -103,7 +109,8 @@ public partial class StrengthenRelationshipTree
                 "No, they do not. I think you and I will get on.",
                 "I tell {you:name} I think we will get on.",
                 "They bite, they kick and they run off. Do not make them into something they are not.",
-                "I tell {you:name} they bite and kick and run off, and not to make them into something else.")),
+                "I tell {you:name} they bite and kick and run off, and not to make them into something else.",
+                typeof(BeastSenseModusMentis))),
 
         new PlayerOption("beasts_ask_favourite", "ask whether there is one they are fond of",
             "Is there one of them you are fond of? There usually is.",
@@ -128,7 +135,8 @@ public partial class StrengthenRelationshipTree
                 "The old one, that should have died last winter and did not. I have kept it going out of stubbornness.",
                 "I tell {you:name} it is the old one that should have died last winter, kept going out of stubbornness.",
                 "No. Some things stay mine.",
-                "I tell {you:name} some things stay mine.")),
+                "I tell {you:name} some things stay mine.",
+                typeof(HusbandryModusMentis))),
 
         new PlayerOption("beasts_let_be", "let them keep it to themselves",
             "Then I will not ask which. Some things are yours.",
@@ -137,7 +145,8 @@ public partial class StrengthenRelationshipTree
                 "You are the first to leave a thing alone when I asked. That is worth more than the answer.",
                 "I tell {you:name} they are the first to leave a thing alone when I asked.",
                 "Then there is nothing more to say.",
-                "I tell {you:name} there is nothing more to say, then.")));
+                "I tell {you:name} there is nothing more to say, then.",
+                typeof(FellowFeelingModusMentis))));
 
     private static NpcLineNode BeastsTrouble() => new(
         nodeId:          "beasts_trouble",
@@ -152,7 +161,8 @@ public partial class StrengthenRelationshipTree
                 "They do. Forty years and they are still ahead of me. Good to laugh about it with someone.",
                 "I tell {you:name} forty years on they are still ahead of me, and that it is good to laugh about it.",
                 "It is not a joke when it is your year they are ruining.",
-                "I tell {you:name} it is not a joke when it is your year they are ruining.")),
+                "I tell {you:name} it is not a joke when it is your year they are ruining.",
+                typeof(CreatureLoreModusMentis))),
 
         new PlayerOption("beasts_ask_loss", "ask whether they have lost many",
             "Have you lost many of them over the years?",
@@ -161,7 +171,8 @@ public partial class StrengthenRelationshipTree
                 "Enough that I stopped naming them, and then started again, because not naming them did not help.",
                 "I tell {you:name} I stopped naming them, then started again because it did not help.",
                 "That is a cold thing to ask. Every one of them cost me.",
-                "I tell {you:name} that is a cold thing to ask, and every one of them cost me.")));
+                "I tell {you:name} that is a cold thing to ask, and every one of them cost me.",
+                typeof(ElegyModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  Wilds — deep
@@ -180,7 +191,8 @@ public partial class StrengthenRelationshipTree
                 "It is. Most people here have never gone and never wondered. You wondered.",
                 "I tell {you:name} most here have never gone and never wondered, but they wondered.",
                 "It is trees and weather. You are making more of it than there is.",
-                "I tell {you:name} it is trees and weather.")),
+                "I tell {you:name} it is trees and weather.",
+                typeof(BushcraftModusMentis))),
 
         new PlayerOption("wilds_ask_far", "ask how far out they have been",
             "How far out have you actually gone?",
@@ -205,7 +217,8 @@ public partial class StrengthenRelationshipTree
                 "Because both times I came home wanting to go further, and I have a household. That is reason enough.",
                 "I tell {you:name} both times I came home wanting to go further, and that I have a household.",
                 "Because I am not a fool. I had hoped you were not either.",
-                "I tell {you:name} it is because I am not a fool, and I had hoped they were not either.")),
+                "I tell {you:name} it is because I am not a fool, and I had hoped they were not either.",
+                typeof(DreadModusMentis))),
 
         new PlayerOption("wilds_offer_go", "offer to walk out that way together sometime",
             "Then walk out that way with me sometime. Two can go further than one.",
@@ -214,7 +227,8 @@ public partial class StrengthenRelationshipTree
                 "Ask me again when the work is slack. I might say yes, and that unsettles me.",
                 "I tell {you:name} to ask again when the work is slack, and that I might say yes.",
                 "With you? I have known you five minutes.",
-                "I tell {you:name} I have known them five minutes.")));
+                "I tell {you:name} I have known them five minutes.",
+                typeof(SurvivalismModusMentis))));
 
     private static NpcLineNode WildsStories() => new(
         nodeId:          "wilds_stories",
@@ -229,7 +243,8 @@ public partial class StrengthenRelationshipTree
                 "There is a track out there older than any village, and it goes somewhere nobody living has been. That is the tame version.",
                 "I tell {you:name} there is a track out there older than any village that goes where nobody living has been.",
                 "You will get none of them from me. Ask the children, they will tell you anything.",
-                "I tell {you:name} to ask the children, who will tell them anything.")),
+                "I tell {you:name} to ask the children, who will tell them anything.",
+                typeof(CautionModusMentis))),
 
         new PlayerOption("wilds_ask_night", "ask for one of the ones told after dark",
             "And the ones nobody tells in daylight?",
@@ -249,7 +264,8 @@ public partial class StrengthenRelationshipTree
                 "Then come after dark, bring nothing to drink, and I will tell you what my father saw. You would be the third to hear it.",
                 "I tell {you:name} to come after dark, and that they would be the third person to hear what my father saw.",
                 "Everyone says that, and then it is round the village by the week's end.",
-                "I tell {you:name} it would be round the village by the week's end.")),
+                "I tell {you:name} it would be round the village by the week's end.",
+                typeof(SuperstitionModusMentis))),
 
         new PlayerOption("wilds_wait", "say you will wait until they trust you enough",
             "Then I will wait until you trust me. It will keep.",
@@ -258,7 +274,8 @@ public partial class StrengthenRelationshipTree
                 "That was the right answer. You will hear it, though not today.",
                 "I tell {you:name} that was the right answer, and that they will hear it, though not today.",
                 "You will be waiting a long time.",
-                "I tell {you:name} they will be waiting a long time.")));
+                "I tell {you:name} they will be waiting a long time.",
+                typeof(InstinctModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  Neighbours — short
@@ -277,7 +294,8 @@ public partial class StrengthenRelationshipTree
                 "It is. People are people wherever you put them. Farewell.",
                 "I tell {you:name} people are people wherever you put them, and bid them farewell.",
                 "Then you have not been paying attention. This place is not like others.",
-                "I tell {you:name} they have not been paying attention.")),
+                "I tell {you:name} they have not been paying attention.",
+                typeof(StreetwiseModusMentis))),
 
         new PlayerOption("neighbours_ask_quarrel", "ask whether there is a quarrel running",
             "Is there a quarrel running that I should know about?",
@@ -291,7 +309,8 @@ public partial class StrengthenRelationshipTree
                 "That is a rarer answer than you would think, and a better one. I will remember it.",
                 "I tell {you:name} that is a rarer answer than they would think, and that I will remember it.",
                 "Then why did you ask?",
-                "I ask {you:name} why they asked, then.")));
+                "I ask {you:name} why they asked, then.",
+                typeof(CourtesyModusMentis))));
 
     private static NpcLineNode NeighboursQuarrel() => new(
         nodeId:          "neighbours_quarrel",
@@ -306,7 +325,8 @@ public partial class StrengthenRelationshipTree
                 "Neither, aloud. Both, depending who is asking. That is how a person survives a small place.",
                 "I tell {you:name} it is neither aloud and both depending who asks, and that this is how a person survives here.",
                 "That is exactly the question that starts a third quarrel. No.",
-                "I tell {you:name} that is the question that starts a third quarrel.")),
+                "I tell {you:name} that is the question that starts a third quarrel.",
+                typeof(GrudgekeepingModusMentis))),
 
         new PlayerOption("neighbours_ask_mend", "ask whether it could be mended",
             "Could it be mended, do you think? By someone from outside it?",
@@ -315,5 +335,6 @@ public partial class StrengthenRelationshipTree
                 "Perhaps. Nobody has tried in twenty years. It would take someone with nothing to lose by it.",
                 "I tell {you:name} nobody has tried in twenty years, and it would take someone with nothing to lose.",
                 "By an outsider? That is the fastest way to make it worse. Leave it alone.",
-                "I tell {you:name} an outsider is the fastest way to make it worse.")));
+                "I tell {you:name} an outsider is the fastest way to make it worse.",
+                typeof(IntercessionModusMentis))));
 }

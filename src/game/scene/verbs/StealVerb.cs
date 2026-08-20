@@ -3,6 +3,8 @@ using System.Linq;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Npc.Corpse;
 
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
@@ -12,6 +14,7 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public class StealVerb : Verb
 {
+
     public override string VerbId         => "steal";
     public override string DisplayName    => "Steal";
     public override int    BaseDifficulty => 3;

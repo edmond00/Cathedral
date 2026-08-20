@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Scene.Building;
 
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
@@ -12,6 +14,12 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public class UnlockDoorVerb : Verb
 {
+    /// <summary>Understanding the mechanism, as against merely defeating it.</summary>
+    public override IEnumerable<ModusMentis> Lessons(LessonContext ctx)
+    {
+        // The target's own declaration, then this verb's default — always last, always visible.
+        foreach (var m in base.Lessons(ctx)) yield return m;
+    }
     public override string VerbId         => "unlock_door";
     public override string DisplayName    => "Unlock";
     public override int    BaseDifficulty => 3;

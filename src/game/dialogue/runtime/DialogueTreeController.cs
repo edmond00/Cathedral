@@ -715,7 +715,7 @@ public class DialogueTreeController
                     // The tree's own lesson, plus any the branch decided — see
                     // DialogueTree.AdditionalGrantedModusMentisIds.
                     var taught = new List<string?> { _tree.GrantedModusMentisId };
-                    taught.AddRange(_tree.AdditionalGrantedModusMentisIds(_npc, resolution));
+                    taught.AddRange(_tree.LessonsFor(_npc, resolution));
 
                     foreach (var id in taught.Distinct())
                     {

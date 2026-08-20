@@ -4,6 +4,8 @@ using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Npc;
 
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
@@ -46,12 +48,17 @@ public abstract class TinyCreatureVerb : Verb
 /// </summary>
 public class CatchVerb : TinyCreatureVerb
 {
+
     public override string VerbId         => "catch";
     public override string DisplayName    => "Catch";
     public override int    BaseDifficulty => 3;
 
-    /// <summary>What a success teaches: holding something alive without crushing it.</summary>
-    public override string? GrantedModusMentisId(Element? target) => "soft_mouth";
+    /// <summary>
+    /// What a success teaches: holding something alive without crushing it — in a mouth or in a hand.
+    /// Beast first, since soft_mouth names a muzzle and snatch names hands.
+    /// </summary>
+    public override IReadOnlyList<string> GrantedModusMentisIds(Element? target)
+        => new[] { "soft_mouth", "snatch" };
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"catch the {TinyName(target)} in my hands";
@@ -88,6 +95,13 @@ public class CatchVerb : TinyCreatureVerb
 /// </summary>
 public class CrushVerb : TinyCreatureVerb
 {
+    /// <summary>What lives closest to people, and what its numbers say about the house.</summary>
+    public override IEnumerable<ModusMentis> Lessons(LessonContext ctx)
+    {
+        if (ctx.Target is SceneNpc { Entity.Archetype: Npc.Archetypes.RatArchetype or Npc.Archetypes.HouseMouseArchetype or Npc.Archetypes.CockroachArchetype }) yield return Mm<RatcatcherModusMentis>();
+        // The target's own declaration, then this verb's default — always last, always visible.
+        foreach (var m in base.Lessons(ctx)) yield return m;
+    }
     public override string VerbId         => "crush";
     public override string DisplayName    => "Crush";
     public override int    BaseDifficulty => 1;

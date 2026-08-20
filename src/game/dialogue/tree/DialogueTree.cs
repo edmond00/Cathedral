@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Npc;
 
@@ -139,8 +140,30 @@ public abstract class DialogueTree
     /// who you asked: the general skill of getting somebody to talk is the same every time, and the
     /// substance of what they told you is not.</para>
     /// </summary>
-    public virtual IEnumerable<string> AdditionalGrantedModusMentisIds(NpcEntity npc, ResolutionNode resolution)
-        => System.Array.Empty<string>();
+    protected virtual IEnumerable<string> AdditionalGrantedModusMentisIds(NpcEntity npc, ResolutionNode resolution)
+        => System.Linq.Enumerable.Empty<string>();
+
+    /// <summary>
+    /// Everything this resolution teaches beyond <see cref="GrantedModusMentisId"/>: the branch's own
+    /// lessons (<see cref="ResolutionNode.Lessons"/>) followed by whatever the tree adds from the
+    /// person being spoken to.
+    ///
+    /// <para><b>Not virtual, and that is the point.</b> The branch lessons used to be yielded by the
+    /// base implementation of <see cref="AdditionalGrantedModusMentisIds"/>, so a tree that overrode
+    /// it without calling <c>base</c> silently taught none of them — four of the thirteen trees were
+    /// in exactly that state, with every authored branch lesson dropped and nothing to say so. An
+    /// override can now only <i>add</i>.</para>
+    /// </summary>
+    public IEnumerable<string> LessonsFor(NpcEntity npc, ResolutionNode resolution)
+    {
+        foreach (var type in resolution.Lessons)
+        {
+            var id = (System.Activator.CreateInstance(type) as Narrative.ModusMentis)?.ModusMentisId;
+            if (id != null) yield return id;
+        }
+
+        foreach (var id in AdditionalGrantedModusMentisIds(npc, resolution)) yield return id;
+    }
 
     /// <summary>
     /// Returns whether this tree can be started given the NPC's current affinity

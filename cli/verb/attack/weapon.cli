@@ -57,7 +57,7 @@ expect First blow: Chop
 expect Modus mentis learned: Battlecraft
 
 # And it landed on him like any other first blow.
-expect-state npcs brewer alive=True affinity=Stranger enemy=False hp=4/5 wounds=1
+expect-state npcs brewer alive=True affinity=Stranger enemy=False hp=5/6 wounds=1
 
 click button
 wait mode Fighting 60

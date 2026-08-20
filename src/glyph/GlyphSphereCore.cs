@@ -327,6 +327,15 @@ namespace Cathedral.Glyph
         protected override void OnLoad()
         {
             base.OnLoad();
+
+            // --hidden: take the window back off the screen. StartVisible=false is NOT sufficient
+            // on its own — OpenTK maps the window during Run() whatever the setting said — so it is
+            // hidden again here, once, at the first point where the window is known to exist.
+            if (Cathedral.Config.Debug.HiddenWindow)
+            {
+                IsVisible = false;
+                Console.WriteLine("Window: hidden after load (--hidden).");
+            }
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
