@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -12,7 +13,7 @@ public class CuriosityModusMentis : ModusMentis
     public override string MenuDescription =>
         "Cannot leave a closed thing closed. Opens, looks in, goes round the back, and asks the question everyone else decided not to. The engine of most discoveries and a fair number of disasters.";
     public override string SkillMeans       => "the need to find out what is behind it";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "encephalon" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
@@ -21,6 +22,13 @@ public class CuriosityModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone already opening the thing everyone agreed to leave alone";
     public override string StyleInstruction =>
         "Lead with the question and follow with the hand - the lid lifted before the risk is finished being assessed.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(DoorUnlockOutcome), () => new VoluptasHumor()),
+        new(typeof(ModusMentisGrantOutcome), () => new LaetitiaHumor()),
+        new(typeof(SkillAcquisitionOutcome), () => new LaetitiaHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of CURIOSITY, and your hand is already on it.
 

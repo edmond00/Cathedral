@@ -1,4 +1,6 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
+using Cathedral.Game.Dialogue.Tree;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -12,7 +14,7 @@ public class MercyModusMentis : ModusMentis
     public override string MenuDescription =>
         "Stops short of what is permitted: spares the beaten, lets the cornered thing go, declines the last blow that nobody would have blamed. A choice made at the exact moment it is most expensive.";
     public override string SkillMeans       => "the stopping short of what is allowed";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "heart", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
@@ -23,6 +25,13 @@ public class MercyModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who lets it go when nobody would have blamed them for not";
     public override string StyleInstruction =>
         "The pause at the decisive moment - the lowered hand, the step back, the short reason given.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(FirstBlowOutcome), () => new PudorHumor()),
+        new(typeof(NpcSlaynOutcome), () => new PudorHumor()),
+        new(typeof(ClearEnemyOutcome), () => new ZenHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of MERCY, and it is not softness, because softness is easy and this is not.
 

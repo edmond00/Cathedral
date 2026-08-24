@@ -1,0 +1,68 @@
+# emotion — the outcome, not the verb.
+#
+# Copied from cli/outcome/coin_grant/success.cli, which is a known-good pickpocket run, and changed
+# in exactly three ways: --grant-mm avarice makes the disposition present (the starting kit is
+# random, so without it whether the protagonist HOLDS an emotion modus mentis is a coin flip), one
+# extra `advance` drains the emotion's own preview part, and the assertions read the spleen.
+#
+# What it proves, and why each half is needed: `expect-outcome emotion` says the emotion really ran
+# (its chip is coloured from the humor's vital heat and carries a count, so scanning the screen for
+# one would be asserting a rendering); `inspect humors` says the spleen actually moved, which is the
+# only thing that distinguishes a chip from a change. The spleen starts pure Blood at creation, so
+# any other humor name in the spleen line is the emotion having landed.
+#
+# It does NOT assert WHICH humor. The protagonist may hold more than one disposition that answers a
+# coin — greed and thrift both do — and the resolver samples one of the matches, so the humor is
+# seed-stable but not scenario-stable, and pinning it would break the day the starting kit changes.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Hall" --period dawn --observe-only "brewer" --grant-mm avarice
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# --- before ---
+# Creation fills the queues by SECRETION (blood / phlegm / yellow bile, plus seeded juvenescence), so
+# the spleen is not empty - what it has none of is a mind state, and that is the assertion.
+inspect humors
+expect-no-state humors Voluptas
+
+strategy succeed
+goal pickpocket
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+# The emotional coda is a preview part of its own, so it needs its own press. `advance` settles and
+# drains whatever is up, which is a no-op on the runs where nothing was felt.
+advance 12 180
+
+# --- the outcome really ran ---
+expect-outcome coin_grant
+expect-outcome emotion
+
+# --- the player was told, in the emotion modus mentis's own voice ---
+# Under --playground the persona rewrite returns the neutral line unchanged, so the humor's own
+# FeelsLike sentence is on screen verbatim. This is the block, not the chip: it proves the coda was
+# narrated and committed, which the chip alone does not.
+expect It makes me feel
+
+# --- after: the spleen really moved ---
+# Nothing but EmotionOutcome.Apply can put a mind state in a queue - secretion never produces one.
+inspect humors
+expect-state humors Voluptas
+quit

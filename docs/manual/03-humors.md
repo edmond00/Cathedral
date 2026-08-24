@@ -131,11 +131,54 @@ The queues are not idle. They advance whenever:
 - **something is ingested**, which pushes its whole composition into the queue of the organ that
   receives it — the paunch, the hepar or the pulmones, according to how it was taken (see [Chapter
   IV §6](04-items.md#6-consumables));
-- **an event of consequence occurs**, which may push a humor of the passions into the spleen.
+- **an act comes to something a disposition answers**, which pushes humors of the passions into the
+  spleen — for which see §8 below.
 
 Everything that enters displaces something at the far end, and everything spent leaves a gap that
 the organ fills according to its condition. The state of a body's humors an hour hence is therefore
 a function of what it did and what its organs are — which is the whole of the doctrine.
+
+## 8. The humors of the passions
+
+The spleen alone receives a class of humor no organ secretes. The **humors of the passions** are
+rendered not by the condition of an organ but by what a body has just done, and they are the one
+place in the doctrine where character is converted into fortune.
+
+**They arrive through a modus mentis bearing the emotion function** (see [Chapter II
+§1](02-memory.md#1-what-a-modus-mentis-is)). Such a modus mentis declares, in advance, which kinds
+of consequence move it and which humor each renders. The disposition that counts coin twice renders
+the humor of pleasure when coin is gained; the disposition that stops short of what is permitted
+renders the humor of shame when a blow is struck.
+
+Four rules govern the rendering.
+
+**It is the kind of consequence that is read, and nothing further.** Not what the thing gained was,
+nor whom the blow fell upon — only that a gain, or a blow, occurred. A disposition cannot therefore
+be moved by a distinction the consequence does not itself declare.
+
+**Every modus mentis the body holds is consulted, not the one that acted.** A disposition answers
+what happened whether or not it was the manner of acting that brought it about. Coin gained by
+stealth moves the miser as surely as coin gained by bargaining.
+
+**At most one disposition answers a single act.** Where several are moved, one is drawn at hazard
+among them, without regard to level. A body does not feel its strongest feeling most often; it feels
+one of the feelings it is capable of.
+
+**The quantity is a single die: one to six.** That many instances of the humor enter the front of
+the spleen's queue, displacing that many from the back — so a strong passion is not merely felt but
+crowds out a sixth of everything the spleen had accumulated.
+
+**Consequence is not confined to the act.** The humors of the passions carry vital heat and
+transmuting virtues like any other, and they are spent in the ordinary rotation. A body that
+rejoices carries its rejoicing into the next journey as warmth and into the next roll as a licence
+to bend a die; a body ashamed carries the shame the same way, and pays for it. The passions of an
+hour ago are the fortune of the hour to come.
+
+It is to be observed that the virtues of these humors are not distributed as the secreted ones are.
+Where blood and yellow bile move a die by one, the passions work chiefly upon the extremes — turning
+a six into a lesser face, or a five into a six, or, in the case of the steadfast humor rendered by a
+body hardened against its own hurt, lifting the lowest face of all. A queue of passions is therefore
+a more violent instrument than a queue of secretions, in both directions.
 
 ---
 

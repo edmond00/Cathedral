@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Dialogue.Tree;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -13,7 +14,7 @@ public class EnterpriseModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads goods, routes, and demand for where profit sits, tracking where wares run cheap and where they sell dear. Inclines reasoning toward the venture, the margin, and the chance worth taking.";
     public override string SkillMeans       => "the understanding of trade, markets and foreign goods";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "cerebrum", "tongue" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>
@@ -25,6 +26,11 @@ public class EnterpriseModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who counts the route of a strange ware as eagerly as its price";
     public override string StyleInstruction =>
         "Use the imagery of goods, routes and ventures, with a merchant's quickening interest in opportunity.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(OpenTradeMenuOutcome), () => new LaetitiaHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of ENTERPRISE, the long-headed trader who looks at any new ware and immediately wonders where it came from, who handled it on the way, and what it would cost to bring back ten more.
 

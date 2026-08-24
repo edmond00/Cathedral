@@ -1,10 +1,12 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
+using Cathedral.Game.Dialogue.Tree;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Sloth — the long, easy laze; bedwarmth, slow mornings, the art of conserving every effort.
-/// Thinking-only.
+/// Thinking and emotion: it deliberates toward the least effort, and is contented by time spent on none.
 /// </summary>
 public class SlothModusMentis : ModusMentis
 {
@@ -13,7 +15,7 @@ public class SlothModusMentis : ModusMentis
     public override string MenuDescription =>
         "Looks for the path of least work in any task, an artful laziness that spares effort. Inclines reasoning and action toward the result reached with the least exertion, distrusting labour for its own sake.";
     public override string SkillMeans       => "the clever avoidance of unnecessary effort";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "trunk" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override MoralLevel MoralLevel => MoralLevel.Low;
@@ -23,6 +25,12 @@ public class SlothModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who would rather wait the trouble out than wade into it";
     public override string StyleInstruction =>
         "Use languid, low-effort imagery, with the heavy-lidded reluctance of someone who would rather not stir.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(OpenJobMenuOutcome), () => new MelancholiaHumor()),
+        new(typeof(TimeShiftOutcome), () => new ZenHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of SLOTH, the warm cushion of mind that asks first whether anything actually has to be done at all.
 

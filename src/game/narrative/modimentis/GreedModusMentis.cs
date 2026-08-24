@@ -1,10 +1,11 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Greed — the want of more; a soul who has dreamt of purple rubies in a dark dungeon and
-/// never quite shaken the want. Thinking-only.
+/// never quite shaken the want. Its gladness at a gain is a step, never the peak: the want is not satisfiable.
 /// </summary>
 public class GreedModusMentis : ModusMentis
 {
@@ -13,7 +14,7 @@ public class GreedModusMentis : ModusMentis
     public override string MenuDescription =>
         "Keeps an unshaken want of more running beneath thought, driving toward acquisition past need. Inclines reasoning and action toward seizing wealth and advantage wherever they appear.";
     public override string SkillMeans       => "the relentless desire to have more";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "heart", "eyes" };
 
     /// <summary>Stands on letters, number or institutions.</summary>
@@ -26,6 +27,13 @@ public class GreedModusMentis : ModusMentis
     public override string StyleInstruction =>
         "Let the imagery be drawn to whatever glitters, with a covetous gleam that prices everything it sees.";
     public override MoralLevel MoralLevel    => MoralLevel.Low;
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(CoinGrantOutcome), () => new LaetitiaHumor()),
+        new(typeof(ItemAcquisitionOutcome), () => new LaetitiaHumor()),
+        new(typeof(ItemGrantOutcome), () => new LaetitiaHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of GREED, the bright pull at the back of attention that never lets a chest, a vein of ore, a glint of silver pass unweighed.
 

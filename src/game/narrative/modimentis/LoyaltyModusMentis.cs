@@ -1,4 +1,6 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
+using Cathedral.Game.Dialogue.Tree;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -12,7 +14,7 @@ public class LoyaltyModusMentis : ModusMentis
     public override string MenuDescription =>
         "Holds fast to the ones it has chosen: reads their state at a glance, remembers every kindness and every desertion, and measures a stranger by what they are to those already loved.";
     public override string SkillMeans       => "the keeping of a bond to one's own, over any distance of time";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "heart", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
@@ -21,6 +23,12 @@ public class LoyaltyModusMentis : ModusMentis
     public override string PersonaReminder2 => "a keeper of bonds who remembers every kindness and every desertion";
     public override string StyleInstruction =>
         "Speak of the bond first and the situation second. Name what is owed and to whom.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(RecruitedOutcome), () => new VoluptasHumor()),
+        new(typeof(JoinPartyOutcome), () => new VoluptasHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of LOYALTY, the bond that does not thin with distance or with time.
 

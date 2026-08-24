@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -12,7 +13,7 @@ public class CondolenceModusMentis : ModusMentis
     public override string MenuDescription =>
         "Sits with grief and says the small right thing. Knows that the offering is presence rather than words, that most consolations are for the speaker, and that the useful sentence is nearly always the shortest one.";
     public override string SkillMeans       => "the small right thing said to the grieving";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "heart", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
@@ -23,6 +24,12 @@ public class CondolenceModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who sits with grief and does not fill the silence";
     public override string StyleInstruction =>
         "Short sentences, long pauses, no consolation offered - the practical question at the end.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(SleeperRousedOutcome), () => new PudorHumor()),
+        new(typeof(NpcSlaynOutcome), () => new MelancholiaHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of CONDOLENCE, and you have learned that almost everything people say at these moments is for themselves.
 

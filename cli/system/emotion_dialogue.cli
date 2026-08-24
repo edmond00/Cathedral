@@ -1,0 +1,82 @@
+# The emotional coda to a CONVERSATION.
+#
+# cli/outcome/emotion/success.cli covers the narration half. This is the other half, and it is a
+# separate script because the two paths are separate code: narration resolves the emotion from the
+# reports it gathered before the dice, a conversation from the outcome set the tree hands out at its
+# resolution. Wiring one and not the other is exactly the kind of gap that leaves five outcome types
+# unreachable by any disposition - alms, an introduction granted, an enmity cleared, a trade or a
+# job opened, and a conversation that came to nothing all exist only in a tree.
+#
+# Copied from cli/system/dialogue_success.cli, which is a known-good walk of the meet_stranger tree,
+# with --grant-mm gregariousness added (the starting kit is random, so holding a disposition that
+# answers a relation moving is otherwise a coin flip) and the assertions appended.
+#
+# meet_stranger is deliberately the tree used, and not only because it is the cheapest to reach: it
+# is the ONLY tree whose whole outcome set is one AffinityTransitionOutcome, which sets a level
+# rather than stepping one and therefore carries no direction. Under the type-only rule that means
+# only a direction-agnostic disposition may answer it, and until one did, the most-played tree in
+# the game - the introduction, which gates every other conversation - could stir nothing at all.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Hall" --period noon --observe-only "brewer" --grant-mm gregariousness
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# --- before: no mind state in the spleen, which secretion never produces one ---
+expect-no-state humors Laetitia
+
+# Reach the conversation through the verb that opens it.
+strategy succeed
+goal meet_stranger
+advance 12 180
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+# The tree is live. `advance` drains whichever preview box is up — the NPC's greeting, then each
+# reply option, which are generated as their own stack.
+wait mode Dialogue 60
+advance 20 180
+expect Good day
+regions
+
+# Walk a branch to its resolution. Two replies is the shortest route through this tree.
+click option 0
+advance 20 180
+regions
+click option 0
+advance 20 180
+
+# The resolution roll is settled; confirming it applies the branch's outcome.
+click continue
+advance 20 180
+
+# The branch's SUCCESS replica, not its failure one — this is what tells the two apart, and so what
+# proves the resolution roll was honoured rather than the tree merely reaching an end.
+expect Courteous, and you know when to stop
+
+# The coda is a preview part of its own, so it lands on its own press. `advance` drains it.
+advance 20 180
+
+# The outcome really ran, and the block reached the screen. Under --playground the persona rewrite
+# returns the neutral line unchanged, so the humor's own FeelsLike sentence is on screen verbatim -
+# which is what proves the coda was NARRATED, not merely chipped.
+expect-outcome emotion
+expect It makes me feel
+
+# --- after: the spleen really moved ---
+inspect humors
+expect-state humors Laetitia
+state
+quit

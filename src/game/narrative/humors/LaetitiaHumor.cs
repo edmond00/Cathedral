@@ -14,4 +14,5 @@ public sealed class LaetitiaHumor : BodyHumor
     public override Vector4 BackgroundColor => new(0.122f, 0.086f, 0.0f, 1.0f);   // dark amber
     public override int VitalHeat => 2;
     public override TransmutingVirtue? TransmutingVirtue => new DigitConversionVirtue(5, 6);
+    public override string FeelsLike => "It makes me feel glad, and lighter than I was.";
 }

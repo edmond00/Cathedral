@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using OpenTK.Mathematics;
@@ -491,21 +491,40 @@ public class MemoryPanelRenderer
         if (anatomyValue.Length > anatomyRoom && anatomyRoom > 1)
             anatomyValue = anatomyValue[..(anatomyRoom - 1)] + "…";
 
-        // Meta lines (left column, rows 2-5)
-        var metaLines = new (string label, string value, Vector4 valCol)[]
+        // Meta lines (left column). A list rather than an array because the Functions entry expands
+        // to one row PER function — see below — so the block's height is no longer a constant, and
+        // the XP bar and the button below it are placed from metaLines.Count rather than from a
+        // hardcoded offset.
+        var metaLines = new List<(string label, string value, Vector4 valCol)>
         {
             ("Memory type",   modusMentis.MemoryType.ToString(),                              SlotText),
-            ("Functions",     string.Join(", ", modusMentis.Functions),                       Config.Colors.LightGray75),
-            ("Discreet",      modusMentis.ActsDiscretely ? "Yes — acts unnoticed" : "No",
-             modusMentis.ActsDiscretely ? Config.Colors.BrightYellow : Config.Colors.LightGray75),
-            ("Morality",      modusMentis.MoralLevel.ToString(),                             Config.Colors.LightGray75),
-            (anatomyLabel,    anatomyValue,                                                  Config.Colors.LightGray75),
-            ("XP",            atMaxLvl ? "MAX" : $"{modusMentis.CurrentXp} / {xpNeeded}",
-             atMaxLvl ? Config.Colors.GoldYellow : Config.Colors.LightGray75),
         };
+
+        // One function per line, bulleted. It was a comma-joined single row until the Emotion
+        // function made four plausible on one modus mentis (R3 caps it at three today, but the set
+        // has grown twice and the row was already the longest thing in this column). A vertical list
+        // costs two rows at most and stops being a wrapping problem the next time one is added.
+        // The label sits on the first row only; the rest are a hanging indent under it.
+        const string FunctionsLabel = "Functions";
+        bool firstFunction = true;
+        foreach (var fn in modusMentis.Functions)
+        {
+            metaLines.Add((firstFunction ? FunctionsLabel : new string(' ', FunctionsLabel.Length),
+                           $"• {fn}", Config.Colors.LightGray75));
+            firstFunction = false;
+        }
+
+        metaLines.Add(("Discreet",      modusMentis.ActsDiscretely ? "Yes — acts unnoticed" : "No",
+             modusMentis.ActsDiscretely ? Config.Colors.BrightYellow : Config.Colors.LightGray75));
+        metaLines.Add(("Morality",      modusMentis.MoralLevel.ToString(),                    Config.Colors.LightGray75));
+        metaLines.Add((anatomyLabel,    anatomyValue,                                         Config.Colors.LightGray75));
+        metaLines.Add(("XP",            atMaxLvl ? "MAX" : $"{modusMentis.CurrentXp} / {xpNeeded}",
+             atMaxLvl ? Config.Colors.GoldYellow : Config.Colors.LightGray75));
+
         int metaRow = row;
         foreach (var (lbl, val, vc) in metaLines)
         {
+            if (metaRow >= DetailPanelRow + panelH - 1) break;
             _terminal.Text(StartX + 2, metaRow, lbl, Config.Colors.DarkGray40, DetailBg);
             _terminal.Text(StartX + 2 + lbl.Length + 1, metaRow, val, vc, DetailBg);
             metaRow++;
@@ -549,7 +568,7 @@ public class MemoryPanelRenderer
             _terminal.Text(rightX, descRow, dline, Config.Colors.LightGray75, DetailBg);
 
         // VerbAction button (left column, after meta + XP bar + 1 empty line)
-        int btnRow = row + metaLines.Length + 2;
+        int btnRow = row + metaLines.Count + 2;
         if (btnRow < DetailPanelRow + panelH - 2)
         {
             if (selectedModType == MemoryModuleType.Working)

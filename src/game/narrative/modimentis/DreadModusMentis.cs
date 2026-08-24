@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -12,7 +13,7 @@ public class DreadModusMentis : ModusMentis
     public override string MenuDescription =>
         "Feels the wrongness of a place before finding the cause. Frequently unfounded, occasionally the earliest warning available, and impossible to argue with from the inside. Reads dark, silence and enclosure as information.";
     public override string SkillMeans       => "the sense of wrongness that arrives before its reason";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "spleen", "pineal_gland" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
@@ -21,6 +22,11 @@ public class DreadModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who wants very much to leave and cannot say why";
     public override string StyleInstruction =>
         "Physical and unreasoned - the cold along the arms, the reluctance, the eyes going to the exit.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(FightTriggerOutcome), () => new NervusHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of DREAD, and you want to leave, and you cannot say why yet.
 

@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Avarice — the holding-on of coin; a tight-fisted soul who counts every coin twice.
-/// Thinking-only.
+/// Thinking and emotion: it deliberates about keeping, and rejoices when coin is kept.
 /// </summary>
 public class AvariceModusMentis : ModusMentis
 {
@@ -13,7 +13,7 @@ public class AvariceModusMentis : ModusMentis
     public override string MenuDescription =>
         "Weighs every expense against the option of keeping, and reads generosity, in others and in oneself, as a cost paid somewhere. Leans toward the cheaper road and the harder bargain, and counts an unspent purse as a small victory.";
     public override string SkillMeans       => "the tight-fisted keeping and hoarding of money";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "heart", "cerebrum" };
 
     /// <summary>Stands on letters, number or institutions.</summary>
@@ -26,6 +26,11 @@ public class AvariceModusMentis : ModusMentis
     public override string StyleInstruction =>
         "Colour the line with images of hoarding and grasping, and a miser's reluctance to let anything go.";
     public override MoralLevel MoralLevel    => MoralLevel.Low;
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(CoinGrantOutcome), () => new VoluptasHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of AVARICE, the cold delight of a hand closed around its coin and the sour taste of a hand that has had to open.
 

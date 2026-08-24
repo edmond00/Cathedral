@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Scholarship — letters, manuscripts, study; consults memory the way another consults an almanach.
-/// Thinking-only.
+/// Thinking and emotion: it deliberates from books, and is gladdened by a lesson learned.
 /// </summary>
 public class ScholarshipModusMentis : ModusMentis
 {
@@ -13,7 +13,7 @@ public class ScholarshipModusMentis : ModusMentis
     public override string MenuDescription =>
         "Draws on what is recorded in manuscripts, reading letters and old texts with patient study. Inclines reasoning toward written knowledge, and treats a question as something the record may already answer.";
     public override string SkillMeans       => "the knowledge found in books and old manuscripts";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "encephalon" };
 
     /// <summary>Stands on letters, number or institutions.</summary>
@@ -26,6 +26,12 @@ public class ScholarshipModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who consults memory the way another consults an almanach";
     public override string StyleInstruction =>
         "Reach for bookish imagery of records, precedents and learned reference, with a scholar's quiet relish for knowing.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(ModusMentisGrantOutcome), () => new LaetitiaHumor()),
+        new(typeof(SkillAcquisitionOutcome), () => new LaetitiaHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of SCHOLARSHIP, the patient consultation of what has already been written down before opinion is offered.
 

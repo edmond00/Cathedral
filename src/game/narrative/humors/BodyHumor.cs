@@ -37,6 +37,22 @@ public abstract class BodyHumor
     public abstract TransmutingVirtue? TransmutingVirtue { get; }
 
     /// <summary>
+    /// One first-person sentence naming what carrying this humor feels like, written plainly.
+    ///
+    /// <para>This is the second half of every emotion narration: the neutral line handed to the
+    /// emotion modus mentis is <c>&lt;what just happened&gt; &lt;what it makes me feel&gt;</c>, and this
+    /// is that second clause. It exists because a humor is otherwise <b>cryptic</b> — "Laetitia" is a
+    /// name, not a feeling, and an LLM asked to rewrite it invents whichever emotion the persona
+    /// flatters. Written here, per humor, the feeling is fixed and the persona only colours it.</para>
+    ///
+    /// <para>Empty on every humor that is not a mind state: the secreted four, Juvenescence and the
+    /// consumables are things a body carries, not things it feels. An emotion trigger naming one of
+    /// those would produce a narration with nothing to say, which is why
+    /// <see cref="Cathedral.Game.Narrative.ModusMentisRuleValidator"/> R15 refuses it.</para>
+    /// </summary>
+    public virtual string FeelsLike => "";
+
+    /// <summary>
     /// When true this humor cannot be erased by normal queue removal.
     /// Black bile instances are pinned at the back of the queue; if removal is needed,
     /// the nearest non-black-bile item is removed instead.

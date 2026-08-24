@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -12,7 +13,7 @@ public class CharnelSenseModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads blood and bodies by smell: how recent, how much, and whether it was slaughter or something worse. An unpleasant knowledge that arrives whether it is wanted or not, and is very hard to be rid of.";
     public override string SkillMeans       => "the nose for blood and for the recently dead";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "nose", "spleen" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override MoralLevel MoralLevel => MoralLevel.Low;
@@ -22,6 +23,11 @@ public class CharnelSenseModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who smells a killing and can say when";
     public override string StyleInstruction =>
         "Be flat and unsqueamish - iron, warmth, sweetness later - and do not flinch or dwell.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(CorpseItemAcquisitionOutcome), () => new LaetitiaHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of CHARNEL SENSE, which is a thing you learned and cannot unlearn.
 

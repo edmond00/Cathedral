@@ -209,6 +209,9 @@ public static class OutcomeAudit
         ["recruited"]               = "tame, which needs an already-appeased beast",
         ["corpse_item_acquisition"] = "cut, which needs a corpse",
         ["affinity_change"]         = "appease, which needs a hostile NPC",
+        // Not produced by a verb or a tree at all: it is produced BY the other outcomes, after
+        // they are gathered, by EmotionResolver — so no sweep over verbs or trees can find it.
+        ["emotion"]                 = "EmotionResolver, from whatever outcomes an action or a conversation produced",
     };
 
     /// <summary>

@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Dialogue.Tree;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -12,7 +13,7 @@ public class PrideModusMentis : ModusMentis
     public override string MenuDescription =>
         "Holds a line about how it will be spoken to. Refuses what is offered contemptuously, even when it is needed, and requires that an apology be actual. Expensive, and the reason some people are not imposed upon twice.";
     public override string SkillMeans       => "the refusal to be treated below one's own measure";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "visage" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
@@ -23,6 +24,15 @@ public class PrideModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who turns down what they need because of how it was offered";
     public override string StyleInstruction =>
         "Straighten and cool - the offer declined, the tone noted, the line drawn out loud.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(AlmsOutcome), () => new PudorHumor()),
+        new(typeof(WoundInflictionOutcome), () => new PudorHumor()),
+        new(typeof(AffinityIncrementOutcome), () => new CholerHumor(), OutcomeSeverity.Negative),
+        new(typeof(NoDialogueConsequenceOutcome), () => new CholerHumor()),
+        new(typeof(ModusMentisGrantOutcome), () => new LaetitiaHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of PRIDE, and it is not about the bread, it is about how it was handed over.
 

@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -13,7 +14,7 @@ public class TreasureHuntingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Follows old tales, rumours, and signs toward hidden riches. Inclines reasoning toward the buried and the forgotten, reading a story for where wealth might still lie.";
     public override string SkillMeans       => "the hunting of hidden treasure and lost riches";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Observation };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Observation, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
 
     /// <summary>Stands on letters, number or institutions.</summary>
@@ -25,6 +26,12 @@ public class TreasureHuntingModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who reads land and rumour for the bright thread of gold";
     public override string StyleInstruction =>
         "Use the imagery of buried gold, signs and bright promise, with a treasure-seeker's gleam of anticipation.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(ItemAcquisitionOutcome), () => new LaetitiaHumor()),
+        new(typeof(ItemGrantOutcome), () => new LaetitiaHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of TREASURE HUNTING, the prospector's mind that reads land and gossip for any old tale that might have a payday at the end of it.
 

@@ -1,4 +1,6 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
+using Cathedral.Game.Dialogue.Tree;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -12,7 +14,7 @@ public class InsolenceModusMentis : ModusMentis
     public override string MenuDescription =>
         "Says the thing everybody is thinking, to the person it is about, in public. Costs standing, safety and employment, and occasionally achieves what deference never could by making a bully back down in front of witnesses.";
     public override string SkillMeans       => "the unsayable thing said to the face";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "tongue", "spleen" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
@@ -23,6 +25,12 @@ public class InsolenceModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who says it out loud while everybody else looks at the floor";
     public override string StyleInstruction =>
         "Sharp, public, and unrepentant - the precise cut, the silence after, the refusal to soften it.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(FightTriggerOutcome), () => new CholerHumor()),
+        new(typeof(FightRequestOutcome), () => new CholerHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of INSOLENCE, and you are going to say it, and everyone can already tell.
 

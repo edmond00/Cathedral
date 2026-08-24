@@ -14,4 +14,5 @@ public sealed class CholerHumor : BodyHumor
     public override Vector4 BackgroundColor => new(0.102f, 0.020f, 0.129f, 1.0f); // deep purple
     public override int VitalHeat => -2;
     public override TransmutingVirtue? TransmutingVirtue => new DigitConversionVirtue(6, 4);
+    public override string FeelsLike => "It makes me feel a hot anger rising in me.";
 }

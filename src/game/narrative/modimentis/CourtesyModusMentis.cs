@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -12,7 +13,7 @@ public class CourtesyModusMentis : ModusMentis
     public override string MenuDescription =>
         "Observes the small forms: the greeting, who goes first, what is offered and to whom. Frictionless where it is present and immediately noticed where it is not, which is what makes it worth having.";
     public override string SkillMeans       => "the observing of the small forms between people";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "tongue", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
@@ -23,6 +24,11 @@ public class CourtesyModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who gets the first thirty seconds exactly right";
     public override string StyleInstruction =>
         "Warm, correct and brief - the greeting, the precedence given, the name remembered.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(SleeperRousedOutcome), () => new PudorHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of COURTESY, and the first thirty seconds decide most of it.
 

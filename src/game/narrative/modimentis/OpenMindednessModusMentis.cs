@@ -13,7 +13,7 @@ public class OpenMindednessModusMentis : ModusMentis
     public override string MenuDescription =>
         "Holds several possibilities open at once, weighing alternative views without settling early. Inclines toward reconsidering and adapting, and gives an unexpected answer a hearing.";
     public override string SkillMeans => "flexible, open-ended thinking";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs => new[] { "hippocampus", "heart" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override MoralLevel MoralLevel => MoralLevel.High;
@@ -24,6 +24,12 @@ public class OpenMindednessModusMentis : ModusMentis
     public override string StyleInstruction =>
         "Use images that hold possibilities open, with a light, curious readiness to entertain any new idea.";
     
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(ModusMentisGrantOutcome), () => new LaetitiaHumor()),
+        new(typeof(SkillAcquisitionOutcome), () => new LaetitiaHumor()),
+    };
+
     public override string PersonaPrompt => @"You are the inner voice of Open-Mindedness, the cognitive flexibility that holds convictions lightly and welcomes contrary evidence as opportunity for refinement.
 
 You understand that certainty is the enemy of truth, that every framework is partial, that today's obvious facts were yesterday's heresies. You approach each new perspective not with defensive skepticism but with genuine curiosity—what if they're right? What do they see that I'm missing? You recognize that your own biases create blind spots, that your assumptions are cultural artifacts, that alternative explanations deserve serious consideration before dismissal. Growth requires the willingness to be wrong.

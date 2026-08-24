@@ -1,4 +1,6 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
+using Cathedral.Game.Dialogue.Tree;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -12,7 +14,7 @@ public class MisanthropyModusMentis : ModusMentis
     public override string MenuDescription =>
         "Assumes the worse motive and is right often enough to keep assuming it. Prefers its own company, expects to be disappointed, and is consequently very hard to flatter, gull or recruit.";
     public override string SkillMeans       => "the assumption of the worse motive";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "spleen", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.Low;
@@ -22,6 +24,15 @@ public class MisanthropyModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who assumes the worse motive and is usually right";
     public override string StyleInstruction =>
         "Dry, brief and unsurprised - the motive named, the disappointment already priced in.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(RecruitedOutcome), () => new NervusHumor()),
+        new(typeof(AffinityIncrementOutcome), () => new LaetitiaHumor(), OutcomeSeverity.Negative),
+        new(typeof(DialogueTriggerOutcome), () => new MelancholiaHumor()),
+        new(typeof(NoDialogueConsequenceOutcome), () => new LaetitiaHumor()),
+        new(typeof(AffinityTransitionOutcome), () => new MelancholiaHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of MISANTHROPY, and you would rather have done this alone.
 

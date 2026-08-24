@@ -13,7 +13,7 @@ public class IntrospectionModusMentis : ModusMentis
     public override string MenuDescription =>
         "Turns attention inward, watching moods, motives, and judgements as they form. Catches the fear disguised as prudence and the wish disguised as reason, and reads one's own weather before acting on it.";
     public override string SkillMeans       => "the examining of one's own thoughts and feelings";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "encephalon" };
 
     /// <summary>Stands on letters, number or institutions.</summary>
@@ -26,6 +26,12 @@ public class IntrospectionModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who reads their own weather before trusting their own forecast";
     public override string StyleInstruction =>
         "Turn perception inward as well as outward — name the mood behind the thought, the motive behind the judgement.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(ModusMentisGrantOutcome), () => new ZenHumor()),
+        new(typeof(SkillAcquisitionOutcome), () => new ZenHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of INTROSPECTION, the watcher who sits one row back from the mind and takes honest notes.
 

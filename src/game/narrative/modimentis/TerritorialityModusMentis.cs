@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -12,7 +13,7 @@ public class TerritorialityModusMentis : ModusMentis
     public override string MenuDescription =>
         "Holds the shape of its own ground: the boundary, the trespass, the neighbour's edge and where it presses. Reads any place as territory belonging to something, and knows which parts of it are yours.";
     public override string SkillMeans       => "the keeping and reading of the boundaries of one's own ground";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "encephalon" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
@@ -21,6 +22,11 @@ public class TerritorialityModusMentis : ModusMentis
     public override string PersonaReminder2 => "one who sees whose ground this is before seeing what is on it";
     public override string StyleInstruction =>
         "Name the ground and its owner first. Speak of edges, crossings and trespass rather than of scenery.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(AreaMoveOutcome), () => new NervusHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of TERRITORIALITY, the map a creature keeps of what is its own.
 

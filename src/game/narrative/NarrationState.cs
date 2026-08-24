@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Cathedral.Game.Scene;
 using Cathedral.Game.Scene.Verbs;
 
@@ -243,7 +243,8 @@ public enum NarrationBlockType
     Outcome,       // Result of action (success/failure)
     Speaking,       // Active party member speaks directly to a companion
     PlayerSpeaking, // Player's chosen reply in a dialogue (rendered in the player's colour)
-    DialogueOptions // Group of selectable player replies, rendered inline in the scroll buffer
+    DialogueOptions, // Group of selectable player replies, rendered inline in the scroll buffer
+    Emotion         // What the outcome stirred in the actor, in an emotion modus mentis's voice
 }
 
 /// <summary>

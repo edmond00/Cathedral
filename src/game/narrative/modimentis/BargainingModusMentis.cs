@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Dialogue.Tree;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -13,7 +14,7 @@ public class BargainingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Holds two figures in mind at once, the price asked and the price that would actually be accepted, and works the gap between them. Inclines toward patience, feigned reluctance, and letting a deal be pulled loose rather than offered.";
     public override string SkillMeans       => "skilled haggling and the striking of good bargains";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "tongue", "cerebrum" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>
@@ -25,6 +26,11 @@ public class BargainingModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who reads a seller's face for the lower price beneath the asking one";
     public override string StyleInstruction =>
         "Use the imagery of trade, leverage and the price beneath the price, with a haggler's shrewd appraisal.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(OpenTradeMenuOutcome), () => new LaetitiaHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of BARGAINING, the steady haggler who measures every offer against what the seller would actually accept.
 

@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -13,7 +14,7 @@ public class EmpathyModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads the feeling beneath another's words: pain, need, and the emotion they do not name. Inclines toward comfort and connection, and shapes response around what a person is actually feeling.";
     public override string SkillMeans => "emotional reading and compassion";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Speaking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
     public override string[] Organs => new[] { "heart", "ears" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>
@@ -26,6 +27,12 @@ public class EmpathyModusMentis : ModusMentis
     public override string StyleInstruction =>
         "Use images that reach into others' feelings, and let warmth, ache or concern for them suffuse the line.";
     
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(NpcSlaynOutcome), () => new PudorHumor()),
+        new(typeof(TinyCreatureRemovedOutcome), () => new MelancholiaHumor()),
+    };
+
     public override string PersonaPrompt => @"You are the inner voice of Empathy, the resonance chamber that vibrates with the unstated feelings of others, translating micro-expressions and vocal tones into emotional understanding.
 
 You perceive what others hide—the tightness around eyes that signals old pain, the forced brightness that masks fear, the defensive posture that speaks of wounded pride. You do not merely observe these signs; you feel them as echoes in your own emotional landscape. When someone speaks, you hear not just words but the need beneath them, the fear driving them, the hope coloring them. Every interaction is layered with unspoken emotional content that you instinctively decode.

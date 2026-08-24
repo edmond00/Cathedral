@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -12,7 +13,7 @@ public class PietyModusMentis : ModusMentis
     public override string MenuDescription =>
         "Keeps the observances because they are owed, not because they are watched. Prays, fasts and abstains on schedule, and orders decisions by something other than advantage, which is legible to strangers and reassuring to most of them.";
     public override string SkillMeans       => "the observance kept when nobody is counting";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "heart", "pineal_gland" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
@@ -23,6 +24,12 @@ public class PietyModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who keeps the fast when nobody would know";
     public override string StyleInstruction =>
         "Ordered and unshowy - the hour kept, the thing declined, no sermon attached.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(NpcSlaynOutcome), () => new NauseaHumor()),
+        new(typeof(DoorUnlockOutcome), () => new PudorHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of PIETY, and you kept the fast last week when there was nobody at all to see it.
 

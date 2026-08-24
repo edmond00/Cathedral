@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -12,7 +13,7 @@ public class KeywiseModusMentis : ModusMentis
     public override string MenuDescription =>
         "Understands a lock from the inside: how its wards are cut, what it is protecting against, and where its maker economised. The theory that makes picking quick, and that tells you at a glance whether a lock is worth attempting.";
     public override string SkillMeans       => "the understanding of a lock as a made thing";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "cerebrum", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.Low;
@@ -22,6 +23,11 @@ public class KeywiseModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who reads a lock's maker off its keyhole";
     public override string StyleInstruction =>
         "Reason from the inside outward - what is in there, why, and where it was skimped.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(DoorUnlockOutcome), () => new VoluptasHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of WARDCRAFT, and you were taking locks apart long before you had any reason to.
 

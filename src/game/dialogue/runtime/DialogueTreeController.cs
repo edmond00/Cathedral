@@ -36,6 +36,8 @@ public class DialogueTreeController
 
     private readonly DialogueReplicaWriter    _replicaWriter;
     private readonly DialogueOptionGenerator  _optionGenerator;
+    /// <summary>Narrates the emotional coda to a resolved conversation. See GenerateEmotionPreviewAsync.</summary>
+    private readonly OutcomeNarrator          _outcomeNarrator;
 
     private readonly DialogueSessionState     _state = new();
     private readonly DialogueTreeUI           _ui;
@@ -149,6 +151,9 @@ public class DialogueTreeController
 
         _replicaWriter   = new DialogueReplicaWriter(llmManager);
         _optionGenerator = new DialogueOptionGenerator(llmManager, slotManager);
+        // Its own narrator, over the SAME slot manager the option generator uses, so an emotion
+        // modus mentis that already has a persona slot from narration reuses it here.
+        _outcomeNarrator = new OutcomeNarrator(llmManager, slotManager);
 
         _currentNode = tree.EntryNode;
         _ui          = ui;
@@ -678,6 +683,38 @@ public class DialogueTreeController
 
             _state.IsLoadingReaction = false;
 
+            // Captured ONCE, before the commit closure. A tree hands out a FRESH outcome set on every
+            // access (SuccessOutcomes => new[] {…}, expression-bodied, because an outcome settles its
+            // own wording at apply time and trees are registry singletons) — so reading it twice
+            // builds two sets, and the emotion would be resolved against instances the commit never
+            // applies. Same for the lessons, whose factory also logs when it refuses.
+            var treeOutcomes = (succeeded ? _tree.SuccessOutcomes : _tree.FailureOutcomes).ToList();
+
+            var lessons = new List<Outcome>();
+            if (succeeded)
+            {
+                // The tree's own lesson, plus any the branch decided — see
+                // DialogueTree.AdditionalGrantedModusMentisIds.
+                var taught = new List<string?> { _tree.GrantedModusMentisId };
+                taught.AddRange(_tree.LessonsFor(_npc, resolution));
+                foreach (var id in taught.Distinct())
+                {
+                    var lesson = ModusMentisGrantOutcome.For(_protagonist, id);
+                    if (lesson != null) lessons.Add(lesson);
+                }
+            }
+
+            // A branch can legitimately change nothing (a failure with no failure-outcome). That case
+            // used to be discovered inside the commit, which is too late for the emotional coda to
+            // see it — and a conversation that came to nothing is precisely the misanthrope's news.
+            // Built here instead, and applied below like any other. Nothing diverges from the old
+            // placement: practice is awarded only on success and every tree carries success
+            // outcomes, so "tree + lessons empty" and "everything empty" are the same condition.
+            NoDialogueConsequenceOutcome? fallbackNothing =
+                treeOutcomes.Count == 0 && lessons.Count == 0
+                    ? new NoDialogueConsequenceOutcome(_npc.DisplayName)
+                    : null;
+
             void CommitResolution()
             {
                 // Award +1 XP to every learned speaking MM that voiced a chosen reply on this branch.
@@ -699,7 +736,7 @@ public class DialogueTreeController
 
                 // Apply the tree's success or failure outcome set (shared by every branch).
                 var reports = new List<Outcome>();
-                foreach (var outcome in succeeded ? _tree.SuccessOutcomes : _tree.FailureOutcomes)
+                foreach (var outcome in treeOutcomes)
                 {
                     Console.WriteLine($"DialogueTreeController: applying outcome — {outcome.DisplayName}");
                     // The outcome IS the chip now: applying it settles its own wording, and one
@@ -709,21 +746,12 @@ public class DialogueTreeController
                 }
 
                 // The conversation's own lesson, on top of the experience the replies already earned.
-                // Only on success: talking your way into a fight teaches nothing about talking.
-                if (succeeded)
+                // Only on success: talking your way into a fight teaches nothing about talking. Built
+                // above so the emotional coda can see it; applied here.
+                foreach (var lesson in lessons)
                 {
-                    // The tree's own lesson, plus any the branch decided — see
-                    // DialogueTree.AdditionalGrantedModusMentisIds.
-                    var taught = new List<string?> { _tree.GrantedModusMentisId };
-                    taught.AddRange(_tree.LessonsFor(_npc, resolution));
-
-                    foreach (var id in taught.Distinct())
-                    {
-                        var lesson = ModusMentisGrantOutcome.For(_protagonist, id);
-                        if (lesson == null) continue;
-                        lesson.ApplyTo(OutcomeContext.For(_protagonist, null, null));
-                        if (lesson.ShowInUI) reports.Add(lesson);
-                    }
+                    lesson.ApplyTo(OutcomeContext.For(_protagonist, null, null));
+                    if (lesson.ShowInUI) reports.Add(lesson);
                 }
 
                 _npc.AffinityTable.MarkFirstContact(_partyMemberId);
@@ -734,15 +762,14 @@ public class DialogueTreeController
 
                 // A branch can legitimately change nothing (a failure with no failure-outcome), and
                 // silence there reads as a bug — say so plainly instead.
-                if (reports.Count == 0)
+                if (reports.Count == 0 && fallbackNothing != null)
                 {
                     // Applied like any other, even though applying it does nothing: an outcome that
                     // reaches the player should always have gone through ApplyTo, which is what
                     // records it. This was the one that did not, so `expect-outcome` could not see
                     // the only outcome whose whole job is to be seen.
-                    var nothing = new NoDialogueConsequenceOutcome(_npc.DisplayName);
-                    nothing.ApplyTo(OutcomeContext.ForDialogue(_npc, _partyMemberId, _protagonist));
-                    reports.Add(nothing);
+                    fallbackNothing.ApplyTo(OutcomeContext.ForDialogue(_npc, _partyMemberId, _protagonist));
+                    reports.Add(fallbackNothing);
                 }
                 AppendOutcomeReports(reports);
 
@@ -751,8 +778,67 @@ public class DialogueTreeController
 
             part.AttachCommit(CommitResolution);
             part.MarkComplete();
+
+            // The emotional coda, in a preview part of its own so it lands on its own CONTINUE — the
+            // same shape the narration path has. Resolved from what the conversation came to plus what
+            // it taught, which is everything the player will see chipped a moment later.
+            var plannedReports = new List<Outcome>(treeOutcomes);
+            plannedReports.AddRange(lessons);
+            if (fallbackNothing != null) plannedReports.Add(fallbackNothing);
+            await GenerateEmotionPreviewAsync(plannedReports);
+
             _preview.EndProduction();
         });
+    }
+
+    /// <summary>
+    /// Streams the conversation's emotional coda into a preview part of its own — the dialogue twin of
+    /// <c>NarrativeController.GenerateEmotionPreviewAsync</c>.
+    ///
+    /// <para>The dialogue side exists at all because five of the outcome types a disposition can react
+    /// to are reachable ONLY here: alms given, an introduction granted, an enmity cleared, a trade or
+    /// a job opened, and a conversation that changed nothing. Without it, pride would never feel the
+    /// refused alm and misanthropy would never be confirmed by a conversation that came to nothing.</para>
+    ///
+    /// <para>The actor is the protagonist rather than an acting party member: a conversation is always
+    /// theirs — <c>_partyMemberId</c> is <c>protagonist.AffinityKey</c> — so there is no companion
+    /// hand-off to honour here the way there is in narration.</para>
+    ///
+    /// <para>Silent when nothing matched, and a failure costs the coda alone: the conversation has
+    /// already resolved and its outcomes are already committed to fire.</para>
+    /// </summary>
+    private async Task GenerateEmotionPreviewAsync(List<Outcome> plannedReports)
+    {
+        var felt = EmotionResolver.Resolve(_protagonist, plannedReports);
+        if (felt == null) return;
+        var emotion = felt.Value;
+
+        try
+        {
+            var part = _preview.BeginPart(PreviewTitles.For(emotion.ModusMentis));
+            string text = await _outcomeNarrator.NarrateEmotionAsync(
+                emotion, System.Threading.CancellationToken.None, part.Sink);
+
+            var chip = emotion.ToOutcome();
+            part.AttachCommit(() =>
+            {
+                chip.ApplyTo(OutcomeContext.For(_protagonist, null, null));
+                Append(new NarrationBlock(
+                    Type:        NarrationBlockType.Emotion,
+                    ModusMentis: emotion.ModusMentis,
+                    Text:        text,
+                    Keywords:    null,
+                    Actions:     null,
+                    OutcomeReports: new List<Outcome> { chip }));
+                Console.WriteLine($"DialogueTreeController: emotion — {emotion.ModusMentis.ModusMentisId} felt "
+                                + $"{chip.Humor.Name} x{emotion.Count} (spleen)");
+            });
+            part.MarkComplete();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"DialogueTreeController: emotion narration failed, skipping the coda: {ex.Message}");
+        }
     }
 
     private void EndConversation()

@@ -25,6 +25,8 @@ namespace Cathedral.Game.Narrative;
 ///   R11 every organ / region of every anatomy has at least 3 MMs that anatomy can learn
 ///   R12 every MM is learnable by at least one anatomy
 ///   R13 a MM with neither Thinking nor VerbAction is MoralLevel.Medium — nothing reads its morality
+///   R14 no MM has both Action and Emotion
+///   R15 MM has Emotion ⇔ it declares >= 1 emotion trigger, and every trigger's humor can be felt
 ///
 /// Soft targets (reported by the audit, never fatal):
 ///   ~80% two-organ MMs vs ~20% one-region MMs
@@ -146,6 +148,47 @@ public static class ModusMentisRuleValidator
                 && mm.MoralLevel != MoralLevel.Medium)
                 violations.Add($"[R13] {mm.ModusMentisId}: is {mm.MoralLevel} morality but has neither "
                                + "Thinking nor Action — nothing would ever read it (must be Medium)");
+
+            // R14 — Action and Emotion are mutually exclusive, for the same reason R1 separates
+            // Thinking from Action: these are the three things a mind does with one event, and a
+            // modus mentis is asked to be exactly one of them at a time. Choosing the goal, carrying
+            // it out, and reacting to what came of it are separate beats of the narration loop, and a
+            // single persona holding two of them would be consulted twice about one action in two
+            // different voices.
+            //
+            // Note this rule cost nothing to satisfy and was not meant to. Every one of the 22
+            // Action modi mentis that looked like a candidate for an emotion — rage, blood_lust,
+            // sneak_art, clenched_grit, endurance and the rest — turned out to name a TECHNIQUE
+            // ("the going on after the reasonable moment to stop") rather than a feeling, so none
+            // was converted. What their emotional half wanted instead was its own modus mentis
+            // beside them: exultation beside ferocity, obduracy beside resolve, sangfroid beside
+            // cold_blood. Twinning is the intended answer here, not conversion.
+            if (fns.Contains(ModusMentisFunction.Action) && fns.Contains(ModusMentisFunction.Emotion))
+                violations.Add($"[R14] {mm.ModusMentisId}: has both Action and Emotion");
+
+            // R15 — the Emotion function and the trigger list imply each other, exactly as R9 makes
+            // the Fighting function and a skill reference imply each other. Both halves are silent
+            // failures on their own: triggers with no function are never consulted, and a function
+            // with no triggers is a modus mentis that advertises a disposition and never feels
+            // anything. The third clause catches the subtler one — a trigger naming a humor with no
+            // FeelsLike produces an emotion narration whose second clause is empty, which reads as
+            // the LLM being asked to invent what the character felt.
+            bool hasEmotionFn       = fns.Contains(ModusMentisFunction.Emotion);
+            var  triggers           = mm.EmotionTriggers;
+            if (hasEmotionFn && triggers.Length == 0)
+                violations.Add($"[R15] {mm.ModusMentisId}: has the Emotion function but declares no triggers");
+            if (!hasEmotionFn && triggers.Length > 0)
+                violations.Add($"[R15] {mm.ModusMentisId}: declares {triggers.Length} emotion trigger(s) "
+                               + "but lacks the Emotion function — nothing would ever read them");
+            foreach (var trigger in triggers)
+            {
+                if (!typeof(Outcome).IsAssignableFrom(trigger.OutcomeType))
+                    violations.Add($"[R15] {mm.ModusMentisId}: trigger type '{trigger.OutcomeType.Name}' is not an Outcome");
+                else if (string.IsNullOrWhiteSpace(trigger.Humor().FeelsLike))
+                    violations.Add($"[R15] {mm.ModusMentisId}: trigger on '{trigger.OutcomeType.Name}' produces "
+                                   + $"'{trigger.Humor().Name}', which declares no FeelsLike — the emotion "
+                                   + "narration would have nothing to say");
+            }
 
             // R5 — exactly 1 region XOR exactly 2 distinct organs, canonical ids only
             var organs = mm.Organs;
@@ -442,7 +485,58 @@ public static class ModusMentisRuleValidator
         sb.AppendLine($"memory:   Procedural {Pct(all.Count(m => m.MemoryType == Memory.ModusMentisMemoryType.Procedural), n)}, "
                       + $"Sensory {Pct(all.Count(m => m.MemoryType == Memory.ModusMentisMemoryType.Sensory), n)}, "
                       + $"Semantic {Pct(all.Count(m => m.MemoryType == Memory.ModusMentisMemoryType.Semantic), n)}   (target ~33/33/33)");
+        sb.AppendLine();
+        sb.Append(EmotionCoverage(all));
 
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Which consequences a disposition can answer, and — the point of the table — which it cannot.
+    ///
+    /// <para>An outcome type no emotion trigger names is not a fault by itself: an internal
+    /// bookkeeping report has nothing to feel about, and plenty of consequences are simply neutral.
+    /// It is a fault when the type is one a player <i>sees</i>, because then the game has a piece of
+    /// news that can never move anybody, and nothing anywhere says so.</para>
+    ///
+    /// <para>This table is here because that failure was found by hand and would not have been found
+    /// twice. <c>meet_stranger</c> — the introduction, which gates every other conversation and is
+    /// therefore the most-played tree in the game — resolves to a single
+    /// <c>AffinityTransitionOutcome</c>, and no disposition named that type. The most common
+    /// conversation in the game could stir nothing at all, the wiring was correct, every test passed,
+    /// and the only symptom was an absence.</para>
+    /// </summary>
+    private static string EmotionCoverage(List<ModusMentis> all)
+    {
+        var sb = new System.Text.StringBuilder();
+        var emotional = all.Where(m => m.Functions.Contains(ModusMentisFunction.Emotion)).ToList();
+
+        // Every concrete Outcome, by reflection, so a new one is covered the day it is written —
+        // the same discovery --outcome-audit uses, and for the same reason.
+        var outcomeTypes = typeof(Outcome).Assembly.GetTypes()
+            .Where(t => !t.IsAbstract && typeof(Outcome).IsAssignableFrom(t))
+            .OrderBy(t => t.Name)
+            .ToList();
+
+        var answered = new Dictionary<Type, List<string>>();
+        foreach (var mm in emotional)
+            foreach (var trigger in mm.EmotionTriggers)
+                foreach (var t in outcomeTypes.Where(t => trigger.OutcomeType.IsAssignableFrom(t)))
+                    (answered.TryGetValue(t, out var l) ? l : answered[t] = new()).Add(mm.ModusMentisId);
+
+        sb.AppendLine("── emotion coverage ──");
+        sb.AppendLine($"{emotional.Count} of {all.Count} modi mentis bear the Emotion function, "
+                    + $"declaring {emotional.Sum(m => m.EmotionTriggers.Length)} triggers over "
+                    + $"{answered.Count} of {outcomeTypes.Count} outcome types");
+
+        var unanswered = outcomeTypes.Where(t => !answered.ContainsKey(t)).Select(t => t.Name).ToList();
+        if (unanswered.Count > 0)
+            sb.AppendLine($"no disposition answers: {string.Join(", ", unanswered)}");
+
+        // Which humor each disposition can render, so a catalogue skewed to one feeling is visible.
+        var byHumor = emotional.SelectMany(m => m.EmotionTriggers)
+            .GroupBy(t => t.Humor().Name).OrderByDescending(g => g.Count()).ThenBy(g => g.Key);
+        sb.AppendLine("humors rendered: " + string.Join("  ", byHumor.Select(g => $"{g.Key}={g.Count()}")));
         return sb.ToString();
     }
 

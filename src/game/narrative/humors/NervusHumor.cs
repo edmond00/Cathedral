@@ -14,4 +14,5 @@ public sealed class NervusHumor : BodyHumor
     public override Vector4 BackgroundColor => new(0.078f, 0.0f, 0.102f, 1.0f);   // deep purple
     public override int VitalHeat => -2;
     public override TransmutingVirtue? TransmutingVirtue => new DigitConversionVirtue(6, 3);
+    public override string FeelsLike => "It makes me feel afraid, and unsteady with it.";
 }

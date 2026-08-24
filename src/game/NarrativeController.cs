@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -1944,6 +1944,18 @@ public class NarrativeController
             _narrationState.IsLoadingAction = false;
             part.AttachCommit(() => CommitOutcomeResult(result, deferredCommit: true));
             part.MarkComplete();
+
+            // The emotional coda. Resolved from the reports that are ABOUT to be applied rather than
+            // from applied ones, because the whole point of the preview session is that a commit
+            // happens on the player's press, not here — so waiting for the apply would mean waiting
+            // for a click the emotion's own generation is supposed to be running ahead of.
+            //
+            // A second part rather than a longer first one: the outcome was written by the ACTION
+            // modus mentis and this is written by the EMOTION one, so it is a different persona in a
+            // different slot, and the preview box already gates one part per CONTINUE. That is where
+            // "own block, own press" comes from — nothing here schedules it.
+            await GenerateEmotionPreviewAsync(result.OutcomeReports ?? verbReports, result.LlmDecidedReports);
+
             _previewSession.EndProduction();
         }
         catch (Exception ex)
@@ -1953,6 +1965,75 @@ public class NarrativeController
             _narrationState.IsLoadingAction = false;
             NarrationDiceClear();
             _narrationState.ErrorMessage = ReportPhaseFailure("resolving an outcome", ex);
+        }
+    }
+
+    /// <summary>
+    /// Streams the emotional coda into a preview part of its own, when what the action produced
+    /// stirred anything in the body that produced it.
+    ///
+    /// <para><b>Silent by default and by design.</b> Most actions move nothing a disposition cares
+    /// about, and <see cref="EmotionResolver.Resolve"/> returns null for those — no part is begun, no
+    /// request is made, and the player presses CONTINUE once as they always did. The extra press is
+    /// bought only where there is something to read.</para>
+    ///
+    /// <para>The commit does the two things in the order the player sees them: the humors reach the
+    /// spleen (<see cref="EmotionOutcome"/>'s own Apply, through <c>ApplyTo</c> like every other
+    /// consequence) and the block lands carrying its chip. It is attached rather than run here for the
+    /// same reason the outcome's is — a press must be able to arrive before, during or after
+    /// generation without the state changing twice.</para>
+    ///
+    /// <para>A failure here costs the coda and nothing else. An emotion is a garnish on an action that
+    /// has already resolved, and taking the phase down over one would turn a decorative request into a
+    /// third way for a visit to end — so this is the one narration path in the controller that
+    /// swallows its exception instead of calling <c>ReportPhaseFailure</c>.</para>
+    /// </summary>
+    private async Task GenerateEmotionPreviewAsync(
+        IReadOnlyList<Outcome>? verbReports,
+        IReadOnlyList<Outcome>? llmDecidedReports)
+    {
+        var all = new List<Outcome>();
+        if (verbReports       != null) all.AddRange(verbReports);
+        if (llmDecidedReports != null) all.AddRange(llmDecidedReports);
+
+        var felt = EmotionResolver.Resolve(_activePartyMember, all);
+        if (felt == null) return;
+        var emotion = felt.Value;
+
+        try
+        {
+            _narrationState.IsLoadingAction = true;
+            _narrationState.LoadingMessage  = Config.LoadingMessages.NarratingOutcome;
+            var part = _previewSession.BeginPart(PreviewTitles.For(emotion.ModusMentis));
+            string text = await _actionExecutor.OutcomeNarrator.NarrateEmotionAsync(
+                emotion, CancellationToken.None, part.Sink);
+            _narrationState.IsLoadingAction = false;
+
+            var chip = emotion.ToOutcome();
+            part.AttachCommit(() =>
+            {
+                chip.ApplyTo(OutcomeContext.For(_activePartyMember, _scene, _pov));
+                var block = new NarrationBlock(
+                    Type:        NarrationBlockType.Emotion,
+                    ModusMentis: emotion.ModusMentis,
+                    Text:        text,
+                    Keywords:    null,
+                    Actions:     null,
+                    OutcomeReports: new List<Outcome> { chip }
+                );
+                _scrollBuffer.AddBlock(block);
+                _narrationState.AddBlock(block);
+                _scrollBuffer.ScrollToBottom();
+                _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+                Console.WriteLine($"NarrativeController: emotion — {emotion.ModusMentis.ModusMentisId} felt "
+                                + $"{chip.Humor.Name} x{emotion.Count} (spleen)");
+            });
+            part.MarkComplete();
+        }
+        catch (Exception ex)
+        {
+            _narrationState.IsLoadingAction = false;
+            Console.Error.WriteLine($"NarrativeController: emotion narration failed, skipping the coda: {ex.Message}");
         }
     }
 
@@ -3496,6 +3577,24 @@ public class NarrativeController
         if (All("wounds"))
             foreach (var w in actor.Wounds)
                 outp.Add($"wound {w.WoundName} target={w.TargetId}");
+
+        // The four humor queues by composition, newest first. This is the only assertable proof that
+        // an emotion reached the spleen: the chip says "Voluptas × 4" and `expect` can scan for that,
+        // but a chip proves what the player was TOLD — the queue is what actually moved. Reported as
+        // counts per humor name rather than slot by slot, because a queue is 49 slots deep and a
+        // script cares that N instances arrived, not where they landed.
+        //
+        // All four queues, not just the spleen, because the same line is what makes eating and the
+        // travel drain assertable later, and a subject that answers only the question of the day
+        // would need widening the first time anything else wanted it.
+        if (All("humors"))
+            foreach (var q in actor.HumorQueues.All)
+            {
+                var counts = q.Items.GroupBy(h => h.Name)
+                                    .OrderByDescending(g => g.Count()).ThenBy(g => g.Key)
+                                    .Select(g => $"{g.Key}={g.Count()}");
+                outp.Add($"humors {q.OrganId} {string.Join(" ", counts)}");
+            }
 
         // xp as well as level: practice is the commonest thing a verb does and the slowest to show,
         // since a level takes several successes. Without the raw count a script cannot tell a modus

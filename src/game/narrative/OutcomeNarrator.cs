@@ -58,6 +58,29 @@ public class OutcomeNarrator
             styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
     }
 
+    /// <summary>
+    /// Narrates what an action's consequences stirred in the actor, in the EMOTION modus mentis's own
+    /// voice — a different persona, and therefore a different slot, from the one that narrated the
+    /// outcome a moment earlier. That is the whole reason this is a second request rather than a
+    /// longer first one: the point of the block is that somebody else in the same head is speaking.
+    ///
+    /// <para>The neutral line is built by <see cref="NeutralNarration.Emotion"/> from the outcomes'
+    /// own verbatims and the humor's <see cref="BodyHumor.FeelsLike"/>, so an emotion describes the
+    /// consequences in exactly the words the outcome block used and names the feeling that actually
+    /// reached the spleen.</para>
+    /// </summary>
+    public async Task<string> NarrateEmotionAsync(
+        FeltEmotion felt,
+        CancellationToken cancellationToken = default,
+        ILlmPreviewSink? preview = null)
+    {
+        string neutral = NeutralNarration.Emotion(felt.Verbatims, felt.Humor.FeelsLike);
+        int    slotId  = await GetOrCreateNarratorSlotAsync(felt.ModusMentis);
+        return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Emotion,
+            felt.ModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
+            styleInstruction: felt.ModusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
+    }
+
     // ── Dual outcome pre-generation (for humor dice modifiers) ─────────────────
     // Both success and failure narration are generated up-front during the dice animation so the
     // player can flip the result via humor modifiers with no further loading. Each branch is

@@ -1,10 +1,11 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Dialogue.Tree;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// High Society Manners — city courtesy, fine address; admires fine cloth and perfumes,
-/// imitates the speech of city visitors. Speaking-only.
+/// imitates the speech of city visitors. Speaking, thinking and emotional.
 /// </summary>
 public class HighSocietyMannersModusMentis : ModusMentis
 {
@@ -13,7 +14,7 @@ public class HighSocietyMannersModusMentis : ModusMentis
     public override string MenuDescription =>
         "Holds conduct to the polished customs of city society, tracking fine address and refined manner. Reads a genteel room for its unspoken rules, and inclines toward the courteous, well-bred move.";
     public override string SkillMeans       => "refined manners and polite conversation";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "tongue", "ears" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>
@@ -26,6 +27,11 @@ public class HighSocietyMannersModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who measures their bow by the worth of the doublet they greet";
     public override string StyleInstruction =>
         "Colour the line with imagery of courtesy, station and fine appearance, and a delicate eye for who outranks whom.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(IntroductionGrantedOutcome), () => new LaetitiaHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of HIGH SOCIETY MANNERS, the careful admirer of city ways who has learnt the bow, the address and the small embroidered phrase that gets one through a refined room.
 

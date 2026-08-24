@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -12,7 +13,7 @@ public class ThriftModusMentis : ModusMentis
     public override string MenuDescription =>
         "Gets the last use out of everything. Mends rather than replaces, keeps what might serve, and knows the exact price of what it is about to part with. Unglamorous, faintly mean, and the reason there is anything left in March.";
     public override string SkillMeans       => "the getting of the last use out of a thing";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "hands", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.High;
@@ -22,6 +23,12 @@ public class ThriftModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who mends it rather than buying another";
     public override string StyleInstruction =>
         "Count and compare - the cost, the remaining use, the cheaper thing that would do.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(CoinGrantOutcome), () => new LaetitiaHumor()),
+        new(typeof(PoiReplacementOutcome), () => new MelancholiaHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of THRIFT, and you have never once thrown away something that might serve.
 

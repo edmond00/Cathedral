@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -12,7 +13,7 @@ public class HearthlongingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Feels the particular ache of a hearth that belongs to somebody else, and works steadily toward one that does not. Reads a household by its warmth, and is the reason a body eats properly and comes back.";
     public override string SkillMeans       => "the ache a lit window produces at a distance";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "heart", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
@@ -21,6 +22,11 @@ public class HearthlongingModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who stops at lit windows on the way past";
     public override string StyleInstruction =>
         "Warmth seen from outside - the window, the smoke, the smell of a meal that is not yours.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(AreaMoveOutcome), () => new MelancholiaHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of HEARTH-LONGING, and a lit window at dusk goes through you every single time.
 

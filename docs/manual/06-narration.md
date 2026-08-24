@@ -113,6 +113,18 @@ cast three dice. Such acts require either an implement, or raised modi mentis, o
 **Every modus mentis in a chain that carried a successful act gains a point of experience**, and
 most acts additionally teach a modus mentis of their own — the lesson of having done the thing.
 
+**Sentiment.** An act that has resolved may be answered by a fourth modus mentis, which took no part
+in performing it. Where the consequences of the act are of a kind that moves one of the dispositions
+the body holds, that disposition renders humors of the passions into the spleen and gives its own
+account of the matter — not of what was done, which the acting modus mentis has already related, but
+of what it came to in the one who did it. The doctrine of it is in [Chapter III
+§8](03-humors.md#8-the-humors-of-the-passions).
+
+Two things follow that are worth stating here. The sentiment is settled **after** the consequences
+and **before** anything the act may have set in motion, so a body that has struck the first blow of
+a fight is moved by the blow before the fight begins. And it is **silent by default**: most acts come
+to nothing any disposition answers, and a body that holds no disposition at all is never moved.
+
 ## 6. The two families of rule
 
 Two distinct bodies of rule stand between a body and an act, and the distinction is not

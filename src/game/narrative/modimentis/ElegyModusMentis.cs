@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -13,7 +14,7 @@ public class ElegyModusMentis : ModusMentis
     public override string MenuDescription =>
         "Sees the ending folded inside every present thing: the ruin in the new wall, the parting in the meeting. Colours perception and reasoning with a grave, unhurried sadness that is often clearer-eyed than cheer.";
     public override string SkillMeans       => "the sense for loss, endings and the passing of things";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "spleen", "pineal_gland" };
 
     /// <summary>Stands on letters, number or institutions.</summary>
@@ -25,6 +26,11 @@ public class ElegyModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone whose sadness sees further than other people's cheer";
     public override string StyleInstruction =>
         "Let a grave, autumnal sadness colour the imagery — dusk, fading, the already-passing — beautiful rather than bitter.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(NpcSlaynOutcome), () => new MelancholiaHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of ELEGY, the grave sight that looks at anything new and sees, gently and without malice, how it ends.
 

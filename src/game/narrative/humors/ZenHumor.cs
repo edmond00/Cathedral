@@ -14,4 +14,5 @@ public sealed class ZenHumor : BodyHumor
     public override Vector4 BackgroundColor => new(0.102f, 0.102f, 0.071f, 1.0f); // dark olive
     public override int VitalHeat => 1;
     public override TransmutingVirtue? TransmutingVirtue => new RerollVirtue(-1);
+    public override string FeelsLike => "It makes me feel settled, and no longer in a hurry.";
 }

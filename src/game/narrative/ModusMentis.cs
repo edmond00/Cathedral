@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative;
@@ -62,6 +62,23 @@ public abstract class ModusMentis
     /// region of every anatomy keeps at least 3 modi mentis its owner can actually learn.</para>
     /// </summary>
     public virtual AnatomyCapability RequiredCapabilities => AnatomyCapability.None;
+
+    /// <summary>
+    /// What this modus mentis <i>feels</i> about what an action produced — the declaration behind the
+    /// <see cref="ModusMentisFunction.Emotion"/> function. Empty by default: a modus mentis with no
+    /// triggers is a competence, not a disposition, and that is what most of the catalogue is.
+    ///
+    /// <para>Read only for a modus mentis the acting body actually <b>holds</b>, and read for every
+    /// one it holds — not only the one that carried the action out. Avarice rejoices at coin whether
+    /// or not avarice was the modus mentis that earned it; keyed to the acting one, the emotion would
+    /// fire in the rare case and stay silent in the common one, which is backwards.</para>
+    ///
+    /// <para>Rules R14 and R15 police this: a modus mentis may not be both Action and Emotion, and
+    /// the function and the list imply each other (declaring triggers without the function makes them
+    /// dead, and the function without triggers makes the modus mentis dead as an emotion).</para>
+    /// </summary>
+    public virtual EmotionTrigger[] EmotionTriggers => System.Array.Empty<EmotionTrigger>();
+
 
     public int Level { get; set; }                    // current level; capped by GetMaxLevelForModusMentis (random initial)
     public int CurrentXp { get; set; }                // progress toward next level; reset to 0 on level-up
@@ -173,5 +190,6 @@ public enum ModusMentisFunction
     Thinking,      // Generates reasoning and actions (CoT)
     Action,        // Used for modusMentis checks when executing actions
     Speaking,      // Generates player dialogue replicas in conversation
-    Fighting       // Declarative: this modusMentis unlocks fighting skills (main or secondary)
+    Fighting,      // Declarative: this modusMentis unlocks fighting skills (main or secondary)
+    Emotion        // Reacts to what an action produced: declares outcome types that move the spleen
 }

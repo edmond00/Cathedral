@@ -18,4 +18,5 @@ public sealed class MelancholiaHumor : BodyHumor
     public override Vector4 Color => new(0.50f, 0.50f, 0.50f, 1.0f);  // MediumGray50
     public override int VitalHeat => -2;
     public override TransmutingVirtue? TransmutingVirtue => new DigitConversionVirtue(6, 5);
+    public override string FeelsLike => "It makes me feel a sadness that has come to stay a while.";
 }

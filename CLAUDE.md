@@ -1480,6 +1480,108 @@ a routine that can be walked, whether or not the first pick survived. `Consume` 
 no-op rather than removed (the base class calls it for every constraint), and it leaves the virtual
 ledger alone so two steps of one routine can both call for the same knife.
 
+### Emotions: what an outcome does to the person who caused it
+
+An action resolves, its consequences are applied — and then **one disposition the acting body holds
+answers them**, renders 1d6 humors into the spleen, and says so in its own voice. That is the whole
+system. The three nouns it adds are `ModusMentisFunction.Emotion`, `EmotionTrigger` and
+`EmotionOutcome`; everything else is existing machinery reused.
+
+**The match is on the outcome's TYPE, never on its payload**, and that discipline is the design
+rather than a shortcut. Asking "was the item *fine*?" or "was the target *weaker than me*?" puts an
+open-ended question in front of every consequence in the game, and the answer has to come from an
+LLM — one more request per action, for a decision the player never sees. A type is a fact the
+compiler already knows, so the whole resolver is type matching and two draws, with no request made.
+The cost is real and worth naming: an `ItemAcquisitionOutcome` cannot tell gluttony the item was
+bread, so **gluttony is not an emotion modus mentis**. That is the correct answer, not a limitation
+to route around.
+
+`EmotionTrigger.WhenSeverity` is the one concession and it reads no payload either —
+`Outcome.Severity` is on the base class. It exists for `AffinityIncrementOutcome`, which is one type
+carrying two opposite pieces of news (its severity is set from the delta's sign in its own
+constructor), so a type-only match would make pride feel affronted by being liked.
+
+Four rules the rest of it assumes:
+
+- **Every modus mentis the body holds is asked, not the one that acted.** Avarice rejoices at coin
+  whether or not avarice was the modus mentis that earned it. Keyed to the acting one, the emotion
+  would fire in the rare case and stay silent in the common one, which is backwards — so
+  `EmotionResolver.Resolve` takes a `PartyMember`, not the action's chain.
+- **Exactly one emotion per action**, sampled uniformly from the matches. A wolf slain in a private
+  room after a forced door matches five dispositions at once, and five blocks plus five chips for one
+  press would bury the action that caused them. Uniformly rather than by level, because a level is
+  how well a thing is *done* and nobody feels their strongest feeling most often.
+- **The narration is a second request in a different slot**, and that is the point of the block: the
+  outcome was written by the ACTION modus mentis and this is written by the EMOTION one. A longer
+  first request would be one persona speaking twice.
+- **The feeling is named, not implied.** `BodyHumor.FeelsLike` carries one plain first-person
+  sentence per mind state, and `NeutralNarration.Emotion` joins it to the outcomes' own verbatims.
+  Without it the persona is handed the word "Laetitia" and invents whichever emotion flatters its
+  disposition — so the humor that reached the queue and the feeling the player read would disagree.
+  `NarrationKind.Emotion`'s instruction insists the stated feeling *survives* the rewrite for the
+  same reason.
+
+**`EmotionOutcome` is an `Outcome`, and the word in this codebase has never meant "something a verb
+did"** — `StateCaptureOutcome` and `GetUpTransitionOutcome` are pure bookkeeping and are Outcomes
+too. What the base class means is "a thing that applies its own change and can show a chip", which is
+exactly this. Being one buys three things that would otherwise each need building: the chip renderer
+already draws `block.OutcomeReports` and already colours by `Severity` (taken here from the humor's
+`VitalHeat` sign, so a humor added later is coloured right without anyone saying so), `ApplyTo` is
+already the one door every state change goes through, and `expect-outcome emotion` worked the day it
+was written.
+
+**Own block, own CONTINUE, for free.** The coda is one more `LlmPreviewSession` part after the
+outcome's, and the preview box already gates one part per press — nothing schedules it. It is
+generated ahead while the player reads the outcome, and it is **silent by default**: most actions
+move nothing a disposition answers, `Resolve` returns null, no part is begun and no request is made.
+Both wirings swallow their own exception, and that is the one narration path in the controller that
+does not call `ReportPhaseFailure`: a garnish on an already-resolved action must not become a third
+way for a visit to end.
+
+**Two paths, because five outcome types live in only one of them.** `NarrativeController` resolves
+from the reports gathered before the dice; `DialogueTreeController` resolves from the tree's outcome
+set plus its lessons. Alms, an introduction granted, an enmity cleared, a trade or job opened, and a
+conversation that came to nothing are reachable **only** through a tree, so wiring narration alone
+would leave pride unable to feel a refused alm. Note what that cost: the dialogue controller now
+builds its outcome set, its lessons and its no-consequence fallback **before** the commit closure
+rather than inside it — a tree hands out a *fresh* outcome set on every access, so reading it twice
+would resolve the emotion against instances the commit never applies.
+
+**R14 and R15** are in `ModusMentisRuleValidator`, fatal like the rest. R14 forbids Action + Emotion,
+for the same reason R1 separates Thinking from Action: wanting, doing and being moved are three
+offices a mind holds toward one event, and one modus mentis is asked to be exactly one of them.
+R15 makes the function and the trigger list imply each other (as R9 does for Fighting and a skill
+reference) and rejects a trigger on a humor with no `FeelsLike` — which would narrate an empty
+clause.
+
+**R14 cost nothing to satisfy, and that was not the expected answer.** All 22 Action modi mentis that
+looked like emotion candidates — rage, blood_lust, sneak_art, clenched_grit, endurance and the rest —
+turned out to name a *technique* ("the going on after the reasonable moment to stop") rather than a
+feeling, and all 22 were additionally Procedural, so stripping Action would have broken R2 and R4 as
+well. **Twinning is the answer here, not conversion**: `exultation` beside ferocity, `obduracy`
+beside resolve, `sangfroid` beside cold_blood, `temerity` beside recklessness, `ruination` beside
+brute_force, `impatience` against patience. The action pool is unchanged at 127.
+
+**`--mm-audit` prints the coverage table**, and the failure it exists to catch is an absence. An
+outcome type no trigger names is fine when nothing feels about it and a fault when a player sees it:
+`meet_stranger` — the introduction, which gates every other conversation and is therefore the most
+played tree in the game — resolves to a single `AffinityTransitionOutcome`, and nothing named that
+type. The most common conversation in the game could stir nobody, the wiring was correct, every test
+passed, and the only symptom was silence. That one was found by hand and would not have been found
+twice.
+
+**`AffinityTransitionOutcome` is also the clearest illustration of the type-only rule biting.** It
+*sets* a level rather than stepping one, and at construction it does not know the level it replaces —
+so no severity can be derived and only a **direction-agnostic** disposition may answer it. That is
+why gregariousness and misanthropy carry it and pride does not.
+
+| | |
+|---|---|
+| `inspect humors` | all four queues by composition, newest first. The only assertable proof an emotion landed — the chip says what the player was told, the queue is what moved |
+| `--grant-mm <id>` | the starting kit is random, so whether a body *holds* a disposition is otherwise a coin flip. Every emotion test grants one |
+| `cli/outcome/emotion/success.cli` | the narration half — pickpocket, avarice, Voluptas into the spleen |
+| `cli/system/emotion_dialogue.cli` | the conversation half, on `meet_stranger` for the reason above |
+
 ### Checking the outcome catalogue
 
 ```bash

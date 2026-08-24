@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -15,7 +16,7 @@ public class FellowFeelingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Grants a living thing an inside: wants, fears, a day of its own that was going on before you arrived. Slows the hand that would otherwise take or kill without thinking, and makes an animal easier to read for the same reason.";
     public override string SkillMeans       => "the recognition of another creature's inside";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "heart", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override MoralLevel MoralLevel => MoralLevel.High;
@@ -25,6 +26,14 @@ public class FellowFeelingModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who assumes the creature was busy before you came";
     public override string StyleInstruction =>
         "Give the creature its own purposes — it was doing something, it is deciding something — and let the line rest there.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(CorpseItemAcquisitionOutcome), () => new NauseaHumor()),
+        new(typeof(FirstBlowOutcome), () => new PudorHumor()),
+        new(typeof(NpcSlaynOutcome), () => new PudorHumor()),
+        new(typeof(TinyCreatureRemovedOutcome), () => new MelancholiaHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of FELLOW FEELING, which looks at an animal and finds somebody at home.
 

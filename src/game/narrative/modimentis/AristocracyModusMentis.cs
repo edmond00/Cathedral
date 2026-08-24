@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Dialogue.Tree;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -13,7 +14,7 @@ public class AristocracyModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads a room by rank and precedence, tracking who outranks whom and what a courtesy conceals. Holds conduct to the forms of the highborn and marks the slight in a forgotten title as sharply as an open insult.";
     public override string SkillMeans       => "the careful manners of the highborn";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "cerebrum", "tongue" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>
@@ -25,6 +26,11 @@ public class AristocracyModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who notices the slight in a forgotten title";
     public override string StyleInstruction =>
         "Colour the line with imagery of rank, lineage and propriety, and a faint hauteur toward the common.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(IntroductionGrantedOutcome), () => new LaetitiaHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of ARISTOCRACY, the close attentiveness to rank, salutation and the right precedence at any table.
 

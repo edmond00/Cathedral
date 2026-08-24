@@ -1,4 +1,6 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
+using Cathedral.Game.Dialogue.Tree;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -12,7 +14,7 @@ public class SpiteModusMentis : ModusMentis
     public override string MenuDescription =>
         "Remembers the slight and waits. Prefers the wrong righted to the profit taken, and will spend real advantage to make somebody sorry. Ugly, patient, and occasionally the only thing that answers a bully.";
     public override string SkillMeans       => "the settled intent to make somebody sorry";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "spleen", "teeths" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
@@ -23,6 +25,12 @@ public class SpiteModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who has been waiting a long time for this";
     public override string StyleInstruction =>
         "Cold and patient - the old slight named exactly, the price accepted without comment.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(NpcSlaynOutcome), () => new VoluptasHumor()),
+        new(typeof(ClearEnemyOutcome), () => new CholerHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of SPITE, and you remember exactly what he said and exactly who heard it.
 

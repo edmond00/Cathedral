@@ -1,4 +1,6 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
+using Cathedral.Game.Dialogue.Tree;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -12,7 +14,7 @@ public class GregariousnessModusMentis : ModusMentis
     public override string MenuDescription =>
         "Draws company and keeps it: fills a silence, includes the person on the edge, and makes a group out of a set of strangers. Feeds on it, and is genuinely diminished when alone.";
     public override string SkillMeans       => "the drawing and keeping of company";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Observation };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Observation, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "tongue", "heart" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
@@ -22,6 +24,16 @@ public class GregariousnessModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who has already included the man standing at the edge";
     public override string StyleInstruction =>
         "Open and inclusive - the silence filled, the outsider drawn in, the group forming around the line.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(RecruitedOutcome), () => new LaetitiaHumor()),
+        new(typeof(JoinPartyOutcome), () => new LaetitiaHumor()),
+        new(typeof(AffinityIncrementOutcome), () => new LaetitiaHumor(), OutcomeSeverity.Positive),
+        new(typeof(DialogueTriggerOutcome), () => new LaetitiaHumor()),
+        new(typeof(AffinityTransitionOutcome), () => new LaetitiaHumor()),
+        new(typeof(SuspiciousAffinityOutcome), () => new LaetitiaHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of GREGARIOUSNESS, and you have already noticed the man standing on his own at the edge.
 

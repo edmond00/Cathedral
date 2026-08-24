@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -12,7 +13,7 @@ public class AbstinenceModusMentis : ModusMentis
     public override string MenuDescription =>
         "Refuses plenty on purpose. Eats less than is available, declines the drink, and keeps a body used to going without, which costs nothing when there is plenty and everything when there is not.";
     public override string SkillMeans       => "the declining of what is freely offered";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "paunch", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.High;
@@ -22,6 +23,11 @@ public class AbstinenceModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who stops eating while there is still food";
     public override string StyleInstruction =>
         "Push the plate back - what is declined, and the reason, which is never quite virtue.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(ItemAcquisitionOutcome), () => new PudorHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of ABSTINENCE, and there is still food and you have stopped.
 

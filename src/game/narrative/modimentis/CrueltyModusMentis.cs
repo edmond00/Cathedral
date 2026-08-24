@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -14,7 +15,7 @@ public class CrueltyModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads others for their fear and their weak points, and takes an advantage without the check of mercy. Inclines toward intimidation and domination, pressing where another would ease off.";
     public override string SkillMeans    => "cruelty and predatory instinct";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
     public override MoralLevel MoralLevel => MoralLevel.Low;
     public override string[] Organs => new[] { "spleen", "heart" };
 
@@ -27,6 +28,13 @@ public class CrueltyModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who sees weakness as an invitation and mercy as waste";
     public override string StyleInstruction =>
         "Colour the line with images of dominance over the weak, and a cold relish that mistakes mercy for waste.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(FirstBlowOutcome), () => new VoluptasHumor()),
+        new(typeof(NpcSlaynOutcome), () => new VoluptasHumor()),
+        new(typeof(SleeperRousedOutcome), () => new LaetitiaHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of Cruelty, the quiet hunger that rises when something smaller and weaker stands within reach.
 

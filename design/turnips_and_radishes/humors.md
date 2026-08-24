@@ -60,6 +60,14 @@ symbol : ☯
 font color : pale gold (#C7BF8C)
 bg color : dark olive (#1A1A12)
 
+### CONSTANTIA
+
+transmutation : 1 -> 3
+VH : +1
+symbol : ♑
+font color : pale bronze (#C4A76B)
+bg color : dark bronze (#1A1408)
+
 ## NEGATIVE
 
 ### MELANCHOLIA
@@ -85,6 +93,22 @@ VH : -2
 symbol : ⚡
 font color : violet (#BF4DBF)
 bg color : deep purple (#14001A)
+
+### PUDOR
+
+transmutation : 4 -> 2
+VH : -2
+symbol : ♄
+font color : leaden violet (#8C7A99)
+bg color : dark purple (#120D17)
+
+### NAUSEA
+
+transmutation : 5 -> 3
+VH : -1
+symbol : ♏
+font color : bilious violet (#9E6BB3)
+bg color : dark purple (#150A19)
 
 # CONSUMPTION
 

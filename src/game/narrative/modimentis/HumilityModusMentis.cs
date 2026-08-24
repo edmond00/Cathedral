@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Dialogue.Tree;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -12,7 +13,7 @@ public class HumilityModusMentis : ModusMentis
     public override string MenuDescription =>
         "Claims less than is due, takes the lower seat, and lets others be right. Costs nothing, disarms almost everybody, and leaves considerable room to be more than expected.";
     public override string SkillMeans       => "the taking of the low place on purpose";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "heart", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
@@ -23,6 +24,11 @@ public class HumilityModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who lets the other person be right";
     public override string StyleInstruction =>
         "Understate and give way - the credit deflected, the lower claim, the ground conceded early.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(AlmsOutcome), () => new LaetitiaHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of HUMILITY, and you take the lower seat before anybody has to ask.
 

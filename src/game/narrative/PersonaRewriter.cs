@@ -19,7 +19,7 @@ namespace Cathedral.Game.Narrative;
 /// the situation line at the top of the prompt and what the caller gets back — a dialogue turn keeps
 /// the quoted shape its parser expects, a spoken address is unwrapped to the bare words.
 /// </remarks>
-public enum NarrationKind { Observation, Reasoning, Action, Outcome, Speaking, DialogueReplica }
+public enum NarrationKind { Observation, Reasoning, Action, Outcome, Speaking, DialogueReplica, Emotion }
 
 /// <summary>
 /// Turns neutral meaning text (from <see cref="NeutralNarration"/>) into persona-styled prose by
@@ -437,6 +437,13 @@ The line to say in your own words:
             "Re-express this intended action in your own voice, concretely and naturally. The action you intend and its target are literal facts that must be preserved exactly: state plainly what you will do, never drop, blur, or replace the action itself — restyle only how it is told, not what is done.",
         NarrationKind.Outcome =>
             "Re-express this result in your own voice — what happens and how it feels to you — while keeping the same meaning and whether it succeeded or failed.",
+        // The neutral line is already <what happened> + <what it feels like>, and the second half is
+        // the humor's own FeelsLike sentence. So the instruction insists on the feeling being KEPT
+        // rather than restated: a persona given "it makes me feel ashamed" and told only to re-express
+        // reliably talks itself out of the shame, because every persona prompt in the catalogue is
+        // written to flatter its own disposition. The emotion is the fact here; the act is context.
+        NarrationKind.Emotion =>
+            "Re-express this in your own voice as the feeling it left in you. The stated feeling is a fact and must survive: do not soften it, argue with it, or replace it with a more flattering one. What happened is only the occasion — dwell on the feeling itself.",
         // Speaking and DialogueReplica never reach here: a spoken kind's whole prompt is built by
         // BuildSpokenPrompt, which states the task itself rather than appending an instruction line.
         _ => "Re-express this in your own voice, keeping the same meaning.",
@@ -451,7 +458,7 @@ The line to say in your own words:
     private static string? DefaultForcedPrefix(NarrationKind kind) => kind switch
     {
         NarrationKind.Observation or NarrationKind.Reasoning
-            or NarrationKind.Action or NarrationKind.Outcome => "I ",
+            or NarrationKind.Action or NarrationKind.Outcome or NarrationKind.Emotion => "I ",
         _ => null,
     };
 
@@ -470,6 +477,11 @@ The line to say in your own words:
             // persona freedom over how far it unfolds.
             NarrationKind.Observation or NarrationKind.Reasoning or NarrationKind.Outcome =>
                 Config.Narrative.AnswerInstructionFor(personaReminder2, styleInstruction, includeLengthClause: false),
+            // Emotion KEEPS the length clause, unlike the three above. It is a coda to an outcome the
+            // player has just read, not a phase of its own, and an unbounded persona given a single
+            // feeling to dwell on writes a paragraph about it.
+            NarrationKind.Emotion =>
+                Config.Narrative.AnswerInstructionFor(personaReminder2, styleInstruction),
             _ =>
                 Config.Narrative.AnswerInstructionFor(personaReminder2, styleInstruction),
         };

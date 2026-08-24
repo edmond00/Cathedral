@@ -188,6 +188,28 @@ public static class NeutralNarration
         return string.Join(", ", parts);
     }
 
+    // -- Emotion ---------------------------------------------------------------
+    /// <summary>
+    /// The neutral line an emotion modus mentis is asked to re-express: what just happened, then what
+    /// carrying it feels like.
+    ///
+    /// <para>The second clause comes from <see cref="Cathedral.Game.Narrative.BodyHumor.FeelsLike"/>
+    /// and NOT from the humor's name, which is the whole point of that property existing. "Laetitia"
+    /// is cryptic — a persona asked to rewrite a line containing it invents whichever emotion flatters
+    /// the character, and the humor that actually reached the queue and the feeling the player read
+    /// then disagree. Naming the feeling plainly leaves the persona only its colour to add.</para>
+    ///
+    /// <para>The first clause reuses <see cref="OutcomeConsequences"/>, so an emotion describes the
+    /// consequences in exactly the words the outcome narration used. A consequence list that comes
+    /// back empty (every verbatim was bookkeeping) falls back to the feeling alone rather than
+    /// producing a dangling "Because I ,".</para>
+    /// </summary>
+    public static string Emotion(IReadOnlyList<string>? outcomeVerbatims, string feelsLike)
+    {
+        var tail = OutcomeConsequences(outcomeVerbatims);
+        return tail.Length == 0 ? feelsLike : $"I {tail}. {feelsLike}";
+    }
+
     public static string PlausibilityFailure(string actionDisplay)
         => $"I tried to {FirstPerson(actionDisplay)}, but it could not happen here.";
 

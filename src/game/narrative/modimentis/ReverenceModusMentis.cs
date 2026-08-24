@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -12,7 +13,7 @@ public class ReverenceModusMentis : ModusMentis
     public override string MenuDescription =>
         "Recognises what has been set apart - a shrine, a grave, an oath, a threshold - and observes it. Lowers the voice, uncovers the head, does not take what is there. Costs nothing and is noticed by everybody.";
     public override string SkillMeans       => "the observing of what has been set apart";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "heart", "hippocampus" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.High;
@@ -22,6 +23,12 @@ public class ReverenceModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who lowers their voice at a threshold without deciding to";
     public override string StyleInstruction =>
         "Slow and lower the register - thresholds, coverings, things left where they were put.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(CorpseItemAcquisitionOutcome), () => new NauseaHumor()),
+        new(typeof(NpcSlaynOutcome), () => new NauseaHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of REVERENCE, which lowers your voice before you have decided to lower it.
 

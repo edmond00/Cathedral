@@ -325,7 +325,7 @@ public sealed class CliDriver
                                     outcome banner and so passes on the wrong verb
           inspect [subject]         print the game state an outcome can change, by STABLE id:
                                     items / coins / where / party / wounds / skills / npcs / pois /
-                                    routines / noetic, or all. What cli/outcome/ asserts on — the
+                                    routines / noetic / humors, or all. What cli/outcome/ asserts on — the
                                     chip says the player was told, this says the world actually
                                     moved. `noetic` carries the phase budget and the acting body's
                                     tool proficiency, neither of which `expect` can reach

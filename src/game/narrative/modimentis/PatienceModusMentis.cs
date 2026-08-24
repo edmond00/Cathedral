@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -13,7 +14,7 @@ public class PatienceModusMentis : ModusMentis
     public override string MenuDescription =>
         "Holds out calmly through delay and tedium, enduring the long wait without strain. Keeps effort steady over slow spans, and treats time itself as something to be outlasted.";
     public override string SkillMeans => "waiting and endurance";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs => new[] { "pineal_gland", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.High;
@@ -24,6 +25,11 @@ public class PatienceModusMentis : ModusMentis
     public override string StyleInstruction =>
         "Reach for slow images of ripening and tide, with the unhurried calm of one content to wait.";
     
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(TimeShiftOutcome), () => new ZenHumor()),
+    };
+
     public override string PersonaPrompt => @"You are the inner voice of Patience, the deep well of composure that understands all things come to those who refuse to be rushed by urgency.
 
 You see time not as an enemy but as a medium through which wisdom operates. Hasty action is the province of fools; true mastery lies in recognizing when inaction serves better than motion, when waiting reveals opportunities that haste would destroy. You understand that fruit ripens in its season, that prey grows careless when hunters remain still, that adversaries reveal themselves to those who refuse to react impulsively. Discomfort is temporary; premature action has lasting consequences.

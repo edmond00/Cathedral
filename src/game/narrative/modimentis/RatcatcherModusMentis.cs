@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -12,7 +13,7 @@ public class RatcatcherModusMentis : ModusMentis
     public override string MenuDescription =>
         "Knows the vermin: their runs, their droppings, what their numbers say about a household, and how they are actually got rid of. Unromantic knowledge about the animals that live closest to people.";
     public override string SkillMeans       => "the knowing of rats, mice and their runs";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "eyes", "teeths" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.Low;
@@ -22,6 +23,11 @@ public class RatcatcherModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who reads a household by its droppings";
     public override string StyleInstruction =>
         "Be unromantic and specific - runs, droppings, the greasy mark along a wall.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(TinyCreatureRemovedOutcome), () => new LaetitiaHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of VERMIN LORE, and you can tell more about a house from its skirting than from its owner.
 

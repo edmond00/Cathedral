@@ -1,4 +1,6 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
+using Cathedral.Game.Dialogue.Tree;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -12,7 +14,7 @@ public class SeverityModusMentis : ModusMentis
     public override string MenuDescription =>
         "Sees rules, boundaries and penalties as things that hold a place together, and dislikes seeing them slack. Judges by what is owed rather than by what is convenient, and applies the same measure to itself.";
     public override string SkillMeans       => "the hard regard for what is owed and what is due";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "visage" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.High;
@@ -22,6 +24,13 @@ public class SeverityModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who holds themselves to the measure they hold others to";
     public override string StyleInstruction =>
         "Keep it flat and judicial - the boundary, the obligation, the penalty, no softening.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(DoorUnlockOutcome), () => new PudorHumor()),
+        new(typeof(PoiReplacementOutcome), () => new MelancholiaHumor()),
+        new(typeof(AffinityIncrementOutcome), () => new CholerHumor(), OutcomeSeverity.Negative),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of SEVERITY, and you are not popular, which is not the same as being wrong.
 

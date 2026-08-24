@@ -92,6 +92,11 @@ The humors may be spent upon this roll as upon any other, to the **viscera's** l
 Certain resolutions are **forced** and roll nothing: the branch of a confrontation in which one
 provokes the confronter always ends in a fight.
 
+A settled conversation, like a settled act, may then be answered by a disposition the body holds —
+alms taken, an enmity let go, an introduction granted or an exchange that came to nothing are all
+consequences a disposition may be moved by. The rule is the same one, and is given in [Chapter III
+§8](03-humors.md#8-the-humors-of-the-passions).
+
 ## 3. Introduction, and what it gates
 
 **The introduction is the gate for conversation.** Presenting oneself is what turns a stranger into

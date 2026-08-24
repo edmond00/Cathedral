@@ -12,7 +12,7 @@ Every modus mentis declares the following, and these declarations are the whole 
 **An identity.** A stable name, and the manner in which it operates — the phrase by which an act
 performed through it is described.
 
-**Its functions**, at least one and at most three, drawn from five:
+**Its functions**, at least one and at most three, drawn from six:
 
 | Function | Office |
 |---|---|
@@ -21,6 +21,12 @@ performed through it is described.
 | **Action** | It performs. It is consulted when an act is carried out, and may refuse. |
 | **Speaking** | It speaks. It furnishes the replies of a conversation. |
 | **Fighting** | Declarative only: it unlocks fighting skills. It performs nothing itself. |
+| **Emotion** | It feels. It answers what an act came to, and renders a humor into the spleen. |
+
+**Action and emotion are exclusive**, as thinking and action already are. These are the three
+offices a mind holds toward a single event — to want it, to do it, to be moved by it — and one
+manner of the mind is asked to be exactly one of them at a time. A body that both performs an act
+and is moved by it does so through two modi mentis, not one.
 
 **Its anatomical sources** — the organs or regions it draws upon. The rule here is strict and admits
 no mixture: **exactly one region, or exactly two distinct organs.** No source is the principal one;
@@ -166,6 +172,9 @@ function a modus mentis bears, since that decides where in the machinery it is c
   settles the exchange.
 - A **fighting** modus mentis unlocks a fighting skill and lends its level to that skill's dice. It
   is never consulted directly.
+- An **emotion** modus mentis is asked nothing. It declares in advance which kinds of consequence
+  move it and to what, and is consulted only after an act has resolved and its consequences are
+  known. Its level does not enter into it; see [Chapter III §8](03-humors.md#8-the-humors-of-the-passions).
 
 A modus mentis may bear several of these and is then consulted in each capacity.
 
