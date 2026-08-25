@@ -1366,7 +1366,7 @@ public class NarrativeController
             Console.WriteLine($"NarrativeController: VerbAction passed plausibility, starting dice roll phase");
 
             // Number of dice = total modusMentis level summed across the chain
-            int numberOfDice = Math.Max(1, action.GetTotalModusMentisLevel());
+            int numberOfDice = Math.Max(1, action.GetTotalModusMentisLevel(_activePartyMember));
 
             // Difficulty = number of 6s needed to succeed (1-10, from LLM evaluation)
             int actualDifficulty = evalResult.DifficultyLevel;
@@ -1552,7 +1552,7 @@ public class NarrativeController
         action.DifficultyLevel = 1;
 
         // Roll dice at forced difficulty 1 (1 six needed to succeed).
-        int numberOfDice = Math.Max(1, action.GetTotalModusMentisLevel());
+        int numberOfDice = Math.Max(1, action.GetTotalModusMentisLevel(_activePartyMember));
         const int getUpDifficulty = 1;
 
         // Humor modifiers are offered here exactly as in the main action roll: rising from the ground
@@ -3186,6 +3186,23 @@ public class NarrativeController
     {
         Console.WriteLine($"NarrativeController: Selected modusMentis: {selectedModusMentis.DisplayName}");
 
+        // A modus mentis this body can no longer carry is still offered and refused here rather than
+        // filtered out of the popup — see BrokenModusMentis. This is the one place all three
+        // player-chosen faculties pass through, so the guard is written once.
+        if (_activePartyMember.IsModusMentisBroken(selectedModusMentis))
+        {
+            var faculty = _narrationState.IsSelectingModusMentisForSpeaking
+                ? NeutralNarration.BrokenFaculty.Speech
+                : _narrationState.IsSelectingObservationModusMentis
+                    ? NeutralNarration.BrokenFaculty.Observation
+                    : NeutralNarration.BrokenFaculty.Thinking;
+
+            _narrationState.IsSelectingModusMentisForSpeaking = false;
+            _narrationState.IsSelectingObservationModusMentis = false;
+            _ = RefuseBrokenModusMentisAsync(selectedModusMentis, faculty);
+            return;
+        }
+
         if (_narrationState.IsSelectingModusMentisForSpeaking)
         {
             // Step 1 of Speak About: speaking modusMentis selected → show companion selection
@@ -3225,6 +3242,93 @@ public class NarrativeController
             _narrationState.IsLoadingThinking = true;
             _narrationState.LoadingMessage = Config.LoadingMessages.ThinkingDeeply;
             _ = ExecuteThinkingPhaseAsync(selectedModusMentis, clickedRegion);
+        }
+    }
+
+    /// <summary>
+    /// Narrates a modus mentis the body can no longer carry, in its own voice, and spends the noetic
+    /// point the attempt cost. The observation / thinking / speaking counterpart of
+    /// <c>BrokenModusMentisRule</c>, which does the same job for an action — see
+    /// <see cref="BrokenModusMentis"/> for why this refuses rather than withholding.
+    ///
+    /// <para>Written against the same three moving parts as the coded-rule failure in
+    /// <see cref="ExecuteActionPhaseAsync"/>: the text streams into a preview part so it reads like
+    /// any other narration, the block is committed on that part's CONTINUE, and the point is spent
+    /// unless the phase is one of the two that never charges for an attempt. Out of points, the
+    /// segment closes without refilling, exactly as a failed roll does — LEAVE is then the way
+    /// out.</para>
+    ///
+    /// <para>It swallows its own exception rather than calling <c>ReportPhaseFailure</c>. This is a
+    /// refusal, not a phase: taking the visit down because the account of a ruined arm could not be
+    /// generated would turn a wound into a lost run.</para>
+    /// </summary>
+    private async Task RefuseBrokenModusMentisAsync(
+        ModusMentis modusMentis, NeutralNarration.BrokenFaculty faculty)
+    {
+        try
+        {
+            Console.WriteLine(
+                $"NarrativeController: '{modusMentis.DisplayName}' is broken on this body " +
+                $"(effective level {_activePartyMember.GetEffectiveModusMentisLevel(modusMentis)}) — " +
+                $"refusing {faculty}");
+
+            _previewSession.Reset();
+            var part = _previewSession.BeginPart(PreviewTitles.For(modusMentis));
+
+            string text = await _actionExecutor.OutcomeNarrator.NarrateBrokenModusMentisAsync(
+                modusMentis, _activePartyMember, faculty, CancellationToken.None, preview: part?.Sink);
+            if (string.IsNullOrWhiteSpace(text))
+                text = $"[IMPOSSIBLE] {BrokenModusMentis.NeutralFor(_activePartyMember, modusMentis, faculty)}";
+
+            var block = new NarrationBlock(
+                Type: NarrationBlockType.Outcome,
+                ModusMentis: modusMentis,
+                Text: text,
+                Keywords: null,
+                Actions: null);
+
+            void Commit()
+            {
+                _scrollBuffer.AddBlock(block);
+                _narrationState.AddBlock(block);
+                _scrollBuffer.ScrollToBottom();
+                _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+            }
+
+            if (part != null)
+            {
+                part.AttachCommit(Commit);
+                part.MarkComplete();
+                _previewSession.EndProduction();
+            }
+            else Commit();
+
+            if (_scene?.Phase == NarrationPhase.ChildhoodReminescence
+                || _scene?.Phase == NarrationPhase.GetUp)
+                return;
+
+            if (_narrationState.ThinkingAttemptsRemaining > 0)
+            {
+                _narrationState.ThinkingAttemptsRemaining--;
+                Console.WriteLine("NarrativeController: Broken modus mentis — consumed 1 noetic point " +
+                                  $"({_narrationState.ThinkingAttemptsRemaining} remaining)");
+            }
+            else
+            {
+                _pendingSegmentSucceeded = false;
+                _narrationState.ShowContinueButton = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(
+                $"NarrativeController: Error narrating broken modus mentis: {ex.Message}");
+            _previewSession.Reset();
+        }
+        finally
+        {
+            _narrationState.IsLoadingThinking = false;
+            _narrationState.IsLoadingFocusObservation = false;
         }
     }
 
@@ -3600,9 +3704,17 @@ public class NarrativeController
         // since a level takes several successes. Without the raw count a script cannot tell a modus
         // mentis that was paid for its work from one that was not — which is how the Get-Up phase
         // came to award none at all without a single test noticing.
+        // xp as well as level, and `effective` as well as `level`: a wound caps what a modus mentis
+        // may reach without touching the level it stored, so the stored number alone cannot say
+        // whether the thing can still be used. `broken=` is the flag every test in this area asserts
+        // — it is the whole of the rule, and deriving it in a script from two numbers would be a
+        // paraphrase of BrokenModusMentis rather than a reading of it.
         if (All("skills"))
             foreach (var m in actor.ModiMentis)
-                outp.Add($"skill {m.ModusMentisId} level={m.Level} xp={m.CurrentXp}");
+                outp.Add($"skill {m.ModusMentisId} level={m.Level} xp={m.CurrentXp}"
+                       + $" effective={actor.GetEffectiveModusMentisLevel(m)}"
+                       + $" max={actor.GetMaxLevelForModusMentis(m)}"
+                       + $" broken={actor.IsModusMentisBroken(m)}");
 
         if (All("npcs") && _scene != null && _pov != null)
             foreach (var npc in _scene.Npcs)

@@ -456,7 +456,7 @@ public class ActionExecutionController
         
         // Roll n dice (1–6 each), succeed if sixes >= difficulty
         var rng = GameRng.Stream("dice");
-        int numberOfDice = Math.Max(1, action.GetTotalModusMentisLevel());
+        int numberOfDice = Math.Max(1, action.GetTotalModusMentisLevel(ActingMember));
         int sixes = 0;
         for (int i = 0; i < numberOfDice; i++)
             if (rng.Next(1, 7) == 6) sixes++;

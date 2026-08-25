@@ -232,19 +232,49 @@ public abstract class FightingSkill
 
     /// <summary>
     /// Sum of levels from all known MMs (main + secondary) for this fighter.
+    ///
+    /// <para><b>Effective levels, not stored ones.</b> A wound lowers what a modus mentis may reach
+    /// (<c>PartyMember.GetEffectiveModusMentisLevel</c>), and this sum is half of
+    /// <see cref="TotalLevel"/> — so reading the stored level would let a ruined arm bring its full
+    /// strength to every blow. It can therefore come out negative, which is what
+    /// <see cref="IsBrokenFor"/> reads.</para>
     /// </summary>
     public int GetTotalMmLevel(Fighter f)
     {
         int total = 0;
         foreach (var mm in f.Member.LearnedModiMentis)
         {
-            if (mm.ModusMentisId == RequiredModusMentisId)
-                total += mm.Level;
-            else if (SecondaryModusMentisIds.Contains(mm.ModusMentisId))
-                total += mm.Level;
+            if (mm.ModusMentisId == RequiredModusMentisId
+             || SecondaryModusMentisIds.Contains(mm.ModusMentisId))
+                total += f.Member.GetEffectiveModusMentisLevel(mm);
         }
         return total;
     }
+
+    /// <summary>
+    /// Whether wounds have taken this skill out of the fighter's hands — the modi mentis behind it
+    /// sum to <b>less than zero</b> once each is capped by what its organs can still reach.
+    ///
+    /// <para><b>The medium is deliberately not consulted</b>, and neither is
+    /// <see cref="BaseDice"/>: a skill is a technique, and a body that can no longer hold the
+    /// technique cannot swing it however sound the limb behind it. That is a separate question from
+    /// <see cref="IsAnyMediumAvailable"/>, which asks whether there is a limb at all.</para>
+    ///
+    /// <para><b>Why below zero and not at it.</b> A sum of exactly 0 is what an <em>unlearned</em>
+    /// skill reads as — no matching modus mentis contributes anything — and that state has to stay
+    /// usable: <c>FirstBlow</c> draws from unlearned skills on purpose, since the first punch is
+    /// where the punch is learned. Inside a fight <see cref="IsUnlocked"/> has already required the
+    /// modus mentis to be known, so a 0 there means "known and worn down to nothing" and does slip
+    /// through this gate — a skill at that point rolls <see cref="BaseDice"/> plus its medium and
+    /// nothing else.</para>
+    /// </summary>
+    public bool IsBrokenFor(Fighter f) => GetTotalMmLevel(f) < 0;
+
+    /// <summary>Whether this fighter knows the primary or any secondary modus mentis.</summary>
+    private bool IsAnyModusMentisKnown(Fighter f) =>
+        f.Member.LearnedModiMentis.Any(m =>
+            m.ModusMentisId == RequiredModusMentisId ||
+            SecondaryModusMentisIds.Contains(m.ModusMentisId));
 
     /// <summary>
     /// The itemised terms behind <see cref="TotalLevel"/>, so the info panel can show a player
@@ -388,21 +418,36 @@ public abstract class FightingSkill
 
     /// <summary>
     /// Returns true when the fighter can use this skill in the current combat state.
-    /// Checks: primary OR any secondary ModusMentis known, medium available, organ not disabled by wounds.
+    /// Checks: primary OR any secondary ModusMentis known, that modus mentis still carryable by this
+    /// body, medium available, organ not disabled by wounds.
     /// (CP cost check is handled separately in GetUnlockedSkills.)
+    ///
+    /// <para>The broken test lives here rather than at the three call sites so the fight AI is gated
+    /// by construction — it filters its own candidates through this method, and a skill an injured
+    /// enemy could still swing while the player could not would be a difficulty bug nobody would
+    /// trace back to a wound.</para>
     /// </summary>
     public bool IsUnlocked(Fighter f)
     {
         // Check primary OR any secondary ModusMentis known
-        bool anyMmKnown = f.Member.LearnedModiMentis.Any(m =>
-            m.ModusMentisId == RequiredModusMentisId ||
-            SecondaryModusMentisIds.Contains(m.ModusMentisId));
-        if (!anyMmKnown)
+        if (!IsAnyModusMentisKnown(f))
+            return false;
+
+        // Known, but wounds have worn the modus mentis behind it past usable.
+        if (IsBrokenFor(f))
             return false;
 
         // At least one medium must be available and undisabled.
         return IsAnyMediumAvailable(f);
     }
+
+    /// <summary>
+    /// A skill the fighter knows and has a limb for, but whose modi mentis wounds have broken. Drawn
+    /// greyed in the action list rather than dropped, so a player can see that a skill they had is
+    /// gone rather than hunting a list for something that silently vanished.
+    /// </summary>
+    public bool IsKnownButBroken(Fighter f) =>
+        IsAnyModusMentisKnown(f) && IsBrokenFor(f) && IsAnyMediumAvailable(f);
 
     /// <summary>Returns true when at least one of <see cref="Mediums"/> is usable by this fighter.</summary>
     public bool IsAnyMediumAvailable(Fighter f)

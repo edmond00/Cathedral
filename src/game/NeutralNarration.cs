@@ -225,6 +225,92 @@ public static class NeutralNarration
         return $"I cannot {FirstPerson(actionDisplay)}: {FirstPerson(r)}";
     }
 
+    // ── A modus mentis the body can no longer carry ────────────────────────────
+
+    /// <summary>
+    /// Which office a broken modus mentis could not perform. The wording differs per faculty because
+    /// the player is being told a different thing each time — that they cannot see, cannot reason,
+    /// cannot act, cannot speak — and one sentence covering all four would name none of them.
+    /// </summary>
+    public enum BrokenFaculty { Observation, Thinking, Action, Speech }
+
+    /// <summary>
+    /// One anatomy source dragging a modus mentis below usable, as the narration needs it: what to
+    /// call it, whether it is out of use entirely or merely failing, and the wounds responsible.
+    /// A plain tuple rather than <c>PartyMember.ImpairedSource</c> so this class stays free of the
+    /// body model — everything else here templates from strings too.
+    /// </summary>
+    public readonly record struct BrokenSource(string Label, bool Disabled, IReadOnlyList<string> Wounds);
+
+    /// <summary>
+    /// The neutral line a broken modus mentis is asked to re-express: it cannot do its office, and
+    /// <b>which part of the body took that away</b>.
+    ///
+    /// <para><b>The wounds are named, not implied</b>, for the same reason
+    /// <see cref="Emotion"/> names the feeling rather than handing over the humor's Latin: told only
+    /// that it failed, the persona invents a reason, and the reason it invents is whichever flatters
+    /// the character. The player would then read a confident excuse in place of the fact that their
+    /// arm is ruined — and the memory panel, which does say so, would disagree with the narration.</para>
+    ///
+    /// <para>A source with no attributable wound still gets its label. That happens when the injury
+    /// sits on the region above the organ, which the lookup cannot pin to one part; the part that
+    /// failed is the news, and the wound is the detail.</para>
+    /// </summary>
+    public static string BrokenModusMentis(
+        string modusMentisName, BrokenFaculty faculty, IReadOnlyList<BrokenSource>? sources)
+    {
+        string office = faculty switch
+        {
+            BrokenFaculty.Observation => "look at anything",
+            BrokenFaculty.Thinking    => "think anything through",
+            BrokenFaculty.Speech      => "shape a single reply",
+            _                         => "do anything",
+        };
+
+        var body = BrokenSourcesPhrase(sources);
+        return $"I cannot {office} with my {FirstPerson(modusMentisName)}: {body}.";
+    }
+
+    /// <summary>
+    /// "my arms will not answer at all — a severed tendon; my hands are failing me — a broken finger".
+    /// Falls back to a bare statement when nothing could be attributed, so the sentence never trails
+    /// off into a dangling colon.
+    ///
+    /// <para>Public because the <b>action</b> phase does not use
+    /// <see cref="BrokenModusMentis"/>: a coded rule there already owns the sentence shape
+    /// (<see cref="ActionImpossible"/> — "I cannot force the door: …"), and it wants only this
+    /// fragment to finish it. Observation and thinking have no action to name, so they take the whole
+    /// sentence instead. One phrase, two frames.</para>
+    /// </summary>
+    public static string BrokenSourcesPhrase(IReadOnlyList<BrokenSource>? sources)
+    {
+        if (sources == null || sources.Count == 0)
+            return "this body will not answer for it any more";
+
+        var clauses = sources.Select(s =>
+        {
+            var head = s.Disabled
+                ? $"my {s.Label.ToLowerInvariant()} will not answer at all"
+                : $"my {s.Label.ToLowerInvariant()} is failing me";
+            var wounds = (s.Wounds ?? Array.Empty<string>())
+                .Where(w => !string.IsNullOrWhiteSpace(w))
+                .Select(w => w.Trim().ToLowerInvariant())
+                .ToList();
+            return wounds.Count == 0 ? head : $"{head} — {AndList(wounds)}";
+        });
+
+        return string.Join("; ", clauses);
+    }
+
+    /// <summary>"a, b and c" — an English list, for prose that is read rather than parsed.</summary>
+    private static string AndList(IReadOnlyList<string> parts) =>
+        parts.Count switch
+        {
+            0 => "",
+            1 => parts[0],
+            _ => string.Join(", ", parts.Take(parts.Count - 1)) + " and " + parts[^1],
+        };
+
     public static string ItemCombinationFailure(string actionDisplay, string itemWithArticle)
         => $"I tried to use {FirstPerson(itemWithArticle)} to {FirstPerson(actionDisplay)}, but it did not work.";
 

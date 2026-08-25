@@ -61,7 +61,7 @@ public class DialogueOptionGenerator
         var results = new List<PlayerReplicaOption>();
         if (node.Options.Count == 0) { preview?.Reset(); return results; }
 
-        var speaking = pc.GetSpeakingModiMentis();
+        var speaking = pc.GetUsableSpeakingModiMentis();
         if (speaking.Count == 0) { preview?.Reset(); return results; }
 
         int n = Math.Min(SpeechFluency(pc), speaking.Count);

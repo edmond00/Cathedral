@@ -55,8 +55,18 @@ A single-part organ is always a whole-organ medium.
 
 ## 4. Fighting skills
 
-A fighting skill is usable when two conditions hold: the fighter **holds the modus mentis** that
-unlocks it, and the **medium** it requires is present and not disabled.
+A fighting skill is usable when three conditions hold: the fighter **holds the modus mentis** that
+unlocks it, that modus mentis is one the frame can **still carry**, and the **medium** it requires is
+present and not disabled.
+
+The second is a separate question from the third, and deliberately so: the medium asks whether there
+is a limb, and this asks whether the technique can still be held. A body that has lost the one cannot
+swing the other however sound the limb behind it. The test is that the **summed level falls below
+nought** once each modus mentis is bound by its ceiling
+([Chapter II §3](02-memory.md#3-level-and-its-ceiling)) — beneath nought, and not at it, because a
+sum of nought is also what an unlearned skill reads as, and the opening blow is drawn from unlearned
+skills on purpose. A skill so lost is shown but not offered, so that its absence is legible as a
+consequence of the injury.
 
 Each skill names a **primary modus mentis** and may name **secondary** ones; the levels of every
 named modus mentis the fighter holds are summed. Its dice are then

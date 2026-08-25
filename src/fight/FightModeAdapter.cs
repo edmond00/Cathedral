@@ -2273,7 +2273,7 @@ public class FightModeAdapter
             ? active.GetLearnableSkills(_skillRegistry).ToList()
             : new List<FightingSkill>();
         _currentUnaffordableSkills = active != null
-            ? active.GetUnaffordableKnownSkills(_skillRegistry).ToList()
+            ? active.GetUnusableKnownSkills(_skillRegistry).ToList()
             : new List<FightingSkill>();
 
         _isMoveMode = true;

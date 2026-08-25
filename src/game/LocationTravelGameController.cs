@@ -347,6 +347,77 @@ public class LocationTravelGameController : IDisposable
     }
 
     /// <summary>
+    /// Break a named modus mentis on a party member (<c>--cli</c> <c>cripple &lt;mm-id&gt; [who]</c>) by
+    /// inflicting a High-handicap wound on every anatomy source it draws on — which drives its
+    /// max-level contribution to −2 apiece and its effective level to 0 or below. See
+    /// <c>BrokenModusMentis</c>.
+    ///
+    /// <para><b>Why this is a command and not a matter of calling <c>wound</c> a few times.</b> A
+    /// wound is drawn at random from the anatomy's catalogue, so asking for one that lands on the
+    /// eyes — and lands there at High rather than Medium — is a lottery a script cannot run. Breaking
+    /// a <em>particular</em> modus mentis is the whole precondition of every test in this area, and
+    /// every one of them would otherwise be a different flaky search through the wound table.</para>
+    ///
+    /// <para>The wound chosen per source is the first High-handicap one in that body's own catalogue
+    /// that affects it, so a beast gets a beast's wound: <c>WoundRegistry.ForAnatomy</c> is what keeps
+    /// an impossible wound off a body, and a debug command that bypassed it would stage a save the
+    /// game cannot load (see "Wounds and healing"). A source with no such wound is reported and
+    /// skipped rather than silently passed over.</para>
+    /// </summary>
+    public string? CliCripple(string modusMentisId, string who)
+    {
+        if (_protagonist == null) return "no protagonist";
+
+        var targets = who.ToLowerInvariant() switch
+        {
+            "protagonist" => new List<Cathedral.Game.Narrative.PartyMember> { _protagonist },
+            "companions"  => _protagonist.CompanionParty.ToList(),
+            _             => _protagonist.EveryMember
+                                 .Where(m => m.DisplayName.StartsWith(who, StringComparison.OrdinalIgnoreCase))
+                                 .ToList(),
+        };
+        if (targets.Count == 0) return $"no party member matching \"{who}\"";
+
+        foreach (var member in targets)
+        {
+            var mm = member.ModiMentis.FirstOrDefault(m =>
+                m.ModusMentisId.Equals(modusMentisId, StringComparison.OrdinalIgnoreCase));
+            if (mm == null) return $"{member.DisplayName} does not hold modus mentis \"{modusMentisId}\"";
+
+            var catalogue = Cathedral.Game.Narrative.WoundRegistry.ForAnatomy(member).ToList();
+
+            foreach (var sourceId in mm.Organs)
+            {
+                var organ     = member.GetOrganById(sourceId);
+                var bodyPartId = organ != null
+                    ? member.BodyParts.FirstOrDefault(bp => bp.Organs.Any(o => o.Id == sourceId))?.Id ?? ""
+                    : sourceId;
+
+                var wound = catalogue.FirstOrDefault(w =>
+                    w.Handicap == Cathedral.Game.Narrative.WoundHandicap.High
+                    && (organ != null ? w.AffectsOrgan(sourceId, bodyPartId)
+                                      : w.AffectsBodyPart(sourceId)));
+
+                if (wound == null)
+                {
+                    Console.WriteLine($"[cli] cripple: no High wound in {member.DisplayName}'s catalogue " +
+                                      $"affects '{sourceId}' — skipped");
+                    continue;
+                }
+
+                member.Wounds.Add(Cathedral.Game.Narrative.WoundInstance.Inflicted(wound));
+                Console.WriteLine($"[cli] cripple: {wound.WoundName} on {member.DisplayName}'s {sourceId}");
+            }
+
+            Console.WriteLine($"[cli] {mm.DisplayName} on {member.DisplayName} — level {mm.Level}, " +
+                              $"max now {member.GetMaxLevelForModusMentis(mm)}, " +
+                              $"effective {member.GetEffectiveModusMentisLevel(mm)}" +
+                              $"{(member.IsModusMentisBroken(mm) ? " — BROKEN" : "")}");
+        }
+        return null;
+    }
+
+    /// <summary>
     /// Sour a party member's humors to fully critical (<c>--cli</c> <c>starve</c>), the state a long
     /// bleed or a fight's worth of buffs arrives at. Same <paramref name="who"/> vocabulary as
     /// <see cref="CliWound"/>. Returns an error string, or null on success.

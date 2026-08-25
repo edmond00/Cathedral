@@ -98,6 +98,11 @@ observed, the one that deliberated, the one that acts — together with the whol
 implement combined, for which see [Chapter IV §7](04-items.md#7-implements). Never fewer than one
 die.
 
+The level counted is what the frame can presently bring to bear, not what was once learned: a wounded
+source lowers the ceiling, and the ceiling binds the level
+([Chapter II §3](02-memory.md#3-level-and-its-ceiling)). An injured body therefore casts fewer dice,
+and one injured past a certain point casts none at all with that manner of the mind.
+
 **The difficulty is the number of sixes required**, from one to ten: the difficulty inherent in that
 manner of acting upon that thing, adjusted by the acting modus mentis's degree of willingness.
 
@@ -132,10 +137,22 @@ presentational.
 
 **Rules of action** judge an act already chosen. They **reject** it; the reason is given in the
 acting modus mentis's own voice; and it **costs a point**. Circumstance belongs here — that man is
-watching, that door needs a key, there is nowhere left to put a log. Seven such rules exist: a
-tongue too damaged to speak, an affinity too poor to address, a crime refused on principle, a crime
-refused before a witness, an act impossible under threat, a missing required implement, and a
-carrying capacity already met.
+watching, that door needs a key, there is nowhere left to put a log. Eight such rules exist: a manner
+of the mind the frame can no longer carry, a tongue too damaged to speak, an affinity too poor to
+address, a crime refused on principle, a crime refused before a witness, an act impossible under
+threat, a missing required implement, and a carrying capacity already met.
+
+The first stands ahead of the others because it alone concerns the frame rather than the
+circumstance. One told that a witness is watching will go to another room; one told that the arm is
+ruined will not, and the refusal names the parts that failed and the wounds behind them.
+
+**A broken manner of the mind is offered and refused, not hidden.** It remains among those that may
+be chosen to observe, to deliberate and to act, and the refusal is what informs of the injury —
+withdrawing it silently would take a body's disciplines away with no account of where they had gone.
+Speech alone is excepted: a reply is set down as a thing said, and there is no room in it for a
+refusal, so a broken speaking modus mentis is passed over instead. When the last of them is passed
+over, the rule of action that governs a damaged tongue answers for it — it asks two questions, whether
+there is a voice and whether there is any manner of the mind left able to use it.
 
 **Rules of choice** narrow what is *offered*. They **withhold**, silently, and **cost nothing**,
 because nothing was refused. Character belongs here — that never occurred to me.

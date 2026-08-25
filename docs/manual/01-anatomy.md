@@ -202,6 +202,11 @@ Three degrees of handicap:
 - **High** — disables what it afflicts entirely. Every measure drawn from it collapses to its worst
   value.
 
+One measure alone is not merely collapsed but **reversed**: the contribution a source makes to the
+ceiling of the modi mentis resting upon it, which a Medium wound may drive to −1 and a High wound to
+−2. This is what allows a wound to put a manner of the mind out of use altogether rather than only
+halt its improvement, and it is set out in [Chapter II §3](02-memory.md#3-level-and-its-ceiling).
+
 Health is not a pool that is spent: **current health is the maximum less the count of wounds
 borne.** A body dies when the count reaches the maximum.
 

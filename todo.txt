@@ -35,10 +35,12 @@ office
 new verbs :
 
 new MM :
-- reject
-- minimize
-- avoid
-- deflect
+- rejection
+- hyperbole
+- oxymoron
+- euphemism
+- avoidance
+- deflection
 - sorry
 - delicatess
 - caresse
@@ -74,3 +76,4 @@ new MM :
 - fortitude
 - sense of justice
 - virtue signaling
+- sociopathy

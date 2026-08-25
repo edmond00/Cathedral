@@ -201,9 +201,25 @@ public class Fighter
                                   && CurrentCineticPoints >= s.CineticPointsCost
                                   && (!s.RequiresSuccessfulDefense || HasDefendedMeleeSinceOwnTurn));
 
-    /// <summary>Fighting skills this fighter knows but cannot currently afford (IsUnlocked but CP cost exceeds CurrentCineticPoints).</summary>
-    public IEnumerable<FightingSkill> GetUnaffordableKnownSkills(FightingSkillRegistry registry) =>
-        registry.GetAll().Where(s => s.IsUnlocked(this) && CurrentCineticPoints < s.CineticPointsCost);
+    /// <summary>
+    /// Fighting skills this fighter knows and has a limb for but cannot use right now — drawn greyed
+    /// in the action list. Two reasons, and the row looks the same for both because from the
+    /// player's side it is one fact: the skill is there and not available.
+    ///
+    /// <list type="bullet">
+    ///   <item>the CP cost exceeds <see cref="CurrentCineticPoints"/> — a passing shortage;</item>
+    ///   <item>wounds have broken the modi mentis behind it
+    ///         (<see cref="FightingSkill.IsKnownButBroken"/>) — which lasts until they heal.</item>
+    /// </list>
+    ///
+    /// <para>A broken skill has to come from its own test rather than from
+    /// <see cref="FightingSkill.IsUnlocked"/>, because that method now returns false for exactly
+    /// these — which is what keeps them out of <see cref="GetUnlockedSkills"/> and away from the AI.</para>
+    /// </summary>
+    public IEnumerable<FightingSkill> GetUnusableKnownSkills(FightingSkillRegistry registry) =>
+        registry.GetAll().Where(s =>
+            (s.IsUnlocked(this) && CurrentCineticPoints < s.CineticPointsCost)
+            || s.IsKnownButBroken(this));
 
     /// <summary>
     /// Returns one learnable skill per available medium group:

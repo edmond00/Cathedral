@@ -19,10 +19,16 @@ namespace Cathedral.Game.Narrative;
 //
 // The contribution scales linearly with how invested the source is: +0 at score 0, and the full
 // bound (+3 organ / +6 region) only when the organ/region is at its maximum possible score.
-// Intermediate scores are rounded to the nearest step. Wounds are handled by the DerivedStat
-// framework: a disabled source degrades the contribution to +0, and a medium-handicap wound lowers
-// the effective score (and thus the contribution). Override CalculateValue on any concrete stat
+// Intermediate scores are rounded to the nearest step. Override CalculateValue on any concrete stat
 // below to give that organ/region a custom curve.
+//
+// Wounds reach the contribution in three tiers, and the bottom two are NEGATIVE — see
+// MaxLevelPenalty below, which is the only place in the game where a derived stat goes under its
+// WorstValue:
+//
+//   • a High-handicap wound        → -2   (the source is out of use)
+//   • Medium wounds below score 0  → -1
+//   • score 0, wounded or never invested → +0, then the ordinary curve above
 
 /// <summary>Marker for the stats that feed a Modus Mentis's max-level formula.</summary>
 public interface IMaxLevelContributionStat { }
@@ -33,6 +39,46 @@ internal static class MaxLevelCurve
     public static int Linear(int score, int maxScore, int cap)
         => maxScore <= 0 ? 0
          : (int)Math.Round((double)cap * score / maxScore, MidpointRounding.AwayFromZero);
+}
+
+/// <summary>
+/// What a wound takes off a source's max-level contribution — the one place the two negative tiers
+/// are written down.
+///
+/// <para><b>A ruined source subtracts rather than merely stopping.</b> Every other derived stat
+/// bottoms out at <see cref="DerivedStat.WorstValue"/>, because a body that cannot see simply
+/// contributes nothing to what its eyes were for. A max-level contribution is different: it is the
+/// ceiling on skills the organ is <em>part of</em>, and a skill built on a ruined arm should not
+/// merely stop growing, it should fall below the floor of 1 that every modus mentis starts from —
+/// which is what makes it unusable. See <c>PartyMember.GetEffectiveModusMentisLevel</c>.</para>
+///
+/// <para><b>Absent is not wounded, and the distinction is load-bearing.</b>
+/// <see cref="DerivedStat.DiscoverAll"/> gives every anatomy every stat, so a human really does
+/// carry <c>FangsMaxLevelStat</c>. It reads +0 rather than a penalty because
+/// <see cref="DerivedStat.GetSourceScore"/> answers 0 (not <c>int.MinValue</c>) for an organ the
+/// body does not have, and <see cref="MaxLevelCurve.Linear"/> then divides into a <c>MaxScore</c>
+/// of 0. Never route absence through the negative branch: a beast organ named by a human's modus
+/// mentis would start costing −2, and <c>ModusMentisAnatomy.IsLearnableBy</c> already refuses that
+/// pairing for a better reason.</para>
+/// </summary>
+internal static class MaxLevelPenalty
+{
+    /// <summary>A High-handicap wound: the source is out of use altogether.</summary>
+    public const int Disabled = -2;
+
+    /// <summary>Medium-handicap wounds have driven the source's effective score below zero.</summary>
+    public const int Impaired = -1;
+
+    /// <summary>
+    /// The penalty owed for <paramref name="effectiveScore"/> (from
+    /// <see cref="DerivedStat.GetEffectiveScore"/>), or null when the source is not wound-degraded
+    /// and the ordinary curve applies. A score of exactly 0 is <em>not</em> degraded: an organ
+    /// nobody ever invested in contributes nothing, which is not the same as one that was taken.
+    /// </summary>
+    public static int? For(int effectiveScore)
+        => effectiveScore == int.MinValue ? Disabled
+         : effectiveScore < 0             ? Impaired
+         : null;
 }
 
 /// <summary>Base for an organ's Modus-Mentis max-level contribution (+0..+3, linear in organ score).</summary>
@@ -49,6 +95,11 @@ public abstract class OrganMaxLevelContributionStat : DerivedStat, IMaxLevelCont
 
     protected override int CalculateValue(PartyMember member, int sourceScore) =>
         MaxLevelCurve.Linear(sourceScore, member.GetOrganById(RelatedOrganId!)?.MaxScore ?? 0, BestValue!.Value);
+
+    /// <inheritdoc cref="MaxLevelPenalty"/>
+    public override int GetValue(PartyMember member)
+        => MaxLevelPenalty.For(GetEffectiveScore(member))
+           ?? base.GetValue(member);
 }
 
 /// <summary>Base for a body region's Modus-Mentis max-level contribution (+0..+6, linear in region score).</summary>
@@ -65,6 +116,11 @@ public abstract class RegionMaxLevelContributionStat : DerivedStat, IMaxLevelCon
 
     protected override int CalculateValue(PartyMember member, int sourceScore) =>
         MaxLevelCurve.Linear(sourceScore, member.GetBodyPartById(RelatedBodyPartId!)?.MaxScore ?? 0, BestValue!.Value);
+
+    /// <inheritdoc cref="MaxLevelPenalty"/>
+    public override int GetValue(PartyMember member)
+        => MaxLevelPenalty.For(GetEffectiveScore(member))
+           ?? base.GetValue(member);
 }
 
 // ── Organ contributions (+0..+3) ─────────────────────────────────────────────

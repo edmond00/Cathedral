@@ -479,7 +479,7 @@ public class DialogueTreeController
 
         int expected = Math.Min(
             DialogueOptionGenerator.SpeechFluency(_protagonist),
-            _protagonist.GetSpeakingModiMentis().Count);
+            _protagonist.GetUsableSpeakingModiMentis().Count);
 
         _state.IsLoadingOptions = true;
         _state.OptionsLoaded    = 0;

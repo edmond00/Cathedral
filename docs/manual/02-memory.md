@@ -83,9 +83,29 @@ also — but only if the sources are carried to their ceilings, which the budget
 not allow across the whole frame. A modus mentis whose sources sit at half their maxima has a
 ceiling near the middle of that range.
 
-Wounds enter here directly. A source disabled by a High wound contributes nothing, and a Medium
-wound lowers its effective score and thus its contribution. **A wound can therefore lower a modus
-mentis's ceiling below the level already attained**, and does.
+Wounds enter here directly, and they do not merely withhold a contribution — **they take one away**.
+A source is reckoned in one of three states:
+
+| the source | contributes |
+|---|---|
+| disabled by a **High** wound | **−2** |
+| driven below nought by **Medium** wounds | **−1** |
+| at nought, whether spent to nothing or never invested in | nothing, and the scale above resumes |
+
+The sum is therefore not bounded below by the base of one, and a sufficiently injured frame carries a
+ceiling of nought or beneath it.
+
+**What a body can bring to bear** is accordingly the lesser of two numbers: the level attained, and
+the ceiling the frame presently allows. **A wound can therefore lower a modus mentis's ceiling below
+the level already attained**, and does; the level itself is untouched, being the record of what was
+learned, and the reach returns of its own accord when the wound closes.
+
+**A modus mentis whose reach has fallen to nought or beneath cannot be used at all.** It is not
+merely a weak manner of the mind but an unusable one: there is no die left to cast with it, and every
+phase that might have called upon it refuses instead, naming the parts of the frame that failed and
+the wounds responsible. The terms of that refusal are set out in
+[Chapter VI §6](06-narration.md#6-the-two-families-of-rule) and, for combat,
+[Chapter VIII §4](08-fighting.md#4-fighting-skills).
 
 ## 4. Experience
 

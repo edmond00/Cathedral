@@ -368,7 +368,13 @@ public static class NpcAudit
 
         foreach (var mm in body.ModiMentis)
         {
-            int cap = body.GetMaxLevelForModusMentis(mm);
+            // The floor of 1 mirrors NpcContentGenerator.SettleSkillLevels, which clamps to the cap
+            // but never below 1 — and must, because a wound can now drive the cap to 0 or under
+            // (MaxLevelPenalty). The stored level is what the character LEARNED and stays at 1; that
+            // the wound has made it unusable is a separate fact, derived, and reported below rather
+            // than treated as a generation fault. Without the same floor here every scarred archetype
+            // reads as over its cap — 37 of them did.
+            int cap = Math.Max(1, body.GetMaxLevelForModusMentis(mm));
             if (mm.Level > cap)
                 yield return $"{who}: '{mm.ModusMentisId}' at level {mm.Level} over its cap of {cap}";
             if (mm.Level < 1)

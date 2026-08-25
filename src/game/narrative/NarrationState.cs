@@ -28,14 +28,24 @@ public abstract class ModusMentisChainElement
     /// <summary>
     /// Calculates the total modusMentis level sum by traversing the chain back to the root.
     /// This represents the number of dice that will be rolled for a modusMentis check.
+    ///
+    /// <para><b>Pass <paramref name="member"/> wherever the acting body is known.</b> A wound lowers
+    /// what a modus mentis may reach without touching the level it stored, so the stored level is
+    /// what was learned and <c>PartyMember.GetEffectiveModusMentisLevel</c> is what can be brought to
+    /// bear. Summing the stored levels lets a ruined arm roll its full pool. The parameter is
+    /// optional because the display paths (the action line's level pips, the scroll buffer) read this
+    /// without a body to hand; every path that becomes dice has one.</para>
     /// </summary>
-    public int GetTotalModusMentisLevel()
+    public int GetTotalModusMentisLevel(PartyMember? member = null)
     {
-        int total = ChainModusMentis?.Level ?? 0;
+        int Level(ModusMentis? mm) =>
+            mm == null ? 0 : member?.GetEffectiveModusMentisLevel(mm) ?? mm.Level;
+
+        int total = Level(ChainModusMentis);
         var current = ChainOrigin;
         while (current != null)
         {
-            total += current.ChainModusMentis?.Level ?? 0;
+            total += Level(current.ChainModusMentis);
             current = current.ChainOrigin;
         }
         return total;

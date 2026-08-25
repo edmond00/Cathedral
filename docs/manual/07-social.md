@@ -43,9 +43,15 @@ A conversation is a tree. The other party speaks; a set of replies is offered; t
 leads to another line, and so on, until the branch reaches its **resolution** — the single dice
 check that settles the whole exchange.
 
-**How many replies are offered** is the **tongue's** measure of fluency, from nought to five. A
-tongue at nought — or disabled by a High wound — offers none, and such a body cannot hold a
-conversation at all.
+**How many replies are offered** is the **tongue's** measure of fluency, from nought to five, and
+never more than the count of speaking modi mentis the body can bring to bear. A tongue at nought — or
+disabled by a High wound — offers none, and such a body cannot hold a conversation at all.
+
+**A speaking modus mentis the frame can no longer carry is passed over** rather than refused
+([Chapter II §3](02-memory.md#3-level-and-its-ceiling)). Elsewhere such a manner of the mind is
+offered and declines aloud, but a reply is set down as a thing said, and a refusal has no room in it.
+When wounds have taken the last of them, the conversation is not opened at all: the rule that governs
+a damaged tongue answers for the want of a mind to use it, and says which parts of the frame failed.
 
 **A branch is between two and four replies deep.** Nothing shorter is a conversation; nothing longer
 is worth the reading.

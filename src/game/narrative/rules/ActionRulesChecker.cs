@@ -17,6 +17,9 @@ public static class ActionRulesChecker
     /// </summary>
     private static readonly IReadOnlyList<IActionRule> Rules = new List<IActionRule>
     {
+        // First: the only rule about the body rather than the situation. A player told a witness is
+        // watching will walk to another room; one told their arm is ruined will not.
+        new BrokenModusMentisRule(),
         new ZeroRepliesDialogueRule(),
         new NegativeAffinityDialogueRule(),
         new IllegalActionHighMoralityRule(),

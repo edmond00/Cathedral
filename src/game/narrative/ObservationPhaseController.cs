@@ -96,6 +96,19 @@ public class ObservationPhaseController
 
         Console.WriteLine($"ObservationPhaseController: Selected {modusMentis.DisplayName}");
 
+        // Every observation modus mentis is broken — the picker only ever returns one of those when
+        // there is nothing else left. The phase opens on the refusal instead of an observation.
+        if (actingMember.IsModusMentisBroken(modusMentis))
+        {
+            Console.WriteLine(
+                "ObservationPhaseController: every observation modus mentis is broken — " +
+                "opening the phase on the refusal.");
+            var brokenSlot = await _observationExecutor.GetOrCreateSlotForModusMentisPublicAsync(modusMentis);
+            _observationExecutor.ResetSlot(brokenSlot);
+            return await BrokenObservationBlockAsync(
+                modusMentis, actingMember, brokenSlot, preview, commit, ct);
+        }
+
         var allOutcomes = currentNode.GetAllDirectConcreteOutcomes();
         if (allOutcomes.Count == 0)
         {
@@ -448,17 +461,84 @@ public class ObservationPhaseController
     /// priority — from the observation modi mentis currently held in the active member's sensory memory,
     /// falling back to any observation modus mentis when none of them sits in sensory memory. Returns
     /// null only when the member has no observation modus mentis at all.
+    ///
+    /// <para><b>Modi mentis wounds have broken are passed over while any usable one remains</b>, and
+    /// that is not the silent filtering <see cref="BrokenModusMentis"/> argues against. Nobody chose
+    /// this one — the phase opens on its own, and the player is given no popup to be told anything
+    /// through, so opening on a refusal would spend a noetic point and a whole phase on a choice they
+    /// never made. Where the player <i>does</i> choose an observation modus mentis (the focus
+    /// observation) the broken ones are still offered and still refuse, which is where the account of
+    /// the injury belongs.</para>
+    ///
+    /// <para>When <em>every</em> observation modus mentis is broken one is returned anyway rather than
+    /// null: the body genuinely cannot perceive, and <see cref="ExecuteObservationPhaseAsync"/> opens
+    /// the phase on that refusal. Null is kept for its original meaning — no observation modus mentis
+    /// at all — which the caller treats as a fault.</para>
     /// </summary>
     private ModusMentis? PickFirstObservationModusMentis(PartyMember member)
     {
         var observation = member.GetObservationModiMentis();
         if (observation.Count == 0) return null;
 
+        var usable = observation.Where(mm => !member.IsModusMentisBroken(mm)).ToList();
+        if (usable.Count > 0) observation = usable;
+
         var inSensory = member.GetMemoryModule(MemoryModuleType.Sensory)?.FilledModiMentis.ToHashSet()
                         ?? new HashSet<ModusMentis>();
         var preferred = observation.Where(mm => inSensory.Contains(mm)).ToList();
         var pool = preferred.Count > 0 ? preferred : observation;
         return pool[_random.Next(pool.Count)];
+    }
+
+    /// <summary>
+    /// The one block a phase opens with when the body cannot perceive at all — every observation
+    /// modus mentis broken by wounds. It names the organs and the wounds responsible, in the voice of
+    /// the modus mentis that could not do its office, and carries no keyword: there is nothing to
+    /// click, and LEAVE is the way out.
+    /// </summary>
+    private async Task<List<NarrationBlock>> BrokenObservationBlockAsync(
+        ModusMentis modusMentis, PartyMember actingMember, int slotId,
+        LlmPreviewSession? preview, Action<List<NarrationBlock>>? commit, CancellationToken ct)
+    {
+        var part = preview?.BeginPart(PreviewTitles.For(modusMentis));
+        string neutral = BrokenModusMentis.NeutralFor(
+            actingMember, modusMentis, NeutralNarration.BrokenFaculty.Observation);
+
+        string text;
+        try
+        {
+            text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation,
+                modusMentis.PersonaReminder2, keepHistory: true,
+                styleInstruction: modusMentis.StyleInstruction, preview: part?.NextSegment(), ct: ct);
+            if (string.IsNullOrWhiteSpace(text)) text = neutral;
+        }
+        catch (Exception ex)
+        {
+            // A refusal must never be the thing that takes the phase down — the body being ruined is
+            // already the news, and a failed rewrite would replace it with a lost visit.
+            Console.Error.WriteLine(
+                $"ObservationPhaseController: broken-observation rewrite failed: {ex.Message}");
+            text = neutral;
+        }
+
+        var blocks = new List<NarrationBlock>
+        {
+            new(Type: NarrationBlockType.Observation,
+                ModusMentis: modusMentis,
+                Text: text,
+                Keywords: new List<string>(),
+                Actions: null)
+        };
+
+        if (part != null)
+        {
+            part.AttachCommit(() => commit?.Invoke(blocks));
+            part.MarkComplete();
+            preview?.EndProduction();
+        }
+        else commit?.Invoke(blocks);
+
+        return blocks;
     }
 
     /// <summary>

@@ -199,8 +199,15 @@ public abstract class DerivedStat
     /// <summary>
     /// Get the final computed value of this derived stat for the given party member,
     /// taking wounds into account.
+    ///
+    /// <para><b>Virtual for one family of stats only.</b> Every stat here degrades <em>towards</em>
+    /// <see cref="WorstValue"/> and stops, which is right for a quantity a body either has or lacks
+    /// — carry weight, beauty, health. The modus-mentis max-level contributions are the exception:
+    /// a ruined organ does not merely stop contributing to what its skills may reach, it takes some
+    /// of that reach away, so those two override this to return a negative. Do not widen that
+    /// reading to the rest — see <c>MaxLevelContributionStats.cs</c>.</para>
     /// </summary>
-    public int GetValue(PartyMember member)
+    public virtual int GetValue(PartyMember member)
     {
         int score = GetEffectiveScore(member);
         // A negative score means the source is absent (int.MinValue) or wound-disabled: the

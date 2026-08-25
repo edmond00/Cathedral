@@ -196,6 +196,31 @@ public class OutcomeNarrator
     }
 
     /// <summary>
+    /// Narrates a modus mentis the body can no longer carry, in that modus mentis's own voice —
+    /// an observation that could not be made, a thought that could not be held, a companion who
+    /// could not be addressed. See <see cref="BrokenModusMentis"/>.
+    ///
+    /// <para>Unlike <see cref="NarrateRefusalAsync"/> this takes no action, because there is none:
+    /// the refusal happens before a goal exists. The neutral sentence therefore carries the whole
+    /// meaning — which office failed, which part of the body took it away, and the wounds
+    /// responsible.</para>
+    /// </summary>
+    public async Task<string> NarrateBrokenModusMentisAsync(
+        ModusMentis modusMentis,
+        PartyMember actor,
+        NeutralNarration.BrokenFaculty faculty,
+        CancellationToken cancellationToken = default,
+        ILlmPreviewSink? preview = null)
+    {
+        string neutral = BrokenModusMentis.NeutralFor(actor, modusMentis, faculty);
+
+        int slotId = await GetOrCreateNarratorSlotAsync(modusMentis);
+        return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
+            modusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
+            styleInstruction: modusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
+    }
+
+    /// <summary>
     /// Narrates why a combined item cannot be used for the action, in the action Modus Mentis's voice.
     ///
     /// <para><paramref name="kind"/> chooses the neutral sentence, and they are genuinely different

@@ -232,6 +232,7 @@ public sealed class CliDriver
                 case "fight-deplete": CmdFightDeplete(rest);          break;
                 case "fight-wound": CmdFightWound(rest);              break;
                 case "wound":       CmdWound(rest);                   break;
+                case "cripple":     CmdCripple(rest);                 break;
                 case "starve":      CmdStarve(rest);                  break;
                 case "clock":       CmdClock(rest);                   break;
                 case "wait":        CmdWait(rest);                    break;
@@ -388,6 +389,12 @@ public sealed class CliDriver
           starve [protagonist|companions|<name>]
                                     sour every humor queue to critical — the other lethal state a
                                     visit can arrive at (default: protagonist)
+          cripple <mm-id> [protagonist|companions|<name>]
+                                    High-wound every organ/region a modus mentis draws on, until it
+                                    is BROKEN — effective level 0 or below, so it rolls nothing and
+                                    every phase refuses it. `wound` draws from the catalogue at
+                                    random, so this is the only way a script can break one NAMED
+                                    modus mentis (default: protagonist)
           wait [frames]             block until the game settles (no LLM/travel/dice in flight)
           advance [presses] [secs]  settle, then press the preview box's CONTINUE until it is gone
                                     (default up to 8 presses). Use this, not a bare `click continue`,
@@ -1185,6 +1192,19 @@ public sealed class CliDriver
         string who   = a.Length > 0 ? a[0].Trim('"') : "protagonist";
         int    count = a.Length > 1 && int.TryParse(a[1], out int n) ? n : 0;
         Report(_game.CliWound(who, count), $"wounded: {who}{(count > 0 ? $" x{count}" : " (mortally)")}");
+    }
+
+    /// <summary>
+    /// <c>cripple &lt;mm-id&gt; [who]</c> — wound every anatomy source a modus mentis draws on until it
+    /// is broken. The only deterministic way a script can reach that state: <c>wound</c> draws from
+    /// the catalogue at random, so landing a High-handicap wound on one named organ is a lottery.
+    /// </summary>
+    private void CmdCripple(string[] a)
+    {
+        if (a.Length < 1) { CliMode.Emit("error: cripple <modus-mentis-id> [protagonist|companions|<name>]"); return; }
+        string mmId = a[0].Trim('"');
+        string who  = a.Length > 1 ? string.Join(' ', a[1..]).Trim('"') : "protagonist";
+        Report(_game.CliCripple(mmId, who), $"crippled: {mmId} on {who}");
     }
 
     private void CmdStarve(string[] a)

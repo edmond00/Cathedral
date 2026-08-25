@@ -315,14 +315,20 @@ public class MemoryPanelRenderer
             _terminal.SetCell(ix, y + 1, ' ', textCol, slotBg);
 
         int    slotMax  = _member?.GetMaxLevelForModusMentis(slot.ModusMentis!) ?? slot.ModusMentis!.Level;
-        string lvl      = $"L{slot.ModusMentis!.Level}/{slotMax}";
+        // A ceiling at or below 0 means wounds have taken this modus mentis out of use altogether,
+        // so the pair of numbers would read as an odd "L4/0" rather than as the news it is. The
+        // detail panel below names the organs; this is only the flag that sends the player there.
+        bool   broken   = _member?.IsModusMentisBroken(slot.ModusMentis!) == true;
+        string lvl      = broken ? "BROKEN" : $"L{slot.ModusMentis!.Level}/{slotMax}";
         int    maxNameW = slotW - 2 - lvl.Length - 1;
         string name     = slot.ModusMentis.DisplayName;
         if (name.Length > maxNameW) name = name.Length > 0 ? name[..Math.Max(0, maxNameW)] : "";
 
         _terminal.Text(x + 1, y + 1, name, textCol, slotBg);
         _terminal.Text(x + slotW - 1 - lvl.Length, y + 1, lvl,
-            isHovered ? Config.Colors.BrightYellow : Config.Colors.GoldYellow, slotBg);
+            broken    ? Config.Colors.BrightRed
+          : isHovered ? Config.Colors.BrightYellow
+                      : Config.Colors.GoldYellow, slotBg);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -465,8 +471,14 @@ public class MemoryPanelRenderer
         int    maxLevel  = _member?.GetMaxLevelForModusMentis(modusMentis) ?? modusMentis.Level;
         int    xpNeeded  = _member?.GetModusMentisXpThreshold() ?? 0;
         bool   atMaxLvl  = modusMentis.Level >= maxLevel;
-        string lvlStr = $"Level {modusMentis.Level} / {maxLevel}";
-        _terminal.Text(EndX - lvlStr.Length, row, lvlStr, Config.Colors.GoldYellow, DetailTitle);
+        bool   isBroken  = _member?.IsModusMentisBroken(modusMentis) == true;
+        // Wounds can pull the ceiling to 0 or below, at which point the modus mentis rolls nothing at
+        // all. "Level 4 / 0" states that arithmetically and says nothing about what it means, so the
+        // title says it in words and the anatomy row below shows which organ took it away.
+        string lvlStr = isBroken ? $"Level {modusMentis.Level} — BROKEN"
+                                 : $"Level {modusMentis.Level} / {maxLevel}";
+        _terminal.Text(EndX - lvlStr.Length, row, lvlStr,
+            isBroken ? Config.Colors.BrightRed : Config.Colors.GoldYellow, DetailTitle);
         row++;
 
         // Separator
@@ -481,12 +493,15 @@ public class MemoryPanelRenderer
 
         // Anatomy row: every organ / region the modusMentis draws on, with the max-level bonus each
         // one currently grants. There is no "primary" source — the sum of these is the max level in
-        // the title row (minus its floor of 1) — so all of them are listed, never just the first.
+        // the title row (minus its base of 1) — so all of them are listed, never just the first.
+        // A wounded source contributes a NEGATIVE amount, and this row is the only place a player can
+        // see which one — hence the explicit sign rather than a hardcoded "+", which printed "+-2".
         var    anatomy      = _member?.GetAnatomySourcesForModusMentis(modusMentis) ?? new();
         string anatomyLabel = anatomy.Any(a => a.IsRegion) ? "Body region" : "Organs";
         string anatomyValue = anatomy.Count == 0
             ? "—"
-            : string.Join(", ", anatomy.Select(a => $"{a.Label} +{a.Contribution}"));
+            : string.Join(", ", anatomy.Select(a =>
+                  $"{a.Label} {(a.Contribution >= 0 ? "+" : "")}{a.Contribution}"));
         int anatomyRoom = leftW - 4 - anatomyLabel.Length;
         if (anatomyValue.Length > anatomyRoom && anatomyRoom > 1)
             anatomyValue = anatomyValue[..(anatomyRoom - 1)] + "…";
@@ -517,7 +532,8 @@ public class MemoryPanelRenderer
         metaLines.Add(("Discreet",      modusMentis.ActsDiscretely ? "Yes — acts unnoticed" : "No",
              modusMentis.ActsDiscretely ? Config.Colors.BrightYellow : Config.Colors.LightGray75));
         metaLines.Add(("Morality",      modusMentis.MoralLevel.ToString(),                    Config.Colors.LightGray75));
-        metaLines.Add((anatomyLabel,    anatomyValue,                                         Config.Colors.LightGray75));
+        metaLines.Add((anatomyLabel,    anatomyValue,
+             anatomy.Any(a => a.Contribution < 0) ? Config.Colors.BrightRed : Config.Colors.LightGray75));
         metaLines.Add(("XP",            atMaxLvl ? "MAX" : $"{modusMentis.CurrentXp} / {xpNeeded}",
              atMaxLvl ? Config.Colors.GoldYellow : Config.Colors.LightGray75));
 

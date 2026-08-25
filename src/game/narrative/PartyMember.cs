@@ -808,6 +808,24 @@ public abstract class PartyMember
         LearnedModiMentis.Where(s => s.Functions.Contains(ModusMentisFunction.Action)).ToList();
     public List<ModusMentis> GetSpeakingModiMentis() =>
         LearnedModiMentis.Where(s => s.Functions.Contains(ModusMentisFunction.Speaking)).ToList();
+
+    /// <summary>
+    /// Speaking modi mentis this body can still carry — <see cref="GetSpeakingModiMentis"/> minus the
+    /// ones wounds have broken (<see cref="IsModusMentisBroken"/>).
+    ///
+    /// <para><b>Speech is the one faculty where a broken modus mentis is dropped rather than offered
+    /// and refused.</b> Every other phase has a narration frame that can carry the account of a
+    /// ruined organ; a dialogue reply is written straight into the option list, so a refusal there
+    /// would have to be worded as something the character says — which is exactly the thing they
+    /// cannot do. Dropping is silent, and when the last one goes
+    /// <c>ZeroRepliesDialogueRule</c> catches it before the conversation opens and says why.</para>
+    ///
+    /// <para>Both readers must use this one: <c>DialogueOptionGenerator</c> samples from it and
+    /// <c>DialogueTreeController</c> sizes the loading box from it, so a filter applied to one and
+    /// not the other leaves the box waiting on replies that will never come.</para>
+    /// </summary>
+    public List<ModusMentis> GetUsableSpeakingModiMentis() =>
+        GetSpeakingModiMentis().Where(mm => !IsModusMentisBroken(mm)).ToList();
     public ModusMentis? GetModusMentisById(string modusMentisId) =>
         LearnedModiMentis.FirstOrDefault(s => s.ModusMentisId == modusMentisId);
 
@@ -824,9 +842,11 @@ public abstract class PartyMember
     /// grants <i>this</i> body — e.g. <c>("Eyes", +2, region: false), ("Cerebrum", +1, false)</c> or
     /// <c>("Trunk", +4, true)</c>. Order follows <see cref="ModusMentis.Organs"/>, but no entry is
     /// "primary": every one counts equally in <see cref="GetMaxLevelForModusMentis"/>, so the sum of
-    /// the contributions here is exactly that method's result minus its floor of 1.
+    /// the contributions here is exactly that method's result minus its base of 1.
     /// A source absent from this anatomy (a beast organ on a human body) is returned under its raw
     /// id with a contribution of 0, which is what it actually grants.
+    /// A contribution may be <b>negative</b> when the source is wounded — see
+    /// <c>MaxLevelPenalty</c> and <see cref="GetImpairedSourcesForModusMentis"/>.
     /// </summary>
     public List<(string Label, int Contribution, bool IsRegion)> GetAnatomySourcesForModusMentis(
         ModusMentis modusMentis) =>
@@ -842,14 +862,92 @@ public abstract class PartyMember
     // ── ModusMentis XP / leveling ──────────────────────────────────────
 
     /// <summary>
-    /// Maximum level a modusMentis can reach: a floor of 1 plus the max-level contribution of every
+    /// Maximum level a modusMentis can reach: a base of 1 plus the max-level contribution of every
     /// organ / body region it is related to (its <see cref="ModusMentis.Organs"/> entries, which may
     /// name organs or body regions). Each contribution comes from that source's
     /// <see cref="IMaxLevelContributionStat"/> — an organ adds +0..+3, a region +0..+6 — and already
-    /// accounts for wounds (a disabled source contributes +0).
+    /// accounts for wounds.
+    ///
+    /// <para><b>This can come out zero or negative, and that is the point.</b> A wounded source
+    /// contributes −1 or −2 (see <c>MaxLevelPenalty</c>), so enough damage drags the ceiling under
+    /// the base of 1 that every modus mentis otherwise starts from. There is deliberately no clamp
+    /// here: <see cref="GetEffectiveModusMentisLevel"/> reads the result as a ceiling on what the
+    /// body can bring to bear, and a ceiling at or below 0 is what
+    /// <see cref="IsModusMentisBroken"/> means.</para>
     /// </summary>
     public int GetMaxLevelForModusMentis(ModusMentis modusMentis) =>
         1 + modusMentis.Organs.Sum(GetMaxLevelContribution);
+
+    /// <summary>
+    /// The level this body can actually bring to bear with <paramref name="modusMentis"/> — what it
+    /// knows, capped by what it can still do with it. This is the number that becomes dice; the
+    /// stored <see cref="ModusMentis.Level"/> is what was learned and is never written down by a
+    /// wound.
+    ///
+    /// <para><b>Derived, never stored, for the same reason age and wound healing are.</b> A wound
+    /// closes on its own schedule and the reach comes back with it, with nothing to keep in sync and
+    /// no save migration; clamping the stored level at the moment of injury would destroy learning
+    /// the body gets back a hundred days later.</para>
+    /// </summary>
+    public int GetEffectiveModusMentisLevel(ModusMentis modusMentis) =>
+        Math.Min(modusMentis.Level, GetMaxLevelForModusMentis(modusMentis));
+
+    /// <summary>
+    /// Whether this body is too damaged to use <paramref name="modusMentis"/> at all — its effective
+    /// level has reached 0 or gone below it. A broken modus mentis rolls no dice, so it is not merely
+    /// weaker: there is nothing left to attempt with.
+    /// </summary>
+    public bool IsModusMentisBroken(ModusMentis modusMentis) =>
+        GetEffectiveModusMentisLevel(modusMentis) <= 0;
+
+    /// <summary>
+    /// The wounded sources dragging <paramref name="modusMentis"/> down, worst first, each with the
+    /// wounds responsible — what a refusal names so the player learns which part of them failed
+    /// rather than only that something did.
+    ///
+    /// <para>Only sources with a <em>negative</em> contribution are returned: an organ merely low or
+    /// never invested in is not what broke this, and naming it would send the player looking for a
+    /// wound that is not there.</para>
+    /// </summary>
+    public List<ImpairedSource> GetImpairedSourcesForModusMentis(ModusMentis modusMentis) =>
+        modusMentis.Organs
+            .Select(id => (Id: id, Contribution: GetMaxLevelContribution(id)))
+            .Where(s => s.Contribution < 0)
+            .Select(s => new ImpairedSource(
+                Label:        GetOrganById(s.Id)?.DisplayName
+                              ?? GetBodyPartById(s.Id)?.DisplayName
+                              ?? s.Id.Replace('_', ' '),
+                Contribution: s.Contribution,
+                Wounds:       GetWoundsForSource(s.Id)))
+            .OrderBy(s => s.Contribution)
+            .ToList();
+
+    /// <summary>
+    /// One wounded anatomy source behind a broken modus mentis. <see cref="Wounds"/> may be empty
+    /// when the source is impaired by a wound on the region above it that this lookup cannot
+    /// attribute; the label alone still names the part that failed.
+    /// </summary>
+    public readonly record struct ImpairedSource(
+        string Label, int Contribution, List<WoundInstance> Wounds);
+
+    /// <summary>
+    /// Wounds bearing on one organ or body-region id, matched exactly as
+    /// <see cref="DerivedStat.GetEffectiveScore"/> matches them, so the wounds named to the player
+    /// are the wounds that caused the penalty.
+    /// </summary>
+    private List<WoundInstance> GetWoundsForSource(string id)
+    {
+        var organ = GetOrganById(id);
+        if (organ != null)
+        {
+            string bodyPartId = _bodyParts.FirstOrDefault(bp => bp.Organs.Any(o => o.Id == id))?.Id ?? "";
+            return Wounds.Where(w => w.AffectsOrgan(id, bodyPartId)
+                                  && w.Handicap != WoundHandicap.Low).ToList();
+        }
+        return GetBodyPartById(id) != null
+            ? Wounds.Where(w => w.AffectsBodyPart(id) && w.Handicap != WoundHandicap.Low).ToList()
+            : new List<WoundInstance>();
+    }
 
     /// <summary>Max-level contribution of a single organ or body-region id (0 if none/absent).</summary>
     private int GetMaxLevelContribution(string id) =>

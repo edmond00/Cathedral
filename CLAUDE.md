@@ -1299,6 +1299,73 @@ the run. `PersonalityTrait.ApplyGameplay` now refuses the wound and logs it, exa
 archetype's own, which `--npc-audit` names. There is deliberately no translation to a beast
 equivalent: nothing sensibly maps a missing finger onto a wolf.
 
+### A wound takes a modus mentis away, not just its growth
+
+**A wounded anatomy source contributes a negative amount to a modus mentis's max level.** That is the
+whole rule, and it is the one place in the game a derived stat goes below its `WorstValue`:
+
+| the source | contributes |
+|---|---|
+| a **High**-handicap wound (`GetEffectiveScore` → `int.MinValue`) | **−2** |
+| **Medium** wounds that have driven the effective score below 0 | **−1** |
+| score 0 — wounded to nothing, or never invested in | +0, then the ordinary linear curve |
+
+Since `GetMaxLevelForModusMentis` is `1 + sum(contributions)` with no clamp, enough damage drags the
+ceiling under the base of 1 that every modus mentis starts from.
+`PartyMember.GetEffectiveModusMentisLevel` is `min(stored level, that ceiling)`, and
+**`IsModusMentisBroken` is that result at or below 0** — nothing left to roll with, so the modus
+mentis cannot be used at all.
+
+**Derived, never stored**, for the same reason age and wound healing are: the stored `ModusMentis.Level`
+is what the character *learned* and no wound writes to it, so the reach comes back on its own when the
+wound closes, with nothing to keep in sync and nothing to migrate in the save.
+
+Before this, a wound was a **growth** penalty and never a **performance** one — the cap gated
+`AwardModusMentisXp` and the memory panel's `L4/7`, while `GetTotalModusMentisLevel` summed the stored
+levels straight into the dice. A ruined arm cost nothing at the table.
+
+**Offered and refused, not withheld — except for speech.** A broken modus mentis stays in the
+observation, thinking and action pools and the refusal is narrated in its own voice, naming the
+organs and the wounds behind them. Filtering it out silently would make a player's skills disappear
+with no account of where they went. It costs a noetic point, like every other refusal.
+
+| where | what happens |
+|---|---|
+| **action** | `BrokenModusMentisRule`, **first** in `ActionRulesChecker` — ahead of every circumstantial rule, because a player told a witness is watching will walk to another room and one told their arm is ruined will not |
+| **thinking / focus observation / Speak About** | `ApplyModusMentisSelection` is the one place all three player-chosen faculties pass through, so the guard is written once; `RefuseBrokenModusMentisAsync` narrates it |
+| **the phase-opening observation** | the persona passes over broken ones *while any usable one remains* — nobody chose it, and there is no popup to be told anything through, so opening on a refusal would spend a phase on a choice the player never made. With **every** observation modus mentis broken the phase opens on the refusal and carries no keyword |
+| **dialogue replies** | **dropped** (`GetUsableSpeakingModiMentis`). A reply is written straight into the option list with no narration frame to carry a refusal — it would have to be worded as something the character says, which is the thing they cannot do. Emptying the list falls through to `ZeroRepliesDialogueRule`, which now answers *two* questions: no voice (fluency 0) and no means (every speaking modus mentis broken), with a different sentence for each |
+| **fighting** | `FightingSkill.IsBrokenFor` is the modus-mentis sum **below zero**, tested inside `IsUnlocked` so the fight AI is gated by construction. Broken skills leave `GetUnlockedSkills` and appear greyed through `GetUnusableKnownSkills` |
+| **emotions** | untouched. A disposition needs no organ to be moved by something, so a broken one still fires |
+
+**Below zero and not at it, for fighting only, and the asymmetry is deliberate.** `GetTotalMmLevel`
+returns 0 for a skill the fighter never learned, and that state must stay usable — `FirstBlow` draws
+from unlearned skills on purpose, since the first punch is where the punch is learned. Inside a fight
+`IsUnlocked` has already required the modus mentis to be known, so a 0 there means "known and worn
+down to nothing" and *does* slip through: such a skill rolls `BaseDice` plus its medium and nothing
+else. Narration has no such ambiguity and breaks at 0.
+
+Three things that had to move with it:
+
+- **`DerivedStat.GetValue` is now virtual, and only the two max-level contribution stats override
+  it.** Every other stat degrades *towards* `WorstValue` and stops, which is right for a quantity a
+  body either has or lacks. Do not widen the negative reading — that method is the read path for
+  carry weight, beauty, health and noetic points.
+- **Absent is not wounded.** `DerivedStat.DiscoverAll()` gives every anatomy every stat, so a human
+  really does carry `FangsMaxLevelStat`. It reads +0 because `GetSourceScore` answers 0 (not
+  `int.MinValue`) for a missing organ and the linear curve then divides into a `MaxScore` of 0 —
+  a *different path* from the wounded one. Route absence through the negative branch and every beast
+  organ named by a human's modus mentis starts costing −2.
+- **`NpcAudit` needs the same floor of 1 that `NpcContentGenerator.SettleSkillLevels` applies.** An
+  NPC generated with a trait scar keeps the skill at level 1 and simply has it broken; without the
+  floor, 37 scarred archetypes read as "over its cap of −3".
+
+| | |
+|---|---|
+| `cripple <mm-id> [who]` | High-wound every source a named modus mentis draws on until it is broken. **The only deterministic way in** — `wound` draws from the catalogue at random, so landing a High wound on one named organ is a lottery. Note it reaches further than it is aimed: a visage wound disables the eyes *and* the nose, so one call breaks every modus mentis built on either |
+| `inspect skills` | now reports `effective=`, `max=` and `broken=` beside `level=`. The stored level alone cannot say whether the thing can still be used, and deriving `broken` in a script from two numbers would be a paraphrase of the rule rather than a reading of it |
+| `cli/system/broken_mm.cli` | the level falls, the refusal is narrated naming the organs, a noetic point is spent, and `save roundtrip` still passes — the clamp is derived, so nothing about it reaches the file |
+
 ### Verbs, actions and outcomes — the three types, and what each is for
 
 The narration loop has exactly three nouns. They were once eight, several of them named "outcome",
