@@ -37,10 +37,9 @@ public class ChickenArchetype : ShallowNpcArchetype
             descriptions: new() { "a limp chicken, its neck broken, wings splayed and the feathers already going flat" },
             parts: new()
             {
-                new ItemElement(new ChickenMeat()),
-                new ItemElement(new ChickenMeat()),
-                new ItemElement(new ChickenFeather()),
-                new ItemElement(new ChickenFeather()),
-                new ItemElement(new ChickenFeather()),
+                new ItemElement(new Meat()), new ItemElement(new Meat()),
+                new ItemElement(new Liver()),
+                new ItemElement(new Heart()),
+                new ItemElement(new Feather()), new ItemElement(new Feather()), new ItemElement(new Feather()),
             });
 }

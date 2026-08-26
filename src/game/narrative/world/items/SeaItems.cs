@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 
@@ -53,11 +53,18 @@ public sealed class Mussel : SeaFoodItem
         .Add<SaltHumor>(40).Add<BloodHumor>(30).Add<CalxHumor>(30);
 }
 
+/// <summary>
+/// A hollow spiral shell — picked up along the tideline, or taken off a snail. The description is
+/// deliberately neutral between the two: the shell a snail leaves is the same object a beach gives
+/// up, and a "Snail Shell" beside a "Shell" would be the general/specific pairing the body-part
+/// vocabulary exists to avoid. The hard case off a beetle or a crab is a <c>Carapace</c>, which is a
+/// different shape of thing.
+/// </summary>
 public sealed class Shell : Item
 {
     public override string ItemId      => "shell";
     public override string DisplayName => "Shell";
-    public override string Description => "A pearly fragment of seashell, edges worn smooth by tide";
+    public override string Description => "A banded spiral shell, chalky and empty, worn thin at the lip";
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass    Weight => WeightClass.Insignificant;

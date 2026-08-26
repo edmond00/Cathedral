@@ -20,8 +20,20 @@ namespace Cathedral.Game.Npc.Corpse;
 /// <para>Parts are listed flat per species rather than grouped by body part. The grouping used to be
 /// real — a wolf's fangs sat in its muzzle, its hide in its body — but each group cost a narration
 /// phase to reach, and the distinct actions a player sees come from the <i>item</i> names, which are
-/// unchanged. Two identical parts still collapse to one goal ("cut the pork meat"); cutting removes
-/// one instance and the goal returns while any remain.</para>
+/// unchanged. Two identical parts still collapse to one goal ("cut the meat"); cutting removes one
+/// instance and the goal returns while any remain.</para>
+///
+/// <para><b>A body yields four to eight parts</b>, and both ends of that are deliberate. Below four
+/// a carcass is one cut and a shrug — the whole approach (a kill, a knife, a noetic point per
+/// attempt) costs more than the body is worth. Above eight the list stops being a choice: the goals
+/// run past what a phase can offer and the pack cannot hold them anyway, so the surplus reads as
+/// litter rather than as plenty. Duplicates count toward the eight but not toward the goals, so a
+/// pig at <c>Meat x3</c> offers one "cut the meat" that can be taken three times.</para>
+///
+/// <para>What varies between species is <b>which</b> parts and <b>how many</b>, never the item's
+/// name — see <c>BodyPartItem</c> for why that rule is worth keeping. A bear is a bear because it
+/// gives three cuts, two claws and a skull; it is not a bear because its meat is called bear meat.
+/// Size is the whole scale: a hare gives five parts and a bear eight.</para>
 /// </summary>
 public static class CorpseRegistry
 {
@@ -31,59 +43,91 @@ public static class CorpseRegistry
 
     private static readonly Dictionary<Type, CorpseTemplate> _templates = new()
     {
-        // A human body yields nothing harvestable — what it leaves is what it carried.
+        // A human is butchered like anything else, and the game does not soften it: the same Meat a
+        // pig gives, plus what a body is actually robbed of — the hair off the head, the skull out
+        // from under it. What they were carrying is a separate PoI beside this one, because that is
+        // grabbed and this is cut.
         [typeof(HumanSpecies)] = new(
             "the body lies where it fell, pale and slack, the limbs already going stiff",
-            () => new()),
+            () => new()
+            {
+                new ItemElement(new Meat()), new ItemElement(new Meat()),
+                new ItemElement(new Liver()),
+                new ItemElement(new Heart()),
+                new ItemElement(new Brain()),
+                new ItemElement(new Bone()),
+                new ItemElement(new Skull()),
+                new ItemElement(new Hair()),
+            }),
 
         [typeof(WolfSpecies)] = new(
             "the wolf lies dead, muzzle still drawn back, the matted pelt stretched over its ribs",
             () => new()
             {
-                new ItemElement(new AnimalFang()), new ItemElement(new AnimalFang()),
-                new ItemElement(new AnimalHide()),
-                new ItemElement(new AnimalClaw()), new ItemElement(new AnimalClaw()),
+                new ItemElement(new Pelt()),
+                new ItemElement(new Meat()), new ItemElement(new Meat()),
+                new ItemElement(new Liver()),
+                new ItemElement(new Fang()), new ItemElement(new Fang()),
+                new ItemElement(new Claw()),
+                new ItemElement(new Sinew()),
             }),
 
+        // The biggest thing in the game, and the only carcass that gives a skull as well as a hide.
         [typeof(BearSpecies)] = new(
             "the bear is a hill of dead muscle, jaws agape, each claw like a knife",
             () => new()
             {
-                new ItemElement(new AnimalFang()), new ItemElement(new AnimalFang()),
-                new ItemElement(new AnimalHide()), new ItemElement(new AnimalHide()),
-                new ItemElement(new AnimalClaw()), new ItemElement(new AnimalClaw()), new ItemElement(new AnimalClaw()),
+                new ItemElement(new Hide()),
+                new ItemElement(new Meat()), new ItemElement(new Meat()),
+                new ItemElement(new Suet()),
+                new ItemElement(new Fang()),
+                new ItemElement(new Claw()), new ItemElement(new Claw()),
+                new ItemElement(new Skull()),
             }),
 
         [typeof(BoarSpecies)] = new(
             "the boar lies on its side, tusks intact, the coarse-bristled barrel of it still warm",
             () => new()
             {
-                new ItemElement(new AnimalFang()), new ItemElement(new AnimalFang()),
-                new ItemElement(new AnimalHide()),
+                new ItemElement(new Hide()),
+                new ItemElement(new Meat()), new ItemElement(new Meat()), new ItemElement(new Meat()),
+                new ItemElement(new Liver()),
+                new ItemElement(new Tusk()), new ItemElement(new Tusk()),
+                new ItemElement(new Suet()),
             }),
 
         [typeof(FoxSpecies)] = new(
             "the fox is a small sleek russet weight, sharp nose down in the dirt",
             () => new()
             {
-                new ItemElement(new AnimalFang()),
-                new ItemElement(new AnimalHide()),
+                new ItemElement(new Pelt()),
+                new ItemElement(new Meat()),
+                new ItemElement(new Liver()),
+                new ItemElement(new Fang()),
+                new ItemElement(new Claw()),
+                new ItemElement(new Bone()),
             }),
 
         [typeof(CatSpecies)] = new(
             "the cat lies curled and still, claws extended in death",
             () => new()
             {
-                new ItemElement(new AnimalFang()),
-                new ItemElement(new AnimalClaw()),
+                new ItemElement(new Pelt()),
+                new ItemElement(new Meat()),
+                new ItemElement(new Heart()),
+                new ItemElement(new Fang()),
+                new ItemElement(new Claw()), new ItemElement(new Claw()),
             }),
 
         [typeof(DogSpecies)] = new(
             "the dog lies with its head lolling, the coarse-furred body slack",
             () => new()
             {
-                new ItemElement(new AnimalFang()),
-                new ItemElement(new AnimalHide()),
+                new ItemElement(new Pelt()),
+                new ItemElement(new Meat()), new ItemElement(new Meat()),
+                new ItemElement(new Liver()),
+                new ItemElement(new Fang()),
+                new ItemElement(new Bone()),
             }),
     };
 

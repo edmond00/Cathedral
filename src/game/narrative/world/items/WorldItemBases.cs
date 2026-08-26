@@ -110,17 +110,9 @@ public abstract class TextileItem : Item
     public override int           PriceReference => 12;
 }
 
-/// <summary>Hide, pelt, feather or horn taken from an animal — material, not food.</summary>
-public abstract class AnimalProductItem : Item
-{
-    public override ItemSize Size => ItemSize.Small;
-    public override WeightClass    Weight => WeightClass.Light;
-    public override ItemCategory Category => ItemCategory.Crafting;
-
-    public override List<ItemTag> Tags    => new() { ItemTag.Pelt };
-    public override CoinType      PriceCoin    => CoinType.Copper;
-    public override int           PriceReference => 10;
-}
+// Hides, pelts, feathers and horns are no longer a base of their own: they are one shared body-part
+// vocabulary, and it lives with the rest of what a carcass yields — see BodyPartItem in
+// src/game/narrative/items/corpse/BodyPartItems.cs.
 
 /// <summary>Fish, shellfish, seaweed and other sea-edge yields.</summary>
 public abstract class SeaFoodItem : ConsumableItem

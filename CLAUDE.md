@@ -1694,9 +1694,26 @@ leaves a plain belongings PoI holding what they carried. Tiny creatures leave no
 
 **A corpse is an ordinary area PoI, not a place you enter.** Its `Items` are the harvestable parts,
 and `SyntheticObservationObject` folds a PoI's items into its own sub-outcomes — so one keyword on
-the body offers "cut the wolf fang" and "cut the animal hide" together, in a single phase. Identical
-parts collapse to one goal (`PersonaChoiceSelector` de-dupes by label): a pig with five `PorkMeat`
-offers one "cut the pork meat", and each cut removes one instance while the goal remains.
+the body offers "cut the pelt" and "cut the liver" together, in a single phase. Identical parts
+collapse to one goal (`PersonaChoiceSelector` de-dupes by label): a pig with three `Meat` offers one
+"cut the meat", and each cut removes one instance while the goal remains.
+
+**A body yields four to eight parts; a tiny creature's `catch` yields two or three.** Below four a
+carcass is one cut and a shrug, which does not pay for the kill, the knife and a noetic point per
+attempt; above eight the goals run past what a phase can offer and past what the pack can hold, so
+the surplus reads as litter. Duplicates count toward the eight and not toward the goals. **A human is
+butchered like anything else** — meat, offal, bone, skull, hair — and their belongings are the
+separate PoI beside the body, because that is grabbed and this is cut.
+
+**The parts are one general vocabulary, and nothing in it names a species** (`BodyPartItem`, in
+`src/game/narrative/items/corpse/BodyPartItems.cs`). A wolf, a cow and a man all give up `Meat` and
+`Bone`. What makes a bear a bear is *which* parts and *how many* — a skull and two claws — never a
+"Bear Meat" beside the `Meat` everything else gives. That middle case is what this replaced: there
+was an `AnimalHide` and a `DeerHide` and a `GoatHide`, a `Feather` and a `ChickenFeather` and an
+`EagleFeather`, so which item a carcass gave depended on which convention its archetype was written
+under. Where a real distinction exists it is a **word**, not a prefix: `Hide`/`Pelt`/`Skin` are three
+grades of one material, and so are `Fang`/`Tooth`, `Horn`/`Antler`, `Feather`/`Plume`. When adding an
+animal, compose from what is there; add a part only when it is a thing no existing word covers.
 
 The verb split needs no per-item reasoning: everything in a `CorpsePointOfInterest` is flesh, so
 `cut` takes it and `grab`/`steal` refuse it (`ItemPickup.FindHoldingPoI` filters the type, and

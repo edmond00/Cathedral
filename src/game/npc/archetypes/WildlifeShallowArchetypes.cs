@@ -65,8 +65,11 @@ public class HareArchetype : SmallMammalShallowArchetype
     protected override string CorpseBodyDescription => "the lean still body of a hare";
     protected override List<ItemElement> BuildCorpseDrops() => new()
     {
-        new ItemElement(new RabbitMeat()),
-        new ItemElement(new RabbitPelt()),
+        new ItemElement(new Pelt()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Liver()),
+        new ItemElement(new Bone()),
     };
 }
 
@@ -82,8 +85,11 @@ public class SnowHareArchetype : SmallMammalShallowArchetype
     protected override string CorpseBodyDescription => "the white-furred body of a snow hare";
     protected override List<ItemElement> BuildCorpseDrops() => new()
     {
-        new ItemElement(new RabbitMeat()),
-        new ItemElement(new RabbitPelt()),
+        new ItemElement(new Pelt()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Liver()),
+        new ItemElement(new Bone()),
     };
 }
 
@@ -97,7 +103,13 @@ public class SquirrelArchetype : SmallMammalShallowArchetype
         noun:   "squirrel",
         traits: new[] { "racing up a trunk, tail flicking", "pausing to watch, tail curled", "darting along a branch" });
     protected override string CorpseBodyDescription => "the small russet body of a squirrel";
-    protected override List<ItemElement> BuildCorpseDrops() => new();
+    protected override List<ItemElement> BuildCorpseDrops() => new()
+    {
+        new ItemElement(new Pelt()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Tail()),
+        new ItemElement(new Bone()),
+    };
 }
 
 public class WoodMouseArchetype : SmallMammalShallowArchetype
@@ -110,7 +122,13 @@ public class WoodMouseArchetype : SmallMammalShallowArchetype
         noun:   "wood mouse",
         traits: new[] { "darting under a fallen log", "nose twitching in the leaf litter", "gone before the eye can follow" });
     protected override string CorpseBodyDescription => "the tiny body of a wood mouse";
-    protected override List<ItemElement> BuildCorpseDrops() => new();
+    protected override List<ItemElement> BuildCorpseDrops() => new()
+    {
+        new ItemElement(new Skin()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Tail()),
+        new ItemElement(new Bone()),
+    };
 }
 
 public class MarmotArchetype : SmallMammalShallowArchetype
@@ -123,7 +141,14 @@ public class MarmotArchetype : SmallMammalShallowArchetype
         noun:   "marmot",
         traits: new[] { "whistling a sharp warning from a flat rock", "sitting up on its haunches", "sunning itself on the stones" });
     protected override string CorpseBodyDescription => "the round still body of a marmot";
-    protected override List<ItemElement> BuildCorpseDrops() => new();
+    protected override List<ItemElement> BuildCorpseDrops() => new()
+    {
+        new ItemElement(new Pelt()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Suet()),
+        new ItemElement(new Bone()),
+    };
 }
 
 public class BatArchetype : SmallMammalShallowArchetype
@@ -136,7 +161,14 @@ public class BatArchetype : SmallMammalShallowArchetype
         noun:   "bat",
         traits: new[] { "wheeling overhead", "hanging folded in the dark", "flitting into a deeper pocket of shadow" });
     protected override string CorpseBodyDescription => "the leathery body of a bat";
-    protected override List<ItemElement> BuildCorpseDrops() => new();
+    protected override List<ItemElement> BuildCorpseDrops() => new()
+    {
+        new ItemElement(new Skin()),
+        new ItemElement(new Wing()),
+        new ItemElement(new Wing()),
+        new ItemElement(new Bone()),
+        new ItemElement(new Fang()),
+    };
 }
 
 public class RatArchetype : SmallMammalShallowArchetype
@@ -149,7 +181,13 @@ public class RatArchetype : SmallMammalShallowArchetype
         noun:   "rat",
         traits: new[] { "scuttling along the wall", "eyes catching the lantern-light", "nosing at something in the dark" });
     protected override string CorpseBodyDescription => "the matted body of a rat";
-    protected override List<ItemElement> BuildCorpseDrops() => new();
+    protected override List<ItemElement> BuildCorpseDrops() => new()
+    {
+        new ItemElement(new Skin()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Tail()),
+        new ItemElement(new Bone()),
+    };
 }
 
 public class BadgerArchetype : SmallMammalShallowArchetype
@@ -164,7 +202,12 @@ public class BadgerArchetype : SmallMammalShallowArchetype
     protected override string CorpseBodyDescription => "the heavy striped body of a badger";
     protected override List<ItemElement> BuildCorpseDrops() => new()
     {
-        new ItemElement(new AnimalHide()),
+        new ItemElement(new Pelt()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Suet()),
+        new ItemElement(new Claw()),
+        new ItemElement(new Claw()),
+        new ItemElement(new Fang()),
     };
 }
 
@@ -184,6 +227,10 @@ public class CrowArchetype : BirdShallowArchetype
     {
         new ItemElement(new Feather()),
         new ItemElement(new Feather()),
+        new ItemElement(new Feather()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Bone()),
+        new ItemElement(new Liver()),
     };
 }
 
@@ -200,6 +247,9 @@ public class LarkArchetype : BirdShallowArchetype
     protected override List<ItemElement> BuildCorpseDrops() => new()
     {
         new ItemElement(new Feather()),
+        new ItemElement(new Feather()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Bone()),
     };
 }
 
@@ -216,6 +266,9 @@ public class SparrowArchetype : BirdShallowArchetype
     protected override List<ItemElement> BuildCorpseDrops() => new()
     {
         new ItemElement(new Feather()),
+        new ItemElement(new Feather()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Bone()),
     };
 }
 
@@ -232,6 +285,9 @@ public class RobinArchetype : BirdShallowArchetype
     protected override List<ItemElement> BuildCorpseDrops() => new()
     {
         new ItemElement(new Feather()),
+        new ItemElement(new Feather()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Bone()),
     };
 }
 
@@ -249,6 +305,10 @@ public class WoodpeckerArchetype : BirdShallowArchetype
     {
         new ItemElement(new Feather()),
         new ItemElement(new Feather()),
+        new ItemElement(new Feather()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Bone()),
+        new ItemElement(new Liver()),
     };
 }
 
@@ -264,8 +324,13 @@ public class OwlArchetype : BirdShallowArchetype
     protected override string CorpseBodyDescription => "the soft body of an owl";
     protected override List<ItemElement> BuildCorpseDrops() => new()
     {
+        new ItemElement(new Plume()),
+        new ItemElement(new Plume()),
         new ItemElement(new Feather()),
         new ItemElement(new Feather()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Claw()),
+        new ItemElement(new Claw()),
     };
 }
 
@@ -281,9 +346,14 @@ public class EagleArchetype : BirdShallowArchetype
     protected override string CorpseBodyDescription => "the great body of an eagle, wings outstretched";
     protected override List<ItemElement> BuildCorpseDrops() => new()
     {
-        new ItemElement(new EagleFeather()),
-        new ItemElement(new EagleFeather()),
+        new ItemElement(new Plume()),
+        new ItemElement(new Plume()),
+        new ItemElement(new Plume()),
         new ItemElement(new Feather()),
+        new ItemElement(new Feather()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Claw()),
+        new ItemElement(new Claw()),
     };
 }
 
@@ -301,6 +371,10 @@ public class RavenArchetype : BirdShallowArchetype
     {
         new ItemElement(new Feather()),
         new ItemElement(new Feather()),
+        new ItemElement(new Feather()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Bone()),
+        new ItemElement(new Liver()),
     };
 }
 
@@ -318,6 +392,10 @@ public class SeagullArchetype : BirdShallowArchetype
     {
         new ItemElement(new Feather()),
         new ItemElement(new Feather()),
+        new ItemElement(new Feather()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Bone()),
+        new ItemElement(new Liver()),
     };
 }
 
@@ -333,8 +411,12 @@ public class HeronArchetype : GenericShallowArchetype
     protected override string CorpseBodyDescription => "the long-necked body of a heron";
     protected override List<ItemElement> BuildCorpseDrops() => new()
     {
+        new ItemElement(new Plume()),
+        new ItemElement(new Plume()),
         new ItemElement(new Feather()),
         new ItemElement(new Feather()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Bone()),
     };
 }
 
@@ -351,6 +433,9 @@ public class SandpiperArchetype : GenericShallowArchetype
     protected override List<ItemElement> BuildCorpseDrops() => new()
     {
         new ItemElement(new Feather()),
+        new ItemElement(new Feather()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Bone()),
     };
 }
 
@@ -366,7 +451,13 @@ public class FrogArchetype : GenericShallowArchetype
         noun:   "frog",
         traits: new[] { "blinking once and slipping into the water", "half-sunk in the shallows", "throat pulsing" });
     protected override string CorpseBodyDescription => "the small wet body of a frog";
-    protected override List<ItemElement> BuildCorpseDrops() => new();
+    protected override List<ItemElement> BuildCorpseDrops() => new()
+    {
+        new ItemElement(new Skin()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Bone()),
+    };
 }
 
 public class ToadArchetype : GenericShallowArchetype
@@ -379,7 +470,13 @@ public class ToadArchetype : GenericShallowArchetype
         noun:   "toad",
         traits: new[] { "half-buried in mud", "watching you with patient eyes", "unmoving among the roots" });
     protected override string CorpseBodyDescription => "the squat body of a toad";
-    protected override List<ItemElement> BuildCorpseDrops() => new();
+    protected override List<ItemElement> BuildCorpseDrops() => new()
+    {
+        new ItemElement(new Skin()),
+        new ItemElement(new Skin()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Bone()),
+    };
 }
 
 public class AdderArchetype : GenericShallowArchetype
@@ -392,7 +489,14 @@ public class AdderArchetype : GenericShallowArchetype
         noun:   "adder",
         traits: new[] { "coiled on a sun-warmed rock", "tongue flickering", "dark zigzag along its back" });
     protected override string CorpseBodyDescription => "the limp coiled body of an adder";
-    protected override List<ItemElement> BuildCorpseDrops() => new();
+    protected override List<ItemElement> BuildCorpseDrops() => new()
+    {
+        new ItemElement(new Skin()),
+        new ItemElement(new Skin()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Fang()),
+        new ItemElement(new Fang()),
+    };
 }
 
 public class CrabArchetype : GenericShallowArchetype
@@ -407,7 +511,10 @@ public class CrabArchetype : GenericShallowArchetype
     protected override string CorpseBodyDescription => "the upturned shell of a crab";
     protected override List<ItemElement> BuildCorpseDrops() => new()
     {
-        new ItemElement(new Crab()),
+        new ItemElement(new Carapace()),
+        new ItemElement(new Carapace()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Meat()),
     };
 }
 
@@ -421,7 +528,13 @@ public class CaveSpiderArchetype : GenericShallowArchetype
         noun:   "cave spider",
         traits: new[] { "rearing in the lantern-light", "palps working", "frozen on the rock" });
     protected override string CorpseBodyDescription => "the curled-leg body of a cave spider";
-    protected override List<ItemElement> BuildCorpseDrops() => new();
+    protected override List<ItemElement> BuildCorpseDrops() => new()
+    {
+        new ItemElement(new Silk()),
+        new ItemElement(new Silk()),
+        new ItemElement(new Fang()),
+        new ItemElement(new Fang()),
+    };
 }
 
 // ── Larger livestock and beasts ──────────────────────────────────────────────
@@ -440,7 +553,12 @@ public class SheepArchetype : GenericShallowArchetype
     {
         new ItemElement(new Wool()),
         new ItemElement(new Wool()),
-        new ItemElement(new AnimalHide()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Hide()),
+        new ItemElement(new Liver()),
+        new ItemElement(new Suet()),
+        new ItemElement(new Horn()),
     };
 }
 
@@ -456,8 +574,14 @@ public class CowArchetype : GenericShallowArchetype
     protected override string CorpseBodyDescription => "the great red body of a dead cow";
     protected override List<ItemElement> BuildCorpseDrops() => new()
     {
-        new ItemElement(new AnimalHide()),
-        new ItemElement(new AnimalHide()),
+        new ItemElement(new Hide()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Liver()),
+        new ItemElement(new Horn()),
+        new ItemElement(new Horn()),
+        new ItemElement(new Tooth()),
     };
 }
 
@@ -473,9 +597,14 @@ public class DeerArchetype : GenericShallowArchetype
     protected override string CorpseBodyDescription => "the long-limbed body of a deer";
     protected override List<ItemElement> BuildCorpseDrops() => new()
     {
-        new ItemElement(new DeerHide()),
-        new ItemElement(new RabbitMeat()),
-        new ItemElement(new RabbitMeat()),
+        new ItemElement(new Hide()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Liver()),
+        new ItemElement(new Antler()),
+        new ItemElement(new Antler()),
+        new ItemElement(new Sinew()),
     };
 }
 
@@ -491,7 +620,13 @@ public class MountainGoatArchetype : GenericShallowArchetype
     protected override string CorpseBodyDescription => "the wiry body of a mountain goat";
     protected override List<ItemElement> BuildCorpseDrops() => new()
     {
-        new ItemElement(new GoatHide()),
+        new ItemElement(new Hide()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Horn()),
+        new ItemElement(new Horn()),
+        new ItemElement(new Liver()),
+        new ItemElement(new Suet()),
     };
 }
 
@@ -507,7 +642,13 @@ public class LynxArchetype : GenericShallowArchetype
     protected override string CorpseBodyDescription => "the spotted body of a lynx";
     protected override List<ItemElement> BuildCorpseDrops() => new()
     {
-        new ItemElement(new LynxPelt()),
+        new ItemElement(new Pelt()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Heart()),
+        new ItemElement(new Fang()),
+        new ItemElement(new Claw()),
+        new ItemElement(new Claw()),
+        new ItemElement(new Bone()),
     };
 }
 
@@ -523,6 +664,12 @@ public class SealArchetype : GenericShallowArchetype
     protected override string CorpseBodyDescription => "the sleek dark body of a seal";
     protected override List<ItemElement> BuildCorpseDrops() => new()
     {
-        new ItemElement(new SealPelt()),
+        new ItemElement(new Pelt()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Suet()),
+        new ItemElement(new Suet()),
+        new ItemElement(new Liver()),
+        new ItemElement(new Bone()),
     };
 }

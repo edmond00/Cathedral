@@ -218,7 +218,7 @@ public sealed partial class PersonalityTraitRegistry
                 TraitId     = "savage_trades_at_the_edge",
                 DisplayName = "Trades at the Treeline",
                 ModiMentis  = new[] { "bargaining", "forage_lore", "enterprise" },
-                Items       = new Func<Item>[] { () => new AnimalHide(), () => new Mushroom() },
+                Items       = new Func<Item>[] { () => new Hide(), () => new Mushroom() },
                 Appearance  = "carrying hides and gathered things, bundled as though for someone else",
                 Persona     = "You leave hides and forage at the wood's edge and take what is left in return. You have never spoken to the people you trade with.",
                 Opinions    = new[]

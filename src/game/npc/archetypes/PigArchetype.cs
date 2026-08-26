@@ -37,10 +37,11 @@ public class PigArchetype : ShallowNpcArchetype
             descriptions: new() { "a heavy pink carcass collapsed in the mire, thick in the haunches and still steaming faintly" },
             parts: new()
             {
-                new ItemElement(new PorkMeat()),
-                new ItemElement(new PorkMeat()),
-                new ItemElement(new PorkMeat()),
-                new ItemElement(new PorkMeat()),
-                new ItemElement(new PorkMeat()),
+                new ItemElement(new Meat()), new ItemElement(new Meat()), new ItemElement(new Meat()),
+                new ItemElement(new Hide()),
+                new ItemElement(new Liver()),
+                new ItemElement(new Heart()),
+                new ItemElement(new Suet()),
+                new ItemElement(new Tooth()),
             });
 }

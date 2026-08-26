@@ -37,7 +37,7 @@ public class SavageArchetype : NamedNpcArchetype
 
     public override IReadOnlyList<Func<Item>> Loadout => new Func<Item>[]
     {
-        () => new HuntingSpear(), () => new AnimalHide(),
+        () => new HuntingSpear(), () => new Hide(),
     };
 
     public override IReadOnlyList<Func<Item>> OptionalLoadout => new Func<Item>[]

@@ -37,8 +37,9 @@ public class RabbitArchetype : ShallowNpcArchetype
             descriptions: new() { "a small dead rabbit, eyes already glazing, the soft grey pelt unmarked" },
             parts: new()
             {
-                new ItemElement(new RabbitMeat()),
-                new ItemElement(new RabbitMeat()),
-                new ItemElement(new RabbitPelt()),
+                new ItemElement(new Pelt()),
+                new ItemElement(new Meat()), new ItemElement(new Meat()),
+                new ItemElement(new Liver()),
+                new ItemElement(new Bone()),
             });
 }
