@@ -46,10 +46,127 @@ public static class JsonConstraintGenerator
         
         // Add basic JSON primitives
         AppendBasicJsonRules(builder, processedRules);
-        
+
         return builder.ToString();
     }
-    
+
+    /// <summary>
+    /// The character class for free-form persona text: letters, digits, space and a small set of
+    /// punctuation. Parentheses are opted in only where asides are wanted (dialogue inner thoughts).
+    /// <para>
+    /// The double-quote is excluded on every path, and that is deliberate on both. In the JSON template
+    /// path a <c>"</c> closes the JSON string and cuts generation off mid-sentence. On the raw-text path
+    /// there is no envelope to break, but the rewrite prompts show the model quoted material (the neutral
+    /// line, the inner thought) and it answers in kind, narrating itself in quotation marks — which then
+    /// hands the quote to the sanitizer's JSON rewrite and truncates the passage there instead. The one
+    /// place quotes belong is a spoken line, where <see cref="GenerateDialogueReplyGrammar"/> emits them
+    /// as structure rather than leaving them to the model.
+    /// </para>
+    /// This is the single source of truth for the body charset shared by the JSON template path and the
+    /// raw-text grammar below.
+    /// </summary>
+    private static string BodyCharClass(bool allowParentheses)
+        => "[-a-zA-Z0-9 .,?!'`" + (allowParentheses ? "()" : "") + "]";
+
+    /// <summary>
+    /// Builds a standalone GBNF (its own <c>root</c> rule) for a single run of free-form persona text
+    /// emitted <b>raw</b> — not wrapped in a JSON object — so it can be consumed directly as a string
+    /// (used by the reasoning stage that feeds the <c>PersonaMatchCritic</c>). The body is restricted
+    /// to the same character set as the JSON persona-rewrite path. When <paramref name="forcedPrefix"/>
+    /// is set (e.g. <c>"I "</c>) it becomes a literal the output must start with; otherwise the first
+    /// character is forced to a letter to avoid a leading-punctuation artifact. <paramref name="minLen"/>
+    /// and <paramref name="maxLen"/> bound the body generated after the prefix (in characters).
+    /// The double-quote is not in the charset — see <see cref="BodyCharClass"/> for why raw text excludes
+    /// it too, and <see cref="GenerateDialogueReplyGrammar"/> for the one shape that has quotes.
+    /// </summary>
+    public static string GenerateRawTextGrammar(string? forcedPrefix, int minLen, int maxLen, bool allowParentheses = false)
+        => GenerateRawTextGrammar(
+               string.IsNullOrEmpty(forcedPrefix) ? System.Array.Empty<string>() : new[] { forcedPrefix! },
+               minLen, maxLen, allowParentheses);
+
+    /// <summary>
+    /// The same raw-text grammar, opened by <b>one of several</b> literals rather than a single one:
+    /// the output must start with exactly one of <paramref name="forcedPrefixes"/>, and the model
+    /// chooses which. An empty list means no forced opening (first character forced to a letter).
+    /// <para>
+    /// This is what turns "begin with I" into "begin with a verb phrase that can actually continue".
+    /// A lone <c>"I "</c> prefix constrains the person but not the syntax, and a small model finishes it
+    /// with whatever completes the option label it was shown — "I reluctant to do it.", "I attack Pig".
+    /// Forcing the choice among <c>"I am "</c>, <c>"I want "</c>, <c>"I could "</c> and the rest leaves
+    /// the model free to pick its stance while making the ungrammatical and the present-tense-narrating
+    /// openings unreachable.
+    /// </para>
+    /// </summary>
+    public static string GenerateRawTextGrammar(
+        IReadOnlyList<string> forcedPrefixes, int minLen, int maxLen, bool allowParentheses = false)
+    {
+        string charClass = BodyCharClass(allowParentheses);
+        var prefixes = (forcedPrefixes ?? System.Array.Empty<string>())
+            .Where(p => !string.IsNullOrEmpty(p))
+            .ToList();
+
+        if (prefixes.Count == 0)
+        {
+            int restMin = Math.Max(0, minLen - 1);
+            int restMax = Math.Max(restMin, maxLen - 1);
+            return $"root ::= [a-zA-Z] {charClass}{{{restMin},{restMax}}}\n";
+        }
+
+        int bodyMin = Math.Max(0, minLen);
+        int bodyMax = Math.Max(bodyMin, maxLen);
+        string alternatives = string.Join(
+            " | ", prefixes.Select(p => "\"" + p.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\""));
+        string opening = prefixes.Count == 1 ? alternatives : $"( {alternatives} )";
+        return $"root ::= {opening} {charClass}{{{bodyMin},{bodyMax}}}\n";
+    }
+
+    /// <summary>
+    /// The fixed opening a dialogue reply is generated behind — <c>I say to Emily : </c> — for the
+    /// given <paramref name="addressee"/>. It is scaffolding, not content: the caller strips it before
+    /// the reply is shown or stored, so it must never be treated as part of the spoken line.
+    /// <para>
+    /// It exists because forbidding a speech verb did not work. The reply grammar forces the answer to
+    /// open with a double quote, leaving the model nowhere outside the quotes to report the act of
+    /// speaking — so it reported it <i>inside</i> them, and produced lines like
+    /// <c>"I say to you who art seeking trade's worth,"</c>. Giving the report a mandatory home of its
+    /// own satisfies the urge somewhere harmless, and the quotes are left to hold speech alone.
+    /// </para>
+    /// <para>
+    /// It names the addressee rather than standing bare, because the same frame opens the line the
+    /// model is <i>given</i>: prompt and answer share one shape, and the only difference between them
+    /// is the part the model is asked to change. A bare <c>I say :</c> left the frame carrying no
+    /// information at all.
+    /// </para>
+    /// </summary>
+    public static string DialogueReplyFrame(string? addressee)
+    {
+        string who = string.IsNullOrWhiteSpace(addressee) ? "them" : addressee!.Trim();
+        return $"I say to {who} : ";
+    }
+
+    /// <summary>
+    /// Grammar for a dialogue reply emitted raw, of the shape <c>I say to Emily : "&lt;spoken&gt;"</c>:
+    /// the <see cref="DialogueReplyFrame"/> for <paramref name="addressee"/> followed by a double-quoted
+    /// spoken line and nothing else. The body excludes the double-quote, so the only quotes in the answer
+    /// are the structural delimiters, and the first spoken character is forced to a letter to avoid a
+    /// leading-punctuation artifact. Lengths are in characters and bound the spoken part alone.
+    /// </summary>
+    public static string GenerateDialogueReplyGrammar(string? addressee, int spokenMinLen, int spokenMaxLen)
+    {
+        // No double-quote: the delimiters are the only ones.
+        const string body = "[-a-zA-Z0-9 .,?!'`]";
+        int restMin = Math.Max(0, spokenMinLen - 1);
+        int restMax = Math.Max(restMin, spokenMaxLen - 1);
+
+        // Placeholder names are allow-listed plain first names, but the frame is still escaped rather
+        // than trusted: a stray quote or backslash in it would silently produce an unparseable grammar.
+        string frame = DialogueReplyFrame(addressee).Replace("\\", "\\\\").Replace("\"", "\\\"");
+
+        // root ::= "I say to Emily : \"" [a-zA-Z] body{restMin,restMax} "\""
+        return "root ::= \"" + frame + "\\\"\" [a-zA-Z] "
+             + body + "{" + restMin + "," + restMax + "} \"\\\"\"\n";
+    }
+
     /// <summary>
     /// Generates a JSON template string from a JsonField structure
     /// </summary>
@@ -340,6 +457,7 @@ public static class JsonConstraintGenerator
 
             string bodyPattern;
             string firstCharPrefix = "";
+            string charClass = BodyCharClass(field.AllowParentheses);
 
             // Free text up to max length. If no literal prefix, force first char to be a letter
             // to prevent leading punctuation artifacts (e.g. ", I ..." instead of "I ...").
@@ -349,14 +467,14 @@ public static class JsonConstraintGenerator
                 int restMin = Math.Max(0, field.MinGenLength - 1);
                 int restMax = field.MaxGenLength - 1;
                 bodyPattern = restMin == restMax
-                    ? $"[-a-zA-Z0-9 .,?!'`]{{{restMin}}}"
-                    : $"[-a-zA-Z0-9 .,?!'`]{{{restMin},{restMax}}}";
+                    ? $"{charClass}{{{restMin}}}"
+                    : $"{charClass}{{{restMin},{restMax}}}";
             }
             else
             {
                 bodyPattern = field.MinGenLength == field.MaxGenLength
-                    ? $"[-a-zA-Z0-9 .,?!'`]{{{field.MinGenLength}}}"
-                    : $"[-a-zA-Z0-9 .,?!'`]{{{field.MinGenLength},{field.MaxGenLength}}}";
+                    ? $"{charClass}{{{field.MinGenLength}}}"
+                    : $"{charClass}{{{field.MinGenLength},{field.MaxGenLength}}}";
             }
 
             var rule = ruleName + " ::= \"\\\"" + before + "\" " + firstCharPrefix + bodyPattern + " \"" + after + "\\\"\"";

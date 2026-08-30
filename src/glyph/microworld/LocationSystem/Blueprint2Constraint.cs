@@ -50,7 +50,7 @@ public static class Blueprint2Constraint
         
         // Create individual action fields with pre-determined outcomes
         var actionFields = new JsonField[numberOfActions];
-        var rng = new Random();
+        var rng = GameRng.Stream("blueprint-constraint");
         
         for (int i = 0; i < numberOfActions; i++)
         {
@@ -76,7 +76,7 @@ public static class Blueprint2Constraint
                     RuleName = $"related_modusMentis_{i + 1}" // Unique GBNF rule per action
                 },
                 
-                // 3. Action text (LLM generates based on consequence and modusMentis)
+                // 3. VerbAction text (LLM generates based on consequence and modusMentis)
                 new TemplateStringField("action_text", "try to <generated>", 5, 100, 
                     "Generate a concrete action (6-12 words) using the chosen modusMentis that could lead to the consequence. Must be possible in the current location. Write in 2nd person.")
             );

@@ -10,7 +10,10 @@ public class PulmonesOrgan : Organ
     public override string Id => "pulmones";
     public override string DisplayName => "Pulmones";
     public override string BodyPartId => "trunk";
-    
+    public override string Description =>
+        "Of the four sanguific organs, that of respiration; it imparts the humors to the circulation as " +
+        "its fellows do, and lends the wind that sustains prolonged exertion.";
+
     private readonly List<OrganPart> _parts;
     public override List<OrganPart> Parts => _parts;
     
@@ -23,5 +26,6 @@ public class PulmonesOrgan : Organ
     {
         public override string Id => "pulmones";
         public override string DisplayName => "Pulmones";
+        public override int DefaultMaxScore => 3;
     }
 }

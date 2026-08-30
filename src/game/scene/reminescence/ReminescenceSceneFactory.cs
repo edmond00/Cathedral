@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Reminescence;
 using Cathedral.Game.Scene.Verbs;
+using Cathedral.Fight.Generators;
 
 namespace Cathedral.Game.Scene.Reminescence;
 
@@ -29,7 +30,7 @@ public sealed class ReminescenceSceneFactory : SceneFactory
     {
         // The reminescence "place" is not a real location — the area display name is shown
         // to the player as "Reminescence" and POIs are read as fragments.
-        var area = new Area(
+        var area = new MemoryArea(
             displayName:           "Reminescence",
             contextDescription:    "remembering fragments of your childhood",
             transitionDescription: "drift back into the memory",
@@ -40,7 +41,8 @@ public sealed class ReminescenceSceneFactory : SceneFactory
         foreach (var fragment in _data.Fragments)
             area.PointsOfInterest.Add(new FragmentPointOfInterest(fragment));
 
-        var section = new Section("Reminescence", new List<string> { "the threshold of memory" });
+        var section = new Section("Reminescence", new List<string> { "the threshold of memory" },
+            seed => new ArenaGenerator { Seed = seed });
         section.Areas.Add(area);
         scene.Sections.Add(section);
         RegisterAll(scene, section);

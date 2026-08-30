@@ -1,0 +1,65 @@
+# A modus mentis wounds have broken cannot be used, and says which part of the body failed.
+#
+# THE RULE. Every anatomy source a modus mentis draws on contributes to its max level, and a wounded
+# one now contributes a NEGATIVE amount — -2 for a High-handicap wound, -1 once Medium wounds have
+# driven the source below zero (MaxLevelPenalty). Enough damage drags the ceiling under the base of 1
+# that every modus mentis starts from, and GetEffectiveModusMentisLevel — what was learned, capped by
+# what the body can still reach — lands at 0 or below. There is nothing left to roll with.
+#
+# WHY `cripple` EXISTS. `wound` draws from the anatomy's catalogue at random, so landing a
+# High-handicap wound on one NAMED organ is a lottery a script cannot run — and breaking a particular
+# modus mentis is the precondition of every test in this area. `cripple` puts one on every source the
+# named modus mentis draws on.
+#
+# WHAT IS ASSERTED, and why it takes all three. `inspect skills` proves the level really fell — a
+# refusal alone would pass on a rule that fired for some other reason. The banner proves the player
+# was TOLD, in the voice of the modus mentis that failed and naming the organs, which is the whole
+# point of refusing rather than filtering. And the noetic count proves it was charged for like every
+# other refusal (ActionRulesChecker's rule costs a point; only a ChoiceRules withholding is free).
+#
+# The clamp is derived, never stored, so `save roundtrip` must still pass with a broken modus mentis
+# on the body: the stored level is what was learned and is what goes in the file.
+#
+# NOTE the wound reaches more than it was aimed at, and that is correct. A visage wound disables the
+# eyes AND the nose, so one `cripple` breaks every modus mentis built on either. Hence `broken=True`
+# rather than an assertion naming one id.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --grant-mm woodcraft:3 --location-type test --location-id 0 --npc-static --period noon
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 45
+travel here
+wait mode LocationInteraction 45
+advance 12 90
+
+# Sound to begin with: woodcraft stands at the level it was granted, and nothing is broken.
+inspect skills
+expect-state skills "woodcraft level=3 xp=0 effective=3 max=3 broken=False"
+expect-no-state skills "broken=True"
+
+# Ruin every organ woodcraft is built on. The stored level is untouched — it is what was LEARNED —
+# and only the effective level falls, which is what makes this heal when the wound does.
+cripple woodcraft
+inspect skills
+expect-state skills "woodcraft level=3 xp=0 effective=0 max=0 broken=True"
+
+# Choosing a broken modus mentis for an observation is offered and refused, not hidden. The refusal
+# is narrated in that modus mentis's own voice and names the organs and the wounds behind them.
+click keyword 0
+choose 1
+choose 0
+advance 8 90
+expect "will not answer"
+expect "cannot look at anything"
+
+# It cost a point, exactly as an action refused by a coded rule does.
+state
+expect "NOETIC"
+
+# A broken modus mentis is a derived state, so nothing about it reaches the file.
+save roundtrip
+
+quit

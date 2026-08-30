@@ -35,13 +35,23 @@ namespace Cathedral.Terminal.Utils
         /// </summary>
         public Vector4 BackgroundColor;
 
-        public TerminalInstance(Vector3 position, Vector2 size, Vector4 uvRect, Vector4 textColor, Vector4 backgroundColor)
+        /// <summary>
+        /// Per-glyph multiplier on the glyph quad, on top of the global
+        /// <c>Config.Terminal.GlyphScale</c> uniform — 1.0 for every ordinary character, larger
+        /// for the few glyphs that are meant to be read as pictures rather than as text.
+        /// See <c>Config.GlyphSizeFactors.QuadScales</c>. Affects the glyph pass only; the
+        /// background quad is always exactly one cell.
+        /// </summary>
+        public float GlyphScale;
+
+        public TerminalInstance(Vector3 position, Vector2 size, Vector4 uvRect, Vector4 textColor, Vector4 backgroundColor, float glyphScale)
         {
             Position = position;
             Size = size;
             UvRect = uvRect;
             TextColor = textColor;
             BackgroundColor = backgroundColor;
+            GlyphScale = glyphScale;
         }
 
         /// <summary>

@@ -1,0 +1,61 @@
+# Regression script for the Speak About hand-off (see NarrativeController.StartObservationPhaseWithHistory).
+# Run: dotnet run -- --playground --skip-childhood --fill-party --debug --seed 42 \
+#        --no-encounters --period noon --cli-timeout 300 --cli-script cli/companion_handoff.cli 2>&1 | grep '^\[cli\]'
+# A non-zero exit means an `expect`/`wait` failed.
+#
+# --fill-party is what makes this reachable: Speak About needs a companion, and recruiting one in play
+# is a long approach. At seed 42 the party is filled with the cat Nighthunter, and the protagonist is
+# Kenryc Greygate — both names are seed-stable, which is what the `expect`s below key on. The panel
+# header names the ACTIVE member, so "[NIGHTHUNTER]" on screen is the assertion that the hand-off held.
+#
+# FLAGS: --playground --skip-childhood --fill-party --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+
+# The session opens on the protagonist.
+expect [KENRYC GREYGATE]
+
+# Speak About: keyword -> "Speak About" -> speaking modus mentis -> companion.
+# (The keyword is the observed object's own noun under --playground, not the word "attention".)
+# Clicked by INDEX, not by name: under --playground the clickable keyword is the object's
+# own noun, not its display name, so a phase pinned with --observe-only still cannot be
+# spelled. Index means "whatever this phase opened on".
+click keyword 0
+choose 2
+choose 0
+choose 0
+advance 12 180
+
+# The address is ONE spoken block (call attention + describe + ask, merged into a single request),
+# and the narration has passed to the companion.
+expect come and look at this
+expect [NIGHTHUNTER]
+
+# The companion acts: their own thinking phase, action, dice, outcome.
+strategy succeed
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+# Footer CONTINUE closes the segment and opens a fresh observation phase in the same session:
+# the old text greys into history, noetic points refill — and the companion KEEPS the narration.
+# Resetting to the protagonist here is the bug this script exists for.
+click button
+wait 60
+advance 12 180
+expect [NIGHTHUNTER]
+
+quit

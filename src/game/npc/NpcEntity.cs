@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Npc.Corpse;
@@ -16,6 +17,15 @@ public class NpcEntity : INpcEntity
     public string NpcId { get; }
 
     /// <inheritdoc/>
+    /// <remarks>
+    /// The name-derived <c>{archetypeId}_{name}</c> that <see cref="NamedNpcArchetype.Spawn"/> also
+    /// files affinity under. It used to be computed inside Spawn and dropped, which left the entity
+    /// holding only <see cref="NpcId"/> — random for anyone non-persistent, and so useless to
+    /// anything that has to recognise this individual on the next visit.
+    /// </remarks>
+    public string PersistentId { get; }
+
+    /// <inheritdoc/>
     public string DisplayName => Combatant.DisplayName;
 
     /// <summary>The underlying party member used for anatomy, wounds, stats, and combat.</summary>
@@ -26,20 +36,40 @@ public class NpcEntity : INpcEntity
 
     NpcArchetype INpcEntity.Archetype => Archetype;
 
-    /// <inheritdoc/>
-    public bool IsHostile { get; set; }
-
     // ── Dialogue ──────────────────────────────────────────────────────────────
 
     /// <summary>Whether this NPC can be spoken to (has a way-to-speak description).</summary>
     public bool CanSpeak { get; }
 
     /// <summary>
-    /// Natural-language description of how this NPC speaks — used as the LLM system prompt
-    /// for the NPC's dedicated dialogue slot.
-    /// Null when <see cref="CanSpeak"/> is false.
+    /// Every piece of natural-language text about this individual — appearance, LLM persona prompt,
+    /// and the dialogue-flavour overrides its personality traits imposed. Composed once at spawn.
     /// </summary>
-    public string? WayToSpeakDescription { get; }
+    public Traits.NpcTextProfile Text { get; }
+
+    /// <summary>
+    /// Natural-language description of how this NPC speaks — used as the LLM system prompt
+    /// for the NPC's dedicated dialogue slot. Null when <see cref="CanSpeak"/> is false.
+    /// This is the archetype's brief <b>plus</b> whatever its traits added, so a greedy smith and a
+    /// pious one are told different things about themselves.
+    /// </summary>
+    public string? WayToSpeakDescription => CanSpeak ? Text.PersonaPrompt : null;
+
+    // ── Trait-aware dialogue flavour ──────────────────────────────────────────
+    //
+    // Each of these prefers what this individual's traits decided and falls back to the archetype's
+    // default. DialogueTemplate reads them rather than the archetype directly, so a {npc:…} token
+    // resolves per person instead of per trade.
+
+    /// <summary>How this NPC introduces themselves — <c>{npc:introduction}</c>.</summary>
+    public string SelfIntroduction => Text.SelfIntroduction ?? Archetype.SelfIntroduction;
+
+    /// <summary>What their working day is actually like — <c>{npc:labour}</c>.</summary>
+    public string DailyLabour => Text.DailyLabour ?? Archetype.DailyLabour;
+
+    /// <summary>This NPC's own view on <paramref name="topic"/> — <c>{npc:opinion_*}</c>.</summary>
+    public string OpinionOn(Dialogue.Tree.DialogueTopic topic)
+        => Text.Opinion(topic) ?? Archetype.OpinionOn(topic);
 
     /// <summary>
     /// Per-instance affinity table tracking relationships with party members and other NPCs.
@@ -48,12 +78,6 @@ public class NpcEntity : INpcEntity
     public AffinityTable AffinityTable { get; }
 
     // ── Witness / authority ───────────────────────────────────────────────────
-
-    /// <summary>
-    /// When true this NPC will not flee or submit when confronting a criminal —
-    /// they will demand a fight instead (sets <see cref="FightRequestedByDialogue"/>).
-    /// </summary>
-    public bool IsBrave { get; }
 
     /// <summary>
     /// Relative authority level (0 = none, higher = more official).
@@ -70,11 +94,97 @@ public class NpcEntity : INpcEntity
     public List<string> OwnedSectionIds { get; }
 
     /// <summary>
+    /// Set when this person has agreed, in conversation, to travel with the player. Acted on by the
+    /// controller after the dialogue session closes — the same deferred pattern
+    /// <see cref="TradeRequest"/> and <see cref="JobRequest"/> use, and for the same reason: a
+    /// dialogue outcome can reach the NPC and nothing else.
+    /// </summary>
+    public bool JoinRequested { get; set; }
+
+    /// <summary>
+    /// Set alongside <see cref="FightRequestedByDialogue"/> when the fight was goaded out of this
+    /// person specifically, so nobody else joins in. Being provoked into swinging at one person is
+    /// not a call for help — and getting somebody on their own is the entire reason to provoke them
+    /// rather than simply attack.
+    /// </summary>
+    public bool FightIsPersonal { get; set; }
+
+    /// <summary>
+    /// Copper this person handed over after a successful beg, waiting to be credited to the party
+    /// wallet once the conversation closes. Same deferred pattern as every other dialogue result.
+    /// </summary>
+    public int AlmsGiven { get; set; }
+
+    /// <summary>
+    /// The person this NPC has been asked to introduce the player to, set by <c>IntroduceMeVerb</c>
+    /// before the conversation opens and read by the dialogue adapter when it builds the context.
+    /// Same hand-off as <see cref="PendingJobOffer"/>: the verb knows which of several possible
+    /// third parties the player picked, and the adapter is where that has to arrive.
+    /// </summary>
+    public NpcEntity? PendingIntroductionTarget { get; set; }
+
+    /// <summary>Set when an introduction succeeded, so the controller can move the player to them.</summary>
+    public NpcEntity? IntroductionGranted { get; set; }
+
+    /// <summary>
     /// Set to true by a "caught red-handed" dialogue when the NPC demands combat
     /// instead of accepting an apology or lie. Checked by the game controller
     /// after dialogue ends to transition into fight mode.
     /// </summary>
     public bool FightRequestedByDialogue { get; set; }
+
+    /// <summary>
+    /// Status effects dealt to this NPC <b>before</b> the fight exists, waiting to be put on their
+    /// <c>Fighter</c> the moment one is built — a knockdown from a trip that opened the fight, the
+    /// bleeding a torn throat started. <c>FightModeAdapter</c> drains it as it wraps them, so it is
+    /// empty again by the second fight.
+    ///
+    /// <para>It lives here rather than on the fight request because the blow is struck several
+    /// reports before the request is made (see <c>FirstBlowOutcome</c>), and because a
+    /// <c>FightStatusEffect</c> is meaningless without the <c>Fighter</c> it hangs on — which does
+    /// not exist until the arena is built. Carried on the individual, so a blow struck at one person
+    /// cannot land on whoever the fight happens to bring in with them.</para>
+    /// </summary>
+    public List<Fight.FightStatusEffect> CarriedFightEffects { get; } = new();
+
+    // ── Trade ───────────────────────────────────────────────────────────────────
+
+    /// <summary>Tag of the goods this NPC sells (player can buy). Null = sells nothing.</summary>
+    public Narrative.ItemTag? SellTag => Archetype.SellTag;
+
+    /// <summary>Tag of the goods this NPC buys (player can sell). Null = buys nothing.</summary>
+    public Narrative.ItemTag? BuyTag => Archetype.BuyTag;
+
+    /// <summary>
+    /// Set by a successful propose-to-buy / propose-to-sell dialogue. Checked by the game
+    /// controller after dialogue ends to open the trade menu (mirrors <see cref="FightRequestedByDialogue"/>).
+    /// </summary>
+    public Trade.TradeMode TradeRequest { get; set; } = Trade.TradeMode.None;
+
+    // ── Work ─────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// The job the player asked to work, set when the REQUEST_JOB verb succeeds and read by the
+    /// request-job dialogue's terminal outcome. Cleared once consumed.
+    /// </summary>
+    public Narrative.Work.Job? PendingJobOffer { get; set; }
+
+    /// <summary>
+    /// Set by a successful request-job dialogue to <see cref="PendingJobOffer"/>. Checked by the game
+    /// controller after dialogue ends to open the work menu (mirrors <see cref="TradeRequest"/>).
+    /// </summary>
+    public Narrative.Work.Job? JobRequest { get; set; }
+
+    private Trade.NpcTradeCatalog? _buyCatalog;
+    private Trade.NpcTradeCatalog? _sellCatalog;
+
+    /// <summary>The catalogue of goods this NPC sells to the player (lazy, cached, seeded by id).</summary>
+    public Trade.NpcTradeCatalog? BuyCatalog =>
+        SellTag is { } tag ? _buyCatalog ??= Trade.NpcTradeCatalog.Build(NpcId, Trade.TradeMode.Buy, tag) : null;
+
+    /// <summary>The catalogue of goods this NPC buys from the player (lazy, cached, seeded by id).</summary>
+    public Trade.NpcTradeCatalog? SellCatalog =>
+        BuyTag is { } tag ? _sellCatalog ??= Trade.NpcTradeCatalog.Build(NpcId, Trade.TradeMode.Sell, tag) : null;
 
     // ── IsAlive ───────────────────────────────────────────────────────────────
 
@@ -91,7 +201,11 @@ public class NpcEntity : INpcEntity
     public bool IsPersistent { get; }
 
     /// <inheritdoc/>
-    public string ObservationHint { get; }
+    /// <remarks>
+    /// The archetype's chosen appearance line with each trait's visible mark appended, so a scar or a
+    /// missing eye is something the player can actually notice on observing them.
+    /// </remarks>
+    public string ObservationHint => Text.ObservationHint;
 
     /// <inheritdoc/>
     public string SpeciesName => Archetype.Species.DisplayName;
@@ -100,28 +214,24 @@ public class NpcEntity : INpcEntity
 
     public NpcEntity(
         string              npcId,
+        string              persistentId,
         EnemyCombatant      combatant,
         NamedNpcArchetype   archetype,
-        bool                isHostile,
         bool                isPersistent,
-        string              observationHint,
+        Traits.NpcTextProfile text,
         bool                canSpeak                = false,
-        string?             wayToSpeakDescription   = null,
         AffinityTable?      affinityTable           = null,
-        bool                isBrave                 = false,
         int                 authorityLevel          = 0,
         IReadOnlyList<string>? ownedSectionIds      = null)
     {
         NpcId                      = npcId;
+        PersistentId               = persistentId;
         Combatant                  = combatant;
         Archetype                  = archetype;
-        IsHostile                  = isHostile;
         IsPersistent               = isPersistent;
-        ObservationHint            = observationHint;
+        Text                       = text;
         CanSpeak                   = canSpeak;
-        WayToSpeakDescription      = wayToSpeakDescription;
         AffinityTable              = affinityTable ?? new AffinityTable();
-        IsBrave                    = isBrave;
         AuthorityLevel             = authorityLevel;
         OwnedSectionIds            = ownedSectionIds != null ? new List<string>(ownedSectionIds) : [];
     }
@@ -129,6 +239,6 @@ public class NpcEntity : INpcEntity
     // ── Corpse generation ─────────────────────────────────────────────────────
 
     /// <inheritdoc/>
-    public CorpseSpot GenerateCorpse(Area area)
-        => CorpseRegistry.CreateForNamedNpc(this, area);
+    public List<PointOfInterest> GenerateCorpse()
+        => CorpseRegistry.CreateForNamedNpc(this);
 }

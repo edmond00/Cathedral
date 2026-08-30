@@ -26,8 +26,12 @@ public class DialogueTreeAdapter
     private readonly DialogueTree?          _prebuiltTree;
     private readonly LlamaServerManager     _llmManager;
     private readonly ModusMentisSlotManager _slotManager;
-    private readonly TerminalHUD            _terminal;
+    private readonly WorldContext?          _world;
+    private readonly int                    _locationId;
+    private readonly NarrationScrollBuffer  _buffer;
+    private readonly Cathedral.Audio.AmbianceEngine? _ambianceEngine;
 
+    private readonly DialogueTreeUI  _ui;
     private DialogueTreeController? _controller;
     private int                     _npcSlotId  = -1;
     private bool                    _ready;
@@ -43,6 +47,17 @@ public class DialogueTreeAdapter
     /// <summary>True when dialogue has ended and the session should be torn down.</summary>
     public bool HasRequestedExit => _controller?.HasRequestedExit ?? _failed;
 
+    /// <summary>
+    /// The live conversation controller, or null while the LLM slot is still being acquired.
+    /// Exposed for --cli driving; the driver reports "still starting" when this is null.
+    /// </summary>
+    public DialogueTreeController? Controller => _controller;
+
+    /// <param name="scrollBuffer">
+    /// The narration session's shared text history. The conversation appends its lines to it live and
+    /// the dialogue panel renders from it, so the player can scroll back into the greyed narration
+    /// that preceded the conversation.
+    /// </param>
     public DialogueTreeAdapter(
         NpcEntity              npc,
         Protagonist            protagonist,
@@ -50,7 +65,11 @@ public class DialogueTreeAdapter
         LlamaServerManager     llmManager,
         ModusMentisSlotManager slotManager,
         TerminalHUD            terminal,
-        DialogueTree?          prebuiltTree = null)
+        NarrationScrollBuffer  scrollBuffer,
+        WorldContext?          world          = null,
+        int                    locationId     = 0,
+        DialogueTree?          prebuiltTree   = null,
+        Cathedral.Audio.AmbianceEngine? ambianceEngine = null)
     {
         _npc          = npc;
         _protagonist  = protagonist;
@@ -58,7 +77,14 @@ public class DialogueTreeAdapter
         _prebuiltTree = prebuiltTree;
         _llmManager   = llmManager;
         _slotManager  = slotManager;
-        _terminal     = terminal;
+        _world        = world;
+        _locationId   = locationId;
+        _buffer       = scrollBuffer;
+        _ambianceEngine = ambianceEngine;
+
+        // The UI is created up front so the setup phase can already render the standard
+        // bordered panel — avoids a black flash when transitioning from narration.
+        _ui = new DialogueTreeUI(terminal, npc, protagonist, scrollBuffer);
     }
 
     // ── Public API ──────────────────────────────────────────────────────────────
@@ -75,13 +101,11 @@ public class DialogueTreeAdapter
             return;
         }
 
-        // While setting up, show a minimal loading screen
-        _terminal.Clear();
-        _terminal.CenteredText(
-            Config.Terminal.MainHeight / 2,
-            _failed ? $"Dialogue failed: {_errorMessage}" : "Starting dialogue…",
-            _failed ? Config.Colors.Red : Config.Colors.LightGray,
-            Config.Colors.Black);
+        // While setting up, keep the standard panel frame with a generating message
+        // at the bottom — a smooth transition from the narration panel.
+        _ui.RenderSetupFrame(
+            $"Starting dialogue with {_npc.DisplayName}…",
+            _failed ? $"Dialogue failed: {_errorMessage}" : null);
     }
 
     public void OnMouseMove(int mx, int my)  => _controller?.OnMouseMove(mx, my);
@@ -91,6 +115,12 @@ public class DialogueTreeAdapter
 
     // ── Setup ────────────────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// The slot id used under <c>--playground</c>, where no LLM instance exists. Never dereferenced:
+    /// every generation path checks <c>PlaygroundMode</c> first and returns neutral text.
+    /// </summary>
+    private const int PlaygroundSlotId = -1;
+
     private async Task SetupAndStartAsync()
     {
         try
@@ -98,9 +128,35 @@ public class DialogueTreeAdapter
             // Resolve tree
             DialogueTree tree = ResolveTree();
 
-            // Acquire NPC slot (system prompt = way-to-speak description)
-            string systemPrompt = _npc.WayToSpeakDescription ?? $"You are {_npc.DisplayName}.";
-            _npcSlotId = await _llmManager.CreateInstanceAsync(systemPrompt);
+            // Placeholder names: the LLM never sees real names. Build the mapping once, then use it
+            // both to rewrite the NPC persona prompt (real → placeholder) and, later, to restore real
+            // names into every generated replica.
+            // The third party, when there is one, is set on the NPC by the verb that opened this —
+            // the same deferred hand-off the job offer and the trade mode use, and for the same
+            // reason: the verb knows and the adapter is where it is needed.
+            var third   = _npc.PendingIntroductionTarget;
+            var names   = DialogueNameTable.Build(_protagonist, _npc, third);
+            var context = new DialogueContext(_protagonist, _npc, _world, _locationId, names)
+            {
+                ThirdParty = third,
+            };
+
+            // Acquire NPC slot (system prompt = way-to-speak description, with the NPC's real name
+            // swapped for its placeholder).
+            string rawPrompt    = _npc.WayToSpeakDescription ?? $"You are {names.Placeholder("npc")}.";
+            string systemPrompt = names.ToPlaceholder(rawPrompt);
+
+            // Playground: no server, so no slot. This was the ONE place in the dialogue path that
+            // still reached for the LLM directly — everything downstream (PersonaRewriter,
+            // PersonaChoiceSelector) already answers with neutral text under playground and never
+            // touches the slot id. Asking for one threw "Server is not ready", the catch below logged
+            // to stderr, and the conversation "completed" instantly: no greeting, no replies, no
+            // resolution roll, no outcomes. Every dialogue tree in the game was unreachable under
+            // --playground, and silently so — a verb test could watch a dialogue open and close
+            // without a word being said and call it a pass.
+            _npcSlotId = PlaygroundMode.IsActive
+                ? PlaygroundSlotId
+                : await _llmManager.CreateInstanceAsync(systemPrompt);
 
             _controller = new DialogueTreeController(
                 tree:        tree,
@@ -109,7 +165,10 @@ public class DialogueTreeAdapter
                 npcSlotId:   _npcSlotId,
                 llmManager:  _llmManager,
                 slotManager: _slotManager,
-                terminal:    _terminal);
+                ui:          _ui,
+                context:     context,
+                buffer:      _buffer,
+                ambianceEngine: _ambianceEngine);
 
             _ready = true;
             _controller.Start();
@@ -130,7 +189,7 @@ public class DialogueTreeAdapter
         // Pre-built tree (e.g. caught-red-handed) takes precedence over registry lookup.
         if (_prebuiltTree != null) return _prebuiltTree;
 
-        string partyMemberId = _protagonist.DisplayName;
+        string partyMemberId = _protagonist.AffinityKey;
 
         if (_treeId != null)
         {

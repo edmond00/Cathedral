@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using Cathedral.Game.Narrative;
 
 namespace Cathedral.Fight.Actions;
 
@@ -14,12 +16,32 @@ public class SkillAction : IFightAction
     public Fighter Target   { get; }
     public FightingSkill Skill { get; }
 
-    public SkillAction(Fighter attacker, Fighter target, FightingSkill skill)
+    /// <summary>
+    /// Organ part this skill is performed with (e.g. "left_hand"), or null to use the whole
+    /// organ. Determines which part's level feeds the dice count for organ-medium skills.
+    /// </summary>
+    public string? OrganPartId { get; }
+
+    /// <summary>
+    /// The medium the skill is being executed through. Overrides <see cref="FightingSkill.Medium"/>
+    /// in the dice calculation for skills that appear in multiple medium lists.
+    /// Null means use the skill's primary medium (<see cref="FightingSkill.Medium"/>).
+    /// </summary>
+    public FightingMedium? ActiveMedium { get; }
+
+    public SkillAction(Fighter attacker, Fighter target, FightingSkill skill,
+        string? organPartId = null, FightingMedium? activeMedium = null)
     {
-        Attacker = attacker;
-        Target   = target;
-        Skill    = skill;
+        Attacker     = attacker;
+        Target       = target;
+        Skill        = skill;
+        OrganPartId  = organPartId;
+        ActiveMedium = activeMedium;
     }
+
+    /// <summary>Turns a body-part id into something readable in the combat log.</summary>
+    private static string Prettify(string? bodyPartId) =>
+        string.IsNullOrEmpty(bodyPartId) ? "body" : bodyPartId.Replace('_', ' ');
 
     public void Execute(FightState state, Random rng)
     {
@@ -27,24 +49,125 @@ public class SkillAction : IFightAction
         int cost = Skill.CineticPointsCost;
         Attacker.CurrentCineticPoints = Math.Max(0, Attacker.CurrentCineticPoints - cost);
 
-        // Handle defense posture differently — no dice roll needed
-        if (Skill.EffectType == FightingSkillEffect.DefensePosture)
+        // ── Buffs: vital heat, no dice ────────────────────────────────────────────
+        // A buff has no target and nothing to hit, so there is nothing for dice to decide. It is
+        // paid for in vital heat instead, and the effect is applied here — before the animation —
+        // so the STATE pane shows it while the consumption box is still up.
+        if (Skill.EffectType == FightingSkillEffect.Buff)
         {
-            Attacker.IsDefensePostureActive = true;
-            state.AddLog($"{Attacker.DisplayName} takes a defensive stance.  [-{cost} CP]");
-            state.Phase = TurnPhase.TurnEnding;
+            var effect = Skill.CreateBuffEffect(Attacker);
+            int vh = Skill.VitalHeatCostFor(Attacker, OrganPartId, ActiveMedium);
+
+            if (effect != null)
+            {
+                Attacker.ActiveEffects.Add(effect);
+                effect.OnApply(Attacker, Attacker, state, rng);
+                if (effect.IsExpired) Attacker.ActiveEffects.Remove(effect);
+            }
+
+            // "X uses Y" — never "X uses Y on X". There is no second party here.
+            state.AddLog($"{Attacker.DisplayName} uses {Skill.DisplayName}.  [-{cost} CP, -{vh} VH]",
+                LogEntryType.SpecialEffect);
+
+            // The heat is drawn one humor at a time while the box plays — see
+            // FightState.DrawNextVitalHeat. Taking it all here would leave the bar nothing to fill.
+            state.BeginVitalHeatConsumption(Attacker, Skill.DisplayName, vh);
             return;
         }
 
-        // Set up dice roll for the window to animate
+        // Defensive guards are bought, not rolled for: defence IS a dice count, so the skill hands
+        // its level straight to the pool the next incoming attack is measured against. (These used
+        // to run the attack path against the user's own defence, which is how a parry could wound
+        // the person parrying.)
+        if (Skill.EffectType == FightingSkillEffect.DefensePosture
+         || Skill.EffectType == FightingSkillEffect.Defense)
+        {
+            bool isPosture = Skill.EffectType == FightingSkillEffect.DefensePosture;
+            int dice = Skill.TotalDice(Attacker, OrganPartId, ActiveMedium);
+            // A posture covers every blow this turn; a parry or dodge covers one.
+            FightStatusEffect guard = isPosture
+                ? new DefensePostureEffect(Skill.DisplayName, dice, Skill.GuardBreaksOnDamage)
+                : new GuardEffect(Skill.DisplayName, dice);
+            Attacker.ActiveEffects.Add(guard);
+            guard.OnApply(Attacker, Attacker, state, rng);
+            state.AddLog($"{Attacker.DisplayName} uses {Skill.DisplayName}.  [-{cost} CP]");
+
+            // A posture is a commitment — settling into it is the whole turn, as it always was.
+            // A parry or a dodge is a cheaper reactive guard and leaves the fighter free to keep
+            // acting on whatever Cinetic Points remain.
+            state.Phase = isPosture ? TurnPhase.TurnEnding : TurnPhase.SelectingAction;
+            return;
+        }
+
+        // ── Charge: close the distance, then strike ───────────────────────────────
+        // A lunge's long reach is the run-up, not the weapon. Without this the attacker would stab
+        // someone five cells away without moving, which is what "Range 5" alone meant.
+        if (Skill.ChargeDistance > 0 && Target != Attacker
+            && FightResolver.ChebyshevDistance(Attacker, Target) > 1)
+        {
+            var landing = FightResolver.ChargeLandingCell(Attacker, Target, state, Skill.ChargeDistance);
+            if (landing == null)
+            {
+                // Nothing to charge across — the route is blocked or too long. The blow is spent
+                // covering ground it cannot cover.
+                state.AddLog($"{Attacker.DisplayName}'s charge is blocked — no clear run at {Target.DisplayName}.  [-{cost} CP]",
+                    LogEntryType.Miss);
+                state.Phase = TurnPhase.SelectingAction;
+                return;
+            }
+            Attacker.X = landing.Value.X;
+            Attacker.Y = landing.Value.Y;
+            state.AddLog($"{Attacker.DisplayName} charges to ({landing.Value.X},{landing.Value.Y}).",
+                LogEntryType.SpecialEffect);
+        }
+
+        // Set up dice roll for the window to animate (two-roll: attack dice vs defense dice)
         state.PendingSkill  = Skill;
         state.PendingTarget = Target;
-        state.DiceNumberOfDice = Skill.TotalDice(Attacker);
-        state.DiceDifficulty   = Target.NaturalDefense;
-        state.IsDiceRolling    = true;
-        state.DiceFinalValues  = null;
-        state.Phase            = TurnPhase.AnimatingDice;
 
-        state.AddLog($"{Attacker.DisplayName} uses {Skill.DisplayName} on {Target.DisplayName}.  [-{cost} CP]");
+        // ── Where the blow is aimed, decided BEFORE the dice ──────────────────────
+        // Armour has to be counted into the defence pool, and the pool is sized here — so the
+        // location cannot wait until the wound is picked. Resolving it for all three targeting
+        // modes (not just the aimed ones) is what lets armour matter against ordinary attacks,
+        // which are the overwhelming majority. Reset first: ContinueTurnOrEnd does not clear
+        // pending state, so a second skill in the same turn would inherit the first one's section.
+        state.PendingArmorSection = null;
+        if (Target != Attacker)
+        {
+            if (Skill.WoundTargetMode == WoundTargetMode.FixedBodyPart)
+                // The authored target may be a list — "one of these" — and one has to be drawn now,
+                // before the roll, because armour is charged against a single resolved section.
+                state.PendingBodyPartId = Skill.TargetBodyPartId is { } ids
+                    ? FightResolver.PreRollAmong(Target, ids, rng)
+                    : null;
+            else if (Skill.WoundTargetMode == WoundTargetMode.Random)
+                state.PendingBodyPartId = FightResolver.PreRollHitLocation(Target, rng);
+            // PlayerChooses already wrote PendingBodyPartId from the localization overlay.
+
+            state.PendingArmorSection =
+                FightResolver.ResolveSectionBodyPartId(Target, state.PendingBodyPartId);
+        }
+
+        int armor = Target.ArmorDice(state.PendingArmorSection);
+
+        // Natural attack dice apply only to offensive rolls against another fighter,
+        // not to self-targeted (defense/utility) skills. Effect bonuses fold in on both sides:
+        // a feint's carry-over on the attack, a parry or stance on the defence.
+        state.DiceNumberOfDice          = Skill.TotalDice(Attacker, OrganPartId, ActiveMedium)
+                                          + (Target != Attacker ? Attacker.NaturalAttack : 0)
+                                          + Attacker.BonusAttackDice;
+        state.DiceSecondaryNumberOfDice = Target.NaturalDefense + armor + Target.BonusDefenseDice;
+        state.DiceDifficulty            = state.DiceSecondaryNumberOfDice; // kept for logging
+        state.IsDiceRolling             = true;
+        state.DiceFinalValues           = null;
+        state.DiceSecondaryFinalValues  = null;
+        state.Phase                     = TurnPhase.AnimatingDice;
+
+        string aim = armor > 0
+            ? $" (aimed at the {Prettify(state.PendingArmorSection)}, armour +{armor})"
+            : "";
+        // Self-targeted skills read "X uses Y", never "X uses Y on X".
+        string on = Target != Attacker ? $" on {Target.DisplayName}" : "";
+        state.AddLog($"{Attacker.DisplayName} uses {Skill.DisplayName}{on}{aim}.  [-{cost} CP]");
     }
 }

@@ -13,7 +13,14 @@ public abstract class BodyPart
     public abstract string Id { get; }
     public abstract string DisplayName { get; }
     public abstract List<Organ> Organs { get; }
-    
+
+    /// <summary>
+    /// Encyclopedia-style flavour text describing the region's overall nature and the faculty
+    /// it lends the frame as a whole. Shown in the creation and body menus, in the band between
+    /// the organ list and the derived-stat detail, when the region is hovered.
+    /// </summary>
+    public virtual string Description => "";
+
     /// <summary>
     /// When true, this body part appears as a candidate target for wildcard wounds
     /// in the narrative failure outcome critic tree.
@@ -24,4 +31,7 @@ public abstract class BodyPart
     /// Score is the sum of all organ scores within this body part.
     /// </summary>
     public int Score => Organs.Sum(o => o.Score);
+
+    /// <summary>Maximum possible score = the sum of all contained organs' max scores.</summary>
+    public int MaxScore => Organs.Sum(o => o.MaxScore);
 }

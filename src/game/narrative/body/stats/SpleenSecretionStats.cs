@@ -1,4 +1,3 @@
-using System;
 namespace Cathedral.Game.Narrative;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -7,14 +6,15 @@ namespace Cathedral.Game.Narrative;
 // Note: Melancholia humor is NOT secreted by the Spleen during normal cycles;
 // it is produced only via specific narrative event triggers (HumorQueueSet.ProduceHumor).
 // No Melancholia secretion stat is defined here.
+// Percentages come from the shared HumoralSecretionTable (organ score 0–3).
 
 public class SpleenBloodSecretionStat : HumoralSecretionStat
 {
     public override string Name        => "spleen_blood_pct";
     public override string DisplayName => "Spleen Blood %";
     public override string? RelatedOrganId => "spleen";
-    public override int CalculateValue(int sourceScore) =>
-        Math.Max(0, sourceScore * 8 - 3);
+    protected override int CalculateValue(int sourceScore) =>
+        HumoralSecretionTable.BloodPct(sourceScore);
 }
 
 public class SpleenPhlegmSecretionStat : HumoralSecretionStat
@@ -22,13 +22,8 @@ public class SpleenPhlegmSecretionStat : HumoralSecretionStat
     public override string Name        => "spleen_phlegm_pct";
     public override string DisplayName => "Spleen Phlegm %";
     public override string? RelatedOrganId => "spleen";
-    public override int CalculateValue(int sourceScore)
-    {
-        int blood  = Math.Max(0, sourceScore * 8 - 3);
-        int yellow = Math.Max(0, 40 - sourceScore * 3);
-        int black  = Math.Max(0, 50 - sourceScore * 5);
-        return 100 - blood - yellow - black;
-    }
+    protected override int CalculateValue(int sourceScore) =>
+        HumoralSecretionTable.PhlegmPct(sourceScore);
 }
 
 public class SpleenYellowBileSecretionStat : HumoralSecretionStat
@@ -36,8 +31,8 @@ public class SpleenYellowBileSecretionStat : HumoralSecretionStat
     public override string Name        => "spleen_yellow_bile_pct";
     public override string DisplayName => "Spleen Yellow Bile %";
     public override string? RelatedOrganId => "spleen";
-    public override int CalculateValue(int sourceScore) =>
-        Math.Max(0, 40 - sourceScore * 3);
+    protected override int CalculateValue(int sourceScore) =>
+        HumoralSecretionTable.YellowBilePct(sourceScore);
 }
 
 public class SpleenBlackBileSecretionStat : HumoralSecretionStat
@@ -45,6 +40,6 @@ public class SpleenBlackBileSecretionStat : HumoralSecretionStat
     public override string Name        => "spleen_black_bile_pct";
     public override string DisplayName => "Spleen Black Bile %";
     public override string? RelatedOrganId => "spleen";
-    public override int CalculateValue(int sourceScore) =>
-        Math.Max(0, 50 - sourceScore * 5);
+    protected override int CalculateValue(int sourceScore) =>
+        HumoralSecretionTable.BlackBilePct(sourceScore);
 }

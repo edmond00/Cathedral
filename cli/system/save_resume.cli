@@ -1,0 +1,58 @@
+# The save file itself: written at the world map, readable, and erased by a new run.
+#
+# One process, so this cannot press Continue on a cold start — that is what tests/save_reload.sh does.
+# What it can prove is everything either side of the process boundary: that the autosave fires at the
+# right moment, that what lands on disk is the run that was played, and that starting a new run
+# spends the save rather than leaving it recoverable.
+#
+# `save dump` reads the LIVE run; `save read` reads the FILE. Asserting both is the point — they
+# diverge exactly when the autosave has not fired, which is how a missing autosave would show up.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon --save-path .tmp-cli-save/resume.json
+
+wait
+
+# No run yet, so nothing on disk and Continue is greyed out.
+save erase
+expect-state savefile save none
+
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+
+# Reaching the world map IS the save point: EnterWorldViewInteractive autosaves on the way in.
+wait mode WorldView 45
+expect-no-state savefile save none
+expect-state savefile version=1
+expect-state savefile seed=42
+
+# The file agrees with the run it was written from.
+expect-state save days=0.0
+expect-state savefile days=0.0
+
+# Travel moves the clock, and arriving back at the world map writes the new state. Going into a
+# location and out again is the shortest round the game allows.
+travel here
+wait mode LocationInteraction 45
+advance 12 90
+click button
+wait mode WorldView 45
+
+# The save now carries the location the visit created memory for.
+expect-no-state savefile locations=0
+
+# A new run spends the save. Erased before anything else, so a crash during setup cannot leave the
+# previous run recoverable.
+#
+# The main menu is not reachable from the world map by itself. Escape opens it for a player, but that
+# key is handled in the launcher's own hook rather than in OnKeyDown, so `key escape` never reaches
+# it — hence `pause`, which calls the very same HandleEscape the hook does.
+pause
+wait mode MainMenu 20
+inspect menu
+expect-state menu Continue enabled
+click menu New
+wait mode ProtagonistCreation 20
+expect-state savefile save none
+
+quit

@@ -1,11 +1,15 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Cathedral.Game.Narrative.Items;
 
 /// <summary>A flake of bark from a tree trunk. Shared by apple tree and pine tree.</summary>
 public sealed class Bark : Item
 {
+    public override ItemCategory Category => ItemCategory.Crafting;
     public override string ItemId => "bark";
     public override string DisplayName => "Bark";
+    public override string Article => "some";
     public override string Description => "A rough flake of bark from a tree trunk";
+    public override List<ItemTag> Tags => new() { ItemTag.Wood };
+    public override int PriceReference => 2;
 }

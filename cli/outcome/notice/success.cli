@@ -1,0 +1,42 @@
+# notice — the outcome, not the verb.
+#
+# cli/verb/stalk/ proves the chip is printed. This proves the chip corresponds to something
+# real: the world is inspected before and after, and it moved. The two overlap on purpose —
+# same scenario, different question.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Wood" --period morning --observe-only "farmer"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# --- before ---
+inspect where
+
+strategy succeed
+goal stalk
+advance 12 180
+regions
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+# --- the outcome really ran ---
+expect-outcome notice
+
+# --- after: the world moved ---
+inspect where
+quit

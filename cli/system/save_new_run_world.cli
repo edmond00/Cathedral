@@ -1,0 +1,43 @@
+# A second New in one process gets a world of its own — and --seed still pins every run.
+#
+# The master seed is per RUN, not per process: the world (terrain, where each location sits, and the
+# people in it) is a pure function of it, and a save restores its own seed at startup so Continue
+# rebuilds nothing. That leaves New, which without a fresh seed would play a new run in the previous
+# run's world — true even before saves existed, since two News in one process gave the identical
+# world.
+#
+# What this asserts is the half that protects the test suite: under --seed, EVERY run in the process
+# uses that seed, so a script that restarts is still reproducible. The other half — that without
+# --seed the second New really does draw a different world — is visible in the log line
+# "[RNG] Master seed re-drawn for a new run" and cannot be asserted from inside one script, since a
+# script has no way to compare two runs' worlds to each other.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --period noon --save-path .tmp-cli-save/new-run.json
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 45
+
+# First run: the process's own world, claimed rather than rebuilt.
+expect-state save seed=42
+world
+
+# Back to the menu and start again. This New goes through the regeneration branch, because the world
+# has been claimed — but --seed overrides the fresh draw, so the run replays identically.
+pause
+wait mode MainMenu 20
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 45
+
+expect-state save seed=42
+world
+
+# And the new run really is new: no location has been visited yet, and the save from the first run
+# was spent when New was pressed.
+expect-state save locations=0
+
+quit

@@ -1,0 +1,66 @@
+# Tools — the implement made for the act
+#
+# The counterpart to tool_excluded_verb.cli, against the same excluded verb and in the same room.
+# Reading lenses declare EXAMINE in Item.MadeForVerbIds, and that single declaration changes three
+# things at once. Its other edge — that the same declaration REFUSES them for every other act — is
+# asserted separately, in tool_not_its_purpose.cli:
+#
+#   * they are OFFERED at all. Lenses are a garment by category, and combinable items are otherwise
+#     tools and weapons only — GetCombinableItems admits anything declaring an exception precisely
+#     so the mechanism is not unreachable for everything that is not already a tool;
+#   * the combination is ACCEPTED against a verb that admits no implement. This is the only road
+#     into an excluded act, and the reason exclusion can be a category rather than a case-by-case
+#     judgement: the item declares what it is for, from its own side;
+#   * it is accepted with NO critic call and NO noetic cost, so the budget is unchanged across it.
+#
+# The proof of acceptance is the reformulated action: a combination that is accepted rewrites the
+# act to incorporate the implement and offers THAT as a second button. Refusal leaves one button,
+# which is what the excluded script asserts.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-item reading_lenses --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon --observe-only "Test Rack"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal examine
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+
+inspect noetic
+
+click action 0
+regions
+choose 1
+regions
+choose 0
+advance 12 180
+
+# Accepted: the reformulated act is on screen as a second button, and the budget did not move.
+regions
+inspect noetic
+
+# Unchanged: an accepted combination is free. The deliberation took the pool from 2 to 1 and
+# nothing since has touched it.
+expect-state noetic points=1/2
+expect-state noetic tool_proficiency=Low
+
+click action 1
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+expect SUCCESS
+expect-verb examine
+
+quit

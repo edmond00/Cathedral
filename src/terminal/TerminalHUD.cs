@@ -19,13 +19,14 @@ namespace Cathedral.Terminal
         private bool _visible = true;
         private float _opacity = 1.0f;
         private bool _disposed;
+        private bool _transparentClickPassthrough;
 
         // Events for external interaction
         public event Action<int, int>? CellClicked;
         public event Action<int, int>? CellRightClicked;
         public event Action<int, int>? CellHovered;
         public event Action<int, int>? CellMouseReleased;
-        public event Action? MouseLeft;
+        public event System.Action? MouseLeft;
 
         public TerminalHUD(int width, int height, int cellSize = 32, int fontPixelSize = 24)
         {
@@ -202,6 +203,31 @@ namespace Cathedral.Terminal
         }
 
         /// <summary>
+        /// Draws a grey vertical rule down the first and last column, edge to edge.
+        ///
+        /// Full-screen menus (main menu, settings, the protagonist submenus) sit over the
+        /// 3D sphere, which stays visible to either side of them. Without an explicit edge
+        /// the menu's black background and the skybox meet with nothing between them and
+        /// the panel appears to bleed into the world. These rails give it a hard border.
+        ///
+        /// Call this <b>last</b>, after all content: it overwrites whatever occupied those
+        /// two columns.
+        /// </summary>
+        public void DrawSideRails(Vector4 lineColor, Vector4 backgroundColor)
+        {
+            int lastCol = Width - 1;
+            for (int y = 0; y < Height; y++)
+            {
+                SetCell(0, y, '│', lineColor, backgroundColor);
+                SetCell(lastCol, y, '│', lineColor, backgroundColor);
+            }
+        }
+
+        /// <summary>Draws the side rails in the standard grey on black.</summary>
+        public void DrawSideRails()
+            => DrawSideRails(Cathedral.Config.Colors.DarkGray20, Cathedral.Config.Colors.Black);
+
+        /// <summary>
         /// Clears the entire terminal (fills with spaces)
         /// </summary>
         public void Clear()
@@ -215,6 +241,29 @@ namespace Cathedral.Terminal
         public void ClearRect(int x, int y, int width, int height)
         {
             _view.ClearRect(x, y, width, height);
+        }
+
+        /// <summary>
+        /// Greys out a rectangular region: every visible foreground color is snapped to
+        /// <paramref name="dimTextColor"/> and every visible background to <paramref name="dimBackgroundColor"/>.
+        /// Characters are preserved. Snapping (rather than scaling) makes the operation idempotent,
+        /// so it is safe to apply every frame over content that is not fully redrawn.
+        /// Fully transparent cells are left untouched (WorldView passthrough).
+        /// </summary>
+        public void DimRect(int x, int y, int width, int height, Vector4 dimTextColor, Vector4 dimBackgroundColor)
+        {
+            int x0 = Math.Max(0, x), y0 = Math.Max(0, y);
+            int x1 = Math.Min(Width, x + width), y1 = Math.Min(Height, y + height);
+            for (int cy = y0; cy < y1; cy++)
+            {
+                for (int cx = x0; cx < x1; cx++)
+                {
+                    var cell = _view[cx, cy];
+                    Vector4 fg = cell.TextColor.W < 0.01f ? cell.TextColor : dimTextColor;
+                    Vector4 bg = cell.BackgroundColor.W < 0.01f ? cell.BackgroundColor : dimBackgroundColor;
+                    cell.SetColors(fg, bg);
+                }
+            }
         }
 
         #endregion
@@ -383,12 +432,62 @@ namespace Cathedral.Terminal
         }
 
         /// <summary>
+        /// When enabled, clicks that land on a cell with a fully transparent background
+        /// are not consumed by the terminal (they fall through to the 3D world below).
+        /// Used in WorldView, where most of the terminal is empty.
+        /// </summary>
+        public bool TransparentClickPassthrough
+        {
+            get => _transparentClickPassthrough;
+            set => _transparentClickPassthrough = value;
+        }
+
+        /// <summary>
+        /// Returns true if the terminal logically owns the mouse at the given position
+        /// (visible AND not a transparent passthrough cell). Used by the world hover
+        /// detection so vertex hovers keep firing over transparent areas in WorldView.
+        /// </summary>
+        public bool ConsumesMouseAt(Vector2 mousePosition, Vector2i windowSize)
+        {
+            if (!_visible) return false;
+            if (!_inputHandler.IsPositionInTerminal(mousePosition, windowSize)) return false;
+
+            if (_transparentClickPassthrough)
+            {
+                var cell = _inputHandler.ScreenToCell(mousePosition, windowSize);
+                if (cell.HasValue)
+                {
+                    var c = _view[cell.Value.X, cell.Value.Y];
+                    bool transparent = c.BackgroundColor.W < 0.01f
+                                       && (c.Character == ' ' || c.TextColor.W < 0.01f);
+                    return !transparent;
+                }
+            }
+            return true;
+        }
+
+        /// <summary>
         /// Handles mouse button down events
         /// Returns true if the terminal handled the event
         /// </summary>
         public bool HandleMouseDown(Vector2 mousePosition, Vector2i windowSize, MouseButton button)
         {
             if (!_visible) return false;
+
+            // In passthrough mode, peek at the cell under the cursor and refuse to handle
+            // clicks on transparent regions so they reach the world below.
+            if (_transparentClickPassthrough)
+            {
+                var cell = _inputHandler.ScreenToCell(mousePosition, windowSize);
+                if (cell.HasValue)
+                {
+                    var c = _view[cell.Value.X, cell.Value.Y];
+                    bool transparent = c.BackgroundColor.W < 0.01f
+                                       && (c.Character == ' ' || c.TextColor.W < 0.01f);
+                    if (transparent) return false;
+                }
+            }
+
             return _inputHandler.HandleMouseDown(mousePosition, windowSize, button);
         }
 
@@ -400,6 +499,9 @@ namespace Cathedral.Terminal
             if (!_visible) return;
             _inputHandler.HandleMouseUp(button);
         }
+
+        /// <summary>True while the left mouse button is held down (used for drag interactions).</summary>
+        public bool IsLeftMouseDown => _inputHandler.IsLeftMouseDown;
 
         /// <summary>
         /// Checks if a screen position is within the terminal area

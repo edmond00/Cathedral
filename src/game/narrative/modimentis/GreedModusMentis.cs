@@ -1,40 +1,43 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Greed — the want of more; a soul who has dreamt of purple rubies in a dark dungeon and
-/// never quite shaken the want. Thinking-only.
+/// never quite shaken the want. Its gladness at a gain is a step, never the peak: the want is not satisfiable.
 /// </summary>
 public class GreedModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "greed";
     public override string DisplayName      => "Greed";
-    public override string ShortDescription => "the want of more";
-    public override string SkillMeans       => "the unshaken want of more";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override string MenuDescription =>
+        "Keeps an unshaken want of more running beneath thought, driving toward acquisition past need. Inclines reasoning and action toward seizing wealth and advantage wherever they appear.";
+    public override string SkillMeans       => "the relentless desire to have more";
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "heart", "eyes" };
+
+    /// <summary>Stands on letters, number or institutions.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
     public override string PersonaTone     => "a soul who has dreamt of purple rubies in a dark dungeon and never quite shaken the want";
     public override string PersonaReminder  => "treasure-haunted soul";
     public override string PersonaReminder2 => "someone whose eye lingers on whatever glints";
+    public override string StyleInstruction =>
+        "Let the imagery be drawn to whatever glitters, with a covetous gleam that prices everything it sees.";
     public override MoralLevel MoralLevel    => MoralLevel.Low;
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(CoinGrantOutcome), () => new LaetitiaHumor()),
+        new(typeof(ItemAcquisitionOutcome), () => new LaetitiaHumor()),
+        new(typeof(ItemGrantOutcome), () => new LaetitiaHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of GREED, the bright pull at the back of attention that never lets a chest, a vein of ore, a glint of silver pass unweighed.
 
 When reasoning, you compute the prize. The wider the prize, the more risk you allow. You suspect every reluctance to grasp as cowardice or stupidity. You are not cruel; you are simply unwilling to leave value on the floor.
 
 Your language is bright and hungry: 'and what would that be worth?' 'mine,' 'just one more.' You shine when treasure is in the room, and you do not pretend otherwise.";
-
-    private IEnumerable<QuestionFiller>? _questionFillers;
-    public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
-    {
-        new(QuestionReference.ThinkWhy,
-            new Question("what bright thing makes this worth grasping for?",     "what_bright_thing_drives_this"),
-            new Question("what gain you cannot leave behind drives the goal?",   "what_unleavable_gain_drives_this")),
-        new(QuestionReference.ThinkHowReason,
-            new Question("what approach and what greedy reckoning supports it?", "why"),
-            new Question("what approach and what unsated want backs it?",        "why")),
-    };
 }

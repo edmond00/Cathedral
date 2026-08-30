@@ -8,6 +8,14 @@ using Cathedral.Glyph;
 using Cathedral.Glyph.Microworld;
 using Cathedral.Game;
 using Cathedral.Game.Scene.Farm;
+using Cathedral.Game.Scene.Plain;
+using Cathedral.Game.Scene.Field;
+using Cathedral.Game.Scene.Forest;
+using Cathedral.Game.Scene.Village;
+using Cathedral.Game.Scene.Cave;
+using Cathedral.Game.Scene.Mountain;
+using Cathedral.Game.Scene.Peak;
+using Cathedral.Game.Scene.Coast;
 using Cathedral.Engine;
 using Cathedral.LLM;
 
@@ -32,12 +40,22 @@ public static class LocationTravelModeLauncher
         var native = new NativeWindowSettings()
         {
             ClientSize = new Vector2i(windowWidth, windowHeight),
-            Title = "Cathedral - Location Travel Mode",
+            // The player's window title. Comes from Config.Name so it cannot drift from the menu.
+            Title = Cathedral.Config.Name.WindowTitle,
             Flags = ContextFlags.Default,
             API = ContextAPI.OpenGL,
             APIVersion = new Version(3, 3),
-            WindowBorder = WindowBorder.Resizable
+            WindowBorder = WindowBorder.Resizable,
+
+            // --hidden: the window is created and never mapped. The GL context exists, so every
+            // renderer runs as it always does; what is gone is the window on screen and the focus it
+            // takes. See Config.Debug.HiddenWindow for why this rather than minimising.
+            StartVisible = !Cathedral.Config.Debug.HiddenWindow,
+            StartFocused = !Cathedral.Config.Debug.HiddenWindow
         };
+
+        if (Cathedral.Config.Debug.HiddenWindow)
+            Console.WriteLine("Window: hidden (--hidden) — created but never shown; rendering runs as normal.");
 
         using var core = new GlyphSphereCore(GameWindowSettings.Default, native, camera);
         var microworldInterface = new MicroworldInterface(core);
@@ -59,72 +77,94 @@ public static class LocationTravelModeLauncher
 
         // Create game controller AFTER core is set up
         LocationTravelGameController? gameController = null;
+
+        // Command driver for --cli: created once the controller exists (see CoreLoaded below).
+        Cathedral.Game.Cli.CliDriver? cliDriver = null;
         
-        // LLM components (optional - Phase 5)
+        // LLM server (optional)
         LlamaServerManager? llamaServer = null;
-        LLMActionExecutor? llmExecutor = null;
         
         // Initialize LLM if requested
         if (useLLM)
         {
-            Console.WriteLine("=== Initializing LLM System (Phase 5) ===");
-            
-            // Initialize logging for LLM communications
-            LLMLogger.Initialize();
-            Console.WriteLine("✓ LLM communication logging enabled");
-            
-            try
+            if (PlaygroundMode.IsActive)
             {
+                // Playground: create the server object so components can be constructed,
+                // but do NOT start it — all actual LLM calls are intercepted before reaching it.
+                Console.WriteLine("=== Playground Mode: LLM server not started ===");
                 llamaServer = new LlamaServerManager();
-                
-                // Set up server ready callback
-                bool serverReady = false;
-                llamaServer.ServerReady += (sender, e) =>
-                {
-                    serverReady = e.IsReady;
-                    if (e.IsReady)
-                    {
-                        Console.WriteLine("✓ LLM Server is ready");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"✗ LLM Server failed: {e.Message}");
-                    }
-                };
-                
-                // Start server with "tiny" model (qwen2-0.5b) - faster but less sophisticated
-                // Use "medium" for phi-4 (better quality but slower)
-                Console.WriteLine("Starting LLM server...");
-                var startTask = llamaServer.StartServerAsync(
-                    onServerReady: (ready) =>
-                    {
-                        if (ready)
-                        {
-                            Console.WriteLine("✓ LLM server started successfully");
-                        }
-                    },
-                    modelAlias: null // or "medium" for better quality
-                );
-                
-                // Don't block - server will start in background
-                Console.WriteLine("LLM server starting (this may take 30-60 seconds)...");
             }
-            catch (Exception ex)
+            else
             {
-                Console.WriteLine($"✗ Failed to initialize LLM: {ex.Message}");
-                Console.WriteLine("  Continuing without LLM (will use fallback executor)");
-                llamaServer = null;
+                // The per-request LLM transcript under logs/. A shipped build keeps only log.txt.
+                if (Cathedral.Config.Debug.VerboseFileLogging)
+                {
+                    LLMLogger.Initialize();
+                }
+
+                try
+                {
+                    llamaServer = new LlamaServerManager();
+                    
+                    // Set up server ready callback
+                    bool serverReady = false;
+                    llamaServer.ServerReady += (sender, e) =>
+                    {
+                        serverReady = e.IsReady;
+                        if (e.IsReady)
+                        {
+                            Console.WriteLine("✓ LLM Server is ready");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"✗ LLM Server failed: {e.Message}");
+                        }
+                    };
+                    
+                    // Start server with the single configured model (see Config.LLM.ModelFileName).
+                    Console.WriteLine("Starting LLM server...");
+                    var startTask = llamaServer.StartServerAsync(
+                        onServerReady: (ready) =>
+                        {
+                            if (ready)
+                            {
+                                Console.WriteLine("✓ LLM server started successfully");
+                            }
+                        }
+                    );
+                    
+                    // Don't block - server will start in background
+                    Console.WriteLine("LLM server starting (this may take 30-60 seconds)...");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"✗ Failed to initialize LLM: {ex.Message}");
+                    Console.WriteLine("  Continuing without LLM (fallback narration)");
+                    llamaServer = null;
+                }
             }
         }
         else
         {
-            Console.WriteLine("=== LLM Disabled - Using Simple Action Executor ===");
+            Console.WriteLine("=== LLM Disabled - Using fallback narration ===");
         }
         
         // Set up event handlers for enhanced interaction
+        int lastHoveredVertexTick = -1;
         microworldInterface.VertexHoverEvent += (index, glyph, color) =>
         {
-            // Hover feedback
+            // Play tick when entering a new vertex that would show a path/location preview.
+            // Mirror the guard conditions in HandleVertexHovered: skip protagonist's own cell and
+            // skip while moving (path previews aren't shown in either case).
+            if (index >= 0
+                && index != lastHoveredVertexTick
+                && index != microworldInterface.GetAvatarVertex()
+                && !microworldInterface.IsAvatarMoving()
+                && !microworldInterface.IsOutOfTravelRange(index))
+            {
+                ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+            }
+            lastHoveredVertexTick = index;
         };
         
         microworldInterface.VertexClickEvent += (index, glyph, color, noise) =>
@@ -142,39 +182,40 @@ public static class LocationTravelModeLauncher
             Console.WriteLine("Creating game controller...");
             gameController = new LocationTravelGameController(core, microworldInterface, ambianceEngine);
 
-            // Register scene factories for specific biome types
-            gameController.RegisterSceneFactory("farm", new FarmSceneFactory());
-            
-            // Set up LLM action executor if server is ready
-            if (llamaServer != null && llamaServer.IsServerReady)
+            // Register scene factories for specific biome types. Constructors, not instances — one
+            // factory is built per scene so its working state cannot outlive the location.
+            gameController.RegisterSceneFactory("farm",     () => new FarmSceneFactory());
+            gameController.RegisterSceneFactory("plain",    () => new PlainSceneFactory());
+            gameController.RegisterSceneFactory("field",    () => new FieldSceneFactory());
+            gameController.RegisterSceneFactory("forest",   () => new ForestSceneFactory());
+            gameController.RegisterSceneFactory("village",  () => new VillageSceneFactory());
+            gameController.RegisterSceneFactory("cave",     () => new CaveSceneFactory());
+            gameController.RegisterSceneFactory("mountain", () => new MountainSceneFactory());
+            gameController.RegisterSceneFactory("peak",     () => new PeakSceneFactory());
+            gameController.RegisterSceneFactory("coast",    () => new CoastSceneFactory());
+
+            // The test location: every kind of thing in one place, under names that never change.
+            // Attached to no biome, so --location-type test is the only way in and it can never
+            // appear in a real world. See TestSceneFactory.
+            gameController.RegisterSceneFactory(
+                Cathedral.Game.Scene.Test.TestSceneFactory.TypeName,
+                () => new Cathedral.Game.Scene.Test.TestSceneFactory());
+
+            Console.WriteLine($"Scene factories registered: {gameController.SceneFactoryCount}");
+
+            // Attach the LLM server if it is ready
+            if (PlaygroundMode.IsActive && llamaServer != null)
             {
-                Console.WriteLine("Setting up LLM action executor...");
-                try
-                {
-                    var simpleExecutor = new SimpleActionExecutor();
-                    llmExecutor = new LLMActionExecutor(llamaServer, simpleExecutor);
-                    
-                    // Initialize async and set immediately when ready
-                    _ = Task.Run(async () =>
-                    {
-                        try
-                        {
-                            // Initialize (Mode 6 doesn't create Director/Narrator slots)
-                            await llmExecutor.InitializeAsync();
-                            gameController.SetLLMActionExecutor(llmExecutor);
-                            Console.WriteLine("✓ LLM action executor ready");
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"✗ Failed to initialize LLM executor: {ex.Message}");
-                        }
-                    });
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"✗ Failed to create LLM executor: {ex.Message}");
-                    llmExecutor = null;
-                }
+                // Playground mode: attach immediately — the server is never actually started
+                Console.WriteLine("Attaching playground LLM server (no server process)...");
+                gameController?.SetLlamaServer(llamaServer);
+                Console.WriteLine("✓ Playground LLM server attached");
+            }
+            else if (llamaServer != null && llamaServer.IsServerReady)
+            {
+                Console.WriteLine("Attaching LLM server...");
+                gameController.SetLlamaServer(llamaServer);
+                Console.WriteLine("✓ LLM server attached");
             }
             else if (llamaServer != null)
             {
@@ -191,23 +232,19 @@ public static class LocationTravelModeLauncher
                 };
 
                 // Wire the ServerReady callback to transition out of loading screen
-                llamaServer.ServerReady += async (sender, e) =>
+                llamaServer.ServerReady += (sender, e) =>
                 {
                     if (e.IsReady && gameController != null)
                     {
-                        Console.WriteLine("LLM server became ready - setting up executor and leaving loading screen...");
+                        Console.WriteLine("LLM server became ready - attaching and leaving loading screen...");
                         try
                         {
-                            var simpleExecutor = new SimpleActionExecutor();
-                            var executor = new LLMActionExecutor(llamaServer, simpleExecutor);
-                            // Initialize (Mode 6 doesn't create Director/Narrator slots)
-                            await executor.InitializeAsync();
-                            gameController.SetLLMActionExecutor(executor);
-                            Console.WriteLine("✓ LLM action executor ready (delayed initialization)");
+                            gameController.SetLlamaServer(llamaServer);
+                            Console.WriteLine("✓ LLM server attached (delayed)");
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine($"✗ Failed to initialize delayed LLM executor: {ex.Message}");
+                            Console.WriteLine($"✗ Failed to attach delayed LLM server: {ex.Message}");
                         }
                         // Signal the main-thread game loop to leave LLMLoading mode
                         gameController.NotifyLLMReady();
@@ -251,11 +288,21 @@ public static class LocationTravelModeLauncher
                 Console.WriteLine($"  Biome: {arrivalInfo.Biome.Name}, Neighbors: {arrivalInfo.NeighboringVertices.Count}");
                 gameController?.OnProtagonistArrived(arrivalInfo.VertexIndex);
             };
+
+            // Wire up per-step notification so vital heat can be consumed at each vertex entered
+            microworldInterface.ProtagonistSteppedToVertex += (vertexIndex) =>
+            {
+                gameController?.OnProtagonistSteppedToVertex(vertexIndex);
+            };
             
             // Wire up update loop for loading animations
             core.UpdateRequested += (deltaTime) =>
             {
-                gameController?.Update();
+                gameController?.Update((float)deltaTime);
+
+                // Drain queued CLI commands on the game thread, after Update so `dump`/`regions`
+                // observe the frame the player would see and hit-regions are freshly populated.
+                cliDriver?.Pump();
             };
             
             // Wire up mouse wheel for scrolling
@@ -264,8 +311,22 @@ public static class LocationTravelModeLauncher
                 gameController?.OnMouseWheel(delta);
             };
             
+            // Start accepting scripted/stdin commands now that the controller exists.
+            if (Cathedral.Game.Cli.CliMode.IsActive && gameController != null)
+            {
+                cliDriver = new Cathedral.Game.Cli.CliDriver(gameController);
+                cliDriver.Start();
+            }
+
+            // Restore the window mode the player left in. Done here rather than in the window
+            // settings above because borderless-fullscreen is applied to a live window (it needs the
+            // monitor the window actually opened on), not requested at construction.
+            if (Cathedral.UserSettings.Fullscreen)
+                Cathedral.Glyph.WindowMode.Apply(core, true);
+
             Console.WriteLine("\n=== Location Travel Mode Ready ===");
             Console.WriteLine("Controls:");
+            Console.WriteLine("  - F11 to toggle fullscreen");
             Console.WriteLine("  - Click on locations to travel");
             Console.WriteLine("  - Click on protagonist to interact with current location");
             Console.WriteLine("  - ESC to leave location interaction");
@@ -283,64 +344,29 @@ public static class LocationTravelModeLauncher
         {
             if (args.Key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.Escape)
             {
-                if (gameController?.CurrentMode == GameMode.Fighting)
-                {
-                    // ESC during fight: pass to fight adapter (cancels skill mode or does nothing)
-                    if (gameController is LocationTravelGameController ltgc)
-                    {
-                        ltgc.OnKeyDown(args.Key);
-                    }
-                }
-                else if (gameController?.CurrentMode == GameMode.Dialogue)
-                {
-                    // ESC during dialogue: request exit
-                    if (gameController is LocationTravelGameController ltgc)
-                    {
-                        ltgc.OnKeyDown(args.Key);
-                    }
-                }
-                else if (gameController?.CurrentMode == GameMode.MainMenu)
-                {
-                    // ESC in main menu: return to world if game has started, otherwise do nothing
-                    if (gameController is LocationTravelGameController ltgc && ltgc.HasGameStarted)
-                    {
-                        Console.WriteLine("ESC pressed - closing main menu");
-                        gameController.SetMode(GameMode.WorldView);
-                    }
-                }
-                else if (gameController?.CurrentMode == GameMode.ProtagonistManagement)
-                {
-                    // ESC in management menu: return to main menu
-                    Console.WriteLine("ESC pressed - closing management menu");
-                    gameController.SetMode(GameMode.MainMenu);
-                }
-                else if (gameController?.CurrentMode == GameMode.LocationInteraction)
-                {
-                    // Check if in Phase 6 mode with popup open
-                    if (gameController is LocationTravelGameController ltgc)
-                    {
-                        // First try to close popup
-                        if (ltgc.CloseNarrativePopup())
-                        {
-                            Console.WriteLine("ESC pressed - closed thinking modusMentis popup");
-                            return; // Don't exit location, just close popup
-                        }
-                        
-                        // No popup open, exit Phase 6 mode
-                        Console.WriteLine("ESC pressed - exiting location");
-                        ltgc.ExitNarrativeMode();
-                    }
-                    
-                    gameController.EndLocationInteraction();
-                }
-                else if (gameController?.CurrentMode == GameMode.WorldView)
-                {
-                    // ESC in world view: open main menu
-                    Console.WriteLine("ESC pressed - opening main menu");
-                    gameController.SetMode(GameMode.MainMenu);
-                }
+                // The whole rule lives in HandleEscape, which is also what the CLI's `pause`
+                // calls. It used to be a chain of else-ifs right here, testing one mode per
+                // branch — so a phase nobody had listed simply swallowed the key, and the CLI's
+                // separate copy of the rule could not notice. See HandleEscape for the per-mode
+                // table, including the modes that deliberately do nothing.
+                gameController?.HandleEscape();
             }
-            else if (args.Key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.D)
+            // F11 is a player control, like Escape, and is never gated by DeveloperKeys: a shipped
+            // build that could enter fullscreen and not leave it would be worse than one with no
+            // fullscreen at all. It writes back to UserSettings so the mode survives the session,
+            // which is the same store the Settings screen's row uses.
+            else if (args.Key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.F11)
+            {
+                (gameController as LocationTravelGameController)?.ToggleFullscreen();
+            }
+            // Escape above is a player control — the pause menu and the popup dismiss — and is
+            // never gated. The two diagnostic dumps below are, by testing DeveloperKeys as part of
+            // each branch rather than short-circuiting the whole chain: a shipped build must let D
+            // and G fall through to the forwarding branch at the bottom, which is what delivers
+            // keys to fight and dialogue modes. Swallowing them here would take the keyboard away
+            // from gameplay.
+            else if (args.Key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.D
+                     && Cathedral.Config.Debug.DeveloperKeys)
             {
                 // Dump debug info
                 if (gameController != null)
@@ -348,7 +374,8 @@ public static class LocationTravelModeLauncher
                     Console.WriteLine("\n" + gameController.GetDebugInfo());
                 }
             }
-            else if (args.Key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.G)
+            else if (args.Key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.G
+                     && Cathedral.Config.Debug.DeveloperKeys)
             {
                 // Dump narration graph structure (only works in narrative mode)
                 if (gameController?.CurrentMode == GameMode.LocationInteraction)
@@ -378,7 +405,19 @@ public static class LocationTravelModeLauncher
         
         // Cleanup
         Console.WriteLine("Shutting down...");
-        // llmExecutor no longer needs Dispose() - simplified to just provide LlamaServerManager access
+
+        // Debug viewers FIRST. Each runs its own WinForms message pump on a background thread, over
+        // the very scene and LLM session the lines below are about to dispose. Left running, the pump
+        // handles one more message against freed state, throws, and WinForms answers by constructing a
+        // ThreadExceptionDialog on a process that is already tearing down — which cannot create a
+        // window handle (Win32Exception 1406) and dies as an unhandled exception on that thread.
+        //
+        // The visible cost was the exit code: a --cli run whose every assertion had passed still
+        // exited 127, so the whole test suite read as failing. Being background threads, they were
+        // going to be killed anyway; the point is to stop the pump while the state is still valid.
+        Cathedral.Debug.SceneDebugManager.Close();
+        Cathedral.Debug.LlmMonitorDebugManager.Close();
+
         gameController?.Dispose();
         llamaServer?.Dispose();
         ambianceEngine?.Dispose();

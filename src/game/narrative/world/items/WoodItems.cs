@@ -1,0 +1,48 @@
+﻿using System;
+using System.Collections.Generic;
+using Cathedral.Game.Narrative;
+
+namespace Cathedral.Game.Narrative.World.Items;
+
+public sealed class Log : WoodRawItem
+{
+    public override string ItemId      => "log";
+    public override string DisplayName => "Log";
+    public override string Description => "A heavy length of split log, bark still on one side";
+    public override ItemSize Size => ItemSize.Large;
+    public override WeightClass    Weight => WeightClass.Heavy;
+}
+
+public sealed class Plank : WoodRawItem
+{
+    public override string ItemId      => "plank";
+    public override string DisplayName => "Plank";
+    public override string Description => "A rough-sawn plank of pale wood, splintered at the ends";
+    public override ItemSize Size => ItemSize.Large;
+    public override WeightClass    Weight => WeightClass.Heavy;
+}
+
+public sealed class Twig : WoodRawItem
+{
+    public override string ItemId      => "twig";
+    public override string DisplayName => "Twig";
+    public override string Description => "A thin dry twig snapped from a deadfall";
+    public override ItemSize Size => ItemSize.Small;
+    public override WeightClass    Weight => WeightClass.Insignificant;
+}
+
+public sealed class BirchSap : ConsumableItem
+{
+    public override string ItemId      => "birch_sap";
+    public override string DisplayName => "Birch Sap";
+    public override string Article     => "some";
+    public override string Description => "A small flask of clear birch sap, faintly sweet";
+    public override List<ItemTag> Tags => new() { ItemTag.Wood };
+    public override CoinType PriceCoin => CoinType.Copper;
+    public override int PriceReference => 3;
+    public override ItemSize Size => ItemSize.Small;
+    public override WeightClass    Weight => WeightClass.Light;
+    public override ConsumableType ConsumableType => ConsumableType.Drink;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<AquaHumor>(55).Add<SugarHumor>(45);
+}

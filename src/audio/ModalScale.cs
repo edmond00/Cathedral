@@ -3,6 +3,17 @@ namespace Cathedral.Audio;
 /// <summary>
 /// Medieval modal scales expressed as MIDI note arrays spanning 3 octaves,
 /// rooted at A3 (MIDI 57). Each entry is an absolute MIDI note number.
+/// <para>
+/// <b>Every scale in this palette has a minor or ambiguous third.</b> The major third is the
+/// single interval that makes a line read as cheerful, so the major-third modes (Ionian, the
+/// major scale; Mixolydian; Lydian) are deliberately absent — there is no value of any mood
+/// axis that can produce a happy key. WholeTone is the one entry that does contain a major
+/// third, and it is the "ambiguous" case rather than an oversight: with no perfect fifth it
+/// cannot form a major triad, which is why it sounds weightless instead of bright.
+/// The <see cref="GetScaleForMood"/> ladder therefore runs
+/// from *cool* to *grieving* rather than from *bright* to *dark*: at Coldness 0 the music is
+/// hollow and detached, never sunny.
+/// </para>
 /// </summary>
 public static class ModalScale
 {
@@ -10,40 +21,33 @@ public static class ModalScale
     private const int Root = 57;
 
     // Interval sets (semitones from root, one octave)
-    private static readonly int[] IonianIntervals       = { 0, 2, 4, 5, 7, 9, 11, 12 }; // A B C# D E F# G# — major scale, bright/tavern
-    private static readonly int[] MixolydianIntervals   = { 0, 2, 4, 5, 7, 9, 10, 12 }; // A B C# D E F# G  — bright with flat 7th
-    private static readonly int[] DorianIntervals       = { 0, 2, 3, 5, 7, 9, 10, 12 }; // A B C D E F# G  — neutral medieval
+    private static readonly int[] DorianIntervals       = { 0, 2, 3, 5, 7, 9, 10, 12 }; // A B C D E F# G  — minor 3rd, major 6th: cool and hollow, the least bleak mode available
     private static readonly int[] AeolianIntervals      = { 0, 2, 3, 5, 7, 8, 10, 12 }; // A B C D E F G   — natural minor, melancholic
-    private static readonly int[] PhrygianIntervals     = { 0, 1, 3, 5, 7, 8, 10, 12 }; // A Bb C D E F G  — dark, haunting
+    private static readonly int[] PhrygianIntervals     = { 0, 1, 3, 5, 7, 8, 10, 12 }; // A Bb C D E F G  — b2: dark, haunting
     private static readonly int[] LocrianIntervals      = { 0, 1, 3, 5, 6, 8, 10, 12 }; // A Bb C D Eb F G — dissonant, scary: b5 makes it unstable
-    private static readonly int[] PentatonicMinorIntervals = { 0, 3, 5, 7, 10, 12 };    // A C D E G       — sparse, otherworldly
+    private static readonly int[] PentatonicMinorIntervals = { 0, 3, 5, 7, 10, 12 };    // A C D E G       — sparse, otherworldly, no leading tone
     private static readonly int[] WholeToneIntervals    = { 0, 2, 4, 6, 8, 10, 12 };    // A B C# Eb F G   — symmetrical, no tonal centre, uncanny
-    private static readonly int[] LydianIntervals       = { 0, 2, 4, 6, 7, 9, 11, 12 }; // A B C# D# E F# G# — raised 4th, wonder/discovery
-    private static readonly int[] HarmonicMinorIntervals = { 0, 2, 3, 5, 7, 8, 11, 12 }; // A B C D E F G#  — raised 7th, dramatic/Eastern
+    private static readonly int[] HarmonicMinorIntervals = { 0, 2, 3, 5, 7, 8, 11, 12 }; // A B C D E F G#  — raised 7th over a minor triad: severe, grieving
 
-    public static readonly int[] Ionian          = BuildScale(IonianIntervals,          octaves: 3);
-    public static readonly int[] Mixolydian      = BuildScale(MixolydianIntervals,      octaves: 3);
     public static readonly int[] Dorian          = BuildScale(DorianIntervals,          octaves: 3);
     public static readonly int[] Aeolian         = BuildScale(AeolianIntervals,         octaves: 3);
     public static readonly int[] Phrygian        = BuildScale(PhrygianIntervals,        octaves: 3);
     public static readonly int[] Locrian         = BuildScale(LocrianIntervals,         octaves: 3);
     public static readonly int[] PentatonicMinor = BuildScale(PentatonicMinorIntervals, octaves: 3);
     public static readonly int[] WholeTone       = BuildScale(WholeToneIntervals,       octaves: 3);
-    public static readonly int[] Lydian          = BuildScale(LydianIntervals,          octaves: 3);
     public static readonly int[] HarmonicMinor   = BuildScale(HarmonicMinorIntervals,   octaves: 3);
 
-    public static readonly string[] ScaleNames = { "Ionian", "Mixolydian", "Dorian", "Aeolian", "Phrygian", "PentatonicMinor" };
-
     /// <summary>
-    /// Selects the appropriate scale based on sadness, mystery, and fear.
-    /// Sadness spans the full gamut from Ionian (major/dance) to Phrygian (dark haunting).
+    /// Selects the appropriate scale based on coldness, mystery, and fear.
+    /// Coldness runs from Dorian (cool, hollow — the *least* bleak mode, not a bright one) down
+    /// through Aeolian and Phrygian to HarmonicMinor (severe, grieving).
     /// Fear pushes toward Locrian (dissonant b5 — scary, unstable).
     /// Mystery pushes toward WholeTone (no tonal centre — uncanny) or PentatonicMinor (sparse).
     /// </summary>
-    public static int[] GetScaleForMood(float sadness, float mystery, float fear, Random rng, float sessionTension = 0f)
+    public static int[] GetScaleForMood(float coldness, float mystery, float fear, Random rng, float sessionTension = 0f)
     {
         // Session tension darkens mood gradually — long sessions drift darker
-        float effectiveSadness = Math.Clamp(sadness + sessionTension * 0.20f, 0f, 1f);
+        float effectiveColdness = Math.Clamp(coldness + sessionTension * 0.20f, 0f, 1f);
         float effectiveFear    = Math.Clamp(fear    + sessionTension * 0.12f, 0f, 1f);
 
         // High fear: Locrian — half-step from tonic creates maximum dissonance
@@ -58,37 +62,35 @@ public static class ModalScale
         if (mystery > 0.45f && rng.NextDouble() < (mystery - 0.45f) * 0.85)
             return PentatonicMinor;
 
-        // Lydian: bright + curious — wonder/discovery; low sadness + moderate mystery
-        if (effectiveSadness < 0.25f && mystery > 0.35f && rng.NextDouble() < (mystery - 0.35f) * 0.80)
-            return Lydian;
+        // Low coldness + curiosity used to be Lydian — bright wonder, the raised 4th of discovery.
+        // PentatonicMinor takes that slot instead: the same open, unresolved, gap-toothed quality,
+        // but hollow rather than radiant. Wonder in this world is a cold feeling.
+        if (effectiveColdness < 0.30f && mystery > 0.35f && rng.NextDouble() < (mystery - 0.35f) * 0.80)
+            return PentatonicMinor;
 
-        // Harmonic Minor: dramatic Eastern; moderate-high sadness + some fear
-        if (effectiveSadness > 0.55f && effectiveFear > 0.25f && rng.NextDouble() < (effectiveSadness - 0.55f) * 1.2)
+        // Harmonic Minor: severe and grieving; moderate-high coldness + some fear
+        if (effectiveColdness > 0.55f && effectiveFear > 0.25f && rng.NextDouble() < (effectiveColdness - 0.55f) * 1.2)
             return HarmonicMinor;
 
-        return effectiveSadness switch
+        return effectiveColdness switch
         {
-            < 0.15f => Ionian,
-            < 0.38f => Mixolydian,
-            < 0.60f => Dorian,
-            < 0.82f => Aeolian,
-            _       => Phrygian,
+            < 0.25f => Dorian,        // cool, hollow, self-possessed — the floor of the palette
+            < 0.50f => Aeolian,       // natural minor
+            < 0.75f => Phrygian,      // b2 — dark, haunting
+            _       => HarmonicMinor, // severe, grieving
         };
     }
 
     /// <summary>Returns a human-readable name for the given scale array.</summary>
     public static string GetScaleName(int[] scale)
     {
-        if (scale == Ionian)          return "Ionian (Major)";
-        if (scale == Mixolydian)      return "Mixolydian";
-        if (scale == Dorian)          return "Dorian";
+        if (scale == Dorian)          return "Dorian (cool)";
         if (scale == Aeolian)         return "Aeolian";
         if (scale == Phrygian)        return "Phrygian";
         if (scale == Locrian)         return "Locrian (scary)";
         if (scale == PentatonicMinor) return "PentatonicMinor";
         if (scale == WholeTone)       return "WholeTone (uncanny)";
-        if (scale == Lydian)           return "Lydian (wonder)";
-        if (scale == HarmonicMinor)    return "HarmonicMinor (dramatic)";
+        if (scale == HarmonicMinor)   return "HarmonicMinor (grieving)";
         return "Custom";
     }
 

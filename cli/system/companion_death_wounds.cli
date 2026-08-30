@@ -1,0 +1,81 @@
+# A companion cut down in a fight leaves the party, and leaves a body.
+#
+# Companions could not really die. `CompanionParty.Remove` was reached by the old-age check and by
+# the heart-ceiling overflow and by nothing else, so a companion whose hit points hit zero in a fight
+# walked out of it at zero hit points and stayed in the party for ever — still counted against the
+# heart ceiling, still handed the narration by Speak About, still turning up in the next fight with
+# no hit points left to lose.
+#
+# One funnel answers all three causes now (SettleCompanionDeaths, asking PartyMember.CauseOfDeath
+# every tick outside a fight). This script covers the Wounds arm; companion_death_humors.cli and
+# companion_death_age.cli cover the other two. Each is asserted separately because only the funnel is
+# shared — how each death is arrived at is not.
+#
+# `fight-wound` exists for this: `fight-end` settles the whole fight and cannot single anybody out,
+# and steering the enemy AI onto one party member for long enough to kill them is not something a
+# script can ask for. The companion is named because at seed 42 --fill-party gives the cat
+# Nighthunter, which companion_handoff.cli already keys on.
+#
+# FLAGS: --playground --skip-childhood --fill-party --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Hall" --period dawn --observe-only brewer --auto-dialogue
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# The companion is in the party before any of this.
+inspect party
+expect-state party Nighthunter
+
+strategy succeed
+goal attack
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+# The landed attack HOLDS the fight so its first blow can be read (see "Opening a fight: the first
+# blow"). The fight opens on the press that closes the segment, not on the swing.
+click button
+wait mode Fighting 90
+
+# Kill the companion by wounds — hit points, not humors.
+fight-wound Nighthunter
+wait 20
+
+# A dead companion must NOT end the fight: the protagonist is still standing, and CheckFightEnd is
+# faction arithmetic. Still being in Fighting here is that assertion.
+wait mode Fighting 20
+
+fight-end victory
+wait 90
+
+# The notice is modal over every mode — including narration, which redraws itself every frame and
+# would paint straight over a box gated below the mode dispatch. These two `expect`s scan the
+# rendered screen, so they only pass if it really is on top.
+expect Nighthunter
+expect died of their wounds
+
+click companion-death
+wait 60
+advance 12 180
+
+# Out of the party for good...
+inspect party
+expect-no-state party Nighthunter
+# ...and a body left where they fell.
+inspect pois
+expect-state pois Nighthunter's Remains
+
+quit

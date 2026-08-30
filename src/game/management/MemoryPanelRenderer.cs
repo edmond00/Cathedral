@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using OpenTK.Mathematics;
@@ -28,9 +28,17 @@ public class MemoryPanelRenderer
     private const int TitleRow        = 2;
     private const int ModulesStartRow = 4;
     private const int DetailPanelRow  = 77;
+    // Detail panel fills from DetailPanelRow down to the last terminal row (99) so it uses
+    // the full available height: 99 - 77 + 1 = 23. Avoids black gap / description truncation.
+    private const int DetailPanelH    = 23;
     private const int SlotWidth       = 20;
     private const int SlotHeight      = 3;
     private const int SlotsPerRow     = 4;
+
+    // Working memory holds up to 25 slots; pack them 5-per-row (narrower) so the grid keeps
+    // the same 5-row height as a 20-slot / 4-per-row module and doesn't push later sections down.
+    private const int WorkingSlotsPerRow = 5;
+    private const int WorkingSlotWidth   = 16; // 5 × 16 = 80 ≤ AreaWidth (83)
 
     // ── Narrow 3-column layout (Sensory | Procedural | Semantic) ─
     // 83 = 27 + │ + 27 + │ + 27
@@ -42,17 +50,24 @@ public class MemoryPanelRenderer
     private static readonly int[] ColStartX = { StartX, Div1X + 1, Div2X + 1 }; // 17, 45, 73
 
     // ── Area and slot backgrounds ────────────────────────────────
-    private static readonly Vector4 AreaBg      = new(0.04f, 0.04f, 0.04f, 1.0f);
+    // Panel backgrounds are black: the final dither layer quantises the frame, and a
+    // flat near-black grey lands mid-step and breaks up into visible pattern noise
+    // over a large area. Section headers keep their grey — they are thin bands, and
+    // the shade is what separates a section from its slots.
+    private static readonly Vector4 AreaBg      = new(0.0f, 0.0f, 0.0f, 1.0f);
     private static readonly Vector4 HeaderBg    = new(0.11f, 0.11f, 0.11f, 1.0f);
-    private static readonly Vector4 FilledBg    = new(0.09f, 0.09f, 0.09f, 1.0f);
+    // Kept a clear step below HeaderBg: at 0.09 a filled slot read as the same grey as the module
+    // header band above it, and the two stopped separating.
+    private static readonly Vector4 FilledBg    = new(0.05f, 0.05f, 0.05f, 1.0f);
     private static readonly Vector4 FilledBgHov = new(0.15f, 0.15f, 0.10f, 1.0f);
     private static readonly Vector4 SelectedBg  = new(0.20f, 0.18f, 0.06f, 1.0f);
-    private static readonly Vector4 EmptyBg     = new(0.06f, 0.06f, 0.06f, 1f);
-    private static readonly Vector4 UnusableBg  = new(0.04f, 0.04f, 0.04f, 1f); // same as AreaBg — slots blend in
+    private static readonly Vector4 EmptyBg     = new(0.0f, 0.0f, 0.0f, 1f);
+    private static readonly Vector4 UnusableBg  = new(0.0f, 0.0f, 0.0f, 1f);    // black — a flat grey breaks up under the dither layer
     private static readonly Vector4 UnusableFg  = new(0.10f, 0.10f, 0.10f, 1f); // barely visible border
-    private static readonly Vector4 DetailBg    = new(0.08f, 0.08f, 0.08f, 1f);
+    private static readonly Vector4 DetailBg    = new(0.0f, 0.0f, 0.0f, 1f);    // black — a flat grey breaks up under the dither layer
     private static readonly Vector4 DetailTitle = new(0.12f, 0.12f, 0.08f, 1f);
     private static readonly Vector4 BtnHovBg    = new(0.16f, 0.16f, 0.10f, 1f);
+    private static readonly Vector4 BtnHovBgDanger = new(0.14f, 0.04f, 0.20f, 1f);
 
     // ── Unified slot colors (same for every module) ─────────────
     private static readonly Vector4 TitleColor  = Config.Colors.White;
@@ -75,6 +90,8 @@ public class MemoryPanelRenderer
     private (MemoryModuleType mod, int slot)? _hoveredSlot   = null;
     private (MemoryModuleType mod, int slot)? _selectedSlot  = null;
     private string?                           _hoveredButton = null;
+
+    public bool IsHovering => _hoveredSlot.HasValue || _hoveredButton != null;
 
     // ── Constructor ──────────────────────────────────────────────
     /// <param name="popup">Ignored — detail is shown inline. Kept for API compat.</param>
@@ -120,7 +137,7 @@ public class MemoryPanelRenderer
             m => m.Type == MemoryModuleType.Working);
         if (working != null)
         {
-            row = RenderModuleFull(working, row);
+            row = RenderModuleFull(working, row, WorkingSlotsPerRow, WorkingSlotWidth);
             row += 2;
         }
 
@@ -200,7 +217,8 @@ public class MemoryPanelRenderer
     // ═══════════════════════════════════════════════════════════════
 
     /// <summary>Render one memory module full-width. Returns next free row.</summary>
-    private int RenderModuleFull(MemoryModule module, int startRow)
+    private int RenderModuleFull(MemoryModule module, int startRow,
+                                 int slotsPerRow = SlotsPerRow, int slotWidth = SlotWidth)
     {
         string label    = GetModuleLabel(module.Type);
         string subtitle = GetModuleSubtitle(module.Type);
@@ -234,10 +252,10 @@ public class MemoryPanelRenderer
         int slotIndex = 0;
         while (slotIndex < module.Slots.Count)
         {
-            int inRow = Math.Min(SlotsPerRow, module.Slots.Count - slotIndex);
+            int inRow = Math.Min(slotsPerRow, module.Slots.Count - slotIndex);
             for (int col = 0; col < inRow; col++)
             {
-                int sx = StartX + col * SlotWidth;
+                int sx = StartX + col * slotWidth;
                 bool isHovered = _hoveredSlot.HasValue
                     && _hoveredSlot.Value.mod  == module.Type
                     && _hoveredSlot.Value.slot == slotIndex + col;
@@ -245,9 +263,9 @@ public class MemoryPanelRenderer
                     && _selectedSlot.Value.mod  == module.Type
                     && _selectedSlot.Value.slot == slotIndex + col;
                 RenderSlot(module.Slots[slotIndex + col], module.Type,
-                           slotIndex + col, sx, row, isHovered, isSelected);
+                           slotIndex + col, sx, row, isHovered, isSelected, slotWidth);
             }
-            slotIndex += SlotsPerRow;
+            slotIndex += slotsPerRow;
             row       += SlotHeight;
         }
         return row;
@@ -277,6 +295,7 @@ public class MemoryPanelRenderer
 
         if (!slot.IsFilled)
         {
+            // Fully black slot — border and grey label are what make it read as open.
             _terminal.DrawBox(x, y, slotW, SlotHeight, BoxStyle.Single, EmptyBorder, EmptyBg);
             for (int ix = x + 1; ix < x + slotW - 1; ix++)
                 _terminal.SetCell(ix, y + 1, ' ', EmptyText, EmptyBg);
@@ -295,14 +314,21 @@ public class MemoryPanelRenderer
         for (int ix = x + 1; ix < x + slotW - 1; ix++)
             _terminal.SetCell(ix, y + 1, ' ', textCol, slotBg);
 
-        string lvl      = $"L{slot.ModusMentis!.Level}";
+        int    slotMax  = _member?.GetMaxLevelForModusMentis(slot.ModusMentis!) ?? slot.ModusMentis!.Level;
+        // A ceiling at or below 0 means wounds have taken this modus mentis out of use altogether,
+        // so the pair of numbers would read as an odd "L4/0" rather than as the news it is. The
+        // detail panel below names the organs; this is only the flag that sends the player there.
+        bool   broken   = _member?.IsModusMentisBroken(slot.ModusMentis!) == true;
+        string lvl      = broken ? "BROKEN" : $"L{slot.ModusMentis!.Level}/{slotMax}";
         int    maxNameW = slotW - 2 - lvl.Length - 1;
         string name     = slot.ModusMentis.DisplayName;
         if (name.Length > maxNameW) name = name.Length > 0 ? name[..Math.Max(0, maxNameW)] : "";
 
         _terminal.Text(x + 1, y + 1, name, textCol, slotBg);
         _terminal.Text(x + slotW - 1 - lvl.Length, y + 1, lvl,
-            isHovered ? Config.Colors.BrightYellow : Config.Colors.GoldYellow, slotBg);
+            broken    ? Config.Colors.BrightRed
+          : isHovered ? Config.Colors.BrightYellow
+                      : Config.Colors.GoldYellow, slotBg);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -400,7 +426,7 @@ public class MemoryPanelRenderer
     /// </summary>
     private void RenderDetailPanel()
     {
-        const int panelH = 14;
+        const int panelH = DetailPanelH;
 
         // Separator above detail panel
         for (int x = StartX; x <= EndX; x++)
@@ -420,12 +446,14 @@ public class MemoryPanelRenderer
 
         if (modusMentis == null)
         {
+            // Same black as the populated state below, so the panel does not change
+            // shade depending on whether a slot is selected.
             for (int y = DetailPanelRow; y < DetailPanelRow + panelH; y++)
                 for (int x = StartX; x <= EndX; x++)
-                    _terminal.SetCell(x, y, ' ', Config.Colors.Black, AreaBg);
+                    _terminal.SetCell(x, y, ' ', Config.Colors.Black, DetailBg);
             _terminal.Text(StartX + 2, DetailPanelRow + 1,
                 "Click a filled memory slot to inspect and manage it.",
-                SubtitleCol, AreaBg);
+                SubtitleCol, DetailBg);
             return;
         }
 
@@ -440,8 +468,17 @@ public class MemoryPanelRenderer
         for (int x = StartX; x <= EndX; x++)
             _terminal.SetCell(x, row, ' ', TitleColor, DetailTitle);
         _terminal.Text(StartX + 2, row, modusMentis.DisplayName, Config.Colors.BrightYellow, DetailTitle);
-        string lvlStr = $"Level {modusMentis.Level}";
-        _terminal.Text(EndX - lvlStr.Length, row, lvlStr, Config.Colors.GoldYellow, DetailTitle);
+        int    maxLevel  = _member?.GetMaxLevelForModusMentis(modusMentis) ?? modusMentis.Level;
+        int    xpNeeded  = _member?.GetModusMentisXpThreshold() ?? 0;
+        bool   atMaxLvl  = modusMentis.Level >= maxLevel;
+        bool   isBroken  = _member?.IsModusMentisBroken(modusMentis) == true;
+        // Wounds can pull the ceiling to 0 or below, at which point the modus mentis rolls nothing at
+        // all. "Level 4 / 0" states that arithmetically and says nothing about what it means, so the
+        // title says it in words and the anatomy row below shows which organ took it away.
+        string lvlStr = isBroken ? $"Level {modusMentis.Level} — BROKEN"
+                                 : $"Level {modusMentis.Level} / {maxLevel}";
+        _terminal.Text(EndX - lvlStr.Length, row, lvlStr,
+            isBroken ? Config.Colors.BrightRed : Config.Colors.GoldYellow, DetailTitle);
         row++;
 
         // Separator
@@ -454,21 +491,73 @@ public class MemoryPanelRenderer
         const int rightX = StartX + leftW + 2;
         const int rightW = AreaWidth - leftW - 3;
 
-        // Meta lines (left column, rows 2-5)
-        var metaLines = new (string label, string value, Vector4 valCol)[]
+        // Anatomy row: every organ / region the modusMentis draws on, with the max-level bonus each
+        // one currently grants. There is no "primary" source — the sum of these is the max level in
+        // the title row (minus its base of 1) — so all of them are listed, never just the first.
+        // A wounded source contributes a NEGATIVE amount, and this row is the only place a player can
+        // see which one — hence the explicit sign rather than a hardcoded "+", which printed "+-2".
+        var    anatomy      = _member?.GetAnatomySourcesForModusMentis(modusMentis) ?? new();
+        string anatomyLabel = anatomy.Any(a => a.IsRegion) ? "Body region" : "Organs";
+        string anatomyValue = anatomy.Count == 0
+            ? "—"
+            : string.Join(", ", anatomy.Select(a =>
+                  $"{a.Label} {(a.Contribution >= 0 ? "+" : "")}{a.Contribution}"));
+        int anatomyRoom = leftW - 4 - anatomyLabel.Length;
+        if (anatomyValue.Length > anatomyRoom && anatomyRoom > 1)
+            anatomyValue = anatomyValue[..(anatomyRoom - 1)] + "…";
+
+        // Meta lines (left column). A list rather than an array because the Functions entry expands
+        // to one row PER function — see below — so the block's height is no longer a constant, and
+        // the XP bar and the button below it are placed from metaLines.Count rather than from a
+        // hardcoded offset.
+        var metaLines = new List<(string label, string value, Vector4 valCol)>
         {
             ("Memory type",   modusMentis.MemoryType.ToString(),                              SlotText),
-            ("Functions",     string.Join(", ", modusMentis.Functions),                       Config.Colors.LightGray75),
-            ("Primary organ", modusMentis.Organs.Length > 0 ? modusMentis.Organs[0] : "—",         Config.Colors.LightGray75),
-            ("Organ score",   _member != null ? _member.GetOrganScoreForModusMentis(modusMentis).ToString() : "—",
-             Config.Colors.LightGray75),
         };
+
+        // One function per line, bulleted. It was a comma-joined single row until the Emotion
+        // function made four plausible on one modus mentis (R3 caps it at three today, but the set
+        // has grown twice and the row was already the longest thing in this column). A vertical list
+        // costs two rows at most and stops being a wrapping problem the next time one is added.
+        // The label sits on the first row only; the rest are a hanging indent under it.
+        const string FunctionsLabel = "Functions";
+        bool firstFunction = true;
+        foreach (var fn in modusMentis.Functions)
+        {
+            metaLines.Add((firstFunction ? FunctionsLabel : new string(' ', FunctionsLabel.Length),
+                           $"• {fn}", Config.Colors.LightGray75));
+            firstFunction = false;
+        }
+
+        metaLines.Add(("Discreet",      modusMentis.ActsDiscretely ? "Yes — acts unnoticed" : "No",
+             modusMentis.ActsDiscretely ? Config.Colors.BrightYellow : Config.Colors.LightGray75));
+        metaLines.Add(("Morality",      modusMentis.MoralLevel.ToString(),                    Config.Colors.LightGray75));
+        metaLines.Add((anatomyLabel,    anatomyValue,
+             anatomy.Any(a => a.Contribution < 0) ? Config.Colors.BrightRed : Config.Colors.LightGray75));
+        metaLines.Add(("XP",            atMaxLvl ? "MAX" : $"{modusMentis.CurrentXp} / {xpNeeded}",
+             atMaxLvl ? Config.Colors.GoldYellow : Config.Colors.LightGray75));
+
         int metaRow = row;
         foreach (var (lbl, val, vc) in metaLines)
         {
+            if (metaRow >= DetailPanelRow + panelH - 1) break;
             _terminal.Text(StartX + 2, metaRow, lbl, Config.Colors.DarkGray40, DetailBg);
             _terminal.Text(StartX + 2 + lbl.Length + 1, metaRow, val, vc, DetailBg);
             metaRow++;
+        }
+
+        // XP progress bar (left column, in the gap row below the meta block)
+        {
+            const int barW = 30;
+            int barRow = metaRow;
+            int filled = atMaxLvl
+                ? barW
+                : (xpNeeded > 0 ? Math.Clamp((int)Math.Round(barW * modusMentis.CurrentXp / (double)xpNeeded), 0, barW) : 0);
+            Vector4 fillCol = atMaxLvl ? Config.Colors.GoldYellow : Config.Colors.BrightYellow;
+            for (int i = 0; i < barW; i++)
+                _terminal.SetCell(StartX + 2 + i, barRow,
+                    i < filled ? '█' : '░',
+                    i < filled ? fillCol : Config.Colors.DarkGray35, DetailBg);
         }
 
         // Vertical divider
@@ -476,7 +565,7 @@ public class MemoryPanelRenderer
             _terminal.SetCell(StartX + leftW, y, '│', Config.Colors.DarkGray35, DetailBg);
 
         // Right column: description word-wrap
-        string desc  = modusMentis.ShortDescription ?? "(no description)";
+        string desc  = modusMentis.MenuDescription ?? "(no description)";
         var    words = desc.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         string dline = "";
         int descRow  = row;
@@ -494,8 +583,8 @@ public class MemoryPanelRenderer
         if (dline.Length > 0 && descRow < DetailPanelRow + panelH - 1)
             _terminal.Text(rightX, descRow, dline, Config.Colors.LightGray75, DetailBg);
 
-        // Action button (left column, row after meta + 1 gap)
-        int btnRow = row + metaLines.Length + 1;
+        // VerbAction button (left column, after meta + XP bar + 1 empty line)
+        int btnRow = row + metaLines.Count + 2;
         if (btnRow < DetailPanelRow + panelH - 2)
         {
             if (selectedModType == MemoryModuleType.Working)
@@ -513,6 +602,11 @@ public class MemoryPanelRenderer
                 string? reason = hasFreeSlot ? null
                     : $"no free slot in {GetModuleLabel(targetModType).ToLower()}";
                 RenderButton("consolidate", "CONSOLIDATE", StartX + 2, btnRow, hasFreeSlot, reason);
+
+                // REJECT: drop the modusMentis outright. Working-memory only — it is the player's
+                // way to open a slot before the FIFO evicts something they wanted to keep.
+                RenderButton("reject", "REJECT", StartX + 2 + "[ CONSOLIDATE ]".Length + 2, btnRow,
+                             enabled: true, disabledReason: null, destructive: true);
             }
             else if (selectedModType == MemoryModuleType.Procedural
                   || selectedModType == MemoryModuleType.Semantic
@@ -551,6 +645,7 @@ public class MemoryPanelRenderer
                 {
                     case "consolidate": ExecuteConsolidate(); break;
                     case "archive":     ExecuteArchive();     break;
+                    case "reject":      ExecuteReject();      break;
                 }
                 return true;
             }
@@ -612,9 +707,38 @@ public class MemoryPanelRenderer
         if (target == null || !target.TryAdd(modusMentis)) return;
 
         srcSlot.ModusMentis = null;
+        working.Compact();   // same reason as REJECT: the freed slot belongs at the back of the queue
         _selectedSlot = null;
     }
 
+    /// <summary>
+    /// Discards the selected working-memory modusMentis. Delegates to
+    /// <see cref="PartyMember.RejectModusMentis"/>, which unlinks it and compacts working memory so
+    /// the freed slot lands at the back of the FIFO queue — the point of the button is to bank room
+    /// for the next thing learned, and a hole in the middle would not do that.
+    /// </summary>
+    private void ExecuteReject()
+    {
+        if (!_selectedSlot.HasValue || _member == null) return;
+        var (modType, slotIdx) = _selectedSlot.Value;
+        if (modType != MemoryModuleType.Working) return;
+
+        var working = _member.MemoryModules.FirstOrDefault(m => m.Type == MemoryModuleType.Working);
+        if (working == null || slotIdx >= working.Slots.Count) return;
+        var slot = working.Slots[slotIdx];
+        if (!slot.IsFilled) return;
+
+        _member.RejectModusMentis(slot.ModusMentis!);
+        _selectedSlot = null;
+    }
+
+    /// <summary>
+    /// Moves the selected long-term modusMentis onto the front of the Residual queue. Delegates to
+    /// <see cref="PartyMember.ArchiveModusMentis"/> for the same reason REJECT delegates to
+    /// <see cref="PartyMember.RejectModusMentis"/>: a full Residual queue pushes its last entry out
+    /// of memory altogether, and unlinking that entry is the member's business, not the renderer's.
+    /// Doing it here was how a discipline could end up held but slotless.
+    /// </summary>
     private void ExecuteArchive()
     {
         if (!_selectedSlot.HasValue || _member == null) return;
@@ -626,22 +750,29 @@ public class MemoryPanelRenderer
         if (!srcSlot.IsFilled) return;
         var modusMentis = srcSlot.ModusMentis!;
 
-        var residual = _member.MemoryModules.FirstOrDefault(m => m.Type == MemoryModuleType.Residual);
-        if (residual == null) return;
+        var dropped = _member.ArchiveModusMentis(modusMentis, out bool archived);
+        if (!archived) return;
 
-        srcSlot.ModusMentis = null;
-        residual.Prepend(modusMentis);
+        if (dropped != null)
+            Console.WriteLine($"MemoryPanel: archived {modusMentis.DisplayName} — "
+                            + $"{dropped.DisplayName} fell out of residual memory and is forgotten");
+
         _selectedSlot = null;
     }
 
-    /// <summary>Draws a labeled action button and registers its hit area.</summary>
-    private void RenderButton(string id, string label, int x, int y, bool enabled, string? disabledReason)
+    /// <summary>
+    /// Draws a labeled action button and registers its hit area. A <paramref name="destructive"/>
+    /// button highlights purple instead of yellow, so a discard does not look like the other actions.
+    /// </summary>
+    private void RenderButton(string id, string label, int x, int y, bool enabled, string? disabledReason,
+                              bool destructive = false)
     {
         string text   = $"[ {label} ]";
         bool   hov    = _hoveredButton == id && enabled;
-        Vector4 fg    = enabled ? (hov ? Config.Colors.BrightYellow : Config.Colors.LightGray85)
+        Vector4 hovFg = destructive ? Config.Colors.LightPurple : Config.Colors.BrightYellow;
+        Vector4 fg    = enabled ? (hov ? hovFg : Config.Colors.LightGray85)
                                 : SubtitleCol;
-        Vector4 bg    = hov ? BtnHovBg : DetailBg;
+        Vector4 bg    = hov ? (destructive ? BtnHovBgDanger : BtnHovBg) : DetailBg;
 
         for (int ix = x; ix < x + text.Length; ix++)
             _terminal.SetCell(ix, y, ' ', fg, bg);
@@ -650,7 +781,7 @@ public class MemoryPanelRenderer
         _buttonHits.Add(new ButtonHit(id, x, y, x + text.Length - 1, y, enabled));
 
         // Disabled reason on the next row
-        if (!enabled && disabledReason != null && y + 1 < DetailPanelRow + 14 - 1)
+        if (!enabled && disabledReason != null && y + 1 < DetailPanelRow + DetailPanelH - 1)
             _terminal.Text(x + 2, y + 1, $"↳ {disabledReason}", EmptyText, DetailBg);
     }
 
@@ -662,7 +793,7 @@ public class MemoryPanelRenderer
 
     private static string GetModuleSubtitle(MemoryModuleType type) => type switch
     {
-        MemoryModuleType.Working    => "any modus mentis  ▶  short-term",
+        MemoryModuleType.Working    => "learning input queue  ▶ FIFO ▶",
         MemoryModuleType.Procedural => "motor · physical modiMentis",
         MemoryModuleType.Semantic   => "conceptual · factual modiMentis",
         MemoryModuleType.Sensory    => "perceptual · experiential",

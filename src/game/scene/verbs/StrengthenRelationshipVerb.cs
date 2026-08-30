@@ -11,22 +11,24 @@ namespace Cathedral.Game.Scene.Verbs;
 /// Requires: target is a speakable NpcEntity, current affinity is NOT Stranger,
 /// and the protagonist has at least one Speaking modus mentis.
 /// </summary>
-public class StrengthenRelationshipVerb : Verb
+public class StrengthenRelationshipVerb : DialogueVerb
 {
-    public override string VerbId         => "strengthen_relationship";
-    public override string DisplayName    => "Talk";
-    public override int    BaseDifficulty => 1;
+    public override string VerbId            => "strengthen_relationship";
+    public override string DisplayName       => "Talk";
+    public override int    BaseDifficulty    => 1;
+    protected override string DialogueTreeId => "strengthen_relationship";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (target is not SceneNpc sceneNpc) return false;
+        if (SleeperGate.IsAsleep(scene, pov, target)) return false;  // wake them first
         if (sceneNpc.Entity is not NpcEntity npc) return false;
         if (!npc.CanSpeak) return false;
         if (!npc.IsAlive) return false;
         if (!scene.GetNpcsAt(pov.Where, pov.When).Exists(n => n.Id == sceneNpc.Id)) return false;
 
         // Only for known party members (non-strangers)
-        var partyMemberId = actor?.DisplayName ?? "Protagonist";
+        var partyMemberId = actor?.AffinityKey ?? "Protagonist";
         if (npc.AffinityTable.IsStranger(partyMemberId)) return false;
 
         // Protagonist must have at least one speaking modus mentis
@@ -35,23 +37,20 @@ public class StrengthenRelationshipVerb : Verb
         return true;
     }
 
+    // The NPC (and their affinity) is named once in the prompt's attention line; the verbatim
+    // refers back with the neutral pronoun — embedding the affinity display here used to double up
+    // with the contextual label ("meet a distant acquaintance (my acquaintance …), to talk").
     public override string Verbatim(Scene scene, PoV pov, Element target)
-    {
-        var actor        = null as Protagonist; // actor not available in Verbatim
-        var partyId      = "Protagonist";
-        if (target is SceneNpc sceneNpc && sceneNpc.Entity is NpcEntity npc)
-        {
-            var level   = npc.AffinityTable.GetLevel(partyId);
-            var display = level.ToDisplayName(npc.DisplayName);
-            return $"talk to {display}";
-        }
-        return $"talk to {target.DisplayName}";
-    }
+        => $"meet {NpcPronoun(target)} to talk";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
+    // Read out of context in the routines menu, so the pronoun is replaced by the name.
+    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
+        => $"meet {NpcName(target)} to talk";
+
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         if (target is not SceneNpc sceneNpc || sceneNpc.Entity is not NpcEntity npc)
-            return System.Array.Empty<OutcomeReport>();
+            return System.Array.Empty<Outcome>();
         return new[] { new DialogueTriggerOutcome(npc, DialogueTreeRegistry.Instance.Get("strengthen_relationship").TreeId) };
     }
 }

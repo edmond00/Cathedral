@@ -5,6 +5,20 @@ using Cathedral.Game.Narrative;
 namespace Cathedral.Fight;
 
 /// <summary>
+/// Category for a fight log entry — controls the color in the bottom panel.
+/// </summary>
+public enum LogEntryType
+{
+    Normal,
+    Attack,
+    Miss,
+    Wound,
+    SpecialEffect,
+    Learning,
+    Defense,
+}
+
+/// <summary>
 /// Which player-facing phase the fight is currently in.
 /// Controls which inputs are valid and what the UI highlights.
 /// </summary>
@@ -23,7 +37,17 @@ public enum TurnPhase
     /// <summary>Turn is transitioning to next fighter.</summary>
     TurnEnding,
     /// <summary>Fighter is stepping through a movement path one tile per animation frame.</summary>
-    AnimatingMovement
+    AnimatingMovement,
+    /// <summary>Player is attempting to learn an unknown skill — learning dice roll is playing.</summary>
+    SkillLearningRoll,
+    /// <summary>Learning dice finished; showing result, waiting for "Continue".</summary>
+    WaitingForLearningComplete,
+    /// <summary>
+    /// A buff's vital-heat cost is being drawn, one humor at a time, with the consumption box up.
+    /// Purely informational — it plays out and hands the turn back, with no Continue button and no
+    /// decision to make, which is why there is no waiting-for-complete twin phase.
+    /// </summary>
+    AnimatingVitalHeat,
 }
 
 /// <summary>
@@ -52,8 +76,19 @@ public class FightState
     public FightingSkill? PendingSkill { get; set; }
     /// <summary>Target fighter for the pending skill.</summary>
     public Fighter? PendingTarget { get; set; }
-    /// <summary>Body-part id chosen by the player for a PlayerChooses skill.</summary>
+    /// <summary>
+    /// Where the blow is aimed, resolved before the dice for <em>every</em> targeting mode: chosen
+    /// by the player, fixed by the skill, or pre-rolled for a Random skill. Either a bare body-part
+    /// id or the overlay's <c>"organ_part_id,body_part_id"</c> pair.
+    /// </summary>
     public string? PendingBodyPartId { get; set; }
+
+    /// <summary>
+    /// The top-level body part <see cref="PendingBodyPartId"/> falls inside — the section whose
+    /// armour is charged. Null when the blow lands nowhere in particular (a wildcard wound), which
+    /// no garment can turn.
+    /// </summary>
+    public string? PendingArmorSection { get; set; }
     /// <summary>Whether the player is selecting a movement destination.</summary>
     public bool IsMovementMode { get; set; }
 
@@ -67,16 +102,141 @@ public class FightState
     public int DiceDifficulty { get; set; }
     public bool IsDiceRolling { get; set; }
     public int[]? DiceFinalValues { get; set; }
+    /// <summary>Secondary (defense) dice count for the two-roll attack flow. 0 = single-roll mode.</summary>
+    public int DiceSecondaryNumberOfDice { get; set; }
+    public int[]? DiceSecondaryFinalValues { get; set; }
+    /// <summary>True while a runaway dice roll is in progress (need at least one six to flee).</summary>
+    public bool PendingRunaway { get; set; }
 
-    // ── Action log ───────────────────────────────────────────────────
-    private const int MaxLogLines = 200;
-    public List<string> ActionLog { get; } = new();
-    public void AddLog(string line)
+    /// <summary>True while a knockdown-recovery dice roll is in progress (need at least one six to act this turn).</summary>
+    public bool PendingKnockdownRecovery { get; set; }
+
+    /// <summary>
+    /// (medium-key, skill-id) pairs the active fighter has already committed to this turn.
+    /// Reset by <see cref="AdvanceToNextFighter"/>. Used to enforce the once-per-turn rule
+    /// for every action except MOVE; a skill that appears under two medium tabs (e.g. the
+    /// same weapon in both hands) tracks each tab independently because the medium key
+    /// includes the equipment anchor.
+    /// </summary>
+    public HashSet<(string MediumKey, string SkillId)> UsedActionsThisTurn { get; } = new();
+
+    /// <summary>
+    /// Whether <paramref name="fighter"/> has already spent this (medium, skill) pair this turn.
+    ///
+    /// <para>
+    /// Go through here rather than testing <see cref="UsedActionsThisTurn"/> directly: an effect
+    /// may lift the rule (Iron Nerves lets a fighter repeat a skill), and that exemption has to
+    /// live in exactly one place or it will hold in some of the dozen call sites and not others.
+    /// </para>
+    /// </summary>
+    public bool IsActionUsed(Fighter fighter, string mediumKey, string skillId)
     {
-        ActionLog.Add(line);
+        if (!UsedActionsThisTurn.Contains((mediumKey, skillId))) return false;
+        return !fighter.ActiveEffects.Any(e => e.BypassesUsedActions);
+    }
+
+    /// <summary>Record that <paramref name="fighter"/> has spent this (medium, skill) pair this turn.</summary>
+    public void MarkActionUsed(Fighter fighter, string mediumKey, string skillId)
+        => UsedActionsThisTurn.Add((mediumKey, skillId));
+
+    /// <summary>Undo a <see cref="MarkActionUsed"/> — used when an action is cancelled before it resolves.</summary>
+    public void UnmarkActionUsed(Fighter fighter, string mediumKey, string skillId)
+        => UsedActionsThisTurn.Remove((mediumKey, skillId));
+
+    /// <summary>True once the active fighter has attempted to flee this turn.</summary>
+    public bool RunUsedThisTurn { get; set; }
+
+    // ── Vital-heat consumption (buff skills) ──────────────────────────
+    // Travel already shows the player every humor it burns, one at a time, against a filling bar.
+    // A buff spending up to ten of them was the odd one out, so it is paid the same way: the cost
+    // is NOT taken up front — it is drawn humor by humor while the box is on screen, which is what
+    // gives the bar something to fill and the flash something to show.
+
+    /// <summary>Fighter paying, or null when no consumption box is up.</summary>
+    public Fighter? VitalHeatFighter { get; private set; }
+    /// <summary>Name of the skill being paid for.</summary>
+    public string VitalHeatSkillName { get; private set; } = "";
+    /// <summary>How much heat the skill asked for.</summary>
+    public int VitalHeatRequired { get; private set; }
+
+    private readonly List<BodyHumor> _vitalHeatDrawn = new();
+    /// <summary>The humors drawn so far, in rotation order.</summary>
+    public IReadOnlyList<BodyHumor> VitalHeatDrawn => _vitalHeatDrawn;
+
+    /// <summary>The humor drawn most recently — what the box flashes.</summary>
+    public BodyHumor? VitalHeatLatest { get; private set; }
+
+    /// <summary>True once the queues ran dry before the cost was met.</summary>
+    public bool VitalHeatExhausted { get; private set; }
+
+    /// <summary>Nothing left to draw: the cost is met, or the body has no more heat to give.</summary>
+    public bool VitalHeatComplete =>
+        VitalHeatFighter == null || VitalHeatExhausted || _vitalHeatDrawn.Count >= VitalHeatRequired;
+
+    /// <summary>
+    /// Arm the consumption box. The heat is spent by <see cref="DrawNextVitalHeat"/> as the
+    /// animation runs, not here.
+    /// </summary>
+    public void BeginVitalHeatConsumption(Fighter fighter, string skillName, int required)
+    {
+        VitalHeatFighter   = fighter;
+        VitalHeatSkillName = skillName;
+        VitalHeatRequired  = required;
+        VitalHeatExhausted = false;
+        VitalHeatLatest    = null;
+        _vitalHeatDrawn.Clear();
+        Phase              = TurnPhase.AnimatingVitalHeat;
+    }
+
+    /// <summary>
+    /// Burn one more humor toward the cost. Returns false when there is nothing left to draw —
+    /// either the cost is paid or every queue has gone critical.
+    /// </summary>
+    public bool DrawNextVitalHeat(Random rng)
+    {
+        if (VitalHeatFighter == null || VitalHeatExhausted) return false;
+        if (_vitalHeatDrawn.Count >= VitalHeatRequired) return false;
+
+        var humor = VitalHeatFighter.Member.HumorQueues.ConsumeCycled(VitalHeatFighter.Member, rng);
+        if (humor == null) { VitalHeatExhausted = true; return false; }
+
+        _vitalHeatDrawn.Add(humor);
+        VitalHeatLatest = humor;
+        return true;
+    }
+
+    /// <summary>Tear the consumption box down.</summary>
+    public void ClearVitalHeatConsumption()
+    {
+        VitalHeatFighter   = null;
+        VitalHeatSkillName = "";
+        VitalHeatRequired  = 0;
+        VitalHeatExhausted = false;
+        VitalHeatLatest    = null;
+        _vitalHeatDrawn.Clear();
+    }
+
+    // ── VerbAction log ───────────────────────────────────────────────────
+    private const int MaxLogLines = 200;
+    public List<(string Text, LogEntryType Type)> ActionLog { get; } = new();
+    public void AddLog(string line, LogEntryType type = LogEntryType.Normal)
+    {
+        ActionLog.Add((line, type));
         if (ActionLog.Count > MaxLogLines)
             ActionLog.RemoveAt(0);
     }
+
+    // ── Skill learning state ──────────────────────────────────────────
+    /// <summary>The unknown skill the player is attempting to learn this turn.</summary>
+    public FightingSkill? PendingLearnSkill { get; set; }
+    /// <summary>Number of dice for the learning roll (from fight_learning derived stat).</summary>
+    public int LearningDiceCount { get; set; }
+    /// <summary>Difficulty threshold for the learning roll (index of skill in medium list).</summary>
+    public int LearningDifficulty { get; set; }
+    /// <summary>Final dice values from the learning roll animation.</summary>
+    public int[]? LearningDiceValues { get; set; }
+    /// <summary>Result of the learning roll. Null while not yet resolved.</summary>
+    public bool? LearningSucceeded { get; set; }
 
     // ── Constructor ───────────────────────────────────────────────────
     public FightState(FightArea area, List<Fighter> fighters)
@@ -89,18 +249,28 @@ public class FightState
     // ── Turn management ───────────────────────────────────────────────
     /// <summary>
     /// Move to the next living fighter in initiative order.
-    /// Skips dead fighters.  Calls <see cref="Fighter.StartTurn"/> on the new active fighter.
+    /// Skips dead fighters. Calls <see cref="Fighter.StartTurn(FightState, Random)"/> on the new active fighter.
     /// </summary>
-    public void AdvanceToNextFighter()
+    public void AdvanceToNextFighter(Random rng)
     {
         // Clear pending intent
         PendingSkill = null;
         PendingTarget = null;
         PendingBodyPartId = null;
+        PendingArmorSection = null;
+        PendingLearnSkill = null;
+        LearningDiceValues = null;
+        LearningSucceeded = null;
         IsMovementMode = false;
         Phase = TurnPhase.SelectingAction;
         IsDiceRolling = false;
         DiceFinalValues = null;
+        DiceSecondaryFinalValues = null;
+        DiceSecondaryNumberOfDice = 0;
+        PendingRunaway = false;
+        PendingKnockdownRecovery = false;
+        UsedActionsThisTurn.Clear();
+        RunUsedThisTurn = false;
         MovementPath = null;
         MovingFighter = null;
         MovementPathIndex = 0;
@@ -113,7 +283,7 @@ public class FightState
             if (Fighters[next].IsAlive)
             {
                 ActiveFighterIndex = next;
-                Fighters[next].StartTurn();
+                Fighters[next].StartTurn(this, rng);
                 return;
             }
         }

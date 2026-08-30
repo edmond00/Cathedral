@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Cathedral.Game.Scene;
 using Cathedral.Game.Scene.Verbs;
 
@@ -7,7 +7,7 @@ namespace Cathedral.Game.Narrative;
 /// <summary>
 /// Abstract base class for elements in a modusMentis chain.
 /// The modusMentis chain represents the sequence of modiMentis involved in an action:
-/// Observation -> Thinking -> Action
+/// Observation -> Thinking -> VerbAction
 /// Each element has an associated modusMentis and optional link to its origin element.
 /// </summary>
 public abstract class ModusMentisChainElement
@@ -28,14 +28,24 @@ public abstract class ModusMentisChainElement
     /// <summary>
     /// Calculates the total modusMentis level sum by traversing the chain back to the root.
     /// This represents the number of dice that will be rolled for a modusMentis check.
+    ///
+    /// <para><b>Pass <paramref name="member"/> wherever the acting body is known.</b> A wound lowers
+    /// what a modus mentis may reach without touching the level it stored, so the stored level is
+    /// what was learned and <c>PartyMember.GetEffectiveModusMentisLevel</c> is what can be brought to
+    /// bear. Summing the stored levels lets a ruined arm roll its full pool. The parameter is
+    /// optional because the display paths (the action line's level pips, the scroll buffer) read this
+    /// without a body to hand; every path that becomes dice has one.</para>
     /// </summary>
-    public int GetTotalModusMentisLevel()
+    public int GetTotalModusMentisLevel(PartyMember? member = null)
     {
-        int total = ChainModusMentis?.Level ?? 0;
+        int Level(ModusMentis? mm) =>
+            mm == null ? 0 : member?.GetEffectiveModusMentisLevel(mm) ?? mm.Level;
+
+        int total = Level(ChainModusMentis);
         var current = ChainOrigin;
         while (current != null)
         {
-            total += current.ChainModusMentis?.Level ?? 0;
+            total += Level(current.ChainModusMentis);
             current = current.ChainOrigin;
         }
         return total;
@@ -113,11 +123,27 @@ public class NarrationState
 }
 
 /// <summary>
-/// A single observation sentence paired with its one assigned keyword.
+/// A single observation sentence, its keyword(s), and the thing they act on.
 /// Stored on an observation NarrationBlock so the scroll buffer can assign each keyword
 /// only to the wrapped lines of its own sentence, preventing cross-sentence highlighting.
+///
+/// <para><b>The anchor lives here, not in a per-block table keyed by the word.</b> It used to be
+/// resolved at click time through a <c>Dictionary&lt;string, NarrativeAnchor&gt;</c>, which can hold
+/// one object per word — so two sentences about two men could not both say "man", and the second
+/// was pushed onto whatever its associated words offered ("thing"). Every object needed a supply of
+/// second-best words purely to keep that table's keys distinct. Carrying the anchor on the sentence
+/// that produced it removes the constraint: the keyword is resolved by <i>which occurrence was
+/// clicked</i>, which the renderer has always known, so identical words in different sentences are
+/// simply different links.</para>
 /// </summary>
-public record NarrationSentence(string Text, List<string> Keywords);
+public record NarrationSentence(string Text, List<string> Keywords, NarrativeAnchor? Anchor = null);
+
+/// <summary>
+/// One selectable player reply carried by a <see cref="NarrationBlockType.DialogueOptions"/> block.
+/// A display-only projection of the dialogue session's PlayerReplicaOption: the scroll buffer only
+/// needs what it renders (skill prefix + text); selection routing stays in the dialogue controller.
+/// </summary>
+public record DialogueOptionItem(string SkillName, int SkillLevel, string Text);
 
 /// <summary>
 /// Represents a single block of narration text in the UI.
@@ -126,7 +152,7 @@ public record NarrationSentence(string Text, List<string> Keywords);
 /// </summary>
 public class NarrationBlock : ModusMentisChainElement
 {
-    public NarrationBlockType Type { get; init; }              // Observation, Thinking, Action, Outcome
+    public NarrationBlockType Type { get; init; }              // Observation, Thinking, VerbAction, Outcome
     public ModusMentis ModusMentis { get; init; } = null!;                 // Which modusMentis generated this block
     public string Text { get; init; } = "";                    // The narration text
     public List<string>? Keywords { get; init; }               // Highlighted keywords (if observation, max 1 per sentence)
@@ -145,18 +171,12 @@ public class NarrationBlock : ModusMentisChainElement
     public ObservationType? SourceObservationType { get; init; } = null;
 
     /// <summary>
-    /// The concrete outcome this observation sentence is about.
-    /// Each sentence is generated for a specific outcome; clicking its keyword leads directly here.
-    /// For merged multi-sentence blocks, prefer KeywordOutcomeMap instead.
+    /// The concrete outcome this whole block is about, for blocks that are about exactly one thing
+    /// and carry no <see cref="Sentences"/>. A multi-sentence observation puts the anchor on each
+    /// <see cref="NarrationSentence"/> instead, and a click resolves through the region it landed
+    /// on; this is the fallback for everything that has no per-sentence breakdown.
     /// </summary>
-    public ConcreteOutcome? LinkedOutcome { get; init; } = null;
-
-    /// <summary>
-    /// Per-keyword outcome map for merged observation blocks (multiple sentences joined into one block).
-    /// Maps each extracted keyword → the ConcreteOutcome that sentence was describing.
-    /// Takes precedence over LinkedOutcome during click resolution.
-    /// </summary>
-    public Dictionary<string, ConcreteOutcome>? KeywordOutcomeMap { get; init; } = null;
+    public NarrativeAnchor? LinkedOutcome { get; init; } = null;
 
     /// <summary>
     /// For Speaking blocks: the display name of the character who spoke (e.g., "Protagonist").
@@ -168,7 +188,22 @@ public class NarrationBlock : ModusMentisChainElement
     /// Short, prewritten outcome chips rendered below the LLM narration.
     /// Null when there are no concrete outcomes to report.
     /// </summary>
-    public IReadOnlyList<OutcomeReport>? OutcomeReports { get; init; } = null;
+    public IReadOnlyList<Outcome>? OutcomeReports { get; init; } = null;
+
+    /// <summary>
+    /// For <see cref="NarrationBlockType.DialogueOptions"/> blocks: the selectable player replies,
+    /// rendered in the scroll buffer as clickable lines (like thinking-block actions). Null for all
+    /// other block types.
+    /// </summary>
+    public IReadOnlyList<DialogueOptionItem>? DialogueOptions { get; init; } = null;
+
+    /// <summary>
+    /// For <see cref="NarrationBlockType.DialogueOptions"/> blocks: index of the reply the player
+    /// picked, or -1 while still choosing. Deliberately mutable — the dialogue controller sets it on
+    /// selection and the renderer restyles the already-generated lines (selected highlighted, the
+    /// rest greyed) without regenerating the buffer.
+    /// </summary>
+    public int SelectedDialogueOptionIndex { get; set; } = -1;
 
     /// <summary>
     /// Implements ModusMentisChainElement.ChainModusMentis - returns the modusMentis of this block.
@@ -186,11 +221,11 @@ public class NarrationBlock : ModusMentisChainElement
         List<ParsedNarrativeAction>? Actions,
         ModusMentisChainElement? ChainOrigin = null,
         ObservationType? SourceObservationType = null,
-        ConcreteOutcome? LinkedOutcome = null,
-        Dictionary<string, ConcreteOutcome>? KeywordOutcomeMap = null,
+        NarrativeAnchor? LinkedOutcome = null,
         List<NarrationSentence>? Sentences = null,
         string? SpeakerName = null,
-        IReadOnlyList<OutcomeReport>? OutcomeReports = null)
+        IReadOnlyList<Outcome>? OutcomeReports = null,
+        IReadOnlyList<DialogueOptionItem>? DialogueOptions = null)
     {
         this.Type = Type;
         this.ModusMentis = ModusMentis;
@@ -200,10 +235,10 @@ public class NarrationBlock : ModusMentisChainElement
         this.ChainOrigin = ChainOrigin;
         this.SourceObservationType = SourceObservationType;
         this.LinkedOutcome = LinkedOutcome;
-        this.KeywordOutcomeMap = KeywordOutcomeMap;
         this.Sentences = Sentences;
         this.SpeakerName = SpeakerName;
         this.OutcomeReports = OutcomeReports;
+        this.DialogueOptions = DialogueOptions;
     }
 }
 
@@ -216,7 +251,10 @@ public enum NarrationBlockType
     Thinking,      // ModusMentis reasons about keyword (CoT)
     Action,        // Player selected action (modusMentis check result)
     Outcome,       // Result of action (success/failure)
-    Speaking       // Active party member speaks directly to a companion
+    Speaking,       // Active party member speaks directly to a companion
+    PlayerSpeaking, // Player's chosen reply in a dialogue (rendered in the player's colour)
+    DialogueOptions, // Group of selectable player replies, rendered inline in the scroll buffer
+    Emotion         // What the outcome stirred in the actor, in an emotion modus mentis's voice
 }
 
 /// <summary>
@@ -241,18 +279,30 @@ public class ParsedNarrativeAction : ModusMentisChainElement
 {
     public string ActionText { get; set; } = "";              // Full text including "try to " prefix
     public string DisplayText { get; set; } = "";             // Text without "try to " prefix (for UI)
+
+    /// <summary>
+    /// The neutral, un-styled action phrase (e.g. "get up and continue my journey") as chosen by the
+    /// thinking modusMentis, captured BEFORE the action modusMentis re-expressed it into persona voice.
+    /// <see cref="DisplayText"/>/<see cref="ActionText"/> hold the styled form (the button label and
+    /// the phrasing critics see); this preserves the plain meaning so the neutral outcome sentence
+    /// ("It is done! I succeeded to …" / "Alas, I failed to …") templates cleanly instead of
+    /// re-embedding an already-styled phrase that does not fit it. Empty for actions with no
+    /// neutral source.
+    /// </summary>
+    public string NeutralActionText { get; set; } = "";
     public string ActionModusMentisId { get; set; } = "";           // Which action modusMentis to use for check
     public ModusMentis? ActionModusMentis { get; set; }                   // Resolved modusMentis reference
     public ModusMentis ThinkingModusMentis { get; set; } = null!;         // Which thinking modusMentis generated this
-    public VerbOutcome PreselectedOutcome { get; set; } = null!;  // Success outcome chosen by thinking modusMentis
-    public Verb Verb => PreselectedOutcome.VerbView.Verb;
+    public VerbAction PreselectedOutcome { get; set; } = null!;  // Success outcome chosen by thinking modusMentis
+    public Verb Verb => PreselectedOutcome.Verb;
     public string Keyword { get; set; } = "";                 // Keyword this action relates to
 
     /// <summary>
-    /// Item combined with this action via right-click item selection.
+    /// Item combined with this action via the action popup's "Use Tool" row.
     /// Null when no item is combined. When set, the action text has been reformulated
     /// by the action modusMentis to incorporate the item, and dice rolls receive a bonus
-    /// equal to the item's UsageLevel.
+    /// equal to the item's whole UsageLevel. The hands bear on <i>whether</i> a combination is
+    /// permitted (<see cref="ToolUsageProficiencyStat"/>) rather than on how much it lends.
     /// </summary>
     public Item? CombinedItem { get; set; } = null;
 
@@ -282,4 +332,24 @@ public class ParsedNarrativeAction : ModusMentisChainElement
     /// otherwise the real action ModusMentis. Used for chain traversal and display.
     /// </summary>
     public override ModusMentis ChainModusMentis => CombinedActionModusMentis ?? ActionModusMentis!;
+
+    /// <summary>
+    /// The glyph opening this action's line: the verb's override when it has one (REMEMBER uses '○',
+    /// having no normal difficulty), else the difficulty glyph, else '>' before evaluation.
+    /// </summary>
+    public char DifficultyGlyph
+        => PreselectedOutcome?.Verb?.DifficultyGlyphOverride
+           ?? (DifficultyLevel > 0
+               ? Config.Symbols.DifficultyGlyphs[Math.Clamp(DifficultyLevel, 1, 10) - 1]
+               : '>');
+
+    /// <summary>
+    /// The full <c>"⑤ [MODUS MENTIS ⟐⟐] "</c> prefix an action line is drawn with. The live renderer
+    /// paints it piece by piece so each part can take its own colour; history lines carry no action
+    /// reference and bake this string in instead. Both must agree, or a line shifts (and loses its
+    /// header) the moment its segment greys out.
+    /// </summary>
+    public string DisplayPrefix
+        => $"{DifficultyGlyph} [{ChainModusMentis?.DisplayName ?? ActionModusMentisId} " +
+           $"{new string(Config.Symbols.ModusMentisLevelIndicator, ChainModusMentis?.Level ?? 1)}] ";
 }

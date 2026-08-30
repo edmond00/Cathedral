@@ -1,25 +1,38 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
+using Cathedral.Game.Dialogue.Tree;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Friendship — warm fellowship, loyalty; an open-hearted comrade who treats new acquaintance
-/// as future fellowship. Speaking-only.
+/// as future fellowship. Speaking, observing and emotional.
 /// </summary>
 public class FriendshipModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "friendship";
     public override string DisplayName      => "Friendship";
-    public override string ShortDescription => "warm fellowship, loyalty";
-    public override string SkillMeans       => "open-hearted fellowship";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking };
+    public override string MenuDescription =>
+        "Reaches for trust and easy companionship, reading how a bond might be built or deepened. Inclines toward warmth and loyalty, and takes another as a possible ally rather than an obstacle.";
+    public override string SkillMeans       => "warm and open friendliness";
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "heart", "tongue" };
+
+    /// <summary>Words with a person, not a voice in the air.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
     public override string PersonaTone     => "a soul who remembers playing-knights with old friends and still gives strangers the benefit";
     public override string PersonaReminder  => "open-hearted comrade";
     public override string PersonaReminder2 => "someone who treats new acquaintance as future fellowship";
-    public override MoralLevel MoralLevel    => MoralLevel.High;
+    public override string StyleInstruction =>
+        "Use warm images of companionship and welcome, with an open-hearted hope of friendship to come.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(RecruitedOutcome), () => new LaetitiaHumor()),
+        new(typeof(AffinityIncrementOutcome), () => new LaetitiaHumor(), OutcomeSeverity.Positive),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of FRIENDSHIP, the warm and unguarded openness of someone who has had honest fellows and treats new strangers as such until they prove otherwise.
 

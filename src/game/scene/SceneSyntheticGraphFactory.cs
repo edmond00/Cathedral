@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Reminescence;
+using Cathedral.Game.Scene.GetUp;
 using Cathedral.Game.Scene.Reminescence;
 using Cathedral.Game.Scene.Verbs;
 
@@ -31,17 +32,50 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
     protected override IReadOnlyDictionary<string, NarrationNode> CollectAllNodes(NarrationNode entry)
         => _areaNodes;
 
+    /// <summary>
+    /// The area narration opens in: the first one the factory built, or — under
+    /// <c>--start-area &lt;name&gt;</c> — the first whose display name contains that name. Inert at its
+    /// default, and inert again when nothing matches, so a location without the named room behaves
+    /// exactly as it always did. The PoV is built from this same helper, so the two cannot disagree.
+    /// </summary>
+    public static Area? ResolveEntryArea(Cathedral.Game.Scene.Scene scene)
+    {
+        var wanted = Config.Debug.StartArea;
+        if (!string.IsNullOrWhiteSpace(wanted))
+        {
+            // Exact name first, substring only as a fallback — the same
+            // whole-thing-before-partial rule --observe-only uses, and for the same reason. Rooms
+            // nest by name ("Alehouse", "Alehouse Store", "Alehouse Bedroom"), so a plain substring
+            // match on "Alehouse" lands in whichever the factory happened to build first. A test
+            // aimed at the taproom quietly opened in the storeroom, found none of the people it
+            // named, and went on to exercise something else entirely.
+            var match = scene.AllAreas.FirstOrDefault(
+                            a => a.DisplayName.Equals(wanted, StringComparison.OrdinalIgnoreCase))
+                     ?? scene.AllAreas.FirstOrDefault(
+                            a => a.DisplayName.Contains(wanted, StringComparison.OrdinalIgnoreCase));
+            if (match != null) return match;
+
+            Cathedral.Game.DebugFlagAudit.Miss("--start-area", wanted, "wherever the factory opened");
+            Console.Error.WriteLine($"[debug]   areas here: {string.Join(", ", scene.AllAreas.Select(a => a.DisplayName))}");
+        }
+        return scene.AllAreas.FirstOrDefault();
+    }
+
     protected override NarrationNode BuildNodes(Random rng, int locationId)
     {
-        var firstArea = _scene.AllAreas.FirstOrDefault();
+        var firstArea = ResolveEntryArea(_scene);
         if (firstArea == null)
             throw new InvalidOperationException("Scene has no areas — cannot build synthetic graph");
 
-        // Create a synthetic NarrationNode for each area, keyed by Guid for graph wiring
+        // Create a synthetic NarrationNode for each area, keyed by Guid for graph wiring.
+        // Node ids are display-name slugs and are only unique by convention, so they are
+        // disambiguated here: a duplicate would overwrite the earlier node in _areaNodes and leave a
+        // whole room with no node — unplaceable by SceneNpcPlacement and unreachable by transition.
         var byGuid = new Dictionary<Guid, SyntheticNarrationNode>();
+        var usedIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var area in _scene.AllAreas)
         {
-            var node = CreateNodeForArea(area);
+            var node = CreateNodeForArea(area, UniqueNodeId(area, usedIds));
             byGuid[area.Id] = node;
             _areaNodes[node.NodeId] = node;
         }
@@ -54,8 +88,8 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
             {
                 if (!byGuid.TryGetValue(toId, out var toNode) || toNode.Area == null) continue;
                 var toArea   = toNode.Area;
-                var verbView = new VerbView(new MoveToAreaVerb(), toArea.TransitionDescription, toArea);
-                var entry    = new SceneViewEntry(toArea, new List<VerbView> { verbView });
+                var verbView = new VerbAction(new MoveToAreaVerb(), toArea.TransitionDescription, toArea);
+                var entry    = new SceneViewEntry(toArea, new List<VerbAction> { verbView });
                 fromNode.PossibleOutcomes.Add(new SyntheticAreaObservationObject(toArea, entry));
             }
         }
@@ -63,7 +97,20 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
         return byGuid[firstArea.Id];
     }
 
-    private SyntheticNarrationNode CreateNodeForArea(Area area)
+    /// <summary>
+    /// A scene-unique node id for <paramref name="area"/>: the display-name slug, suffixed on
+    /// collision. Two buildings each holding a "Hall" would otherwise produce one id.
+    /// </summary>
+    private static string UniqueNodeId(Area area, HashSet<string> used)
+    {
+        var baseId = area.DisplayName.ToLowerInvariant().Replace(' ', '_');
+        var id     = baseId;
+        for (int n = 2; !used.Add(id); n++)
+            id = $"{baseId}_{n}";
+        return id;
+    }
+
+    private SyntheticNarrationNode CreateNodeForArea(Area area, string nodeId)
     {
         SyntheticNarrationNode node;
         if (_scene.Phase == NarrationPhase.ChildhoodReminescence
@@ -72,22 +119,35 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
             && ReminescenceRegistry.Get(_scene.CurrentReminescenceId) is { } data)
         {
             node = new ReminescenceNarrationNode(
-                area.DisplayName.ToLowerInvariant().Replace(' ', '_'),
+                nodeId,
                 area.ContextDescription,
                 area.TransitionDescription,
                 area,
                 _protagonist,
                 data);
         }
+        else if (_scene.Phase == NarrationPhase.GetUp)
+        {
+            node = new GetUpNarrationNode(
+                nodeId,
+                area.ContextDescription,
+                area.TransitionDescription,
+                area);
+        }
         else
         {
             node = new SyntheticNarrationNode(
-                area.DisplayName.ToLowerInvariant().Replace(' ', '_'),
+                nodeId,
                 area.ContextDescription,
                 area.TransitionDescription,
                 area);
         }
 
+        // Any period serves for this initial expansion; RefreshSceneVerbs re-gates every verb live at
+        // the real period before anything is shown, and stamps that period onto the observations too.
+        // Doors ARE period-dependent (an entry door is shut at night), so this bake is provisional —
+        // do not read verb availability off it. NPC observation objects are NOT baked here: they are
+        // placed per period by SceneNpcPlacement so a scene only shows the NPCs actually present now.
         var pov = new PoV(area, TimePeriod.Morning);
 
         // Add points of interest as synthetic ObservationObjects
@@ -95,45 +155,24 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
         {
             var entry = new SceneViewEntry(poi,
                 _scene.Verbs
-                    .Where(v => v.IsPossible(_scene, pov, poi))
-                    .Select(v => new VerbView(v, v.Verbatim(_scene, pov, poi), poi))
+                    .SelectMany(v => v.ExpandViews(_scene, pov, poi))
                     .ToList());
 
             // Build item sub-entries so item verbs (e.g. "grab the apple") fold into the PoI SubOutcomes.
             var itemSubEntries = poi.Items
                 .Select(ie => new SceneViewEntry(ie,
                     _scene.Verbs
-                        .Where(v => v.IsPossible(_scene, pov, ie))
-                        .Select(v => new VerbView(v, v.Verbatim(_scene, pov, ie), ie))
+                        .SelectMany(v => v.ExpandViews(_scene, pov, ie))
                         .ToList()))
                 .ToList();
 
-            node.PossibleOutcomes.Add(new SyntheticObservationObject(poi, entry, itemSubEntries));
+            // The viewing area is what lets a connector PoI describe itself per side: a door lives in
+            // both areas' PoI lists, so this is the only thing distinguishing the two observations.
+            node.PossibleOutcomes.Add(new SyntheticObservationObject(poi, entry, itemSubEntries, area));
         }
 
-        // Add spots as synthetic enterable sub-locations
-        foreach (var spot in area.Spots)
-        {
-            var entry = new SceneViewEntry(spot,
-                _scene.Verbs
-                    .Where(v => v.IsPossible(_scene, pov, spot))
-                    .Select(v => new VerbView(v, v.Verbatim(_scene, pov, spot), spot))
-                    .ToList());
-
-            node.PossibleOutcomes.Add(new SyntheticSpotObject(spot, entry));
-        }
-
-        // Add NPCs as ObservationObjects with verb SubOutcomes (attack, slay, meet, etc.)
-        foreach (var npc in _scene.GetNpcsAt(area, pov.When))
-        {
-            var entry = new SceneViewEntry(npc,
-                _scene.Verbs
-                    .Where(v => v.IsPossible(_scene, pov, npc))
-                    .Select(v => new VerbView(v, v.Verbatim(_scene, pov, npc), npc))
-                    .ToList());
-
-            node.PossibleOutcomes.Add(new SyntheticNpcObservationObject(npc, entry));
-        }
+        // Anything the game spawns later — a corpse — is reconciled in by
+        // NarrativeController.SyncSpawnedObservations, which runs before every observation phase.
 
         return node;
     }

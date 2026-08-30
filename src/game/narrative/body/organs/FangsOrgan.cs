@@ -11,6 +11,9 @@ public class FangsOrgan : Organ
     public override string Id => "fangs";
     public override string DisplayName => "Fangs";
     public override string BodyPartId => "muzzle";
+    public override string Description =>
+        "The principal armament of the Beast, in the place of the teeth of Man: the instrument of the " +
+        "killing bite, its power varying with the species. The seat of the predatory arts of the maw.";
 
     private readonly List<OrganPart> _parts;
     public override List<OrganPart> Parts => _parts;

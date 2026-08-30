@@ -1,0 +1,59 @@
+# attack — success
+#
+# The attack verb carried through: forced past the dice, the first blow lands, and the fight opens
+# on a man already marked.
+#
+# Reached in 12/12 of the sampled location ids (see --verb-probe). --location-type and
+# --location-id decide the whole scene, so this does not depend on world generation; --npc-static
+# pins people to one room; --observe-only pins the phase to one object, which is why the keyword is
+# clicked by index (which word the prose highlights is not something a test can know).
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Hall" --period dawn --observe-only "brewer"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal attack
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+# The fight is HELD here rather than entered, which is the whole point of the first-blow layer: the
+# chips are the only account the player gets of what the swing did, and the fight screen paints over
+# the narration carrying them. `state` reports fight-held=yes for a script that presses nothing.
+expect SUCCESS
+
+# What makes this an attack test rather than an any-verb test: every verb alike can enter a fight
+# (a failed action under threat does), so only this can tell them apart.
+expect-verb attack
+
+# The blow itself — prefix only, since which skill was drawn and what it broke move with the body.
+expect First blow:
+# What the blow taught. Attack declares no lesson of its own: it teaches the modus mentis behind
+# whichever fighting skill the blow drew, so this chip is the only proof the grant happened at all.
+expect Modus mentis
+# The outcome TYPES, asserted by their stable ids rather than by chip wording. `expect <chip>`
+# proves what the player was told; this proves what actually ran. See --outcome-audit.
+expect-outcome first_blow
+expect-outcome fight_trigger
+
+# And only now the fight, on the press that closes the segment.
+click button
+wait mode Fighting 60
+quit

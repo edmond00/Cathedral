@@ -1,0 +1,71 @@
+# Losing a conversation: the tree runs, a branch is walked, the resolution roll fails, and the
+# tree's FAILURE branch is spoken instead.
+#
+# This is a DIALOGUE FEATURE test, not a test of the meet_stranger tree — that tree is only the
+# cheapest one to reach. What it covers is the machinery every tree shares: the greeting, the reply
+# options, the resolution check, and the outcomes landing on the NPC.
+#
+# Deliberately does NOT pass --auto-dialogue. That flag settles a conversation without holding one so
+# a verb test can assert about its verb; here the conversation is the thing under test.
+#
+# It works at all because --playground now stubs DialogueTreeAdapter's LLM slot. Before that, Setup
+# threw "Server is not ready", the dialogue "completed" instantly, and every tree in the game was
+# unreachable under --playground — silently.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Hall" --period noon --observe-only "brewer"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# Reach the conversation through the verb that opens it — which must SUCCEED, or no conversation
+# happens and there is nothing to lose. `strategy` is a preset consulted at every roll, and this
+# script needs two different answers at two different moments: the verb's roll here, the dialogue's
+# resolution roll further down. Setting fail-dice this early failed the verb instead, and the script
+# then sat waiting for a Dialogue mode that was never coming.
+strategy succeed
+goal meet_stranger
+advance 12 180
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+# The tree is live. `advance` drains whichever preview box is up — the NPC's greeting, then each
+# reply option, which are generated as their own stack.
+wait mode Dialogue 60
+
+# NOW switch the preset: the conversation is open, and the roll under test is its resolution.
+strategy fail-dice
+
+advance 20 180
+expect Good day
+regions
+
+# Walk a branch to its resolution. Two replies is the shortest route through this tree.
+click option 0
+advance 20 180
+regions
+click option 0
+advance 20 180
+
+# The resolution roll is settled; confirming it applies the branch's outcome.
+click continue
+advance 20 180
+
+# The branch's SUCCESS replica, not its failure one — this is what tells the two apart, and so what
+# proves the resolution roll was honoured rather than the tree merely reaching an end.
+# The branch's FAILURE replica. The mirror of dialogue_success.cli: same tree, same branch,
+# opposite roll — so between them they prove the resolution check decides the outcome.
+expect Then keep walking
+state
+quit

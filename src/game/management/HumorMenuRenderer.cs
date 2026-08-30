@@ -39,7 +39,9 @@ public sealed class HumorMenuRenderer
 
     // ── Panel background ──────────────────────────────────────────
     private static readonly Vector4 BgColor     = new(0.0f, 0.0f, 0.0f, 1.0f);
-    private static readonly Vector4 PanelBg     = new(0.04f, 0.04f, 0.04f, 1.0f);
+    // Bottom info panel. Black rather than a near-black grey — a flat grey lands
+    // mid-quantisation-step and breaks up into pattern noise under the dither layer.
+    private static readonly Vector4 PanelBg     = new(0.0f, 0.0f, 0.0f, 1.0f);
     private static readonly Vector4 SepColor    = Config.Colors.DarkGray35;
     private static readonly Vector4 TitleColor  = Config.Colors.DarkYellowGrey;
     private static readonly Vector4 HeaderColor = Config.Colors.LightGray75;
@@ -49,6 +51,8 @@ public sealed class HumorMenuRenderer
     // ── Hover state ───────────────────────────────────────────────
     private string? _hoveredOrganId;
     private int     _hoveredQueueIndex = -1;
+
+    public bool IsHovering => _hoveredOrganId != null;
 
     // ── Constructor ───────────────────────────────────────────────
     public HumorMenuRenderer(
@@ -288,31 +292,10 @@ public sealed class HumorMenuRenderer
         row++;
 
         // Transmuting virtue
-        _terminal.Text(19, row, "Transmutation:", LabelColor, PanelBg);
-        if (humor.TransmutingVirtue != null)
-        {
-            _terminal.Text(35, row, humor.TransmutingVirtue.Description, ValueColor, PanelBg);
-
-            // Explain the virtue type
-            row++;
-            string explanation = humor.TransmutingVirtue switch
-            {
-                NumericModVirtue nmv => nmv.Modifier < 0
-                    ? "Reduces the dice result by a fixed amount on each invocation."
-                    : "Increases the dice result by a fixed amount on each invocation.",
-                DigitConversionVirtue dcv when dcv.SourceDigit == -1 =>
-                    $"Converts any dice face to {dcv.TargetDigit} (worst-case lock).",
-                DigitConversionVirtue dcv =>
-                    $"Converts face {dcv.SourceDigit} to {dcv.TargetDigit} when that face is rolled.",
-                _ => ""
-            };
-            if (explanation.Length > 0)
-                _terminal.Text(21, row, explanation, LabelColor, PanelBg);
-        }
-        else
-        {
-            _terminal.Text(35, row, "none", LabelColor, PanelBg);
-        }
+        _terminal.Text(19, row, "Transmuting Virtue:", LabelColor, PanelBg);
+        string virtueText = humor.TransmutingVirtue?.Description ?? "none";
+        Vector4 virtueFg  = humor.TransmutingVirtue is NullVirtue or null ? LabelColor : ValueColor;
+        _terminal.Text(40, row, virtueText, virtueFg, PanelBg);
 
         // Black bile stack info (if any black bile is present near the back of this queue)
         row += 2;

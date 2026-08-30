@@ -14,6 +14,18 @@ public abstract class Element
     /// <summary>Unique identifier for this element, generated on construction.</summary>
     public Guid Id { get; } = Guid.NewGuid();
 
+    /// <summary>
+    /// Rebuild-independent identity, assigned by <c>SceneFactory.AssignStableKeys</c> in deterministic
+    /// build order. <see cref="Id"/> is a fresh Guid per construction and scenes are rebuilt from
+    /// scratch on every visit, so anything that must be "the same thing" twice — a procedural
+    /// description seed, an audit comparison across rebuilds — keys off this instead.
+    ///
+    /// <para>A connector (door, stair, path) belongs to two areas' PoI lists and would be keyed twice
+    /// by the walk, with the later write winning; those pre-assign their own key at construction and
+    /// the walk leaves any already-keyed element alone.</para>
+    /// </summary>
+    public string StableKey { get; set; } = "";
+
     /// <summary>Human-readable display name for UI and logging.</summary>
     public abstract string DisplayName { get; }
 

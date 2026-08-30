@@ -1,6 +1,9 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Scene.Building;
+
+using Cathedral.Game.Narrative.ModiMentis;
 
 namespace Cathedral.Game.Scene.Verbs;
 
@@ -14,16 +17,27 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public class OpenDoorVerb : Verb
 {
+
     public override string VerbId         => "open_door";
     public override string DisplayName    => "Open";
     public override int    BaseDifficulty => 1;
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    /// <summary>Pushing an unlocked door open. Forcing a shut one is BREAK and picking a fastened one is UNLOCK DOOR; both take implements, and this is neither.</summary>
+    public override ToolUsage ToolUse => ToolUsage.Excluded;
+
+    /// <summary>A latch, a handle, a bar to lift. No hands, no verb.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
+
+    /// <summary>What a success teaches: a door passed through is a route learned.</summary>
+    public override string? GrantedModusMentisId(Element? target) => "wayfaring";
+
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (target is not DoorPointOfInterest door) return false;
 
-        // Front → back: only when unlocked
-        if (pov.Where.Id == door.FrontArea.Id && door.DoorState == DoorState.Unlocked) return true;
+        // Front → back: only when unlocked. Effective state, not authored state — an entry door is
+        // shut at night whatever it is by day, and the description the player just read says so.
+        if (pov.Where.Id == door.FrontArea.Id && door.EffectiveState(pov.When) == DoorState.Unlocked) return true;
 
         // Back → front: always (locked doors cannot trap you inside)
         if (pov.Where.Id == door.BackArea.Id) return true;
@@ -36,14 +50,28 @@ public class OpenDoorVerb : Verb
         if (target is not DoorPointOfInterest door) return "open the door";
 
         return pov.Where.Id == door.FrontArea.Id
-            ? $"open {door.DisplayName.ToLowerInvariant()} and step through"
-            : $"exit back through {door.DisplayName.ToLowerInvariant()}";
+            ? $"open {DefiniteTarget(door)} and step through"
+            : $"exit back through {DefiniteTarget(door)}";
     }
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
-        if (target is not DoorPointOfInterest door) return System.Array.Empty<OutcomeReport>();
+        if (target is not DoorPointOfInterest door) return System.Array.Empty<Outcome>();
         var destination = pov.Where.Id == door.FrontArea.Id ? door.BackArea : door.FrontArea;
         return new[] { new AreaMoveOutcome(destination) };
     }
+
+    // ── Routine recording ─────────────────────────────────────────────────────
+    // Only passing through an already-unlocked door (handled here); forcing a locked door is the
+    // illegal UnlockDoorVerb, which is not recordable.
+    public override bool CanRecordAsRoutine(Scene scene, PoV pov, Element target, PartyMember actor)
+        => target is DoorPointOfInterest;
+
+    public override RoutineTargetRef? RoutineTarget(Scene scene, PoV pov, Element target)
+        => target is PointOfInterest poi
+            ? new RoutineTargetRef(RoutineTargetKind.PointOfInterest, poi.ReferenceLemma, poi.DisplayName)
+            : null;
+
+    public override RoutinePhaseKind RoutineTriggeredPhase(Scene scene, PoV pov, Element target)
+        => RoutinePhaseKind.Narration;
 }

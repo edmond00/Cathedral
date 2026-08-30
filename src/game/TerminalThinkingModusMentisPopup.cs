@@ -13,8 +13,18 @@ namespace Cathedral.Game;
 public class TerminalThinkingModusMentisPopup
 {
     private const int POPUP_WIDTH = 35;
-    private const int MAX_VISIBLE_SKILLS = 15;
-    
+
+    /// <summary>
+    /// How many modi mentis fit in the box at once — the popup grid's height less the title row, the
+    /// close hint and the bottom border.
+    ///
+    /// <para>This used to be a flat 15 with <see cref="_scrollOffset"/> declared and never written,
+    /// so a member who had learned more than fifteen of one function simply could not reach the rest:
+    /// they were not listed, and there was nothing on screen to say more existed. The list is now
+    /// sized to the box and the remainder scrolls.</para>
+    /// </summary>
+    private static int MaxVisibleModiMentis => Math.Max(1, Config.Terminal.PopupHeight - 3);
+
     private readonly PopupTerminalHUD _popup;
     private List<ModusMentis> _thinkingModiMentis = new();
     private int? _hoveredModusMentisIndex = null;
@@ -67,6 +77,31 @@ public class TerminalThinkingModusMentisPopup
     /// Check if the popup is currently visible.
     /// </summary>
     public bool IsVisible => _thinkingModiMentis.Count > 0;
+
+    /// <summary>The modi mentis currently offered (for --cli listing/selection by index).</summary>
+    public IReadOnlyList<ModusMentis> Choices => _thinkingModiMentis;
+
+    /// <summary>How many rows the box shows at the current list length.</summary>
+    private int VisibleCount => Math.Min(MaxVisibleModiMentis, _thinkingModiMentis.Count);
+
+    /// <summary>
+    /// Scrolls the list by <paramref name="lines"/> (negative = toward the top), clamped so the last
+    /// screenful is the furthest the box can go. A list that fits does not move. Returns true when
+    /// something actually moved, so the caller can repaint.
+    /// </summary>
+    public bool Scroll(int lines)
+    {
+        if (!IsVisible) return false;
+
+        int maxOffset = Math.Max(0, _thinkingModiMentis.Count - MaxVisibleModiMentis);
+        int next = Math.Clamp(_scrollOffset + lines, 0, maxOffset);
+        if (next == _scrollOffset) return false;
+
+        _scrollOffset = next;
+        _hoveredModusMentisIndex = null;   // the row under the cursor is a different entry now
+        Render();
+        return true;
+    }
     
     /// <summary>
     /// Update hover state based on screen pixel mouse position.
@@ -119,8 +154,8 @@ public class TerminalThinkingModusMentisPopup
         int cellX = (int)Math.Floor((relativeX + cellPixelSize * 0.5f) / cellPixelSize);
         int cellY = (int)Math.Floor((relativeY + cellPixelSize * 0.5f) / cellPixelSize);
         
-        // Check if we're in the modusMentis list area (row 1 to MAX_VISIBLE_SKILLS+1, within popup width)
-        if (cellY < 1 || cellY > MAX_VISIBLE_SKILLS || cellX < 0 || cellX >= POPUP_WIDTH)
+        // Check if we're in the modusMentis list area (one row per visible entry, within popup width)
+        if (cellY < 1 || cellY > VisibleCount || cellX < 0 || cellX >= POPUP_WIDTH)
             return null;
         
         // Calculate modusMentis index (accounting for scroll)
@@ -170,7 +205,7 @@ public class TerminalThinkingModusMentisPopup
         if (!IsVisible)
             return;
         
-        int visibleModusMentisCount = Math.Min(MAX_VISIBLE_SKILLS, _thinkingModiMentis.Count);
+        int visibleModusMentisCount = VisibleCount;
         int popupHeight = visibleModusMentisCount + 3; // Title + border + modiMentis + close hint
         
         // Draw background
@@ -179,10 +214,15 @@ public class TerminalThinkingModusMentisPopup
         // Draw border
         _popup.DrawBox(0, 0, POPUP_WIDTH, popupHeight, BorderColor, Config.ThinkingModusMentisPopup.BackgroundColor);
         
-        // Draw title
-        int titleX = (POPUP_WIDTH - _title.Length) / 2;
-        _popup.DrawText(titleX, 0, _title, TitleColor, Config.ThinkingModusMentisPopup.BackgroundColor);
-        
+        // Draw title. When the list overflows the box, the title carries the position so the player
+        // can see that more exist and that the wheel reaches them.
+        string title = _thinkingModiMentis.Count > visibleModusMentisCount
+            ? $"{_title} ({_scrollOffset + 1}-{_scrollOffset + visibleModusMentisCount}/{_thinkingModiMentis.Count})"
+            : _title;
+        if (title.Length > POPUP_WIDTH - 2) title = title.Substring(0, POPUP_WIDTH - 2);
+        int titleX = Math.Max(1, (POPUP_WIDTH - title.Length) / 2);
+        _popup.DrawText(titleX, 0, title, TitleColor, Config.ThinkingModusMentisPopup.BackgroundColor);
+
         // Draw modiMentis
         int startIndex = _scrollOffset;
         int endIndex = Math.Min(startIndex + visibleModusMentisCount, _thinkingModiMentis.Count);

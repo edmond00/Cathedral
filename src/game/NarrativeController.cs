@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -7,7 +7,9 @@ using Cathedral.Debug;
 using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Dialogue.Tree.Trees;
 using Cathedral.Game.Narrative;
-using Cathedral.Game.Narrative.Nodes;
+using Cathedral.Game.Narrative.Preview;
+using Cathedral.Game.Narrative.Routines;
+using Cathedral.Game.Narrative.Rules;
 using Cathedral.Game.Npc;
 using Cathedral.Game.Scene;
 using Cathedral.Game.Scene.Verbs;
@@ -48,8 +50,10 @@ public class NarrativeController
     private int _lastMouseX = 0;
     private int _lastMouseY = 0;
     
-    // Pending action result (stored while waiting for dice roll continue)
-    private ActionExecutionResult? _pendingActionResult = null;
+    // Get-Up defers its outcome narration to the dice CONTINUE (like the main action path), so the
+    // dice animation runs for the fixed Config.Dice duration instead of blocking on LLM generation.
+    // Set while the get-up dice animate; invoked once by OnDiceRollContinue.
+    private Func<Task>? _pendingGetUpOutcome = null;
     
     // _graph and _scene are mutable so the reminescence flow can swap them when transitioning
     // between consecutive reminescences without rebuilding the controller.
@@ -59,13 +63,82 @@ public class NarrativeController
     // ── Scene system (new backend, coexists with NarrationGraph) ──
     private Cathedral.Game.Scene.Scene? _scene;
     private PoV? _pov;
+
+    // Period-aware placement of the scene's NPCs into graph nodes; null on the pure-graph path.
+    private Cathedral.Game.Scene.SceneNpcPlacement? _npcPlacement;
     
     // Pending fight/dialogue transitions (set by OnDiceRollContinue, consumed by game controller)
-    private FightOutcome? _pendingFightOutcome = null;
-    private DialogueOutcome? _pendingDialogueOutcome = null;
+    private FightTriggerOutcome? _pendingFightOutcome = null;
+
+    /// <summary>
+    /// A fight that has been decided but not yet entered, waiting on the CONTINUE press that closes
+    /// the segment. <see cref="_pendingFightOutcome"/> is read by the game controller on the very next
+    /// tick, so anything written there switches mode before a frame is drawn — which is right for a
+    /// fight the player was dragged into and wrong for one they started, since the outcome chips
+    /// (what the first blow was, what it broke, what it taught) are the only account they get of the
+    /// swing and the fight screen paints over the narration that carries them.
+    /// </summary>
+    private FightTriggerOutcome? _deferredFightOutcome = null;
+    private DialogueTriggerOutcome? _pendingDialogueOutcome = null;
+
+    // Continuity context captured when a dialogue becomes pending and consumed by the next observation
+    // phase: the NPC talked to and the observation modus mentis that originated the dialogue's chain of
+    // thought (null when the dialogue had no such origin). See SetPendingDialogue / GenerateObservationsAsync.
+    private NpcEntity? _postDialogueNpc = null;
+    private ModusMentis? _postDialogueObservationMM = null;
+
+    // Records recordable successful verbs into a learned routine for this narration session.
+    // Non-null only for scene-backed Exploration narration.
+    private RoutineRecorder? _recorder = null;
     
-    // Random for dice rolls
-    private readonly Random _diceRandom = new Random();
+    // Random for dice rolls — the run-long shared stream, not a per-controller generator: a new
+    // NarrativeController is built for every narration phase, and a fresh Random on the same derived
+    // seed made the first roll of each phase repeat the previous phase's first roll.
+    private readonly Random _diceRandom = GameRng.Stream("dice");
+
+    // Unified dice-roll overlay (animation + humor modifiers + hit-testing).
+    private readonly DiceRollComponent _dice = new();
+
+    // In-flight roll (main path): the evaluation to narrate and the current (humor-modified) result.
+    // The actual outcome is generated only once the player presses the dice CONTINUE — see
+    // OnDiceRollContinue → GenerateOutcomePreviewAsync — so no narration is produced during the roll.
+    private ActionEvaluationResult? _pendingEval;
+    private bool _pendingSucceeded;
+    // Separator caption for the segment the post-action CONTINUE closes ("after trying to grab a
+    // rope"). Set when an in-place outcome shows the CONTINUE button; consumed by HandleContinueClicked.
+    private string? _pendingSegmentLabel;
+
+    /// <summary>
+    /// Whether the action that closed the current segment succeeded. Only a success refills noetic
+    /// points on the CONTINUE that follows — a failed attempt costs the point it spent and leaves the
+    /// player to think again with what is left, which is what makes a point worth spending at all.
+    /// Defaults true so every other path into a segment (a fight, a conversation, an area move)
+    /// refills as before.
+    /// </summary>
+    private bool _pendingSegmentSucceeded = true;
+
+    // ── Narration footer button (single button, three values) ────────────────────
+    // The one bottom button in narration. In normal exploration it is LEAVE (or RUNAWAY when a
+    // visible enemy/witness makes leaving risky) while idle, and CONTINUE while a succeeded action
+    // is pending progression (node/area transition). In the childhood-reminescence and get-up
+    // phases early exit is impossible, so it is only ever CONTINUE.
+    private enum ExitButtonKind { Leave, RunawayEnemy, RunawayWitness, Continue }
+    // Click region of the footer exit button as last rendered (Width == 0 ⇒ not shown this frame).
+    private (int X, int Y, int Width) _exitButtonRegion;
+    private bool _exitButtonHovered;
+    // Set while an exit-runaway dice roll is in flight, so the dice Continue click resolves the exit
+    // (via FinishExitRunaway) instead of the normal thinking-action OnDiceRollContinue.
+    private bool _exitRunawayPending;
+    private NpcEntity? _exitRunawayTarget;
+    private bool _exitRunawayIsEnemy;
+
+    // ── LLM generation preview box ───────────────────────────────────────────────
+    // Streams the text being generated over the greyed-out menu, gated by a CONTINUE button.
+    // Active from the first BeginPart until the last part's CONTINUE commits its block(s).
+    private readonly LlmPreviewSession _previewSession = new();
+    private (int X, int Y, int Width) _previewContinueRegion; // last-rendered CONTINUE region (Width 0 ⇒ none)
+    private bool _previewContinueHovered;
+    private string _lastPreviewText = ""; // last rendered preview text, to tick on change
 
     // Ambient music engine (optional — null when MIDI is unavailable)
     private readonly AmbianceEngine? _ambianceEngine;
@@ -76,14 +149,84 @@ public class NarrativeController
     // Fires a hover sound when the cursor enters a new interactive element.
     private void PlayHoverSound() => _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
 
+    // ── Dice-roll lifecycle helpers — wrap NarrationState calls + SFX cues. ───────
+    // Open: neutral sound. Resolve: positive/negative depending on success. Close: neutral.
+    private void NarrationDiceStart(int numberOfDice, int difficulty, PartyMember? humorMember = null,
+        string? subtitle = null, string difficultyVerb = "to hit")
+    {
+        _narrationState.StartDiceRoll(numberOfDice, difficulty);
+        _dice.Start(numberOfDice, difficulty, subtitle, difficultyVerb);
+        if (humorMember != null)
+        {
+            int limit = HumorModifierLimit(humorMember);
+            if (limit > 0) _dice.EnableHumorModifiers(humorMember.HumorQueues, limit);
+        }
+        _ambianceEngine?.TriggerGameEvent(GameEventType.NeutralOutcome);
+    }
+
+    private void NarrationDiceComplete(int[] finalValues)
+    {
+        _narrationState.CompleteDiceRoll(finalValues);
+        _dice.Complete(finalValues);
+        PlayDiceVerdictCue(_dice.IsCurrentlySuccess);
+    }
+
+    /// <summary>
+    /// Feedback for a settled roll: the PCM click, then the success/failure sting. The click is what
+    /// guarantees the reveal is heard at all — the stings are MIDI and go silent without an open
+    /// device, which is why a humor-modified result seemed to be the only one that made a sound (the
+    /// humor button plays its own click on the way).
+    /// </summary>
+    private void PlayDiceVerdictCue(bool success)
+    {
+        PlayClickSound();
+        _ambianceEngine?.TriggerGameEvent(success
+            ? GameEventType.PositiveOutcome : GameEventType.NegativeOutcome);
+    }
+
+    private void NarrationDiceClear()
+    {
+        bool wasActive = _narrationState.IsDiceRollActive;
+        _narrationState.ClearDiceRoll();
+        _dice.Hide();
+        if (wasActive)
+            _ambianceEngine?.TriggerGameEvent(GameEventType.NeutralOutcome);
+    }
+
+    /// <summary>Per-roll humor modifier budget from the viscera <c>humor_modifier_limit</c> stat.</summary>
+    private static int HumorModifierLimit(PartyMember member)
+        => member.DerivedStats.First(s => s.Name == "humor_modifier_limit").GetValue(member);
+
+    /// <summary>
+    /// Fired by the dice component when a humor modifier flips success↔failure. Records the new final
+    /// result (the outcome is generated later, on the dice CONTINUE) and replays the outcome cue.
+    /// </summary>
+    private void OnDiceOutcomeFlipped(bool nowSuccess)
+    {
+        _pendingSucceeded = nowSuccess;
+        _ambianceEngine?.TriggerGameEvent(nowSuccess
+            ? GameEventType.PositiveOutcome : GameEventType.NegativeOutcome);
+    }
+
     // Active party member (starts as protagonist, switches to companion after Speak About)
     private PartyMember _activePartyMember = null!;
     // Companion list parallel to the companion selection choice popup choices
-    private List<Companion> _pendingCompanions = new();
+    private List<PartyMember> _pendingCompanions = new();
     // Per-member noetic point counters — keyed by DisplayName.
     // Preserved across hand-offs so returning to a member keeps their remaining points.
     private readonly Dictionary<string, int> _memberNoeticPoints = new();
-    
+
+    // What has already been looked at in the current narration phase. Every observation request
+    // narrows its choice list by this, so a phase explores the scene instead of circling one object;
+    // it is cleared wherever the live text greys into history (see CloseNarrationSegment).
+    private readonly ObservationLedger _observationLedger = new();
+
+    // What the current narration phase has already put an action button on screen for. The thinking
+    // side of the same rule the ledger above applies to observations: every goal list narrows by it,
+    // so the points spent in one phase explore the scene instead of circling one action. Cleared in
+    // the same place, for the same reason (see CloseNarrationSegment).
+    private readonly ActionProposalLedger _proposalLedger = new();
+
     public NarrativeController(
         TerminalHUD terminal,
         PopupTerminalHUD popup,
@@ -96,7 +239,6 @@ public class NarrativeController
         NarrationGraphFactory? graphFactory = null,
         int locationId = 0,
         WorldContext? worldContext = null,
-        KeywordFallbackService? keywordFallbackService = null,
         Protagonist? existingProtagonist = null,
         AmbianceEngine? ambianceEngine = null)
     {
@@ -119,6 +261,10 @@ public class NarrativeController
         
         _ambianceEngine = ambianceEngine;
         _ui = new NarrativeUI(terminal);
+        _dice.OnDiceTick      = () => _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+        _dice.OnButtonHover   = PlayHoverSound;
+        _dice.OnButtonClick   = PlayClickSound;
+        _dice.OnResultChanged = OnDiceOutcomeFlipped;
         // Calculate content width dynamically: terminal width - margins - scrollbar
         var layout = new NarrativeLayout(
             terminal.Width, 
@@ -136,7 +282,12 @@ public class NarrativeController
         _terminalInputHandler = terminalInputHandler;
         _worldContext = worldContext ?? new PlainBiomeContext();
         _locationId = locationId;
-        
+
+        // Publish where this scene is, so every prompt's closing reminder can name it (a forest must
+        // not be furnished with town streets). Both constructors funnel through here, and every
+        // narration session builds a controller, so the ambient value cannot go stale behind a move.
+        SceneSetting.SetPlace(_worldContext.GenerateContextDescription(locationId));
+
         // Use the protagonist passed in by the caller (LocationTravelGameController owns the
         // run's protagonist across phases). Fall back to a fresh one only as a safety net for
         // legacy call sites.
@@ -150,18 +301,22 @@ public class NarrativeController
             _protagonist.InitializeMemory();
         }
         _activePartyMember = _protagonist;
-        
+
+        // Noetic points for a fresh node/reset come from the active member's encephalon
+        // (NoeticPointsStat), so a smarter mind gets more thinking attempts.
+        _narrationState.MaxNoeticPointsProvider = () => (_activePartyMember ?? _protagonist).MaxNoeticPoints;
+
         // Generate graph for this location using factory
         if (graphFactory == null)
             throw new ArgumentNullException(nameof(graphFactory), "NarrationGraphFactory is required - no fallback provided");
 
         _graph       = graphFactory.GenerateGraph(locationId);
         _currentNode = _graph.EntryNode;
-        Console.WriteLine($"NarrativeController: Generated graph for location {locationId} with entry node '{_currentNode.NodeId}' ({_graph.Npcs.Count} NPCs)");
+        Console.WriteLine($"NarrativeController: Generated graph for location {locationId} with entry node '{_currentNode.NodeId}' ({_graph.AllNodes.Count} nodes)");
         LlmMonitorDebugManager.Show();
         
         // Initialize controllers
-        _observationController = new ObservationPhaseController(llamaServer, slotManager, _worldContext, keywordFallbackService);
+        _observationController = new ObservationPhaseController(llamaServer, slotManager, _worldContext);
         _thinkingExecutor = thinkingExecutor;
         _actionExecutor = actionExecutor;
         
@@ -186,37 +341,24 @@ public class NarrativeController
         Cathedral.Game.Scene.Scene scene,
         int locationId,
         WorldContext? worldContext = null,
-        KeywordFallbackService? keywordFallbackService = null,
         Protagonist? existingProtagonist = null,
         AmbianceEngine? ambianceEngine = null)
         : this(terminal, popup, core, llamaServer, slotManager, terminalInputHandler,
                thinkingExecutor, actionExecutor,
                CreateGraphFactoryForScene(scene, locationId, existingProtagonist),
-               locationId, worldContext, keywordFallbackService, existingProtagonist,
+               locationId, worldContext, existingProtagonist,
                ambianceEngine)
     {
         _scene = scene;
+        _npcPlacement = new Cathedral.Game.Scene.SceneNpcPlacement(scene, _graph.AllNodes.Values);
 
-        // Build initial PoV from the first area
-        var firstArea = scene.AllAreas.FirstOrDefault();
+        // Build initial PoV from the area the graph opened on — the first the factory built, or the
+        // one --start-area names. Same helper, so PoV and entry node can never point at different rooms.
+        var firstArea = Cathedral.Game.Scene.SceneSyntheticGraphFactory.ResolveEntryArea(scene);
         if (firstArea != null)
         {
             _pov = new PoV(firstArea, TimePeriod.Morning);
             Console.WriteLine($"NarrativeController [Scene]: PoV at {firstArea.DisplayName}");
-        }
-
-        // When the scene is a special narration phase, swap the observation prompt
-        // constructor for the matching phase-specific variant. The base constructor
-        // already created a standard one; we replace it here after the chain returns.
-        if (scene.Phase == NarrationPhase.ChildhoodReminescence)
-        {
-            _observationController = new ObservationPhaseController(
-                llamaServer,
-                slotManager,
-                worldContext ?? new PlainBiomeContext(),
-                keywordFallbackService,
-                new Cathedral.Game.Narrative.Reminescence.ReminescenceObservationPromptConstructor());
-            Console.WriteLine("NarrativeController: swapped to ReminescenceObservationPromptConstructor");
         }
 
         // Show scene debug viewer alongside graph viewer
@@ -243,23 +385,97 @@ public class NarrativeController
     public PoV? CurrentPoV => _pov;
 
     /// <summary>
+    /// The shared text history for this narration session. Every text-bearing phase of the visit
+    /// writes into it — dialogue appends its lines live, fight/trade append their summaries — so the
+    /// player can scroll back through the whole visit. It is emptied only when a new session starts
+    /// (i.e. after world travel), since each session builds its own controller.
+    /// </summary>
+    public NarrationScrollBuffer ScrollBuffer => _scrollBuffer;
+
+    /// <summary>
+    /// Grey the current live text into history, closed by a labelled separator rule, and reset the
+    /// node state (which refills noetic points). The node, scene and PoV are left untouched, so
+    /// anything a phase added to the world — corpses from a fight, for instance — is still there.
+    /// Call this when LEAVING narration for another phase; no observation pass is started.
+    ///
+    /// <para>This is the phase boundary every return-to-narration path funnels through, so it is also
+    /// where the <see cref="ObservationLedger"/> is emptied: the scene becomes fully observable again,
+    /// even standing in the same place with the same point of view.</para>
+    /// </summary>
+    /// <param name="separatorLabel">Caption for the rule, naming the segment that follows.</param>
+    /// <param name="refillNoetic">
+    /// False keeps the counter where the closing segment left it. Passed by the one caller that
+    /// closes on a <b>failed</b> action: refilling there meant a miss cost nothing, since the very
+    /// next CONTINUE handed the whole budget back. Every other boundary refills.
+    /// </param>
+    public void CloseNarrationSegment(string? separatorLabel = null, bool refillNoetic = true)
+    {
+        int kept = _narrationState.ThinkingAttemptsRemaining;
+        _scrollBuffer.ConvertToHistory(separatorLabel);
+        _narrationState.ResetForNewNode();
+        if (!refillNoetic) _narrationState.ThinkingAttemptsRemaining = kept;
+        _observationLedger.Clear();
+        _proposalLedger.Clear();
+        _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+    }
+
+    /// <summary>
+    /// <see cref="CloseNarrationSegment"/> followed by a fresh observation pass in the SAME node and
+    /// scene. Call this when RETURNING to narration from another phase (or on a node transition,
+    /// where the caller reassigns <c>_currentNode</c> first): the player gets full noetic points and
+    /// narration that describes the scene as it now stands.
+    /// </summary>
+    public void BeginNarrationSegment(string? separatorLabel = null, bool refillNoetic = true)
+    {
+        CloseNarrationSegment(separatorLabel, refillNoetic);
+        StartObservationPhaseWithHistory(refillNoetic);
+    }
+
+    /// <summary>
+    /// Append a one-line note from a non-narration phase (e.g. a trade summary) to the shared
+    /// history, so the phase leaves a trace in the log.
+    /// </summary>
+    public void AppendPhaseNote(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return;
+        _scrollBuffer.AddBlock(new NarrationBlock(
+            Type: NarrationBlockType.Outcome,
+            ModusMentis: null!,
+            Text: text,
+            Keywords: null,
+            Actions: null));
+        _scrollBuffer.ScrollToBottom();
+        _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+    }
+
+    /// <summary>
     /// Start the observation phase (generates observations asynchronously).
     /// This clears all history - use for initial start only.
     /// </summary>
-    public void StartObservationPhase()
+    public void StartObservationPhase(TimePeriod? forcedPeriod = null)
     {
         _narrationState.Clear();
         _scrollBuffer.Clear();
         _activePartyMember = _protagonist;
         _memberNoeticPoints.Clear();
-        
-        // Place NPCs into nodes based on a randomly selected time period
-        var period = TimePeriodExtensions.Random(_diceRandom);
-        _graph.TimeUpdate(period);
+        _observationLedger.Clear();
+        // New session — drop any stale post-dialogue continuity context.
+        _postDialogueNpc = null;
+        _postDialogueObservationMM = null;
+
+        // Place NPCs into nodes based on the supplied time period, or a random one when none is given.
+        // --period pins it for the whole run: several rules (every entry door shutting at night) only
+        // fire in one period, and a random draw reaches that one visit in six.
+        var period = forcedPeriod ?? Config.Debug.ForcedPeriod ?? TimePeriodExtensions.Random(_diceRandom);
+        ApplyTimePeriod(period);
         Console.WriteLine($"NarrativeController: Time period is {period}");
 
+        // Begin recording a routine for scene-backed Exploration sessions (other phases opt out).
+        if (_scene != null && _scene.Phase == NarrationPhase.Exploration)
+            _recorder = new RoutineRecorder(_protagonist, _locationId, period);
+
         _narrationState.IsLoadingObservations = true;
-        _narrationState.LoadingMessage = Config.LoadingMessages.GeneratingObservations;
+        _narrationState.LoadingMessage = ObservationLoadingMessage();
 
         // Fire-and-forget async task
         _ = GenerateObservationsAsync();
@@ -268,21 +484,82 @@ public class NarrativeController
     }
     
     /// <summary>
-    /// Start the observation phase while preserving scroll buffer history.
-    /// Used when transitioning to a new node after a successful action.
+    /// Initializes a scene-backed session enough to open a sub-phase (dialogue / trade / work)
+    /// directly, WITHOUT running an observation pass. Used by the routine-replay bridge, where a
+    /// recorded routine jumps straight into the dialogue (or its baked-in follow-on phase) it ended
+    /// on. Places NPCs for the period so the target is present, and arms a recorder so anything the
+    /// player does after the sub-phase is still recordable — exactly like a normal visit, minus the
+    /// opening narration.
+    ///
+    /// <para><paramref name="startAreaLemma"/> is where the headless replay ended. It is not
+    /// cosmetic: the scene is rebuilt here, so without it the point of view sits on the location's
+    /// default opening area and everything after the sub-phase happens there — a routine that walked
+    /// into a forge to trade put the player back in the village square the moment the trade menu
+    /// closed. Set BEFORE <see cref="ApplyTimePeriod"/>, which places NPCs and re-gates every verb
+    /// against the point of view.</para>
     /// </summary>
-    private void StartObservationPhaseWithHistory()
+    public void PrepareForRoutineSubPhase(TimePeriod period, string? startAreaKey = null)
     {
-        // Note: ResetForNewNode() should already be called before this
+        _narrationState.Clear();
+        _scrollBuffer.Clear();
         _activePartyMember = _protagonist;
-        _memberNoeticPoints.Clear(); // New node — everyone starts with a fresh counter
-        // Re-apply the current time period so new node gets its NPCs placed
-        _graph.TimeUpdate(_graph.CurrentPeriod);
-        
+        _memberNoeticPoints.Clear();
+        _observationLedger.Clear();
+        _proposalLedger.Clear();
+        _postDialogueNpc = null;
+        _postDialogueObservationMM = null;
+
+        MovePointOfViewToArea(startAreaKey);
+        ApplyTimePeriod(period);
+        Console.WriteLine($"NarrativeController: routine sub-phase prepared at period {period}"
+                        + $", area '{_pov?.Where.DisplayName ?? "-"}'");
+
+        if (_scene != null && _scene.Phase == NarrationPhase.Exploration)
+            _recorder = new RoutineRecorder(_protagonist, _locationId, period);
+    }
+
+    /// <summary>
+    /// Start the observation phase while preserving scroll buffer history.
+    /// Always reached through <see cref="BeginNarrationSegment"/>, which performs the required
+    /// grey-into-history + node reset first.
+    /// <para>
+    /// <b>The active member carries across the segment boundary.</b> Speak About hands the narration
+    /// to a companion, and the hand-off has to survive the action that follows it — resetting to the
+    /// protagonist here took the narration straight back the moment the companion's own action
+    /// resolved. This is the same visit continuing (an action, a fight, a conversation, a move to
+    /// another area); a genuinely fresh session goes through <see cref="StartObservationPhase"/>,
+    /// which still opens on the protagonist.
+    /// </para>
+    /// </summary>
+    private void StartObservationPhaseWithHistory(bool refillNoetic = true)
+    {
+        // The one case the hand-off cannot survive: a companion who has left the party since (dead of
+        // old age, or dropped over the party cap). There is no one to narrate as, so the protagonist
+        // takes over.
+        if (_activePartyMember != _protagonist && !_protagonist.CompanionParty.Contains(_activePartyMember))
+        {
+            Console.WriteLine($"NarrativeController: active member '{_activePartyMember.DisplayName}' is no longer in the party — narration returns to the protagonist");
+            _activePartyMember = _protagonist;
+        }
+
+        if (refillNoetic)
+        {
+            _memberNoeticPoints.Clear(); // New node — everyone starts with a fresh counter
+            // ResetForNewNode refilled the counter already, but from whoever was active when the
+            // segment closed; restate it from the member who will actually act, since their maxima
+            // differ. A segment closed by a FAILED action refills nothing: the counter (and every
+            // companion's saved counter) carries straight over.
+            _narrationState.ThinkingAttemptsRemaining = _activePartyMember.MaxNoeticPoints;
+        }
+        // Re-apply the current time period so this segment's nodes get their NPCs (re)placed and
+        // their state-dependent verbs re-expanded (affinity above all: "introduce myself" is for
+        // strangers only, and a dialogue may just have changed that).
+        ApplyTimePeriod(_graph.CurrentPeriod);
+
         // Just set loading state and start generation
         _narrationState.IsLoadingObservations = true;
-        _narrationState.LoadingMessage = Config.LoadingMessages.GeneratingObservations;
-        
+        _narrationState.LoadingMessage = ObservationLoadingMessage();
+
         Console.WriteLine($"NarrativeController: Started observation phase (with history preserved)");
         Console.WriteLine($"  History lines: {_scrollBuffer.HistoryLineCount}");
         Console.WriteLine($"  Total lines: {_scrollBuffer.TotalLines}");
@@ -291,7 +568,124 @@ public class NarrativeController
         // Fire-and-forget async task
         _ = GenerateObservationsAsync();
     }
-    
+
+    /// <summary>
+    /// Applies a time period to the scene-backed graph: records it on the graph <b>and on the PoV</b>,
+    /// repositions the scene's NPCs into the nodes where their schedule places them for that period
+    /// (via <see cref="SceneNpcPlacement"/>), then re-expands every observation's verbs against the
+    /// now-current state. NPC placement and verb gating therefore always share one period — the
+    /// source of the earlier "NPCs at the wrong place / no actions offered" bug was letting them
+    /// diverge.
+    ///
+    /// <para>This is the <b>single writer</b> of the period. <c>NarrationGraph.CurrentPeriod</c> and
+    /// <c>PoV.When</c> are two views of one fact — node placement reads the first, every verb's
+    /// <c>IsPossible</c> reads the second — so nothing else may set either. A verb that shifts time
+    /// returns a <c>TimeShiftOutcome</c>; <see cref="CommitOutcomeResult"/> notices the PoV change
+    /// once reports have applied and routes it back through here.</para>
+    /// </summary>
+    private void ApplyTimePeriod(TimePeriod period)
+    {
+        _graph.SetCurrentPeriod(period);
+        if (_pov != null) _pov.When = period;
+        _npcPlacement?.PlaceForPeriod(period);
+        RefreshSceneVerbs();
+    }
+
+    /// <summary>
+    /// Re-expands the verb SubOutcomes of every scene-backed observation (NPCs, PoIs + their items,
+    /// spots — everything <see cref="IVerbRefreshable"/>; areas keep their static transition verb)
+    /// against the current scene state, at the graph's current period. Called on each period change
+    /// (through <see cref="ApplyTimePeriod"/>) and before each thinking request, so the offered
+    /// goals always reflect the world — and the NPCs actually present — as they now stand.
+    /// </summary>
+    /// <summary>
+    /// The graph node standing for <paramref name="area"/>, matched on area identity.
+    ///
+    /// <para>This used to re-derive the node's id from the area's display name. That silently picked
+    /// the wrong node once a location held two rooms with the same name — which every multi-building
+    /// location does, since each building has its own hall and bedrooms — landing the player in
+    /// another building's room. Node ids stay human-readable for logs; routing goes by identity.</para>
+    /// </summary>
+    private NarrationNode? NodeForArea(Cathedral.Game.Scene.Area area)
+        => _graph.AllNodes.Values.FirstOrDefault(
+            n => n is SyntheticNarrationNode { Area: { } a } && a.Id == area.Id);
+
+    private void RefreshSceneVerbs()
+    {
+        if (_scene == null) return;
+
+        foreach (var node in _graph.AllNodes.Values)
+        {
+            if (node is not SyntheticNarrationNode { Area: { } area } synthetic) continue;
+            SyncSpawnedObservations(synthetic, area);
+            // Gate at the live period. NPCs were placed into this node by SceneNpcPlacement using
+            // the same Scene.GetNpcsAt query the verb gates use, so a present NPC's verbs always
+            // survive here, and an absent one simply has no observation object to refresh.
+            var pov = new PoV(area, _graph.CurrentPeriod);
+            foreach (var outcome in node.PossibleOutcomes)
+            {
+                // Stamp before refreshing: an observation whose text depends on the time (a door
+                // saying whether it looks locked) must describe the same period its verbs were gated
+                // at, or the player reads "seems open" and is offered UNLOCK.
+                (outcome as IPeriodStampable)?.StampPeriod(_graph.CurrentPeriod);
+                // Gated against the member who will actually act, not the protagonist: after a
+                // Speak-About hand-off that is a companion, and a beast companion must not be offered
+                // the verbs its body cannot perform (every dialogue verb, everything needing hands).
+                if (outcome is IVerbRefreshable refreshable)
+                    refreshable.RefreshVerbs(_scene, pov, _activePartyMember);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Reconciles a node's point-of-interest observations with the PoIs its area actually holds: adds
+    /// one for a PoI that has none, drops one whose PoI has left the area.
+    ///
+    /// <para>The narration graph is built once, at scene creation, from the areas as the factory left
+    /// them — so anything the game <i>spawns</i> during play has no observation object, and an object
+    /// with no observation object cannot be looked at or acted on however correct it is in
+    /// <c>area.PointsOfInterest</c>. That is what made a corpse unreachable: the body was in the area
+    /// and in the scene's element table, right in every respect except the one that shows it to the
+    /// player.</para>
+    ///
+    /// <para>Verbs are left to the caller's refresh loop, which runs over <c>PossibleOutcomes</c>
+    /// straight after this and expands the new object at the live period like any other.</para>
+    /// </summary>
+    private void SyncSpawnedObservations(SyntheticNarrationNode node, Cathedral.Game.Scene.Area area)
+    {
+        node.PossibleOutcomes.RemoveAll(
+            o => o is SyntheticObservationObject obs && !area.PointsOfInterest.Contains(obs.PointOfInterest));
+
+        var present = node.PossibleOutcomes
+            .OfType<SyntheticObservationObject>()
+            .Select(o => o.PointOfInterest)
+            .ToHashSet();
+
+        foreach (var poi in area.PointsOfInterest)
+        {
+            if (present.Contains(poi)) continue;
+
+            // Empty verb lists: the refresh pass that follows expands the real ones, for the PoI and
+            // for every item in it, at the period actually in force.
+            var entry = new SceneViewEntry(poi, new List<VerbAction>());
+            var itemEntries = poi.Items
+                .Select(ie => new SceneViewEntry(ie, new List<VerbAction>()))
+                .ToList();
+
+            node.PossibleOutcomes.Add(new SyntheticObservationObject(poi, entry, itemEntries, area));
+            Console.WriteLine($"NarrativeController: '{poi.DisplayName}' added to node '{node.NodeId}'");
+        }
+    }
+
+    /// <summary>
+    /// The footer message for an observation wait. The childhood phase runs the same code, but there
+    /// are no surroundings there and the narration says a memory surfaces — so it says so too.
+    /// </summary>
+    private string ObservationLoadingMessage()
+        => _scene?.Phase == NarrationPhase.ChildhoodReminescence
+            ? Config.LoadingMessages.Remembering
+            : Config.LoadingMessages.GeneratingObservations;
+
     /// <summary>
     /// Generate observations from selected modiMentis (async).
     /// </summary>
@@ -300,66 +694,310 @@ public class NarrativeController
         try
         {
             Console.WriteLine("NarrativeController: Calling ObservationPhaseController...");
-            
-            // Generate ONE overall observation (one sentence per sampled outcome)
-            var blocks = await _observationController.ExecuteObservationPhaseAsync(
-                _currentNode,
-                _protagonist
-            );
-            
-            Console.WriteLine($"NarrativeController: Generated {blocks.Count} observation blocks");
-            
-            // Add blocks to scroll buffer
-            foreach (var block in blocks)
+
+            _previewSession.Reset();
+
+            // Deferred commit: the generated block(s) are appended to the buffer only when the player
+            // presses CONTINUE on the last preview part (see FinalizePreview). Playing the reveal sound
+            // and scrolling ride along at commit time so the reveal matches the button press.
+            void CommitObservation(List<NarrationBlock> blocks)
             {
-                _scrollBuffer.AddBlock(block);
-                _narrationState.AddBlock(block);
+                Console.WriteLine($"NarrativeController: Committing {blocks.Count} observation blocks");
+                foreach (var block in blocks)
+                {
+                    _scrollBuffer.AddBlock(block);
+                    _narrationState.AddBlock(block);
+                }
+                _ambianceEngine?.PlaySoundEffect(SoundEffectType.NarrativeReveal);
+                _scrollBuffer.ScrollToBottom();
+                _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
             }
-            _ambianceEngine?.PlaySoundEffect(SoundEffectType.NarrativeReveal);
-            
-            // Scroll to show the new observation at the bottom of the view
-            _scrollBuffer.ScrollToBottom();
-            _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
-            
-            // Update state
+
+            // If a dialogue just ended, open this phase with a single observation of that NPC, narrated by
+            // the observation modus mentis that originated the dialogue (see GeneratePostDialogueObservationAsync).
+            // The context is consumed once; if the NPC has left the scene we fall through to the normal phase.
+            var postDialogueNpc = _postDialogueNpc;
+            var postDialogueMM  = _postDialogueObservationMM;
+            _postDialogueNpc = null;
+            _postDialogueObservationMM = null;
+
+            // Arrival-first: somebody who heard a failed action and has just walked in opens the
+            // phase. Ahead of the corpse opener — both are one-shot events, but an arrival is the
+            // newest of them and the one that has just changed what the player may safely do next
+            // (they are a Visual presence now, so the exit is a RUNAWAY roll). Drained whether or not
+            // it is used, like the corpse list, so a stale arrival cannot open a phase two moves on.
+            var arrivals = _scene?.PendingArrivalObservations.ToList() ?? new List<SceneNpc>();
+            _scene?.PendingArrivalObservations.Clear();
+
+            bool handled = arrivals.Count > 0
+                        && await TryGenerateArrivalObservationAsync(arrivals, CommitObservation);
+
+            // Corpse-next: bodies made since the last phase. Ahead of the threat opener because a
+            // corpse is a one-shot event consumed right here, while an enemy still standing will lead
+            // the next phase — and the one after — anyway. The list is drained whether or not it is
+            // used, so a body left in another area cannot open a phase two moves later.
+            var corpses = _scene?.PendingCorpseObservations.ToList()
+                          ?? new List<Cathedral.Game.Npc.Corpse.CorpsePointOfInterest>();
+            _scene?.PendingCorpseObservations.Clear();
+
+            if (!handled)
+                handled = corpses.Count > 0
+                       && await TryGenerateCorpseObservationAsync(corpses, CommitObservation);
+
+            // Threat-first: a same-area (visual) enemy opens the phase with a forced, caution-flavoured
+            // observation of that enemy — the same condition that turns the exit button into RUNAWAY.
+            // This takes precedence over post-dialogue continuity.
+            if (!handled)
+                handled = await TryGenerateThreatObservationAsync(CommitObservation);
+
+            // Otherwise, if a dialogue just ended, open with a single observation of that NPC.
+            if (!handled)
+                handled = postDialogueNpc != null
+                    && await TryGeneratePostDialogueObservationAsync(postDialogueNpc, postDialogueMM, CommitObservation);
+
+            if (!handled)
+            {
+                // Generate ONE overall observation (one sentence per sampled outcome), streamed into the box.
+                await _observationController.ExecuteObservationPhaseAsync(
+                    _currentNode,
+                    _activePartyMember,
+                    _protagonist.CurrentLocationId,
+                    isReminescence: _scene?.Phase == NarrationPhase.ChildhoodReminescence,
+                    ledger: _observationLedger,
+                    preview: _previewSession,
+                    commit: CommitObservation
+                );
+            }
+
+            // Generation is done; the box now waits for CONTINUE. Clearing the loading flag lets the
+            // CLI settle (idle) so a test can drive the CONTINUE clicks.
             _narrationState.IsLoadingObservations = false;
             _narrationState.ErrorMessage = null;
-            
+
             Console.WriteLine("NarrativeController: Observation phase complete");
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"NarrativeController: Error generating observations: {ex.Message}");
-            Console.Error.WriteLine(ex.StackTrace);
-            
+            _previewSession.Reset();
             _narrationState.IsLoadingObservations = false;
-            _narrationState.ErrorMessage = $"Failed to generate observations: {ex.Message}";
+            _narrationState.ErrorMessage = ReportPhaseFailure("generating observations", ex);
         }
     }
-    
+
     /// <summary>
-    /// Execute thinking phase with selected modusMentis and keyword (async).
+    /// The one way a narration phase reports that it could not finish: writes a full crash report,
+    /// preserves the run's log under a name the next launch will not overwrite, and returns the text
+    /// to show the player.
+    ///
+    /// <para><b>The phase stays dead on purpose.</b> There is no retry and no way to continue —
+    /// <see cref="Render"/> draws this message and nothing else, leaving Escape (the pause menu, and
+    /// so the way out) as the only input. A run that could be resumed is a run the player will
+    /// resume, and then <c>log.txt</c> grows for another hour, the failure ends up buried in the
+    /// middle of it, and the next launch truncates it entirely. Stopping is what produces a report
+    /// worth reading.</para>
+    ///
+    /// <para>The message names the preserved file, because a bug report without it costs a round
+    /// trip and usually the log as well.</para>
     /// </summary>
-    private async Task ExecuteThinkingPhaseAsync(ModusMentis thinkingModusMentis, string keyword)
+    private string ReportPhaseFailure(string what, Exception ex)
     {
-        // Get the source observation block from the hovered keyword (for modusMentis chain tracking)
-        var sourceObservationBlock = _narrationState.HoveredKeyword?.SourceBlock;
+        string? crashLog = CrashReport.Capture(what, ex);
+
+        // Ordered by what the player needs, because ShowError truncates at the separator line and a
+        // long exception message would otherwise push the one actionable sentence off the screen.
+        var message = $"Something went wrong while {what}. This is a bug, not something you did.";
+        if (crashLog != null)
+            message += $"\n\nPlease send '{crashLog}' from the game's folder to the developer. It holds everything needed to diagnose this.";
+        else if (GameLog.IsOpen)
+            // The copy failed, or this is the fourth failure this run. The live log still has every
+            // report in it — it just will not survive the next launch, so say so.
+            message += $"\n\nPlease send '{GameLog.FileName}' from the game's folder to the developer BEFORE starting the game again — the next launch replaces it.";
+        else
+            message += "\n\nThe game could not write its log (is its folder read-only?), so there is nothing to send. Please describe what you were doing when this happened.";
+        message += "\n\nPress Escape for the menu.";
+        message += $"\n\n{ex.GetType().Name}: {ex.Message}";
+        return message;
+    }
+
+    /// <summary>
+    /// Runs the post-dialogue continuity observation when possible: resolves <paramref name="npc"/> to
+    /// an observable object in the current node and, if it is still there, generates a single observation
+    /// of it via <see cref="ObservationPhaseController.GeneratePostDialogueObservationAsync"/> (which reuses
+    /// <paramref name="originMM"/> when still learned, else resamples). Returns false — so the caller runs
+    /// the normal phase — when the NPC has left the scene or nothing was produced.
+    /// </summary>
+    /// <summary>
+    /// Runs the under-threat opener when a same-area (visual) enemy is present: resolves the threat to
+    /// an observable object in the current node and, if found, leads the phase with a single
+    /// caution-flavoured observation of it via
+    /// <see cref="ObservationPhaseController.GenerateThreatObservationAsync"/>. Returns false — so the
+    /// caller falls through to post-dialogue / normal observation — when there is no visual threat, it
+    /// has no observation object, or nothing was produced. The threat condition mirrors
+    /// <see cref="ComputeExitContext"/> (the RUNAWAY trigger).
+    /// </summary>
+    private async Task<bool> TryGenerateThreatObservationAsync(Action<List<NarrationBlock>> commit)
+    {
+        if (_scene == null || _pov == null || _protagonist == null) return false;
+
+        var threat = ThreatSelector.ComputeContext(_scene, _pov, _protagonist);
+        if (threat.Level != ThreatLevel.Visual || threat.Threat == null) return false;
+
+        var threatOutcome = _currentNode.GetAllDirectConcreteOutcomes()
+            .OfType<SyntheticNpcObservationObject>()
+            .FirstOrDefault(o => ReferenceEquals(o.NpcEntity, threat.Threat));
+        if (threatOutcome == null)
+        {
+            Console.WriteLine($"NarrativeController: Visual threat '{threat.Threat.DisplayName}' has no observation object — normal observation.");
+            return false;
+        }
+
+        var blocks = await _observationController.GenerateThreatObservationAsync(
+            threatOutcome, _protagonist.CurrentLocationId, _activePartyMember,
+            ledger: _observationLedger, preview: _previewSession, commit: commit);
+        return blocks.Count > 0;
+    }
+
+    /// <summary>
+    /// Runs the arrival opener: somebody heard a failed action from the next room and has walked in,
+    /// so the phase opens on them and nothing else. Reuses the threat opener's caution-flavoured
+    /// generation — the feeling is the same one, and an arrival is very often a threat by the time it
+    /// finishes crossing the room.
+    ///
+    /// <para>Only arrivals still standing in the current area are narrated: the player may have moved
+    /// on between the failure and this phase, and announcing a person who came to a room nobody is in
+    /// would read as somebody materialising. Returns false when nothing was left to narrate, so the
+    /// caller falls through to the corpse / threat / normal openers.</para>
+    /// </summary>
+    private async Task<bool> TryGenerateArrivalObservationAsync(
+        List<SceneNpc> arrivals, Action<List<NarrationBlock>> commit)
+    {
+        if (_scene == null || _pov == null || _protagonist == null) return false;
+
+        foreach (var arrival in arrivals)
+        {
+            if (!arrival.IsAlive) continue;
+            if (_scene.GetAreaOf(arrival, _pov.When)?.Id != _pov.Where.Id) continue;
+
+            var outcome = _currentNode.GetAllDirectConcreteOutcomes()
+                .OfType<SyntheticNpcObservationObject>()
+                .FirstOrDefault(o => ReferenceEquals(o.NpcEntity, arrival.Entity));
+            if (outcome == null)
+            {
+                Console.WriteLine($"NarrativeController: arriving '{arrival.Entity.DisplayName}' has no observation object — normal observation.");
+                continue;
+            }
+
+            var blocks = await _observationController.GenerateThreatObservationAsync(
+                outcome, _protagonist.CurrentLocationId, _activePartyMember,
+                ledger: _observationLedger, preview: _previewSession, commit: commit);
+            if (blocks.Count > 0) return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Runs the corpse opener: resolves each spawned corpse to its observation object in the current
+    /// node and, for those still here, opens the phase by observing them and only them (see
+    /// <see cref="ObservationPhaseController.GenerateCorpseObservationAsync"/>). Returns false — so the
+    /// caller falls through to the threat / post-dialogue / normal openers — when none of the bodies is
+    /// in this node, which is the case whenever the kill happened somewhere the player has since left.
+    /// </summary>
+    private async Task<bool> TryGenerateCorpseObservationAsync(
+        List<Cathedral.Game.Npc.Corpse.CorpsePointOfInterest> corpses, Action<List<NarrationBlock>> commit)
+    {
+        var nodeOutcomes = _currentNode.GetAllDirectConcreteOutcomes()
+            .OfType<SyntheticObservationObject>()
+            .ToList();
+
+        // Node order is irrelevant here — the bodies are narrated in the order they fell.
+        var corpseOutcomes = corpses
+            .Select(c => nodeOutcomes.FirstOrDefault(o => ReferenceEquals(o.PointOfInterest, c)))
+            .Where(o => o != null)
+            .Select(o => (NarrativeAnchor)o!)
+            .ToList();
+
+        if (corpseOutcomes.Count == 0)
+        {
+            Console.WriteLine("NarrativeController: no spawned corpse is observable in this node — normal observation.");
+            return false;
+        }
+
+        var blocks = await _observationController.GenerateCorpseObservationAsync(
+            corpseOutcomes, _protagonist.CurrentLocationId, _activePartyMember,
+            ledger: _observationLedger, preview: _previewSession, commit: commit);
+        return blocks.Count > 0;
+    }
+
+    private async Task<bool> TryGeneratePostDialogueObservationAsync(
+        NpcEntity npc, ModusMentis? originMM, Action<List<NarrationBlock>> commit)
+    {
+        var npcOutcome = _currentNode.GetAllDirectConcreteOutcomes()
+            .OfType<SyntheticNpcObservationObject>()
+            .FirstOrDefault(o => ReferenceEquals(o.NpcEntity, npc));
+        if (npcOutcome == null)
+        {
+            Console.WriteLine($"NarrativeController: Post-dialogue NPC '{npc.DisplayName}' left the scene — normal observation.");
+            return false;
+        }
+
+        var blocks = await _observationController.GeneratePostDialogueObservationAsync(
+            npcOutcome, originMM, _protagonist.CurrentLocationId, _activePartyMember,
+            ledger: _observationLedger, preview: _previewSession, commit: commit);
+        return blocks.Count > 0;
+    }
+
+    /// <summary>
+    /// Records a pending dialogue and captures the continuity context for the observation phase that will
+    /// follow it: the NPC being talked to, and the observation modus mentis that originated this chain of
+    /// thought (traced back through <paramref name="chainOrigin"/>; null for dialogues that did not come
+    /// from an observation→thinking→action chain, e.g. a caught-red-handed confrontation).
+    /// </summary>
+    private void SetPendingDialogue(DialogueTriggerOutcome outcome, ModusMentisChainElement? chainOrigin)
+    {
+        _pendingDialogueOutcome    = outcome;
+        _postDialogueNpc           = outcome.Target;
+        _postDialogueObservationMM = TraceObservationModusMentis(chainOrigin);
+    }
+
+    /// <summary>
+    /// Walks the modus-mentis chain back to its observation root and returns that observation's modus
+    /// mentis, or null if the chain has no observation origin.
+    /// </summary>
+    private static ModusMentis? TraceObservationModusMentis(ModusMentisChainElement? element)
+    {
+        for (var current = element; current != null; current = current.ChainOrigin)
+            if (current is NarrationBlock { Type: NarrationBlockType.Observation } observation)
+                return observation.ModusMentis;
+        return null;
+    }
+
+    /// <summary>
+    /// Execute thinking phase for the clicked keyword occurrence (async). Takes the region rather
+    /// than the word: the region is what knows which occurrence was clicked, and therefore which
+    /// object it acts on when two sentences of a block use the same word.
+    /// </summary>
+    private async Task ExecuteThinkingPhaseAsync(ModusMentis thinkingModusMentis, KeywordRegion keywordRegion)
+    {
+        string keyword = keywordRegion.Keyword;
+        // Source observation block, for modusMentis chain tracking
+        var sourceObservationBlock = keywordRegion.SourceBlock;
 
         try
         {
             Console.WriteLine($"NarrativeController: Executing thinking with {thinkingModusMentis.DisplayName} on keyword '{keyword}'");
 
-            // Resolve the outcome linked to the clicked keyword via KeywordOutcomeMap or LinkedOutcome
-            ConcreteOutcome? targetOutcome = null;
-            if (sourceObservationBlock?.KeywordOutcomeMap?.TryGetValue(keyword, out var kmo) == true)
-                targetOutcome = kmo;
-            else
-                targetOutcome = sourceObservationBlock?.LinkedOutcome;
+            _previewSession.Reset();
 
+            var targetOutcome = keywordRegion.ResolvedAnchor;
             if (targetOutcome == null)
             {
                 throw new Exception($"No outcome found for keyword '{keyword}'");
             }
+
+            // Verb gates read mutable world state (affinity, item presence, …) — re-expand every
+            // scene verb list right before the goal choice so it can only offer what is possible NOW.
+            RefreshSceneVerbs();
 
             // Get action modiMentis from the active party member.
             // In the childhood reminescence phase REMEMBER may only be performed with the
@@ -383,7 +1021,18 @@ public class NarrativeController
                 actionModiMentis,
                 _protagonist,
                 _worldContext,
-                CancellationToken.None);
+                _locationId,
+                _activePartyMember,
+                // The scene and PoV are what the coded choice rules judge from: they decide whether a
+                // goal on offer is a crime, which decides what this mind is shown.
+                _scene,
+                _pov,
+                isReminescence: _scene?.Phase == NarrationPhase.ChildhoodReminescence,
+                autoSuccess: _scene?.Phase == NarrationPhase.ChildhoodReminescence
+                             || _scene?.Phase == NarrationPhase.GetUp,
+                preview: _previewSession,
+                proposed: _proposalLedger,
+                cancellationToken: CancellationToken.None);
 
             if (response == null)
             {
@@ -412,48 +1061,69 @@ public class NarrativeController
                 action.ChainOrigin = thinkingBlock;
             }
 
-            // Pre-compute difficulty for each action while still in loading state.
-            // Reminescence actions (REMEMBER) skip the critic LLM call entirely — they are
-            // automatic-success and rendered with the '○' glyph (no numeric difficulty).
-            if (response.Actions.Count > 0)
+            // Difficulty is now computed inside ThinkingExecutor from the persona-fit answer
+            // (verb base ± eager/willing/unsure modifier), so each action already carries its
+            // DifficultyLevel. Auto-success phases (reminescence / get-up) carry difficulty 0 (○ glyph).
+
+            // Persona-fit cancellation: the action skill refused (reluctant/opposed). Show the
+            // first-person refusal as an outcome block; no action button is offered. The noetic
+            // point is still consumed below via the normal thinking-complete decrement.
+            NarrationBlock? refusalBlock = null;
+            if (!hasActions && response.RefusalText != null && response.RefusalModusMentis != null)
             {
-                bool isReminescence = _scene != null && _scene.Phase == NarrationPhase.ChildhoodReminescence;
-                if (!isReminescence)
-                {
-                    _narrationState.LoadingMessage = Config.LoadingMessages.EvaluatingDifficulty;
-                    foreach (var act in response.Actions)
-                    {
-                        var criticContext = new CriticContext(
-                            _currentNode, _worldContext, _locationId,
-                            act.PreselectedOutcome?.ToNaturalLanguageString() ?? "");
-                        var difficultyTree = CriticTrees.BuildDifficultyTree(act.ActionText, criticContext);
-                        var difficultyResult = await _actionExecutor.CriticEvaluator.EvaluateTreeAsync(difficultyTree);
-                        act.DifficultyLevel = CriticTrees.CalculateFinalDifficulty(act.Verb, difficultyResult);
-                        Console.WriteLine($"NarrativeController: Pre-computed difficulty for '{act.DisplayText}': {act.DifficultyLevel}/10");
-                    }
-                }
-                else
-                {
-                    foreach (var act in response.Actions)
-                    {
-                        act.DifficultyLevel = 0;
-                        Console.WriteLine($"NarrativeController: Reminescence action '{act.DisplayText}' — auto-success, ○ glyph");
-                    }
-                }
+                refusalBlock = new NarrationBlock(
+                    Type: NarrationBlockType.Outcome,
+                    ModusMentis: response.RefusalModusMentis,
+                    Text: response.RefusalText,
+                    Keywords: null,
+                    Actions: null);
+                Console.WriteLine("NarrativeController: VerbAction refused by persona-fit — refusal narrated, no button.");
             }
-            
-            // Add to scroll buffer
-            _scrollBuffer.AddBlock(thinkingBlock);
-            _narrationState.AddBlock(thinkingBlock);
-            _ambianceEngine?.PlaySoundEffect(SoundEffectType.NarrativeReveal);
-            
-            // Auto-scroll to bottom to show new thinking block
-            _scrollBuffer.ScrollToBottom();
-            _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset; // Sync scroll position
-            
-            // Update state
+
+            // Deferred commit: the thinking block (and refusal, and its action button) become visible
+            // only when the player presses CONTINUE on the last preview part. Reveal sound + scroll ride
+            // along at commit time so they match the button press.
+            void CommitThinking()
+            {
+                // An action is "proposed" the moment its button is on screen, which is here — so this
+                // is where the phase records it and stops offering it again. A goal the action modus
+                // mentis refused reaches no button and is deliberately not recorded: the refusal was
+                // that mind's, and asking again with another one is the move that should work.
+                foreach (var proposedAction in response.Actions)
+                    if (proposedAction.PreselectedOutcome is VerbAction proposedVerb)
+                        _proposalLedger.Propose(proposedVerb);
+
+                _scrollBuffer.AddBlock(thinkingBlock);
+                _narrationState.AddBlock(thinkingBlock);
+                _ambianceEngine?.PlaySoundEffect(SoundEffectType.NarrativeReveal);
+                if (refusalBlock != null)
+                {
+                    _scrollBuffer.AddBlock(refusalBlock);
+                    _narrationState.AddBlock(refusalBlock);
+                }
+                _scrollBuffer.ScrollToBottom();
+                _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+            }
+
+            // Attach the commit and complete the last part only after it is attached (race-free), or
+            // commit immediately when previewing produced no part.
+            if (response.PreviewLastPart is { } lastPart)
+            {
+                lastPart.AttachCommit(CommitThinking);
+                lastPart.MarkComplete();
+                _previewSession.EndProduction();
+            }
+            else
+            {
+                CommitThinking();
+                _previewSession.Reset();
+            }
+
+            // Update state at generation end (not deferred): the noetic point is spent now, and the
+            // loading flag clears so the CLI settles for the CONTINUE clicks.
             _narrationState.IsLoadingThinking = false;
-            if (_scene?.Phase != NarrationPhase.ChildhoodReminescence)
+            if (_scene?.Phase != NarrationPhase.ChildhoodReminescence
+                && _scene?.Phase != NarrationPhase.GetUp)
                 _narrationState.ThinkingAttemptsRemaining--;
             _narrationState.ErrorMessage = null;
 
@@ -468,10 +1138,9 @@ public class NarrativeController
         catch (Exception ex)
         {
             Console.Error.WriteLine($"NarrativeController: Error during thinking phase: {ex.Message}");
-            Console.Error.WriteLine(ex.StackTrace);
-            
+            _previewSession.Reset();
             _narrationState.IsLoadingThinking = false;
-            _narrationState.ErrorMessage = $"Thinking failed: {ex.Message}";
+            _narrationState.ErrorMessage = ReportPhaseFailure("thinking", ex);
         }
     }
     
@@ -486,6 +1155,11 @@ public class NarrativeController
         try
         {
             Console.WriteLine($"NarrativeController: Starting action execution for '{action.ActionText}'");
+            _cliLastExecutedVerbId = action.PreselectedOutcome?.Verb.VerbId;
+
+            // Whoever is the active party member performs this action: their skills, organ scores,
+            // XP, wounds, and item consumption all apply (not necessarily the protagonist's).
+            _actionExecutor.ActingMember = _activePartyMember;
 
             // === REMINESCENCE-PHASE SHORT-CIRCUIT ===
             // In the childhood-reminescence phase REMEMBER actions auto-succeed: no critic,
@@ -494,6 +1168,15 @@ public class NarrativeController
             if (_scene != null && _scene.Phase == NarrationPhase.ChildhoodReminescence)
             {
                 await ExecuteReminescenceActionAsync(action);
+                return;
+            }
+
+            // === GET-UP PHASE SHORT-CIRCUIT ===
+            // GET UP skips the critic entirely and forces difficulty 1. Dice are still rolled.
+            // Failure has no penalty and loops back; success queues a GetUpTransitionOutcome.
+            if (_scene != null && _scene.Phase == NarrationPhase.GetUp)
+            {
+                await ExecuteGetUpActionAsync(action);
                 return;
             }
 
@@ -509,7 +1192,9 @@ public class NarrativeController
             // === CODED RULES CHECK (before LLM — fast, deterministic, absolute) ===
 
             // Determine if the action is illegal so we know whether to compute witness context.
-            bool isIllegalAction = !action.Verb.IsLegal || (_pov?.Where.IsPrivate ?? false);
+            // Contextual: the verb, its target and who counts the actor an enemy all speak to it.
+            bool isIllegalAction = _scene != null && _pov != null
+                && action.Verb.IsIllegal(_scene, _pov, action.PreselectedOutcome?.Target, _activePartyMember);
 
             // Compute witness context (visual = same area, audio = adjacent area).
             var witnessContext = (isIllegalAction && _scene != null && _pov != null)
@@ -523,28 +1208,61 @@ public class NarrativeController
 
             // Run all coded rules; a failure here is absolute — no LLM retry, no noetic cost.
             var ruleCtx = new Narrative.Rules.ActionRuleContext(
-                action, _protagonist!, _scene, _pov, witnessContext, threatContext);
+                action, _activePartyMember, _scene, _pov, witnessContext, threatContext);
             var ruleResult = Narrative.Rules.ActionRulesChecker.Check(ruleCtx);
             if (!ruleResult.Passed)
             {
                 Console.WriteLine($"NarrativeController: Coded rule blocked action — {ruleResult.ErrorMessage}");
                 action.IsImpossible = true;
+
+                // Re-express the refusal in the acting modus mentis's voice when one is resolvable
+                // (e.g. caught-red-handed, under threat); fall back to the raw rule message otherwise.
+                // The refusal streams into a preview box like every other outcome text.
+                var refusalMm = _activePartyMember.ModiMentis
+                    .FirstOrDefault(m => m.ModusMentisId == action.ActionModusMentisId)
+                    ?? action.ActionModusMentis;
+                _previewSession.Reset();
+                var refusalPart = refusalMm != null ? _previewSession.BeginPart(PreviewTitles.For(refusalMm)) : null;
+                string refusalText;
+                if (refusalMm != null)
+                {
+                    refusalText = await _actionExecutor.OutcomeNarrator.NarrateRefusalAsync(
+                        action, refusalMm, ruleResult.ErrorMessage ?? "", _activePartyMember, CancellationToken.None, preview: refusalPart?.Sink);
+                    if (string.IsNullOrWhiteSpace(refusalText))
+                        refusalText = $"[IMPOSSIBLE] {ruleResult.ErrorMessage}";
+                }
+                else
+                {
+                    refusalText = $"[IMPOSSIBLE] {ruleResult.ErrorMessage}";
+                }
+
                 _narrationState.IsLoadingAction = false;
 
                 var ruleBlock = new NarrationBlock(
                     Type: NarrationBlockType.Outcome,
-                    ModusMentis: action.ThinkingModusMentis,
-                    Text: $"[IMPOSSIBLE] {ruleResult.ErrorMessage}",
+                    ModusMentis: refusalMm ?? action.ThinkingModusMentis,
+                    Text: refusalText,
                     Keywords: null,
                     Actions: null);
-                _scrollBuffer.AddBlock(ruleBlock);
-                _narrationState.AddBlock(ruleBlock);
-                _scrollBuffer.ScrollToBottom();
-                _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+                void CommitRuleFailure()
+                {
+                    _scrollBuffer.AddBlock(ruleBlock);
+                    _narrationState.AddBlock(ruleBlock);
+                    _scrollBuffer.ScrollToBottom();
+                    _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+                }
+                if (refusalPart != null)
+                {
+                    refusalPart.AttachCommit(CommitRuleFailure);
+                    refusalPart.MarkComplete();
+                    _previewSession.EndProduction();
+                }
+                else CommitRuleFailure();
 
                 Console.WriteLine($"NarrativeController: Coded rule failure - consumed 1 noetic point ({_narrationState.ThinkingAttemptsRemaining} remaining)");
 
-                if (_scene?.Phase == NarrationPhase.ChildhoodReminescence)
+                if (_scene?.Phase == NarrationPhase.ChildhoodReminescence
+                    || _scene?.Phase == NarrationPhase.GetUp)
                 {
                     return;
                 }
@@ -555,6 +1273,9 @@ public class NarrativeController
                 }
                 else
                 {
+                    // Out of points. The CONTINUE that follows closes the segment on a refusal, so
+                    // it refills nothing — same rule as a failed roll. LEAVE is the way out.
+                    _pendingSegmentSucceeded = false;
                     _narrationState.ShowContinueButton = true;
                     return;
                 }
@@ -577,34 +1298,47 @@ public class NarrativeController
             // Handle plausibility failure
             if (!evalResult.IsPlausible)
             {
-                Console.WriteLine($"NarrativeController: Action failed plausibility check");
+                Console.WriteLine($"NarrativeController: VerbAction failed plausibility check");
                 action.IsImpossible = true;
 
-                // Generate plausibility failure narration
+                // Generate plausibility failure narration, streamed into a preview box.
+                _previewSession.Reset();
+                var plausPart = evalResult.ActionModusMentis != null
+                    ? _previewSession.BeginPart(PreviewTitles.For(evalResult.ActionModusMentis))
+                    : null;
                 var plausibilityResult = await _actionExecutor.GeneratePlausibilityFailureNarrationAsync(
-                    evalResult, CancellationToken.None);
-                
+                    evalResult, CancellationToken.None, preview: plausPart?.Sink);
+
                 _narrationState.IsLoadingAction = false;
-                
-                // Add outcome narration block
+
+                // Add outcome narration block (deferred to the preview CONTINUE).
                 var plausibilityBlock = new NarrationBlock(
                     Type: NarrationBlockType.Outcome,
-                    ModusMentis: plausibilityResult.ActionModusMentis ?? throw new InvalidOperationException("Action modusMentis cannot be null"),
+                    ModusMentis: plausibilityResult.ActionModusMentis ?? throw new InvalidOperationException("VerbAction modusMentis cannot be null"),
                     Text: $"[IMPOSSIBLE] {plausibilityResult.Narration}",
                     Keywords: null,
                     Actions: null
                 );
-                _scrollBuffer.AddBlock(plausibilityBlock);
-                _narrationState.AddBlock(plausibilityBlock);
-                
-                // Auto-scroll to bottom to show outcome
-                _scrollBuffer.ScrollToBottom();
-                _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
-                
+                void CommitPlausibility()
+                {
+                    _scrollBuffer.AddBlock(plausibilityBlock);
+                    _narrationState.AddBlock(plausibilityBlock);
+                    _scrollBuffer.ScrollToBottom();
+                    _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+                }
+                if (plausPart != null)
+                {
+                    plausPart.AttachCommit(CommitPlausibility);
+                    plausPart.MarkComplete();
+                    _previewSession.EndProduction();
+                }
+                else CommitPlausibility();
+
                 Console.WriteLine($"NarrativeController: Plausibility failure - consumed 1 noetic point ({_narrationState.ThinkingAttemptsRemaining} remaining)");
 
-                // Reminescence phase never costs noetic — player can retry freely
-                if (_scene?.Phase == NarrationPhase.ChildhoodReminescence)
+                // Reminescence and GetUp phases never cost noetic — player can retry freely
+                if (_scene?.Phase == NarrationPhase.ChildhoodReminescence
+                    || _scene?.Phase == NarrationPhase.GetUp)
                 {
                     return;
                 }
@@ -620,31 +1354,45 @@ public class NarrativeController
                 else
                 {
                     Console.WriteLine("NarrativeController: No noetic points remaining - showing continue button");
-                    // No more noetic points - show continue button and grey out like a normal failure
+                    // No more noetic points - show continue button and grey out like a normal failure,
+                    // which includes not refilling the pool on the CONTINUE that closes the segment.
+                    _pendingSegmentSucceeded = false;
                     _narrationState.ShowContinueButton = true;
                     return;
                 }
             }
             
             // === PHASE 2: DICE ROLL (dice rolling animation) ===
-            Console.WriteLine($"NarrativeController: Action passed plausibility, starting dice roll phase");
+            Console.WriteLine($"NarrativeController: VerbAction passed plausibility, starting dice roll phase");
 
             // Number of dice = total modusMentis level summed across the chain
-            int numberOfDice = Math.Max(1, action.GetTotalModusMentisLevel());
+            int numberOfDice = Math.Max(1, action.GetTotalModusMentisLevel(_activePartyMember));
 
             // Difficulty = number of 6s needed to succeed (1-10, from LLM evaluation)
             int actualDifficulty = evalResult.DifficultyLevel;
 
-            // Start dice roll animation
-            _narrationState.StartDiceRoll(numberOfDice, actualDifficulty);
-            _narrationState.LoadingMessage = "Rolling dice...";
-
-            // Roll each die independently (1–6) and count sixes
+            // Roll each die independently (1–6) and count sixes. The forced-outcome branch runs
+            // BEFORE the animation starts because a forced success may have to lower the difficulty
+            // (see below) and the animation is drawn against it.
             int[] finalDiceValues;
             bool succeeded;
             if (DebugMode.IsActive && !DebugMode.IsAutoStrategy)
             {
-                succeeded = DebugMode.GetDiceRollOverride(action.ActionText, evalResult.SuccessProbability);
+                succeeded = DebugMode.GetDiceRollOverride(action.ActionText, numberOfDice, actualDifficulty);
+
+                // A forced success has to be a roll the pool can actually show. A verb harder than
+                // the chain that reached it — tame is difficulty 4 off three modi mentis — needs more
+                // sixes than there are dice, which no arrangement satisfies: the roll is then simply
+                // impossible, and `strategy succeed` asking for it used to hang the game outright
+                // (GenerateDiceValuesForResult spinning for a six it had nowhere left to put). Cap the
+                // demand at the pool, the way the fight path guarantees a forced success one die.
+                if (succeeded && actualDifficulty > numberOfDice)
+                {
+                    Console.WriteLine($"NarrativeController: forced success needs {actualDifficulty} sixes from " +
+                                      $"{numberOfDice} dice — difficulty capped at {numberOfDice} for this roll");
+                    actualDifficulty = numberOfDice;
+                }
+
                 finalDiceValues = GenerateDiceValuesForResult(numberOfDice, actualDifficulty, succeeded);
             }
             else
@@ -656,22 +1404,27 @@ public class NarrativeController
                 succeeded = sixesCount >= actualDifficulty;
             }
 
+            // Start dice roll animation (with humor modifiers for the acting member)
+            NarrationDiceStart(numberOfDice, actualDifficulty, _activePartyMember);
+            _narrationState.LoadingMessage = Config.LoadingMessages.RollingDice;
+
             Console.WriteLine($"NarrativeController: Rolled {finalDiceValues.Count(v => v == 6)} sixes out of {numberOfDice} dice (need {actualDifficulty}) → {(succeeded ? "SUCCESS" : "FAILURE")}");
 
-            // Execute dice roll phase (failure outcome evaluation + narration generation)
-            var result = await _actionExecutor.ExecuteDiceRollAsync(
-                evalResult,
-                succeeded,
-                CancellationToken.None
-            );
+            // Do NOT generate any narration during the animation. Remember the evaluation and the
+            // rolled result; humor modifiers may still flip _pendingSucceeded. The actual (single)
+            // outcome is generated only when the player presses the dice CONTINUE — see
+            // OnDiceRollContinue → GenerateOutcomePreviewAsync — and streams into a preview box.
+            _pendingEval      = evalResult;
+            _pendingSucceeded = succeeded;
 
-            Console.WriteLine($"NarrativeController: Action {(result.Succeeded ? "SUCCEEDED" : "FAILED")}");
+            Console.WriteLine($"NarrativeController: Rolled {(succeeded ? "SUCCESS" : "FAILURE")} (humor may change this) — outcome generated on continue");
 
-            // Store the action result for later (when player clicks continue on dice screen)
-            _pendingActionResult = result;
+            // Fixed animation window: no async work backs this roll anymore (the outcome is generated
+            // only on Continue), so pause like the runaway/fight rolls do to let the dice animate.
+            await Task.Delay(Config.Dice.AnimationDurationMs);
 
             // Complete the dice roll (stops animation, shows final values and continue button)
-            _narrationState.CompleteDiceRoll(finalDiceValues);
+            NarrationDiceComplete(finalDiceValues);
             _narrationState.IsLoadingAction = false;
 
             Console.WriteLine($"NarrativeController: Dice roll complete - {finalDiceValues.Count(v => v == 6)} sixes rolled, difficulty {actualDifficulty}");
@@ -679,11 +1432,10 @@ public class NarrativeController
         catch (Exception ex)
         {
             Console.Error.WriteLine($"NarrativeController: Error during action execution: {ex.Message}");
-            Console.Error.WriteLine(ex.StackTrace);
-            
+            _previewSession.Reset();
             _narrationState.IsLoadingAction = false;
-            _narrationState.ClearDiceRoll();
-            _narrationState.ErrorMessage = $"Action execution failed: {ex.Message}";
+            NarrationDiceClear();
+            _narrationState.ErrorMessage = ReportPhaseFailure("executing an action", ex);
         }
     }
     
@@ -693,6 +1445,12 @@ public class NarrativeController
     /// to transition out of <c>GameMode.ChildhoodReminescence</c>.
     /// </summary>
     public bool ReminescencePhaseFinished { get; private set; }
+
+    /// <summary>
+    /// True when the GET UP action succeeded in the Get-Up scene. Polled by the game
+    /// controller to transition out of <c>GameMode.GetUp</c> into world travel.
+    /// </summary>
+    public bool GetUpPhaseFinished { get; private set; }
 
     /// <summary>
     /// Number of REMEMBER fragments successfully resolved so far in the current
@@ -740,11 +1498,12 @@ public class NarrativeController
         var newScene = factory.Build(_locationId);
         ReplaceScene(newScene);
 
-        // Preserve the prior narration as history and start a fresh observation phase.
-        _scrollBuffer.ConvertToHistory();
-        _narrationState.ResetForNewNode();
-        _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
-        StartObservationPhaseWithHistory();
+        // Preserve the prior narration as history and start a fresh observation phase, under the
+        // fragment that led here — the childhood phase is one long scroll of memories and an
+        // unlabelled rule between them says nothing about which one just surfaced.
+        BeginNarrationSegment(string.IsNullOrWhiteSpace(req.FragmentName)
+            ? null
+            : $"after remembering {req.FragmentName}");
     }
 
     /// <summary>
@@ -759,8 +1518,152 @@ public class NarrativeController
         var newFactory = new Cathedral.Game.Scene.SceneSyntheticGraphFactory(newScene, _locationId, _protagonist);
         _graph         = newFactory.GenerateGraph(_locationId);
         _currentNode   = _graph.EntryNode;
+        _npcPlacement  = new Cathedral.Game.Scene.SceneNpcPlacement(newScene, _graph.AllNodes.Values);
 
         Console.WriteLine($"NarrativeController: scene replaced with reminescence '{newScene.CurrentReminescenceId}'");
+    }
+
+    /// <summary>
+    /// Consumes a pending Get-Up success transition: signals to the game controller that the
+    /// protagonist has risen and world travel should begin.
+    /// </summary>
+    private void HandleGetUpContinue()
+    {
+        Console.WriteLine("NarrativeController: Get-Up complete — protagonist risen, transitioning to world travel");
+        if (_scene != null) _scene.PendingGetUpTransition = false;
+        GetUpPhaseFinished = true;
+        _narrationState.ShowContinueButton = false;
+        _narrationState.RequestedExit = true;
+    }
+
+    /// <summary>
+    /// Get-Up phase action path: GET UP rolls dice at forced difficulty 1 with no critic and
+    /// no noetic cost. On success, queues a GetUpTransitionOutcome via normal verb reports.
+    /// On failure, no damage or penalty; the scene loops back when Continue is clicked.
+    /// </summary>
+    private async Task ExecuteGetUpActionAsync(ParsedNarrativeAction action)
+    {
+        if (_scene == null || _pov == null)
+        {
+            Console.Error.WriteLine("NarrativeController: ExecuteGetUpActionAsync called without scene/pov");
+            return;
+        }
+
+        action.DifficultyLevel = 1;
+
+        // Roll dice at forced difficulty 1 (1 six needed to succeed).
+        int numberOfDice = Math.Max(1, action.GetTotalModusMentisLevel(_activePartyMember));
+        const int getUpDifficulty = 1;
+
+        // Humor modifiers are offered here exactly as in the main action roll: rising from the ground
+        // exhausted is precisely the check a spent humor should be able to swing.
+        NarrationDiceStart(numberOfDice, getUpDifficulty, _activePartyMember);
+        _narrationState.LoadingMessage = Config.LoadingMessages.RollingDice;
+
+        int[] finalDiceValues = new int[numberOfDice];
+        for (int i = 0; i < numberOfDice; i++)
+            finalDiceValues[i] = _diceRandom.Next(1, 7);
+        int sixesCount = finalDiceValues.Count(v => v == 6);
+        bool succeeded = sixesCount >= getUpDifficulty;
+
+        Console.WriteLine(
+            $"NarrativeController: GetUp dice — {sixesCount}/{numberOfDice} sixes (need {getUpDifficulty}) → {(succeeded ? "SUCCESS" : "FAILURE")}");
+
+        var actionMm = action.ActionModusMentis ?? action.ChainModusMentis;
+
+        // Defer the outcome narration to the dice CONTINUE — like the main action path — so the
+        // animation runs for the fixed Config.Dice duration rather than blocking on the LLM. The
+        // rolled result is only provisional: a humor modifier may still flip it (OnDiceOutcomeFlipped
+        // writes _pendingSucceeded), so the closure reads the field at CONTINUE time, not now.
+        _pendingSucceeded    = succeeded;
+        _pendingGetUpOutcome = () => GenerateGetUpOutcomeAsync(action, actionMm, _pendingSucceeded, getUpDifficulty);
+
+        // Fixed animation window (no async work backs this roll now that narration is deferred).
+        await Task.Delay(Config.Dice.AnimationDurationMs);
+
+        NarrationDiceComplete(finalDiceValues);
+        _narrationState.IsLoadingAction = false;
+
+        Console.WriteLine($"NarrativeController: GetUp dice rolled — {(succeeded ? "SUCCESS" : "FAILURE")}, outcome generated on continue");
+    }
+
+    /// <summary>
+    /// Generates the Get-Up outcome narration after the dice CONTINUE and commits the result.
+    /// Mirrors the main action path's deferred generation, preview box included: the text streams
+    /// into <see cref="_previewSession"/> and the block is committed on the preview CONTINUE.
+    /// <paramref name="succeeded"/> is the final result, humor modifiers already applied.
+    /// </summary>
+    private async Task GenerateGetUpOutcomeAsync(ParsedNarrativeAction action, ModusMentis actionMm,
+        bool succeeded, int getUpDifficulty)
+    {
+        try
+        {
+            // This runs after the dice, on the CONTINUE: what is being generated is the result of the
+            // attempt, not the attempt itself.
+            _narrationState.LoadingMessage = Config.LoadingMessages.NarratingOutcome;
+
+            // Choose the narration hint for the LLM based on success/failure.
+            INarratable outcomeForPrompt = succeeded
+                ? new InlineNarratable("getting up", "with great effort you push yourself to your feet and continue your travel")
+                : new InlineNarratable("the effort", "your exhausted body refuses to rise — you slump back against the tree");
+
+            _previewSession.Reset();
+            var part = _previewSession.BeginPart(PreviewTitles.For(actionMm));
+
+            string narration;
+            try
+            {
+                narration = await _actionExecutor.OutcomeNarrator.NarrateOutcomeAsync(
+                    action,
+                    actionMm,
+                    outcomeForPrompt,
+                    succeeded,
+                    difficulty: CriticTrees.DifficultyLevelToScore(getUpDifficulty),
+                    _protagonist,
+                    System.Threading.CancellationToken.None,
+                    preview: part.Sink);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"NarrativeController: GetUp narration failed — {ex.Message}");
+                narration = succeeded
+                    ? "With great effort, you force yourself to your feet."
+                    : "Your body refuses to cooperate. You slump back against the tree.";
+                // The sink never completed — show the fallback text in the box so the player still
+                // gets a CONTINUE to press rather than an empty, stuck preview.
+                part.Sink.OnComplete(narration);
+            }
+
+            // ActualOutcome is always the VerbAction so the GetUpVerb's Success/FailureReports fire.
+            var result = new ActionExecutionResult
+            {
+                Action              = action,
+                ActionModusMentis   = actionMm,
+                ThinkingModusMentis = action.ThinkingModusMentis ?? actionMm,
+                Difficulty          = CriticTrees.DifficultyLevelToScore(getUpDifficulty),
+                DifficultyLevel     = getUpDifficulty,
+                Succeeded           = succeeded,
+                ActualOutcome       = action.PreselectedOutcome != null
+                                          ? (INarratable)action.PreselectedOutcome
+                                          : new InlineNarratable("get up", "rise"),
+                Narration           = narration,
+            };
+
+            _narrationState.IsLoadingAction = false;
+            part.AttachCommit(() => CommitOutcomeResult(result, deferredCommit: false));
+            part.MarkComplete();
+            _previewSession.EndProduction();
+
+            Console.WriteLine($"NarrativeController: GetUp outcome generated — {(succeeded ? "pending transition" : "failure, will loop")}, commits on preview continue");
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"NarrativeController: GetUp outcome generation failed — {ex.Message}");
+            _previewSession.Reset();
+            _narrationState.IsLoadingAction = false;
+            NarrationDiceClear();
+            _narrationState.ErrorMessage = ReportPhaseFailure("resolving the get-up outcome", ex);
+        }
     }
 
     /// <summary>
@@ -781,7 +1684,7 @@ public class NarrativeController
 
         // Pull the verb target out of the preselected outcome chain.
         Element? target = null;
-        if (action.PreselectedOutcome is VerbOutcome vo)
+        if (action.PreselectedOutcome is VerbAction vo)
             target = vo.Target;
 
         if (target == null)
@@ -790,37 +1693,68 @@ public class NarrativeController
             return;
         }
 
-        // Collect and apply all verb reports (skills, items, history, transition).
-        System.Collections.Generic.IReadOnlyList<OutcomeReport> reminescenceReportList;
-        try
+        // Collect and apply all verb reports (skills, items, history, transition), then the dice
+        // chain's own lesson — REMEMBER rolls nothing, but the modi mentis that observed the
+        // fragment, chose to reach for it and voiced the memory did the work all the same, and
+        // every other action in the game pays them for it (see CommitOutcomeResult). Appended after
+        // the fragment's own grants so a skill the fragment has just taught is already known when
+        // its practice report is built.
+        // Deliberately uncaught: this used to swallow everything and carry on with an empty report
+        // list, showing a memory that succeeded and granted nothing.
+        //
+        // Today that is merely misleading — every throw on this path happens while the list is being
+        // BUILT (SuccessReports rejects an unregistered modus mentis; ItemGrantOutcome's constructor
+        // reads DisplayName off its item), so nothing has been applied yet and the world is still
+        // consistent. What the catch was hiding was a missing reward, not a corrupt character.
+        //
+        // The reason to remove it anyway is that the ordering which makes it harmless is an accident
+        // nothing enforces. These outcomes are applied one at a time, so the first Apply that throws —
+        // a future one validating an anatomy the way WoundRegistry.CanBeSufferedBy does, say — leaves
+        // the earlier ones already written and the catch would discard every chip for them. Letting it
+        // propagate reaches ExecuteActionPhaseAsync's handler, which writes a crash report and stops
+        // the phase. Stopping is what keeps a half-applied character off disk: autosave fires on entry
+        // to the world map, and a phase that cannot finish never gets there.
+        var reminescenceReports = new System.Collections.Generic.List<Outcome>(
+            action.Verb.SuccessReports(_scene, _pov, _protagonist, target));
+        foreach (var report in reminescenceReports)
+            report.ApplyTo(OutcomeContext.For(_protagonist, _scene, _pov));
+
+        foreach (var chainModusMentis in action.GetModusMentisChain())
         {
-            reminescenceReportList = action.Verb.SuccessReports(_scene, _pov, _protagonist, target);
-            foreach (var report in reminescenceReportList)
-                report.Apply(_protagonist, _scene, _pov);
+            var practice = ModusMentisPracticeOutcome.For(_protagonist, chainModusMentis);
+            if (practice == null) continue;
+            practice.ApplyTo(OutcomeContext.For(_protagonist, _scene, _pov));
+            reminescenceReports.Add(practice);
         }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"NarrativeController: REMEMBER verb threw — {ex.Message}");
-            Console.Error.WriteLine(ex.StackTrace);
-            reminescenceReportList = System.Array.Empty<OutcomeReport>();
-        }
+
+        System.Collections.Generic.IReadOnlyList<Outcome> reminescenceReportList = reminescenceReports;
 
         // Resolve the action modusMentis (ChildhoodReminescenceModusMentis) from the action.
         // Fall back to ChainModusMentis if ActionModusMentis is unexpectedly null.
         var actionMm = action.ActionModusMentis ?? action.ChainModusMentis;
 
-        // Build a lightweight outcome whose ToNaturalLanguageString() feeds the LLM prompt
-        // with the concrete memory text: the narrator will write its own prose around it.
+        // Build the neutral outcome sentence directly from the fragment: a plain "I tried to
+        // remember …, and succeeded." framing plus the concrete recovered memory (OutcomeText).
+        // This is handed to the narrator as an override so the persona rewrite styles the actual
+        // memory rather than the flowery thinking-phase action label.
         var fpoi = target as Cathedral.Game.Scene.Reminescence.FragmentPointOfInterest;
+        var reminescenceNeutral = fpoi != null
+            ? NeutralNarration.ReminescenceOutcome(fpoi.Fragment.Name, fpoi.Fragment.OutcomeText)
+            : null;
         var outcomeForPrompt = fpoi != null
-            ? (OutcomeBase)new InlineOutcome(
+            ? (INarratable)new InlineNarratable(
                 displayName:    fpoi.Fragment.Name,
                 naturalLanguage: $"remember: {fpoi.Fragment.OutcomeText}")
-            : new InlineOutcome("memory", "remember this childhood moment");
+            : new InlineNarratable("memory", "remember this childhood moment");
 
-        // Generate outcome narration through the LLM exactly as any other action.
+        // Generate outcome narration through the LLM exactly as any other action — streamed into the
+        // preview box, with the memory block committed on its CONTINUE. The footer says what is
+        // actually being recovered: nothing is attempted here, a childhood memory comes back.
         _narrationState.IsLoadingAction = true;
-        _narrationState.LoadingMessage  = Config.LoadingMessages.EvaluatingAction;
+        _narrationState.LoadingMessage  = Config.LoadingMessages.Remembering;
+
+        _previewSession.Reset();
+        var previewPart = _previewSession.BeginPart(PreviewTitles.For(actionMm));
 
         string narrationText;
         try
@@ -832,7 +1766,9 @@ public class NarrativeController
                 succeeded:  true,
                 difficulty: 0.0,
                 _protagonist,
-                CancellationToken.None);
+                CancellationToken.None,
+                neutralOverride: reminescenceNeutral,
+                preview: previewPart.Sink);
         }
         catch (Exception ex)
         {
@@ -841,6 +1777,8 @@ public class NarrativeController
             narrationText = fpoi != null
                 ? fpoi.Fragment.OutcomeText
                 : "You remember.";
+            // The sink never completed — put the fallback in the box so CONTINUE still appears.
+            previewPart.Sink.OnComplete(narrationText);
         }
 
         _narrationState.IsLoadingAction = false;
@@ -858,13 +1796,23 @@ public class NarrativeController
             Actions:        null,
             ChainOrigin:    action,
             OutcomeReports: uiReminescenceReports.Count > 0 ? uiReminescenceReports : null);
-        _scrollBuffer.AddBlock(outcomeBlock);
-        _narrationState.AddBlock(outcomeBlock);
-        _scrollBuffer.ScrollToBottom();
-        _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
 
-        _narrationState.PendingTransitionNode = null;
-        _narrationState.ShowContinueButton    = true;
+        previewPart.AttachCommit(() =>
+        {
+            _scrollBuffer.AddBlock(outcomeBlock);
+            _narrationState.AddBlock(outcomeBlock);
+            // REMEMBER always succeeds (and often grants a skill/item) — cue the positive
+            // outcome sting, matching the normal action-resolution path.
+            _ambianceEngine?.TriggerGameEvent(GameEventType.PositiveOutcome);
+            _scrollBuffer.ScrollToBottom();
+            _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+
+            _narrationState.PendingTransitionNode = null;
+            _narrationState.ShowContinueButton    = true;
+        });
+        previewPart.MarkComplete();
+        _previewSession.EndProduction();
+
         Console.WriteLine($"NarrativeController: REMEMBER narrated — pending transition '{_scene.PendingReminescenceTransition?.NextReminescenceId}'");
     }
 
@@ -877,8 +1825,11 @@ public class NarrativeController
         
         if (succeeded)
         {
-            // Ensure at least 'difficulty' sixes
-            int sixesNeeded = difficulty;
+            // Ensure at least 'difficulty' sixes — but never ask for more sixes than there are dice.
+            // The tail loop below places one six per pass and has nowhere to put the surplus, so an
+            // unclamped demand spins forever. Callers clamp too; this is the backstop, because a hang
+            // here freezes the whole game with nothing on screen to say why.
+            int sixesNeeded = Math.Min(difficulty, numberOfDice);
             int sixesPlaced = 0;
             
             for (int i = 0; i < numberOfDice; i++)
@@ -940,37 +1891,310 @@ public class NarrativeController
     }
     
     /// <summary>
-    /// Handle continue button click on dice roll screen.
-    /// Applies the pending action result and shows outcome.
+    /// Handle continue button click on the dice-roll screen. Both paths defer to now: the outcome is
+    /// generated (streamed into a preview box) and committed on the preview CONTINUE.
     /// </summary>
     private void OnDiceRollContinue()
     {
-        if (_pendingActionResult == null)
+        // Get-Up path: narration was deferred to now — generate the outcome text (into the preview
+        // box) and commit on its CONTINUE, exactly as the main path does. The closure reads the
+        // final _pendingSucceeded, so a humor modifier applied during the roll is honoured.
+        if (_pendingGetUpOutcome != null)
         {
-            Console.WriteLine("NarrativeController: No pending action result for dice roll continue");
-            _narrationState.ClearDiceRoll();
+            var generate = _pendingGetUpOutcome;
+            _pendingGetUpOutcome = null;
+            NarrationDiceClear();
+            _narrationState.IsLoadingAction = true;
+            _ = Task.Run(generate);
             return;
         }
-        
-        var result = _pendingActionResult;
-        _pendingActionResult = null;
-        
-        Console.WriteLine($"NarrativeController: Dice roll continue - applying result");
-        
-        // Collect all outcome reports: verb-specific + LLM-decided (wound).
-        var allReports = new System.Collections.Generic.List<OutcomeReport>();
-        if (result.ActualOutcome is VerbOutcome verbTarget && _scene != null && _pov != null)
-        {
-            var verbReports = result.Succeeded
-                ? verbTarget.VerbView.Verb.SuccessReports(_scene, _pov, _protagonist, verbTarget.Target!)
-                : verbTarget.VerbView.Verb.FailureReports(_scene, _pov, _protagonist, verbTarget.Target!);
-            allReports.AddRange(verbReports);
-        }
-        allReports.AddRange(result.LlmDecidedReports);
 
-        // Apply every report's game-state change in order.
+        // Main path: generate ONLY the final (possibly humor-modified) outcome now, into a preview box.
+        if (_pendingEval != null)
+        {
+            var eval = _pendingEval;
+            _pendingEval = null;
+            bool succeeded = _pendingSucceeded;
+            NarrationDiceClear();
+            _narrationState.IsLoadingAction = true;
+            _ = Task.Run(() => GenerateOutcomePreviewAsync(eval, succeeded));
+            return;
+        }
+
+        Console.WriteLine("NarrativeController: No pending action result for dice roll continue");
+        NarrationDiceClear();
+    }
+
+    /// <summary>
+    /// Generates the single true outcome after the dice, streaming it into the preview box; the block
+    /// commit and all side-effects fire when the player presses the preview CONTINUE.
+    /// </summary>
+    private async Task GenerateOutcomePreviewAsync(ActionEvaluationResult eval, bool succeeded)
+    {
+        try
+        {
+            _previewSession.Reset();
+            _narrationState.LoadingMessage = Config.LoadingMessages.NarratingOutcome;
+            string title = eval.ActionModusMentis != null ? PreviewTitles.For(eval.ActionModusMentis) : "OUTCOME";
+            var part = _previewSession.BeginPart(title);
+            // Gather the verb's outcome reports up-front so their verbatims can be woven into the
+            // narration; the same instances are reused at commit time (see CommitOutcomeResult).
+            var verbReports = GatherVerbReports(eval.Action.PreselectedOutcome, succeeded, eval.Action.CombinedItem);
+            var result = await _actionExecutor.PrepareSingleOutcomeAsync(eval, succeeded, verbReports, part.Sink, CancellationToken.None);
+            _narrationState.IsLoadingAction = false;
+            part.AttachCommit(() => CommitOutcomeResult(result, deferredCommit: true));
+            part.MarkComplete();
+
+            // The emotional coda. Resolved from the reports that are ABOUT to be applied rather than
+            // from applied ones, because the whole point of the preview session is that a commit
+            // happens on the player's press, not here — so waiting for the apply would mean waiting
+            // for a click the emotion's own generation is supposed to be running ahead of.
+            //
+            // A second part rather than a longer first one: the outcome was written by the ACTION
+            // modus mentis and this is written by the EMOTION one, so it is a different persona in a
+            // different slot, and the preview box already gates one part per CONTINUE. That is where
+            // "own block, own press" comes from — nothing here schedules it.
+            await GenerateEmotionPreviewAsync(result.OutcomeReports ?? verbReports, result.LlmDecidedReports);
+
+            _previewSession.EndProduction();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"NarrativeController: Outcome generation failed: {ex.Message}");
+            _previewSession.Reset();
+            _narrationState.IsLoadingAction = false;
+            NarrationDiceClear();
+            _narrationState.ErrorMessage = ReportPhaseFailure("resolving an outcome", ex);
+        }
+    }
+
+    /// <summary>
+    /// Streams the emotional coda into a preview part of its own, when what the action produced
+    /// stirred anything in the body that produced it.
+    ///
+    /// <para><b>Silent by default and by design.</b> Most actions move nothing a disposition cares
+    /// about, and <see cref="EmotionResolver.Resolve"/> returns null for those — no part is begun, no
+    /// request is made, and the player presses CONTINUE once as they always did. The extra press is
+    /// bought only where there is something to read.</para>
+    ///
+    /// <para>The commit does the two things in the order the player sees them: the humors reach the
+    /// spleen (<see cref="EmotionOutcome"/>'s own Apply, through <c>ApplyTo</c> like every other
+    /// consequence) and the block lands carrying its chip. It is attached rather than run here for the
+    /// same reason the outcome's is — a press must be able to arrive before, during or after
+    /// generation without the state changing twice.</para>
+    ///
+    /// <para>A failure here costs the coda and nothing else. An emotion is a garnish on an action that
+    /// has already resolved, and taking the phase down over one would turn a decorative request into a
+    /// third way for a visit to end — so this is the one narration path in the controller that
+    /// swallows its exception instead of calling <c>ReportPhaseFailure</c>.</para>
+    /// </summary>
+    private async Task GenerateEmotionPreviewAsync(
+        IReadOnlyList<Outcome>? verbReports,
+        IReadOnlyList<Outcome>? llmDecidedReports)
+    {
+        var all = new List<Outcome>();
+        if (verbReports       != null) all.AddRange(verbReports);
+        if (llmDecidedReports != null) all.AddRange(llmDecidedReports);
+
+        var felt = EmotionResolver.Resolve(_activePartyMember, all);
+        if (felt == null) return;
+        var emotion = felt.Value;
+
+        try
+        {
+            _narrationState.IsLoadingAction = true;
+            _narrationState.LoadingMessage  = Config.LoadingMessages.NarratingOutcome;
+            var part = _previewSession.BeginPart(PreviewTitles.For(emotion.ModusMentis));
+            string text = await _actionExecutor.OutcomeNarrator.NarrateEmotionAsync(
+                emotion, CancellationToken.None, part.Sink);
+            _narrationState.IsLoadingAction = false;
+
+            var chip = emotion.ToOutcome();
+            part.AttachCommit(() =>
+            {
+                chip.ApplyTo(OutcomeContext.For(_activePartyMember, _scene, _pov));
+                var block = new NarrationBlock(
+                    Type:        NarrationBlockType.Emotion,
+                    ModusMentis: emotion.ModusMentis,
+                    Text:        text,
+                    Keywords:    null,
+                    Actions:     null,
+                    OutcomeReports: new List<Outcome> { chip }
+                );
+                _scrollBuffer.AddBlock(block);
+                _narrationState.AddBlock(block);
+                _scrollBuffer.ScrollToBottom();
+                _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+                Console.WriteLine($"NarrativeController: emotion — {emotion.ModusMentis.ModusMentisId} felt "
+                                + $"{chip.Humor.Name} x{emotion.Count} (spleen)");
+            });
+            part.MarkComplete();
+        }
+        catch (Exception ex)
+        {
+            _narrationState.IsLoadingAction = false;
+            Console.Error.WriteLine($"NarrativeController: emotion narration failed, skipping the coda: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Gathers the verb-specific outcome reports for a resolved action. Success reports carry the
+    /// chosen <see cref="VerbAction"/> (so verbs that expanded into several actions read their variant)
+    /// and the implement the player combined, if any — which only <c>attack</c> reads, since which
+    /// weapon is in the hand decides which blow can be thrown. Failure reports use the target-only
+    /// overload. Returns an empty list for non-verb outcomes.
+    /// </summary>
+    private System.Collections.Generic.IReadOnlyList<Outcome> GatherVerbReports(INarratable? outcome, bool succeeded,
+                                                                                Item? tool = null)
+    {
+        if (outcome is VerbAction verbTarget && _scene != null && _pov != null && verbTarget.Target != null)
+        {
+            var verb = verbTarget.Verb;
+            if (!succeeded)
+                return verb.FailureReports(_scene, _pov, _activePartyMember, verbTarget.Target);
+
+            var reports = new System.Collections.Generic.List<Outcome>(
+                verb.SuccessReports(_scene, _pov, _activePartyMember, verbTarget.Target, verbTarget, tool));
+
+            // Doing a thing is how the thing is learned. Appended last so the lesson reads as the
+            // consequence of whatever the verb actually did, not as its headline.
+            var lesson = ModusMentisGrantOutcome.For(
+                _activePartyMember, ChooseLesson(verb, verbTarget.Target)?.ModusMentisId);
+            if (lesson != null) reports.Add(lesson);
+
+            return reports;
+        }
+        return System.Array.Empty<Outcome>();
+    }
+
+
+    /// <summary>
+    /// The one lesson this action teaches. The whole decision belongs to the verb — see
+    /// <see cref="Verb.ResolveLesson"/>, which asks the verb's own contextual answer first, then the
+    /// target's declaration, then the verb's defaults, skipping whatever this body cannot hold.
+    /// </summary>
+    private ModusMentis? ChooseLesson(Verb verb, Element target)
+    {
+        var threat = ThreatLevel.None;
+        if (_protagonist != null)
+        {
+            try { threat = ThreatSelector.ComputeContext(_scene!, _pov!, _protagonist).Level; } catch { }
+        }
+
+        return verb.ResolveLesson(new LessonContext(_scene!, _pov!, _activePartyMember!, target)
+        {
+            Hostile = threat,
+        });
+    }
+
+    /// <summary>
+    /// Applies a resolved action outcome: the chain's practice XP, outcome reports, the outcome
+    /// narration block, and any fight/dialogue/transition it triggers. <paramref name="deferredCommit"/>
+    /// additionally settles what only the deferred path produced — the speculative branch's
+    /// narration history.
+    /// Called synchronously for Get-Up and via the outcome preview's CONTINUE for the main path.
+    /// </summary>
+    private void CommitOutcomeResult(ActionExecutionResult result, bool deferredCommit)
+    {
+        Console.WriteLine($"NarrativeController: committing {(result.Succeeded ? "SUCCESS" : "FAILURE")} outcome");
+
+        // The dice chain's own lesson — one report per modus mentis that fed the roll (observation →
+        // thinking → action), so each shows its own chip instead of the XP moving in silence. Built
+        // here and applied with the rest below; a capped modus mentis reports nothing.
+        var practiceReports = new System.Collections.Generic.List<Outcome>();
+
+        // Owed on EVERY success, both paths. This sat inside the `deferredCommit` branch below,
+        // which made it unreachable for the one caller that commits synchronously: the Get-Up
+        // phase rolled its dice against the chain's levels, narrated the outcome, and paid the
+        // chain nothing — no XP and no chip to say so. The reminescence phase beside it grants the
+        // same reports by hand for exactly this reason. Deferral is about which BRANCH won (the
+        // roll may still be flipped by a humor), not about whether practice is earned; the two
+        // things below genuinely are deferred, because only the deferred path generates a
+        // speculative second branch or combines an item.
+        if (result.Succeeded)
+            foreach (var chainModusMentis in result.Action.GetModusMentisChain())
+            {
+                var practice = ModusMentisPracticeOutcome.For(_activePartyMember, chainModusMentis);
+                if (practice != null) practiceReports.Add(practice);
+            }
+
+        if (deferredCommit)
+        {
+            // Keep only the chosen branch's narration in the narrator slot history (discard the
+            // speculative other branch that was generated during the roll).
+            _actionExecutor.OutcomeNarrator.CommitNarrationHistory(result.Succeeded);
+        }
+
+        // Collect all outcome reports: verb-specific + LLM-decided (wound).
+        System.Collections.Generic.List<Outcome> allReports;
+        if (result.OutcomeReports != null)
+        {
+            // Main action path: reports were gathered up-front so their verbatims could feed the
+            // narration. Reuse those exact instances — re-gathering would run any item factory a
+            // second time and materialise duplicate items.
+            allReports = new System.Collections.Generic.List<Outcome>(result.OutcomeReports);
+        }
+        else
+        {
+            // Fallback (e.g. Get-Up): no reports were pre-gathered, so build them now.
+            allReports = new System.Collections.Generic.List<Outcome>();
+            allReports.AddRange(GatherVerbReports(result.ActualOutcome, result.Succeeded, result.Action?.CombinedItem));
+            allReports.AddRange(result.LlmDecidedReports);
+        }
+
+        // The chain's practice chips read as the quiet coda to whatever the verb actually did, so
+        // they go last — after the verb's own reports and after its lesson.
+        allReports.AddRange(practiceReports);
+
+        // Record this verb into the in-progress routine BEFORE applying reports, so the recorder
+        // evaluates the verb against the pre-move PoV. The reports come along because they carry the
+        // RoutineChainEffect the recorder decides on (skip vs stop, and what counts as movement).
+        if (result.Succeeded && _recorder != null && _scene != null && _pov != null
+            && result.ActualOutcome is VerbAction)
+        {
+            _recorder.OnVerbSucceeded(result.Action, _scene, _pov, _activePartyMember, allReports);
+        }
+
+        // Remember where and when we were before reports apply. The area drives continuing narration
+        // at the destination node (any area-moving verb — move, follow path, stairs, climb, door — not
+        // just MoveToArea); the period drives re-placing NPCs for the new time of day.
+        var areaBefore   = _pov?.Where;
+        var periodBefore = _pov?.When;
+
+        // Apply every report's game-state change in order — to the acting member, so a companion's
+        // loot, learned skills, and suffered wounds land on the companion, not the protagonist.
         foreach (var report in allReports)
-            report.Apply(_protagonist, _scene, _pov);
+            report.ApplyTo(OutcomeContext.For(_activePartyMember, _scene, _pov));
+
+        // Self-check for the routine recorder's one silent failure mode: a report that relocates the
+        // player without declaring it. The recorder cannot see the move (it runs before Apply, by
+        // design), so it would build routines on a stale prefix. Shout rather than record something
+        // subtly wrong. Space and time are checked separately so the message names the right flag.
+        if (!ReferenceEquals(areaBefore, _pov?.Where)
+            && !allReports.Any(r => r.RoutineChainEffect.HasFlag(RoutineChainEffect.Movement)))
+        {
+            Console.Error.WriteLine(
+                $"NarrativeController: '{result.Action.Verb?.VerbId}' moved the point of view but none of its " +
+                "reports declared RoutineChainEffect.Movement — routine recording will mis-track position. " +
+                "Declare it on the report that moves the PoV.");
+        }
+
+        if (periodBefore != _pov?.When
+            && !allReports.Any(r => r.RoutineChainEffect.HasFlag(RoutineChainEffect.TimeShift)))
+        {
+            Console.Error.WriteLine(
+                $"NarrativeController: '{result.Action.Verb?.VerbId}' changed the time of day but none of its " +
+                "reports declared RoutineChainEffect.TimeShift — routine recording will mis-track it. " +
+                "Declare it on the report that shifts the period.");
+        }
+
+        // A verb that shifted the period only wrote PoV.When; route it back through the single writer
+        // so the graph's period, NPC placement and verb gating all follow it to the new time of day.
+        if (_pov != null && periodBefore != null && periodBefore != _pov.When)
+        {
+            Console.WriteLine($"NarrativeController: time of day advanced {periodBefore} → {_pov.When}");
+            ApplyTimePeriod(_pov.When);
+        }
 
         // UI-visible chips for the outcome block.
         var uiReports = allReports.Where(r => r.ShowInUI).ToList();
@@ -978,7 +2202,7 @@ public class NarrativeController
         // Add outcome narration block
         var outcomeBlock = new NarrationBlock(
             Type: NarrationBlockType.Outcome,
-            ModusMentis: result.ActionModusMentis ?? throw new InvalidOperationException("Action modusMentis cannot be null"),
+            ModusMentis: result.ActionModusMentis ?? throw new InvalidOperationException("VerbAction modusMentis cannot be null"),
             Text: $"[{(result.Succeeded ? "SUCCESS" : "FAILURE")}] {result.Narration}",
             Keywords: null,
             Actions: null,
@@ -991,55 +2215,88 @@ public class NarrativeController
         // Auto-scroll to bottom to show outcome
         _scrollBuffer.ScrollToBottom();
         _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
-        
+
         // Clear dice roll state
-        _narrationState.ClearDiceRoll();
+        NarrationDiceClear();
         _ambianceEngine?.SetFilter(MusicFilter.None);
 
-        // === FAILURE-PATH WITNESS CONFRONTATION (step 4b) ===
-        // On failure, the executor already asked the LLM whether the witness noticed.
-        // If detected, override the normal failure flow with a caught-red-handed dialogue.
-        if (!result.Succeeded && result.WitnessDetected && result.DetectedWitness != null && _pov != null)
+        // === A FIGHT ASKED FOR BY THE ACTION ITSELF ===
+        // Hoisted above the failure ladder below, and read off the scene rather than off the outcome,
+        // because a report is what asks for it (FightTriggerOutcome.Apply writes the request) and
+        // reports are applied for both a success and a failure. Two things follow, both deliberate:
+        //
+        //  - a fight the player STARTED outranks the one their failure invited. Swing at somebody and
+        //    miss in front of a witness, and the brawl you began is the story, not the trespass
+        //    conversation the miss would otherwise have opened;
+        //  - the request cannot outlive the action that made it. Left on the scene while an early
+        //    return took some other branch, it would open a fight two actions later, against whoever
+        //    it happened to name.
+        //
+        // Deferred to the CONTINUE rather than raised now: the chips are the only account the player
+        // gets of what the blow did, and the fight screen replaces the narration the frame it opens.
+        if (_scene?.PendingFightRequest is { } fightRequest)
         {
-            var crimeType = DetermineCrimeType(result.Action.Verb, _pov.Where.IsPrivate);
-            Console.WriteLine($"NarrativeController: Witness '{result.DetectedWitness.DisplayName}' detected failed illegal action (crime: {crimeType})");
-            var catchTree = CaughtRedHandedTreeFactory.Create(crimeType, result.DetectedWitness.IsBrave);
-            _pendingDialogueOutcome = new Cathedral.Game.Narrative.DialogueOutcome(result.DetectedWitness, tree: catchTree);
+            _scene.PendingFightRequest = null;
+            _deferredFightOutcome = new FightTriggerOutcome(fightRequest.Npc, $"attack on {fightRequest.Npc.DisplayName}")
+            {
+                EnemyInitiative = !result.Succeeded,
+            };
+            Console.WriteLine($"NarrativeController: fight with {fightRequest.Npc.DisplayName} held for CONTINUE"
+                            + (result.Succeeded ? "" : " (missed — enemy initiative)"));
+            _narrationState.PendingTransitionNode = null;
+            _narrationState.ShouldExitOnContinue  = false;
+            _narrationState.ShowContinueButton    = true;
+            _pendingSegmentLabel                  = SegmentLabelFor(result);
+            _pendingSegmentSucceeded              = result.Succeeded;
+            if (_pov != null) SceneDebugManager.UpdatePoV(_pov);
             return;
         }
 
-        // === FAILURE-PATH ENEMY OPPORTUNITY ATTACK (step 4c) ===
-        // On failure, the executor asked the LLM whether the enemy seized an opportunity.
-        // If triggered, skip normal outcome and queue a fight immediately.
-        if (!result.Succeeded && result.FightTriggered && result.FightEnemy != null)
+        // === FAILURE-PATH SOCIAL CONSEQUENCE ===
+        // Three rungs of one ladder, decided deterministically by the executor from effective
+        // proximity (no LLM). At most one is set. See ActionExecutionController.FailureConsequences.
+
+        // Seen by an enemy: they attack, with the initiative.
+        if (!result.Succeeded && result.FightWithEnemy != null)
         {
-            Console.WriteLine($"NarrativeController: Enemy '{result.FightEnemy.DisplayName}' seized opportunity — triggering fight");
-            _pendingFightOutcome = new FightOutcome(result.FightEnemy, $"opportunity attack by {result.FightEnemy.DisplayName}");
+            Console.WriteLine($"NarrativeController: Enemy '{result.FightWithEnemy.DisplayName}' attacks after failed action in plain sight — enemy initiative");
+            _pendingFightOutcome = new FightTriggerOutcome(result.FightWithEnemy, $"opportunity attack by {result.FightWithEnemy.DisplayName}")
+            {
+                EnemyInitiative = true
+            };
             return;
+        }
+
+        // Seen by a witness: they confront you, and the tree decides what that becomes.
+        if (!result.Succeeded && result.CaughtByWitness != null && _pov != null)
+        {
+            var crimeType = DetermineCrimeType(result.Action.Verb, _pov.Where.IsPrivate);
+            Console.WriteLine($"NarrativeController: Witness '{result.CaughtByWitness.DisplayName}' caught the failed illegal action (crime: {crimeType})");
+            var catchTree = CaughtRedHandedTreeFactory.Create(crimeType);
+            SetPendingDialogue(new Cathedral.Game.Scene.DialogueTriggerOutcome(result.CaughtByWitness, tree: catchTree), result.Action);
+            return;
+        }
+
+        // Only heard, from a room away: they come to look. Nothing is confronted yet — the point of
+        // this rung is that it leaves room to leave. What it costs is that they are now standing in
+        // the room with you, which closes the free exit and makes the next slip a caught one.
+        if (!result.Succeeded && result.NpcDrawnIn != null && _scene != null && _pov != null)
+        {
+            var arriving = _scene.Npcs.FirstOrDefault(n => ReferenceEquals(n.Entity, result.NpcDrawnIn));
+            if (arriving != null)
+                _scene.DrawNpcTo(arriving, _pov.Where);
+            else
+                Console.Error.WriteLine(
+                    $"NarrativeController: '{result.NpcDrawnIn.DisplayName}' was drawn in but is not a scene NPC — nobody arrives.");
         }
 
         // Handle outcome based on type - show continue button for next step
-        if (result.ActualOutcome is FightOutcome fightOutcome)
+        // A fight needs no arm here: every route to one goes through scene.PendingFightRequest, which
+        // is answered above — including an outcome that IS a FightTriggerOutcome, since it writes the
+        // request from its own Apply like any other report.
+        if (result.ActualOutcome is VerbAction verbOutcome && _scene != null && _pov != null)
         {
-            Console.WriteLine($"NarrativeController: Fight outcome with {fightOutcome.Target.DisplayName}, signaling fight mode");
-            _pendingFightOutcome = fightOutcome;
-            // Don't show continue button - the game controller will detect the pending fight and switch modes
-        }
-        else if (result.ActualOutcome is DialogueOutcome dialogueOutcome)
-        {
-            Console.WriteLine($"NarrativeController: Dialogue outcome with {dialogueOutcome.Target.DisplayName}, signaling dialogue mode");
-            _pendingDialogueOutcome = dialogueOutcome;
-            // Don't show continue button - the game controller will detect the pending dialogue and switch modes
-        }
-        else if (result.ActualOutcome is NarrationNode nextNode)
-        {
-            Console.WriteLine($"NarrativeController: Transition outcome to node {nextNode.NodeId}, showing continue button");
-            _narrationState.PendingTransitionNode = nextNode;
-            _narrationState.ShowContinueButton = true;
-        }
-        else if (result.ActualOutcome is VerbOutcome verbOutcome && _scene != null && _pov != null)
-        {
-            Console.WriteLine($"NarrativeController: Verb outcome '{verbOutcome.VerbView.Verb.VerbId}' on '{verbOutcome.Target?.DisplayName}', reports already applied");
+            Console.WriteLine($"NarrativeController: Verb outcome '{verbOutcome.Verb.VerbId}' on '{verbOutcome.Target?.DisplayName}', reports already applied");
             SceneDebugManager.UpdatePoV(_pov);
 
             // Check if the verb requested a dialogue session
@@ -1047,38 +2304,49 @@ public class NarrativeController
             {
                 var req = _scene.PendingDialogueRequest;
                 _scene.PendingDialogueRequest = null;
-                _pendingDialogueOutcome = new Cathedral.Game.Narrative.DialogueOutcome(req.Npc, req.TreeId);
+                SetPendingDialogue(new Cathedral.Game.Scene.DialogueTriggerOutcome(req.Npc, req.TreeId), result.Action);
                 Console.WriteLine($"NarrativeController: Dialogue verb triggered tree '{req.TreeId}' with {req.Npc.DisplayName}");
                 return;
             }
 
-            // Check if the verb requested a fight (e.g. AttackVerb)
-            if (_scene.PendingFightRequest != null)
+            // Any area-moving verb (move, follow path, stairs, climb, open door): stay in scene and
+            // transition to the destination area's node. Detected generically by the PoV's area
+            // changing, so all connector verbs behave like MoveToAreaVerb (consistent PoV/node and a
+            // live session that survives across connectors — required for multi-step routine chains).
+            if (_pov != null && areaBefore != null && _pov.Where.Id != areaBefore.Id)
             {
-                var req = _scene.PendingFightRequest;
-                _scene.PendingFightRequest = null;
-                _pendingFightOutcome = new FightOutcome(req.Npc, $"attack on {req.Npc.DisplayName}");
-                Console.WriteLine($"NarrativeController: Attack verb triggered fight with {req.Npc.DisplayName}");
-                return;
-            }
-
-            // MoveToAreaVerb: stay in scene and transition to the target area's node
-            if (verbOutcome.VerbView.Verb is Cathedral.Game.Scene.Verbs.MoveToAreaVerb
-                && verbOutcome.Target is Cathedral.Game.Scene.Area movedArea)
-            {
-                var nodeId = movedArea.DisplayName.ToLowerInvariant().Replace(' ', '_');
-                if (_graph.AllNodes.TryGetValue(nodeId, out var areaNode))
+                if (NodeForArea(_pov.Where) is { } areaNode)
                 {
-                    Console.WriteLine($"NarrativeController: MoveToAreaVerb — transitioning to node '{nodeId}'");
+                    Console.WriteLine($"NarrativeController: area changed to '{_pov.Where.DisplayName}' — transitioning to node '{areaNode.NodeId}'");
                     _narrationState.PendingTransitionNode = areaNode;
                     _narrationState.ShowContinueButton = true;
+                    // Same caption every other resolved action gets. This early return skipped it,
+                    // so the whole family of area-moving verbs — move, follow path, stairs, climb,
+                    // door, crossing — closed its segment under a blank rule while an in-place action
+                    // closed under "after trying to …".
+                    _pendingSegmentLabel     = SegmentLabelFor(result);
+                    _pendingSegmentSucceeded = result.Succeeded;
                     return;
                 }
+            }
+
+            // GetUp phase: failure loops back (no ShouldExitOnContinue); success is handled
+            // via PendingGetUpTransition in the Continue button handler.
+            if (_scene?.Phase == NarrationPhase.GetUp)
+            {
+                _narrationState.PendingTransitionNode = null;
+                _narrationState.ShouldExitOnContinue = false;
+                _narrationState.ShowContinueButton = true;
+                if (_pov != null) SceneDebugManager.UpdatePoV(_pov);
+                Console.WriteLine($"NarrativeController: GetUp action complete ({(result.Succeeded ? "pending transition" : "will loop")})");
+                return;
             }
 
             _narrationState.PendingTransitionNode = null;
             _narrationState.ShouldExitOnContinue = IsMovementAction(result.Action);
             _narrationState.ShowContinueButton = true;
+            _pendingSegmentLabel = SegmentLabelFor(result);
+            _pendingSegmentSucceeded = result.Succeeded;
         }
         else
         {
@@ -1086,44 +2354,57 @@ public class NarrativeController
             _narrationState.PendingTransitionNode = null;
             _narrationState.ShouldExitOnContinue = IsMovementAction(result.Action);
             _narrationState.ShowContinueButton = true;
+            _pendingSegmentLabel = SegmentLabelFor(result);
+            _pendingSegmentSucceeded = result.Succeeded;
         }
 
         // Refresh debug window to reflect any state changes
         if (_pov != null)
             SceneDebugManager.UpdatePoV(_pov);
 
-        Console.WriteLine("NarrativeController: Action phase complete");
+        Console.WriteLine("NarrativeController: VerbAction phase complete");
     }
     
     /// <summary>
     /// Execute focus observation phase: generate a detailed observation for a specific outcome (async).
     /// Triggered by right-clicking a keyword and selecting an observation modusMentis.
     /// </summary>
-    private async Task ExecuteFocusObservationAsync(ModusMentis observationModusMentis, ConcreteOutcome focusOutcome)
+    private async Task ExecuteFocusObservationAsync(ModusMentis observationModusMentis, NarrativeAnchor focusOutcome)
     {
         try
         {
             Console.WriteLine($"NarrativeController: Executing focus observation with {observationModusMentis.DisplayName} on outcome '{focusOutcome.DisplayName}'");
 
-            var blocks = await _observationController.GenerateFocusObservationAsync(
+            _previewSession.Reset();
+
+            // Deferred commit: reveal the focus block(s) when the player presses CONTINUE.
+            void CommitFocus(List<NarrationBlock> blocks)
+            {
+                foreach (var block in blocks)
+                {
+                    _scrollBuffer.AddBlock(block);
+                    _narrationState.AddBlock(block);
+                }
+                _ambianceEngine?.PlaySoundEffect(SoundEffectType.NarrativeReveal);
+                _scrollBuffer.ScrollToBottom();
+                _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+            }
+
+            await _observationController.GenerateFocusObservationAsync(
                 focusOutcome,
                 observationModusMentis,
                 _currentNode,
-                _protagonist
+                _protagonist.CurrentLocationId,
+                _activePartyMember,
+                isReminescence: _scene?.Phase == NarrationPhase.ChildhoodReminescence,
+                ledger: _observationLedger,
+                preview: _previewSession,
+                commit: CommitFocus
             );
 
-            foreach (var block in blocks)
-            {
-                _scrollBuffer.AddBlock(block);
-                _narrationState.AddBlock(block);
-            }
-
-            // Auto-scroll to bottom to show new observation
-            _scrollBuffer.ScrollToBottom();
-            _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
-
-            // Consume a thinking point (same pool as thinking)
-            if (_scene?.Phase != NarrationPhase.ChildhoodReminescence)
+            // Consume a thinking point (same pool as thinking) at generation end.
+            if (_scene?.Phase != NarrationPhase.ChildhoodReminescence
+                && _scene?.Phase != NarrationPhase.GetUp)
                 _narrationState.ThinkingAttemptsRemaining--;
 
             // Update state
@@ -1135,10 +2416,8 @@ public class NarrativeController
         catch (Exception ex)
         {
             Console.Error.WriteLine($"NarrativeController: Error during focus observation: {ex.Message}");
-            Console.Error.WriteLine(ex.StackTrace);
-
             _narrationState.IsLoadingFocusObservation = false;
-            _narrationState.ErrorMessage = $"Focus observation failed: {ex.Message}";
+            _narrationState.ErrorMessage = ReportPhaseFailure("observing in focus", ex);
         }
     }
     
@@ -1152,7 +2431,7 @@ public class NarrativeController
     private void LoadNoeticPoints(PartyMember member)
     {
         if (!_memberNoeticPoints.TryGetValue(member.DisplayName, out var points))
-            points = NarrativeUI.GetMaxThinkingAttempts();
+            points = member.MaxNoeticPoints;
         _narrationState.ThinkingAttemptsRemaining = points;
     }
 
@@ -1163,23 +2442,16 @@ public class NarrativeController
     /// </summary>
     private async Task ExecuteSpeakingPhaseAsync(
         ModusMentis speakingModusMentis,
-        Companion companion,
+        PartyMember companion,
         KeywordRegion keywordRegion)
     {
         string keyword = keywordRegion.Keyword;
-        var sourceBlock = keywordRegion.SourceBlock;
 
         try
         {
-            Console.WriteLine($"NarrativeController: Speaking phase — skill={speakingModusMentis.DisplayName}, companion={companion.Name}, keyword='{keyword}'");
+            Console.WriteLine($"NarrativeController: Speaking phase — skill={speakingModusMentis.DisplayName}, companion={companion.DisplayName}, keyword='{keyword}'");
 
-            // Resolve the outcome linked to this keyword
-            ConcreteOutcome? linkedOutcome = null;
-            if (sourceBlock?.KeywordOutcomeMap?.TryGetValue(keyword, out var ko) == true)
-                linkedOutcome = ko;
-            else
-                linkedOutcome = sourceBlock?.LinkedOutcome;
-
+            var linkedOutcome = keywordRegion.ResolvedAnchor;
             if (linkedOutcome == null)
             {
                 Console.Error.WriteLine($"NarrativeController: Speaking — no outcome found for keyword '{keyword}'");
@@ -1187,61 +2459,92 @@ public class NarrativeController
                 return;
             }
 
-            var speakingBlock = await _observationController.GenerateSpeakingTextAsync(
+            _previewSession.Reset();
+
+            // Deferred commit: when the player presses CONTINUE on the last spoken line, grey the old
+            // content, add the speaking block, spend a noetic point and hand off to the companion.
+            void CommitSpeaking(NarrationBlock speakingBlock)
+            {
+                _scrollBuffer.ConvertToHistory();
+                _narrationState.ResetForPartyMemberChange();
+                // The companion takes over the narration with their own attention: whatever the
+                // speaker had already looked at — or been offered a button for — does not constrain
+                // what draws them or what they may be shown.
+                _observationLedger.Clear();
+                _proposalLedger.Clear();
+                _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+
+                _scrollBuffer.AddBlock(speakingBlock);
+                _narrationState.AddBlock(speakingBlock);
+                _ambianceEngine?.PlaySoundEffect(SoundEffectType.NarrativeReveal);
+                _scrollBuffer.ScrollToBottom();
+                _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+
+                // Consume one noetic point from the speaker's own pool, then save it.
+                _narrationState.ThinkingAttemptsRemaining--;
+                SaveActiveNoeticPoints();
+
+                // Switch to companion and load their own counter (fresh if first hand-off to them).
+                _activePartyMember = companion;
+                LoadNoeticPoints(companion);
+            }
+
+            var speakingResult = await _observationController.GenerateSpeakingTextAsync(
                 keyword,
                 speakingModusMentis,
-                companion.Name,
+                companion.DisplayName,
                 linkedOutcome,
                 _currentNode,
-                _protagonist,
-                _worldContext
+                _activePartyMember,
+                _protagonist.CurrentLocationId,
+                _worldContext,
+                preview: _previewSession,
+                commit: CommitSpeaking
             );
 
-            if (speakingBlock == null)
+            if (speakingResult == null)
             {
                 Console.Error.WriteLine("NarrativeController: Speaking generation returned null.");
+                _previewSession.Reset();
                 _narrationState.IsLoadingSpeaking = false;
                 _narrationState.ErrorMessage = "Speaking failed — no text generated.";
                 return;
             }
 
-            // Grey out current content and reset without spending all noetic points
-            _scrollBuffer.ConvertToHistory();
-            _narrationState.ResetForPartyMemberChange();
-            _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
-
-            // Speaking block is the new observation root for this sequence
-            _scrollBuffer.AddBlock(speakingBlock);
-            _narrationState.AddBlock(speakingBlock);
-            _scrollBuffer.ScrollToBottom();
-            _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
-
-            // Consume one noetic point from the speaker's own pool, then save it.
-            _narrationState.ThinkingAttemptsRemaining--;
-            SaveActiveNoeticPoints();
-
-            // Switch to companion and load their own counter (fresh if first hand-off to them).
-            _activePartyMember = companion;
-            LoadNoeticPoints(companion);
-
             _narrationState.IsLoadingSpeaking = false;
             _narrationState.ErrorMessage = null;
 
-            Console.WriteLine($"NarrativeController: Speaking phase complete — active party member is now {companion.Name}");
+            Console.WriteLine($"NarrativeController: Speaking phase complete — active party member is now {companion.DisplayName}");
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"NarrativeController: Speaking phase error: {ex.Message}");
-            Console.Error.WriteLine(ex.StackTrace);
+            _previewSession.Reset();
             _narrationState.IsLoadingSpeaking = false;
-            _narrationState.ErrorMessage = $"Speaking failed: {ex.Message}";
+            _narrationState.ErrorMessage = ReportPhaseFailure("speaking", ex);
         }
     }
+
+    /// <summary>A modal popup (modus mentis / item / choice) is open over the panel.</summary>
+    private bool IsAnyPopupVisible =>
+        _modusMentisPopup.IsVisible || _itemSelectionPopup.IsVisible || _choicePopup.IsVisible;
 
     /// <summary>
     /// Update loop - called at 10 Hz by game controller.
     /// </summary>
     public void Update()
+    {
+        RenderPanel();
+
+        // A popup is a modal choice, so the panel behind it is greyed out the same way
+        // the generation preview box greys it: recolouring the text rather than darkening
+        // the whole HUD, so the popup itself (a separate terminal) stays at full strength.
+        // Applied after RenderPanel because DimContent only affects what is already drawn.
+        if (IsAnyPopupVisible)
+            _ui.DimContent();
+    }
+
+    private void RenderPanel()
     {
         // Clear terminal
         _ui.Clear();
@@ -1249,136 +2552,177 @@ public class NarrativeController
         // Sync music filter based on current loading/dice state
         if (_ambianceEngine != null)
         {
-            bool diceActive    = _narrationState.IsDiceRollActive;
-            bool loadingActive = _narrationState.IsLoadingObservations
-                              || _narrationState.IsLoadingThinking
-                              || _narrationState.IsLoadingFocusObservation
-                              || _narrationState.IsLoadingSpeaking
-                              || _narrationState.IsLoadingAction;
-            var desired = diceActive   ? MusicFilter.DiceRoll
-                        : loadingActive ? MusicFilter.Loading
+            // Play the dice-roll music only while the dice are actually tumbling — it stops the
+            // instant the animation settles and the values are locked in, not when the player
+            // dismisses the settled overlay with Continue.
+            bool diceRolling = _narrationState.IsDiceRollActive && _narrationState.IsDiceRolling;
+            var desired = diceRolling                 ? MusicFilter.DiceRoll
+                        : _narrationState.IsAnyLoading ? MusicFilter.Loading
                         : MusicFilter.None;
             if (_ambianceEngine.ActiveFilter != desired)
                 _ambianceEngine.SetFilter(desired);
         }
 
-        // Render header
-        _ui.RenderHeader(_currentNode.DisplayName, _narrationState.ThinkingAttemptsRemaining, _worldContext, _activePartyMember.DisplayName, _graph.CurrentPeriod);
-        
+        // Header: agent name (left) + noetic counter (right, hidden in phases without cost).
+        // Always rendered — while the LLM is generating it's greyed out along with the rest
+        // of the panel (see below) rather than replaced.
+        bool showNoetic = _scene?.Phase != NarrationPhase.ChildhoodReminescence
+                       && _scene?.Phase != NarrationPhase.GetUp;
+        _ui.RenderHeader(_activePartyMember.DisplayName, _narrationState.ThinkingAttemptsRemaining,
+            _activePartyMember.MaxNoeticPoints, showNoetic);
+
+        // The footer exit button is only (re)rendered in the interactive states below. Clear its
+        // click region each frame so stale zones don't linger during dice/loading/error states.
+        _exitButtonRegion = default;
+
+        // Footer scene info — shown as the default footer in every state
+        string sceneInfo = BuildSceneInfoLine();
+
         // Show error if present
         if (_narrationState.ErrorMessage != null)
         {
             _ui.ShowError(_narrationState.ErrorMessage);
-            _ui.RenderStatusBar("Press ESC to return to world view");
+            _ui.RenderStatusBar(sceneInfo);
             return;
         }
-        
-        // Show dice roll screen if active (for action execution)
+
+        // Dice roll overlay (action execution): narration stays visible but greyed out
+        // underneath a small dice box — same presentation as fight mode.
         if (_narrationState.IsDiceRollActive)
         {
-            bool hasContinueButton = _ui.ShowDiceRollIndicator(
-                _narrationState.DiceRollNumberOfDice,
-                _narrationState.DiceRollDifficulty,
-                _narrationState.IsDiceRolling,
-                _narrationState.DiceRollFinalValues,
-                _narrationState.IsDiceRollButtonHovered
-            );
-            
-            string diceStatus = _narrationState.IsDiceRolling 
-                ? "Rolling dice..." 
-                : (_narrationState.DiceRollSucceeded ? "Success! Click Continue to see the outcome" : "Failed! Click Continue to see the outcome");
+            _dice.Advance();
+            RenderNarrationContent();
+            _ui.RenderDiceComponent(_dice, _narrationState.IsDiceRollButtonHovered);
+
+            string diceStatus = _narrationState.IsDiceRolling
+                ? Config.LoadingMessages.RollingDice
+                : (_dice.IsCurrentlySuccess ? "Success! Click Continue to see the outcome" : "Failed! Click Continue to see the outcome");
             _ui.RenderStatusBar(diceStatus);
             return;
         }
-        
-        // Show loading indicator if generating (for non-action loading, or action evaluation phase before dice roll)
-        bool isLoadingNonDice = _narrationState.IsLoadingObservations || _narrationState.IsLoadingThinking ||
-                                _narrationState.IsLoadingFocusObservation || _narrationState.IsLoadingSpeaking ||
-                                (_narrationState.IsLoadingAction && !_narrationState.IsDiceRollActive);
-        if (isLoadingNonDice)
+
+        // LLM generation preview: a box streaming the text being written, gated by CONTINUE. Shown
+        // for the whole life of the preview session (generation in flight AND the wait-for-CONTINUE
+        // after), which is why it precedes the plain IsAnyLoading branch below.
+        if (_previewSession.IsActive)
         {
-            _ui.ShowLoadingIndicator(_narrationState.LoadingMessage);
-            string loadingStatus = _narrationState.IsLoadingObservations 
-                ? "Generating observations..." 
-                : _narrationState.IsLoadingThinking
-                    ? "Generating thinking and actions..."
-                    : _narrationState.IsLoadingAction
-                        ? "Evaluating action..."
-                        : "Generating focus observation...";
-            _ui.RenderStatusBar(loadingStatus);
+            RenderNarrationContent();
+            var snap = _previewSession.Snapshot();
+            // Play the hover tick whenever new preview text streams in (typewriter feedback).
+            if (snap.DisplayText != _lastPreviewText)
+            {
+                PlayHoverSound();
+                _lastPreviewText = snap.DisplayText;
+            }
+            var region = _ui.RenderPreviewBox(snap, _previewContinueHovered);
+            _previewContinueRegion = region.Present ? (region.X, region.Y, region.Width) : default;
+            // No footer button while the box is up — clear its region so a stale one can't be clicked.
+            _exitButtonRegion = default;
+            _ui.RenderWaitingStatus(_narrationState.LoadingMessage);
             return;
         }
-        
+        _previewContinueRegion = default;
+        _lastPreviewText = "";
+
+        // LLM generating (non-action loading, or action evaluation phase before dice roll):
+        // keep the narration visible but greyed out (header included), with a centered
+        // progress bar animation and the waiting message (animated ellipsis) on the footer.
+        if (_narrationState.IsAnyLoading)
+        {
+            RenderNarrationContent();
+            _ui.DimContent();
+            _ui.RenderCenterProgressBar();
+            _ui.RenderWaitingStatus(_narrationState.LoadingMessage);
+            return;
+        }
+
         // Show continue button if flagged
         if (_narrationState.ShowContinueButton)
         {
-            // Render narration blocks (non-interactive, dimmed)
-            _ui.RenderObservationBlocks(
-                _scrollBuffer,
-                _narrationState.ScrollOffset,
-                _narrationState.ThinkingAttemptsRemaining,
-                null, // No keyword hover
-                null, // No action hover
-                true  // Dim content when continue button is shown
-            );
-            
-            // Render scrollbar (still visible when continue button shown)
-            _narrationState.ScrollbarThumb = _ui.RenderScrollbar(
-                _scrollBuffer,
-                _narrationState.ScrollOffset,
-                _narrationState.IsScrollbarThumbHovered
-            );
-            
-            // Render continue button
-            var buttonRegion = _ui.RenderContinueButton(_narrationState.IsContinueButtonHovered);
-            
-            // Track button region for click detection (reuse ActionRegion for simplicity)
-            _narrationState.ActionRegions.Clear();
-            _narrationState.ActionRegions.Add(new ActionRegion(
-                0, 
-                buttonRegion.Y, 
-                buttonRegion.Y, 
-                buttonRegion.X, 
-                buttonRegion.X + buttonRegion.Width
-            ));
-            
-            _ui.RenderStatusBar("Click Continue to return to world view");
+            RenderNarrationContent(dimContent: true);
+
+            // Post-action progression uses the single footer button, shown here as CONTINUE.
+            RenderFooterButton(showNoetic);
+            _ui.RenderStatusBar(sceneInfo);
             return;
         }
-        
+
         // Render observation blocks with keywords
+        RenderNarrationContent(_narrationState.HoveredKeyword, _narrationState.HoveredAction);
+
+        // Single footer button — LEAVE/RUNAWAY while idle in exploration (the only interactive
+        // control once noetic points are exhausted, since keyword regions render inert then).
+        RenderFooterButton(showNoetic);
+
+        // Footer always shows scene info in the idle observation state
+        _ui.RenderStatusBar(sceneInfo);
+    }
+
+    /// <summary>
+    /// Render the panel's normal content: observation blocks plus the scrollbar
+    /// (updating the stored thumb region for hit-testing).
+    /// </summary>
+    private void RenderNarrationContent(
+        KeywordRegion? hoveredKeyword = null,
+        ActionRegion?  hoveredAction  = null,
+        bool           dimContent     = false)
+    {
         _ui.RenderObservationBlocks(
             _scrollBuffer,
-            _narrationState.ScrollOffset,
             _narrationState.ThinkingAttemptsRemaining,
-            _narrationState.HoveredKeyword,
-            _narrationState.HoveredAction
-        );
-        
-        // Render scrollbar and update thumb region
+            hoveredKeyword,
+            hoveredAction,
+            dimContent);
+
         _narrationState.ScrollbarThumb = _ui.RenderScrollbar(
             _scrollBuffer,
             _narrationState.ScrollOffset,
-            _narrationState.IsScrollbarThumbHovered
-        );
-        
-        // Render status bar - show modusMentis chain dice count when hovering over an action
-        string statusMessage;
-        if (_narrationState.HoveredAction?.Action != null)
+            _narrationState.IsScrollbarThumbHovered);
+    }
+
+    /// <summary>
+    /// Builds the scene-info line displayed in the footer:
+    /// "BiomeName — location name | Time of day".
+    /// </summary>
+    private string BuildSceneInfoLine()
+    {
+        string location = _currentNode.DisplayName.Replace("_", " ");
+        string biome    = _worldContext?.DisplayName ?? "";
+        string time     = _graph.CurrentPeriod.ToString();
+
+        if (biome.Length > 0)
+            return $"{biome}  —  {location}  |  {time}";
+        return $"{location}  |  {time}";
+    }
+
+    /// <summary>
+    /// Renders the single narration footer button (CONTINUE / LEAVE / RUNAWAY) and records its
+    /// click region for <see cref="OnMouseMove"/>/<see cref="OnMouseClick"/>.
+    /// <para>
+    /// CONTINUE shows while a succeeded action awaits progression (<see cref="NarrativeState.ShowContinueButton"/>)
+    /// and throughout the no-early-exit phases; otherwise the idle exploration state shows LEAVE/RUNAWAY.
+    /// In a no-early-exit phase's idle state (nothing pending) no button is drawn — matching the old flow.
+    /// </para>
+    /// </summary>
+    private void RenderFooterButton(bool showNoetic)
+    {
+        bool postAction = _narrationState.ShowContinueButton;
+
+        // Reminescence / get-up: only surface the button (as CONTINUE) while progression is pending.
+        if (!showNoetic && !postAction)
         {
-            // Calculate total modusMentis level from the modusMentis chain
-            int totalDice = _narrationState.HoveredAction.Action.GetTotalModusMentisLevel();
-            statusMessage = $"Click to attempt this action with {totalDice}{Config.Symbols.ModusMentisLevelIndicator} in the modusMentis check";
+            _exitButtonRegion = default;
+            return;
         }
-        else if (_narrationState.ThinkingAttemptsRemaining > 0)
+
+        ExitButtonKind kind = postAction ? ExitButtonKind.Continue : ComputeExitContext().kind;
+        string label = kind switch
         {
-            statusMessage = $"Hover keywords to highlight • Click keywords to think ({_narrationState.ThinkingAttemptsRemaining} attempts remaining)";
-        }
-        else
-        {
-            statusMessage = "No thinking attempts remaining • Explore keywords to continue";
-        }
-        _ui.RenderStatusBar(statusMessage, _narrationState.HoveredAction?.Action);
+            ExitButtonKind.Continue => "CONTINUE",
+            ExitButtonKind.Leave    => "LEAVE",
+            _                       => "RUNAWAY",
+        };
+        _exitButtonRegion = _ui.RenderExitButton(label, _exitButtonHovered);
     }
     
     /// <summary>
@@ -1391,14 +2735,19 @@ public class NarrativeController
         var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.ClientSize);
         float cellPixelSize = layoutInfo.CellSize.X;
 
+        // UpdateHover returns true when the highlighted option changed — play a tick then,
+        // so hovering options inside a popup gives the same feedback as elsewhere.
+        bool hoverChanged = false;
         if (_modusMentisPopup.IsVisible)
-            _modusMentisPopup.UpdateHover(screenPosition.X, screenPosition.Y, _core.ClientSize, cellPixelSize);
+            hoverChanged |= _modusMentisPopup.UpdateHover(screenPosition.X, screenPosition.Y, _core.ClientSize, cellPixelSize);
 
         if (_itemSelectionPopup.IsVisible)
-            _itemSelectionPopup.UpdateHover(screenPosition.X, screenPosition.Y, _core.ClientSize, cellPixelSize);
+            hoverChanged |= _itemSelectionPopup.UpdateHover(screenPosition.X, screenPosition.Y, _core.ClientSize, cellPixelSize);
 
         if (_choicePopup.IsVisible)
-            _choicePopup.UpdateHover(screenPosition.X, screenPosition.Y, _core.ClientSize, cellPixelSize);
+            hoverChanged |= _choicePopup.UpdateHover(screenPosition.X, screenPosition.Y, _core.ClientSize, cellPixelSize);
+
+        if (hoverChanged) PlayHoverSound();
     }
     
     /// <summary>
@@ -1411,7 +2760,7 @@ public class NarrativeController
         var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.ClientSize);
         float cellPixelSize = layoutInfo.CellSize.X;
 
-        // Choice popup (Think/Observe or Execute/Use Item) takes highest priority
+        // Choice popup (Think/Observe or Execute/Use Tool) takes highest priority
         if (_choicePopup.IsVisible)
         {
             int? choiceIndex = _choicePopup.HandleClick(screenPosition.X, screenPosition.Y, _core.ClientSize, cellPixelSize);
@@ -1454,7 +2803,7 @@ public class NarrativeController
                     _narrationState.IsSelectingModusMentisForSpeaking = false;
                     _narrationState.SpeakingModusMentisPending = selectedModusMentis;
                     _pendingCompanions = _protagonist.CompanionParty.ToList();
-                    var companionNames = _pendingCompanions.Select(c => c.Name).ToList();
+                    var companionNames = _pendingCompanions.Select(c => c.DisplayName).ToList();
                     _narrationState.IsSelectingCompanionForSpeaking = true;
                     Vector2 screenPos2 = _terminalInputHandler.CellToScreen(_lastMouseX, _lastMouseY, _core.ClientSize);
                     _choicePopup.Show(screenPos2, companionNames, "Who do you address?");
@@ -1462,24 +2811,18 @@ public class NarrativeController
                 // Get the keyword that was clicked (stored before popup appeared)
                 else if (_narrationState.HoveredKeyword != null)
                 {
-                    string keyword = _narrationState.HoveredKeyword.Keyword;
-                    var sourceBlock = _narrationState.HoveredKeyword.SourceBlock;
+                    var clickedRegion = _narrationState.HoveredKeyword;
+                    string keyword = clickedRegion.Keyword;
 
                     // Check if we're selecting an observation modusMentis or thinking modusMentis
                     if (_narrationState.IsSelectingObservationModusMentis)
                     {
                         // Focus observation phase
                         _narrationState.IsLoadingFocusObservation = true;
-                        _narrationState.LoadingMessage = Config.LoadingMessages.GeneratingObservations;
+                        _narrationState.LoadingMessage = ObservationLoadingMessage();
                         _narrationState.IsSelectingObservationModusMentis = false;
 
-                        // Resolve focus outcome: prefer KeywordOutcomeMap, then LinkedOutcome, then keyword lookup
-                        ConcreteOutcome? focusOutcome = null;
-                        if (sourceBlock?.KeywordOutcomeMap?.TryGetValue(keyword, out var fko) == true)
-                            focusOutcome = fko;
-                        else
-                            focusOutcome = sourceBlock?.LinkedOutcome;
-
+                        var focusOutcome = clickedRegion.ResolvedAnchor;
                         if (focusOutcome != null)
                             _ = ExecuteFocusObservationAsync(selectedModusMentis, focusOutcome);
                         else
@@ -1490,7 +2833,7 @@ public class NarrativeController
                         // Thinking phase
                         _narrationState.IsLoadingThinking = true;
                         _narrationState.LoadingMessage = Config.LoadingMessages.ThinkingDeeply;
-                        _ = ExecuteThinkingPhaseAsync(selectedModusMentis, keyword);
+                        _ = ExecuteThinkingPhaseAsync(selectedModusMentis, clickedRegion);
                     }
                 }
             }
@@ -1520,12 +2863,14 @@ public class NarrativeController
         // Handle dice roll screen hover
         if (_narrationState.IsDiceRollActive && !_narrationState.IsDiceRolling)
         {
-            bool isOverButton = _ui.IsMouseOverDiceRollButton(mouseX, mouseY);
+            var region = _dice.ContinueButtonRegion;
+            bool isOverButton = mouseY == region.Y && mouseX >= region.X && mouseX < region.X + region.Width;
             if (isOverButton != _narrationState.IsDiceRollButtonHovered)
             {
                 _narrationState.IsDiceRollButtonHovered = isOverButton;
                 if (isOverButton) PlayHoverSound();
             }
+            _dice.HandleHumorHover(mouseX, mouseY);
             return;
         }
         
@@ -1579,23 +2924,37 @@ public class NarrativeController
         {
             _narrationState.IsScrollbarThumbHovered = isOverThumb;
         }
-        
-        // If continue button is shown, check if mouse is over it
-        if (_narrationState.ShowContinueButton && _narrationState.ActionRegions.Count > 0)
+
+        // Footer button (CONTINUE / LEAVE / RUNAWAY) hover — present in idle and post-action states.
+        if (_exitButtonRegion.Width > 0)
         {
-            var buttonRegion = _narrationState.ActionRegions[0];
-            bool isOverButton = buttonRegion.Contains(mouseX, mouseY);
-            
-            if (isOverButton != _narrationState.IsContinueButtonHovered)
+            bool overExit = mouseY == _exitButtonRegion.Y
+                         && mouseX >= _exitButtonRegion.X
+                         && mouseX <  _exitButtonRegion.X + _exitButtonRegion.Width;
+            if (overExit != _exitButtonHovered)
             {
-                _narrationState.IsContinueButtonHovered = isOverButton;
-                if (isOverButton) PlayHoverSound();
+                _exitButtonHovered = overExit;
+                if (overExit) PlayHoverSound();
             }
-            
-            // Don't process keyword/action hover when continue button is shown, 
-            // but scrollbar interactions are still allowed (processed above)
-            return;
         }
+
+        // Preview box CONTINUE hover (shown while the generation-preview session is active).
+        if (_previewContinueRegion.Width > 0)
+        {
+            bool overPreview = mouseY == _previewContinueRegion.Y
+                            && mouseX >= _previewContinueRegion.X
+                            && mouseX <  _previewContinueRegion.X + _previewContinueRegion.Width;
+            if (overPreview != _previewContinueHovered)
+            {
+                _previewContinueHovered = overPreview;
+                if (overPreview) PlayHoverSound();
+            }
+        }
+
+        // In the post-action (CONTINUE) state, while the LLM is generating, and while the preview box
+        // is up, content is inert — skip keyword/action hover (scrollbar interactions stay allowed).
+        if (_narrationState.ShowContinueButton || _narrationState.IsAnyLoading || _previewSession.IsActive)
+            return;
         
         // Update hovered keyword region
         KeywordRegion? newHoveredKeyword = _ui.GetHoveredKeyword(mouseX, mouseY);
@@ -1626,13 +2985,21 @@ public class NarrativeController
         // Handle dice roll screen click
         if (_narrationState.IsDiceRollActive && !_narrationState.IsDiceRolling)
         {
-            // Check if clicked on continue button
-            if (_ui.IsMouseOverDiceRollButton(mouseX, mouseY))
+            // Continue button takes priority over the humor layer.
+            var region = _dice.ContinueButtonRegion;
+            bool overContinue = mouseY == region.Y && mouseX >= region.X && mouseX < region.X + region.Width;
+            if (overContinue)
             {
                 Console.WriteLine("NarrativeController: Dice roll continue button clicked");
                 PlayClickSound();
-                OnDiceRollContinue();
+                // An exit-runaway roll resolves the exit instead of committing a thinking outcome.
+                if (_exitRunawayPending)
+                    FinishExitRunaway();
+                else
+                    OnDiceRollContinue();
+                return;
             }
+            _dice.HandleHumorClick(mouseX, mouseY);
             return;
         }
         
@@ -1655,54 +3022,34 @@ public class NarrativeController
             Console.WriteLine($"NarrativeController: Jump scrolled to offset {newOffset}");
             return;
         }
-        
-        // If continue button is shown, check if clicked
-        if (_narrationState.ShowContinueButton && _narrationState.ActionRegions.Count > 0)
+
+        // Preview box CONTINUE — commit the current part and advance to the next (or end the session).
+        if (_previewContinueRegion.Width > 0
+            && mouseY == _previewContinueRegion.Y
+            && mouseX >= _previewContinueRegion.X
+            && mouseX <  _previewContinueRegion.X + _previewContinueRegion.Width)
         {
-            var buttonRegion = _narrationState.ActionRegions[0];
-            if (buttonRegion.Contains(mouseX, mouseY))
-            {
-                PlayClickSound();
-                // Reminescence transition takes priority over normal node transition.
-                if (_scene != null && _scene.PendingReminescenceTransition is { } req)
-                {
-                    HandleReminescenceContinue(req);
-                    return;
-                }
-                // Check if there's a pending transition to a new node
-                if (_narrationState.PendingTransitionNode != null)
-                {
-                    Console.WriteLine($"NarrativeController: Continue button clicked, transitioning to {_narrationState.PendingTransitionNode.NodeId}");
-
-                    // Perform the transition
-                    _currentNode = _narrationState.PendingTransitionNode;
-
-                    // Convert current narration to history (grayed out, non-interactive)
-                    _scrollBuffer.ConvertToHistory();
-                    _narrationState.ResetForNewNode();
-                    _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
-
-                    // Start new observation phase WITHOUT clearing history
-                    StartObservationPhaseWithHistory();
-                }
-                else if (_narrationState.ShouldExitOnContinue)
-                {
-                    Console.WriteLine("NarrativeController: Continue button clicked — movement action, exiting to world view");
-                    _narrationState.RequestedExit = true;
-                }
-                else
-                {
-                    Console.WriteLine("NarrativeController: Continue button clicked — staying in scene, restarting observation");
-                    _scrollBuffer.ConvertToHistory();
-                    _narrationState.ResetForNewNode();
-                    _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
-                    StartObservationPhaseWithHistory();
-                }
-            }
-            // When continue button is shown, don't process other clicks (keywords/actions)
-            // but scrollbar clicks are allowed (processed above)
+            PlayClickSound();
+            _previewContinueHovered = false;
+            _previewSession.TryContinue();
             return;
         }
+
+        // Single footer button (CONTINUE / LEAVE / RUNAWAY) — clickable in idle and post-action states.
+        if (_exitButtonRegion.Width > 0
+            && mouseY == _exitButtonRegion.Y
+            && mouseX >= _exitButtonRegion.X
+            && mouseX <  _exitButtonRegion.X + _exitButtonRegion.Width)
+        {
+            PlayClickSound();
+            HandleFooterButtonClicked();
+            return;
+        }
+
+        // In the post-action (CONTINUE) state, while the LLM is generating, and while the preview box
+        // is up, the content is inert — swallow other clicks (scrollbar clicks handled above).
+        if (_narrationState.ShowContinueButton || _narrationState.IsAnyLoading || _previewSession.IsActive)
+            return;
 
         // If choice popup is visible, handle it first
         if (_choicePopup.IsVisible)
@@ -1754,53 +3101,7 @@ public class NarrativeController
             var selectedModusMentis = _modusMentisPopup.HandleClick(correctedScreenPos.X, correctedScreenPos.Y, _core.ClientSize, cellPixelSize);
             if (selectedModusMentis != null)
             {
-                Console.WriteLine($"NarrativeController: Selected modusMentis: {selectedModusMentis.DisplayName}");
-
-                if (_narrationState.IsSelectingModusMentisForSpeaking)
-                {
-                    // Step 1 of Speak About: speaking modusMentis selected → show companion selection
-                    _narrationState.IsSelectingModusMentisForSpeaking = false;
-                    _narrationState.SpeakingModusMentisPending = selectedModusMentis;
-                    _pendingCompanions = _protagonist.CompanionParty.ToList();
-                    var companionNames = _pendingCompanions.Select(c => c.Name).ToList();
-                    _narrationState.IsSelectingCompanionForSpeaking = true;
-                    Vector2 screenPos2 = _terminalInputHandler.CellToScreen(_lastMouseX, _lastMouseY, _core.ClientSize);
-                    _choicePopup.Show(screenPos2, companionNames, "Who do you address?");
-                }
-                // Get the keyword that was clicked (stored before popup appeared)
-                else if (_narrationState.HoveredKeyword != null)
-                {
-                    string keyword = _narrationState.HoveredKeyword.Keyword;
-                    var sourceBlock = _narrationState.HoveredKeyword.SourceBlock;
-
-                    // Check if we're selecting an observation modusMentis or thinking modusMentis
-                    if (_narrationState.IsSelectingObservationModusMentis)
-                    {
-                        // Focus observation phase
-                        _narrationState.IsLoadingFocusObservation = true;
-                        _narrationState.LoadingMessage = Config.LoadingMessages.GeneratingObservations;
-                        _narrationState.IsSelectingObservationModusMentis = false;
-
-                        // Resolve focus outcome: prefer KeywordOutcomeMap, then LinkedOutcome, then keyword lookup
-                        ConcreteOutcome? focusOutcome = null;
-                        if (sourceBlock?.KeywordOutcomeMap?.TryGetValue(keyword, out var fko) == true)
-                            focusOutcome = fko;
-                        else
-                            focusOutcome = sourceBlock?.LinkedOutcome;
-
-                        if (focusOutcome != null)
-                            _ = ExecuteFocusObservationAsync(selectedModusMentis, focusOutcome);
-                        else
-                            Console.WriteLine($"NarrativeController: Cannot focus - no outcome found for keyword '{keyword}'");
-                    }
-                    else
-                    {
-                        // Thinking phase
-                        _narrationState.IsLoadingThinking = true;
-                        _narrationState.LoadingMessage = Config.LoadingMessages.ThinkingDeeply;
-                        _ = ExecuteThinkingPhaseAsync(selectedModusMentis, keyword);
-                    }
-                }
+                ApplyModusMentisSelection(selectedModusMentis);
             }
             else
             {
@@ -1828,16 +3129,22 @@ public class NarrativeController
             {
                 var action = allActions[clickedAction.ActionIndex];
 
+                // Reaching for a tool is part of the action already on screen, not a second thought:
+                // the point was spent when the action was thought of, and only one item may ever be
+                // combined with it (hasItems tests CombinedItem), so nothing loops. Gating this on
+                // remaining points made the five tool-gated verbs unreachable outright once the pool
+                // shrank — the thinking phase that produces the action spends the point that "Use
+                // Tool" then wanted, so `dig`, `mine`, `fish`, `cut_wood` and `break` were offered,
+                // greyed out, and impossible.
                 bool hasItems = action.CombinedItem == null && GetCombinableItems().Count > 0;
-                bool canUseItem = hasItems && _narrationState.ThinkingAttemptsRemaining > 0;
-                var disabledIndices = canUseItem ? new HashSet<int>() : new HashSet<int> { 1 };
+                var disabledIndices = hasItems ? new HashSet<int>() : new HashSet<int> { 1 };
 
                 Console.WriteLine($"NarrativeController: Showing action mode choice for '{action.ActionText}' (hasItems={hasItems})");
                 _narrationState.ActionPendingModeSelection = action;
                 _narrationState.IsSelectingInteractionMode = true;
                 _narrationState.InteractionModeIsForKeyword = false;
                 Vector2 screenPos = _terminalInputHandler.CellToScreen(mouseX, mouseY, _core.ClientSize);
-                _choicePopup.Show(screenPos, new List<string> { "Execute", "Use Item" }, "Action", disabledIndices);
+                _choicePopup.Show(screenPos, new List<string> { "Execute", "Use Tool" }, "Action", disabledIndices);
             }
             else
             {
@@ -1863,12 +3170,170 @@ public class NarrativeController
                          && _narrationState.ThinkingAttemptsRemaining > 0
                          && _protagonist.CompanionParty.Count > 0;
             if (!canSpeak) speakDisabled.Add(2);
-            _choicePopup.Show(screenPos, speakChoices, "Keyword Action", speakDisabled);
+            // The title names what was clicked. It read "Keyword VerbAction" — a leftover of the
+            // Outcome→VerbAction rename, which described the popup's plumbing rather than telling
+            // the player what the three options were about to be aimed at.
+            _choicePopup.Show(screenPos, speakChoices, $"“{clickedKeyword.Keyword}”", speakDisabled);
         }
     }
 
     /// <summary>
-    /// Dispatches the result of the Think/Observe/SpeakAbout or Execute/Use Item choice popup.
+    /// Route a modus-mentis popup selection to the phase it starts: the companion picker (step 2 of
+    /// Speak About), a focus observation, or a thinking phase. Shared by the mouse path and the
+    /// --cli <c>choose</c> command.
+    /// </summary>
+    private void ApplyModusMentisSelection(ModusMentis selectedModusMentis)
+    {
+        Console.WriteLine($"NarrativeController: Selected modusMentis: {selectedModusMentis.DisplayName}");
+
+        // A modus mentis this body can no longer carry is still offered and refused here rather than
+        // filtered out of the popup — see BrokenModusMentis. This is the one place all three
+        // player-chosen faculties pass through, so the guard is written once.
+        if (_activePartyMember.IsModusMentisBroken(selectedModusMentis))
+        {
+            var faculty = _narrationState.IsSelectingModusMentisForSpeaking
+                ? NeutralNarration.BrokenFaculty.Speech
+                : _narrationState.IsSelectingObservationModusMentis
+                    ? NeutralNarration.BrokenFaculty.Observation
+                    : NeutralNarration.BrokenFaculty.Thinking;
+
+            _narrationState.IsSelectingModusMentisForSpeaking = false;
+            _narrationState.IsSelectingObservationModusMentis = false;
+            _ = RefuseBrokenModusMentisAsync(selectedModusMentis, faculty);
+            return;
+        }
+
+        if (_narrationState.IsSelectingModusMentisForSpeaking)
+        {
+            // Step 1 of Speak About: speaking modusMentis selected → show companion selection
+            _narrationState.IsSelectingModusMentisForSpeaking = false;
+            _narrationState.SpeakingModusMentisPending = selectedModusMentis;
+            _pendingCompanions = _protagonist.CompanionParty.ToList();
+            var companionNames = _pendingCompanions.Select(c => c.DisplayName).ToList();
+            _narrationState.IsSelectingCompanionForSpeaking = true;
+            Vector2 screenPos2 = _terminalInputHandler.CellToScreen(_lastMouseX, _lastMouseY, _core.ClientSize);
+            _choicePopup.Show(screenPos2, companionNames, "Who do you address?");
+            return;
+        }
+
+        // Get the keyword that was clicked (stored before popup appeared)
+        if (_narrationState.HoveredKeyword == null) return;
+
+        var clickedRegion = _narrationState.HoveredKeyword;
+        string keyword = clickedRegion.Keyword;
+
+        // Check if we're selecting an observation modusMentis or thinking modusMentis
+        if (_narrationState.IsSelectingObservationModusMentis)
+        {
+            // Focus observation phase
+            _narrationState.IsLoadingFocusObservation = true;
+            _narrationState.LoadingMessage = ObservationLoadingMessage();
+            _narrationState.IsSelectingObservationModusMentis = false;
+
+            var focusOutcome = clickedRegion.ResolvedAnchor;
+            if (focusOutcome != null)
+                _ = ExecuteFocusObservationAsync(selectedModusMentis, focusOutcome);
+            else
+                Console.WriteLine($"NarrativeController: Cannot focus - no outcome found for keyword '{keyword}'");
+        }
+        else
+        {
+            // Thinking phase
+            _narrationState.IsLoadingThinking = true;
+            _narrationState.LoadingMessage = Config.LoadingMessages.ThinkingDeeply;
+            _ = ExecuteThinkingPhaseAsync(selectedModusMentis, clickedRegion);
+        }
+    }
+
+    /// <summary>
+    /// Narrates a modus mentis the body can no longer carry, in its own voice, and spends the noetic
+    /// point the attempt cost. The observation / thinking / speaking counterpart of
+    /// <c>BrokenModusMentisRule</c>, which does the same job for an action — see
+    /// <see cref="BrokenModusMentis"/> for why this refuses rather than withholding.
+    ///
+    /// <para>Written against the same three moving parts as the coded-rule failure in
+    /// <see cref="ExecuteActionPhaseAsync"/>: the text streams into a preview part so it reads like
+    /// any other narration, the block is committed on that part's CONTINUE, and the point is spent
+    /// unless the phase is one of the two that never charges for an attempt. Out of points, the
+    /// segment closes without refilling, exactly as a failed roll does — LEAVE is then the way
+    /// out.</para>
+    ///
+    /// <para>It swallows its own exception rather than calling <c>ReportPhaseFailure</c>. This is a
+    /// refusal, not a phase: taking the visit down because the account of a ruined arm could not be
+    /// generated would turn a wound into a lost run.</para>
+    /// </summary>
+    private async Task RefuseBrokenModusMentisAsync(
+        ModusMentis modusMentis, NeutralNarration.BrokenFaculty faculty)
+    {
+        try
+        {
+            Console.WriteLine(
+                $"NarrativeController: '{modusMentis.DisplayName}' is broken on this body " +
+                $"(effective level {_activePartyMember.GetEffectiveModusMentisLevel(modusMentis)}) — " +
+                $"refusing {faculty}");
+
+            _previewSession.Reset();
+            var part = _previewSession.BeginPart(PreviewTitles.For(modusMentis));
+
+            string text = await _actionExecutor.OutcomeNarrator.NarrateBrokenModusMentisAsync(
+                modusMentis, _activePartyMember, faculty, CancellationToken.None, preview: part?.Sink);
+            if (string.IsNullOrWhiteSpace(text))
+                text = $"[IMPOSSIBLE] {BrokenModusMentis.NeutralFor(_activePartyMember, modusMentis, faculty)}";
+
+            var block = new NarrationBlock(
+                Type: NarrationBlockType.Outcome,
+                ModusMentis: modusMentis,
+                Text: text,
+                Keywords: null,
+                Actions: null);
+
+            void Commit()
+            {
+                _scrollBuffer.AddBlock(block);
+                _narrationState.AddBlock(block);
+                _scrollBuffer.ScrollToBottom();
+                _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+            }
+
+            if (part != null)
+            {
+                part.AttachCommit(Commit);
+                part.MarkComplete();
+                _previewSession.EndProduction();
+            }
+            else Commit();
+
+            if (_scene?.Phase == NarrationPhase.ChildhoodReminescence
+                || _scene?.Phase == NarrationPhase.GetUp)
+                return;
+
+            if (_narrationState.ThinkingAttemptsRemaining > 0)
+            {
+                _narrationState.ThinkingAttemptsRemaining--;
+                Console.WriteLine("NarrativeController: Broken modus mentis — consumed 1 noetic point " +
+                                  $"({_narrationState.ThinkingAttemptsRemaining} remaining)");
+            }
+            else
+            {
+                _pendingSegmentSucceeded = false;
+                _narrationState.ShowContinueButton = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(
+                $"NarrativeController: Error narrating broken modus mentis: {ex.Message}");
+            _previewSession.Reset();
+        }
+        finally
+        {
+            _narrationState.IsLoadingThinking = false;
+            _narrationState.IsLoadingFocusObservation = false;
+        }
+    }
+
+    /// <summary>
+    /// Dispatches the result of the Think/Observe/SpeakAbout or Execute/Use Tool choice popup.
     /// </summary>
     private void DispatchChoiceSelection(int? choiceIndex)
     {
@@ -1886,9 +3351,9 @@ public class NarrativeController
                 var speakingMM  = _narrationState.SpeakingModusMentisPending;
                 _narrationState.SpeakingModusMentisPending = null;
                 _pendingCompanions.Clear();
-                Console.WriteLine($"NarrativeController: Speak About — companion={companion.Name}, skill={speakingMM.DisplayName}");
+                Console.WriteLine($"NarrativeController: Speak About — companion={companion.DisplayName}, skill={speakingMM.DisplayName}");
                 _narrationState.IsLoadingSpeaking = true;
-                _narrationState.LoadingMessage = Config.LoadingMessages.GeneratingObservations;
+                _narrationState.LoadingMessage = Config.LoadingMessages.Speaking;
                 _ = ExecuteSpeakingPhaseAsync(speakingMM, companion, _narrationState.HoveredKeyword);
             }
             else
@@ -1941,7 +3406,7 @@ public class NarrativeController
         }
         else
         {
-            // Action choice: 0 = Execute, 1 = Use Item
+            // VerbAction choice: 0 = Execute, 1 = Use Tool
             var action = _narrationState.ActionPendingModeSelection;
             _narrationState.ActionPendingModeSelection = null;
 
@@ -1955,11 +3420,11 @@ public class NarrativeController
                 var candidateItems = GetCombinableItems();
                 if (candidateItems.Count > 0)
                 {
-                    Console.WriteLine($"NarrativeController: Choice — Use Item for '{action.ActionText}'");
+                    Console.WriteLine($"NarrativeController: Choice — Use Tool for '{action.ActionText}'");
                     _narrationState.IsSelectingItemForAction = true;
                     _narrationState.ActionPendingItemCombination = action;
                     Vector2 screenPos = _terminalInputHandler.CellToScreen(_lastMouseX, _lastMouseY, _core.ClientSize);
-                    _itemSelectionPopup.Show(screenPos, candidateItems, "Combine Item with Action");
+                    _itemSelectionPopup.Show(screenPos, candidateItems, "Use with this action");
                 }
                 else
                 {
@@ -1968,7 +3433,7 @@ public class NarrativeController
             }
             else
             {
-                Console.WriteLine("NarrativeController: Action choice dismissed");
+                Console.WriteLine("NarrativeController: VerbAction choice dismissed");
             }
         }
     }
@@ -1983,6 +3448,19 @@ public class NarrativeController
     /// </summary>
     public void OnMouseWheel(float delta)
     {
+        // A popup that overflows its box owns the wheel: scrolling the narration behind a modal the
+        // player is reading through would move text they cannot see anyway.
+        if (_modusMentisPopup.IsVisible)
+        {
+            _modusMentisPopup.Scroll(delta > 0 ? -3 : 3);
+            return;
+        }
+        if (_itemSelectionPopup.IsVisible)
+        {
+            _itemSelectionPopup.Scroll(delta > 0 ? -3 : 3);
+            return;
+        }
+
         if (delta > 0)
         {
             // Scroll up
@@ -2011,6 +3489,304 @@ public class NarrativeController
     /// Check if the thinking modusMentis popup is visible.
     /// </summary>
     public bool IsPopupVisible => _modusMentisPopup.IsVisible || _itemSelectionPopup.IsVisible || _choicePopup.IsVisible;
+
+    // ── CLI driving surface (--cli) ───────────────────────────────────────────
+    // These exist so an automated run can act on named handles instead of pixel coordinates.
+    // Note the popup selectors deliberately bypass OnMouseClick: its popup branches read the live
+    // OS cursor via GetCorrectedMousePosition(), which no injected coordinate can influence.
+
+    /// <summary>
+    /// Snapshot of the narration state a --cli `state` command reports. <c>Observed</c> is how many
+    /// objects this narration phase has already looked at (see <see cref="ObservationLedger"/>) out of
+    /// how many the current node offers — the pair a script watches to prove observations stop
+    /// repeating themselves, and that the count resets when a phase does.
+    /// </summary>
+    public (bool AnyLoading, string LoadingMessage, bool DiceActive, bool DiceRolling,
+            bool ShowContinue, int Noetic, int MaxNoetic, string? Error, int Observed, int Observable)
+        CliSnapshot() => (
+            _narrationState.IsAnyLoading,
+            _narrationState.LoadingMessage,
+            _narrationState.IsDiceRollActive,
+            _narrationState.IsDiceRolling,
+            _narrationState.ShowContinueButton,
+            _narrationState.ThinkingAttemptsRemaining,
+            _activePartyMember.MaxNoeticPoints,
+            _narrationState.ErrorMessage,
+            _observationLedger.Count,
+            _currentNode.GetAllDirectConcreteOutcomes().Count);
+
+    /// <summary>Distinct clickable keywords in the current frame, in reading order.</summary>
+    public IReadOnlyList<string> CliKeywords()
+        => _ui.KeywordRegions.Select(r => r.Keyword).Distinct().ToList();
+
+    /// <summary>Clickable action lines in the current frame as (index, text) pairs.</summary>
+    public IReadOnlyList<(int Index, string Text)> CliActions()
+        => _ui.ActionRegions
+            .Select(r => (r.ActionIndex, r.Action?.ActionText ?? "?"))
+            .Distinct()
+            .ToList();
+
+    /// <summary>The footer button label and whether it is currently clickable.</summary>
+    public (bool Present, int X, int Y, int Width) CliExitButton() =>
+        (_exitButtonRegion.Width > 0, _exitButtonRegion.X, _exitButtonRegion.Y, _exitButtonRegion.Width);
+
+    /// <summary>The dice [ Continue ] button region, if the dice overlay is showing one.</summary>
+    public (bool Present, int X, int Y, int Width) CliDiceContinue()
+    {
+        var r = _dice.ContinueButtonRegion;
+        return (_narrationState.IsDiceRollActive && !_narrationState.IsDiceRolling && r.Width > 0, r.X, r.Y, r.Width);
+    }
+
+    /// <summary>Whether the generation-preview box is up, its title, text and CONTINUE region (if clickable).</summary>
+    public (bool Active, string Title, string Text, bool Complete) CliPreview()
+    {
+        var s = _previewSession.Snapshot();
+        return (s.Active, s.Title, s.DisplayText, s.Complete);
+    }
+
+    /// <summary>The preview box [ CONTINUE ] button region, when generation is done and it is clickable.</summary>
+    public (bool Present, int X, int Y, int Width) CliPreviewContinue() =>
+        (_previewContinueRegion.Width > 0, _previewContinueRegion.X, _previewContinueRegion.Y, _previewContinueRegion.Width);
+
+    /// <summary>Labels of the currently visible popup, or null when no popup is up.</summary>
+    public (string Kind, IReadOnlyList<string> Labels)? CliPopup()
+    {
+        if (_choicePopup.IsVisible)
+            return ("choice", _choicePopup.Choices.Select((c, i) =>
+                _choicePopup.IsChoiceEnabled(i) ? c : $"{c} (disabled)").ToList());
+        if (_modusMentisPopup.IsVisible)
+            return ("modus-mentis", _modusMentisPopup.Choices.Select(m => m.DisplayName).ToList());
+        if (_itemSelectionPopup.IsVisible)
+            return ("item", _itemSelectionPopup.Choices.Select(i => i.DisplayName).ToList());
+        return null;
+    }
+
+    /// <summary>
+    /// Answer the visible popup by index. Returns an error string, or null on success.
+    /// </summary>
+    public string? CliChoosePopup(int index)
+    {
+        if (_choicePopup.IsVisible)
+        {
+            if (!_choicePopup.IsChoiceEnabled(index))
+                return $"choice {index} is disabled or out of range";
+            _choicePopup.Hide();
+            _narrationState.IsSelectingInteractionMode = false;
+            DispatchChoiceSelection(index);
+            return null;
+        }
+
+        if (_modusMentisPopup.IsVisible)
+        {
+            var list = _modusMentisPopup.Choices;
+            if (index < 0 || index >= list.Count) return $"modus-mentis {index} out of range";
+            var chosen = list[index];
+            _modusMentisPopup.Hide();
+            ApplyModusMentisSelection(chosen);
+            return null;
+        }
+
+        if (_itemSelectionPopup.IsVisible)
+        {
+            var list = _itemSelectionPopup.Choices;
+            if (index < 0 || index >= list.Count) return $"item {index} out of range";
+            var chosen = list[index];
+            _itemSelectionPopup.Hide();
+            var pending = _narrationState.ActionPendingItemCombination;
+            _narrationState.IsSelectingItemForAction = false;
+            _narrationState.ActionPendingItemCombination = null;
+            if (pending != null) _ = ExecuteItemCombinationAsync(pending, chosen);
+            return null;
+        }
+
+        return "no popup is visible";
+    }
+
+    /// <summary>Click the first region whose keyword matches (case-insensitive).</summary>
+    /// <summary>
+    /// Click a narration keyword by name, or — when <paramref name="keyword"/> is a number — by
+    /// position in the offered list.
+    ///
+    /// <para>The index form exists because a verb test cannot know the word. Which keyword an
+    /// observation highlights is chosen from the prose (under <c>--playground</c> it is the object's
+    /// own noun, in a real run the noun most associated with it), so a script that has already pinned
+    /// the phase to one object with <c>--observe-only</c> knows exactly <i>what</i> it is looking at
+    /// and still cannot spell the handle. Guessing it from the object's display name is what made
+    /// two thirds of the generated verb tests fail on "no clickable keyword 'stern' on screen".</para>
+    ///
+    /// <para>Name-matching stays the default and stays preferred for hand-written scripts: it reads
+    /// as intent and survives a reordering. Use the index where the point is "whatever this phase
+    /// opened on".</para>
+    /// </summary>
+    /// <summary>
+    /// The verb id of the last action actually put through execution, or null before any. Read by
+    /// the CLI's <c>expect-verb</c>: the outcome banner ("SUCCESS") is the same for every verb, so it
+    /// is the only thing a verb test can assert that a wrong verb cannot satisfy.
+    /// </summary>
+    public string? CliLastExecutedVerbId() => _cliLastExecutedVerbId;
+
+    /// <summary>
+    /// A flat, greppable dump of the game state an <see cref="Outcome"/> can change. Read by the
+    /// CLI's <c>inspect</c>, which is what makes the <c>cli/outcome/</c> range possible: a chip
+    /// proves the player was told something happened, and this proves it actually did.
+    ///
+    /// <para>Everything is named by <b>stable id</b> — item ids, modus mentis ids, archetype ids —
+    /// never by display name, because names come from content and a test that spells one breaks the
+    /// day somebody rewrites it. One fact per line, prefixed by subject, so a script asserts with a
+    /// plain <c>expect</c>.</para>
+    /// </summary>
+    public IReadOnlyList<string> CliInspect(string subject)
+    {
+        var outp = new List<string>();
+        bool All(string s) => subject is "all" or "" || subject == s;
+        var actor = _activePartyMember ?? (PartyMember)_protagonist;
+
+        if (All("items"))
+            foreach (var i in actor.GetAllItems())
+                outp.Add($"item {i.ItemId}");
+
+        if (All("coins"))
+            outp.Add($"coins gold={_protagonist.Party.Gold} silver={_protagonist.Party.Silver} "
+                   + $"copper={_protagonist.Party.Copper}");
+
+        // The phase's budget, and the acting body's implement band. Both appear in the `state` line
+        // too, but `state` only emits — `expect` scans the rendered terminal and never sees it, so
+        // this is the seam that makes them assertable, exactly as `inspect menu` is for a greyed
+        // button. The budget is what proves a refused combination was CHARGED for: the refusal
+        // narration reads much like any other failure, so nothing on screen distinguishes a
+        // combination that cost a point from one that did not.
+        if (All("noetic"))
+            outp.Add($"noetic points={_narrationState.ThinkingAttemptsRemaining}/{actor.MaxNoeticPoints} "
+                   + $"tool_proficiency={ToolUsageProficiencyStat.Of(actor)}");
+
+        if (All("where"))
+            outp.Add($"where area=\"{_pov?.Where.DisplayName ?? "-"}\" period={_pov?.When.ToString() ?? "-"} "
+                   + $"day={(int)Cathedral.Game.Narrative.GameClock.Days}");
+
+        if (All("party"))
+            foreach (var c in _protagonist.CompanionParty)
+                outp.Add($"companion \"{c.DisplayName}\" species=\"{c.PartyDescription}\"");
+
+        // Recorded routines, by the only two things about them that are stable: the location they
+        // replay at and the ordered verb ids they walk. Names and step labels come from content
+        // (an NPC's rolled name is in them), so a test that spelled one would break the day somebody
+        // renamed a room. Reported here rather than read off the routines panel because recording
+        // happens with no UI open at all — the panel is where a player reads them, not where they
+        // are made.
+        if (All("routines"))
+            foreach (var r in _protagonist.RecordedRoutines)
+                outp.Add($"routine location={r.LocationId} start={r.StartTime} steps={r.Steps.Count} "
+                       + $"verbs=[{string.Join(",", r.Steps.Select(s => s.VerbId))}]");
+
+        if (All("wounds"))
+            foreach (var w in actor.Wounds)
+                outp.Add($"wound {w.WoundName} target={w.TargetId}");
+
+        // The four humor queues by composition, newest first. This is the only assertable proof that
+        // an emotion reached the spleen: the chip says "Voluptas × 4" and `expect` can scan for that,
+        // but a chip proves what the player was TOLD — the queue is what actually moved. Reported as
+        // counts per humor name rather than slot by slot, because a queue is 49 slots deep and a
+        // script cares that N instances arrived, not where they landed.
+        //
+        // All four queues, not just the spleen, because the same line is what makes eating and the
+        // travel drain assertable later, and a subject that answers only the question of the day
+        // would need widening the first time anything else wanted it.
+        if (All("humors"))
+            foreach (var q in actor.HumorQueues.All)
+            {
+                var counts = q.Items.GroupBy(h => h.Name)
+                                    .OrderByDescending(g => g.Count()).ThenBy(g => g.Key)
+                                    .Select(g => $"{g.Key}={g.Count()}");
+                outp.Add($"humors {q.OrganId} {string.Join(" ", counts)}");
+            }
+
+        // xp as well as level: practice is the commonest thing a verb does and the slowest to show,
+        // since a level takes several successes. Without the raw count a script cannot tell a modus
+        // mentis that was paid for its work from one that was not — which is how the Get-Up phase
+        // came to award none at all without a single test noticing.
+        // xp as well as level, and `effective` as well as `level`: a wound caps what a modus mentis
+        // may reach without touching the level it stored, so the stored number alone cannot say
+        // whether the thing can still be used. `broken=` is the flag every test in this area asserts
+        // — it is the whole of the rule, and deriving it in a script from two numbers would be a
+        // paraphrase of BrokenModusMentis rather than a reading of it.
+        if (All("skills"))
+            foreach (var m in actor.ModiMentis)
+                outp.Add($"skill {m.ModusMentisId} level={m.Level} xp={m.CurrentXp}"
+                       + $" effective={actor.GetEffectiveModusMentisLevel(m)}"
+                       + $" max={actor.GetMaxLevelForModusMentis(m)}"
+                       + $" broken={actor.IsModusMentisBroken(m)}");
+
+        if (All("npcs") && _scene != null && _pov != null)
+            foreach (var npc in _scene.Npcs)
+            {
+                string key   = _protagonist.AffinityKey;
+                string where = _scene.GetAreaOf(npc, _pov.When)?.DisplayName ?? "-";
+                var ent = npc.Entity as Cathedral.Game.Npc.NpcEntity;
+                outp.Add($"npc {npc.Entity.Archetype.ArchetypeId} alive={npc.Entity.IsAlive}"
+                       + (ent != null ? $" affinity={ent.AffinityTable.GetLevel(key)}"
+                                      + $" enemy={ent.AffinityTable.IsEnemy(key)}"
+                                      // What a blow does to them. Hit points are derived from the
+                                      // wound count, so the pair is one fact read two ways — but a
+                                      // test asserting the first blow landed needs the count, and
+                                      // one asserting it was withheld from a dying man needs the
+                                      // hit points. Nothing else surfaces either.
+                                      + $" hp={ent.Combatant.CurrentHp}/{ent.Combatant.MaxHp}"
+                                      + $" wounds={ent.Combatant.Wounds.Count}"
+                                      // What a conversation's outcomes write. None of it is visible
+                                      // any other way, and it is the whole state change of half the
+                                      // catalogue: join_party, alms, the trade and job menus, the
+                                      // goad into a fight, the introduction.
+                                      + $" roused={npc.Roused}"
+                                      + $" join={ent.JoinRequested}"
+                                      + $" alms={ent.AlmsGiven}"
+                                      + $" trade={ent.TradeRequest}"
+                                      + $" job={(ent.JobRequest != null)}"
+                                      + $" goaded={ent.FightRequestedByDialogue}"
+                                      + $" introduced={(ent.IntroductionGranted != null)}" : "")
+                       + $" area=\"{where}\"");
+            }
+
+        if (All("pois") && _pov != null)
+            foreach (var poi in _pov.Where.PointsOfInterest)
+                outp.Add($"poi \"{poi.DisplayName}\" lemma={poi.ReferenceLemma} items={poi.Items.Count}"
+                       + (poi is Cathedral.Game.Scene.Building.DoorPointOfInterest d ? $" door={d.DoorState}" : ""));
+
+        return outp;
+    }
+
+    private string? _cliLastExecutedVerbId;
+
+    public string? CliClickKeyword(string keyword)
+    {
+        var regions = _ui.KeywordRegions;
+
+        KeywordRegion? region;
+        if (int.TryParse(keyword, out int index))
+        {
+            if (index < 0 || index >= regions.Count)
+                return $"no keyword {index} on screen ({regions.Count} offered)";
+            region = regions[index];
+        }
+        else
+        {
+            region = regions.FirstOrDefault(r => r.Keyword.Equals(keyword, StringComparison.OrdinalIgnoreCase));
+            if (region == null) return $"no clickable keyword '{keyword}' on screen";
+        }
+
+        OnMouseMove(region.StartX, region.Y);
+        OnMouseClick(region.StartX, region.Y);
+        return null;
+    }
+
+    /// <summary>Click the action with the given global action index.</summary>
+    public string? CliClickAction(int actionIndex)
+    {
+        var region = _ui.ActionRegions.FirstOrDefault(r => r.ActionIndex == actionIndex);
+        if (region == null) return $"no action {actionIndex} on screen";
+        OnMouseMove(region.StartX, region.StartY);
+        OnMouseClick(region.StartX, region.StartY);
+        return null;
+    }
     
     /// <summary>
     /// Close the thinking modusMentis popup if it's open.
@@ -2049,18 +3825,165 @@ public class NarrativeController
     /// <summary>
     /// Check if a fight outcome is pending (NarrativeController wants to enter fight mode).
     /// </summary>
-    public FightOutcome? PendingFightOutcome => _pendingFightOutcome;
+    public FightTriggerOutcome? PendingFightOutcome => _pendingFightOutcome;
     
     /// <summary>
     /// Check if a dialogue outcome is pending (NarrativeController wants to enter dialogue mode).
     /// </summary>
-    public DialogueOutcome? PendingDialogueOutcome => _pendingDialogueOutcome;
+    public DialogueTriggerOutcome? PendingDialogueOutcome => _pendingDialogueOutcome;
     
     /// <summary>
     /// The protagonist used by this narrative controller.
     /// </summary>
     public Protagonist Protagonist => _protagonist;
-    
+
+    /// <summary>The world context of the current location (for dialogue template fields).</summary>
+    public WorldContext? WorldContext => _worldContext;
+
+    /// <summary>The current location's vertex id (for dialogue template fields).</summary>
+    public int LocationId => _locationId;
+
+    /// <summary>
+    /// Unified next-phase request. Maps the legacy pending fight/dialogue outcomes onto the
+    /// <see cref="PhaseTransition"/> abstraction so the game controller can consume one channel.
+    /// </summary>
+    public PhaseTransition? PendingPhaseTransition
+    {
+        get
+        {
+            if (_pendingFightOutcome != null)
+                return new StartFightTransition(_pendingFightOutcome.Target, _pendingFightOutcome.CombatContext, _pendingFightOutcome.EnemyInitiative);
+            if (_pendingDialogueOutcome != null)
+                return new StartDialogueTransition(_pendingDialogueOutcome.Target,
+                    _pendingDialogueOutcome.TreeId, _pendingDialogueOutcome.Tree);
+            return null;
+        }
+    }
+
+    /// <summary>Clears whichever pending transition was just consumed.</summary>
+    public void ClearPendingPhaseTransition()
+    {
+        _pendingFightOutcome    = null;
+        _pendingDialogueOutcome = null;
+    }
+
+    /// <summary>
+    /// Whether a fight has been decided and is waiting on the CONTINUE press — read by the CLI's
+    /// <c>state</c>, since a held fight is indistinguishable on screen from an ordinary resolved
+    /// action and a script that does not press CONTINUE would sit out its timeout wondering why
+    /// Fighting never arrived.
+    /// </summary>
+    public bool HasDeferredFight => _deferredFightOutcome != null;
+
+    /// <summary>
+    /// Saves any routine still being recorded for this session. Called by the game controller when
+    /// the narration phase ends (returns to world travel).
+    /// </summary>
+    public void FinalizeRoutineRecording()
+    {
+        _recorder?.FinalizeAtNarrationEnd();
+        _recorder = null;
+    }
+
+    /// <summary>
+    /// Starts narration positioned at a specific area and time period (used when continuing into
+    /// narration after a routine replay ends at a moved-to area). Falls back to a normal start when
+    /// the area cannot be resolved.
+    /// </summary>
+    public void StartAtArea(string areaKey, TimePeriod time)
+    {
+        // Only the area is set here — StartObservationPhase(time) below routes the period through
+        // ApplyTimePeriod, the single writer of PoV.When + graph period.
+        MovePointOfViewToArea(areaKey);
+        StartObservationPhase(time);
+    }
+
+    /// <summary>
+    /// Repositions the point of view (and the current node with it) onto the area named by
+    /// <paramref name="areaKey"/>. No-op on null, or when nothing matches — a routine recorded
+    /// before a factory changed should still open somewhere.
+    ///
+    /// <para>Matched by <b>display name</b> first, because that is the only per-location unique
+    /// area identifier: <c>ReferenceLemma</c> is a generic noun, and <c>BuildingFactory</c> gives
+    /// every building's roof the lemma "roof" while prefixing only the display name with the
+    /// building. Resuming a village routine by lemma could therefore land on the wrong building's
+    /// room. <c>--building-audit</c> is what guarantees the display names do not collide (it fails on
+    /// two areas sharing a node-id slug). Lemma is kept as a fallback so a key recorded against an
+    /// older build still finds something.</para>
+    ///
+    /// <para>By name rather than by instance because every caller is resuming into a <b>freshly
+    /// rebuilt</b> scene: the <c>Area</c> the routine ended on belongs to a scene that has already
+    /// been thrown away. Shared by the two resume paths (narration and the routine sub-phase) so
+    /// they cannot disagree about how an area is found.</para>
+    /// </summary>
+    private void MovePointOfViewToArea(string? areaKey)
+    {
+        if (string.IsNullOrWhiteSpace(areaKey) || _scene == null || _pov == null) return;
+
+        var area = _scene.AllAreas.FirstOrDefault(a =>
+                       string.Equals(a.DisplayName, areaKey, StringComparison.OrdinalIgnoreCase))
+                ?? _scene.AllAreas.FirstOrDefault(a =>
+                       string.Equals(a.ReferenceLemma, areaKey, StringComparison.OrdinalIgnoreCase));
+        if (area == null)
+        {
+            Console.Error.WriteLine($"NarrativeController: no area matching '{areaKey}' in the rebuilt "
+                                  + $"scene — staying at '{_pov.Where.DisplayName}'");
+            return;
+        }
+
+        _pov.Where = area;
+        if (NodeForArea(area) is { } node)
+            _currentNode = node;
+        Console.WriteLine($"NarrativeController: point of view resumed at '{area.DisplayName}'");
+    }
+
+    /// <summary>
+    /// Takes the player to the person a go-between has just agreed to present them to, and makes the
+    /// phase that follows open on <b>that</b> person. Returns false when they are nowhere to be found
+    /// at this hour — the reeve keeps his own times — in which case the standing still stands and the
+    /// walk simply does not happen. Being vouched for does not conjure somebody into a room.
+    ///
+    /// <para>Three writes, and it was missing two of them. Moving <c>PoV.Where</c> alone is not
+    /// moving: the observation phase runs against <c>_currentNode</c>, so the point of view said one
+    /// area while everything the player could see and act on still came from the old one — the walk
+    /// happened on paper and nowhere else. And <c>_postDialogueNpc</c> was still the go-between, set
+    /// when the conversation was triggered, so the first observation after being introduced to the
+    /// reeve was of the bondman who introduced you.</para>
+    ///
+    /// <para>Lives here rather than in the game controller because the PoV, the node and the
+    /// post-dialogue context are this class's invariants; reaching in to set one of the three from
+    /// outside is what let them drift apart.</para>
+    /// </summary>
+    public bool WalkToIntroducedNpc(NpcEntity presented)
+    {
+        if (_scene == null || _pov == null) return false;
+
+        var sceneNpc = _scene.Npcs.FirstOrDefault(n => ReferenceEquals(n.Entity, presented));
+        if (sceneNpc == null) return false;
+
+        var where = _scene.GetAreaOf(sceneNpc, _pov.When);
+        if (where == null)
+        {
+            Console.WriteLine($"NarrativeController: {presented.DisplayName} is not about at {_pov.When} — "
+                            + "introduction stands, but no walk");
+            return false;
+        }
+
+        _pov.Where = where;
+        _pov.Focus = sceneNpc;
+        if (NodeForArea(where) is { } node)
+            _currentNode = node;
+
+        // The phase that follows opens on the person just introduced, not on the go-between — that
+        // is what makes the introduction read as an arrival, and puts the conversation it unlocked
+        // one click away.
+        _postDialogueNpc = presented;
+
+        Console.WriteLine($"NarrativeController: walked to {presented.DisplayName} in {where.DisplayName} "
+                        + $"(node '{_currentNode.NodeId}') — next observation is of them");
+        return true;
+    }
+
     /// <summary>
     /// Clear the pending fight outcome after the game controller has handled it.
     /// </summary>
@@ -2070,6 +3993,223 @@ public class NarrativeController
     /// Clear the pending dialogue outcome after the game controller has handled it.
     /// </summary>
     public void ClearPendingDialogue() => _pendingDialogueOutcome = null;
+
+    // ── Narration-exit (LEAVE / RUNAWAY) ─────────────────────────────────────────
+
+    /// <summary>
+    /// Decides what the footer exit button should offer given the current location:
+    /// <list type="bullet">
+    /// <item><b>RunawayEnemy</b> — a visual enemy is present in the current area (highest priority).</item>
+    /// <item><b>RunawayWitness</b> — the current area is private (illegal) with a visual witness present.</item>
+    /// <item><b>Leave</b> — otherwise; exiting is free.</item>
+    /// </list>
+    /// Only same-area (visual) threats/witnesses count — leaving is about the location you stand in.
+    /// </summary>
+    private (ExitButtonKind kind, NpcEntity? target) ComputeExitContext()
+    {
+        if (_scene == null || _pov == null || _protagonist == null)
+            return (ExitButtonKind.Leave, null);
+
+        // Enemy in the current location takes precedence over a witness confrontation.
+        var threat = ThreatSelector.ComputeContext(_scene, _pov, _protagonist);
+        if (threat.Level == ThreatLevel.Visual && threat.Threat != null)
+            return (ExitButtonKind.RunawayEnemy, threat.Threat);
+
+        // A bystander who can see you leave, and a reason for them to stop you: either you are
+        // standing somewhere you have no business being, or they came in here after you.
+        //
+        // The second condition is what makes the approach cost something. Three crimes happen in the
+        // open — pickpocket, stalk, attack — so a witness drawn to a public square by a botched one
+        // would, on the privacy test alone, watch you stroll away.
+        var witness = WitnessSelector.ComputeContext(_scene, _pov);
+        if (witness.Type == WitnessType.Visual && witness.Witness != null)
+        {
+            var sceneNpc = _scene.Npcs.FirstOrDefault(n => ReferenceEquals(n.Entity, witness.Witness));
+            bool cameForYou = sceneNpc != null && _scene.DisplacedNpcs.ContainsKey(sceneNpc.Id);
+            if (_pov.Where.IsPrivate || cameForYou)
+                return (ExitButtonKind.RunawayWitness, witness.Witness);
+        }
+
+        return (ExitButtonKind.Leave, null);
+    }
+
+    /// <summary>Number of d6 rolled in an exit-runaway check — the protagonist's feet stat, min 1.</summary>
+    private int ProtagonistRunawayDiceCount()
+    {
+        return _protagonist.DerivedStats.First(s => s.Name == "runaway_dice").GetValue(_protagonist);
+    }
+
+    /// <summary>
+    /// Invoked when the single footer button is clicked. In the post-action state it acts as CONTINUE
+    /// (<see cref="HandleContinueClicked"/>); otherwise LEAVE exits immediately and the RUNAWAY variants
+    /// begin a runaway dice roll against the enemy/witness (resolved in <see cref="FinishExitRunaway"/>).
+    /// </summary>
+    private void HandleFooterButtonClicked()
+    {
+        // Post-action progression (and every press in the no-early-exit phases) is a CONTINUE.
+        if (_narrationState.ShowContinueButton)
+        {
+            HandleContinueClicked();
+            return;
+        }
+
+        var (kind, target) = ComputeExitContext();
+        switch (kind)
+        {
+            case ExitButtonKind.Leave:
+                Console.WriteLine("NarrativeController: LEAVE clicked — exiting narration");
+                _narrationState.RequestedExit = true;
+                break;
+            case ExitButtonKind.RunawayEnemy when target != null:
+                Console.WriteLine($"NarrativeController: RUNAWAY clicked — enemy '{target.DisplayName}' present");
+                _ = BeginExitRunawayAsync(target, isEnemy: true);
+                break;
+            case ExitButtonKind.RunawayWitness when target != null:
+                Console.WriteLine($"NarrativeController: RUNAWAY clicked — witness '{target.DisplayName}' present");
+                _ = BeginExitRunawayAsync(target, isEnemy: false);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Handles a CONTINUE press: drives the get-up / reminescence terminal transitions and node/area
+    /// transitions. With nothing pending, the no-early-exit phases restart observations (as the old
+    /// Continue button did) while normal exploration simply returns to the interactive observation
+    /// state without regenerating observations.
+    /// </summary>
+    /// <summary>Separator caption for the segment a resolved action closes.</summary>
+    private static string? SegmentLabelFor(ActionExecutionResult result)
+        => string.IsNullOrWhiteSpace(result.Action?.NeutralActionText)
+            ? null
+            : $"after trying to {result.Action.NeutralActionText}";
+
+    private void HandleContinueClicked()
+    {
+        // A fight held back so its opening blow could be read (see _deferredFightOutcome). First,
+        // because the segment it closes is the one the fight itself will grey into history.
+        if (_deferredFightOutcome != null)
+        {
+            Console.WriteLine($"NarrativeController: CONTINUE — entering the held fight with {_deferredFightOutcome.Target.DisplayName}");
+            _pendingFightOutcome  = _deferredFightOutcome;
+            _deferredFightOutcome = null;
+            _pendingSegmentLabel     = null;
+            _pendingSegmentSucceeded = true;
+            return;
+        }
+
+        // Get-Up success transition: protagonist risen, world travel begins.
+        if (_scene != null && _scene.PendingGetUpTransition)
+        {
+            HandleGetUpContinue();
+            return;
+        }
+
+        // Reminescence transition takes priority over a normal node transition.
+        if (_scene != null && _scene.PendingReminescenceTransition is { } req)
+        {
+            HandleReminescenceContinue(req);
+            return;
+        }
+
+        // Transition to a new node (e.g. an action moved the player to a different area).
+        if (_narrationState.PendingTransitionNode != null)
+        {
+            Console.WriteLine($"NarrativeController: CONTINUE — transitioning to node {_narrationState.PendingTransitionNode.NodeId}");
+            _currentNode = _narrationState.PendingTransitionNode;
+            // Carry the same caption the in-place branch below uses. This dropped it, so a segment
+            // closed by an action that MOVED you — every move, climb, crossing and door — got the
+            // unlabelled rule while one closed in place got "after trying to …". Two different
+            // separators for the same event, decided by whether the action happened to relocate you.
+            BeginNarrationSegment(_pendingSegmentLabel, refillNoetic: _pendingSegmentSucceeded);
+            _pendingSegmentLabel     = null;
+            _pendingSegmentSucceeded = true;
+            return;
+        }
+
+        // A movement/leave action requested exit-on-continue (the LEAVE button is the primary exit
+        // now, but honor an explicit movement-exit action too).
+        if (_narrationState.ShouldExitOnContinue)
+        {
+            Console.WriteLine("NarrativeController: CONTINUE — movement action, exiting to world view");
+            _narrationState.RequestedExit = true;
+            return;
+        }
+
+        // Nothing pending: the resolved action closes the segment — grey the text into history under
+        // a labelled separator, refill noetic points, and open a fresh observation of the scene as it
+        // now stands (the outcome may have changed it: item gone, state shifted). This makes CONTINUE
+        // behave identically for in-place actions and transitions.
+        Console.WriteLine("NarrativeController: CONTINUE — closing segment after action, restarting observations"
+                        + (_pendingSegmentSucceeded ? "" : " (failed action — noetic points not refilled)"));
+        BeginNarrationSegment(_pendingSegmentLabel, refillNoetic: _pendingSegmentSucceeded);
+        _pendingSegmentLabel     = null;
+        _pendingSegmentSucceeded = true;
+    }
+
+    /// <summary>
+    /// Plays the runaway dice-roll overlay (single roll, ≥1 six to flee — same rule as combat).
+    /// Resolution happens on the dice Continue click in <see cref="FinishExitRunaway"/>.
+    /// </summary>
+    private async Task BeginExitRunawayAsync(NpcEntity target, bool isEnemy)
+    {
+        _exitRunawayPending  = true;
+        _exitRunawayTarget   = target;
+        _exitRunawayIsEnemy  = isEnemy;
+
+        int diceCount = ProtagonistRunawayDiceCount();
+        NarrationDiceStart(diceCount, 1, subtitle: "RUNAWAY CHECK — feet", difficultyVerb: "to flee");
+        _narrationState.LoadingMessage = Config.LoadingMessages.RollingDice;
+
+        // Fixed animation window (no async work backs this roll, unlike thinking checks).
+        await Task.Delay(Config.Dice.AnimationDurationMs);
+
+        var values = new int[diceCount];
+        for (int i = 0; i < diceCount; i++) values[i] = _diceRandom.Next(1, 7);
+        NarrationDiceComplete(values);
+    }
+
+    /// <summary>
+    /// Resolves an exit-runaway roll after the player clicks Continue on the dice overlay.
+    /// Success → exit narration. Failure → start a fight (enemy) or the caught-red-handed
+    /// trespass dialogue (witness). Enemy precedence is already baked into <c>isEnemy</c>.
+    /// </summary>
+    private void FinishExitRunaway()
+    {
+        bool success   = _dice.IsCurrentlySuccess;
+        var  target    = _exitRunawayTarget;
+        bool isEnemy   = _exitRunawayIsEnemy;
+
+        _exitRunawayPending = false;
+        _exitRunawayTarget  = null;
+        NarrationDiceClear();
+
+        if (success)
+        {
+            Console.WriteLine("NarrativeController: RUNAWAY succeeded — exiting narration");
+            _narrationState.RequestedExit = true;
+            return;
+        }
+
+        if (target == null)
+        {
+            // Defensive: nothing to escalate to, just leave.
+            _narrationState.RequestedExit = true;
+            return;
+        }
+
+        if (isEnemy)
+        {
+            Console.WriteLine($"NarrativeController: RUNAWAY failed — fight starts vs '{target.DisplayName}'");
+            _pendingFightOutcome = new FightTriggerOutcome(target, $"failed to run away from {target.DisplayName}");
+        }
+        else
+        {
+            Console.WriteLine($"NarrativeController: RUNAWAY failed — witness '{target.DisplayName}' confronts trespass");
+            var catchTree = CaughtRedHandedTreeFactory.Create(CriminalAffinityType.Intruder);
+            // A runaway confrontation has no observation→thinking→action origin — resample the narrator.
+            SetPendingDialogue(new DialogueTriggerOutcome(target, tree: catchTree), null);
+        }
+    }
     
     /// <summary>
     /// Called by the game controller when returning from fight mode.
@@ -2078,7 +4218,8 @@ public class NarrativeController
     public void OnFightCompleted(
         Fight.FightAdapterResult result,
         NpcEntity npc,
-        IReadOnlyList<NpcEntity>? allEnemyNpcs = null)
+        IReadOnlyList<NpcEntity>? allEnemyNpcs = null,
+        IReadOnlyList<string>? combatLog = null)
     {
         Console.WriteLine($"NarrativeController: Fight completed with result {result} vs {npc.DisplayName}");
 
@@ -2086,40 +4227,71 @@ public class NarrativeController
 
         if (result == Fight.FightAdapterResult.Victory)
         {
-            // Spawn corpses for every dead enemy + focus on main enemy's corpse
-            Spot? mainCorpse = null;
+            // A body — and, for a human, their belongings — for every enemy that fell. Each one
+            // queues itself on the scene as it is added, and the narration phase that opens next
+            // observes exactly those, in the order they were spawned here.
+            Cathedral.Game.Scene.PointOfInterest? mainCorpse = null;
             foreach (var enemy in enemies)
             {
-                if (!enemy.IsAlive && _scene != null && _pov != null)
-                {
-                    var corpse = enemy.GenerateCorpse(_pov.Where);
-                    _scene.AddSpotToArea(_pov.Where, corpse);
-                    _graph.NotifyNpcDead(enemy);
-                    Console.WriteLine($"NarrativeController: Corpse spawned for {enemy.DisplayName}");
+                if (enemy.IsAlive || _scene == null || _pov == null) continue;
 
-                    if (enemy == npc)
-                        mainCorpse = corpse;
+                foreach (var remains in enemy.GenerateCorpse())
+                {
+                    _scene.AddPointOfInterestToArea(_pov.Where, remains);
+                    if (enemy == npc) mainCorpse ??= remains;
                 }
+
+                // Out of play for good — the same door the slay verb and the two recruit routes use,
+                // so a location does not stand its dead back up on the next visit. An enemy with no
+                // SceneNpc (a --start-fight creature) was never in the scene and needs no removal.
+                var fallen = _scene.Npcs.FirstOrDefault(n => ReferenceEquals(n.Entity, enemy));
+                if (fallen != null) _scene.RemoveNpcFromPlay(fallen);
+
+                Console.WriteLine($"NarrativeController: Corpse spawned for {enemy.DisplayName}");
             }
 
-            // Focus on main enemy's corpse so the player can loot/inspect
+            // Focus on the main enemy's body so the debug view opens on what just happened.
             if (mainCorpse != null && _pov != null)
             {
                 _pov.Focus = mainCorpse;
                 SceneDebugManager.UpdatePoV(_pov);
             }
+
+            // Drop the slain NPCs from their nodes immediately: re-placing for the current period
+            // removes anyone no longer alive (Scene.GetNpcsAt filters the dead), so a defeated NPC
+            // can't still be observed standing where their corpse now lies.
+            _npcPlacement?.PlaceForPeriod(_graph.CurrentPeriod);
         }
         else if (result == Fight.FightAdapterResult.Runaway)
         {
-            // Every alive fighter who participated now considers the protagonist an enemy
+            // The whole party fights together, so every alive enemy now considers each party
+            // member (protagonist + companions) an enemy after the party fled.
+            var partyNames = new List<string> { _protagonist.DisplayName };
+            partyNames.AddRange(_protagonist.CompanionParty.Select(c => c.DisplayName));
+
             foreach (var enemy in enemies)
             {
-                if (enemy.IsAlive)
-                {
-                    enemy.AffinityTable.SetEnemy(_protagonist.DisplayName);
-                    Console.WriteLine($"NarrativeController: {enemy.DisplayName} flagged as enemy after runaway");
-                }
+                if (!enemy.IsAlive) continue;
+                foreach (var name in partyNames)
+                    enemy.AffinityTable.SetEnemy(name);
+                Console.WriteLine($"NarrativeController: {enemy.DisplayName} flagged the whole party ({partyNames.Count} member(s)) as enemies after runaway");
             }
+        }
+
+        // Archive the tail of the combat log so the fight leaves a scrollable trace. One block, not
+        // one per line: the buffer re-wraps every block on each append, and WrapText already splits
+        // on newlines. Only the closing exchange is kept — the rest was always ephemeral.
+        if (combatLog is { Count: > 0 })
+        {
+            const int MaxCombatLogLines = 12;
+            var tail = combatLog.Skip(Math.Max(0, combatLog.Count - MaxCombatLogLines));
+            string logText = (combatLog.Count > MaxCombatLogLines ? "…\n" : "") + string.Join("\n", tail);
+            _scrollBuffer.AddBlock(new NarrationBlock(
+                Type: NarrationBlockType.Outcome,
+                ModusMentis: null!,
+                Text: logText,
+                Keywords: null,
+                Actions: null));
         }
 
         string outcomeText = result switch
@@ -2130,10 +4302,11 @@ public class NarrativeController
             _ => "The fight ended."
         };
 
-        // Add outcome to scroll buffer
+        // Add outcome to scroll buffer. No modus mentis: this is a system note, not an MM's
+        // narration — attaching one would print its skill header without any LLM involvement.
         var block = new NarrationBlock(
             Type: NarrationBlockType.Outcome,
-            ModusMentis: _protagonist.ModiMentis.FirstOrDefault()!,
+            ModusMentis: null!,
             Text: outcomeText,
             Keywords: null,
             Actions: null
@@ -2159,9 +4332,11 @@ public class NarrativeController
     {
         Console.WriteLine($"NarrativeController: Dialogue completed with {npc.DisplayName}");
         
+        // No modus mentis: a system note — an MM here would print its skill header (e.g.
+        // "[DISCIPLINE ▪]") before the segment separator without any LLM involvement.
         var block = new NarrationBlock(
             Type: NarrationBlockType.Outcome,
-            ModusMentis: _protagonist.ModiMentis.FirstOrDefault()!,
+            ModusMentis: null!,
             Text: $"You finished talking with {npc.DisplayName}.",
             Keywords: null,
             Actions: null
@@ -2193,13 +4368,6 @@ public class NarrativeController
             Console.WriteLine($"    Entry Node: {node.IsEntryNode}");
             Console.WriteLine($"    Outcomes: {node.GetAllDirectConcreteOutcomes().Count}");
 
-            var items = node.GetAvailableItems();
-            if (items.Count > 0)
-            {
-                Console.WriteLine($"    Items ({items.Count}):");
-                foreach (var item in items)
-                    Console.WriteLine($"      - {item.DisplayName}");
-            }
 
             var observations = node.PossibleOutcomes.OfType<ObservationObject>().ToList();
             if (observations.Count > 0)
@@ -2232,24 +4400,56 @@ public class NarrativeController
         return CriticTrees.IsMovementVerb(action.ActionText);
     }
 
-    /// Determines the <see cref="CriminalAffinityType"/> for a verb that was just executed.
+    /// <summary>
+    /// What the witness will say they saw, for a verb that was just caught. Only reached once the
+    /// action is already established as a crime, so this names the kind rather than re-deciding it —
+    /// see <see cref="Cathedral.Game.Scene.Verbs.Verb.IsIllegal"/> for the deciding.
+    ///
+    /// <para>The violent verbs all read as <c>Murderer</c>, including a bare <c>attack</c>: what the
+    /// witness is reacting to is somebody setting about a person, and the accusation is worded from
+    /// that. Anything unlisted done inside a private area is trespass, which is what makes an
+    /// otherwise innocuous verb a crime there in the first place.</para>
     /// </summary>
     private static CriminalAffinityType DetermineCrimeType(Cathedral.Game.Scene.Verbs.Verb verb, bool areaIsPrivate)
     {
         return verb.VerbId switch
         {
             "steal"       => CriminalAffinityType.Thief,
+            "pickpocket"  => CriminalAffinityType.Thief,
             "grab"        => areaIsPrivate ? CriminalAffinityType.Thief : CriminalAffinityType.None,
             "slay"        => CriminalAffinityType.Murderer,
+            "murder"      => CriminalAffinityType.Murderer,
+            "attack"      => CriminalAffinityType.Murderer,
             "unlock_door" => CriminalAffinityType.Intruder,
+            "slip_into"   => CriminalAffinityType.Intruder,
+            "stalk"       => CriminalAffinityType.Intruder,
+            "break"       => CriminalAffinityType.Vandal,
             _             => areaIsPrivate ? CriminalAffinityType.Intruder : CriminalAffinityType.None,
         };
     }
 
+    /// <summary>
+    /// The tools that may be combined with an action. <see cref="ItemCategory.Tool"/> and
+    /// <see cref="ItemCategory.Weapon"/> qualify — a weapon is a tool too, just a specialised and
+    /// often clumsy one (see <c>WeaponItem.UsageLevel</c>). Garments, food and raw material are
+    /// excluded: they are things you wear, eat or own, not things you work with.
+    ///
+    /// <para><b>Plus anything declaring <see cref="Item.MadeForVerbIds"/>, whatever its
+    /// category.</b> An item made for an act is by definition something you work with, and the
+    /// exception would otherwise be unreachable for everything that is not already a tool — which is
+    /// most of what wants one. Reading lenses are a garment by category and are the whole reason the
+    /// mechanism exists.</para>
+    ///
+    /// Location is deliberately not a factor — anything carried is usable, whether it is in hand
+    /// or at the bottom of a pack. A container holding something is excluded, since combining it
+    /// with an action would mean putting its contents down.
+    /// </summary>
     private List<Item> GetCombinableItems()
     {
-        return _protagonist.GetAllItems()
-            .Where(i => i is not ContainerItem c || c.Contents.Count == 0)
+        return _activePartyMember.GetAllItems()
+            .Where(i => i.Category is ItemCategory.Tool or ItemCategory.Weapon
+                     || i.MadeForVerbIds.Count > 0)
+            .Where(i => i is not IContainer c || c.Contents.Count == 0)
             .ToList();
     }
 
@@ -2277,14 +4477,16 @@ public class NarrativeController
     /// </summary>
     private async Task ExecuteItemCombinationAsync(ParsedNarrativeAction action, Item item)
     {
+        // Nothing is attempted yet — the critic is deciding whether the item helps at all, and the
+        // action it may reword is still waiting behind its own button.
         _narrationState.IsLoadingAction = true;
-        _narrationState.LoadingMessage = Config.LoadingMessages.EvaluatingAction;
+        _narrationState.LoadingMessage = Config.LoadingMessages.CombiningItem;
 
         try
         {
             // Resolve action modusMentis
             var actionModusMentis = action.ActionModusMentis
-                ?? _protagonist.ModiMentis.FirstOrDefault(m => m.ModusMentisId == action.ActionModusMentisId);
+                ?? _activePartyMember.ModiMentis.FirstOrDefault(m => m.ModusMentisId == action.ActionModusMentisId);
 
             if (actionModusMentis == null)
             {
@@ -2296,58 +4498,126 @@ public class NarrativeController
             string itemContext = $"{item.DisplayName} ({item.Description})";
             Console.WriteLine($"NarrativeController: Item combination — action='{action.DisplayText}', item='{itemContext}'");
 
-            // Build critic context
-            var goalDescription = action.PreselectedOutcome?.ToNaturalLanguageString() ?? "";
-            var criticContext = new CriticContext(_currentNode, _worldContext, _locationId, goalDescription);
-            criticContext.CombinedItemContext = itemContext;
+            var gatedVerb    = action.PreselectedOutcome?.Verb;
+            var proficiency  = ToolUsageProficiencyStat.Of(_activePartyMember);
+            var gate         = ToolCombinationRules.Resolve(gatedVerb, item, proficiency);
+            Console.WriteLine($"NarrativeController: Tool gate — proficiency={proficiency}, verb={gatedVerb?.VerbId ?? "none"} ({gatedVerb?.ToolUse.ToString() ?? "n/a"}), gate={gate}");
 
-            // === CRITIC: can the item help? (two passes — either succeeding is enough) ===
-            // Pass 1: original action-text phrasing (persona voice)
-            var appropriatenessTree1 = CriticTrees.BuildItemAppropriatenessTreeByActionText(action.ActionText, itemContext, criticContext);
-            var appropriatenessResult1 = await _actionExecutor.CriticEvaluator.EvaluateTreeAsync(appropriatenessTree1);
-            Console.WriteLine($"NarrativeController: Item appropriateness pass 1 (action text): {(appropriatenessResult1.OverallSuccess ? "success" : "fail")}");
+            // Three of the four gates settle it here, with no request made at all. The fourth is the
+            // only one that was ever worth a critic call.
+            //
+            // How the refusal is worded is decided alongside it, because the four failures are four
+            // different pieces of news and a single "it did not work" makes the acting modus mentis
+            // invent which one it was.
+            bool appropriatenessSuccess;
+            ToolFailureKind failureKind = ToolFailureKind.None;
+            string criticReason = "";
 
-            // Pass 2: neutral goal-based phrasing (only if pass 1 failed)
-            bool appropriatenessSuccess = appropriatenessResult1.OverallSuccess;
-            var appropriatenessResult = appropriatenessResult1;
-            if (!appropriatenessSuccess)
+            if (gate == ToolCombinationGate.AskTheCritic)
             {
-                var appropriatenessTree2 = CriticTrees.BuildItemAppropriatenessTree(goalDescription, actionModusMentis.ShortDescription, item.DisplayName, criticContext);
-                appropriatenessResult = await _actionExecutor.CriticEvaluator.EvaluateTreeAsync(appropriatenessTree2);
-                appropriatenessSuccess = appropriatenessResult.OverallSuccess;
-                Console.WriteLine($"NarrativeController: Item appropriateness pass 2 (neutral): {(appropriatenessSuccess ? "success" : "fail")}");
+                var goalDescription = action.PreselectedOutcome?.ToNaturalLanguageString() ?? "";
+                var criticContext = new CriticContext(_currentNode, _worldContext, _locationId, goalDescription);
+                criticContext.CombinedItemContext = itemContext;
+
+                // A required verb asks a different question: not "does this beat bare hands" (bare
+                // hands are not an option there) but "can this do the work of the tool this needs".
+                var appropriatenessTree = gatedVerb is { RequiresTool: true }
+                    ? CriticTrees.BuildToolSubstitutionTree(
+                          goalDescription, CriticTrees.ToolPhrase(gatedVerb.ReferenceToolIds),
+                          item.DisplayName, criticContext)
+                    : CriticTrees.BuildItemAppropriatenessTree(goalDescription, item.DisplayName, criticContext);
+                var appropriatenessResult = await _actionExecutor.ItemUseCritic.EvaluateTreeAsync(appropriatenessTree);
+
+                // The critic judges the implement; the body judges itself. A verdict it returns as
+                // passing may still be out of this body's reach, and that is a different refusal from
+                // "wrong tool" — the wording has to distinguish them or the rewrite blames the item.
+                string verdict = appropriatenessResult.Trace.LastOrDefault()?.ChosenId ?? "";
+                bool itemAcceptable = appropriatenessResult.OverallSuccess;
+                appropriatenessSuccess = itemAcceptable
+                                      && ToolCombinationRules.VerdictClears(verdict, proficiency);
+
+                if (!appropriatenessSuccess)
+                {
+                    // The item passed and the hands did not: a different refusal from "wrong tool",
+                    // and the one the player can do something about by taking a level.
+                    failureKind  = itemAcceptable ? ToolFailureKind.BeyondSkill : ToolFailureKind.WrongTool;
+                    criticReason = appropriatenessResult.CombinedFailureReason;
+                    Console.WriteLine($"NarrativeController: Item verdict '{verdict}' needs "
+                        + $"{ToolCombinationRules.RequiredFor(verdict)?.ToString() ?? "a band no body reaches"}"
+                        + $", body has {proficiency} → {failureKind}");
+                }
+                else
+                {
+                    Console.WriteLine($"NarrativeController: Item verdict '{verdict}' cleared at {proficiency}.");
+                }
+            }
+            else
+            {
+                appropriatenessSuccess = gate == ToolCombinationGate.MadeForIt;
+                failureKind = gate switch
+                {
+                    ToolCombinationGate.NoProficiency => ToolFailureKind.NoProficiency,
+                    ToolCombinationGate.NotItsPurpose => ToolFailureKind.NotItsPurpose,
+                    ToolCombinationGate.ExcludedVerb  => ToolFailureKind.Senseless,
+                    ToolCombinationGate.NotAWeapon    => ToolFailureKind.NotAWeapon,
+                    _                                 => ToolFailureKind.None,
+                };
+                Console.WriteLine($"NarrativeController: Settled without a critic call — {gate}.");
             }
 
-            // Item combination always costs one noetic point, regardless of outcome
-            _narrationState.ThinkingAttemptsRemaining = Math.Max(0, _narrationState.ThinkingAttemptsRemaining - 1);
-            Console.WriteLine($"NarrativeController: Item combination consumed 1 noetic point ({_narrationState.ThinkingAttemptsRemaining} remaining)");
+            // A failed combination costs a noetic point; an accepted one is free, being part of the
+            // act already paid for. Charging for the accepted case is what made every required verb
+            // impossible once the pool was cut to a third of the encephalon. Choosing an implement
+            // that can actually serve is the player's side of that bargain.
+            //
+            // Exempt in childhood and get-up for the same reason every other spend is: those phases
+            // do not run on the pool at all, and both of their verbs are Excluded — so without this
+            // they would be the one place a combination could be charged for in a budget that is
+            // not being kept. The counter is not saved here; only the Speak-About hand-off persists
+            // it, because that is the only point at which the acting member changes.
+            bool phaseKeepsBudget = _scene?.Phase != NarrationPhase.ChildhoodReminescence
+                                 && _scene?.Phase != NarrationPhase.GetUp;
+            if (!appropriatenessSuccess && phaseKeepsBudget && _narrationState.ThinkingAttemptsRemaining > 0)
+                _narrationState.ThinkingAttemptsRemaining--;
 
             if (appropriatenessSuccess)
             {
                 Console.WriteLine($"NarrativeController: Item '{item.DisplayName}' approved — generating reasoning then reformulating.");
 
+                // Both the reasoning and the reformulated action stream into one preview box.
+                _previewSession.Reset();
+                var itemPart = _previewSession.BeginAccumulatingPart(PreviewTitles.For(actionModusMentis));
+
                 // ── Step 1: reasoning (how does the item help?) ─────────────────
                 string? reasoningText = await _thinkingExecutor.ExecuteItemReasoningAsync(
-                    action, item, _currentNode, _protagonist, _worldContext);
+                    action, item, _currentNode, _protagonist, _worldContext, preview: itemPart?.NextSegment());
                 if (string.IsNullOrWhiteSpace(reasoningText))
                     reasoningText = $"I could use {item.DisplayName} to help with this.";
 
                 // ── Step 2: reformulation (rewrite the action incorporating the item) ──
                 string? reformulatedText = await _thinkingExecutor.ExecuteItemReformulationAsync(
-                    action, item, _currentNode, _protagonist, _worldContext);
+                    action, item, _currentNode, _protagonist, _worldContext, preview: itemPart?.NextSegment());
                 if (string.IsNullOrWhiteSpace(reformulatedText))
                     reformulatedText = action.DisplayText;
 
                 // ── Step 3: build the combined action ────────────────────────────
-                // Chain leaf: a synthetic ModusMentis carrying item name + UsageLevel so that:
+                // Chain leaf: a synthetic ModusMentis carrying item name + usage level so that:
                 //   - the action button shows [ItemName ◼◼] instead of [ActionSkill ◼◼◼]
-                //   - GetTotalModusMentisLevel() = obs.Level + thinking.Level + action.Level + item.UsageLevel (no repetition)
+                //   - GetTotalModusMentisLevel() = obs.Level + thinking.Level + action.Level + usage
+                // The level is the implement's own, whole. The hands had their say already, and it
+                // was a harder one: the proficiency band decided whether this combination was allowed
+                // to happen at all. Capping the dice on top of that taxed one organ twice for one act.
                 var itemModusMentis = new SyntheticItemModusMentis(item.ItemId, item.DisplayName, item.UsageLevel);
 
                 var combinedAction = new ParsedNarrativeAction
                 {
                     ActionText             = reformulatedText,
                     DisplayText            = reformulatedText,
+                    // Keep a neutral phrasing for the outcome template ("I tried to … using an item")
+                    // so it doesn't re-embed the styled reformulation; empty when the source had none.
+                    NeutralActionText      = string.IsNullOrWhiteSpace(action.NeutralActionText)
+                                                 ? string.Empty
+                                                 : $"{action.NeutralActionText} using {item.WithArticle()}",
                     ActionModusMentisId    = action.ActionModusMentisId,   // real skill for execution/slot lookup
                     ActionModusMentis      = action.ActionModusMentis,     // real skill for organ score etc.
                     CombinedActionModusMentis = itemModusMentis,           // item as chain leaf / display prefix
@@ -2370,17 +4640,31 @@ public class NarrativeController
                 );
                 combinedAction.ChainOrigin = reasoningBlock;
 
-                _scrollBuffer.AddBlock(reasoningBlock);
-                _narrationState.AddBlock(reasoningBlock);
-                _scrollBuffer.ScrollToBottom();
-                _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+                // Deferred commit: reveal the reasoning block (and its reformulated action button) on CONTINUE.
+                void CommitItemReasoning()
+                {
+                    _scrollBuffer.AddBlock(reasoningBlock);
+                    _narrationState.AddBlock(reasoningBlock);
+                    _scrollBuffer.ScrollToBottom();
+                    _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+                }
+                if (itemPart != null)
+                {
+                    itemPart.AttachCommit(CommitItemReasoning);
+                    itemPart.MarkComplete();
+                    _previewSession.EndProduction();
+                }
+                else CommitItemReasoning();
             }
             else
             {
-                Console.WriteLine($"NarrativeController: Item '{item.ItemId}' rejected — narrating failure.");
+                Console.WriteLine($"NarrativeController: Item '{item.ItemId}' rejected ({failureKind}) — narrating failure.");
 
+                // The failure explanation streams into a preview box.
+                _previewSession.Reset();
+                var itemFailPart = _previewSession.BeginPart(PreviewTitles.For(actionModusMentis));
                 string failureNarration = await _actionExecutor.OutcomeNarrator.NarrateItemCombinationFailureAsync(
-                    action, item, actionModusMentis, appropriatenessResult.CombinedFailureReason);
+                    action, item, actionModusMentis, criticReason, failureKind, preview: itemFailPart?.Sink);
 
                 var failureBlock = new NarrationBlock(
                     Type: NarrationBlockType.Outcome,
@@ -2390,15 +4674,26 @@ public class NarrativeController
                     Actions: null,
                     ChainOrigin: action.ChainOrigin
                 );
-                _scrollBuffer.AddBlock(failureBlock);
-                _narrationState.AddBlock(failureBlock);
-                _scrollBuffer.ScrollToBottom();
-                _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+                void CommitItemFailure()
+                {
+                    _scrollBuffer.AddBlock(failureBlock);
+                    _narrationState.AddBlock(failureBlock);
+                    _scrollBuffer.ScrollToBottom();
+                    _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+                }
+                if (itemFailPart != null)
+                {
+                    itemFailPart.AttachCommit(CommitItemFailure);
+                    itemFailPart.MarkComplete();
+                    _previewSession.EndProduction();
+                }
+                else CommitItemFailure();
             }
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"NarrativeController: Error during item combination: {ex.Message}");
+            _previewSession.Reset();
         }
         finally
         {

@@ -1,4 +1,9 @@
-﻿namespace Cathedral.Game.Narrative;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+
+namespace Cathedral.Game.Narrative;
 
 /// <summary>
 /// Base class for derived stats. A derived stat is computed from a specific organ part,
@@ -43,16 +48,28 @@ public abstract class DerivedStat
     public virtual string FormatValue(int value) => value.ToString();
 
     /// <summary>
-    /// Convert a negative source score (due to low-handicap wounds) into the stat value.
-    /// Default: clamps to 0. Override for stats that can meaningfully go negative.
+    /// Whether a higher computed value is better for the player. Default: true.
+    /// Override to false for stats where a lower value is preferable (e.g. an XP cost or
+    /// threshold). This drives which side of the value range is the "worst" and how the
+    /// value is clamped — see <see cref="WorstValue"/> and <see cref="BestValue"/>.
     /// </summary>
-    public virtual int CalculateValueNegative(int sourceScore) => 0;
+    public virtual bool HigherIsBetter => true;
 
     /// <summary>
-    /// Stat value when the source organ/body part is fully disabled by a high-handicap wound.
-    /// Default: 0.
+    /// The maximally-degraded value for this stat — what <see cref="GetValue"/> returns when
+    /// the source is absent or disabled, and the bound the result can never be worse than.
+    /// For a <see cref="HigherIsBetter"/> stat this is a floor (a low number); for a
+    /// lower-is-better stat it is a ceiling (a high number). Default: 0.
     /// </summary>
-    public virtual int CalculateValueDisabled() => 0;
+    public virtual int WorstValue => 0;
+
+    /// <summary>
+    /// Optional cap on the best side of the range, or null for no cap. For a
+    /// <see cref="HigherIsBetter"/> stat this is the maximum the value may reach; for a
+    /// lower-is-better stat it is the minimum. Lets each stat carry its own two-sided bounds
+    /// instead of relying on clamps at the call site. Default: null (no cap).
+    /// </summary>
+    public virtual int? BestValue => null;
 
     /// <summary>
     /// Get the raw (unmodified by wounds) source score.
@@ -138,24 +155,25 @@ public abstract class DerivedStat
     }
 
     /// <summary>
-    /// Convert the source score into the derived stat value (score >= 0 path).
-    /// Each subclass implements its own formula.
+    /// Convert the source score into the raw derived stat value (score >= 0 path), before
+    /// any bounds are applied. Each subclass implements its own formula. Protected so callers
+    /// go through <see cref="GetValue"/> / <see cref="GetRawValue"/>, which apply the bounds.
     /// </summary>
-    public abstract int CalculateValue(int sourceScore);
+    protected abstract int CalculateValue(int sourceScore);
 
     /// <summary>
-    /// The lowest meaningful value for this stat regardless of wounds or anatomy.
-    /// Used as a safe fallback when <see cref="IsUsable"/> returns false and the caller
-    /// needs a numeric value to stay compatible with running code.
-    /// Default: 0. Override in stats where a minimum of 1 is required (e.g. memory slots).
+    /// Member-aware variant of <see cref="CalculateValue(int)"/>, used by <see cref="GetValue"/> and
+    /// <see cref="GetRawValue"/>. Defaults to the member-agnostic formula, so existing stats are
+    /// unaffected; override when the value depends on more than the source score (e.g. a linear
+    /// scale relative to the source's <c>MaxScore</c>).
     /// </summary>
-    public virtual int MinimumValue() => 0;
+    protected virtual int CalculateValue(PartyMember member, int sourceScore) => CalculateValue(sourceScore);
 
     /// <summary>
     /// Returns false when this stat cannot be computed for the given party member because
     /// (a) the related organ / organ part / body part is absent from their anatomy, or
     /// (b) the related source is fully disabled by a High-handicap wound.
-    /// Callers can use <see cref="MinimumValue"/> as the fallback score, or invoke
+    /// Callers can use <see cref="WorstValue"/> as the fallback score, or invoke
     /// anatomy-specific fallback logic.
     /// </summary>
     public bool IsUsable(PartyMember member)
@@ -181,13 +199,80 @@ public abstract class DerivedStat
     /// <summary>
     /// Get the final computed value of this derived stat for the given party member,
     /// taking wounds into account.
+    ///
+    /// <para><b>Virtual for one family of stats only.</b> Every stat here degrades <em>towards</em>
+    /// <see cref="WorstValue"/> and stops, which is right for a quantity a body either has or lacks
+    /// — carry weight, beauty, health. The modus-mentis max-level contributions are the exception:
+    /// a ruined organ does not merely stop contributing to what its skills may reach, it takes some
+    /// of that reach away, so those two override this to return a negative. Do not widen that
+    /// reading to the rest — see <c>MaxLevelContributionStats.cs</c>.</para>
     /// </summary>
-    public int GetValue(PartyMember member)
+    public virtual int GetValue(PartyMember member)
     {
-        int effective = GetEffectiveScore(member);
-        if (effective == int.MinValue) return CalculateValueDisabled();
-        if (effective < 0)             return CalculateValueNegative(effective);
-        return CalculateValue(effective);
+        int score = GetEffectiveScore(member);
+        // A negative score means the source is absent (int.MinValue) or wound-disabled: the
+        // stat degrades all the way to its worst value.
+        if (score < 0) return WorstValue;
+        return Clamp(CalculateValue(member, score));
+    }
+
+    /// <summary>
+    /// Value computed from the raw source score, ignoring wounds, with bounds applied.
+    /// Used where wounds are accounted for separately (e.g. <see cref="PartyMember.MaxHp"/>).
+    /// </summary>
+    public int GetRawValue(PartyMember member) => Clamp(CalculateValue(member, GetSourceScore(member)));
+
+    /// <summary>
+    /// The value this stat reaches when its source is scored as high as this member's anatomy
+    /// allows — the far end of the stat's range, not its current state. Wounds are ignored, since
+    /// the point is the size of the bar rather than how much of it is filled. UI that draws a stat
+    /// as filled/empty pips needs this to know how many pips to draw; a species with a smaller
+    /// maximum therefore gets a shorter bar rather than one it can never fill.
+    /// Returns <see cref="WorstValue"/> when the source is absent from the anatomy.
+    /// </summary>
+    public int GetValueAtMaxScore(PartyMember member)
+    {
+        int? maxScore =
+              RelatedOrganPartId != null ? member.GetOrganPartById(RelatedOrganPartId)?.MaxScore
+            : RelatedOrganId     != null ? member.GetOrganById(RelatedOrganId)?.MaxScore
+            : RelatedBodyPartId  != null ? member.GetBodyPartById(RelatedBodyPartId)?.MaxScore
+            : null;
+
+        return maxScore is { } max ? Clamp(CalculateValue(member, max)) : WorstValue;
+    }
+
+    /// <summary>
+    /// Clamp a raw computed value so it is never worse than <see cref="WorstValue"/> nor,
+    /// when set, better than <see cref="BestValue"/>, respecting <see cref="HigherIsBetter"/>.
+    /// </summary>
+    private int Clamp(int value)
+    {
+        if (HigherIsBetter)
+        {
+            value = Math.Max(WorstValue, value);
+            if (BestValue.HasValue) value = Math.Min(BestValue.Value, value);
+        }
+        else
+        {
+            value = Math.Min(WorstValue, value);
+            if (BestValue.HasValue) value = Math.Max(BestValue.Value, value);
+        }
+        return value;
+    }
+
+    /// <summary>
+    /// Discovers and instantiates every concrete <see cref="DerivedStat"/> subclass
+    /// in this assembly. New stats are picked up automatically — no manual registration
+    /// needed in anatomy factories.
+    /// </summary>
+    public static List<DerivedStat> DiscoverAll()
+    {
+        return Assembly.GetExecutingAssembly()
+            .GetTypes()
+            .Where(t => t.IsClass && !t.IsAbstract && typeof(DerivedStat).IsAssignableFrom(t))
+            .OrderBy(t => t.FullName)
+            .Select(t => (DerivedStat)Activator.CreateInstance(t)!)
+            .ToList();
     }
 }
 

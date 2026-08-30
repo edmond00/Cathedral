@@ -21,14 +21,14 @@ public static class ThreatSelector
     public static ThreatContext ComputeContext(Scene scene, PoV pov, Protagonist protagonist)
     {
         // 1. Visual threat: same area
-        var visual = SelectFrom(scene, pov.Where, pov.When, protagonist.DisplayName);
+        var visual = SelectFrom(scene, pov.Where, pov.When, protagonist.AffinityKey);
         if (visual != null)
             return new ThreatContext(ThreatLevel.Visual, visual);
 
-        // 2. Audio threat: adjacent areas (one hop in either direction)
-        foreach (var adjacent in GetAdjacentAreas(scene, pov.Where))
+        // 2. Audio threat: any enemy within earshot — one graph hop, or through a connector.
+        foreach (var adjacent in SceneAdjacency.WithinEarshot(scene, pov.Where))
         {
-            var audio = SelectFrom(scene, adjacent, pov.When, protagonist.DisplayName);
+            var audio = SelectFrom(scene, adjacent, pov.When, protagonist.AffinityKey);
             if (audio != null)
                 return new ThreatContext(ThreatLevel.Audio, audio);
         }
@@ -58,19 +58,4 @@ public static class ThreatSelector
         return candidates.OrderByDescending(n => n.AuthorityLevel).First();
     }
 
-    private static System.Collections.Generic.IEnumerable<Area> GetAdjacentAreas(Scene scene, Area area)
-    {
-        foreach (var reachable in scene.GetReachableAreas(area))
-            yield return reachable;
-
-        foreach (var (fromId, targets) in scene.AreaGraph)
-        {
-            if (!targets.Contains(area.Id)) continue;
-            var fromArea = scene.Sections
-                .SelectMany(s => s.Areas)
-                .FirstOrDefault(a => a.Id == fromId);
-            if (fromArea != null && fromArea.Id != area.Id)
-                yield return fromArea;
-        }
-    }
 }

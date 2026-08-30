@@ -45,7 +45,7 @@ public enum GameMode
     
     /// <summary>
     /// Player is managing their protagonist/companions from the main menu.
-    /// Terminal shows tabbed interface: body/organs viewer, inventory, journal.
+    /// Terminal shows tabbed interface: anatomy/organs viewer, inventory, journal.
     /// </summary>
     ProtagonistManagement,
 
@@ -64,6 +64,13 @@ public enum GameMode
     ChildhoodReminescence,
 
     /// <summary>
+    /// Short intermediate scene between childhood reminiscence and world exploration.
+    /// The protagonist rests exhausted under a lone tree; the only action is GET UP.
+    /// No noetic cost, no failure penalty (loop back), difficulty forced to 1.
+    /// </summary>
+    GetUp,
+
+    /// <summary>
     /// Protagonist is engaged in turn-based combat within the narrative.
     /// Fight system runs on the main terminal; narrative resumes when fight ends.
     /// </summary>
@@ -73,5 +80,36 @@ public enum GameMode
     /// Protagonist is in dialogue with an NPC within the narrative.
     /// Dialogue system runs on the main terminal; narrative resumes when dialogue ends.
     /// </summary>
-    Dialogue
+    Dialogue,
+
+    /// <summary>
+    /// Protagonist is in a buy/sell menu with an NPC merchant, reached by succeeding a
+    /// propose-to-buy/sell dialogue. Trade UI runs on the main terminal; narrative resumes
+    /// when the menu is closed.
+    /// </summary>
+    Trading,
+
+    /// <summary>
+    /// Protagonist is in a work menu with a master or reeve, reached by succeeding a request-job
+    /// dialogue. Work UI runs on the main terminal; narrative resumes when the menu is closed.
+    /// </summary>
+    Working,
+
+    /// <summary>
+    /// The protagonist has died. Shows a purple death screen with cause of death
+    /// and an "End Run" button that returns to the main menu.
+    /// </summary>
+    Death,
+
+    /// <summary>
+    /// A travel encounter has been rolled. Shows a purple message box describing
+    /// the threat with an "Engage" button; clicking it transitions to Fighting.
+    /// </summary>
+    EncounterPrompt,
+
+    /// <summary>
+    /// Settings screen reached from the main menu. Shows music and sound-effects
+    /// volume controls; a Back button returns to <see cref="MainMenu"/>.
+    /// </summary>
+    Settings
 }

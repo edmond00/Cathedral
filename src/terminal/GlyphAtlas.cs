@@ -73,6 +73,18 @@ namespace Cathedral.Terminal
         public string CurrentGlyphSet => _currentGlyphSet;
         public int GlyphCount => _glyphMap.Count;
 
+        /// <summary>
+        /// Bumped on every rebuild. <b>A rebuild invalidates every UV this atlas has ever handed
+        /// out</b> — the grid is re-laid-out from scratch (its column count is the square root of
+        /// the glyph count), so adding one glyph moves all the others. Anything that caches a
+        /// <see cref="GlyphInfo"/> beyond the call — both terminal renderers cache one per cell in
+        /// a GPU instance buffer — must compare this against the version it built with and rebuild
+        /// when they differ. Without that the cached UVs point into the new layout at the old
+        /// coordinates, which draws the wrong characters until something unrelated dirties the
+        /// buffer.
+        /// </summary>
+        public int Version { get; private set; }
+
         #endregion
 
         #region Font Management
@@ -137,6 +149,25 @@ namespace Cathedral.Terminal
         #region Atlas Building
 
         /// <summary>
+        /// Re-rasters the glyph set already loaded, for a change in how a glyph is <b>drawn</b>
+        /// rather than in which glyphs there are.
+        ///
+        /// <para><see cref="BuildAtlas"/> alone cannot do this: it early-returns when the set is
+        /// unchanged, which is right for its usual caller and wrong here — the emboldening pen
+        /// (<c>Config.Terminal.GlyphStrokeFactor</c>) is baked into the raster, so every pixel of
+        /// an identical glyph set can be stale. The Settings screen's weight row is the one caller.</para>
+        ///
+        /// <para><see cref="Version"/> is bumped like any rebuild, which is what makes both
+        /// terminal renderers re-lay their instance buffers against the new layout.</para>
+        /// </summary>
+        public void Rebuild()
+        {
+            string glyphSet = _currentGlyphSet;
+            _currentGlyphSet = "";   // defeat BuildAtlas's no-change early return
+            BuildAtlas(glyphSet);
+        }
+
+        /// <summary>
         /// Builds or rebuilds the texture atlas with the specified glyph set
         /// </summary>
         public void BuildAtlas(string glyphSet)
@@ -158,7 +189,10 @@ namespace Cathedral.Terminal
             if (cleanGlyphSet == _currentGlyphSet)
                 return; // No change needed
 
-            Console.WriteLine($"Terminal: Building atlas with {cleanGlyphSet.Length} glyphs");
+            // File only. The atlas is rebuilt whenever the glyph set changes — about ninety times
+            // in a short session — so on the console these two lines were a third of everything
+            // printed, and they say nothing a player or a bug report needs.
+            Cathedral.GameLog.WriteToFileOnly($"Terminal: Building atlas with {cleanGlyphSet.Length} glyphs");
 
             // Dispose old texture
             if (_textureId != 0)
@@ -209,8 +243,9 @@ namespace Cathedral.Terminal
             // Upload to GPU
             _textureId = CreateTexture(atlasImage);
             _currentGlyphSet = cleanGlyphSet;
+            Version++;
 
-            Console.WriteLine($"Terminal: Atlas built successfully - {cols}x{rows} grid, {atlasWidth}x{atlasHeight} pixels");
+            Cathedral.GameLog.WriteToFileOnly($"Terminal: Atlas built successfully - {cols}x{rows} grid, {atlasWidth}x{atlasHeight} pixels");
         }
 
         private void RenderGlyphToAtlas(Image<Rgba32> atlas, char glyph, int x, int y)
@@ -238,6 +273,12 @@ namespace Cathedral.Terminal
                 fontToUse = baseFont.Family.CreateFont(adjustedSize, FontStyle.Regular);
             }
 
+            // Emboldening: stroke the outline as well as filling it. See Config.Terminal
+            // .GlyphStrokeFactor — the raster is minified to the on-screen cell, and FreeMono's
+            // hairline stems do not survive that. Scaled off the font actually used, so a glyph
+            // shrunk by its size factor is not stroked proportionally heavier than its neighbours.
+            float strokeWidth = fontToUse.Size * Cathedral.Config.Terminal.GlyphStrokeFactor;
+
             atlas.Mutate(ctx =>
             {
                 var textOptions = new RichTextOptions(fontToUse)
@@ -248,7 +289,10 @@ namespace Cathedral.Terminal
                 };
 
                 // Use white color for the glyph (we'll tint it with fragment shader)
-                ctx.DrawText(textOptions, glyph.ToString(), Color.White);
+                if (strokeWidth > 0f)
+                    ctx.DrawText(textOptions, glyph.ToString(), Brushes.Solid(Color.White), Pens.Solid(Color.White, strokeWidth));
+                else
+                    ctx.DrawText(textOptions, glyph.ToString(), Color.White);
             });
         }
 
@@ -302,8 +346,13 @@ namespace Cathedral.Terminal
                 return existingGlyph;
             }
 
-            // Add new glyph and rebuild atlas
-            Console.WriteLine($"Terminal: Adding new glyph '{c}' to atlas");
+            // Add new glyph and rebuild atlas. File only, like the two build lines: this fires in
+            // bursts whenever a screen introduces new box-drawing or body-art characters.
+            //
+            // Reaching here mid-fill is what EnsureGlyphs exists to avoid — see Version. A caller
+            // filling a buffer of cached UVs must ensure the whole set FIRST, in one rebuild, or
+            // everything it wrote before this line is left pointing at the old layout.
+            Cathedral.GameLog.WriteToFileOnly($"Terminal: Adding new glyph '{c}' to atlas");
             string newGlyphSet = _currentGlyphSet + c;
             BuildAtlas(newGlyphSet);
 
@@ -327,23 +376,25 @@ namespace Cathedral.Terminal
         }
 
         /// <summary>
-        /// Adds a set of characters to the atlas if not already present
+        /// Adds a set of characters to the atlas if not already present, in <b>one</b> rebuild.
+        /// Returns true when the atlas was rebuilt, which invalidates every UV previously handed
+        /// out — see <see cref="Version"/>.
         /// </summary>
-        public void EnsureGlyphs(string characters)
+        public bool EnsureGlyphs(IEnumerable<char> characters)
         {
-            var newChars = "";
+            HashSet<char>? newChars = null;
             foreach (char c in characters)
             {
-                if (!_glyphMap.ContainsKey(c))
-                {
-                    newChars += c;
-                }
+                if (_glyphMap.ContainsKey(c)) continue;
+                (newChars ??= new HashSet<char>()).Add(c);
             }
 
-            if (!string.IsNullOrEmpty(newChars))
-            {
-                BuildAtlas(_currentGlyphSet + newChars);
-            }
+            if (newChars == null) return false;
+
+            var sb = new System.Text.StringBuilder(_currentGlyphSet);
+            foreach (char c in newChars) sb.Append(c);
+            BuildAtlas(sb.ToString());
+            return true;
         }
 
         #endregion

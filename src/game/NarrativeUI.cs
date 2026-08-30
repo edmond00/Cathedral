@@ -14,12 +14,15 @@ namespace Cathedral.Game;
 /// </summary>
 public class NarrativeUI : TerminalPanelUI
 {
-    // Dice roll animation — _loadingFrameIndex/_lastFrameUpdate live in TerminalPanelUI base
-    
     private readonly KeywordRenderer _keywordRenderer;
-    private int SCROLLBAR_X => _scrollbarX;  // alias to base protected field
     private List<KeywordRegion> _keywordRegions = new();
     private List<ActionRegion> _actionRegions = new();
+
+    /// <summary>Clickable keyword regions in the current frame (used by --cli to list handles).</summary>
+    public IReadOnlyList<KeywordRegion> KeywordRegions => _keywordRegions;
+
+    /// <summary>Clickable action regions in the current frame (used by --cli to list handles).</summary>
+    public IReadOnlyList<ActionRegion> ActionRegions => _actionRegions;
     
     public NarrativeUI(TerminalHUD terminal) : base(terminal)
     {
@@ -28,12 +31,13 @@ public class NarrativeUI : TerminalPanelUI
     }
     
     /// <summary>
-    /// Get maximum thinking attempts.
-    /// TODO: This should be retrieved from the protagonist instance once that characteristic is implemented.
+    /// Fallback maximum thinking attempts, used only when no member-derived value is available
+    /// (e.g. before the active member is known). The real per-member value comes from the
+    /// encephalon-derived <see cref="Cathedral.Game.Narrative.NoeticPointsStat"/> via
+    /// <see cref="Cathedral.Game.Narrative.PartyMember.MaxNoeticPoints"/>.
     /// </summary>
     public static int GetMaxThinkingAttempts()
     {
-        // Placeholder implementation - will be replaced with protagonist characteristic
         return 13;
     }
     
@@ -45,43 +49,50 @@ public class NarrativeUI : TerminalPanelUI
     }
     
     /// <summary>
-    /// Render the header with location name and thinking attempts.
+    /// Render the header: active agent name (left) and noetic-point counter (right).
+    /// Pass <paramref name="showNoeticPoints"/> as false for phases where noetic points are
+    /// not consumed (childhood reminescence, get-up scene).
     /// </summary>
-    public void RenderHeader(string locationName, int thinkingAttemptsRemaining, WorldContext? worldContext = null, string? activePartyMemberName = null, TimePeriod? timePeriod = null)
+    public void RenderHeader(string activeAgentName, int thinkingAttemptsRemaining, int maxNoeticPoints,
+        bool showNoeticPoints = true)
     {
-        // Header starts after top padding
         int headerY = _layout.TOP_PADDING;
 
-        // Line 0: Location name with world context display name
-        string formattedLocationName = locationName.Replace("_", " ");
-        string memberSuffix = activePartyMemberName != null ? $"  [{activePartyMemberName.ToUpper()}]" : "";
-        string timeSuffix = timePeriod.HasValue ? $"  | {timePeriod.Value}" : "";
-        string contextPrefix = worldContext != null ? $"{worldContext.DisplayName} - " : "";
-        string title = $"{contextPrefix}{formattedLocationName}{memberSuffix}{timeSuffix}";
-        _terminal.Text(_layout.CONTENT_START_X, headerY, title, Config.NarrativeUI.HeaderColor, Config.NarrativeUI.BackgroundColor);
-        
-        // Thinking attempts indicator (right side)
-        int maxAttempts = GetMaxThinkingAttempts();
-        string attempts = $"Remaining noetic points : [";
-        int attemptsX = _layout.CONTENT_END_X - 40;
-        _terminal.Text(attemptsX, headerY, attempts, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
-        
-        // Draw individual attempt markers
-        int markerX = attemptsX + attempts.Length;
-        for (int i = 0; i < maxAttempts; i++)
+        // Left: agent name in uppercase brackets
+        string agentLabel = $"[{activeAgentName.ToUpper()}]";
+        _terminal.Text(_layout.CONTENT_START_X, headerY, agentLabel, Config.NarrativeUI.HeaderColor, Config.NarrativeUI.BackgroundColor);
+
+        // Right: noetic-point counter (only when noetic points are meaningful), named. The markers
+        // alone were a row of unexplained circles — the one number the whole narration loop is spent
+        // against, with nothing on screen saying what it counts.
+        if (showNoeticPoints)
         {
-            bool isRemaining = i < thinkingAttemptsRemaining;
-            Vector4 markerColor = isRemaining
-                ? Config.NarrativeUI.LoadingColor // Bright yellow for available
-                : Config.NarrativeUI.HistoryColor; // Dark gray for used
-            _terminal.Text(markerX, headerY, Config.Symbols.NoeticPointMarker.ToString(), markerColor, Config.NarrativeUI.BackgroundColor);
-            markerX++;
+            int maxAttempts = maxNoeticPoints;
+            const string label = "NOETIC ";
+            string prefix = "[";
+            // Reserve space: label + prefix "[" + maxAttempts markers + suffix "]"
+            int suffixWidth = label.Length + 1 + maxAttempts + 1;
+            int labelX  = _layout.CONTENT_END_X - suffixWidth;
+            int prefixX = labelX + label.Length;
+
+            _terminal.Text(labelX, headerY, label, Config.NarrativeUI.HeaderColor, Config.NarrativeUI.BackgroundColor);
+            _terminal.Text(prefixX, headerY, prefix, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
+
+            int markerX = prefixX + prefix.Length;
+            for (int i = 0; i < maxAttempts; i++)
+            {
+                bool isRemaining = i < thinkingAttemptsRemaining;
+                Vector4 markerColor = isRemaining
+                    ? Config.NarrativeUI.LoadingColor
+                    : Config.NarrativeUI.HistoryColor;
+                _terminal.Text(markerX, headerY, Config.Symbols.NoeticPointMarker.ToString(), markerColor, Config.NarrativeUI.BackgroundColor);
+                markerX++;
+            }
+
+            _terminal.Text(markerX, headerY, "]", Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
         }
-        
-        // Closing bracket
-        _terminal.Text(markerX, headerY, "]", Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
-        
-        // Separator line (after header)
+
+        // Separator line
         DrawHorizontalLine(_layout.TOP_PADDING + 1);
     }
     
@@ -91,7 +102,6 @@ public class NarrativeUI : TerminalPanelUI
     /// </summary>
     public void RenderObservationBlocks(
         NarrationScrollBuffer scrollBuffer,
-        int scrollOffset,
         int thinkingAttemptsRemaining,
         KeywordRegion? hoveredKeyword = null,
         ActionRegion? hoveredAction = null,
@@ -109,10 +119,10 @@ public class NarrativeUI : TerminalPanelUI
             }
         }
         
-        // Get visible lines based on scroll offset
+        // Get the visible window (the buffer owns the scroll position).
         // Subtract 1 from NARRATIVE_HEIGHT to account for the bottom separator line
         int visibleContentHeight = _layout.NARRATIVE_HEIGHT - _layout.SEPARATOR_HEIGHT;
-        var visibleLines = scrollBuffer.GetVisibleLines(scrollOffset, visibleContentHeight);
+        var visibleLines = scrollBuffer.GetVisibleLines(visibleContentHeight);
         
         // When dimming content, find the last outcome block to keep it highlighted
         int lastOutcomeBlockStart = -1;
@@ -162,6 +172,18 @@ public class NarrativeUI : TerminalPanelUI
             // Determine if this specific line should be dimmed
             int lineIndex = visibleLines.IndexOf(renderedLine);
             bool shouldDimThisLine = dimContent && (lastOutcomeBlockStart == -1 || lineIndex < lastOutcomeBlockStart);
+
+            // When an action is hovered, grey out every block outside its chain-of-thought
+            // (full header, narration text and dice symbols) so the chain stands out.
+            // Clickable action lines are excluded here: RenderActionLine dims per-action,
+            // so sibling actions of the hovered one grey out individually.
+            if (!shouldDimThisLine && hoveredAction?.Action != null &&
+                renderedLine.SourceBlock != null &&
+                !(renderedLine.Type == LineType.Action && renderedLine.Actions != null) &&
+                !hoveredAction.Action.IsElementInChain(renderedLine.SourceBlock))
+            {
+                shouldDimThisLine = true;
+            }
             
             switch (renderedLine.Type)
             {
@@ -223,22 +245,12 @@ public class NarrativeUI : TerminalPanelUI
                         
                         Vector4 modusMentisHeaderColor = shouldDimThisLine ? Config.NarrativeUI.DimmedContentColor : Config.NarrativeUI.ModusMentisHeaderColor;
                         
-                        // Determine modusMentis level indicator color based on whether this specific block is in the hovered action's chain
-                        Vector4 modusMentisLevelColor;
-                        if (shouldDimThisLine)
-                        {
-                            modusMentisLevelColor = Config.NarrativeUI.DimmedContentColor;
-                        }
-                        else if (hoveredAction?.Action != null && renderedLine.SourceBlock != null)
-                        {
-                            // Check if this specific block is in the hovered action's chain (not just matching modusMentis)
-                            bool isInChain = hoveredAction.Action.IsElementInChain(renderedLine.SourceBlock);
-                            modusMentisLevelColor = isInChain ? Config.NarrativeUI.LoadingColor : Config.NarrativeUI.ModusMentisHeaderColor;
-                        }
-                        else
-                        {
-                            modusMentisLevelColor = Config.NarrativeUI.LoadingColor;
-                        }
+                        // ModusMentis level indicator color: blocks outside a hovered action's chain
+                        // are fully dimmed above, so any line reaching here un-dimmed is either
+                        // in the chain or no action is hovered — both keep the bright dice color.
+                        Vector4 modusMentisLevelColor = shouldDimThisLine
+                            ? Config.NarrativeUI.DimmedContentColor
+                            : Config.NarrativeUI.LoadingColor;
                         
                         _terminal.Text(_layout.CONTENT_START_X, currentY, modusMentisName, modusMentisHeaderColor, Config.NarrativeUI.BackgroundColor);
                         _terminal.Text(_layout.CONTENT_START_X + modusMentisName.Length, currentY, levelIndicators, modusMentisLevelColor, Config.NarrativeUI.BackgroundColor);
@@ -261,6 +273,16 @@ public class NarrativeUI : TerminalPanelUI
                     break;
                     
                 case LineType.Content:
+                    // A dialogue reply the player chose: flat, in the player's colour. These carry
+                    // no keywords, so the highlighting pass is skipped entirely.
+                    if (renderedLine.BlockType == NarrationBlockType.PlayerSpeaking)
+                    {
+                        _terminal.Text(_layout.CONTENT_START_X, currentY, renderedLine.Text,
+                            shouldDimThisLine ? Config.NarrativeUI.DimmedContentColor : Config.Colors.LightPurple,
+                            Config.NarrativeUI.BackgroundColor);
+                        break;
+                    }
+
                     // Render content with keyword highlighting
                     RenderLineWithKeywords(
                         renderedLine.Text,
@@ -271,7 +293,8 @@ public class NarrativeUI : TerminalPanelUI
                         hoveredKeyword,
                         shouldDimThisLine,
                         renderedLine.SourceBlock,
-                        renderedLine.KeywordOccurrenceIndices);
+                        renderedLine.KeywordOccurrenceIndices,
+                        renderedLine.KeywordAnchors);
                     break;
                     
                 case LineType.Action:
@@ -293,7 +316,7 @@ public class NarrativeUI : TerminalPanelUI
                     }
                     else
                     {
-                        // Action result block (from Action block type) - detect SUCCESS/FAILURE
+                        // VerbAction result block (from VerbAction block type) - detect SUCCESS/FAILURE
                         Vector4 actionColor = Config.NarrativeUI.NarrativeColor;
                         if (renderedLine.Text.Contains("[SUCCESS]"))
                         {
@@ -349,29 +372,33 @@ public class NarrativeUI : TerminalPanelUI
                     break;
                     
                 case LineType.Report:
-                    if (renderedLine.Report != null)
+                    RenderReportChip(renderedLine, currentY,
+                        shouldDimThisLine ? Config.NarrativeUI.DimmedContentColor : null);
+                    break;
+
+                case LineType.Separator:
+                    // A segment rule that has not yet aged into history (ConvertToHistory marks its
+                    // own separators as history, so this covers any live one).
+                    _terminal.Text(_layout.CONTENT_START_X, currentY, renderedLine.Text,
+                        Config.NarrativeUI.SeparatorColor, Config.NarrativeUI.BackgroundColor);
+                    break;
+
+                case LineType.DialogueOption:
+                    // Dialogue reply lines are interactive only in the dialogue panel; if one is
+                    // still live here (not yet aged into history), show the chosen reply in the
+                    // player's colour and the rejected ones greyed, never clickable.
                     {
-                        if (shouldDimThisLine)
-                        {
-                            _terminal.Text(_layout.CONTENT_START_X, currentY, renderedLine.Text,
-                                Config.NarrativeUI.DimmedContentColor, Config.NarrativeUI.BackgroundColor);
-                        }
-                        else
-                        {
-                            var bgColor = renderedLine.Report.Severity switch
-                            {
-                                OutcomeReportSeverity.Negative => Config.NarrativeUI.OutcomeReportNegativeBackground,
-                                OutcomeReportSeverity.Positive => Config.NarrativeUI.OutcomeReportPositiveBackground,
-                                _                              => Config.NarrativeUI.OutcomeReportNeutralBackground,
-                            };
-                            _terminal.Text(_layout.CONTENT_START_X, currentY, renderedLine.Text,
-                                Config.NarrativeUI.OutcomeReportTextColor, bgColor);
-                        }
+                        int sel = renderedLine.SourceBlock?.SelectedDialogueOptionIndex ?? -1;
+                        Vector4 optColor = shouldDimThisLine ? Config.NarrativeUI.DimmedContentColor
+                            : sel < 0                                    ? Config.NarrativeUI.NarrativeColor
+                            : sel == renderedLine.DialogueOptionIndex    ? Config.Colors.LightPurple
+                            :                                              Config.NarrativeUI.DimmedContentColor;
+                        _terminal.Text(_layout.CONTENT_START_X, currentY, renderedLine.Text,
+                            optColor, Config.NarrativeUI.BackgroundColor);
                     }
                     break;
 
                 case LineType.Empty:
-                case LineType.Separator:
                     // Just skip (already cleared)
                     break;
             }
@@ -396,6 +423,7 @@ public class NarrativeUI : TerminalPanelUI
 
             case LineType.Report:
                 // Report chips collapse to plain history grey — no color background in history.
+                // (ConvertToHistory drops the Report reference, so this is the text-only fallback.)
                 _terminal.Text(_layout.CONTENT_START_X, y, line.Text.TrimEnd(), historyColor, Config.NarrativeUI.BackgroundColor);
                 break;
 
@@ -420,7 +448,8 @@ public class NarrativeUI : TerminalPanelUI
         KeywordRegion? hoveredKeyword,
         bool dimContent = false,
         NarrationBlock? sourceBlock = null,
-        List<int>? keywordOccurrenceIndices = null)
+        List<int>? keywordOccurrenceIndices = null,
+        List<NarrativeAnchor?>? keywordAnchors = null)
     {
         if (string.IsNullOrEmpty(text))
             return;
@@ -439,7 +468,13 @@ public class NarrativeUI : TerminalPanelUI
             : _keywordRenderer.ParseNarrationWithKeywords(text, keywords);
         
         int currentX = startX;
-        
+
+        // Segments arrive in text order, so the Nth highlighted occurrence of a word on this line is
+        // the entry whose recorded occurrence index is N. Matching on the word ALONE would be
+        // ambiguous exactly where it now matters — two sentences about two men, wrapped onto one
+        // line, both offering "man" and each acting on a different person.
+        var seenPerKeyword = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
         foreach (var segment in segments)
         {
             if (segment.IsKeyword)
@@ -447,13 +482,19 @@ public class NarrativeUI : TerminalPanelUI
                 // Only highlight keywords if thinking attempts remain and content is not dimmed
                 if (thinkingAttemptsRemaining > 0 && !dimContent)
                 {
-                    // Track keyword region for click detection, including source block for modusMentis chain
+                    string kw = segment.KeywordValue!;
+                    seenPerKeyword.TryGetValue(kw, out int occurrence);
+                    seenPerKeyword[kw] = occurrence + 1;
+
+                    // Track keyword region for click detection, including source block for modusMentis
+                    // chain and the anchor this occurrence acts on.
                     var keywordRegion = new KeywordRegion(
-                        segment.KeywordValue!,
+                        kw,
                         y,
                         currentX,
                         currentX + segment.Text.Length - 1,
-                        sourceBlock);
+                        sourceBlock,
+                        AnchorFor(kw, occurrence, keywords, keywordOccurrenceIndices, keywordAnchors));
                     _keywordRegions.Add(keywordRegion);
                     
                     // Check if this specific region is hovered
@@ -483,7 +524,25 @@ public class NarrativeUI : TerminalPanelUI
             currentX += segment.Text.Length;
         }
     }
-    
+
+    /// <summary>
+    /// The anchor recorded for the <paramref name="occurrence"/>-th appearance of
+    /// <paramref name="keyword"/> on this line. The three lists are parallel, so this finds the
+    /// entry that matches on both word and occurrence index. Null when the block carries no
+    /// per-sentence data, which leaves the click to fall back to the block's single anchor.
+    /// </summary>
+    private static NarrativeAnchor? AnchorFor(
+        string keyword, int occurrence,
+        List<string> keywords, List<int>? occurrenceIndices, List<NarrativeAnchor?>? anchors)
+    {
+        if (anchors == null || occurrenceIndices == null) return null;
+        for (int i = 0; i < keywords.Count && i < occurrenceIndices.Count && i < anchors.Count; i++)
+            if (occurrenceIndices[i] == occurrence
+             && keywords[i].Equals(keyword, StringComparison.OrdinalIgnoreCase))
+                return anchors[i];
+        return null;
+    }
+
     /// <summary>
     /// Get the keyword region under the mouse cursor, or null if none.
     /// </summary>
@@ -510,6 +569,13 @@ public class NarrativeUI : TerminalPanelUI
         // Check if this action is hovered
         bool isHovered = hoveredAction != null && hoveredAction.ActionIndex == actionIndex;
 
+        // When another action is hovered, grey out this whole action line (difficulty glyph,
+        // bracket, dice and text) — only the hovered action's chain stays lit.
+        if (!isHovered && hoveredAction?.Action != null && !hoveredAction.Action.IsElementInChain(action))
+        {
+            dimContent = true;
+        }
+
         // Calculate colors - when dimmed, use dark grey regardless of hover state
         Vector4 prefixColor = dimContent ? Config.NarrativeUI.DimmedContentColor : Config.NarrativeUI.NarrativeColor;
         Vector4 textColor = dimContent ? Config.NarrativeUI.DimmedContentColor : 
@@ -521,28 +587,11 @@ public class NarrativeUI : TerminalPanelUI
         Vector4 modusMentisBracketColor = dimContent ? Config.NarrativeUI.DimmedContentColor :
             (isHovered ? Config.NarrativeUI.ActionHoverColor : Config.Colors.DarkYellowGrey);
         
-        // ModusMentis level color - when an action is hovered, only highlight modusMentis levels in the chain
-        Vector4 modusMentisLevelColor;
-        if (dimContent)
-        {
-            modusMentisLevelColor = Config.NarrativeUI.DimmedContentColor;
-        }
-        else if (isHovered)
-        {
-            // This action is hovered - its modusMentis is always in its own chain, so highlight it
-            modusMentisLevelColor = Config.NarrativeUI.LoadingColor;
-        }
-        else if (hoveredAction?.Action != null)
-        {
-            // Another action is hovered - check if this specific action element is in that chain
-            // (different actions are never in each other's chains)
-            bool isInChain = hoveredAction.Action.IsElementInChain(action);
-            modusMentisLevelColor = isInChain ? Config.NarrativeUI.LoadingColor : Config.NarrativeUI.ModusMentisHeaderColor;
-        }
-        else
-        {
-            modusMentisLevelColor = Config.NarrativeUI.LoadingColor;
-        }
+        // ModusMentis level color: actions outside a hovered action's chain are fully
+        // dimmed above, so any un-dimmed action keeps the bright dice color.
+        Vector4 modusMentisLevelColor = dimContent
+            ? Config.NarrativeUI.DimmedContentColor
+            : Config.NarrativeUI.LoadingColor;
         
         Vector4 modusMentisBracketBackground = backgroundColor; // Use action background for modusMentis parts too
         
@@ -550,16 +599,10 @@ public class NarrativeUI : TerminalPanelUI
         
         if (lineIndex == 0)
         {
-            // First line: render difficulty glyph prefix + modusMentis bracket.
-            // Verbs may override the glyph — REMEMBER, for example, always renders '○'
-            // because it has no normal difficulty.
-            char? verbOverride = action.PreselectedOutcome is VerbOutcome vo
-                ? vo.VerbView.Verb.DifficultyGlyphOverride
-                : null;
-            char diffChar = verbOverride ?? (action.DifficultyLevel > 0
-                ? Config.Symbols.DifficultyGlyphs[Math.Clamp(action.DifficultyLevel, 1, 10) - 1]
-                : '>');
-            string diffPrefix = $"{diffChar} ";
+            // First line: render difficulty glyph prefix + modusMentis bracket. The glyph choice
+            // lives on the action so history lines (which bake the whole prefix into their text)
+            // cannot drift from what is painted here.
+            string diffPrefix = $"{action.DifficultyGlyph} ";
 
             // Build modusMentis bracket with level indicators
             string modusMentisName = action.ChainModusMentis?.DisplayName ?? action.ActionModusMentisId;
@@ -682,102 +725,11 @@ public class NarrativeUI : TerminalPanelUI
         => CalculateScrollOffsetFromMouseY(mouseY, scrollBuffer.TotalLines);
     
     /// <summary>
-    /// Render the status bar at the bottom.
-    /// When hovering over an action, the dice count portion is highlighted in yellow.
+    /// Render the footer status bar. In normal operation, pass scene-info text (biome, location,
+    /// time). For transient states (dice, error) pass the relevant status message.
     /// </summary>
-    public void RenderStatusBar(string message = "", ParsedNarrativeAction? hoveredAction = null)
-    {
-        int statusY = _layout.STATUS_BAR_Y;
-        int separatorY = _layout.SEPARATOR_Y;
-        
-        // Draw separator line above status bar
-        DrawHorizontalLine(separatorY);
-        
-        if (string.IsNullOrEmpty(message))
-        {
-            message = "Hover keywords to highlight • Click keywords to think (3 attempts remaining)";
-        }
-        
-        // Truncate if too long
-        int maxMessageWidth = _layout.CONTENT_WIDTH - 2;
-        if (message.Length > maxMessageWidth)
-        {
-            message = message.Substring(0, maxMessageWidth - 3) + "...";
-        }
-        
-        // If hovering over an action, render with highlighted dice count
-        if (hoveredAction != null)
-        {
-            int totalDice = hoveredAction.GetTotalModusMentisLevel();
-            string diceText = $"{totalDice}{Config.Symbols.ModusMentisLevelIndicator}";
-            
-            // Find where the dice text appears in the message
-            int diceIndex = message.IndexOf(diceText);
-            if (diceIndex >= 0)
-            {
-                // Render before dice text in dark gray
-                string beforeDice = message.Substring(0, diceIndex);
-                _terminal.Text(_layout.CONTENT_START_X, statusY, beforeDice, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
-                
-                // Render dice text in yellow (highlighted)
-                int diceX = _layout.CONTENT_START_X + beforeDice.Length;
-                _terminal.Text(diceX, statusY, diceText, Config.NarrativeUI.LoadingColor, Config.NarrativeUI.BackgroundColor);
-                
-                // Render after dice text in dark gray
-                string afterDice = message.Substring(diceIndex + diceText.Length);
-                int afterX = diceX + diceText.Length;
-                _terminal.Text(afterX, statusY, afterDice, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
-            }
-            else
-            {
-                // Fallback: render entire message in status bar color
-                _terminal.Text(_layout.CONTENT_START_X, statusY, message, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
-            }
-        }
-        else
-        {
-            _terminal.Text(_layout.CONTENT_START_X, statusY, message, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
-        }
-    }
-    
-    // ShowLoadingIndicator — inherited from TerminalPanelUI (public virtual)
+    public void RenderStatusBar(string message = "")
+        => DrawStatusBar(message);
 
-    
-    /// <summary>
-    /// Show dice roll loading indicator with animated rolling dice.
-    /// </summary>
-
-    // ShowError — inherited from TerminalPanelUI (public virtual)
-
-    
-    // DrawHorizontalLine, GenerateProgressBar, WrapText — inherited from TerminalPanelUI
-    
-    /// <summary>
-    /// Render the "Continue" button at the bottom of the screen.
-    /// Returns the button region for click detection.
-    /// </summary>
-    public (int X, int Y, int Width) RenderContinueButton(bool isHovered = false)
-    {
-        string buttonText = "[ Continue ]";
-        int buttonWidth = buttonText.Length;
-        int buttonX = (_layout.TERMINAL_WIDTH - buttonWidth) / 2;
-        int buttonY = _layout.SEPARATOR_Y - 2; // Place near bottom, above separator
-        
-        Vector4 buttonColor = isHovered ? Config.NarrativeUI.ContinueButtonHoverColor : Config.NarrativeUI.ContinueButtonColor;
-        Vector4 buttonBackgroundColor = isHovered ? Config.NarrativeUI.ContinueButtonHoverBackgroundColor : Config.NarrativeUI.ContinueButtonBackgroundColor;
-        
-        _terminal.Text(buttonX, buttonY, buttonText, buttonColor, buttonBackgroundColor);
-        
-        return (buttonX, buttonY, buttonWidth);
-    }
-    
-    /// <summary>
-    /// Check if mouse is over the continue button.
-    /// </summary>
-    public bool IsMouseOverContinueButton(int mouseX, int mouseY, (int X, int Y, int Width) buttonRegion)
-    {
-        return mouseY == buttonRegion.Y && 
-               mouseX >= buttonRegion.X && 
-               mouseX < buttonRegion.X + buttonRegion.Width;
-    }
+    // RenderExitButton — inherited from TerminalPanelUI (shared with DialogueTreeUI)
 }

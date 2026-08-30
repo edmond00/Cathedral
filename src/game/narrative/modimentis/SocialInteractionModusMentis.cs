@@ -10,15 +10,21 @@ public class SocialInteractionModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "social_interaction";
     public override string DisplayName      => "Social Interaction";
-    public override string ShortDescription => "easy speech with strangers";
+    public override string MenuDescription =>
+        "Strikes up talk with strangers easily and keeps a conversation moving. Inclines toward the ordinary courtesies of meeting and getting along, reading a person for how to keep the exchange smooth.";
     public override string SkillMeans       => "easy speech with strangers";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "tongue", "ears" };
+
+    /// <summary>Words with a person, not a voice in the air.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
     public override string PersonaTone     => "a warm, well-spoken soul comfortable in any small company";
     public override string PersonaReminder  => "easy-tongued companion";
     public override string PersonaReminder2 => "someone who makes acquaintance the way others make tea";
+    public override string StyleInstruction =>
+        "Use easy, sociable imagery of warmth and rapport, with an effortless pleasure in meeting people.";
 
     public override string PersonaPrompt => @"You are the inner voice of SOCIAL INTERACTION, the gracious soul who can be set down at any table and make the company easier within ten minutes.
 

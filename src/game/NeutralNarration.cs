@@ -1,0 +1,534 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
+
+namespace Cathedral.Game;
+
+/// <summary>
+/// Builds neutral, first-person English describing the *meaning* of a piece of narration, from
+/// structured game data. This is the single source of meaning for both narration paths:
+///   • in playground mode it is shown verbatim (no LLM);
+///   • otherwise it is handed to <see cref="Cathedral.Game.Narrative.PersonaRewriter"/>, which asks
+///     the speaker's Modus Mentis / NPC LLM slot to re-express it in persona voice while keeping
+///     the meaning.
+///
+/// Free-form descriptions are messy (bare names, capitalised phrases, mood prefixes, proper nouns),
+/// so <see cref="NounPhrase"/> cleans them into an embeddable noun phrase before templating.
+/// </summary>
+public static class NeutralNarration
+{
+    // ── Observation ────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Builds the attention sentence that opens an observation, naming the object by a simple noun
+    /// phrase (e.g. "a straw figure", "Hugh Furrow"). The first object of a phase is "drawn to";
+    /// any later object is "shifts to". During the childhood reminescence phase
+    /// (<paramref name="isReminescence"/>) both are reworded as memory surfacing/drifting rather
+    /// than attention being drawn/shifted. The richer detail follows in
+    /// <see cref="ObservationDetail"/>.
+    /// </summary>
+    public static string ObservationAttention(bool isFirst, string simpleName, bool isReminescence = false)
+    {
+        var s = NounPhrase(FirstPerson(simpleName));
+        if (isFirst)
+            return isReminescence ? $"A memory surfaces: {s}."
+                                  : $"My attention is drawn to {s}.";
+        return isReminescence ? $"My memory drifts to {s}."
+                              : $"My attention shifts to {s}.";
+    }
+
+    /// <summary>
+    /// Builds the detail sentence that follows the attention line, giving the object's richer
+    /// description (e.g. "a wind-blown straw-stuffed figure"), normalised to a clean noun phrase.
+    /// During the childhood reminescence phase (<paramref name="isReminescence"/>) the fragment is
+    /// a recollection, so the sentence is put in the past tense ("This was …").
+    /// </summary>
+    public static string ObservationDetail(string description, bool isReminescence = false)
+        => isReminescence ? $"This was {NounPhrase(FirstPerson(description))}."
+                          : $"This is {NounPhrase(FirstPerson(description))}.";
+
+    /// <summary>
+    /// Builds the full neutral meaning of an observation as one text: the attention line naming the
+    /// object (<see cref="ObservationAttention"/>) followed by the richer detail line
+    /// (<see cref="ObservationDetail"/>). Merged so the persona rewrite can be done in a single
+    /// request that yields two or three short styled sentences.
+    /// </summary>
+    public static string Observation(bool isFirst, string simpleName, string description, bool isReminescence = false)
+        => $"{ObservationAttention(isFirst, simpleName, isReminescence)} {ObservationDetail(description, isReminescence)}";
+
+    /// <summary>
+    /// Trailing sentence appended to a threatening enemy's observation neutral text: it flags the
+    /// just-described object as a present danger so the observation persona rewrites a note of caution
+    /// into the block. Used only when the first observation of a phase leads with a same-area enemy
+    /// (the "under threat" opener), and kept first-person so it merges into the observation voice.
+    /// </summary>
+    public static string ThreatCaution()
+        => "This one means me harm, right here — I must stay wary and ready.";
+
+    /// <summary>
+    /// Neutral meaning for a failed observation: the Modus Mentis found nothing here worth its
+    /// attention (every candidate object was graded "averse" in the persona evaluation). Re-expressed
+    /// in the observation persona's voice as the whole observation block.
+    /// </summary>
+    public static string ObservationNothing(bool isReminescence = false)
+        => isReminescence ? "Nothing surfaces from my memory here."
+                          : "Nothing here draws my attention.";
+
+    /// <summary>
+    /// Neutral meaning for a Modus Mentis that let its focus go part-way through an observation: it
+    /// had already described something, was offered the objects this narration phase has not looked
+    /// at yet, and chose none of them. Distinct from <see cref="ObservationNothing"/>, which is a
+    /// whole block saying nothing here ever drew it — this one closes a block that <i>did</i> observe,
+    /// and says only that there is nothing further worth attending to right now. Appended as a last
+    /// sentence in the persona's voice, with no clickable keyword.
+    /// </summary>
+    public static string ObservationNothingMore(bool isReminescence = false)
+        => isReminescence
+            ? "Nothing more surfaces from my memory now, and I let the recollection fade."
+            : "Nothing more here is worth my attention now, and I let my focus go.";
+
+    /// <summary>
+    /// Neutral meaning for a refused focus: a (new) observation Modus Mentis was handed
+    /// <paramref name="targetPhrase"/> (already articled) to focus on, and chose to lose interest
+    /// instead of observing it. Re-expressed in that persona's voice as the whole focus block —
+    /// no detail, no clickable keyword.
+    /// </summary>
+    public static string ObservationNotInterested(string targetPhrase, bool isReminescence = false)
+        => isReminescence
+            ? $"I am not interested in the memory of {targetPhrase}, and let it fade."
+            : $"I am not interested in {targetPhrase}, and turn my attention away.";
+
+    // ── Thinking ───────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Neutral chain-of-thought once the goal and skill have been chosen: what is noticed, what is
+    /// intended, and the means that will be used. <paramref name="goalPhrase"/> is a verb phrase
+    /// ("climb the tree"); <paramref name="skillMeans"/> is a Modus Mentis means description.
+    /// During the childhood reminescence phase (<paramref name="isReminescence"/>) the opener is
+    /// "I remember …" rather than "I notice …", since the object is a surfacing memory.
+    /// </summary>
+    public static string ReasoningChain(string targetPhrase, string goalPhrase, string skillMeans, bool isReminescence = false)
+    {
+        var opener = isReminescence ? "I remember" : "I notice";
+        var parts = new List<string> { $"{opener} {NounPhrase(FirstPerson(targetPhrase))}." };
+        if (!string.IsNullOrWhiteSpace(goalPhrase)) parts.Add($"I want to {FirstPerson(goalPhrase)}.");
+        if (!string.IsNullOrWhiteSpace(skillMeans)) parts.Add($"I will rely on {FirstPerson(skillMeans)}.");
+        return string.Join(" ", parts);
+    }
+
+    /// <summary>
+    /// Neutral reasoning for the "ignore and move on" path: the thinking Modus Mentis was offered the
+    /// goals this object affords and settled on none of them — either because the object affords
+    /// nothing, or because its free reasoning wandered to something that was never on the list, which
+    /// the match critic reports through its catch-all option (see <c>ThinkingExecutor.ChooseGoalAsync</c>).
+    /// Both mean the same thing to the player: nothing here is worth acting on, look elsewhere.
+    /// </summary>
+    public static string ReasoningIgnore(string targetPhrase, bool isReminescence = false)
+        => isReminescence
+            ? $"I remember {NounPhrase(FirstPerson(targetPhrase))}, but there is nothing in it worth doing, and I would rather let my mind turn to something else."
+            : $"I notice {NounPhrase(FirstPerson(targetPhrase))}, but there is nothing here worth doing, and I would rather turn my attention to something else.";
+
+    /// <summary>
+    /// Neutral reasoning for the "no way to do it" path: the goal was chosen but the thinking Modus
+    /// Mentis judged that none of the available action skills fit (every one graded "averse" in the
+    /// willingness evaluation), so the intent is dropped. Reasoning-only, no action follows.
+    /// </summary>
+    public static string ReasoningNoMeans(string targetPhrase, string goalPhrase, bool isReminescence = false)
+    {
+        var opener = isReminescence ? "I remember" : "I notice";
+        return $"{opener} {NounPhrase(FirstPerson(targetPhrase))}. I want to {FirstPerson(goalPhrase)}, but I find no way to do it, and let it go.";
+    }
+
+    /// <summary>
+    /// The intended action as a first-person "I will …" statement (e.g. "I will climb the tree").
+    /// When <paramref name="discrete"/> is true the adverb "discretely" is inserted ("I will
+    /// discretely climb the tree") to reflect a stealthy modus mentis. The styled rewrite is
+    /// GBNF-forced to open with the "I will " prefix, which is then stripped to form the button label.
+    /// </summary>
+    public static string ActionIntent(string verbVerbatim, bool discrete = false)
+        => discrete ? $"I will discretely {FirstPerson(verbVerbatim)}"
+                    : $"I will {FirstPerson(verbVerbatim)}";
+
+    /// <summary>
+    /// First-person refusal used when the action modus mentis is too reluctant/opposed to attempt the
+    /// action (persona-fit cancellation). Rewritten in the skill's voice as the outcome narration.
+    /// </summary>
+    public static string ActionRefusal(string verbVerbatim) => $"I don't want to {FirstPerson(verbVerbatim)}.";
+
+    // ── VerbAction outcomes ────────────────────────────────────────────────────────
+    // actionDisplay is already a clean verb phrase (e.g. "climb the tree"), so it is used verbatim.
+
+    public static string OutcomeSuccess(string actionDisplay, IReadOnlyList<string>? outcomeVerbatims = null)
+    {
+        var head = $"It is done! I succeeded to {FirstPerson(actionDisplay)}.";
+        var tail = OutcomeConsequences(outcomeVerbatims);
+        return tail.Length == 0 ? head : $"{head} Thanks to this success I {tail}.";
+    }
+
+    public static string OutcomeFailure(string actionDisplay, IReadOnlyList<string>? outcomeVerbatims = null)
+    {
+        var head = $"Alas, I failed to {FirstPerson(actionDisplay)}.";
+        var tail = OutcomeConsequences(outcomeVerbatims);
+        return tail.Length == 0 ? head : $"{head} Due to this failure I {tail}.";
+    }
+
+    /// <summary>
+    /// Joins the outcome reports' <c>Verbatim</c> phrases into a single comma-separated clause that
+    /// reads grammatically after "I " (e.g. "obtained a gold coin, learned Bargaining"). Empty
+    /// verbatims (internal bookkeeping reports) are dropped; returns "" when nothing is left, so the
+    /// caller can omit the consequence clause entirely.
+    /// </summary>
+    private static string OutcomeConsequences(IReadOnlyList<string>? outcomeVerbatims)
+    {
+        if (outcomeVerbatims == null || outcomeVerbatims.Count == 0) return "";
+        var parts = outcomeVerbatims
+            .Where(v => !string.IsNullOrWhiteSpace(v))
+            .Select(v => v.Trim());
+        return string.Join(", ", parts);
+    }
+
+    // -- Emotion ---------------------------------------------------------------
+    /// <summary>
+    /// The neutral line an emotion modus mentis is asked to re-express: what just happened, then what
+    /// carrying it feels like.
+    ///
+    /// <para>The second clause comes from <see cref="Cathedral.Game.Narrative.BodyHumor.FeelsLike"/>
+    /// and NOT from the humor's name, which is the whole point of that property existing. "Laetitia"
+    /// is cryptic — a persona asked to rewrite a line containing it invents whichever emotion flatters
+    /// the character, and the humor that actually reached the queue and the feeling the player read
+    /// then disagree. Naming the feeling plainly leaves the persona only its colour to add.</para>
+    ///
+    /// <para>The first clause reuses <see cref="OutcomeConsequences"/>, so an emotion describes the
+    /// consequences in exactly the words the outcome narration used. A consequence list that comes
+    /// back empty (every verbatim was bookkeeping) falls back to the feeling alone rather than
+    /// producing a dangling "Because I ,".</para>
+    /// </summary>
+    public static string Emotion(IReadOnlyList<string>? outcomeVerbatims, string feelsLike)
+    {
+        var tail = OutcomeConsequences(outcomeVerbatims);
+        return tail.Length == 0 ? feelsLike : $"I {tail}. {feelsLike}";
+    }
+
+    public static string PlausibilityFailure(string actionDisplay)
+        => $"I tried to {FirstPerson(actionDisplay)}, but it could not happen here.";
+
+    /// <summary>
+    /// Refusal for a coded-rule block: the character declines an action they cannot take, with a
+    /// first-person reason (e.g. a witness present, an enemy at hand). Re-expressed in the acting
+    /// modus mentis's voice as the [IMPOSSIBLE] narration.
+    /// </summary>
+    public static string ActionImpossible(string actionDisplay, string reason)
+    {
+        var r = (reason ?? "").Trim();
+        if (r.Length == 0) return $"I cannot {FirstPerson(actionDisplay)} here.";
+        return $"I cannot {FirstPerson(actionDisplay)}: {FirstPerson(r)}";
+    }
+
+    // ── A modus mentis the body can no longer carry ────────────────────────────
+
+    /// <summary>
+    /// Which office a broken modus mentis could not perform. The wording differs per faculty because
+    /// the player is being told a different thing each time — that they cannot see, cannot reason,
+    /// cannot act, cannot speak — and one sentence covering all four would name none of them.
+    /// </summary>
+    public enum BrokenFaculty { Observation, Thinking, Action, Speech }
+
+    /// <summary>
+    /// One anatomy source dragging a modus mentis below usable, as the narration needs it: what to
+    /// call it, whether it is out of use entirely or merely failing, and the wounds responsible.
+    /// A plain tuple rather than <c>PartyMember.ImpairedSource</c> so this class stays free of the
+    /// body model — everything else here templates from strings too.
+    /// </summary>
+    public readonly record struct BrokenSource(string Label, bool Disabled, IReadOnlyList<string> Wounds);
+
+    /// <summary>
+    /// The neutral line a broken modus mentis is asked to re-express: it cannot do its office, and
+    /// <b>which part of the body took that away</b>.
+    ///
+    /// <para><b>The wounds are named, not implied</b>, for the same reason
+    /// <see cref="Emotion"/> names the feeling rather than handing over the humor's Latin: told only
+    /// that it failed, the persona invents a reason, and the reason it invents is whichever flatters
+    /// the character. The player would then read a confident excuse in place of the fact that their
+    /// arm is ruined — and the memory panel, which does say so, would disagree with the narration.</para>
+    ///
+    /// <para>A source with no attributable wound still gets its label. That happens when the injury
+    /// sits on the region above the organ, which the lookup cannot pin to one part; the part that
+    /// failed is the news, and the wound is the detail.</para>
+    /// </summary>
+    public static string BrokenModusMentis(
+        string modusMentisName, BrokenFaculty faculty, IReadOnlyList<BrokenSource>? sources)
+    {
+        string office = faculty switch
+        {
+            BrokenFaculty.Observation => "look at anything",
+            BrokenFaculty.Thinking    => "think anything through",
+            BrokenFaculty.Speech      => "shape a single reply",
+            _                         => "do anything",
+        };
+
+        var body = BrokenSourcesPhrase(sources);
+        return $"I cannot {office} with my {FirstPerson(modusMentisName)}: {body}.";
+    }
+
+    /// <summary>
+    /// "my arms will not answer at all — a severed tendon; my hands are failing me — a broken finger".
+    /// Falls back to a bare statement when nothing could be attributed, so the sentence never trails
+    /// off into a dangling colon.
+    ///
+    /// <para>Public because the <b>action</b> phase does not use
+    /// <see cref="BrokenModusMentis"/>: a coded rule there already owns the sentence shape
+    /// (<see cref="ActionImpossible"/> — "I cannot force the door: …"), and it wants only this
+    /// fragment to finish it. Observation and thinking have no action to name, so they take the whole
+    /// sentence instead. One phrase, two frames.</para>
+    /// </summary>
+    public static string BrokenSourcesPhrase(IReadOnlyList<BrokenSource>? sources)
+    {
+        if (sources == null || sources.Count == 0)
+            return "this body will not answer for it any more";
+
+        var clauses = sources.Select(s =>
+        {
+            var head = s.Disabled
+                ? $"my {s.Label.ToLowerInvariant()} will not answer at all"
+                : $"my {s.Label.ToLowerInvariant()} is failing me";
+            var wounds = (s.Wounds ?? Array.Empty<string>())
+                .Where(w => !string.IsNullOrWhiteSpace(w))
+                .Select(w => w.Trim().ToLowerInvariant())
+                .ToList();
+            return wounds.Count == 0 ? head : $"{head} — {AndList(wounds)}";
+        });
+
+        return string.Join("; ", clauses);
+    }
+
+    /// <summary>"a, b and c" — an English list, for prose that is read rather than parsed.</summary>
+    private static string AndList(IReadOnlyList<string> parts) =>
+        parts.Count switch
+        {
+            0 => "",
+            1 => parts[0],
+            _ => string.Join(", ", parts.Take(parts.Count - 1)) + " and " + parts[^1],
+        };
+
+    public static string ItemCombinationFailure(string actionDisplay, string itemWithArticle)
+        => $"I tried to use {FirstPerson(itemWithArticle)} to {FirstPerson(actionDisplay)}, but it did not work.";
+
+    /// <summary>
+    /// Neutral sentence for an implement combined with an act no implement bears upon — a tool held
+    /// out at a conversation, at a smell, at the act of sitting still. Distinct from
+    /// <see cref="ItemCombinationFailure"/>, which is a real attempt the critic judged and refused:
+    /// this one was never a question, and the wording has to say so, or the acting modus mentis
+    /// rewrites it as a near miss.
+    /// </summary>
+    public static string ItemCombinationSenseless(string actionDisplay, string itemWithArticle)
+        => $"I thought to use {FirstPerson(itemWithArticle)} to {FirstPerson(actionDisplay)}, "
+         + "and saw at once there is no sense in it — that is not a thing an implement bears upon.";
+
+    /// <summary>
+    /// Neutral sentence for a single-purpose implement held to work it was not made for — lenses at
+    /// an ore seam. Distinct from <see cref="ItemCombinationSenseless"/>: the act is a real one that
+    /// some implement would serve, and this is simply not that implement.
+    /// </summary>
+    public static string ItemCombinationNotItsPurpose(string actionDisplay, string itemWithArticle)
+        => $"I weighed {FirstPerson(itemWithArticle)} in my hand and set it aside. "
+         + $"It was made for other work than to {FirstPerson(actionDisplay)}, and will do no other.";
+
+    /// <summary>
+    /// Neutral sentence for a body whose hands have no craft in them at all (Tool Usage Proficiency
+    /// of None — an absent or disabled organ). The fault is the hand, not the implement and not the
+    /// act, and the sentence names the hand so the rewrite cannot blame the wrong thing.
+    /// </summary>
+    public static string ItemCombinationNoProficiency(string itemWithArticle)
+        => $"I turned {FirstPerson(itemWithArticle)} over and could do nothing with it. "
+         + "There is no craft left in my hands — no implement will answer to them.";
+
+    /// <summary>
+    /// Neutral sentence for an implement raised as a weapon that is not one. Distinct from
+    /// <see cref="ItemCombinationNotItsPurpose"/>, which is about what a thing was made for: this is
+    /// about what a blow is. A lantern was made for other work and could still be swung at a head —
+    /// what refuses it is that fighting is done with weapons and with the body, and the body is
+    /// already in the swing.
+    /// </summary>
+    public static string ItemCombinationNotAWeapon(string itemWithArticle)
+        => $"I had {FirstPerson(itemWithArticle)} in my hand and no use for it here. "
+         + "This is settled with a weapon or with the body, and that is neither.";
+
+    /// <summary>
+    /// Neutral sentence for the middle case: the implement could be made to serve, and this body is
+    /// not the one to make it. The critic passed a verdict the hands could not reach, so the
+    /// wording must credit the idea and refuse the execution.
+    /// </summary>
+    public static string ItemCombinationBeyondSkill(string actionDisplay, string itemWithArticle)
+        => $"I could see how {FirstPerson(itemWithArticle)} might be made to {FirstPerson(actionDisplay)}, "
+         + "but not by hands as unpractised as mine.";
+
+    // ── Reminescence outcome ───────────────────────────────────────────────────
+
+    /// <summary>
+    /// Neutral success sentence for the childhood reminescence REMEMBER action. Unlike a normal
+    /// action outcome (which templates the styled action label), this uses a plain "I tried to
+    /// remember …, and succeeded." framing and then states the concrete memory that surfaces —
+    /// <paramref name="memoryEvent"/> is the fragment's <c>OutcomeText</c>, converted to first
+    /// person so the whole recollection reads in the protagonist's own voice.
+    /// </summary>
+    public static string ReminescenceOutcome(string fragmentName, string memoryEvent)
+    {
+        var name   = FirstPerson((fragmentName ?? "").Trim());
+        var memory = FirstPerson((memoryEvent ?? "").Trim().TrimEnd('.'));
+        return $"I tried to remember {name} from my childhood, and succeeded. It came back to me: {memory}.";
+    }
+
+    // ── First-person normalisation ─────────────────────────────────────────────
+
+    /// <summary>Prepositions/particles that mark a following-or-preceding "you" as an object ("me").</summary>
+    private static readonly string[] ObjectMarkers =
+    {
+        "to", "toward", "towards", "with", "into", "onto", "for", "from", "at", "of", "on",
+        "upon", "around", "near", "behind", "below", "beneath", "beside", "against", "through",
+        "over", "under", "about", "before", "after", "past", "beyond",
+    };
+
+    /// <summary>
+    /// Rewrites second-person content into the protagonist's first-person voice
+    /// ("you spent your childhood" → "I spent my childhood", "pulling you toward sleep" →
+    /// "pulling me toward sleep"). Much of the authored content that fills neutral self-narration
+    /// templates — most of all the childhood reminescence catalog — is written in the second person
+    /// for prompt-framing, so every self-POV neutral sentence is normalised through here before it is
+    /// shown or handed to the persona rewriter. It is deliberately NOT applied to dialogue/speaking
+    /// templates, where "you" correctly addresses another character.
+    ///
+    /// The subject/object distinction is heuristic: a "you" adjacent to a preposition (either "below
+    /// you" or "you toward …") is treated as an object ("me"); any other "you" is a subject ("I").
+    /// </summary>
+    public static string FirstPerson(string? s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return s ?? "";
+
+        // Be-verb agreement must run before the generic you→I so we don't produce "I are".
+        s = Regex.Replace(s, @"\byou['’]re\b", "I'm",  RegexOptions.IgnoreCase);
+        s = Regex.Replace(s, @"\byou are\b",   "I am",  RegexOptions.IgnoreCase);
+        s = Regex.Replace(s, @"\byou were\b",  "I was", RegexOptions.IgnoreCase);
+
+        // Possessives / reflexive first (leaves subject/object "you" for the passes below).
+        s = Regex.Replace(s, @"\byourself\b", "myself", RegexOptions.IgnoreCase);
+        s = Regex.Replace(s, @"\byours\b",    "mine",   RegexOptions.IgnoreCase);
+        s = Regex.Replace(s, @"\byour\b",     "my",     RegexOptions.IgnoreCase);
+
+        // Object "you" → "me": trailing ("below you") or immediately before a preposition
+        // ("you toward sleep", "watching you with suspicion").
+        var markers = string.Join("|", ObjectMarkers);
+        s = Regex.Replace(s, @"\byou\b(?=\s*(?:[.,;:!?)\]—-]|$))",         "me", RegexOptions.IgnoreCase);
+        s = Regex.Replace(s, $@"\byou\b(?=\s+(?:{markers})\b)",            "me", RegexOptions.IgnoreCase);
+
+        // Any remaining "you" is a subject → "I".
+        s = Regex.Replace(s, @"\byou\b", "I", RegexOptions.IgnoreCase);
+        return s;
+    }
+
+    // ── Speaking (3-part address to a companion) ───────────────────────────────
+
+    public static string Attention(string companionName)
+        => $"{companionName}, come and look at this.";
+
+    public static string Description(string subject)
+        => $"I noticed {NounPhrase(FirstPerson(subject))}.";
+
+    public static string Question()
+        => "What do you make of it?";
+
+    /// <summary>
+    /// The whole of what a party member says to a companion about something they noticed: call
+    /// attention, describe, ask — as one line.
+    /// <para>
+    /// The three parts used to be three separate rewrite requests, and a small model rewriting one
+    /// sentence at a time has no way to see the address as a single utterance: it re-established the
+    /// situation on every line ("You hear the creak of old ropes…", then "You hear 'bout that slick
+    /// trunk…"), and each line paid the persona and setting preamble again. One request produces one
+    /// spoken turn.
+    /// </para>
+    /// </summary>
+    public static string SpokenReport(string companionName, string subject)
+        => $"{Attention(companionName)} {Description(subject)} {Question()}";
+
+    // Dialogue neutral text now lives on the dialogue tree nodes themselves (direct speech with
+    // {scope:field} template tokens) and flows through Cathedral.Game.Dialogue.Runtime.DialogueTemplate
+    // + DialogueReplicaWriter — not through this class.
+
+    // ── Critic ─────────────────────────────────────────────────────────────────
+
+    /// <summary>First-person critic verdict ("I think …"), matching the LLM reason's voice.</summary>
+    public static string CriticFailureReason()
+        => "I think this cannot be done as intended.";
+
+    // ── Keyword helper ─────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Picks a keyword from a neutral description: the last whitespace-delimited word,
+    /// lower-cased and stripped of surrounding punctuation. Returns null for empty input.
+    /// Used as the playground/fallback keyword when the LLM does not supply one.
+    /// </summary>
+    public static string? KeywordFromPhrase(string? phrase)
+    {
+        if (string.IsNullOrWhiteSpace(phrase)) return null;
+        var words = phrase.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (words.Length == 0) return null;
+        return words[^1].ToLowerInvariant().Trim('.', ',', '!', '?', '"', '\'', '(', ')');
+    }
+
+    // ── Noun-phrase normalisation ──────────────────────────────────────────────
+
+    private static readonly HashSet<string> Determiners = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "a", "an", "the", "some", "his", "her", "its", "their", "your", "my", "our",
+        "this", "that", "these", "those", "no", "one", "two", "three", "four", "five",
+        "several", "many", "few", "each", "every", "another",
+    };
+
+    /// <summary>
+    /// Turns a raw neutral description into a clean noun phrase suitable for embedding mid-sentence:
+    /// strips trailing punctuation, keeps proper nouns verbatim, lower-cases a sentence-initial
+    /// capital, repairs mood-prefixed articles ("wind-blown a straw figure" → "a wind-blown straw
+    /// figure"), and adds "a"/"an" when the phrase has no determiner and is not plural.
+    /// </summary>
+    public static string NounPhrase(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return "something";
+        var s = raw.Trim().TrimEnd('.', ',', ';', ':', '!', '?', ' ');
+        if (s.Length == 0) return "something";
+
+        var words0 = s.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        // Proper name (e.g. "Hugh Furrow", "Godric Reeve"): up to 3 words, each starting with a
+        // capital and otherwise alphabetic. Kept verbatim — no lower-casing, no article.
+        if (words0.Length <= 3 && words0.All(IsCapitalizedWord))
+            return s;
+
+        // Lower-case a sentence-initial capital (this is a common-noun phrase, not a name).
+        s = char.ToLowerInvariant(s[0]) + s.Substring(1);
+
+        // Lower-case stray capitalised articles left mid-phrase by a mood prefix.
+        s = Regex.Replace(s, @"\b(A|An|The)\b", m => m.Value.ToLowerInvariant());
+
+        // Mood-prefix repair: "<adj> a|an|the <rest>" → "a|an|the <adj> <rest>".
+        var mood = Regex.Match(s, @"^([a-z][a-z-]*)\s+(a|an|the)\s+(.+)$");
+        if (mood.Success && !Determiners.Contains(mood.Groups[1].Value))
+            s = $"{mood.Groups[2].Value} {mood.Groups[1].Value} {mood.Groups[3].Value}";
+
+        // Decide whether a leading article is needed.
+        var words = s.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        bool hasDeterminer = words.Take(3).Any(w => Determiners.Contains(w.Trim('-')));
+        string last = words[^1].ToLowerInvariant();
+        bool looksPlural = last.Length > 2 && last.EndsWith("s") && !last.EndsWith("ss");
+
+        if (!hasDeterminer && !looksPlural)
+        {
+            string article = "aeiou".IndexOf(char.ToLowerInvariant(s[0])) >= 0 ? "an" : "a";
+            s = $"{article} {s}";
+        }
+        return s;
+    }
+
+    private static bool IsCapitalizedWord(string w)
+        => w.Length > 0 && char.IsUpper(w[0]) && w.All(c => char.IsLetter(c) || c == '-' || c == '\'');
+}

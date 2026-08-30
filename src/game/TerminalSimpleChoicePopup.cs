@@ -60,6 +60,16 @@ public class TerminalSimpleChoicePopup
     /// <summary>True while the popup is displayed.</summary>
     public bool IsVisible => _choices.Count > 0;
 
+    /// <summary>The choice labels currently offered (for --cli listing/selection by index).</summary>
+    public IReadOnlyList<string> Choices => _choices;
+
+    /// <summary>The popup title (for --cli listing).</summary>
+    public string Title => _title;
+
+    /// <summary>True when the choice at <paramref name="index"/> exists and is selectable.</summary>
+    public bool IsChoiceEnabled(int index)
+        => index >= 0 && index < _choices.Count && !_disabledIndices.Contains(index);
+
     /// <summary>Update hover highlight from screen pixel coordinates. Returns true if repaint needed.</summary>
     public bool UpdateHover(float screenX, float screenY, Vector2i windowSize, float cellPixelSize)
     {
@@ -129,8 +139,12 @@ public class TerminalSimpleChoicePopup
             BorderColor,
             Config.ThinkingModusMentisPopup.BackgroundColor);
 
-        int titleX = Math.Max(1, (POPUP_WIDTH - _title.Length) / 2);
-        _popup.DrawText(titleX, 0, _title, TitleColor, Config.ThinkingModusMentisPopup.BackgroundColor);
+        // Titles can carry content now (the clicked keyword), so clip rather than draw past the box.
+        string title = _title.Length > POPUP_WIDTH - 2
+            ? _title.Substring(0, POPUP_WIDTH - 5) + "..."
+            : _title;
+        int titleX = Math.Max(1, (POPUP_WIDTH - title.Length) / 2);
+        _popup.DrawText(titleX, 0, title, TitleColor, Config.ThinkingModusMentisPopup.BackgroundColor);
 
         for (int i = 0; i < _choices.Count; i++)
         {

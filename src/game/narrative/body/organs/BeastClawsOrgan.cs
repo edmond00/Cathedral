@@ -10,6 +10,8 @@ public class BeastClawsOrgan : Organ
     public override string Id => "claws";
     public override string DisplayName => "Claws";
     public override string BodyPartId => "limbs";
+    public override string Description =>
+        "The lacerating armament of the paw; the seat of the rending arts of the stroke.";
 
     private readonly List<OrganPart> _parts;
     public override List<OrganPart> Parts => _parts;

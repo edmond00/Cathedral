@@ -20,7 +20,8 @@ public class Companion : PartyMember
     public string Description { get; set; }
 
     // ── PartyMember abstract ─────────────────────────────────────
-    public override string DisplayName => Name;
+    public override string DisplayName      => Name;
+    public override string PartyDescription => Description;
 
     public Companion(string name, string description = "", Species? species = null)
         : base(species ?? SpeciesRegistry.Human)
@@ -48,7 +49,7 @@ public class Companion : PartyMember
     /// </summary>
     public static List<Companion> GenerateRandom(ModusMentisRegistry registry, int count = 3)
     {
-        var rng = new Random();
+        var rng = GameRng.Stream("companion-pool");
         var shuffled = (Companion[])
             new Companion[_pool.Length];
 
@@ -69,6 +70,7 @@ public class Companion : PartyMember
             c.InitializeModiMentis(registry, modusMentisCount: 30);
             c.InitializeMemory();
             c.AssignModiMentisToMemoryRandom();
+            c.SetAgeAtCreation(rng.Next(20, 61) * LifetimeStat.DaysPerYear);
             companions.Add(c);
         }
         return companions;

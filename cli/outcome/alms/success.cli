@@ -1,0 +1,57 @@
+# alms — the outcome, not the verb.
+#
+# cli/verb/beg_for_coin/ proves the chip is printed. This proves the chip corresponds to something
+# real: the world is inspected before and after, and it moved. The verb script runs in full
+# here — the two overlap on purpose, same scenario, different question.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Hall" --period dawn --observe-only "brewer"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# --- before ---
+inspect npcs
+expect-state npcs "alms=0"
+
+strategy succeed
+goal beg_for_coin
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+expect SUCCESS
+# The OUTCOME, not just the banner. "SUCCESS" is the dice result — it is printed from
+# result.Succeeded and says nothing about what the verb did, so a verb whose SuccessReports
+# stopped producing anything would still pass every other assertion here. This is the chip
+# the outcome block carries, and it is the only line that proves the verb had an effect.
+expect Conversation:
+
+# What makes this a beg_for_coin test rather than an any-verb test: SUCCESS/FAILURE is the outcome banner
+# of every verb alike, so only this can tell them apart.
+expect-verb beg_for_coin
+# The outcome TYPE, asserted by its stable id rather than by chip wording. `expect <chip>`
+# proves what the player was told; this proves what actually ran. See --outcome-audit.
+expect-outcome dialogue_trigger
+
+# --- the outcome really ran ---
+expect-outcome alms
+
+# --- after: the world moved ---
+inspect npcs
+expect-state npcs "alms=2"
+quit

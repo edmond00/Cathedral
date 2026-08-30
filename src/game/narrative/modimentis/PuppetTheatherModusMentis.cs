@@ -10,15 +10,21 @@ public class PuppetTheatherModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "puppet_theather";
     public override string DisplayName      => "Puppet Theatre";
-    public override string ShortDescription => "voicing characters, mummery";
-    public override string SkillMeans       => "the lending of voices to inert things";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking };
+    public override string MenuDescription =>
+        "Lends voice and seeming life to inert things, playing several parts at once. Inclines toward mummery that entertains, distracts, or misdirects, shaping attention through performance.";
+    public override string SkillMeans       => "the giving of voices and life to puppets and objects";
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "tongue", "hands" };
-    public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
+
+    /// <summary>Words with a person, not a voice in the air.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
+    public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
     public override string PersonaTone     => "a child of wooden dolls who can lend a voice to anything inert and let it answer back";
     public override string PersonaReminder  => "puppet-voiced player";
     public override string PersonaReminder2 => "someone who makes a wooden head argue, mourn and bow";
+    public override string StyleInstruction =>
+        "Use images of strings, gestures and little wooden players, with a showman's delight in giving them life.";
 
     public override string PersonaPrompt => @"You are the inner voice of PUPPET THEATRE, the child-grown art of lending speech to a wooden head and letting it argue, mourn and bow.
 

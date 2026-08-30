@@ -1,0 +1,44 @@
+# tiny_creature_removed — the outcome, not the verb.
+#
+# cli/verb/crush/ proves the chip is printed. This proves the chip corresponds to something
+# real: the world is inspected before and after, and it moved. The two overlap on purpose —
+# same scenario, different question.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Yard" --period dawn --observe-only "Butterfly"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# --- before ---
+inspect npcs
+expect-state npcs butterfly
+
+strategy succeed
+goal crush
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+
+# --- the outcome really ran ---
+expect-outcome tiny_creature_removed
+
+# --- after: the world moved ---
+inspect npcs
+expect-state npcs "butterfly alive=False"
+quit

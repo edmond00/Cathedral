@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Cathedral.Game;
+using Cathedral.Game.Narrative.Preview;
 
 namespace Cathedral.Game.Narrative;
 
@@ -35,7 +36,6 @@ public class ActionEvaluationResult
     public string? PlausibilityError { get; set; }
     public double DifficultyScore { get; set; }
     public int DifficultyLevel { get; set; }
-    public double SuccessProbability { get; set; }
     public ModusMentis ActionModusMentis { get; set; } = null!;
     public ModusMentis ThinkingModusMentis { get; set; } = null!;
     public ParsedNarrativeAction Action { get; set; } = null!;
@@ -43,8 +43,8 @@ public class ActionEvaluationResult
 
     /// <summary>
     /// Witness context computed before the pipeline. Carried forward so
-    /// <see cref="ActionExecutionController.ExecuteDiceRollAsync"/> can re-ask
-    /// the witness detection question on failure without needing the scene again.
+    /// <see cref="ActionExecutionController.ExecuteDiceRollAsync"/> can resolve witness detection on
+    /// failure without needing the scene again.
     /// </summary>
     public Cathedral.Game.Scene.WitnessContext WitnessContext { get; set; }
         = Cathedral.Game.Scene.WitnessContext.None;
@@ -65,29 +65,34 @@ public class ActionEvaluationResult
 public class ActionExecutionController
 {
     private readonly OutcomeNarrator _outcomeNarrator;
-    private readonly OutcomeApplicator _outcomeApplicator;
-    private readonly Protagonist _protagonist;
-    private readonly CriticEvaluator _criticEvaluator;
+
+    /// <summary>
+    /// The party member currently performing actions. Defaults to the protagonist but is
+    /// reassigned by <see cref="NarrativeController"/> whenever a companion becomes the active
+    /// party member (after a "Speak About"), so skill resolution, organ scores, XP and wounds all
+    /// operate on whoever is actually acting.
+    /// </summary>
+    public PartyMember ActingMember { get; set; }
+    private readonly ItemUseCritic _criticEvaluator;
     private readonly WorldContext _worldContext;
     private readonly int _locationId;
+    private readonly Random _rng = GameRng.Stream("action-execution");
 
     /// <summary>Exposes the outcome narrator for item combination failure narration.</summary>
     public OutcomeNarrator OutcomeNarrator => _outcomeNarrator;
 
-    /// <summary>Exposes the critic evaluator for item appropriateness checks.</summary>
-    public CriticEvaluator CriticEvaluator => _criticEvaluator;
+    /// <summary>Exposes the item-use critic for the item-appropriateness judgement.</summary>
+    public ItemUseCritic ItemUseCritic => _criticEvaluator;
 
     public ActionExecutionController(
         OutcomeNarrator outcomeNarrator,
-        OutcomeApplicator outcomeApplicator,
         Protagonist protagonist,
-        CriticEvaluator criticEvaluator,
+        ItemUseCritic criticEvaluator,
         WorldContext worldContext,
         int locationId)
     {
         _outcomeNarrator = outcomeNarrator;
-        _outcomeApplicator = outcomeApplicator;
-        _protagonist = protagonist;
+        ActingMember = protagonist;
         _criticEvaluator = criticEvaluator;
         _worldContext = worldContext;
         _locationId = locationId;
@@ -97,12 +102,12 @@ public class ActionExecutionController
     /// PHASE 1: Evaluate action plausibility and difficulty.
     /// Shows normal loading screen during this phase.
     /// Returns evaluation result with plausibility status and difficulty score.
-    /// When <paramref name="witnessContext"/> is non-None, also asks the LLM
-    /// how likely the witness is to detect the action (stored for step 4b re-ask on failure).
-    /// When <paramref name="threatContext"/> is non-None and the action cannot be used under
-    /// threat, asks the LLM whether the enemy gets an opportunity (informational).
+    /// <paramref name="witnessContext"/> and <paramref name="threatContext"/> are carried through
+    /// untouched, to be read on the failure path by <see cref="ResolveFailureConsequences"/>.
     /// </summary>
-    public async Task<ActionEvaluationResult> EvaluateActionAsync(
+    // Not async: every LLM step formerly here (plausibility, difficulty, witness/threat) has moved
+    // out, so evaluation is now pure arithmetic. Kept returning Task so callers still await it.
+    public Task<ActionEvaluationResult> EvaluateActionAsync(
         ParsedNarrativeAction action,
         NarrationNode currentNode,
         ModusMentis thinkingModusMentisUsed,
@@ -112,153 +117,48 @@ public class ActionExecutionController
     {
         // Debug: Show what we're searching for and what we have
         Console.WriteLine($"DEBUG: Looking for action modusMentis ID: '{action.ActionModusMentisId}'");
-        Console.WriteLine($"DEBUG: Protagonist has {_protagonist.ModiMentis.Count} modiMentis:");
-        foreach (var modusMentis in _protagonist.ModiMentis)
+        Console.WriteLine($"DEBUG: Protagonist has {ActingMember.ModiMentis.Count} modiMentis:");
+        foreach (var modusMentis in ActingMember.ModiMentis)
         {
             Console.WriteLine($"  - {modusMentis.ModusMentisId} ({modusMentis.DisplayName})");
         }
         
-        // Resolve action modusMentis
-        var actionModusMentis = _protagonist.ModiMentis.FirstOrDefault(s => s.ModusMentisId == action.ActionModusMentisId);
-        if (actionModusMentis == null)
-        {
-            Console.WriteLine($"DEBUG: ModusMentis '{action.ActionModusMentisId}' NOT FOUND in protagonist's modiMentis!");
-            return new ActionEvaluationResult
-            {
-                IsPlausible = false,
-                PlausibilityError = "The modusMentis required for this action is unavailable.",
-                ActionModusMentis = thinkingModusMentisUsed, // Fallback
-                ThinkingModusMentis = thinkingModusMentisUsed,
-                Action = action,
-                CurrentNode = currentNode
-            };
-        }
+        // Resolve action modusMentis. The action was assembled from the acting member's own
+        // modiMentis during the thinking phase, so the id always resolves here — a miss would be a
+        // programming error, not a gameplay outcome, so fail loud rather than manufacturing a
+        // "plausibility failure" the player could never provoke.
+        var actionModusMentis = ActingMember.ModiMentis.FirstOrDefault(s => s.ModusMentisId == action.ActionModusMentisId)
+            ?? throw new InvalidOperationException(
+                $"EvaluateActionAsync: action modusMentis '{action.ActionModusMentisId}' is not present on "
+                + $"the acting member '{ActingMember.DisplayName}'.");
 
-        // Build rich context for critic trees
-        var goalDescription = action.PreselectedOutcome?.ToNaturalLanguageString() ?? "";
-        var criticContext = new CriticContext(
-            currentNode, _worldContext, _locationId, goalDescription);
+        // Difficulty was decided at thinking time from the persona-fit answer (verb base ± the
+        // eager/willing/unsure modifier) and stored on the action. Possibility is likewise settled
+        // before this point — by the coded rules (pre-execution) and persona-fit cancellation — so
+        // all this method does is normalise the difficulty into the 0..1 score the narration
+        // prompts want. It decides nothing about the outcome: success is the dice roll alone
+        // (difficulty = 6s needed, dice = summed modus-mentis levels), which is where the anatomy
+        // enters, and only through the level cap those modi mentis were raised under.
+        int difficultyLevel = action.DifficultyLevel > 0
+            ? action.DifficultyLevel
+            : Math.Clamp(action.Verb.DifficultyFor(action.PreselectedOutcome?.Target), 1, 10);
+        double difficultyScore = (Math.Clamp(difficultyLevel, 1, 10) - 1) / 9.0;
 
-        // Attach item context so tool-missing checks don't misfire when a proper item is in use
-        if (action.CombinedItem != null)
-            criticContext.CombinedItemContext = $"{action.CombinedItem.DisplayName} ({action.CombinedItem.Description})";
+        Console.WriteLine($"🎯 [DIFFICULTY] level {difficultyLevel}/10 (score {difficultyScore:F3}, " +
+            $"{(difficultyLevel <= 3 ? "Easy" : difficultyLevel <= 6 ? "Moderate" : "Hard")})");
 
-        // === STEP 1: PLAUSIBILITY TREE ===
-        Console.WriteLine($"\n🔍 [PLAUSIBILITY CHECK] Evaluating if action is possible...");
-
-        var plausibilityTree = CriticTrees.BuildPlausibilityTree(action.ActionText, criticContext);
-        var plausibilityResult = await _criticEvaluator.EvaluateTreeAsync(plausibilityTree, continueOnFailure: true);
-
-        // If any plausibility check failed, try second opinions before rejecting
-        if (!plausibilityResult.OverallSuccess)
-        {
-            bool overridden = await EvaluateSecondOpinionsAsync(
-                plausibilityResult, action, criticContext, cancellationToken);
-
-            if (!overridden)
-            {
-                // Prefer the critic's free-text reason over the generic error label
-                var errorMessage = plausibilityResult.CombinedFailureReason.Length > 0
-                    ? plausibilityResult.CombinedFailureReason
-                    : plausibilityResult.FirstErrorMessage.Length > 0
-                        ? plausibilityResult.FirstErrorMessage
-                        : "That action doesn't make sense in this situation.";
-
-                Console.WriteLine($"   ❌ Action rejected: {errorMessage}\n");
-
-                return new ActionEvaluationResult
-                {
-                    IsPlausible = false,
-                    PlausibilityError = errorMessage,
-                    ActionModusMentis = actionModusMentis,
-                    ThinkingModusMentis = thinkingModusMentisUsed,
-                    Action = action,
-                    CurrentNode = currentNode
-                };
-            }
-
-            Console.WriteLine($"   ✓ Second opinion overrode plausibility failure — action approved.\n");
-        }
-
-        Console.WriteLine($"   ✓ Action approved as plausible ({plausibilityResult.Trace.Count} checks passed)\n");
-
-        // === STEP 2: DIFFICULTY (reuse pre-computed level from narration menu) ===
-        // Difficulty is already evaluated during the thinking phase; reuse it to avoid a
-        // second LLM call that could produce a different value and cause a mismatch.
-        int difficultyLevel;
-        if (action.DifficultyLevel > 0)
-        {
-            difficultyLevel = action.DifficultyLevel;
-            Console.WriteLine($"🎯 [DIFFICULTY CHECK] Reusing pre-computed difficulty: {difficultyLevel}/10");
-        }
-        else
-        {
-            Console.WriteLine($"🎯 [DIFFICULTY CHECK] No pre-computed difficulty — evaluating now...");
-            var difficultyTree = CriticTrees.BuildDifficultyTree(action.ActionText, criticContext);
-            var difficultyResult = await _criticEvaluator.EvaluateTreeAsync(difficultyTree);
-            difficultyLevel = CriticTrees.CalculateFinalDifficulty(action.Verb, difficultyResult);
-        }
-        double difficultyScore = CriticTrees.DifficultyLevelToScore(difficultyLevel);
-        
-        Console.WriteLine($"   Difficulty: {difficultyScore:F3} (level {difficultyLevel}/10)");
-        Console.WriteLine($"   Category: {(difficultyLevel <= 3 ? "Easy" : difficultyLevel <= 6 ? "Moderate" : "Hard")}");
-        
-        // Convert difficulty score to success probability
-        // Easy (0.0) = 95% success, Moderate (0.5) = 70% success, Hard (1.0) = 40% success
-        double successProbability = 0.95 - (difficultyScore * 0.55);
-        
-        // Adjust for organ score
-        string organId = actionModusMentis.Organs.Length > 0 ? actionModusMentis.Organs[0] : "hands";
-        int organScore = _protagonist.GetOrganById(organId)?.Score ?? 5;
-        
-        // Organ score adds up to 10% success chance
-        successProbability += (organScore - 5) * 0.02;
-        successProbability = Math.Clamp(successProbability, 0.1, 0.95);
-        
-        Console.WriteLine($"   Success probability: {successProbability:F2} (organ '{organId}': {organScore})\n");
-
-        // === STEP 3: WITNESS DETECTION QUESTION (if a witness is present) ===
-        var resolvedWitnessContext = witnessContext ?? Cathedral.Game.Scene.WitnessContext.None;
-        if (resolvedWitnessContext.Type != Cathedral.Game.Scene.WitnessType.None)
-        {
-            Console.WriteLine($"👁 [WITNESS DETECTION] {resolvedWitnessContext.Type} witness present — asking detection probability...");
-            var witnessTree = CriticTrees.BuildWitnessDetectionTree(
-                action.ActionText, resolvedWitnessContext, criticContext, actionFailed: false);
-            var witnessResult = await _criticEvaluator.EvaluateTreeAsync(witnessTree);
-            Console.WriteLine($"   Detection chance: {witnessResult.FinalChosenId}\n");
-            // Result stored for context only; step 4b re-asks with failure context.
-        }
-
-        // === STEP 3b: UNDER-THREAT OPPORTUNITY QUESTION (visual enemy + action can't be used under threat) ===
-        var resolvedThreatContext = threatContext ?? Cathedral.Game.Scene.ThreatContext.None;
-        if (resolvedThreatContext.Level == Cathedral.Game.Scene.ThreatLevel.Visual)
-        {
-            bool canBeUsedUnderThreat = action.Verb.CanBeUsedUnderThreat;
-
-            if (!canBeUsedUnderThreat)
-            {
-                Console.WriteLine($"⚔ [UNDER THREAT] Visual enemy present — asking opportunity probability...");
-                var threatTree = CriticTrees.BuildUnderThreatTree(
-                    action.ActionText, resolvedThreatContext, criticContext, actionFailed: false);
-                var threatResult = await _criticEvaluator.EvaluateTreeAsync(threatTree);
-                Console.WriteLine($"   Opportunity chance: {threatResult.FinalChosenId}\n");
-                // Informational only — step 4b re-asks if action fails.
-            }
-        }
-
-        return new ActionEvaluationResult
+        return Task.FromResult(new ActionEvaluationResult
         {
             IsPlausible = true,
             DifficultyScore = difficultyScore,
             DifficultyLevel = difficultyLevel,
-            SuccessProbability = successProbability,
             ActionModusMentis = actionModusMentis,
             ThinkingModusMentis = thinkingModusMentisUsed,
             Action = action,
             CurrentNode = currentNode,
-            WitnessContext = resolvedWitnessContext,
-            ThreatContext = resolvedThreatContext,
-        };
+            WitnessContext = witnessContext ?? Cathedral.Game.Scene.WitnessContext.None,
+            ThreatContext = threatContext ?? Cathedral.Game.Scene.ThreatContext.None,
+        });
     }
 
     /// <summary>
@@ -267,7 +167,8 @@ public class ActionExecutionController
     /// </summary>
     public async Task<ActionExecutionResult> GeneratePlausibilityFailureNarrationAsync(
         ActionEvaluationResult evalResult,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        ILlmPreviewSink? preview = null)
     {
         return await CreatePlausibilityFailureResultAsync(
             evalResult.Action,
@@ -275,7 +176,8 @@ public class ActionExecutionController
             evalResult.ThinkingModusMentis,
             evalResult.PlausibilityError!,
             evalResult.CurrentNode,
-            cancellationToken);
+            cancellationToken,
+            preview);
     }
 
     /// <summary>
@@ -297,9 +199,9 @@ public class ActionExecutionController
 
         Console.WriteLine($"   Roll result: {(succeeded ? "✓ SUCCESS" : "✗ FAILURE")}\n");
 
-        // Determine actual outcome
-        OutcomeBase actualOutcome;
-        Wound? failureWound = null;
+        // Determine actual outcome and (on failure) its consequences.
+        INarratable actualOutcome;
+        var consequences = default(FailureConsequences);
 
         if (succeeded)
         {
@@ -307,117 +209,41 @@ public class ActionExecutionController
         }
         else
         {
-            // === STEP 3: FAILURE OUTCOME TREE ===
-            Console.WriteLine($"💥 [FAILURE OUTCOME] Determining consequence of failure...");
-
-            var goalDescription2 = action.PreselectedOutcome?.ToNaturalLanguageString() ?? "";
-            var failureCriticContext = new CriticContext(
-                currentNode, _worldContext, _locationId, goalDescription2);
-            var wildcardCandidates = BuildWildcardCandidates();
-            var failureTree = CriticTrees.BuildFailureOutcomeTree(action.ActionText, failureCriticContext, wildcardCandidates);
-            DebugMode.InFailureOutcomeTree = true;
-            var failureResult = await _criticEvaluator.EvaluateTreeAsync(failureTree);
-            DebugMode.InFailureOutcomeTree = false;
-
-            failureWound = CriticTrees.GetWoundFromResult(failureResult, wildcardCandidates);
-
-            if (failureWound != null)
-                Console.WriteLine($"   Wound: {failureWound.WoundName} ({WoundLocationLabel(failureWound)}, {failureWound.Handicap})\n");
-            else
-                Console.WriteLine("   No wound inflicted.\n");
-
-            actualOutcome = new WoundOutcome(failureWound);
+            consequences  = ResolveFailureConsequences(evalResult);
+            actualOutcome = consequences.Wound != null
+                ? new WoundInflictionOutcome(consequences.Wound)
+                : (INarratable)new InlineNarratable("No wound", "escaped without injury");
         }
+        var failureWound = consequences.Wound;
 
-        // Build LLM-decided reports (wound on failure, empty on success).
-        // Verb-specific reports are built later in NarrativeController via SuccessReports()/FailureReports().
-        var llmDecidedReports = new System.Collections.Generic.List<OutcomeReport>();
+        // Wound-infliction report (failure only). Verb-specific reports are built later in
+        // NarrativeController via SuccessReports()/FailureReports().
+        var llmDecidedReports = new System.Collections.Generic.List<Outcome>();
         if (!succeeded && failureWound != null)
             llmDecidedReports.Add(new WoundInflictionOutcome(failureWound));
 
-        // === STEP 4: ITEM CONSUMPTION CHECK ===
-        if (action.CombinedItem != null)
-        {
-            Console.WriteLine($"🧪 [ITEM CONSUMPTION] Checking if {action.CombinedItem.ItemId} was consumed...");
-            string itemContext = $"{action.CombinedItem.DisplayName} ({action.CombinedItem.Description})";
-            var goalDescription3 = action.PreselectedOutcome?.ToNaturalLanguageString() ?? "";
-            var consumptionCriticContext = new CriticContext(currentNode, _worldContext, _locationId, goalDescription3);
-            var consumptionTree = CriticTrees.BuildItemConsumptionTree(action.ActionText, itemContext, consumptionCriticContext);
-            var consumptionResult = await _criticEvaluator.EvaluateTreeAsync(consumptionTree);
-            if (CriticTrees.IsItemConsumedFromResult(consumptionResult))
+        // +1 XP for every modusMentis in the action chain (observation → thinking → action), as a
+        // report rather than a bare award so each one shows the player a chip. The caller applies it.
+        if (succeeded)
+            foreach (var chainModusMentis in action.GetModusMentisChain())
             {
-                _protagonist.RemoveItem(action.CombinedItem);
-                Console.WriteLine($"   Item consumed and removed: {action.CombinedItem.ItemId}");
+                var practice = ModusMentisPracticeOutcome.For(ActingMember, chainModusMentis);
+                if (practice != null) llmDecidedReports.Add(practice);
             }
-            else
-            {
-                Console.WriteLine($"   Item retained: {action.CombinedItem.ItemId}");
-            }
-        }
 
-        // === STEP 4b: WITNESS DETECTION RE-ASK (failure path only) ===
-        // On success the action was clean — no confrontation regardless of witnesses.
-        // On failure, re-ask whether the witness noticed, now knowing the action failed.
-        bool witnessDetected = false;
-        Cathedral.Game.Npc.NpcEntity? detectedWitness = null;
-        if (!succeeded && evalResult.WitnessContext.Type != Cathedral.Game.Scene.WitnessType.None)
-        {
-            Console.WriteLine($"👁 [WITNESS DETECTION — FAILURE] Re-evaluating witness detection after failed action...");
-            var goalDescription4 = action.PreselectedOutcome?.ToNaturalLanguageString() ?? "";
-            var witnessCtx = new CriticContext(currentNode, _worldContext, _locationId, goalDescription4);
-            var witnessTree = CriticTrees.BuildWitnessDetectionTree(
-                action.ActionText, evalResult.WitnessContext, witnessCtx, actionFailed: true);
-            var witnessResult = await _criticEvaluator.EvaluateTreeAsync(witnessTree);
-            witnessDetected = CriticTrees.IsWitnessDetectedFromResult(witnessResult);
-            if (witnessDetected)
-            {
-                detectedWitness = evalResult.WitnessContext.Witness;
-                Console.WriteLine($"   Witness detected the failed action — confrontation pending.\n");
-            }
-            else
-            {
-                Console.WriteLine($"   Witness did not detect the failed action ({witnessResult.FinalChosenId}).\n");
-            }
-        }
+        // A combined implement survives being used. Nothing combinable is a consumable — see the
+        // note where the consumption tree used to be, in CriticTrees.
 
-        // === STEP 4c: UNDER-THREAT OPPORTUNITY RE-ASK (failure path only) ===
-        // If an enemy is nearby and the action fails, ask whether they seize the moment.
-        bool fightTriggered = false;
-        Cathedral.Game.Npc.NpcEntity? fightEnemy = null;
-        if (!succeeded && evalResult.ThreatContext.Level != Cathedral.Game.Scene.ThreatLevel.None)
-        {
-            Console.WriteLine($"⚔ [UNDER THREAT — FAILURE] Re-evaluating enemy opportunity after failed action...");
-            var goalDescription5 = action.PreselectedOutcome?.ToNaturalLanguageString() ?? "";
-            var threatCtx = new CriticContext(currentNode, _worldContext, _locationId, goalDescription5);
-            var threatTree = CriticTrees.BuildUnderThreatTree(
-                action.ActionText, evalResult.ThreatContext, threatCtx, actionFailed: true);
-            var threatResult = await _criticEvaluator.EvaluateTreeAsync(threatTree);
-            fightTriggered = CriticTrees.IsOpportunityFromResult(threatResult);
-            if (fightTriggered)
-            {
-                fightEnemy = evalResult.ThreatContext.Threat;
-                Console.WriteLine($"   Enemy seized the opportunity — fight triggered.\n");
-            }
-            else
-            {
-                Console.WriteLine($"   Enemy did not seize an opportunity ({threatResult.FinalChosenId}).\n");
-            }
-        }
-
-        // Generate narration — pass wound description as failure hint
-        string? failureHint = failureWound != null
-            ? $"The character suffered a wound: {failureWound.WoundName} to their {WoundLocationLabel(failureWound)}"
-            : null;
-
+        // Generate narration — the wound (if any) contributes its Verbatim to the consequence list.
         string narration = await _outcomeNarrator.NarrateOutcomeAsync(
             action,
             actionModusMentis,
             actualOutcome,
             succeeded,
             difficultyScore,
-            _protagonist,
+            ActingMember,
             cancellationToken,
-            failureHint);
+            outcomeVerbatims: CollectVerbatims(llmDecidedReports));
 
         return new ActionExecutionResult
         {
@@ -432,11 +258,181 @@ public class ActionExecutionController
             Narration = narration,
             FailureWound = failureWound,
             IsPlausibilityFailure = false,
-            WitnessDetected = witnessDetected,
-            DetectedWitness = detectedWitness,
-            FightTriggered = fightTriggered,
-            FightEnemy = fightEnemy,
+            CaughtByWitness = consequences.CaughtBy,
+            FightWithEnemy  = consequences.FightWith,
+            NpcDrawnIn      = consequences.DrawnIn,
         };
+    }
+
+    /// <summary>
+    /// PHASE 2 (post-dice variant): compute ONLY the actual outcome once the final (possibly
+    /// humor-modified) success/failure is known, streaming its narration into <paramref name="preview"/>
+    /// like every other text. No game-state side-effects are applied here; the caller commits them on
+    /// the preview's CONTINUE. The failure branch also samples the wound and resolves witness/threat
+    /// consequences.
+    /// </summary>
+    public async Task<ActionExecutionResult> PrepareSingleOutcomeAsync(
+        ActionEvaluationResult evalResult, bool succeeded,
+        IReadOnlyList<Outcome> verbReports,
+        ILlmPreviewSink? preview = null,
+        CancellationToken cancellationToken = default)
+    {
+        var action = evalResult.Action;
+        var actionModusMentis = evalResult.ActionModusMentis;
+        var thinkingModusMentisUsed = evalResult.ThinkingModusMentis;
+        double difficultyScore = evalResult.DifficultyScore;
+        int difficultyLevel = evalResult.DifficultyLevel;
+        var currentNode = evalResult.CurrentNode;
+
+        if (succeeded)
+        {
+            INarratable successOutcome = action.PreselectedOutcome;
+
+            // The full report list is exactly the verb's success reports; their verbatims become the
+            // "Thanks to this success I …" consequence clause.
+            var allReports = new List<Outcome>(verbReports);
+            string narration = await _outcomeNarrator.NarrateOutcomeAsync(
+                action, actionModusMentis, successOutcome, true, difficultyScore, ActingMember,
+                cancellationToken, outcomeVerbatims: CollectVerbatims(allReports), preview: preview);
+            return new ActionExecutionResult
+            {
+                Action = action,
+                ActionModusMentis = actionModusMentis,
+                ThinkingModusMentis = thinkingModusMentisUsed,
+                Difficulty = difficultyScore,
+                DifficultyLevel = difficultyLevel,
+                Succeeded = true,
+                ActualOutcome = successOutcome,
+                LlmDecidedReports = System.Array.Empty<Outcome>(),
+                OutcomeReports = allReports,
+                Narration = narration,
+                FailureWound = null,
+                IsPlausibilityFailure = false,
+            };
+        }
+        else
+        {
+            var consequences = ResolveFailureConsequences(evalResult);
+            var failureWound = consequences.Wound;
+            // One object, both roles: the report IS the narratable. These used to be two classes
+            // built side by side from the same wound.
+            var woundReport = failureWound != null ? new WoundInflictionOutcome(failureWound) : null;
+            INarratable failureOutcome = woundReport
+                ?? (INarratable)new InlineNarratable("No wound", "escaped without injury");
+
+            var llmDecidedReports = new List<Outcome>();
+            if (woundReport != null) llmDecidedReports.Add(woundReport);
+
+            // Full list = the verb's failure reports followed by the sampled wound. The wound is no
+            // longer a separate free-text hint: its Verbatim ("suffered …") lands in the consequence
+            // clause like every other report.
+            var allReports = new List<Outcome>(verbReports);
+            allReports.AddRange(llmDecidedReports);
+
+            string narration = await _outcomeNarrator.NarrateOutcomeAsync(
+                action, actionModusMentis, failureOutcome, false, difficultyScore, ActingMember,
+                cancellationToken, outcomeVerbatims: CollectVerbatims(allReports), preview: preview);
+
+            return new ActionExecutionResult
+            {
+                Action = action,
+                ActionModusMentis = actionModusMentis,
+                ThinkingModusMentis = thinkingModusMentisUsed,
+                Difficulty = difficultyScore,
+                DifficultyLevel = difficultyLevel,
+                Succeeded = false,
+                ActualOutcome = failureOutcome,
+                LlmDecidedReports = llmDecidedReports,
+                OutcomeReports = allReports,
+                Narration = narration,
+                FailureWound = failureWound,
+                IsPlausibilityFailure = false,
+                CaughtByWitness = consequences.CaughtBy,
+                FightWithEnemy  = consequences.FightWith,
+                NpcDrawnIn      = consequences.DrawnIn,
+            };
+        }
+    }
+
+    /// <summary>The non-empty <see cref="Outcome.Verbatim"/> phrases, in order.</summary>
+    private static IReadOnlyList<string> CollectVerbatims(IEnumerable<Outcome> reports)
+        => reports.Select(r => r.Verbatim)
+                  .Where(v => !string.IsNullOrWhiteSpace(v))
+                  .ToList();
+
+    /// <summary>
+    /// PHASE 2 (humor-modifier variant): pre-compute BOTH the success and failure outcomes for an
+    /// action during the dice animation, generating both narration texts and the failure wound /
+    /// witness / threat data, but applying NO game-state side-effects. The caller commits the
+    /// chosen branch's side-effects at the dice-roll Continue step (XP, wound reports,
+    /// witness/threat) based on the final (possibly humor-modified) result.
+    /// </summary>
+    public async Task<(ActionExecutionResult success, ActionExecutionResult failure)>
+        PrepareDualOutcomesAsync(ActionEvaluationResult evalResult, CancellationToken cancellationToken = default)
+    {
+        var action = evalResult.Action;
+        var actionModusMentis = evalResult.ActionModusMentis;
+        var thinkingModusMentisUsed = evalResult.ThinkingModusMentis;
+        double difficultyScore = evalResult.DifficultyScore;
+        int difficultyLevel = evalResult.DifficultyLevel;
+        var currentNode = evalResult.CurrentNode;
+
+        // ── Failure branch data: sampled wound + deterministic witness/threat consequences ──
+        var consequences = ResolveFailureConsequences(evalResult);
+        var failureWound = consequences.Wound;
+        var woundReport = failureWound != null ? new WoundInflictionOutcome(failureWound) : null;
+        INarratable failureOutcome = woundReport
+            ?? (INarratable)new InlineNarratable("No wound", "escaped without injury");
+
+        var llmDecidedReports = new List<Outcome>();
+        if (woundReport != null) llmDecidedReports.Add(woundReport);
+
+        INarratable successOutcome = action.PreselectedOutcome;
+
+        // ── Generate both narration texts (snapshot/restore keeps the slot history clean) ──
+        // No verb reports are pre-gathered on this legacy dual path, so only the failure branch's
+        // wound contributes a consequence verbatim.
+        var (successNarration, failureNarration) = await _outcomeNarrator.NarrateBothOutcomesAsync(
+            action, actionModusMentis, successOutcome, failureOutcome,
+            difficultyScore, ActingMember,
+            successVerbatims: System.Array.Empty<string>(),
+            failureVerbatims: CollectVerbatims(llmDecidedReports),
+            cancellationToken);
+
+        var success = new ActionExecutionResult
+        {
+            Action = action,
+            ActionModusMentis = actionModusMentis,
+            ThinkingModusMentis = thinkingModusMentisUsed,
+            Difficulty = difficultyScore,
+            DifficultyLevel = difficultyLevel,
+            Succeeded = true,
+            ActualOutcome = successOutcome,
+            LlmDecidedReports = System.Array.Empty<Outcome>(),
+            Narration = successNarration,
+            FailureWound = null,
+            IsPlausibilityFailure = false,
+        };
+
+        var failure = new ActionExecutionResult
+        {
+            Action = action,
+            ActionModusMentis = actionModusMentis,
+            ThinkingModusMentis = thinkingModusMentisUsed,
+            Difficulty = difficultyScore,
+            DifficultyLevel = difficultyLevel,
+            Succeeded = false,
+            ActualOutcome = failureOutcome,
+            LlmDecidedReports = llmDecidedReports,
+            Narration = failureNarration,
+            FailureWound = failureWound,
+            IsPlausibilityFailure = false,
+            CaughtByWitness = consequences.CaughtBy,
+            FightWithEnemy  = consequences.FightWith,
+            NpcDrawnIn      = consequences.DrawnIn,
+        };
+
+        return (success, failure);
     }
 
     /// <summary>
@@ -459,8 +455,8 @@ public class ActionExecutionController
         }
         
         // Roll n dice (1–6 each), succeed if sixes >= difficulty
-        var rng = new Random();
-        int numberOfDice = Math.Max(1, action.GetTotalModusMentisLevel());
+        var rng = GameRng.Stream("dice");
+        int numberOfDice = Math.Max(1, action.GetTotalModusMentisLevel(ActingMember));
         int sixes = 0;
         for (int i = 0; i < numberOfDice; i++)
             if (rng.Next(1, 7) == 6) sixes++;
@@ -471,95 +467,110 @@ public class ActionExecutionController
     }
 
     /// <summary>
-    /// Builds the list of locations that can receive wildcard wounds in the failure tree.
-    /// Body parts with AcceptsWildcardWounds=true contribute one candidate each.
-    /// Organs with AcceptsWildcardWounds=true contribute one candidate per organ part.
+    /// What a failed action costs, decided deterministically (no LLM). At most one of the three
+    /// social consequences can be set: they are three rungs of one ladder, not a set of flags.
     /// </summary>
-    private IReadOnlyList<WildcardCandidate> BuildWildcardCandidates()
+    /// <param name="Wound">Sampled from the verb's <see cref="Verb.FailurePenalties"/>; often none.</param>
+    /// <param name="CaughtBy">A witness who <b>saw</b> it: the caught-red-handed confrontation.</param>
+    /// <param name="FightWith">An enemy who <b>saw</b> it: the fight, on their initiative.</param>
+    /// <param name="DrawnIn">
+    /// Somebody a room away who <b>heard</b> it and is coming to look — witness or enemy alike. They
+    /// move into the area and open the next observation phase; nothing else happens yet, which is
+    /// what leaves room to run.
+    /// </param>
+    private readonly record struct FailureConsequences(
+        WoundInstance?                  Wound,
+        Cathedral.Game.Npc.NpcEntity?   CaughtBy,
+        Cathedral.Game.Npc.NpcEntity?   FightWith,
+        Cathedral.Game.Npc.NpcEntity?   DrawnIn);
+
+    /// <summary>
+    /// Resolves what a failed action costs. The physical penalty is a verb-authored roll; the social
+    /// consequence is read off <b>effective</b> proximity
+    /// (<see cref="Cathedral.Game.Scene.ProximityModel"/>), which is where the acting modus mentis's
+    /// discreteness applies:
+    ///
+    /// <list type="bullet">
+    /// <item>effective <b>Visual</b> — they are in the room and watched it go wrong. A witness
+    ///   confronts you; an enemy simply attacks. Only a discrete modus mentis (or a combat verb) can
+    ///   reach this at all, since the coded rules stop anyone else from trying in front of somebody.</item>
+    /// <item>effective <b>Audio</b> — they heard it from the next room and come to look. No
+    ///   confrontation yet: they arrive, the next observation phase opens on them, and from then on
+    ///   they are a Visual presence and the door is no longer a free exit.</item>
+    /// <item>effective <b>None</b> — nobody is any the wiser. This is what discreteness buys at a
+    ///   distance: a quiet failure a room away is not heard at all.</item>
+    /// </list>
+    ///
+    /// <para>The enemy and witness ladders are deliberately identical in shape and differ only in what
+    /// the top rung is — a fight against somebody who already wants one, a conversation against
+    /// somebody who has just discovered they might.</para>
+    /// </summary>
+    private FailureConsequences ResolveFailureConsequences(ActionEvaluationResult evalResult)
     {
-        var candidates = new List<WildcardCandidate>();
+        var action = evalResult.Action;
+        bool discrete = evalResult.ActionModusMentis?.ActsDiscretely ?? false;
 
-        foreach (var bp in _protagonist.BodyParts)
+        // Verb-authored penalty (wound or none), sampled uniformly. Wrapped as an instance stamped
+        // with today's date: this happened during the run, so it is a wound that can heal — unlike
+        // the historical ones a character was generated with.
+        var target = action.PreselectedOutcome?.Target;
+        var template = action.Verb.SampleFailurePenalty(target, _rng);
+
+        // Verbs author their penalties as HUMAN wounds — a turned ankle, a cut hand, a broken foot —
+        // and the acting member need not be human: a beast narrates and acts for itself after a
+        // Speak-About hand-off. A wound the body does not own penalises nothing (every Affects*
+        // query misses an organ part the anatomy lacks) and is captured into the save verbatim,
+        // where PartyState.Rebuild refuses it and loses the run. So the miss costs no injury rather
+        // than an injury that is not there. Deliberately not translated to a beast equivalent: the
+        // verb named one wound, and inventing a counterpart for it is content, not plumbing.
+        if (template != null && !WoundRegistry.CanBeSufferedBy(template, ActingMember))
         {
-            if (bp.AcceptsWildcardWounds)
-                candidates.Add(new WildcardCandidate(bp.Id, bp.DisplayName, bp.Id));
-
-            foreach (var organ in bp.Organs.Where(o => o.AcceptsWildcardWounds))
-                foreach (var part in organ.Parts)
-                    candidates.Add(new WildcardCandidate(part.Id, part.DisplayName, part.Id));
+            Console.WriteLine($"💥 [FAILURE PENALTY] {template.WoundName} is not a wound "
+                + $"{ActingMember.DisplayName} ({ActingMember.AnatomyType}) can suffer — no injury.");
+            template = null;
         }
 
-        return candidates;
+        WoundInstance? wound = template != null ? WoundInstance.Inflicted(template) : null;
+        Console.WriteLine(wound != null
+            ? $"💥 [FAILURE PENALTY] {wound.WoundName} ({WoundLocationLabel(wound)}, {wound.Handicap})"
+            : "💥 [FAILURE PENALTY] no injury");
+
+        // An enemy in the room outranks a witness in the room: the quarrel is already declared, and
+        // being asked to explain yourself by somebody drawing steel is not a conversation.
+        var effThreat  = Cathedral.Game.Scene.ProximityModel.Effective(evalResult.ThreatContext.Level, discrete);
+        var effWitness = Cathedral.Game.Scene.ProximityModel.Effective(evalResult.WitnessContext.Type, discrete);
+
+        if (effThreat == Cathedral.Game.Scene.ThreatLevel.Visual)
+        {
+            var enemy = evalResult.ThreatContext.Threat;
+            Console.WriteLine($"⚔ [THREAT] failed in front of the enemy — fight with {enemy?.DisplayName ?? "them"}.");
+            return new FailureConsequences(wound, null, enemy, null);
+        }
+
+        if (effWitness == Cathedral.Game.Scene.WitnessType.Visual)
+        {
+            var witness = evalResult.WitnessContext.Witness;
+            Console.WriteLine($"👁 [WITNESS] failed in plain sight — caught red-handed by {witness?.DisplayName ?? "someone"}.");
+            return new FailureConsequences(wound, witness, null, null);
+        }
+
+        // Heard, not seen. Whoever is nearest comes to look; the enemy first, for the same reason.
+        var heardBy = effThreat  == Cathedral.Game.Scene.ThreatLevel.Audio  ? evalResult.ThreatContext.Threat
+                    : effWitness == Cathedral.Game.Scene.WitnessType.Audio  ? evalResult.WitnessContext.Witness
+                    : null;
+        if (heardBy != null)
+            Console.WriteLine($"👂 [EARSHOT] failed within earshot — {heardBy.DisplayName} comes to look.");
+
+        return new FailureConsequences(wound, null, null, heardBy);
     }
 
     /// <summary>Returns a readable location label for a wound, using WildcardZoneHint as fallback.</summary>
-    private static string WoundLocationLabel(Wound wound)
+    private static string WoundLocationLabel(WoundInstance wound)
     {
         var raw = wound.TargetId.Length > 0
             ? wound.TargetId
             : wound.WildcardZoneHint ?? "body";
         return raw.Replace('_', ' ');
-    }
-
-    /// <summary>
-    /// For each failing node in <paramref name="plausibilityResult"/>, checks whether the
-    /// corresponding choice has a <see cref="Config.PlausibilityQuestions.SecondOpinion"/> whose
-    /// runtime condition is satisfied.  If so, evaluates it and returns <c>true</c> the first
-    /// time one passes — meaning the original failure is overridden and the action is plausible.
-    /// Returns <c>false</c> if no second opinion overrides the failure.
-    /// </summary>
-    private async Task<bool> EvaluateSecondOpinionsAsync(
-        CriticTreeResult plausibilityResult,
-        ParsedNarrativeAction action,
-        CriticContext criticContext,
-        CancellationToken cancellationToken)
-    {
-        foreach (var failedNode in plausibilityResult.Trace.Where(r => r.IsFailure))
-        {
-            var question = Config.PlausibilityQuestions.Questions
-                .FirstOrDefault(q => q.Name == failedNode.NodeName);
-            if (question == null) continue;
-
-            var failedChoice = question.Choices.FirstOrDefault(c => c.Id == failedNode.ChosenId);
-            if (failedChoice?.SecondOpinions == null) continue;
-
-            foreach (var secondOpinion in failedChoice.SecondOpinions)
-            {
-                if (!IsSecondOpinionConditionMet(secondOpinion.Condition, action)) continue;
-
-                Console.WriteLine($"\n🔄 [SECOND OPINION — {secondOpinion.Question.Name}] " +
-                    (action.CombinedItem != null
-                        ? $"Checking if '{action.CombinedItem.DisplayName}' can serve as the required tool..."
-                        : "Checking if bare hands can substitute..."));
-
-                var soTree = CriticTrees.BuildSecondOpinionTree(
-                    secondOpinion.Question, action.ActionText, criticContext);
-                var soResult = await _criticEvaluator.EvaluateTreeAsync(soTree);
-
-                if (soResult.OverallSuccess)
-                {
-                    Console.WriteLine($"   ✓ [{soResult.FinalChosenId}] Overriding '{failedNode.ChosenId}'.");
-                    return true;
-                }
-
-                Console.WriteLine($"   ✗ [{soResult.FinalChosenId}] Second opinion confirms failure.");
-            }
-        }
-
-        return false;
-    }
-
-    /// <summary>Returns true when the runtime condition for a second opinion is satisfied.</summary>
-    private static bool IsSecondOpinionConditionMet(
-        Config.PlausibilityQuestions.SecondOpinionCondition condition,
-        ParsedNarrativeAction action)
-    {
-        return condition switch
-        {
-            Config.PlausibilityQuestions.SecondOpinionCondition.ItemInUse   => action.CombinedItem != null,
-            Config.PlausibilityQuestions.SecondOpinionCondition.NoItemInUse => action.CombinedItem == null,
-            _ => false,
-        };
     }
 
     /// <summary>
@@ -572,17 +583,22 @@ public class ActionExecutionController
         ModusMentis thinkingModusMentis,
         string plausibilityError,
         NarrationNode currentNode,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        ILlmPreviewSink? preview = null)
     {
         // Generate narration explaining why the action is not possible
-        var failureOutcome = new HumorOutcome("Melancholia", 1, "inability to act");
-        
+        // A marker for "the action was never attempted" — nothing here changes the world, and the
+        // narration comes from NarratePlausibilityFailureAsync below rather than from this. It used
+        // to claim a Melancholia +1 that no report ever applied.
+        var failureOutcome = new InlineNarratable("Not attempted", "thought better of it");
+
         string narration = await _outcomeNarrator.NarratePlausibilityFailureAsync(
             action,
             actionModusMentis,
             plausibilityError,
-            _protagonist,
-            cancellationToken);
+            ActingMember,
+            cancellationToken,
+            preview);
         
         return new ActionExecutionResult
         {
@@ -611,22 +627,31 @@ public class ActionExecutionResult
     public double Difficulty { get; set; }
     public int DifficultyLevel { get; set; }
     public bool Succeeded { get; set; }
-    public OutcomeBase ActualOutcome { get; set; } = null!;
+    public INarratable ActualOutcome { get; set; } = null!;
 
     /// <summary>
     /// Reports produced by LLM-decided outcomes (wound on failure).
     /// Verb-specific reports come from <c>verb.SuccessReports()</c> / <c>verb.FailureReports()</c>
     /// and are built separately in NarrativeController.
     /// </summary>
-    public System.Collections.Generic.IReadOnlyList<OutcomeReport> LlmDecidedReports { get; set; }
-        = System.Array.Empty<OutcomeReport>();
+    public System.Collections.Generic.IReadOnlyList<Outcome> LlmDecidedReports { get; set; }
+        = System.Array.Empty<Outcome>();
+
+    /// <summary>
+    /// The full, ordered outcome-report list (verb reports + LLM-decided wound) gathered up-front so
+    /// their <see cref="Outcome.Verbatim"/> phrases can be woven into the outcome narration.
+    /// When non-null, <c>CommitOutcomeResult</c> applies exactly these reports rather than
+    /// re-gathering them, so each report — and any item factory it carries — is realised once.
+    /// Null for paths that still gather at commit time (e.g. Get-Up).
+    /// </summary>
+    public System.Collections.Generic.IReadOnlyList<Outcome>? OutcomeReports { get; set; }
 
     public string Narration { get; set; } = "";
     
     /// <summary>
     /// The wound inflicted on the protagonist if action failed with a physical injury (null otherwise).
     /// </summary>
-    public Wound? FailureWound { get; set; }
+    public WoundInstance? FailureWound { get; set; }
     
     /// <summary>
     /// The plausibility error message if action was rejected as implausible.
@@ -639,25 +664,21 @@ public class ActionExecutionResult
     /// </summary>
     public bool IsPlausibilityFailure { get; set; }
 
-    /// <summary>
-    /// True when a witness detected the failed action (step 4b).
-    /// Always false on success — the new design never triggers witness confrontation on success.
-    /// </summary>
-    public bool WitnessDetected { get; set; }
 
     /// <summary>
-    /// The NPC who detected the crime. Non-null only when <see cref="WitnessDetected"/> is true.
+    /// The witness who <b>saw</b> a failed crime, if any — the caught-red-handed confrontation.
+    /// Null on success: nothing is ever confronted for succeeding.
     /// </summary>
-    public Cathedral.Game.Npc.NpcEntity? DetectedWitness { get; set; }
+    public Cathedral.Game.Npc.NpcEntity? CaughtByWitness { get; set; }
 
     /// <summary>
-    /// True when a nearby enemy seized an opportunity to attack on the failure path (step 4c).
-    /// Always false on success.
+    /// The enemy who <b>saw</b> a failed action, if any — the fight, on their initiative.
     /// </summary>
-    public bool FightTriggered { get; set; }
+    public Cathedral.Game.Npc.NpcEntity? FightWithEnemy { get; set; }
 
     /// <summary>
-    /// The enemy who triggered the fight. Non-null only when <see cref="FightTriggered"/> is true.
+    /// Somebody a room away who <b>heard</b> a failed action and is coming to look. They move into
+    /// the area and open the next observation phase; the confrontation, if any, comes later.
     /// </summary>
-    public Cathedral.Game.Npc.NpcEntity? FightEnemy { get; set; }
+    public Cathedral.Game.Npc.NpcEntity? NpcDrawnIn { get; set; }
 }

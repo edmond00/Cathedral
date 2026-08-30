@@ -13,11 +13,12 @@ namespace Cathedral.Game.Management;
 /// </summary>
 public enum ManagementTab
 {
-    Body,
+    Anatomy,
     Inventory,
     Journal,
     Memory,
-    Humors
+    Humors,
+    Routines
 }
 
 /// <summary>
@@ -39,6 +40,7 @@ public class ManagementMenuRenderer
     private readonly MemoryPanelRenderer _memoryPanel;
     private readonly HumorMenuRenderer _humorMenu;
     private readonly InventoryMenuRenderer _inventoryMenu;
+    private readonly RoutinesPanelRenderer _routinesPanel;
 
     // ── Cached art data per anatomy type ─────────────────────────
     private readonly BodyArtData _humanArtData;
@@ -49,17 +51,18 @@ public class ManagementMenuRenderer
     private GearAnchorData? _beastGearData;
 
     // ── Tab state ────────────────────────────────────────────────
-    private ManagementTab _activeTab = ManagementTab.Body;
+    private ManagementTab _activeTab = ManagementTab.Anatomy;
     private int _selectedCharacterIndex = 0; // 0 = protagonist, 1+ = companions
 
     // ── Tab definitions ──────────────────────────────────────────
     private static readonly TabDefinition[] AllTabs = new[]
     {
-        new TabDefinition("Body",      ManagementTab.Body,      AllCharacters: true),
+        new TabDefinition("Anatomy",   ManagementTab.Anatomy,   AllCharacters: true),
         new TabDefinition("Inventory", ManagementTab.Inventory,  AllCharacters: true),
         new TabDefinition("Journal",   ManagementTab.Journal,    AllCharacters: false), // protagonist only
         new TabDefinition("Memory",    ManagementTab.Memory,    AllCharacters: true),
         new TabDefinition("Humors",    ManagementTab.Humors,    AllCharacters: true),
+        new TabDefinition("Routines",  ManagementTab.Routines,   AllCharacters: false), // protagonist only
     };
 
     // ── Hover state ──────────────────────────────────────────────
@@ -74,8 +77,10 @@ public class ManagementMenuRenderer
     private const int ContentX = 1;           // text content starts at col 2
     private const int ContentW = 13;          // usable text width inside panel
 
-    // Subtle panel background
-    private static readonly Vector4 PanelBg = new(0.04f, 0.04f, 0.04f, 1.0f);
+    // Panel background. Black rather than a near-black grey: the final dither layer
+    // quantises the frame, and a flat 0.04 grey lands mid-step and breaks up into
+    // visible pattern noise across the whole panel. Pure black quantises cleanly.
+    private static readonly Vector4 PanelBg = new(0.0f, 0.0f, 0.0f, 1.0f);
 
     // Menu section (top of panel)
     private const int MenuTitleRow = 2;
@@ -83,11 +88,8 @@ public class ManagementMenuRenderer
     private const int MenuFirstItemRow = 5;
     // Items at rows 5, 6, 7 (one per tab)
 
-    // Party section (bottom of panel, always visible)
-    private const int PartyTitleRow = 86;
-    private const int PartyDividerRow = 87;
-    private const int PartyFirstItemRow = 89;
-    // Items start at row 89
+    // Party section: bottom-anchored just above the back button and sized to the party,
+    // so it never overlaps BACK regardless of companion count (see RenderPartySection).
 
     // Back button (very bottom)
     private const int BackRow = 96;
@@ -98,12 +100,31 @@ public class ManagementMenuRenderer
     private const int ContentStartRow = 4;
     private const int FooterSepRow = 92;
 
+    /// <summary>
+    /// Where the Anatomy tab's organ rows begin: below the two identity lines (anatomy, species) and
+    /// the blank that separates them from the body regions. Other tabs start at
+    /// <see cref="ContentStartRow"/> — only this one carries the identity block.
+    /// </summary>
+    private const int AnatomyStatsStartRow = ContentStartRow + 3;
+
     // ── Hit-test regions (computed on render) ────────────────────
     private readonly List<(int row, int tabIndex)> _tabHitRows = new();
     private readonly List<(int row, int charIndex)> _charHitRows = new();
 
     /// <summary>Callback for when the player clicks Back.</summary>
     public Action? OnBack { get; set; }
+
+    /// <summary>Callback invoked when the player successfully consumes an item (for audio feedback).</summary>
+    public Action? OnItemConsumed { get; set; }
+
+    /// <summary>
+    /// Fired with a routine's LocationId when the Routines tab focuses one (selection change or tab
+    /// activation). The host centers the world camera so the minimap porthole shows that location.
+    /// </summary>
+    public Action<int>? OnRoutineLocationFocused { get; set; }
+
+    /// <summary>Fired when the Routines tab is left (tab switch or Back) so the host can restore camera/world state.</summary>
+    public Action? OnRoutinesPortholeClosed { get; set; }
 
     public ManagementMenuRenderer(TerminalHUD terminal, Protagonist protagonist, BodyArtData artData,
                                    PopupTerminalHUD? popup = null)
@@ -117,7 +138,7 @@ public class ManagementMenuRenderer
         _bodyViewer = new BodyArtViewer(terminal, protagonist, artData)
         {
             ArtOffsetX = SepCol + 1,  // left boundary of the middle panel
-            StatsStartRow = ContentStartRow,
+            StatsStartRow = AnatomyStatsStartRow,
             ShowScoreEditControls = false,
             ShowClickHints = false
         };
@@ -127,8 +148,12 @@ public class ManagementMenuRenderer
         _bodyViewer.ArtOffsetY = 0;
 
         _memoryPanel = new MemoryPanelRenderer(terminal, popup);
+        _routinesPanel = new RoutinesPanelRenderer(terminal);
+        _routinesPanel.OnRoutineFocused = locId => OnRoutineLocationFocused?.Invoke(locId);
 
         _inventoryMenu = new InventoryMenuRenderer(terminal, _bodyViewer, _humanGearData, popup);
+        _inventoryMenu.OnItemConsumed = () => { Render(); OnItemConsumed?.Invoke(); };
+        _inventoryMenu.Wallet = _protagonist.Party;   // shared (global) coin wallet
 
         var humorArtData = HumorArtData.Load("assets/art/humors");
         var heparMap     = HumorQueuePositionMap.Load("assets/art/humors/hepar.txt",    "hepar");
@@ -182,14 +207,14 @@ public class ManagementMenuRenderer
 
     /// <summary>Display name for a slot index (0 = protagonist, 1+ = companions).</summary>
     private string GetCharacterName(int index) =>
-        index == 0 ? _protagonist.DisplayName : _protagonist.CompanionParty[index - 1].Name;
+        index == 0 ? _protagonist.DisplayName : _protagonist.CompanionParty[index - 1].DisplayName;
 
     /// <summary>Whether slot index belongs to the protagonist.</summary>
     private bool IsProtagonistSlot(int index) => index == 0;
 
     /// <summary>Get the <see cref="PartyMember"/> for a slot index.</summary>
     private PartyMember GetPartyMember(int index) =>
-        index == 0 ? _protagonist : (PartyMember)_protagonist.CompanionParty[index - 1];
+        index == 0 ? _protagonist : _protagonist.CompanionParty[index - 1];
 
     // ═══════════════════════════════════════════════════════════════
     // Public API
@@ -201,30 +226,37 @@ public class ManagementMenuRenderer
         _terminal.Fill(' ', Config.Colors.Black, Config.Colors.Black);
         _terminal.Visible = true;
 
-        // Body art (only on Body tab)
-        if (_activeTab == ManagementTab.Body)
+        // Body art (only on Anatomy tab)
+        if (_activeTab == ManagementTab.Anatomy)
         {
             _bodyViewer.ShowWounds = true;
+            _bodyViewer.ShowAge    = true;
             _bodyViewer.RenderBodyArt();
         }
-        else if (_activeTab != ManagementTab.Memory && _activeTab != ManagementTab.Humors)
+        else if (_activeTab != ManagementTab.Memory && _activeTab != ManagementTab.Humors
+                 && _activeTab != ManagementTab.Routines)
         {
             _bodyViewer.ShowWounds = false;
-            // Draw separator on non-body, non-memory, non-humors tabs
+            _bodyViewer.ShowAge    = false;
+            // Draw separator on non-anatomy, non-memory, non-humors, non-routines tabs
             int sepX = BodyArtViewer.PanelX - 1;
             for (int y = 0; y < 100; y++)
                 _terminal.SetCell(sepX, y, '│', Config.Colors.DarkGray35, Config.Colors.Black);
         }
 
         // Right panel
-        if (_activeTab != ManagementTab.Memory && _activeTab != ManagementTab.Humors)
+        if (_activeTab != ManagementTab.Memory && _activeTab != ManagementTab.Humors
+            && _activeTab != ManagementTab.Routines)
             RenderPanelHeader();
 
         switch (_activeTab)
         {
-            case ManagementTab.Body:
+            case ManagementTab.Anatomy:
+                RenderAnatomyIdentity();
                 int lastRow = _bodyViewer.RenderOrganStats();
-                _bodyViewer.RenderHoveredDetail(lastRow);
+                int descRow = _bodyViewer.RenderHoveredOrganDescription(lastRow);
+                _bodyViewer.RenderHoveredDetail(descRow);
+                _bodyViewer.RenderHoveredRegionDetail(lastRow);
                 break;
             case ManagementTab.Inventory:
                 var invMember = GetPartyMember(_selectedCharacterIndex);
@@ -240,83 +272,194 @@ public class ManagementMenuRenderer
             case ManagementTab.Humors:
                 _humorMenu.Render(GetPartyMember(_selectedCharacterIndex));
                 break;
+            case ManagementTab.Routines:
+                _routinesPanel.Render(_protagonist);
+                break;
         }
 
         // Left panel (rendered AFTER all tab content so it overlays cleanly)
         RenderLeftPanel();
 
-        if (_activeTab != ManagementTab.Memory && _activeTab != ManagementTab.Humors)
+        if (_activeTab != ManagementTab.Memory && _activeTab != ManagementTab.Humors
+            && _activeTab != ManagementTab.Routines)
             RenderFooter();
+
+        // Edge rules against the sphere, drawn last so no tab content overwrites them
+        _terminal.DrawSideRails();
     }
 
     /// <summary>Called every frame for animations.</summary>
     public void Update()
     {
-        if (_activeTab == ManagementTab.Body && _bodyViewer.UpdateBlink())
+        if (_activeTab == ManagementTab.Anatomy && _bodyViewer.UpdateBlink())
         {
             _bodyViewer.ShowWounds = true;
             _bodyViewer.RenderBodyArt();
+            RenderAnatomyIdentity();
             int lastRow = _bodyViewer.RenderOrganStats();
-            _bodyViewer.RenderHoveredDetail(lastRow);
+            int descRow = _bodyViewer.RenderHoveredOrganDescription(lastRow);
+            _bodyViewer.RenderHoveredDetail(descRow);
+            _bodyViewer.RenderHoveredRegionDetail(lastRow);
             // Re-render left panel on top after art redraw
             RenderLeftPanel();
+            // …which owns column 0, so the rails go back on top of it
+            _terminal.DrawSideRails();
         }
 
         if (_activeTab == ManagementTab.Inventory && _inventoryMenu.Update())
             Render();
     }
 
-    /// <summary>Handle mouse hover at terminal coordinates.</summary>
-    public void OnMouseMove(int x, int y)
+    /// <summary>
+    /// Handle mouse hover at terminal coordinates.
+    /// Returns true when the cursor just entered a new interactive (highlighted) element — caller should play a tick sound.
+    /// </summary>
+    public bool OnMouseMove(int x, int y)
     {
         bool changed = false;
+        bool tick = false;
 
         // Check view tab rows in sidebar
         int newTabHover = GetTabAtPosition(x, y);
-        if (newTabHover != _hoveredTabIndex) { _hoveredTabIndex = newTabHover; changed = true; }
+        if (newTabHover != _hoveredTabIndex)
+        {
+            _hoveredTabIndex = newTabHover;
+            changed = true;
+            if (newTabHover >= 0) tick = true;
+        }
 
         // Check character rows in sidebar
         int newCharHover = GetCharacterAtPosition(x, y);
-        if (newCharHover != _hoveredCharIndex) { _hoveredCharIndex = newCharHover; changed = true; }
+        if (newCharHover != _hoveredCharIndex)
+        {
+            _hoveredCharIndex = newCharHover;
+            changed = true;
+            if (newCharHover >= 0) tick = true;
+        }
 
         // Check back button
         bool newBackHovered = IsOnBackButton(x, y);
-        if (newBackHovered != _backHovered) { _backHovered = newBackHovered; changed = true; }
+        if (newBackHovered != _backHovered)
+        {
+            _backHovered = newBackHovered;
+            changed = true;
+            if (newBackHovered) tick = true;
+        }
 
-        // Delegate to body viewer on Body tab, memory panel on Memory tab, humor menu on Humors tab
-        if (_activeTab == ManagementTab.Body)
+        // Delegate to content-area sub-renderers; tick when entering an interactive element
+        if (_activeTab == ManagementTab.Anatomy)
         {
             if (_bodyViewer.ProcessHover(x, y))
+            {
                 changed = true;
+                if (_bodyViewer.HoveredOrganPartName != null || _bodyViewer.HoveredBodyPartId != null)
+                    tick = true;
+            }
         }
         else if (_activeTab == ManagementTab.Memory)
         {
             if (_memoryPanel.ProcessHover(x, y))
+            {
                 changed = true;
+                if (_memoryPanel.IsHovering) tick = true;
+            }
         }
         else if (_activeTab == ManagementTab.Humors)
         {
             if (_humorMenu.ProcessHover(x, y))
+            {
                 changed = true;
+                if (_humorMenu.IsHovering) tick = true;
+            }
         }
         else if (_activeTab == ManagementTab.Inventory)
         {
             if (_inventoryMenu.ProcessHover(x, y))
+            {
                 changed = true;
+                if (_inventoryMenu.IsHovering) tick = true;
+            }
+        }
+        else if (_activeTab == ManagementTab.Routines)
+        {
+            if (_routinesPanel.ProcessHover(x, y))
+            {
+                changed = true;
+                if (_routinesPanel.IsHovering) tick = true;
+            }
         }
 
         if (changed)
             Render();
+
+        return tick;
     }
 
     /// <summary>Handle left click at terminal coordinates.</summary>
-    public void OnMouseClick(int x, int y)
+    /// <summary>
+    /// Selects a tab by name for <c>--cli</c>, which cannot click the tab strip. Returns false for
+    /// an unknown or disabled tab. Mirrors the click path in <see cref="OnMouseClick"/>, including
+    /// the routines porthole handover, so a scripted switch behaves like a real one.
+    /// </summary>
+    public bool CliSelectTab(string tabName)
+    {
+        // TabDefinition is a record struct, so FirstOrDefault yields default() rather than null on
+        // a miss — index first and check the index, or an unknown name silently selects Anatomy.
+        int idx = Array.FindIndex(AllTabs,
+            t => string.Equals(t.Label, tabName, StringComparison.OrdinalIgnoreCase));
+        if (idx < 0) return false;
+
+        var tabDef = AllTabs[idx];
+        if (!tabDef.Enabled) return false;
+
+        var previousTab = _activeTab;
+        _activeTab = tabDef.Tab;
+
+        if (previousTab == ManagementTab.Routines && _activeTab != ManagementTab.Routines)
+            OnRoutinesPortholeClosed?.Invoke();
+        if (_activeTab == ManagementTab.Routines && previousTab != ManagementTab.Routines)
+            _routinesPanel.OnActivated(_protagonist);
+
+        if (!IsCharacterVisibleForTab(_selectedCharacterIndex, _activeTab))
+            _selectedCharacterIndex = 0;
+
+        Render();
+        return true;
+    }
+
+    /// <summary>The tab labels a <c>--cli</c> script may pass to <see cref="CliSelectTab"/>.</summary>
+    public IReadOnlyList<string> CliTabNames =>
+        AllTabs.Where(t => t.Enabled).Select(t => t.Label).ToList();
+
+    /// <summary>Selects a carried item by name on the Inventory tab, so its info panel can be read.</summary>
+    public bool CliSelectItem(string itemName)
+    {
+        if (!CliSelectTab("Inventory")) return false;
+        if (!_inventoryMenu.CliSelectItem(itemName)) return false;
+        Render();
+        return true;
+    }
+
+    /// <summary>Everything the selected character is carrying, for <c>--cli</c> discovery.</summary>
+    public IReadOnlyList<string> CliCarriedItemNames => _inventoryMenu.CliCarriedItemNames;
+
+    /// <summary>
+    /// Handle left click at terminal coordinates. <b>Returns true when the click actually landed on
+    /// something</b> — the caller plays its click sound on that, not on every press.
+    ///
+    /// <para>The management screen is mostly art and read-only text, so a click anywhere in it used
+    /// to sound exactly like pressing a button. Reporting the hit here rather than re-hit-testing at
+    /// the call site keeps one answer: this method already knows what it did.</para>
+    /// </summary>
+    public bool OnMouseClick(int x, int y)
     {
         // Back button
         if (IsOnBackButton(x, y))
         {
+            if (_activeTab == ManagementTab.Routines)
+                OnRoutinesPortholeClosed?.Invoke();
             OnBack?.Invoke();
-            return;
+            return true;
         }
 
         // View tab click
@@ -326,7 +469,14 @@ public class ManagementMenuRenderer
             var tabDef = AllTabs[tabIdx];
             if (tabDef.Enabled)
             {
+                var previousTab = _activeTab;
                 _activeTab = tabDef.Tab;
+
+                // Routines tab owns a transparent minimap porthole + a focused world camera.
+                if (previousTab == ManagementTab.Routines && _activeTab != ManagementTab.Routines)
+                    OnRoutinesPortholeClosed?.Invoke();
+                if (_activeTab == ManagementTab.Routines && previousTab != ManagementTab.Routines)
+                    _routinesPanel.OnActivated(_protagonist);
 
                 if (!IsCharacterVisibleForTab(_selectedCharacterIndex, _activeTab))
                     _selectedCharacterIndex = 0;
@@ -335,7 +485,7 @@ public class ManagementMenuRenderer
                 // _selectedCharacterIndex was reset to 0 above, or the tab just became visible).
                 SwapMemberArt(GetPartyMember(_selectedCharacterIndex));
 
-                if (_activeTab != ManagementTab.Body)
+                if (_activeTab != ManagementTab.Anatomy)
                     _bodyViewer.ClearHover();
                 if (_activeTab != ManagementTab.Memory)
                     _memoryPanel.ClearHover();
@@ -343,9 +493,11 @@ public class ManagementMenuRenderer
                     _humorMenu.ClearHover();
                 if (_activeTab != ManagementTab.Inventory)
                     _inventoryMenu.ClearHover();
+                if (_activeTab != ManagementTab.Routines)
+                    _routinesPanel.ClearHover();
 
                 Render();
-                return;
+                return true;
             }
         }
 
@@ -360,23 +512,33 @@ public class ManagementMenuRenderer
                 SwapMemberArt(GetPartyMember(charIdx));
                 // Memory panel re-renders automatically via Render() with GetPartyMember(_selectedCharacterIndex)
                 Render();
-                return;
+                return true;
             }
         }
 
-        // Memory panel interactive clicks (slot selection + buttons)
-        if (_activeTab == ManagementTab.Memory)
+        // Content-area clicks. Each panel's ProcessClick already reports whether it consumed the
+        // press, which is exactly the answer this method owes its caller.
+        if (_activeTab == ManagementTab.Memory && _memoryPanel.ProcessClick(x, y))
         {
-            if (_memoryPanel.ProcessClick(x, y))
-                Render();
+            Render();
+            return true;
         }
 
-        // Inventory tab clicks
-        if (_activeTab == ManagementTab.Inventory)
+        if (_activeTab == ManagementTab.Inventory && _inventoryMenu.ProcessClick(x, y))
         {
-            if (_inventoryMenu.ProcessClick(x, y))
-                Render();
+            Render();
+            return true;
         }
+
+        // Routines tab: toggle a routine's lock state
+        if (_activeTab == ManagementTab.Routines && _routinesPanel.ProcessClick(x, y, _protagonist))
+        {
+            OnItemConsumed?.Invoke(); // reuse the click-SFX callback
+            Render();
+            return true;
+        }
+
+        return false;
     }
 
     /// <summary>Handle right click (no special behavior in management mode).</summary>
@@ -483,26 +645,34 @@ public class ManagementMenuRenderer
 
     private void RenderPartySection()
     {
-        // Section title
-        string title = "P A R T Y";
-        int titleX = ContentX + (ContentW - title.Length) / 2;
-        _terminal.Text(titleX, PartyTitleRow, title, Config.Colors.DarkYellowGrey, PanelBg);
-
-        // Thin divider
-        for (int tx = ContentX; tx < ContentX + ContentW; tx++)
-            _terminal.SetCell(tx, PartyDividerRow, '─', Config.Colors.DarkGray35, PanelBg);
-
         // Build the visible character list for this tab
         var visibleIndices = new List<int>();
         for (int i = 0; i < PartyCount; i++)
             if (IsCharacterVisibleForTab(i, _activeTab))
                 visibleIndices.Add(i);
 
+        // Bottom-anchor the block just above BACK so it never overlaps, whatever the party
+        // size. Items end one row above BACK; the divider/title sit above (with a blank gap
+        // between divider and the first item, matching the menu section's spacing).
+        int lastItemRow  = BackRow - 2;
+        int firstItemRow = lastItemRow - Math.Max(0, visibleIndices.Count - 1);
+        int dividerRow   = firstItemRow - 2;
+        int titleRow     = dividerRow - 1;
+
+        // Section title
+        string title = "P A R T Y";
+        int titleX = ContentX + (ContentW - title.Length) / 2;
+        _terminal.Text(titleX, titleRow, title, Config.Colors.DarkYellowGrey, PanelBg);
+
+        // Thin divider
+        for (int tx = ContentX; tx < ContentX + ContentW; tx++)
+            _terminal.SetCell(tx, dividerRow, '─', Config.Colors.DarkGray35, PanelBg);
+
         // Character items
         for (int vi = 0; vi < visibleIndices.Count; vi++)
         {
             int charIdx = visibleIndices[vi];
-            int row = PartyFirstItemRow + vi;
+            int row = firstItemRow + vi;
             bool isSelected = charIdx == _selectedCharacterIndex;
             bool isHovered = charIdx == _hoveredCharIndex;
 
@@ -560,7 +730,7 @@ public class ManagementMenuRenderer
     {
         string title = _activeTab switch
         {
-            ManagementTab.Body      => "B O D Y  /  O R G A N S",
+            ManagementTab.Anatomy   => "A N A T O M Y  /  O R G A N S",
             ManagementTab.Inventory => "I N V E N T O R Y",
             ManagementTab.Journal   => "J O U R N A L",
             ManagementTab.Memory    => "",  // memory panel renders its own full-width title
@@ -571,6 +741,32 @@ public class ManagementMenuRenderer
         _terminal.Text(BodyArtViewer.PanelContentX, RightTitleRow, title, Config.Colors.BrightYellow, Config.Colors.Black);
         _terminal.Text(BodyArtViewer.PanelContentX, RightSepRow, "──────────────────────────────", Config.Colors.DarkGray35, Config.Colors.Black);
     }
+
+    /// <summary>
+    /// The two identity lines heading the Anatomy tab: which anatomy this body is built on, and which
+    /// species it belongs to. Both matter to read the panel below — a beast's regions are muzzle and
+    /// limbs where a human's are visage, upper and lower limbs, and the species is what sets the organ
+    /// ceilings the bars are drawn against. A wolf and a cat share an anatomy and differ in nothing
+    /// else the panel shows, so neither line alone identifies a companion.
+    /// </summary>
+    private void RenderAnatomyIdentity()
+    {
+        var member = GetPartyMember(_selectedCharacterIndex);
+
+        void Line(int row, string label, string value)
+        {
+            _terminal.Text(BodyArtViewer.PanelContentX, row, label,
+                Config.Colors.DarkGray35, Config.Colors.Black);
+            _terminal.Text(BodyArtViewer.PanelContentX + IdentityValueX, row, value,
+                Config.Colors.LightGray75, Config.Colors.Black);
+        }
+
+        Line(ContentStartRow,     "Anatomy", member.AnatomyType.ToString());
+        Line(ContentStartRow + 1, "Species", member.Species.DisplayName);
+    }
+
+    /// <summary>Column, relative to the panel's content edge, the identity values line up on.</summary>
+    private const int IdentityValueX = 10;
 
     private void RenderInventoryPlaceholder()
     {
@@ -602,7 +798,7 @@ public class ManagementMenuRenderer
     {
         _terminal.Text(BodyArtViewer.PanelContentX, FooterSepRow, "──────────────────────────────", Config.Colors.DarkGray35, Config.Colors.Black);
 
-        if (_activeTab == ManagementTab.Body)
+        if (_activeTab == ManagementTab.Anatomy)
         {
             int totalScore = _bodyViewer.GetTotalScore();
             string pointsText = $"Total Points: {totalScore}";

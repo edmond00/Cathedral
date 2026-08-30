@@ -104,6 +104,69 @@ public sealed class HumorQueue
     }
 
     /// <summary>
+    /// Fill every slot with the provided humor instance.
+    /// Used during protagonist creation to start with a pure Blood baseline.
+    /// </summary>
+    public void FillWith(BodyHumor humor)
+    {
+        for (int i = 0; i < Capacity; i++)
+            _items[i] = humor;
+    }
+
+    /// <summary>
+    /// Fill every slot by secretion based on organ score, but never produce Black Bile.
+    /// Black bile's share of the distribution is redistributed proportionally across
+    /// Blood, Phlegm and Yellow Bile. Used at protagonist creation.
+    /// </summary>
+    public void FillWithSecretionSkippingBlackBile(int organScore, Random rng)
+    {
+        for (int i = 0; i < Capacity; i++)
+            _items[i] = CreateSecretedHumorNoBlackBile(organScore, rng);
+    }
+
+    /// <summary>
+    /// Randomly overwrite roughly <paramref name="percent"/>% of the slots with Juvenescence.
+    /// Each slot is independently converted with probability percent/100.
+    /// Used once at protagonist creation to seed the vigour of youth.
+    /// </summary>
+    public void SeedJuvenescence(int percent, Random rng)
+    {
+        if (percent <= 0) return;
+        for (int i = 0; i < Capacity; i++)
+            if (rng.Next(100) < percent)
+                _items[i] = new JuvenescenceHumor();
+    }
+
+    /// <summary>
+    /// TEMPORARY: Directly set a slot by index, bypassing queue logic.
+    /// Use only for testing humor display. Remove after verification.
+    /// </summary>
+    public void ForceSet(int index, BodyHumor humor) => _items[index] = humor;
+
+    /// <summary>
+    /// Replaces the whole queue with a saved one, front (newest) first. The load counterpart of
+    /// <see cref="Items"/>.
+    ///
+    /// <para>Order is the queue's entire meaning — which humor is spendable, which is about to fall
+    /// off the back, and how deep the black bile has stacked are all positional — so this takes the
+    /// full <see cref="Capacity"/> and refuses anything else rather than padding a short list and
+    /// silently shifting every position.</para>
+    ///
+    /// <para>Deliberately separate from <see cref="ForceSet"/>, which is a display-testing hook that
+    /// bypasses queue logic and is marked for removal. This is the documented load seam.</para>
+    /// </summary>
+    public void RestoreAll(IReadOnlyList<BodyHumor> humors)
+    {
+        if (humors == null) throw new ArgumentNullException(nameof(humors));
+        if (humors.Count != Capacity)
+            throw new ArgumentException(
+                $"A humor queue holds exactly {Capacity} places; got {humors.Count}.", nameof(humors));
+
+        for (int i = 0; i < Capacity; i++)
+            _items[i] = humors[i] ?? throw new ArgumentException($"Humor at place {i} is null.", nameof(humors));
+    }
+
+    /// <summary>
     /// Organ secretion: generate a new random humor, insert at front, remove from back.
     /// If the queue is critical (all black bile) nothing happens.
     /// Returns the newly secreted humor, or null when critical.
@@ -143,6 +206,30 @@ public sealed class HumorQueue
         // Shift everything right from front to make room at 0
         Array.Copy(_items, 0, _items, 1, Capacity - 1);
         _items[0] = newHumor;
+
+        return consumed;
+    }
+
+    /// <summary>
+    /// Spend the tail humor as a dice-roll modifier: remove the oldest non-black-bile item
+    /// (the same one <see cref="PeekConsumable"/> exposes) and shift the rest toward the back,
+    /// leaving a phlegm placeholder at the front. Unlike <see cref="Consume"/> the organ does
+    /// NOT secrete a replacement — the queue simply loses the spent humor and the next
+    /// non-black-bile item becomes the new usable tail.
+    /// Returns the removed humor, or null when the queue is critical (all black bile).
+    /// </summary>
+    public BodyHumor? ConsumeTailModifier()
+    {
+        int removeIdx = FindRemoveIndex();
+        if (removeIdx < 0) return null; // critical — nothing usable
+
+        BodyHumor consumed = _items[removeIdx];
+        RemoveAtIndex(removeIdx);
+
+        // RemoveAtIndex shifted everything from removeIdx+1 left and parked phlegm at the back.
+        // Open a fresh slot at the front (no secretion) so capacity stays full.
+        Array.Copy(_items, 0, _items, 1, Capacity - 1);
+        _items[0] = new PhlegmHumor();
 
         return consumed;
     }
@@ -202,20 +289,16 @@ public sealed class HumorQueue
     /// <summary>
     /// Randomly create a secreted humor instance using organ-score-based probabilities.
     ///
-    /// Secretion probabilities (score 1–10, all four always sum to 100 %):
-    ///   Blood    % = max(0, score * 8 - 3)
-    ///   Yellow   % = max(0, 40 - score * 3)
-    ///   Black    % = max(0, 50 - score * 5)
-    ///   Phlegm   % = 100 - other three         ← always 13 % regardless of score
+    /// Secretion probabilities come from <see cref="HumoralSecretionTable"/> (organ score 0–3,
+    /// beasts up to 4; all four always sum to 100 %).
     ///
     /// High score → mostly Blood / Phlegm; low score → Black Bile dominant.
     /// </summary>
     private static BodyHumor CreateSecretedHumor(int organScore, Random rng)
     {
-        int score = Math.Clamp(organScore, 0, 10);
-        int blood     = Math.Max(0, score * 8 - 3);
-        int yellow    = Math.Max(0, 40 - score * 3);
-        int blackbile = Math.Max(0, 50 - score * 5);
+        int blood     = HumoralSecretionTable.BloodPct(organScore);
+        int yellow    = HumoralSecretionTable.YellowBilePct(organScore);
+        int blackbile = HumoralSecretionTable.BlackBilePct(organScore);
         int phlegm    = 100 - blood - yellow - blackbile;
 
         int roll = rng.Next(100);
@@ -225,5 +308,27 @@ public sealed class HumorQueue
         roll -= phlegm;
         if (roll < yellow) return new YellowBileHumor();
         return new BlackBileHumor();
+    }
+
+    /// <summary>
+    /// Same secretion probabilities as <see cref="CreateSecretedHumor"/> but Black Bile is
+    /// excluded: its share is redistributed proportionally across Blood, Phlegm and Yellow Bile
+    /// by rolling within the non-black total. Used for protagonist-creation queue fills.
+    /// </summary>
+    private static BodyHumor CreateSecretedHumorNoBlackBile(int organScore, Random rng)
+    {
+        int blood  = HumoralSecretionTable.BloodPct(organScore);
+        int yellow = HumoralSecretionTable.YellowBilePct(organScore);
+        int black  = HumoralSecretionTable.BlackBilePct(organScore);
+        int phlegm = 100 - blood - yellow - black;
+
+        int total = blood + phlegm + yellow;
+        if (total <= 0) return new PhlegmHumor();
+
+        int roll = rng.Next(total);
+        if (roll < blood)  return new BloodHumor();
+        roll -= blood;
+        if (roll < phlegm) return new PhlegmHumor();
+        return new YellowBileHumor();
     }
 }

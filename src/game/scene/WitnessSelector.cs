@@ -30,8 +30,8 @@ public static class WitnessSelector
         if (visual != null)
             return new WitnessContext(WitnessType.Visual, visual);
 
-        // 2. Audio witness: adjacent areas (one hop in either direction)
-        foreach (var adjacent in GetAdjacentAreas(scene, pov.Where))
+        // 2. Audio witness: anyone within earshot — one graph hop, or through a connector.
+        foreach (var adjacent in SceneAdjacency.WithinEarshot(scene, pov.Where))
         {
             var audio = SelectFrom(scene, adjacent, pov.When);
             if (audio != null)
@@ -40,13 +40,6 @@ public static class WitnessSelector
 
         return WitnessContext.None;
     }
-
-    /// <summary>
-    /// Legacy helper: picks the best visual witness at <paramref name="area"/> or null.
-    /// Retained for call sites that only care about same-area witnesses.
-    /// </summary>
-    public static NpcEntity? Select(Scene scene, Area area, TimePeriod when)
-        => SelectFrom(scene, area, when);
 
     // ── Internals ────────────────────────────────────────────────────────────
 
@@ -68,26 +61,5 @@ public static class WitnessSelector
 
         // Fall back to highest authority level (guard > civilian).
         return candidates.OrderByDescending(n => n.AuthorityLevel).First();
-    }
-
-    /// <summary>
-    /// Returns all areas one hop away from <paramref name="area"/> in either direction.
-    /// </summary>
-    private static System.Collections.Generic.IEnumerable<Area> GetAdjacentAreas(Scene scene, Area area)
-    {
-        // Outgoing edges: areas reachable from the current area
-        foreach (var reachable in scene.GetReachableAreas(area))
-            yield return reachable;
-
-        // Incoming edges: areas from which the current area is reachable
-        foreach (var (fromId, targets) in scene.AreaGraph)
-        {
-            if (!targets.Contains(area.Id)) continue;
-            var fromArea = scene.Sections
-                .SelectMany(s => s.Areas)
-                .FirstOrDefault(a => a.Id == fromId);
-            if (fromArea != null && fromArea.Id != area.Id)
-                yield return fromArea;
-        }
     }
 }

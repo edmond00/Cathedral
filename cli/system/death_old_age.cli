@@ -1,0 +1,38 @@
+# Death by old age erases the save, and Continue goes with it.
+#
+# One of three death scripts (see death_starvation.cli, death_wounds.cli). Each proves the same two
+# things for a different cause: the death screen names it, and the run cannot be continued afterwards.
+# That second half is what makes the save system ironman rather than merely automatic — the save is
+# deleted in TriggerDeath, the funnel for all three causes, so it goes even if the player force-quits
+# at the death screen instead of pressing END RUN.
+#
+# Reached with --advance-days, which is applied on the first arrival at the world map immediately
+# BEFORE the old-age check — so a shove past any possible lifetime (the heart tops out at 43,200 days)
+# kills on arrival with no journey needed.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --advance-days 45000 --save-path .tmp-cli-save/death-age.json
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+
+# The clock is shoved past the lifetime before the world map becomes interactive, so the run ends
+# without the player ever choosing a destination.
+wait mode Death 45
+expect OLD AGE
+expect END RUN
+
+# Permadeath: the save is gone the moment the death fires, before END RUN is pressed.
+expect-state savefile save none
+
+click end-run
+wait mode MainMenu 20
+
+# Nothing to continue, and the menu says so.
+# Continue is state, not pixels — a disabled button differs only by colour on screen, so
+# this is asserted through inspect rather than by scanning the terminal.
+inspect menu
+expect-state menu Continue disabled
+
+quit

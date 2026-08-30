@@ -90,10 +90,25 @@ namespace Cathedral.Glyph
         // Decorative sky and cloud layers
         private SkyCloudRenderer? _skyCloudRenderer;
 
+        // Final full-screen shader layer (dither). Off by default; F/G/H cycle it.
+        private readonly PostProcessRenderer _postProcess = new();
+
+        /// <summary>The final shader layer, so game code can drive it without keyboard input.</summary>
+        public PostProcessRenderer PostProcess => _postProcess;
+
+        /// <summary>
+        /// Sets the cloud rotation speed multiplier (1.0 = normal, 5.0 = 5x faster).
+        /// </summary>
+        public void SetCloudSpeedMultiplier(float multiplier)
+        {
+            if (_skyCloudRenderer != null)
+                _skyCloudRenderer.SpeedMultiplier = multiplier;
+        }
+
         // Events for interface interaction
         public event Action<int, OpenTK.Mathematics.Vector2>? VertexHovered;
         public event Action<int, OpenTK.Mathematics.Vector2>? VertexClicked;
-        public event Action? CoreLoaded;
+        public event System.Action? CoreLoaded;
         public event Action<float>? UpdateRequested;
         public event Action<float>? MouseWheelScrolled;
         
@@ -154,6 +169,33 @@ namespace Cathedral.Glyph
         public int VertexCount => vertices.Count;
         public Vector3 GetVertexPosition(int index) => vertices[index].Position;
         public float GetVertexNoise(int index) => (index >= 0 && index < vertices.Count) ? vertices[index].Noise : 0f;
+
+        /// <summary>
+        /// Re-derives everything the sphere itself takes from the master seed, for a new run in the
+        /// same process. The mesh is untouched — it is a fixed icosphere and carries no randomness.
+        ///
+        /// <para>Two things are seeded here and are easy to miss, because neither lives in
+        /// <c>GenerateWorld</c>: the per-vertex pathfinding <c>Noise</c> set in <see cref="BuildSphere"/>,
+        /// and the per-edge jitter that <c>GlyphSphereGraph.ComputeEdgeJitter</c> derives whenever the
+        /// graph is built. Regenerating only the terrain would lay a brand-new world over the previous
+        /// world's travel costs — passable-looking, and quietly wrong.</para>
+        ///
+        /// <para>The jitter needs no explicit work: it is computed from the master seed at graph-build
+        /// time, so rebuilding the graph picks up the new seed by itself.</para>
+        /// </summary>
+        public void RebuildForNewSeed()
+        {
+            var random = new Random(GameRng.DerivedSeed("pathfinding-noise"));
+            for (int i = 0; i < vertices.Count; i++)
+            {
+                var v = vertices[i];
+                v.Noise = (float)random.NextDouble();
+                vertices[i] = v;
+            }
+
+            InitializePathfinding();
+            Console.WriteLine("GlyphSphereCore: pathfinding noise and graph rebuilt for the new seed.");
+        }
         
         // Public access to camera for external control
         /// <summary>
@@ -215,9 +257,54 @@ namespace Cathedral.Glyph
             }
         }
         
+        /// <summary>
+        /// The radius, in world units, within which a ray is taken to have hit a vertex's glyph.
+        ///
+        /// <para><b>This is the drawn size, and it has to stay that way.</b> The vertex shader
+        /// scales each quad by <c>QuadSize * VertexShaderSizeMultiplier * WorldGlyphScale</c>, and
+        /// the world is clicked by finding the nearest vertex inside this radius — so the moment
+        /// the size became a player setting, a fixed radius here would mean the hit target no
+        /// longer matched the picture: enlarged glyphs unclickable at their edges, shrunken ones
+        /// answering clicks on bare ground between them. Both are silent, and neither is reachable
+        /// by a CLI script, which injects a vertex index and never runs the picking maths at all.</para>
+        /// </summary>
+        public static float WorldGlyphPickRadius
+            => Config.GlyphSphere.QuadSize
+             * Config.GlyphSphere.VertexShaderSizeMultiplier
+             * Config.GlyphSphere.WorldGlyphScale;
+
+        /// <summary>
+        /// Sets the two uniforms the world-glyph settings drive, on whichever program is about to
+        /// draw. Every sphere program shares one vertex shader and thresholds the atlas the same
+        /// way, so both apply to all of them — including the debug variants, which would otherwise
+        /// draw at a different size from the game the moment a player touched the size row.
+        ///
+        /// <para>Both lookups are guarded: <c>GL.Uniform1(-1, …)</c> is a defined no-op, but a
+        /// missing uniform is then completely silent, which is the failure the terminal renderer
+        /// grew a warning for. Here the shaders are built from strings in this same file, so a
+        /// missing one means an edit went astray rather than a build drifting.</para>
+        /// </summary>
+        private void SetWorldGlyphUniforms(int shaderProgram)
+        {
+            int scaleLoc = GL.GetUniformLocation(shaderProgram, "uGlyphScale");
+            if (scaleLoc >= 0) GL.Uniform1(scaleLoc, Config.GlyphSphere.WorldGlyphScale);
+
+            int cutoffLoc = GL.GetUniformLocation(shaderProgram, "uGlyphCutoff");
+            if (cutoffLoc >= 0) GL.Uniform1(cutoffLoc, Config.GlyphSphere.WorldGlyphCutoff);
+        }
+
+        /// <summary>
+        /// Re-rasters the sphere atlas at the current world weight, for a change in how a glyph is
+        /// <b>drawn</b> rather than in which glyphs there are — the counterpart of
+        /// <c>GlyphAtlas.Rebuild()</c>, and needed for the same reason: the emboldening pen is
+        /// baked into the raster, so the Settings screen's world WEIGHT row would otherwise apply
+        /// its cutoff half alone and do something subtler than it claims.
+        /// </summary>
+        public void RebuildGlyphAtlasForWeight() => RebuildGlyphAtlas(currentGlyphSet);
+
         private void RebuildGlyphAtlas(string glyphSet)
         {
-            Console.WriteLine($"Rebuilding atlas with glyphs: \"{glyphSet}\"");
+            Cathedral.GameLog.WriteToFileOnly($"Rebuilding atlas with glyphs: \"{glyphSet}\"");
             
             // Dispose old texture
             if (glyphTexture != 0)
@@ -240,9 +327,23 @@ namespace Cathedral.Glyph
         protected override void OnLoad()
         {
             base.OnLoad();
+
+            // --hidden: take the window back off the screen. StartVisible=false is NOT sufficient
+            // on its own — OpenTK maps the window during Run() whatever the setting said — so it is
+            // hidden again here, once, at the first point where the window is known to exist.
+            if (Cathedral.Config.Debug.HiddenWindow)
+            {
+                IsVisible = false;
+                Console.WriteLine("Window: hidden after load (--hidden).");
+            }
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+
+            // Mirror the UI sound effects visually: every game event that fires a sound
+            // also pulses the dither. Only queues a request; the pulse itself is applied
+            // on the render thread in OnRenderFrame.
+            Cathedral.Audio.AmbianceEngine.GameEventFired += _postProcess.TriggerPulse;
 
             // Build shader
             program = CreateProgram(vertexShaderSrc, fragmentShaderSrc);
@@ -641,6 +742,24 @@ namespace Cathedral.Glyph
             // Update decorative sky/cloud animation
             _skyCloudRenderer?.Update((float)args.Time);
 
+            // Decay any dither pulse fired by a game event since the last frame
+            _postProcess.Update((float)args.Time);
+
+            // Hold right mouse to magnify around the cursor. Purely a post-process remap
+            // of the finished frame — the camera, hit-testing and game state never see it,
+            // so it works in any mode without interacting with what is on screen.
+            // MousePosition is client-relative and top-down; the texture's V runs bottom-up.
+            if (ClientSize.X > 0 && ClientSize.Y > 0)
+            {
+                _postProcess.SetZoom(
+                    MouseState.IsButtonDown(OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Right),
+                    MousePosition.X / ClientSize.X,
+                    1.0f - MousePosition.Y / ClientSize.Y);
+            }
+
+            // Redirect the whole frame into the post-process target (no-op when disabled)
+            _postProcess.Begin(ClientSize.X, ClientSize.Y);
+
             // Clear
             GL.ClearColor(0f, 0f, 0f, 1f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
@@ -670,15 +789,9 @@ namespace Cathedral.Glyph
             // Render terminal HUD overlay
             if (_terminal != null)
             {
-                // Darken terminal if popup is active (in fixed mode with visible content)
-                bool popupActive = false;
-                if (_popupTerminal != null && _popupTerminal.IsFixedMode)
-                {
-                    // Check if popup has any visible content
-                    popupActive = _popupTerminal.View.EnumerateCells().Any(c => c.cell.Character != ' ' || c.cell.BackgroundColor.W > 0.01f);
-                }
-                _terminal.SetDarkenFactor(popupActive ? 0.5f : 1.0f);
-                
+                // No blanket darkening while a popup is up: the narration panel now greys
+                // its own text (NarrativeController.Update -> DimContent), matching the
+                // generation preview box. Multiplying on top of that would double-dim it.
                 _terminal.Render(ClientSize);
             }
             
@@ -688,6 +801,9 @@ namespace Cathedral.Glyph
                 _popupTerminal.Render(ClientSize);
             }
 
+            // Final shader layer: resolve the offscreen frame to the window (no-op when disabled)
+            _postProcess.End(ClientSize.X, ClientSize.Y);
+
             SwapBuffers();
         }
 
@@ -696,27 +812,63 @@ namespace Cathedral.Glyph
             // Let camera handle its input first
             bool cameraHandled = _camera.ProcessInput(KeyboardState, args);
 
-            // Debug shader switching (D key)
-            if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D))
+            // Development shortcuts — render debugging and live post-process tuning. Inert in a
+            // shipped build (see Config.Debug.DeveloperKeys), where a stray D or F would otherwise
+            // leave a player looking at a wireframe sphere with no idea how to undo it.
+            //
+            // The camera keys are deliberately OUTSIDE this block: they are the player's controls.
+            if (Config.Debug.DeveloperKeys)
             {
-                debugShaderMode = (debugShaderMode + 1) % 5;
-                string description = debugShaderMode switch
+                // Debug shader switching (D key)
+                if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D))
                 {
-                    0 => "Normal rendering (texture + vertex colors)",
-                    1 => "Vertex colors only (no texture masking)",
-                    2 => "Texture only (white on black)",
-                    3 => "Wireframe/Debug view",
-                    4 => "Grayscale (luminosity-based grayscale)",
-                    _ => "Unknown"
-                };
-                Console.WriteLine($"Debug shader mode: {debugShaderMode} - {description}");
-            }
+                    debugShaderMode = (debugShaderMode + 1) % 5;
+                    string description = debugShaderMode switch
+                    {
+                        0 => "Normal rendering (texture + vertex colors)",
+                        1 => "Vertex colors only (no texture masking)",
+                        2 => "Texture only (white on black)",
+                        3 => "Wireframe/Debug view",
+                        4 => "Grayscale (luminosity-based grayscale)",
+                        _ => "Unknown"
+                    };
+                    Console.WriteLine($"Debug shader mode: {debugShaderMode} - {description}");
+                }
 
-            // Debug markers toggle (M key)
-            if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.M))
-            {
-                debugShowMarkers = !debugShowMarkers;
-                Console.WriteLine($"Debug markers: {(debugShowMarkers ? "ON" : "OFF")}");
+                // Debug markers toggle (M key)
+                if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.M))
+                {
+                    debugShowMarkers = !debugShowMarkers;
+                    Console.WriteLine($"Debug markers: {(debugShowMarkers ? "ON" : "OFF")}");
+                }
+
+                // Final shader layer: F cycles the dither, G its palette depth, H its grain size
+                if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.F))
+                {
+                    Console.WriteLine($"Post-process: {_postProcess.CycleMode()}");
+                }
+
+                if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.G))
+                {
+                    _postProcess.Levels = _postProcess.Levels switch
+                    {
+                        2 => 3, 3 => 4, 4 => 6, 6 => 8, 8 => 16, _ => 2
+                    };
+                    Console.WriteLine($"Post-process: {_postProcess.Describe()}");
+                }
+
+                if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.H))
+                {
+                    _postProcess.PixelScale = _postProcess.PixelScale >= 4 ? 1 : _postProcess.PixelScale + 1;
+                    Console.WriteLine($"Post-process: {_postProcess.Describe()}");
+                }
+
+                // J toggles the event pulses, for A/B-ing them against the resting dither
+                if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.J))
+                {
+                    _postProcess.PulsesEnabled = !_postProcess.PulsesEnabled;
+                    Console.WriteLine($"Post-process: {_postProcess.Describe()}");
+                }
             }
 
             // Center camera on protagonist (SPACE key)
@@ -782,7 +934,9 @@ namespace Cathedral.Glyph
                 int projLoc = GL.GetUniformLocation(currentWorldProgram, "uProj");
                 GL.UniformMatrix4(viewLoc, false, ref view);
                 GL.UniformMatrix4(projLoc, false, ref proj);
-                
+
+                SetWorldGlyphUniforms(currentWorldProgram);
+
                 int texLoc = GL.GetUniformLocation(currentWorldProgram, "uAtlas");
                 if (texLoc >= 0)
                 {
@@ -815,7 +969,9 @@ namespace Cathedral.Glyph
                 int projLoc = GL.GetUniformLocation(currentUIProgram, "uProj");
                 GL.UniformMatrix4(viewLoc, false, ref view);
                 GL.UniformMatrix4(projLoc, false, ref proj);
-                
+
+                SetWorldGlyphUniforms(currentUIProgram);
+
                 int texLoc = GL.GetUniformLocation(currentUIProgram, "uAtlas");
                 if (texLoc >= 0)
                 {
@@ -855,8 +1011,11 @@ namespace Cathedral.Glyph
             debugRayDirection = rayDir;
             debugMousePos = mouse;
 
-            // Find hovered vertex (only if mouse is not over terminal and interactions are enabled)
-            if (_worldInteractionsEnabled && (_terminal == null || !_terminal.IsPositionInTerminal(mouse, ClientSize)))
+            // Find hovered vertex (only if mouse is not over an opaque terminal cell
+            // and world interactions are enabled). In WorldView the terminal stays
+            // visible but most cells are transparent, so we use ConsumesMouseAt() to
+            // let vertex hovers fire over those transparent areas.
+            if (_worldInteractionsEnabled && (_terminal == null || !_terminal.ConsumesMouseAt(mouse, ClientSize)))
             {
                 int newHover = FindVertexByMagentaRayIntersection(mouse);
                 
@@ -992,7 +1151,7 @@ namespace Cathedral.Glyph
                 Vector3 vertexPos = vertices[i].Position;
                 float dist = Vector3.Distance(intersectionPoint, vertexPos);
                 
-                float maxDist = Config.GlyphSphere.QuadSize * Config.GlyphSphere.VertexShaderSizeMultiplier;
+                float maxDist = WorldGlyphPickRadius;
                 if (dist <= maxDist && dist < closestDist)
                 {
                     closestDist = dist;
@@ -1104,8 +1263,9 @@ namespace Cathedral.Glyph
 
             BuildIcosphere(subdivisions, radius);
 
-            // Initialize random with fixed seed for consistent pathfinding noise
-            var random = new Random(Config.GlyphSphere.PathfindingNoiseSeed);
+            // Initialize random from the master seed for consistent pathfinding noise
+            int pathfindingSeed = GameRng.DerivedSeed("pathfinding-noise");
+            var random = new Random(pathfindingSeed);
 
             // Initialize all vertices with default green dots and pathfinding noise
             for (int i = 0; i < vertices.Count; i++)
@@ -1125,7 +1285,7 @@ namespace Cathedral.Glyph
             }
 
             instanceCount = vertices.Count;
-            Console.WriteLine($"Generated {vertices.Count} vertices with pathfinding noise (seed: {Config.GlyphSphere.PathfindingNoiseSeed})");
+            Console.WriteLine($"Generated {vertices.Count} vertices with pathfinding noise (seed: {pathfindingSeed})");
         }
 
         private void BuildIcosphere(int subdivisions, float radius)
@@ -1469,6 +1629,11 @@ namespace Cathedral.Glyph
                     fontToUse = fallbackFont;
                 }
 
+                // Emboldening, the rastered half of a world-weight step. Zero at the shipped
+                // weight, so this draws exactly what it always did until the player asks for
+                // more. Scaled off the font actually in use, like the terminal's pen.
+                float strokeWidth = fontToUse.Size * Config.GlyphSphere.WorldGlyphStrokeFactor;
+
                 atlas.Mutate(ctx =>
                 {
                     var textOptions = new RichTextOptions(fontToUse)
@@ -1477,7 +1642,10 @@ namespace Cathedral.Glyph
                         HorizontalAlignment = HorizontalAlignment.Center,
                         VerticalAlignment = VerticalAlignment.Center
                     };
-                    ctx.DrawText(textOptions, glyph, Color.White);
+                    if (strokeWidth > 0f)
+                        ctx.DrawText(textOptions, glyph, Brushes.Solid(Color.White), Pens.Solid(Color.White, strokeWidth));
+                    else
+                        ctx.DrawText(textOptions, glyph, Color.White);
                 });
 
                 infos[i] = new GlyphInfo
@@ -1973,13 +2141,14 @@ layout(location = 7) in vec4 iColor;
 
 uniform mat4 uView;
 uniform mat4 uProj;
+uniform float uGlyphScale;   // Config.GlyphSphere.WorldGlyphScale, the world SIZE row
 
 out vec2 vUv;
 out vec4 vColor;
 
 void main()
 {{
-    vec3 worldPos = iPos + (iRight * aLocalPos.x + iUp * aLocalPos.y) * iSize * {Config.GlyphSphere.VertexShaderSizeMultiplier};
+    vec3 worldPos = iPos + (iRight * aLocalPos.x + iUp * aLocalPos.y) * iSize * {Config.GlyphSphere.VertexShaderSizeMultiplier} * uGlyphScale;
     gl_Position = uProj * uView * vec4(worldPos, 1.0);
     vUv = vec2(iUvRect.x + aLocalUV.x * iUvRect.z, iUvRect.y + aLocalUV.y * iUvRect.w);
     vColor = iColor;
@@ -1992,13 +2161,14 @@ in vec4 vColor;
 out vec4 FragColor;
 
 uniform sampler2D uAtlas;
+uniform float uGlyphCutoff;   // Config.GlyphSphere.WorldGlyphCutoff, the world WEIGHT row
 
 void main()
 {
     vec4 texSample = texture(uAtlas, vUv);
     float luminance = dot(texSample.rgb, vec3(0.299, 0.587, 0.114));
     
-    if (luminance > 0.1) {
+    if (luminance > uGlyphCutoff) {
         FragColor = vec4(vColor.rgb, 1.0);
     } else {
         discard;
@@ -2011,6 +2181,7 @@ in vec2 vUv;
 in vec4 vColor;
 out vec4 FragColor;
 uniform sampler2D uAtlas;
+uniform float uGlyphCutoff;   // Config.GlyphSphere.WorldGlyphCutoff, the world WEIGHT row
 void main() { FragColor = vColor; }";
 
         private readonly string debugFragmentSrc2 = @"
@@ -2019,10 +2190,11 @@ in vec2 vUv;
 in vec4 vColor;
 out vec4 FragColor;
 uniform sampler2D uAtlas;
+uniform float uGlyphCutoff;   // Config.GlyphSphere.WorldGlyphCutoff, the world WEIGHT row
 void main() {
     vec4 texSample = texture(uAtlas, vUv);
     float luminance = dot(texSample.rgb, vec3(0.299, 0.587, 0.114));
-    if (luminance > 0.1) { FragColor = vec4(1.0, 1.0, 1.0, 1.0); } else { discard; }
+    if (luminance > uGlyphCutoff) { FragColor = vec4(1.0, 1.0, 1.0, 1.0); } else { discard; }
 }";
 
         private readonly string debugFragmentSrc3 = @"
@@ -2031,12 +2203,13 @@ in vec2 vUv;
 in vec4 vColor;
 out vec4 FragColor;
 uniform sampler2D uAtlas;
+uniform float uGlyphCutoff;   // Config.GlyphSphere.WorldGlyphCutoff, the world WEIGHT row
 void main() {
     vec4 texSample = texture(uAtlas, vUv);
     float luminance = dot(texSample.rgb, vec3(0.299, 0.587, 0.114));
     vec2 grid = abs(fract(vUv * 10.0) - 0.5);
     float line = smoothstep(0.0, 0.05, min(grid.x, grid.y));
-    if (luminance > 0.1) { FragColor = vec4(mix(vec3(1.0, 0.0, 0.0), vColor.rgb, line), 1.0); } else { discard; }
+    if (luminance > uGlyphCutoff) { FragColor = vec4(mix(vec3(1.0, 0.0, 0.0), vColor.rgb, line), 1.0); } else { discard; }
 }";
 
         private readonly string debugFragmentSrc4 = @"
@@ -2045,11 +2218,12 @@ in vec2 vUv;
 in vec4 vColor;
 out vec4 FragColor;
 uniform sampler2D uAtlas;
+uniform float uGlyphCutoff;   // Config.GlyphSphere.WorldGlyphCutoff, the world WEIGHT row
 void main() {
     vec4 texSample = texture(uAtlas, vUv);
     float texLuminance = dot(texSample.rgb, vec3(0.299, 0.587, 0.114));
     
-    if (texLuminance > 0.1) {
+    if (texLuminance > uGlyphCutoff) {
         // Compute luminosity of the original vertex color
         float colorLuminance = dot(vColor.rgb, vec3(0.299, 0.587, 0.114));
         // Use the luminosity as a grayscale value
@@ -2065,11 +2239,12 @@ in vec2 vUv;
 in vec4 vColor;
 out vec4 FragColor;
 uniform sampler2D uAtlas;
+uniform float uGlyphCutoff;   // Config.GlyphSphere.WorldGlyphCutoff, the world WEIGHT row
 void main() {
     vec4 texSample = texture(uAtlas, vUv);
     float texLuminance = dot(texSample.rgb, vec3(0.299, 0.587, 0.114));
 
-    if (texLuminance > 0.1) {
+    if (texLuminance > uGlyphCutoff) {
         float colorLuminance = dot(vColor.rgb, vec3(0.299, 0.587, 0.114));
 
         if (vColor.a > 3.5) {
@@ -2101,11 +2276,12 @@ in vec2 vUv;
 in vec4 vColor;
 out vec4 FragColor;
 uniform sampler2D uAtlas;
+uniform float uGlyphCutoff;   // Config.GlyphSphere.WorldGlyphCutoff, the world WEIGHT row
 void main() {
     vec4 texSample = texture(uAtlas, vUv);
     float texLuminance = dot(texSample.rgb, vec3(0.299, 0.587, 0.114));
     
-    if (texLuminance > 0.1) {
+    if (texLuminance > uGlyphCutoff) {
         // Compute luminosity of the original vertex color
         float colorLuminance = dot(vColor.rgb, vec3(0.299, 0.587, 0.114));
         // Map luminosity to yellow scale: dark yellow (0.4, 0.4, 0.0) to bright yellow (1.0, 1.0, 0.0)
@@ -2125,12 +2301,13 @@ in vec2 vUv;
 in vec4 vColor;
 out vec4 FragColor;
 uniform sampler2D uAtlas;
+uniform float uGlyphCutoff;   // Config.GlyphSphere.WorldGlyphCutoff, the world WEIGHT row
 uniform float uDarkeningFactor;
 void main() {
     vec4 texSample = texture(uAtlas, vUv);
     float texLuminance = dot(texSample.rgb, vec3(0.299, 0.587, 0.114));
 
-    if (texLuminance > 0.1) {
+    if (texLuminance > uGlyphCutoff) {
         float colorLuminance = dot(vColor.rgb, vec3(0.299, 0.587, 0.114));
 
         if (vColor.a > 3.5) {
@@ -2267,13 +2444,11 @@ void main() { FragColor = vec4(vColor, 1.0); }";
                 // Verify the calculation
                 Vector3 calculatedCameraPos = _camera.GetCameraPosition();
                 
-                Console.WriteLine($"� Camera positioned like drone above protagonist");
-                Console.WriteLine($"  Protagonist position: {protagonistPosition}");
-                Console.WriteLine($"  Camera position: {calculatedCameraPos}");
-                Console.WriteLine($"  Calculated camera pos: {calculatedCameraPos}");
-                Console.WriteLine($"  Camera focused on target: {Vector3.Distance(protagonistPosition, Vector3.Zero) > 0}");
-                Console.WriteLine($"  Camera distance: {_camera.Distance:F2}");
-                Console.WriteLine($"  Camera angles: yaw={_camera.Yaw:F1}°, pitch={_camera.Pitch:F1}°");
+                // One file-only line where there were seven on the console — two of which printed
+                // the same value under different names, which is how long they had gone unread.
+                Cathedral.GameLog.WriteToFileOnly(
+                    $"Camera centred on protagonist at {protagonistPosition}; camera {calculatedCameraPos}, " +
+                    $"distance {_camera.Distance:F2}, yaw {_camera.Yaw:F1}°, pitch {_camera.Pitch:F1}°");
             }
         }
 
@@ -2302,6 +2477,8 @@ void main() { FragColor = vec4(vColor, 1.0); }";
             _skyCloudRenderer?.Dispose();
             _pathfindingService?.Dispose();
             _terminal?.Dispose();
+            Cathedral.Audio.AmbianceEngine.GameEventFired -= _postProcess.TriggerPulse;
+            _postProcess.Dispose();
             base.OnUnload();
         }
     }

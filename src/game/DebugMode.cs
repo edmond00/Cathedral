@@ -38,15 +38,37 @@ public static class DebugMode
     /// <summary>Current strategy for the action being executed.</summary>
     public static DebugStrategy CurrentStrategy { get; private set; } = DebugStrategy.Custom;
 
-    /// <summary>True when the current strategy is Auto — LLM and RNG run normally, no override.</summary>
-    public static bool IsAutoStrategy => CurrentStrategy == DebugStrategy.Auto;
+    /// <summary>
+    /// Set the strategy without prompting. Used by <c>--cli</c> (the <c>strategy</c> command) so an
+    /// automated run can pin an action's outcome up front instead of answering console prompts.
+    /// </summary>
+    public static void SetStrategy(DebugStrategy strategy) => CurrentStrategy = strategy;
 
     /// <summary>
-    /// Set to true while the failure outcome tree (wound selection) is being evaluated.
-    /// Causes GetCriticOverride to prompt interactively regardless of strategy,
-    /// so the user can control which wound is inflicted.
+    /// Parse a strategy name accepted by the CLI <c>strategy</c> command.
+    /// Returns null when the name is not recognised.
     /// </summary>
-    public static bool InFailureOutcomeTree { get; set; } = false;
+    public static DebugStrategy? ParseStrategy(string name) => name.Trim().ToLowerInvariant() switch
+    {
+        "fail-plausibility" or "failplausibility" => DebugStrategy.FailPlausibility,
+        "fail-dice" or "faildice" or "fail"       => DebugStrategy.FailDiceRoll,
+        "succeed" or "success" or "pass"          => DebugStrategy.Succeed,
+        "custom"                                  => DebugStrategy.Custom,
+        "auto"                                    => DebugStrategy.Auto,
+        _                                         => null,
+    };
+
+    /// <summary>
+    /// True when console prompts must not block. Under <c>--cli</c> stdin belongs to the command
+    /// driver, so a blocking <see cref="Console.ReadLine"/> from a background LLM task would steal
+    /// commands and deadlock the run. In that case the preset <see cref="CurrentStrategy"/> answers
+    /// every decision instead, and <see cref="DebugStrategy.Custom"/> degrades to letting the
+    /// LLM/RNG decide.
+    /// </summary>
+    private static bool NonInteractive => Cli.CliMode.IsActive;
+
+    /// <summary>True when the current strategy is Auto — LLM and RNG run normally, no override.</summary>
+    public static bool IsAutoStrategy => CurrentStrategy == DebugStrategy.Auto;
 
     /// <summary>
     /// Print all available actions and their outcomes to the console.
@@ -75,9 +97,16 @@ public static class DebugMode
     /// </summary>
     public static void PromptActionStrategy(string actionText, string outcomeSummary)
     {
+        // Under --cli the strategy is preset by the `strategy` command; never block on stdin.
+        if (NonInteractive)
+        {
+            Cli.CliMode.Emit($"action-strategy {CurrentStrategy} action=\"{actionText}\" outcome=\"{outcomeSummary}\"");
+            return;
+        }
+
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine();
-        Console.WriteLine($"[DEBUG] ═══ Action Strategy ═══");
+        Console.WriteLine($"[DEBUG] ═══ VerbAction Strategy ═══");
         Console.WriteLine($"  Action:  {actionText}");
         Console.WriteLine($"  Outcome: {outcomeSummary}");
         Console.WriteLine();
@@ -140,6 +169,13 @@ public static class DebugMode
     /// </summary>
     public static string? PromptCriticNode(string nodeName, string question, List<CriticChoice> choices)
     {
+        // Custom (per-node prompting) is interactive by nature; under --cli fall back to the LLM.
+        if (NonInteractive)
+        {
+            Cli.CliMode.Emit($"critic-node {nodeName} → auto (custom prompts disabled under --cli)");
+            return null;
+        }
+
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine();
         Console.WriteLine($"[DEBUG] Critic Node: {nodeName}");
@@ -190,14 +226,29 @@ public static class DebugMode
     /// Prompt the user to choose whether a dice roll succeeds or fails.
     /// Returns true for success, false for failure.
     /// Only called when CurrentStrategy is Custom.
+    /// <para>
+    /// The roll being overridden is <paramref name="numberOfDice"/> d6 needing
+    /// <paramref name="difficulty"/> sixes — that is the whole model, so those are the numbers
+    /// shown. Nothing else weighs on the outcome.
+    /// </para>
     /// </summary>
-    public static bool PromptDiceRoll(string actionText, double successProbability)
+    public static bool PromptDiceRoll(string actionText, int numberOfDice, int difficulty)
     {
+        string odds = $"{numberOfDice} dice, need {difficulty} six{(difficulty == 1 ? "" : "es")}";
+
+        // No stdin under --cli: succeed by default so a scripted run makes progress. Pin the
+        // outcome explicitly with `strategy succeed` / `strategy fail-dice`.
+        if (NonInteractive)
+        {
+            Cli.CliMode.Emit($"dice-roll auto=success ({odds}) (use `strategy fail-dice` to force failure)");
+            return true;
+        }
+
         Console.ForegroundColor = ConsoleColor.Cyan;
         Console.WriteLine();
         Console.WriteLine($"[DEBUG] Dice Roll");
         Console.WriteLine($"  Action: {actionText}");
-        Console.WriteLine($"  Success probability: {successProbability:P0}");
+        Console.WriteLine($"  Roll: {odds}");
         Console.WriteLine($"  1) Success");
         Console.WriteLine($"  2) Failure");
         Console.Write($"  Choice [1/2]: ");
@@ -236,10 +287,6 @@ public static class DebugMode
     /// </summary>
     public static string? GetCriticOverride(string nodeName, string question, List<CriticChoice> choices, bool isPlausibilityNode)
     {
-        // Wound selection is always prompted so the user controls which wound is inflicted.
-        if (InFailureOutcomeTree)
-            return PromptCriticNode(nodeName, question, choices);
-
         var failureChoice = choices.FirstOrDefault(c => c.IsFailure);
         var passChoice = choices.FirstOrDefault(c => !c.IsFailure);
 
@@ -276,7 +323,7 @@ public static class DebugMode
     /// Returns the dice roll override based on the current strategy.
     /// For non-Custom strategies, returns the auto-answer without prompting.
     /// </summary>
-    public static bool GetDiceRollOverride(string actionText, double successProbability)
+    public static bool GetDiceRollOverride(string actionText, int numberOfDice, int difficulty)
     {
         switch (CurrentStrategy)
         {
@@ -298,7 +345,7 @@ public static class DebugMode
 
             case DebugStrategy.Custom:
             default:
-                return PromptDiceRoll(actionText, successProbability);
+                return PromptDiceRoll(actionText, numberOfDice, difficulty);
         }
     }
 }

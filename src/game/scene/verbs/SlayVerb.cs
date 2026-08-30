@@ -1,13 +1,16 @@
 using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 
+using Cathedral.Game.Narrative.ModiMentis;
+
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
 /// Kills a living NPC without combat. Only possible when the player is in the same area
 /// as the NPC and the NPC is currently alive.
-/// On execution: sets <c>IsAlive = false</c>, spawns a <see cref="Cathedral.Game.Npc.Corpse.CorpseSpot"/>
-/// in the current area, and registers it in the scene.
+/// On execution: sets <c>IsAlive = false</c>, spawns the NPC's remains — a
+/// <see cref="Cathedral.Game.Npc.Corpse.CorpsePointOfInterest"/>, plus a belongings PoI for a human —
+/// in the current area, and registers them in the scene.
 /// </summary>
 public class SlayVerb : Verb
 {
@@ -15,28 +18,59 @@ public class SlayVerb : Verb
     public override string DisplayName    => "Slay";
     public override int    BaseDifficulty => 3;
 
-    /// <summary>Slaying a living person is never a legal action.</summary>
-    public override bool IsLegal => false;
+    /// <summary>What a success teaches: killing without giving the other a fight.</summary>
+    public override string? GrantedModusMentisId(Element? target) => "low_blow";
+
+    /// <summary>
+    /// Killing somebody outright, without the fight that ATTACK opens, takes a blade in the hand.
+    ///
+    /// <para>This costs a beast the verb entirely, which is deliberate: <c>Required</c> implies
+    /// <see cref="AnatomyCapability.Handcraft"/> through <c>EffectiveCapabilities</c>, so a wolf is
+    /// never <i>offered</i> SLAY rather than being offered it and charged a noetic point for a
+    /// refusal it could never have avoided. ATTACK remains, and a wolf that means to kill something
+    /// fights it.</para>
+    /// </summary>
+    public override ToolUsage ToolUse => ToolUsage.Required;
+
+    public override IReadOnlyList<string> ReferenceToolIds => new[] { "knife" };
+
+    /// <summary>
+    /// Killing is a crime — unless the one being killed already counts you an enemy. Finishing
+    /// somebody who has declared for your death is not what a witness would call murder.
+    /// </summary>
+    protected override bool IsIllegalFor(Scene scene, PoV pov, Element? target, PartyMember? actor)
+        => !TargetIsAlreadyHostile(target, actor);
 
     /// <summary>Slaying is an attack — it can be attempted even under direct threat.</summary>
     public override bool CanBeUsedUnderThreat => true;
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (target is not SceneNpc npc) return false;
         if (!npc.IsAlive) return false;
-        if (pov.InSpot != null) return false;  // can't slay from inside a spot
+
+        // Tiny creatures get catch/crush instead. Slaying a snail is not a thing anyone does, and
+        // offering it beside "crush" reads as a bug rather than as a choice.
+        if (npc.Entity.Archetype is Cathedral.Game.Npc.ShallowNpcArchetype { IsTiny: true }) return false;
 
         // NPC must be present at the current area and time
         return scene.GetNpcsAt(pov.Where, pov.When).Exists(n => n.Id == npc.Id);
     }
 
+    // Named NPCs are introduced once in the prompt's attention line, so the verbatim refers back
+    // by pronoun; shallow wildlife keeps its type name ("slay the crab").
     public override string Verbatim(Scene scene, PoV pov, Element target)
-        => $"slay the {target.DisplayName.ToLowerInvariant()}";
+        => target is SceneNpc { Entity: Cathedral.Game.Npc.NpcEntity }
+            ? $"slay {NpcPronoun(target)}"
+            : $"slay the {target.DisplayName.ToLowerInvariant()}";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
+    // Read out of context in the routines menu, so the pronoun is replaced by the name.
+    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
+        => $"slay {NpcName(target)}";
+
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
-        if (target is not SceneNpc npc) return System.Array.Empty<OutcomeReport>();
+        if (target is not SceneNpc npc) return System.Array.Empty<Outcome>();
         return new[] { new NpcSlaynOutcome(npc) };
     }
 }

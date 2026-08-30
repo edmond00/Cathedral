@@ -24,19 +24,4 @@ public enum WitnessType
 public record WitnessContext(WitnessType Type, NpcEntity? Witness)
 {
     public static readonly WitnessContext None = new(WitnessType.None, null);
-
-    /// <summary>
-    /// Natural-language description of the witness situation, injected into LLM prompts.
-    /// Returns empty string when there is no witness.
-    /// </summary>
-    public string ToPromptDescription() => Type switch
-    {
-        WitnessType.Visual =>
-            $"There is a potential witness ({Witness?.DisplayName ?? "someone"}) right here" +
-            " who could see and hear everything.",
-        WitnessType.Audio =>
-            $"There is a potential witness ({Witness?.DisplayName ?? "someone"}) a few steps away" +
-            " who might hear any noise.",
-        _ => string.Empty,
-    };
 }

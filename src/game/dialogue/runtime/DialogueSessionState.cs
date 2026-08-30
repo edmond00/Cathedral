@@ -4,37 +4,24 @@ using Cathedral.Game.Narrative;
 
 namespace Cathedral.Game.Dialogue.Runtime;
 
-// ── Log entry types ───────────────────────────────────────────────────────────
-
-public enum DialogueLogEntryType { NpcSpeaking, PlayerReplica, SystemMessage, Separator }
-
-public class DialogueLogEntry
-{
-    public DialogueLogEntryType Type    { get; }
-    public string?              Speaker { get; }
-    public string               Text    { get; }
-
-    public DialogueLogEntry(DialogueLogEntryType type, string? speaker, string text)
-    {
-        Type    = type;
-        Speaker = speaker;
-        Text    = text;
-    }
-}
-
 // ── Player option ─────────────────────────────────────────────────────────────
 
 /// <summary>One generated player reply option shown during option-selection phase.</summary>
 public class PlayerReplicaOption
 {
-    public ModusMentis      Skill        { get; }
-    public DialogueTreeNode TargetNode   { get; }
-    public string           ReplicaText  { get; }
+    /// <summary>The Modus Mentis that voiced this option; its level feeds the branch dice pool.</summary>
+    public ModusMentis  Skill       { get; }
 
-    public PlayerReplicaOption(ModusMentis skill, DialogueTreeNode targetNode, string replicaText)
+    /// <summary>The authored option chosen; <see cref="PlayerOption.Next"/> is where selecting it leads.</summary>
+    public PlayerOption Option      { get; }
+
+    /// <summary>The persona-rewritten line shown to the player (real names restored).</summary>
+    public string       ReplicaText { get; }
+
+    public PlayerReplicaOption(ModusMentis skill, PlayerOption option, string replicaText)
     {
         Skill       = skill;
-        TargetNode  = targetNode;
+        Option      = option;
         ReplicaText = replicaText;
     }
 }
@@ -94,14 +81,22 @@ public class DialogueSessionState
     }
 
     // ── Content ───────────────────────────────────────────────────────────────
-    public List<DialogueLogEntry>     Log     { get; } = new();
+    // Spoken lines live in the narration session's shared NarrationScrollBuffer, which also owns the
+    // scroll position — only the selectable replies are session-local.
     public List<PlayerReplicaOption>  Options { get; set; } = new();
 
     // ── Selection ─────────────────────────────────────────────────────────────
     public int HoveredOptionIndex { get; set; } = -1;
 
-    // ── Scroll ────────────────────────────────────────────────────────────────
-    public int ScrollOffset { get; set; }
+    // ── Footer exit button (LEAVE / INTERRUPT) ────────────────────────────────
+    /// <summary>Click region of the footer button; default (Width 0) while hidden.</summary>
+    public (int X, int Y, int Width) ExitButtonRegion { get; set; }
+    public bool IsExitButtonHovered { get; set; }
+
+    // ── Generation preview box CONTINUE button ─────────────────────────────────
+    /// <summary>Click region of the preview box CONTINUE; default (Width 0) while not clickable.</summary>
+    public (int X, int Y, int Width) PreviewContinueRegion { get; set; }
+    public bool IsPreviewHovered { get; set; }
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
     public bool ConversationEnded { get; set; }
@@ -120,10 +115,12 @@ public class DialogueSessionState
         OptionsLoaded       = 0;
         OptionsTotal        = 0;
         ClearDiceRoll();
-        Log.Clear();
         Options.Clear();
         HoveredOptionIndex  = -1;
-        ScrollOffset        = 0;
+        ExitButtonRegion    = default;
+        IsExitButtonHovered = false;
+        PreviewContinueRegion = default;
+        IsPreviewHovered    = false;
         ConversationEnded   = false;
         RequestedExit       = false;
         ErrorMessage        = null;

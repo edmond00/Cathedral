@@ -9,7 +9,7 @@ namespace Cathedral.Game.Narrative;
 /// Represents a discrete narrative context within a location that can be reached as an outcome.
 /// Implements IObservation: a node IS its own observation whose outcomes are its items + child NarrationNodes.
 /// </summary>
-public abstract class NarrationNode : ConcreteOutcome, IObservation
+public abstract class NarrationNode : IObservation
 {
     /// <summary>
     /// Unique identifier for this node (e.g., "clearing", "stream").
@@ -32,34 +32,19 @@ public abstract class NarrationNode : ConcreteOutcome, IObservation
     /// All possible outcomes available from this node.
     /// Populated at runtime by NarrationGraphFactory.
     /// </summary>
-    public List<OutcomeBase> PossibleOutcomes { get; set; } = new();
+    public List<INarratable> PossibleOutcomes { get; set; } = new();
 
     /// <summary>
     /// Can this node be used as an entry point when entering the location?
     /// </summary>
     public abstract bool IsEntryNode { get; }
 
-    /// <summary>
-    /// NPC encounter slots for this node. Used by <see cref="NarrationGraphFactory.BuildNpcs"/>
-    /// at graph-construction time to decide whether to include an NPC in this location.
-    /// Empty by default (no encounters).
-    /// </summary>
-    public virtual List<NpcEncounterSlot> PossibleEncounters => new();
 
-    /// <summary>
-    /// Returns the items available at this node. Override in subclasses to list items explicitly.
-    /// </summary>
-    public virtual List<Item> GetItems() => new();
-
-    /// <summary>
-    /// Gets all items available at this node. Delegates to <see cref="GetItems"/>.
-    /// </summary>
-    public List<Item> GetAvailableItems() => GetItems();
 
     /// <summary>
     /// Display name is just the node type without qualifiers (e.g., "clearing" not "sun-dappled clearing").
     /// </summary>
-    public override string DisplayName => NodeId;
+    public string DisplayName => NodeId;
 
     /// <summary>
     /// Generates a neutral description with random qualifiers for variety.
@@ -83,25 +68,23 @@ public abstract class NarrationNode : ConcreteOutcome, IObservation
     public virtual string BuildLocationContext(WorldContext worldContext, int locationId)
         => $"You are in a {worldContext.GenerateContextDescription(locationId)}. You are currently {GenerateEnrichedContextDescription(locationId)}.";
 
-    public override string ToNaturalLanguageString() => TransitionDescription;
+    public string ToNaturalLanguageString() => TransitionDescription;
 
     /// <summary>
     /// Gets all concrete outcomes directly available at this node (child nodes + items + spawned NPCs).
     /// Used for sampling which outcomes to generate observation sentences for.
     /// All ConcreteOutcomes are included regardless of keywords — keywords are found dynamically.
     /// </summary>
-    public List<ConcreteOutcome> GetAllDirectConcreteOutcomes()
+    public List<NarrativeAnchor> GetAllDirectConcreteOutcomes()
     {
-        var outcomes = new List<ConcreteOutcome>();
+        var outcomes = new List<NarrativeAnchor>();
 
         foreach (var outcome in PossibleOutcomes)
         {
-            if (outcome is ConcreteOutcome co)
+            if (outcome is NarrativeAnchor co)
                 outcomes.Add(co);
         }
 
-        foreach (var item in GetAvailableItems())
-            outcomes.Add(item);
 
         return outcomes;
     }
@@ -112,27 +95,14 @@ public abstract class NarrationNode : ConcreteOutcome, IObservation
     /// </summary>
     public List<IObservation> GetObservations()
     {
-        var result = new List<IObservation>();
-        foreach (var outcome in PossibleOutcomes)
-        {
-            if (outcome is ObservationObject obs) result.Add(obs);
-            else if (outcome is NarrationNode nn) result.Add(nn);
-        }
-        foreach (var item in GetAvailableItems())
-            result.Add(item);
-        return result;
+        // Observation objects only. Nodes used to be reachable from one another through
+        // PossibleOutcomes, but nothing has built such an edge since the scene graph replaced the
+        // hand-authored one.
+        return PossibleOutcomes.OfType<ObservationObject>().Cast<IObservation>().ToList();
     }
 
     // ── IObservation ──────────────────────────────────────────────────────────
     string IObservation.ObservationId => NodeId;
-    IReadOnlyList<ConcreteOutcome> IObservation.ObservationOutcomes
-    {
-        get
-        {
-            var result = new List<ConcreteOutcome>();
-            result.AddRange(GetAvailableItems());
-            result.AddRange(PossibleOutcomes.OfType<NarrationNode>());
-            return result.AsReadOnly();
-        }
-    }
+    IReadOnlyList<NarrativeAnchor> IObservation.ObservationOutcomes =>
+        PossibleOutcomes.OfType<NarrativeAnchor>().ToList().AsReadOnly();
 }

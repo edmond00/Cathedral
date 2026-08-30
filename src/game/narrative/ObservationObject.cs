@@ -14,11 +14,11 @@ namespace Cathedral.Game.Narrative;
 /// REFLECT + GOAL before WHY/HOW/WHAT. The GOAL choices include all SubOutcomes plus the
 /// "ignore and move on" sentinel.
 ///
-/// Keywords are found dynamically in LLM-generated text by <see cref="KeywordFallbackService"/>.
-/// The description returned by <see cref="GenerateNeutralDescription"/> is used by the LLM
-/// as context when selecting the best keyword; make it rich and noun-phrase.
+/// The observation persona rewrite selects the clickable keyword from its styled text; the
+/// description returned by <see cref="GenerateNeutralDescription"/> is the neutral meaning the
+/// rewrite re-expresses, so make it rich and noun-phrase.
 /// </summary>
-public abstract class ObservationObject : ConcreteOutcome, IObservation
+public abstract class ObservationObject : NarrativeAnchor, IObservation
 {
     /// <summary>
     /// Unique identifier for this observation (e.g., "fox_den", "owl_pellet_site").
@@ -26,10 +26,44 @@ public abstract class ObservationObject : ConcreteOutcome, IObservation
     public abstract string ObservationId { get; }
 
     /// <summary>
+    /// Short, human-readable name in a few words (e.g. "fox den", "old well", "Hugh Furrow").
+    /// Used to build the choice enum when the observation Modus Mentis picks which object to observe.
+    /// Distinct from <see cref="GenerateNeutralDescription"/>, which is the longer description.
+    /// </summary>
+    public abstract string NeutralName { get; }
+
+    /// <summary>
+    /// Extra names <c>--observe-only</c> may target this object by, beyond its neutral name and id.
+    /// Empty for most things; an NPC adds its species, because a beast placed by
+    /// <c>--spawn-beast wolf</c> is called something like "Stormtusk" and a test naturally asks for
+    /// the wolf. Test-targeting only — nothing in play or in a prompt reads this.
+    /// </summary>
+    public virtual System.Collections.Generic.IEnumerable<string> TargetingAliases
+        => System.Array.Empty<string>();
+
+    /// <summary>
+    /// Natural, articled noun phrase used to fill neutral sentence templates — e.g. "a beech tree",
+    /// "an old well". Distinct from <see cref="NeutralName"/> ("Beech Tree"), which is a title and
+    /// would read unnaturally mid-sentence ("...shifts to Beech Tree"). The default lower-cases
+    /// <see cref="NeutralName"/> and prepends an article; NPC observation objects override this to
+    /// keep the proper name verbatim ("Hugh Furrow").
+    /// </summary>
+    public virtual string NeutralPhrase => NeutralNarration.NounPhrase(NeutralName.ToLowerInvariant());
+
+    /// <summary>
+    /// One word naming the object's core noun (e.g. "tree", "well", "scarecrow"), used as the
+    /// anchor when picking the clickable keyword: the noun in the generated text most semantically
+    /// related to this word becomes the keyword. The keyword extractor lemmatizes this value, so a
+    /// plural head word ("stones") still anchors on its lemma ("stone"). Defined explicitly by every
+    /// concrete observation object — never inferred from the display name.
+    /// </summary>
+    public abstract string ReferenceLemma { get; }
+
+    /// <summary>
     /// All concrete sub-outcomes reachable through this observation (items, node transitions).
     /// Populated in the subclass constructor.
     /// </summary>
-    public List<ConcreteOutcome> SubOutcomes { get; protected set; } = new();
+    public List<NarrativeAnchor> SubOutcomes { get; protected set; } = new();
 
     /// <summary>
     /// Generates a rich noun-phrase description of this observation used both in LLM prompts
@@ -39,12 +73,7 @@ public abstract class ObservationObject : ConcreteOutcome, IObservation
     /// </summary>
     public abstract string GenerateNeutralDescription(int locationId = 0);
 
-    /// <summary>
-    /// Optional NPC encounter slots associated with this observation.
-    /// </summary>
-    public virtual List<NpcEncounterSlot> AssociatedEncounters => new();
-
-    // ── ConcreteOutcome overrides ─────────────────────────────────────────────
+    // ── NarrativeAnchor overrides ─────────────────────────────────────────────
 
     /// <inheritdoc/>
     public override string DisplayName => ObservationId;
@@ -54,6 +83,6 @@ public abstract class ObservationObject : ConcreteOutcome, IObservation
 
     // ── IObservation ──────────────────────────────────────────────────────────
     string IObservation.ObservationId => ObservationId;
-    IReadOnlyList<ConcreteOutcome> IObservation.ObservationOutcomes =>
+    IReadOnlyList<NarrativeAnchor> IObservation.ObservationOutcomes =>
         SubOutcomes.AsReadOnly();
 }

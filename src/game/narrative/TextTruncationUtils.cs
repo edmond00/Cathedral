@@ -69,10 +69,16 @@ public static class TextTruncationUtils
 
     /// <summary>
     /// Ensures LLM-generated text ends gracefully. If the text already ends with sentence-ending
-    /// punctuation (. ! ?) it is returned as-is. Otherwise "..." is appended to signal that the
-    /// text was cut mid-sentence, without removing the incomplete sentence.
+    /// punctuation (. ! ?) it is returned as-is. Otherwise the dangling half-sentence after the last
+    /// full stop is dropped and "..." is put in its place, so the text ends on a complete thought
+    /// ("…recalled easily at first...") instead of mid-clause ("…half-shapes from a...").
+    ///
+    /// The cut is guarded: when the dangling fragment is a large share of the whole text
+    /// (<paramref name="maxDroppedFraction"/>, 30% by default) it is kept — a model that wrote no
+    /// full stop at all would otherwise lose most of what it generated, and "..." alone is the
+    /// lesser evil. The same guard covers a text with no sentence-ending punctuation whatsoever.
     /// </summary>
-    public static string TrimToLastSentence(string text)
+    public static string TrimToLastSentence(string text, double maxDroppedFraction = 0.30)
     {
         if (string.IsNullOrWhiteSpace(text))
             return text;
@@ -81,6 +87,20 @@ public static class TextTruncationUtils
 
         if (text.EndsWith('.') || text.EndsWith('!') || text.EndsWith('?'))
             return text;
+
+        int lastSentenceEnd = Math.Max(text.LastIndexOf('.'),
+                                       Math.Max(text.LastIndexOf('!'), text.LastIndexOf('?')));
+        if (lastSentenceEnd >= 0)
+        {
+            string dropped = text.Substring(lastSentenceEnd + 1).Trim();
+            if (dropped.Length <= text.Length * maxDroppedFraction)
+            {
+                string kept = text.Substring(0, lastSentenceEnd + 1).TrimEnd();
+                // A trailing "." becomes the ellipsis itself; "!" and "?" keep their punctuation and
+                // take the ellipsis after it (an existing "..." must not grow to ".....").
+                return kept.EndsWith('.') ? kept.TrimEnd('.') + "..." : kept + "...";
+            }
+        }
 
         return text + "...";
     }

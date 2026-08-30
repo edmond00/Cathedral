@@ -11,7 +11,6 @@ namespace Cathedral.Fight.Generators
     {
         public float Density { get; set; } = 0.74f;       // Noise threshold above which cells become hard obstacles (higher = fewer walls)
         public float NoiseScale { get; set; } = 0.12f;    // Spatial frequency of the noise field
-        public int Seed { get; set; } = 0;
 
         // Sub-thresholds for soft terrain types (applied to noise values below Density)
         // The "passable" band is split into: dangerous, treacherous, soft, free

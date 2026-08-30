@@ -12,7 +12,7 @@ public abstract class LocationFeatureGenerator
     /// <summary>
     /// Random number generator seeded with location ID for deterministic generation
     /// </summary>
-    protected Random Rng { get; private set; } = new Random();
+    protected Random Rng { get; private set; } = GameRng.For("location-feature-fallback");
     
     /// <summary>
     /// Current location ID being processed

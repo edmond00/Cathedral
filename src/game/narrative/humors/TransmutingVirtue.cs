@@ -11,6 +11,40 @@ public abstract class TransmutingVirtue
 {
     /// <summary>Human-readable description of the effect shown in the UI.</summary>
     public abstract string Description { get; }
+
+    /// <summary>
+    /// True when this virtue can legally modify a die currently showing <paramref name="dieValue"/>.
+    /// Drives which dice become clickable once the humor is selected during a roll.
+    /// </summary>
+    public abstract bool CanApplyTo(int dieValue);
+
+    /// <summary>
+    /// Returns the new face value after applying this virtue to a die currently showing
+    /// <paramref name="dieValue"/>. Callers must guard with <see cref="CanApplyTo"/> first.
+    /// </summary>
+    public abstract int Apply(int dieValue, Random rng);
+}
+
+/// <summary>
+/// A transmuting virtue that leaves the dice roll unchanged (N → N).
+/// Used by humors that are present but exert no transmuting influence.
+/// </summary>
+public sealed class NullVirtue : TransmutingVirtue
+{
+    public override string Description => "N \u2192 N";
+
+    /// <summary>
+    /// Applies to any die, and changes none of them.
+    ///
+    /// <para>Spending a humor is what advances its queue — the tail is removed and whatever sat
+    /// behind it becomes the usable one — so a virtue that could not be spent walled off everything
+    /// queued behind it: a phlegm tail made the whole organ dead for the roll, however useful the
+    /// humor one slot in. Applying it costs a point of the modifier budget and moves the die
+    /// nowhere, which is the player's trade to make.</para>
+    /// </summary>
+    public override bool CanApplyTo(int dieValue) => true;
+
+    public override int Apply(int dieValue, Random rng) => dieValue;
 }
 
 /// <summary>
@@ -28,6 +62,11 @@ public sealed class NumericModVirtue : TransmutingVirtue
         Modifier >= 0
             ? $"N \u2192 N + {Modifier}"
             : $"N \u2192 N - {Math.Abs(Modifier)}";
+
+    /// <summary>A numeric shift applies to any die.</summary>
+    public override bool CanApplyTo(int dieValue) => true;
+
+    public override int Apply(int dieValue, Random rng) => Math.Clamp(dieValue + Modifier, 1, 6);
 }
 
 /// <summary>
@@ -54,4 +93,32 @@ public sealed class DigitConversionVirtue : TransmutingVirtue
         SourceDigit == -1
             ? $"N \u2192 {TargetDigit}"
             : $"{SourceDigit} \u2192 {TargetDigit}";
+
+    /// <summary>Applies to any die when wildcard (-1), otherwise only to the matching source face.</summary>
+    public override bool CanApplyTo(int dieValue) => SourceDigit == -1 || dieValue == SourceDigit;
+
+    public override int Apply(int dieValue, Random rng) => TargetDigit;
+}
+
+/// <summary>
+/// Rerolls a specific die face to a new random value (1–6).
+/// When <see cref="SourceDigit"/> is -1 the reroll applies to ANY face.
+/// Displayed as "{Source} → ?" or "N → ?" for the wildcard case.
+/// </summary>
+public sealed class RerollVirtue : TransmutingVirtue
+{
+    /// <summary>Die face to reroll. -1 means "any face" (wildcard).</summary>
+    public int SourceDigit { get; }
+
+    public RerollVirtue(int sourceDigit) => SourceDigit = sourceDigit;
+
+    public override string Description =>
+        SourceDigit == -1
+            ? "N \u2192 ?"
+            : $"{SourceDigit} \u2192 ?";
+
+    /// <summary>Applies to any die when wildcard (-1), otherwise only to the matching source face.</summary>
+    public override bool CanApplyTo(int dieValue) => SourceDigit == -1 || dieValue == SourceDigit;
+
+    public override int Apply(int dieValue, Random rng) => rng.Next(1, 7);
 }

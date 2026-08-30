@@ -16,16 +16,31 @@ public class MainMenuRenderer
     private readonly List<MenuButton> _buttons = new();
     private int _hoveredIndex = -1;
 
-    // Layout constants
-    private const int TitleRow = 35;
+    // Layout constants — title block
+    private const int TitleOrnamentTopRow    = 28;
+    private const int TitleMainRow           = 30;
+    private const int TitleChapterRow        = 33;
+    private const int TitleSubtitleRow       = 35;
+    private const int TitleOrnamentBottomRow = 37;
+
     private const int FirstButtonRow = 42;
-    private const int ButtonSpacing = 3;
-    private const int ButtonWidth = 20;
+    private const int ButtonSpacing  = 3;
+    private const int ButtonWidth    = 20;
 
     /// <summary>
     /// Whether a game session has been started (New or Continue clicked at least once).
     /// </summary>
     public bool HasGameStarted { get; set; } = false;
+
+    /// <summary>
+    /// Whether Continue can do anything — a live session to resume, or a readable save on disk.
+    ///
+    /// <para>Separate from <see cref="HasGameStarted"/> because the two genuinely diverge on a cold
+    /// start: with a save present and not yet loaded there is a run to continue but no protagonist to
+    /// inspect, so Continue is enabled while Protagonist is not. Defaults to
+    /// <see cref="HasGameStarted"/> when never set, which is the old behaviour.</para>
+    /// </summary>
+    public bool? CanContinue { get; set; }
 
     public MainMenuRenderer(TerminalHUD terminal)
     {
@@ -35,36 +50,36 @@ public class MainMenuRenderer
     /// <summary>
     /// Configures the menu buttons. Call before Render().
     /// </summary>
-    public void SetButtons(Action onNew, Action onContinue, Action onProtagonist, Action onExit)
+    public void SetButtons(Action onNew, Action onContinue, Action onProtagonist, Action onSettings, Action onExit)
     {
         _buttons.Clear();
         _buttons.Add(new MenuButton("New", onNew, true));
-        _buttons.Add(new MenuButton("Continue", onContinue, HasGameStarted));
+        _buttons.Add(new MenuButton("Continue", onContinue, CanContinue ?? HasGameStarted));
         _buttons.Add(new MenuButton("Protagonist", onProtagonist, HasGameStarted));
+        _buttons.Add(new MenuButton("Settings", onSettings, true));
         _buttons.Add(new MenuButton("Exit", onExit, true));
     }
 
     /// <summary>
-    /// Updates the enabled state of the Continue button.
+    /// Updates the enabled state of a button by label. By label rather than by index: the two setters
+    /// below used to hard-code positions 1 and 2, which is a trap the moment anything is inserted
+    /// above them, and silently disables the wrong row rather than failing.
     /// </summary>
-    public void SetContinueEnabled(bool enabled)
+    private void SetEnabledByLabel(string label, bool enabled)
     {
-        if (_buttons.Count >= 2)
-        {
-            _buttons[1] = _buttons[1] with { Enabled = enabled };
-        }
+        for (int i = 0; i < _buttons.Count; i++)
+            if (string.Equals(_buttons[i].Label, label, StringComparison.OrdinalIgnoreCase))
+            {
+                _buttons[i] = _buttons[i] with { Enabled = enabled };
+                return;
+            }
     }
 
-    /// <summary>
-    /// Updates the enabled state of the Protagonist button.
-    /// </summary>
-    public void SetProtagonistEnabled(bool enabled)
-    {
-        if (_buttons.Count >= 3)
-        {
-            _buttons[2] = _buttons[2] with { Enabled = enabled };
-        }
-    }
+    /// <summary>Updates the enabled state of the Continue button.</summary>
+    public void SetContinueEnabled(bool enabled) => SetEnabledByLabel("Continue", enabled);
+
+    /// <summary>Updates the enabled state of the Protagonist button.</summary>
+    public void SetProtagonistEnabled(bool enabled) => SetEnabledByLabel("Protagonist", enabled);
 
     /// <summary>
     /// Renders the full menu to the terminal.
@@ -75,15 +90,44 @@ public class MainMenuRenderer
         _terminal.Fill(' ', Config.Colors.Black, Config.Colors.Black);
         _terminal.Visible = true;
 
-        // Draw title
-        _terminal.CenteredText(TitleRow, "C A T H E D R A L", Config.Colors.BrightYellow, Config.Colors.Black);
-        _terminal.CenteredText(TitleRow + 2, "─────────────────────", Config.Colors.DarkGray35, Config.Colors.Black);
+        // ── Title block ──────────────────────────────────────────
+        const string ornament = "─ · ─ · ─ · ─ · ─ · ─ · ─ · ─";
+        _terminal.CenteredText(TitleOrnamentTopRow,    ornament,
+            Config.Colors.DarkGray35,   Config.Colors.Black);
+        _terminal.CenteredText(TitleMainRow,           Config.Name.GameTitle,
+            Config.Colors.BrightYellow, Config.Colors.Black);
+        _terminal.CenteredText(TitleChapterRow,        Spaced(Config.Name.Chapter.ToUpper()),
+            Config.Colors.MediumGray50, Config.Colors.Black);
+        _terminal.CenteredText(TitleSubtitleRow,       $"·  {Config.Name.ChapterSubtitle}  ·",
+            Config.Colors.MediumGray60, Config.Colors.Black);
+        _terminal.CenteredText(TitleOrnamentBottomRow, ornament,
+            Config.Colors.DarkGray35,   Config.Colors.Black);
 
         // Draw buttons
         for (int i = 0; i < _buttons.Count; i++)
         {
             DrawButton(i);
         }
+
+        // Edge rules against the sphere, drawn last so nothing overwrites them
+        _terminal.DrawSideRails();
+    }
+
+    /// <summary>Spreads characters within each word with single spaces, and separates words with triple spaces.</summary>
+    private static string Spaced(string s)
+    {
+        var parts = s.Split(' ');
+        var sb = new System.Text.StringBuilder();
+        for (int w = 0; w < parts.Length; w++)
+        {
+            if (w > 0) sb.Append("   ");
+            for (int c = 0; c < parts[w].Length; c++)
+            {
+                if (c > 0) sb.Append(' ');
+                sb.Append(parts[w][c]);
+            }
+        }
+        return sb.ToString();
     }
 
     /// <summary>
@@ -180,6 +224,18 @@ public class MainMenuRenderer
     {
         int idx = GetButtonAtPosition(x, y);
         return (idx >= 0 && idx < _buttons.Count && _buttons[idx].Enabled) ? idx : -1;
+    }
+
+    /// <summary>
+    /// The menu buttons with their cell positions, so --cli can list and press them by name
+    /// instead of hard-coding the layout constants.
+    /// </summary>
+    public IReadOnlyList<(string Label, bool Enabled, int X, int Y)> CliButtons()
+    {
+        int startX = (_terminal.Width - ButtonWidth) / 2;
+        return _buttons
+            .Select((b, i) => (b.Label, b.Enabled, startX, FirstButtonRow + i * ButtonSpacing))
+            .ToList();
     }
 
     // ── Data types ───────────────────────────────────────────────

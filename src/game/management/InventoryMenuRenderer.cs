@@ -65,7 +65,10 @@ public sealed class InventoryMenuRenderer
 
     // Item box states
     private static readonly Vector4 EmptyBoxBorder  = Config.Colors.DarkGray35;
-    private static readonly Vector4 EmptyBoxBg      = new(0.03f, 0.03f, 0.03f, 1f);
+    // Black, not a near-black grey: the final dither layer quantises the frame and a flat
+    // low grey lands mid-step and breaks up into pattern noise. Filled boxes keep their
+    // grey (NormalBoxBg) — that shade is what distinguishes an occupied slot from an empty one.
+    private static readonly Vector4 EmptyBoxBg      = new(0.0f, 0.0f, 0.0f, 1f);
     private static readonly Vector4 EmptyTextColor  = new(0.22f, 0.22f, 0.22f, 1f);
 
     private static readonly Vector4 NormalBoxBorder = Config.Colors.MediumGray60;
@@ -99,6 +102,8 @@ public sealed class InventoryMenuRenderer
     private static readonly Vector4 InfoLabelColor  = Config.Colors.MediumGray60;
     private static readonly Vector4 InfoValueColor  = Config.Colors.LightGray75;
     private static readonly Vector4 SepColor        = Config.Colors.DarkGray35;
+    // Item flavour text — deliberately recessive against the values above it.
+    private static readonly Vector4 DescriptionColor = Config.Colors.DarkGray40;
 
     private static readonly Vector4 ContentNormal   = Config.Colors.MediumGray60;
     private static readonly Vector4 ContentHovered  = Config.Colors.White;
@@ -115,9 +120,16 @@ public sealed class InventoryMenuRenderer
     private record struct ContentHit(int Index, int Y0, int Y1);
     private readonly List<ContentHit> _contentHits = new();
 
+    // "Move to" destinations (body anchor or container item).
+    private enum MoveDestKind { Anchor, Container }
+    private readonly record struct MoveDest(MoveDestKind Kind, EquipmentAnchor Anchor, IContainer? Container, string Label);
+    private readonly List<(int Row, MoveDest Dest)> _moveDestHits = new();
+
     // ── State ─────────────────────────────────────────────────────
     private EquipmentAnchor? _hoveredAnchor  = null;
     private int              _hoveredItemIdx = -1;
+
+    public bool IsHovering => _hoveredAnchor.HasValue || _hoveredContent >= 0;
     private EquipmentAnchor? _selectedAnchor = null;
     private int              _selectedItemIdx = -1; // -1 = anchor header selected
     private int              _hoveredContent  = -1;
@@ -128,7 +140,7 @@ public sealed class InventoryMenuRenderer
     private Item?            _dragItem            = null;
     private EquipmentAnchor? _dragSourceAnchor    = null;
     private int              _dragSourceItemIdx   = -1;
-    private ContainerItem?   _dragSourceContainer = null;  // non-null when dragged from container contents
+    private IContainer?   _dragSourceContainer = null;  // non-null when dragged from container contents
 
     // Pending drag — mouse-down records intent; promoted to real drag
     // only after mouse movement or a short delay, so a quick click selects.
@@ -136,7 +148,7 @@ public sealed class InventoryMenuRenderer
     private Item?            _pendingDragItem      = null;
     private EquipmentAnchor? _pendingDragAnchor    = null;
     private int              _pendingDragItemIdx   = -1;
-    private ContainerItem?   _pendingDragContainer = null;  // non-null when from content
+    private IContainer?   _pendingDragContainer = null;  // non-null when from content
     private int              _pendingClickX        = 0;
     private int              _pendingClickY        = 0;
     private long             _pendingClickTick     = 0;
@@ -169,6 +181,34 @@ public sealed class InventoryMenuRenderer
 
     // Cached member reference for event handlers
     private PartyMember? _member;
+
+    // Consume button hit region (row of the button label, or -1 if not shown)
+    private int  _consumeButtonRow     = -1;
+    private bool _consumeButtonHovered = false;
+
+    // Throw-away / move-to action buttons (row of the button label, or -1 if not shown)
+    private int  _throwButtonRow      = -1;
+    private bool _throwButtonHovered  = false;
+    private int  _moveButtonRow       = -1;
+    private bool _moveButtonHovered   = false;
+    private bool _moveButtonEnabled   = false;
+
+    // "Move to" submenu state
+    private bool  _moveMenuOpen    = false;
+    private Item? _moveMenuItem    = null;  // item the submenu was opened for
+    private int   _hoveredMoveDest = -1;    // index into the last-rendered destination list
+
+    /// <summary>
+    /// Invoked when the player successfully consumes an item.
+    /// Wire this up in the parent renderer to play a sound or update other state.
+    /// </summary>
+    public Action? OnItemConsumed { get; set; }
+
+    /// <summary>
+    /// The party's shared coin wallet. When set, a compact "X⎊ Y◉ Z⊚" box is drawn in the
+    /// top-right corner of the body-art panel. Null hides it.
+    /// </summary>
+    public Party? Wallet { get; set; }
 
     // ── Constructor ───────────────────────────────────────────────
     public InventoryMenuRenderer(TerminalHUD terminal, BodyArtViewer bodyViewer, GearAnchorData gearData,
@@ -207,7 +247,84 @@ public sealed class InventoryMenuRenderer
         foreach (EquipmentAnchor anchor in Enum.GetValues<EquipmentAnchor>())
             RenderAnchor(member, anchor);
 
+        RenderWeightBar(member);
+        RenderWallet();
         RenderRightPanel(member);
+    }
+
+    /// <summary>Bar width in cells — fixed, since the bar shows a fraction rather than a count.</summary>
+    private const int WeightBarWidth = 20;
+
+    /// <summary>
+    /// Draws "WEIGHT 34/100" over a filled bar in the top-left of the art panel — the corner the
+    /// wallet used to occupy. Carrying capacity is the one number that silently decides whether a
+    /// pickup succeeds, so it belongs where the eye lands first rather than buried in the item panel.
+    ///
+    /// The bar sours as it fills: an approaching limit should read as a warning at a glance.
+    /// </summary>
+    private void RenderWeightBar(PartyMember member)
+    {
+        int current = member.CurrentWeight;
+        int max     = Math.Max(1, member.MaxCarryWeight);
+        double frac = Math.Clamp(current / (double)max, 0.0, 1.0);
+
+        int x0 = ArtOffsetX + 2;
+        int y0 = 2;
+
+        string label = $"WEIGHT {current}/{max}";
+        _terminal.Text(x0, y0, label, NormalTextColor, BgColor);
+
+        Vector4 fill = frac >= 1.0  ? Config.Colors.BrightPurple
+                     : frac >= 0.85 ? Config.Colors.Purple
+                     :                Config.Colors.DarkYellowGrey;
+
+        // Distinct glyphs, not just distinct colours: a bar that reads only by hue is invisible in
+        // a text dump and hard to judge at a glance. Matches TerminalView.ProgressBar's convention.
+        int filled = (int)Math.Round(frac * WeightBarWidth);
+        for (int i = 0; i < WeightBarWidth; i++)
+            _terminal.SetCell(x0 + i, y0 + 1,
+                i < filled ? '█' : '░',
+                i < filled ? fill : Config.Colors.DarkGray35, BgColor);
+    }
+
+    /// <summary>
+    /// Draws a compact coin box ("X⎊ Y◉ Z⊚") in the <b>bottom</b>-right corner of the body-art
+    /// panel, just left of the separator — the top-left is now the weight readout, and the purse is
+    /// the thing you consult deliberately rather than monitor. Each count is in its denomination color.
+    /// </summary>
+    private void RenderWallet()
+    {
+        if (Wallet == null) return;
+
+        // Build the three "<count><symbol>" segments and lay them out right-aligned so the
+        // box hugs the separator at RightPanelX-1.
+        (string text, Vector4 color)[] segments =
+        {
+            ($"{Wallet.Gold}{Config.Symbols.GoldCoinSymbol}",   Config.Colors.CoinGold),
+            ($"{Wallet.Silver}{Config.Symbols.SilverCoinSymbol}", Config.Colors.CoinSilver),
+            ($"{Wallet.Copper}{Config.Symbols.CopperCoinSymbol}", Config.Colors.CoinCopper),
+        };
+
+        const int gap = 1;
+        int contentLen = segments.Sum(s => s.text.Length) + gap * (segments.Length - 1);
+        int boxW = contentLen + 2;                 // 1 cell padding each side
+        int boxRight = RightPanelX - 1;            // column of the separator
+        int x0 = Math.Max(ArtOffsetX, boxRight - boxW);
+        int y0 = Math.Max(0, _terminal.Height - 4);
+
+        // Background strip + single-line border.
+        for (int dy = 0; dy < 3; dy++)
+            for (int x = x0; x < x0 + boxW; x++)
+                _terminal.SetCell(x, y0 + dy, ' ', NormalTextColor, NormalBoxBg);
+        _terminal.DrawBox(x0, y0, boxW, 3, BoxStyle.Single, NormalBoxBorder, NormalBoxBg);
+
+        int cx = x0 + 1;
+        int cy = y0 + 1;
+        for (int i = 0; i < segments.Length; i++)
+        {
+            _terminal.Text(cx, cy, segments[i].text, segments[i].color, NormalBoxBg);
+            cx += segments[i].text.Length + gap;
+        }
     }
 
     /// <summary>Process a mouse hover. Returns true when displayed state changed.</summary>
@@ -228,7 +345,7 @@ public sealed class InventoryMenuRenderer
         var hit        = HitTestItem(x, y);
         var newAnchor  = hit?.Anchor;
         var newIdx     = hit?.ItemIdx ?? -1;
-        var newContent = HitTestContent(y);
+        var newContent = HitTestContent(x, y);
         bool onRight   = x >= RightPanelX;
 
         bool changed = newAnchor != _hoveredAnchor || newIdx != _hoveredItemIdx
@@ -237,6 +354,21 @@ public sealed class InventoryMenuRenderer
         _hoveredItemIdx     = newIdx;
         _hoveredContent     = newContent;
         _hoveringRightPanel = onRight;
+
+        bool newConsumeHovered = _consumeButtonRow >= 0 && x >= RightContentX && y == _consumeButtonRow;
+        if (newConsumeHovered != _consumeButtonHovered) { _consumeButtonHovered = newConsumeHovered; changed = true; }
+
+        bool newThrowHovered = _throwButtonRow >= 0 && x >= RightContentX && y == _throwButtonRow;
+        if (newThrowHovered != _throwButtonHovered) { _throwButtonHovered = newThrowHovered; changed = true; }
+
+        bool newMoveHovered = _moveButtonRow >= 0 && _moveButtonEnabled && x >= RightContentX && y == _moveButtonRow;
+        if (newMoveHovered != _moveButtonHovered) { _moveButtonHovered = newMoveHovered; changed = true; }
+
+        int newMoveDest = -1;
+        if (x >= RightContentX)
+            for (int i = 0; i < _moveDestHits.Count; i++)
+                if (_moveDestHits[i].Row == y) { newMoveDest = i; break; }
+        if (newMoveDest != _hoveredMoveDest) { _hoveredMoveDest = newMoveDest; changed = true; }
 
         // During drag: update sticky hover-item when the cursor enters a real item.
         // When the cursor moves to a placeholder / header / empty space the previous
@@ -312,7 +444,7 @@ public sealed class InventoryMenuRenderer
         // Clear any deferred header selection from a previous mouse-down.
         _pendingDragAnchor = null;
 
-        int contentIdx = HitTestContent(y);
+        int contentIdx = HitTestContent(x, y);
         if (contentIdx >= 0)
         {
             if (_isDragging) { CancelDrag(); return true; }
@@ -375,10 +507,25 @@ public sealed class InventoryMenuRenderer
 
         if (_isDragging) { CancelDrag(); return true; }
 
+        // Mouse-down on the consume button: keep the current selection so the
+        // mouse-up handler can resolve the displayed item and consume it.
+        // (Clearing the selection here would reset _consumeButtonRow on the
+        // re-render and the consume click would never register.)
+        if (_consumeButtonRow >= 0 && x >= RightContentX && y == _consumeButtonRow)
+            return true;
+
+        // Same deal for the throw-away / move-to buttons and the move submenu rows:
+        // keep the selection so mouse-up can act on the displayed item.
+        if (x >= RightContentX &&
+            ((_throwButtonRow >= 0 && y == _throwButtonRow)
+             || (_moveButtonRow >= 0 && y == _moveButtonRow)
+             || _moveDestHits.Exists(h => h.Row == y)))
+            return true;
+
         _selectedAnchor  = null;
         _selectedItemIdx = -1;
         _selectedContentPath.Clear();
-        return false;
+        return true;
     }
 
     /// <summary>
@@ -406,6 +553,7 @@ public sealed class InventoryMenuRenderer
                 _selectedItemIdx = idx;
                 _selectedContentPath.Clear();
             }
+            CloseMoveMenu();
             return true;
         }
 
@@ -416,6 +564,7 @@ public sealed class InventoryMenuRenderer
             _selectedItemIdx = -1;
             _selectedContentPath.Clear();
             _pendingDragAnchor = null;
+            CloseMoveMenu();
             return true;
         }
 
@@ -428,12 +577,67 @@ public sealed class InventoryMenuRenderer
                 GoBackContent();
                 return true;
             }
-            int contentIdx = HitTestContent(y);
+            int contentIdx = HitTestContent(x, y);
             if (contentIdx >= 0)
             {
                 SelectContent(contentIdx);
                 return true;
             }
+
+            // Consume button click (mouse-up on the consume button row).
+            if (_consumeButtonRow >= 0 && x >= RightContentX && y == _consumeButtonRow && _member != null)
+            {
+                var displayedItem = ResolveDisplayedItem();
+                if (displayedItem is ConsumableItem consumable && consumable.CanConsume(_member))
+                {
+                    consumable.Consume(_member);
+                    _selectedAnchor       = null;
+                    _selectedItemIdx      = -1;
+                    _selectedContentPath.Clear();
+                    _consumeButtonRow     = -1;
+                    _consumeButtonHovered = false;
+                    OnItemConsumed?.Invoke();
+                    return true;
+                }
+            }
+
+            // Throw-away button: discard the displayed item (and any container contents).
+            if (_throwButtonRow >= 0 && x >= RightContentX && y == _throwButtonRow && _member != null)
+            {
+                ThrowAwayDisplayedItem();
+                return true;
+            }
+
+            // Click on a move-to destination row (submenu open).
+            if (x >= RightContentX)
+            {
+                foreach (var (row, dest) in _moveDestHits)
+                {
+                    if (row == y)
+                    {
+                        MoveDisplayedItem(dest);
+                        return true;
+                    }
+                }
+            }
+
+            // Move-to button toggles the destination submenu.
+            if (_moveButtonRow >= 0 && _moveButtonEnabled && x >= RightContentX && y == _moveButtonRow)
+            {
+                var displayed = ResolveDisplayedItem();
+                if (_moveMenuOpen && ReferenceEquals(_moveMenuItem, displayed))
+                {
+                    _moveMenuOpen = false;
+                    _moveMenuItem = null;
+                }
+                else
+                {
+                    _moveMenuOpen = true;
+                    _moveMenuItem = displayed;
+                }
+                return true;
+            }
+
             return false;
         }
 
@@ -451,7 +655,7 @@ public sealed class InventoryMenuRenderer
         //   3. Sticky _dragHoverItem (from a previous hover on body art) — only
         //      when cursor is NOT on the right panel or a body-art item.
         // Skip containers that are the drag source.
-        ContainerItem? target = null;
+        IContainer? target = null;
         bool onRightPanel = x >= RightPanelX;
 
         // 1. Right-panel container (highest priority when cursor is there).
@@ -467,7 +671,7 @@ public sealed class InventoryMenuRenderer
         if (target == null && hit.HasValue && hit.Value.ItemIdx >= 0)
         {
             var items = _member.EquippedItems[hit.Value.Anchor];
-            if (hit.Value.ItemIdx < items.Count && items[hit.Value.ItemIdx] is ContainerItem c
+            if (hit.Value.ItemIdx < items.Count && items[hit.Value.ItemIdx] is IContainer c
                 && c != _dragSourceContainer)
                 target = c;
         }
@@ -475,7 +679,7 @@ public sealed class InventoryMenuRenderer
         // 3. Sticky drag-hover item — only when cursor is NOT on a body-art item
         //    or the right panel (so direct targets take priority over stale hover).
         if (target == null && !hit.HasValue && !onRightPanel
-            && _dragHoverItem is ContainerItem sticky
+            && _dragHoverItem is IContainer sticky
             && sticky != _dragSourceContainer)
             target = sticky;
 
@@ -496,7 +700,8 @@ public sealed class InventoryMenuRenderer
                 {
                     _selectedAnchor  = _dragHoverAnchor;
                     var anchorItems = _member.EquippedItems[_dragHoverAnchor.Value];
-                    _selectedItemIdx = anchorItems.IndexOf(target);
+                    // Every IContainer is also an Item; the anchor list is typed by the latter.
+                    _selectedItemIdx = anchorItems.IndexOf((Item)target);
                 }
                 _selectedContentPath.Clear();
             }
@@ -514,12 +719,71 @@ public sealed class InventoryMenuRenderer
     }
 
     /// <summary>Clear all hover / selection state (called when switching away from this tab).</summary>
+    /// <summary>
+    /// Selects a carried item by display name so <c>--cli</c> can inspect the info panel, which is
+    /// otherwise reachable only by clicking a body-art box whose position depends on the art.
+    /// Searches the anchors first, then one level of container contents, and returns false when
+    /// nothing matches. Case-insensitive, and a prefix is enough.
+    /// </summary>
+    public bool CliSelectItem(string itemName)
+    {
+        if (_member == null) return false;
+
+        bool Matches(Item i) =>
+            i.DisplayName.StartsWith(itemName, StringComparison.OrdinalIgnoreCase);
+
+        foreach (EquipmentAnchor anchor in Enum.GetValues<EquipmentAnchor>())
+        {
+            var items = _member.EquippedItems[anchor];
+            for (int i = 0; i < items.Count; i++)
+            {
+                if (Matches(items[i]))
+                {
+                    _selectedAnchor  = anchor;
+                    _selectedItemIdx = i;
+                    _selectedContentPath.Clear();
+                    return true;
+                }
+
+                // One level in: enough to reach what is inside a pack or a bottle.
+                if (items[i] is IContainer held)
+                {
+                    for (int c = 0; c < held.Contents.Count; c++)
+                        if (Matches(held.Contents[c]))
+                        {
+                            _selectedAnchor  = anchor;
+                            _selectedItemIdx = i;
+                            _selectedContentPath.Clear();
+                            _selectedContentPath.Add(c);
+                            return true;
+                        }
+                }
+            }
+        }
+        return false;
+    }
+
+    /// <summary>Display names of everything carried, for <c>--cli</c> discovery.</summary>
+    public IReadOnlyList<string> CliCarriedItemNames =>
+        _member?.GetAllItems().Select(i => i.DisplayName).Distinct().ToList()
+        ?? (IReadOnlyList<string>)Array.Empty<string>();
+
     public void ClearHover()
     {
         _hoveredAnchor      = null;
         _hoveredItemIdx     = -1;
         _hoveringRightPanel = false;
+        CloseMoveMenu();
         CancelDrag();
+    }
+
+    /// <summary>Close the "move to" destination submenu and clear its hover state.</summary>
+    private void CloseMoveMenu()
+    {
+        _moveMenuOpen    = false;
+        _moveMenuItem    = null;
+        _hoveredMoveDest = -1;
+        _moveDestHits.Clear();
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -593,36 +857,187 @@ public sealed class InventoryMenuRenderer
     {
         var viewedContainer = ResolveViewedContainer();
         if (viewedContainer != null && contentIdx < viewedContainer.Contents.Count)
+        {
             _selectedContentPath.Add(contentIdx);
+            CloseMoveMenu();
+        }
     }
 
     /// <summary>Go back one level in the content selection path.</summary>
     private void GoBackContent()
     {
         if (_selectedContentPath.Count > 0)
+        {
             _selectedContentPath.RemoveAt(_selectedContentPath.Count - 1);
+            CloseMoveMenu();
+        }
     }
 
     /// <summary>
     /// Walk the selection path to find the container currently being viewed
     /// in the right panel. Returns null when no container is in view.
     /// </summary>
-    private ContainerItem? ResolveViewedContainer()
+    private IContainer? ResolveViewedContainer()
     {
         if (_member == null || !_selectedAnchor.HasValue || _selectedItemIdx < 0) return null;
         var items = _member.EquippedItems[_selectedAnchor.Value];
         if (_selectedItemIdx >= items.Count) return null;
-        if (items[_selectedItemIdx] is not ContainerItem current) return null;
+        if (items[_selectedItemIdx] is not IContainer current) return null;
 
         foreach (int idx in _selectedContentPath)
         {
             if (idx >= current.Contents.Count) return null;
-            if (current.Contents[idx] is ContainerItem nested)
+            if (current.Contents[idx] is IContainer nested)
                 current = nested;
             else
                 return current;  // non-container selected; parent is the viewed container
         }
         return current;
+    }
+
+    private Item? ResolveDisplayedItem()
+    {
+        if (_member == null || !_selectedAnchor.HasValue || _selectedItemIdx < 0) return null;
+        var items = _member.EquippedItems[_selectedAnchor.Value];
+        if (_selectedItemIdx >= items.Count) return null;
+        Item displayed = items[_selectedItemIdx];
+        foreach (int ci in _selectedContentPath)
+        {
+            if (displayed is IContainer container)
+            {
+                if (ci >= container.Contents.Count) break;
+                displayed = container.Contents[ci];
+            }
+            else break;
+        }
+        return displayed;
+    }
+
+    /// <summary>
+    /// Resolve the displayed item together with its immediate location:
+    /// <c>parent</c> is the container it currently sits in (null when it sits
+    /// directly on the anchor list), and <c>anchor</c> is the top-level anchor.
+    /// </summary>
+    private (Item item, IContainer? parent, EquipmentAnchor anchor)? ResolveDisplayedItemLocation()
+    {
+        if (_member == null || !_selectedAnchor.HasValue || _selectedItemIdx < 0) return null;
+        var anchor = _selectedAnchor.Value;
+        var items  = _member.EquippedItems[anchor];
+        if (_selectedItemIdx >= items.Count) return null;
+
+        Item displayed = items[_selectedItemIdx];
+        IContainer? parent = null;
+        foreach (int ci in _selectedContentPath)
+        {
+            if (displayed is not IContainer container) break;
+            if (ci >= container.Contents.Count) break;
+            parent    = container;
+            displayed = container.Contents[ci];
+        }
+        return (displayed, parent, anchor);
+    }
+
+    /// <summary>
+    /// Enumerate every place the displayed item could be moved to: body anchors that
+    /// accept it with room, and container items with room. Excludes the item's current
+    /// location, the item itself, and (for containers) its own descendants.
+    /// </summary>
+    private List<MoveDest> BuildMoveDestinations(Item item, IContainer? currentParent, EquipmentAnchor currentAnchor)
+    {
+        var dests = new List<MoveDest>();
+        if (_member == null) return dests;
+
+        foreach (EquipmentAnchor anchor in Enum.GetValues<EquipmentAnchor>())
+        {
+            // A move onto the anchor the item already sits directly on is a no-op.
+            if (currentParent == null && anchor == currentAnchor) continue;
+            if (anchor.CanAccept(item) && _member.AvailableSlots(anchor) >= item.SlotCount)
+                dests.Add(new MoveDest(MoveDestKind.Anchor, anchor, null, anchor.Label().ToUpperInvariant()));
+        }
+
+        foreach (var list in _member.EquippedItems.Values)
+            foreach (var equipped in list)
+                CollectContainerDests(equipped, item, currentParent, dests);
+
+        return dests;
+    }
+
+    /// <summary>Recursively collect container destinations, skipping the moved item and its subtree.</summary>
+    private void CollectContainerDests(Item candidate, Item moving, IContainer? currentParent, List<MoveDest> dests)
+    {
+        if (ReferenceEquals(candidate, moving)) return;  // skip the moved item and everything inside it
+
+        if (candidate is IContainer container)
+        {
+            if (!ReferenceEquals(container, currentParent)
+                && container.CanContain(moving) && container.AvailableSlots >= moving.SlotCount)
+                dests.Add(new MoveDest(MoveDestKind.Container, default, container, candidate.DisplayName));
+
+            foreach (var c in container.Contents)
+                CollectContainerDests(c, moving, currentParent, dests);
+        }
+    }
+
+    /// <summary>Remove the displayed item from the inventory. Containers take their contents with them.</summary>
+    private void ThrowAwayDisplayedItem()
+    {
+        var loc = ResolveDisplayedItemLocation();
+        if (loc == null || _member == null) return;
+        var (item, parent, anchor) = loc.Value;
+
+        if (parent != null) parent.TryRemove(item);
+        else _member.EquippedItems[anchor].Remove(item);
+
+        ClearItemSelection();
+    }
+
+    /// <summary>Move the displayed item to the chosen destination, restoring it on failure.</summary>
+    private void MoveDisplayedItem(MoveDest dest)
+    {
+        var loc = ResolveDisplayedItemLocation();
+        if (loc == null || _member == null) return;
+        var (item, parent, anchor) = loc.Value;
+
+        // Remove from the source first so destination slot checks are accurate.
+        if (parent != null) parent.TryRemove(item);
+        else _member.EquippedItems[anchor].Remove(item);
+
+        bool placed = dest.Kind == MoveDestKind.Anchor
+            ? TryPlaceOnAnchor(dest.Anchor, item)
+            : dest.Container != null && dest.Container.TryAdd(item);
+
+        // Put the item back where it was if the destination unexpectedly refused it.
+        if (!placed)
+        {
+            if (parent != null) parent.TryAdd(item);
+            else _member.EquippedItems[anchor].Add(item);
+        }
+
+        ClearItemSelection();
+    }
+
+    private bool TryPlaceOnAnchor(EquipmentAnchor anchor, Item item)
+    {
+        if (_member == null) return false;
+        if (!anchor.CanAccept(item) || _member.AvailableSlots(anchor) < item.SlotCount) return false;
+        _member.EquippedItems[anchor].Add(item);
+        return true;
+    }
+
+    /// <summary>Clear item selection plus all right-panel button/menu state.</summary>
+    private void ClearItemSelection()
+    {
+        _selectedAnchor       = null;
+        _selectedItemIdx      = -1;
+        _selectedContentPath.Clear();
+        _consumeButtonRow     = -1;
+        _consumeButtonHovered = false;
+        _throwButtonRow       = -1;
+        _throwButtonHovered   = false;
+        _moveButtonRow        = -1;
+        _moveButtonHovered    = false;
+        _moveButtonEnabled    = false;
+        CloseMoveMenu();
     }
 
     private void ResetDragState()
@@ -719,7 +1134,7 @@ public sealed class InventoryMenuRenderer
                 border = DragBoxBorder; bg = DragBoxBg; textCol = DragTextColor;
             }
             else if (isGrayedOut
-                     && !(item is ContainerItem c && _dragItem != null && c.CanContain(_dragItem)
+                     && !(item is IContainer c && _dragItem != null && c.CanContain(_dragItem)
                           && c.AvailableSlots >= _dragItem.SlotCount && c != _dragItem))
             {
                 border = GrayBoxBorder; bg = GrayBoxBg; textCol = GrayTextColor;
@@ -752,7 +1167,7 @@ public sealed class InventoryMenuRenderer
                 border = NormalBoxBorder; bg = NormalBoxBg; textCol = NormalTextColor;
             }
 
-            DrawItemBox(item.DisplayName, termX, itemY, boxH, border, bg, textCol, item.UsageLevel);
+            DrawItemBox(item.DisplayName, termX, itemY, boxH, border, bg, textCol);
             _itemHits.Add(new ItemHit(anchor, i, termX, itemY, termX + ItemBoxW - 1, itemY + boxH - 1));
             itemY += boxH;
         }
@@ -794,7 +1209,7 @@ public sealed class InventoryMenuRenderer
         }
     }
 
-    private void DrawItemBox(string label, int x, int y, int h, Vector4 border, Vector4 bg, Vector4 fg, int usageLevel = 0)
+    private void DrawItemBox(string label, int x, int y, int h, Vector4 border, Vector4 bg, Vector4 fg)
     {
         for (int dy = 0; dy < h; dy++)
             for (int dx = 0; dx < ItemBoxW; dx++)
@@ -803,21 +1218,18 @@ public sealed class InventoryMenuRenderer
         _terminal.DrawBox(x, y, ItemBoxW, h, BoxStyle.Single, border, bg);
 
         int innerW = ItemBoxW - 2;
-        int nameRow = h >= 4 ? y + h / 2 - 1 : y + h / 2;
+
+        // Dead centre of the interior. A taller box used to nudge this up a row to leave space for
+        // usage-level pips underneath; those are gone (they marked every item, meaning nothing on
+        // most), and the offset outlived them — which left every Medium and Large box top-heavy,
+        // with its name one row high and an empty row spare at the bottom.
+        int nameRow = y + h / 2;
 
         if (!string.IsNullOrEmpty(label))
         {
             string name = label.Length > innerW ? TruncRight(label, innerW) : label;
             int lx = x + 1 + (innerW - name.Length) / 2;
             _terminal.Text(lx, nameRow, name, fg, bg);
-        }
-
-        // Usage level indicators — shown only when box is tall enough and level > 0
-        if (usageLevel > 0 && h >= 4)
-        {
-            string indicators = new string(Config.Symbols.ModusMentisLevelIndicator, Math.Min(usageLevel, innerW));
-            int lx = x + 1 + (innerW - indicators.Length) / 2;
-            _terminal.Text(lx, nameRow + 1, indicators, Config.Colors.BrightYellow, bg);
         }
     }
 
@@ -857,16 +1269,16 @@ public sealed class InventoryMenuRenderer
             Item displayItem = selectedItem;
             bool hasPath = false;
 
-            if (selectedItem is ContainerItem root)
+            if (selectedItem is IContainer root)
             {
-                ContainerItem current = root;
+                IContainer current = root;
                 for (int d = 0; d < _selectedContentPath.Count; d++)
                 {
                     int ci = _selectedContentPath[d];
                     if (ci >= current.Contents.Count) break;
                     displayItem = current.Contents[ci];
                     hasPath = true;
-                    if (displayItem is ContainerItem next)
+                    if (displayItem is IContainer next)
                         current = next;
                     else
                         break;
@@ -875,7 +1287,7 @@ public sealed class InventoryMenuRenderer
                 // Show the deepest selected item, or the root if no path.
                 int nextRow = DrawItemInfo(displayItem, panelStartRow, showBack: hasPath);
                 // Show drag preview only when the mouse is over the right panel.
-                if (displayItem is ContainerItem viewContainer)
+                if (displayItem is IContainer viewContainer)
                 {
                     if (_isDragging && _hoveringRightPanel)
                         DrawContainerContentsDragPreview(viewContainer, nextRow);
@@ -935,10 +1347,134 @@ public sealed class InventoryMenuRenderer
         {
             if (y > InfoEndRow) break;
             _terminal.Text(RightContentX, y++,
-                TruncRight($"\u2022 {item.DisplayName}  ({item.SlotCount} sl)", RightContentW),
+                TruncRight($"\u2022 {item.DisplayName}", RightContentW),
                 InfoValueColor, RightPanelBg);
         }
     }
+
+    // Dimmer than EmptyTextColor's neighbours: used for things the player cannot reach yet.
+    private static readonly Vector4 LockedTextColor = Config.Colors.DarkGray35;
+
+    /// <summary>
+    /// The half of the info panel that depends on what kind of item this is: usage, armour, social
+    /// appeal, capacity, the attacks a weapon can teach. Separated from the shared block above by a
+    /// rule, so the panel always has the same shape — invariant facts first, then the specifics.
+    /// Returns the row after everything drawn; draws nothing (and no rule) for a plain item.
+    /// </summary>
+    private int DrawItemSpecifics(Item item, int y)
+    {
+        bool isWeapon    = item is Cathedral.Fight.IWeaponItem;
+        bool hasUsage    = item.Category is ItemCategory.Tool or ItemCategory.Weapon;
+        bool anySpecific = hasUsage || isWeapon || item is WearableItem || item is IContainer || item.IsLiquid;
+        if (!anySpecific) return y;
+
+        if (y > InfoEndRow) return y;
+        DrawSep(y); y += 2;
+
+        if (hasUsage)
+            DrawKV("Usage", $"lv. {item.UsageLevel}", ref y);
+
+        if (item is Cathedral.Fight.IWeaponItem weapon)
+        {
+            DrawKV("Medium", $"lv. {weapon.Level}", ref y);
+            y = DrawWeaponAttacks(weapon, y);
+        }
+
+        if (item is WearableItem worn)
+        {
+            // Always shown, even at 0: "this garment protects nothing" is information, and its
+            // absence would read as the panel having forgotten to mention armour.
+            DrawKV("Defence",  $"+{worn.DefenseDice} dice", ref y);
+            DrawKV("Protects", ArmorSections.SectionOf(worn.Slot) is { } sec
+                                   ? sec.Replace('_', ' ')
+                                   : "nothing", ref y);
+            y = DrawDialogueAppeal(worn, y);
+        }
+
+        // What it is built to hold. The capacity is deliberately not repeated here — the contents
+        // display below draws one row per slot, which shows how full it is far better than a ratio.
+        if (item is IContainer container)
+            DrawKV("Holds", container.Kind.ToString(), ref y);
+
+        if (item.IsLiquid)
+            DrawKV("Storage", "needs a vessel", ref y);
+
+        return y + 1;
+    }
+
+    /// <summary>
+    /// Every social standing, ticked or not — a garment's appeal is only meaningful against the
+    /// standings it does <em>not</em> reach, so listing all of them says more than naming the two
+    /// it happens to flatter.
+    /// </summary>
+    private int DrawDialogueAppeal(WearableItem worn, int y)
+    {
+        if (y > InfoEndRow) return y;
+        _terminal.Text(RightContentX, y++, "Impresses", InfoLabelColor, RightPanelBg);
+
+        foreach (Cathedral.Game.Npc.SocialCategory social in
+                 Enum.GetValues<Cathedral.Game.Npc.SocialCategory>())
+        {
+            if (y > InfoEndRow) break;
+            bool appeals = worn.DialogueAppeal.Contains(social);
+            _terminal.Text(RightContentX + 2, y++,
+                TruncRight($"{(appeals ? '☑' : '☐')} {social}", RightContentW - 2),
+                appeals ? InfoValueColor : LockedTextColor, RightPanelBg);
+        }
+        return y;
+    }
+
+    /// <summary>
+    /// The attacks this weapon's medium can teach, in the order they must be learned.
+    ///
+    /// Named if you can act on it, <c>???</c> if you cannot. That means the learnt attacks plus
+    /// the next one — because a fight always lets you attempt the first attack you have not yet
+    /// learned, so hiding its name would conceal the one choice actually in front of you. Only the
+    /// attacks locked behind it stay anonymous. A weapon therefore never shows nothing but <c>???</c>.
+    /// </summary>
+    private int DrawWeaponAttacks(Cathedral.Fight.IWeaponItem weapon, int y)
+    {
+        var category = Cathedral.Fight.WeaponMediumRegistry.GetById(weapon.WeaponCategory);
+        if (category == null || _member == null) return y;
+
+        if (y > InfoEndRow) return y;
+        _terminal.Text(RightContentX, y++, "Unlocks", InfoLabelColor, RightPanelBg);
+
+        var registry = Cathedral.Fight.FightingSkillRegistry.Instance;
+        bool nextMarked = false;
+
+        foreach (string skillId in category.SkillIds)
+        {
+            if (y > InfoEndRow) break;
+            var skill = registry.GetById(skillId);
+            if (skill == null) continue;
+
+            bool known = MemberKnowsSkill(skill);
+
+            // The first unknown attack in the medium's order is the one a fight lets you attempt;
+            // everything behind it is unreachable until that one is learned.
+            bool isNext = !known && !nextMarked;
+            if (isNext) nextMarked = true;
+
+            // Named when it is actionable — learnt, or next in line to be attempted.
+            string label = known || isNext ? skill.DisplayName : "???";
+            _terminal.Text(RightContentX + 2, y++,
+                TruncRight($"• {label}", RightContentW - 2),
+                known ? InfoValueColor : isNext ? InfoLabelColor : LockedTextColor,
+                RightPanelBg);
+        }
+        return y;
+    }
+
+    /// <summary>
+    /// Whether the member already knows a fighting skill. Mirrors <c>FightingSkill.IsUnlocked</c>'s
+    /// modus-mentis test but without a <c>Fighter</c>, which only exists mid-combat — the medium
+    /// availability half of that check is irrelevant here, since the weapon in hand *is* the medium.
+    /// </summary>
+    private bool MemberKnowsSkill(Cathedral.Fight.FightingSkill skill) =>
+        _member != null && _member.LearnedModiMentis.Any(m =>
+            m.ModusMentisId == skill.RequiredModusMentisId ||
+            skill.SecondaryModusMentisIds.Contains(m.ModusMentisId));
 
     private int DrawItemInfo(Item item, int startRow, bool showBack)
     {
@@ -952,24 +1488,37 @@ public sealed class InventoryMenuRenderer
 
         _terminal.Text(RightContentX, y, TruncRight(item.DisplayName, RightContentW), InfoTitleColor, RightPanelBg);
         y++;
-        DrawSep(y); y++;
+        DrawSep(y); y += 2;
 
-        string types = string.Join(", ", item.Types.Select(t => t.ToString()));
-        DrawKV("Type",   types,                                       ref y);
-        DrawKV("Weight", $"{item.Weight:F1} kg",                      ref y);
-        DrawKV("Size",   $"{item.Size}  ({item.SlotCount} slots)",    ref y);
+        // ── Shared: everything every item has ─────────────────────
+        // Kept together above the separator so the top of the panel reads the same whatever is
+        // selected, and the eye learns where to find weight and size without hunting.
+        DrawKV("Type",   item.Category.ToString(), ref y);
+        if (item.SubcategoryKey.Length > 0)
+            DrawKV("Category", item.SubcategoryKey, ref y);
+        DrawKV("Weight", item.Weight.Label(),      ref y);
+        DrawKV("Size",   item.Size.ToString(),     ref y);
+
+        // What the thing is worth, before the small per-merchant variation a catalogue applies.
+        // Shown for everything, including items no NPC currently stocks: an item without a trade
+        // tag is one nobody happens to deal in, not one without a value.
+        DrawKV("Price", $"{item.PriceReference}{CoinSymbol(item.PriceCoin)}", ref y);
         y++;
 
+        // Flavour, not fact: dimmer than the values above so the eye can skip it when scanning
+        // for numbers and settle on it when reading.
         foreach (string desc in WrapText(item.Description, RightContentW))
         {
             if (y > InfoEndRow) break;
-            _terminal.Text(RightContentX, y++, desc, InfoValueColor, RightPanelBg);
+            _terminal.Text(RightContentX, y++, desc, DescriptionColor, RightPanelBg);
         }
-        y++;
+
+        // ── Specific: what this kind of item, and only this kind, does ────────
+        y = DrawItemSpecifics(item, y);
 
         if (item.Info.Length > 0)
         {
-            DrawSep(y); y++;
+            DrawSep(y); y += 2;
             foreach (string line in item.Info)
             {
                 if (y > InfoEndRow) break;
@@ -982,22 +1531,153 @@ public sealed class InventoryMenuRenderer
             y++;
         }
 
+        // ── Consumable composition + button ───────────────────────
+        _consumeButtonRow = -1;
+        if (item is ConsumableItem consumable && _member != null)
+        {
+            if (y <= InfoEndRow) { DrawSep(y); y += 2; }
+            if (y <= InfoEndRow)
+            {
+                _terminal.Text(RightContentX, y, "— Composition —", InfoLabelColor, RightPanelBg);
+                y++;
+            }
+
+            var nosestat   = new NoseRecognitionStat();
+            int recognized = nosestat.IsUsable(_member) ? nosestat.GetValue(_member) : 0;
+            var composition = consumable.Composition;
+
+            for (int ci = 0; ci < composition.Count; ci++)
+            {
+                if (y > InfoEndRow) break;
+                if (ci < recognized || recognized >= 99)
+                {
+                    var h = composition[ci];
+                    // Symbol in humor color, then name
+                    _terminal.SetCell(RightContentX, y, h.Symbol, h.Color, RightPanelBg);
+                    _terminal.Text(RightContentX + 2, y, TruncRight(h.Name, RightContentW - 2), InfoValueColor, RightPanelBg);
+                }
+                else
+                {
+                    _terminal.Text(RightContentX, y, "? unknown", InfoLabelColor, RightPanelBg);
+                }
+                y++;
+            }
+            y++;
+
+            // Consume button
+            if (y <= InfoEndRow)
+            {
+                string reason = consumable.GetCannotConsumeReason(_member);
+                bool canConsume = reason == null;
+
+                string btnLabel = consumable.ConsumeButtonLabel;
+                // Match the CLEAR button styling from the travel box UI.
+                Vector4 btnFg, btnBg;
+                if (!canConsume)
+                {
+                    btnFg = InfoLabelColor;
+                    btnBg = RightPanelBg;
+                }
+                else if (_consumeButtonHovered)
+                {
+                    btnFg = Config.TravelUI.ClearButtonHoverTextColor;
+                    btnBg = Config.TravelUI.ClearButtonHoverBackgroundColor;
+                }
+                else
+                {
+                    btnFg = Config.TravelUI.ClearButtonTextColor;
+                    btnBg = Config.TravelUI.ClearButtonBackgroundColor;
+                }
+                _terminal.Text(RightContentX, y, $"[ {btnLabel} ]", btnFg, btnBg);
+                if (!canConsume && y + 1 <= InfoEndRow)
+                {
+                    _terminal.Text(RightContentX, y + 1,
+                        TruncRight(reason ?? string.Empty, RightContentW),
+                        InfoLabelColor, RightPanelBg);
+                }
+
+                if (canConsume)
+                    _consumeButtonRow = y;
+
+                y += canConsume ? 1 : 2;
+            }
+        }
+
+        // ── Throw-away / move-to buttons (available for every item) ─────
+        _throwButtonRow    = -1;
+        _moveButtonRow     = -1;
+        _moveButtonEnabled = false;
+        _moveDestHits.Clear();
+
+        var loc = ResolveDisplayedItemLocation();
+        if (_member != null && loc.HasValue && ReferenceEquals(loc.Value.item, item))
+        {
+            var (locItem, locParent, locAnchor) = loc.Value;
+
+            if (y <= InfoEndRow) { DrawSep(y); y += 2; }
+
+            // THROW AWAY — always present, always clickable. Purple = destructive/negative.
+            if (y <= InfoEndRow)
+            {
+                Vector4 tFg = _throwButtonHovered ? Config.Colors.Black       : Config.Colors.LightPurple;
+                Vector4 tBg = _throwButtonHovered ? Config.Colors.LightPurple : Config.Colors.DarkGray35;
+                _terminal.Text(RightContentX, y, "[ THROW AWAY ]", tFg, tBg);
+                _throwButtonRow = y;
+                y += 2;   // blank line between buttons
+            }
+
+            // MOVE TO — greyed out when there is nowhere else to move the item.
+            var dests = BuildMoveDestinations(locItem, locParent, locAnchor);
+            bool canMove = dests.Count > 0;
+            _moveButtonEnabled = canMove;
+            if (y <= InfoEndRow)
+            {
+                Vector4 mFg, mBg;
+                if (!canMove)                { mFg = InfoLabelColor; mBg = RightPanelBg; }
+                else if (_moveButtonHovered) { mFg = Config.TravelUI.ClearButtonHoverTextColor; mBg = Config.TravelUI.ClearButtonHoverBackgroundColor; }
+                else                         { mFg = Config.TravelUI.ClearButtonTextColor;      mBg = Config.TravelUI.ClearButtonBackgroundColor; }
+                _terminal.Text(RightContentX, y, "[ MOVE TO ]", mFg, mBg);
+                _moveButtonRow = y;
+                y += 2;   // blank line before the destination submenu
+            }
+
+            // Destination submenu (only when opened for this item).
+            if (canMove && _moveMenuOpen && ReferenceEquals(_moveMenuItem, item))
+            {
+                for (int di = 0; di < dests.Count; di++)
+                {
+                    if (y > InfoEndRow) break;
+                    var d = dests[di];
+                    bool hovered = _hoveredMoveDest == di;
+                    Vector4 dFg = hovered ? ContentHovered : ContentNormal;
+                    Vector4 dBg = hovered ? ContentSelBg   : RightPanelBg;
+                    string glyph = d.Kind == MoveDestKind.Anchor ? "→ " : "→ ▢ ";
+                    string label = TruncRight("  " + glyph + d.Label, RightContentW);
+                    _terminal.Text(RightContentX, y, label.PadRight(RightContentW), dFg, dBg);
+                    _moveDestHits.Add((y, d));
+                    y++;
+                }
+            }
+        }
+
         return y;
     }
 
     // Box width for items rendered inside the right info panel.
     private const int ContentBoxW = RightContentW;
 
-    private void DrawContainerContents(ContainerItem container, int startRow)
+    private void DrawContainerContents(IContainer container, int startRow)
     {
         _contentHits.Clear();
 
         int y = startRow;
         if (y > InfoEndRow) return;
 
-        DrawSep(y); y++;
-        string header = $"Contents  {container.UsedSlots}/{container.ContentSlots} slots";
-        _terminal.Text(RightContentX, y, TruncRight(header, RightContentW), InfoLabelColor, RightPanelBg);
+        DrawSep(y); y += 2;
+        // No slot count: the boxes below are drawn one row per slot, so how full it is reads off
+        // the display itself. The capacity number lived here and on the specifics line above, and
+        // saying it twice told the player nothing the second time.
+        _terminal.Text(RightContentX, y, "Contents", InfoLabelColor, RightPanelBg);
         y++;
 
         if (container.Contents.Count == 0)
@@ -1039,7 +1719,7 @@ public sealed class InventoryMenuRenderer
     /// Draws container contents with a preview box showing where the dragged item
     /// would land if the user releases the mouse button.
     /// </summary>
-    private void DrawContainerContentsDragPreview(ContainerItem container, int startRow)
+    private void DrawContainerContentsDragPreview(IContainer container, int startRow)
     {
         int y = startRow;
         if (y > InfoEndRow) return;
@@ -1049,7 +1729,7 @@ public sealed class InventoryMenuRenderer
                        && container != _dragItem;
 
         int usedPreview = container.UsedSlots + (_dragItem != null && canDrop ? _dragItem.SlotCount : 0);
-        DrawSep(y); y++;
+        DrawSep(y); y += 2;
         string header = canDrop
             ? $"Contents  {usedPreview}/{container.ContentSlots} slots (preview)"
             : $"Contents  {container.UsedSlots}/{container.ContentSlots} slots";
@@ -1131,8 +1811,9 @@ public sealed class InventoryMenuRenderer
         return null;
     }
 
-    private int HitTestContent(int y)
+    private int HitTestContent(int x, int y)
     {
+        if (x < RightPanelX) return -1;
         foreach (var hit in _contentHits)
             if (y >= hit.Y0 && y <= hit.Y1)
                 return hit.Index;
@@ -1148,12 +1829,28 @@ public sealed class InventoryMenuRenderer
         _terminal.Text(RightContentX, y, new string('\u2500', RightContentW), SepColor, RightPanelBg);
     }
 
+    /// <summary>
+    /// Width of the label column. Must exceed the longest label plus its colon, or that one row
+    /// loses the gap between label and value and reads as a single run-on word — "Category:" is
+    /// nine characters and did exactly that at the previous width.
+    /// </summary>
+    private const int KvLabelW = 10;
+
+    /// <summary>The coin glyph for a denomination, matching the wallet box.</summary>
+    private static string CoinSymbol(CoinType coin) => coin switch
+    {
+        CoinType.Gold   => Config.Symbols.GoldCoinSymbol.ToString(),
+        CoinType.Silver => Config.Symbols.SilverCoinSymbol.ToString(),
+        _               => Config.Symbols.CopperCoinSymbol.ToString(),
+    };
+
     private void DrawKV(string label, string value, ref int y)
     {
         if (y > InfoEndRow) return;
-        string labelPad = (label + ":").PadRight(9);
-        _terminal.Text(RightContentX,     y, labelPad,                              InfoLabelColor, RightPanelBg);
-        _terminal.Text(RightContentX + 9, y, TruncRight(value, RightContentW - 9),  InfoValueColor, RightPanelBg);
+        string labelPad = (label + ":").PadRight(KvLabelW);
+        _terminal.Text(RightContentX, y, labelPad, InfoLabelColor, RightPanelBg);
+        _terminal.Text(RightContentX + KvLabelW, y,
+            TruncRight(value, RightContentW - KvLabelW), InfoValueColor, RightPanelBg);
         y++;
     }
 

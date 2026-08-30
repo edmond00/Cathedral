@@ -44,11 +44,27 @@ public class FightingSkillRegistry
     public FightingSkill? GetById(string id) => _byId.GetValueOrDefault(id);
 
     public IEnumerable<FightingSkill> GetByMediumOrgan(string organId) =>
-        _byId.Values.Where(s => s.Medium.Type == MediumType.OrganMedium && s.Medium.OrganId == organId);
+        _byId.Values.Where(s => s.Mediums.Any(m => m.Type == MediumType.OrganMedium && m.OrganId == organId));
 
     public IEnumerable<FightingSkill> GetByModusMentis(string modId) =>
         _byId.Values.Where(s => s.RequiredModusMentisId == modId);
 
     public IEnumerable<FightingSkill> GetAttackSkills() =>
         _byId.Values.Where(s => s.EffectType == FightingSkillEffect.Attack);
+
+    /// <summary>Defensive skills — Parry, Dodge, Cover, DefensePosture.</summary>
+    public IEnumerable<FightingSkill> GetDefensiveSkills() =>
+        _byId.Values.Where(s => s.EffectType == FightingSkillEffect.Defense
+                              || s.EffectType == FightingSkillEffect.DefensePosture);
+
+    /// <summary>
+    /// Utility skills — the viscera buffs (Rage, BloodLust, ColdBlood, IronNerves,
+    /// SurvivalInstinct), Sprint, Jump, Feint. <see cref="FightingSkillEffect.Buff"/> must stay in
+    /// this filter: it is how <c>FightAI</c> discovers these skills at all, so dropping it would
+    /// silently make every buff player-only.
+    /// </summary>
+    public IEnumerable<FightingSkill> GetUtilitySkills() =>
+        _byId.Values.Where(s => s.EffectType == FightingSkillEffect.Utility
+                              || s.EffectType == FightingSkillEffect.Other
+                              || s.EffectType == FightingSkillEffect.Buff);
 }

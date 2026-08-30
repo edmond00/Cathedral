@@ -10,6 +10,14 @@ public interface IAnatomyFactory
 {
     AnatomyType AnatomyType { get; }
 
+    /// <summary>
+    /// What this anatomy is able to do beyond its organs — speech, fine manipulation, abstract
+    /// thought. The single declaration point: a modus mentis or a verb states what it <i>requires</i>,
+    /// and a body either has it or does not. A new anatomy adds one line here and needs no content
+    /// edited anywhere else.
+    /// </summary>
+    AnatomyCapability Capabilities { get; }
+
     /// <summary>Create the full body part hierarchy (with default organ scores).</summary>
     List<BodyPart> CreateBodyParts();
 

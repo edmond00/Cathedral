@@ -8,18 +8,33 @@ public sealed class BearSpecies : Species
     public override string DisplayName => "Bear";
     public override string ArtFolderPath => "assets/art/body/beast";
 
-    // Bears have powerful limbs and strong claws; moderate bite.
+    // Apex brute: massive physical power, resilient body, below-average wit.
     public override IReadOnlyDictionary<string, int> OrganPartMaxScores { get; } =
         new Dictionary<string, int>
         {
-            { "fangs",           6 },
-            { "left_foreleg",    9 },
-            { "right_foreleg",   9 },
-            { "left_hindleg",    8 },
-            { "right_hindleg",   8 },
-            { "left_foreclaws",  8 },
-            { "right_foreclaws", 8 },
-            { "left_hindclaws",  7 },
-            { "right_hindclaws", 7 },
+            // Encephalon: slow but not mindless — a dog is smarter
+            { "anamnesis",      3 },
+            { "cerebrum",       2 }, // below average reasoning
+            { "cerebellum",     3 },
+            { "hippocampus",    3 },
+            { "pineal_gland",   2 },
+            // Trunk: everything maxed — an unstoppable biological machine
+            { "backbone",   5 },
+            { "heart",      5 },
+            { "pulmones",   4 },
+            { "viscera",    5 }, // virtually immune to disease
+            { "paunch",     4 }, // omnivore, digests anything
+            { "hepar",      4 },
+            { "spleen",     4 },
+            // Body: strongest raw power among beasts
+            { "fangs",           4 },
+            { "left_foreleg",    5 },
+            { "right_foreleg",   5 },
+            { "left_hindleg",    5 },
+            { "right_hindleg",   5 },
+            { "left_foreclaws",  5 },
+            { "right_foreclaws", 5 },
+            { "left_hindclaws",  5 },
+            { "right_hindclaws", 5 },
         };
 }

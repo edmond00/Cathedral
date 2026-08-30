@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using OpenTK.Mathematics;
 
 namespace Cathedral;
@@ -9,7 +10,429 @@ namespace Cathedral;
 /// </summary>
 public static class Config
 {
+    #region Randomness
+
+    public static class Rng
+    {
+        /// <summary>
+        /// Master seed for the entire playthrough — world layout, protagonist spawn,
+        /// dice rolls, travel-path jitter, etc. all derive from it (see <see cref="GameRng"/>).
+        ///
+        /// <list type="bullet">
+        /// <item><c>null</c> (default) → a fresh time-based seed each launch, so every run
+        /// gets a different world.</item>
+        /// <item>a fixed integer → the exact same run can be replayed by making the same
+        /// decisions.</item>
+        /// </list>
+        ///
+        /// Set it here, or pass <c>--seed &lt;n&gt;</c> on the command line (the CLI flag
+        /// overrides this value). The resolved seed is printed at startup so a time-based
+        /// run can be pinned afterwards.
+        ///
+        /// Note: this does not affect the LLM (its sampling is nondeterministic and carries
+        /// no seed), nor RNG already seeded from world data such as NPC or location ids.
+        /// </summary>
+        public static int? Seed { get; set; } = null;
+    }
+
+    /// <summary>
+    /// Switches that exist only to make a feature testable, set from command-line flags and never
+    /// from gameplay. Anything here must be inert when left at its default, so a normal run behaves
+    /// exactly as if the option did not exist.
+    ///
+    /// <para>Adding to this is expected: when a change is hard to reach from a <c>--cli</c> script —
+    /// it needs a rare biome, a particular time of day, a specific roll — the fix is a new flag here
+    /// plus a line in CLAUDE.md, not a hunt for a lucky seed.</para>
+    /// </summary>
+    public static class Debug
+    {
+        /// <summary>
+        /// Time of day to arrive at every location with, instead of a random draw. Set by
+        /// <c>--period &lt;dawn|morning|noon|afternoon|evening|night&gt;</c>. Night is the one that
+        /// matters most: it is when every building's entry door is shut, and a random arrival hits it
+        /// one visit in six.
+        /// </summary>
+        public static Game.Narrative.TimePeriod? ForcedPeriod { get; set; } = null;
+
+        /// <summary>
+        /// Whether the developer keyboard shortcuts respond. <b>False in a shipped build</b>
+        /// (<c>-p:Ship=true</c> defines SHIP); true everywhere else.
+        ///
+        /// <para>What it gates: the render-debug keys (D shader mode, M markers), the post-process
+        /// tuning keys (F dither, G levels, H grain, J pulses), the debug camera (C, V), the
+        /// window's diagnostic dumps (D, G), <b>and camera zoom (W, S)</b>.</para>
+        ///
+        /// <para>Zoom is in that list on purpose even though it is not a debug feature. The game
+        /// frames its own camera — narration, travel and fights each set a distance — and a player
+        /// who zooms out of that framing has no way back to it and reports the result as a bug.
+        /// Rotation and re-centring (arrows, Space) stay: they cannot leave a state you cannot
+        /// recover from.</para>
+        ///
+        /// <para><b>Escape is not gated</b> and never should be. It opens the pause menu and closes
+        /// narration popups; without it a player has no way out of a scene.</para>
+        ///
+        /// <para>Settable so a development build can be tested as though it were shipped
+        /// (<c>--no-developer-keys</c>). Setting it true in a SHIP build does nothing useful — the
+        /// handlers are still compiled in, but nothing turns it on.</para>
+        /// </summary>
+        public static bool DeveloperKeys { get; set; } =
+#if SHIP
+            false;
+#else
+            true;
+#endif
+
+        /// <summary>
+        /// Whether to write the development log tree under <c>logs/</c> — a directory per LLM
+        /// session, a subdirectory per slot, a further one per request holding the prompt, the
+        /// full context, the reply and its timings, plus the narration-graph dumps.
+        /// <b>False in a shipped build.</b>
+        ///
+        /// <para>That tree is a development instrument: it is how a prompt regression is found,
+        /// and it is worth thousands of files. A player has no use for it, it grows without bound
+        /// (~7 files and 71 KB per LLM request), and it contains the full text of everything the
+        /// model was asked and answered.</para>
+        ///
+        /// <para>What a shipped build writes instead is <c>log.txt</c> — one file, replaced each
+        /// launch, holding the console output and llama-server's output together. That is the file
+        /// a player can attach to a bug report, and it is written in both builds. See
+        /// <see cref="GameLog"/>.</para>
+        /// </summary>
+        public static bool VerboseFileLogging { get; set; } =
+#if SHIP
+            false;
+#else
+            true;
+#endif
+
+        /// <summary>
+        /// Compute device for the language model, overriding both the player's setting and the
+        /// first-run probe. Set by <c>--cpu</c> (and <c>--gpu</c>).
+        ///
+        /// <para>It lives here rather than being written into <see cref="UserSettings"/> because
+        /// flags are parsed before <c>UserSettings.Load()</c> runs, so a flag that wrote to the
+        /// settings object would be silently overwritten by the file a moment later. It also
+        /// <i>should</i> not persist: <c>--cpu</c> is one run's instruction, not a change to what
+        /// the player chose.</para>
+        ///
+        /// <para>Null means "no override" — the settings and the probe decide, exactly as if the
+        /// flag did not exist.</para>
+        ///
+        /// <para>Qualified with <c>global::</c> because <see cref="Config.LLM"/> — the sampling
+        /// settings nested in this same class — shadows the <c>Cathedral.LLM</c> namespace here.</para>
+        /// </summary>
+        public static global::Cathedral.LLM.LlamaComputeDevice? ForcedLlmDevice { get; set; } = null;
+
+        /// <summary>
+        /// Biome or location name to place the protagonist on at world generation, e.g. "village".
+        /// Set by <c>--start-at &lt;name&gt;</c>. Matched case-insensitively as a substring; ignored
+        /// when nothing in the world matches.
+        /// </summary>
+        public static string? StartAt { get; set; } = null;
+
+        /// <summary>
+        /// Forces every scene to be built as though it were this location id, whatever vertex the
+        /// protagonist actually stands on. Set by <c>--location-id &lt;n&gt;</c>.
+        ///
+        /// <para><b>What it is for.</b> A scene is a pure function of its location id
+        /// (<c>SceneFactory.CreateSeededRandom(locationId)</c>), so the id decides the layout, the
+        /// room names, the objects and the people — a village rolls a Chain or a Hub with entirely
+        /// different rooms depending on it. That makes every other targeting flag id-dependent:
+        /// <c>--start-area "Alehouse Store"</c> and <c>--observe-only "Shelving Rack"</c> name things
+        /// that exist in *some* villages.</para>
+        ///
+        /// <para><c>--verb-probe</c> reports the situations that reach each verb by sampling ids
+        /// 0…N. Without this flag a test written from that report is aimed at a location the game
+        /// will never build — <c>--start-at village</c> lands on whatever vertex the world generated,
+        /// and its id is not one of the sampled ones. Pinning the id is what makes the probe's
+        /// findings and the run agree, and so what makes a generated verb test hit its verb.</para>
+        ///
+        /// <para>Inert at its default of null: the vertex index is used, exactly as before.</para>
+        /// </summary>
+        public static int? LocationId { get; set; } = null;
+
+        /// <summary>
+        /// Forces which scene factory builds every location, ignoring the biome under the avatar.
+        /// Set by <c>--location-type &lt;name&gt;</c> ("forest", "village", "cave"…).
+        ///
+        /// <para><b>Why <c>--start-at</c> is not enough.</b> That flag walks the generated world
+        /// looking for a matching biome, and when the world does not contain one within reach it
+        /// shrugs and uses the normal spawn. At seed 42 there is no forest near the start, so every
+        /// test written for a forest ran in a plain — and, since <c>--location-id</c> pins the id but
+        /// not the factory, went on to build the wrong factory at the right number.</para>
+        ///
+        /// <para>Together with <see cref="LocationId"/> this gives a test complete control: the
+        /// factory and the id decide the whole scene, so the world need not contain the biome at all.
+        /// That is what makes a verb test independent of world generation.</para>
+        ///
+        /// <para>Inert at its default of null.</para>
+        /// </summary>
+        public static string? LocationType { get; set; } = null;
+
+        /// <summary>
+        /// Area inside a location to open narration in, e.g. "pigsty". Set by
+        /// <c>--start-area &lt;name&gt;</c>. Matched case-insensitively as a substring of the area's
+        /// display name; ignored when the location has no such area, so it is harmless to leave on
+        /// while moving between locations.
+        ///
+        /// <para><c>--start-at</c> gets a script to the right location; this gets it to the right room.
+        /// Without it a script arrives in whichever area the factory built first — a farm's courtyard —
+        /// and reaching anything else means walking there through observation, thinking and an action
+        /// per step, with the persona choosing what is observable at each one. Anything that lives in a
+        /// specific room (a pigsty's pigs, a smithy's anvil) is otherwise a long approach away.</para>
+        /// </summary>
+        public static string? StartArea { get; set; } = null;
+
+        /// <summary>
+        /// Pins every NPC to one area for the whole day, instead of following their schedule. Set by
+        /// <c>--npc-static</c>.
+        ///
+        /// <para><b>What it is for.</b> A schedule sends somebody to their bed, their workplace and
+        /// two or three other rooms across the six periods, drawn from the location seed — so "where
+        /// is the brewer at dawn?" has an answer that depends on the location id and the hour, and
+        /// nothing about it is guessable when writing a test. Every NPC verb (stalk, provoke,
+        /// pickpocket, meet_stranger, attack …) has to find its person before it can do anything, and
+        /// a test that names the wrong room finds an empty one.</para>
+        ///
+        /// <para>This removes the variable: the NPC is where the schedule puts them at their busiest
+        /// hour, at every hour. Run <c>--verb-probe</c> with the same flag and its reported rooms are
+        /// the rooms the run will use.</para>
+        ///
+        /// <para>Inert at its default of false — schedules are followed exactly as before, so nothing
+        /// about a normal run changes.</para>
+        /// </summary>
+        public static bool NpcStatic { get; set; } = false;
+
+        /// <summary>
+        /// Opens no audio device at all: no music, no sound effects, no loading wash.
+        ///
+        /// <para>For test runs. The suite launches the game a hundred-odd times, and every one of
+        /// them starts its ambience — so a full run is an hour of music from windows nobody is
+        /// looking at, several of them overlapping. <c>run_tests.sh</c> passes this on every script.</para>
+        ///
+        /// <para>Implemented by not opening the MIDI device rather than by turning a volume down,
+        /// because that is a state the engine already supports and handles everywhere: a machine with
+        /// no MIDI device runs this path in production. Nothing else has to learn about silence.</para>
+        ///
+        /// <para>Inert at its default of false.</para>
+        /// </summary>
+        public static bool Silent { get; set; } = false;
+
+        /// <summary>
+        /// Opens the game window but never shows it. Set by <c>--hidden</c>; <c>run_tests.sh</c>
+        /// passes it on every script, for the same reason it passes <c>--silent</c>: a full run
+        /// launches the game a hundred-odd times, and each launch otherwise puts a window on screen
+        /// and takes the keyboard focus off whatever the developer was doing.
+        ///
+        /// <para>Implemented as <c>StartVisible = false</c> on the window rather than as a minimised
+        /// state. The GL context is created either way, so rendering, the glyph atlas and every mode
+        /// still run exactly as they do in a visible run - and <c>dump</c> reads the terminal cell
+        /// grid on the CPU rather than the framebuffer, so nothing a script asserts on depends on the
+        /// window being mapped. Minimising instead would leave frame presentation at the driver's
+        /// discretion, which is a difference between test and play for no gain.</para>
+        ///
+        /// <para>Deliberately not implied by <c>--cli</c>: watching a script drive the game is how
+        /// most CLI problems get diagnosed, and taking that away by default would be a poor trade.
+        /// Inert at its default of false.</para>
+        /// </summary>
+        public static bool HiddenWindow { get; set; } = false;
+        /// <summary>
+        /// Settles every dialogue as an immediate success instead of holding it. Set by
+        /// <c>--auto-dialogue</c>.
+        ///
+        /// <para>A dozen verbs do nothing themselves — they open a conversation, and the tree decides
+        /// what follows. Without this, a test for the <i>verb</i> has to walk somebody else's tree to
+        /// reach its own assertion, and is broken by any re-authoring of that tree. With it, the verb
+        /// test asserts about the verb; the trees are covered separately by
+        /// <c>cli/_systems/dialogue_*.cli</c>, which drive them properly.</para>
+        ///
+        /// <para>See <c>DialogueAutoResolve</c>: it performs exactly the writes a won conversation
+        /// makes, so nothing reading the world afterwards can tell the difference.</para>
+        ///
+        /// <para>Inert at its default of false.</para>
+        /// </summary>
+        public static bool AutoDialogue { get; set; } = false;
+
+        /// <summary>
+        /// Starts every NPC at this affinity with the protagonist instead of Stranger. Set by
+        /// <c>--npc-affinity &lt;level&gt;</c> (<c>distant_acquaintance</c>, <c>close_friend</c>…).
+        ///
+        /// <para>Six verbs are gated on already knowing somebody — <c>propose_to_buy</c>,
+        /// <c>propose_to_sell</c>, <c>propose_to_join</c>, <c>request_job</c>,
+        /// <c>strengthen_relationship</c> and the trade modes behind them all want
+        /// DistantAcquaintance or better. Earning that in-script means holding a whole conversation
+        /// first and winning its roll, which makes the test a test of <i>that</i> conversation.</para>
+        ///
+        /// <para>Seeded when a location's affinity store is first handed out, so it behaves exactly
+        /// like a relationship built in play — including persisting, since it lands in the same
+        /// backing store. Inert at its default of null.</para>
+        /// </summary>
+        public static Game.Dialogue.Affinity.AffinityLevel? NpcAffinity { get; set; } = null;
+
+        /// <summary>
+        /// Makes every NPC count the protagonist an enemy from the start. Set by <c>--npc-hostile</c>.
+        ///
+        /// <para>The counterpart to <see cref="NpcAffinity"/>, for the verbs that need somebody who
+        /// already wants to fight: <c>reconcile</c> and <c>appease</c> apply only to an enemy (or an
+        /// annoying acquaintance). <c>--spawn-beast</c> covers the beast case, but a wolf cannot be
+        /// reconciled with — that tree needs somebody who can speak — and earning a human enemy in
+        /// script means committing a crime, being caught, losing the confrontation and walking out of
+        /// the resulting fight.</para>
+        ///
+        /// <para>Seeded into the same enemy store gameplay writes to, so it reads back exactly like a
+        /// grudge earned in play. Inert at its default of false.</para>
+        /// </summary>
+        public static bool NpcHostile { get; set; } = false;
+
+        /// <summary>
+        /// Restricts what an observation phase may look at to objects whose name contains this, e.g.
+        /// "pig". Set by <c>--observe-only &lt;name&gt;</c>. Null (the default) offers the whole scene,
+        /// exactly as before.
+        ///
+        /// <para>Which object a phase observes is a persona choice, and a phase opens on ONE object out
+        /// of a dozen — so a script that wants to act on a particular thing is at the mercy of that
+        /// choice, and re-rolling seeds until the right one comes up first is not a test. This pins it.
+        /// Ignored for a phase where nothing matches (the persona chooses freely again), so an area
+        /// without the named object still narrates instead of falling silent.</para>
+        /// </summary>
+        public static string? ObserveOnly { get; set; } = null;
+
+        /// <summary>
+        /// Suppresses random travel encounters. Set by <c>--no-encounters</c>. Inert at its default
+        /// of false: a run without the flag rolls for encounters exactly as it always did.
+        ///
+        /// <para>For scripted runs. A CLI script that travels somewhere and waits for
+        /// <c>LocationInteraction</c> has no way to know an encounter has put the game in
+        /// <c>EncounterPrompt</c> instead, so it sits there until its timeout and reports a failure
+        /// that has nothing to do with what it was testing. The encounter is not the thing under
+        /// test; being able to turn it off is what makes everything else testable.</para>
+        /// </summary>
+        public static bool NoEncounters { get; set; } = false;
+
+        /// <summary>
+        /// Lets a world-map click on the vertex the avatar is already standing on re-enter that
+        /// location. Set by <c>--allow-reentry</c>.
+        ///
+        /// <para>The game refuses it: arriving somewhere <b>already</b> opens it
+        /// (<c>OnProtagonistArrived</c> starts the interaction itself), so clicking your own vertex is
+        /// only ever a way back into the place you have just walked out of — and a visit is meant to
+        /// cost a journey. Every trip therefore goes somewhere new.</para>
+        ///
+        /// <para>For scripted runs, where it is the opposite of a nuisance: a script has to enter a
+        /// location from a cold start, and the spawn vertex is the only one it can name without
+        /// knowing what the seed generated. This is what <c>travel here</c> needs, so
+        /// <c>run_tests.sh</c> passes it on every script. Inert at its default of false.</para>
+        /// </summary>
+        public static bool AllowReentry { get; set; } = false;
+
+        /// <summary>
+        /// Days to push the world clock forward once the run reaches the world map, on top of
+        /// whatever travel and work have accrued. Set by <c>--advance-days &lt;n&gt;</c>.
+        /// Inert at its default of 0.
+        ///
+        /// <para>For scripted runs. <see cref="Game.Narrative.GameClock"/> only moves on travel
+        /// arrival and work stints, and a wound takes 100–1000 days to close — so without this a
+        /// script that wants to see healing happen has to simulate years of journeys. Applied once,
+        /// at the first entry to the world view, and then cleared.</para>
+        /// </summary>
+        public static double AdvanceDays { get; set; } = 0;
+
+        /// <summary>
+        /// Fills all four humor queues with black bile right after character creation, so the next
+        /// journey starves the protagonist. Set by <c>--black-bile</c>. Inert at its default.
+        ///
+        /// <para>Starvation is the one death a script cannot otherwise stage. Old age is reachable
+        /// with <c>--advance-days</c> (applied just before the old-age check) and death by wounds
+        /// with <c>--start-fight</c> plus <c>fight-end death</c>, but souring the humors takes a
+        /// whole run of bad organs and long journeys. A critical queue is a state the engine already
+        /// handles — every consumption path checks for it — so this only forces the state, it does
+        /// not special-case the death.</para>
+        /// </summary>
+        public static bool BlackBile { get; set; } = false;
+
+        /// <summary>
+        /// Modi mentis to grant the protagonist after character creation, and the level to set them
+        /// to. Set by <c>--grant-mm &lt;id[,id…]&gt;[:level]</c>. Null means grant nothing.
+        ///
+        /// <para>For scripted runs. Fighting skills are gated behind their modi mentis, so without
+        /// this a script cannot reach the buffs at all — and cannot exercise both ends of the
+        /// level-derived vital-heat curve, which is the whole of a buff's cost model.</para>
+        /// </summary>
+        public static (string[] Ids, int Level)? GrantModiMentis { get; set; } = null;
+
+        /// <summary>
+        /// Creature to fight immediately on reaching the world map, e.g. "wolf". Set by
+        /// <c>--start-fight &lt;creature&gt;</c>. Null means no debug fight.
+        ///
+        /// <para>For scripted runs, and the flag the rest of the fight work depends on: the only
+        /// real ways into a fight are a random travel encounter (which every script disables with
+        /// <c>--no-encounters</c>) and provoking a location NPC through a conversation and a check.
+        /// Neither is a reasonable prerequisite for testing combat itself.</para>
+        /// </summary>
+        public static string? StartFight { get; set; } = null;
+
+        /// <summary>
+        /// Creature to force a travel encounter with on the <b>final</b> step of the next journey,
+        /// e.g. "wolf". Set by <c>--encounter-on-arrival &lt;creature&gt;</c>. Fires once and clears
+        /// itself. Null means no forced encounter, which is how every ordinary run behaves.
+        ///
+        /// <para>For scripted runs, and it covers a case no other flag reaches. The last step of a
+        /// path raises <c>ProtagonistSteppedToVertex</c> and <c>ProtagonistArrivedAtLocation</c> from
+        /// the <em>same</em> <c>UpdateMovement</c> call, so an encounter rolled there begins with the
+        /// arrival already announced and the interface's path already cleared — the one arrangement
+        /// in which winning the fight has no journey left to finish. It stranded the game in
+        /// <c>Traveling</c> over a cleared terminal, and a random roll reaches it about once in a
+        /// hundred journeys.</para>
+        ///
+        /// <para>Deliberately honoured <b>before</b> <see cref="NoEncounters"/>, so a script can
+        /// suppress the random rolls and still stage this one.</para>
+        /// </summary>
+        public static string? EncounterOnArrival { get; set; } = null;
+
+        /// <summary>
+        /// Beast archetype to add to every scene as it is built, e.g. "wolf". Set by
+        /// <c>--spawn-beast &lt;name&gt;</c>. Null means add nothing.
+        ///
+        /// <para>For scripted runs. Every beast a wilderness factory places is rolled (a wolf 10–20%
+        /// of the time, a boar 25–40%) and then given a roaming schedule, so whether one is standing
+        /// where the script opens is two coin flips deep — and the beast is the whole subject of
+        /// appease/tame. This puts one in the opening area at every period, flagged an enemy by the
+        /// same first-contact pass that flags a rolled one.</para>
+        /// </summary>
+        public static string? SpawnBeast { get; set; } = null;
+
+        /// <summary>
+        /// Verb id the playground's goal choice must land on, e.g. "tame". Set by
+        /// <c>--goal-only &lt;verb-id&gt;</c> and by the CLI's <c>goal</c> command, which is what a
+        /// script uses when the goal has to change between steps. Null (the default) leaves the
+        /// choice to the RNG, exactly as before.
+        ///
+        /// <para><c>--playground</c> replaces the persona's "what do you want to do?" with a uniform
+        /// draw over every goal the observed object offers, so a script that means to appease — and
+        /// then to tame — a beast offering a dozen goals is not testing anything it can name. Ignored
+        /// for a thinking phase where no goal matches, which then draws as usual.</para>
+        /// </summary>
+        public static string? GoalOnly { get; set; } = null;
+    }
+
+    #endregion
+
     #region Terminal Configuration
+    public static class Name {
+        /// <summary>Stylised lowercase, as the main menu draws it.</summary>
+        public const string GameTitle = "proscribed palimpsest";
+
+        /// <summary>
+        /// Title case, for the OS window title bar — the one place the name appears outside the
+        /// game's own typography, next to every other application's. Kept here rather than written
+        /// at the window so the launchers cannot drift from the menu, which is how the title bar
+        /// came to read "Cathedral - Location Travel Mode" in a shipped build.
+        /// </summary>
+        public const string WindowTitle = "Proscribed Palimpsest";
+
+        public const string Chapter = "Volume 2";
+        public const string ChapterSubtitle = "Of Shame and the Opened Body";
+    }
     
     public static class Terminal
     {
@@ -25,7 +448,9 @@ public static class Config
         {
             // Add characters here that need fallback font
             // Example: '█', '▓', '▒', '░', etc.
-            '♞', '⚓'
+            '♞', '⚓',
+            '⨯', // U+2A2F — vector cross used for the forbidden-travel flash on the world sphere
+            '⎊', '◉', '⊚', // coin denomination glyphs (gold / silver / copper)
         };
         
         // Main terminal dimensions
@@ -39,8 +464,131 @@ public static class Config
         public const int PopupHeight = 40;
         public const int PopupCellSize = MainCellSize;
 
+        // ── Glyph rendering ──────────────────────────────────────────────────
+        //
+        // The three below are the only knobs the player has over how readable the terminal text
+        // is, and they are the reason none of them is a const: the Settings screen writes them
+        // live. GlyphScale and GlyphAlphaGamma are uniforms set on every frame, so a write here
+        // shows on the next one; GlyphStrokeFactor is baked into the atlas raster and a write
+        // must be followed by GlyphAtlas.Rebuild(). See UserSettings.GlyphWeight for what is
+        // persisted, and SettingsMenuRenderer for the rows.
+        //
+        // The grid itself is deliberately NOT adjustable. Cell size is the window divided by
+        // MainWidth/MainHeight, and every renderer hardcodes its rows and columns against that
+        // 100x100 — the grid is part of the layout, not a setting. Fullscreen is the player's
+        // lever over cell size.
+
+        /// <summary>
+        /// The weight ladder the Settings screen offers, from hairline to heavy.
+        ///
+        /// <para><b>One row, two constants, on purpose.</b>
+        /// <see cref="GlyphStrokeFactor"/> and <see cref="GlyphAlphaGamma"/> are two halves of one
+        /// fix that bite at opposite ends of the cell-size range — the stroke is what carries a
+        /// large cell, where there is little partial coverage for the gamma to lift, and the gamma
+        /// is what carries a small one, where a stem is mostly skirt. A player cannot tell which
+        /// half their panel needs, and offered as two rows the obvious thing to do with them is
+        /// set one against the other. So they move together and the player sees a single weight.</para>
+        ///
+        /// <para>The ends are the documented failure modes rather than arbitrary limits: past
+        /// ~0.04 of stroke the counters of '@', '8' and '%' begin to close at small cell sizes,
+        /// and much below 0.7 of gamma the anti-aliased skirt stops reading as an edge and the
+        /// text turns blocky. A player who walks to either end gets an ugly result, not a broken
+        /// one — which is the right thing for a knob whose whole purpose is to be pushed until it
+        /// looks right on a panel nobody here has seen.</para>
+        ///
+        /// <para>Declared <b>before</b> the three fields below, and that is load-bearing: static
+        /// field initializers run in declaration order, so a table declared after the fields that
+        /// read it is still null when they initialize.</para>
+        /// </summary>
+        public static readonly (string Label, float Stroke, float Gamma)[] GlyphWeightSteps =
+        {
+            ("THIN",   0.000f, 1.00f),
+            ("LIGHT",  0.010f, 0.85f),
+            ("NORMAL", 0.020f, 0.75f),   // the shipped default — see GlyphWeightDefaultStep
+            ("BOLD",   0.030f, 0.68f),
+            ("HEAVY",  0.040f, 0.62f),
+        };
+
+        /// <summary>Index into <see cref="GlyphWeightSteps"/> of the default, unchanged weight.</summary>
+        public const int GlyphWeightDefaultStep = 2;
+
+        // Bounds for the glyph-size row.
+        //
+        // The ceiling was 1.30, on the reasoning that box-drawing glyphs fill their cell and so
+        // collide before letters do. Measured against the atlas raster, that is the wrong way
+        // round: in FreeMono a '─' and a '█' are 0.66 cell WIDE, so a popup frame is gapped at
+        // every setting and only goes solid at 1.52 — which is why the borders read as dotted.
+        // The widest letters ('A', 'M') are 0.63 and touch across at 1.59. What genuinely
+        // overlaps is vertical, and it is prose rather than furniture: a 'j' is 0.86 cell tall
+        // against a one-cell row pitch, so a descender reaches the line above at 1.17 — BELOW
+        // the default. Brackets follow at 1.25, 'Q' at 1.35, 'g' and the digits at 1.46.
+        //
+        // So nothing new begins to break between 1.30 and 1.50; the interleaving is already
+        // there at the default and grows smoothly. 1.50 is where two things arrive at once —
+        // horizontal rules finally close up, and letters come within a twentieth of a cell of
+        // touching across — which makes it the honest stopping place rather than an arbitrary
+        // one. Past it, glyphs would begin to merge sideways as well, and that is a different
+        // kind of ugly from tight leading.
+        //
+        // The row is a preference on a panel nobody here has seen, and the same argument the
+        // weight ladder makes applies: a player who walks to the end should get an ugly result,
+        // not a broken one.
+        public const float GlyphScaleDefault = 1.20f;
+        public const float GlyphScaleMin     = 1.00f;
+        public const float GlyphScaleMax     = 1.50f;
+        public const float GlyphScaleStep    = 0.05f;
+
         // Glyph scale relative to cell (1.0 = exact fit, >1.0 = slight overflow for natural look)
-        public const float GlyphScale = 1.2f;
+        public static float GlyphScale = GlyphScaleDefault;
+
+        /// <summary>
+        /// Emboldening: the glyph is stroked as well as filled when rastered into the atlas, with a
+        /// pen this fraction of the raster font size wide (0 disables it). FreeMono Regular is a
+        /// hairline face — at the 35px raster its stems are ~2px, and a stem that thin does not
+        /// survive the trip to the screen. The atlas is rastered once at 35px and every cell is
+        /// then MINIFIED to whatever the window gives it (a 100x100 grid in a 1200x900 window is a
+        /// 9px cell; fullscreen on a 4K panel is ~22px), with bilinear filtering and no mipmaps.
+        /// Under heavy minification the stem is smeared across two pixels and reads as a grey
+        /// blur; under light minification it reads as the hairline it really is — which is why the
+        /// text looks THINNER in fullscreen than in a window, though it is larger there.
+        /// Thickening the raster fixes both, and it is the half that matters at large cell sizes,
+        /// where there is little partial coverage for <see cref="GlyphAlphaGamma"/> to work with.
+        /// Above ~0.04 the counters of '@', '8' and '%' start to close at small cell sizes.
+        /// <para><b>Baked into the atlas.</b> Writing this without calling
+        /// <c>GlyphAtlas.Rebuild()</c> changes nothing — the glyph set is unchanged, so the atlas
+        /// does not notice.</para>
+        /// </summary>
+        public static float GlyphStrokeFactor = GlyphWeightSteps[GlyphWeightDefaultStep].Stroke;
+
+        /// <summary>
+        /// Exponent applied to the glyph's alpha in the fragment shader (1.0 disables it). Below 1
+        /// it lifts the partially-covered pixels that minification produces, so an anti-aliased
+        /// stem reads as a stroke rather than as a smudge. This is the half that matters at small
+        /// cell sizes, where a stem is mostly skirt. Kept mild — pushed much below 0.7 the skirt
+        /// stops being an edge and the text turns blocky.
+        /// </summary>
+        public static float GlyphAlphaGamma = GlyphWeightSteps[GlyphWeightDefaultStep].Gamma;
+
+        /// <summary>
+        /// Which <see cref="GlyphWeightSteps"/> entry is live. Config is the truth here rather than
+        /// <c>UserSettings</c>, so the Settings screen shows the real state the same way the dither
+        /// toggle reads back from the renderer — there is no reverse lookup from a stroke/gamma
+        /// pair to a step, and two places free to disagree about which step is current is exactly
+        /// the bug that arrangement invites.
+        /// </summary>
+        public static int GlyphWeightStep { get; private set; } = GlyphWeightDefaultStep;
+
+        /// <summary>
+        /// Applies a weight step, clamped into range. <b>The caller must rebuild the atlas</b> —
+        /// the stroke half of this is rastered, not shaded, so half the change is invisible
+        /// otherwise. Kept the caller's job because at startup there is no atlas yet to rebuild.
+        /// </summary>
+        public static void ApplyGlyphWeight(int step)
+        {
+            GlyphWeightStep   = Math.Clamp(step, 0, GlyphWeightSteps.Length - 1);
+            GlyphStrokeFactor = GlyphWeightSteps[GlyphWeightStep].Stroke;
+            GlyphAlphaGamma   = GlyphWeightSteps[GlyphWeightStep].Gamma;
+        }
     }
     
     #endregion
@@ -49,6 +597,114 @@ public static class Config
     
     public static class GlyphSphere
     {
+        // ── The player's two levers on the world glyphs ───────────────────────────────────────
+        //
+        // The counterparts of Config.Terminal's SIZE and WEIGHT, and deliberately NOT the same two
+        // constants. The sphere is a different pipeline in both halves, so a single pair could not
+        // have served both:
+        //
+        //   SIZE   — a terminal glyph is scaled inside a fixed cell, so its ceiling is the cell.
+        //            A world glyph has no cell: it is a quad on a sphere, and what limits it is
+        //            its neighbours. Below 1.0 the surface opens into gaps between glyphs; above
+        //            it they overlap, which reads as a denser world rather than a broken one.
+        //
+        //   WEIGHT — the terminal blends a glyph's alpha, so its weight is a gamma on that alpha.
+        //            EVERY sphere fragment shader instead thresholds the atlas luminance and is
+        //            fully opaque or discarded ("if (texLuminance > cutoff) … else discard"), so
+        //            there is no alpha here for a gamma to act on at all. The threshold IS the
+        //            weight: lower keeps more of the anti-aliased skirt, which thickens the glyph.
+        //
+        // What the two ladders share is the shape — a stroke baked into the raster paired with a
+        // shader-side term, moved together as one named step, because a player cannot tell which
+        // half their panel needs. See Config.Terminal.GlyphWeightSteps for that argument in full.
+        //
+        // Declared BEFORE the fields that read them, like the terminal ladder: static field
+        // initializers run in declaration order, and a table declared after its readers is still
+        // null when they initialize.
+
+        /// <summary>
+        /// The world-weight ladder: an emboldening pen baked into the sphere atlas, paired with
+        /// the luminance cutoff every sphere fragment shader tests against.
+        ///
+        /// <para><b>NORMAL is exactly what the game drew before this was a setting</b> — no pen at
+        /// all and the 0.1 cutoff that was hardcoded into all nine shaders. That is why the default
+        /// sits in the middle of a ladder whose lighter half needs no stroke: the two steps below
+        /// are reached by raising the cutoff, which eats into the skirt, and only the two above
+        /// have a pen to add. Keeping the shipped look on a named step is what lets a player who
+        /// has wandered off it find their way back.</para>
+        /// </summary>
+        public static readonly (string Label, float Stroke, float Cutoff)[] WorldGlyphWeightSteps =
+        {
+            ("THIN",   0.000f, 0.30f),
+            ("LIGHT",  0.000f, 0.18f),
+            ("NORMAL", 0.000f, 0.10f),   // the shipped look — see WorldGlyphWeightDefaultStep
+            ("BOLD",   0.015f, 0.08f),
+            ("HEAVY",  0.030f, 0.06f),
+        };
+
+        /// <summary>Index into <see cref="WorldGlyphWeightSteps"/> of the default, unchanged weight.</summary>
+        public const int WorldGlyphWeightDefaultStep = 2;
+
+        // Bounds for the world-size row. Unlike the terminal's, this one has no hard edge to run
+        // into — a glyph quad that outgrows its neighbours overlaps them, and the sphere simply
+        // reads as denser. The ends are where it stops being the same picture: below 0.70 the
+        // surface breaks into visible gaps and the terrain stops reading as ground, above 1.60 the
+        // overlap swallows the single-glyph markers (the protagonist, the waypoints) that a player
+        // needs to pick out of it.
+        public const float WorldGlyphScaleDefault = 1.00f;
+        public const float WorldGlyphScaleMin     = 0.70f;
+        public const float WorldGlyphScaleMax     = 1.60f;
+        public const float WorldGlyphScaleStep    = 0.05f;
+
+        /// <summary>
+        /// Live multiplier on every world glyph quad, applied as a shader uniform so a change
+        /// shows on the next frame with no buffer rebuild.
+        ///
+        /// <para><b>Ray picking must read this too.</b> The sphere is clicked by finding the vertex
+        /// nearest the ray within <c>QuadSize * VertexShaderSizeMultiplier</c>, so a drawn size that
+        /// this scales while the pick radius stays fixed puts the hit target out of step with what
+        /// the player can see — bigger glyphs that cannot be clicked at their edges, or smaller ones
+        /// that answer a click on empty ground. <c>GlyphSphereCore.WorldGlyphPickRadius</c> is the
+        /// one place both come from.</para>
+        /// </summary>
+        public static float WorldGlyphScale = WorldGlyphScaleDefault;
+
+        /// <summary>
+        /// Emboldening pen for the sphere atlas, as a fraction of the raster font size (0 disables
+        /// it, which is where the shipped weight sits). <b>Baked into the atlas</b>: writing this
+        /// without calling <c>GlyphSphereCore.RebuildGlyphAtlasForWeight()</c> changes nothing,
+        /// exactly as with the terminal's <c>GlyphStrokeFactor</c>.
+        /// </summary>
+        public static float WorldGlyphStrokeFactor = WorldGlyphWeightSteps[WorldGlyphWeightDefaultStep].Stroke;
+
+        /// <summary>
+        /// The atlas-luminance threshold every sphere fragment shader tests: a texel below it is
+        /// discarded, and one above is drawn fully opaque. Lowering it keeps more of the glyph's
+        /// anti-aliased skirt and so thickens it; raising it pares the glyph back to its core.
+        /// This is the shaded half of a world-weight step, standing where the terminal's alpha
+        /// gamma stands — the sphere has no alpha to apply a gamma to.
+        /// </summary>
+        public static float WorldGlyphCutoff = WorldGlyphWeightSteps[WorldGlyphWeightDefaultStep].Cutoff;
+
+        /// <summary>
+        /// Which <see cref="WorldGlyphWeightSteps"/> entry is live. Config is the truth rather than
+        /// <c>UserSettings</c>, for the reason <c>Config.Terminal.GlyphWeightStep</c> gives: there is
+        /// no reverse lookup from a stroke/cutoff pair back to a step.
+        /// </summary>
+        public static int WorldGlyphWeightStep { get; private set; } = WorldGlyphWeightDefaultStep;
+
+        /// <summary>
+        /// Applies a world-weight step, clamped into range. <b>The caller must rebuild the sphere
+        /// atlas</b> — the pen half is rastered rather than shaded, so half the step is otherwise
+        /// invisible. The caller's job because at startup there is no atlas yet to rebuild.
+        /// </summary>
+        public static void ApplyWorldGlyphWeight(int step)
+        {
+            WorldGlyphWeightStep   = Math.Clamp(step, 0, WorldGlyphWeightSteps.Length - 1);
+            WorldGlyphStrokeFactor = WorldGlyphWeightSteps[WorldGlyphWeightStep].Stroke;
+            WorldGlyphCutoff       = WorldGlyphWeightSteps[WorldGlyphWeightStep].Cutoff;
+        }
+
         // Sphere geometry
         public const float QuadSize = 0.3f; // Size of each glyph quad on the sphere
         public const float VertexShaderSizeMultiplier = 2.0f; // Multiplier used in vertex shader
@@ -64,6 +720,7 @@ public static class Config
         public const float CameraZoomWorldView = 100.0f; // Destination selection phase (starting value)
         public const float CameraZoomTraveling = 85.0f; // Travel animation phase
         public const float CameraZoomNarration = 65.0f; // Location interaction/narration phase
+        public const float CameraZoomRoutineMinimap = 50.0f; // Routines-tab minimap porthole (closer = focused minimap)
         
         // Default glyph settings
         public const char DefaultGlyph = '.';
@@ -74,20 +731,37 @@ public static class Config
         public const char ProtagonistChar = '☻'; // Smiling face for protagonist
         public const char PathWaypointChar = '.'; // Dot for waypoints
         public const char PathDestinationChar = '+'; // Plus for destination
-        
+        public const char ForbiddenDestinationChar = '⨯'; // Cross for impassable tiles (sea/ocean on foot)
+
+        // Numbered glyphs used to mark waypoints in click-order on the world map.
+        // Falls back to PathDestinationChar past the array length.
+        public static readonly char[] WaypointNumberChars = new[] { '①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨' };
+
+        // Maximum number of travel waypoints that can be queued at once.
+        public const int MaxTravelWaypoints = 4;
+
         // Protagonist and pathfinding colors (RGB 0-255)
         public static readonly System.Numerics.Vector3 ProtagonistColor = new(255, 255, 255); // Yellow
         public static readonly System.Numerics.Vector3 PathWaypointPreviewColor = new(255, 255, 255); // Light blue
         public static readonly System.Numerics.Vector3 PathDestinationPreviewColor = new(255, 255, 255); // Light red
         public static readonly System.Numerics.Vector3 PathWaypointActiveColor = new(255, 255, 255); // Gold
         public static readonly System.Numerics.Vector3 PathDestinationActiveColor = new(255, 255, 255); // Bright yellow
+        public static readonly System.Numerics.Vector3 PathForbiddenColor = new(200, 60, 60); // Red for impassable cells
         
         // Update timing for interface animations
         public const float UpdateInterval = 0.1f; // Update every 100ms (10 Hz)
         
-        // Pathfinding noise
-        public const int PathfindingNoiseSeed = 42; // Fixed seed for consistent paths
-        public const float PathfindingNoiseStrength = 0.25f; // 0-1, adds up to 15% variation to edge costs
+        // Pathfinding noise. The seed now comes from the central Config.Rng.Seed /
+        // GameRng master seed (see GameRng.DerivedSeed("pathfinding-noise")).
+        public const float PathfindingNoiseStrength = 0.25f; // 0-1, adds up to 25% terrain-correlated variation to edge costs
+
+        /// <summary>
+        /// Per-edge deterministic jitter applied on top of the terrain-correlated noise.
+        /// Because the jitter is independent across edges (hashed from the edge's two
+        /// vertex ids), even subtle values push A* off the dead-straight great-circle
+        /// and produce visually wandering travel paths. 0.10–0.25 is a good range.
+        /// </summary>
+        public const float PathfindingEdgeJitterStrength = 0.15f;
         
         // Rendering
         public const float NarrationWorldDarkeningFactor = 0.3f; // 0-1, multiplier for world brightness during narration (0.3 = 70% darker)
@@ -96,9 +770,39 @@ public static class Config
         public const float NearClipPlane = 0.01f;
         public const float FarClipPlane = 800.0f; // Must be > SkyCloud.SkySphereRadius + CameraMaxDistance
     }
-    
+
     #endregion
-    
+
+    #region PostProcess Configuration
+
+    /// <summary>
+    /// Final full-screen shader layer applied to the whole render.
+    /// Mutable rather than const: --dither sets it at startup and F/G/H retune it live.
+    /// </summary>
+    public static class PostProcess
+    {
+        // Resting state of the layer. 0 = off, 1 = Bayer 8x8, 2 = Bayer 4x4 two-tone, 3 = noise
+        public static int DitherMode = 1;
+
+        /// <summary>
+        /// True once <c>--dither</c> has set the mode above. The saved
+        /// <see cref="UserSettings.DitherEnabled"/> is applied at startup only when this is false,
+        /// so a player who once turned dither on in the Settings screen does not silently break
+        /// <c>--dither off</c> for every later run. The flag is one run's instruction and wins.
+        /// </summary>
+        public static bool DitherModeSetByFlag = false;
+        public static int Levels = 6;       // Quantisation steps per channel (2 = 1 bit)
+        public static int PixelScale = 1;   // Dither cell size in pixels (1 = fine, 4 = chunky)
+        public static float Strength = 1.0f; // Blend between original and dithered
+
+        // Event pulses: the layer briefly switches to a different dither on a game
+        // event, the visual counterpart of the UI sound effects. See PostProcessRenderer.
+        public static bool PulsesEnabled = true;
+        public static float PulseDuration = 0.15f; // Seconds a pulse lasts before decaying back
+    }
+
+    #endregion
+
     #region SkyCloud Configuration
     
     /// <summary>
@@ -176,6 +880,11 @@ public static class Config
         public static readonly Vector4 LightYellow = new(1.0f, 1.0f, 0.6f, 1.0f);      // Light yellow for gradients
         public static readonly Vector4 DarkYellowGrey = new(0.6f, 0.6f, 0.2f, 1.0f);   // Dark yellow-grey for important non-gameplay elements
         public static readonly Vector4 GoldYellow = new(1.0f, 0.85f, 0.2f, 1.0f);      // Gold yellow for special highlights (dice sixes)
+
+        // Coin denomination colors (gold = yellow, silver = grey, copper = dark yellow)
+        public static readonly Vector4 CoinGold   = new(1.0f, 0.85f, 0.2f, 1.0f);      // bright gold yellow
+        public static readonly Vector4 CoinSilver = new(0.75f, 0.75f, 0.78f, 1.0f);    // cool grey
+        public static readonly Vector4 CoinCopper = new(0.72f, 0.52f, 0.18f, 1.0f);    // dark yellow / bronze
         
         // Purple variants (for negative elements, wounds, danger)
         public static readonly Vector4 DarkPurple = new(0.3f, 0.0f, 0.45f, 1.0f);     // Dark purple for depleted HP, subtle negatives
@@ -235,6 +944,11 @@ public static class Config
         
         // Difficulty level glyphs (1-10)
         public static readonly char[] DifficultyGlyphs = new[] { '①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩' };
+
+        // Coin denomination glyphs (gold ≈ horse, silver ≈ sword, copper ≈ egg)
+        public const char GoldCoinSymbol   = '⎊'; // yellow
+        public const char SilverCoinSymbol = '◉'; // grey
+        public const char CopperCoinSymbol = '⊚'; // dark yellow
 
         /// <summary>
         /// Color for a difficulty level on the 1-10 scale:
@@ -397,31 +1111,131 @@ public static class Config
     
     #endregion
     
+    #region Travel UI
+
+    /// <summary>
+    /// Compact UI box displayed in WorldView mode while travel waypoints are set.
+    /// Sits a few rows above the bottom of the screen and is centered horizontally.
+    /// </summary>
+    public static class TravelUI
+    {
+        // Layout
+        public const int BoxWidth = 40;
+        public const int BoxHeight = 12;
+        /// <summary>Cells of empty space between the box bottom edge and the screen bottom.</summary>
+        public const int BoxBottomMargin = 8;
+
+        /// <summary>How long a transient world-map notice stays on screen.</summary>
+        public const double NoticeSeconds = 4.0;
+
+        // Colors
+        public static readonly Vector4 BorderColor      = Colors.DarkYellowGrey;
+        public static readonly Vector4 BackgroundColor  = Colors.BlackTransparent;
+        public static readonly Vector4 TitleColor       = Colors.BrightYellow;
+        public static readonly Vector4 LabelColor       = Colors.MediumGray50;
+        public static readonly Vector4 ValueColor       = Colors.White;
+        public static readonly Vector4 ValueAccentColor = Colors.BrightYellow;
+        public static readonly Vector4 WarningColor     = Colors.OrangeYellow;
+        public static readonly Vector4 DangerColor      = Colors.BrightPurple;
+
+        // Primary action button (TRAVEL) — yellow chip.
+        public static readonly Vector4 TravelButtonTextColor             = Colors.Black;
+        public static readonly Vector4 TravelButtonBackgroundColor       = Colors.BrightYellow;
+        public static readonly Vector4 TravelButtonHoverTextColor        = Colors.Black;
+        public static readonly Vector4 TravelButtonHoverBackgroundColor  = Colors.White;
+
+        // Secondary action button (CLEAR) — muted grey chip.
+        public static readonly Vector4 ClearButtonTextColor              = Colors.LightGray85;
+        public static readonly Vector4 ClearButtonBackgroundColor        = Colors.DarkGray35;
+        public static readonly Vector4 ClearButtonHoverTextColor         = Colors.Black;
+        public static readonly Vector4 ClearButtonHoverBackgroundColor   = Colors.LightGray85;
+
+        public static readonly Vector4 HintColor        = Colors.DarkGray40;
+    }
+
+    #endregion
+
     #region Loading Messages
     
+    /// <summary>
+    /// The footer line under the narration panel while the game is busy. It is the player's only signal
+    /// for what the wait is <i>for</i>, so each phase gets its own — but it is read from inside the
+    /// fiction, so none of them names the machinery. "Narrating the outcome" tells the player there is
+    /// an LLM writing a paragraph for them; "What follows" tells them the same thing about the world.
+    /// <para>
+    /// The register, for anything added here: three or four words, impersonal, present tense, no "you",
+    /// no names, no verb the UI performs (generating, evaluating, loading). Say what is happening in the world,
+    /// vaguely enough that it fits both a success and a failure — the message is up before the result
+    /// is known. The trailing ellipsis is stripped and re-animated by
+    /// <c>TerminalPanelUI.RenderWaitingStatus</c>; it is written here only so the strings read whole.
+    /// </para>
+    /// Dialogue keeps its own set, built per NPC in <c>DialogueTreeUI.BuildGeneratingText</c>.
+    /// </summary>
     public static class LoadingMessages
     {
-        // General
-        public const string Default = "Loading...";
-        
-        // Phase 6 - Observation/Narration
-        public const string GeneratingObservations = "Observing surroundings...";
-        public const string ThinkingDeeply = "Thinking about what to do...";
-        public const string EvaluatingAction = "Taking action...";
-        
-        // Location Travel
-        public const string Thinking = "Thinking...";
-        public const string EvaluatingDifficulty = "Evaluating action difficulty...";
-        public const string DeterminingOutcome = "Determining outcome...";
-        public const string NarratingDemise = "Narrating your demise...";
-        public const string GeneratingActions = "Generating actions...";
-        public const string GeneratingNarrative = "Generating narrative...";
+        // General — only ever seen between phases, on a state reset.
+        public const string Default = "The world stirs...";
+
+        // Observation phase — the senses reaching out, or a memory surfacing during the childhood
+        // phase, where there are no surroundings to observe.
+        public const string GeneratingObservations = "The senses wander...";
+        public const string Remembering = "A memory surfaces...";
+
+        // Thinking phase (keyword → modus mentis → actions).
+        public const string ThinkingDeeply = "The mind turns...";
+
+        // Speak About — the active member addresses a companion. Deliberately nameless: the player
+        // picked the companion one click ago, so the name adds nothing here, and a footer that names
+        // people is a footer that has to know which name is the real one.
+        public const string Speaking = "Words take shape...";
+
+        // Action: intent weighed (plausibility + difficulty) → dice → outcome. Three distinct waits,
+        // and the last says nothing about which way it went — it is written before the player knows.
+        public const string EvaluatingAction = "Intent gathers...";
+        public const string RollingDice = "The bones fall...";
+        public const string NarratingOutcome = "What follows...";
+        public const string CombiningItem = "The hand weighs it...";
     }
     
     #endregion
     
+    #region Dice
+
+    public static class Dice
+    {
+        /// <summary>
+        /// How long the dice-roll animation tumbles before the values lock in. Shared by every roll
+        /// context — narrative checks, get-up, runaway, dialogue resolutions and fights — so the spin
+        /// (and the dice-roll music that plays alongside it) has one consistent length.
+        ///
+        /// <para><b>Zero in playground mode.</b> Every one of these is time spent watching something
+        /// there is nothing to decide about, and the test suite pays it once per roll across a
+        /// hundred-odd scripts. Playground already replaces the thing that makes a run slow (the
+        /// LLM); this replaces the rest. See <see cref="AnimationsAreInstant"/>.</para>
+        /// </summary>
+        public static float AnimationDurationSeconds => AnimationsAreInstant ? 0f : 5.0f;
+
+        /// <summary>
+        /// The animation duration in milliseconds, for <see cref="System.Threading.Tasks.Task.Delay(int)"/>.
+        /// </summary>
+        public static int AnimationDurationMs => (int)(AnimationDurationSeconds * 1000);
+    }
+
+    /// <summary>
+    /// Whether purely decorative timing should be skipped: dice tumbling, a vital-heat bar draining,
+    /// an AI pausing before it moves. True under <c>--playground</c>, which is the flag that means
+    /// "this is a test run, not a play session".
+    ///
+    /// <para>Deliberately not its own switch. Every caller of this is animating a result that has
+    /// already been decided, so there is nothing a script could want to observe mid-way — and a
+    /// second flag would be one more thing a new test has to remember to pass.</para>
+    /// </summary>
+    public static bool AnimationsAreInstant => Cathedral.Game.PlaygroundMode.IsActive;
+
+    #endregion
+
     #region Narrative Configuration
-    
+
     public static class Narrative
     {
         /// <summary>
@@ -439,157 +1253,165 @@ public static class Config
         public const int TargetKeywordCount = 10;
 
         /// <summary>
-        /// Base instruction appended to every LLM prompt to enforce concise, grounded JSON responses.
-        /// Does not include the character reminder — use <see cref="AnswerInstructionFor"/> to get the full instruction.
+        /// Maximum character length of an LLM-generated narrative text — observation, thinking,
+        /// action, outcome, speaking, dialogue, and sanitizer rewrites all share this cap. It is
+        /// encoded straight into the GBNF grammar as the upper bound of the free-text body.
         /// </summary>
-        public const string AnswerInstruction = "Respond in JSON format. Answer in one short sentence and stop. Use only the given information; no invention.";
+        public const int MaxNarrativeTextLength = 800;
+
+        // ── Observation phase length thresholds (see ObservationPhaseController) ──────────────
+        // All in characters of the final (sanitized) observation text. Kept here so the pacing of a
+        // multi-object observation phase can be tuned without touching the controller.
+
+        /// <summary>
+        /// If the first object's observation text alone is longer than this, the phase stops there and
+        /// no second (or third) observation is started — one rich paragraph stands on its own.
+        /// </summary>
+        public const int ObservationSkipSecondThreshold = 500;
+
+        /// <summary>
+        /// If the first + second observation texts together stay below this, and more than
+        /// <see cref="ObservationThirdMinRemaining"/> other objects could still be observed, a third
+        /// observation is added over the remaining objects.
+        /// </summary>
+        public const int ObservationTriggerThirdThreshold = 400;
+
+        /// <summary>Minimum number of still-observable objects required before a third observation is added.</summary>
+        public const int ObservationThirdMinRemaining = 5;
+
+        /// <summary>
+        /// If a single observation's text is longer than this, two distinct keywords (both linked to the
+        /// same object, so either click does the same thing) are highlighted instead of one.
+        /// </summary>
+        public const int ObservationTwoKeywordsThreshold = 400;
+
+        /// <summary>
+        /// How related to the observed object a word must be before it is treated as an equally good
+        /// handle on it. Every candidate at or above this score goes into a pool the keyword is drawn
+        /// uniformly from; below it, the best-scoring word is simply taken. Scored by
+        /// <c>KeywordExtractor</c> as similarity minus centrality, so this is on that scale.
+        ///
+        /// <para>0.25 measured as the point that admits the words genuinely about the object and
+        /// excludes the merely co-occurring: a hearth's pool is <c>hearth, stone</c>, a roof's is
+        /// <c>roof, thatch, slope, sky</c>, an anvil's is <c>anvil, hammer</c>. At 0.15 the marginal
+        /// ones creep in (<c>village</c> for a roof); at 0.35 most objects collapse to one choice and
+        /// the sampling stops doing anything. A pool of one is a correct outcome, not a failure —
+        /// a pallet lying in straw has nothing else in the sentence that is about the pallet.</para>
+        /// </summary>
+        public const double KeywordSamplingThreshold = 0.25;
+
+        /// <summary>Length clause used for single-sentence rewrites (the default).</summary>
+        private const string OneSentenceClause = "Answer in one short sentence and stop.";
+
+        /// <summary>
+        /// Brevity clause for the kinds that omit <see cref="OneSentenceClause"/> (observation,
+        /// reasoning, outcome). Those are free to unfold over more than one sentence, but a small model
+        /// left with no ceiling at all drifts into a paragraph that then gets cut off by the token
+        /// limit — this caps the unfolding without pinning it to a single sentence.
+        /// </summary>
+        private const string ShortTextClause = "Write a short text: one to three sentences at most.";
+
+        /// <summary>Grounding clause appended after the length clause; keeps the rewrite faithful.</summary>
+        private const string GroundingClause = "Keep every literal fact from the given information and invent no new facts, names, objects or events.";
+
+        /// <summary>
+        /// Fallback styling clause used when no per-modusMentis <c>StyleInstruction</c> is supplied
+        /// (e.g. NPC speaking, which carries an NPC persona rather than a modusMentis). Per-modusMentis
+        /// callers pass their own <c>ModusMentis.StyleInstruction</c> instead.
+        /// </summary>
+        private const string DefaultStyleInstruction = "Where it fits, a figure of speech (metaphor, comparison, imagery) or an inner feeling that suits your character is welcome.";
+
+        /// <summary>
+        /// Style clause for dialogue replies: a spoken line carries personality in its wording, not in a
+        /// described tone. The broad <see cref="DefaultStyleInstruction"/> ("an inner feeling that suits
+        /// your character is welcome") invites a small model to narrate its own manner ("…, you say with
+        /// curiosity"), which is exactly what a spoken line must not do — so dialogue uses this instead.
+        /// This clause is always in force for dialogue: a caller-supplied style is kept but this is
+        /// appended after it — see <see cref="DialogueAnswerInstructionFor"/>.
+        /// </summary>
+        private const string DialogueStyleInstruction = "Let your wording and personality colour the words themselves; do not describe your tone, expression, or manner of speaking.";
+
+        /// <summary>
+        /// The setting + place reminder that closes every answer instruction below. Its text and the
+        /// scene's place live in <see cref="Cathedral.Game.Narrative.SceneSetting"/>; it is restated
+        /// per request because the system prompt's copy of the rule is too far up the context to hold
+        /// a small model on its own.
+        /// </summary>
+        private static string SettingReminder => Cathedral.Game.Narrative.SceneSetting.Reminder();
 
         /// <summary>
         /// Returns the full answer instruction, appending a character reminder from PersonaReminder2 when available.
-        /// Falls back to "Stay in character." when no reminder is provided.
+        /// Falls back to "Stay in character." when no reminder is provided. The rewrite is emitted as raw
+        /// text (constrained by GBNF), so there is no "respond in JSON" clause.
         /// </summary>
-        public static string AnswerInstructionFor(string? personaReminder2) =>
-            personaReminder2 != null
-                ? $"{AnswerInstruction} Stay in the character of {personaReminder2}."
-                : $"{AnswerInstruction} Stay in character.";
-
-        /// <summary>
-        /// Like <see cref="AnswerInstructionFor"/> but adds a 2nd-person dialogue reminder
-        /// for speaking prompts where the character is directly addressing a companion.
-        /// </summary>
-        public static string SpeakingAnswerInstructionFor(string? personaReminder2) =>
-            personaReminder2 != null
-                ? $"{AnswerInstruction} Stay in the character of {personaReminder2}. Address your companion using \"you\". No narration, no third-person phrasing."
-                : $"{AnswerInstruction} Stay in character. Adress your companion using \"you\". No narration, no third-person phrasing.";
-    }
-
-    /// <summary>
-    /// Configuration for the plausibility check questions asked to the critic LLM.
-    /// Each entry defines one independent question, its enum choices, and which choice ids
-    /// count as a failure (action rejected). Questions are evaluated in order; all are always
-    /// asked (continueOnFailure mode) so every check is visible in the trace.
-    /// Add, remove, or reorder entries here to change the plausibility check battery.
-    /// </summary>
-    public static class PlausibilityQuestions
-    {
-        /// <summary>
-        /// Runtime condition that must be met for a SecondOpinion to be triggered.
-        /// Add new values here as new second-opinion chains are introduced.
-        /// </summary>
-        public enum SecondOpinionCondition
+        public static string AnswerInstructionFor(string? personaReminder2, string? styleInstruction = null, bool includeLengthClause = true)
         {
-            /// <summary>The player combined an item with this action.</summary>
-            ItemInUse,
-            /// <summary>No item was combined with this action.</summary>
-            NoItemInUse,
+            string style = string.IsNullOrWhiteSpace(styleInstruction) ? DefaultStyleInstruction : styleInstruction.Trim();
+            string character = personaReminder2 != null ? $"Stay in the character of {personaReminder2}." : "Stay in character.";
+            var parts = new[]
+            {
+                includeLengthClause ? OneSentenceClause : null,
+                GroundingClause,
+                style,
+                // The kinds that drop the one-sentence clause still get a ceiling, right before the
+                // closing character reminder.
+                includeLengthClause ? null : ShortTextClause,
+                character,
+                SettingReminder,
+            };
+            return string.Join(" ", parts.Where(p => !string.IsNullOrEmpty(p)));
         }
 
         /// <summary>
-        /// A follow-up question asked when a specific failure choice fires and its
-        /// runtime Condition is met.  If this question passes, it overrides the failure.
+        /// The footer for an address to a companion during narration. It is
+        /// <see cref="DialogueAnswerInstructionFor"/>, because the two are the same act: words one
+        /// character says to another, generated behind the same <c>I say to X : "…"</c> frame.
+        /// <para>
+        /// It used to carry the pronoun rules, the shape ("no narration, no third-person phrasing")
+        /// and a one-sentence length clause on top of a full grounding clause. The first two the
+        /// spoken prompt now states beside the grammar that enforces them, and a second wording of a
+        /// rule reads to a small model as a second rule. The length clause had to go outright: the
+        /// address is generated as one utterance of three merged sentences, so "answer in one short
+        /// sentence and stop" contradicted the line it was attached to.
+        /// </para>
         /// </summary>
-        public record SecondOpinion(SecondOpinionCondition Condition, Question Question);
+        public static string SpeakingAnswerInstructionFor(string? personaReminder2, string? styleInstruction = null)
+            => DialogueAnswerInstructionFor(personaReminder2, styleInstruction);
 
         /// <summary>
-        /// A failing choice may declare multiple second opinions (one per condition).
-        /// Each one whose condition is met at runtime is evaluated in order;
-        /// the first that passes overrides the failure.
+        /// The one sentence of guidance a dialogue reply gets: whose voice to choose the words in, and
+        /// the setting they belong to. It is a clause of <c>PersonaRewriter.BuildDialoguePrompt</c>'s
+        /// "Rewrite the description as the exact words X says to Y" line, not a paragraph of its own.
+        /// <para>
+        /// Deliberately shorter than every other kind's. It used to carry the reply's shape, the
+        /// pronouns and the ban on narrating one's own speech — all of which the dialogue prompt already
+        /// said in different words — and then a length clause and a grounding clause on top. Two
+        /// wordings of one rule read to a small model as two rules, and the pile made the dialogue prompt
+        /// the longest in the game while the replies got worse. The shape lives in the prompt alone, next
+        /// to the grammar that enforces it; the length clause is gone (a spoken line is as long as it
+        /// needs to be, and the grammar bounds it); and grounding is one short clause rather than the
+        /// full <see cref="GroundingClause"/>, since the description is right there to be faithful to.
+        /// </para>
         /// </summary>
-        public record Choice(string Id, string Description, bool IsFailure,
-            string? ErrorMessage = null, List<SecondOpinion>? SecondOpinions = null);
-
-        public record Question(string Name, string Text, List<Choice> Choices);
-
-        public static readonly List<Question> Questions =
-        [
-            // new Question(
-            //     Name: "PhysicalFeasibility",
-            //     Text: "Can a human body physically attempt this action — regardless of whether it succeeds? Judge only whether a human body can make the attempt, not the outcome. Trying to outrun a horse is a valid attempt (it will likely fail, but the body can try). Flying unaided is not a valid attempt (human anatomy cannot produce flight at all).",
-            //     Choices:
-            //     [
-            //         new("clearly_possible",     "the human body can clearly attempt this",                           IsFailure: false),
-            //         new("possible_with_effort", "the body can attempt this, though it demands exceptional exertion", IsFailure: false),
-            //         new("borderline",           "the body can barely attempt this — at the very edge of anatomy",    IsFailure: false),
-            //         new("physically_impossible","the human body cannot even attempt this — anatomy prevents it",      IsFailure: true,
-            //             ErrorMessage: "The human body cannot attempt this action"),
-            //     ]
-            // ),
-
-            new Question(
-                Name: "RequiredElements",
-                Text: "Is anything missing for this action to be attempted?",
-                Choices:
-                [
-                    new("nothing_missing",  "nothing is missing, all required elements are present", IsFailure: false),
-                    new("minor_missing",    "a minor, easily improvised element is absent",          IsFailure: false),
-                    new("tool_missing",     "a specific tool or object is absent",                   IsFailure: true,
-                        ErrorMessage: "A required object is not available",
-                        SecondOpinions:
-                        [
-                            new(
-                                Condition: SecondOpinionCondition.ItemInUse,
-                                Question: new(
-                                    Name: "ItemAppropriateness",
-                                    Text: "The character is using the item described above. Could this item serve — even improvised or unconventionally — as the tool needed to attempt this action?",
-                                    Choices:
-                                    [
-                                        new("clearly_appropriate",  "the item is clearly suitable for this action",                IsFailure: false),
-                                        new("somewhat_appropriate", "the item could work with ingenuity or improvisation",         IsFailure: false),
-                                        new("not_appropriate",      "the item cannot be used for this action in any way",          IsFailure: true,
-                                            ErrorMessage: "The item cannot be used for this action"),
-                                    ]
-                                )
-                            ),
-                            new(
-                                Condition: SecondOpinionCondition.NoItemInUse,
-                                Question: new(
-                                    Name: "BareHandsFeasibility",
-                                    Text: "No specific tool is being used. Could the character attempt this action using only their bare hands or body?",
-                                    Choices:
-                                    [
-                                        new("hands_sufficient",  "bare hands are sufficient to attempt this action",                IsFailure: false),
-                                        new("hands_improvised",  "bare hands could work as a rough improvisation",                  IsFailure: false),
-                                        new("hands_impossible",  "bare hands cannot substitute — a specific tool is truly required", IsFailure: true,
-                                            ErrorMessage: "This action requires a specific tool"),
-                                    ]
-                                )
-                            ),
-                        ]),
-                    new("person_missing",   "a required person or creature is absent",               IsFailure: true,
-                        ErrorMessage: "A required person is not present"),
-                    new("location_wrong",   "the wrong location — a specific place is required",    IsFailure: true,
-                        ErrorMessage: "This action requires a different location"),
-                ]
-            ),
-
-            new Question(
-                Name: "Duration",
-                Text: "How long would this action realistically take to complete?",
-                Choices:
-                [
-                    new("seconds", "a few seconds",   IsFailure: false),
-                    new("minutes", "several minutes", IsFailure: false),
-                    new("hours",   "a few hours",     IsFailure: false),
-                    new("days",    "multiple days",   IsFailure: true,
-                        ErrorMessage: "This action would take too many days to complete"),
-                    new("weeks",   "weeks or longer", IsFailure: true,
-                        ErrorMessage: "This action would take weeks — far too long"),
-                ]
-            ),
-
-            new Question(
-                Name: "SituationalConsistency",
-                Text: "How well does this action fit the current situation and recent events?",
-                Choices:
-                [
-                    new("fully_consistent",      "fully consistent with the current situation",          IsFailure: false),
-                    new("mostly_consistent",     "mostly consistent, minor tension with the situation",  IsFailure: false),
-                    new("somewhat_inconsistent", "somewhat inconsistent with recent events",             IsFailure: false),
-                    new("nonsensical",           "makes no sense given the current context",             IsFailure: true,
-                        ErrorMessage: "This action makes no sense in the current situation"),
-                ]
-            ),
-        ];
+        public static string DialogueAnswerInstructionFor(string? personaReminder2, string? styleInstruction = null)
+        {
+            // A dialogue line is spoken words, so the dialogue style clause is always in force — not just
+            // as a default. A caller-supplied style (a modusMentis's, say) is written for narration, and a
+            // small model reads it as licence to describe its own manner: MURMUR's "use hushed images of
+            // whisper and undertone" produced «"I whisper it softly, 'that sounds like more…'"» — the real
+            // line nested inside a narrated frame. Appending the dialogue clause after the caller's style
+            // keeps the flavour and cancels the invitation to narrate.
+            string style = string.IsNullOrWhiteSpace(styleInstruction)
+                ? DialogueStyleInstruction
+                : $"{styleInstruction.Trim()} {DialogueStyleInstruction}";
+            string character = personaReminder2 != null
+                ? $"Speak as {personaReminder2} would."
+                : "Speak in your own character.";
+            // No grounding clause here: the dialogue prompt's own "the meaning must not change" sentence
+            // sits next to the line it applies to, and a second wording of the same rule reads to a small
+            // model as a second requirement.
+            return $"{character} {style} {SettingReminder}";
+        }
     }
 
     #endregion
@@ -678,8 +1500,29 @@ public static class Config
     #region Glyph Size Factors
     
     /// <summary>
-    /// Per-glyph font size multipliers for special characters that need different sizing.
-    /// Glyphs not in this dictionary use 1.0 (normal size).
+    /// Per-glyph sizing for characters that need to read larger than ordinary text.
+    ///
+    /// <para><b>There are two knobs and they do different things.</b> <see cref="Factors"/> is the
+    /// <i>raster</i> size — the point size the glyph is drawn at inside its atlas cell.
+    /// <see cref="QuadScales"/> is the <i>quad</i> size — how much of the screen that cell is
+    /// stretched over, on top of <see cref="Terminal.GlyphScale"/>. Glyphs in neither dictionary
+    /// are 1.0 in both.</para>
+    ///
+    /// <para><b>The raster factor has a hard ceiling and it is not obvious.</b> The atlas cell is
+    /// 35px and the glyph is centred in it; ink drawn past the cell edge is simply not sampled —
+    /// the UV rect <i>is</i> the cell — and it bleeds into the neighbouring atlas cell, whose
+    /// 2px padding it also overruns. So the factor stops buying size at the point the ink fills
+    /// the cell and starts quietly cropping instead. That is where the dice faces were: at 2.0
+    /// each die was drawn 3px taller than its cell and lost the bottom rule of its box, which
+    /// reads on screen as a die with a broken outline. They fit at 1.80, the side views at 1.60,
+    /// at every weight on <see cref="Terminal.GlyphWeightSteps"/> — the emboldening pen widens
+    /// the ink, so the ceiling is lowest at HEAVY and that is the one to check against.</para>
+    ///
+    /// <para>Past that ceiling the only way to make a glyph bigger is to give it a bigger quad,
+    /// which is what <see cref="QuadScales"/> is for. It costs nothing but it does overflow the
+    /// cell on screen, so it suits a glyph standing in space of its own — the dice sit two cells
+    /// apart in their grid — and not one set in a line of prose. The difficulty glyphs below are
+    /// deliberately raster-only for that reason: they are printed mid-sentence.</para>
     /// </summary>
     public static class GlyphSizeFactors
     {
@@ -688,39 +1531,75 @@ public static class Config
             { '∅', 1.5f },
             { '⎆', 1.7f },
 
-            // Dice faces - make them 30% larger
-            { '⚀', 2f },
-            { '⚁', 2f },
-            { '⚂', 2f },
-            { '⚃', 2f },
-            { '⚄', 2f },
-            { '⚅', 2f },
-            
-            // Dice rolling animation glyphs
-            { '⬖', 1.7f },
-            { '⬗', 1.7f },
-            { '⬘', 1.7f },
-            { '⬙', 1.7f },
-            
-            // Difficulty indicators - slightly larger
-            { '①', 1.3f },
-            { '②', 1.3f },
-            { '③', 1.3f },
-            { '④', 1.3f },
-            { '⑤', 1.3f },
-            { '⑥', 1.3f },
-            { '⑦', 1.3f },
-            { '⑧', 1.3f },
-            { '⑨', 1.3f },
-            { '⑩', 1.3f },
+            // Dice faces — the largest raster that still fits the atlas cell at every glyph
+            // weight. Their on-screen size comes from QuadScales, not from here.
+            { '⚀', 1.8f },
+            { '⚁', 1.8f },
+            { '⚂', 1.8f },
+            { '⚃', 1.8f },
+            { '⚄', 1.8f },
+            { '⚅', 1.8f },
+
+            // Dice side views (the tumbling animation). 1.60 puts the same amount of ink in the
+            // cell as a face at 1.80, so a die does not pulse in size as it rolls.
+            { '⬖', 1.6f },
+            { '⬗', 1.6f },
+            { '⬘', 1.6f },
+            { '⬙', 1.6f },
+
+            // Difficulty indicators — 1.40 is the ceiling, and they get no quad scale. Unlike a
+            // die, one of these OPENS AN ACTION LINE ("⑤ [STEALTH ⟐⟐] …") and action lines stack,
+            // so a glyph drawn past its cell would meet the numeral of the line above it. The
+            // raster is the whole budget here; it stops where the cell does.
+            { '①', 1.4f },
+            { '②', 1.4f },
+            { '③', 1.4f },
+            { '④', 1.4f },
+            { '⑤', 1.4f },
+            { '⑥', 1.4f },
+            { '⑦', 1.4f },
+            { '⑧', 1.4f },
+            { '⑨', 1.4f },
+            { '⑩', 1.4f },
         };
-        
+
         /// <summary>
-        /// Gets the size factor for a glyph. Returns 1.0 for normal-sized glyphs.
+        /// Per-glyph multiplier on the glyph quad, applied on top of
+        /// <see cref="Terminal.GlyphScale"/> — so the glyph is drawn over more of the screen than
+        /// its cell. Only the ten dice glyphs use it: the roll is the one place the player is
+        /// asked to read a glyph rather than a word, and pips a pixel across at a 10px cell are
+        /// not readable. They stand two cells apart in their grid, which is what makes the
+        /// overflow safe.
+        /// </summary>
+        public static readonly Dictionary<char, float> QuadScales = new()
+        {
+            { '⚀', 1.35f },
+            { '⚁', 1.35f },
+            { '⚂', 1.35f },
+            { '⚃', 1.35f },
+            { '⚄', 1.35f },
+            { '⚅', 1.35f },
+
+            { '⬖', 1.35f },
+            { '⬗', 1.35f },
+            { '⬘', 1.35f },
+            { '⬙', 1.35f },
+        };
+
+        /// <summary>
+        /// Gets the raster size factor for a glyph. Returns 1.0 for normal-sized glyphs.
         /// </summary>
         public static float GetFactor(char c)
         {
             return Factors.TryGetValue(c, out float factor) ? factor : 1.0f;
+        }
+
+        /// <summary>
+        /// Gets the quad multiplier for a glyph. Returns 1.0 for glyphs drawn at cell size.
+        /// </summary>
+        public static float GetQuadScale(char c)
+        {
+            return QuadScales.TryGetValue(c, out float scale) ? scale : 1.0f;
         }
     }
     
@@ -733,18 +1612,61 @@ public static class Config
     /// </summary>
     public static class LLM
     {
+        // Nothing here names the model or the hardware, deliberately.
+        //
+        //   which model  — always models/model.gguf (LlamaRuntime.ModelFileName). Changing models
+        //                  means replacing that file; there is no setting and no path to edit.
+        //   which device — measured once by LlamaProbe and stored in UserSettings, where the
+        //                  player can override it from the Settings screen. A constant cannot
+        //                  know whether this machine has a working GPU.
+        //
+        // What remains below is sampling: properties of the prompts and the prose we want out of
+        // them, which is a content decision and belongs in code.
+
         // Sampling parameters (narrative generation and constrained single-token requests)
-        public const int GenerationMaxTokens = 2048;
-        public const double Temperature = 0.5;
-        public const int TopK = 6;
-        public const double TopP = 0.9;
+        public const int GenerationMaxTokens = 512;
+
+        // Maximum context window size in tokens passed to the llama.cpp server (-c flag)
+        public const int ContextSize = 2048;
+        public const double Temperature = 0.7;
+        public const int TopK = 12;
+        public const double TopP = 0.95;
+
+        // Anti-repetition. Passed to the llama.cpp server at launch (not per request), so these
+        // apply to every call — narration, dialogue and constrained single-token alike. That reach is
+        // the thing to keep in mind: the windows are the llama.cpp defaults (--repeat-last-n 64,
+        // --dry-penalty-last-n -1 = whole context), and neither is set here, so all three look at the
+        // PROMPT as well as at what has been generated. Our prompts are written to be echoed — the
+        // option labels a choice must name back, the sentence PersonaRewriter must re-express — so any
+        // penalty raised here is aimed partly at vocabulary the game itself supplied.
+        //   RepeatPenalty   — llama.cpp default 1.0 (off), and left off deliberately. It is a FLAT
+        //                     divisor on any token seen in the last 64, so ordinary function words in
+        //                     the prompt tail take the same hit as a looping phrase. At the usual mild
+        //                     1.1 that measurably cost grammar: ~3% of persona-choice answers (10/330,
+        //                     qwen2.5-3b at the sampler above) dropped the "to" out of "I want to …"
+        //                     and returned "I want focus on the muck heap". At 1.0 and 1.05 it was
+        //                     0/420. Turning it off cost nothing it was there for — repeated 4-grams
+        //                     in long narration stayed at 0.0%, the same as with it on, because DRY
+        //                     already covers looping (all three off gives 0.5%).
+        //   FrequencyPenalty— llama.cpp default 0.0; usual range 0.1-0.3. Above that a 3B model
+        //                     starts avoiding words it ought to repeat (names, a recurring object).
+        //                     Measured clean of the effect above (0/60 at 0.2 with repeat off).
+        //   DryMultiplier   — default 0.0 (off); 0.8 is the recommended on-value. Penalises
+        //                     repeated *sequences* rather than tokens, so it curbs verbatim
+        //                     looping without flattening vocabulary. Set to 0 to disable. This is what
+        //                     carries anti-repetition now, and it is also clean of the effect (0/60).
+        public const double RepeatPenalty = 1.0;
+        public const double FrequencyPenalty = 0.2;
+        public const double DryMultiplier = 0.8;
 
         // Temperature for utility requests (health-check, prompt pre-caching)
         public const double UtilityTemperature = 0.1;
 
-        // GPU layer offloading: 99 = all layers on GPU, 0 = CPU-only
-        // Set via --cpu flag at launch
-        public static int GpuLayers { get; set; } = 99;
+        // GPU offloading and thread count used to live here as constants (-ngl 99, -t 6). Both are
+        // now in UserSettings, decided per machine by LlamaProbe and overridable in the Settings
+        // screen. The -ngl 99 in particular was actively harmful once a GPU backend was present:
+        // it means "put all layers in VRAM" and overrides llama.cpp's own --fit, which is on by
+        // default and sizes the offload to the card. See LlamaServerManager.BuildServerArguments.
     }
     
     #endregion

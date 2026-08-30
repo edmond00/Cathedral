@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Items;
@@ -12,41 +13,33 @@ namespace Cathedral.Game.Npc.Archetypes;
 /// </summary>
 public class ChickenArchetype : ShallowNpcArchetype
 {
+
+    /// <summary>Livestock: seen, heard and — being livestock — smelled.</summary>
+    public override SensoryProfile Senses => SensoryProfile.FullyAlive;
+
+    /// <summary>An animal, so the naturalist's lessons rather than the object ones.</summary>
+    public override System.Collections.Generic.IReadOnlyDictionary<string, string>? VerbModiMentis
+        => CreatureSenses;
+
     public override string ArchetypeId     => "chicken";
     public override string TypeDisplayName => "Chicken";
-    public override bool   DefaultHostile  => false;
 
-    protected override string BuildObservationHint(string nodeContext)
-        => "a speckled hen clucks and scratches in the yard, paying you no mind";
+    protected override string ComposeObservationHint(Random rng, string nodeContext) => Compose(rng,
+        sizes:  new[] { "plump", "scrawny", "small" },
+        colors: new[] { "speckled", "russet", "white", "black-and-white" },
+        noun:   "hen",
+        traits: new[] { "clucking and scratching in the dirt", "pecking at the ground, oblivious", "fluffed up and strutting" });
 
-    public override CorpseSpot CreateCorpse(ShallowNpcEntity entity, Area area)
-    {
-        var bodyParts = new List<PointOfInterest>
-        {
-            new CorpseBodyPartPoI(
-                "Body",
-                new() { "the limp feathered body of the chicken" },
-                new()
-                {
-                    new ItemElement(new ChickenMeat()),
-                    new ItemElement(new ChickenMeat()),
-                }),
-
-            new CorpseBodyPartPoI(
-                "Wings",
-                new() { "the outstretched wings of the dead chicken" },
-                new()
-                {
-                    new ItemElement(new ChickenFeather()),
-                    new ItemElement(new ChickenFeather()),
-                    new ItemElement(new ChickenFeather()),
-                }),
-        };
-
-        return CorpseRegistry.CreateForShallowNpc(
-            entity, area,
+    public override List<PointOfInterest> CreateCorpse(ShallowNpcEntity entity)
+        => CorpseRegistry.CreateForShallowNpc(
+            entity,
             displayName:  "Dead Chicken",
-            descriptions: new() { "A limp chicken, its neck broken, feathers already going flat" },
-            bodyParts);
-    }
+            descriptions: new() { "a limp chicken, its neck broken, wings splayed and the feathers already going flat" },
+            parts: new()
+            {
+                new ItemElement(new Meat()), new ItemElement(new Meat()),
+                new ItemElement(new Liver()),
+                new ItemElement(new Heart()),
+                new ItemElement(new Feather()), new ItemElement(new Feather()), new ItemElement(new Feather()),
+            });
 }

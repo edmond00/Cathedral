@@ -13,29 +13,28 @@ namespace Cathedral.Game.Scene.Verbs;
 ///
 /// On execution: opens the reconcile dialogue tree.
 /// Success: clears enemy flag + sets Suspicious affinity.
-/// Failure: stays enemy (and may demand a fight if IsBrave).
+/// Failure: stays enemy, and may demand a fight.
 /// </summary>
-public class ReconcileVerb : Verb
+public class ReconcileVerb : DialogueVerb
 {
-    public override string VerbId         => "reconcile";
-    public override string DisplayName    => "Reconcile";
-    public override int    BaseDifficulty => 2;
-
-    /// <summary>Reconciliation is a legal, non-violent action.</summary>
-    public override bool IsLegal => true;
+    public override string VerbId            => "reconcile";
+    public override string DisplayName       => "Reconcile";
+    public override int    BaseDifficulty    => 1;   // the action only meets the NPC; the dialogue carries the real stakes
+    protected override string DialogueTreeId => "reconcile";
 
     /// <summary>Can be attempted even when the enemy is right there.</summary>
     public override bool CanBeUsedUnderThreat => true;
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (target is not SceneNpc sceneNpc) return false;
+        if (SleeperGate.IsAsleep(scene, pov, target)) return false;  // wake them first
         if (sceneNpc.Entity is not NpcEntity npc) return false;
         if (!npc.CanSpeak) return false;
         if (!npc.IsAlive) return false;
         if (!scene.GetNpcsAt(pov.Where, pov.When).Exists(n => n.Id == sceneNpc.Id)) return false;
 
-        var protagonistId = actor?.DisplayName ?? "Protagonist";
+        var protagonistId = actor?.AffinityKey ?? "Protagonist";
         var isEnemy   = npc.AffinityTable.IsEnemy(protagonistId);
         var affinity  = npc.AffinityTable.GetLevel(protagonistId);
         var isAnnoying = affinity == AffinityLevel.AnnoyingAcquaintance;
@@ -44,12 +43,16 @@ public class ReconcileVerb : Verb
     }
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
-        => $"try to reconcile with {target.DisplayName}";
+        => $"meet {NpcPronoun(target)} to try to reconcile";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
+    // Read out of context in the routines menu, so the pronoun is replaced by the name.
+    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
+        => $"meet {NpcName(target)} to try to reconcile";
+
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         if (target is not SceneNpc sceneNpc || sceneNpc.Entity is not NpcEntity npc)
-            return System.Array.Empty<OutcomeReport>();
+            return System.Array.Empty<Outcome>();
         return new[] { new DialogueTriggerOutcome(npc, DialogueTreeRegistry.Instance.Get("reconcile").TreeId) };
     }
 }

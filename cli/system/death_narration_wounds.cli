@@ -1,0 +1,46 @@
+# A mortal wound taken inside a visit ends the run, and the run cannot be continued.
+#
+# Wounds had no standing check anywhere. Starvation is caught where vital heat is drawn on a journey
+# and age on the return to the map, because those clocks move nowhere else — but a wound is dealt at
+# any moment of a visit, by a fight or by the penalty a failed act samples, and nothing looked. A
+# protagonist could take a mortal wound from a failed act and go on playing at zero health.
+#
+# `wound` is the narration counterpart of `fight-wound`. A wound is SAMPLED from a verb's failure
+# penalties, one slot in five, so whether a given failed act injures anybody is not something a
+# script can ask for — let alone three times over on one body. What wants testing is the consequence.
+# cli/outcome/wound_infliction/success.cli covers the sampling itself, at a seed where it lands.
+#
+# The two assertions at the end are the same pair the other three death scripts make (see
+# death_wounds.cli, death_starvation.cli, death_old_age.cli): the screen names the cause, and the
+# save is gone before END RUN is pressed rather than when it is.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Hall" --period dawn --save-path .tmp-cli-save/death-narration.json
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+inspect wounds
+expect-no-state wounds wound
+
+# Enough to consume the health the frame affords — what a run of bad failures would do.
+wound protagonist
+
+# No click, no phase boundary: the check is standing, so the run ends on the next tick.
+wait mode Death 45
+expect MORTAL WOUNDS
+expect END RUN
+
+# Permadeath, as for every other cause.
+expect-state savefile save none
+
+click end-run
+wait mode MainMenu 20
+inspect menu
+expect-state menu Continue disabled
+
+quit

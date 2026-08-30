@@ -6,8 +6,17 @@ namespace Cathedral.Audio;
 /// </summary>
 public struct MusicMoodState
 {
-    /// <summary>0 = bright/hopeful, 1 = deeply melancholic. Drives scale choice and tempo.</summary>
-    public float Sadness;
+    /// <summary>
+    /// 0 = cool and detached, 1 = deeply mournful. Drives scale choice, contour and tempo.
+    /// <para>
+    /// Named for what its <b>low</b> end means. This axis has no happy end: 0 is not "bright" or
+    /// "hopeful", it is merely the least grieving the music ever gets — hollow, still, unhurried.
+    /// The scale palette contains no major-third mode at any value (see <see cref="ModalScale"/>),
+    /// the melodic walk leans downward at every value, and the rhythm sets range from measured to
+    /// dragging. Turning this down makes the music emptier, not cheerier.
+    /// </para>
+    /// </summary>
+    public float Coldness;
 
     /// <summary>0 = calm, 1 = terrifying. Drives dissonance, broken rhythms, and velocity spikes.</summary>
     public float Fear;
@@ -21,56 +30,61 @@ public struct MusicMoodState
     /// </summary>
     public float Intensity;
 
-    public MusicMoodState(float sadness, float fear, float mystery, float intensity = 1.0f)
+    public MusicMoodState(float coldness, float fear, float mystery, float intensity = 1.0f)
     {
-        Sadness   = Math.Clamp(sadness,   0f, 1f);
+        Coldness   = Math.Clamp(coldness,   0f, 1f);
         Fear      = Math.Clamp(fear,      0f, 1f);
         Mystery   = Math.Clamp(mystery,   0f, 1f);
         Intensity = Math.Clamp(intensity, 0f, 1f);
     }
 
-    /// <summary>Neutral starting mood: slightly contemplative.</summary>
-    public static readonly MusicMoodState Neutral = new(0.2f, 0.1f, 0.2f);
+    // Presets sit noticeably higher on Coldness than they used to. The old floor (Tavern at 0.00,
+    // Neutral at 0.20) was written when 0 meant "bright", and it put the common cases squarely in
+    // major-scale territory. Nothing now goes below ~0.30: the warmest room in the world is still
+    // a cold one.
+
+    /// <summary>Neutral starting mood: still and contemplative, not cheerful.</summary>
+    public static readonly MusicMoodState Neutral = new(0.38f, 0.10f, 0.25f);
 
     // ── Game-state presets ────────────────────────────────────────────────────
-    /// <summary>Protagonist creation: self-reflective, slightly melancholic.</summary>
-    public static readonly MusicMoodState Creation = new(0.35f, 0.05f, 0.3f);
+    /// <summary>Protagonist creation: self-reflective, inward.</summary>
+    public static readonly MusicMoodState Creation = new(0.50f, 0.05f, 0.35f);
 
-    /// <summary>Childhood reminiscence: sad, dreamlike, mysterious.</summary>
-    public static readonly MusicMoodState Childhood = new(0.65f, 0.05f, 0.6f);
+    /// <summary>Childhood reminiscence: mournful, dreamlike, mysterious.</summary>
+    public static readonly MusicMoodState Childhood = new(0.72f, 0.05f, 0.62f);
 
-    /// <summary>World exploration: alert, mysterious.</summary>
-    public static readonly MusicMoodState WorldView = new(0.3f, 0.25f, 0.45f);
+    /// <summary>World exploration: alert, exposed.</summary>
+    public static readonly MusicMoodState WorldView = new(0.65f, 0.60f, 0.0f, 0.25f);
 
     // ── Archetype presets (for PoC demonstration) ─────────────────────────────
-    /// <summary>Lively tavern: major scale, lively rhythms, bright instruments.</summary>
-    public static readonly MusicMoodState Tavern = new(0.0f, 0.28f, 0.02f);
+    /// <summary>Tavern: the warmest place in the world — Dorian, measured pulse, still not a dance.</summary>
+    public static readonly MusicMoodState Tavern = new(0.32f, 0.28f, 0.05f);
 
     /// <summary>Tense chase/battle: fast BPM, staccato, urgent feel.</summary>
-    public static readonly MusicMoodState Battle = new(0.08f, 0.92f, 0.08f);
+    public static readonly MusicMoodState Battle = new(0.35f, 0.92f, 0.10f);
 
-    /// <summary>Dark dungeon: very sad, fearful, highly mysterious with vast silences.</summary>
-    public static readonly MusicMoodState DarkDungeon = new(0.88f, 0.45f, 0.92f);
+    /// <summary>Dark dungeon: mournful, fearful, highly mysterious with vast silences.</summary>
+    public static readonly MusicMoodState DarkDungeon = new(0.90f, 0.45f, 0.92f);
 
-    /// <summary>Cathedral lament: deeply sad and calm, moderately mysterious.</summary>
-    public static readonly MusicMoodState Lament = new(0.85f, 0.02f, 0.38f);
+    /// <summary>Cathedral lament: deeply mournful and calm, moderately mysterious.</summary>
+    public static readonly MusicMoodState Lament = new(0.88f, 0.02f, 0.38f);
 
-    /// <summary>Returns a copy with Sadness changed by delta, clamped.</summary>
-    public MusicMoodState WithSadness(float delta) =>
-        new(Sadness + delta, Fear, Mystery, Intensity);
+    /// <summary>Returns a copy with Coldness changed by delta, clamped.</summary>
+    public MusicMoodState WithColdness(float delta) =>
+        new(Coldness + delta, Fear, Mystery, Intensity);
 
     /// <summary>Returns a copy with Fear changed by delta, clamped.</summary>
     public MusicMoodState WithFear(float delta) =>
-        new(Sadness, Fear + delta, Mystery, Intensity);
+        new(Coldness, Fear + delta, Mystery, Intensity);
 
     /// <summary>Returns a copy with Mystery changed by delta, clamped.</summary>
     public MusicMoodState WithMystery(float delta) =>
-        new(Sadness, Fear, Mystery + delta, Intensity);
+        new(Coldness, Fear, Mystery + delta, Intensity);
 
     /// <summary>Returns a copy with Intensity changed by delta, clamped.</summary>
     public MusicMoodState WithIntensity(float delta) =>
-        new(Sadness, Fear, Mystery, Intensity + delta);
+        new(Coldness, Fear, Mystery, Intensity + delta);
 
     public override string ToString() =>
-        $"Sadness={Sadness:F2}  Fear={Fear:F2}  Mystery={Mystery:F2}  Intensity={Intensity:F2}";
+        $"Coldness={Coldness:F2}  Fear={Fear:F2}  Mystery={Mystery:F2}  Intensity={Intensity:F2}";
 }

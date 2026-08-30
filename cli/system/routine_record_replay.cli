@@ -1,0 +1,118 @@
+# routine — record, then replay
+#
+# The full round trip of the routine system, which nothing else covered: a routine is recorded by
+# playing, the player leaves and comes back, and the routine replays on arrival into the sub-phase it
+# ended on. Both halves are in one script because the replay needs a routine, and recording one is
+# most of the work.
+#
+# WHAT IS RECORDED. The routine is [move, propose_to_buy], which is the shape a real one takes: a
+# repositioning step only extends the prefix (walking somewhere is how you get somewhere, not what
+# you went to do), and the first non-repositioning step is the terminus that emits the routine. So
+# the walk into the wood is IN the routine but is not a routine of its own.
+#
+# WHAT THE REPLAY MUST GET RIGHT. Replay walks the steps headlessly and hands the game a phase
+# transition. That transition has to carry BOTH where and when the replay ended — the trade menu is
+# opened from a rebuilt scene, and the rebuild starts at the location's default opening area (Test
+# Yard). The three routine bridges used to carry the period alone, so leaving the trade menu put the
+# player back in the yard instead of the wood the routine had walked into. `expect-state where Test
+# Wood` at the end is that bug, and it is the whole reason this script exists.
+#
+# THE SETUP. The farmer sells crops and roams: at noon she is in Test Wood, which is one plain path
+# from Test Yard — the only seller in the location reachable without unlocking a door.
+# --npc-affinity is what makes propose_to_buy possible at all (TradeGate wants an acquaintance).
+# --observe-only pins the FIRST phase, in the yard, on the wood; the `observe` command pins the
+# second, in the wood, on the farmer — a flag cannot do that, because the second phase is generated
+# mid-run.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --npc-affinity CloseFriend --location-type test --location-id 0 --start-area "Test Yard" --period noon --observe-only "Test Wood"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+strategy succeed
+
+# --- step 1: walk into the wood (a prefix step, not a routine of its own) ------
+goal move
+advance 12 180
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+# Pinned BEFORE the footer press: that press closes the segment and generates the next phase's
+# observation, so a filter set after it would arrive too late to steer anything.
+observe farmer
+goal propose_to_buy
+click button
+wait 60
+advance 12 180
+expect-state where Test Wood
+
+# --- step 2: the trade, which is the terminus that emits the routine ----------
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+# The recorder's rule, asserted by verb ids rather than by the routine's name: the name is built
+# from the NPC's rolled name and is content, free to change.
+inspect routines
+expect-state routines verbs=[move,propose_to_buy]
+
+# --- leave, go elsewhere, and come back on the routine ------------------------
+# `travel neighbour` and `travel back` exist because a script cannot name either vertex: the one it
+# started on is whatever the seed put under the avatar, and `travel <name>` prefers the vertex
+# underfoot, which would walk straight back into the location it is trying to leave.
+observe none
+click button
+wait mode WorldView 90
+
+# And exactly one routine, not two. The move was consumed by the trade's emission, so the prefix has
+# nothing new to say and the end-of-session pass must not emit it a second time as a bare "go to the
+# wood". The complementary case — a walk that NO emission claimed — is routine_movement_only.cli.
+expect-no-state routines steps=1
+
+# A recorded routine must survive the save, and this is the only script in the suite that HAS one —
+# cli/system/save_roundtrip.cli stacks breadth of party state by flags, and no flag records a
+# routine, so the routine branch of the save went untested until it broke in a player's file. What
+# broke was RoutineStep.Constraints: a list of an abstract type, which System.Text.Json wrote by the
+# DECLARED type (silently dropping each constraint's own fields) and then refused to read back at
+# all, making the whole save unloadable. This is the assertion that says so.
+save roundtrip
+
+travel neighbour
+travel-go
+wait mode LocationInteraction 120
+advance 12 180
+click button
+wait mode WorldView 90
+
+travel back
+routines
+routines 0
+wait mode WorldView 150
+
+# CONTINUE on the outcome box applies the phase the routine ended on. For a trade terminus that is
+# the trade menu itself — reached without the walk and without the conversation, which is what a
+# routine is for.
+routines continue
+wait mode Trading 60
+
+# And the point of the whole script: the replay resumed in the area it ended in, not the one the
+# rebuilt scene opens at.
+expect-state where Test Wood
+quit

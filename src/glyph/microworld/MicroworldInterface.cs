@@ -24,8 +24,13 @@ namespace Cathedral.Glyph.Microworld
         // Track vertices that need water animation (sea and ocean biomes without locations)
         private readonly HashSet<int> waterVertices = new HashSet<int>();
         
-        // Random generator for water animation
+        // Random generator for water animation (purely cosmetic — intentionally unseeded)
         private readonly Random animationRandom = new Random();
+
+        // Master-seed-derived offset added to every Perlin sample position, so a
+        // different seed shifts the sampled noise field and yields a different world.
+        // Computed once in GenerateWorld and reused by the recompute fallback.
+        private Vector3 _worldNoiseOffset;
 
         // Protagonist system
         private int _protagonistVertex = -1;
@@ -35,13 +40,32 @@ namespace Cathedral.Glyph.Microworld
         private int _hoveredVertex = -1;
         private int _pathIndex = 0;
         private float _moveTimer = 0.0f;
-        
+
         // Threading support for hover paths
         private Cathedral.Pathfinding.Path? _pendingHoverPath;
         private int _pendingHoverVertex = -1;
-        
+
         // Threading support for movement paths
         private Cathedral.Pathfinding.Path? _pendingMovementPath;
+
+        // Travel constraint (forbids sea/ocean for default on-foot travel) and the
+        // constraint-aware graph view used for hover-path pathfinding.
+        private ITravelConstraint? _travelConstraint;
+        private ConstrainedPathGraph? _constrainedGraph;
+
+        // Externally-controlled travel mode: when true, clicks do not auto-start
+        // movement (the controller handles waypoint queuing and triggers movement
+        // explicitly via BeginTravelAlongPath).
+        private bool _externalTravelControl;
+
+        // Committed (post-waypoint) path drawn on top of the world while the player is
+        // still planning. Stored as vertex ids; rendering uses these to know which
+        // tiles to restore when the plan is cleared or the hover preview overlaps.
+        private readonly List<int> _plannedPathVertices = new();
+        private readonly List<int> _plannedWaypointVertices = new();
+        // Origin used as the start of the hover-path preview (typically the last
+        // waypoint when one is set, otherwise the protagonist vertex).
+        private int _hoverPathOrigin = -1;
         
         private const float MOVE_SPEED = 5.0f; // Moves per second (debugging to understand timing)
         
@@ -51,8 +75,19 @@ namespace Cathedral.Glyph.Microworld
         // Flag to disable world interactions (used when UI is in focus)
         private bool _worldInteractionsEnabled = true;
 
+        // Travel range — vertices beyond this radius are darkened and blocked as waypoints.
+        private readonly HashSet<int> _outOfRangeVertices = new();
+        private const float TravelRangeDarkenFactor = 0.35f;
+
         // Events for location travel mode
         public event Action<ProtagonistArrivalInfo>? ProtagonistArrivedAtLocation;
+
+        /// <summary>
+        /// Fires every time the protagonist moves to a new vertex during travel,
+        /// including the final step (before <see cref="ProtagonistArrivedAtLocation"/>).
+        /// Carries the vertex index that was just entered.
+        /// </summary>
+        public event Action<int>? ProtagonistSteppedToVertex;
 
         /// <summary>
         /// Detailed information about protagonist arrival at a vertex
@@ -70,7 +105,7 @@ namespace Cathedral.Glyph.Microworld
         public MicroworldInterface(GlyphSphereCore glyphSphereCore) : base(glyphSphereCore)
         {
             // Subscribe to our own events to handle protagonist interactions
-            VertexHoverEvent += (vertexIndex, glyph, color) => 
+            VertexHoverEvent += (vertexIndex, glyph, color) =>
             {
                 if (vertexIndex >= 0)
                     HandleVertexHovered(vertexIndex);
@@ -83,10 +118,158 @@ namespace Cathedral.Glyph.Microworld
             };
         }
 
+        // ── Travel constraint plumbing ──────────────────────────────────────────────
+
+        /// <summary>
+        /// Installs the travel constraint used for hover pathfinding and traversability
+        /// checks. Pass <c>null</c> to clear the constraint.
+        /// </summary>
+        public void SetTravelConstraint(ITravelConstraint? constraint)
+        {
+            _travelConstraint = constraint;
+            RebuildConstrainedGraph();
+        }
+
+        /// <summary>
+        /// Rebuilds the constrained path graph from the current biome constraint and the
+        /// active travel-range set. Must be called whenever either changes.
+        /// </summary>
+        private void RebuildConstrainedGraph()
+        {
+            var baseGraph = core.GetGraph();
+            if (baseGraph == null) { _constrainedGraph = null; return; }
+
+            // Build the effective constraint: biome constraint AND range exclusion (if active).
+            ITravelConstraint? effective = _travelConstraint;
+            if (_outOfRangeVertices.Count > 0)
+            {
+                var rangeConstraint = new RangeExclusionConstraint(_outOfRangeVertices);
+                effective = effective != null
+                    ? new CompositeTravelConstraint(effective, rangeConstraint)
+                    : rangeConstraint;
+            }
+
+            _constrainedGraph = effective != null
+                ? new ConstrainedPathGraph(baseGraph, effective)
+                : null;
+        }
+
+        /// <summary>The pathfinding graph currently used for travel (constraint-aware if one is set).</summary>
+        public IPathGraph? GetTravelGraph() => (IPathGraph?)_constrainedGraph ?? core.GetGraph();
+
+        /// <summary>Returns false if the given vertex is forbidden by the active constraint.</summary>
+        public bool IsVertexTraversable(int vertexIndex)
+            => _travelConstraint == null || _travelConstraint.IsTraversable(vertexIndex);
+
+        /// <summary>Returns true if the vertex lies outside the current travel range radius.</summary>
+        public bool IsOutOfTravelRange(int vertexIndex)
+            => _outOfRangeVertices.Contains(vertexIndex);
+
+        /// <summary>
+        /// Every world vertex the avatar could currently set out for: has world data, is not blocked by
+        /// the active travel constraint, and lies inside the stat-derived travel radius.
+        ///
+        /// <para>Exists for the <c>--cli</c> driver. Travel range covers far more of the map than the
+        /// handful of immediate graph neighbours, so without this a test script can only ever reach
+        /// whatever happens to border the spawn point — which is how testing a village feature turned
+        /// into hunting for a seed that spawns beside one.</para>
+        /// </summary>
+        public IEnumerable<int> EnumerateReachableVertices()
+        {
+            for (int i = 0; i < VertexCount; i++)
+            {
+                if (i == _protagonistVertex) continue;
+                if (!vertexData.ContainsKey(i)) continue;
+                if (!IsVertexTraversable(i) || IsOutOfTravelRange(i)) continue;
+                yield return i;
+            }
+        }
+
+        /// <summary>
+        /// Darkens every vertex beyond <paramref name="radius"/> from <paramref name="protagonistVertex"/>
+        /// and records them so they are blocked as waypoint destinations and restored correctly
+        /// when paths are cleared. Calls <see cref="ClearTravelRange"/> first.
+        /// </summary>
+        public void SetTravelRange(int protagonistVertex, float radius)
+        {
+            ClearTravelRange();
+            if (protagonistVertex < 0 || radius <= 0f) return;
+
+            Vector3 origin = GetVertexPosition(protagonistVertex);
+            for (int i = 0; i < VertexCount; i++)
+            {
+                if (i == protagonistVertex || !vertexData.ContainsKey(i)) continue;
+                if (Vector3.Distance(origin, GetVertexPosition(i)) > radius)
+                {
+                    _outOfRangeVertices.Add(i);
+                    if (i != _protagonistVertex)
+                        ApplyDarkening(i);
+                }
+            }
+
+            RebuildConstrainedGraph();
+        }
+
+        /// <summary>Restores all darkened out-of-range vertices and clears the range set.</summary>
+        public void ClearTravelRange()
+        {
+            foreach (int i in _outOfRangeVertices)
+            {
+                if (i == _protagonistVertex) continue;
+                if (vertexData.TryGetValue(i, out var data))
+                    SetVertexGlyph(i, data.GlyphChar, TileColor(data), data.Location?.Size ?? data.Biome.Size);
+            }
+            _outOfRangeVertices.Clear();
+            RebuildConstrainedGraph();
+        }
+
+        private void ApplyDarkening(int vertexIndex)
+        {
+            if (!vertexData.TryGetValue(vertexIndex, out var data)) return;
+            var dark = new Vector4(
+                data.Color.X / 255f * TravelRangeDarkenFactor,
+                data.Color.Y / 255f * TravelRangeDarkenFactor,
+                data.Color.Z / 255f * TravelRangeDarkenFactor,
+                GetTileCategory(data));
+            SetVertexGlyph(vertexIndex, data.GlyphChar, dark, data.Location?.Size ?? data.Biome.Size);
+        }
+
+        /// <summary>Looks up the biome name at a vertex, or null if unknown.</summary>
+        public string? GetBiomeNameAt(int vertexIndex)
+            => vertexData.TryGetValue(vertexIndex, out var data) ? data.Biome.Name : null;
+
+        // ── External travel control ─────────────────────────────────────────────────
+
+        /// <summary>
+        /// When true, <see cref="UpdateMovement"/> is suspended so the controller can
+        /// process per-frame humor consumption before allowing the next vertex step.
+        /// </summary>
+        public bool MovementPaused { get; set; } = false;
+
+        /// <summary>
+        /// When enabled, the interface stops auto-starting movement on world clicks.
+        /// The owning controller becomes responsible for queuing waypoints and calling
+        /// <see cref="BeginTravelAlongPath"/> once the player commits to a route.
+        /// </summary>
+        public void SetExternalTravelControl(bool enabled) => _externalTravelControl = enabled;
+
         public override void GenerateWorld()
         {
             Console.WriteLine("Generating microworld biomes using Perlin noise...");
-            
+
+            // Every vertex is overwritten below, but waterVertices is only ever ADDED to — so on a
+            // second generation the previous world's lakes would still be registered for animation on
+            // tiles that are now dry land.
+            waterVertices.Clear();
+
+            // Derive the world's noise offset from the master seed. A large offset moves
+            // the sampled region of the (fixed) Perlin field, so each seed is a new world.
+            var worldRng = GameRng.For("world-terrain");
+            _worldNoiseOffset = new Vector3(
+                (float)(worldRng.NextDouble() * 20000.0 - 10000.0),
+                (float)(worldRng.NextDouble() * 20000.0 - 10000.0),
+                (float)(worldRng.NextDouble() * 20000.0 - 10000.0));
+
             var noiseValues = new List<float>();
             var glyphCounts = new Dictionary<char, int>();
 
@@ -99,10 +282,11 @@ namespace Cathedral.Glyph.Microworld
                 Vector3 off1 = new Vector3(1337.0f, 2468.0f, 9876.0f);
                 Vector3 off2 = new Vector3(5432.0f, 8765.0f, 1234.0f);
                 Vector3 off3 = new Vector3(9999.0f, 3333.0f, 7777.0f);
-                
-                Vector3 p1 = (off1 + pos) / 12f;
-                Vector3 p2 = (off2 + pos) / 3f;
-                Vector3 p3 = (off3 + pos) / 8f;
+
+                Vector3 sp = pos + _worldNoiseOffset;
+                Vector3 p1 = (off1 + sp) / 12f;
+                Vector3 p2 = (off2 + sp) / 3f;
+                Vector3 p3 = (off3 + sp) / 8f;
                 
                 float perlinNoise1 = Perlin.Noise(p1.X, p1.Y, p1.Z);
                 float perlinNoise2 = Perlin.Noise(p2.X, p2.Y, p2.Z);
@@ -164,7 +348,9 @@ namespace Cathedral.Glyph.Microworld
             // Print statistics using the base class utilities
             PrintNoiseStatistics(noiseValues, "Microworld Noise Distribution Statistics");
             PrintGlyphStatistics(glyphCounts, VertexCount, "Microworld Biome-Based Glyph Distribution");
-            
+
+            PostProcessWorld();
+
             // Initialize protagonist at a random suitable location
             InitializeProtagonist();
         }
@@ -232,8 +418,10 @@ namespace Cathedral.Glyph.Microworld
                 return Biomes["mountain"];
 
             // CITY (perlinNoise2) — tightened from -0.4 to -0.58
+            // if (perlinNoise2 < -0.58f)
+            //     return Biomes["city"];
             if (perlinNoise2 < -0.58f)
-                return Biomes["city"];
+                return Biomes["field"]; // TODO: restore city biome
 
             // COAST (perlinNoise1)
             if (perlinNoise1 <= 0.065f)
@@ -253,9 +441,10 @@ namespace Cathedral.Glyph.Microworld
 
         private LocationType? DetermineLocation(BiomeType biome, Vector3 position)
         {
-            // Generate a pseudo-random value based on position for consistency
+            // Generate a pseudo-random value based on position for consistency, mixed with
+            // the master seed so the same vertex yields different locations across worlds.
             int seed = (int)(position.X * 1000 + position.Y * 2000 + position.Z * 3000);
-            var random = new Random(Math.Abs(seed));
+            var random = new Random(Math.Abs(unchecked(seed ^ GameRng.MasterSeed)));
             
             // Check if a location should spawn based on biome density
             if (random.NextDouble() > biome.Density)
@@ -299,10 +488,11 @@ namespace Cathedral.Glyph.Microworld
             Vector3 off1 = new Vector3(1337.0f, 2468.0f, 9876.0f);
             Vector3 off2 = new Vector3(5432.0f, 8765.0f, 1234.0f);
             Vector3 off3 = new Vector3(9999.0f, 3333.0f, 7777.0f);
-            
-            Vector3 p1 = (off1 + pos) / 12f;
-            Vector3 p2 = (off2 + pos) / 3f;
-            Vector3 p3 = (off3 + pos) / 8f;
+
+            Vector3 sp = pos + _worldNoiseOffset;
+            Vector3 p1 = (off1 + sp) / 12f;
+            Vector3 p2 = (off2 + sp) / 3f;
+            Vector3 p3 = (off3 + sp) / 8f;
             
             float perlinNoise1 = Perlin.Noise(p1.X, p1.Y, p1.Z);
             float perlinNoise2 = Perlin.Noise(p2.X, p2.Y, p2.Z);
@@ -407,9 +597,38 @@ namespace Cathedral.Glyph.Microworld
 
             if (suitableVertices.Count > 0)
             {
-                _protagonistVertex = suitableVertices[animationRandom.Next(suitableVertices.Count)];
-                PlaceProtagonist(_protagonistVertex, centerCamera: true); // Center camera only during initialization
-                
+                // Fresh seeded generator each call so the spawn is reproducible per seed
+                // (and identical across in-session "new game" resets for the same world).
+                var spawnRng = GameRng.For("spawn");
+                // suitableVertices comes from dictionary enumeration; sort for a stable
+                // ordering so the picked index maps to the same vertex every run.
+                suitableVertices.Sort();
+                int newVertex = suitableVertices[spawnRng.Next(suitableVertices.Count)];
+
+                // --start-at <name>: spawn on a named biome or location instead. Debug only — a
+                // feature that lives in one rare biome is otherwise reachable only by hunting for a
+                // seed that happens to put one within travel range of the spawn point.
+                if (Config.Debug.StartAt is { Length: > 0 } want)
+                {
+                    var match = suitableVertices.FirstOrDefault(v =>
+                        vertexData.TryGetValue(v, out var d) &&
+                        (d.Location?.Name ?? d.Biome.Name).Contains(want, StringComparison.OrdinalIgnoreCase),
+                        -1);
+
+                    if (match >= 0)
+                    {
+                        newVertex = match;
+                        Console.WriteLine($"[debug] --start-at \"{want}\" → vertex {match}");
+                    }
+                    else
+                    {
+                        Cathedral.Game.DebugFlagAudit.Miss("--start-at", want,
+                            "the normal spawn. The world has no such biome in reach — use --location-type to build one regardless");
+                    }
+                }
+
+                PlaceProtagonist(newVertex, centerCamera: true); // PlaceProtagonist restores the old position first
+
                 Console.WriteLine($"Protagonist initialized at vertex {_protagonistVertex} ({vertexData[_protagonistVertex].Biome.Name})");
             }
         }
@@ -472,13 +691,80 @@ namespace Cathedral.Glyph.Microworld
             return 1.0f;
         }
 
+        /// <summary>
+        /// Post-processes the generated world to fix coherence issues.
+        /// Currently ensures every field tile is adjacent to at least one farm or village.
+        /// </summary>
+        private void PostProcessWorld()
+        {
+            int placed = 0;
+            LocationType farm    = Locations["farm"];
+            LocationType village = Locations["village"];
+
+            for (int i = 0; i < VertexCount; i++)
+            {
+                if (!vertexData.TryGetValue(i, out var data) || data.Biome.Name != "field")
+                    continue;
+
+                var neighbors = GetNeighboringVertices(i);
+
+                // Already satisfied if any neighbor has a farm or village
+                bool satisfied = neighbors.Any(n =>
+                    vertexData.TryGetValue(n, out var nd) &&
+                    nd.Location.HasValue &&
+                    (nd.Location.Value.Name == "farm" || nd.Location.Value.Name == "village"));
+
+                if (satisfied)
+                    continue;
+
+                // Pick placement candidate: self first (if empty), then an empty field neighbor, then force self
+                int candidate = -1;
+                if (!data.Location.HasValue)
+                {
+                    candidate = i;
+                }
+                else
+                {
+                    foreach (int n in neighbors)
+                    {
+                        if (vertexData.TryGetValue(n, out var nd) &&
+                            nd.Biome.Name == "field" && !nd.Location.HasValue)
+                        {
+                            candidate = n;
+                            break;
+                        }
+                    }
+                    if (candidate == -1)
+                        candidate = i; // force-overwrite self as last resort
+                }
+
+                // Randomly pick farm or village (seeded on vertex index + master seed for
+                // per-world determinism)
+                LocationType chosen = new Random(unchecked(i ^ GameRng.MasterSeed)).Next(2) == 0 ? farm : village;
+
+                // Place chosen location on candidate and refresh its visual
+                var cd = vertexData[candidate];
+                cd.Location = chosen;
+                cd.GlyphChar = chosen.Glyph;
+                cd.Color = new System.Numerics.Vector3(chosen.Color.X, chosen.Color.Y, chosen.Color.Z);
+                vertexData[candidate] = cd;
+                SetVertexGlyph(candidate, chosen.Glyph, TileColor(vertexData[candidate]), chosen.Size);
+                placed++;
+            }
+
+            if (placed > 0)
+                Console.WriteLine($"[PostProcess] Placed {placed} farm(s)/village(s) to satisfy field adjacency.");
+        }
+
         private static Vector4 TileColor(VertexWorldData data) =>
             new Vector4(data.Color.X / 255.0f, data.Color.Y / 255.0f, data.Color.Z / 255.0f, GetTileCategory(data));
 
         private void RestoreVertexData(int vertexIndex, VertexWorldData data)
         {
-            float size = data.Location?.Size ?? data.Biome.Size;
-            SetVertexGlyph(vertexIndex, data.GlyphChar, TileColor(data), size);
+            if (_outOfRangeVertices.Contains(vertexIndex))
+                ApplyDarkening(vertexIndex);
+            else
+                SetVertexGlyph(vertexIndex, data.GlyphChar, TileColor(data), data.Location?.Size ?? data.Biome.Size);
         }
 
         public void HandleVertexHovered(int vertexIndex)
@@ -486,7 +772,7 @@ namespace Cathedral.Glyph.Microworld
             // Ignore hover when interactions are disabled
             if (!_worldInteractionsEnabled)
                 return;
-                
+
             if (_protagonistVertex == -1 || vertexIndex == _protagonistVertex) return;
 
             // Don't show hover paths while protagonist is moving
@@ -502,19 +788,31 @@ namespace Cathedral.Glyph.Microworld
             }
 
             _hoveredVertex = vertexIndex;
-            
-            // Request path to hovered vertex
+
+            // Skip hover-path computation for impassable destinations under the active
+            // constraint. The popup terminal still shows the biome name so the player
+            // gets feedback that the cell is reachable as a piece of geography just not
+            // as a destination.
+            if (!IsVertexTraversable(vertexIndex))
+                return;
+
+            // Request path to hovered vertex from the configured hover-path origin
+            // (defaults to the protagonist, but can be set to the last waypoint by the
+            // travel planner so the preview shows the *next* segment).
+            int origin = _hoverPathOrigin >= 0 ? _hoverPathOrigin : _protagonistVertex;
+            if (origin == vertexIndex) return;
+
             var pathfindingService = core.GetPathfindingService();
-            var graph = core.GetGraph();
-            
+            var graph = GetTravelGraph();
+
             if (pathfindingService != null && graph != null)
             {
                 Task.Run(async () =>
                 {
                     try
                     {
-                        var path = await pathfindingService.FindPathAsync(graph, _protagonistVertex, vertexIndex);
-                        
+                        var path = await pathfindingService.FindPathAsync(graph, origin, vertexIndex);
+
                         // Schedule path update on the main thread if still hovering the same vertex
                         if (_hoveredVertex == vertexIndex)
                         {
@@ -572,20 +870,20 @@ namespace Cathedral.Glyph.Microworld
         public void HandleVertexClicked(int vertexIndex)
         {
             Console.WriteLine($"HandleVertexClicked: vertex {vertexIndex}, protagonist at {_protagonistVertex}");
-            
+
             // Ignore clicks when interactions are disabled
             if (!_worldInteractionsEnabled)
             {
                 Console.WriteLine("World interactions are disabled");
                 return;
             }
-            
+
             if (_protagonistVertex == -1)
             {
                 Console.WriteLine("Cannot handle click: protagonist not initialized");
                 return;
             }
-            
+
             // Allow clicking on protagonist vertex - let GameController handle it
             // (GameController can enter location interaction mode)
             if (vertexIndex == _protagonistVertex)
@@ -601,13 +899,18 @@ namespace Cathedral.Glyph.Microworld
                 return;
             }
 
-            // Start movement to clicked vertex
+            // When external travel control is enabled (waypoint mode), the controller
+            // queues waypoints and calls BeginTravelAlongPath() once committed; the
+            // interface no longer auto-starts movement on click.
+            if (_externalTravelControl)
+                return;
+
+            // Legacy direct-movement-on-click behaviour. Still useful when no waypoint
+            // planner is wired up (e.g. tests). Uses the constrained graph so sea/ocean
+            // travel is forbidden even on this path.
             var pathfindingService = core.GetPathfindingService();
-            var graph = core.GetGraph();
-            
-            Console.WriteLine($"Pathfinding service available: {pathfindingService != null}");
-            Console.WriteLine($"Graph available: {graph != null}");
-            
+            var graph = GetTravelGraph();
+
             if (pathfindingService != null && graph != null)
             {
                 Task.Run(async () =>
@@ -615,16 +918,10 @@ namespace Cathedral.Glyph.Microworld
                     try
                     {
                         var path = await pathfindingService.FindPathAsync(graph, _protagonistVertex, vertexIndex);
-                        
+
                         if (path != null && path.Length > 1)
                         {
-                            Console.WriteLine($"Path found for movement: {path.Length} nodes");
-                            // Schedule movement on main thread
                             _pendingMovementPath = path;
-                        }
-                        else
-                        {
-                            Console.WriteLine("No path found for movement or path too short");
                         }
                     }
                     catch (Exception ex)
@@ -633,6 +930,127 @@ namespace Cathedral.Glyph.Microworld
                     }
                 });
             }
+        }
+
+        // ── Externally-driven travel & planned-path rendering ──────────────────────
+
+        /// <summary>
+        /// Sets the start vertex used for the hover-path preview. Passing -1 reverts to
+        /// the protagonist's current position (default).
+        /// </summary>
+        public void SetHoverPathOrigin(int vertex)
+        {
+            _hoverPathOrigin = vertex;
+            // Force a redraw of the hover preview against the new origin.
+            ClearHoveredPath();
+            _hoveredVertex = -1;
+        }
+
+        /// <summary>
+        /// Draws the committed travel plan: the concatenated path through the queue of
+        /// waypoints, with each waypoint cell shown as a numbered marker.
+        /// </summary>
+        public void ShowPlannedPath(IReadOnlyList<int> pathVertices,
+                                    IReadOnlyList<int> waypointVertices)
+        {
+            ClearPlannedPath();
+            if (pathVertices == null || pathVertices.Count <= 1) return;
+
+            _plannedPathVertices.AddRange(pathVertices);
+            if (waypointVertices != null) _plannedWaypointVertices.AddRange(waypointVertices);
+
+            // Intermediate path cells (skip start = protagonist; skip waypoints themselves)
+            var wpSet = new HashSet<int>(_plannedWaypointVertices);
+            for (int i = 1; i < pathVertices.Count; i++)
+            {
+                int nodeId = pathVertices[i];
+                if (nodeId == _protagonistVertex) continue;
+                if (wpSet.Contains(nodeId)) continue;
+                SetVertexGlyph(nodeId, Config.GlyphSphere.PathWaypointChar,
+                    Config.GlyphSphere.PathWaypointActiveColor, true);
+            }
+
+            // Numbered waypoint markers in click order.
+            for (int i = 0; i < _plannedWaypointVertices.Count; i++)
+            {
+                int wp = _plannedWaypointVertices[i];
+                char marker = i < Config.GlyphSphere.WaypointNumberChars.Length
+                    ? Config.GlyphSphere.WaypointNumberChars[i]
+                    : Config.GlyphSphere.PathDestinationChar;
+                var color = (i == _plannedWaypointVertices.Count - 1)
+                    ? Config.GlyphSphere.PathDestinationActiveColor
+                    : Config.GlyphSphere.PathWaypointActiveColor;
+                SetVertexGlyph(wp, marker, color, true);
+            }
+        }
+
+        /// <summary>Restores the original glyphs over the committed path cells.</summary>
+        public void ClearPlannedPath()
+        {
+            // Restore intermediate path cells.
+            for (int i = 1; i < _plannedPathVertices.Count; i++)
+            {
+                int nodeId = _plannedPathVertices[i];
+                if (nodeId == _protagonistVertex) continue;
+                if (vertexData.TryGetValue(nodeId, out var d))
+                    RestoreVertexData(nodeId, d);
+            }
+            _plannedPathVertices.Clear();
+            _plannedWaypointVertices.Clear();
+        }
+
+        /// <summary>
+        /// Briefly overlays the "forbidden" glyph on a single cell to tell the player
+        /// the click was rejected. The cell is drawn as a world tile (not a UI element)
+        /// with the water category alpha so the world shader colors it purple, matching
+        /// the danger tone used elsewhere in the UI.
+        /// </summary>
+        public void FlashForbiddenCell(int vertexIndex)
+        {
+            if (vertexIndex < 0 || !vertexData.ContainsKey(vertexIndex)) return;
+            // alpha = 2.0 routes through the "water" branch of the world fragment
+            // shader, producing a dark-purple rendering of the glyph. RGB is kept
+            // bright so the shader's colorLuminance-modulated purple comes out vivid.
+            var purple = new Vector4(1.0f, 1.0f, 1.0f, 2.0f);
+            SetVertexGlyph(vertexIndex, Config.GlyphSphere.ForbiddenDestinationChar,
+                purple, 1.5f);
+        }
+
+        /// <summary>Restores a cell previously decorated by <see cref="FlashForbiddenCell"/>.</summary>
+        public void RestoreCellGlyph(int vertexIndex)
+        {
+            if (vertexIndex < 0) return;
+            RestoreCellAppearance(vertexIndex);
+        }
+
+        /// <summary>
+        /// Starts movement animation along an externally-resolved path. The path's
+        /// first node must be the protagonist's current vertex.
+        /// </summary>
+        public void BeginTravelAlongPath(Cathedral.Pathfinding.Path path)
+        {
+            if (path == null || path.Length < 2) return;
+            ClearPlannedPath();
+            _pendingMovementPath = path;
+        }
+
+        /// <summary>
+        /// Cancels an in-flight travel without moving the protagonist. Clears the path
+        /// visuals (active path glyphs + planned path) and stops the movement animation
+        /// while leaving the avatar at its current vertex.
+        /// </summary>
+        public void CancelTravel()
+        {
+            ClearTravelPath();
+            ClearPlannedPath();
+            ClearHoveredPath();
+            _currentPath         = null;
+            _pendingMovementPath = null;
+            _hoveredPath         = null;
+            _pendingHoverPath    = null;
+            _pathIndex           = 0;
+            _moveTimer           = 0.0f;
+            MovementPaused       = false;
         }
 
         private void UpdateHoveredPath(Cathedral.Pathfinding.Path? path)
@@ -662,17 +1080,53 @@ namespace Cathedral.Glyph.Microworld
         {
             if (_hoveredPath != null && _hoveredPath.Length > 1)
             {
-                // Restore original glyphs for path visualization
+                // Restore each cell either to its planned-path appearance (when the
+                // hover overlapped a committed waypoint/path) or to its original
+                // biome/location glyph.
                 for (int i = 1; i < _hoveredPath.Length; i++) // Skip start (protagonist)
                 {
                     int nodeId = _hoveredPath.GetNode(i);
-                    if (nodeId != _protagonistVertex && vertexData.TryGetValue(nodeId, out var data))
-                    {
-                        SetVertexGlyph(nodeId, data.GlyphChar, TileColor(data), data.Location?.Size ?? data.Biome.Size);
-                    }
+                    if (nodeId == _protagonistVertex) continue;
+                    RestoreCellAppearance(nodeId);
                 }
             }
             _hoveredPath = null;
+        }
+
+        /// <summary>
+        /// Restores a cell to whichever overlay should currently own it: protagonist
+        /// glyph → planned waypoint marker → planned intermediate path → underlying
+        /// biome/location glyph.
+        /// </summary>
+        private void RestoreCellAppearance(int nodeId)
+        {
+            if (nodeId == _protagonistVertex) return; // owned by movement system
+
+            // Planned waypoint marker takes priority.
+            int wpIndex = _plannedWaypointVertices.IndexOf(nodeId);
+            if (wpIndex >= 0)
+            {
+                char marker = wpIndex < Config.GlyphSphere.WaypointNumberChars.Length
+                    ? Config.GlyphSphere.WaypointNumberChars[wpIndex]
+                    : Config.GlyphSphere.PathDestinationChar;
+                var color = (wpIndex == _plannedWaypointVertices.Count - 1)
+                    ? Config.GlyphSphere.PathDestinationActiveColor
+                    : Config.GlyphSphere.PathWaypointActiveColor;
+                SetVertexGlyph(nodeId, marker, color, true);
+                return;
+            }
+
+            // Planned intermediate cell.
+            if (_plannedPathVertices.Count > 1 && _plannedPathVertices.Contains(nodeId))
+            {
+                SetVertexGlyph(nodeId, Config.GlyphSphere.PathWaypointChar,
+                    Config.GlyphSphere.PathWaypointActiveColor, true);
+                return;
+            }
+
+            // Otherwise restore original biome/location appearance (with darkening if out of range).
+            if (vertexData.TryGetValue(nodeId, out var data))
+                RestoreVertexData(nodeId, data);
         }
 
         private void StartMovement(Cathedral.Pathfinding.Path path)
@@ -710,20 +1164,18 @@ namespace Cathedral.Glyph.Microworld
         private void ClearTravelPath()
         {
             if (_currentPath == null || _currentPath.Length <= 1) return;
-            
-            // Restore original glyphs for the path
-            for (int i = 1; i < _currentPath.Length; i++) // Skip protagonist position
+
+            for (int i = 1; i < _currentPath.Length; i++)
             {
                 int nodeId = _currentPath.GetNode(i);
                 if (nodeId != _protagonistVertex && vertexData.TryGetValue(nodeId, out var data))
-                {
-                    SetVertexGlyph(nodeId, data.GlyphChar, TileColor(data), data.Location?.Size ?? data.Biome.Size);
-                }
+                    RestoreVertexData(nodeId, data);
             }
         }
 
         private void UpdateMovement(float deltaTime)
         {
+            if (MovementPaused) return;
             if (_currentPath == null || _pathIndex >= _currentPath.Length - 1) return;
 
             // Calculate threshold for this frame
@@ -747,13 +1199,13 @@ namespace Cathedral.Glyph.Microworld
                     // Restore the previous vertex to its original appearance (no longer on path ahead)
                     if (_pathIndex > 0 && vertexData.TryGetValue(_currentPath.GetNode(_pathIndex - 1), out var prevData))
                     {
-                        if (_currentPath.GetNode(_pathIndex - 1) != _protagonistVertex)
-                        {
-                            SetVertexGlyph(_currentPath.GetNode(_pathIndex - 1), prevData.GlyphChar, TileColor(prevData), prevData.Location?.Size ?? prevData.Biome.Size);
-                        }
+                        int prevNode = _currentPath.GetNode(_pathIndex - 1);
+                        if (prevNode != _protagonistVertex)
+                            RestoreVertexData(prevNode, prevData);
                     }
                     
                     PlaceProtagonist(nextVertex, centerCamera: true); // Focus camera on protagonist with each step
+                    ProtagonistSteppedToVertex?.Invoke(nextVertex);
                     
                     if (_pathIndex >= _currentPath.Length - 1)
                     {
@@ -806,11 +1258,47 @@ namespace Cathedral.Glyph.Microworld
         public int GetAvatarVertex() => _protagonistVertex;
 
         /// <summary>
+        /// Re-asserts the protagonist glyph on the current vertex.
+        /// Call when returning to WorldView to recover from any glyph overwrite that
+        /// may have occurred during path cleanup or travel-range recalculation.
+        /// </summary>
+        public void RefreshProtagonistGlyph()
+        {
+            if (_protagonistVertex >= 0)
+                SetVertexGlyph(_protagonistVertex,
+                    Config.GlyphSphere.ProtagonistChar,
+                    Config.GlyphSphere.ProtagonistColor,
+                    true);
+        }
+
+        /// <summary>
         /// Resets the protagonist to a new random starting position.
         /// Used when starting a new game from the main menu.
         /// </summary>
         public void ResetProtagonistPosition()
         {
+            ClearMovementState();
+
+            // Re-initialize protagonist at a new random position
+            InitializeProtagonist();
+            Console.WriteLine($"MicroworldInterface: Protagonist reset to vertex {_protagonistVertex}");
+        }
+
+        /// <summary>
+        /// Drops every path, hover and in-flight movement. Shared by the two ways a run's position is
+        /// decided — <see cref="ResetProtagonistPosition"/> rolls a new spawn,
+        /// <see cref="PlaceAvatarAt"/> restores a saved one — because leaving a half-walked path
+        /// behind would have the avatar resume the dead run's journey.
+        /// </summary>
+        public void ClearMovementState()
+        {
+            // Clear all path visuals before wiping the path references.
+            ClearHoveredPath();
+            _hoveredVertex = -1;
+            ClearPlannedPath();
+            ClearTravelPath();
+            _hoverPathOrigin = -1;
+
             // Cancel any in-progress movement
             _currentPath = null;
             _hoveredPath = null;
@@ -818,12 +1306,59 @@ namespace Cathedral.Glyph.Microworld
             _pendingMovementPath = null;
             _pathIndex = 0;
             _moveTimer = 0.0f;
-            _hoveredVertex = -1;
             _pendingHoverVertex = -1;
-            
-            // Re-initialize protagonist at a new random position
+            MovementPaused = false;
+        }
+
+        /// <summary>
+        /// Throws the world away and builds a new one from the current master seed — a new run in the
+        /// same process. Call after <c>GameRng.Reseed</c>.
+        ///
+        /// <para>The avatar is forgotten first: it stands on a vertex of the old world, and the tile
+        /// it was covering is about to be overwritten, so restoring that tile afterwards would stamp a
+        /// dead world's terrain onto the new one. <see cref="InitializeProtagonist"/> rolls a fresh
+        /// spawn at the end.</para>
+        ///
+        /// <para>The caller must still re-apply the travel range, which is derived from the
+        /// protagonist rather than the world — <c>EnterWorldViewInteractive</c> already does.</para>
+        /// </summary>
+        public void RegenerateWorld()
+        {
+            ClearMovementState();
+            _protagonistVertex        = -1;
+            _originalProtagonistData  = null;
+            _outOfRangeVertices.Clear();
+
+            GenerateWorld();
             InitializeProtagonist();
-            Console.WriteLine($"MicroworldInterface: Protagonist reset to vertex {_protagonistVertex}");
+            Console.WriteLine($"MicroworldInterface: world regenerated; protagonist at vertex {_protagonistVertex}");
+        }
+
+        /// <summary>
+        /// Puts the avatar on <paramref name="vertexIndex"/> — the load counterpart of
+        /// <see cref="ResetProtagonistPosition"/>, which re-rolls a random spawn and so cannot restore
+        /// a saved position.
+        ///
+        /// <para>Goes through the same private placement the travel loop uses, so the tile under the
+        /// avatar is captured and the previous one restored exactly as in play; a save that wrote the
+        /// glyph directly would leave an '@' stamped on the old vertex for the rest of the run.</para>
+        ///
+        /// <para>Returns false when the vertex is not part of this world, which for a save means it
+        /// was written against a different seed.</para>
+        /// </summary>
+        public bool PlaceAvatarAt(int vertexIndex)
+        {
+            if (!vertexData.ContainsKey(vertexIndex))
+            {
+                Console.Error.WriteLine(
+                    $"MicroworldInterface: cannot place the avatar at vertex {vertexIndex} — no such vertex.");
+                return false;
+            }
+
+            ClearMovementState();
+            PlaceProtagonist(vertexIndex, centerCamera: true);
+            Console.WriteLine($"MicroworldInterface: Avatar restored to vertex {_protagonistVertex}");
+            return true;
         }
 
         /// <summary>
@@ -887,6 +1422,16 @@ namespace Cathedral.Glyph.Microworld
             public float NoiseValue;
             public char GlyphChar;
             public System.Numerics.Vector3 Color;
+        }
+
+        /// <summary>Travel constraint that blocks every vertex in a fixed exclusion set.</summary>
+        private sealed class RangeExclusionConstraint : Cathedral.Pathfinding.ITravelConstraint
+        {
+            private readonly HashSet<int> _excluded;
+            public RangeExclusionConstraint(HashSet<int> excluded) => _excluded = excluded;
+            public string Name => "range";
+            public bool IsTraversable(int nodeId) => !_excluded.Contains(nodeId);
+            public float GetCostMultiplier(int fromNode, int toNode) => 1.0f;
         }
     }
 }

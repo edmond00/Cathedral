@@ -1,7 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using OpenTK.Mathematics;
 using Cathedral.Terminal;
+using Cathedral.Terminal.Utils;
+using Cathedral.Game.Narrative;
+using Cathedral.Game.Narrative.Preview;
 
 namespace Cathedral.Game;
 
@@ -11,7 +15,8 @@ namespace Cathedral.Game;
 ///   • Padding-zone border rendering  (Clear / ClearContent)
 ///   • Horizontal separator lines     (DrawHorizontalLine)
 ///   • Proportional scrollbar         (RenderScrollbar + hit-test helpers)
-///   • Animated loading spinner       (ShowLoadingIndicator  — public virtual)
+///   • Content grey-out               (DimContent)
+///   • Animated center progress bar   (RenderCenterProgressBar)
 ///   • Centered error display         (ShowError             — public virtual)
 ///   • Status bar                     (DrawStatusBar         — protected)
 ///   • Word-wrap helper               (WrapText              — protected)
@@ -29,14 +34,6 @@ public abstract class TerminalPanelUI
     /// <summary>Current animation frame for the loading spinner (shared with dice-roll animation).</summary>
     protected int      _loadingFrameIndex;
     protected DateTime _lastFrameUpdate = DateTime.Now;
-
-    // ── Dice-roll animation fields ────────────────────────────────────────────
-    private int[]  _rollingDiceFrames = Array.Empty<int>();
-    private bool[] _diceShowingFaces  = Array.Empty<bool>();
-    private int[]  _diceFrameCounters = Array.Empty<int>();
-    private int[]  _diceWaitTimes     = Array.Empty<int>();
-    private readonly Random _diceRandom = new();
-    private (int X, int Y, int Width) _diceRollButtonRegion;
 
     // ── Constructor ──────────────────────────────────────────────────────────
 
@@ -153,14 +150,23 @@ public abstract class TerminalPanelUI
 
         int visibleLines = _layout.NARRATIVE_HEIGHT;
         if (totalLines <= visibleLines && scrollOffset == 0) return (0, 0);
-        // Clamp totalLines so thumb ratio is valid when offset pushes content into view
-        int effectiveTotal = Math.Max(totalLines, scrollOffset + visibleLines);
 
-        float visibleRatio = (float)visibleLines / effectiveTotal;
-        int   thumbHeight  = Math.Max(2, (int)(trackHeight * visibleRatio));
-        int   maxScrollOff = _layout.CalculateMaxScrollOffset(effectiveTotal);
-        float scrollRatio  = maxScrollOff > 0 ? (float)scrollOffset / maxScrollOff : 0f;
-        int   thumbY       = trackStartY + (int)((trackHeight - thumbHeight) * scrollRatio);
+        // Both ratios are measured against `totalLines` — the same number the buffer's own
+        // MaxScrollOffset works from (NarrationScrollBuffer.TotalLines is _renderedLines.Count).
+        //
+        // This used to substitute max(totalLines, scrollOffset + visibleLines). Since
+        // CalculateMaxScrollOffset adds SCROLL_BOTTOM_MARGIN, the bottom offset already exceeds
+        // totalLines - visibleLines, so that substitution added the margin to the denominator a
+        // SECOND time and capped the position ratio at maxScroll / (maxScroll + margin). Scrolled
+        // fully to the bottom the thumb therefore stopped short of the track's end — a quarter of the
+        // way short over a typical buffer — and shrank as it went, since the height ratio was
+        // inflated by the same amount.
+        float visibleRatio = Math.Clamp((float)visibleLines / totalLines, 0f, 1f);
+        int   thumbHeight  = Math.Clamp((int)(trackHeight * visibleRatio), 2, trackHeight);
+
+        int   maxScrollOff = _layout.CalculateMaxScrollOffset(totalLines);
+        float scrollRatio  = maxScrollOff > 0 ? Math.Clamp((float)scrollOffset / maxScrollOff, 0f, 1f) : 0f;
+        int   thumbY       = trackStartY + (int)Math.Round((trackHeight - thumbHeight) * scrollRatio);
 
         Vector4 thumbColor = isThumbHovered
             ? Config.NarrativeUI.ScrollbarThumbHoverColor
@@ -197,34 +203,74 @@ public abstract class TerminalPanelUI
         return Math.Clamp((int)(maxScrollOffset * scrollRatio), 0, maxScrollOffset);
     }
 
-    // ── Loading indicator ─────────────────────────────────────────────────────
+    // ── Content grey-out + generating header ──────────────────────────────────
 
-    /// <summary>Animate a spinner + progress bar centred in the content area.</summary>
-    public virtual void ShowLoadingIndicator(string message = "Loading...")
+    /// <summary>Grey out every row from <paramref name="startY"/> to the bottom of the panel.</summary>
+    private void DimFrom(int startY)
+    {
+        _terminal.DimRect(
+            _layout.LEFT_PADDING,
+            startY,
+            _layout.TERMINAL_WIDTH - _layout.LEFT_PADDING - _layout.RIGHT_PADDING,
+            (_layout.TERMINAL_HEIGHT - _layout.BOTTOM_PADDING) - startY,
+            Config.NarrativeUI.DimmedContentColor,
+            Config.NarrativeUI.BackgroundColor);
+    }
+
+    /// <summary>
+    /// Grey out everything inside the panel border (header, content, status bar).
+    /// Idempotent — safe to apply every frame. Draw any overlay (dice box, progress bar,
+    /// status message) AFTER dimming so it stays at full brightness.
+    /// </summary>
+    public void DimContent() => DimFrom(_layout.TOP_PADDING);
+
+    /// <summary>
+    /// Draw a small centered animated progress bar (bracketed, same width as the old
+    /// centre-screen loading bar) in the middle of the content area, in a lighter shade
+    /// than <see cref="Config.NarrativeUI.DimmedContentColor"/> so it stands out against
+    /// the greyed-out content drawn underneath via <see cref="DimContent"/>.
+    /// </summary>
+    public void RenderCenterProgressBar()
+    {
+        const int barWidth = 30;
+        int frame = AdvanceSpinnerFrame();
+
+        const string chars = " ░░▒▒▓█▓▒▒░░";
+        var bar = new System.Text.StringBuilder("[");
+        for (int i = 0; i < barWidth - 2; i++)
+            bar.Append(chars[(frame + i) % chars.Length]);
+        bar.Append(']');
+
+        int barX = (_layout.TERMINAL_WIDTH - barWidth) / 2;
+        int barY = _layout.CONTENT_START_Y + _layout.NARRATIVE_HEIGHT / 2;
+        _terminal.Text(barX, barY, bar.ToString(), Config.Colors.LightGray75, Config.NarrativeUI.BackgroundColor);
+    }
+
+    /// <summary>
+    /// Draw the status bar with the current loading message, its trailing ellipsis animated
+    /// (0–3 dots cycling) instead of static — e.g. "The senses wander", "The senses wander.",
+    /// "The senses wander..". Any literal trailing dots/ellipsis on <paramref name="message"/>
+    /// are stripped first so the animation is the only source of "...". Used at the bottom of the
+    /// panel while the LLM is generating, alongside <see cref="RenderCenterProgressBar"/>.
+    /// </summary>
+    public void RenderWaitingStatus(string message)
+    {
+        int frame = AdvanceSpinnerFrame();
+        string spinner = Config.Symbols.LoadingSpinner[frame];
+        string baseMsg = message.TrimEnd('.', ' ', '…');
+        string dots    = new string('.', frame % 4);
+        DrawStatusBar($"{spinner} {baseMsg}{dots}", Config.Colors.LightGray75);
+    }
+
+    /// <summary>Advance the shared spinner animation at ~10 fps and return the current frame index.</summary>
+    protected int AdvanceSpinnerFrame()
     {
         if ((DateTime.Now - _lastFrameUpdate).TotalMilliseconds > 100)
         {
             _loadingFrameIndex = (_loadingFrameIndex + 1) % Config.Symbols.LoadingSpinner.Length;
             _lastFrameUpdate   = DateTime.Now;
         }
-
-        string spinner = Config.Symbols.LoadingSpinner[_loadingFrameIndex];
-
-        ClearContent();
-
-        string loadingText = $"{spinner}  {message}  {spinner}";
-        int    centerY     = _layout.CONTENT_START_Y + _layout.NARRATIVE_HEIGHT / 2;
-        int    centerX     = (_layout.TERMINAL_WIDTH - loadingText.Length) / 2;
-        _terminal.Text(centerX, centerY, loadingText, Config.Colors.DarkYellowGrey, Config.NarrativeUI.BackgroundColor);
-
-        string dots  = new string('.', _loadingFrameIndex % 4);
-        string hint  = $"Please wait {dots}";
-        _terminal.Text((_layout.TERMINAL_WIDTH - hint.Length) / 2, centerY + 2, hint,
-            Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
-
-        string bar = GenerateProgressBar(30, _loadingFrameIndex);
-        _terminal.Text((_layout.TERMINAL_WIDTH - 30) / 2, centerY - 2, bar,
-            Config.NarrativeUI.LoadingColor, Config.NarrativeUI.BackgroundColor);
+        return _loadingFrameIndex;
     }
 
     // ── Error display ─────────────────────────────────────────────────────────
@@ -255,12 +301,16 @@ public abstract class TerminalPanelUI
 
     /// <summary>Draw the horizontal separator and write a message to the status bar row.</summary>
     protected void DrawStatusBar(string message)
+        => DrawStatusBar(message, Config.NarrativeUI.StatusBarColor);
+
+    /// <summary>Draw the horizontal separator and write a message to the status bar row in a given color.</summary>
+    protected void DrawStatusBar(string message, Vector4 textColor)
     {
         DrawHorizontalLine(_layout.SEPARATOR_Y);
         int maxW = _layout.CONTENT_WIDTH - 2;
         if (message.Length > maxW) message = message[..(maxW - 3)] + "...";
         _terminal.Text(_layout.CONTENT_START_X, _layout.STATUS_BAR_Y,
-            message, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
+            message, textColor, Config.NarrativeUI.BackgroundColor);
     }
 
     // ── Text helpers ──────────────────────────────────────────────────────────
@@ -297,193 +347,156 @@ public abstract class TerminalPanelUI
         return lines;
     }
 
-    private string GenerateProgressBar(int width, int frame)
-    {
-        var    bar   = new System.Text.StringBuilder("[");
-        string chars = " ░░▒▒▓█▓▒▒░░";
-        for (int i = 0; i < width - 2; i++) bar.Append(chars[(frame + i) % chars.Length]);
-        bar.Append(']');
-        return bar.ToString();
-    }
-
-    // ── Dice-roll indicator (shared with NarrativeUI and DialogueUI) ──────────
+    // ── Footer exit button ────────────────────────────────────────────────────
 
     /// <summary>
-    /// Renders the full N-dice roll screen. Animates while rolling; shows final values
-    /// with a [ Continue ] button once complete. Returns true when the continue button
-    /// is visible so the caller knows clicks should be tested with
-    /// <see cref="IsMouseOverDiceRollButton"/>.
+    /// Renders the single footer button (e.g. "CONTINUE", "LEAVE", "RUNAWAY", "INTERRUPT")
+    /// at the bottom-left, above the separator, and returns its click region.
     /// </summary>
-    public bool ShowDiceRollIndicator(
-        int numberOfDice,
-        int difficulty,
-        bool isRolling,
-        int[]? finalDiceValues = null,
-        bool isContinueButtonHovered = false)
+    public (int X, int Y, int Width) RenderExitButton(string label, bool isHovered = false)
     {
-        // Advance animation every 80 ms
-        if ((DateTime.Now - _lastFrameUpdate).TotalMilliseconds > 80)
-        {
-            _loadingFrameIndex = (_loadingFrameIndex + 1) % Config.Symbols.DiceRollingFrames.Length;
-            _lastFrameUpdate   = DateTime.Now;
+        string buttonText = $"[ {label} ]";
+        int buttonX = _layout.CONTENT_START_X;   // bottom-left
+        int buttonY = _layout.SEPARATOR_Y - 2;
 
-            if (isRolling)
-            {
-                if (_rollingDiceFrames.Length != numberOfDice)
-                {
-                    _rollingDiceFrames = new int[numberOfDice];
-                    _diceShowingFaces  = new bool[numberOfDice];
-                    _diceFrameCounters = new int[numberOfDice];
-                    _diceWaitTimes     = new int[numberOfDice];
-                    for (int i = 0; i < numberOfDice; i++)
-                    {
-                        _diceShowingFaces[i]  = _diceRandom.Next(2) == 0;
-                        _diceFrameCounters[i] = 0;
-                        _diceWaitTimes[i]     = _diceRandom.Next(1, 4);
-                        _rollingDiceFrames[i] = _diceShowingFaces[i]
-                            ? _diceRandom.Next(Config.Symbols.DiceFaces.Length)
-                            : _diceRandom.Next(Config.Symbols.DiceSideViews.Length);
-                    }
-                }
+        Vector4 buttonColor           = isHovered ? Config.NarrativeUI.ContinueButtonHoverColor           : Config.NarrativeUI.ContinueButtonColor;
+        Vector4 buttonBackgroundColor = isHovered ? Config.NarrativeUI.ContinueButtonHoverBackgroundColor : Config.NarrativeUI.ContinueButtonBackgroundColor;
 
-                for (int i = 0; i < _rollingDiceFrames.Length; i++)
-                {
-                    _diceFrameCounters[i]++;
-                    if (_diceFrameCounters[i] >= _diceWaitTimes[i])
-                    {
-                        _diceFrameCounters[i] = 0;
-                        _diceWaitTimes[i]     = _diceRandom.Next(1, 6);
-                        _diceShowingFaces[i]  = !_diceShowingFaces[i];
-                        _rollingDiceFrames[i] = _diceShowingFaces[i]
-                            ? _diceRandom.Next(Config.Symbols.DiceFaces.Length)
-                            : _diceRandom.Next(Config.Symbols.DiceSideViews.Length);
-                    }
-                }
-            }
-        }
+        _terminal.Text(buttonX, buttonY, buttonText, buttonColor, buttonBackgroundColor);
 
-        // Initialise frames if not yet sized (first call before first tick)
-        if (_rollingDiceFrames.Length != numberOfDice)
-        {
-            _rollingDiceFrames = new int[numberOfDice];
-            _diceShowingFaces  = new bool[numberOfDice];
-            _diceFrameCounters = new int[numberOfDice];
-            _diceWaitTimes     = new int[numberOfDice];
-            for (int i = 0; i < numberOfDice; i++)
-            {
-                _diceShowingFaces[i]  = _diceRandom.Next(2) == 0;
-                _diceFrameCounters[i] = 0;
-                _diceWaitTimes[i]     = _diceRandom.Next(1, 6);
-                _rollingDiceFrames[i] = _diceShowingFaces[i]
-                    ? _diceRandom.Next(Config.Symbols.DiceFaces.Length)
-                    : _diceRandom.Next(Config.Symbols.DiceSideViews.Length);
-            }
-        }
-
-        // Clear content area
-        ClearContent();
-
-        int centerY = _layout.CONTENT_START_Y + _layout.NARRATIVE_HEIGHT / 2;
-
-        // Results (used in multiple places below)
-        int  numberOfSixes = 0;
-        bool isSuccess     = false;
-        if (!isRolling && finalDiceValues != null)
-        {
-            numberOfSixes = finalDiceValues.Count(v => v == 6);
-            isSuccess     = numberOfSixes >= difficulty;
-        }
-
-        // Title
-        string  title      = isRolling ? "Rolling Dice..." : (isSuccess ? "SUCCESS!" : "FAILURE!");
-        Vector4 titleColor = isRolling
-            ? Config.NarrativeUI.LoadingColor
-            : (isSuccess ? Config.NarrativeUI.SuccessColor : Config.NarrativeUI.FailureColor);
-        _terminal.Text((_layout.TERMINAL_WIDTH - title.Length) / 2, centerY - 10,
-            title, titleColor, Config.NarrativeUI.BackgroundColor);
-
-        // Difficulty indicator
-        int  diffClamp   = Math.Clamp(difficulty, 1, 10);
-        char diffGlyph   = Config.Symbols.DifficultyGlyphs[diffClamp - 1];
-        var  diffColor   = Config.Symbols.DifficultyLevelColor(diffClamp);
-        string diffLabel  = $"Difficulty: {diffGlyph} ({diffClamp} {(diffClamp == 1 ? "six" : "sixes")} needed)";
-        int    diffLabelX = (_layout.TERMINAL_WIDTH - diffLabel.Length) / 2;
-        int    diffLabelY = centerY - 8;
-        _terminal.Text(diffLabelX,      diffLabelY, "Difficulty: ",             Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
-        _terminal.Text(diffLabelX + 12, diffLabelY, diffGlyph.ToString(),       diffColor,                         Config.NarrativeUI.BackgroundColor);
-        string diffSuffix = $" ({diffClamp} {(diffClamp == 1 ? "six" : "sixes")} needed)";
-        _terminal.Text(diffLabelX + 13, diffLabelY, diffSuffix,                 Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
-
-        // Dice grid
-        int dicePerRow    = Math.Min(numberOfDice, 20);
-        int startX        = (_layout.TERMINAL_WIDTH - dicePerRow * 2) / 2;
-        int startY        = centerY - 5;
-
-        for (int i = 0; i < numberOfDice; i++)
-        {
-            int row   = (i / dicePerRow) * 2;
-            int col   = i % dicePerRow;
-            int diceX = startX + col * 2 + (row % 2);
-            int diceY = startY + row;
-
-            char    diceChar;
-            Vector4 diceColor;
-
-            if (isRolling)
-            {
-                diceChar  = _diceShowingFaces[i]
-                    ? Config.Symbols.DiceFaces[_rollingDiceFrames[i]]
-                    : Config.Symbols.DiceSideViews[_rollingDiceFrames[i]];
-                diceColor = Config.NarrativeUI.LoadingColor;
-            }
-            else if (finalDiceValues != null && i < finalDiceValues.Length)
-            {
-                int value = Math.Clamp(finalDiceValues[i], 1, 6);
-                diceChar  = Config.Symbols.DiceFaces[value - 1];
-                diceColor = value == 6 ? Config.NarrativeUI.DiceGoldColor : Config.NarrativeUI.NarrativeColor;
-            }
-            else
-            {
-                diceChar  = Config.Symbols.DiceFaces[0];
-                diceColor = Config.NarrativeUI.NarrativeColor;
-            }
-
-            _terminal.SetCell(diceX, diceY, diceChar, diceColor, Config.NarrativeUI.BackgroundColor);
-        }
-
-        int rows   = ((numberOfDice + dicePerRow - 1) / dicePerRow) * 2;
-        int afterY = startY + rows + 2;
-
-        if (!isRolling && finalDiceValues != null)
-        {
-            // Summary
-            string  summary  = $"Rolled {numberOfSixes} {(numberOfSixes == 1 ? "six" : "sixes")} out of {numberOfDice} dice";
-            Vector4 summCol  = isSuccess ? Config.NarrativeUI.SuccessColor : Config.NarrativeUI.FailureColor;
-            _terminal.Text((_layout.TERMINAL_WIDTH - summary.Length) / 2, afterY, summary, summCol, Config.NarrativeUI.BackgroundColor);
-
-            // Continue button
-            string  btn    = "[ Continue ]";
-            int     btnX   = (_layout.TERMINAL_WIDTH - btn.Length) / 2;
-            int     btnY   = afterY + 3;
-            Vector4 btnFg  = isContinueButtonHovered ? Config.NarrativeUI.ContinueButtonHoverColor      : Config.NarrativeUI.ContinueButtonColor;
-            Vector4 btnBg  = isContinueButtonHovered ? Config.NarrativeUI.ContinueButtonHoverBackgroundColor : Config.NarrativeUI.ContinueButtonBackgroundColor;
-            _terminal.Text(btnX, btnY, btn, btnFg, btnBg);
-            _diceRollButtonRegion = (btnX, btnY, btn.Length);
-            return true;
-        }
-        else
-        {
-            string spinner = Config.Symbols.LoadingSpinner[_loadingFrameIndex % Config.Symbols.LoadingSpinner.Length];
-            string wait    = $"{spinner}  Please wait...  {spinner}";
-            _terminal.Text((_layout.TERMINAL_WIDTH - wait.Length) / 2, afterY, wait,
-                Config.Colors.DarkYellowGrey, Config.NarrativeUI.BackgroundColor);
-            return false;
-        }
+        return (buttonX, buttonY, buttonText.Length);
     }
 
-    /// <summary>Returns true if the mouse is over the dice-roll continue button.</summary>
-    public bool IsMouseOverDiceRollButton(int mouseX, int mouseY)
-        => mouseY == _diceRollButtonRegion.Y
-        && mouseX >= _diceRollButtonRegion.X
-        && mouseX <  _diceRollButtonRegion.X + _diceRollButtonRegion.Width;
+    // ── Outcome report chips (shared with NarrativeUI and DialogueTreeUI) ─────
+
+    /// <summary>
+    /// Draw one outcome-report chip: the pre-centred text of <paramref name="line"/> on a band
+    /// coloured by severity (positive / negative / neutral). Shared so a dialogue's outcome is
+    /// indistinguishable from an action's outcome — they are the same kind of event to the player.
+    /// <paramref name="flatColor"/> replaces the band with plain trimmed text in that colour, which
+    /// is how both panels render a chip that has greyed into history or been dimmed behind an overlay.
+    /// </summary>
+    protected void RenderReportChip(RenderedLine line, int y, Vector4? flatColor = null)
+    {
+        if (line.Report == null) return;
+
+        if (flatColor is { } flat)
+        {
+            _terminal.Text(_layout.CONTENT_START_X, y, line.Text.TrimEnd(), flat,
+                Config.NarrativeUI.BackgroundColor);
+            return;
+        }
+
+        var bg = line.Report.Severity switch
+        {
+            OutcomeSeverity.Negative => Config.NarrativeUI.OutcomeReportNegativeBackground,
+            OutcomeSeverity.Positive => Config.NarrativeUI.OutcomeReportPositiveBackground,
+            _                              => Config.NarrativeUI.OutcomeReportNeutralBackground,
+        };
+        _terminal.Text(_layout.CONTENT_START_X, y, line.Text,
+            Config.NarrativeUI.OutcomeReportTextColor, bg);
+    }
+
+    // ── Dice-roll overlay (shared with NarrativeUI and DialogueUI) ────────────
+
+    /// <summary>
+    /// Render a <see cref="DiceRollComponent"/> as an overlay box centered in this panel's
+    /// content area. The underlying content is greyed out first (matching fight mode), then
+    /// animation, dice, humor buttons, and the [ Continue ] button are delegated to the
+    /// component. Returns true once the continue button is visible.
+    /// Hit-test clicks against <see cref="DiceRollComponent.ContinueButtonRegion"/> and route
+    /// hover/click to <see cref="DiceRollComponent.HandleHumorHover"/> /
+    /// <see cref="DiceRollComponent.HandleHumorClick"/>.
+    /// </summary>
+    public bool RenderDiceComponent(DiceRollComponent dice, bool continueHovered)
+    {
+        DimContent();
+        int centerX = _layout.TERMINAL_WIDTH / 2;
+        int centerY = _layout.CONTENT_START_Y + _layout.NARRATIVE_HEIGHT / 2;
+        return dice.Render(_terminal, centerX, centerY, continueHovered);
+    }
+
+    // ── LLM generation preview overlay (replaces the centre progress bar) ─────────
+
+    /// <summary>
+    /// Draws the "text being generated" preview box: a thin-grey-bordered, black-filled overlay ~half
+    /// the menu size, centred over the greyed-out content. Layout top→bottom: the modus-mentis title
+    /// centred on the top border; a blank row; the animated progress bar; a blank row; the streamed
+    /// preview text (tail-clipped); then either a <c>.</c>/<c>..</c>/<c>...</c> dot animation (still
+    /// generating) or a <c>[ CONTINUE ]</c> button (done). Returns the CONTINUE hit-region for the
+    /// controller to store and click-test — <c>Present=false</c> while generation is still in flight.
+    /// </summary>
+    public (bool Present, int X, int Y, int Width) RenderPreviewBox(PreviewSnapshot state, bool continueHovered)
+    {
+        if (!state.Active) return (false, 0, 0, 0);
+
+        DimContent();
+
+        Vector4 border = Config.NarrativeUI.SeparatorColor;
+        Vector4 black  = Config.NarrativeUI.BackgroundColor;
+
+        int bgW = Math.Max(28, _layout.CONTENT_WIDTH  / 2);
+        int bgH = Math.Max(11, _layout.NARRATIVE_HEIGHT / 2);
+        int centerX = _layout.TERMINAL_WIDTH / 2;
+        int centerY = _layout.CONTENT_START_Y + _layout.NARRATIVE_HEIGHT / 2;
+        int bgX = centerX - bgW / 2;
+        int bgY = centerY - bgH / 2;
+
+        _terminal.FillRect(bgX, bgY, bgW, bgH, ' ', Config.Colors.White, black);
+        _terminal.DrawBox(bgX, bgY, bgW, bgH, BoxStyle.Single, border, black);
+
+        // Title centred on the top border line.
+        if (!string.IsNullOrEmpty(state.Title))
+            _terminal.Text(bgX + bgW / 2, bgY, $" {state.Title} ",
+                Config.NarrativeUI.ModusMentisHeaderColor, black, TextAlignment.Center);
+
+        int innerX = bgX + 2;
+        int innerW = bgW - 4;
+        int frame  = AdvanceSpinnerFrame();
+
+        // Progress bar on the second interior row (border + one blank row above it).
+        const string barChars = " ░░▒▒▓█▓▒▒░░";
+        var bar = new StringBuilder();
+        for (int i = 0; i < innerW; i++) bar.Append(barChars[(frame + i) % barChars.Length]);
+        _terminal.Text(innerX, bgY + 2, bar.ToString(), Config.Colors.LightGray75, black);
+
+        // Preview text: blank row (bgY+3), then wrapped text from bgY+4 down to a guaranteed blank row
+        // above the button.
+        int textStartY = bgY + 4;
+        int buttonY    = bgY + bgH - 3; // one row up from the bottom border
+        int textEndY   = buttonY - 2; // leave (at least) one blank row above the button
+        int maxRows    = Math.Max(0, textEndY - textStartY + 1);
+
+        // Wrap each segment to the box width, tagging every wrapped line with its kind so free reasoning
+        // renders dimmer. Free reasoning (the persona's unconstrained inner thought) is parenthesized by
+        // the snapshot already.
+        var lines = new List<(string Text, bool IsFree)>();
+        foreach (var seg in state.Segments)
+            foreach (var wl in WrapText(seg.Text, innerW))
+                lines.Add((wl, seg.IsFree));
+
+        // Auto-scroll: drop the oldest lines so the most recently streamed text stays visible; the
+        // clip to maxRows keeps the blank row above the button intact even as the text grows.
+        int first = Math.Max(0, lines.Count - maxRows);
+        for (int i = first; i < lines.Count; i++)
+        {
+            Vector4 col = lines[i].IsFree ? Config.Colors.DarkGray35 : Config.NarrativeUI.NarrativeColor;
+            _terminal.Text(innerX, textStartY + (i - first), lines[i].Text, col, black);
+        }
+
+        if (state.Complete)
+        {
+            string btn = "[ CONTINUE ]";
+            int btnX = centerX - btn.Length / 2;
+            Vector4 fg = continueHovered ? Config.NarrativeUI.ContinueButtonHoverColor           : Config.NarrativeUI.ContinueButtonColor;
+            Vector4 bg = continueHovered ? Config.NarrativeUI.ContinueButtonHoverBackgroundColor : Config.NarrativeUI.ContinueButtonBackgroundColor;
+            _terminal.Text(btnX, buttonY, btn, fg, bg);
+            return (true, btnX, buttonY, btn.Length);
+        }
+
+        // Still generating → dot animation where the button will be.
+        string dots = new string('.', 1 + (frame % 3));
+        _terminal.Text(centerX - 1, buttonY, dots.PadRight(3), Config.Colors.LightGray75, black);
+        return (false, 0, 0, 0);
+    }
 }

@@ -84,17 +84,6 @@ public static class NarrativeValidator
             Console.WriteLine($"  Is Entry Node: {node.IsEntryNode}");
             Console.WriteLine($"  Outcomes: {node.GetAllDirectConcreteOutcomes().Count}");
 
-            var items = node.GetAvailableItems();
-            if (items.Any())
-            {
-                Console.WriteLine($"  Items ({items.Count}):");
-                foreach (var item in items)
-                    Console.WriteLine($"    - {item.DisplayName} ({item.ItemId})");
-            }
-            else
-            {
-                Console.WriteLine($"  No items");
-            }
 
             Console.WriteLine($"  Note: Transitions populated at runtime by factories");
             Console.WriteLine();

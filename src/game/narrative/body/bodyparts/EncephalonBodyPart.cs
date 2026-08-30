@@ -9,7 +9,11 @@ public class EncephalonBodyPart : BodyPart
 {
     public override string Id => "encephalon";
     public override string DisplayName => "Encephalon";
-    
+    public override string Description =>
+        "The cephalic mass, lodged within the cranium, comprising the organs of the intellective and " +
+        "sensitive faculties. Taken whole, it determines the capacity of the attentive faculty, the sum " +
+        "of impressions the mind may hold under consideration at once.";
+
     private readonly List<Organ> _organs;
     public override List<Organ> Organs => _organs;
     

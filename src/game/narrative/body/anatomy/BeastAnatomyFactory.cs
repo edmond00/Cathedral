@@ -14,6 +14,13 @@ public sealed class BeastAnatomyFactory : IAnatomyFactory
 
     public AnatomyType AnatomyType => AnatomyType.Beast;
 
+    /// <summary>
+    /// None of the three. A beast has voice but not language, paws but not hands, and cunning but not
+    /// letters — so every dialogue verb, every tool-and-lock verb and every lettered modus mentis is
+    /// out of its reach, while tracking, scenting, fighting and going places are not.
+    /// </summary>
+    public AnatomyCapability Capabilities => AnatomyCapability.None;
+
     public List<BodyPart> CreateBodyParts() => new()
     {
         new EncephalonBodyPart(),
@@ -26,30 +33,7 @@ public sealed class BeastAnatomyFactory : IAnatomyFactory
     /// Returns the same 20 shared derived stats.
     /// Stats tied to absent organs (genitories) will report <c>IsUsable = false</c>.
     /// </summary>
-    public List<DerivedStat> CreateDerivedStats() => new()
-    {
-        // Memory capacity stats
-        new WorkingMemoryCapacityStat(),
-        new ProceduralMemoryCapacityStat(),
-        new SemanticMemoryCapacityStat(),
-        new SensoryMemoryCapacityStat(),
-        new ResidualMemoryCapacityStat(),
-        // Secretion percentage stats
-        new HeparBloodSecretionStat(),        new HeparPhlegmSecretionStat(),
-        new HeparYellowBileSecretionStat(),   new HeparBlackBileSecretionStat(),
-        new PaunchBloodSecretionStat(),       new PaunchPhlegmSecretionStat(),
-        new PaunchYellowBileSecretionStat(),  new PaunchBlackBileSecretionStat(),
-        new PulmonesBloodSecretionStat(),     new PulmonesPhlegmSecretionStat(),
-        new PulmonesYellowBileSecretionStat(),new PulmonesBlackBileSecretionStat(),
-        new SpleenBloodSecretionStat(),       new SpleenPhlegmSecretionStat(),
-        new SpleenYellowBileSecretionStat(),  new SpleenBlackBileSecretionStat(),
-        // Combat stats
-        new CineticPointsStat(),
-        new NaturalDefenseStat(),
-        new MoveSpeedStat(),
-        new RunawayChanceStat(),
-        new InitiativeStat(),
-    };
+    public List<DerivedStat> CreateDerivedStats() => DerivedStat.DiscoverAll();
 
     public Dictionary<char, Wound> GetWoundClassMap()
     {
@@ -64,6 +48,7 @@ public sealed class BeastAnatomyFactory : IAnatomyFactory
         Add(new BeastBrokenBackboneWound());           Add(new BeastTailAmputeeWound());
         Add(new BeastBrokenRibsWound());
         Add(new BeastEviscerationWound());             Add(new BeastPiercedPaunchWound());
+        Add(new BeastPiercedHeartWound());
         Add(new BeastTornedOffFangWound());
         Add(new BeastBrokenLeftForelegWound());        Add(new BeastBrokenRightForelegWound());
         Add(new BeastCrippledLeftForelegWound());      Add(new BeastCrippledRightForelegWound());

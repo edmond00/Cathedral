@@ -1,0 +1,22 @@
+using Cathedral.Game.Narrative;
+
+namespace Cathedral.Fight.Skills;
+
+/// <summary>Scratch — quick claw strike.</summary>
+public sealed class ScratchSkill : FightingSkill
+{
+    public override string SkillId                => "scratch";
+    public override string DisplayName            => "Scratch";
+    public override string Description            => "Quick claw strike.";
+    public override string RequiredModusMentisId  => "predator";
+    public override string[] SecondaryModusMentisIds => new[] { "ferocity", "brawling" };
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Organ("claws") };
+    public override int CineticPointsCost         => 1;
+    public override int BaseDice                  => 0;
+    public override int MediumLevelMultiplicator  => 1;
+    public override int SkillLevelMultiplicator   => 1;
+    public override FightingSkillEffect EffectType => FightingSkillEffect.Attack;
+    public override DamageType DamageTypes         => DamageType.Cutting;
+    public override WoundTargetMode WoundTargetMode => WoundTargetMode.FixedBodyPart;
+    public override string? TargetBodyPartId       => "trunk,lower_limbs";
+}

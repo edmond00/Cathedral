@@ -33,16 +33,16 @@ namespace Cathedral.Fight
             ),
             [TerrainType.TreacherousTerrain] = new TerrainAppearance(
                 new[] { '~', '≈', '∼' },
-                new Vector4(0.50f, 0.46f, 0.20f, 1.0f),      // Muted dull yellow-brown
-                new Vector4(0.13f, 0.11f, 0.02f, 1.0f)       // Very dark yellow bg
+                new Vector4(0.60f, 0.34f, 0.12f, 1.0f),      // Muted orange
+                new Vector4(0.16f, 0.07f, 0.01f, 1.0f)       // Very dark orange bg
             ),
             [TerrainType.DangerousTerrain] = new TerrainAppearance(
                 new[] { '!', '⁘', '*', '%' },
-                new Vector4(0.55f, 0.33f, 0.16f, 1.0f),      // Muted dark rust
-                new Vector4(0.15f, 0.06f, 0.01f, 1.0f)       // Very dark rust bg
+                new Vector4(0.50f, 0.22f, 0.60f, 1.0f),      // Muted purple
+                new Vector4(0.14f, 0.04f, 0.18f, 1.0f)       // Very dark purple bg
             ),
             [TerrainType.FreeSpace] = new TerrainAppearance(
-                new[] { '.', '-', ' ' },                      // Mostly spaces for readability
+                new[] { '.', '-' },                          // Printable only — no spaces, so darken stays visible
                 new Vector4(0.22f, 0.20f, 0.17f, 1.0f),      // Near-black warm gray
                 new Vector4(0.0f, 0.0f, 0.0f, 1.0f)          // Black bg
             ),

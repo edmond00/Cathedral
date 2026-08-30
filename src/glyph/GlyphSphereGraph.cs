@@ -56,11 +56,13 @@ namespace Cathedral.Glyph
             var debugInfo = GetDebugInfo();
             Console.WriteLine($"GlyphSphereGraph built: {debugInfo.nodes} nodes, {debugInfo.edges} edges, {debugInfo.avgConnections:F1} avg connections/node");
             
-            // Log some connection examples for verification
+            // A sample of five vertices' adjacency, kept for verifying the graph build but written
+            // to the log rather than the console: the summary line above is what a reader needs,
+            // and five arrays of neighbour indices is not.
             for (int i = 0; i < Math.Min(5, NodeCount); i++)
             {
                 var connections = _adjacencyList[i];
-                Console.WriteLine($"  Vertex {i}: connected to {connections.Count} vertices: [{string.Join(", ", connections.Take(6))}{(connections.Count > 6 ? "..." : "")}]");
+                Cathedral.GameLog.WriteToFileOnly($"  Vertex {i}: connected to {connections.Count} vertices: [{string.Join(", ", connections.Take(6))}{(connections.Count > 6 ? "..." : "")}]");
             }
         }
 
@@ -86,19 +88,44 @@ namespace Cathedral.Glyph
             var pos2 = new Vector3(otkPos2.X, otkPos2.Y, otkPos2.Z);
             float baseDistance = Vector3.Distance(pos1, pos2);
             
-            // Add noise to make paths more natural
-            // Average the noise of both vertices and apply strength multiplier
+            // Terrain-correlated noise: regions of "hard ground" inherit the underlying
+            // Perlin field, so neighbouring edges get similar costs. On its own this
+            // does not bend the path much (the smoothness keeps A* on the great circle).
             float noise1 = _core.GetVertexNoise(v1);
             float noise2 = _core.GetVertexNoise(v2);
-            float avgNoise = (noise1 + noise2) * 0.5f; // 0-1 range
-            
-            // Apply noise as a multiplier: 1.0 + (avgNoise * strength)
-            // This adds 0-15% variation by default (configurable)
-            float noiseFactor = 1.0f + (avgNoise * Config.GlyphSphere.PathfindingNoiseStrength);
+            float avgNoise = (noise1 + noise2) * 0.5f; // 0..1
+
+            // Per-edge deterministic jitter: each edge gets independent noise hashed
+            // from its (sorted) vertex ids and the global seed. This is what actually
+            // makes A* zig-zag a little around the geodesic — cheap "wiggly path" feel.
+            float edgeJitter = ComputeEdgeJitter(edge.Item1, edge.Item2); // 0..1
+
+            float noiseFactor = 1.0f
+                + avgNoise   * Config.GlyphSphere.PathfindingNoiseStrength
+                + edgeJitter * Config.GlyphSphere.PathfindingEdgeJitterStrength;
             float noisedDistance = baseDistance * noiseFactor;
             
             // Store cost for both directions (undirected graph)
             _edgeCosts[edge] = noisedDistance;
+        }
+
+        /// <summary>
+        /// Deterministic [0,1) hash of an undirected edge id. Same edge always returns
+        /// the same value so paths are reproducible, but adjacent edges get
+        /// uncorrelated values so the optimal path can deviate from a straight line.
+        /// </summary>
+        private static float ComputeEdgeJitter(int lo, int hi)
+        {
+            unchecked
+            {
+                uint h = (uint)(lo * 73856093) ^ (uint)(hi * 19349663)
+                       ^ (uint)GameRng.DerivedSeed("pathfinding-jitter");
+                // xorshift-style avalanche so neighbouring (lo, hi) pairs decorrelate.
+                h ^= h >> 13;
+                h *= 0x5bd1e995u;
+                h ^= h >> 15;
+                return (float)(h / (double)uint.MaxValue);
+            }
         }
 
         /// <summary>

@@ -1,0 +1,65 @@
+# Tools — an implement offered to an act that admits none
+#
+# EXAMINE is ToolUsage.Excluded: turning a sense on something produces no state change at all, so
+# there is nothing for an implement to make go better. Three things follow, and none is visible from
+# the other two:
+#
+#   * the "Use Tool" row is NOT greyed. Greying is decided by what is carried and by nothing else —
+#     a knife is carried, so the row is live. That is deliberate: the player is trusted to choose,
+#     and the noetic cost below is what pays for that trust;
+#   * the attempt FAILS, and without a critic call. Under --playground the item critic picks its
+#     verdict at random, so a script that reached it would pass or fail by seed; this one is
+#     deterministic precisely because ToolCombinationRules.Resolve settles it before any request;
+#   * it costs a NOETIC POINT, which is the half with no other witness. The refusal narration reads
+#     much like any other failure, so only the counter shows it was charged for — and `state` emits
+#     it but `expect` scans the rendered terminal, hence `inspect noetic`.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-item knife --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon --observe-only "Test Rack"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal examine
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+
+# The budget after the deliberation and before the combination. The assertion at the foot is
+# against this number less one.
+inspect noetic
+
+click action 0
+
+# Row 1 is "Use Tool" and it must be LIVE. Were a verb category ever to start greying this row, the
+# `regions` line below would report "(disabled)" and `choose 1` would error — which is the
+# regression this script exists to catch.
+regions
+choose 1
+regions
+choose 0
+advance 12 180
+
+# No reformulated action was offered: the combination was refused, so there is no action 1 and the
+# original button stands alone.
+regions
+inspect noetic
+
+# The point was taken. A starting protagonist's encephalon gives a pool of 2, of which the
+# deliberation above spent one and this refusal spent the other.
+expect-state noetic points=0/2
+
+# And the band is Low, not None — so the refusal above was the VERB's doing and not the body's.
+# Without this the script would still pass if hands ever fell to nought, having proved the wrong
+# rule: at None every combination fails, excluded or not.
+expect-state noetic tool_proficiency=Low
+
+quit

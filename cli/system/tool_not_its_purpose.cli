@@ -1,0 +1,59 @@
+# Tools — a single-purpose implement held to work it was not made for
+#
+# The third of the three tool scripts, and the one that asserts the edge the other two do not touch:
+# Item.MadeForVerbIds cuts BOTH ways. tool_special_use.cli proves reading lenses are accepted for
+# EXAMINE without a critic call; this proves the same declaration refuses them for everything else,
+# equally without a critic call.
+#
+# That is not a nicety. The declaration is what lets EXAMINE be excluded as a category and still
+# admit the one implement that bears on it — and an item that could be waved at any act while
+# keeping that privilege would be strictly better than a general tool, which is the opposite of
+# what a specialised thing should be.
+#
+# GATHER is used as the other work: an ordinary optional verb that a general implement would be
+# judged for on its merits. The lenses never reach that judgement.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-item reading_lenses --location-type test --location-id 0 --npc-static --start-area "Test Field" --period noon --observe-only "Test Berry Bush"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal gather
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+
+inspect noetic
+
+click action 0
+
+# Still offered. The row is greyed by what is carried and by nothing else, so an implement that
+# cannot possibly serve is still offered — and the point below is what that costs.
+regions
+choose 1
+regions
+choose 0
+advance 12 180
+
+# Refused: no reformulated act, so there is no action 1 and the original button stands alone.
+regions
+inspect noetic
+
+# The point was taken, exactly as for an act that admits no implement at all. The lenses were
+# offered, refused without a critic call, and charged for.
+expect-state noetic points=0/2
+
+# Low, not None — the refusal was the LENSES' doing. At None every combination fails and this
+# script would pass while proving nothing about MadeForVerbIds.
+expect-state noetic tool_proficiency=Low
+
+quit

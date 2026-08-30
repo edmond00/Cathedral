@@ -356,27 +356,57 @@ public sealed class BrokenFootRightWound : Wound
 // ─── Wildcard (Low handicap: -1 HP only, no organ effect) ─────────────────────────────────
 
 /// <summary>Base class for wildcard wounds that can appear anywhere on the body art.</summary>
+/// <summary>
+/// Pierced Heart — the wound a bolt aimed at the heart actually causes.
+///
+/// <para>
+/// High-handicap by necessity rather than for severity's sake: disabling the heart collapses
+/// <see cref="LifetimeStat"/> to its minimum, which kills outright anyone already past thirty. That
+/// is the stat's stated intent — "a wound to the heart is meant to be a sentence, not a scratch" —
+/// and until this existed there was nothing in the catalogue to deliver it, so Sighted Shot's
+/// authored localisation degraded silently to a graze.
+/// </para>
+/// </summary>
+public sealed class PiercedHeartWound : Wound
+{
+    public override char WoundId => 'F';
+    public override string WoundName => "Pierced Heart";
+    public override WoundHandicap Handicap => WoundHandicap.High;
+    public override WoundTargetKind TargetKind => WoundTargetKind.Organ;
+    public override string TargetId => "heart";
+}
+
 public abstract class WildcardWound : Wound
 {
     public override WoundHandicap Handicap => WoundHandicap.Low;
     public override WoundTargetKind TargetKind => WoundTargetKind.Wildcard;
     public override string TargetId => string.Empty;
+
+    /// <summary>
+    /// The kind of harm this generic wound represents. A blow that lands somewhere with no
+    /// authored wound falls back to a wildcard, and this is what makes that fallback specific to
+    /// the weapon: a blade leaves a Cut, a mace a Contusion. See <c>FightResolver.Wildcards</c>.
+    /// </summary>
+    public abstract DamageType DamageType { get; }
 }
 
 public sealed class ContusionWound : WildcardWound
 {
     public override char WoundId => 'C';
     public override string WoundName => "Contusion";
+    public override DamageType DamageType => DamageType.Contending;
 }
 
 public sealed class CutWound : WildcardWound
 {
     public override char WoundId => 'D';
     public override string WoundName => "Cut";
+    public override DamageType DamageType => DamageType.Cutting;
 }
 
 public sealed class PunctureWound : WildcardWound
 {
     public override char WoundId => 'E';
     public override string WoundName => "Puncture";
+    public override DamageType DamageType => DamageType.Piercing;
 }

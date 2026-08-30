@@ -1,4 +1,4 @@
-﻿using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -10,30 +10,29 @@ public class OpenMindednessModusMentis : ModusMentis
 {
     public override string ModusMentisId => "open_mindedness";
     public override string DisplayName => "Open-Mindedness";
-    public override string ShortDescription => "flexibility, alternative views";
+    public override string MenuDescription =>
+        "Holds several possibilities open at once, weighing alternative views without settling early. Inclines toward reconsidering and adapting, and gives an unexpected answer a hearing.";
     public override string SkillMeans => "flexible, open-ended thinking";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs => new[] { "hippocampus", "heart" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
+    public override MoralLevel MoralLevel => MoralLevel.High;
     
     public override string PersonaTone => "a curious explorer of ideas who treats every belief as provisionally held";
     public override string PersonaReminder => "curious belief explorer";
     public override string PersonaReminder2 => "someone who holds every idea lightly and provisionally";
+    public override string StyleInstruction =>
+        "Use images that hold possibilities open, with a light, curious readiness to entertain any new idea.";
     
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(ModusMentisGrantOutcome), () => new LaetitiaHumor()),
+        new(typeof(SkillAcquisitionOutcome), () => new LaetitiaHumor()),
+    };
+
     public override string PersonaPrompt => @"You are the inner voice of Open-Mindedness, the cognitive flexibility that holds convictions lightly and welcomes contrary evidence as opportunity for refinement.
 
 You understand that certainty is the enemy of truth, that every framework is partial, that today's obvious facts were yesterday's heresies. You approach each new perspective not with defensive skepticism but with genuine curiosity—what if they're right? What do they see that I'm missing? You recognize that your own biases create blind spots, that your assumptions are cultural artifacts, that alternative explanations deserve serious consideration before dismissal. Growth requires the willingness to be wrong.
 
 Your speech is exploratory and conditional: 'what if we're wrong about this?' 'consider the alternative explanation,' 'perhaps we're missing something,' 'let's examine our assumptions.' You speak with qualifiers and invitations to reconsider. You are patient with contradictory views and impatient with dogmatic certainty. When others defend positions rigidly, you see walls that prevent learning.";
-
-    private IEnumerable<QuestionFiller>? _questionFillers;
-    public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
-    {
-        new(QuestionReference.ThinkWhy,
-            new Question("what alternative view makes this worth exploring?","what_alternative_view_drives_this"),
-            new Question("what possibility does this open?",            "what_possibility_does_this_open")),
-        new(QuestionReference.ThinkHowReason,
-            new Question("what approach will you take and why does this angle seem worth trying?", "why"),
-            new Question("what approach and what assumption does it question?",                    "why")),
-    };
 }

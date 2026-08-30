@@ -1,0 +1,57 @@
+# attack — success against shallow wildlife
+#
+# The third arm of the verb, and genuinely different from success.cli rather than a second seed of
+# it: a chicken has no anatomy to wound and no fight to have, so the first blow kills outright and
+# narration carries on. Everything BEFORE the kill is the same layer — the medium is gathered, an
+# attack is drawn from it, and its modus mentis is what the blow teaches.
+#
+# It is deliberately not slay: that verb needs a tool, is difficulty 3, and is about butchery. This
+# is a blow that happened to be enough.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Yard" --period dawn --observe-only "chicken"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# There before the blow, so the absence asserted at the end is a removal and not a scene that never
+# had one.
+expect-state npcs chicken
+
+strategy succeed
+goal attack
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+expect SUCCESS
+expect-verb attack
+
+# The blow and its lesson — the half this shares with a fight-opening attack.
+expect First blow:
+expect Modus mentis
+expect-outcome first_blow
+
+# The half it does not: the bird is dead and there is no fight, so the phase hands back to narration
+# rather than to the fight screen.
+expect Slain:
+expect-outcome npc_slayn
+expect-no-outcome fight_trigger
+# Gone from the scene entirely rather than standing there dead: RemoveNpcFromPlay drops it from
+# scene.Npcs, so the assertion is an absence — the same one cli/outcome/npc_slayn/ makes.
+expect-no-state npcs chicken
+quit

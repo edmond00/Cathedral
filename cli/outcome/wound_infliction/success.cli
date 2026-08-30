@@ -1,0 +1,56 @@
+# wound_infliction — the outcome, not the verb.
+#
+# cli/verb/climb_up/ proves the chip is printed. This proves it corresponds to something real.
+# The verb script runs in full and the outcome assertions go on the end.
+#
+# SEED 7, not the suite default of 42. A wound is SAMPLED from FailurePenalties, and climb_up
+# fills 4 of its 7 slots — so most failures injure nobody, and at seed 42 this one does not.
+# Changing the seed is the honest fix: the alternative is a test that asserts a wound and passes
+# because it never checked.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 7 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Rock" --period dawn --observe-only "Test Cliff"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# --- before ---
+inspect wounds
+expect-no-state wounds wound
+
+strategy fail-dice
+goal climb_up
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+expect FAILURE
+
+# What makes this a climb_up test rather than an any-verb test: SUCCESS/FAILURE is the outcome banner
+# of every verb alike, so only this can tell them apart.
+expect-verb climb_up
+# The failure assertion that means something: the verb's own consequence did NOT happen.
+# Asserting the wound instead would be flaky — FailurePenalties samples one slot in five,
+# so most failures injure nobody.
+expect-no-outcome area_move
+
+# --- the outcome really ran ---
+expect-outcome wound_infliction
+
+# --- after: the world moved ---
+inspect wounds
+quit

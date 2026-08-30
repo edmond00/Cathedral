@@ -1,0 +1,93 @@
+# cut — success
+#
+# Harvesting a part from a body. The verb needs a CORPSE, and a corpse only exists after a kill — so
+# unlike every other verb test this one has to make its own subject first: slay the chicken, then cut
+# the carcass.
+#
+# Two things about that make this worth having as a test rather than trusting the verb audit:
+#
+#   * a spawned corpse is not observable until NarrativeController.SyncSpawnedObservations reconciles
+#     it into the narration graph, which is built once from the areas as the factory left them. Before
+#     that sync existed the body was in the area and the player was never told;
+#   * the corpse OPENS the next observation phase by itself — PendingCorpseObservations is drained
+#     ahead of everything else — so the second half of this script does not have to hunt for it.
+#
+# `goal` is set twice for the same reason cli/tame/success.cli sets it twice: two different verbs in
+# one run, and the playground's goal draw is otherwise uniform over everything the object offers.
+#
+# Both halves are Required verbs now, so the knife is combined TWICE — once to make the corpse and
+# once to open it. It is the reference tool of both, so neither combination reaches the item critic
+# (which picks at random under --playground and would otherwise decide this test by seed).
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-item knife --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon --observe-only "chicken"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# ── Make the corpse ──────────────────────────────────────────────────────────
+strategy succeed
+goal slay
+advance 12 180
+regions
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 1
+regions
+choose 0
+advance 12 180
+regions
+click action 1
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect SUCCESS
+expect Slain:
+expect-verb slay
+
+# ── Now cut it ───────────────────────────────────────────────────────────────
+# The corpse opens the phase on its own, so the keyword is whatever it left behind.
+click button
+advance 12 180
+regions
+
+goal cut
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+
+click action 0
+choose 1
+regions
+choose 0
+advance 12 180
+regions
+click action 1
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect SUCCESS
+
+# What makes this a cut test rather than an any-verb test.
+# The OUTCOME, not just the banner. "SUCCESS" is the dice result — it is printed from
+# result.Succeeded and says nothing about what the verb did, so a verb whose SuccessReports
+# stopped producing anything would still pass every other assertion here. This is the chip
+# the outcome block carries, and it is the only line that proves the verb had an effect.
+expect Item received:
+expect-verb cut
+# The outcome TYPE, asserted by its stable id rather than by chip wording. `expect <chip>`
+# proves what the player was told; this proves what actually ran. See --outcome-audit.
+expect-outcome corpse_item_acquisition
+quit

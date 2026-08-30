@@ -110,12 +110,18 @@ namespace Cathedral.Glyph
         }
 
         /// <summary>
+        /// Multiplier applied to cloud rotation speed. Set to 1.0 for normal speed.
+        /// </summary>
+        public float SpeedMultiplier { get; set; } = 1.0f;
+
+        /// <summary>
         /// Updates cloud rotation animation. Call once per frame.
         /// </summary>
         public void Update(float deltaTime)
         {
-            _rotAngle1 += _rotSpeed1 * deltaTime;
-            _rotAngle2 += _rotSpeed2 * deltaTime;
+            float dt = deltaTime * SpeedMultiplier;
+            _rotAngle1 += _rotSpeed1 * dt;
+            _rotAngle2 += _rotSpeed2 * dt;
             UpdateCloudInstanceBuffer();
         }
 
@@ -163,6 +169,16 @@ namespace Cathedral.Glyph
             int projLoc = GL.GetUniformLocation(_shaderProgram, "uProj");
             GL.UniformMatrix4(viewLoc, false, ref view);
             GL.UniformMatrix4(projLoc, false, ref proj);
+
+            // The clouds follow the world-glyph settings rather than keeping a size of their own.
+            // Worth knowing what that means here: a cloud is a patch of overlapping glyphs, so
+            // the size row does not make individual clouds bigger so much as it thickens the
+            // cover, and the weight row's cutoff moves their edges between wispy and solid.
+            int scaleLoc = GL.GetUniformLocation(_shaderProgram, "uGlyphScale");
+            if (scaleLoc >= 0) GL.Uniform1(scaleLoc, Cathedral.Config.GlyphSphere.WorldGlyphScale);
+
+            int cutoffLoc = GL.GetUniformLocation(_shaderProgram, "uGlyphCutoff");
+            if (cutoffLoc >= 0) GL.Uniform1(cutoffLoc, Cathedral.Config.GlyphSphere.WorldGlyphCutoff);
 
             GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, _glyphTexture);
@@ -563,6 +579,14 @@ namespace Cathedral.Glyph
                 int x = i * cellSize;
                 _charToIndex[chars[i]] = i;
 
+                // The rastered half of a world-weight step, as on the sphere. Zero at the shipped
+                // weight. Note this atlas is built once at startup and is NOT re-rastered when the
+                // weight row moves — the clouds take the cutoff half live and pick the pen up at
+                // the next launch, which is a fair trade for not rebuilding a decorative layer
+                // mid-frame. The sphere's own atlas, which carries everything a player reads, is
+                // rebuilt properly.
+                float strokeWidth = font.Size * Cathedral.Config.GlyphSphere.WorldGlyphStrokeFactor;
+
                 atlas.Mutate(ctx =>
                 {
                     var opts = new RichTextOptions(font)
@@ -571,7 +595,10 @@ namespace Cathedral.Glyph
                         HorizontalAlignment = HorizontalAlignment.Center,
                         VerticalAlignment = VerticalAlignment.Center
                     };
-                    ctx.DrawText(opts, chars[i].ToString(), Color.White);
+                    if (strokeWidth > 0f)
+                        ctx.DrawText(opts, chars[i].ToString(), Brushes.Solid(Color.White), Pens.Solid(Color.White, strokeWidth));
+                    else
+                        ctx.DrawText(opts, chars[i].ToString(), Color.White);
                 });
 
                 _glyphUVs[i] = new GlyphUV
@@ -615,13 +642,14 @@ layout(location = 7) in vec4 iColor;
 
 uniform mat4 uView;
 uniform mat4 uProj;
+uniform float uGlyphScale;   // Config.GlyphSphere.WorldGlyphScale, the world SIZE row
 
 out vec2 vUv;
 out vec4 vColor;
 
 void main()
 {{
-    vec3 worldPos = iPos + (iRight * aLocalPos.x + iUp * aLocalPos.y) * iSize * {Cathedral.Config.GlyphSphere.VertexShaderSizeMultiplier};
+    vec3 worldPos = iPos + (iRight * aLocalPos.x + iUp * aLocalPos.y) * iSize * {Cathedral.Config.GlyphSphere.VertexShaderSizeMultiplier} * uGlyphScale;
     gl_Position = uProj * uView * vec4(worldPos, 1.0);
     vUv = vec2(iUvRect.x + aLocalUV.x * iUvRect.z, iUvRect.y + aLocalUV.y * iUvRect.w);
     vColor = iColor;
@@ -634,11 +662,12 @@ in vec2 vUv;
 in vec4 vColor;
 out vec4 FragColor;
 uniform sampler2D uAtlas;
+uniform float uGlyphCutoff;   // Config.GlyphSphere.WorldGlyphCutoff, the world WEIGHT row
 void main()
 {
     vec4 texSample = texture(uAtlas, vUv);
     float luminance = dot(texSample.rgb, vec3(0.299, 0.587, 0.114));
-    if (luminance > 0.1) {
+    if (luminance > uGlyphCutoff) {
         FragColor = vec4(vColor.rgb, vColor.a);
     } else {
         discard;

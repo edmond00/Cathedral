@@ -16,6 +16,44 @@ public sealed class HumorQueueSet
     public HumorQueue Pulmones { get; } = new HumorQueue("pulmones");
     public HumorQueue Spleen   { get; } = new HumorQueue("spleen");
 
+    // ── Cycle state ───────────────────────────────────────────────
+    /// <summary>
+    /// Index into the canonical queue order (0=Hepar, 1=Paunch, 2=Pulmones, 3=Spleen)
+    /// indicating which queue will be consumed next in a cycled call.
+    /// </summary>
+    private int _cycleIndex = 0;
+
+    /// <summary>
+    /// Where the consumption rotation has got to, for saving and restoring. Exposed as a raw index
+    /// rather than as an organ id because it is bookkeeping, not a fact about the body — a save has
+    /// to put the rotation back exactly where it was, or the first drink after a reload comes out of
+    /// the wrong organ.
+    /// </summary>
+    public int CycleIndex
+    {
+        get => _cycleIndex;
+        set => _cycleIndex = ((value % 4) + 4) % 4;
+    }
+
+    /// <summary>The organ id of the queue that will be consumed next in the rotation.</summary>
+    public string CurrentCycleOrganId => _cycleIndex switch
+    {
+        0 => "hepar",
+        1 => "paunch",
+        2 => "pulmones",
+        3 => "spleen",
+        _ => "hepar"
+    };
+
+    private HumorQueue QueueAtCycleIndex(int index) => index switch
+    {
+        0 => Hepar,
+        1 => Paunch,
+        2 => Pulmones,
+        3 => Spleen,
+        _ => Hepar
+    };
+
     /// <summary>
     /// Returns the queue associated with the given organ id, or null when not found.
     /// </summary>
@@ -81,11 +119,30 @@ public sealed class HumorQueueSet
     /// </summary>
     public void Initialize(PartyMember member, Random rng)
     {
+        var blood = new BloodHumor();
+        foreach (var queue in All)
+        {
+            queue.FillWith(blood);
+            var organ = member.GetOrganById(queue.OrganId);
+            int score = organ?.Score ?? 5;
+            for (int i = 0; i < 10; i++)
+                queue.Secrete(score, rng);
+        }
+    }
+
+    /// <summary>
+    /// Protagonist-creation initialisation. For every queue: fill all slots by secretion using
+    /// the organ's score but never Black Bile (Blood / Phlegm / Yellow Bile only), then seed
+    /// Juvenescence into a random <paramref name="youthfulnessPercent"/>% of the slots.
+    /// </summary>
+    public void InitializeForCreation(PartyMember member, Random rng, int youthfulnessPercent)
+    {
         foreach (var queue in All)
         {
             var organ = member.GetOrganById(queue.OrganId);
             int score = organ?.Score ?? 5;
-            queue.FillWithSecretion(score, rng);
+            queue.FillWithSecretionSkippingBlackBile(score, rng);
+            queue.SeedJuvenescence(youthfulnessPercent, rng);
         }
     }
 
@@ -116,6 +173,35 @@ public sealed class HumorQueueSet
     {
         return GetByOrganId(organId)?.Produce(humor) ?? false;
     }
+
+    /// <summary>
+    /// Consume from the next non-critical queue in the rotation
+    /// (Hepar → Paunch → Pulmones → Spleen → Hepar → …).
+    /// Critical queues are skipped. The cycle index advances after each successful consumption.
+    /// Returns the consumed humor, or null when all four queues are critical.
+    /// </summary>
+    public BodyHumor? ConsumeCycled(PartyMember member, Random rng)
+    {
+        for (int attempt = 0; attempt < 4; attempt++)
+        {
+            var queue  = QueueAtCycleIndex(_cycleIndex);
+            _cycleIndex = (_cycleIndex + 1) % 4;
+
+            if (queue.IsCritical) continue;
+
+            var organ = member.GetOrganById(queue.OrganId);
+            int score = organ?.Score ?? 5;
+            return queue.Consume(score, rng);
+        }
+        return null; // all queues critical
+    }
+
+    /// <summary>
+    /// Consume from the next non-critical queue in the rotation and return the
+    /// VitalHeat of the consumed humor. Returns 0 when all queues are critical.
+    /// </summary>
+    public int ConsumeVitalHeatCycled(PartyMember member, Random rng)
+        => ConsumeCycled(member, rng)?.VitalHeat ?? 0;
 
     /// <summary>
     /// Apply secretion to all four queues simultaneously (called at the end of a turn

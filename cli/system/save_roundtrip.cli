@@ -1,0 +1,58 @@
+# The save survives being written down and read back.
+#
+# The suite runs ONE launch per script, so a real save-quit-relaunch-load test cannot be expressed
+# here — see cli/system/save_resume.cli for what the file layer can be asserted on in one process,
+# and tests/save_reload.sh for the genuine two-launch check.
+#
+# What this covers instead is the failure that actually bites: a field added to a party type and
+# forgotten in PartyState's DTO, which resets silently on every load. `save roundtrip` captures the
+# live run, serialises it, rebuilds a whole protagonist from the text, re-captures, and compares —
+# and separately asserts the reference topology, which a text comparison is blind to (two modus
+# mentis objects where the live graph had one serialise identically while consolidate/archive/reject
+# silently stop working).
+#
+# This script's job is BREADTH of state, not depth of play: the flags stack a party that exercises
+# every branch of Capture/Rebuild at once — a companion (the only member that is not a Protagonist),
+# granted items (including a container, so the recursive contents branch runs), and granted modi
+# mentis above level 1 (so level and experience are not all at their defaults, where a dropped field
+# would still compare equal).
+#
+# Post-action state is covered for free by appending `save roundtrip` to the verb scripts, which
+# already reach it by a route that is maintained. Re-deriving a narration sequence here would be a
+# second copy of that route, and it stalled on exactly the preview-box step CLAUDE.md warns about.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --fill-party --grant-item axe,sack --grant-mm woodcraft,scrutiny:3 --location-type test --location-id 0 --npc-static --period noon --save-path .tmp-cli-save/roundtrip.json
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 45
+
+# A fresh party: organ scores, four humor queues of 49, five memory modules, granted items and modi
+# mentis, and a companion.
+inspect save
+expect-state save companions=1
+expect-state save seed=42
+save roundtrip
+
+# Inside a location: instance state exists and the protagonist has a CurrentLocationId.
+travel here
+wait mode LocationInteraction 45
+
+# Drain the opening observation's preview box FIRST. The footer only becomes LEAVE once it is gone,
+# so pressing the button before this sits on the preview until the wait times out — the stall
+# cli/system/routine_movement_only.cli documents at its own exit.
+advance 12 90
+save roundtrip
+
+# Back out at the world map, where the autosave fires and location memory has been recorded.
+click button
+wait mode WorldView 45
+save roundtrip
+
+# The visit is remembered, and the autosave on the way out wrote it.
+expect-state save locations=1
+expect-state savefile locations=1
+
+quit

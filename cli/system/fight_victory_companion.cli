@@ -1,0 +1,101 @@
+# A companion in the party does not stop a fight from ending — killing the last enemy still wins it.
+#
+# The question this answers is whether FightState.CheckFightEnd can mistake a companion for an enemy
+# and sit waiting for them to fall. It cannot be answered with `fight-end victory`, which sets the
+# result directly and never evaluates the condition — so this one is played out blow by blow, and the
+# ONLY thing that can end it is anyEnemyAlive going false with a second party fighter still standing.
+# Reaching WorldView is therefore the assertion; there is no weaker way to make it.
+#
+# --fill-party is what puts a companion in the roster: at seed 42 that is the cat Nighthunter, who
+# joins the fight as a party fighter (BuildFighters walks Protagonist.CompanionParty). `expect` on the
+# initiative panel below is what stops this quietly degrading into a solo fight if that ever changes.
+#
+# --grant-mm arms the protagonist: unarmed skills are gated behind their modi mentis and a fresh
+# character knows none of the attacking ones, so without it Kenryc can only end his turn.
+#
+# The loop is turn-agnostic on purpose. Both attacks are offered every round and only the one the
+# active fighter actually knows lands; the other reports `error: no usable or learnable skill`, which
+# is noise rather than a failure (a CLI error does not fail a run — only `expect` and `wait` do).
+# Twelve rounds is margin, and a round here is one END TURN rather than one blow: with two
+# party fighters and an enemy taking turns between them, a round in which the enemy acts
+# spends the script's clicks and lands nothing. Six stopped being enough the moment NPC
+# generation shifted the companion's skills, which is a thing this script must not be
+# sensitive to — it is testing CheckFightEnd, not the draw.
+#
+# Note `strategy succeed` pins EVERY attacker's dice, the wolf's included, so this is a race the
+# protagonist wins only because the run is seeded. If it ever starts ending in death, that is the
+# reason, and the fix is more grants rather than fewer rounds.
+#
+# FLAGS: --playground --skip-childhood --fill-party --debug --seed 42 --no-encounters --grant-mm pugilitas:5,brawling:5 --start-fight wolf
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode Fighting 90
+
+# The companion is really in this fight, and on the party's side of it: the initiative panel marks
+# party fighters with ☻ and enemies with ☹.
+expect ☻ Nighthunt
+expect ☹ Redhorn
+
+strategy succeed
+
+state
+click skill "Lacerate"
+click skill "Knee Strike"
+wait 25
+click fighter Redhorn
+wait 25
+click continue
+wait 25
+click end-turn
+wait 35
+
+state
+click skill "Lacerate"
+click skill "Knee Strike"
+wait 25
+click fighter Redhorn
+wait 25
+click continue
+wait 25
+click end-turn
+wait 35
+
+state
+click skill "Lacerate"
+click skill "Knee Strike"
+wait 25
+click fighter Redhorn
+wait 25
+click continue
+wait 25
+click end-turn
+wait 35
+
+state
+click skill "Lacerate"
+click skill "Knee Strike"
+wait 25
+click fighter Redhorn
+wait 25
+click continue
+wait 25
+click end-turn
+wait 35
+
+fight-wound enemies
+wait 35
+
+# The wolf is down and the fight let go of the game. Had the companion been counted an enemy, the
+# fight would still be running here and this would time out in Fighting.
+wait mode WorldView 60
+wait 30
+
+# The companion came out of it still in the party — a fight that ended by killing the wrong side
+# would have taken them out of it.
+inspect party
+expect-state party Nighthunter
+
+quit

@@ -12,7 +12,7 @@ namespace Cathedral.Game;
 public class NarrativeState
 {
     /// <summary>
-    /// All narration blocks in order (Observation, Thinking, Action, Outcome).
+    /// All narration blocks in order (Observation, Thinking, VerbAction, Outcome).
     /// </summary>
     public List<NarrationBlock> Blocks { get; private set; } = new();
 
@@ -45,6 +45,14 @@ public class NarrativeState
     /// Current loading message to display.
     /// </summary>
     public string LoadingMessage { get; set; } = "Loading...";
+
+    /// <summary>
+    /// True while any LLM generation is in flight. The content is rendered greyed out
+    /// and inert during this time (only scrolling stays interactive).
+    /// </summary>
+    public bool IsAnyLoading =>
+        IsLoadingObservations || IsLoadingThinking || IsLoadingFocusObservation ||
+        IsLoadingSpeaking || IsLoadingAction;
 
     /// <summary>
     /// Currently hovered keyword region (null if none).
@@ -90,6 +98,15 @@ public class NarrativeState
     /// Thinking attempts remaining (starts at max, decrements on keyword click).
     /// </summary>
     public int ThinkingAttemptsRemaining { get; set; } = NarrativeUI.GetMaxThinkingAttempts();
+
+    /// <summary>
+    /// Supplies the max noetic points for a fresh node/reset, sourced from the active member's
+    /// encephalon (see <see cref="NoeticPointsStat"/>). Set by <see cref="NarrativeController"/>.
+    /// Falls back to <see cref="NarrativeUI.GetMaxThinkingAttempts"/> when unset.
+    /// </summary>
+    public System.Func<int>? MaxNoeticPointsProvider { get; set; }
+
+    private int MaxNoeticPoints() => MaxNoeticPointsProvider?.Invoke() ?? NarrativeUI.GetMaxThinkingAttempts();
 
     /// <summary>
     /// Should the "Continue" button be shown?
@@ -174,13 +191,13 @@ public class NarrativeState
     public ParsedNarrativeAction? ActionPendingItemCombination { get; set; } = null;
 
     /// <summary>
-    /// Is the initial "Think/Observe" or "Execute/Use Item" choice popup currently visible?
+    /// Is the initial "Think/Observe" or "Execute/Use Tool" choice popup currently visible?
     /// </summary>
     public bool IsSelectingInteractionMode { get; set; } = false;
 
     /// <summary>
     /// True when the choice popup was triggered by a keyword click (Think/Observe).
-    /// False when triggered by an action click (Execute/Use Item).
+    /// False when triggered by an action click (Execute/Use Tool).
     /// </summary>
     public bool InteractionModeIsForKeyword { get; set; } = false;
 
@@ -238,7 +255,7 @@ public class NarrativeState
         IsLoadingFocusObservation = false;
         LoadingMessage = Config.LoadingMessages.Default;
         HoveredKeyword = null;
-        ThinkingAttemptsRemaining = NarrativeUI.GetMaxThinkingAttempts();
+        ThinkingAttemptsRemaining = MaxNoeticPoints();
         ShowContinueButton = false;
         IsContinueButtonHovered = false;
         IsSelectingObservationModusMentis = false;
@@ -274,7 +291,7 @@ public class NarrativeState
         HoveredKeyword = null;
         HoveredAction = null;
         ActionRegions.Clear();
-        ThinkingAttemptsRemaining = NarrativeUI.GetMaxThinkingAttempts();
+        ThinkingAttemptsRemaining = MaxNoeticPoints();
         ShowContinueButton = false;
         IsContinueButtonHovered = false;
         IsSelectingObservationModusMentis = false;
@@ -434,10 +451,21 @@ public static class ClickableRegionExtensions
 }
 
 /// <summary>
-/// Represents a clickable keyword region in the terminal.
+/// Represents a clickable keyword region in the terminal — one per highlighted <b>occurrence</b>.
+///
+/// <para><paramref name="Anchor"/> is what the click acts on, carried here rather than looked up
+/// from the word. The region already knows which occurrence it is, down to the cell; resolving the
+/// object from the word threw that away and forced every keyword in a block to be unique. Falls
+/// back to <see cref="NarrationBlock.LinkedOutcome"/> when null, which covers blocks with no
+/// per-sentence breakdown.</para>
 /// </summary>
-public record KeywordRegion(string Keyword, int Y, int StartX, int EndX, NarrationBlock? SourceBlock = null) : IClickableRegion
+public record KeywordRegion(string Keyword, int Y, int StartX, int EndX, NarrationBlock? SourceBlock = null,
+                            NarrativeAnchor? Anchor = null) : IClickableRegion
 {
+    /// <summary>What a click here acts on: this occurrence's anchor, else the block's single one.</summary>
+    public NarrativeAnchor? ResolvedAnchor => Anchor ?? SourceBlock?.LinkedOutcome;
+
+
     /// <summary>
     /// Starting Y coordinate (same as Y for single-line regions).
     /// </summary>

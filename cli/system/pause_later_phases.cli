@@ -1,0 +1,49 @@
+# The rest of the phases a script can reach: the world map, a location's narration, the management
+# screen and the settings screen. Companion to pause_early_phases.cli — see its header for why this
+# is worth a test at all.
+#
+# Settings is the second gap this found: its only exit is one small Back button, and Escape was not
+# handled there, which on a screen with nothing else on it reads as a freeze.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --silent --no-save --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+
+# ── World map ─────────────────────────────────────────────────────────────────
+wait mode WorldView 60
+pause
+wait mode MainMenu 20
+
+# ── Settings ──────────────────────────────────────────────────────────────────
+# Opened from the menu, and Escape is the same press as its Back button.
+click menu Settings
+wait mode Settings 20
+pause
+wait mode MainMenu 20
+
+click menu Continue
+wait mode WorldView 20
+
+# ── Narration ─────────────────────────────────────────────────────────────────
+# The menu opens as an OVERLAY: narration is not torn down, and Continue resumes the same scene.
+# Leaving a location is the footer LEAVE button's job, not Escape's.
+travel here
+wait mode LocationInteraction 60
+pause
+wait mode MainMenu 20
+click menu Continue
+wait mode LocationInteraction 30
+
+# ── Management ────────────────────────────────────────────────────────────────
+# Opened over narration, and Escape closes it back to the menu rather than to the scene.
+manage
+wait mode ProtagonistManagement 20
+pause
+wait mode MainMenu 20
+click menu Continue
+wait mode LocationInteraction 30
+
+quit

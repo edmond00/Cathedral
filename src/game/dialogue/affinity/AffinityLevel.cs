@@ -45,6 +45,23 @@ public static class AffinityLevelExtensions
         _                                  => npcName,
     };
 
+    /// <summary>
+    /// First-person relation phrase used when building an NPC's contextual label for LLM prompts,
+    /// e.g. "my friend Godric Reeve". Distinct from <see cref="ToDisplayName"/> (second-person
+    /// "your …", used by the dialogue UI). Stranger is handled by the caller (name omitted), so it
+    /// falls through to the bare name here.
+    /// </summary>
+    public static string ToFirstPersonRelation(this AffinityLevel level, string name) => level switch
+    {
+        AffinityLevel.AnnoyingAcquaintance
+            or AffinityLevel.DistantAcquaintance
+            or AffinityLevel.CloseAcquaintance => $"my acquaintance {name}",
+        AffinityLevel.DistantFriend            => $"my friend {name}",
+        AffinityLevel.CloseFriend              => $"my close friend {name}",
+        AffinityLevel.Suspicious               => $"{name}, an uneasy acquaintance of mine",
+        _                                      => name,
+    };
+
     /// <summary>Returns a short label shown in the dialogue header (no NPC name).</summary>
     public static string ToShortLabel(this AffinityLevel level) => level switch
     {

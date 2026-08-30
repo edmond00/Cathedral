@@ -1,0 +1,111 @@
+# get_up — success
+#
+# GET UP exists only in the get-up phase, which follows the childhood reminescences — so like
+# cli/remember/, this test must NOT pass --skip-childhood, the flag every other script in the suite
+# uses. That is why the verb had no test.
+#
+# Reaching it means playing the whole childhood out: four reminescences, each a full
+# observe -> think -> act chain plus a footer CONTINUE to move to the next. The loop below is those
+# four, unrolled — the count is fixed by --seed 42 — a script has no repetition, and unrolling reads better than pretending otherwise.
+#
+# The phase itself skips the critic and forces difficulty 1 (NarrativeController's GET-UP
+# short-circuit), so failure loops back with no penalty rather than producing a FAILURE outcome —
+# there is no meaningful fail.cli, and cli/get_up/ has one script deliberately.
+#
+# FLAGS: --playground --debug --seed 42 --no-encounters
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode ChildhoodReminescence 60
+
+# ── The three childhood reminescences ────────────────────────────────────────
+advance 12 180
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 20 180
+click button
+advance 12 180
+
+advance 12 180
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 20 180
+click button
+advance 12 180
+
+advance 12 180
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 20 180
+click button
+advance 12 180
+
+advance 12 180
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 20 180
+click button
+advance 12 180
+
+# ── The get-up phase ─────────────────────────────────────────────────────────
+wait mode GetUp 60
+advance 12 180
+regions
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+
+# Before and after, because the phase's one silent failure is that it pays the chain nothing.
+# The practice loop in CommitOutcomeResult used to sit inside its `deferredCommit` branch, and
+# Get-Up is the ONLY caller that commits synchronously — so it rolled dice against the chain's
+# levels, narrated the outcome, and awarded no experience at all. Nothing caught it: `inspect
+# skills` reported the level only, and a level takes several successes to move.
+inspect skills
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 20 180
+inspect skills
+
+# What makes this a get_up test rather than an any-verb test.
+expect-verb get_up
+
+# The two halves of what a successful act owes, and they are different outcomes:
+#   vigor  — the lesson the verb teaches of itself (ModusMentisGrantOutcome), newly known here
+#   rote   — a point of practice to a modus mentis that carried the chain, and it stood at xp=0
+#            before the action, so the whole of this value was earned by THIS phase
+# Both values are pinned by --seed 42, as everything in this script is; if the childhood content
+# changes the chain, this fails naming the skill, which is the right way to be told.
+expect-state skills skill vigor level=1 xp=0
+expect-state skills skill rote level=1 xp=1
+quit

@@ -24,7 +24,9 @@ namespace Cathedral.Terminal
         private int _instanceVbo;
         private TerminalInstance[] _instances;
         private bool _instanceBufferDirty;
-        
+        /// <summary>The <see cref="GlyphAtlas.Version"/> the buffer's UVs were computed against.</summary>
+        private int _atlasVersion = -1;
+
         // Quad geometry (shared for all cells)
         private readonly float[] _quadVertices = {
             // Position   UV
@@ -80,8 +82,8 @@ namespace Cathedral.Terminal
 
         private int CreateProgram()
         {
-            string vertexSource = LoadShaderSource("terminal.vert");
-            string fragmentSource = LoadShaderSource("terminal.frag");
+            string vertexSource = ShaderSource.Load("terminal.vert");
+            string fragmentSource = ShaderSource.Load("terminal.frag");
             
             int vertexShader = CreateShader(ShaderType.VertexShader, vertexSource);
             int fragmentShader = CreateShader(ShaderType.FragmentShader, fragmentSource);
@@ -120,26 +122,6 @@ namespace Cathedral.Terminal
             }
             
             return shader;
-        }
-
-        private string LoadShaderSource(string filename)
-        {
-            string shaderPath = Path.Combine("src", "terminal", "Shaders", filename);
-            if (File.Exists(shaderPath))
-            {
-                return File.ReadAllText(shaderPath);
-            }
-            
-            // Fallback to embedded shaders if files don't exist
-            switch (filename)
-            {
-                case "terminal.vert":
-                    return GetEmbeddedVertexShader();
-                case "terminal.frag":
-                    return GetEmbeddedFragmentShader();
-                default:
-                    throw new FileNotFoundException($"Shader file not found: {shaderPath}");
-            }
         }
 
         private void CreateQuadGeometry()
@@ -205,7 +187,14 @@ namespace Cathedral.Terminal
             GL.EnableVertexAttribArray(6);
             GL.VertexAttribPointer(6, 4, VertexAttribPointerType.Float, false, stride, 13 * sizeof(float));
             GL.VertexAttribDivisor(6, 1);
-            
+
+            // Per-glyph quad scale (location 7). Enabled here as well as in TerminalRenderer:
+            // the two share terminal.vert, and a disabled attribute reads as 0 — which would draw
+            // the popup's glyphs at zero size rather than at their cell size.
+            GL.EnableVertexAttribArray(7);
+            GL.VertexAttribPointer(7, 1, VertexAttribPointerType.Float, false, stride, 17 * sizeof(float));
+            GL.VertexAttribDivisor(7, 1);
+
             GL.BindVertexArray(0);
         }
 
@@ -243,7 +232,11 @@ namespace Cathedral.Terminal
             // Set glyph scale
             int glyphScaleLoc = GL.GetUniformLocation(_program, "uGlyphScale");
             GL.Uniform1(glyphScaleLoc, Config.Terminal.GlyphScale);
-            
+
+            // Set glyph weight curve
+            int glyphGammaLoc = GL.GetUniformLocation(_program, "uGlyphGamma");
+            GL.Uniform1(glyphGammaLoc, Config.Terminal.GlyphAlphaGamma);
+
             // Bind atlas texture
             GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, _atlas.TextureId);
@@ -274,12 +267,19 @@ namespace Cathedral.Terminal
 
         private void UpdateInstanceBuffer(Vector2i windowSize)
         {
-            if (!_instanceBufferDirty && !_view.HasChanges)
+            // The atlas is SHARED with the main terminal, and a rebuild re-lays its whole grid out —
+            // so a glyph the main terminal introduced invalidates these cached UVs too. See
+            // GlyphAtlas.Version.
+            if (!_instanceBufferDirty && !_view.HasChanges && _atlasVersion == _atlas.Version)
                 return;
+
+            // One rebuild up front, before any UV is read — see TerminalRenderer for why filling
+            // with GetGlyph alone strands the instances written before a mid-fill rebuild.
+            _atlas.EnsureGlyphs(GlyphsInView());
 
             // Calculate popup layout
             CalculatePopupLayout(windowSize, out Vector2 cellSize, out Vector2 topLeft);
-            
+
             // Update instance data for all cells
             int instanceIndex = 0;
             foreach (var (x, y, cell) in _view.EnumerateCells())
@@ -300,7 +300,8 @@ namespace Cathedral.Terminal
                     cellSize,
                     glyphInfo.UvRect,
                     cell.TextColor,
-                    cell.BackgroundColor
+                    cell.BackgroundColor,
+                    Config.GlyphSizeFactors.GetQuadScale(cell.Character)
                 );
                 
                 instanceIndex++;
@@ -310,9 +311,17 @@ namespace Cathedral.Terminal
             GL.BindBuffer(BufferTarget.ArrayBuffer, _instanceVbo);
             GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, _instances.Length * TerminalInstance.SizeInBytes, _instances);
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
-            
+
             _instanceBufferDirty = false;
+            _atlasVersion = _atlas.Version;
             _view.MarkAllClean();
+        }
+
+        /// <summary>Every character currently on the grid, for a single up-front atlas rebuild.</summary>
+        private IEnumerable<char> GlyphsInView()
+        {
+            foreach (var (_, _, cell) in _view.EnumerateCells())
+                yield return cell.Character;
         }
 
         private void CalculatePopupLayout(Vector2i windowSize, out Vector2 cellSize, out Vector2 topLeft)
@@ -438,76 +447,6 @@ namespace Cathedral.Terminal
         {
             _instanceBufferDirty = true;
             _view.MarkAllDirty();
-        }
-
-        #endregion
-
-        #region Embedded Shaders
-
-        private string GetEmbeddedVertexShader()
-        {
-            return @"#version 330 core
-layout(location = 0) in vec2 aLocalPos;
-layout(location = 1) in vec2 aLocalUV;
-layout(location = 2) in vec3 iPosition;
-layout(location = 3) in vec2 iSize;
-layout(location = 4) in vec4 iUvRect;
-layout(location = 5) in vec4 iTextColor;
-layout(location = 6) in vec4 iBgColor;
-
-uniform mat4 uProjection;
-uniform int uRenderPass;
-uniform float uGlyphScale;
-
-out vec2 vUV;
-out vec4 vTextColor;
-out vec4 vBgColor;
-
-void main()
-{
-    float scale = (uRenderPass == 1) ? uGlyphScale : 1.0;
-    vec2 screenPos = iPosition.xy + aLocalPos * iSize * scale;
-    gl_Position = uProjection * vec4(screenPos, 0.0, 1.0);
-    
-    if (uRenderPass == 0) {
-        vUV = vec2(0.0);
-    } else {
-        vUV = vec2(iUvRect.x + aLocalUV.x * iUvRect.z, 
-                   iUvRect.y + aLocalUV.y * iUvRect.w);
-    }
-    
-    vTextColor = iTextColor;
-    vBgColor = iBgColor;
-}";
-        }
-
-        private string GetEmbeddedFragmentShader()
-        {
-            return @"#version 330 core
-in vec2 vUV;
-in vec4 vTextColor;
-in vec4 vBgColor;
-
-uniform sampler2D uGlyphAtlas;
-uniform int uRenderPass;
-
-out vec4 FragColor;
-
-void main()
-{
-    if (uRenderPass == 0) {
-        FragColor = vBgColor;
-    } else {
-        vec4 atlasTexel = texture(uGlyphAtlas, vUV);
-        float glyphAlpha = atlasTexel.r;
-        
-        if (glyphAlpha < 0.1) {
-            discard;
-        }
-        
-        FragColor = vec4(vTextColor.rgb, vTextColor.a * glyphAlpha);
-    }
-}";
         }
 
         #endregion

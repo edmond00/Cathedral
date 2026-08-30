@@ -10,8 +10,13 @@ public class ArmsOrgan : Organ
     public override string Id => "arms";
     public override string DisplayName => "Arms";
     public override bool AcceptsWildcardWounds => true;
+    public override bool PartsAreIndependentMediums => true; // left & right arm strike independently
     public override string BodyPartId => "upper_limbs";
-    
+    public override string Description =>
+        "The organs of gross force: the power of the thrust, the grapple, and the heavy blow. They are " +
+        "the seat of the disciplines of strength: laborious toil, the wielding of weighty implements and " +
+        "arms, and work that taxes the whole frame.";
+
     private readonly List<OrganPart> _parts;
     public override List<OrganPart> Parts => _parts;
     
@@ -24,11 +29,13 @@ public class ArmsOrgan : Organ
     {
         public override string Id => "left_arm";
         public override string DisplayName => "Left Arm";
+        public override int DefaultMaxScore => 2;
     }
     
     public sealed class RightArmPart : OrganPart
     {
         public override string Id => "right_arm";
         public override string DisplayName => "Right Arm";
+        public override int DefaultMaxScore => 2;
     }
 }

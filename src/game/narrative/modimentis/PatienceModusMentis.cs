@@ -1,4 +1,5 @@
-﻿using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -10,45 +11,28 @@ public class PatienceModusMentis : ModusMentis
 {
     public override string ModusMentisId => "patience";
     public override string DisplayName => "Patience";
-    public override string ShortDescription => "waiting, endurance";
+    public override string MenuDescription =>
+        "Holds out calmly through delay and tedium, enduring the long wait without strain. Keeps effort steady over slow spans, and treats time itself as something to be outlasted.";
     public override string SkillMeans => "waiting and endurance";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs => new[] { "pineal_gland", "backbone" };
-    public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
+    public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
+    public override MoralLevel MoralLevel => MoralLevel.High;
     
     public override string PersonaTone => "a serene strategist who knows that time is an ally to those who can wait";
     public override string PersonaReminder => "serene strategist of timing";
     public override string PersonaReminder2 => "someone who knows that waiting is itself a kind of action";
+    public override string StyleInstruction =>
+        "Reach for slow images of ripening and tide, with the unhurried calm of one content to wait.";
     
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(TimeShiftOutcome), () => new ZenHumor()),
+    };
+
     public override string PersonaPrompt => @"You are the inner voice of Patience, the deep well of composure that understands all things come to those who refuse to be rushed by urgency.
 
 You see time not as an enemy but as a medium through which wisdom operates. Hasty action is the province of fools; true mastery lies in recognizing when inaction serves better than motion, when waiting reveals opportunities that haste would destroy. You understand that fruit ripens in its season, that prey grows careless when hunters remain still, that adversaries reveal themselves to those who refuse to react impulsively. Discomfort is temporary; premature action has lasting consequences.
 
 You speak in measured, calm terms: 'wait for the right moment,' 'let the situation develop,' 'premature action wastes opportunity,' 'endure this discomfort briefly.' You are dismissive of impulsiveness and contemptuous of those who cannot sit with uncertainty. Your vocabulary favors stillness, timing, and the long view. When others rush forward, you counsel the strength found in deliberate restraint.";
-
-    private IEnumerable<QuestionFiller>? _questionFillers;
-    public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
-    {
-        new(QuestionReference.ThinkWhy,
-            new Question("why is this the right moment to act?",        "why_is_this_the_right_moment"),
-            new Question("what does waiting tell you about this goal?", "what_does_waiting_tell_me")),
-        new(QuestionReference.ThinkHowReason,
-            new Question("what approach and why does its timing make sense?",                  "why"),
-            new Question("what approach and what does its pace tell you?",                     "why")),
-        new(QuestionReference.ThinkWhat,
-            new Question("expert in {0}, what does restraint allow you to do here?", "what_does_restraint_allow_me_to_do"),
-            new Question("skilled {0}, when do you act and how?",      "when_do_i_act_and_how")),
-        new(QuestionReference.OutcomeSucceededHappened,
-            new Question("timing served you — what did waiting produce?",  "what_happened"),
-            new Question("your patience paid off — what exactly happened?", "what_happened")),
-        new(QuestionReference.OutcomeSucceededFeel,
-            new Question("you succeeded — what do you feel having held back until now?", "what_i_feel"),
-            new Question("it worked — what does patience vindicated feel like?",         "what_i_feel")),
-        new(QuestionReference.OutcomeFailedHappened,
-            new Question("timing failed you — what did waiting miss?",       "what_happened"),
-            new Question("your patience didn't pay off — what went wrong?",  "what_happened")),
-        new(QuestionReference.OutcomeFailedFeel,
-            new Question("you failed — what does a long wait that led nowhere feel like?", "what_i_feel"),
-            new Question("it didn't work — what does patience unrewarded leave in you?",   "what_i_feel")),
-    };
 }

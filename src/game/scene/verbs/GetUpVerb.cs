@@ -1,0 +1,39 @@
+﻿using System.Collections.Generic;
+using Cathedral.Game.Narrative;
+
+using Cathedral.Game.Narrative.ModiMentis;
+
+namespace Cathedral.Game.Scene.Verbs;
+
+/// <summary>
+/// GET UP — the only action available in the Get-Up scene.
+/// Accessible from any observation in the scene regardless of target.
+/// Difficulty is always 1 (overridden in the action executor; no critic malus).
+/// On success: queues a <see cref="GetUpTransitionOutcome"/> that signals world travel.
+/// On failure: no penalty, no damage — the scene loops back for another attempt.
+/// </summary>
+public sealed class GetUpVerb : Verb
+{
+
+    public override string VerbId         => "get_up";
+    public override string DisplayName    => "GET UP";
+    public override int    BaseDifficulty => 1;
+
+    /// <summary>A phase transition. There is no act here yet for an implement to lend dice to.</summary>
+    public override ToolUsage ToolUse => ToolUsage.Excluded;
+
+    /// <summary>What a success teaches: getting a body up and moving.</summary>
+    public override string? GrantedModusMentisId(Element? target) => "vigor";
+
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
+        => scene.Phase == NarrationPhase.GetUp;
+
+    public override string Verbatim(Scene scene, PoV pov, Element target)
+        => "get up and continue my journey";
+
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
+        => new List<Outcome> { new GetUpTransitionOutcome() };
+
+    public override IReadOnlyList<Outcome> FailureReports(Scene scene, PoV pov, PartyMember actor, Element target)
+        => System.Array.Empty<Outcome>();
+}

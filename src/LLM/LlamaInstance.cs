@@ -135,6 +135,25 @@ public class LlamaInstance
     }
     
     /// <summary>
+    /// Returns a shallow copy of the current conversation history. Pair with
+    /// <see cref="RestoreHistory"/> to speculatively generate then discard turns
+    /// (e.g. pre-generating both success and failure outcome narration on one slot).
+    /// </summary>
+    public List<object> SnapshotHistory() => new List<object>(ConversationHistory);
+
+    /// <summary>
+    /// Replaces the conversation history with a previously captured snapshot, dropping any
+    /// turns appended since. The server-side KV cache is keyed by the shared prefix, so the
+    /// next request reuses the cache up to the restore point.
+    /// </summary>
+    public void RestoreHistory(List<object> snapshot)
+    {
+        ConversationHistory.Clear();
+        ConversationHistory.AddRange(snapshot);
+        LastUsed = DateTime.Now;
+    }
+
+    /// <summary>
     /// Gets the current conversation as an array suitable for the API
     /// </summary>
     public object[] GetMessages()
@@ -172,24 +191,31 @@ public class LlamaInstance
     /// Trims the conversation history to fit within the context window.
     /// Keeps the system prompt and most recent messages.
     /// </summary>
+    /// <remarks>
+    /// The newest message is never dropped. Callers add the pending user message before trimming, so
+    /// removing it would send the model a bare system prompt and get an answer to no question — a
+    /// worse failure than an over-long prompt, and a silent one. When system prompt + newest message
+    /// alone exceed the target this therefore returns having removed everything else and still not
+    /// fitting; the request goes out oversized and the server rejects it, which is the honest outcome.
+    /// </remarks>
     /// <param name="maxTokens">Maximum tokens to keep (defaults to MaxContextTokens - 512 for response buffer)</param>
     /// <returns>Number of messages removed</returns>
     public int TrimToFitContext(int? maxTokens = null)
     {
         int targetTokens = maxTokens ?? (MaxContextTokens - 512); // Reserve 512 tokens for response
         int currentTokens = EstimateConversationTokens();
-        
+
         if (currentTokens <= targetTokens)
             return 0; // No trimming needed
-        
+
         // Always keep system prompt (first message)
         var systemPrompt = ConversationHistory[0];
         var messages = ConversationHistory.Skip(1).ToList();
-        
+
         int removedCount = 0;
-        
-        // Remove oldest messages (after system prompt) until we fit
-        while (messages.Count > 0 && currentTokens > targetTokens)
+
+        // Remove oldest messages (after system prompt) until we fit, never the newest one
+        while (messages.Count > 1 && currentTokens > targetTokens)
         {
             var removed = messages[0];
             messages.RemoveAt(0);
@@ -227,8 +253,8 @@ public class LlamaInstance
         var result = new List<object> { ConversationHistory[0] };
         var messages = ConversationHistory.Skip(1).ToList();
         
-        // Remove oldest messages until we fit
-        while (messages.Count > 0 && currentTokens > targetTokens)
+        // Remove oldest messages until we fit, never the newest one (see TrimToFitContext)
+        while (messages.Count > 1 && currentTokens > targetTokens)
         {
             var removed = messages[0];
             messages.RemoveAt(0);

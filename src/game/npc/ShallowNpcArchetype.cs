@@ -1,4 +1,6 @@
 using System;
+using System.Text;
+using Cathedral;
 using Cathedral.Game.Npc.Corpse;
 using Cathedral.Game.Scene;
 
@@ -15,24 +17,72 @@ public abstract class ShallowNpcArchetype : NpcArchetype
     /// <summary>Display name used for all instances of this type (e.g. "Chicken", "Rabbit").</summary>
     public abstract string TypeDisplayName { get; }
 
-    /// <summary>Whether instances are hostile by default. Almost always false for farm animals.</summary>
-    public virtual bool DefaultHostile => false;
+    /// <summary>
+    /// Whether this creature is small enough that violence is not the word for it — an insect, a
+    /// snail, a mouse, a lizard. Tiny creatures are offered <c>catch</c> and <c>crush</c> instead of
+    /// <c>attack</c> and <c>slay</c>: you do not draw a weapon on a butterfly, you close your hand
+    /// on it or you step on it, and which of those you do says something about you.
+    ///
+    /// <para>Default false, so every existing creature keeps the verbs it had.</para>
+    /// </summary>
+    public virtual bool IsTiny => false;
+
+    /// <summary>
+    /// What is left of a tiny creature caught intact — a specimen, not a carcass. Empty by default;
+    /// override on the ones worth keeping. Caught creatures go straight into the inventory rather
+    /// than leaving a body on the ground, which is the difference between catching a thing and
+    /// killing it.
+    /// </summary>
+    public virtual System.Collections.Generic.List<Narrative.Item> BuildCatchYield() => new();
 
     // ── Spawn ────────────────────────────────────────────────────────────────
 
     /// <summary>Spawns a new <see cref="ShallowNpcEntity"/> from this archetype.</summary>
     public ShallowNpcEntity Spawn(Random rng, string nodeContext = "")
     {
-        var npcId    = $"{ArchetypeId}_{rng.Next(100000)}";
-        var hint     = BuildObservationHint(nodeContext);
-        return new ShallowNpcEntity(npcId, TypeDisplayName, this, DefaultHostile, hint);
+        var npcId   = $"{ArchetypeId}_{rng.Next(100000)}";
+        // Description RNG is seeded from the NPC id (stable FNV-1a hash) so the same creature always
+        // looks the same across a run, independent of the spawn-order rng passed in.
+        var descRng = new Random(GameRng.DerivedSeed($"npc_desc_{npcId}"));
+        var hint    = ComposeObservationHint(descRng, nodeContext);
+        return new ShallowNpcEntity(npcId, TypeDisplayName, this, hint);
     }
 
     // ── Overridable builders ────────────────────────────────────────────────
 
-    /// <summary>Override to provide the observation hint for the LLM.</summary>
-    protected abstract string BuildObservationHint(string nodeContext);
+    /// <summary>
+    /// Override to compose the observation description by drawing from small attribute pools with
+    /// <paramref name="rng"/> (which is seeded per-NPC, so the result is stable). Prefer the
+    /// <see cref="Compose"/> helper, which assembles a grammatical "a/an {size} {colour} {noun}, {trait}"
+    /// sentence. The description is appearance-only — no name (shallow NPCs are anonymous).
+    /// </summary>
+    protected abstract string ComposeObservationHint(Random rng, string nodeContext);
 
-    /// <summary>Override to build a <see cref="CorpseSpot"/> when an instance is slain.</summary>
-    public abstract CorpseSpot CreateCorpse(ShallowNpcEntity entity, Area area);
+    /// <summary>Override to build the remains left when an instance is slain.</summary>
+    public abstract System.Collections.Generic.List<PointOfInterest> CreateCorpse(ShallowNpcEntity entity);
+
+    // ── Composition helpers ──────────────────────────────────────────────────
+
+    /// <summary>Picks one option from a pool. Draws exactly one value from <paramref name="rng"/>.</summary>
+    protected static string Pick(Random rng, params string[] options) => options[rng.Next(options.Length)];
+
+    /// <summary>
+    /// Assembles a grammatical creature description from optional size/colour pools, a fixed noun, and
+    /// an optional trait/activity pool: <c>"a small brown crab, one claw held high"</c>. The article is
+    /// chosen (a/an) from the first word, so vowel-initial descriptors are safe. Pools are drawn in a
+    /// fixed order (size → colour → trait); pass an empty array to skip a dimension. Any pool may be
+    /// omitted, but keep the call order stable so a given NPC id stays deterministic.
+    /// </summary>
+    protected static string Compose(Random rng, string[] sizes, string[] colors, string noun, string[] traits)
+    {
+        var head = new StringBuilder();
+        if (sizes.Length  > 0) head.Append(Pick(rng, sizes)).Append(' ');
+        if (colors.Length > 0) head.Append(Pick(rng, colors)).Append(' ');
+        head.Append(noun);
+
+        string h       = head.ToString();
+        string article = "aeiou".IndexOf(char.ToLowerInvariant(h[0])) >= 0 ? "an" : "a";
+        string trait   = traits.Length > 0 ? $", {Pick(rng, traits)}" : "";
+        return $"{article} {h}{trait}";
+    }
 }

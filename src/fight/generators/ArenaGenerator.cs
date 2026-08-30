@@ -18,8 +18,6 @@ namespace Cathedral.Fight.Generators
         /// <summary>Padding between the arena walls and the map edge (cells).</summary>
         public int ArenaPadding { get; set; } = 6;
 
-        public int Seed { get; set; } = 0;
-
         public float DangerousChance    { get; set; } = 0.012f;
         public float TreacherousChance  { get; set; } = 0.06f;
 

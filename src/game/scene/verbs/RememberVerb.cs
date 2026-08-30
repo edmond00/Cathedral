@@ -1,13 +1,15 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Scene.Reminescence;
+
+using Cathedral.Game.Narrative.ModiMentis;
 
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
 /// REMEMBER — the only action available in the childhood reminescence phase.
-/// All state changes are expressed as <see cref="OutcomeReport"/> objects returned by
+/// All state changes are expressed as <see cref="Outcome"/> objects returned by
 /// <see cref="SuccessReports"/>, which are applied in sequence by the caller.
 /// </summary>
 public class RememberVerb : Verb
@@ -15,9 +17,15 @@ public class RememberVerb : Verb
     public override string VerbId         => "remember";
     public override string DisplayName    => "Remember";
     public override int    BaseDifficulty => 0;
+
+    /// <summary>A phase transition inward. Nothing in the hands reaches what is being reached for.</summary>
+    public override ToolUsage ToolUse => ToolUsage.Excluded;
+
+    /// <summary>What a success teaches: reaching back into your own childhood.</summary>
+    public override string? GrantedModusMentisId(Element? target) => "introspection";
     public override char?  DifficultyGlyphOverride => '○';
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (scene.Phase != NarrationPhase.ChildhoodReminescence) return false;
         return target is FragmentPointOfInterest;
@@ -26,11 +34,11 @@ public class RememberVerb : Verb
     public override string Verbatim(Scene scene, PoV pov, Element target)
     {
         if (target is FragmentPointOfInterest frag)
-            return $"try to remember what was {frag.Fragment.Name}";
+            return $"try to remember what was this {frag.Fragment.Name} from my childhood";
         return "try to remember";
     }
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         if (target is not FragmentPointOfInterest fragmentPoi)
             throw new InvalidOperationException("RememberVerb target must be a FragmentPointOfInterest");
@@ -38,23 +46,27 @@ public class RememberVerb : Verb
         var data    = fragmentPoi.Fragment;
         var outcome = data.Outcome;
         var origin  = scene.CurrentReminescenceId ?? "";
-        var reports = new List<OutcomeReport>();
+        var reports = new List<Outcome>();
 
         // Skills — visible positive chips; Apply() grants a fresh level-1 instance.
-        foreach (var skillId in outcome.SkillIds)
+        foreach (var skillType in outcome.SkillTypes)
         {
-            var template = ModusMentisRegistry.Instance.GetModusMentis(skillId);
+            var template = ModusMentisRegistry.Instance.GetModusMentis(skillType);
             if (template == null)
-            {
-                Console.WriteLine($"RememberVerb: skill '{skillId}' not registered — skipping.");
-                continue;
-            }
+                throw new InvalidOperationException(
+                    $"RememberVerb: modusMentis '{skillType.Name}' is not registered "
+                    + "(it needs a public parameterless constructor to be auto-registered).");
+
             reports.Add(new SkillAcquisitionOutcome(template));
         }
 
         // Items — visible positive chips; Apply() calls protagonist.AcquireItem().
         foreach (var itemFactory in outcome.Items)
             reports.Add(new ItemGrantOutcome(itemFactory()));
+
+        // Coins — visible positive chips; Apply() credits the shared party wallet.
+        foreach (var (coinType, amount) in outcome.Coins)
+            reports.Add(new CoinGrantOutcome(coinType, amount));
 
         // Internal: childhood history mutation (location + fragment record).
         reports.Add(new ChildhoodHistoryOutcome(origin, data.Name, data.Summary, data.ContextSummary, outcome.SetChildhoodLocation));

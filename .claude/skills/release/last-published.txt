@@ -1,0 +1,17 @@
+# The last commit whose content went live on itch.io, by any means - a Volume cut by the
+# release skill, or a hotfix uploaded by hand.
+#
+# The release skill diffs from here: `git log --no-merges <sha>..HEAD` is the new work,
+# and that log is what the changelog is written from.
+#
+# Format: one uncommented line, `<full-sha> <YYYY-MM-DD> <volume label>`.
+#
+# A hotfix keeps the Volume label it shipped under and moves only the sha and the date.
+# Update this by hand after one, or run `/release record <sha>`; a record left behind
+# makes the next changelog re-announce fixes players already have.
+#
+# Seeded by hand from the user's statement that the live build is the 2026-08-15 one.
+# Nothing in the working tree can confirm that and dist/ cannot be used to try - see
+# "Hotfixes" in SKILL.md.
+
+c1e5fbe203820557c9f2181734948dacf19663b4 2026-08-15 Volume 1 - Turnips and Radishes

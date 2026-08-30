@@ -1,0 +1,81 @@
+                 
+#                 ______________
+#                /\.............\   
+#                \/\ proscribed  \  
+#                 \ \  palimpsest \ 
+#                  \ \-------------\ 
+#                   \/\             \ 
+#                    \ \_____________\
+#                     \/_____________/ 
+
+
+PLAYTEST :
+- fight debuging
+- slay>corpse debug
+- illegal actions
+- beast constraints + better context
+- llama auto setup
+- exe build
+- manual
+- childhood -> death run
+
+humor outcome
+organ name in humor button during dices rolls
+"John" in free reasoning thought preview
+time of the day context, anatomy (beast) context, ...
+(You wonder ...) in dialogue inner thought (2nd person)
+routine + traveling NPC ?
+
+words to prevent :
+photo album
+bullet
+office
+
+
+new verbs :
+
+new MM :
+- rejection
+- hyperbole
+- oxymoron
+- euphemism
+- avoidance
+- deflection
+- sorry
+- delicatess
+- caresse
+- ponder
+- relax
+- confront
+- resistance
+- gold mining
+- watchdog
+- infiltration
+- buglary
+- narcicism
+- megalomania
+- voyeurism
+- perversity
+- misanthropy
+- philanthropy
+- sadism
+- masochism
+- nihilism
+- solipsism
+- pareidolia
+- optimism/pessimism
+- common sens
+- sarcasm
+- irony
+- critical thinking
+- anxiety
+- contrariness
+- courtesy
+- courage
+- bravery
+- fortitude
+- sense of justice
+- virtue signaling
+- sociopathy
+- solitude
+- shyness

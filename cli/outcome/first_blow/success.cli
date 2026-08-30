@@ -1,0 +1,45 @@
+# first_blow — the blow that opens a fight
+#
+# The verb test next door (cli/verb/attack/success.cli) asserts that attack REPORTS a first blow.
+# This asserts that the blow actually landed on somebody: the chip says a wound was left, and the
+# man is carrying it.
+#
+# Read on the NPC rather than on the screen, which is the whole distinction the outcome range
+# exists for — `expect` proves what the player was told, `inspect` reads the world. The brewer is
+# built by TestSceneFactory at 5 hit points with nothing wrong with him, and hit points are the
+# wound count subtracted from the maximum, so one blow is one wound and one point.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Hall" --period dawn --observe-only "brewer"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# Untouched before the swing — asserted, so the change below is a change and not a starting state.
+expect-state npcs brewer alive=True affinity=Stranger enemy=False hp=6/6 wounds=0
+
+strategy succeed
+goal attack
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+expect First blow:
+expect-outcome first_blow
+
+# The world, not the chip: a wound on his body and a hit point off it.
+expect-state npcs brewer alive=True affinity=Stranger enemy=False hp=5/6 wounds=1
+quit

@@ -1,0 +1,59 @@
+# A fight lost inside a location ends the run, the same as one lost on the road.
+#
+# It used to exit to the world view instead. The travel encounter was therefore the only lethal fight
+# in the game: a fight picked in a location could be lost at no cost whatever, the protagonist
+# walking out of it at zero health and playing on — which also made every quarrel in a location free
+# to start.
+#
+# death_wounds.cli is the same assertion by the travel route. Both are kept: they reach TriggerDeath
+# down different paths, and it was the difference between the paths that was the bug.
+#
+# The teardown is the second thing being tested here and cannot be seen from the death screen alone.
+# Update enters its narration branch on _isInNarrativeMode rather than on the mode, so a session left
+# standing would repaint itself over the death screen every frame; `expect END RUN` passing is what
+# says it did not.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --npc-static --start-area "Test Hall" --period dawn --observe-only brewer --save-path .tmp-cli-save/death-narration-fight.json
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal attack
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+# The landed attack HOLDS the fight so its first blow can be read (see "Opening a fight: the first
+# blow"). The fight opens on the press that closes the segment, not on the swing.
+click button
+wait mode Fighting 90
+
+fight-end death
+
+wait mode Death 60
+expect MORTAL WOUNDS
+expect END RUN
+
+expect-state savefile save none
+
+click end-run
+wait mode MainMenu 20
+inspect menu
+expect-state menu Continue disabled
+
+quit

@@ -1,379 +1,290 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Cathedral;
+using Cathedral.Game.Narrative.Preview;
+using Cathedral.Game.Narrative.Rules;
 using Cathedral.LLM;
-using Cathedral.LLM.JsonConstraints;
 
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
-/// Generates narration for action outcomes from the action modusMentis's perspective.
-/// Uses the action modusMentis's LLM slot for outcome narration.
+/// Generates narration for action outcomes from the action Modus Mentis's perspective by building
+/// neutral meaning text (<see cref="NeutralNarration"/>) and re-expressing it in persona voice via
+/// <see cref="PersonaRewriter"/>. In playground mode the neutral text is returned unchanged.
 /// </summary>
 public class OutcomeNarrator
 {
     private readonly LlamaServerManager _llmManager;
     private readonly ModusMentisSlotManager _slotManager;
-    private readonly QuestionFillerService _questionFillerService;
+    private readonly PersonaRewriter _rewriter;
 
-    public OutcomeNarrator(LlamaServerManager llmManager, ModusMentisSlotManager slotManager, QuestionFillerService? questionFillerService = null)
+    /// <summary>GBNF-forced opening for outcome narration — keeps the styled result first-person.</summary>
+    private const string OutcomePrefix = "I ";
+
+    public OutcomeNarrator(LlamaServerManager llmManager, ModusMentisSlotManager slotManager)
     {
-        _llmManager = llmManager;
+        _llmManager  = llmManager;
         _slotManager = slotManager ?? throw new ArgumentNullException(nameof(slotManager));
-        _questionFillerService = questionFillerService ?? QuestionFillerService.Instance;
+        _rewriter    = new PersonaRewriter(llmManager);
     }
 
     /// <summary>
-    /// Generates narration for an action outcome from the action modusMentis's perspective.
+    /// Narrates an action outcome (success or failure) in the action Modus Mentis's voice.
     /// </summary>
     public async Task<string> NarrateOutcomeAsync(
         ParsedNarrativeAction action,
         ModusMentis actionModusMentis,
-        OutcomeBase outcome,
+        INarratable outcome,
         bool succeeded,
         double difficulty,
-        Protagonist protagonist,
+        PartyMember protagonist,
         CancellationToken cancellationToken = default,
-        string? failureHint = null)
+        IReadOnlyList<string>? outcomeVerbatims = null,
+        string? neutralOverride = null,
+        ILlmPreviewSink? preview = null)
     {
-        // Ensure narrator slot is initialized with action modusMentis's persona
+        // The reminescence path supplies its own neutral meaning (a plain "I tried to remember …"
+        // framing that embeds the concrete recovered memory); everything else templates it here.
+        string neutral = neutralOverride ?? BuildNeutralOutcome(action, succeeded, outcomeVerbatims);
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
-
-        // Resolve questions from the filler service
-        var happenedRef = succeeded ? QuestionReference.OutcomeSucceededHappened : QuestionReference.OutcomeFailedHappened;
-        var happenedQ = _questionFillerService.GetNext(actionModusMentis, happenedRef);
-
-        // Build prompt
-        string prompt = BuildNarrationPrompt(
-            action,
-            actionModusMentis,
-            outcome,
-            succeeded,
-            difficulty,
-            protagonist,
-            happenedQ.PromptText,
-            failureHint);
-
-        // Build JSON schema for narration
-        var schema = LLMSchemaConfig.CreateOutcomeNarrationSchema(happenedQ.JsonFieldName);
-
-        string gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
-
-        // Request from LLM
-        string? jsonResponse = await RequestFromLLMAsync(slotId, prompt, gbnf, cancellationToken);
-
-        if (string.IsNullOrWhiteSpace(jsonResponse))
-        {
-            return GenerateFallbackNarration(action, succeeded, outcome);
-        }
-
-        // Parse response
-        string narrationText;
-        try
-        {
-            using var doc = JsonDocument.Parse(jsonResponse);
-            narrationText = TextTruncationUtils.TrimToLastSentence(doc.RootElement.GetProperty(happenedQ.JsonFieldName).GetString() ?? "");
-            if (string.IsNullOrWhiteSpace(narrationText))
-                return GenerateFallbackNarration(action, succeeded, outcome);
-        }
-        catch (JsonException)
-        {
-            return GenerateFallbackNarration(action, succeeded, outcome);
-        }
-
-        // Follow-up: what do you feel?
-        string feeling = await RequestFeelingAsync(slotId, actionModusMentis, action.ActionText, succeeded, cancellationToken);
-        return string.IsNullOrWhiteSpace(feeling)
-            ? narrationText
-            : $"{narrationText} {feeling}";
+        // forcedPrefix "I " constrains the styled result to a first-person opening (every neutral
+        // outcome is first-person — "I succeeded to …", "Alas, I failed to …", "I tried to remember
+        // …"), the same GBNF trick the action rewrite uses. When a preview
+        // sink is supplied, the outcome streams into the preview box like every other narration.
+        return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
+            actionModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
+            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
     }
 
     /// <summary>
-    /// Generates narration explaining why an action failed plausibility checks.
+    /// Narrates what an action's consequences stirred in the actor, in the EMOTION modus mentis's own
+    /// voice — a different persona, and therefore a different slot, from the one that narrated the
+    /// outcome a moment earlier. That is the whole reason this is a second request rather than a
+    /// longer first one: the point of the block is that somebody else in the same head is speaking.
+    ///
+    /// <para>The neutral line is built by <see cref="NeutralNarration.Emotion"/> from the outcomes'
+    /// own verbatims and the humor's <see cref="BodyHumor.FeelsLike"/>, so an emotion describes the
+    /// consequences in exactly the words the outcome block used and names the feeling that actually
+    /// reached the spleen.</para>
+    /// </summary>
+    public async Task<string> NarrateEmotionAsync(
+        FeltEmotion felt,
+        CancellationToken cancellationToken = default,
+        ILlmPreviewSink? preview = null)
+    {
+        string neutral = NeutralNarration.Emotion(felt.Verbatims, felt.Humor.FeelsLike);
+        int    slotId  = await GetOrCreateNarratorSlotAsync(felt.ModusMentis);
+        return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Emotion,
+            felt.ModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
+            styleInstruction: felt.ModusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
+    }
+
+    // ── Dual outcome pre-generation (for humor dice modifiers) ─────────────────
+    // Both success and failure narration are generated up-front during the dice animation so the
+    // player can flip the result via humor modifiers with no further loading. Each branch is
+    // generated on a clean copy of the narrator slot history (snapshot/restore) so they don't
+    // pollute each other; CommitNarrationHistory keeps only the chosen branch's turns.
+    private int _pendingNarratorSlot = -1;
+    private List<object>? _pendingSuccessHistory;
+    private List<object>? _pendingFailureHistory;
+
+    /// <summary>
+    /// Generate BOTH the success and failure narration for an action in one pass. Neither result
+    /// is committed to the slot's permanent history yet — call <see cref="CommitNarrationHistory"/>
+    /// once the final (possibly humor-modified) outcome is known.
+    /// </summary>
+    public async Task<(string success, string failure)> NarrateBothOutcomesAsync(
+        ParsedNarrativeAction action,
+        ModusMentis actionModusMentis,
+        INarratable successOutcome,
+        INarratable failureOutcome,
+        double difficulty,
+        PartyMember protagonist,
+        IReadOnlyList<string>? successVerbatims,
+        IReadOnlyList<string>? failureVerbatims,
+        CancellationToken cancellationToken = default)
+    {
+        if (PlaygroundMode.IsActive)
+        {
+            _pendingNarratorSlot = -1;
+            return (BuildNeutralOutcome(action, true, successVerbatims),
+                    BuildNeutralOutcome(action, false, failureVerbatims));
+        }
+
+        int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
+        var instance = _llmManager.GetInstance(slotId);
+        var baseline = instance?.SnapshotHistory();
+
+        string success = await NarrateOutcomeAsync(
+            action, actionModusMentis, successOutcome, true, difficulty, protagonist, cancellationToken,
+            outcomeVerbatims: successVerbatims);
+        var afterSuccess = instance?.SnapshotHistory();
+
+        // Reset to the pre-narration baseline so the failure branch generates without seeing the
+        // success turns, then snapshot the failure branch state.
+        if (instance != null && baseline != null) instance.RestoreHistory(baseline);
+
+        string failure = await NarrateOutcomeAsync(
+            action, actionModusMentis, failureOutcome, false, difficulty, protagonist, cancellationToken,
+            outcomeVerbatims: failureVerbatims);
+        var afterFailure = instance?.SnapshotHistory();
+
+        _pendingNarratorSlot   = (instance != null) ? slotId : -1;
+        _pendingSuccessHistory = afterSuccess;
+        _pendingFailureHistory = afterFailure;
+
+        return (success, failure);
+    }
+
+    /// <summary>
+    /// After the final outcome is chosen, keep only that branch's narration turns in the slot's
+    /// conversation history (discarding the speculative other branch). No-op if no dual generation
+    /// is pending.
+    /// </summary>
+    public void CommitNarrationHistory(bool success)
+    {
+        if (_pendingNarratorSlot < 0) return;
+        var instance = _llmManager.GetInstance(_pendingNarratorSlot);
+        var chosen = success ? _pendingSuccessHistory : _pendingFailureHistory;
+        if (instance != null && chosen != null) instance.RestoreHistory(chosen);
+        _pendingNarratorSlot = -1;
+        _pendingSuccessHistory = null;
+        _pendingFailureHistory = null;
+    }
+
+    /// <summary>
+    /// Narrates why an action failed plausibility checks, in the action Modus Mentis's voice.
     /// </summary>
     public async Task<string> NarratePlausibilityFailureAsync(
         ParsedNarrativeAction action,
         ModusMentis actionModusMentis,
         string plausibilityError,
-        Protagonist protagonist,
-        CancellationToken cancellationToken = default)
+        PartyMember protagonist,
+        CancellationToken cancellationToken = default,
+        ILlmPreviewSink? preview = null)
     {
-        // Use the action modusMentis's slot for plausibility failure narration
+        string neutral = NeutralNarration.PlausibilityFailure(ActionDisplay(action));
+        if (!string.IsNullOrWhiteSpace(plausibilityError))
+            neutral = $"{neutral} {plausibilityError}";
+
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
-
-        string personaToneLine = actionModusMentis.PersonaTone != null
-            ? $"You are a {actionModusMentis.PersonaTone}."
-            : $"You are {actionModusMentis.DisplayName}.";
-        string reminderClause = actionModusMentis.PersonaReminder != null
-            ? $"As a {actionModusMentis.PersonaReminder}, "
-            : "";
-
-        var happenedQ = _questionFillerService.GetNext(actionModusMentis, QuestionReference.OutcomeFailedHappened);
-
-        string prompt = $@"{personaToneLine}
-{WorldContext.EpochContext}
-You tried to {action.ActionText} but it could not happen.
-{plausibilityError}
-
-{reminderClause}{happenedQ.PromptText}
-{Config.Narrative.AnswerInstructionFor(actionModusMentis.PersonaReminder2)}";
-
-        var schema = LLMSchemaConfig.CreateOutcomeNarrationSchema(happenedQ.JsonFieldName);
-        string gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
-
-        string? jsonResponse = await RequestFromLLMAsync(slotId, prompt, gbnf, cancellationToken);
-
-        if (string.IsNullOrWhiteSpace(jsonResponse))
-        {
-            return plausibilityError; // Fallback to the raw error message
-        }
-
-        string narrationText;
-        try
-        {
-            using var doc = JsonDocument.Parse(jsonResponse);
-            narrationText = TextTruncationUtils.TrimToLastSentence(doc.RootElement.GetProperty(happenedQ.JsonFieldName).GetString() ?? "");
-            if (string.IsNullOrWhiteSpace(narrationText))
-                return plausibilityError;
-        }
-        catch (JsonException)
-        {
-            return plausibilityError;
-        }
-
-        // Follow-up: what do you feel?
-        string feeling = await RequestFeelingAsync(slotId, actionModusMentis, action.ActionText, false, cancellationToken);
-        return string.IsNullOrWhiteSpace(feeling)
-            ? narrationText
-            : $"{narrationText} {feeling}";
+        return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
+            actionModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
+            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
     }
 
     /// <summary>
-    /// Generates a short narration explaining why a combined item cannot be used for the action
-    /// (i.e. the item appropriateness critic rejected the combination).
+    /// Narrates a coded-rule refusal (witness present, under threat, …) in the action Modus Mentis's
+    /// voice. <paramref name="reason"/> is the rule's first-person reason phrase.
+    /// </summary>
+    public async Task<string> NarrateRefusalAsync(
+        ParsedNarrativeAction action,
+        ModusMentis actionModusMentis,
+        string reason,
+        PartyMember protagonist,
+        CancellationToken cancellationToken = default,
+        ILlmPreviewSink? preview = null)
+    {
+        string neutral = NeutralNarration.ActionImpossible(ActionDisplay(action), reason);
+
+        int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
+        return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
+            actionModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
+            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
+    }
+
+    /// <summary>
+    /// Narrates a modus mentis the body can no longer carry, in that modus mentis's own voice —
+    /// an observation that could not be made, a thought that could not be held, a companion who
+    /// could not be addressed. See <see cref="BrokenModusMentis"/>.
+    ///
+    /// <para>Unlike <see cref="NarrateRefusalAsync"/> this takes no action, because there is none:
+    /// the refusal happens before a goal exists. The neutral sentence therefore carries the whole
+    /// meaning — which office failed, which part of the body took it away, and the wounds
+    /// responsible.</para>
+    /// </summary>
+    public async Task<string> NarrateBrokenModusMentisAsync(
+        ModusMentis modusMentis,
+        PartyMember actor,
+        NeutralNarration.BrokenFaculty faculty,
+        CancellationToken cancellationToken = default,
+        ILlmPreviewSink? preview = null)
+    {
+        string neutral = BrokenModusMentis.NeutralFor(actor, modusMentis, faculty);
+
+        int slotId = await GetOrCreateNarratorSlotAsync(modusMentis);
+        return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
+            modusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
+            styleInstruction: modusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
+    }
+
+    /// <summary>
+    /// Narrates why a combined item cannot be used for the action, in the action Modus Mentis's voice.
+    ///
+    /// <para><paramref name="kind"/> chooses the neutral sentence, and they are genuinely different
+    /// pieces of news — the implement is wrong, the act admits of no implement, the act is a blow and
+    /// the thing is no weapon, the hands have no craft in them, or the idea was sound and the hands
+    /// were not. Collapsing them into one "it did not work" leaves the rewrite to invent which, and
+    /// it invents the flattering one.</para>
+    ///
+    /// <para>Only <see cref="ToolFailureKind.WrongTool"/> carries the critic's own reason, because it
+    /// is the only kind an LLM was asked about.</para>
     /// </summary>
     public async Task<string> NarrateItemCombinationFailureAsync(
         ParsedNarrativeAction action,
         Item item,
         ModusMentis actionModusMentis,
         string criticReason = "",
-        CancellationToken cancellationToken = default)
+        ToolFailureKind kind = ToolFailureKind.WrongTool,
+        CancellationToken cancellationToken = default,
+        ILlmPreviewSink? preview = null)
     {
+        string display = ActionDisplay(action);
+        string neutral = kind switch
+        {
+            ToolFailureKind.Senseless     => NeutralNarration.ItemCombinationSenseless(display, item.WithArticle()),
+            ToolFailureKind.NotItsPurpose => NeutralNarration.ItemCombinationNotItsPurpose(display, item.WithArticle()),
+            ToolFailureKind.NoProficiency => NeutralNarration.ItemCombinationNoProficiency(item.WithArticle()),
+            ToolFailureKind.BeyondSkill   => NeutralNarration.ItemCombinationBeyondSkill(display, item.WithArticle()),
+            ToolFailureKind.NotAWeapon    => NeutralNarration.ItemCombinationNotAWeapon(item.WithArticle()),
+            _                             => NeutralNarration.ItemCombinationFailure(display, item.WithArticle()),
+        };
+        if (kind == ToolFailureKind.WrongTool && !string.IsNullOrWhiteSpace(criticReason))
+            neutral = $"{neutral} {criticReason}";
+
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
+        return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
+            actionModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
+            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
+    }
 
-        string personaToneLine = actionModusMentis.PersonaTone != null
-            ? $"You are a {actionModusMentis.PersonaTone}."
-            : $"You are {actionModusMentis.DisplayName}.";
-        string reminderClause = actionModusMentis.PersonaReminder != null
-            ? $"As a {actionModusMentis.PersonaReminder}, "
-            : "";
-        string criticLine = !string.IsNullOrWhiteSpace(criticReason)
-            ? $"{criticReason}\n"
-            : "";
+    // ── Helpers ────────────────────────────────────────────────────────────────
 
-        string prompt = $@"{personaToneLine}
-{WorldContext.EpochContext}
-You are about to: {action.ActionText}.
-You are in possession of {item.WithArticle()} ({item.DescriptionLower()}).
-You want to use this item to realize this action but it is not suitable.
-{criticLine}
-{reminderClause}explain in one sentence why using {item.WithArticle()} here simply does not work or makes no sense.
-{Config.Narrative.AnswerInstructionFor(actionModusMentis.PersonaReminder2)}";
-
-        var schema = LLMSchemaConfig.CreateOutcomeNarrationSchema();
-        string gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
-
-        string? jsonResponse = await RequestFromLLMAsync(slotId, prompt, gbnf, cancellationToken);
-
-        if (string.IsNullOrWhiteSpace(jsonResponse))
-            return $"Using {item.DisplayName} here does not help.";
-
-        try
-        {
-            using var doc = JsonDocument.Parse(jsonResponse);
-            string narration = TextTruncationUtils.TrimToLastSentence(doc.RootElement.GetProperty("what_happened").GetString() ?? "");
-            return string.IsNullOrWhiteSpace(narration)
-                ? $"Using {item.DisplayName} here does not help."
-                : narration;
-        }
-        catch (JsonException)
-        {
-            return $"Using {item.DisplayName} here does not help.";
-        }
+    private static string BuildNeutralOutcome(
+        ParsedNarrativeAction action, bool succeeded, IReadOnlyList<string>? outcomeVerbatims)
+    {
+        var d = ActionDisplay(action);
+        return succeeded
+            ? NeutralNarration.OutcomeSuccess(d, outcomeVerbatims)
+            : NeutralNarration.OutcomeFailure(d, outcomeVerbatims);
     }
 
     /// <summary>
-    /// Ensures the narrator slot is initialized with the action modusMentis's persona.
-    /// Returns the slot ID for this modusMentis.
+    /// Clean neutral action phrase for the neutral-meaning templates fed back to the persona rewriter.
+    /// Prefers <see cref="ParsedNarrativeAction.NeutralActionText"/> ("get up and continue my journey")
+    /// so the "I tried to …" framing embeds the plain phrasing rather than the already-styled label;
+    /// falls back to DisplayText, then to ActionText with any leading "try to " stripped.
     /// </summary>
-    private async Task<int> GetOrCreateNarratorSlotAsync(ModusMentis actionModusMentis)
+    private static string ActionDisplay(ParsedNarrativeAction action)
     {
-        // Use ModusMentisSlotManager to get slot for the action modusMentis
-        return await _slotManager.GetOrCreateSlotForModusMentisAsync(actionModusMentis);
+        if (!string.IsNullOrWhiteSpace(action.NeutralActionText)) return action.NeutralActionText;
+        if (!string.IsNullOrWhiteSpace(action.DisplayText)) return action.DisplayText;
+        var text = action.ActionText ?? "";
+        return text.StartsWith("try to ", StringComparison.OrdinalIgnoreCase) ? text.Substring(7) : text;
     }
 
-    /// <summary>
-    /// Builds the prompt for outcome narration.
-    /// </summary>
-    private string BuildNarrationPrompt(
-        ParsedNarrativeAction action,
-        ModusMentis actionModusMentis,
-        OutcomeBase outcome,
-        bool succeeded,
-        double difficulty,
-        Protagonist protagonist,
-        string questionText,
-        string? failureHint = null)
-    {
-        string personaToneLine = actionModusMentis.PersonaTone != null
-            ? $"You are a {actionModusMentis.PersonaTone}."
-            : $"You are {actionModusMentis.DisplayName}.";
-        string reminderClause = actionModusMentis.PersonaReminder != null
-            ? $"As a {actionModusMentis.PersonaReminder}, "
-            : "";
-
-        string resultLine;
-        if (succeeded)
-        {
-            string difficultyNote = difficulty < 0.3
-                ? "without much effort"
-                : difficulty < 0.7
-                    ? "after some difficulty"
-                    : "against the odds";
-            string outcomeDescription = outcome.ToNaturalLanguageString();
-            resultLine = $"You succeeded {difficultyNote}. {outcomeDescription}.";
-        }
-        else
-        {
-            string failureLine = string.IsNullOrEmpty(failureHint)
-                ? "You failed."
-                : $"You failed. {failureHint}";
-            resultLine = failureLine;
-        }
-
-        return $@"{personaToneLine}
-{WorldContext.EpochContext}
-You tried to {action.ActionText}.
-{resultLine}
-
-{reminderClause}{questionText}
-{Config.Narrative.AnswerInstructionFor(actionModusMentis.PersonaReminder2)}";
-    }
-
-    /// <summary>
-    /// Follow-up call in the same slot: asks "what do you feel?" after outcome narration.
-    /// The slot still holds the narration context, so no prompt reset is needed.
-    /// Returns the parsed feeling sentence, or empty string on failure.
-    /// </summary>
-    private async Task<string> RequestFeelingAsync(int slotId, ModusMentis actionModusMentis, string actionText, bool succeeded, CancellationToken cancellationToken)
-    {
-        var feelRef = succeeded ? QuestionReference.OutcomeSucceededFeel : QuestionReference.OutcomeFailedFeel;
-        var feelQ = _questionFillerService.GetNext(actionModusMentis, feelRef);
-        string outcomeReminder = succeeded
-            ? $"You tried to {actionText} and you succeeded."
-            : $"You tried to {actionText} and you failed.";
-        string prompt = $"{outcomeReminder}\n{feelQ.PromptText}\n{Config.Narrative.AnswerInstructionFor(actionModusMentis.PersonaReminder2)}";
-        var schema = LLMSchemaConfig.CreateFeelingSchema(feelQ.JsonFieldName);
-        string gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
-
-        string? jsonResponse = await RequestFromLLMAsync(slotId, prompt, gbnf, cancellationToken);
-        if (string.IsNullOrWhiteSpace(jsonResponse))
-            return string.Empty;
-
-        try
-        {
-            using var doc = JsonDocument.Parse(jsonResponse);
-            return TextTruncationUtils.TrimToLastSentence(
-                doc.RootElement.GetProperty(feelQ.JsonFieldName).GetString() ?? "");
-        }
-        catch (JsonException)
-        {
-            return string.Empty;
-        }
-    }
-
-    /// <summary>
-    /// Sends request to LLM and returns the complete response text.
-    /// </summary>
-    private async Task<string?> RequestFromLLMAsync(
-        int slotId,
-        string prompt,
-        string grammar,
-        CancellationToken cancellationToken)
-    {
-        var tcs = new TaskCompletionSource<string>();
-        var responseText = string.Empty;
-
-        void OnTokenStreamed(object? sender, TokenStreamedEventArgs e)
-        {
-            if (e.SlotId == slotId)
-            {
-                responseText += e.Token;
-            }
-        }
-
-        void OnRequestCompleted(object? sender, RequestCompletedEventArgs e)
-        {
-            if (e.SlotId == slotId)
-            {
-                _llmManager.TokenStreamed -= OnTokenStreamed;
-                _llmManager.RequestCompleted -= OnRequestCompleted;
-
-                if (!e.WasCancelled)
-                {
-                    tcs.SetResult(responseText);
-                }
-                else
-                {
-                    tcs.SetResult(string.Empty);
-                }
-            }
-        }
-
-        _llmManager.TokenStreamed += OnTokenStreamed;
-        _llmManager.RequestCompleted += OnRequestCompleted;
-
-        try
-        {
-            await _llmManager.ContinueRequestAsync(
-                slotId,
-                prompt,
-                null,
-                null,
-                grammar);
-
-            var result = await tcs.Task;
-            
-            // Small delay to ensure LlamaServerManager's finally block completes cleanup
-            await Task.Delay(100);
-            
-            return result;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"OutcomeNarrator: LLM request failed: {ex.Message}");
-            _llmManager.TokenStreamed -= OnTokenStreamed;
-            _llmManager.RequestCompleted -= OnRequestCompleted;
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// Generates a simple fallback narration when LLM fails.
-    /// </summary>
-    private string GenerateFallbackNarration(ParsedNarrativeAction action, bool succeeded, OutcomeBase outcome)
-    {
-        if (succeeded)
-        {
-            return $"The action succeeded. {outcome.ToNaturalLanguageString()}.";
-        }
-        else
-        {
-            return "The attempt failed. Perhaps another approach would work better.";
-        }
-    }
+    private Task<int> GetOrCreateNarratorSlotAsync(ModusMentis actionModusMentis)
+        => _slotManager.GetOrCreateSlotForModusMentisAsync(actionModusMentis);
 }

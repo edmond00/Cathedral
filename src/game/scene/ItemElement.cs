@@ -13,6 +13,12 @@ public class ItemElement : Element
     /// <summary>The wrapped narrative item.</summary>
     public Narrative.Item Item { get; }
 
+    /// <summary>
+    /// Stable per-slot identity for depletion/regeneration, assigned at scene build
+    /// (deterministic across rebuilds). Empty until assigned. See <c>SceneFactory.AssignDepletionKeys</c>.
+    /// </summary>
+    public string DepletionKey { get; set; } = "";
+
     public override string DisplayName => Item.DisplayName;
 
     public override List<string> Descriptions => new() { Item.Description };

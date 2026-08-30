@@ -65,4 +65,30 @@ public class ChildhoodHistory
         sb.Append('.');
         return sb.ToString();
     }
+
+    /// <summary>
+    /// Renders the childhood life-experiences as a short block for the post-childhood
+    /// <c>ChildhoodMemoryModusMentis</c> persona prompt: a location-grounding line followed by one
+    /// "- {context phrase}" bullet per remembered fragment that carries a biographical phrase.
+    /// Returns an empty string when nothing biographical has been recorded.
+    /// </summary>
+    public string ToExperienceSummary()
+    {
+        var experiences = RememberedFragments
+            .Where(f => !string.IsNullOrWhiteSpace(f.ContextSummary))
+            .Select(f => f.ContextSummary)
+            .ToList();
+
+        if (Location == null && experiences.Count == 0) return string.Empty;
+
+        var sb = new StringBuilder();
+        if (Location != null)
+            sb.Append($"You spent your childhood at {Location}.");
+        foreach (var experience in experiences)
+        {
+            if (sb.Length > 0) sb.Append('\n');
+            sb.Append($"- {experience}");
+        }
+        return sb.ToString();
+    }
 }

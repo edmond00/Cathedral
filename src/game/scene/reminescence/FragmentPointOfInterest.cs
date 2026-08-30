@@ -17,6 +17,7 @@ public sealed class FragmentPointOfInterest : PointOfInterest
     public FragmentPointOfInterest(FragmentData fragment)
         : base(
             displayName:  fragment.Name,
+            referenceLemma: "memory",
             descriptions: new List<string> { fragment.ObservationText },
             items:        null,
             moods:        new[] { "fuzzy", "fading", "half-remembered", "hazy", "shimmering", "elusive", "distant" })

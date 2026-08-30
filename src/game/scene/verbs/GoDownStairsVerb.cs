@@ -1,5 +1,6 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Scene.Building;
 
 namespace Cathedral.Game.Scene.Verbs;
@@ -14,18 +15,37 @@ public class GoDownStairsVerb : Verb
     public override string DisplayName    => "Go Down";
     public override int    BaseDifficulty => 1;
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    /// <summary>As going up: a stair asks nothing of the hands.</summary>
+    public override ToolUsage ToolUse => ToolUsage.Excluded;
+
+    /// <summary>Four limbs are sure-footed; two are balanced. Surefoot names a beast's limbs, so a person falls through.</summary>
+    public override IReadOnlyList<string> GrantedModusMentisIds(Element? target)
+        => new[] { "surefoot", "balance" };
+
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (target is not StairPointOfInterest stair) return false;
         return pov.Where.Id == stair.TopArea.Id;
     }
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
-        => $"descend {target.DisplayName.ToLowerInvariant()}";
+        => $"descend {DefiniteTarget(target)}";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
-        if (target is not StairPointOfInterest stair) return System.Array.Empty<OutcomeReport>();
+        if (target is not StairPointOfInterest stair) return System.Array.Empty<Outcome>();
         return new[] { new AreaMoveOutcome(stair.BottomArea) };
     }
+
+    // ── Routine recording ─────────────────────────────────────────────────────
+    public override bool CanRecordAsRoutine(Scene scene, PoV pov, Element target, PartyMember actor)
+        => target is StairPointOfInterest;
+
+    public override RoutineTargetRef? RoutineTarget(Scene scene, PoV pov, Element target)
+        => target is PointOfInterest poi
+            ? new RoutineTargetRef(RoutineTargetKind.PointOfInterest, poi.ReferenceLemma, poi.DisplayName)
+            : null;
+
+    public override RoutinePhaseKind RoutineTriggeredPhase(Scene scene, PoV pov, Element target)
+        => RoutinePhaseKind.Narration;
 }

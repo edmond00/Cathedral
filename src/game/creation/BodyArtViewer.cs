@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using OpenTK.Mathematics;
 using Cathedral.Terminal;
 using Cathedral.Terminal.Utils;
 using Cathedral.Game.Narrative;
+using Cathedral.Fight;
 
 namespace Cathedral.Game.Creation;
 
@@ -29,6 +31,12 @@ public class BodyArtViewer
     public const int PanelWidth = 32;
     public const int PanelContentX = 70;
     public const int PanelContentW = 28;
+    public const int MaxBarWidth = 5;
+    /// <summary>Cells in the wound-healing bar. Matches the age readout's bar so the two read alike.</summary>
+    private const int HealBarWidth = 10;
+
+    // ── Creation point budget ─────────────────────────────────────
+    public const int PointBudget = 25;
 
     // ── Configuration ────────────────────────────────────────────
     /// <summary>Horizontal offset for the body art (default 0, increase to shift art right).</summary>
@@ -42,6 +50,9 @@ public class BodyArtViewer
 
     /// <summary>When true, wound glyphs and HP bar are rendered (body submenu only).</summary>
     public bool ShowWounds { get; set; } = false;
+
+    /// <summary>When true, the age / remaining-lifetime readout is rendered (body submenu only).</summary>
+    public bool ShowAge { get; set; } = false;
 
     /// <summary>When true, ◄/► arrows are rendered next to each score for editing.</summary>
     public bool ShowScoreEditControls { get; set; } = false;
@@ -60,7 +71,7 @@ public class BodyArtViewer
     private string? _hoveredRawPartName;    /// <summary>-1 when hovering the ◄ button, +1 when hovering the ► button, 0 otherwise.</summary>
     private int _hoveredArrowDelta = 0;
     private char? _hoveredWoundId;          // set when mouse is precisely on a wound ∅ glyph
-    private Wound? _hoveredWoundInstance;  // specific wound instance being hovered (used for wildcard position)
+    private WoundInstance? _hoveredWoundInstance;  // the specific injury being hovered, not just its kind
     // ── Blink state ──────────────────────────────────────────────
     private readonly Stopwatch _blinkStopwatch = Stopwatch.StartNew();
     private double _lastBlinkTime;
@@ -82,6 +93,7 @@ public class BodyArtViewer
     private readonly Dictionary<string, char> _organPartNameToChar;
     private readonly List<(string bodyPartId, int startRow)> _bodyPartRows = new();
     private readonly Dictionary<int, string> _rowToOrganPartId = new();
+    private readonly Dictionary<int, string> _rowToBodyPartId = new();
     private readonly Dictionary<int, (int decX, int incX)> _rowToArrowX = new();
 
     /// <summary>Exposes row→organPartId mapping for callers that need hit-testing.</summary>
@@ -105,6 +117,7 @@ public class BodyArtViewer
     public void ComputeLayout()
     {
         _rowToOrganPartId.Clear();
+        _rowToBodyPartId.Clear();
         _rowToArrowX.Clear();
         _bodyPartRows.Clear();
 
@@ -112,6 +125,7 @@ public class BodyArtViewer
         foreach (var bp in _protagonist.BodyParts)
         {
             _bodyPartRows.Add((bp.Id, row));
+            _rowToBodyPartId[row] = bp.Id;
             row++; // header row
 
             foreach (var organ in bp.Organs)
@@ -250,6 +264,11 @@ public class BodyArtViewer
                     }
                 }
             }
+            else if (_rowToBodyPartId.TryGetValue(y, out var hoverBpId))
+            {
+                // Hovering a region header row → region selected (no organ, whole-region box).
+                newBodyPart = hoverBpId;
+            }
         }
 
         bool changed = newOrganPart != _hoveredOrganPartName
@@ -265,21 +284,18 @@ public class BodyArtViewer
         }
         changed = changed || newArrowDelta != _hoveredArrowDelta;
 
-        // Check if hovering precisely on a wound glyph (only when ShowWounds is active)
+        // Check if hovering precisely on a wound glyph (only when ShowWounds is active).
+        // Same resolver the render loop uses, so what the player points at is what they see.
         char? newWoundId = null;
-        Wound? newWoundInstance = null;
+        WoundInstance? newWoundInstance = null;
         if (ShowWounds && artX >= 0 && artX < _artData.Width && artY >= 0 && artY < _artData.Height)
         {
-            foreach (var wound in _protagonist.Wounds)
+            foreach (var (wound, pos) in ResolveWoundPositions())
             {
-                bool hit;
-                if (wound.ArtX != null)
-                    hit = wound.ArtX.Value == artX && wound.ArtY!.Value == artY;
-                else if (_artData.WoundPositions.TryGetValue(wound.WoundId, out var positions))
-                    hit = positions.Any(p => p.x == artX && p.y == artY);
-                else
-                    hit = false;
-                if (hit) { newWoundId = wound.WoundId; newWoundInstance = wound; break; }
+                if (pos.x != artX || pos.y != artY) continue;
+                newWoundId = wound.WoundId;
+                newWoundInstance = wound;
+                break;
             }
         }
 
@@ -477,58 +493,23 @@ public class BodyArtViewer
         // Overlay wound glyphs (∅) on the body art, blinking orange/dark-grey (body submenu only)
         if (ShowWounds)
         {
-            // Assign free art positions to any wildcard wounds that haven't been placed yet
-            var occupiedByWounds = new HashSet<(int, int)>(
-                _artData.WoundPositions.Values.SelectMany(v => v).Select(p => (p.x, p.y)));
-            // Also count already-placed wildcard instances
-            foreach (var w in _protagonist.Wounds)
-                if (w.ArtX != null) occupiedByWounds.Add((w.ArtX.Value, w.ArtY!.Value));
-            // Collect all free body cells once, then pick randomly for each unplaced wildcard
-            var freeCells = new List<(int x, int y)>();
-            for (int fy2 = 0; fy2 < _artData.Height; fy2++)
-                for (int fx2 = 0; fx2 < _artData.Width; fx2++)
-                    if (_artData.IsBodyCell(fx2, fy2) && !occupiedByWounds.Contains((fx2, fy2)))
-                        freeCells.Add((fx2, fy2));
-            var rng = new Random();
-            foreach (var wound in _protagonist.Wounds.Where(w => w.ArtX == null && w.TargetKind == Cathedral.Game.Narrative.WoundTargetKind.Wildcard))
-            {
-                if (freeCells.Count == 0) break;
-                // Prefer cells in the wound's target zone; fall back to any free cell
-                var pool = wound.WildcardZoneHint != null
-                    ? freeCells.Where(p => IsWoundCellInZone(p.x, p.y, wound.WildcardZoneHint)).ToList()
-                    : freeCells;
-                if (pool.Count == 0) pool = freeCells;
-                int idx = rng.Next(pool.Count);
-                var chosen = pool[idx];
-                freeCells.Remove(chosen);
-                wound.ArtX = chosen.x;
-                wound.ArtY = chosen.y;
-                occupiedByWounds.Add(chosen);
-            }
-
             Vector4 woundColor = _blinkOn ? Config.Colors.Purple : Config.Colors.DarkGray35;
-            foreach (var wound in _protagonist.Wounds)
+            foreach (var (_, pos) in ResolveWoundPositions())
             {
-                IEnumerable<(int x, int y)> positions;
-                if (wound.ArtX != null)
-                    positions = new[] { (wound.ArtX.Value, wound.ArtY!.Value) };
-                else if (_artData.WoundPositions.TryGetValue(wound.WoundId, out var wpos))
-                    positions = wpos;
-                else
-                    continue;
-                foreach (var (wx, wy) in positions)
-                {
-                    int tx = ArtOffsetX + wx;
-                    int ty = ArtOffsetY + wy;
-                    if (tx >= 0 && tx < PanelX - 1 && ty >= 0 && ty < _terminal.Height)
-                        _terminal.SetCell(tx, ty, '∅', woundColor, Config.Colors.Black);
-                }
+                int tx = ArtOffsetX + pos.x;
+                int ty = ArtOffsetY + pos.y;
+                if (tx >= 0 && tx < PanelX - 1 && ty >= 0 && ty < _terminal.Height)
+                    _terminal.SetCell(tx, ty, '∅', woundColor, Config.Colors.Black);
             }
         }
 
         // HP bar overlaid in the black space at the top of the art area
         if (ShowWounds)
             RenderHpBar();
+
+        // Age readout in the bottom-right corner of the art area, clear of the HP bar (top-left)
+        if (ShowAge)
+            RenderAgeReadout();
 
         // Separator line between art and panel
         int sepX = PanelX - 1;
@@ -540,6 +521,113 @@ public class BodyArtViewer
     }
 
     /// <summary>
+    /// Where every one of the subject's wounds draws its ∅ glyph — one cell each, no two the same.
+    ///
+    /// <para>
+    /// The single source of truth for both the render loop and the hover hit-test, which used to
+    /// duplicate the logic and could therefore disagree about what the player was pointing at.
+    /// </para>
+    ///
+    /// <para>
+    /// A wound's <em>anchor</em> is its canonical cell in <c>wounds.txt</c>, or — for a wildcard,
+    /// which has no authored position — the centre of its zone hint, or the middle of the body.
+    /// If that cell is already taken the glyph moves to the nearest free body cell instead of
+    /// drawing on top: two Black Eyes used to render as one, with the second invisible and
+    /// unhoverable even though it was costing HP. Resolved positions are cached on the instance so
+    /// they stay put between frames.
+    /// </para>
+    /// </summary>
+    private List<(WoundInstance Wound, (int x, int y) Pos)> ResolveWoundPositions()
+    {
+        var result   = new List<(WoundInstance, (int, int))>();
+        var occupied = new HashSet<(int, int)>();
+
+        // Wounds already placed keep their cell — placement must not shuffle between frames.
+        foreach (var w in _protagonist.Wounds)
+            if (w.ArtX != null) occupied.Add((w.ArtX.Value, w.ArtY!.Value));
+
+        foreach (var wound in _protagonist.Wounds)
+        {
+            if (wound.ArtX != null)
+            {
+                result.Add((wound, (wound.ArtX.Value, wound.ArtY!.Value)));
+                continue;
+            }
+
+            var anchor = AnchorCellFor(wound);
+            if (anchor == null) continue;   // nothing in the art represents this wound
+
+            var cell = NearestFreeBodyCell(anchor.Value, occupied);
+            if (cell == null) continue;     // body art completely full
+
+            wound.ArtX = cell.Value.x;
+            wound.ArtY = cell.Value.y;
+            occupied.Add(cell.Value);
+            result.Add((wound, cell.Value));
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// The cell a wound would ideally occupy: its authored <c>wounds.txt</c> position, else the
+    /// centre of the zone it was dealt to, else the middle of the body.
+    /// </summary>
+    private (int x, int y)? AnchorCellFor(WoundInstance wound)
+    {
+        if (_artData.WoundPositions.TryGetValue(wound.WoundId, out var wpos) && wpos.Count > 0)
+            return (wpos[0].x, wpos[0].y);
+
+        // Wildcards have no authored cell. Aim at the middle of the hinted zone when there is one.
+        if (wound.WildcardZoneHint != null)
+        {
+            var zone = new List<(int x, int y)>();
+            for (int y = 0; y < _artData.Height; y++)
+                for (int x = 0; x < _artData.Width; x++)
+                    if (_artData.IsBodyCell(x, y) && IsWoundCellInZone(x, y, wound.WildcardZoneHint))
+                        zone.Add((x, y));
+            if (zone.Count > 0)
+                return (zone.Sum(p => p.x) / zone.Count, zone.Sum(p => p.y) / zone.Count);
+        }
+
+        var body = new List<(int x, int y)>();
+        for (int y = 0; y < _artData.Height; y++)
+            for (int x = 0; x < _artData.Width; x++)
+                if (_artData.IsBodyCell(x, y)) body.Add((x, y));
+        if (body.Count == 0) return null;
+        return (body.Sum(p => p.x) / body.Count, body.Sum(p => p.y) / body.Count);
+    }
+
+    /// <summary>
+    /// The unoccupied body cell closest to <paramref name="anchor"/>, searched in rings outward.
+    /// Deterministic — no RNG, so the same wounds land in the same places on every run at a seed.
+    /// </summary>
+    private (int x, int y)? NearestFreeBodyCell((int x, int y) anchor, HashSet<(int, int)> occupied)
+    {
+        if (_artData.IsBodyCell(anchor.x, anchor.y) && !occupied.Contains(anchor))
+            return anchor;
+
+        int maxRadius = Math.Max(_artData.Width, _artData.Height);
+        for (int r = 1; r <= maxRadius; r++)
+        {
+            (int x, int y)? best = null;
+            int bestDistSq = int.MaxValue;
+            for (int dy = -r; dy <= r; dy++)
+            for (int dx = -r; dx <= r; dx++)
+            {
+                // Only the ring's edge — the interior was covered by smaller radii.
+                if (Math.Abs(dx) != r && Math.Abs(dy) != r) continue;
+                int nx = anchor.x + dx, ny = anchor.y + dy;
+                if (nx < 0 || ny < 0 || nx >= _artData.Width || ny >= _artData.Height) continue;
+                if (!_artData.IsBodyCell(nx, ny) || occupied.Contains((nx, ny))) continue;
+                int d = dx * dx + dy * dy;
+                if (d < bestDistSq) { bestDistSq = d; best = (nx, ny); }
+            }
+            if (best != null) return best;
+        }
+        return null;
+    }
+
     /// <summary>
     /// Returns true if the art cell at (x, y) belongs to the given zone hint.
     /// Checks body-part id first, then organ-part name and organ name from organs.csv.
@@ -564,9 +652,10 @@ public class BodyArtViewer
         int labelRow = ArtOffsetY + 1;
         int barRow   = ArtOffsetY + 2;
 
-        // Label and numeric value
+        // Label and numeric value. Kept light rather than tinted to the bar's own colour, so it
+        // reads as a heading like the inventory's WEIGHT readout and the bar below carries the hue.
         string label = $"HP  {curHp}/{maxHp}";
-        _terminal.Text(barX, labelRow, label, Config.Colors.DarkYellowGrey, Config.Colors.Black);
+        _terminal.Text(barX, labelRow, label, Config.Colors.LightGray75, Config.Colors.Black);
 
         // Individual cells — one per max HP
         for (int i = 0; i < maxHp; i++)
@@ -576,24 +665,89 @@ public class BodyArtViewer
         }
     }
 
+    /// <summary>
+    /// Age readout in the bottom-right of the art area, kept clear of the HP bar (top-left).
+    ///   Row 1: current age, in days.
+    ///   Row 2: a short bar and percentage showing how much life is left.
+    /// Both are derived — age from the member's birth time against the global clock, lifetime from
+    /// the heart — so nothing here needs refreshing when either changes.
+    ///
+    /// <para>The lifetime itself is deliberately not spelled out: "Age 5022/17280 d" is wide enough
+    /// to crowd the art beside it, and the bar underneath already says how much of a life has been
+    /// spent — which is the thing being read at a glance.</para>
+    /// </summary>
+    private void RenderAgeReadout()
+    {
+        int lifetime = _protagonist.GetLifetimeDays();
+        if (lifetime <= 0) return;
+
+        int age       = (int)Math.Round(_protagonist.GetAgeDays());
+        int remaining = (int)Math.Round(_protagonist.GetRemainingLifeDays());
+        float fraction = Math.Clamp((float)remaining / lifetime, 0f, 1f);
+        int percent    = (int)Math.Round(fraction * 100f);
+
+        // "Age " mirrors the "HP  " prefix on the opposite corner — both four cells wide.
+        string label = $"Age {age} d";
+        string pct   = $"{percent}%";
+
+        // Right-align both rows against the art area's right edge, kept clear of the separator.
+        // Anchored to the bottom-right of the art area so it never collides with the HP bar
+        // in the top-left corner, then nudged up 2 rows and right 8 columns to clear the feet.
+        int rightEdge = Math.Min(ArtOffsetX + _artData.Width - 1 + 8, PanelX - 3);
+        int barRow    = ArtOffsetY + _artData.Height - 1 - 2 + BeastAgeRowDrop;
+        int labelRow  = barRow - 1;
+
+        int rowWidth = Math.Max(label.Length, AgeBarWidth + 1 + pct.Length);
+        int x0       = rightEdge - rowWidth + 1;
+        if (x0 < 0) return;   // art area too narrow to hold the readout
+
+        // Row 1 — age / lifetime in days, right-aligned. Light like the HP label opposite it, so
+        // both readouts head their bars the same way.
+        _terminal.Text(rightEdge - label.Length + 1, labelRow, label,
+            Config.Colors.LightGray75, Config.Colors.Black);
+
+        // Row 2 — remaining-lifetime bar, then the percentage.
+        int filled = (int)Math.Round(fraction * AgeBarWidth);
+        Vector4 barColor = AgeBarColor(fraction);
+        for (int i = 0; i < AgeBarWidth; i++)
+        {
+            Vector4 c = i < filled ? barColor : Config.Colors.DarkGray35;
+            _terminal.SetCell(x0 + i, barRow, '█', c, Config.Colors.Black);
+        }
+        _terminal.Text(x0 + AgeBarWidth + 1, barRow, pct, barColor, Config.Colors.Black);
+    }
+
+    /// <summary>Width in cells of the remaining-lifetime bar.</summary>
+    private const int AgeBarWidth = 10;
+
+    /// <summary>
+    /// Rows the age readout is pushed down by on a beast. The anchor is the bottom of the art, which
+    /// on the human sits below the feet but on a quadruped lands among the forelegs — the readout
+    /// printed straight through the claws. Beast art is shallower there, so it can simply drop.
+    /// </summary>
+    private int BeastAgeRowDrop =>
+        _protagonist.AnatomyType == Cathedral.Game.Narrative.AnatomyType.Beast ? 4 : 0;
+
+    /// <summary>Bar colour by remaining life: it sours as the end approaches.</summary>
+    private static Vector4 AgeBarColor(float remainingFraction) => remainingFraction switch
+    {
+        <= 0.10f => Config.Colors.BrightPurple,   // on the threshold
+        <= 0.25f => Config.Colors.Purple,         // failing
+        _        => Config.Colors.DarkYellowGrey, // matches the HP bar opposite
+    };
+
     private void RenderArrows()
     {
         // Orange arrow when hovering a wound glyph
         if (_hoveredWoundId != null)
         {
             int wx = -1, wy = -1;
+            // The resolved cell is the only source now: every wound has one, including the ones
+            // whose canonical position was taken and which were moved to a neighbouring cell.
             if (_hoveredWoundInstance?.ArtX != null)
             {
-                // Wildcard wound: use stored art position
                 wx = ArtOffsetX + _hoveredWoundInstance.ArtX.Value;
                 wy = ArtOffsetY + _hoveredWoundInstance.ArtY!.Value;
-            }
-            else if (_artData.WoundPositions.TryGetValue(_hoveredWoundId.Value, out var wpositions) && wpositions.Count > 0)
-            {
-                // Pick the rightmost wound glyph position as arrow origin
-                var rightmost = wpositions.OrderByDescending(p => p.x).First();
-                wx = ArtOffsetX + rightmost.x;
-                wy = ArtOffsetY + rightmost.y;
             }
             // Arrow target: row 53 = "minRow+1=50, +2 header, +1 WOUND label" i.e. title line of wound detail
             int targetRow = 54;
@@ -603,6 +757,32 @@ public class BodyArtViewer
                     wx, wy,
                     PanelContentX - 1, targetRow,
                     Config.Colors.Purple, Config.Colors.Black);
+            }
+            return;
+        }
+
+        // Region arrow: a region is hovered with no organ part (region name text or a non-organ
+        // body cell). Connect the region's art box to its header row, without any organ highlight.
+        if (_hoveredOrganPartName == null && _hoveredBodyPartId != null)
+        {
+            ArtBounds? regionBounds =
+                (LimbBodyParts.Contains(_hoveredBodyPartId) && _hoveredRawPartName != null)
+                    ? _artData.GetRawPartBounds(_hoveredRawPartName)
+                    : _artData.GetBodyPartBounds(_hoveredBodyPartId);
+
+            int headerRow = -1;
+            foreach (var (bpId, startRow) in _bodyPartRows)
+                if (bpId == _hoveredBodyPartId) { headerRow = startRow; break; }
+
+            if (regionBounds != null && headerRow >= 0)
+            {
+                int ox = ArtOffsetX + regionBounds.MaxX;
+                int oy = ArtOffsetY + (regionBounds.MinY + regionBounds.MaxY) / 2;
+                if (ox < PanelX - 2)
+                    ArrowRenderer.DrawConnector(_terminal,
+                        ox, oy,
+                        PanelContentX - 1, headerRow,
+                        Config.Colors.MediumYellow, Config.Colors.Black);
             }
             return;
         }
@@ -774,6 +954,10 @@ public class BodyArtViewer
                         }
                     }
 
+                    // ── Padding: align arrows to fixed column ──────────────────────
+                    for (int i = barWidth; i < MaxBarWidth; i++)
+                        _terminal.SetCell(barX + i, row, ' ', Config.Colors.Black, bg);
+
                     // ── Score digit ───────────────────────────────────────────────
                     char scoreDigit = partIsDisabled ? 'X' :
                         (partIsWounded && !isHoveredPart && !isHoveredOrgan)
@@ -790,21 +974,21 @@ public class BodyArtViewer
                         Vector4 incColor = isIncHovered ? Config.Colors.BrightYellow
                                          : isHoveredPart ? Config.Colors.MediumYellow
                                          : Config.Colors.DarkGray35;
-                        _terminal.SetCell(barX + barWidth,     row, ' ',         Config.Colors.Black, bg);
-                        _terminal.SetCell(barX + barWidth + 1, row, '◄',         decColor, bg);
-                        _terminal.SetCell(barX + barWidth + 2, row, scoreDigit,  scoreFg,  bg);
-                        _terminal.SetCell(barX + barWidth + 3, row, '►',         incColor, bg);
-                        _rowToArrowX[row] = (barX + barWidth + 1, barX + barWidth + 3);
+                        _terminal.SetCell(barX + MaxBarWidth,     row, ' ',         Config.Colors.Black, bg);
+                        _terminal.SetCell(barX + MaxBarWidth + 1, row, '◄',         decColor, bg);
+                        _terminal.SetCell(barX + MaxBarWidth + 2, row, scoreDigit,  scoreFg,  bg);
+                        _terminal.SetCell(barX + MaxBarWidth + 3, row, '►',         incColor, bg);
+                        _rowToArrowX[row] = (barX + MaxBarWidth + 1, barX + MaxBarWidth + 3);
 
-                        for (int fx = barX + barWidth + 4; fx < PanelX + PanelWidth; fx++)
+                        for (int fx = barX + MaxBarWidth + 4; fx < PanelX + PanelWidth; fx++)
                             _terminal.SetCell(fx, row, ' ', Config.Colors.Black, bg);
                     }
                     else
                     {
-                        _terminal.SetCell(barX + barWidth,     row, ' ',        Config.Colors.Black, bg);
-                        _terminal.SetCell(barX + barWidth + 1, row, scoreDigit, scoreFg,  bg);
+                        _terminal.SetCell(barX + MaxBarWidth,     row, ' ',        Config.Colors.Black, bg);
+                        _terminal.SetCell(barX + MaxBarWidth + 1, row, scoreDigit, scoreFg,  bg);
 
-                        for (int fx = barX + barWidth + 2; fx < PanelX + PanelWidth; fx++)
+                        for (int fx = barX + MaxBarWidth + 2; fx < PanelX + PanelWidth; fx++)
                             _terminal.SetCell(fx, row, ' ', Config.Colors.Black, bg);
                     }
 
@@ -821,9 +1005,56 @@ public class BodyArtViewer
         return row;
     }
 
-    // ── Humoral organ IDs ────────────────────────────────────────
-    private static readonly System.Collections.Generic.HashSet<string> HumoralOrganIds =
-        new() { "hepar", "paunch", "pulmones", "spleen" };
+    /// <summary>
+    /// Renders the hovered organ's flavour description in the band between the organ list
+    /// and the derived-stat detail. Returns the row after the description so the caller can
+    /// anchor the detail section below it. Renders nothing and returns <paramref name="minRow"/>
+    /// unchanged when no organ is hovered (or a wound glyph is hovered), preserving the detail
+    /// section's default position.
+    /// </summary>
+    public int RenderHoveredOrganDescription(int minRow)
+    {
+        if (_hoveredWoundId != null || _hoveredOrganPartName == null) return minRow;
+
+        var opInfo = FindOrganPartByName(_hoveredOrganPartName);
+        if (opInfo == null) return minRow;
+
+        var organ = _protagonist.GetOrganById(opInfo.Value.organName);
+        if (organ == null || string.IsNullOrWhiteSpace(organ.Description)) return minRow;
+
+        int row = Math.Max(minRow + 1, StatsStartRow);
+        _terminal.Text(PanelContentX, row, "──────────────────────────────", Config.Colors.DarkGray35, Config.Colors.Black);
+        row += 2;
+        _terminal.Text(PanelContentX, row, opInfo.Value.organDisplayName.ToUpper(), Config.Colors.MediumYellow, Config.Colors.Black);
+        row += 2;
+
+        foreach (var line in WrapText(organ.Description, PanelContentW))
+        {
+            _terminal.Text(PanelContentX, row, line, Config.Colors.LightGray75, Config.Colors.Black);
+            row++;
+        }
+        return row;
+    }
+
+    /// <summary>Greedy word-wrap of <paramref name="text"/> into lines no wider than <paramref name="maxWidth"/>.</summary>
+    private static IEnumerable<string> WrapText(string text, int maxWidth)
+    {
+        var sb = new StringBuilder();
+        foreach (var word in text.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (sb.Length == 0)
+                sb.Append(word);
+            else if (sb.Length + 1 + word.Length <= maxWidth)
+                sb.Append(' ').Append(word);
+            else
+            {
+                yield return sb.ToString();
+                sb.Clear();
+                sb.Append(word);
+            }
+        }
+        if (sb.Length > 0) yield return sb.ToString();
+    }
 
     /// <summary>
     /// Renders the hovered organ detail section below the stats.
@@ -857,6 +1088,38 @@ public class BodyArtViewer
                     _terminal.Text(PanelContentX, wRow, $"Affects: {hovered.TargetId}", Config.Colors.MediumGray60, Config.Colors.Black);
                     wRow++;
                 }
+
+                // ── Healing ──────────────────────────────────────────────────────
+                // Where a wound is on its way to closing, or why it never will be.
+                wRow++;
+                if (hovered.Handicap == Cathedral.Game.Narrative.WoundHandicap.High)
+                {
+                    _terminal.Text(PanelContentX, wRow, "Permanent — will not heal",
+                        Config.Colors.BrightPurple, Config.Colors.Black);
+                    wRow++;
+                }
+                else if (!hovered.CanHeal)
+                {
+                    // No infliction date: something the character already carried when the run began.
+                    _terminal.Text(PanelContentX, wRow, "An old wound",
+                        Config.Colors.MediumGray60, Config.Colors.Black);
+                    wRow++;
+                }
+                else
+                {
+                    int total = _protagonist.WoundHealDurationDays;
+                    double p  = hovered.HealProgress(total);
+                    int filled = (int)Math.Round(p * HealBarWidth);
+                    string bar = new string('█', filled) + new string('░', HealBarWidth - filled);
+                    _terminal.Text(PanelContentX, wRow, $"Healing  {bar}  {(int)Math.Round(p * 100)}%",
+                        Config.Colors.Yellow, Config.Colors.Black);
+                    wRow++;
+                    _terminal.Text(PanelContentX, wRow,
+                        $"         {(int)Math.Round(hovered.DaysOld)} of {total} days",
+                        Config.Colors.MediumGray60, Config.Colors.Black);
+                    wRow++;
+                }
+
                 if (!string.IsNullOrEmpty(hovered.Description))
                 {
                     wRow++;
@@ -884,13 +1147,6 @@ public class BodyArtViewer
         var opInfo = FindOrganPartByName(_hoveredOrganPartName);
         if (opInfo != null)
         {
-            _terminal.Text(PanelContentX, row, opInfo.Value.partDisplayName, Config.Colors.BrightYellow, Config.Colors.Black);
-            row++;
-            _terminal.Text(PanelContentX, row, $"Organ: {opInfo.Value.organDisplayName}", Config.Colors.MediumGray60, Config.Colors.Black);
-            row++;
-            _terminal.Text(PanelContentX, row, $"Region: {opInfo.Value.bodyPartDisplayName}", Config.Colors.MediumGray60, Config.Colors.Black);
-            row += 2;
-
             string organPartId      = opInfo.Value.partId;
             string organId          = opInfo.Value.organName;
             string organDisplayName = opInfo.Value.organDisplayName;
@@ -898,99 +1154,209 @@ public class BodyArtViewer
             string bodyPartDisplay  = opInfo.Value.bodyPartDisplayName;
             bool singlePartOrgan    = organPartId == organId;
 
-            // ── Section 1+2 merged (single-part organs) or split (multi-part) ─
+            // Colour scheme (foreground only — no background chips):
+            //   organ part      → yellow (the focused entity: title + its own stats)
+            //   belonging lines → grey ("Organ: …", "Region: …")
+            //   scope headers   → dark-yellow text for every scope ("Left Foot (part)",
+            //                     "Legs (organ)", "Lower Limbs (region)")
+            //   fighting medium → white text
+            Vector4 partColor      = Config.Colors.BrightYellow;
+            Vector4 belongGrey     = Config.Colors.MediumGray60;
+            Vector4 statGrey       = Config.Colors.LightGray75;
+            Vector4 scopeHeadColor = Config.Colors.DarkYellow;
+
+            var organObj = _protagonist.GetOrganById(organId);
+            // Whether each part is its own fighting medium (e.g. hands) decides where the
+            // Fighting Medium block hangs and which level it shows.
+            bool perPartMedium = organObj is { PartsAreIndependentMediums: true } && organObj.Parts.Count > 1;
+            int organScore = organObj?.Score ?? 0;
+            int partScore  = _protagonist.GetOrganPartById(organPartId)?.Score ?? 0;
+
+            // ── Title + belonging ──
+            _terminal.Text(PanelContentX, row, opInfo.Value.partDisplayName, partColor, Config.Colors.Black);
+            row++;
+            _terminal.Text(PanelContentX, row, $"Organ: {organDisplayName}", belongGrey, Config.Colors.Black);
+            row++;
+            _terminal.Text(PanelContentX, row, $"Region: {bodyPartDisplay}", belongGrey, Config.Colors.Black);
+            row += 2;
+
+            // ── Local renderers (share `row`) ──
+            void RenderScopeHeader(string title, string scope, Vector4 fg, Vector4 bg)
+            {
+                // "▸" prefix makes scope headers stand out; a blank line always separates the
+                // header from its first info line.
+                _terminal.Text(PanelContentX, row, $"▸ {title}  ({scope})", fg, bg);
+                row += 2;
+            }
+            // Each derived stat is rendered on two lines: the label on the first line and the
+            // value (with its unit) on the second, indented one extra space and drawn in a
+            // slightly darker grey so the number reads as secondary detail. Because the label
+            // no longer shares a row with the value it may use the full width of the right panel.
+            // extraIndent shifts both lines further right so a stat can nest under a group
+            // sub-header (e.g. secretion percentages beneath the "Secretion" label).
+            void RenderStat(DerivedStat stat, Vector4 labelColor, int extraIndent = 0)
+            {
+                int val = stat.GetRawValue(_protagonist);
+                Vector4 valueColor = AdjustLuminosity(labelColor, 0.65f);
+                string pad = new string(' ', extraIndent);
+                _terminal.Text(PanelContentX, row, $"{pad}  {stat.ShortDisplayName}", labelColor, Config.Colors.Black);
+                row++;
+                _terminal.Text(PanelContentX, row, $"{pad}    {stat.FormatValue(val)}", valueColor, Config.Colors.Black);
+                row++;
+            }
+            // Renders a "Fighting Medium lv.X" block followed by its skill list (learned skills
+            // bright, the next learnable one dim). Shared by organ and body-part mediums.
+            void RenderFightingMediumSkills(IReadOnlyList<string> skillIds, int level)
+            {
+                _terminal.Text(PanelContentX, row, $"  Fighting Medium  lv.{level}", Config.Colors.White, Config.Colors.Black);
+                row++;
+                bool nextLearnable = false;
+                foreach (var skillId in skillIds)
+                {
+                    var skill = FightingSkillRegistry.Instance.GetById(skillId);
+                    if (skill == null) continue;
+                    bool isLearned = _protagonist.LearnedModiMentis
+                        .Any(m => m.ModusMentisId == skill.RequiredModusMentisId);
+                    if (isLearned)
+                    {
+                        _terminal.Text(PanelContentX, row, $"    · {skill.DisplayName}", Config.Colors.LightGray75, Config.Colors.Black);
+                        row++;
+                    }
+                    else if (!nextLearnable)
+                    {
+                        _terminal.Text(PanelContentX, row, $"    · {skill.DisplayName}", Config.Colors.DarkGray35, Config.Colors.Black);
+                        row++;
+                        nextLearnable = true;
+                    }
+                }
+                row++;
+            }
+            // White "Secretion" sub-label shown beneath a humoral organ's scope header,
+            // mirroring how the white "Fighting Medium" label sits beneath its scope header.
+            void RenderSecretionLabel()
+            {
+                _terminal.Text(PanelContentX, row, "  Secretion", Config.Colors.White, Config.Colors.Black);
+                row++;
+            }
+
+            // Renders a scope's derived stats: ordinary stats first, then the humoral "Secretion"
+            // group as special info (white label) separated by a blank line. Returns true if any
+            // stat row was emitted (so the caller can blank-line before a following medium block).
+            bool RenderScopeStats(List<DerivedStat> stats, Vector4 normalColor)
+            {
+                var secretionStats = stats.Where(s => s is HumoralSecretionStat).ToList();
+                var normalStats    = stats.Where(s => s is not HumoralSecretionStat).ToList();
+                foreach (var stat in normalStats) RenderStat(stat, normalColor);
+                if (secretionStats.Count > 0)
+                {
+                    if (normalStats.Count > 0) row++; // blank line between normal stats and secretion info
+                    RenderSecretionLabel();
+                    foreach (var stat in secretionStats) RenderStat(stat, statGrey, extraIndent: 2);
+                }
+                return stats.Count > 0;
+            }
+
+            // Organ fighting-medium category (null if this organ has no combat skills).
+            var organCategory = OrganMediumRegistry.GetById(organId);
+
+            // ── Organ-part / organ stats, with the fighting medium hung off its owner ──
+            // Every scope that has content (stats and/or a fighting medium) renders its scope
+            // header first, so a header always precedes the info regardless of scope. The white
+            // Secretion / Fighting Medium labels sit beneath the (dark-yellow) scope header.
             if (singlePartOrgan)
             {
-                // Organ part and organ are the same — collect stats from both relations
+                // Part and organ coincide — one combined block owned by the organ.
                 var combined = _protagonist.DerivedStats
                     .Where(s => s.RelatedOrganPartId == organPartId || s.RelatedOrganId == organId)
                     .Distinct()
                     .ToList();
-                if (combined.Count > 0)
+                if (combined.Count > 0 || organCategory != null)
                 {
-                    bool isSecretion = HumoralOrganIds.Contains(organId);
-                    string header = isSecretion ? $"{organDisplayName} Secretion" : organDisplayName;
-                    _terminal.Text(PanelContentX, row, header, Config.Colors.DarkYellowGrey, Config.Colors.Black);
-                    row++;
-                    foreach (var stat in combined)
+                    RenderScopeHeader(organDisplayName, "organ", scopeHeadColor, Config.Colors.Black);
+                    bool anyStat = RenderScopeStats(combined, statGrey);
+                    // Single-part organs are whole-organ mediums → owned by the organ.
+                    if (organCategory != null)
                     {
-                        int val = stat.CalculateValue(stat.GetSourceScore(_protagonist));
-                        string line = $"  {stat.ShortDisplayName,-16} {stat.FormatValue(val)}";
-                        _terminal.Text(PanelContentX, row, line, Config.Colors.LightGray75, Config.Colors.Black);
-                        row++;
+                        if (anyStat) row++; // blank line between stats and special info
+                        RenderFightingMediumSkills(organCategory.SkillIds, organScore);
                     }
                     row++;
                 }
             }
             else
             {
-                // Section 1: Organ Part stats
+                // ── Part scope: part stats and/or the per-part medium (e.g. hands, feet) ──
                 var organPartStats = _protagonist.DerivedStats
                     .Where(s => s.RelatedOrganPartId == organPartId)
                     .ToList();
-                if (organPartStats.Count > 0)
+                bool partOwnsMedium = perPartMedium && organCategory != null;
+                if (organPartStats.Count > 0 || partOwnsMedium)
                 {
-                    _terminal.Text(PanelContentX, row, opInfo.Value.partDisplayName, Config.Colors.DarkYellowGrey, Config.Colors.Black);
-                    row++;
-                    foreach (var stat in organPartStats)
+                    RenderScopeHeader(opInfo.Value.partDisplayName, "part", scopeHeadColor, Config.Colors.Black);
+                    bool anyStat = RenderScopeStats(organPartStats, partColor);
+                    // Per-part medium → owned by THIS part, level = this part's score.
+                    if (partOwnsMedium)
                     {
-                        int val = stat.CalculateValue(stat.GetSourceScore(_protagonist));
-                        string line = $"  {stat.ShortDisplayName,-16} {stat.FormatValue(val)}";
-                        _terminal.Text(PanelContentX, row, line, Config.Colors.LightGray75, Config.Colors.Black);
-                        row++;
+                        if (anyStat) row++; // blank line between stats and special info
+                        RenderFightingMediumSkills(organCategory!.SkillIds, partScore);
                     }
                     row++;
                 }
 
-                // Section 2: Organ stats
+                // ── Organ scope: organ stats and/or the whole-organ medium (e.g. legs) ──
                 var organStats = _protagonist.DerivedStats
                     .Where(s => s.RelatedOrganId == organId)
                     .ToList();
-                if (organStats.Count > 0)
+                bool organOwnsMedium = !perPartMedium && organCategory != null;
+                if (organStats.Count > 0 || organOwnsMedium)
                 {
-                    bool isSecretion = HumoralOrganIds.Contains(organId);
-                    string header = isSecretion ? $"{organDisplayName} Secretion" : organDisplayName;
-                    _terminal.Text(PanelContentX, row, header, Config.Colors.DarkYellowGrey, Config.Colors.Black);
-                    row++;
-                    foreach (var stat in organStats)
+                    RenderScopeHeader(organDisplayName, "organ", scopeHeadColor, Config.Colors.Black);
+                    bool anyStat = RenderScopeStats(organStats, statGrey);
+                    if (organOwnsMedium)
                     {
-                        int val = stat.CalculateValue(stat.GetSourceScore(_protagonist));
-                        string line = $"  {stat.ShortDisplayName,-16} {stat.FormatValue(val)}";
-                        _terminal.Text(PanelContentX, row, line, Config.Colors.LightGray75, Config.Colors.Black);
-                        row++;
+                        if (anyStat) row++; // blank line between stats and special info
+                        RenderFightingMediumSkills(organCategory!.SkillIds, organScore);
                     }
                     row++;
                 }
             }
 
-            // ── Section 3: Body Part stats ───────────────────────────────
+            // ── Body-part (region) stats + region fighting medium (e.g. upper limbs) ──
             var bodyPartStats = _protagonist.DerivedStats
                 .Where(s => s.RelatedBodyPartId == bodyPartId)
                 .ToList();
-            if (bodyPartStats.Count > 0)
+            var bodyPartCategory = BodyPartMediumRegistry.GetById(bodyPartId);
+            if (bodyPartStats.Count > 0 || bodyPartCategory != null)
             {
-                _terminal.Text(PanelContentX, row, bodyPartDisplay, Config.Colors.DarkYellowGrey, Config.Colors.Black);
-                row++;
-                foreach (var stat in bodyPartStats)
+                RenderScopeHeader(bodyPartDisplay, "region", scopeHeadColor, Config.Colors.Black);
+                bool anyStat = RenderScopeStats(bodyPartStats, statGrey);
+                // A body part that is itself a fighting medium (level = region total score).
+                if (bodyPartCategory != null)
                 {
-                    int val = stat.CalculateValue(stat.GetSourceScore(_protagonist));
-                    string line = $"  {stat.ShortDisplayName,-16} {stat.FormatValue(val)}";
-                    _terminal.Text(PanelContentX, row, line, Config.Colors.LightGray75, Config.Colors.Black);
-                    row++;
+                    if (anyStat) row++; // blank line between stats and special info
+                    RenderFightingMediumSkills(bodyPartCategory.SkillIds,
+                        _protagonist.GetBodyPartById(bodyPartId)?.Score ?? 0);
                 }
                 row++;
             }
 
-            // ── Section 4: Wounds on this organ part / organ / body part ──
+            // ── Wounds on this organ part / organ / body part ──
             var wounds = _protagonist.GetWoundsForOrganPart(organPartId, organId, bodyPartId);
             if (wounds.Count > 0)
             {
                 _terminal.Text(PanelContentX, row, "Wounds", Config.Colors.BrightPurple, Config.Colors.Black);
                 row++;
+                int healDays = _protagonist.WoundHealDurationDays;
                 foreach (var wound in wounds)
                 {
                     string sev = wound.Handicap == Cathedral.Game.Narrative.WoundHandicap.High ? "●" : "◌";
-                    string line = $"  {sev} {wound.WoundName}";
+                    // Healing percentage inline, so a glance at the organ tells you which of its
+                    // wounds are on their way out. Blank for anything that will never close.
+                    string heal = wound.CanHeal
+                        ? $" {(int)Math.Round(wound.HealProgress(healDays) * 100),3}%"
+                        : "";
+                    string line = $"  {sev} {wound.WoundName}{heal}";
+                    if (line.Length > PanelContentW) line = line[..PanelContentW];
                     Vector4 wc = wound.Handicap == Cathedral.Game.Narrative.WoundHandicap.High
                         ? (_blinkOn ? Config.Colors.BrightPurple : Config.Colors.DarkGray35)
                         : Config.Colors.MediumGray60;
@@ -1000,9 +1366,80 @@ public class BodyArtViewer
                 row++;
             }
 
-            if (ShowClickHints)
+        }
+    }
+
+    /// <summary>
+    /// Renders the hovered region (body part) detail: its flavour description in the middle band
+    /// (right below the organ list), followed by the derived stats that belong specifically to the
+    /// region (not to its organs) and any region fighting medium. No-ops unless a region is hovered
+    /// with no organ part and no wound glyph.
+    /// </summary>
+    public void RenderHoveredRegionDetail(int minRow)
+    {
+        if (_hoveredWoundId != null || _hoveredOrganPartName != null || _hoveredBodyPartId == null) return;
+
+        var bodyPart = _protagonist.GetBodyPartById(_hoveredBodyPartId);
+        if (bodyPart == null) return;
+
+        // ── Description block (middle band) ──
+        int row = Math.Max(minRow + 1, StatsStartRow);
+        _terminal.Text(PanelContentX, row, "──────────────────────────────", Config.Colors.DarkGray35, Config.Colors.Black);
+        row += 2;
+        _terminal.Text(PanelContentX, row, bodyPart.DisplayName.ToUpper(), Config.Colors.MediumYellow, Config.Colors.Black);
+        row += 2;
+        if (!string.IsNullOrWhiteSpace(bodyPart.Description))
+            foreach (var line in WrapText(bodyPart.Description, PanelContentW))
             {
-                _terminal.Text(PanelContentX, row, "Click: cycle score", Config.Colors.DarkYellowGrey, Config.Colors.Black);
+                _terminal.Text(PanelContentX, row, line, Config.Colors.LightGray75, Config.Colors.Black);
+                row++;
+            }
+
+        // ── Region-specific derived stats + region fighting medium (the info section) ──
+        var regionStats = _protagonist.DerivedStats
+            .Where(s => s.RelatedBodyPartId == _hoveredBodyPartId)
+            .ToList();
+        var regionCategory = BodyPartMediumRegistry.GetById(_hoveredBodyPartId);
+        if (regionStats.Count == 0 && regionCategory == null) return;
+
+        int detailRow = Math.Max(row + 1, 50);
+        _terminal.Text(PanelContentX, detailRow, "──────────────────────────────", Config.Colors.DarkGray35, Config.Colors.Black);
+        detailRow += 2;
+        _terminal.Text(PanelContentX, detailRow, $"▸ {bodyPart.DisplayName}  (region)", Config.Colors.DarkYellow, Config.Colors.Black);
+        detailRow += 2;
+
+        Vector4 statGrey = Config.Colors.LightGray75;
+        foreach (var stat in regionStats)
+        {
+            int val = stat.GetRawValue(_protagonist);
+            _terminal.Text(PanelContentX, detailRow, $"  {stat.ShortDisplayName}", statGrey, Config.Colors.Black);
+            detailRow++;
+            _terminal.Text(PanelContentX, detailRow, $"    {stat.FormatValue(val)}", AdjustLuminosity(statGrey, 0.65f), Config.Colors.Black);
+            detailRow++;
+        }
+
+        if (regionCategory != null)
+        {
+            if (regionStats.Count > 0) detailRow++; // blank line between stats and medium
+            _terminal.Text(PanelContentX, detailRow, $"  Fighting Medium  lv.{bodyPart.Score}", Config.Colors.White, Config.Colors.Black);
+            detailRow++;
+            bool nextLearnable = false;
+            foreach (var skillId in regionCategory.SkillIds)
+            {
+                var skill = FightingSkillRegistry.Instance.GetById(skillId);
+                if (skill == null) continue;
+                bool isLearned = _protagonist.LearnedModiMentis.Any(m => m.ModusMentisId == skill.RequiredModusMentisId);
+                if (isLearned)
+                {
+                    _terminal.Text(PanelContentX, detailRow, $"    · {skill.DisplayName}", Config.Colors.LightGray75, Config.Colors.Black);
+                    detailRow++;
+                }
+                else if (!nextLearnable)
+                {
+                    _terminal.Text(PanelContentX, detailRow, $"    · {skill.DisplayName}", Config.Colors.DarkGray35, Config.Colors.Black);
+                    detailRow++;
+                    nextLearnable = true;
+                }
             }
         }
     }
@@ -1058,6 +1495,7 @@ public class BodyArtViewer
 
     /// <summary>
     /// Adjusts the score of an organ part on the protagonist.
+    /// Increases are gated by the remaining creation point budget.
     /// </summary>
     public void AdjustOrganPartScore(string organPartName, int delta)
     {
@@ -1066,12 +1504,14 @@ public class BodyArtViewer
             .SelectMany(o => o.Parts)
             .FirstOrDefault(p => p.Id == organPartName);
 
-        if (organPart != null)
-            organPart.Score = Math.Clamp(organPart.Score + delta, 0, organPart.MaxScore);
+        if (organPart == null) return;
+        if (delta > 0 && GetRemainingPoints() <= 0) return;
+        organPart.Score = Math.Clamp(organPart.Score + delta, 0, organPart.MaxScore);
     }
 
     /// <summary>
-    /// Cycles the score of an organ part: increments by 1, wrapping back to 0 after MaxScore.
+    /// Cycles the score of an organ part: increments by 1, wrapping back to 1 after MaxScore.
+    /// Increments are gated by the remaining creation point budget.
     /// </summary>
     public void CycleOrganPartScore(string organPartName)
     {
@@ -1080,8 +1520,10 @@ public class BodyArtViewer
             .SelectMany(o => o.Parts)
             .FirstOrDefault(p => p.Id == organPartName);
 
-        if (organPart != null)
-            organPart.Score = organPart.Score >= organPart.MaxScore ? 0 : organPart.Score + 1;
+        if (organPart == null) return;
+        if (organPart.Score >= organPart.MaxScore) return;  // already at max, do nothing
+        if (GetRemainingPoints() > 0)
+            organPart.Score++;             // spend one point
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -1095,6 +1537,18 @@ public class BodyArtViewer
             .SelectMany(bp => bp.Organs)
             .SelectMany(o => o.Parts)
             .Sum(p => p.Score);
+    }
+
+    /// <summary>
+    /// Points remaining in the creation budget (each organ starts at 1; budget covers extras).
+    /// </summary>
+    public int GetRemainingPoints()
+    {
+        int organCount = _protagonist.BodyParts
+            .SelectMany(bp => bp.Organs)
+            .SelectMany(o => o.Parts)
+            .Count();
+        return PointBudget - (GetTotalScore() - organCount);
     }
 
     /// <summary>Finds organ part info by its string id.</summary>

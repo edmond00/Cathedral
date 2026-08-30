@@ -7,11 +7,12 @@ namespace Cathedral.Game.Narrative;
 public class ProceduralMemoryCapacityStat : DerivedStat
 {
     public override string Name => "procedural_memory_capacity";
-    public override string DisplayName => "Procedural Capacity";
+    public override string DisplayName => "Procedural Memory";
     public override string? RelatedOrganId => "cerebellum";
 
     /// <summary>Slot count = organ score × 2 (range 2-20).</summary>
-    public override int CalculateValue(int sourceScore) => sourceScore * 2;
+    protected override int CalculateValue(int sourceScore) => sourceScore * 4;
     public override string FormatValue(int value) => $"{value} slots";
-    public override int MinimumValue() => 1;
+    public override int WorstValue => 1;
+    public override int? BestValue => 20;
 }

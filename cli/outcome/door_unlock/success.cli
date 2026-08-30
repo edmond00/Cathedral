@@ -1,0 +1,55 @@
+# door_unlock — the outcome, not the verb.
+#
+# cli/verb/unlock_door/ proves the chip is printed. This proves the chip corresponds to something
+# real: the world is inspected before and after, and it moved. The two overlap on purpose —
+# same scenario, different question.
+#
+# Lockpicking is a Required verb: a pick must be COMBINED with the action, not merely carried.
+# The hairpin is one of the verb's own reference tools, so the combination is accepted with no
+# critic call — which is what makes this deterministic, the item critic picking at random
+# under --playground.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-item hairpin --location-type test --location-id 0 --start-area "Test Yard" --period dawn --observe-only "Test Door"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# --- before ---
+inspect pois
+expect-state pois door=Locked
+
+strategy succeed
+goal unlock_door
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+
+click action 0
+choose 1
+regions
+choose 0
+advance 12 180
+regions
+click action 1
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+
+# --- the outcome really ran ---
+expect-outcome door_unlock
+
+# --- after: the world moved ---
+inspect pois
+expect-state pois door=Unlocked
+quit

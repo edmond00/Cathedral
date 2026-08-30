@@ -4,13 +4,19 @@ namespace Cathedral.Game.Scene;
 
 /// <summary>
 /// A specific space within a <see cref="Section"/>.
-/// Contains <see cref="PointOfInterest"/>s and <see cref="Spot"/>s the player can focus on.
+/// Contains the <see cref="PointOfInterest"/>s the player can focus on.
 /// Connected to other areas via directed edges in <see cref="Scene.AreaGraph"/>.
 /// </summary>
 public class Area : Element
 {
     public override string DisplayName { get; }
     public override List<string> Descriptions { get; }
+
+    /// <summary>
+    /// Core noun used as the keyword-similarity anchor when this area becomes an observation.
+    /// Defined explicitly at every construction site (no inference) — e.g. "grassland".
+    /// </summary>
+    public string ReferenceLemma { get; }
 
     /// <summary>Context description for LLM prompts (e.g. "crossing the open grassland").</summary>
     public string ContextDescription { get; }
@@ -21,12 +27,6 @@ public class Area : Element
     /// <summary>Points of interest (large objects, features) directly within this area.</summary>
     public List<PointOfInterest> PointsOfInterest { get; } = new();
 
-    /// <summary>
-    /// Sub-locations within this area that the player can enter.
-    /// Each spot has its own PoIs and is navigated separately (Enter/Leave verbs).
-    /// </summary>
-    public List<Spot> Spots { get; } = new();
-
     /// <summary>Mood adjectives for procedural neutral descriptions.</summary>
     public string[] Moods { get; }
 
@@ -35,8 +35,10 @@ public class Area : Element
     /// </summary>
     public bool IsPrivate { get; set; }
 
+
     public Area(
         string displayName,
+        string referenceLemma,
         string contextDescription,
         string transitionDescription,
         List<string> descriptions,
@@ -44,6 +46,7 @@ public class Area : Element
         bool isPrivate = false)
     {
         DisplayName           = displayName;
+        ReferenceLemma        = referenceLemma;
         ContextDescription    = contextDescription;
         TransitionDescription = transitionDescription;
         Descriptions          = descriptions;

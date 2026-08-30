@@ -9,8 +9,10 @@ using Mosaik.Core;
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
-/// English noun extractor. Uses Catalyst POS tagging when initialized,
-/// falling back to rule-based heuristics otherwise.
+/// English word extractor. Uses Catalyst POS tagging when initialized, falling back to rule-based
+/// heuristics otherwise. <see cref="ExtractKeywordCandidates"/> yields the words a narration
+/// keyword may be drawn from — nouns <i>and</i> adjectives, filtered against a stop list.
+///
 /// </summary>
 public static class NounExtractor
 {
@@ -20,8 +22,8 @@ public static class NounExtractor
     // ── Initialisation ─────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Loads the Catalyst English model. Call once from KeywordFallbackService.InitializeAsync.
-    /// Subsequent calls to ExtractNouns will use POS tagging instead of heuristics.
+    /// Loads the Catalyst English model. Call once from TextSanitizationPipeline initialization.
+    /// Subsequent extraction uses POS tagging instead of the rule-based heuristics.
     /// </summary>
     public static async Task InitializeAsync(string modelStoragePath)
     {
@@ -43,58 +45,65 @@ public static class NounExtractor
     // ── Public API ─────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Extracts candidate nouns from the given text.
-    /// Uses Catalyst POS tagging if initialized, rule-based heuristics as fallback.
-    /// Returns distinct lowercase words.
+    /// Extracts the words a narration keyword may be drawn from, paired with their lemma. Uses
+    /// Catalyst POS + lemmatizer when initialized (the English model bundles a lemma lookup),
+    /// falling back to the rule-based nouns with a simple singularizer. Surfaces are distinct,
+    /// lower-cased, and filtered against <see cref="StopWords"/>.
+    ///
+    /// <para><b>Adjectives count, not only nouns.</b> A description's most distinctive word is
+    /// frequently a participle or a qualifier — the <i>smouldering</i> hearth, the <i>sodden</i>
+    /// straw — and restricting candidacy to nouns left those unclickable, so a phase's keyword was
+    /// picked from a thinner and more generic pool than the prose actually offered. The generic
+    /// adjectives ("old", "big", "dark", "warm") are in <see cref="StopWords"/> already and stay
+    /// filtered; they are the adjective equivalent of "time" and nothing is gained by highlighting
+    /// one.</para>
     /// </summary>
-    public static List<string> ExtractNouns(string text)
+    public static List<(string Surface, string Lemma)> ExtractKeywordCandidates(string text)
     {
         if (string.IsNullOrWhiteSpace(text))
-            return new List<string>();
+            return new List<(string, string)>();
 
         if (_initialized && _pipeline != null)
-            return ExtractNounsCatalyst(text);
+        {
+            try
+            {
+                var doc = new Document(text, Language.English);
+                _pipeline!.ProcessSingle(doc);
 
-        return ExtractNounsRuleBased(text);
+                var result = new List<(string, string)>();
+                var seen   = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var span in doc)
+                    foreach (var token in span)
+                    {
+                        if (token.POS is not (PartOfSpeech.NOUN or PartOfSpeech.PROPN or PartOfSpeech.ADJ)) continue;
+                        var surface = token.Value.ToLowerInvariant();
+                        if (surface.Length < 3 || StopWords.Contains(surface) || !seen.Add(surface)) continue;
+
+                        var lemma = token.Lemma;
+                        lemma = string.IsNullOrWhiteSpace(lemma) ? Singularize(surface) : lemma.ToLowerInvariant();
+                        result.Add((surface, lemma));
+                    }
+
+                if (result.Count > 0) return result;
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"NounExtractor: Catalyst lemma extraction failed: {ex.Message}");
+            }
+        }
+
+        return ExtractNounsRuleBased(text).Select(w => (w, Singularize(w))).ToList();
     }
 
-    // ── Catalyst path ──────────────────────────────────────────────────────────
-
-    private static List<string> ExtractNounsCatalyst(string text)
+    /// <summary>Crude English singularizer used when Catalyst lemmas are unavailable.</summary>
+    private static string Singularize(string w)
     {
-        try
-        {
-            var doc = new Document(text, Language.English);
-            _pipeline!.ProcessSingle(doc);
-
-            var nouns = new List<string>();
-            var seen  = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            foreach (var span in doc)
-            {
-                foreach (var token in span)
-                {
-                    if (token.POS is PartOfSpeech.NOUN or PartOfSpeech.PROPN)
-                    {
-                        var lower = token.Value.ToLowerInvariant();
-                        if (lower.Length >= 3 && !StopWords.Contains(lower) && seen.Add(lower))
-                            nouns.Add(lower);
-                    }
-                }
-            }
-
-            if (nouns.Count > 0)
-                return nouns;
-
-            // If Catalyst found nothing, fall back to rule-based
-            Console.WriteLine("NounExtractor: Catalyst found no nouns, falling back to rule-based.");
-            return ExtractNounsRuleBased(text);
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"NounExtractor: Catalyst extraction failed: {ex.Message}");
-            return ExtractNounsRuleBased(text);
-        }
+        if (w.Length > 4 && w.EndsWith("ies")) return w[..^3] + "y";
+        if (w.Length > 4 && (w.EndsWith("ches") || w.EndsWith("shes") || w.EndsWith("ses") || w.EndsWith("xes") || w.EndsWith("zes")))
+            return w[..^2];
+        if (w.Length > 3 && w.EndsWith("s") && !w.EndsWith("ss")) return w[..^1];
+        return w;
     }
 
     // ── Rule-based fallback ────────────────────────────────────────────────────

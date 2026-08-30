@@ -1,0 +1,64 @@
+# Regression script for the LLM generation-preview box (see src/game/narrative/preview/).
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+wait
+
+# Observation preview: both sentences stream into ONE box (opener names "attention"), one CONTINUE.
+expect CONTINUE
+expect attention
+click continue
+wait
+
+# Observation committed: its text is now in the log and the keyword is live.
+#
+# Clicked by INDEX, not by name. The clickable keyword is the observed object's own noun, which
+# depends on what the phase opened on — this script pins nothing with --observe-only, so it cannot
+# know the word. It used to say `click keyword attention`, from an older rule where every
+# observation came out as "attention"; when that changed the script kept passing its `expect`s (the
+# word is still in the prose, "My attention is drawn to…") and silently stopped clicking anything.
+expect attention
+strategy succeed
+click keyword 0
+choose 0
+choose 0
+wait 45
+
+# Thinking preview: reasoning part first, gated by CONTINUE.
+expect CONTINUE
+click continue
+wait
+
+# Action preview: the action line always opens with "I will".
+expect I will
+click continue
+wait
+
+# Thinking committed: the action button is live.
+expect I want to
+click action 0
+choose 0
+wait 60
+
+# Dice overlay resolved — confirm it, which triggers outcome generation.
+click continue
+wait 60
+
+# Outcome preview box: only the true outcome is generated, opening first-person with "I".
+expect CONTINUE
+# "succeeded to" is NeutralNarration.OutcomeSuccess's wording ("It is done! I succeeded to …").
+# This used to expect "tried to", which is now only the childhood-reminescence framing.
+expect succeeded to
+click continue
+wait 60
+
+# Outcome committed: the success line is in the log and the footer CONTINUE is shown.
+expect SUCCESS
+quit

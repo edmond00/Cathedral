@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -6,355 +6,455 @@ using System.Threading;
 using System.Threading.Tasks;
 using Cathedral.LLM;
 using Cathedral.LLM.JsonConstraints;
+using Cathedral.Game.Npc;
 using Cathedral.Game.Scene;
 using Cathedral.Game.Scene.Verbs;
+using Cathedral.Game.Narrative.Preview;
 
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
-/// Manages thinking modusMentis LLM requests using slots 10-29.
-/// Handles instance creation, caching, and JSON-constrained action generation.
+/// Drives the thinking Chain-of-Thought. The two LLM *decisions* are preserved as constrained
+/// choices (which goal/sub-outcome to pursue, which action skill to use); the *flavor* — the
+/// reasoning block and the concrete action text — is produced by building neutral meaning text
+/// (<see cref="NeutralNarration"/>) and re-expressing it in persona voice via
+/// <see cref="PersonaRewriter"/>. In playground mode the decisions are made heuristically and the
+/// flavor falls back to the neutral text.
 /// </summary>
 public class ThinkingExecutor
 {
     private readonly LlamaServerManager _llmManager;
-    private readonly ThinkingPromptConstructor _promptConstructor;
     private readonly ModusMentisSlotManager _slotManager;
-    private readonly QuestionFillerService _questionFillerService;
+    private readonly PersonaRewriter _rewriter;
+    private readonly PersonaChoiceSelector _selector;
 
+    /// <param name="promptConstructor">Retained for API compatibility; the thinking prompts now use
+    /// <see cref="ThinkingPromptConstructor"/>'s static helpers directly, so no instance is stored.</param>
     public ThinkingExecutor(
         LlamaServerManager llmManager,
         ThinkingPromptConstructor promptConstructor,
-        ModusMentisSlotManager slotManager,
-        QuestionFillerService? questionFillerService = null)
+        ModusMentisSlotManager slotManager)
     {
         _llmManager = llmManager;
-        _promptConstructor = promptConstructor;
         _slotManager = slotManager ?? throw new ArgumentNullException(nameof(slotManager));
-        _questionFillerService = questionFillerService ?? QuestionFillerService.Instance;
+        _rewriter = new PersonaRewriter(llmManager);
+        _selector = new PersonaChoiceSelector(llmManager);
     }
 
-/// <summary>
-    /// CoT pipeline: REFLECT+GOAL → WHY → (HOW → WHAT, or early exit if IGNORE).
-    /// For ObservationObject targets the thinking modusMentis first reflects and picks a
-    /// goal (including the "ignore and move on" option). If it chooses to ignore, only the
-    /// WHY reasoning is returned and no action is generated. Otherwise the full
-    /// HOW → WHAT pipeline runs and one action is returned.
-    /// Returns null if any required LLM call fails.
+    private readonly Random _rng = GameRng.Stream("thinking");
+
+    /// <summary>
+    /// GOAL (decision) → optional IGNORE early-exit → HOW (decision) → reasoning rewrite →
+    /// action rewrite. Returns null only if no usable action skill is available.
     /// </summary>
     public async Task<ThinkingResponse?> GenerateThinkingAsync(
         ModusMentis thinkingModusMentis,
-        ConcreteOutcome targetOutcome,
+        NarrativeAnchor targetOutcome,
         string keyword,
         NarrationNode node,
         List<ModusMentis> actionModiMentis,
         Protagonist protagonist,
         WorldContext worldContext,
+        int locationId,
+        PartyMember actingMember,
+        Scene.Scene? scene = null,
+        PoV? pov = null,
+        bool isReminescence = false,
+        bool autoSuccess = false,
+        LlmPreviewSession? preview = null,
+        ActionProposalLedger? proposed = null,
         CancellationToken cancellationToken = default)
     {
-        // Acquire and reset the thinking slot once at the start of the procedure.
+        // The reasoning box accumulates the thinking MM's free "wants" (goal, then means) as dimmer
+        // parenthesized inner thoughts, followed by the reasoning rewrite. The action box (a different
+        // MM) gets the persona-fit want, then the action rewrite.
+        var reasoningPart = preview?.BeginAccumulatingPart(PreviewTitles.For(thinkingModusMentis));
+
         int thinkingSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(thinkingModusMentis);
         _llmManager.ResetInstance(thinkingSlot);
 
-        // ── Call 0: REFLECT + GOAL (always) ─────────────────────────────────────────
-        // For ObservationObjects use their sub-outcomes; for plain outcomes wrap in a list.
-        var (reflectTarget, subOutcomes) = targetOutcome is ObservationObject obs
-            ? (obs as ConcreteOutcome, obs.SubOutcomes)
-            : (targetOutcome, new List<ConcreteOutcome> { targetOutcome });
+        // Stamp the contextual NPC label for the current narrator's POV before any prompt text is
+        // built (this also propagates the label to the target's sub-outcomes / goal phrases).
+        (targetOutcome as INpcContextLabelStampable)?.StampContextLabel(actingMember, worldContext, locationId);
 
-        var (goalOutcome, reflect) = await GenerateGoalAsync(
-            thinkingSlot, reflectTarget, subOutcomes, node, thinkingModusMentis, protagonist, worldContext, cancellationToken);
+        // Sub-outcomes to choose between. "Ignore and move on" is offered by ChooseGoalAsync as the
+        // decline option ("walk away and leave it"); the persona choosing it IS the ignore outcome.
+        var sourceObs = targetOutcome as ObservationObject;
+        var subOutcomes = sourceObs != null
+            ? new List<NarrativeAnchor>(sourceObs.SubOutcomes)
+            : new List<NarrativeAnchor> { targetOutcome };
 
-        ConcreteOutcome resolvedOutcome = goalOutcome ?? subOutcomes[0];
-        string reflectText = reflect;
-        ObservationObject? sourceObs = targetOutcome as ObservationObject;
+        string targetDescription = targetOutcome.ToNaturalLanguageString();
 
-        string outcomeDescription = resolvedOutcome.ToNaturalLanguageString();
-        var skillMeans = actionModiMentis.Select(s => $"with {s.SkillMeans}").ToList();
+        // Short situational context threaded into every constrained-choice prompt: the overall
+        // location (e.g. "a farm"), the specific area within it (e.g. "courtyard"), and what drew
+        // the character's attention (the observed object).
+        string overallLocation = worldContext.GenerateContextDescription(locationId);
+        string areaLocation = node.GenerateNeutralDescription(locationId);
+        string? observedPhrase = sourceObs?.NeutralPhrase;
 
-        // ── Call 1: WHY ────────────────────────────────────────────────────────────
-        // For the ignore outcome use the source observation as the attention label so
-        // the prompt reads naturally ("drawn to [observation]… want to ignore and move on").
-        bool resolvedIsIgnore = resolvedOutcome is VerbOutcome vIgn && vIgn.VerbView.Verb is IgnoreVerb;
-        ConcreteOutcome whyTargetOutcome = (resolvedIsIgnore && sourceObs != null)
-            ? sourceObs
-            : resolvedOutcome;
-        var whyQ = _questionFillerService.GetNext(thinkingModusMentis, QuestionReference.ThinkWhy);
-        string whyPrompt = _promptConstructor.BuildWhyPrompt(outcomeDescription, node, thinkingModusMentis, protagonist, worldContext, whyTargetOutcome, whyQ.PromptText);
-        string whyGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateWhySchema(whyQ.JsonFieldName));
+        // The coded choice rules need somewhere to judge from; without a scene (tooling, tests) they
+        // are simply not run and every option stands.
+        var choiceCtx = scene != null && pov != null
+            ? new Rules.Choice.ChoiceRuleContext(scene, pov, actingMember, thinkingModusMentis)
+            : null;
 
-        string? whyJson = await RequestFromLLMAsync(thinkingSlot, whyPrompt, whyGbnf, cancellationToken);
-        if (string.IsNullOrWhiteSpace(whyJson))
-        {
-            Console.Error.WriteLine("ThinkingExecutor: WHY call returned empty response.");
-            return null;
-        }
+        // ── Decision 1: GOAL ────────────────────────────────────────────────────
+        var (resolved, goalThought) = await ChooseGoalAsync(thinkingSlot, subOutcomes, thinkingModusMentis, overallLocation, areaLocation, observedPhrase, choiceCtx, proposed, cancellationToken, reasoningPart);
+        bool isIgnore = resolved is VerbAction vIgnore && vIgnore.Verb is IgnoreVerb;
 
-        string whyText = ParseSingleTextField(whyJson, whyQ.JsonFieldName);
-        Console.WriteLine($"ThinkingExecutor: WHY complete ({whyText.Length} chars)");
-
-        // ── Early exit: IGNORE ─────────────────────────────────────────────────────
-        bool isIgnore = resolvedOutcome is VerbOutcome vIgnore && vIgnore.VerbView.Verb is IgnoreVerb;
+        // ── Early exit: IGNORE (reasoning only, no action) ──────────────────────
         if (isIgnore)
         {
-            Console.WriteLine("ThinkingExecutor: IGNORE selected — skipping HOW/WHAT, returning reasoning only.");
-            string ignoreReasoning = string.Join(" ", new[] { reflectText, whyText }
-                .Where(s => !string.IsNullOrWhiteSpace(s)));
+            string ignoreNeutral = NeutralNarration.ReasoningIgnore(targetDescription, isReminescence);
+            string ignoreReasoning = await _rewriter.RewriteAsync(
+                thinkingSlot, ignoreNeutral, NarrationKind.Reasoning, thinkingModusMentis.PersonaReminder2, styleInstruction: thinkingModusMentis.StyleInstruction, innerThought: goalThought, preview: reasoningPart?.NextSegment(), ct: cancellationToken);
             return new ThinkingResponse
             {
                 ReasoningText = ignoreReasoning,
-                Actions = new List<ParsedNarrativeAction>()
+                Actions = new List<ParsedNarrativeAction>(),
+                PreviewLastPart = reasoningPart
             };
         }
 
-        // ── Call 2: HOW ────────────────────────────────────────────────────────────
-        var howQ = _questionFillerService.GetNext(thinkingModusMentis, QuestionReference.ThinkHowReason);
-        string howPrompt = _promptConstructor.BuildHowPrompt(outcomeDescription, actionModiMentis, thinkingModusMentis, howQ.PromptText);
-        string howGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateHowSchema(skillMeans, howQ.JsonFieldName));
+        string goalPhrase = resolved.ToNaturalLanguageString();
 
-        string? howJson = await RequestFromLLMAsync(thinkingSlot, howPrompt, howGbnf, cancellationToken);
-        if (string.IsNullOrWhiteSpace(howJson))
+        // ── Decision 2: HOW (which action skill) ────────────────────────────────
+        var (skill, skillThought) = await ChooseSkillAsync(thinkingSlot, goalPhrase, actionModiMentis, thinkingModusMentis, overallLocation, areaLocation, observedPhrase, cancellationToken, reasoningPart);
+        if (skill == null)
         {
-            Console.Error.WriteLine("ThinkingExecutor: HOW call returned empty response.");
-            return null;
+            if (actionModiMentis.Count == 0)
+            {
+                Console.Error.WriteLine("ThinkingExecutor: no usable action skill for the chosen goal.");
+                preview?.Reset();
+                return null;
+            }
+
+            // Skills exist but the thinking Modus Mentis declined every means → "no way to do
+            // it": a reasoning-only outcome in the thinking MM's voice, mirroring the ignore branch.
+            string noMeansNeutral = NeutralNarration.ReasoningNoMeans(targetDescription, goalPhrase, isReminescence);
+            string noMeansText = await _rewriter.RewriteAsync(
+                thinkingSlot, noMeansNeutral, NarrationKind.Reasoning, thinkingModusMentis.PersonaReminder2, styleInstruction: thinkingModusMentis.StyleInstruction, innerThought: JoinThoughts(goalThought, skillThought), preview: reasoningPart?.NextSegment(), ct: cancellationToken);
+            return new ThinkingResponse
+            {
+                ReasoningText = string.IsNullOrWhiteSpace(noMeansText) ? noMeansNeutral : noMeansText,
+                Actions = new List<ParsedNarrativeAction>(),
+                PreviewLastPart = reasoningPart
+            };
         }
 
-        var (howText, selectedMeans) = ParseHowResponse(howJson, howQ.JsonFieldName);
-        if (string.IsNullOrEmpty(selectedMeans))
-        {
-            Console.Error.WriteLine("ThinkingExecutor: HOW call could not parse 'how' field.");
-            return null;
-        }
+        // ── Flavor: reasoning (thinking slot) ───────────────────────────────────
+        // The goal and means wants are handed back as the inner thought behind the chain, so the
+        // styled reasoning echoes why this goal and this way were chosen.
+        string reasoningNeutral = NeutralNarration.ReasoningChain(targetDescription, goalPhrase, skill.SkillMeans, isReminescence);
+        string reasoningText = await _rewriter.RewriteAsync(
+            thinkingSlot, reasoningNeutral, NarrationKind.Reasoning, thinkingModusMentis.PersonaReminder2, styleInstruction: thinkingModusMentis.StyleInstruction, innerThought: JoinThoughts(goalThought, skillThought), preview: reasoningPart?.NextSegment(), ct: cancellationToken);
+        // Reasoning is done — make it continue-able now while the action (different MM) streams behind it.
+        reasoningPart?.MarkComplete();
 
-        Console.WriteLine($"ThinkingExecutor: HOW complete — selected approach: '{selectedMeans}'");
-
-        var selectedModusMentis = MapMeansToModusMentis(selectedMeans, actionModiMentis);
-        if (selectedModusMentis == null)
-        {
-            Console.Error.WriteLine($"ThinkingExecutor: Could not map approach '{selectedMeans}' to any action modusMentis.");
-            return null;
-        }
-        string selectedSkillId = selectedModusMentis.ModusMentisId;
-
-        // ── Call 3: WHAT (action modusMentis slot) ─────────────────────────────────
-        int actionSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(selectedModusMentis);
+        // ── VerbAction skill slot: persona-fit check, then action-text flavor ───────
+        int actionSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(skill);
         _llmManager.ResetInstance(actionSlot);
 
-        var whatQ = _questionFillerService.GetNext(selectedModusMentis, QuestionReference.ThinkWhat);
-        string whatPrompt = _promptConstructor.BuildWhatPrompt(keyword, outcomeDescription, node, protagonist, selectedModusMentis, worldContext, whatQ.PromptText);
-        string whatGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateWhatSchema(whatQ.JsonFieldName));
+        // The action box (skill MM) accumulates the persona-fit want, then the action rewrite.
+        var actionPart = preview?.BeginAccumulatingPart(PreviewTitles.For(skill));
 
-        string? whatJson = await RequestFromLLMAsync(actionSlot, whatPrompt, whatGbnf, cancellationToken);
-        if (string.IsNullOrWhiteSpace(whatJson))
+        // Persona-fit: how strongly is the skill drawn to this action? Decides possibility + difficulty
+        // via the persona-reasoning → neutral-critic pass (the selector resets the slot in and out, so
+        // the action rewrite below starts fresh). Skipped for auto-success phases (reminescence /
+        // get-up). Replaces the former plausibility + difficulty critic trees.
+        // The willingness rules judge the action skill against the goal now settled on, so the context
+        // is rebuilt around the skill rather than the thinking modus mentis.
+        var fitCtx = choiceCtx == null
+            ? null
+            : choiceCtx with { ModusMentis = skill, Goal = resolved };
+
+        var (fit, fitThought) = autoSuccess
+            ? (PersonaFit.Willing, (string?)null)
+            : await AskPersonaFitAsync(actionSlot, skill, goalPhrase, overallLocation, areaLocation, observedPhrase, fitCtx, cancellationToken, actionPart);
+
+        // "unwilling to do it" → the skill refuses; produce a first-person refusal outcome, no action.
+        // The fit want explains the refusal, so it rides into the rewrite as the inner thought.
+        if (fit.Cancels)
         {
-            Console.Error.WriteLine("ThinkingExecutor: WHAT call returned empty response.");
-            return null;
+            string refusalNeutral = NeutralNarration.ActionRefusal(goalPhrase);
+            string refusalText = await _rewriter.RewriteAsync(
+                actionSlot, refusalNeutral, NarrationKind.Outcome, skill.PersonaReminder2,
+                styleInstruction: skill.StyleInstruction, innerThought: fitThought, preview: actionPart?.NextSegment(), ct: cancellationToken);
+            return new ThinkingResponse
+            {
+                ReasoningText   = reasoningText,
+                Actions         = new List<ParsedNarrativeAction>(),
+                RefusalText     = string.IsNullOrWhiteSpace(refusalText) ? refusalNeutral : refusalText,
+                RefusalModusMentis = skill,
+                PreviewLastPart = actionPart
+            };
         }
 
-        string actionDescription = ParseSingleTextField(whatJson, whatQ.JsonFieldName);
-        string displayText = actionDescription.StartsWith("try to ", StringComparison.OrdinalIgnoreCase)
-            ? actionDescription.Substring(7)
-            : actionDescription;
+        // The neutral sentence opens with "I will …" (plus "discretely" for a discrete skill), and the
+        // GBNF prefix constraint forces the styled rewrite to open with the same literal. This
+        // guarantees the prefix can be stripped cleanly to form the button label (DisplayText);
+        // ActionText keeps the canonical "try to …" form the item critic expects.
+        string styledAction = await _rewriter.RewriteAsync(
+            actionSlot, NeutralNarration.ActionIntent(goalPhrase, skill.ActsDiscretely), NarrationKind.Action, skill.PersonaReminder2, forcedPrefix: ActionPrefix, styleInstruction: skill.StyleInstruction, innerThought: fitThought, preview: actionPart?.NextSegment(), ct: cancellationToken);
+        if (string.IsNullOrWhiteSpace(styledAction))
+            styledAction = ActionPrefix + (skill.ActsDiscretely ? "discretely " : "") + goalPhrase;
+        string bareAction = StripPrefix(styledAction, ActionPrefix);
 
-        Console.WriteLine($"ThinkingExecutor: WHAT complete — action: '{displayText}'");
-
-        // Combine REFLECT (if any) + WHY + HOW reasoning into one block
-        string reasoningText = string.Join(" ", new[] { reflectText, whyText, howText }
-            .Where(s => !string.IsNullOrWhiteSpace(s)));
+        // Difficulty: verb base ± the persona-fit modifier (eager −1 / willing 0 / reluctant +1),
+        // clamped to 1..10. Auto-success phases carry difficulty 0 (rendered with the ○ glyph).
+        var verbOutcome = (VerbAction)resolved;
+        int difficultyLevel = autoSuccess
+            ? 0
+            : Math.Clamp(verbOutcome.Verb.DifficultyFor(verbOutcome.Target) + fit.DifficultyModifier, 1, 10);
 
         var action = new ParsedNarrativeAction
         {
-            ActionModusMentisId = selectedSkillId,
-            ActionModusMentis = selectedModusMentis,
-            PreselectedOutcome = (VerbOutcome)resolvedOutcome,
-            ActionText = actionDescription,
-            DisplayText = displayText,
+            ActionModusMentisId = skill.ModusMentisId,
+            ActionModusMentis   = skill,
+            PreselectedOutcome  = verbOutcome,
+            ActionText          = $"try to {bareAction}",
+            DisplayText         = bareAction,
+            NeutralActionText   = goalPhrase,
             ThinkingModusMentis = thinkingModusMentis,
-            Keyword = keyword
+            Keyword             = keyword,
+            DifficultyLevel     = difficultyLevel
         };
 
         return new ThinkingResponse
         {
             ReasoningText = reasoningText,
-            Actions = new List<ParsedNarrativeAction> { action }
+            Actions = new List<ParsedNarrativeAction> { action },
+            PreviewLastPart = actionPart
         };
     }
 
+    // ── Persona-fit (possibility + difficulty) ──────────────────────────────────
+
+    /// <summary>The persona-fit answers and how each maps to difficulty / cancellation.</summary>
+    private readonly struct PersonaFit
+    {
+        public int DifficultyModifier { get; }
+        public bool Cancels { get; }
+        private PersonaFit(int modifier, bool cancels) { DifficultyModifier = modifier; Cancels = cancels; }
+
+        public static readonly PersonaFit Eager     = new(-1, false);
+        public static readonly PersonaFit Willing   = new(0,  false);
+        public static readonly PersonaFit Reluctant = new(+1, false);
+        public static readonly PersonaFit Refused   = new(0,  true);
+    }
+
     /// <summary>
-    /// REFLECT + GOAL batch: two calls in the same slot.
-    /// Call 0a (REFLECT): full context, asks what the thinker makes of <paramref name="reflectTarget"/> → reasoning text.
-    /// Call 0b (GOAL): short continuation, picks from <paramref name="subOutcomes"/> or "ignore and move on".
-    /// Returns (chosen sub-outcome or IgnoreOutcome, reflect text). Outcome is null on LLM failure.
+    /// The real persona-fit options, written as stances on one willingness axis ("eager to do it");
+    /// the refusal rides in as the selector's decline option ("unwilling to do it"), so a <c>null</c>
+    /// pick means the skill refuses the action. Phrasing the whole set as parallel stances (rather than
+    /// three "do it …" commands plus a lone "refuse") keeps the critic matching on the willingness axis
+    /// instead of on which option names the target.
+    ///
+    /// <para>The default set. <see cref="Rules.Choice.ChoiceRulesChecker.FilterWillingness"/> may narrow
+    /// it before it is offered — an unscrupulous skill asked to commit a crime loses the refusal.</para>
     /// </summary>
-    private async Task<(ConcreteOutcome? Outcome, string ReflectText)> GenerateGoalAsync(
+    private static readonly Rules.Choice.WillingnessOptions DefaultWillingness = new(
+        new[] { "eager to do it", "willing to do it", "reluctant to do it" },
+        DeclineOption: "unwilling to do it");
+
+    /// <summary>
+    /// Asks the action skill how strongly it is drawn to the action, through the same
+    /// persona-reasoning → neutral-critic pass as every other choice
+    /// (<see cref="PersonaChoiceSelector"/>): the skill answers "Do you want to do it?" in its own
+    /// voice, and the critic maps that onto "eager to do it" (−1 difficulty), "willing to do it" (0),
+    /// "reluctant to do it" (+1), or the decline option "unwilling to do it" (cancels the action —
+    /// caller renders the refusal outcome). The selector resets the slot in and out, so the
+    /// following action rewrite starts from the system prompt. In playground mode picks Willing.
+    /// </summary>
+    private async Task<(PersonaFit Fit, string? Reasoning)> AskPersonaFitAsync(
+        int actionSlot, ModusMentis skill, string goalPhrase,
+        string? overallLocation, string? areaLocation, string? observedPhrase,
+        Rules.Choice.ChoiceRuleContext? choiceCtx, CancellationToken ct,
+        PreviewPart? part = null)
+    {
+        if (PlaygroundMode.IsActive) return (PersonaFit.Willing, null);
+
+        // Coded rules narrow the answers before they are offered. A skill with no refusal left cannot
+        // land on PersonaFit.Refused at all — the decline option is simply not in the prompt.
+        var options = choiceCtx == null
+            ? DefaultWillingness
+            : Rules.Choice.ChoiceRulesChecker.FilterWillingness(DefaultWillingness, choiceCtx);
+
+        string situation = ThinkingPromptConstructor.SituationLine(overallLocation, areaLocation, observedPhrase).TrimEnd();
+        string lead = situation.Length == 0 ? "" : situation + " ";
+        // A willingness site: its options are bare adjectives ("reluctant to do it"), so the reasoning
+        // opens on a copula or a modal rather than on a bare "I" the model completes with the label
+        // itself ("I reluctant to do it.").
+        var prompt = new PersonaChoicePrompt(
+            $"{lead}You are considering whether to {goalPhrase}.\n\n",
+            "Do you want to do it?", "whether they want to do it",
+            PersonaOpening.Willingness);
+
+        var chosen = await _selector.SelectAsync(
+            actionSlot, skill, options.Stances,
+            a => a,
+            prompt, declineOption: options.DeclineOption, preview: part?.NextSegment(isFree: true), ct: ct);
+
+        Console.WriteLine($"ThinkingExecutor: Persona-fit for '{goalPhrase}' ({skill.DisplayName}): {chosen.Item ?? "unwilling to do it"}");
+        var fit = chosen.Item switch
+        {
+            "eager to do it"    => PersonaFit.Eager,
+            "willing to do it"  => PersonaFit.Willing,
+            "reluctant to do it" => PersonaFit.Reluctant,
+            // Null means the critic matched nothing on offer. With a decline available that is the
+            // refusal; without one there is no refusal to express, so the least eager stance stands in
+            // rather than cancelling an action this skill was never allowed to decline.
+            null                => options.DeclineOption != null ? PersonaFit.Refused : PersonaFit.Reluctant,
+            _                   => PersonaFit.Willing, // unrecognised → proceed at base difficulty
+        };
+        return (fit, chosen.Reasoning);
+    }
+
+    // ── Decision: GOAL ─────────────────────────────────────────────────────────
+
+    private async Task<(NarrativeAnchor Outcome, string? Reasoning)> ChooseGoalAsync(
         int thinkingSlot,
-        ConcreteOutcome reflectTarget,
-        List<ConcreteOutcome> subOutcomes,
-        NarrationNode node,
+        List<NarrativeAnchor> subOutcomes,
         ModusMentis thinkingModusMentis,
-        Protagonist protagonist,
-        WorldContext worldContext,
-        CancellationToken cancellationToken)
+        string? overallLocation,
+        string? areaLocation,
+        string? observedPhrase,
+        Rules.Choice.ChoiceRuleContext? choiceCtx,
+        ActionProposalLedger? proposed,
+        CancellationToken ct,
+        PreviewPart? part = null)
     {
-        // ── Call 0a: REFLECT ───────────────────────────────────────────────────────
-        string reflectPrompt = reflectTarget is ObservationObject obsTarget
-            ? ThinkingPromptConstructor.BuildReflectPrompt(obsTarget, node, thinkingModusMentis, protagonist, worldContext)
-            : ThinkingPromptConstructor.BuildReflectPrompt(reflectTarget, node, thinkingModusMentis, protagonist, worldContext);
-        string reflectGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateWhySchema());
+        // Only real, pursuable goals go in the list; "ignore & move on" rides in as the decline option
+        // below. Choosing decline returns IgnoreVerb.MakeOutcome() so the caller's isIgnore exit fires.
+        var realOutcomes = subOutcomes
+            .Where(o => !(o is VerbAction vo && vo.Verb is IgnoreVerb))
+            .ToList();
 
-        string? reflectJson = await RequestFromLLMAsync(thinkingSlot, reflectPrompt, reflectGbnf, cancellationToken);
-        string reflectText = "";
-        if (!string.IsNullOrWhiteSpace(reflectJson))
-        {
-            reflectText = ParseSingleTextField(reflectJson, "what_do_i_think");
-            Console.WriteLine($"ThinkingExecutor: REFLECT complete ({reflectText.Length} chars)");
-        }
-        else
-        {
-            Console.Error.WriteLine("ThinkingExecutor: REFLECT call returned empty response — continuing to GOAL.");
-        }
+        // Anything this phase has already put a button on screen for is dropped, so a second thought
+        // about the same object reaches for something new instead of re-offering what the player has
+        // already been handed. Before the coded rules, for the same reason the ledger is consulted
+        // before them everywhere else: what has been offered is not this mind's business to weigh.
+        if (proposed != null)
+            realOutcomes = proposed.Remaining(realOutcomes);
 
-        // ── Call 0b: GOAL ──────────────────────────────────────────────────────────
-        // Ensure subOutcomes always contains an IgnoreVerb option (scene ObservationObjects
-        // inject it via MakeIgnoreSubOutcome; legacy graph-level nodes do not).
-        var workingOutcomes = new List<ConcreteOutcome>(subOutcomes);
-        if (!workingOutcomes.Any(o => o is VerbOutcome vo && vo.VerbView.Verb is IgnoreVerb))
-            workingOutcomes.Add(IgnoreVerb.MakeOutcome());
-        var goalOptions = workingOutcomes.Select(o => o.ToNaturalLanguageString()).ToList();
-        string goalPrompt = ThinkingPromptConstructor.BuildGoalPrompt(goalOptions, thinkingModusMentis);
-        string goalGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateGoalSchema(goalOptions));
+        // Coded rules narrow the list to what this mind may be shown at all — a principled modus
+        // mentis is not offered crimes, an unscrupulous one is offered nothing else. Applied before
+        // the empty check on purpose: filtering everything away IS a decision, and it reads as ignore.
+        if (choiceCtx != null)
+            realOutcomes = Rules.Choice.ChoiceRulesChecker.FilterGoals(realOutcomes, choiceCtx).ToList();
 
-        string? goalJson = await RequestFromLLMAsync(thinkingSlot, goalPrompt, goalGbnf, cancellationToken);
-        if (string.IsNullOrWhiteSpace(goalJson))
+        // Nothing left to offer. The caller's ignore branch narrates the same "nothing here worth
+        // doing" line the decline option produces, in this modus mentis's voice — but with no
+        // question put to it, because there is nothing to ask about.
+        if (realOutcomes.Count == 0) return (IgnoreVerb.MakeOutcome(), null);
+
+        if (PlaygroundMode.IsActive)
         {
-            Console.Error.WriteLine("ThinkingExecutor: GOAL call returned empty response.");
-            return (null, reflectText);
+            var pool = GoalOnlyFilter(realOutcomes);
+            return (pool[_rng.Next(pool.Count)], null);
         }
 
-        try
-        {
-            using var doc = JsonDocument.Parse(goalJson);
-            string chosen = doc.RootElement.GetProperty("goal").GetString() ?? "";
-            Console.WriteLine($"ThinkingExecutor: GOAL selected '{chosen}'");
-            var match = workingOutcomes.FirstOrDefault(o =>
-                o.ToNaturalLanguageString().Equals(chosen, StringComparison.OrdinalIgnoreCase));
-            // Unknown match → treat as ignore rather than crash.
-            return (match ?? IgnoreVerb.MakeOutcome(), reflectText);
-        }
-        catch (JsonException ex)
-        {
-            Console.Error.WriteLine($"ThinkingExecutor: Failed to parse GOAL response: {ex.Message}");
-            return (null, reflectText);
-        }
+        // The Modus Mentis reasons over the goals ("What do you want to do?") and the neutral critic
+        // maps that to one — or to the decline option, which is the ignore outcome. Each goal phrase
+        // ("grab a beechnut") is already the action; the selector lists them and collapses duplicates.
+        var prompt = new PersonaChoicePrompt(
+            ThinkingPromptConstructor.SituationLine(overallLocation, areaLocation, observedPhrase),
+            "What do you want to do?", "what they want to do");
+        // The decline is shown to the persona, not hidden behind the critic. It serves two purposes
+        // and used to serve only the second:
+        //   • it is a real answer. With the goal list shrinking request by request (see the proposal
+        //     ledger above), a mind left with two leftovers it cares nothing for should be able to say
+        //     so rather than be forced to commit to one of them;
+        //   • it is still the critic's catch-all. Personas regularly answer with something that was
+        //     never on the list ("I choose to mark the boy by the wall instead"), and without a letter
+        //     meaning "none of these" the critic must call that a match for option A, so the character
+        //     acts on an intent nobody expressed.
+        // Landing on it is a refusal — the caller's isIgnore exit fires, and the noetic point is spent
+        // all the same.
+        var chosen = await _selector.SelectAsync(
+            thinkingSlot, thinkingModusMentis, realOutcomes,
+            o => o.ToNaturalLanguageString(),
+            prompt, declineOption: "do something else entirely",
+            preview: part?.NextSegment(isFree: true), ct: ct);
+
+        if (chosen.Item == null)
+            Console.WriteLine("ThinkingExecutor: goal reasoning matched none of the offered goals — treating as a refusal.");
+
+        // Null item ⇒ the hidden decline was matched, or the list was empty; either way the target is
+        // not worth acting on. The reasoning still explains the (non-)choice and rides into the rewrite.
+        return (chosen.Item ?? IgnoreVerb.MakeOutcome(), chosen.Reasoning);
     }
 
     /// <summary>
-    /// Sends request to LLM and returns the complete response text.
-    /// Uses event-based async pattern with TaskCompletionSource.
+    /// Narrows a playground goal draw to the verb <c>--goal-only</c> (or the CLI's <c>goal</c>
+    /// command) names. Returns the pool untouched at the flag's default, and again when no goal in it
+    /// matches — a phase where the named verb does not apply then draws as usual rather than being
+    /// unable to choose anything.
     /// </summary>
-    private async Task<string?> RequestFromLLMAsync(
-        int slot,
-        string prompt,
-        string grammar,
-        CancellationToken cancellationToken)
+    private static List<NarrativeAnchor> GoalOnlyFilter(List<NarrativeAnchor> outcomes)
     {
-        var tcs = new TaskCompletionSource<string>();
-        var responseText = string.Empty;
+        var wanted = Config.Debug.GoalOnly;
+        if (string.IsNullOrWhiteSpace(wanted)) return outcomes;
 
-        void OnTokenStreamed(object? sender, TokenStreamedEventArgs e)
-        {
-            if (e.SlotId == slot)
-            {
-                responseText += e.Token;
-            }
-        }
+        var matched = outcomes
+            .Where(o => o is VerbAction vo &&
+                        string.Equals(vo.Verb.VerbId, wanted, StringComparison.OrdinalIgnoreCase))
+            .ToList();
 
-        void OnRequestCompleted(object? sender, RequestCompletedEventArgs e)
-        {
-            if (e.SlotId == slot)
-            {
-                _llmManager.TokenStreamed -= OnTokenStreamed;
-                _llmManager.RequestCompleted -= OnRequestCompleted;
+        if (matched.Count > 0) return matched;
 
-                if (!e.WasCancelled)
-                {
-                    tcs.SetResult(responseText);
-                }
-                else
-                {
-                    tcs.SetResult(string.Empty);
-                }
-            }
-        }
-
-        _llmManager.TokenStreamed += OnTokenStreamed;
-        _llmManager.RequestCompleted += OnRequestCompleted;
-
-        await _llmManager.ContinueRequestAsync(
-            slot,
-            prompt,
-            null, // onTokenStreamed - using events instead
-            null, // onCompleted - using events instead
-            grammar);
-
-        var result = await tcs.Task;
-        
-        // Small delay to ensure LlamaServerManager's finally block completes cleanup
-        await Task.Delay(100);
-        
-        return result;
+        Cathedral.Game.DebugFlagAudit.Miss("--goal-only", wanted, $"all {outcomes.Count} offered goal(s)");
+        return outcomes;
     }
 
+    // ── Decision: HOW (skill) ──────────────────────────────────────────────────
 
-
-    /// <summary>
-    /// Parses a single named text field from a JSON response. Returns "" on failure.
-    /// </summary>
-    private string ParseSingleTextField(string json, string fieldName)
+    private async Task<(ModusMentis? Skill, string? Reasoning)> ChooseSkillAsync(
+        int thinkingSlot,
+        string goalPhrase,
+        List<ModusMentis> actionModiMentis,
+        ModusMentis thinkingModusMentis,
+        string? overallLocation,
+        string? areaLocation,
+        string? observedPhrase,
+        CancellationToken ct,
+        PreviewPart? part = null)
     {
-        try
-        {
-            using var doc = JsonDocument.Parse(json);
-            return TextTruncationUtils.TrimToLastSentence(doc.RootElement.GetProperty(fieldName).GetString() ?? "");
-        }
-        catch (JsonException ex)
-        {
-            Console.Error.WriteLine($"ThinkingExecutor: Failed to parse '{fieldName}' from JSON: {ex.Message}");
-            return "";
-        }
+        if (actionModiMentis.Count == 0) return (null, null);
+        if (PlaygroundMode.IsActive)
+            return (actionModiMentis[_rng.Next(actionModiMentis.Count)], null);
+
+        // The goal is fixed; the Modus Mentis reasons over the available means ("How do you want to do
+        // it?") and the neutral critic maps that to one skill — or to the decline option, which is the
+        // "no way to do it" outcome. Each option is the means ("with the unfussy keeping-of-oneself-
+        // alive"); the goal lives in the context so it need not repeat per option.
+        string situation = ThinkingPromptConstructor.SituationLine(overallLocation, areaLocation, observedPhrase).TrimEnd();
+        string lead = situation.Length == 0 ? "" : situation + " ";
+        var prompt = new PersonaChoicePrompt(
+            $"{lead}Your goal is to {goalPhrase}.\n\n",
+            "How do you want to do it?", "how they want to go about it");
+        // No decline option for now — the persona always settles on one means.
+        var chosen = await _selector.SelectAsync(
+            thinkingSlot, thinkingModusMentis, actionModiMentis,
+            s => $"go about it with {s.SkillMeans}",
+            prompt, preview: part?.NextSegment(isFree: true), ct: ct);
+
+        // Null item only if the list was empty; the caller still handles it as "no way to do it".
+        return (chosen.Item, chosen.Reasoning);
     }
 
-    /// <summary>
-    /// Parses the HOW call response. Returns (howText, selectedMeans) where selectedMeans is "with X".
-    /// </summary>
-    private (string HowText, string SelectedMeans) ParseHowResponse(string json, string whyFieldName = "why")
+    /// <summary>Joins choice reasonings into one inner-thought hint; null when there is none.</summary>
+    private static string? JoinThoughts(params string?[] thoughts)
     {
-        try
-        {
-            using var doc = JsonDocument.Parse(json);
-            var root = doc.RootElement;
-            string means = root.GetProperty("how").GetString() ?? "";
-            string howText = root.GetProperty(whyFieldName).GetString() ?? "";
-            return (howText, means);
-        }
-        catch (JsonException ex)
-        {
-            Console.Error.WriteLine($"ThinkingExecutor: Failed to parse HOW response: {ex.Message}");
-            return ("", "");
-        }
+        var parts = thoughts.Where(t => !string.IsNullOrWhiteSpace(t)).Select(t => t!.Trim()).ToList();
+        return parts.Count == 0 ? null : string.Join(" ", parts);
     }
 
-    /// <summary>
-    /// Maps a "with X" means string back to the matching ModusMentis, or null if no match.
-    /// </summary>
-    private static ModusMentis? MapMeansToModusMentis(string means, List<ModusMentis> actionModiMentis)
-        => actionModiMentis.FirstOrDefault(s => $"with {s.SkillMeans}" == means);
+    // ── Item combination (reasoning + reformulated action) ──────────────────────
 
     /// <summary>
-    /// Asks the action modusMentis to reason about how the combined item helps realise the action.
-    /// Uses the WHY schema ("what_do_i_think"). Returns the reasoning text, or null on LLM failure.
-    /// Called before <see cref="ExecuteItemReformulationAsync"/>; the result is displayed as a
-    /// reasoning block before the reformulated action button.
+    /// Reasons (in the action Modus Mentis's voice) about how a combined item helps the action.
     /// </summary>
     public async Task<string?> ExecuteItemReasoningAsync(
         ParsedNarrativeAction originalAction,
@@ -362,35 +462,29 @@ public class ThinkingExecutor
         NarrationNode node,
         Protagonist protagonist,
         WorldContext worldContext,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        ILlmPreviewSink? preview = null)
     {
-        var actionModusMentis = originalAction.ActionModusMentis;
-        if (actionModusMentis == null)
-        {
-            Console.Error.WriteLine("ThinkingExecutor: Item reasoning skipped — action has no resolved modusMentis.");
-            return null;
-        }
+        var mm = originalAction.ActionModusMentis;
+        if (mm == null) return null;
 
-        int actionSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(actionModusMentis);
-        _llmManager.ResetInstance(actionSlot);
-
-        string prompt = _promptConstructor.BuildItemReasoningPrompt(
-            originalAction.ActionText, item, actionModusMentis, node, protagonist, worldContext);
-        string gbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateWhySchema());
-
-        string? jsonResponse = await RequestFromLLMAsync(actionSlot, prompt, gbnf, cancellationToken);
-        if (string.IsNullOrWhiteSpace(jsonResponse))
-        {
-            Console.Error.WriteLine("ThinkingExecutor: Item reasoning LLM call returned empty response.");
-            return null;
-        }
-
-        return ParseSingleTextField(jsonResponse, "what_do_i_think");
+        int slot = await _slotManager.GetOrCreateSlotForModusMentisAsync(mm);
+        _llmManager.ResetInstance(slot);
+        string neutral = $"I could use {item.WithArticle()} to help me {ActionDisplay(originalAction)}.";
+        return await _rewriter.RewriteAsync(slot, neutral, NarrationKind.Reasoning, mm.PersonaReminder2, styleInstruction: mm.StyleInstruction, preview: preview, ct: cancellationToken);
     }
 
     /// <summary>
-    /// Asks the action modusMentis to reformulate an existing action text to incorporate a combined item.
-    /// Uses the WHAT-style prompt. Returns the reformulated display text, or null on LLM failure.
+    /// Reformulates an action to incorporate a combined item, in the action Modus Mentis's voice.
+    /// Returns the styled display text (the "I will " opening stripped, so it reads as a button label).
+    /// <para>
+    /// Generated exactly like the plain action above: the neutral sentence is the same
+    /// <see cref="NeutralNarration.ActionIntent"/> "I will …" statement, the rewrite is GBNF-forced to
+    /// open with the same literal, and the same literal is stripped off the answer. Without the forced
+    /// prefix this path fell back to the kind's default "I ", and the persona wrote the deed as
+    /// something already under way — "I slice into the pig's belly … using an arming sword" — where
+    /// every other action button reads as an intention.
+    /// </para>
     /// </summary>
     public async Task<string?> ExecuteItemReformulationAsync(
         ParsedNarrativeAction originalAction,
@@ -398,39 +492,38 @@ public class ThinkingExecutor
         NarrationNode node,
         Protagonist protagonist,
         WorldContext worldContext,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        ILlmPreviewSink? preview = null)
     {
-        var actionModusMentis = originalAction.ActionModusMentis;
-        if (actionModusMentis == null)
-        {
-            Console.Error.WriteLine("ThinkingExecutor: Item reformulation skipped — action has no resolved modusMentis.");
-            return null;
-        }
+        var mm = originalAction.ActionModusMentis;
+        if (mm == null) return null;
 
-        int actionSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(actionModusMentis);
-        _llmManager.ResetInstance(actionSlot);
-
-        string prompt = _promptConstructor.BuildItemReformulationPrompt(
-            originalAction.ActionText, item, actionModusMentis, node, protagonist, worldContext);
-        string gbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateWhatSchema());
-
-        string? jsonResponse = await RequestFromLLMAsync(actionSlot, prompt, gbnf, cancellationToken);
-        if (string.IsNullOrWhiteSpace(jsonResponse))
-        {
-            Console.Error.WriteLine("ThinkingExecutor: Item reformulation LLM call returned empty response.");
-            return null;
-        }
-
-        string reformulated = ParseSingleTextField(jsonResponse, "what_should_i_do");
-        if (string.IsNullOrWhiteSpace(reformulated))
-            return null;
-
-        // Strip "try to " prefix like the WHAT pipeline does
-        return reformulated.StartsWith("try to ", StringComparison.OrdinalIgnoreCase)
-            ? reformulated.Substring(7)
-            : reformulated;
+        int slot = await _slotManager.GetOrCreateSlotForModusMentisAsync(mm);
+        _llmManager.ResetInstance(slot);
+        string neutral = NeutralNarration.ActionIntent($"{ActionDisplay(originalAction)} using {item.WithArticle()}");
+        string styled = await _rewriter.RewriteAsync(slot, neutral, NarrationKind.Action, mm.PersonaReminder2, forcedPrefix: ActionPrefix, styleInstruction: mm.StyleInstruction, preview: preview, ct: cancellationToken);
+        if (string.IsNullOrWhiteSpace(styled)) return null;
+        return StripPrefix(styled, ActionPrefix);
     }
 
+    /// <summary>
+    /// The opening every action rewrite is generated behind, and stripped of afterwards to form the
+    /// button label. It is <see cref="NeutralNarration.ActionIntent"/>'s opening, the GBNF forced
+    /// prefix, and the fallback's opening — one literal, so the three cannot drift apart.
+    /// </summary>
+    private const string ActionPrefix = "I will ";
+
+    private static string ActionDisplay(ParsedNarrativeAction action)
+        => !string.IsNullOrWhiteSpace(action.DisplayText)
+            ? action.DisplayText
+            : StripTryToPrefix(action.ActionText ?? "");
+
+    /// <summary>Drops a leading "try to " so an attempt phrase becomes the bare action used as a label.</summary>
+    private static string StripTryToPrefix(string text) => StripPrefix(text, "try to ");
+
+    /// <summary>Drops <paramref name="prefix"/> (case-insensitive) and surrounding whitespace if present.</summary>
+    private static string StripPrefix(string text, string prefix)
+        => text.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) ? text.Substring(prefix.Length).Trim() : text.Trim();
 }
 
 /// <summary>
@@ -440,4 +533,22 @@ public class ThinkingResponse
 {
     public string ReasoningText { get; set; } = "";
     public List<ParsedNarrativeAction> Actions { get; set; } = new();
+
+    /// <summary>
+    /// Set when the action modus mentis refused the action (persona-fit reluctant/opposed): the
+    /// first-person "I don't want to …" narration, shown as an outcome block. <see cref="Actions"/>
+    /// is empty in this case.
+    /// </summary>
+    public string? RefusalText { get; set; }
+
+    /// <summary>The skill that refused, whose voice the <see cref="RefusalText"/> is in.</summary>
+    public ModusMentis? RefusalModusMentis { get; set; }
+
+    /// <summary>
+    /// The last preview part of this thinking generation (reasoning-only paths: the reasoning part;
+    /// the full path: the action/refusal part). The caller attaches the block-commit closure to it
+    /// and marks it complete once the block is built (see NarrativeController.ExecuteThinkingPhaseAsync).
+    /// Null when previewing is off.
+    /// </summary>
+    internal PreviewPart? PreviewLastPart { get; set; }
 }

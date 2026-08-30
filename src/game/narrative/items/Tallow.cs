@@ -1,10 +1,13 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Cathedral.Game.Narrative.Items;
 
 public sealed class Tallow : Item
 {
+    public override ItemCategory Category => ItemCategory.Crafting;
     public override string ItemId      => "tallow";
     public override string DisplayName => "Tallow";
+    public override string Article     => "some";
     public override string Description => "A lump of rendered animal fat, pale and waxy, with a faint rancid smell";
+    public override int PriceReference => 4;
 }

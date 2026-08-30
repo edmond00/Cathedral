@@ -16,13 +16,23 @@ namespace Cathedral.Game.Narrative;
 /// </summary>
 public abstract class PartyMember
 {
-    private static readonly Random _sharedRng = new Random();
+    /// <summary>Humor-queue filling, shared by every party member — master-seeded so a run replays.</summary>
+    private static readonly Random _sharedRng = GameRng.Stream("humor-queues");
 
     // ── Body ─────────────────────────────────────────────────────
     private List<BodyPart> _bodyParts;
 
     public List<BodyPart> BodyParts => _bodyParts;
     public List<DerivedStat> DerivedStats { get; private set; }
+
+    /// <summary>
+    /// Biological sex, when assigned (true = male, false = female). Set at NPC creation from a seeded
+    /// flip and read by <see cref="GenderStat"/>. Left null for members whose sex is not stamped
+    /// (e.g. beasts, which have no genitories), in which case <see cref="GenderStat"/> falls back to
+    /// the genitories organ score. Kept separate from that score so it never affects HP or
+    /// genitories-based skills.
+    /// </summary>
+    public bool? BiologicalSexMale { get; set; }
 
     // ── Humor queues ──────────────────────────────────────────────
     /// <summary>
@@ -53,7 +63,95 @@ public abstract class PartyMember
 
     // ── Wounds ───────────────────────────────────────────────────
     /// <summary>Active wounds currently affecting this party member.</summary>
-    public List<Wound> Wounds { get; private set; } = new();
+    public List<WoundInstance> Wounds { get; private set; } = new();
+
+    // ── Age ───────────────────────────────────────────────────────
+    /// <summary>
+    /// The reading on the run's global clock (<see cref="GameClock.Days"/>) at the moment this member
+    /// was born. Anyone alive when the run begins was therefore born before day zero, so this is
+    /// normally negative — a protagonist starting at 14 years old has a birth time of about −5040.
+    ///
+    /// <para>
+    /// Age is never stored: it is always <c>GameClock.Days − BirthTimeDays</c>, so every member ages
+    /// automatically as the clock advances, with nothing to keep in sync. Set once at creation via
+    /// <see cref="SetAgeAtCreation"/>.
+    /// </para>
+    /// </summary>
+    public double BirthTimeDays { get; private set; } = -DefaultAgeDays;
+
+    /// <summary>Age a member falls back to when nobody sets one explicitly: 25 years.</summary>
+    private const double DefaultAgeDays = 25 * LifetimeStat.DaysPerYear;
+
+    /// <summary>
+    /// Stamps this member's birth time so that they are <paramref name="ageDays"/> old right now.
+    /// Call at creation, after organ scores are settled (the age is clamped against the member's
+    /// heart-derived lifetime, so it must be able to read that).
+    ///
+    /// <para>
+    /// The age is capped at <see cref="MaxFractionOfLifeAtCreation"/> of the member's lifetime so no
+    /// one is ever born already past their death date — an NPC rolled old from a wide archetype range
+    /// but dealt a weak heart would otherwise drop dead the moment they joined the party.
+    /// </para>
+    /// </summary>
+    /// <summary>
+    /// Puts a saved birth time back verbatim. Distinct from <see cref="SetAgeAtCreation"/>, which is
+    /// age-relative — it computes a birth time from "this many days old *right now*" and clamps it
+    /// against the member's lifetime. Replaying that on load would re-derive the birth time against
+    /// the restored clock and quietly shift everyone's age.
+    /// </summary>
+    public void RestoreBirthTime(double birthTimeDays) => BirthTimeDays = birthTimeDays;
+
+    public void SetAgeAtCreation(double ageDays)
+    {
+        double capped = Math.Min(Math.Max(0, ageDays), GetLifetimeDays() * MaxFractionOfLifeAtCreation);
+        BirthTimeDays = GameClock.Days - capped;
+    }
+
+    /// <summary>The most of their lifetime a member may already have spent when created (90%).</summary>
+    private const double MaxFractionOfLifeAtCreation = 0.9;
+
+    /// <summary>This member's current age in days, measured against the run's global clock.</summary>
+    public double GetAgeDays() => GameClock.Days - BirthTimeDays;
+
+    /// <summary>
+    /// The total span of days this member's body is granted, from the heart-derived
+    /// <see cref="LifetimeStat"/>. Wound-aware: damage to the heart really does shorten it.
+    /// </summary>
+    public int GetLifetimeDays() => new LifetimeStat().GetValue(this);
+
+    /// <summary>Days of life this member has left; zero once they are due to die.</summary>
+    public double GetRemainingLifeDays() => Math.Max(0, GetLifetimeDays() - GetAgeDays());
+
+    /// <summary>True once this member has lived out their full lifetime and should die of old age.</summary>
+    public bool IsDeadOfOldAge() => GetAgeDays() >= GetLifetimeDays();
+
+    /// <summary>
+    /// What has killed this member, or null while they live — the single question anything sweeping
+    /// the party for its dead should ask.
+    ///
+    /// <para><b>All three causes are derived, and none of them is a flag anybody sets.</b> Hit points
+    /// are <see cref="MaxHp"/> minus the wound count, a fully-critical humor set is a state every
+    /// consumption path already produces, and old age is the clock against
+    /// <see cref="GetLifetimeDays"/> — so a member is dead the moment they are, whenever the question
+    /// happens to be asked, with nothing to keep in sync.</para>
+    ///
+    /// <para>They are ordered by what a reader would call it rather than by which came first: a body
+    /// with no hit points left died of its wounds even if the humors were also spent.</para>
+    ///
+    /// <para>Note this is deliberately <em>not</em> what ends a fight — <see cref="Fight.Fighter"/>
+    /// keeps its own <c>IsAlive</c>, because a fighter's humor depletion is recorded on the wrapper
+    /// and the fight must not consult the world mid-swing. The two agree once the fight is over,
+    /// which is what <c>FightModeAdapter.SettleEnemyDeaths</c> and the companion sweep both rely
+    /// on.</para>
+    /// </summary>
+    public Cathedral.Game.DeathCause? CauseOfDeath =>
+        CurrentHp <= 0                ? Cathedral.Game.DeathCause.Wounds
+      : HumorQueues.IsFullyCritical   ? Cathedral.Game.DeathCause.Starvation
+      : IsDeadOfOldAge()              ? Cathedral.Game.DeathCause.OldAge
+      : null;
+
+    /// <inheritdoc cref="CauseOfDeath"/>
+    public bool IsDead => CauseOfDeath != null;
 
     // ── Species & anatomy ─────────────────────────────────────────
     /// <summary>The species of this party member (determines anatomy type and art folder).</summary>
@@ -62,9 +160,27 @@ public abstract class PartyMember
     /// <summary>Shortcut to the anatomy type used by this member's species.</summary>
     public AnatomyType AnatomyType => Species.AnatomyType;
 
+    /// <summary>
+    /// What this body is able to do beyond its organs (see <see cref="AnatomyCapability"/>) — read
+    /// from the anatomy, never stored, so it cannot drift from the species.
+    /// </summary>
+    public AnatomyCapability Capabilities =>
+        AnatomyFactoryRegistry.GetFactory(Species.AnatomyType).Capabilities;
+
+    /// <summary>True when this body has every capability in <paramref name="required"/>.</summary>
+    public bool Can(AnatomyCapability required) => (Capabilities & required) == required;
+
     // ── Display name (subclasses define this differently) ────────
     /// <summary>Human-readable name shown in the party panel.</summary>
     public abstract string DisplayName { get; }
+
+    /// <summary>
+    /// Stable identity used to key this member in NPC <see cref="Dialogue.Affinity.AffinityTable"/>s,
+    /// deliberately decoupled from <see cref="DisplayName"/>. Defaults to the display name (companions),
+    /// but the protagonist overrides it to a fixed constant so a player-chosen/generated display name
+    /// never shifts affinity keys mid-run.
+    /// </summary>
+    public virtual string AffinityKey => DisplayName;
 
     // ── Constructor ──────────────────────────────────────────────
     protected PartyMember(Species species)
@@ -82,7 +198,7 @@ public abstract class PartyMember
         LearnedModiMentis = ModiMentis; // same reference
         Inventory = new List<Item>();
         MemoryModules = new List<MemoryModule>(); // populated after modiMentis are assigned via InitializeMemory()
-        Wounds = InitializeDebugWounds(factory);
+        Wounds = new List<WoundInstance>();
 
         // Initialise all 13 anchor slots to empty lists
         EquippedItems = new Dictionary<EquipmentAnchor, List<Item>>();
@@ -106,16 +222,123 @@ public abstract class PartyMember
     /// </summary>
     public void Equip(EquipmentAnchor anchor, Item item) => EquippedItems[anchor].Add(item);
 
+    // ── Carrying weight ───────────────────────────────────────────
+
+    /// <summary>
+    /// Total carrying cost of everything held — worn, in hand, and inside anything worn.
+    /// Relies on <see cref="GetAllItems"/> descending into nested containers, or a flask inside a
+    /// backpack would weigh nothing.
+    /// </summary>
+    public int CurrentWeight => GetAllItems().Sum(i => i.WeightPoints);
+
+    /// <summary>How much this character can carry before anything further is refused.</summary>
+    public int MaxCarryWeight =>
+        DerivedStats.FirstOrDefault(s => s.Name == "maximum_weight")?.GetValue(this) ?? 100;
+
+    /// <summary>Free carrying capacity; never negative.</summary>
+    public int RemainingWeight => Math.Max(0, MaxCarryWeight - CurrentWeight);
+
+    /// <summary>
+    /// True when this character is carrying more than they can bear. Being overloaded never
+    /// prevents picking something up — you can always stoop and take one more thing. What it
+    /// prevents is <em>travel</em>: the party cannot set out until every member is under their
+    /// limit, so the player has to decide what to leave behind rather than being blocked at the
+    /// moment of acquisition.
+    /// </summary>
+    public bool IsOverloaded => CurrentWeight > MaxCarryWeight;
+
+    /// <summary>
+    /// One line describing this member for the party panel — species, trade, what they are.
+    ///
+    /// <para>Lives here rather than on <c>Companion</c> because the roster holds any
+    /// <see cref="PartyMember"/> now: a recruited villager or a tamed wolf joins as the body it
+    /// already is, and each has something to say about itself.</para>
+    /// </summary>
+    public virtual string PartyDescription => Species?.DisplayName ?? "";
+
+    /// <summary>How much must be put down before this character can travel; 0 when they are fine.</summary>
+    public int ExcessWeight => Math.Max(0, CurrentWeight - MaxCarryWeight);
+
+    // ── Looks ─────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Bonus dialogue dice this character's face is worth, from the <c>beauty</c> stat. Wounds to
+    /// the visage cost dice here, which is the point of routing it through the stat rather than the
+    /// body part's score.
+    /// </summary>
+    public int BeautyDice =>
+        DerivedStats.FirstOrDefault(s => s.Name == "beauty")?.GetValue(this) ?? 0;
+
+    /// <summary>
+    /// The most beauty dice this character's anatomy could ever be worth — the length of the bar
+    /// the dialogue footer draws <see cref="BeautyDice"/> into.
+    /// </summary>
+    public int MaxBeautyDice =>
+        DerivedStats.FirstOrDefault(s => s.Name == "beauty")?.GetValueAtMaxScore(this) ?? 0;
+
+    // ── Armour ────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Bonus defence dice granted by what this character is <em>wearing</em> over
+    /// <paramref name="bodyPartId"/>. Contributions from every slot covering the section add up, so
+    /// a cloak over a tunic over an undershirt all count on the trunk.
+    ///
+    /// Two things are deliberate here. First, the garment must sit on an anchor its own
+    /// <see cref="WearSlot"/> maps to — armour held in a fist or stuffed in a pack protects
+    /// nothing, and iterating <see cref="EquippedItems"/> (which never contains a bag's contents)
+    /// enforces that structurally. Second, the section is looked up against this character's actual
+    /// <see cref="BodyParts"/> rather than trusting <c>Organ.BodyPartId</c>, because several organ
+    /// classes hardcode <c>"visage"</c> even on a beast that has a muzzle instead.
+    ///
+    /// There is no cap: the ceiling is a content decision, watched by <c>--item-audit</c>.
+    /// </summary>
+    public int ArmorDiceForSection(string bodyPartId)
+    {
+        if (!BodyParts.Any(bp => bp.Id == bodyPartId)) return 0;
+
+        int total = 0;
+        foreach (var (anchor, items) in EquippedItems)
+            foreach (var item in items)
+                if (item is WearableItem worn
+                    && worn.Slot.AnchorsTo(anchor)
+                    && ArmorSections.SectionOf(worn.Slot) == bodyPartId)
+                    total += worn.DefenseDice;
+
+        return total;
+    }
+
+    /// <summary>
+    /// The first vessel with room for <paramref name="liquid"/>, or null when there is none.
+    /// Liquids live only in vessels, so this is the whole of their placement logic.
+    /// </summary>
+    public IContainer? FindVesselFor(Item liquid) =>
+        GetAllItems()
+            .OfType<IContainer>()
+            .FirstOrDefault(c => c.Kind == ContainerKind.Vessel
+                              && c.CanContain(liquid)
+                              && liquid.SlotCount <= c.AvailableSlots);
+
     /// <summary>
     /// Try to place an acquired item into the best available slot:
     ///   1. Preferred anchor (if the item declares one and it is free).
     ///   2. Any free anchor that CanAccept the item.
     ///   3. Any equipped ContainerItem that CanContain + has space.
-    ///   4. Falls back to <see cref="Inventory"/> overflow list.
-    /// Returns true when placement succeeds (includes overflow).
+    /// Returns true when the item was placed, false when there is no room anywhere — in which case
+    /// the item is NOT taken (it is dropped/ignored, never forced into a bottomless overflow). Pickup
+    /// is normally gated earlier by <c>InventoryCapacityRule</c>, so a false here is a last-resort guard.
     /// </summary>
     public bool TryAcquireItem(Item item)
     {
+        // 0. Liquids first: one never touches an anchor — it goes in a vessel or nowhere at all,
+        //    which is why this precedes the anchor scan rather than joining it. Weight is not
+        //    checked; an overloaded character can still pick things up, they just cannot travel.
+        if (item.IsLiquid)
+        {
+            if (FindVesselFor(item) is { } vessel && vessel.TryAdd(item)) return true;
+            Console.WriteLine($"PartyMember: no vessel with room for '{item.DisplayName}' — item dropped.");
+            return false;
+        }
+
         // 1. Preferred anchor
         if (item.PreferredAnchor.HasValue)
         {
@@ -137,21 +360,64 @@ public abstract class PartyMember
             }
         }
 
-        // 3. Any equipped container that can take the item
-        foreach (var kvp in EquippedItems)
+        // 3. Any container being carried, however deeply nested
+        foreach (var container in GetAllItems().OfType<IContainer>())
+            if (container.TryAdd(item)) return true;
+
+        // No room: drop the item rather than overflow.
+        Console.WriteLine($"PartyMember: No free anchor/container for '{item.DisplayName}' — item dropped (inventory full).");
+        return false;
+    }
+
+    /// <summary>
+    /// The outcome of an acquisition check: whether the item can be taken, and — when it cannot —
+    /// why, phrased as a first-person sentence fragment. The reason matters: it is handed to
+    /// <c>InventoryCapacityRule</c>, which fails the action, and the refusal is then re-voiced by
+    /// the acting modus mentis rather than swallowed. A pickup must never fail silently.
+    /// </summary>
+    public readonly record struct AcquireCheck(bool Ok, string? Reason)
+    {
+        public static AcquireCheck Allow => new(true, null);
+        public static AcquireCheck Deny(string reason) => new(false, reason);
+    }
+
+    /// <summary>
+    /// Non-mutating mirror of <see cref="TryAcquireItem"/>, reporting the reason on refusal.
+    /// Checked in the order the player would notice: too heavy first, then nowhere to put it.
+    /// </summary>
+    public AcquireCheck CanAcquire(Item item)
+    {
+        // Weight is deliberately NOT checked here. Being overloaded does not stop you picking
+        // something up — it stops you walking anywhere with it. See IsOverloaded, which gates
+        // travel instead, so the player discovers the problem when they try to leave rather than
+        // being quietly refused an item they are standing next to.
+
+        // Liquids never sit on the body: a vessel with room is the only way to hold one.
+        if (item.IsLiquid)
+            return FindVesselFor(item) is not null
+                ? AcquireCheck.Allow
+                : AcquireCheck.Deny($"I have no empty vessel to hold {item.WithArticle()}");
+
+        if (item.PreferredAnchor.HasValue)
         {
-            foreach (var equipped in kvp.Value)
-            {
-                if (equipped is ContainerItem container && container.TryAdd(item))
-                    return true;
-            }
+            var preferred = item.PreferredAnchor.Value;
+            if (preferred.CanAccept(item) && AvailableSlots(preferred) >= item.SlotCount)
+                return AcquireCheck.Allow;
         }
 
-        // 4. Overflow
-        Console.WriteLine($"PartyMember: No free anchor/container for '{item.DisplayName}' — placed in overflow inventory.");
-        Inventory.Add(item);
-        return true; // acquisition itself always succeeds; caller is informed via log
+        foreach (EquipmentAnchor anchor in Enum.GetValues<EquipmentAnchor>())
+            if (anchor.CanAccept(item) && AvailableSlots(anchor) >= item.SlotCount)
+                return AcquireCheck.Allow;
+
+        foreach (var container in GetAllItems().OfType<IContainer>())
+            if (container.CanContain(item) && item.SlotCount <= container.AvailableSlots)
+                return AcquireCheck.Allow;
+
+        return AcquireCheck.Deny($"I have nowhere left to put {item.WithArticle()}");
     }
+
+    /// <summary>Boolean form of <see cref="CanAcquire"/>, for callers that do not need the reason.</summary>
+    public bool CanAcquireItem(Item item) => CanAcquire(item).Ok;
 
     /// <summary>
     /// Remove a specific item from wherever it is held (overflow, anchor slot, or container).
@@ -162,29 +428,60 @@ public abstract class PartyMember
         if (Inventory.Remove(item)) return true;
         foreach (var list in EquippedItems.Values)
             if (list.Remove(item)) return true;
+
+        // Descend into containers, however deeply nested. Test against IContainer, never
+        // ContainerItem: a backpack is a WearableContainerItem and shares no base class with a
+        // loose jug, so matching on the class silently skips everything the player is wearing.
         foreach (var list in EquippedItems.Values)
             foreach (var equipped in list)
-                if (equipped is ContainerItem c && c.TryRemove(item)) return true;
+                if (equipped is IContainer c && RemoveFromContainer(c, item)) return true;
+        foreach (var held in Inventory)
+            if (held is IContainer c && RemoveFromContainer(c, item)) return true;
+        return false;
+    }
+
+    /// <summary>Removes <paramref name="item"/> from a container or any container nested inside it.</summary>
+    private static bool RemoveFromContainer(IContainer container, Item item)
+    {
+        if (container.TryRemove(item)) return true;
+        foreach (var inner in container.Contents)
+            if (inner is IContainer nested && RemoveFromContainer(nested, item)) return true;
         return false;
     }
 
     /// <summary>
-    /// Returns all items currently held: overflow inventory, every anchor slot,
-    /// and the contents of any equipped containers.
+    /// Returns all items currently held: overflow inventory, every anchor slot, and the contents
+    /// of every container, however deeply nested (a flask inside a backpack counts).
     /// </summary>
     public List<Item> GetAllItems()
     {
         var result = new List<Item>(Inventory);
+        foreach (var item in Inventory)
+            if (item is IContainer nested) CollectContents(nested, result);
+
         foreach (var list in EquippedItems.Values)
         {
             foreach (var item in list)
             {
                 result.Add(item);
-                if (item is ContainerItem c)
-                    result.AddRange(c.Contents);
+                if (item is IContainer c) CollectContents(c, result);
             }
         }
         return result;
+    }
+
+    /// <summary>
+    /// Appends a container's contents to <paramref name="into"/>, descending into nested containers.
+    /// Guards against a container that (incorrectly) ends up holding itself.
+    /// </summary>
+    private static void CollectContents(IContainer container, List<Item> into)
+    {
+        foreach (var item in container.Contents)
+        {
+            if (ReferenceEquals(item, container)) continue;
+            into.Add(item);
+            if (item is IContainer inner) CollectContents(inner, into);
+        }
     }
 
     // ── Body initialisation ──────────────────────────────────────
@@ -199,11 +496,10 @@ public abstract class PartyMember
 
     private void RandomizeOrganScores()
     {
-        var rng = new Random();
         foreach (var bp in _bodyParts)
             foreach (var organ in bp.Organs)
                 foreach (var part in organ.Parts)
-                    part.Score = rng.Next(1, part.MaxScore + 1);
+                    part.Score = 1;
     }
 
     private HumorQueueSet InitializeHumorQueues()
@@ -214,12 +510,16 @@ public abstract class PartyMember
     }
 
     /// <summary>
-    /// Re-fills all four humor queues using the current organ scores.
+    /// Re-fills all four humor queues using the current organ scores, following the
+    /// protagonist-creation rules: secrete only Blood / Phlegm / Yellow Bile (no Black Bile),
+    /// then seed Juvenescence into a random <c>youthfulness</c>% of the slots.
     /// Call this after the player has finished setting scores in the creation screen.
     /// </summary>
     public void ReinitializeHumorQueues()
     {
-        HumorQueues.Initialize(this, _sharedRng);
+        int youthfulness = DerivedStats
+            .FirstOrDefault(s => s.Name == "youthfulness")?.GetValue(this) ?? 0;
+        HumorQueues.InitializeForCreation(this, _sharedRng, youthfulness);
     }
 
 
@@ -230,16 +530,20 @@ public abstract class PartyMember
     /// </summary>
     public void InitializeModiMentis(ModusMentisRegistry registry, int modusMentisCount = 50)
     {
-        var rng = new Random();
+        var rng = GameRng.Stream("party-modimentis");
         var obs = registry.GetObservationModiMentis().OrderBy(_ => rng.Next()).Take(10);
         var think = registry.GetThinkingModiMentis().OrderBy(_ => rng.Next()).Take(20);
         var act = registry.GetActionModiMentis().OrderBy(_ => rng.Next()).Take(20);
         var selected = obs.Concat(think).Concat(act).Distinct().Take(modusMentisCount).ToList();
 
         ModiMentis.Clear();
-        ModiMentis.AddRange(selected);
-        foreach (var modusMentis in ModiMentis)
-            modusMentis.Level = rng.Next(1, 11);
+        foreach (var template in selected)
+        {
+            var instance = (ModusMentis)Activator.CreateInstance(template.GetType())!;
+            instance.Level = 1;
+            instance.CurrentXp = 0;
+            ModiMentis.Add(instance);
+        }
     }
 
     // ── Memory initialisation ─────────────────────────────────────
@@ -249,15 +553,15 @@ public abstract class PartyMember
     /// </summary>
     public void InitializeMemory()
     {
-        int WorkingCap   = Math.Clamp(GetMemoryStat("working_memory_capacity"),    1, 20);
-        int ProceduralCap= Math.Clamp(GetMemoryStat("procedural_memory_capacity"), 1, 20);
-        int SemanticCap  = Math.Clamp(GetMemoryStat("semantic_memory_capacity"),   1, 20);
-        int SensoryCap   = Math.Clamp(GetMemoryStat("sensory_memory_capacity"),    1, 20);
-        int ResidualCap  = Math.Clamp(GetMemoryStat("residual_memory_capacity"),   1, 20);
+        int WorkingCap   = GetMemoryStat("working_memory_capacity");
+        int ProceduralCap= GetMemoryStat("procedural_memory_capacity");
+        int SemanticCap  = GetMemoryStat("semantic_memory_capacity");
+        int SensoryCap   = GetMemoryStat("sensory_memory_capacity");
+        int ResidualCap  = GetMemoryStat("residual_memory_capacity");
 
         MemoryModules = new List<MemoryModule>
         {
-            new MemoryModule(MemoryModuleType.Working,    WorkingCap),
+            new MemoryModule(MemoryModuleType.Working,    WorkingCap, maxCapacity: 25),
             new MemoryModule(MemoryModuleType.Procedural, ProceduralCap),
             new MemoryModule(MemoryModuleType.Semantic,   SemanticCap),
             new MemoryModule(MemoryModuleType.Sensory,    SensoryCap),
@@ -266,11 +570,7 @@ public abstract class PartyMember
     }
 
     private int GetMemoryStat(string name)
-    {
-        var stat = DerivedStats.FirstOrDefault(s => s.Name == name);
-        if (stat == null) return 1;
-        return stat.GetValue(this);
-    }
+        => DerivedStats.First(s => s.Name == name).GetValue(this);
 
     /// <summary>
     /// Randomly distribute modiMentis across compatible memory modules for testing.
@@ -281,7 +581,7 @@ public abstract class PartyMember
     {
         if (MemoryModules.Count == 0) InitializeMemory();
 
-        var rng = new Random();
+        var rng = GameRng.Stream("party-memory-assign");
         // Shuffle modiMentis before assigning to get a varied distribution
         var shuffled = ModiMentis.OrderBy(_ => rng.Next()).ToList();
 
@@ -381,6 +681,20 @@ public abstract class PartyMember
         return permanentlyDropped;
     }
 
+    /// <summary>
+    /// Removes a modusMentis from the member entirely: unlinks it from <see cref="ModiMentis"/> and
+    /// from every memory module it may occupy. Used when one MM is swapped out for another (e.g. the
+    /// childhood reminescence MM being replaced once the childhood phase ends). Returns true if it
+    /// was present in <see cref="ModiMentis"/>.
+    /// </summary>
+    public bool RemoveModusMentis(ModusMentis modusMentis)
+    {
+        bool removed = ModiMentis.Remove(modusMentis);
+        foreach (var module in MemoryModules)
+            module.Remove(modusMentis);
+        return removed;
+    }
+
     private static MemoryModuleType? ToMemoryModuleType(Cathedral.Game.Narrative.Memory.ModusMentisMemoryType t)
         => t switch
         {
@@ -421,6 +735,66 @@ public abstract class PartyMember
         return true;
     }
 
+    /// <summary>
+    /// Discards a modusMentis still sitting in working memory: it is unlinked from
+    /// <see cref="ModiMentis"/> (so it stops being usable) and its slot is freed. Working memory is
+    /// compacted afterwards, so the freed slot ends up at the *back* of the FIFO queue rather than
+    /// as a hole in the middle — that is what makes rejection a way to bank space against the next
+    /// eviction, and it keeps <see cref="MemoryModule.Prepend"/>'s shift from silently swallowing
+    /// the last entry.
+    /// Returns false if the modusMentis is not in working memory.
+    /// </summary>
+    public bool RejectModusMentis(ModusMentis modusMentis)
+    {
+        var working = GetMemoryModule(MemoryModuleType.Working);
+        if (working == null || !working.Remove(modusMentis)) return false;
+
+        working.Compact();
+        ModiMentis.Remove(modusMentis);
+        return true;
+    }
+
+    /// <summary>
+    /// Moves a modusMentis out of a long-term module (Procedural / Semantic / Sensory) and onto the
+    /// front of the Residual queue — the way room is made in a full long-term module for something
+    /// better.
+    ///
+    /// <para>Residual is finite, so a prepend into a full queue pushes its last entry out. That entry
+    /// belongs to no module afterwards and must therefore be unlinked from <see cref="ModiMentis"/>
+    /// as well, exactly as <see cref="AcquireModusMentis"/> does on the same overflow. Leaving it
+    /// linked is not harmless: it stays usable in every function list and in every narration chain
+    /// while occupying no slot and appearing nowhere in the memory panel, so the player holds a
+    /// discipline the interface says they have forgotten.</para>
+    ///
+    /// Returns the modusMentis permanently dropped from the member, or null when the queue had room.
+    /// The out parameter <paramref name="archived"/> reports whether the move itself happened.
+    /// </summary>
+    public ModusMentis? ArchiveModusMentis(ModusMentis modusMentis, out bool archived)
+    {
+        archived = false;
+        var residual = GetMemoryModule(MemoryModuleType.Residual);
+        if (residual == null) return null;
+
+        // Refuse before touching the source module. Prepend returns null both when it found room and
+        // when the queue has no usable slot at all, so a queue with none would take the modusMentis
+        // out of its module and put it nowhere — the same slotless state this method exists to
+        // prevent, reached from the other side. Residual capacity floors at 1, so this is a guard
+        // against a future retuning rather than against today's numbers.
+        if (!residual.Slots.Any(s => !s.IsUnusable && !s.IsBlocked)) return null;
+
+        var source = MemoryModules.FirstOrDefault(
+            m => m.Type is MemoryModuleType.Procedural
+                       or MemoryModuleType.Semantic
+                       or MemoryModuleType.Sensory
+              && m.Slots.Any(s => !s.IsUnusable && s.ModusMentis == modusMentis));
+        if (source == null || !source.Remove(modusMentis)) return null;
+
+        archived = true;
+        var dropped = residual.Prepend(modusMentis);
+        if (dropped != null) ModiMentis.Remove(dropped);
+        return dropped;
+    }
+
     /// <summary>Get a memory module by type.</summary>
     public MemoryModule? GetMemoryModule(MemoryModuleType type) =>
         MemoryModules.FirstOrDefault(m => m.Type == type);
@@ -434,6 +808,24 @@ public abstract class PartyMember
         LearnedModiMentis.Where(s => s.Functions.Contains(ModusMentisFunction.Action)).ToList();
     public List<ModusMentis> GetSpeakingModiMentis() =>
         LearnedModiMentis.Where(s => s.Functions.Contains(ModusMentisFunction.Speaking)).ToList();
+
+    /// <summary>
+    /// Speaking modi mentis this body can still carry — <see cref="GetSpeakingModiMentis"/> minus the
+    /// ones wounds have broken (<see cref="IsModusMentisBroken"/>).
+    ///
+    /// <para><b>Speech is the one faculty where a broken modus mentis is dropped rather than offered
+    /// and refused.</b> Every other phase has a narration frame that can carry the account of a
+    /// ruined organ; a dialogue reply is written straight into the option list, so a refusal there
+    /// would have to be worded as something the character says — which is exactly the thing they
+    /// cannot do. Dropping is silent, and when the last one goes
+    /// <c>ZeroRepliesDialogueRule</c> catches it before the conversation opens and says why.</para>
+    ///
+    /// <para>Both readers must use this one: <c>DialogueOptionGenerator</c> samples from it and
+    /// <c>DialogueTreeController</c> sizes the loading box from it, so a filter applied to one and
+    /// not the other leaves the box waiting on replies that will never come.</para>
+    /// </summary>
+    public List<ModusMentis> GetUsableSpeakingModiMentis() =>
+        GetSpeakingModiMentis().Where(mm => !IsModusMentisBroken(mm)).ToList();
     public ModusMentis? GetModusMentisById(string modusMentisId) =>
         LearnedModiMentis.FirstOrDefault(s => s.ModusMentisId == modusMentisId);
 
@@ -445,11 +837,157 @@ public abstract class PartyMember
     public OrganPart? GetOrganPartById(string id) =>
         _bodyParts.SelectMany(bp => bp.Organs).SelectMany(o => o.Parts).FirstOrDefault(p => p.Id == id);
 
-    /// <summary>Returns the primary organ score for a modusMentis (used for modusMentis checks).</summary>
-    public int GetOrganScoreForModusMentis(ModusMentis modusMentis)
+    /// <summary>
+    /// The anatomy sources a modusMentis draws on, each with the max-level contribution it currently
+    /// grants <i>this</i> body — e.g. <c>("Eyes", +2, region: false), ("Cerebrum", +1, false)</c> or
+    /// <c>("Trunk", +4, true)</c>. Order follows <see cref="ModusMentis.Organs"/>, but no entry is
+    /// "primary": every one counts equally in <see cref="GetMaxLevelForModusMentis"/>, so the sum of
+    /// the contributions here is exactly that method's result minus its base of 1.
+    /// A source absent from this anatomy (a beast organ on a human body) is returned under its raw
+    /// id with a contribution of 0, which is what it actually grants.
+    /// A contribution may be <b>negative</b> when the source is wounded — see
+    /// <c>MaxLevelPenalty</c> and <see cref="GetImpairedSourcesForModusMentis"/>.
+    /// </summary>
+    public List<(string Label, int Contribution, bool IsRegion)> GetAnatomySourcesForModusMentis(
+        ModusMentis modusMentis) =>
+        modusMentis.Organs.Select(id =>
+        {
+            int contribution = GetMaxLevelContribution(id);
+            var organ = GetOrganById(id);
+            if (organ != null) return (organ.DisplayName, contribution, false);
+            var region = GetBodyPartById(id);
+            return region != null ? (region.DisplayName, contribution, true) : (id, 0, false);
+        }).ToList();
+
+    // ── ModusMentis XP / leveling ──────────────────────────────────────
+
+    /// <summary>
+    /// Maximum level a modusMentis can reach: a base of 1 plus the max-level contribution of every
+    /// organ / body region it is related to (its <see cref="ModusMentis.Organs"/> entries, which may
+    /// name organs or body regions). Each contribution comes from that source's
+    /// <see cref="IMaxLevelContributionStat"/> — an organ adds +0..+3, a region +0..+6 — and already
+    /// accounts for wounds.
+    ///
+    /// <para><b>This can come out zero or negative, and that is the point.</b> A wounded source
+    /// contributes −1 or −2 (see <c>MaxLevelPenalty</c>), so enough damage drags the ceiling under
+    /// the base of 1 that every modus mentis otherwise starts from. There is deliberately no clamp
+    /// here: <see cref="GetEffectiveModusMentisLevel"/> reads the result as a ceiling on what the
+    /// body can bring to bear, and a ceiling at or below 0 is what
+    /// <see cref="IsModusMentisBroken"/> means.</para>
+    /// </summary>
+    public int GetMaxLevelForModusMentis(ModusMentis modusMentis) =>
+        1 + modusMentis.Organs.Sum(GetMaxLevelContribution);
+
+    /// <summary>
+    /// The level this body can actually bring to bear with <paramref name="modusMentis"/> — what it
+    /// knows, capped by what it can still do with it. This is the number that becomes dice; the
+    /// stored <see cref="ModusMentis.Level"/> is what was learned and is never written down by a
+    /// wound.
+    ///
+    /// <para><b>Derived, never stored, for the same reason age and wound healing are.</b> A wound
+    /// closes on its own schedule and the reach comes back with it, with nothing to keep in sync and
+    /// no save migration; clamping the stored level at the moment of injury would destroy learning
+    /// the body gets back a hundred days later.</para>
+    /// </summary>
+    public int GetEffectiveModusMentisLevel(ModusMentis modusMentis) =>
+        Math.Min(modusMentis.Level, GetMaxLevelForModusMentis(modusMentis));
+
+    /// <summary>
+    /// Whether this body is too damaged to use <paramref name="modusMentis"/> at all — its effective
+    /// level has reached 0 or gone below it. A broken modus mentis rolls no dice, so it is not merely
+    /// weaker: there is nothing left to attempt with.
+    /// </summary>
+    public bool IsModusMentisBroken(ModusMentis modusMentis) =>
+        GetEffectiveModusMentisLevel(modusMentis) <= 0;
+
+    /// <summary>
+    /// The wounded sources dragging <paramref name="modusMentis"/> down, worst first, each with the
+    /// wounds responsible — what a refusal names so the player learns which part of them failed
+    /// rather than only that something did.
+    ///
+    /// <para>Only sources with a <em>negative</em> contribution are returned: an organ merely low or
+    /// never invested in is not what broke this, and naming it would send the player looking for a
+    /// wound that is not there.</para>
+    /// </summary>
+    public List<ImpairedSource> GetImpairedSourcesForModusMentis(ModusMentis modusMentis) =>
+        modusMentis.Organs
+            .Select(id => (Id: id, Contribution: GetMaxLevelContribution(id)))
+            .Where(s => s.Contribution < 0)
+            .Select(s => new ImpairedSource(
+                Label:        GetOrganById(s.Id)?.DisplayName
+                              ?? GetBodyPartById(s.Id)?.DisplayName
+                              ?? s.Id.Replace('_', ' '),
+                Contribution: s.Contribution,
+                Wounds:       GetWoundsForSource(s.Id)))
+            .OrderBy(s => s.Contribution)
+            .ToList();
+
+    /// <summary>
+    /// One wounded anatomy source behind a broken modus mentis. <see cref="Wounds"/> may be empty
+    /// when the source is impaired by a wound on the region above it that this lookup cannot
+    /// attribute; the label alone still names the part that failed.
+    /// </summary>
+    public readonly record struct ImpairedSource(
+        string Label, int Contribution, List<WoundInstance> Wounds);
+
+    /// <summary>
+    /// Wounds bearing on one organ or body-region id, matched exactly as
+    /// <see cref="DerivedStat.GetEffectiveScore"/> matches them, so the wounds named to the player
+    /// are the wounds that caused the penalty.
+    /// </summary>
+    private List<WoundInstance> GetWoundsForSource(string id)
     {
-        if (modusMentis.Organs.Length == 0) return 0;
-        return GetOrganById(modusMentis.Organs[0])?.Score ?? 0;
+        var organ = GetOrganById(id);
+        if (organ != null)
+        {
+            string bodyPartId = _bodyParts.FirstOrDefault(bp => bp.Organs.Any(o => o.Id == id))?.Id ?? "";
+            return Wounds.Where(w => w.AffectsOrgan(id, bodyPartId)
+                                  && w.Handicap != WoundHandicap.Low).ToList();
+        }
+        return GetBodyPartById(id) != null
+            ? Wounds.Where(w => w.AffectsBodyPart(id) && w.Handicap != WoundHandicap.Low).ToList()
+            : new List<WoundInstance>();
+    }
+
+    /// <summary>Max-level contribution of a single organ or body-region id (0 if none/absent).</summary>
+    private int GetMaxLevelContribution(string id) =>
+        DerivedStats.FirstOrDefault(s => s is IMaxLevelContributionStat
+                                      && (s.RelatedOrganId == id || s.RelatedBodyPartId == id))
+                    ?.GetValue(this) ?? 0;
+
+    /// <summary>XP a modusMentis needs to gain one level (pineal-gland-derived stat, 6-12).</summary>
+    public int GetModusMentisXpThreshold() =>
+        DerivedStats.First(s => s.Name == "modus_mentis_xp_threshold").GetValue(this);
+
+    /// <summary>
+    /// Awards XP to a modusMentis. When CurrentXp reaches the pineal threshold the bar resets to 0
+    /// and the level increments. No-op once the modusMentis has reached its max level.
+    ///
+    /// <para>Returns what the award came to, so callers can tell the player without re-deriving any
+    /// of these rules — see <see cref="ModusMentisXpAward"/>. A caller with nothing to show may
+    /// ignore the return; one that shows something must use it rather than reading level and bar
+    /// itself, so every message about experience is worded in one place.</para>
+    /// </summary>
+    public ModusMentisXpAward AwardModusMentisXp(ModusMentis modusMentis, int amount = 1)
+    {
+        int maxLevel = GetMaxLevelForModusMentis(modusMentis);
+        if (modusMentis.Level >= maxLevel)                   // capped — no XP
+            return ModusMentisXpAward.None(modusMentis);
+
+        int threshold   = GetModusMentisXpThreshold();
+        int levelBefore = modusMentis.Level;
+
+        modusMentis.CurrentXp += amount;
+        if (modusMentis.CurrentXp >= threshold)
+        {
+            modusMentis.CurrentXp = 0;                       // reset bar
+            modusMentis.Level++;
+            if (modusMentis.Level >= maxLevel) modusMentis.CurrentXp = 0;
+        }
+
+        return new ModusMentisXpAward(modusMentis, Landed: true,
+            Levelled: modusMentis.Level > levelBefore,
+            modusMentis.Level, modusMentis.CurrentXp, threshold);
     }
 
     // ── Wound helpers ─────────────────────────────────────────────
@@ -457,13 +995,13 @@ public abstract class PartyMember
     /// <summary>
     /// Return all wounds that affect the given organ part (directly or via its organ/body part).
     /// </summary>
-    public List<Wound> GetWoundsForOrganPart(string organPartId, string organId, string bodyPartId) =>
+    public List<WoundInstance> GetWoundsForOrganPart(string organPartId, string organId, string bodyPartId) =>
         Wounds.Where(w => w.AffectsOrganPart(organPartId, organId, bodyPartId)).ToList();
 
     /// <summary>
     /// Return all wounds that affect any organ part belonging to the given body part.
     /// </summary>
-    public List<Wound> GetWoundsForBodyPart(string bodyPartId) =>
+    public List<WoundInstance> GetWoundsForBodyPart(string bodyPartId) =>
         Wounds.Where(w => w.AffectsBodyPart(bodyPartId)
                        || _bodyParts.FirstOrDefault(bp => bp.Id == bodyPartId)?.Organs
                               .Any(o => w.AffectsOrgan(o.Id, bodyPartId)) == true
@@ -492,33 +1030,76 @@ public abstract class PartyMember
         Wounds.Any(w => w.AffectsOrganPart(organPartId, organId, bodyPartId)
                      && w.Handicap == WoundHandicap.High);
 
-    /// <summary>Maximum HP = trunk body part score.</summary>
-    public int MaxHp =>
-        _bodyParts.FirstOrDefault(bp => bp.Id == "trunk")?.Score ?? 0;
+    // ── Healing ───────────────────────────────────────────────────
+
+    /// <summary>
+    /// Days this body needs to close a wound it can close, from the <c>wound_healing</c> stat.
+    /// Wound-aware, so an injured viscera lengthens the recovery of everything else.
+    /// </summary>
+    public int WoundHealDurationDays
+    {
+        get
+        {
+            var stat = DerivedStats.FirstOrDefault(s => s.Name == "wound_healing");
+            return stat?.GetValue(this) ?? WoundHealingStat.SlowestHealDays;
+        }
+    }
+
+    /// <summary>
+    /// Remove every wound that has had time to close, and report what closed.
+    ///
+    /// <para>
+    /// Only Low and Medium wounds ever heal, and only ones actually suffered during the run —
+    /// <see cref="WoundInstance.CanHeal"/> is the single place that rule lives. Healing restores HP
+    /// for free, since <see cref="CurrentHp"/> is <see cref="MaxHp"/> minus the wound count.
+    /// </para>
+    ///
+    /// <para>
+    /// Call this when the clock has moved (see <see cref="GameClock"/>), not every frame: nothing
+    /// changes between advances, because progress is measured against <see cref="GameClock.Days"/>
+    /// rather than ticked.
+    /// </para>
+    /// </summary>
+    public List<WoundInstance> HealWounds()
+    {
+        int duration = WoundHealDurationDays;
+        var closed = Wounds.Where(w => w.CanHeal && w.DaysOld >= duration).ToList();
+        foreach (var w in closed) Wounds.Remove(w);
+        return closed;
+    }
+
+    /// <summary>
+    /// Maximum HP = trunk body part score, defined by <see cref="HealthPointStat"/>.
+    /// Uses the raw source score (not <c>GetValue</c>) so wounds are not double-counted —
+    /// they are subtracted once in <see cref="CurrentHp"/>.
+    /// </summary>
+    public int MaxHp
+    {
+        get
+        {
+            var stat = DerivedStats.FirstOrDefault(s => s.Name == "health_point");
+            return stat != null
+                ? stat.GetRawValue(this)
+                : _bodyParts.FirstOrDefault(bp => bp.Id == "trunk")?.Score ?? 0;
+        }
+    }
 
     /// <summary>Current HP = max HP minus total wound count (all severities cost 1 HP).</summary>
     public int CurrentHp => Math.Max(0, MaxHp - Wounds.Count);
 
-    // ── Debug wound initialisation ────────────────────────────────
-    private static List<Wound> InitializeDebugWounds(IAnatomyFactory factory)
+    /// <summary>
+    /// Maximum noetic points = encephalon body part score, defined by <see cref="NoeticPointsStat"/>.
+    /// This is the per-node pool of thinking attempts (one per encephalon level).
+    /// </summary>
+    public int MaxNoeticPoints
     {
-        var woundMap = factory.GetWoundClassMap();
-        var specific = woundMap.Values
-            .Where(w => w.TargetKind != WoundTargetKind.Wildcard).ToList();
-        var rng = new Random();
-        int count = rng.Next(2, 5);
-        var result = specific.OrderBy(_ => rng.Next()).Take(count).ToList<Wound>();
-        // Add 1-2 wildcard wounds with placeholder positions (will be assigned by viewer)
-        var wildcards = woundMap.Values.OfType<WildcardWound>().ToList();
-        if (wildcards.Count > 0)
+        get
         {
-            int wc = rng.Next(1, 3);
-            foreach (var template in wildcards.OrderBy(_ => rng.Next()).Take(wc))
-            {
-                var instance = (WildcardWound)System.Activator.CreateInstance(template.GetType())!;
-                result.Add(instance);
-            }
+            var stat = DerivedStats.FirstOrDefault(s => s.Name == "noetic_points");
+            return stat != null
+                ? stat.GetRawValue(this)
+                : Math.Max(1, _bodyParts.FirstOrDefault(bp => bp.Id == "encephalon")?.Score ?? 1);
         }
-        return result;
     }
+
 }

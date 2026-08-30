@@ -1,4 +1,6 @@
+﻿using System.Collections.Generic;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Narrative.ModiMentis;
 
 namespace Cathedral.Game.Scene.Verbs;
 
@@ -12,10 +14,21 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public sealed class IgnoreVerb : Verb
 {
+
+    /// <summary>Turning away from a person is a verdict; turning away from a barrel is not.</summary>
+    public override IEnumerable<ModusMentis> Lessons(LessonContext ctx)
+    {
+        if (ctx.TargetIsPerson) yield return Mm<MisanthropyModusMentis>();
+
+        // The target's own declaration, then this verb's default — always last, always visible.
+        foreach (var m in base.Lessons(ctx)) yield return m;
+    }
+
+
     public static readonly IgnoreVerb Instance = new();
 
     /// Canonical text shown in the GOAL prompt and used for matching.
-    public const string VerbatimText = "move on and find something else to focus on";
+    public const string VerbatimText = "move on and find something else to do";
 
     private IgnoreVerb() { }
 
@@ -23,14 +36,16 @@ public sealed class IgnoreVerb : Verb
     public override string DisplayName    => "Ignore and Move On";
     public override int    BaseDifficulty => 1;
 
+    /// <summary>Does nothing, by design. An implement combined with doing nothing is doing nothing with an implement.</summary>
+    public override ToolUsage ToolUse => ToolUsage.Excluded;
+
     /// Always possible — the player can always choose not to act.
-    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null) => true;
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null) => true;
 
     public override string Verbatim(Scene scene, PoV pov, Element target) => VerbatimText;
 
     // No-op: IgnoreVerb exits the pipeline before SuccessReports() is ever called.
 
-    /// Creates a VerbOutcome for IgnoreVerb with no specific target.
-    public static VerbOutcome MakeOutcome() =>
-        new VerbOutcome(new VerbView(Instance, VerbatimText), null!);
+    /// The "do nothing" action, with no specific target.
+    public static VerbAction MakeOutcome() => new VerbAction(Instance, VerbatimText);
 }

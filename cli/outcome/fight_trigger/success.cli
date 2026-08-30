@@ -1,0 +1,57 @@
+# fight_trigger — the outcome, not the verb.
+#
+# cli/verb/attack/ proves the chip is printed. This proves it corresponds to something real.
+# The verb script runs in full and the outcome assertions go on the end.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Hall" --period dawn --observe-only "brewer"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# --- before ---
+inspect where
+
+strategy succeed
+goal attack
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+# The fight is decided but HELD, waiting on the press that closes the segment — so that the first
+# blow's chips can be read before the fight screen paints over them. `state` says fight-held=yes;
+# `expect-outcome fight_trigger` already passes here, because the outcome ran (it wrote the request
+# on the scene) even though the mode has not changed yet.
+expect-outcome fight_trigger
+
+# The press, and only now the fight.
+click button
+wait mode Fighting 60
+
+# What makes this an attack test rather than an any-verb test: every verb alike can enter a fight
+# (a failed action under threat does), so only this can tell them apart.
+expect-verb attack
+# The outcome TYPE, asserted by its stable id rather than by chip wording. `expect <chip>`
+# proves what the player was told; this proves what actually ran. See --outcome-audit.
+expect-outcome fight_trigger
+
+# --- the outcome really ran ---
+expect-outcome fight_trigger
+
+# --- after: the world moved ---
+inspect where
+quit
