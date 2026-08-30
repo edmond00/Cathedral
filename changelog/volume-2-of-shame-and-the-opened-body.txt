@@ -1,0 +1,40 @@
+Volume 2 - Of Shame and the Opened Body
+2026-08-30
+
+Added
+  - Striking somebody now lands a blow. The swing itself is narrated - what you hit
+    them with, what it broke, what it taught you - before the fight begins. A miss
+    still starts the fight, and hands them the first move.
+  - What you do now moves you. One disposition you hold answers the act, secretes
+    humors into the spleen, and says so in its own voice.
+  - Three new mind states: Constantia, which steadies a poor roll; Pudor, the shame
+    that hollows out an ordinary one; and Nausea.
+  - Over a hundred new modi mentis, fifty-one of them dispositions that can be stirred.
+  - A carcass now gives up four to eight parts. A person is butchered like anything
+    else, and what they carried lies beside the body rather than inside it.
+  - A companion can die - of wounds, of spent humors, or of age - and leaves a body
+    behind them in the room where they fell.
+  - A conversation teaches a lesson drawn from the branch and from who you spoke to.
+    Begging a reeve is not what begging a farmhand is.
+  - Settings now sizes and weights the glyphs of the world separately from those of
+    the interface.
+
+Changed
+  - A wound no longer merely slows a discipline's growth - it can take it away. A
+    ruined organ drags the ceiling under its base, and the modus mentis reads BROKEN,
+    is refused in its own voice when you reach for it, and leaves your replies.
+  - Implements are judged before they are argued about. A hand with no craft in it
+    may use none at all, a weapon is a weapon whatever it was made for, and a thing
+    made for one purpose is refused for every other - with a different refusal for each.
+  - A combined implement is never consumed. The knife survives the carcass.
+  - An observation no longer avoids the object's own word, and varies which of the
+    words that suit it is offered.
+
+Fixed
+  - A fight lost inside a location now ends the run, as one lost on the road always did.
+  - An enemy bled dry is dead afterwards, rather than standing in the room at full health.
+  - Being ambushed on the last step of a journey no longer strands you on the world map
+    with nothing to press.
+
+Internal
+  - Twenty-one new test scripts, and a new audit of how a player reaches each modus mentis.

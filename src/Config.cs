@@ -430,8 +430,8 @@ public static class Config
         /// </summary>
         public const string WindowTitle = "Proscribed Palimpsest";
 
-        public const string Chapter = "Volume 1";
-        public const string ChapterSubtitle = "Turnips and Radishes";
+        public const string Chapter = "Volume 2";
+        public const string ChapterSubtitle = "Of Shame and the Opened Body";
     }
     
     public static class Terminal

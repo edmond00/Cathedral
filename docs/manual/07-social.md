@@ -98,6 +98,14 @@ The humors may be spent upon this roll as upon any other, to the **viscera's** l
 Certain resolutions are **forced** and roll nothing: the branch of a confrontation in which one
 provokes the confronter always ends in a fight.
 
+**A conversation that carries teaches three things, not one.** The first is the general skill of
+walking up to somebody and opening one's mouth, which is the same whatever follows and is what the
+act itself teaches. The second is the conversation's own lesson, particular to the business
+attempted: to have begged a coin successfully is beggary, whatever the act of addressing a stranger
+may be. The third is drawn from the branch that was actually walked and from the person who was
+listening — a matter pressed upon a man of standing is not the matter pressed upon a labourer, and
+does not teach the same thing. Where no lesson has been set upon a branch, the second stands alone.
+
 A settled conversation, like a settled act, may then be answered by a disposition the body holds —
 alms taken, an enmity let go, an introduction granted or an exchange that came to nothing are all
 consequences a disposition may be moved by. The rule is the same one, and is given in [Chapter III

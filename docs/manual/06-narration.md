@@ -259,7 +259,20 @@ to be entered. Its contents are the harvestable parts, and they are folded into 
 affordances, so one attention upon the body offers everything that may be cut from it. Identical
 parts collapse to a single goal, each cutting removing one.
 
-A human additionally leaves a separate holding of what they carried. The division needs no reasoning
+**A body yields between four and eight parts.** Fewer than four and a carcass does not repay the
+approach it costs — a killing, a blade, and a point of the budget for every attempt; more than eight
+and the parts run past what one attention can offer and past what may be borne away. Duplicates are
+counted in the eight but not in the goals, so a body carrying three cuts of meat offers one act of
+cutting that may be taken three times. What differs between one creature and another is which parts
+and how many of each, never what those parts are called: the same flesh and the same bone are had
+from every body, and a bear is a bear by giving eight where a smaller beast gives four.
+
+A creature small enough to be taken in the hand rather than slain yields two parts or three, granted
+whole at the taking rather than cut out one at a time. Crushing such a creature leaves nothing.
+
+**A human is opened like any other body**, and no exception is made for the kind — the same flesh, with
+the hair from the head and the skull from beneath it. A human additionally leaves a separate holding
+of what they carried. The division needs no reasoning
 about particular items: everything in a corpse is flesh, and the acts of cutting take it while the
 acts of seizing refuse it; everything in the belongings beside it is cloth and steel, and the
 reverse holds.
