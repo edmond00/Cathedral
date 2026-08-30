@@ -834,6 +834,15 @@ public class SettingsMenuRenderer
         CtlWeightPlus  => "settings:glyph-weight-plus",
         CtlSizeMinus   => "settings:glyph-size-minus",
         CtlSizePlus    => "settings:glyph-size-plus",
+        // The world half of the 2x2 block. Both sounds - the hover tick and the click - are gated on
+        // this switch, so a control missing from it highlights and works in total silence, which
+        // reads as a dead button beside the four UI ones that answer. Adding a row means adding it
+        // here as well; this is the third time that seam has been missed (see the Trade/Work and
+        // travel-box notes in LocationTravelGameController).
+        CtlWorldSizeMinus   => "settings:world-size-minus",
+        CtlWorldSizePlus    => "settings:world-size-plus",
+        CtlWorldWeightMinus => "settings:world-weight-minus",
+        CtlWorldWeightPlus  => "settings:world-weight-plus",
         CtlDevice        => "settings:llm-device",
         CtlLayersMinus   => "settings:llm-layers-minus",
         CtlLayersPlus    => "settings:llm-layers-plus",
