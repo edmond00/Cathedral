@@ -487,3 +487,10 @@ docs/manual/_html/
 # Throwaway save files written by the cli/system/save_*.cli and death_*.cli scripts, which pass
 # --save-path so a scripted run never touches the player's real save.
 .tmp-cli-save/
+
+# `[Rr]elease/` and `[Rr]eleases/` above are the Visual Studio template's build-output rules,
+# and both match by directory NAME at any depth - so they also swallowed the release skill and
+# its changelogs, which are source. Git never descends into an ignored directory, so the
+# re-inclusion has to name the directory itself; a negation on the files inside it does nothing.
+!.claude/skills/release/
+!changelog/
