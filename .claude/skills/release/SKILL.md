@@ -107,14 +107,33 @@ Fixed
 
 Rules, in order of how often they are broken:
 
+- **Plain, not literary. This is the rule that gets broken.** The changelog is a list of changes, and
+  a reader must be able to tell what each line *is* on one pass — a feature, a fix, what it affects.
+  The game's prose voice belongs in the game and in the Volume subtitle; it does not belong here.
+  Concretely, in a changelog line: no metaphor, no allusion, no riddling compression, no rhetorical
+  inversion, no sentence whose subject is an abstraction ("What you do now moves you"). State the
+  change directly, subject first, in the order a player would meet it.
+
+  | instead of | write |
+  |---|---|
+  | "What you do now moves you. One disposition you hold answers the act, secretes humors into the spleen, and says so in its own voice." | "Actions can now provoke an emotion. One of the dispositions you hold answers what you did, secretes humors into the spleen, and narrates its reaction." |
+  | "Implements are judged before they are argued about." | "Tool use is now judged before the model is asked." |
+  | "The knife survives the carcass." | "Combining an item with a tool no longer consumes the tool." |
+  | "A wound no longer merely slows a discipline's growth — it can take it away." | "A wound can now disable a modus mentis outright, where before it only slowed its growth." |
+
+  Flavour is not the same as vagueness, and cutting it must not cost detail: if a line names a number,
+  a condition or a consequence, the plain rewrite keeps it. "Three new mind states: Constantia, which
+  steadies a poor roll" becomes "Three new humors: Constantia, which turns a 1 into a 3" — shorter *and*
+  more informative.
 - **Short lines, most of the changes.** One line per item, no sub-bullets, no paragraph of
   explanation. Aim for 15–30 lines total. Mentioning nearly everything briefly is the goal;
   explaining anything in depth is not. A release that genuinely did one big thing gets a short file.
 - **Player-facing voice.** Say what the player can now do, see or expect. No type names, no file
-  paths, no `--flags`, no commit shas. "A wound can now cripple a discipline outright" — not
+  paths, no `--flags`, no commit shas. "A wound can now disable a modus mentis outright" — not
   "`GetMaxLevelForModusMentis` contributes −2 for a High-handicap wound".
 - **Use the game's own vocabulary**: modus mentis / modi mentis, humors, organs, areas, verbs as the
-  game words them. The same discipline the `manual` skill applies.
+  game words them. That is the *nouns* only — borrowing the game's terms is not licence to borrow its
+  register. The same discipline the `manual` skill applies.
 - **Internal work is one line or none.** Packaging, audits, test scripts, refactors and CLI plumbing
   changed nothing a player meets. Fold them into a single "Internal" line at the end, or leave them
   out. Do not pad the file with them.
@@ -313,3 +332,243 @@ git push origin main develop
 - **The volume constants are player-facing text and nothing more.** They are not read by the save,
   the packaging or the store metadata, so bumping them cannot break anything — which is also why
   forgetting them is silent, and why they are their own numbered step.
+
+
+---
+
+# Reference: packaging, publishing and naming
+
+Moved here from the root `CLAUDE.md`. This is the *how it works* behind steps 7-9.
+
+## Packaging a release
+
+```powershell
+./package.ps1                      # dist/ProscribedPalimpsest/ + dist/ProscribedPalimpsest-win64-<date>.zip
+./package.ps1 -NoModel -NoZip      # seconds, for checking the script itself
+./package.ps1 -ReadyToRun          # ~30% larger, faster startup
+```
+
+Self-contained (`--self-contained`), so the .NET runtime ships inside and a player needs nothing
+installed. About 200 MB, and it removes the commonest "it won't start" report.
+
+**Single-file, so the folder a player opens is legible.** A plain self-contained publish is 301
+files at the root and the game sits in the middle of them, alphabetically between
+`PresentationFramework.dll` and `System.Private.CoreLib.dll`. `PublishSingleFile` bundles the
+managed assemblies into the executable: 9 files at the root, of which one is the game and the rest
+are unmanaged libraries that cannot be bundled.
+
+This is **bundling, not trimming** — every assembly is still present, just inside the exe, so the
+reflection the audits and Catalyst depend on is untouched. Managed code runs from the bundle
+without being extracted, so there is no first-run unpacking cost.
+
+Two more prunings, worth about 16 MB and 220 files: `SatelliteResourceLanguages=en` drops thirteen
+folders of localised framework strings for a game with no localisation, and the staging step
+deletes a macOS `.dylib` and a 32-bit MIDI native that an x64 process can never load. After
+pruning the MIDI native, confirm audio still starts — the smoke test asserts a window and a ready
+server but says nothing about sound, and the line to look for is
+`Ambient music engine started`.
+
+**The console is a build flag, not a code path.** `dotnet build` and `dotnet run` produce a console
+`Exe` as always; `package.ps1` passes `-p:Ship=true`, which flips `OutputType` to `WinExe` so a
+player double-clicking the game gets no black window filling with diagnostics. The two differ only
+in a PE subsystem byte — read it with `[BitConverter]::ToUInt16($bytes, $peOffset + 92)`: 3 is
+console, 2 is GUI. It is keyed on an explicit `Ship` property rather than on `Configuration`, so
+building or profiling in Release still gives you a console; shipping is a deliberate act.
+
+`WinExe` alone would make the shipped build permanently mute, including when run from a terminal on
+purpose — which is how a package is verified at all. `ConsoleAttach.AttachToParentIfPresent()`, the
+first line of `Program.cs`, rejoins the launching terminal when there is one and does nothing when
+there is not. So `dist\ProscribedPalimpsest\ProscribedPalimpsest.exe --cli-script …` still works, piped capture and file
+redirection both still work, and a double-click is still silent.
+
+The cost to accept: a shipped build that dies before its window opens shows the player nothing.
+Reproduce it by running that same exe from a terminal.
+
+**`Ship` also strips the development command-line options.** `ShipArguments.Filter` runs as the
+second line of `Program.cs` — after `ConsoleAttach`, before the seed parse — and reduces `args` to
+an **allow-list**: `--cpu`, `--gpu`, `--no-llm-probe`, `--silent`, `--help`. Everything else is
+dropped, along with its value, so `--seed 42` leaves no stray `42` behind. It reports how many it
+ignored, which is visible when the exe was launched from a terminal.
+
+A filter rather than 49 conditionals, for the same reason the packaging payload is an allow-list:
+the option surface grows every time a feature turns out to be hard to reach, and a debug flag left
+reachable does not announce itself — it just works. Filtering once, before anything reads `args`,
+makes every handler unreachable by construction and means a flag added tomorrow is excluded from
+shipped builds without anyone remembering to exclude it.
+
+The five that survive all exist to get a player out of trouble rather than to change the game, and
+`--help` in a shipped build lists exactly those. Printing the full development list would be worse
+than printing nothing: every line is an instruction that silently does nothing, with no way for the
+reader to tell which.
+
+**`Ship` also compiles out the developer keyboard.** It defines a `SHIP` constant, which flips
+`Config.Debug.DeveloperKeys` to false. That gates the render-debug keys (D, M), the post-process
+tuning keys (F, G, H, J), the debug camera (C, V), the window's diagnostic dumps (D, G) — **and
+camera zoom (W, S)**. Zoom is in the list although it is not a debug feature: the game sets the
+camera distance itself per phase, and a player who zooms out of that framing has no control that
+restores it.
+
+What a player keeps: **arrows** rotate, **Space** re-centres on the protagonist, **Escape** opens
+the pause menu and closes narration popups. Escape is never gated — without it there is no way out
+of a scene. See "Escape, and the phases it must answer" below for what it does per phase.
+
+Two things to keep in mind when touching that keyboard:
+
+- **Gate the branch, not the chain.** In `LocationTravelModeLauncher`'s `KeyDown`, the D and G
+  branches test `DeveloperKeys` as part of their own condition. Short-circuiting the whole
+  `else if` chain instead would swallow every non-Escape key before it reached the final `else`,
+  which is what forwards keys to fight and dialogue modes — taking the keyboard away from gameplay.
+- **`--no-developer-keys` makes a development build behave like a shipped one.** Keys cannot be
+  driven by `--cli` at all, so this flag plus the `Developer keys: …` line printed at startup is
+  the only way to check the shipped keyboard without building and hand-testing a shipped exe.
+
+**The payload is an allow-list.** Only paths named in `$Payload` are copied, and a missing required
+one fails the build before anything is archived. The tempting alternative — copy the repo, delete
+what looks unnecessary — ships whatever was added since someone last read the delete list, and
+breaks silently when a new runtime asset arrives without being un-deleted.
+
+Three things the script knows that are not obvious:
+
+- **`dotnet publish` copies neither `assets/` nor `models/`.** Nothing in the csproj marks them as
+  content, so both are staged by the script. Adding a runtime asset means adding it to `$Payload`.
+
+- **`Compress-Archive` is not used.** The cmdlet in Windows PowerShell 5.1 fails above 2 GB, and
+  this package is larger than that before the model is counted; `ZipFile.CreateFromDirectory`
+  handles it.
+
+Not shipped, and why: `data/` is design source nothing reads at runtime, `assets/old/` is
+superseded art, and `src/` is unnecessary because the two shaders under `src/terminal/Shaders/` are
+**`EmbeddedResource`s** — they travel inside the assembly, so a shipped build has them without the
+folder. `ShaderSource.Load` reads the file from disk when it is there (a shader stays editable
+without a rebuild) and from the manifest otherwise.
+
+**That arrangement replaced three hand-maintained copies, and the story is why it is worth the
+csproj entry.** The shaders used to fall back to string literals in *both* renderers, so the vertex
+shader existed three times: the file, `TerminalRenderer`'s copy, `PopupRenderer`'s. Since `src/` is
+not in the payload, a package ran the copies — and `TerminalRenderer`'s had drifted, missing
+`uGlyphScale` entirely. **Every shipped build drew its main terminal text at scale 1.0 while
+development drew it at 1.2**, and the popup, whose copy was correct, disagreed with the terminal
+beside it. Nothing reported it, because a missing uniform is silent by design:
+`GL.GetUniformLocation` returns -1 and `GL.Uniform1(-1, …)` is a defined no-op, so the value was set
+every frame into nowhere. It surfaced only when the Settings screen made the value changeable and
+the SIZE row did nothing in the package. Drift is now not fixed but impossible — there is one copy.
+
+Two things that outlive the bug:
+
+- **`TerminalRenderer.Uniform(name)` complains once when a lookup returns -1**, which turns that
+  whole class of silent failure into a log line. Worth extending to any renderer that gains a
+  uniform-heavy shader.
+- **Reproduce a shipped build's shader path by renaming `src/terminal/Shaders/`.** That is the only
+  way to exercise it, because `ShipArguments.Filter` strips `--cli-script` and a packaged build
+  therefore cannot be driven by a script at all. Both paths should start the game with no
+  `no uniform` line in the log.
+
+A new shader file needs no code change — the csproj item is a wildcard, and `LogicalName` names the
+resource for the file (`Shaders/terminal.vert`) rather than for its namespace-mangled path.
+
+The zip lands around 2.2 GB, nearly all of it `model.gguf`, which is already-compressed
+quantised weights and does not shrink. That is over itch.io's browser upload limit, so releases
+go through `publish.ps1`.
+
+### The manual in a release
+
+`package.ps1` runs `python tools/build_manual.py` **before anything else** and stages the result at
+the root of the package, beside the executable. The chapters are the source and the PDF is a build
+artefact, so shipping whatever PDF happened to be in the working tree would eventually ship a
+manual describing rules the game no longer has — with nothing about the file to say so. A build
+failure there stops the package rather than falling back to the stale copy; `-SkipManual` overrides
+that for a machine without Chrome, and says what it costs.
+
+**`publish.ps1` deliberately does not upload it.** butler only ever replaces builds in channels it
+owns, so it cannot touch the PDF that sits on the page — that was uploaded through the web form and
+has no channel. It *could* push the manual as a channel of its own, but itch then serves it as an
+archive rather than a one-click PDF, which is a worse page for a document. So the manual is a
+hand-upload, and `publish.ps1` closes with a reminder naming the freshly built file and its full
+path, because the failure this guards against is shipping a new build against last month's manual.
+
+If that trade ever looks different — automation mattering more than the one-click download — the
+push is one `butler push <pdf> user/game:manual` away.
+
+### Publishing
+
+```powershell
+./publish.ps1 -Status     # read-only: what is on the channel now
+./publish.ps1             # publishes to edmond00/proscribed:windows
+```
+
+The target is `edmond00/proscribed:windows`, from the page at edmond00.itch.io/proscribed.
+
+### Naming
+
+The game is **Proscribed Palimpsest**; "Cathedral" is the development name. The split is
+deliberate and is drawn at exactly one line — what a player can see:
+
+| player-facing, renamed | development, still Cathedral |
+|---|---|
+| window title (`Config.Name.WindowTitle`) | repository, csproj, namespaces |
+| main menu (`Config.Name.GameTitle`, stylised lowercase) | `bin/Debug/Cathedral.exe` |
+| `ProscribedPalimpsest.exe`, staged folder, zip | the dev-only launchers (fight area, image-to-text, music PoC) |
+| `%APPDATA%\ProscribedPalimpsest\` (save + settings) | `%APPDATA%\Cathedral\` for a development build |
+| the itch page | the repository name and the csproj file name |
+
+**Only the shipped executable is renamed**, by an `AssemblyName` conditioned on the same `Ship`
+flag. `run_tests.sh` guards the suite with `Get-Process -Name Cathedral`, and that guard is what
+stops a leftover run from racing a new one; renaming the development binary would break it
+*silently*, because the guard would simply stop finding anything and read as "all clear".
+
+**The data folder is named per build** (`AppData.FolderName`, conditioned on the same SHIP
+constant): `%APPDATA%\ProscribedPalimpsest` when shipped, `%APPDATA%\Cathedral` in development.
+They shared one folder until it became clear that testing the packaged game was never testing a
+clean install — a save left by a `dotnet run` session lit up Continue in the shipped build, and a
+compute device probed by one was inherited by the other.
+
+There is deliberately **no migration** between them. Copying development data into the shipped
+folder is the coupling this removes; a shipped build starting empty is the point. The cost is that
+the first launch after this change re-probes the compute device, because the new folder has no
+probe result in it.
+
+The shipped name has no space in it. A player sees it in a folder listing either way, and every
+CLI invocation — the whole test driver, any future CI — would otherwise need quoting.
+
+**It pushes the staged folder, not the zip**, and that is the whole reason it is worth having a
+script. butler diffs a build against the previous one file by file; pushed as a folder, the 2 GB
+model is uploaded once and skipped on every later release, so a code-only update sends a few
+hundred MB. A zip is one opaque blob — change one byte and the entire archive is new. Players
+still get a downloadable archive; itch builds one from the pushed files. The zip `package.ps1`
+makes is for manual distribution and backups, not for this.
+
+**No credentials live in the repo or on a command line.** `butler login` is a one-off interactive
+browser flow that stores a token under `~/.config/itch/butler_creds`; `BUTLER_API_KEY` in the
+environment is the unattended alternative. The script only checks that one of the two exists and
+lets butler do the rest.
+
+Pre-flight refuses to upload rather than publish something broken: the same required paths
+`package.ps1` verifies, plus a **PE subsystem check** that fails a console build (which would mean
+`-p:Ship=true` was lost and players would get a diagnostic window behind the game), plus deleting
+any `logs/` left in the staged folder — those contain the full text of everything the model was
+asked and answered.
+
+### Verifying a shipped build
+
+**Gameplay is verified on the development build; the shipped artifact is verified by starting it.**
+That division is deliberate, and it is why the locked-down option set costs nothing.
+
+`-p:Ship=true` changes exactly three things — a PE subsystem byte, two compile constants, and the
+assembly name. No line of game logic differs, so the CLI suite testing narration, verbs and
+outcomes against the development build is testing the same code with better tools. There is
+deliberately **no flag that re-enables the development options in a shipped build**: the scripts
+are built on `--seed`, `--skip-childhood`, `--observe-only`, `--location-type` and a dozen more, so
+anything that made them usable would put most of the surface back and would drift every time a
+script needed something new.
+
+What only the artifact can prove — that the self-contained runtime resolves, that `assets/` and
+`models/` are found from the executable's own directory, that the GGUF loads and a backend is
+chosen, that a window opens with its fonts — needs **no options at all**. `publish.ps1` launches
+the staged build with an empty command line, waits for a window title and for `LLM Server is ready`
+on stdout, then kills it and its `llama-server` child. `ConsoleAttach` is what makes that output
+readable. A pass covers every packaging failure mode there is; skip it with `-SkipSmokeTest` only
+when re-pushing something already started once.
+
+The confirmation prompt cancels rather than throwing when nothing can answer it, so an unattended
+run never publishes by accident — `-Yes` is how such a run says it meant to.
+

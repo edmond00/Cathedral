@@ -9,30 +9,26 @@
 #                     \/_____________/ 
 
 
-PLAYTEST :
-- fight debuging
-- slay>corpse debug
-- illegal actions
-- beast constraints + better context
-- llama auto setup
-- exe build
-- manual
-- childhood -> death run
+Volume 3 Todo list :
+- world rotation arrows buttons
+- world selection menu + world seed
+- world region split + world region graph
+- desert biome
+- calendar
+- name generator refactor
+- history simulator 
+- history simulation -> history event chronology
+- history event chronology -> world impact
+- history related locations : city, castle, port, ...
+- history related content
+- stable, ship, mount, travel refactor, naval battle, ...
+- bank and coins transactions
 
-humor outcome
-organ name in humor button during dices rolls
-"John" in free reasoning thought preview
-time of the day context, anatomy (beast) context, ...
-(You wonder ...) in dialogue inner thought (2nd person)
-routine + traveling NPC ?
 
 words to prevent :
 photo album
 bullet
 office
-
-
-new verbs :
 
 new MM :
 - rejection
@@ -79,3 +75,20 @@ new MM :
 - sociopathy
 - solitude
 - shyness
+
+COSMOLOGY :
+
+Adswaru : 1st Principium of the axioms.
+Silance : 2nd Principium of nothing.
+Adswaru+Silance = Repance : 3rd Principium of the destruction.
+Adswaru+Repance = Rede : 4th Principium of the randomness.
+Adswaru+Repance = Rhema : 5th Principium of the consciousness.
+Adswaru+Repance = Rhesis : 6th Principium of the judgment.
+Adswaru+Repance = Qoth : 7th Principium of the reality.
+
+Qoth+Rede : world 1 = cosmic forest --Repance-> ashes
+Qoth+Rhena : world 2 = cosmic orgia --Repance-> tears
+Qoth+Rhesis : world 3 = cosmic temple --Repance-> sand 
+ashes+tears+sand : world 4 = cosmic sea
+
+night shell > rain shell > ground shell > inner shell 
