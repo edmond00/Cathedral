@@ -50,13 +50,22 @@ namespace Cathedral.Terminal
         // Default terminal glyph set (ASCII printable characters)
         private const string DEFAULT_GLYPH_SET = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
         
-        // Padding in pixels between glyphs to prevent texture bleeding with linear filtering
-        private const int GLYPH_PADDING = 2;
+        // Transparent gutter between glyphs, in atlas texels. Scaled with the raster like every
+        // other size here — see Config.Terminal.GlyphAtlasPadding for why a mip chain needs more
+        // of it than a plain bilinear sample does.
+        private static int GlyphPadding =>
+            Config.Terminal.GlyphAtlasPadding * Config.Terminal.AtlasSupersample;
 
+        /// <param name="cellSize">Cell size in <i>cell units</i>, not atlas texels.</param>
+        /// <param name="fontPixelSize">Font size in cell units, likewise.</param>
         public GlyphAtlas(int cellSize = 64, int fontPixelSize = 48)
         {
-            _cellSize = cellSize;
-            _fontPixelSize = fontPixelSize;
+            // The supersample is applied here and nowhere else, so every caller keeps passing the
+            // on-screen cell size it already thinks in and no UV, quad or layout downstream moves:
+            // the UV rect is normalized against the atlas it is measured in. See
+            // Config.Terminal.AtlasSupersample.
+            _cellSize = cellSize * Config.Terminal.AtlasSupersample;
+            _fontPixelSize = fontPixelSize * Config.Terminal.AtlasSupersample;
             _glyphMap = new Dictionary<char, GlyphInfo>();
             _currentGlyphSet = "";
             _textureId = 0;
@@ -208,7 +217,7 @@ namespace Cathedral.Terminal
             int glyphCount = cleanGlyphSet.Length;
             int cols = (int)Math.Ceiling(Math.Sqrt(glyphCount));
             int rows = (int)Math.Ceiling((float)glyphCount / cols);
-            int cellWithPadding = _cellSize + GLYPH_PADDING;
+            int cellWithPadding = _cellSize + GlyphPadding;
             int atlasWidth = cols * cellWithPadding;
             int atlasHeight = rows * cellWithPadding;
 
@@ -221,8 +230,8 @@ namespace Cathedral.Terminal
                 char glyph = cleanGlyphSet[i];
                 int col = i % cols;
                 int row = i / cols;
-                int x = col * cellWithPadding + GLYPH_PADDING / 2;
-                int y = row * cellWithPadding + GLYPH_PADDING / 2;
+                int x = col * cellWithPadding + GlyphPadding / 2;
+                int y = row * cellWithPadding + GlyphPadding / 2;
 
                 // Render glyph to atlas
                 RenderGlyphToAtlas(atlasImage, glyph, x, y);
@@ -277,7 +286,14 @@ namespace Cathedral.Terminal
             // .GlyphStrokeFactor — the raster is minified to the on-screen cell, and FreeMono's
             // hairline stems do not survive that. Scaled off the font actually used, so a glyph
             // shrunk by its size factor is not stroked proportionally heavier than its neighbours.
-            float strokeWidth = fontToUse.Size * Cathedral.Config.Terminal.GlyphStrokeFactor;
+            //
+            // The per-glyph scale then thins (or fattens) one glyph against the rest at whatever
+            // weight the player chose — the dice use it, because a face rastered at 1.80 has stems
+            // 1.80x wide before the pen touches it and does not need the help the pen was added to
+            // give. See Config.GlyphSizeFactors.StrokeScales.
+            float strokeWidth = fontToUse.Size
+                              * Cathedral.Config.Terminal.GlyphStrokeFactor
+                              * Cathedral.Config.GlyphSizeFactors.GetStrokeScale(glyph);
 
             atlas.Mutate(ctx =>
             {
@@ -319,8 +335,16 @@ namespace Cathedral.Terminal
                 pixels
             );
 
+            // The mip chain is what makes Config.Terminal.AtlasSupersample worth anything. A plain
+            // Linear min filter reads a 2x2 texel neighbourhood however far it is minifying, so a
+            // 70-texel cell landing on a 23px quad would sample two texels in three and alias;
+            // LinearMipmapLinear averages the whole footprint instead, which is the entire point of
+            // rastering above the on-screen size. Generated after the upload, so it covers the
+            // image that was actually uploaded.
+            GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+
             // Set texture parameters
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);

@@ -484,6 +484,46 @@ public static class Config
         public const int MainHeight = 100;
         public const int MainCellSize = 35;
         public const int MainFontSize = 35;
+
+        /// <summary>
+        /// How many atlas texels the terminal rasters per <see cref="MainCellSize"/> pixel. The
+        /// atlas is drawn at this multiple of the cell and font size and minified back down by the
+        /// GPU; <b>every size on this class stays in cell units</b>, because <c>GlyphAtlas</c>
+        /// applies the factor inside its own constructor and nothing outside it reads the raster
+        /// size. Two windows also size themselves off <see cref="MainCellSize"/> directly
+        /// (<c>FightAreaTestLauncher</c>, <c>ImageToTextModeLauncher</c>), which is exactly why the
+        /// factor lives in the atlas and not in this constant.
+        ///
+        /// <para><b>It exists because a 1:1 raster has no detail left to give.</b> The grid is
+        /// 100x100, so a 1440-tall panel is a 14px cell and a die — quad-scaled to about 23px — was
+        /// being rastered into 35 and minified to 23. Its pips were three source pixels across,
+        /// which is not enough to resolve a pip from the rule beside it however thin the
+        /// emboldening pen is set: at that size the pen was the whole difference between a 5px pip
+        /// and a 3px one, and 3px still blurred back into a blob. Rastering at 70 and letting
+        /// minification average it down is what actually separates them.</para>
+        ///
+        /// <para><b>This is worth nothing without mipmaps and must not be raised without them.</b>
+        /// A plain <c>Linear</c> min filter samples a 2x2 texel neighbourhood no matter how far it
+        /// is minifying, so at 3x it reads two texels in every three and drops the rest — that is
+        /// undersampling, and it aliases and shimmers rather than smoothing. The averaging this
+        /// depends on is the mip chain, which is why <c>CreateTexture</c> builds one and filters
+        /// <c>LinearMipmapLinear</c>. <see cref="GlyphAtlasPadding"/> is the other half: the mip
+        /// levels this actually reaches must not blend one glyph into its neighbour.</para>
+        /// </summary>
+        public const int AtlasSupersample = 2;
+
+        /// <summary>
+        /// Transparent gutter between atlas cells, in cell units — the atlas multiplies it by
+        /// <see cref="AtlasSupersample"/> like everything else it rasters.
+        ///
+        /// <para>It was 2 texels, which is the right answer for a bilinear sample off the base
+        /// level and the wrong one once there is a mip chain: each level halves the gutter, so a
+        /// 2-texel gutter is gone by level 2 and coarse levels start averaging a neighbouring
+        /// glyph into this one's edge. 4 cell units is 8 texels at the shipped supersample, which
+        /// still leaves 2 clear texels at level 2 — past the level a 100x100 grid on a 4K panel
+        /// asks for, and past the level a 1200x900 window asks for either.</para>
+        /// </summary>
+        public const int GlyphAtlasPadding = 4;
         
         // Popup terminal dimensions
         public const int PopupWidth = 40;
@@ -1642,11 +1682,12 @@ public static class Config
     /// <summary>
     /// Per-glyph sizing for characters that need to read larger than ordinary text.
     ///
-    /// <para><b>There are two knobs and they do different things.</b> <see cref="Factors"/> is the
-    /// <i>raster</i> size — the point size the glyph is drawn at inside its atlas cell.
+    /// <para><b>There are three knobs and they do different things.</b> <see cref="Factors"/> is
+    /// the <i>raster</i> size — the point size the glyph is drawn at inside its atlas cell.
     /// <see cref="QuadScales"/> is the <i>quad</i> size — how much of the screen that cell is
-    /// stretched over, on top of <see cref="Terminal.GlyphScale"/>. Glyphs in neither dictionary
-    /// are 1.0 in both.</para>
+    /// stretched over, on top of <see cref="Terminal.GlyphScale"/>. <see cref="StrokeScales"/> is
+    /// the <i>weight</i> — a multiplier on the emboldening pen this glyph is stroked with.
+    /// Glyphs in none of the three dictionaries are 1.0 in all of them.</para>
     ///
     /// <para><b>The raster factor has a hard ceiling and it is not obvious.</b> The atlas cell is
     /// 35px and the glyph is centred in it; ink drawn past the cell edge is simply not sampled —
@@ -1656,7 +1697,10 @@ public static class Config
     /// each die was drawn 3px taller than its cell and lost the bottom rule of its box, which
     /// reads on screen as a die with a broken outline. They fit at 1.80, the side views at 1.60,
     /// at every weight on <see cref="Terminal.GlyphWeightSteps"/> — the emboldening pen widens
-    /// the ink, so the ceiling is lowest at HEAVY and that is the one to check against.</para>
+    /// the ink, so the ceiling is lowest at HEAVY and that is the one to check against. (The dice
+    /// now take a <see cref="StrokeScales"/> of 0.0 — no pen at all — so for them the ceiling no
+    /// longer moves with the weight. The raster factors were left where they are, since 1.80 was
+    /// chosen against the cell, not against the pen.)</para>
     ///
     /// <para>Past that ceiling the only way to make a glyph bigger is to give it a bigger quad,
     /// which is what <see cref="QuadScales"/> is for. It costs nothing but it does overflow the
@@ -1672,7 +1716,8 @@ public static class Config
             { '⎆', 1.7f },
 
             // Dice faces — the largest raster that still fits the atlas cell at every glyph
-            // weight. Their on-screen size comes from QuadScales, not from here.
+            // weight. Their on-screen size comes from QuadScales and their weight from
+            // StrokeScales; this is only how much of the atlas cell the ink covers.
             { '⚀', 1.8f },
             { '⚁', 1.8f },
             { '⚂', 1.8f },
@@ -1727,6 +1772,54 @@ public static class Config
         };
 
         /// <summary>
+        /// Per-glyph multiplier on the emboldening pen — the stroke laid down alongside the fill
+        /// when the glyph is rastered, whose width is <c>Terminal.GlyphStrokeFactor</c> of the font
+        /// size. Below 1.0 the glyph is drawn thinner than its neighbours at the same weight; the
+        /// floor is 0.0, which is the bare outline of the face with no emboldening at all.
+        ///
+        /// <para><b>Why an enlarged glyph needs this.</b> The pen scales off the font actually
+        /// used, so a glyph carrying a <see cref="Factors"/> of 1.80 is stroked with a pen 1.80x
+        /// wider than an ordinary letter's — and its stems were already 1.80x wider before the pen
+        /// touched them. The emboldening exists to keep a hairline stem alive through minification
+        /// to a 9px cell; a stem that starts at nearly twice the size does not need it, and gets
+        /// bold instead. The knob is the correction.</para>
+        ///
+        /// <para>The dice are where it shows. At NORMAL the six's pips fused into two solid bars
+        /// and the bars met the frame of the die; at HEAVY the four's pips closed on the corners.
+        /// The roll's side views take the same scale as its faces — a die must not change weight as
+        /// it tumbles, the same reason their raster factors are matched at 1.60 against 1.80.</para>
+        ///
+        /// <para><b>For the dice the pen is a cliff, not a dial, and 0.0 is the only useful
+        /// setting.</b> Measured down the six's pip stack in the 35px atlas cell, every scale from
+        /// 0.15 to 0.40 produces the identical raster — pips 5px tall separated by 2px — because
+        /// the pen at those widths is sub-pixel (0.19px to 0.50px) and its partial-coverage ring
+        /// still lands a whole pixel of ink on each side of every pip. Only at exactly 0.0 do the
+        /// pips fall to 3px and the gap between them double to 4px. So a value chosen to be
+        /// "slightly thinner" buys nothing at all; the choice is emboldened or not.</para>
+        ///
+        /// <para>The consequence is that the dice no longer answer the weight row in Settings.
+        /// That is the honest trade and not a regression: across the whole ladder the pen was only
+        /// ever making them fatter, never legibly bolder, because their stems start at 1.80x. The
+        /// die's own frame is 2px of real outline at this raster and survives minification without
+        /// help. If the pips ever need to be genuinely further apart than this, the lever is the
+        /// atlas cell — there are only 3px of pip to work with — and not this knob.</para>
+        /// </summary>
+        public static readonly Dictionary<char, float> StrokeScales = new()
+        {
+            { '⚀', 0.0f },
+            { '⚁', 0.0f },
+            { '⚂', 0.0f },
+            { '⚃', 0.0f },
+            { '⚄', 0.0f },
+            { '⚅', 0.0f },
+
+            { '⬖', 0.0f },
+            { '⬗', 0.0f },
+            { '⬘', 0.0f },
+            { '⬙', 0.0f },
+        };
+
+        /// <summary>
         /// Gets the raster size factor for a glyph. Returns 1.0 for normal-sized glyphs.
         /// </summary>
         public static float GetFactor(char c)
@@ -1740,6 +1833,15 @@ public static class Config
         public static float GetQuadScale(char c)
         {
             return QuadScales.TryGetValue(c, out float scale) ? scale : 1.0f;
+        }
+
+        /// <summary>
+        /// Gets the emboldening-pen multiplier for a glyph. Returns 1.0 for glyphs stroked at the
+        /// weight the player chose.
+        /// </summary>
+        public static float GetStrokeScale(char c)
+        {
+            return StrokeScales.TryGetValue(c, out float scale) ? scale : 1.0f;
         }
     }
     
