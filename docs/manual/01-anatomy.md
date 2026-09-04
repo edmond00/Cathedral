@@ -214,7 +214,7 @@ borne.** A body dies when the count reaches the maximum.
 moment of a visit — by a blow struck in a fight, or by the hurt that a failed act sometimes exacts of
 whoever attempted it — and the mortal one ends the protagonist at the instant it is taken, with no
 phase to be finished first and no return to the map to be waited for. A companion so wounded is lost
-to the party at the same instant, on the terms of [Chapter V §7](05-travel.md#7-companions-and-their-loss).
+to the party at the same instant, on the terms of [Chapter V §8](05-travel.md#8-companions-and-their-loss).
 
 **The exhaustion of the humors is reckoned by the same standing question**, and for the same reason:
 the queues are drawn upon by a bleeding and by every exertion a fight is paid for with, so they may

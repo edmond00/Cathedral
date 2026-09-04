@@ -38,6 +38,17 @@ public enum GameMode
     LocationInteraction,
     
     /// <summary>
+    /// The first screen of a new run: the world sphere is not drawn (and not yet generated), the
+    /// star sphere stands alone, and the player picks the world to play by clicking one of the moons
+    /// in it. Confirming seeds the run and generates the world; cancelling returns to
+    /// <see cref="MainMenu"/>.
+    ///
+    /// <para>Skipped when <c>--seed</c> pinned the world on the command line: the question has
+    /// already been answered.</para>
+    /// </summary>
+    WorldSelection,
+
+    /// <summary>
     /// Player is creating/configuring their protagonist before starting the game.
     /// Terminal shows body art with interactive organ-part score adjustment.
     /// </summary>

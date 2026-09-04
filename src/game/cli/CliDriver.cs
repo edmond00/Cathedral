@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -217,6 +217,7 @@ public sealed class CliDriver
                 case "world":       CmdWorld();                       break;
                 case "destinations":CmdDestinations(rest);            break;
                 case "click":       CmdClick(rest);                   break;
+                case "point":       CmdPoint(rest);                   break;
                 case "choose":      CmdChoose(rest);                  break;
                 case "travel":      CmdTravel(rest);                  break;
                 case "travel-go":   CmdTravelGo();                    break;
@@ -354,6 +355,15 @@ public sealed class CliDriver
           click engage              the travel encounter prompt's ENGAGE button
           click companion-death     the companion-death notice's CONTINUE — modal over every mode
           click menu <label>        press a main-menu button (New, Continue, …)
+          click moon <name|n>       pick a world off the world-selection sky, by moon name or
+                                    ordinal. Turns the sky towards it first, as the arrows would
+          click sky                 press an empty patch of the world-selection sky, which releases
+                                    the chosen moon without leaving the screen
+          point moon <name|n>       hover a moon without choosing it. Hovering and choosing are
+                                    separate states with separate looks; `click moon` drives both
+          click world <confirm|cancel>  the world-selection screen's two buttons
+          click arrow <direction>   press an on-screen camera arrow (left|right|up|down), the
+                                    mouse's copy of the arrow keys
           click button              press the footer button (LEAVE/INTERRUPT/END/CONTINUE)
           click continue            confirm the dice overlay
           click cell <x> <y>        raw terminal cell click (escape hatch)
@@ -528,6 +538,22 @@ public sealed class CliDriver
     private void CmdRegions()
     {
         bool any = false;
+
+        if (_game.CliWorldSelectionButtons() is { } world)
+        {
+            var (count, selected, _) = _game.CliMoonState();
+            CliMode.Emit(selected >= 0
+                ? $"  moon {selected} selected: {Cathedral.Glyph.SkyMoons.Name(selected)} "
+                  + $"(seed {Cathedral.Glyph.SkyMoons.WorldSeed(selected)})"
+                : "  no moon selected yet");
+            CliMode.Emit($"  click moon <name|ordinal>  ({count} moons, ordinals 0..{count - 1})");
+            CliMode.Emit("  point moon <name|ordinal>  (hover it without choosing it)");
+            CliMode.Emit("  click sky  (press empty sky — releases the chosen moon)");
+            foreach (var (label, enabled, _, _) in world)
+                CliMode.Emit($"  click world \"{label}\"{(enabled ? "" : "  (disabled)")}");
+            CliMode.Emit("  click arrow left|right|up|down  (turn the sky)");
+            return;
+        }
 
         if (_game.CliMenuButtons() is { } menu)
         {
@@ -812,6 +838,51 @@ public sealed class CliDriver
                 CliMode.Emit("ok: confirmed dice");
                 break;
             }
+            case "moon":
+            {
+                if (a.Length < 2) { CliMode.Emit("error: click moon <name|ordinal>"); return; }
+
+                int ordinal = ResolveMoon(string.Join(' ', a[1..]).Trim('\"'));
+                if (ordinal < 0) return;
+
+                Report(_game.CliSelectMoon(ordinal),
+                    $"selected moon {ordinal} ({Cathedral.Glyph.SkyMoons.Name(ordinal)}, "
+                    + $"seed {Cathedral.Glyph.SkyMoons.WorldSeed(ordinal)})");
+                break;
+            }
+            case "sky":
+            {
+                Report(_game.CliClickEmptySky(), "pressed empty sky (choice released)");
+                break;
+            }
+            case "world":
+            {
+                if (a.Length < 2) { CliMode.Emit("error: click world <confirm|cancel>"); return; }
+                var buttons = _game.CliWorldSelectionButtons();
+                if (buttons == null) { CliMode.Emit("error: not on the world-selection screen"); return; }
+
+                var match = buttons.FirstOrDefault(b => b.Label.Contains(a[1], StringComparison.OrdinalIgnoreCase));
+                if (match.Label == null) { CliMode.Emit($"error: no world-selection button matching \"{a[1]}\""); return; }
+                if (!match.Enabled)      { CliMode.Emit($"error: \"{match.Label}\" is disabled — no moon chosen yet"); return; }
+                _game.CliHoverCell(match.X, match.Y);
+                _game.CliClickCell(match.X, match.Y);
+                CliMode.Emit($"ok: pressed \"{match.Label}\"");
+                break;
+            }
+            case "arrow":
+            {
+                if (a.Length < 2) { CliMode.Emit("error: click arrow left|right|up|down"); return; }
+                if (!Enum.TryParse<Cathedral.Game.CameraArrow>(a[1], ignoreCase: true, out var arrow)
+                    || arrow == Cathedral.Game.CameraArrow.None)
+                { CliMode.Emit($"error: unknown arrow '{a[1]}' (left|right|up|down)"); return; }
+
+                var before = _game.CliCameraFacing();
+                string? err = _game.CliPressCameraArrow(arrow);
+                var after  = _game.CliCameraFacing();
+                Report(err, $"pressed the {arrow} arrow (yaw {before.Yaw:F1}\u00b0 -> {after.Yaw:F1}\u00b0, "
+                          + $"pitch {before.Pitch:F1}\u00b0 -> {after.Pitch:F1}\u00b0)");
+                break;
+            }
             case "menu":
             {
                 if (a.Length < 2) { CliMode.Emit("error: click menu <label>"); return; }
@@ -838,6 +909,42 @@ public sealed class CliDriver
                 CliMode.Emit($"error: unknown click target '{a[0]}'");
                 break;
         }
+    }
+
+    /// <summary>
+    /// <c>point moon &lt;name|ordinal&gt;</c> — put the cursor on a moon without pressing.
+    ///
+    /// <para>Hovering and choosing are separate states on the world-selection screen, drawn
+    /// differently and held at the same time. <c>click moon</c> drives both at once, so this is the
+    /// only way a script can show that a choice survives the cursor wandering off it.</para>
+    /// </summary>
+    private void CmdPoint(string[] a)
+    {
+        if (a.Length < 2 || !a[0].Equals("moon", StringComparison.OrdinalIgnoreCase))
+        { CliMode.Emit("error: point moon <name|ordinal>"); return; }
+
+        int ordinal = ResolveMoon(string.Join(' ', a[1..]).Trim('"'));
+        if (ordinal < 0) return;
+
+        Report(_game.CliPointAtMoon(ordinal),
+            $"pointed at moon {ordinal} ({Cathedral.Glyph.SkyMoons.Name(ordinal)})");
+    }
+
+    /// <summary>
+    /// A moon ordinal from a name or a number, or -1 having already reported why not. Names are
+    /// stable across processes (the sky is drawn from a constant), so a script may use either.
+    /// </summary>
+    private int ResolveMoon(string token)
+    {
+        if (int.TryParse(token, out int parsed)) return parsed;
+
+        var (count, _, _) = _game.CliMoonState();
+        for (int i = 0; i < count; i++)
+            if (string.Equals(Cathedral.Glyph.SkyMoons.Name(i), token, StringComparison.OrdinalIgnoreCase))
+                return i;
+
+        CliMode.Emit($"error: no moon named \"{token}\"");
+        return -1;
     }
 
     private void CmdChoose(string[] a)

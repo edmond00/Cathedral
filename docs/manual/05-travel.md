@@ -5,7 +5,31 @@ The world is a sphere divided into cells. Each cell bears a **biome**, and some 
 movement is paid for three times over: in days, in vital heat, and in the risk of what is met on the
 way.
 
-## 1. The compass of a stride
+## 1. The choosing of a world
+
+The sphere is not one sphere but many. Every world the game can build is settled entire by a single
+number — its terrain, where each location falls upon it, the cost of every edge between two cells,
+and the people who will be found inside each place — so that two travellers given the same number
+walk the same ground, and no part of a world is decided after the fact.
+
+That number is not asked for directly. Beyond the world hangs a further sphere, of stars, and among
+the stars are **three hundred and eighty-three moons**. Each moon stands for one world and for
+nothing else; each bears a name, and the name, the moon and the world beneath it are fixed for all
+players and all time. The sky is not drawn from the world's own number — were it so, a moon would
+cease to be itself in the instant it was taken — but from a constant, so that the sky above one
+world is the sky above every other.
+
+A run begins by taking one moon out of that sky. Until it is taken, no world exists: the sphere is
+unmade, and what stands in its place is the star-field alone. Taking it settles the number, and the
+world is generated from it before a protagonist is composed (Chapter I, §9). Nothing is spent by
+looking; a choice may be set down again without cost, since nothing has yet been made.
+
+**The moon of the world one stands upon is absent from that world's sky.** A traveller may count
+three hundred and eighty-two moons overhead and never the one beneath their feet. The same holds on
+returning to a world set aside and taken up again: its moon is struck from its own sky for as long
+as it is inhabited.
+
+## 2. The compass of a stride
 
 A destination may be set only within a radius of the traveller's present position, measured as a
 straight chord across the sphere and not as a count of steps. That radius is the **lower limbs'**
@@ -21,7 +45,7 @@ round.
 durations and hazards are recorded against the day some other means of crossing exists — but no
 route on foot may enter them.
 
-## 2. The price of a crossing
+## 3. The price of a crossing
 
 Each biome declares what one of its cells costs to cross, and the whole is summed cell by cell along
 the route.
@@ -44,7 +68,7 @@ The durations are calibrated so that a single hop costs several days and a journ
 runs into the hundreds. Time is the principal expense of travel, and the reason a journey is not
 undertaken lightly.
 
-## 3. Hazards
+## 4. Hazards
 
 Each hazard's stated chance is the **independent** probability that it fires upon crossing **one**
 cell of that biome. The chance of meeting a given creature at all across a route is therefore
@@ -60,7 +84,7 @@ steering the party clear.
 
 An encounter interrupts the journey where it occurs.
 
-## 4. Heat, and starvation
+## 5. Heat, and starvation
 
 The heat a route demands is **paid as the route is walked, not on reaching the end of it.** Each leg
 of the journey opens a debt, and the traveller halts where they stand until it is met, consuming
@@ -83,7 +107,7 @@ to sour in its humors is killed, and it is why the state of the queues is a thin
 setting out rather than after. The forecast of a route reports whether the queues as they now stand
 would carry the traveller to the end of it.
 
-## 5. The calendar
+## 6. The calendar
 
 The world keeps a calendar of **days**, and the day is the unit every span is expressed in.
 
@@ -99,7 +123,7 @@ Two things are settled on the traveller's return to the map:
 - **Wounds are swept for healing.** Those that have stood their term close, and the health they cost
   is restored.
 - **Age is checked.** A body that has lived out its term dies of old age. The protagonist's term
-  ending here ends the run; a companion's is caught by the standing question of [§7](#7-companions-and-their-loss),
+  ending here ends the run; a companion's is caught by the standing question of [§8](#8-companions-and-their-loss),
   which needs no particular juncture to be asked at.
 
 The order is deliberate: healing restores what a wound took, and the term of life is itself
@@ -111,7 +135,7 @@ are reckoned by a standing question, wherever the body happens to be ([Chapter I
 §7](01-anatomy.md#7-wounds)). Age is the one end of a life that keeps to a juncture, because the
 calendar keeps to one.
 
-## 6. The periods of the day
+## 7. The periods of the day
 
 Within a day, six coarse **periods** are distinguished — dawn, morning, noon, afternoon, evening,
 night — and they cycle, night returning to dawn.
@@ -125,7 +149,7 @@ stands is decided by their schedule against the period; a building's entry is sh
 what may be attempted at all follows from both. Arriving at a place at two different periods is
 arriving at two different places.
 
-## 7. Companions, and their loss
+## 8. Companions, and their loss
 
 The party is limited by the **heart's** measure — one companion per level of the organ. The limit is
 checked before a destination may be chosen, and a party over strength must be reduced before travel
@@ -157,7 +181,7 @@ fell in, on the same terms as any other death ([Chapter VI
 leaving what they carried. Where they died upon the map, between places, there is no area to hold a
 body and none is left.
 
-## 8. Arrival
+## 9. Arrival
 
 On arrival the traveller enters the place. Where the cell bears a location, the location is built
 and its narration begins; where it bears only a biome, the biome is entered instead. Arriving

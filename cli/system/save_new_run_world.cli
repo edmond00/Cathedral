@@ -8,9 +8,8 @@
 #
 # What this asserts is the half that protects the test suite: under --seed, EVERY run in the process
 # uses that seed, so a script that restarts is still reproducible. The other half — that without
-# --seed the second New really does draw a different world — is visible in the log line
-# "[RNG] Master seed re-drawn for a new run" and cannot be asserted from inside one script, since a
-# script has no way to compare two runs' worlds to each other.
+# --seed a run draws its world from the moon it was given — is cli/system/world_selection.cli, which
+# has to run without --seed precisely because this flag skips the screen that asks.
 #
 # FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --period noon --save-path .tmp-cli-save/new-run.json
 
@@ -20,12 +19,13 @@ wait mode ProtagonistCreation 20
 click continue
 wait mode WorldView 45
 
-# First run: the process's own world, claimed rather than rebuilt.
+# First run: the world built for this seed when New was pressed. Nothing is generated at startup any
+# more — a world belongs to a run, and until New or Continue there is no run to own one.
 expect-state save seed=42
 world
 
-# Back to the menu and start again. This New goes through the regeneration branch, because the world
-# has been claimed — but --seed overrides the fresh draw, so the run replays identically.
+# Back to the menu and start again. This New builds a world of its own exactly as the first did —
+# and --seed pins both, so the run replays identically.
 pause
 wait mode MainMenu 20
 click menu New

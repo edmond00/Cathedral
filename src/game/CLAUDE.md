@@ -60,16 +60,62 @@ And one that reaches past the party, because a field is stored **as-is** rather 
 ### The seed is per run, not per process
 
 The world derives from the master seed, and that seed locks before the window opens — so the save's
-seed is **peeked in `Program.cs` before `GameRng.Initialize`**, and Continue then rebuilds no world at
-all. `--seed` still wins outright, which keeps every scripted run reproducible and means a save from a
-different seed is simply unloadable.
+seed is **peeked in `Program.cs` before `GameRng.Initialize`**, and a continued run therefore builds
+its world on the seed the process already holds. `--seed` still wins outright, which keeps every
+scripted run reproducible and means a save from a different seed is simply unloadable.
 
-New therefore draws a fresh seed and regenerates the world in place (`GameRng.Reseed`, which also
-clears the streams; `GlyphSphereCore.RebuildForNewSeed`; `MicroworldInterface.RegenerateWorld`). The
-*first* New of a process is exempt — the world it booted with is nobody's yet — so the ordinary
-launch-then-play path carries none of that risk. Note **three** things come off the seed, not one:
-terrain, per-vertex pathfinding noise, and per-edge travel jitter. Regenerating only the terrain lays
-a new world over the old world's travel costs.
+**A launch that names no seed gets `Config.Rng.BootSeed`, a constant** — not the clock, as it was
+while the world was built at startup. Nothing visible hangs off it any more: a run takes its seed
+from its moon or from its save, so the boot value governs only the stretch before any run exists,
+and there is no reason for it to differ between launches.
+
+**Nothing is generated at startup.** A world belongs to a run, and until New or Continue there is no
+run to own one — the launcher sets `GlyphSphereCore.WorldRenderEnabled = false` and the sphere stays
+empty and undrawn, so the main menu and the world-selection screen open on nothing but stars. Both
+entrances then build one: New through `StartNewRun(worldSeed)`, Continue through `GenerateWorld()` on
+the seed already peeked out of the save.
+
+`StartNewRun` is the whole of it — `GameRng.Reseed` (which also clears the streams),
+`GlyphSphereCore.RebuildForNewSeed`, `MicroworldInterface.RegenerateWorld` — and it runs for *every*
+New, including the first. It used to exempt the first New of a process, because that process had
+booted with a world nobody owned yet; that exemption went with the boot-time generation that created
+it, and with it a class of bug where the first run and every later one took different paths through
+the same code. Note **three** things come off the seed, not one: terrain, per-vertex pathfinding
+noise, and per-edge travel jitter. Regenerating only the terrain lays a new world over the old
+world's travel costs.
+
+### Which world: the moons
+
+`GameMode.WorldSelection` is where a new run's seed comes from. The screen is the star sphere with
+the world not drawn behind it, and the moons in it — the `'O'` glyphs, 383 of them — are clickable.
+Each stands for a world: `SkyMoons` maps an ordinal to a name and to `WorldSeed(ordinal)`, and
+CONFIRM feeds that seed to `StartNewRun`. CANCEL and Escape both go back to the menu, having spent
+nothing — the save is not deleted until `StartNewRun` runs. **A press on empty sky releases the
+choice** without leaving the screen: `MoonClicked` fires with -1 rather than not firing, which is the
+whole of that rule.
+
+**Hovered and chosen are two states, not one.** They are held at the same time and drawn
+differently — chosen is larger and white, hovered smaller and yellow (`SetSelectedMoon` and
+`SetHighlightedMoon`, ranked in `RewriteMoon` as blanked > chosen > lit) — so a player can weigh a
+second moon against the one they hold without giving it up. The box reads them on separate lines for
+the same reason: one line says what CONFIRM will take, the other what the cursor is over.
+
+**The sky is not seeded from the master seed, and must not be.** It is drawn from
+`Config.SkyCloud.SkySeed`, a constant, so that the third moon is the same moon with the same name
+over the same world in every run on every machine. Seeding it from `GameRng` would mean the moon a
+player just clicked no longer existed the moment they clicked it — clicking it is what changes the
+master seed. This is one of the two deliberate `new Random(constant)` calls in the codebase.
+
+The moon of the world you are standing in is blanked out of your sky — by `SetHiddenMoon`, which
+shrinks its quad to nothing rather than painting it black (black is still a black square, and clear
+depends on whatever blend state the sky pass inherits). Confirming a moon hides it; continuing a save
+hides whichever moon matches the save's seed, if any does.
+
+**`--seed` skips the screen.** It has already named the world, so New goes straight to
+`ProtagonistCreation` — which is what keeps the whole CLI suite working, since every script passes
+it. The distinction that makes this safe is `Config.Rng.SeedPinned`: `Program.cs` also writes a
+*save's* seed into `Config.Rng.Seed`, and testing that field alone would skip the screen whenever a
+save merely existed.
 
 **Reloading re-rolls anything random that follows the save**, because RNG stream *positions* are not
 stored. This is a known and accepted save-scum vector, not a bug. The fix, if it is ever wanted, is a
@@ -92,6 +138,7 @@ against a file of its own; `--no-save` disables it outright.
 | `click end-run` | the death screen's END RUN button |
 | `inspect menu` | which menu buttons are enabled — a disabled button differs only by colour, so this is unassertable from the screen |
 | `--black-bile` | fills every humor queue with black bile, so the next journey starves. The only death a script cannot otherwise stage (old age uses `--advance-days`, wounds `--start-fight` plus `fight-end death`) |
+| `click moon` / `click world` | drive the world-selection screen. A script that wants it must run **without** `--seed`, which skips it — `cli/system/world_selection.cli` does, and is reproducible anyway because the sky is a constant |
 
 `cli/system/save_*.cli` and `cli/system/death_*.cli` cover the lifecycle in-process.
 **`tests/save_reload.sh` is the two-launch check** — save, quit, relaunch, Continue — and is

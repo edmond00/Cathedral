@@ -253,6 +253,16 @@ namespace Cathedral.Glyph.Microworld
         /// </summary>
         public void SetExternalTravelControl(bool enabled) => _externalTravelControl = enabled;
 
+        /// <summary>
+        /// True once a world has been generated into this interface.
+        ///
+        /// <para>Worth a flag rather than a null check because the world is no longer built at
+        /// startup: a new run builds it when its moon is confirmed, and a continued run builds it
+        /// when the save is read. Between the window opening and either of those the sphere carries
+        /// no biomes at all, and everything that would read one has to know not to ask.</para>
+        /// </summary>
+        public bool IsWorldGenerated { get; private set; }
+
         public override void GenerateWorld()
         {
             Console.WriteLine("Generating microworld biomes using Perlin noise...");
@@ -353,6 +363,8 @@ namespace Cathedral.Glyph.Microworld
 
             // Initialize protagonist at a random suitable location
             InitializeProtagonist();
+
+            IsWorldGenerated = true;
         }
 
         public override (string primaryType, string secondaryType, float noiseValue) GetWorldInfoAt(int vertexIndex)

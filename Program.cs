@@ -22,14 +22,18 @@ args = Cathedral.ShipArguments.Filter(args);
 // ── Master seed: resolved FIRST, before any other flag is looked at ──────────
 // Every other flag handler below sets a static on some mode class, and touching one of those runs
 // its static initializers — several of which ask GameRng for a stream. The first such ask resolves
-// the master seed permanently, so parsing --seed any later than this silently produced a time-based
-// run with --seed on the command line (which is exactly what happened with --skip-childhood).
+// the master seed permanently, so parsing --seed any later than this silently produced a run on the
+// boot default with --seed on the command line (which is exactly what happened with
+// --skip-childhood) — and, now, one that stops at the moon-selection screen it was meant to skip.
 // Nothing above this line may touch game state.
 for (int i = 0; i < args.Length; i++)
 {
     if (args[i] == "--seed" && i + 1 < args.Length && int.TryParse(args[i + 1], out int parsedSeed))
     {
         Cathedral.Config.Rng.Seed = parsedSeed;
+        // Pinned by hand, which is a different thing from a seed recovered from a save below: this
+        // one names the world to play, and so skips the screen that would ask which world to play.
+        Cathedral.Config.Rng.SeedPinned = true;
         break;
     }
 }
@@ -155,7 +159,8 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --no-llm-probe                     Skip first-run compute-device detection; use whatever is already saved");
     Console.WriteLine("  --no-developer-keys                Disable the developer keyboard shortcuts (D/M/F/G/H/J, C/V, W/S zoom),");
     Console.WriteLine("                                     leaving arrows/Space/Escape — i.e. behave as a shipped build does");
-    Console.WriteLine("  --seed <n>                         Fix the master RNG seed for a reproducible run (world, spawn, dice)");
+    Console.WriteLine("  --seed <n>                         Fix the master RNG seed for a reproducible run (world, spawn, dice).");
+    Console.WriteLine("                                     Names the world outright, so New skips the moon-selection screen");
     Console.WriteLine("  --start-at <name>                  DEBUG: spawn on the first biome/location matching <name> (e.g. village, farm)");
     Console.WriteLine("  --start-area <name>                DEBUG: open narration in the first area of the location matching <name>");
     Console.WriteLine("                                     (e.g. pigsty, smithy). --start-at picks the location, this picks the room:");

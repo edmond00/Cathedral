@@ -1,0 +1,74 @@
+# A new run picks its world by clicking a moon, and gets that moon's world.
+#
+# Deliberately runs WITHOUT --seed. That flag pins the world on the command line and so skips this
+# screen entirely — which is exactly what keeps the other hundred-odd scripts working — so a script
+# testing the screen cannot pass it. The run is still reproducible: the sky is drawn from a constant
+# (Config.SkyCloud.SkySeed), so moon 0 is Armoth in every process, and confirming it reseeds the run
+# to Armoth's world seed. Everything after the confirmation is as deterministic as --seed made it.
+#
+# The three assertions, in order: the screen exists and is reached by New; CANCEL goes back without
+# spending anything; and CONFIRM really does hand the run the world the moon names — read off the
+# live run's own seed rather than off the screen that claimed it.
+#
+# FLAGS: --playground --skip-childhood --debug --no-encounters --location-type test --location-id 0 --npc-static --period noon
+
+wait
+click menu New
+wait mode WorldSelection 20
+
+# Nothing chosen yet: the box is up with both its readings empty, and `regions` reports CONFIRM
+# dead — a disabled button differs only by colour, which `expect` cannot see.
+expect THE MOONS
+regions
+
+# Backing out costs nothing and returns to the menu.
+click world cancel
+wait mode MainMenu 20
+
+# In again, and this time pick one. `click moon` turns the sky towards it first, exactly as the
+# arrow pad would, and then hovers and clicks it through the real screen-space picking.
+click menu New
+wait mode WorldSelection 20
+click moon Armoth
+
+# One settle before reading the screen: the box is repainted from Update, so a `regions` or an
+# `expect` fired in the same breath as the click reads the frame before it.
+wait
+expect Armoth
+expect -209322086
+
+# Pointing at a SECOND moon must not disturb the first. The two states are drawn differently in the
+# sky — chosen is larger and white, pointed-at smaller and yellow — and the box reads them on
+# separate lines, which is the half of it a script can see.
+point moon Belavel
+wait
+expect Chosen
+expect Armoth
+expect Belavel
+
+# Pressing empty sky releases the choice without leaving the screen: CONFIRM goes dead again, and
+# `regions` says so.
+click sky
+wait
+regions
+
+# Take it back and go on.
+click moon Armoth
+wait
+
+# The compass turns the camera. Asserted through the CLI's own report of the yaw either side of the
+# press, since the camera is not something `dump` can see.
+click arrow left
+click arrow up
+
+# Take it. The world is generated here, not before.
+click world confirm
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+
+# The run is being played in Armoth's world — the seed the moon stands for, not a time-based one.
+expect-state save seed=-209322086
+world
+
+quit

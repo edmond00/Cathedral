@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Cathedral;
@@ -29,8 +29,8 @@ public static class GameRng
     private static readonly object _lock = new();
 
     /// <summary>
-    /// The resolved master seed actually in use. Printed at startup so a time-based
-    /// run can be pinned afterwards by passing this value back via <c>--seed</c>.
+    /// The resolved master seed actually in use. Printed both at startup and whenever a run
+    /// re-seeds, so any world can be pinned afterwards by passing that value back via <c>--seed</c>.
     /// Accessing it before <see cref="Initialize"/> lazily resolves it from
     /// <see cref="Config.Rng.Seed"/>.
     /// </summary>
@@ -44,10 +44,14 @@ public static class GameRng
     }
 
     /// <summary>
-    /// Resolves and locks in the master seed for the whole run. A null
-    /// <paramref name="seed"/> produces a fresh time-based seed (worlds differ every
-    /// launch); a non-null value replays the exact same run. Call once at startup;
-    /// later calls are ignored so the seed cannot drift mid-run.
+    /// Resolves and locks in the master seed the process boots with. A null
+    /// <paramref name="seed"/> resolves to <see cref="Config.Rng.BootSeed"/>, a constant; a non-null
+    /// value (from <c>--seed</c>, or peeked out of a save) names a world outright. Call once at
+    /// startup; later calls are ignored so the seed cannot drift mid-run.
+    ///
+    /// <para>This is no longer where a played world comes from. Nothing is generated at startup, and
+    /// a new run re-seeds through <see cref="Reseed"/> from the moon it was started on — so what is
+    /// locked here governs only the stretch before any run exists.</para>
     /// </summary>
     public static void Initialize(int? seed)
     {
@@ -65,10 +69,10 @@ public static class GameRng
                         "this run is NOT reproducible. Resolve the seed earlier, or make that reader lazy.");
                 return;
             }
-            _masterSeed = seed ?? Environment.TickCount;
+            _masterSeed = seed ?? Config.Rng.BootSeed;
             _initialized = true;
         }
-        Console.WriteLine($"[RNG] Master seed: {_masterSeed} ({(seed.HasValue ? "fixed" : "time-based")})");
+        Console.WriteLine($"[RNG] Master seed: {_masterSeed} ({(seed.HasValue ? "named" : "boot default")})");
     }
 
     /// <summary>

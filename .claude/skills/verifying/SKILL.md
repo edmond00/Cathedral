@@ -23,7 +23,7 @@ from the game's (very chatty) diagnostic logging on the same stdout.
 | `--cli-script <file>` | Run a command script at startup (implies `--cli`). |
 | `--cli-timeout <secs>` | Hard limit before the run closes itself. **Always pass this** — without it a script that never reaches `quit` hangs forever. |
 | `--playground` | Replaces every LLM call with instant placeholder text. No model, no server, no waiting. |
-| `--seed <n>` | Fixes the master RNG so the run is repeatable — world, spawn, dice, the starting kit, and every choice `--playground` stands in for. Two runs with the same seed produce byte-identical `[cli]` output; only LLM text (which carries no seed) is exempt. |
+| `--seed <n>` | Fixes the master RNG so the run is repeatable — world, spawn, dice, the starting kit, and every choice `--playground` stands in for. Two runs with the same seed produce byte-identical `[cli]` output; only LLM text (which carries no seed) is exempt. **It also skips the world-selection screen**: a new run normally picks its world by clicking a moon out of the sky, and this flag has already named one, so `click menu New` goes straight to `ProtagonistCreation` as it always did. A script testing that screen must therefore run *without* `--seed` — see `cli/system/world_selection.cli`, which is still reproducible because the sky is drawn from a constant. |
 | `--skip-childhood` | Skips the childhood + get-up phases and fills starting skills/items randomly — from the master seed, so the same seed gives the same kit. |
 | `--debug` | Lets `strategy` force action outcomes. Under `--cli` it never prompts — see below. |
 | `--start-at <name>` | Spawns the protagonist on the first biome or location matching `<name>` (`village`, `farm`, `field`, `cave`…). Without it you get wherever the seed puts you, which is usually plain or forest — testing anything village-specific otherwise means hunting for a lucky seed. |
@@ -77,6 +77,24 @@ Run `help` for the authoritative list. The essentials:
                             neighbours; filter by biome/location name — `destinations all village`
 
   click menu <label>        main-menu button
+  click moon <name|ordinal> pick a world off the world-selection sky. Turns the sky towards the
+                            moon first (as the compass rose would), then hovers and clicks it through
+                            the real screen-space picking. Names are stable: moon 0 is Armoth in
+                            every process, because the sky is drawn from a constant, not the seed
+  click world <confirm|cancel>
+                            the world-selection screen's two buttons. CONFIRM is what seeds the run
+                            and generates its world; CANCEL spends nothing and returns to the menu
+  click sky                 press an empty patch of the selection sky — releases the chosen moon
+                            without leaving the screen (a player's way of changing their mind)
+  point moon <name|n>       hover a moon WITHOUT choosing it. Hovering and choosing are separate
+                            states with separate looks and are held at the same time; `click moon`
+                            drives both, so this is the only way to assert that a choice survives
+                            the cursor moving off it
+  click arrow <direction>   press an arm of the compass rose (left|right|up|down) — the mouse's copy
+                            of the arrow keys, drawn top-right on the world map and the selection
+                            sky. Reports
+                            the yaw and pitch either side of the press, which is the only way a
+                            script can observe the camera at all
   click continue            protagonist-creation Continue, or a settled dice overlay
   click keyword <name>      a narration keyword
   click action <n>          a narration action
@@ -499,7 +517,10 @@ bordering the spawn point, while travel range reaches far further.
 ### What `--cli` cannot check
 
 - **Anything about pixels**: camera framing, the glyph atlas, sky/cloud rendering, and whether the
-  3D sphere looks right. `dump` sees the terminal cell grid, not the framebuffer.
+  3D sphere looks right. `dump` sees the terminal cell grid, not the framebuffer. This now includes
+  the world-selection sky: a script can prove which moon it picked and which world that gave it, but
+  not that the hovered moon lit up, that the chosen one vanished from the sky, or that the sphere
+  stopped being drawn behind it. Those want an eye.
 - **Ray picking**: `travel` injects a vertex index directly, bypassing
   `GlyphSphereCore.FindVertexByMagentaRayIntersection`. If that math breaks, scripts stay green
   while the game becomes unclickable. Keep one manual click-through in your release routine.

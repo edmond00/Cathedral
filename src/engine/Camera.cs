@@ -407,6 +407,23 @@ namespace Cathedral.Engine
         }
         
         /// <summary>
+        /// Turns the camera by a delta, clamping pitch exactly as the arrow keys do.
+        ///
+        /// <para>This is what the on-screen arrow pad presses. It is deliberately the same two
+        /// writes <see cref="ProcessInput"/> makes for Left/Right/Up/Down rather than a second way
+        /// of moving the camera: the pad exists so that a player who never touches the keyboard can
+        /// still look around, and a pad that turned the camera differently from the keys would be a
+        /// second control rather than the same one.</para>
+        /// </summary>
+        public void Rotate(float deltaYaw, float deltaPitch)
+        {
+            if (deltaYaw == 0f && deltaPitch == 0f) return;
+            _yaw += deltaYaw;
+            _pitch = Math.Clamp(_pitch + deltaPitch, MIN_PITCH, MAX_PITCH);
+            CameraTransformed?.Invoke(_yaw, _pitch, _distance);
+        }
+
+        /// <summary>
         /// Sets the camera distance (zoom level)
         /// </summary>
         public void SetDistance(float distance)

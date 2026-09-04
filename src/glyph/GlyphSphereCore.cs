@@ -63,6 +63,10 @@ namespace Cathedral.Glyph
         
         // Mouse interaction
         int hoveredVertexIndex = -1;
+
+        // The moon under the cursor while the sky is being chosen from, so MoonHovered fires on
+        // change rather than on every mouse move.
+        private int _hoveredMoon = -1;
         int lastHoveredVertexIndex = -2;
         private bool _worldInteractionsEnabled = true;
         private bool _isNarrationMode = false; // Track if in narration/location interaction mode
@@ -137,6 +141,183 @@ namespace Cathedral.Glyph
         public void SetNarrationMode(bool isNarration)
         {
             _isNarrationMode = isNarration;
+        }
+
+        /// <summary>
+        /// Whether the world — the glyph sphere, its opaque backdrop and the clouds over it — is
+        /// drawn at all. False leaves the star sphere alone in the frame.
+        ///
+        /// <para>Not a darkening, which is what <see cref="SetNarrationMode"/> does: the backdrop
+        /// sphere exists precisely to hide the stars behind the world, so a world that is merely dim
+        /// still blocks the sky. The world-selection screen needs the whole sky, and before a world
+        /// has been generated at all there is nothing to draw but an unpainted sphere.</para>
+        /// </summary>
+        public bool WorldRenderEnabled { get; set; } = true;
+
+        /// <summary>
+        /// When true, mouse movement and clicks are tested against the moons in the sky instead of
+        /// the vertices of the world, raising <see cref="MoonHovered"/> and <see cref="MoonClicked"/>.
+        /// Set only by the world-selection screen.
+        /// </summary>
+        public bool SkySelectionEnabled { get; set; } = false;
+
+        /// <summary>Fires with the ordinal of the moon under the cursor, or -1 when none is.</summary>
+        public event Action<int>? MoonHovered;
+
+        /// <summary>
+        /// Fires with the ordinal of a clicked moon, or <b>-1 when the click landed on empty sky</b>.
+        /// The empty case is not nothing: it is how a choice is taken back, the same way clicking off
+        /// a selection dismisses it anywhere else.
+        /// </summary>
+        public event Action<int>? MoonClicked;
+
+        /// <summary>How many moons the sky holds; 0 before the sky renderer has initialised.</summary>
+        public int MoonCount => _skyCloudRenderer?.MoonCount ?? 0;
+
+        /// <summary>The moon currently blanked out of the sky, or -1.</summary>
+        public int HiddenMoon => _skyCloudRenderer?.HiddenMoon ?? -1;
+
+        /// <summary>Lights the moon at <paramref name="ordinal"/> under the cursor; -1 lights none.</summary>
+        public void HighlightMoon(int ordinal) => _skyCloudRenderer?.SetHighlightedMoon(ordinal);
+
+        /// <summary>Marks the moon at <paramref name="ordinal"/> as chosen; -1 chooses none.</summary>
+        public void SelectMoon(int ordinal) => _skyCloudRenderer?.SetSelectedMoon(ordinal);
+
+        /// <summary>Blanks the moon at <paramref name="ordinal"/> out of the sky; -1 blanks none.</summary>
+        public void HideMoon(int ordinal) => _skyCloudRenderer?.SetHiddenMoon(ordinal);
+
+        /// <summary>
+        /// The ordinal of the moon nearest <paramref name="mousePos"/> on screen, or -1 when the
+        /// cursor is not near one.
+        ///
+        /// <para>Screen-space rather than the ray/sphere intersection the world uses: a moon is a
+        /// billboard on a sphere of radius 400 with the camera inside it, so "how far is the cursor
+        /// from it in pixels" is both the cheaper question and the one the player is actually
+        /// asking. The blanked moon is skipped — it is not in the sky to be clicked.</para>
+        /// </summary>
+        public int FindMoonAtScreen(OpenTK.Mathematics.Vector2 mousePos)
+        {
+            if (_skyCloudRenderer == null || ClientSize.X <= 0 || ClientSize.Y <= 0) return -1;
+
+            var view = GetViewMatrix();
+            var proj = Matrix4.CreatePerspectiveFieldOfView(
+                MathHelper.DegreesToRadians(60f), (float)ClientSize.X / ClientSize.Y,
+                Config.GlyphSphere.NearClipPlane, Config.GlyphSphere.FarClipPlane);
+            var viewProj = view * proj;
+
+            float radius = Config.SkyCloud.MoonPickPixelRadius;
+            float bestDist = radius * radius;
+            int best = -1;
+
+            for (int i = 0; i < _skyCloudRenderer.MoonCount; i++)
+            {
+                if (i == _skyCloudRenderer.HiddenMoon) continue;
+
+                var clip = new Vector4(_skyCloudRenderer.MoonPosition(i), 1.0f) * viewProj;
+                if (clip.W <= 0) continue;
+
+                float ndcX = clip.X / clip.W, ndcY = clip.Y / clip.W;
+                if (ndcX < -1 || ndcX > 1 || ndcY < -1 || ndcY > 1) continue;
+
+                float sx = (ndcX + 1.0f) * 0.5f * ClientSize.X;
+                float sy = (1.0f - ndcY) * 0.5f * ClientSize.Y;
+
+                float dx = sx - mousePos.X, dy = sy - mousePos.Y;
+                float d2 = dx * dx + dy * dy;
+                if (d2 < bestDist)
+                {
+                    bestDist = d2;
+                    best = i;
+                }
+            }
+            return best;
+        }
+
+        /// <summary>
+        /// The screen position of a moon, for the CLI: a script drives the selection screen through
+        /// the same hover-then-click path a player does, and needs a pixel to aim at. Returns false
+        /// when the moon is behind the camera or off screen.
+        /// </summary>
+        public bool TryGetMoonScreenPosition(int ordinal, out OpenTK.Mathematics.Vector2 screen)
+        {
+            screen = OpenTK.Mathematics.Vector2.Zero;
+            if (_skyCloudRenderer == null || ordinal < 0 || ordinal >= _skyCloudRenderer.MoonCount) return false;
+            if (ClientSize.X <= 0 || ClientSize.Y <= 0) return false;
+
+            var view = GetViewMatrix();
+            var proj = Matrix4.CreatePerspectiveFieldOfView(
+                MathHelper.DegreesToRadians(60f), (float)ClientSize.X / ClientSize.Y,
+                Config.GlyphSphere.NearClipPlane, Config.GlyphSphere.FarClipPlane);
+            var clip = new Vector4(_skyCloudRenderer.MoonPosition(ordinal), 1.0f) * (view * proj);
+            if (clip.W <= 0) return false;
+
+            float ndcX = clip.X / clip.W, ndcY = clip.Y / clip.W;
+            if (ndcX < -1 || ndcX > 1 || ndcY < -1 || ndcY > 1) return false;
+
+            screen = new OpenTK.Mathematics.Vector2(
+                (ndcX + 1.0f) * 0.5f * ClientSize.X,
+                (1.0f - ndcY) * 0.5f * ClientSize.Y);
+            return true;
+        }
+
+        /// <summary>
+        /// Drives the sky's hover and click at a screen position, for the CLI. Deliberately the same
+        /// two calls <c>OnMouseMove</c> and <c>OnMouseDown</c> make, so a script that picks a moon
+        /// goes through the same picking a player's cursor does rather than around it.
+        /// </summary>
+        public void CliPickSkyAt(OpenTK.Mathematics.Vector2 screen, bool click)
+        {
+            int moon = FindMoonAtScreen(screen);
+            if (moon != _hoveredMoon)
+            {
+                _hoveredMoon = moon;
+                MoonHovered?.Invoke(moon);
+            }
+            if (click) MoonClicked?.Invoke(moon);
+        }
+
+        /// <summary>
+        /// A screen position with no moon near it and no terminal cell owning it, for the CLI's
+        /// "click the empty dark" — the gesture that releases a choice. False when the view is so
+        /// crowded that no such point exists, which the caller should report rather than guess at.
+        /// </summary>
+        public bool TryFindEmptySkyPoint(out OpenTK.Mathematics.Vector2 screen)
+        {
+            screen = OpenTK.Mathematics.Vector2.Zero;
+            if (ClientSize.X <= 0 || ClientSize.Y <= 0) return false;
+
+            // A coarse sweep rather than a search: the sky holds a few hundred moons across a whole
+            // sphere, so almost any point is empty and the first probe nearly always answers.
+            for (int gy = 1; gy < 8; gy++)
+                for (int gx = 1; gx < 8; gx++)
+                {
+                    var p = new OpenTK.Mathematics.Vector2(
+                        ClientSize.X * gx / 8f, ClientSize.Y * gy / 8f);
+                    if (FindMoonAtScreen(p) >= 0) continue;
+                    if (_terminal != null && _terminal.ConsumesMouseAt(p, ClientSize)) continue;
+                    screen = p;
+                    return true;
+                }
+            return false;
+        }
+
+        /// <summary>
+        /// Turns the camera to put the moon at <paramref name="ordinal"/> in front of it. The CLI's
+        /// way of reaching a moon that is behind the player's head, and the same yaw/pitch a player
+        /// would arrive at with the arrow pad.
+        /// </summary>
+        public bool FaceMoon(int ordinal)
+        {
+            if (_skyCloudRenderer == null || ordinal < 0 || ordinal >= _skyCloudRenderer.MoonCount) return false;
+
+            var p = Vector3.Normalize(_skyCloudRenderer.MoonPosition(ordinal));
+
+            // The camera looks from -camDir * distance towards the origin, with camDir built from
+            // yaw/pitch exactly as below — so facing a point means solving that for the point.
+            float pitch = MathHelper.RadiansToDegrees(MathF.Asin(Math.Clamp(p.Y, -1f, 1f)));
+            float yaw   = MathHelper.RadiansToDegrees(MathF.Atan2(p.Z, p.X));
+            _camera.SetCameraParameters(yaw, Math.Clamp(pitch, -85f, 85f), _camera.Distance);
+            return true;
         }
         
         // Terminal HUD
@@ -771,14 +952,20 @@ namespace Cathedral.Glyph
             // Render sky stars first (behind everything)
             _skyCloudRenderer?.RenderSky(view, proj);
 
-            // Render background sphere (opaque backdrop, hides stars behind world)
-            RenderBackgroundSphere(view, proj);
+            // The world and everything that belongs to it. Skipped whole while the sky is being
+            // chosen from, and before a world exists at all — the backdrop sphere is opaque, so
+            // leaving it in would show a blank ball where the stars should be.
+            if (WorldRenderEnabled)
+            {
+                // Render background sphere (opaque backdrop, hides stars behind world)
+                RenderBackgroundSphere(view, proj);
 
-            // Render main sphere
-            RenderGlyphSphere(view, proj);
+                // Render main sphere
+                RenderGlyphSphere(view, proj);
 
-            // Render cloud layer over the world (semi-transparent)
-            _skyCloudRenderer?.RenderClouds(view, proj);
+                // Render cloud layer over the world (semi-transparent)
+                _skyCloudRenderer?.RenderClouds(view, proj);
+            }
 
             // Render debug markers if enabled
             if (debugShowMarkers)
@@ -807,10 +994,27 @@ namespace Cathedral.Glyph
             SwapBuffers();
         }
 
+        /// <summary>
+        /// A standing request to turn the camera, in degrees per second, from something that is not
+        /// the keyboard — the on-screen arrow pad holds one of these down while its arrow is pressed.
+        ///
+        /// <para>Applied here, in the render loop, rather than by the caller: the game's own update
+        /// runs at 10 Hz, and a camera turned once per update crawls in visible six-degree steps
+        /// while the frame behind it is drawn sixty times a second. The arrow keys have always been
+        /// read here for exactly that reason, and the pad is meant to be the same control.</para>
+        /// </summary>
+        public float CameraTurnYawPerSecond   { get; set; }
+        public float CameraTurnPitchPerSecond { get; set; }
+
         private void HandleInput(FrameEventArgs args)
         {
             // Let camera handle its input first
             bool cameraHandled = _camera.ProcessInput(KeyboardState, args);
+
+            // Then whatever the arrow pad is asking for, at frame rate and in the same units.
+            if (CameraTurnYawPerSecond != 0f || CameraTurnPitchPerSecond != 0f)
+                _camera.Rotate(CameraTurnYawPerSecond   * (float)args.Time,
+                               CameraTurnPitchPerSecond * (float)args.Time);
 
             // Development shortcuts — render debugging and live post-process tuning. Inert in a
             // shipped build (see Config.Debug.DeveloperKeys), where a stray D or F would otherwise
@@ -1011,6 +1215,21 @@ namespace Cathedral.Glyph
             debugRayDirection = rayDir;
             debugMousePos = mouse;
 
+            // The sky is picked from instead of the world while a world is being chosen. Same rule
+            // about the terminal owning the mouse: the confirmation box and the arrow pad are opaque
+            // and take precedence over whatever moon is behind them.
+            if (SkySelectionEnabled)
+            {
+                bool overTerminal = _terminal != null && _terminal.ConsumesMouseAt(mouse, ClientSize);
+                int newMoon = overTerminal ? -1 : FindMoonAtScreen(mouse);
+                if (newMoon != _hoveredMoon)
+                {
+                    _hoveredMoon = newMoon;
+                    MoonHovered?.Invoke(newMoon);
+                }
+                return;
+            }
+
             // Find hovered vertex (only if mouse is not over an opaque terminal cell
             // and world interactions are enabled). In WorldView the terminal stays
             // visible but most cells are transparent, so we use ConsumesMouseAt() to
@@ -1068,6 +1287,21 @@ namespace Cathedral.Glyph
                 return; // Terminal handled the event
             }
             
+            // While a world is being chosen there are no world vertices to hit — the sphere is not
+            // even drawn — so the click asks the sky instead.
+            if (e.Button == OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Left
+                && SkySelectionEnabled)
+            {
+                // -1 included: a press on bare sky is a real answer, and the screen reads it as
+                // taking the choice back.
+                int moon = FindMoonAtScreen(mouse);
+                Console.WriteLine(moon >= 0
+                    ? $"Sky selection: moon ordinal {moon} clicked"
+                    : "Sky selection: clicked empty sky");
+                MoonClicked?.Invoke(moon);
+                return;
+            }
+
             if (e.Button == OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Left)
             {
                 Console.WriteLine("Left mouse button detected - processing 3D interaction");

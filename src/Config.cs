@@ -19,20 +19,46 @@ public static class Config
         /// dice rolls, travel-path jitter, etc. all derive from it (see <see cref="GameRng"/>).
         ///
         /// <list type="bullet">
-        /// <item><c>null</c> (default) → a fresh time-based seed each launch, so every run
-        /// gets a different world.</item>
+        /// <item><c>null</c> (default) → <see cref="BootSeed"/>, a constant. The launch itself is
+        /// not where a world comes from any more: a run gets its seed from the moon it is started
+        /// on, or from a save, and until then there is no world at all.</item>
         /// <item>a fixed integer → the exact same run can be replayed by making the same
-        /// decisions.</item>
+        /// decisions, and the moon-selection screen is skipped since the world is already named.</item>
         /// </list>
         ///
         /// Set it here, or pass <c>--seed &lt;n&gt;</c> on the command line (the CLI flag
-        /// overrides this value). The resolved seed is printed at startup so a time-based
-        /// run can be pinned afterwards.
+        /// overrides this value). The resolved seed is printed at startup, and a run's own seed is
+        /// printed again when its world is built, so any world can be pinned afterwards.
         ///
         /// Note: this does not affect the LLM (its sampling is nondeterministic and carries
         /// no seed), nor RNG already seeded from world data such as NPC or location ids.
         /// </summary>
         public static int? Seed { get; set; } = null;
+
+        /// <summary>
+        /// The master seed a launch resolves to when nothing else names one.
+        ///
+        /// <para><b>A constant, not the clock.</b> It used to be <c>Environment.TickCount</c>, because
+        /// the world was generated at startup and a fresh world each launch was the point. It is not
+        /// generated at startup any more — a run takes its seed from the moon it is started on — so a
+        /// time-based value here would leave one last source of launch-to-launch variation governing
+        /// nothing anybody can see, and would make the seed printed at startup a different number
+        /// every time for no reason. Every run is now reproducible from the moon it names.</para>
+        /// </summary>
+        public const int BootSeed = 1;
+
+        /// <summary>
+        /// True when the seed above was pinned on the command line with <c>--seed</c>, as opposed to
+        /// being read back out of a save file (which <c>Program.cs</c> also writes into
+        /// <see cref="Seed"/>, for a different reason).
+        ///
+        /// <para>The distinction is what the world-selection screen turns on. A new run normally
+        /// picks its world by clicking a moon; a run whose seed was pinned on the command line has
+        /// already been told which world to play, so the screen would have nothing to ask and is
+        /// skipped. Testing <see cref="Seed"/> alone would skip it whenever a save merely existed —
+        /// the save's seed is loaded into that same field so Continue can rebuild its world.</para>
+        /// </summary>
+        public static bool SeedPinned { get; set; } = false;
     }
 
     /// <summary>
@@ -830,6 +856,120 @@ public static class Config
         public const float SkyStarMinSize = 1.2f;
         public const float SkyStarMaxSize = 6.0f;
         public const float StarDensity = 0.25f;           // 25% of vertices become stars
+
+        /// <summary>
+        /// The seed the sky is drawn from — which vertices become bodies, and which of those are
+        /// moons. Deliberately a constant and NOT <see cref="GameRng"/>: the sky is the same sky in
+        /// every run on every machine, because a moon in it names a world. Seeding it from the master
+        /// seed would make the moon a player picked stop existing the moment they picked it.
+        /// </summary>
+        public const int SkySeed = 9999;
+
+        /// <summary>The last (rarest) character in <see cref="SkyChars"/> — the moons, and the only
+        /// bodies the world-selection screen lets a player click.</summary>
+        public const char MoonChar = 'O';
+
+        /// <summary>Screen-space radius, in pixels, within which a click counts as hitting a moon.</summary>
+        public const float MoonPickPixelRadius = 26f;
+
+        /// <summary>Multiplier applied to a moon's quad size while it is hovered on the selection screen.</summary>
+        public const float MoonHighlightScale = 1.5f;
+
+        /// <summary>Colour a hovered moon is repainted in — the same bright yellow every hovered
+        /// control in the game uses.</summary>
+        public static readonly Vector4 MoonHighlightColor = new(1.0f, 1.0f, 0.4f, 1.0f);
+
+        /// <summary>
+        /// Multiplier and colour for the moon that has been <b>chosen</b>, as distinct from the one
+        /// merely under the cursor. The two states co-exist — a choice stands while the cursor goes on
+        /// wandering the sky — so they cannot share a look, or the player would have no way to tell
+        /// what CONFIRM is about to take from what they happen to be pointing at. Chosen is bigger and
+        /// white; hovered is smaller and yellow.
+        /// </summary>
+        public const float MoonSelectedScale = 2.3f;
+
+        public static readonly Vector4 MoonSelectedColor = new(1.0f, 1.0f, 1.0f, 1.0f);
+    }
+
+    #endregion
+
+    #region World Selection
+
+    /// <summary>
+    /// The screen where a new run picks its world by clicking a moon out of the sky.
+    /// </summary>
+    public static class WorldSelectionUI
+    {
+        public const int TitleRow  = 6;
+        public const int HintRow   = 8;
+
+        /// <summary>The information/confirmation box at the bottom of the screen.</summary>
+        public const int BoxWidth        = 46;
+        // Nine rows: border, title, gap, chosen, seed, pointed-at, gap, buttons, border. The gap
+        // above the buttons is load-bearing — text hard against a button reads as part of it.
+        public const int BoxHeight       = 9;
+        public const int BoxBottomMargin = 8;
+
+        public static readonly Vector4 TitleColor      = Colors.BrightYellow;
+        public static readonly Vector4 HintColor       = Colors.MediumGray50;
+        public static readonly Vector4 BorderColor     = Colors.DarkYellowGrey;
+        public static readonly Vector4 BackgroundColor = Colors.BlackTransparent;
+        public static readonly Vector4 LabelColor      = Colors.MediumGray50;
+        public static readonly Vector4 ValueColor      = Colors.White;
+        public static readonly Vector4 NameColor       = Colors.BrightYellow;
+
+        // CONFIRM — the primary chip, yellow like TRAVEL.
+        public static readonly Vector4 ConfirmTextColor            = Colors.Black;
+        public static readonly Vector4 ConfirmBackgroundColor      = Colors.BrightYellow;
+        public static readonly Vector4 ConfirmHoverTextColor       = Colors.Black;
+        public static readonly Vector4 ConfirmHoverBackgroundColor = Colors.White;
+
+        // CANCEL — the muted chip, grey like CLEAR.
+        public static readonly Vector4 CancelTextColor             = Colors.LightGray85;
+        public static readonly Vector4 CancelBackgroundColor       = Colors.DarkGray35;
+        public static readonly Vector4 CancelHoverTextColor        = Colors.Black;
+        public static readonly Vector4 CancelHoverBackgroundColor  = Colors.LightGray85;
+    }
+
+    #endregion
+
+    #region Camera Pad
+
+    /// <summary>
+    /// The four on-screen arrows that turn the camera, so the sky and the world can both be looked
+    /// around with the mouse alone. The arrow keys still work and do exactly the same thing; this is
+    /// the mouse's copy of them, not a second control.
+    /// </summary>
+    public static class CameraPad
+    {
+        /// <summary>Cells between the rose's right edge and the right edge of the grid.</summary>
+        public const int RightMargin = 5;
+        /// <summary>
+        /// Cells between the rose's top edge and the top of the grid. Two, which puts the rose clear
+        /// above the world-selection screen's hint line — that line is centred and long enough to
+        /// reach the rose's column, and the two were printing through each other.
+        /// </summary>
+        public const int TopMargin   = 2;
+
+        public const int Width  = 13;
+        public const int Height = 5;
+
+        /// <summary>Degrees per second while an arrow is held down — the keyboard's rotation speed.</summary>
+        public const float RotationSpeed = 60f;
+
+        /// <summary>
+        /// Degrees turned by a single click. A press that is released before the next frame would
+        /// otherwise move the camera by an invisible fraction of a degree and read as a dead button.
+        /// </summary>
+        public const float ClickStep = 6f;
+
+        // No frame and no fill: the rose is drawn as ink on the sky, the way a compass is drawn in
+        // the corner of a map. Only the inked cells take a click — everything around them stays
+        // transparent and falls through to whatever is behind.
+        public static readonly Vector4 ArrowColor      = Colors.LightGray75;
+        public static readonly Vector4 RayColor        = Colors.DarkYellowGrey;
+        public static readonly Vector4 LabelColor      = Colors.MediumGray60;
+        public static readonly Vector4 ArrowHoverColor = Colors.BrightYellow;
     }
     
     #endregion

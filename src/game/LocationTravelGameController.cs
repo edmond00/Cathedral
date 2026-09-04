@@ -65,6 +65,19 @@ public class LocationTravelGameController : IDisposable
     private MainMenuRenderer? _mainMenuRenderer;
     private SettingsMenuRenderer? _settingsMenuRenderer;
     private bool _hasGameStarted = false;
+
+    // World selection — the sky a new run picks its world out of.
+    private WorldSelectionRenderer? _worldSelectionRenderer;
+    /// <summary>Ordinal of the moon the player has clicked and not yet confirmed, or -1.</summary>
+    private int _selectedMoon = -1;
+    /// <summary>Ordinal of the moon under the cursor, or -1. Purely for the box's preview line.</summary>
+    private int _hoveredMoon = -1;
+
+    // The four on-screen camera arrows, shared by the world map and the world-selection sky. One
+    // instance: only one of those two modes is ever on screen, and the pad has no per-mode state.
+    private CameraArrowPad? _cameraArrowPad;
+    /// <summary>The arrow being held down with the mouse, turning the camera every frame.</summary>
+    private CameraArrow _heldArrow = CameraArrow.None;
     
     // Protagonist creation
     private ProtagonistCreationRenderer? _protagonistCreationRenderer;
@@ -482,6 +495,109 @@ public class LocationTravelGameController : IDisposable
         => _currentMode == GameMode.MainMenu ? _mainMenuRenderer?.CliButtons() : null;
 
     /// <summary>
+    /// The world-selection screen's two buttons with their cells, or null when that screen is not up.
+    /// Same shape as <see cref="CliMenuButtons"/>, so <c>regions</c> can print them the same way.
+    /// </summary>
+    public IReadOnlyList<(string Label, bool Enabled, int X, int Y)>? CliWorldSelectionButtons()
+    {
+        if (_currentMode != GameMode.WorldSelection || _worldSelectionRenderer == null) return null;
+
+        var (cx, cy) = _worldSelectionRenderer.ConfirmCell();
+        var (kx, ky) = _worldSelectionRenderer.CancelCell();
+        return new List<(string, bool, int, int)>
+        {
+            ("Confirm", _worldSelectionRenderer.ConfirmEnabled, cx, cy),
+            ("Cancel",  true,                                   kx, ky),
+        };
+    }
+
+    /// <summary>How many moons the sky holds, and which one is selected. For <c>regions</c>.</summary>
+    public (int Count, int Selected, int Hovered) CliMoonState()
+        => (_core.MoonCount, _selectedMoon, _hoveredMoon);
+
+    /// <summary>
+    /// Picks a moon by ordinal from a script: turns the camera onto it, then hovers and clicks it
+    /// through the real sky picking. Returns an error string, or null on success.
+    ///
+    /// <para>The camera move is not a shortcut around the picking — it is the arrow pad's job done in
+    /// one step. A moon on the far side of the sky is genuinely not clickable until the sky has been
+    /// turned, and a script that clicked one anyway would be testing a path no player has.</para>
+    /// </summary>
+    public string? CliSelectMoon(int ordinal)
+    {
+        if (_currentMode != GameMode.WorldSelection) return "not on the world-selection screen";
+        if (ordinal < 0 || ordinal >= _core.MoonCount)
+            return $"no moon with ordinal {ordinal} (the sky holds {_core.MoonCount})";
+        if (ordinal == _core.HiddenMoon) return $"moon {ordinal} is the world you are already in";
+
+        if (!_core.FaceMoon(ordinal)) return $"could not turn the sky towards moon {ordinal}";
+        if (!_core.TryGetMoonScreenPosition(ordinal, out var screen))
+            return $"moon {ordinal} is not on screen even after turning towards it";
+
+        _core.CliPickSkyAt(screen, click: false);
+        _core.CliPickSkyAt(screen, click: true);
+        return _selectedMoon == ordinal ? null : $"the click landed on moon {_selectedMoon}, not {ordinal}";
+    }
+
+    /// <summary>
+    /// Moves the cursor onto a moon without pressing, from a script. The hover and the choice are
+    /// separate states with separate looks, and this is the only way to drive one without the other
+    /// — which is what makes "a choice survives pointing at something else" assertable.
+    /// </summary>
+    public string? CliPointAtMoon(int ordinal)
+    {
+        if (_currentMode != GameMode.WorldSelection) return "not on the world-selection screen";
+        if (ordinal < 0 || ordinal >= _core.MoonCount)
+            return $"no moon with ordinal {ordinal} (the sky holds {_core.MoonCount})";
+
+        if (!_core.FaceMoon(ordinal)) return $"could not turn the sky towards moon {ordinal}";
+        if (!_core.TryGetMoonScreenPosition(ordinal, out var screen))
+            return $"moon {ordinal} is not on screen even after turning towards it";
+
+        _core.CliPickSkyAt(screen, click: false);
+        return _hoveredMoon == ordinal ? null : $"the cursor landed on moon {_hoveredMoon}, not {ordinal}";
+    }
+
+    /// <summary>
+    /// Presses a patch of empty sky, which releases the chosen moon without leaving the screen.
+    /// Returns an error string, or null on success.
+    /// </summary>
+    public string? CliClickEmptySky()
+    {
+        if (_currentMode != GameMode.WorldSelection) return "not on the world-selection screen";
+        if (!_core.TryFindEmptySkyPoint(out var screen)) return "found no empty patch of sky to press";
+
+        _core.CliPickSkyAt(screen, click: true);
+        return _selectedMoon < 0 ? null : $"moon {_selectedMoon} is still chosen";
+    }
+
+    /// <summary>
+    /// Presses one of the four camera arrows from a script, through the same cell click a player
+    /// makes. Returns an error string, or null on success.
+    /// </summary>
+    public string? CliPressCameraArrow(CameraArrow arrow)
+    {
+        if (!CameraPadActive) return "the camera arrows are not on screen in this mode";
+
+        var (x, y) = _cameraArrowPad!.CellFor(arrow);
+        if (x < 0) return $"no cell for the {arrow} arrow";
+
+        CliHoverCell(x, y);
+        CliClickCell(x, y);
+
+        // A scripted press is a tap: nothing is still held down, so the standing rate the pad hands
+        // the render loop has to be put back at once. Left standing it would turn the camera for the
+        // rest of the run.
+        _heldArrow = CameraArrow.None;
+        _core.CameraTurnYawPerSecond   = 0f;
+        _core.CameraTurnPitchPerSecond = 0f;
+        return null;
+    }
+
+    /// <summary>The camera's current facing, so a script can prove an arrow actually turned it.</summary>
+    public (float Yaw, float Pitch) CliCameraFacing() => (_core.Camera.Yaw, _core.Camera.Pitch);
+
+    /// <summary>
     /// Opens the protagonist-management screen (anatomy / inventory / memory tabs) from wherever the
     /// game currently is, and closes it again on the second call.
     ///
@@ -673,6 +789,10 @@ public class LocationTravelGameController : IDisposable
         // Wire up global mouse click handler for popup interactions
         _core.GlobalMouseClicked += OnGlobalMouseClicked;
 
+        // The sky's own hover and click, raised only while the core is in sky-selection mode.
+        _core.MoonHovered += OnMoonHovered;
+        _core.MoonClicked += OnMoonClicked;
+
         // Travel planning: install the land travel constraint (forbids sea/ocean) on
         // the microworld interface so pathfinding skips impassable cells, and stand up
         // the waypoint queue + bottom UI.
@@ -685,7 +805,10 @@ public class LocationTravelGameController : IDisposable
         // Initialize terminal UI (if terminal is available)
         InitializeTerminalUI();
         if (_core.Terminal != null)
+        {
             _travelInfoRenderer = new TravelInfoRenderer(_core.Terminal);
+            _cameraArrowPad     = new CameraArrowPad(_core.Terminal);
+        }
         
         // Show main menu on startup
         SetMode(GameMode.MainMenu);
@@ -785,6 +908,23 @@ public class LocationTravelGameController : IDisposable
         {
             int trackCount = Math.Min(_narrativeController.ReminescenceCompletedCount, 4);
             _ambianceEngine.SetActiveTrackCount(trackCount);
+        }
+
+        // The camera arrows turn the camera for as long as one is held down, in either of the two
+        // modes that draw them. Before the mode dispatch below, which returns early all over.
+        UpdateCameraPad(deltaTime);
+
+        // World selection: repaint the box every frame so the hover preview and the button
+        // highlights follow the cursor, exactly as the travel box does on the world map.
+        if (_currentMode == GameMode.WorldSelection)
+        {
+            if (_worldSelectionRenderer != null)
+            {
+                _worldSelectionRenderer.Draw(_selectedMoon, _hoveredMoon, _core.MoonCount);
+                _cameraArrowPad?.Draw();
+            }
+            UpdatePopupTerminal();
+            return;
         }
 
         // Update protagonist creation blink animation
@@ -1061,6 +1201,10 @@ public class LocationTravelGameController : IDisposable
                 && _protagonist.RecordedRoutines.Any(r => r.LocationId == destVertex);
         }
 
+        // The arrow pad, drawn before the travel box so that if the two ever overlapped the box —
+        // the one carrying the decision — would win.
+        if (CameraPadActive) _cameraArrowPad!.Draw();
+
         _travelInfoRenderer.Erase();
         _travelInfoRenderer.Draw(
             waypointCount: _travelPlanner.Count,
@@ -1313,6 +1457,19 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
+        // The camera arrows sit over both the world map and the selection sky, and are checked
+        // before either screen's own buttons — they are drawn on top of both.
+        if (TryPressCameraArrow(x, y)) return;
+
+        // World selection: the confirmation box's two buttons. A press anywhere else on the screen
+        // is either a moon (handled in the core, which sees the raw click) or nothing.
+        if (_currentMode == GameMode.WorldSelection && _worldSelectionRenderer != null)
+        {
+            if (_worldSelectionRenderer.IsOverConfirmButton(x, y)) { ConfirmWorldSelection(); return; }
+            if (_worldSelectionRenderer.IsOverCancelButton(x, y))  { CancelWorldSelection();  return; }
+            return;
+        }
+
         // WorldView: only the TRAVEL and CLEAR buttons on the bottom travel info box
         // are clickable (everything else is transparent and falls through to the world
         // sphere via TerminalHUD.TransparentClickPassthrough).
@@ -1516,6 +1673,10 @@ public class LocationTravelGameController : IDisposable
             : _travelInfoRenderer.IsOverClearButton(x, y)    ? "travel-clear-button"
             : _travelInfoRenderer.IsOverRoutinesButton(x, y) ? "travel-routines-button"
             : null,
+        GameMode.WorldSelection => _worldSelectionRenderer == null ? null
+            : _worldSelectionRenderer.IsOverConfirmButton(x, y) ? "world-confirm"
+            : _worldSelectionRenderer.IsOverCancelButton(x, y)  ? "world-cancel"
+            : null,
         GameMode.Death => _deathScreenRenderer?.IsOverEndRunButton(x, y) == true ? "death-end-run" : null,
         GameMode.EncounterPrompt => _encounterPromptRenderer?.IsOverEngageButton(x, y) == true ? "encounter-engage" : null,
         GameMode.ProtagonistManagement => null, // management menu fires its own tick via OnMouseMove return value
@@ -1561,6 +1722,10 @@ public class LocationTravelGameController : IDisposable
         _mouseCellX = x;
         _mouseCellY = y;
         _travelInfoRenderer?.SetHover(x, y);
+        _worldSelectionRenderer?.SetHover(x, y);
+        if (CameraPadActive && _cameraArrowPad!.SetHover(x, y)
+            && _cameraArrowPad.Hovered != CameraArrow.None)
+            _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
         _deathScreenRenderer?.SetHover(x, y);
         _encounterPromptRenderer?.SetHover(x, y);
 
@@ -1791,6 +1956,12 @@ public class LocationTravelGameController : IDisposable
     /// <summary>The mode-specific setup half of <see cref="SetMode"/>, shared with the repaint.</summary>
     private void RunModeEnter(GameMode newMode)
     {
+        // Whether the world is drawn at all, decided in one place for every mode rather than in each
+        // OnEnter. Two conditions, and both are easy to get wrong from inside a single mode: there
+        // may be no world yet (nothing is generated until a run starts), and the world-selection
+        // screen wants the sky unobstructed even when a previous run has left a world standing.
+        _core.WorldRenderEnabled = _interface.IsWorldGenerated && newMode != GameMode.WorldSelection;
+
         // Handle mode-specific setup
         switch (newMode)
         {
@@ -1804,6 +1975,10 @@ public class LocationTravelGameController : IDisposable
 
             case GameMode.Settings:
                 OnEnterSettings();
+                break;
+
+            case GameMode.WorldSelection:
+                OnEnterWorldSelection();
                 break;
                 
             case GameMode.WorldView:
@@ -2423,9 +2598,20 @@ public class LocationTravelGameController : IDisposable
             _mainMenuRenderer.SetButtons(
                 onNew: () =>
                 {
-                    // Spends the save and gives the run a world of its own — see StartNewRun.
-                    StartNewRun();
-                    SetMode(GameMode.ProtagonistCreation);
+                    // Which world? Normally the player answers by picking a moon out of the sky, and
+                    // nothing is spent or built until they confirm one — so backing out of that
+                    // screen leaves the save on disk exactly as it was.
+                    //
+                    // --seed answers it on the command line instead, and a screen that asked a
+                    // question already answered would only be an extra keypress in front of every
+                    // scripted run.
+                    if (Config.Rng.SeedPinned && Config.Rng.Seed.HasValue)
+                    {
+                        StartNewRun(Config.Rng.Seed.Value);
+                        SetMode(GameMode.ProtagonistCreation);
+                        return;
+                    }
+                    SetMode(GameMode.WorldSelection);
                 },
                 onContinue: () =>
                 {
@@ -2466,6 +2652,242 @@ public class LocationTravelGameController : IDisposable
             // Render the menu
             _mainMenuRenderer.Render();
         }
+    }
+
+    // ── World selection ──────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Opens the sky a new run picks its world out of: no world drawn, no world interactions, the
+    /// star sphere alone, and the moons made clickable.
+    /// </summary>
+    private void OnEnterWorldSelection()
+    {
+        Console.WriteLine("LocationTravelGameController: Entered WorldSelection mode");
+        _ambianceEngine?.SetFilter(MusicFilter.None);
+        _ambianceEngine?.SetMood(MusicMoodState.Neutral);
+        _ambianceEngine?.SetActiveTrackCount(1);
+
+        // Not narration mode: that greys the world down, and there is no world here to grey. The
+        // sky is the subject of the screen and is drawn at full strength.
+        _core.SetNarrationMode(false);
+
+        // The world's own hover and click are off and the sky's are on. Both matter: the sphere is
+        // not drawn, but its vertices are still there to be hit, and a click that quietly travelled
+        // somewhere in an ungenerated world is the kind of thing that surfaces three phases later.
+        _core.SetWorldInteractionsEnabled(false);
+        _interface.SetWorldInteractionsEnabled(false);
+        _core.SkySelectionEnabled = true;
+
+        // Far enough back that a good spread of sky is in frame at once, and still well inside the
+        // star sphere. Same lever the world map uses for its own framing.
+        _core.Camera.SetDistance(Config.GlyphSphere.CameraZoomWorldView);
+
+        // Re-entrant, like every other OnEnter — a modal notice dismissed over this screen repaints
+        // it through RedrawCurrentMode, and a repaint that quietly discarded the player's choice
+        // would be indistinguishable from a click that never registered. The choice is cleared on
+        // the way OUT instead, in LeaveWorldSelection, which both exits go through.
+        _hoveredMoon = -1;
+        _core.HighlightMoon(-1);
+        _core.SelectMoon(_selectedMoon);
+
+        // The whole sky is back. A moon is blanked only while its world is being lived in, and
+        // standing here the player lives in none — without this, the world a previous run of this
+        // process was played in would be the one world unchoosable.
+        _core.HideMoon(-1);
+
+        if (_core.Terminal != null)
+        {
+            _worldSelectionRenderer ??= new WorldSelectionRenderer(_core.Terminal);
+
+            // Transparent with passthrough, exactly as the world map is: the box and the arrow pad
+            // are the only opaque things on screen, and everything else has to let a click reach the
+            // sky behind it.
+            SetTransparentWorldOverlay(clickPassthrough: true);
+            _worldSelectionRenderer.Draw(_selectedMoon, _hoveredMoon, _core.MoonCount);
+            _cameraArrowPad?.Draw();
+        }
+    }
+
+    /// <summary>
+    /// Puts everything the selection screen switched on back, whichever way it is being left.
+    /// Shared by CONFIRM and CANCEL so neither can forget half of it.
+    /// </summary>
+    private void LeaveWorldSelection()
+    {
+        _core.SkySelectionEnabled = false;
+        _core.HighlightMoon(-1);
+        _core.SelectMoon(-1);
+        _selectedMoon = -1;
+        _hoveredMoon  = -1;
+        _heldArrow    = CameraArrow.None;
+        _core.CameraTurnYawPerSecond   = 0f;
+        _core.CameraTurnPitchPerSecond = 0f;
+        _worldSelectionRenderer?.Erase();
+        _cameraArrowPad?.Erase();
+    }
+
+    /// <summary>The cursor moved onto (or off) a moon. Fired by the core, only in this mode.</summary>
+    private void OnMoonHovered(int ordinal)
+    {
+        if (_currentMode != GameMode.WorldSelection) return;
+        if (ordinal == _hoveredMoon) return;
+
+        _hoveredMoon = ordinal;
+
+        // The highlight follows the cursor whatever else is going on, including over a choice already
+        // made: the two are drawn differently (a chosen moon is larger and white, a pointed-at one
+        // smaller and yellow), so both can be on screen at once and a player can weigh a second moon
+        // against the one they have without giving it up first.
+        _core.HighlightMoon(ordinal);
+
+        if (ordinal >= 0)
+            _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+    }
+
+    /// <summary>
+    /// A moon was clicked, or the empty sky was. Selects it; the world is not built until CONFIRM.
+    ///
+    /// <para>A press on bare sky unchooses, which is the ordinary meaning of clicking off a
+    /// selection and saves the player hunting for a button to do it with. It is not the same as
+    /// CANCEL: the screen stays open and another moon can be taken.</para>
+    /// </summary>
+    private void OnMoonClicked(int ordinal)
+    {
+        if (_currentMode != GameMode.WorldSelection) return;
+
+        if (ordinal < 0)
+        {
+            if (_selectedMoon < 0) return; // nothing was chosen; a press on empty sky says nothing
+            Console.WriteLine("WorldSelection: choice released (clicked empty sky)");
+            _selectedMoon = -1;
+            _core.SelectMoon(-1);
+            _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+            return;
+        }
+
+        _selectedMoon = ordinal;
+        _core.SelectMoon(ordinal);
+        _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+        Console.WriteLine($"WorldSelection: moon {ordinal} ({Cathedral.Glyph.SkyMoons.Name(ordinal)}) "
+                        + $"selected — seed {Cathedral.Glyph.SkyMoons.WorldSeed(ordinal)}");
+    }
+
+    /// <summary>
+    /// Takes the chosen moon: builds its world, blanks it out of the sky, and hands the run on to
+    /// protagonist creation. Nothing before this point has spent the save or touched the master seed.
+    /// </summary>
+    private void ConfirmWorldSelection()
+    {
+        if (_selectedMoon < 0) return;
+
+        int ordinal = _selectedMoon;
+        int seed    = Cathedral.Glyph.SkyMoons.WorldSeed(ordinal);
+        Console.WriteLine($"WorldSelection: confirmed {Cathedral.Glyph.SkyMoons.Name(ordinal)} "
+                        + $"(moon {ordinal}, seed {seed})");
+
+        _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+        LeaveWorldSelection();
+
+        // StartNewRun blanks the moon itself, from the seed — one rule covering this path and the
+        // continued-save one alike, rather than two callers each remembering to do it.
+        StartNewRun(seed);
+
+        SetMode(GameMode.ProtagonistCreation);
+    }
+
+    /// <summary>Abandons the choice and goes back to the menu. Costs nothing: no save was spent.</summary>
+    private void CancelWorldSelection()
+    {
+        Console.WriteLine("WorldSelection: cancelled");
+        _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+        LeaveWorldSelection();
+        SetMode(GameMode.MainMenu);
+    }
+
+    /// <summary>
+    /// Blanks whichever moon stands for <paramref name="seed"/>. Does nothing when no moon does,
+    /// which is every world reached by <c>--seed</c> rather than by picking one.
+    /// </summary>
+    private void HideMoonForSeed(int seed)
+    {
+        int ordinal = Cathedral.Glyph.SkyMoons.OrdinalForSeed(seed, _core.MoonCount);
+        if (ordinal >= 0) _core.HideMoon(ordinal);
+    }
+
+    // ── The camera arrow pad ─────────────────────────────────────────────────────────────
+
+    /// <summary>The two modes the arrow pad is drawn in — the only two with a camera to turn.</summary>
+    private bool CameraPadActive
+        => (_currentMode == GameMode.WorldSelection
+            || (_currentMode == GameMode.WorldView && _companionRemovalRenderer == null
+                                                   && _routineOutcomeBox == null
+                                                   && _travelRoutinesBox == null))
+           && _cameraArrowPad != null;
+
+    /// <summary>
+    /// Keeps the camera turning while an arrow is held down.
+    ///
+    /// <para>It does not turn the camera itself: it hands the core a standing rate in degrees per
+    /// second, which the render loop applies at frame rate. This update runs at 10 Hz, and a camera
+    /// turned from here would move in six-degree jerks under a sixty-frame-a-second sky. The press
+    /// itself is handled in the click router, which turns it one fixed step at once so that a click
+    /// too short to span a frame still does something.</para>
+    /// </summary>
+    private void UpdateCameraPad(float deltaTime)
+    {
+        bool held = _cameraArrowPad != null
+                 && _core.Terminal != null
+                 && CameraPadActive
+                 && _core.Terminal.InputHandler.IsLeftMouseDown
+                 && _heldArrow != CameraArrow.None
+                 // Held means "still down, still over the arrow it went down on". Dragging off the
+                 // pad releases it, which is what every other button in the game does.
+                 && _cameraArrowPad.Hovered == _heldArrow;
+
+        if (!held) _heldArrow = CameraArrow.None;
+
+        float rate = held ? Config.CameraPad.RotationSpeed : 0f;
+        _core.CameraTurnYawPerSecond = _heldArrow switch
+        {
+            CameraArrow.Left  => -rate,
+            CameraArrow.Right => +rate,
+            _                 => 0f,
+        };
+        _core.CameraTurnPitchPerSecond = _heldArrow switch
+        {
+            CameraArrow.Up   => +rate,
+            CameraArrow.Down => -rate,
+            _                => 0f,
+        };
+    }
+
+    /// <summary>Applies one arrow's worth of rotation, in the same sense the arrow keys do.</summary>
+    private void ApplyCameraArrow(CameraArrow arrow, float degrees)
+    {
+        switch (arrow)
+        {
+            case CameraArrow.Left:  _core.Camera.Rotate(-degrees, 0f); break;
+            case CameraArrow.Right: _core.Camera.Rotate(+degrees, 0f); break;
+            case CameraArrow.Up:    _core.Camera.Rotate(0f, +degrees); break;
+            case CameraArrow.Down:  _core.Camera.Rotate(0f, -degrees); break;
+        }
+    }
+
+    /// <summary>
+    /// Routes a press to the arrow pad. Returns true when it landed on an arrow, so the caller stops
+    /// looking for something else under the cursor.
+    /// </summary>
+    private bool TryPressCameraArrow(int x, int y)
+    {
+        if (!CameraPadActive) return false;
+
+        var arrow = _cameraArrowPad!.ArrowAt(x, y);
+        if (arrow == CameraArrow.None) return false;
+
+        _heldArrow = arrow;
+        ApplyCameraArrow(arrow, Config.CameraPad.ClickStep);
+        _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+        return true;
     }
 
     private void OnEnterSettings()
@@ -3940,6 +4362,13 @@ public class LocationTravelGameController : IDisposable
 
             // ── Escape goes back one screen ───────────────────────────────────────────────
 
+            // Choosing a world is not a running phase and nothing has been spent yet, so Escape is
+            // the CANCEL button — the same call, so the two cannot drift.
+            case GameMode.WorldSelection:
+                Console.WriteLine("ESC pressed - abandoning world selection");
+                CancelWorldSelection();
+                return true;
+
             // Both are opened FROM the main menu and both have a Back button; Escape is the same
             // press. Settings had no Escape at all, which on a screen whose only exit is one small
             // button reads as a freeze.
@@ -4080,6 +4509,17 @@ public class LocationTravelGameController : IDisposable
             return false;
         }
 
+        // The world is built here rather than at startup. The process already booted on this save's
+        // seed (see the seed block in Program.cs) and the check above proved it, so generating now
+        // reproduces exactly the world this run was played in. Done AFTER the protagonist has been
+        // rebuilt, so a save this build can no longer read costs nothing and changes nothing.
+        if (!_interface.IsWorldGenerated)
+        {
+            _interface.GenerateWorld();
+            _core.WorldRenderEnabled = true;
+            Console.WriteLine($"Continue: world rebuilt from seed {save.Seed}");
+        }
+
         if (_isInNarrativeMode) ExitNarrativeMode();
 
         _protagonist = protagonist;
@@ -4104,50 +4544,44 @@ public class LocationTravelGameController : IDisposable
             return false;
         }
 
-        // The loaded run now owns the world the process booted with, so a later New must build its own
-        // rather than replaying this one's.
-        _worldClaimed   = true;
+        // Same rule as a new run's: the world under your feet is not above your head.
+        HideMoonForSeed(save.Seed);
+
         _hasGameStarted = true;
         Console.WriteLine($"Continue: restored day {save.Days:F1} at vertex {save.AvatarVertex}, "
                         + $"{save.Locations.Count} location(s) remembered");
         return true;
     }
 
-    /// <summary>
-    /// True once a run has taken possession of the world this process booted with. Set by the first
-    /// New or Continue; from then on, a further New has to build a world of its own.
-    /// </summary>
-    private bool _worldClaimed = false;
 
     /// <summary>
-    /// Begins a new run: spends the save, gives the run a world, and clears the previous one out.
+    /// Begins a new run on <paramref name="worldSeed"/>: spends the save, builds that world, and
+    /// clears any previous one out.
     ///
     /// <para><b>The seed is per run, not per process.</b> The world — terrain, where each location
-    /// sits, and the people inside it — is a pure function of the master seed, and a save restores its
-    /// own seed at startup so Continue rebuilds nothing. That leaves New: without a fresh seed, a new
-    /// run started after loading would be played in the dead run's world. (This was true before saves
-    /// existed too — two News in one process gave the identical world.)</para>
+    /// sits, and the people inside it — is a pure function of the master seed. Nothing is generated
+    /// at startup any more, so every New generates: either the world of the moon just confirmed, or,
+    /// under <c>--seed</c>, the world that flag names.</para>
     ///
-    /// <para>The first New of a process is the exception, and deliberately so: the world it booted
-    /// with is nobody's yet, so it is simply claimed. That is the ordinary launch-then-play path, and
-    /// it therefore carries none of the regeneration's risk.</para>
-    ///
-    /// <para><c>--seed</c> still wins, so a pinned run replays identically however many times it is
-    /// restarted, and the CLI suite is untouched.</para>
+    /// <para>This used to claim the world the process booted with for the first run of a process and
+    /// regenerate only from the second onwards. That distinction is gone with the boot-time
+    /// generation that created it, and with it the class of bug where the first run and every
+    /// subsequent one took different paths through the same code.</para>
     /// </summary>
-    public void StartNewRun()
+    public void StartNewRun(int worldSeed)
     {
         // Erased FIRST: a crash part-way through setup must not leave a save pointing at a world that
         // no longer exists.
         Cathedral.Game.Save.SaveFile.Delete();
 
-        if (_worldClaimed)
-        {
-            GameRng.Reseed(Config.Rng.Seed ?? Environment.TickCount);
-            _core.RebuildForNewSeed();
-            _interface.RegenerateWorld();
-        }
-        _worldClaimed = true;
+        GameRng.Reseed(worldSeed);
+        _core.RebuildForNewSeed();
+        _interface.RegenerateWorld();
+        _core.WorldRenderEnabled = true;
+
+        // The world you are standing in is not one of the moons in your sky. Does nothing when the
+        // seed belongs to no moon, which is every run pinned with --seed.
+        HideMoonForSeed(worldSeed);
 
         ResetGameState();
     }

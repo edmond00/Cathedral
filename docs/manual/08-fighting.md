@@ -226,7 +226,7 @@ The dead do not rise afterwards. Each leaves a corpse where they fell, on the te
 §11](06-narration.md#11-what-a-killing-leaves), and an enemy who falls is lost to that place for
 good, on the terms of [Chapter VI §9](06-narration.md#9-what-a-place-remembers). A companion who
 falls is lost to the party for good, on the terms of [Chapter V
-§7](05-travel.md#7-companions-and-their-loss).
+§8](05-travel.md#8-companions-and-their-loss).
 
 **A fight lost is a run lost, wherever it was fought.** The field going to the enemy is the death of
 the protagonist, and it is reckoned the same whether the quarrel was met upon the road or picked

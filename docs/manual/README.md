@@ -29,9 +29,9 @@ goes, and what it does when it arrives.
 
 **The World**
 
-5. [Travel](05-travel.md) — the sphere and its cells; the compass of a body's stride; the price of a
-   crossing in days, in heat and in hazard; the calendar and the periods of the day; the party a
-   heart sustains, and the three ways it is lost.
+5. [Travel](05-travel.md) — the choosing of a world out of the moons; the sphere and its cells; the
+   compass of a body's stride; the price of a crossing in days, in heat and in hazard; the calendar
+   and the periods of the day; the party a heart sustains, and the three ways it is lost.
 
 **The Conduct of a Visit**
 

@@ -176,9 +176,13 @@ public static class LocationTravelModeLauncher
         // Generate world and set up game controller when core is loaded
         core.CoreLoaded += () =>
         {
-            Console.WriteLine("Core loaded - generating microworld...");
-            microworldInterface.GenerateWorld();
-            
+            // No world is generated here any more. A world belongs to a run, and a run does not
+            // exist yet: New builds one for the moon the player picks out of the sky, and Continue
+            // builds the one its save was played in. Until then the sphere is empty and the core is
+            // told not to draw it (GlyphSphereCore.WorldRenderEnabled), so the main menu and the
+            // world-selection screen both open on nothing but stars.
+            core.WorldRenderEnabled = false;
+
             Console.WriteLine("Creating game controller...");
             gameController = new LocationTravelGameController(core, microworldInterface, ambianceEngine);
 
@@ -330,7 +334,7 @@ public static class LocationTravelModeLauncher
             Console.WriteLine("  - Click on locations to travel");
             Console.WriteLine("  - Click on protagonist to interact with current location");
             Console.WriteLine("  - ESC to leave location interaction");
-            Console.WriteLine("  - Arrow keys to rotate camera");
+            Console.WriteLine("  - Arrow keys to rotate camera (or the on-screen arrow pad)");
             Console.WriteLine("  - W/S to zoom in/out");
             Console.WriteLine("  - C to toggle debug camera");
             Console.WriteLine("  - D to dump game state\n");
