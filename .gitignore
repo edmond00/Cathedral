@@ -494,3 +494,24 @@ docs/manual/_html/
 # re-inclusion has to name the directory itself; a negation on the files inside it does nothing.
 !.claude/skills/release/
 !changelog/
+
+# Crash reports. `CrashReport.WriteReport` preserves the run's log as
+# `log-crash-<timestamp>.txt` in the working directory, so a bad week leaves a dozen of them
+# in the repo root. They are a copy of log.txt (already ignored above) at the moment of the
+# failure — worth reading, never worth committing.
+log-crash-*.txt
+
+# The audit CSVs. `--mm-grant-csv` and `--mm-reach-csv` default to these two paths at the repo
+# root, and both are regenerated whole from the verb and modus mentis classes. See the `audits`
+# skill for the commands.
+mm_grants.csv
+mm_reachability.csv
+
+# The pre-microworld archive: the old Microworld.cs and its CSVs, kept locally for reference
+# the way models_old/ is. Nothing in the build reads it.
+DEPRECATED/
+
+# Local scratch. Reference art dropped in to look at, one-off patch scripts already applied,
+# installers and anything else that wants to live beside the repo without being part of it.
+# Git never descends into it, so nothing inside needs its own rule.
+local/

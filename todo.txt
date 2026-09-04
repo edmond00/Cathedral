@@ -86,9 +86,13 @@ Adswaru+Repance = Rhema : 5th Principium of the consciousness.
 Adswaru+Repance = Rhesis : 6th Principium of the judgment.
 Adswaru+Repance = Qoth : 7th Principium of the reality.
 
-Qoth+Rede : world 1 = cosmic forest --Repance-> ashes
-Qoth+Rhena : world 2 = cosmic orgia --Repance-> tears
-Qoth+Rhesis : world 3 = cosmic temple --Repance-> sand 
+Qoth+Rede : world 1 = random forest --Repance-> ashes
+Qoth+Rhena : world 2 = infinite orgia --Repance-> tears
+Qoth+Rhesis : world 3 = first temple --Repance-> sand 
 ashes+tears+sand : world 4 = cosmic sea
 
 night shell > rain shell > ground shell > inner shell 
+
+random forest -> wood elf / ash elf
+infinite orgia -> blood elf
+first temple -> marble elf
