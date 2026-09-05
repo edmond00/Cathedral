@@ -71,7 +71,12 @@ Run `help` for the authoritative list. The essentials:
                             of the phase and released again when the phase ends
   dump [--color]            the terminal grid as text; --color tags each row dim/mix/lit
   regions                   what is actionable right now — the handles `click` accepts
-  world                     avatar vertex, biome and location
+  world                     avatar vertex, biome, location, and the region under the avatar
+  world-regions [vertex]    the world's division into regions -- how many, over how many
+                            landmasses, each one's size, its seed vertex, its palette swatch and
+                            which regions it borders. With a vertex, just that vertex's region.
+                            `inspect world-regions` is the assertable form (see below); this one
+                            is for reading
   destinations              vertices bordering the avatar
   destinations all [filter] every vertex inside the (stat-derived) travel range, not just the
                             neighbours; filter by biome/location name — `destinations all village`
@@ -169,7 +174,13 @@ Run `help` for the authoritative list. The essentials:
                             cli/outcome/ reads: `expect` scans the SCREEN, this reads the world.
                             `routines` is answerable with NO narration in progress, because a
                             session's trailing routine is finalised as that session ENDS — reading
-                            it from inside the location reads a moment too early
+                            it from inside the location reads a moment too early.
+                            `world-regions` is answerable at the WORLD MAP and carries the region
+                            division: counts, the region under the avatar, and two numbers about
+                            the colouring, which is otherwise pixels a script cannot see —
+                            `conflicts=` (bordering pairs sharing a colour; the invariant, always 0)
+                            and `minborder=` with its verdict `borders=distinct|muddy` (how far
+                            apart the closest bordering pair on the world is; the quality)
   expect-state <subj> <text> | expect-no-state <subj> <text>
                             assert `inspect <subj>` does (or does not) report a line containing
                             <text>. The outcome range's assertion

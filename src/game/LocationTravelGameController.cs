@@ -3369,6 +3369,11 @@ public class LocationTravelGameController : IDisposable
                        .ToList()
                    ?? new List<string> { "menu (not on the main menu)" };
 
+        // The world division. A fact about the world rather than about the run, readable at the map
+        // where the overlay is looked at — and the only assertable form of it, since `world-regions`
+        // emits to the CLI stream and `expect` reads the rendered screen.
+        if (subject == "world-regions") return CliRegionLines();
+
         if (_protagonist == null) return null;
         if (subject is not ("routines" or "all")) return null;
 
@@ -3376,6 +3381,56 @@ public class LocationTravelGameController : IDisposable
             .Select(r => $"routine location={r.LocationId} start={r.StartTime} steps={r.Steps.Count} "
                        + $"verbs=[{string.Join(",", r.Steps.Select(x => x.VerbId))}]")
             .ToList();
+    }
+
+    /// <summary>
+    /// The world's region division, as assertable lines. The header carries the counts and the
+    /// overlay state; the avatar line says which region the party is standing in; and
+    /// <c>conflicts=</c> is the number of bordering region pairs that ended up sharing a colour and
+    /// <c>minborder=</c> is how far apart the closest bordering pair anywhere on the world is, 0..1.
+    /// Between them they are the whole of what a script can check about the colouring — the overlay
+    /// itself is pixels, and `dump` sees the terminal grid rather than the sphere. conflicts is the
+    /// hard invariant; minborder is the quality, and it falling is how a palette change that looks
+    /// fine on one seed and muddy on another gets caught.
+    /// </summary>
+    private IReadOnlyList<string> CliRegionLines()
+    {
+        var map = _interface.Regions;
+        if (map == null) return new List<string> { "world-regions (no world generated)" };
+
+        int conflicts = 0;
+        float minBorder = float.MaxValue;
+        foreach (var r in map.Regions)
+            foreach (int o in r.Neighbours)
+            {
+                if (o <= r.Id) continue;
+                if (map.Regions[o].PaletteIndex == r.PaletteIndex) conflicts++;
+                minBorder = Math.Min(minBorder, WorldRegionPalette.Distance(
+                    map.Palette[r.PaletteIndex], map.Palette[map.Regions[o].PaletteIndex]));
+            }
+        if (minBorder == float.MaxValue) minBorder = 0f;   // a world of nothing but isles
+
+        int avatar = _interface.GetAvatarVertex();
+        var lines = new List<string>
+        {
+            // Invariant culture, because a script asserts on this text and the machine's decimal
+            // separator is not the script's business — this run prints "0,494" left to itself.
+            $"world-regions count={map.Regions.Count} landmasses={map.LandmassCount} " +
+            $"conflicts={conflicts} " +
+            $"minborder={minBorder.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)} " +
+            $"borders={(minBorder >= WorldRegionPalette.MinBorderContrast ? "distinct" : "muddy")} " +
+            $"overlay={(_interface.RegionOverlayEnabled ? "on" : "off")}",
+
+            $"world-regions avatar vertex={avatar} region={map.RegionAt(avatar)} " +
+            $"landmass={map.LandmassAt(avatar)}",
+        };
+
+        foreach (var r in map.Regions)
+            lines.Add($"world-regions region={r.Id} landmass={r.LandmassId} cells={r.CellCount} " +
+                      $"seed={r.SeedVertex} swatch=\"{map.Palette[r.PaletteIndex].Name}\" " +
+                      $"borders={r.Neighbours.Count}");
+
+        return lines;
     }
 
     /// <summary>Opens the routine box for the planned destination. False when no trip is planned.</summary>
@@ -5675,6 +5730,17 @@ public class LocationTravelGameController : IDisposable
         else if (_currentMode == GameMode.Working && _workAdapter != null)
         {
             _workAdapter.OnKeyPress(key);
+        }
+        // R repaints the sphere by region instead of by biome — a development view of the world
+        // division, with no gameplay behind it yet.
+        //
+        // Below the mode dispatch and not above it, unlike F11: R is already the fight's "run away",
+        // and a key that means one thing on the world and another inside a battle has to lose to the
+        // battle. Everything above returns into an adapter, so this line is only reached in the
+        // modes that are actually looking at the sphere.
+        else if (key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.R && Config.Debug.DeveloperKeys)
+        {
+            _interface.ToggleRegionOverlay();
         }
     }
 

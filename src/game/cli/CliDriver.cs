@@ -215,6 +215,7 @@ public sealed class CliDriver
                 case "dump":        CmdDump(rest);                    break;
                 case "regions":     CmdRegions();                     break;
                 case "world":       CmdWorld();                       break;
+                case "world-regions": CmdWorldRegions(rest);         break;
                 case "destinations":CmdDestinations(rest);            break;
                 case "click":       CmdClick(rest);                   break;
                 case "point":       CmdPoint(rest);                   break;
@@ -303,7 +304,9 @@ public sealed class CliDriver
           state                     current mode + phase flags (loading, dice, noetic, …)
           dump [--color]            the terminal grid as text; --color annotates greyed lines
           regions                   what is actionable right now (the handles `click` accepts)
-          world                     avatar vertex, biome, location, travel range
+          world                     avatar vertex, biome, location, travel range, region
+          world-regions [vertex]    the world's division into regions: sizes, seeds, borders,
+                                    palette. With a vertex, just that vertex's region
           destinations              reachable vertices, by name
         Action
           click end-run             the death screen's END RUN button, back to the main menu
@@ -327,7 +330,8 @@ public sealed class CliDriver
                                     outcome banner and so passes on the wrong verb
           inspect [subject]         print the game state an outcome can change, by STABLE id:
                                     items / coins / where / party / wounds / skills / npcs / pois /
-                                    routines / noetic / humors, or all. What cli/outcome/ asserts on — the
+                                    routines / noetic / humors / world-regions, or all. What
+                                    cli/outcome/ asserts on — the
                                     chip says the player was told, this says the world actually
                                     moved. `noetic` carries the phase budget and the acting body's
                                     tool proficiency, neither of which `expect` can reach
@@ -660,7 +664,43 @@ public sealed class CliDriver
     {
         int v = _game.CliAvatarVertex;
         var (location, biome) = _game.CliWorld.GetCurrentLocationInfo();
-        CliMode.Emit($"avatar_vertex={v} biome=\"{biome.Name}\" location=\"{location?.Name ?? "-"}\" mode={_game.CurrentMode}");
+        var regions = _game.CliWorld.Regions;
+        CliMode.Emit($"avatar_vertex={v} biome=\"{biome.Name}\" location=\"{location?.Name ?? "-"}\" " +
+                     $"region={regions?.RegionAt(v) ?? -1} landmass={regions?.LandmassAt(v) ?? -1} " +
+                     $"mode={_game.CurrentMode}");
+    }
+
+    /// <summary>
+    /// Prints the world's division into regions — the thing the developer R key colours in. Bare, it
+    /// lists every region; with a vertex argument, only the region covering that vertex.
+    /// </summary>
+    private void CmdWorldRegions(string[] a)
+    {
+        var map = _game.CliWorld.Regions;
+        if (map == null) { CliMode.Emit("error: no world generated"); return; }
+
+        if (a.Length > 0)
+        {
+            if (!int.TryParse(a[0], out int vertex)) { CliMode.Emit("error: world-regions [vertex]"); return; }
+            int id = map.RegionAt(vertex);
+            if (id < 0) { CliMode.Emit($"vertex {vertex}: water (no region)"); return; }
+            EmitRegion(map.Regions[id], vertex);
+            return;
+        }
+
+        CliMode.Emit($"regions={map.Regions.Count} landmasses={map.LandmassCount} " +
+                     $"overlay={(_game.CliWorld.RegionOverlayEnabled ? "on" : "off")}");
+        foreach (var r in map.Regions) EmitRegion(r, null);
+    }
+
+    private void EmitRegion(Cathedral.Glyph.Microworld.WorldRegion r, int? queriedVertex)
+    {
+        var (biome, location, _) = _game.CliWorld.GetDetailedBiomeInfoAt(r.SeedVertex);
+        string swatch = _game.CliWorld.Regions!.Palette[r.PaletteIndex].Name;
+        string where = queriedVertex is int v ? $"vertex {v}: " : "  ";
+        CliMode.Emit($"{where}region {r.Id}  landmass {r.LandmassId}  {r.CellCount} cells  " +
+                     $"seed {r.SeedVertex} (\"{location?.Name ?? biome.Name}\")  " +
+                     $"swatch \"{swatch}\"  borders [{string.Join(", ", r.Neighbours.OrderBy(x => x))}]");
     }
 
     /// <summary>

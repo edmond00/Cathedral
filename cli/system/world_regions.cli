@@ -1,0 +1,56 @@
+# The world divides itself into regions, and the developer overlay paints them.
+#
+# Nothing in the game reads a region yet — this is the ground world history will be laid on — so what
+# there is to assert is the division's own shape:
+#
+#   - it exists at all, with more than one region and at least one landmass;
+#   - the avatar is standing in one. A spawn is always on land, so a region of -1 under the party
+#     would mean the growth never reached where the game put them;
+#   - no region is empty. An empty one is a seed that lost every cell to another seed, and it would
+#     still be handed a colour and a border list;
+#   - no two bordering regions share a swatch. That is the whole point of the colouring, and it is
+#     the one property of it a script can check — the overlay is pixels, and `dump` sees the terminal
+#     cell grid rather than the sphere;
+#   - the overlay is off until asked for and comes back off.
+#
+# Deliberately asserts no counts: how many regions a world has is a property of the seed and of the
+# calibration in Config.WorldRegions, and pinning it here would turn every tuning pass into a failing
+# test that says nothing about whether the division is right.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --silent --no-save
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 45
+
+# The division is built with the world, not on first sight of it: the overlay has never been asked
+# for at this point.
+expect-state world-regions overlay=off
+expect-state world-regions landmasses=
+expect-no-state world-regions (no world generated)
+
+# On land, in a region. `region=-1` is what a water cell reads as, and the party is never on one.
+expect-no-state world-regions region=-1
+expect-no-state world-regions cells=0
+
+# Every region has a colour of its own (conflicts counts bordering pairs that share one), and every
+# border is wide enough to read as a border (`borders=distinct` is minborder past
+# WorldRegionPalette.MinBorderContrast). The overlay itself is pixels and `dump` sees the terminal
+# grid rather than the sphere, so these two numbers are the whole of what a script can check about
+# the colouring - conflicts is the invariant, borders is the quality.
+expect-state world-regions conflicts=0
+expect-state world-regions borders=distinct
+
+world
+world-regions
+
+# The R key is the developer view. It repaints every land tile from its region's swatch and leaves
+# the sea alone, and pressing it again puts the biome colours back.
+key R
+expect-state world-regions overlay=on
+key R
+expect-state world-regions overlay=off
+
+quit

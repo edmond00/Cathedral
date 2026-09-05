@@ -394,6 +394,14 @@ public static class LocationTravelModeLauncher
                     Console.WriteLine("G key: Graph visualization only available in narrative mode (enter a location first)");
                 }
             }
+            // R paints the world by region instead of by biome. Forwarded in every mode rather than
+            // handled here, because OnKeyDown is where the fight's own R ("run away") has to win —
+            // see the ordering there. Gated with DeveloperKeys in the same place, not in this
+            // branch, so a shipped build still delivers R to a fight.
+            else if (args.Key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.R)
+            {
+                (gameController as LocationTravelGameController)?.OnKeyDown(args.Key);
+            }
             else
             {
                 // Forward other keys to fight/dialogue modes

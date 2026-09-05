@@ -2481,7 +2481,14 @@ void main() {
     if (texLuminance > uGlyphCutoff) {
         float colorLuminance = dot(vColor.rgb, vec3(0.299, 0.587, 0.114));
 
-        if (vColor.a > 3.5) {
+        if (vColor.a > 4.5) {
+            // Region overlay - the rgb IS the colour, drawn as given.
+            // Every branch below reduces the vertex colour to a luminance and re-tints it from
+            // this alpha, which is what keeps the map to its three tones. The region view wants
+            // one distinguishable colour per region and cannot be said in three tones, so it is
+            // the one caller that opts out. Only the developer R key sets this.
+            FragColor = vec4(vColor.rgb, 1.0);
+        } else if (vColor.a > 3.5) {
             // Agricultural field - midpoint between grayscale and dark yellow
             float v = mix(0.2, 0.72, colorLuminance);
             FragColor = vec4(mix(colorLuminance, v, 0.5),
@@ -2544,7 +2551,10 @@ void main() {
     if (texLuminance > uGlyphCutoff) {
         float colorLuminance = dot(vColor.rgb, vec3(0.299, 0.587, 0.114));
 
-        if (vColor.a > 3.5) {
+        if (vColor.a > 4.5) {
+            // Region overlay, dimmed - see the note in the undimmed world shader
+            FragColor = vec4(vColor.rgb * uDarkeningFactor, 1.0);
+        } else if (vColor.a > 3.5) {
             // Agricultural field - midpoint between grayscale and dark yellow, dimmed
             float v = mix(0.2, 0.72, colorLuminance) * uDarkeningFactor;
             float L = colorLuminance * uDarkeningFactor;

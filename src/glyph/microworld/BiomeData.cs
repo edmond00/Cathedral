@@ -123,6 +123,13 @@ namespace Cathedral.Glyph.Microworld
         /// <summary>Biomes rendered in dark yellow on the world sphere.</summary>
         public static readonly HashSet<string> HumanBiomes = new HashSet<string> { "city" };
 
+        /// <summary>
+        /// The high ground. <c>DetermineBiome</c> tests the mountain noise layer BEFORE the field
+        /// and city thresholds, so on these tiles the settlement layer decides nothing — which is
+        /// why the region division will grow across them but never centre a region on one.
+        /// </summary>
+        public static readonly HashSet<string> MountainBiomes = new HashSet<string> { "mountain", "peak" };
+
         /// <summary>Locations rendered in dark purple on the world sphere.</summary>
         public static readonly HashSet<string> WaterLocations = new HashSet<string>
         {

@@ -217,7 +217,7 @@ namespace Cathedral.Glyph.Microworld
             {
                 if (i == _protagonistVertex) continue;
                 if (vertexData.TryGetValue(i, out var data))
-                    SetVertexGlyph(i, data.GlyphChar, TileColor(data), data.Location?.Size ?? data.Biome.Size);
+                    SetVertexGlyph(i, data.GlyphChar, TileColor(i, data), data.Location?.Size ?? data.Biome.Size);
             }
             _outOfRangeVertices.Clear();
             RebuildConstrainedGraph();
@@ -226,11 +226,14 @@ namespace Cathedral.Glyph.Microworld
         private void ApplyDarkening(int vertexIndex)
         {
             if (!vertexData.TryGetValue(vertexIndex, out var data)) return;
+            // Dim whatever the tile would otherwise be, overlay included: out-of-range has to keep
+            // reading as out-of-range while the regions are on screen.
+            var lit = TileColor(vertexIndex, data);
             var dark = new Vector4(
-                data.Color.X / 255f * TravelRangeDarkenFactor,
-                data.Color.Y / 255f * TravelRangeDarkenFactor,
-                data.Color.Z / 255f * TravelRangeDarkenFactor,
-                GetTileCategory(data));
+                lit.X * TravelRangeDarkenFactor,
+                lit.Y * TravelRangeDarkenFactor,
+                lit.Z * TravelRangeDarkenFactor,
+                lit.W);
             SetVertexGlyph(vertexIndex, data.GlyphChar, dark, data.Location?.Size ?? data.Biome.Size);
         }
 
@@ -334,6 +337,7 @@ namespace Cathedral.Glyph.Microworld
                     Biome = biome,
                     Location = location,
                     NoiseValue = avgNoise,
+                    SettlementNoise = perlinNoise2,
                     GlyphChar = glyphChar,
                     Color = color
                 };
@@ -344,7 +348,7 @@ namespace Cathedral.Glyph.Microworld
                     waterVertices.Add(i);
                 }
                 
-                SetVertexGlyph(i, glyphChar, TileColor(vertexData[i]), size);
+                SetVertexGlyph(i, glyphChar, TileColor(i, vertexData[i]), size);
                 
                 // Collect statistics
                 noiseValues.Add(avgNoise);
@@ -361,10 +365,98 @@ namespace Cathedral.Glyph.Microworld
 
             PostProcessWorld();
 
+            // After PostProcessWorld, because the farms and villages it places are part of the world
+            // the regions divide — and before InitializeProtagonist, so that anything downstream of
+            // the spawn can already ask which region it is standing in.
+            BuildRegions();
+
             // Initialize protagonist at a random suitable location
             InitializeProtagonist();
 
             IsWorldGenerated = true;
+        }
+
+        // ── Regions ─────────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// The world's division into regions, or null before a world has been generated.
+        /// Purely descriptive for now: nothing in the game reads it except the developer overlay.
+        /// </summary>
+        public WorldRegionMap? Regions { get; private set; }
+
+        /// <summary>
+        /// True while the sphere is drawn by region rather than by biome. Toggled by the developer
+        /// R key and by the CLI's <c>key R</c>; never on in a shipped build, which has no way in.
+        /// </summary>
+        public bool RegionOverlayEnabled { get; private set; }
+
+        private void BuildRegions()
+        {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            Regions = WorldRegionMap.Build(new WorldRegionInput
+            {
+                VertexCount     = VertexCount,
+                Neighbours      = GetNeighboringVertices,
+                IsLand          = v => vertexData.TryGetValue(v, out var d)
+                                       && !BiomeDatabase.WaterBiomes.Contains(d.Biome.Name),
+                // DetermineBiome tests the mountain layer before it reads the settlement one, so
+                // above the treeline the settlement noise decides nothing at all and its value there
+                // says nothing about where people are.
+                IsSettleable    = v => vertexData.TryGetValue(v, out var d)
+                                       && !BiomeDatabase.WaterBiomes.Contains(d.Biome.Name)
+                                       && !BiomeDatabase.MountainBiomes.Contains(d.Biome.Name),
+                SettlementNoise = v => vertexData.TryGetValue(v, out var d) ? d.SettlementNoise : 0f,
+                // A location sits on top of its biome and does not change what it costs to walk
+                // across, which is exactly what BiomeTravelDatabase says about locations.
+                StepCostDays    = v => vertexData.TryGetValue(v, out var d)
+                                       ? BiomeTravelDatabase.GetFor(d.Biome.Name).DurationDays
+                                       : 1f,
+                Position        = GetVertexPosition,
+            });
+            sw.Stop();
+
+            int land = Regions.Regions.Sum(r => r.CellCount);
+            Console.WriteLine($"[Regions] {Regions.Regions.Count} region(s) over {Regions.LandmassCount} " +
+                              $"landmass(es), {land} land cells, in {sw.ElapsedMilliseconds} ms.");
+        }
+
+        /// <summary>
+        /// Flips the region overlay and repaints every tile. Returns the new state.
+        /// </summary>
+        public bool ToggleRegionOverlay()
+        {
+            if (Regions == null)
+            {
+                Console.WriteLine("[Regions] no world generated yet — nothing to colour.");
+                return false;
+            }
+
+            RegionOverlayEnabled = !RegionOverlayEnabled;
+            RefreshAllTiles();
+            Console.WriteLine($"[Regions] overlay {(RegionOverlayEnabled ? "ON" : "OFF")} " +
+                              $"({Regions.Regions.Count} regions).");
+            return RegionOverlayEnabled;
+        }
+
+        /// <summary>
+        /// Repaints every tile from its stored data, honouring the travel-range darkening — and
+        /// puts the committed travel plan back on top, which the repaint would otherwise erase. The
+        /// hovered preview is not restored because it is redrawn by the next mouse move anyway; a
+        /// plan the player has already clicked out is not.
+        /// </summary>
+        private void RefreshAllTiles()
+        {
+            var path = _plannedPathVertices.ToList();
+            var waypoints = _plannedWaypointVertices.ToList();
+
+            for (int i = 0; i < VertexCount; i++)
+            {
+                if (i == _protagonistVertex) continue;
+                if (vertexData.TryGetValue(i, out var data))
+                    RestoreVertexData(i, data);
+            }
+
+            if (path.Count > 1) ShowPlannedPath(path, waypoints);
         }
 
         public override (string primaryType, string secondaryType, float noiseValue) GetWorldInfoAt(int vertexIndex)
@@ -574,7 +666,7 @@ namespace Cathedral.Glyph.Microworld
                     vertexData[vertexIndex] = updatedData;
                     
                     // Update the visual representation with original biome size
-                    SetVertexGlyph(vertexIndex, newGlyph, TileColor(data), data.Biome.Size);
+                    SetVertexGlyph(vertexIndex, newGlyph, TileColor(vertexIndex, data), data.Biome.Size);
                 }
             }
         }
@@ -760,7 +852,7 @@ namespace Cathedral.Glyph.Microworld
                 cd.GlyphChar = chosen.Glyph;
                 cd.Color = new System.Numerics.Vector3(chosen.Color.X, chosen.Color.Y, chosen.Color.Z);
                 vertexData[candidate] = cd;
-                SetVertexGlyph(candidate, chosen.Glyph, TileColor(vertexData[candidate]), chosen.Size);
+                SetVertexGlyph(candidate, chosen.Glyph, TileColor(candidate, vertexData[candidate]), chosen.Size);
                 placed++;
             }
 
@@ -768,15 +860,39 @@ namespace Cathedral.Glyph.Microworld
                 Console.WriteLine($"[PostProcess] Placed {placed} farm(s)/village(s) to satisfy field adjacency.");
         }
 
-        private static Vector4 TileColor(VertexWorldData data) =>
-            new Vector4(data.Color.X / 255.0f, data.Color.Y / 255.0f, data.Color.Z / 255.0f, GetTileCategory(data));
+        /// <summary>
+        /// The vertex colour handed to the sphere shader: rgb the shader reduces to a luminance, and
+        /// the tile category in the alpha, which is what it actually tints from.
+        ///
+        /// <para>With the region overlay on, land takes its region's colour instead, under the
+        /// alpha that tells the shader to draw the rgb as given rather than re-tint it — the one
+        /// place in the game where a vertex colour reaches the screen unchanged. Water is left
+        /// alone: purple is the sea's, and a region drawn in it would read as water.</para>
+        /// </summary>
+        private Vector4 TileColor(int vertexIndex, VertexWorldData data)
+        {
+            var swatch = RegionSwatchFor(vertexIndex);
+            if (swatch != null)
+                return new Vector4(swatch.Value.R, swatch.Value.G, swatch.Value.B,
+                                   WorldRegionPalette.OverlayCategory);
+
+            return new Vector4(data.Color.X / 255.0f, data.Color.Y / 255.0f, data.Color.Z / 255.0f,
+                               GetTileCategory(data));
+        }
+
+        /// <summary>
+        /// The region swatch this vertex should be drawn in, or null when the overlay is off, no
+        /// world has been divided yet, or the vertex is water.
+        /// </summary>
+        private WorldRegionPalette.Swatch? RegionSwatchFor(int vertexIndex)
+            => RegionOverlayEnabled ? Regions?.SwatchAt(vertexIndex) : null;
 
         private void RestoreVertexData(int vertexIndex, VertexWorldData data)
         {
             if (_outOfRangeVertices.Contains(vertexIndex))
                 ApplyDarkening(vertexIndex);
             else
-                SetVertexGlyph(vertexIndex, data.GlyphChar, TileColor(data), data.Location?.Size ?? data.Biome.Size);
+                SetVertexGlyph(vertexIndex, data.GlyphChar, TileColor(vertexIndex, data), data.Location?.Size ?? data.Biome.Size);
         }
 
         public void HandleVertexHovered(int vertexIndex)
@@ -1432,6 +1548,15 @@ namespace Cathedral.Glyph.Microworld
             public BiomeType Biome;
             public LocationType? Location;
             public float NoiseValue;
+
+            /// <summary>
+            /// The second Perlin layer alone — the one <see cref="DetermineBiome"/> reads for city,
+            /// field and forest, where lower is more settled. Kept beside the average because the
+            /// region division seeds itself on this layer's peaks, and the average of all three has
+            /// the water layer and the mountain layer mixed into it.
+            /// </summary>
+            public float SettlementNoise;
+
             public char GlyphChar;
             public System.Numerics.Vector3 Color;
         }

@@ -839,6 +839,100 @@ public static class Config
 
     #endregion
 
+    #region World Regions
+
+    /// <summary>
+    /// How the generated world is divided into regions. See
+    /// <c>src/glyph/microworld/WorldRegions.cs</c> for what each step does.
+    ///
+    /// <para>The numbers are all calibrated against the sphere the game actually builds: subdivision
+    /// 6 at radius 45, which is ~41,000 vertices about 0.8 world units apart, roughly half of them
+    /// land. Changing <see cref="GlyphSphere.SphereSubdivisions"/> or
+    /// <see cref="GlyphSphere.SphereRadius"/> changes what all of these mean.</para>
+    /// </summary>
+    public static class WorldRegions
+    {
+        /// <summary>
+        /// Diffusion passes applied to the settlement noise before its peaks are read as region
+        /// centres. Each pass spreads a value by one vertex, so the smoothing radius grows as the
+        /// square root: 90 passes is about seven world units, which is the scale a region wants and
+        /// well above the three-unit speckle the raw layer is sampled at.
+        /// </summary>
+        public const int SmoothingPasses = 90;
+
+        /// <summary>
+        /// How much of a seed's neighbourhood must be settleable land for it to be a region's heart,
+        /// as the fraction the smoothing kernel sees — so 0.55 means the majority of what lies within
+        /// about ten world units is habitable ground rather than sea or mountain.
+        ///
+        /// <para>This is not the same rule as "the seed is on settleable land", and it is not
+        /// redundant with it. The smoothed field is a weighted mean over settleable land divided by
+        /// how much of it was in reach, and dividing by a small number is a noisy estimate: on a
+        /// spit or a headland the mean is taken over a handful of cells and swings much wider than
+        /// it does inland, so the largest values in a world land on its beaches. Two thirds of the
+        /// region seeds of a test world sat on a coast tile, against coast being a sixth of its
+        /// settleable land. A region's heart belongs in the middle of its country.</para>
+        ///
+        /// <para>A landmass with nothing clearing this — an atoll, a narrow isle — falls back to its
+        /// most habitable settleable vertex, and then to any land at all. Every landmass is a region
+        /// regardless.</para>
+        /// </summary>
+        public const float MinSeedCoverage = 0.55f;
+
+        /// <summary>
+        /// Minimum distance, in world units, between two region seeds on the same landmass. At 17 a
+        /// region covers ~250 square units, which puts a score of them around the equator - large
+        /// enough that a region is a place a history could be told about, small enough that a
+        /// continent is divided into a good many. Seeds on different landmasses never crowd each
+        /// other.
+        /// </summary>
+        public const float MinSeedSeparation = 17.0f;
+
+        /// <summary>
+        /// A region above this many cells is split by adding a seed at its far end. This is the
+        /// floor under a landmass whose settlement field is too smooth to have offered enough peaks
+        /// of its own.
+        /// </summary>
+        public const int MaxRegionCells = 700;
+
+        /// <summary>
+        /// A region below this many cells is folded into the neighbour it shares the most border
+        /// with - unless it is an isle, which has no land neighbour to fold into and stays.
+        /// </summary>
+        public const int MinRegionCells = 40;
+
+        /// <summary>
+        /// Hard ceiling on region count, so a pathological world cannot run the splitter away. Well
+        /// clear of what a world actually produces (fifty-odd): this is a guard, not a target, and a
+        /// world that reaches it has something wrong with it rather than a lot of regions.
+        /// </summary>
+        public const int MaxRegions = 200;
+
+        /// <summary>How many times the splitter may add seeds and regrow. Each pass is one Dijkstra.</summary>
+        public const int MaxSplitPasses = 12;
+
+        /// <summary>How many times the absorber may sweep. Each sweep can only shrink the region count.</summary>
+        public const int MaxAbsorbPasses = 4;
+
+        /// <summary>
+        /// How many times the colour assignment may improve its worst border by swapping two
+        /// regions' colours. Each pass is one swap; the search stops early the moment no swap helps,
+        /// so this is a ceiling and not a cost.
+        ///
+        /// <para>It exists because the greedy assignment alone leaves the worst border on the world
+        /// at about a third of the scale — roughly red against orange — and the regions coloured
+        /// last are the ones stuck with it. Oversampling the palette instead was tried and is worse
+        /// than it looks: with more colours than regions the greedy takes the most extreme it can
+        /// find every time and converges on a handful of hues, so a world came out holding "red at
+        /// 2 degrees", "red at 4 degrees" and "red at 5 degrees" — all unique, none of them telling
+        /// two regions apart. The palette is therefore exactly one colour per region, spread over
+        /// the whole wheel, and the worst border is fixed by rearranging rather than by widening.</para>
+        /// </summary>
+        public const int MaxColourSwapPasses = 400;
+    }
+
+    #endregion
+
     #region PostProcess Configuration
 
     /// <summary>
