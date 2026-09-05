@@ -83,9 +83,10 @@ should not have to walk to the feature.
 | Healing, ageing, anything on the world clock | `--advance-days <n>` — a wound takes 100-1000 days to close. |
 | Starvation, humors | `--black-bile`. |
 | Travel and the world map | `--no-encounters` to stop random encounters interrupting, `--allow-reentry` to re-enter your own vertex. |
+| The world's division into regions | Nothing to add -- press **R** on the world map. It repaints the sphere by region instead of by biome (gray and ochre for the land, the sea left purple) and R again puts the biomes back. A developer key, so it is off under `--no-developer-keys`. |
 | The world-selection sky | Drop `--seed` — the flag names the world outright and skips that screen. The sky is drawn from a constant, so it is still the same sky. |
 | A save-format change | `--save-path <file>` against a scratch file. Never let a playtest write the real save while a format change is in flight. |
-| A shipped-build behaviour | `--no-developer-keys` — the developer shortcuts (D/M/F/G/H/J, C/V, W/S) are off in a shipped build. |
+| A shipped-build behaviour | `--no-developer-keys` — the developer shortcuts (D/M/F/G/H/J, R, C/V, W/S) are off in a shipped build. |
 
 `dotnet run -- --help` is the full list and is authoritative; the table above is what tends to
 matter for a hands-on look.
@@ -99,16 +100,34 @@ if it is the kind of thing a playtest will want again.
 
 ## Launching
 
-1. **Kill anything still running first.** A previous playtest or test suite left alive fights over
-   the build output and spawns a competing window. Query with the PowerShell tool, never
-   `powershell -Command` from Bash — Bash eats `$_` before PowerShell sees it:
+1. **Kill anything still running first — the runner SHELL, not just the game.** A live
+   `run_tests.sh` does not merely compete for the build output. **After every script it runs
+   `Get-Process -Name Cathedral | Stop-Process -Force`** — every instance on the machine, by name,
+   not only its own. Its guard for that (`run_tests.sh:144`) checks only at suite *start*, so it
+   cannot know about a window opened afterwards. A suite left running **will kill the playtest,
+   mid-session, within a script or two.**
+
+   Query with the PowerShell tool, never `powershell -Command` from Bash — Bash eats `$_` before
+   PowerShell sees it:
 
    ```powershell
-   Get-CimInstance Win32_Process -Filter "Name='Cathedral.exe'" | Select-Object ProcessId,CommandLine
+   Get-CimInstance Win32_Process -Filter "Name='Cathedral.exe' OR Name='bash.exe' OR Name='dotnet.exe'" |
+     Select-Object ProcessId,Name,CommandLine | Format-List
+   ```
+
+   Kill the runner shell **first** (it respawns the game otherwise), then the games, then confirm
+   both counts are zero:
+
+   ```powershell
+   Get-CimInstance Win32_Process -Filter "Name='bash.exe' OR Name='sh.exe'" |
+     Where-Object { $_.CommandLine -like '*run_tests*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
    Get-Process Cathedral -ErrorAction SilentlyContinue | Stop-Process -Force
    ```
 
-   If `run_tests.sh` is running, kill the runner shell *first* — it respawns the game otherwise.
+   **Stopping the background task is not enough.** `TaskStop` kills the tracked shell; the
+   `run_tests.sh` process and its children survive it and carry on looping. Clear the suite's lock
+   afterwards too (`rm -f "${TMPDIR:-/tmp}/cathedral-tests/run_tests.lock"`), or the next real suite
+   refuses to start.
 
 2. **Build, and read the result.** `dotnet build`. A playtest launched over a failed build silently
    runs the last good binary, and the user plays the old code without knowing it.
@@ -119,18 +138,25 @@ if it is the kind of thing a playtest will want again.
    dotnet run -- <flags>
    ```
 
-   with `run_in_background`. The window opens on their desktop; you are notified when they close it.
+   with `run_in_background`. The window opens on their desktop; you are notified when the process
+   ends — which is not the same as the user closing it, see below.
    If the launch is refused or sandboxed, hand them the line to run themselves — in this session,
    `! dotnet run -- <flags>` puts the output straight into the conversation.
 
 4. **Say what you launched and why**, in one or two lines: the command, and which flags you added
    beyond the baseline for this particular change. The user needs to know what they are looking at.
 
-## After they close it
+## After the window is gone
 
 - `log.txt` in the repo root is the last run's log; `logs/` holds the tree.
 - `log-crash-<timestamp>.txt` in the repo root means it crashed — read it before asking what
   happened. There are a lot of these already; check the timestamp is the run you just launched.
+- **A window that dies with no exception, no `log-crash-*` and exit 127 was killed, not crashed.**
+  Suspect a surviving test runner before you suspect the change — check for a live `bash
+  ./run_tests.sh` and for a `log.txt` still being written *after* the window died, which is the
+  clearest tell that something else was running. Do not report a kill as a crash, and do not report
+  it as the user closing the window: this has happened more than once, and reading it as a fault in
+  the session's own code sends the next hour in the wrong direction.
 - If they report something wrong, the fix is a code change verified with `verifying`, not another
   blind playtest. Reproduce it in a `.cli` script if it can be reproduced that way — a script that
   fails is worth more than a second hand-played run.
