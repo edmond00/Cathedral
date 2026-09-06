@@ -157,6 +157,23 @@ public static class Config
         public static string? StartAt { get; set; } = null;
 
         /// <summary>
+        /// Forces every world to be generated as this variant, whatever variant its seed names. Set
+        /// by <c>--world-variant &lt;id&gt;</c> ("drowned-reach", "riven-spine"...).
+        ///
+        /// <para><b>What it is for.</b> A variant is otherwise reached only by finding a moon that
+        /// happens to be it, and there are ten variants over three hundred and eighty moons. This is
+        /// how a playtest looks at one on purpose, and how <c>--world-variant-audit</c>'s findings can
+        /// be walked rather than only read.</para>
+        ///
+        /// <para><b>A save made under this flag will not continue without it.</b> The variant is part
+        /// of the world's identity and is written into the save; continuing on a mismatch is refused
+        /// rather than dropping the player into terrain that is not the terrain they left.</para>
+        ///
+        /// <para>Inert at its default of null: the seed decides, as it does in a shipped build.</para>
+        /// </summary>
+        public static string? WorldVariant { get; set; } = null;
+
+        /// <summary>
         /// Forces every scene to be built as though it were this location id, whatever vertex the
         /// protagonist actually stands on. Set by <c>--location-id &lt;n&gt;</c>.
         ///
@@ -1039,9 +1056,11 @@ public static class Config
 
         /// <summary>The information/confirmation box at the bottom of the screen.</summary>
         public const int BoxWidth        = 46;
-        // Nine rows: border, title, gap, chosen, seed, pointed-at, gap, buttons, border. The gap
-        // above the buttons is load-bearing — text hard against a button reads as part of it.
-        public const int BoxHeight       = 9;
+        // Eleven rows: border, title, gap, chosen, seed, world, the line under the world, pointed-at,
+        // gap, buttons, border. The gap above the buttons is load-bearing — text hard against a
+        // button reads as part of it. The world's line sits directly under its name, with no gap,
+        // because it is that name explained and not a separate fact.
+        public const int BoxHeight       = 11;
         public const int BoxBottomMargin = 8;
 
         public static readonly Vector4 TitleColor      = Colors.BrightYellow;

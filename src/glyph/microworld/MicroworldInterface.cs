@@ -32,6 +32,12 @@ namespace Cathedral.Glyph.Microworld
         // Computed once in GenerateWorld and reused by the recompute fallback.
         private Vector3 _worldNoiseOffset;
 
+        // Which KIND of world this is: the thresholds and feature sizes the noise is read through.
+        // Resolved once in GenerateWorld, from the master seed, and reused by the recompute fallback
+        // for the same reason the offset is — a vertex must classify the same way whichever path
+        // asks about it.
+        private WorldVariant _variant = WorldVariants.All[0];
+
         // Protagonist system
         private int _protagonistVertex = -1;
         private VertexWorldData? _originalProtagonistData;
@@ -283,6 +289,12 @@ namespace Cathedral.Glyph.Microworld
                 (float)(worldRng.NextDouble() * 20000.0 - 10000.0),
                 (float)(worldRng.NextDouble() * 20000.0 - 10000.0));
 
+            // The variant is a pure function of the seed, NOT a draw from worldRng: the
+            // world-selection screen names it before the seed has been taken, and a screen that
+            // could not say what it was about to give the player would be worth nothing.
+            _variant = ResolveVariant();
+            Console.WriteLine($"[World] {_variant.Name} ({_variant.Id}) - {_variant.Blurb}");
+
             var noiseValues = new List<float>();
             var glyphCounts = new Dictionary<char, int>();
 
@@ -290,23 +302,12 @@ namespace Cathedral.Glyph.Microworld
             for (int i = 0; i < VertexCount; i++)
             {
                 Vector3 pos = GetVertexPosition(i);
-                
-                // Multi-scale Perlin noise like the original Unity code
-                Vector3 off1 = new Vector3(1337.0f, 2468.0f, 9876.0f);
-                Vector3 off2 = new Vector3(5432.0f, 8765.0f, 1234.0f);
-                Vector3 off3 = new Vector3(9999.0f, 3333.0f, 7777.0f);
 
-                Vector3 sp = pos + _worldNoiseOffset;
-                Vector3 p1 = (off1 + sp) / 12f;
-                Vector3 p2 = (off2 + sp) / 3f;
-                Vector3 p3 = (off3 + sp) / 8f;
-                
-                float perlinNoise1 = Perlin.Noise(p1.X, p1.Y, p1.Z);
-                float perlinNoise2 = Perlin.Noise(p2.X, p2.Y, p2.Z);
-                float perlinNoise3 = Perlin.Noise(p3.X, p3.Y, p3.Z);
-                
-                // Determine biome based on the three noise layers (matching Unity logic)
-                BiomeType biome = DetermineBiome(perlinNoise1, perlinNoise2, perlinNoise3);
+                // Three scales of Perlin noise, read through this world's variant: how big its
+                // features are and where its waterline and treeline sit.
+                var (perlinNoise1, perlinNoise2, perlinNoise3) = _variant.Shape.Sample(pos, _worldNoiseOffset);
+
+                BiomeType biome = _variant.Shape.BiomeFor(perlinNoise1, perlinNoise2, perlinNoise3);
                 
                 // Calculate location spawn chance and determine if a location should spawn
                 LocationType? location = DetermineLocation(biome, pos);
@@ -501,46 +502,36 @@ namespace Cathedral.Glyph.Microworld
             return new System.Numerics.Vector3(0, 255, 0); // Default green
         }
 
-        // Biome determination logic (from original code)
-        private BiomeType DetermineBiome(float perlinNoise1, float perlinNoise2, float perlinNoise3)
+        /// <summary>
+        /// Which kind of world this is. A pure function of the master seed (or of
+        /// <c>--world-variant</c>), so the moon box can name it before the world exists.
+        /// </summary>
+        public WorldVariant Variant => _variant;
+
+        /// <summary>
+        /// The variant this world is built to: the one the seed names, unless <c>--world-variant</c>
+        /// overrides it. The override is debug-only and does not reach a shipped build, which has no
+        /// way to pass a flag.
+        /// </summary>
+        private static WorldVariant ResolveVariant()
         {
-            // Based on Unity Microworld.cs biome classification logic (exact match)
-            // perlinNoise1: water classification (-1 to 1 range)
-            // perlinNoise2: cities/forests/fields classification (-1 to 1 range)  
-            // perlinNoise3: mountains classification (-1 to 1 range)
+            var resolved = WorldVariants.Resolve(GameRng.MasterSeed);
 
-            // WATER (perlinNoise1)
-            if (perlinNoise1 <= -0.25f)
-                return Biomes["ocean"];
-            if (perlinNoise1 <= 0.0f)
-                return Biomes["sea"];
+            // The rule itself lives in WorldVariants.Resolve, which the continue guard also reads.
+            // What is left here is the reporting, and it belongs here because this is the one place
+            // a world is actually built: a miss recorded at every caller would fail a script twice
+            // for one mistyped flag.
+            if (Config.Debug.WorldVariant is { Length: > 0 } want)
+            {
+                if (WorldVariants.ById(want) != null)
+                    Console.WriteLine($"[debug] --world-variant \"{want}\" -> {resolved.Name}");
+                else
+                    Cathedral.Game.DebugFlagAudit.Miss("--world-variant", want,
+                        "the variant this seed names. Known: "
+                        + string.Join(", ", WorldVariants.All.Select(v => v.Id)));
+            }
 
-            // MOUNTAIN (perlinNoise3)
-            if (perlinNoise3 > 0.5f)
-                return Biomes["peak"];
-            if (perlinNoise3 > 0.3f)
-                return Biomes["mountain"];
-
-            // CITY (perlinNoise2) — tightened from -0.4 to -0.58
-            // if (perlinNoise2 < -0.58f)
-            //     return Biomes["city"];
-            if (perlinNoise2 < -0.58f)
-                return Biomes["field"]; // TODO: restore city biome
-
-            // COAST (perlinNoise1)
-            if (perlinNoise1 <= 0.065f)
-                return Biomes["coast"];
-
-            // FOREST (perlinNoise2)
-            if (perlinNoise2 > 0.25f)
-                return Biomes["forest"];
-
-            // FIELD (perlinNoise2) — tightened from -0.15 to -0.38
-            if (perlinNoise2 < -0.38f)
-                return Biomes["field"];
-
-            // PLAIN (default fallback)
-            return Biomes["plain"];
+            return resolved;
         }
 
         private LocationType? DetermineLocation(BiomeType biome, Vector3 position)
@@ -589,20 +580,8 @@ namespace Cathedral.Glyph.Microworld
             // Fallback: recalculate if not found
             Vector3 pos = GetVertexPosition(vertexIndex);
             
-            Vector3 off1 = new Vector3(1337.0f, 2468.0f, 9876.0f);
-            Vector3 off2 = new Vector3(5432.0f, 8765.0f, 1234.0f);
-            Vector3 off3 = new Vector3(9999.0f, 3333.0f, 7777.0f);
-
-            Vector3 sp = pos + _worldNoiseOffset;
-            Vector3 p1 = (off1 + sp) / 12f;
-            Vector3 p2 = (off2 + sp) / 3f;
-            Vector3 p3 = (off3 + sp) / 8f;
-            
-            float perlinNoise1 = Perlin.Noise(p1.X, p1.Y, p1.Z);
-            float perlinNoise2 = Perlin.Noise(p2.X, p2.Y, p2.Z);
-            float perlinNoise3 = Perlin.Noise(p3.X, p3.Y, p3.Z);
-            
-            BiomeType biome = DetermineBiome(perlinNoise1, perlinNoise2, perlinNoise3);
+            var (perlinNoise1, perlinNoise2, perlinNoise3) = _variant.Shape.Sample(pos, _worldNoiseOffset);
+            BiomeType biome = _variant.Shape.BiomeFor(perlinNoise1, perlinNoise2, perlinNoise3);
             LocationType? location = DetermineLocation(biome, pos);
             float avgNoise = (perlinNoise1 + perlinNoise2 + perlinNoise3) / 3.0f;
             

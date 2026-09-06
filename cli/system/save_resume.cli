@@ -23,8 +23,13 @@ click continue
 # Reaching the world map IS the save point: EnterWorldViewInteractive autosaves on the way in.
 wait mode WorldView 45
 expect-no-state savefile save none
-expect-state savefile version=1
+expect-state savefile version=2
 expect-state savefile seed=42
+
+# The seed alone no longer names a world — a variant can be forced onto it — so the world's kind is
+# stored beside it and a mismatch is refused on Continue. Seed 42 names The Green Shroud, and no
+# --world-variant is passed here, so this is the seed's own answer written back.
+expect-state savefile variant=green-shroud
 
 # The file agrees with the run it was written from.
 expect-state save days=0.0

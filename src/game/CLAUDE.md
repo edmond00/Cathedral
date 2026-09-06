@@ -19,9 +19,18 @@ character is worse than a refused load when there is only one save.
 
 ### What is stored, and the rule for adding to it
 
-Five things: the master seed, the clock, the avatar's vertex, `Dictionary<int, LocationInstanceState>`
-verbatim, and the party. Nothing else feeds a scene build — the world is a pure function of the seed,
-a scene of its location id, and the time of day is drawn fresh on every arrival.
+Six things: the master seed, the **world variant**, the clock, the avatar's vertex,
+`Dictionary<int, LocationInstanceState>` verbatim, and the party. Nothing else feeds a scene build —
+the world is a pure function of the seed and the variant, a scene of its location id, and the time of
+day is drawn fresh on every arrival.
+
+**The variant is normally redundant and is stored anyway.** `WorldVariants.ForSeed` derives it from
+the master seed, so on any ordinary run the save says the same thing twice. `--world-variant` is what
+makes it load-bearing: under that flag the terrain is not the terrain the seed names, and a save
+continued without it would put the avatar back on a vertex that is now open ocean, with every
+location it remembers hanging off vertices that are somewhere else entirely. Nothing about that would
+throw. `TryContinueSavedRun` refuses a variant mismatch exactly as it refuses a seed mismatch, and
+naming the flag to pass.
 
 **Locations and the party are persisted by opposite means, and that is deliberate.**
 `LocationInstanceState` is plain data shared *by reference*: `AttachTo` hands its dictionaries to the
@@ -89,7 +98,14 @@ world's travel costs.
 `GameMode.WorldSelection` is where a new run's seed comes from. The screen is the star sphere with
 the world not drawn behind it, and the moons in it — the `'O'` glyphs, 383 of them — are clickable.
 Each stands for a world: `SkyMoons` maps an ordinal to a name and to `WorldSeed(ordinal)`, and
-CONFIRM feeds that seed to `StartNewRun`. CANCEL and Escape both go back to the menu, having spent
+CONFIRM feeds that seed to `StartNewRun`.
+
+**The box also names what KIND of world the moon is**, and can only do so because
+`WorldVariants.ForSeed` is a pure function of the seed rather than something the generator decides
+along the way — one of ten variants, each shifting the thresholds the terrain is read through (where
+the waterline sits, how high the treeline is, how much of the land is worth farming). Like the seed
+above it, the World row follows the **chosen** moon and not the hovered one: it names what CONFIRM
+will hand over. `--world-variant-audit` is what keeps all ten playable; see the `audits` skill. CANCEL and Escape both go back to the menu, having spent
 nothing — the save is not deleted until `StartNewRun` runs. **A press on empty sky releases the
 choice** without leaving the screen: `MoonClicked` fires with -1 rather than not firing, which is the
 whole of that rule.

@@ -3374,6 +3374,11 @@ public class LocationTravelGameController : IDisposable
         // emits to the CLI stream and `expect` reads the rendered screen.
         if (subject == "world-regions") return CliRegionLines();
 
+        // Which KIND of world this is. Assertable rather than merely printed, because a script that
+        // pins a variant with --world-variant has no other way to prove it got the world it asked
+        // for — every other reading (biomes, region counts) also varies by seed.
+        if (subject == "world-variant") return CliVariantLines();
+
         if (_protagonist == null) return null;
         if (subject is not ("routines" or "all")) return null;
 
@@ -3381,6 +3386,43 @@ public class LocationTravelGameController : IDisposable
             .Select(r => $"routine location={r.LocationId} start={r.StartTime} steps={r.Steps.Count} "
                        + $"verbs=[{string.Join(",", r.Steps.Select(x => x.VerbId))}]")
             .ToList();
+    }
+
+    /// <summary>
+    /// The world's variant, as assertable lines: which one, what its numbers are, and — separately —
+    /// which one this world's seed names. The two differ exactly when <c>--world-variant</c> is in
+    /// play, and telling them apart is the whole reason the second line exists.
+    /// </summary>
+    private IReadOnlyList<string> CliVariantLines()
+    {
+        if (!_interface.IsWorldGenerated)
+            return new List<string> { "world-variant (no world generated)" };
+
+        var v = _interface.Variant;
+        var shape = v.Shape;
+        var bySeed = Cathedral.Glyph.Microworld.WorldVariants.ForSeed(GameRng.MasterSeed);
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+
+        return new List<string>
+        {
+            $"world-variant id={v.Id} name=\"{v.Name}\" "
+          + $"forced={(v == bySeed ? "no" : "yes")} seed-names={bySeed.Id}",
+
+            // Invariant culture, for the reason the region header carries it: left alone this
+            // machine writes "0,25" and every script asserting on the line fails somewhere it has
+            // never been run.
+            $"world-variant shape sea={shape.SeaLevel.ToString("F3", inv)} "
+          + $"oceandepth={shape.OceanDepth.ToString("F3", inv)} "
+          + $"coastband={shape.CoastBand.ToString("F3", inv)} "
+          + $"mountain={shape.MountainLevel.ToString("F3", inv)} "
+          + $"peak={shape.PeakLevel.ToString("F3", inv)} "
+          + $"forest={shape.ForestLevel.ToString("F3", inv)} "
+          + $"field={shape.FieldLevel.ToString("F3", inv)}",
+
+            $"world-variant scales continent={shape.ContinentScale.ToString("F1", inv)} "
+          + $"settlement={shape.SettlementScale.ToString("F1", inv)} "
+          + $"relief={shape.ReliefScale.ToString("F1", inv)}",
+        };
     }
 
     /// <summary>
@@ -4512,6 +4554,7 @@ public class LocationTravelGameController : IDisposable
         return new Cathedral.Game.Save.SaveGame
         {
             Seed         = GameRng.MasterSeed,
+            Variant      = _interface.Variant.Id,
             Days         = Cathedral.Game.Narrative.GameClock.Days,
             AvatarVertex = _interface.GetAvatarVertex(),
             Party        = Cathedral.Game.Save.PartyState.Capture(_protagonist),
@@ -4554,6 +4597,24 @@ public class LocationTravelGameController : IDisposable
             // loaded into the wrong world.
             Console.Error.WriteLine(
                 $"Continue: the save was played on seed {save.Seed}, this process is on {GameRng.MasterSeed} — refusing.");
+            return false;
+        }
+
+        // The seed alone no longer names a world: --world-variant can build a different kind of
+        // terrain on it. Same refusal, and for the same reason — the avatar's vertex means nothing
+        // in a world that was shaped differently.
+        //
+        // Asked of WorldVariants.Resolve rather than of the interface, because the world is not
+        // generated until forty lines below this: the interface's own variant at this moment is
+        // whatever the last run left there, or the table's first entry on a cold start.
+        var wantVariant = Cathedral.Glyph.Microworld.WorldVariants.ById(save.Variant);
+        var haveVariant = Cathedral.Glyph.Microworld.WorldVariants.Resolve(GameRng.MasterSeed);
+        if (wantVariant != null && wantVariant != haveVariant)
+        {
+            Console.Error.WriteLine(
+                $"Continue: the save was played in {wantVariant.Name} ({save.Variant}), this process builds "
+                + $"{haveVariant.Name} ({haveVariant.Id}) — refusing. Drop --world-variant, or pass "
+                + $"--world-variant {save.Variant}.");
             return false;
         }
 

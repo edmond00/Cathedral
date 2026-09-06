@@ -107,7 +107,7 @@ from the game's (very chatty) diagnostic logging on the same stdout.
 **Invoke the `verifying` skill before writing or running any `.cli` script.** It carries the
 reproducibility flags, the full command vocabulary, `--debug`'s forced outcomes, the test-suite
 layout, `--verb-probe`, and what `--cli` cannot check. **Invoke `audits` after touching content**
-— it carries the eleven headless audits and says which one covers which change.
+— it carries the twelve headless audits and says which one covers which change.
 
 When the user wants to *play* the change rather than read `[cli]` output — anything visual, anything
 about feel, "let me try it" — **invoke `playtest`**. It carries the baseline launch command, the flags
@@ -126,7 +126,7 @@ every line that left is the same text, moved.
 | `src/game/CLAUDE.md` | when working with files under `src/game/` | saving and the save contract; `HandleEscape` and the phases it must answer; fights, the first blow, victory, death, companion death; wounds and healing and the modi mentis a wound takes away; verbs/actions/outcomes; the noetic economy; tools and the four gates; emotions; corpses; crime; landscapes; recruiting; what survives a visit; what a body can do; the senses; the affinity ladder; circumstance and dialogue lessons |
 | `verifying` skill | on invocation | `--cli`, the reproducibility flags, the command vocabulary, forcing outcomes, the test suite and `cli/` layout, `--verb-probe`, extending the CLI, adding a debug flag, what `--cli` cannot check |
 | `playtest` skill | on invocation | launching the game for the user to play by hand: the baseline command, which debug flags reach which feature, the CPU/GPU rule, when `--playground` belongs on |
-| `audits` skill | on invocation | `--outcome-audit`, `--crime-audit`, `--dialogue-audit`, `--npc-audit`, `--mm-audit`, `--item-audit`, `--verb-audit`, `--mm-grant-csv`, `--mm-reach-csv`, `--llm-probe-audit`, `--building-audit` |
+| `audits` skill | on invocation | `--outcome-audit`, `--crime-audit`, `--dialogue-audit`, `--npc-audit`, `--mm-audit`, `--item-audit`, `--verb-audit`, `--world-variant-audit`, `--mm-grant-csv`, `--mm-reach-csv`, `--llm-probe-audit`, `--building-audit` |
 | `runtime` skill | on invocation | `models/model.gguf` and the llama.cpp backends, `-ngl`, the first-run probe, the connection-pool and streaming contracts, server-start fallback, `log.txt` and the `logs/` tree, the crash report, the Settings screen |
 | `release` skill | on invocation | the ten release steps, and now the packaging, publishing, naming and shipped-build-verification reference behind them |
 | `manual` skill | on invocation | the player manual's style guide, chapter map and procedure |

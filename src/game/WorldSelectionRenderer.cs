@@ -1,9 +1,10 @@
-// WorldSelectionRenderer.cs — the screen a new run opens on: the bare sky, and a moon to pick out
+﻿// WorldSelectionRenderer.cs — the screen a new run opens on: the bare sky, and a moon to pick out
 // of it. Draws the title, the hint and the confirmation box; the moons themselves are lit in the
 // sky by the sky renderer, not here.
 using System;
 using OpenTK.Mathematics;
 using Cathedral.Glyph;
+using Cathedral.Glyph.Microworld;
 using Cathedral.Terminal;
 using Cathedral.Terminal.Utils;
 
@@ -136,11 +137,28 @@ namespace Cathedral.Game
                 selected >= 0 ? SkyMoons.WorldSeed(selected).ToString() : "—",
                 Config.WorldSelectionUI.ValueColor);
 
-            DrawRow(innerLeft, contentY + 4, "Pointed at",
+            // What KIND of world this moon is. Known before it is built, because the variant is a
+            // pure function of the seed above rather than something the generator decides — which is
+            // the whole reason it can be shown here at all. Tied to the choice, not to the hover, for
+            // the same reason the seed is: this names what CONFIRM will hand over.
+            var variant = selected >= 0 ? WorldVariants.ForSeed(SkyMoons.WorldSeed(selected)) : null;
+
+            DrawRow(innerLeft, contentY + 4, "World",
+                variant?.Name ?? "—",
+                variant != null ? Config.WorldSelectionUI.NameColor
+                                : Config.WorldSelectionUI.LabelColor);
+
+            // Directly under the name, with no gap, because it is that name explained. Centred rather
+            // than right-aligned so it does not read as a fourth value in the column above it.
+            if (variant != null)
+                _terminal.Text(_boxX + (_boxW - variant.Blurb.Length) / 2, contentY + 5, variant.Blurb,
+                    Config.WorldSelectionUI.HintColor, Config.WorldSelectionUI.BackgroundColor);
+
+            DrawRow(innerLeft, contentY + 6, "Pointed at",
                 hoveredMoon >= 0 ? SkyMoons.Name(hoveredMoon) : "—",
                 Config.WorldSelectionUI.HintColor);
 
-            // Row contentY + 5 is left blank on purpose: it is the gap that keeps the last line of
+            // Row contentY + 7 is left blank on purpose: it is the gap that keeps the last line of
             // text off the buttons.
             DrawButtons(confirmEnabled: selected >= 0);
         }

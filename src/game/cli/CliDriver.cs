@@ -216,6 +216,7 @@ public sealed class CliDriver
                 case "regions":     CmdRegions();                     break;
                 case "world":       CmdWorld();                       break;
                 case "world-regions": CmdWorldRegions(rest);         break;
+                case "world-variant": CmdWorldVariant();             break;
                 case "destinations":CmdDestinations(rest);            break;
                 case "click":       CmdClick(rest);                   break;
                 case "point":       CmdPoint(rest);                   break;
@@ -305,6 +306,7 @@ public sealed class CliDriver
           dump [--color]            the terminal grid as text; --color annotates greyed lines
           regions                   what is actionable right now (the handles `click` accepts)
           world                     avatar vertex, biome, location, travel range, region
+          world-variant             which kind of world this is, its thresholds, and the whole table
           world-regions [vertex]    the world's division into regions: sizes, seeds, borders,
                                     palette. With a vertex, just that vertex's region
           destinations              reachable vertices, by name
@@ -330,7 +332,7 @@ public sealed class CliDriver
                                     outcome banner and so passes on the wrong verb
           inspect [subject]         print the game state an outcome can change, by STABLE id:
                                     items / coins / where / party / wounds / skills / npcs / pois /
-                                    routines / noetic / humors / world-regions, or all. What
+                                    routines / noetic / humors / world-regions / world-variant, or all. What
                                     cli/outcome/ asserts on — the
                                     chip says the player was told, this says the world actually
                                     moved. `noetic` carries the phase budget and the acting body's
@@ -548,7 +550,8 @@ public sealed class CliDriver
             var (count, selected, _) = _game.CliMoonState();
             CliMode.Emit(selected >= 0
                 ? $"  moon {selected} selected: {Cathedral.Glyph.SkyMoons.Name(selected)} "
-                  + $"(seed {Cathedral.Glyph.SkyMoons.WorldSeed(selected)})"
+                  + $"(seed {Cathedral.Glyph.SkyMoons.WorldSeed(selected)}, "
+                  + $"{Cathedral.Glyph.Microworld.WorldVariants.ForSeed(Cathedral.Glyph.SkyMoons.WorldSeed(selected)).Id})"
                 : "  no moon selected yet");
             CliMode.Emit($"  click moon <name|ordinal>  ({count} moons, ordinals 0..{count - 1})");
             CliMode.Emit("  point moon <name|ordinal>  (hover it without choosing it)");
@@ -667,7 +670,24 @@ public sealed class CliDriver
         var regions = _game.CliWorld.Regions;
         CliMode.Emit($"avatar_vertex={v} biome=\"{biome.Name}\" location=\"{location?.Name ?? "-"}\" " +
                      $"region={regions?.RegionAt(v) ?? -1} landmass={regions?.LandmassAt(v) ?? -1} " +
+                     $"variant={_game.CliWorld.Variant.Id} " +
                      $"mode={_game.CurrentMode}");
+    }
+
+    /// <summary>
+    /// Prints the kind of world this is, and the numbers behind it. The whole table is listed after
+    /// it, marked, so a script can see what it did NOT get as well as what it did.
+    /// </summary>
+    private void CmdWorldVariant()
+    {
+        var live = _game.CliWorld.Variant;
+        var bySeed = Cathedral.Glyph.Microworld.WorldVariants.ForSeed(GameRng.MasterSeed);
+
+        CliMode.Emit($"variant={live.Id} name=\"{live.Name}\" seed-names={bySeed.Id} " +
+                     $"forced={(live == bySeed ? "no" : "yes")}");
+        CliMode.Emit($"  {live.Blurb}");
+        foreach (var v in Cathedral.Glyph.Microworld.WorldVariants.All)
+            CliMode.Emit($"  {(v == live ? "*" : " ")} {v.Id,-18} {v.Name}");
     }
 
     /// <summary>
@@ -887,7 +907,8 @@ public sealed class CliDriver
 
                 Report(_game.CliSelectMoon(ordinal),
                     $"selected moon {ordinal} ({Cathedral.Glyph.SkyMoons.Name(ordinal)}, "
-                    + $"seed {Cathedral.Glyph.SkyMoons.WorldSeed(ordinal)})");
+                    + $"seed {Cathedral.Glyph.SkyMoons.WorldSeed(ordinal)}, "
+                    + $"{Cathedral.Glyph.Microworld.WorldVariants.ForSeed(Cathedral.Glyph.SkyMoons.WorldSeed(ordinal)).Id})");
                 break;
             }
             case "sky":

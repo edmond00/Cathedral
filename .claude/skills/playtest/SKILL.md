@@ -84,7 +84,8 @@ should not have to walk to the feature.
 | Starvation, humors | `--black-bile`. |
 | Travel and the world map | `--no-encounters` to stop random encounters interrupting, `--allow-reentry` to re-enter your own vertex. |
 | The world's division into regions | Nothing to add -- press **R** on the world map. It repaints the sphere by region instead of by biome (gray and ochre for the land, the sea left purple) and R again puts the biomes back. A developer key, so it is off under `--no-developer-keys`. |
-| The world-selection sky | Drop `--seed` — the flag names the world outright and skips that screen. The sky is drawn from a constant, so it is still the same sky. |
+| The world-selection sky | Drop `--seed` — the flag names the world outright and skips that screen. The sky is drawn from a constant, so it is still the same sky. The box names the moon's world variant beside its seed, so this is also how to browse the ten of them. |
+| A particular kind of world (more sea, more mountains, more farms) | `--world-variant <id>` — one of `even-lands`, `drowned-reach`, `great-continent`, `scattered-isles`, `riven-spine`, `worn-country`, `green-shroud`, `tilled-plain`, `empty-marches`, `shoal-country`. Only one seed in ten names any given variant, so hunting the sky for one is exactly the lucky-seed hunt this table exists to avoid. Pair it with **R** to see how the regions fall in that shape. **A save written under this flag will not continue without it**, so do not leave it on across a session meant to be resumed. |
 | A save-format change | `--save-path <file>` against a scratch file. Never let a playtest write the real save while a format change is in flight. |
 | A shipped-build behaviour | `--no-developer-keys` — the developer shortcuts (D/M/F/G/H/J, R, C/V, W/S) are off in a shipped build. |
 

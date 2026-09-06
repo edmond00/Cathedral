@@ -41,6 +41,7 @@ from the game's (very chatty) diagnostic logging on the same stdout.
 | `--advance-days <n>` | Pushes the world clock forward `n` days on first arrival at the world map. The clock only moves on travel arrival and work stints while a wound needs 100–1000 days to close, so without this nothing about healing is observable. Fires once, before anything has happened — for healing *a wound taken in play*, use the `clock` command instead. |
 | `--location-type test` | Builds the **test location** (`TestSceneFactory`) — a kitchen sink holding one of everything, under names that never change. This is what the whole CLI suite runs in; see "The test location" below. It is attached to no biome, so this flag is the only way in. |
 | `--silent` | Opens no audio device: no music, no sound effects, no loading wash. `run_tests.sh` passes it on every script — a full run launches the game a hundred-odd times, and without it that is an hour of overlapping music from windows nobody is watching. Implemented by not opening the MIDI device, which is a state the engine already handles (a machine with no MIDI runs the same path). |
+| `--world-variant <id>` | Forces every world to be generated as that variant (`even-lands`, `drowned-reach`, `great-continent`, `scattered-isles`, `riven-spine`, `worn-country`, `green-shroud`, `tilled-plain`, `empty-marches`, `shoal-country`) instead of the one its seed names. A variant is otherwise reached only by finding a moon that happens to be it, which is one seed in ten. **A save written under this flag will not continue without it** — the variant is stored beside the seed and a mismatch is refused, because the avatar's vertex means nothing in a world shaped differently. An unknown id falls back to the seed's own variant and records a `DebugFlagAudit` miss, which fails the script. |
 | `--location-type <name>` | Forces which scene factory builds every location (`village`, `forest`, `cave`…), ignoring the biome underfoot. **Prefer this to `--start-at` in a test.** `--start-at` searches the *generated world* and shrugs when it finds nothing — at seed 42 there is no forest in reach, so every forest test silently ran in a plain. This builds one regardless, so a test does not depend on world generation at all. |
 | `--location-id <n>` | Builds every scene as location id `n`. A scene is a pure function of its id (`CreateSeededRandom(locationId)`), so the id decides the layout, the room names, the objects and the people — a village rolls a Chain or a Hub with entirely different rooms. Together with `--location-type` it determines the whole scene, which is what makes `--verb-probe`'s reported rooms actually exist in the run. |
 | `--npc-static` | Pins every NPC to the area they spend most of the day in, instead of following their schedule. Where somebody stands at a given hour is drawn from the location seed across six periods, so an NPC verb's test cannot otherwise name the room — and a test that names the wrong one finds it empty. `--verb-probe` sets the same flag, so its rooms and the run's agree by construction. |
@@ -71,7 +72,11 @@ Run `help` for the authoritative list. The essentials:
                             of the phase and released again when the phase ends
   dump [--color]            the terminal grid as text; --color tags each row dim/mix/lit
   regions                   what is actionable right now — the handles `click` accepts
-  world                     avatar vertex, biome, location, and the region under the avatar
+  world                     avatar vertex, biome, location, the region under the avatar, and which
+                            world variant this world was built to
+  world-variant             which KIND of world this is: its id and name, whether it was forced by
+                            `--world-variant` or chosen by the seed, and the whole table of ten with
+                            the live one marked. `inspect world-variant` is the assertable form
   world-regions [vertex]    the world's division into regions -- how many, over how many
                             landmasses, each one's size, its seed vertex, its palette swatch and
                             which regions it borders. With a vertex, just that vertex's region.
@@ -180,7 +185,13 @@ Run `help` for the authoritative list. The essentials:
                             the colouring, which is otherwise pixels a script cannot see —
                             `conflicts=` (bordering pairs sharing a colour; the invariant, always 0)
                             and `minborder=` with its verdict `borders=distinct|muddy` (how far
-                            apart the closest bordering pair on the world is; the quality)
+                            apart the closest bordering pair on the world is; the quality).
+                            `world-variant` carries the kind of world: `id=`, `forced=yes|no` and
+                            `seed-names=` (what the seed would have picked, which differs from `id`
+                            exactly when `--world-variant` is in play), plus the thresholds and
+                            scales the terrain was read through. That last group is the only proof
+                            a variant's numbers reached the generator rather than sitting unread in
+                            the table — every other reading of a world also varies by seed
   expect-state <subj> <text> | expect-no-state <subj> <text>
                             assert `inspect <subj>` does (or does not) report a line containing
                             <text>. The outcome range's assertion

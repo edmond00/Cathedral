@@ -1522,116 +1522,23 @@ namespace Cathedral.Glyph
             Console.WriteLine($"Generated {vertices.Count} vertices with pathfinding noise (seed: {pathfindingSeed})");
         }
 
+        /// <summary>
+        /// Builds the world sphere's vertices from <see cref="IcosphereGeometry"/>. The mesh itself
+        /// lives there so that the background sphere and the headless world audits get the same one.
+        /// </summary>
         private void BuildIcosphere(int subdivisions, float radius)
         {
-            // Create base icosahedron
-            float t = (1.0f + MathF.Sqrt(5.0f)) / 2.0f; // golden ratio
-            float scale = radius / MathF.Sqrt(1 + t * t);
+            var (positions, triangles) = IcosphereGeometry.Build(subdivisions, radius);
 
-            // 12 vertices of icosahedron
-            var baseVertices = new List<Vector3>
-            {
-                new Vector3(-1,  t,  0) * scale,
-                new Vector3( 1,  t,  0) * scale,
-                new Vector3(-1, -t,  0) * scale,
-                new Vector3( 1, -t,  0) * scale,
-                
-                new Vector3( 0, -1,  t) * scale,
-                new Vector3( 0,  1,  t) * scale,
-                new Vector3( 0, -1, -t) * scale,
-                new Vector3( 0,  1, -t) * scale,
-                
-                new Vector3( t,  0, -1) * scale,
-                new Vector3( t,  0,  1) * scale,
-                new Vector3(-t,  0, -1) * scale,
-                new Vector3(-t,  0,  1) * scale
-            };
-
-            // Normalize to sphere surface
-            for (int i = 0; i < baseVertices.Count; i++)
-            {
-                baseVertices[i] = Vector3.Normalize(baseVertices[i]) * radius;
-            }
-
-            // 20 triangular faces of icosahedron
-            var baseIndices = new List<uint>
-            {
-                // 5 faces around point 0
-                0, 11, 5,   0, 5, 1,    0, 1, 7,    0, 7, 10,   0, 10, 11,
-                
-                // 5 adjacent faces
-                1, 5, 9,    5, 11, 4,   11, 10, 2,  10, 7, 6,   7, 1, 8,
-                
-                // 5 faces around point 3
-                3, 9, 4,    3, 4, 2,    3, 2, 6,    3, 6, 8,    3, 8, 9,
-                
-                // 5 adjacent faces
-                4, 9, 5,    2, 4, 11,   6, 2, 10,   8, 6, 7,    9, 8, 1
-            };
-
-            // Start with base icosahedron
-            var currentVertices = new List<Vector3>(baseVertices);
-            var currentIndices = new List<uint>(baseIndices);
-
-            // Subdivide
-            for (int level = 0; level < subdivisions; level++)
-            {
-                var newVertices = new List<Vector3>(currentVertices);
-                var newIndices = new List<uint>();
-                var midPointCache = new Dictionary<(int, int), int>();
-
-                // Process each triangle
-                for (int i = 0; i < currentIndices.Count; i += 3)
-                {
-                    uint i1 = currentIndices[i];
-                    uint i2 = currentIndices[i + 1];
-                    uint i3 = currentIndices[i + 2];
-
-                    // Get midpoints (or create them)
-                    int a = GetMidpoint(i1, i2, currentVertices, newVertices, midPointCache, radius);
-                    int b = GetMidpoint(i2, i3, currentVertices, newVertices, midPointCache, radius);
-                    int c = GetMidpoint(i3, i1, currentVertices, newVertices, midPointCache, radius);
-
-                    // Create 4 new triangles from 1 old triangle
-                    newIndices.AddRange(new uint[] { i1, (uint)a, (uint)c });
-                    newIndices.AddRange(new uint[] { i2, (uint)b, (uint)a });
-                    newIndices.AddRange(new uint[] { i3, (uint)c, (uint)b });
-                    newIndices.AddRange(new uint[] { (uint)a, (uint)b, (uint)c });
-                }
-
-                currentVertices = newVertices;
-                currentIndices = newIndices;
-            }
-
-            // Convert to vertex objects
             vertices.Clear();
             indices.Clear();
 
-            foreach (var pos in currentVertices)
+            foreach (var pos in positions)
             {
                 vertices.Add(new Vertex { Position = pos, GlyphIndex = 0, GlyphChar = Config.GlyphSphere.DefaultGlyph, Noise = 0, Color = Vector4.One, Size = 1.0f });
             }
 
-            indices.AddRange(currentIndices);
-        }
-
-        private int GetMidpoint(uint i1, uint i2, List<Vector3> oldVertices, List<Vector3> newVertices, Dictionary<(int, int), int> cache, float radius)
-        {
-            var key = i1 < i2 ? ((int)i1, (int)i2) : ((int)i2, (int)i1);
-
-            if (cache.TryGetValue(key, out int cachedIndex))
-            {
-                return cachedIndex;
-            }
-
-            Vector3 mid = (oldVertices[(int)i1] + oldVertices[(int)i2]) / 2.0f;
-            mid = Vector3.Normalize(mid) * radius;
-
-            int newIndex = newVertices.Count;
-            newVertices.Add(mid);
-            cache[key] = newIndex;
-
-            return newIndex;
+            indices.AddRange(triangles);
         }
 
         private void BuildBackgroundSphere(int subdivisions, int unused, float radius)
@@ -1662,56 +1569,9 @@ namespace Cathedral.Glyph
 
         private void BuildIcosphereGeometry(int subdivisions, float radius, List<Vector3> outVertices, List<uint> outIndices)
         {
-            // Same as BuildIcosphere but outputs to provided lists
-            float t = (1.0f + MathF.Sqrt(5.0f)) / 2.0f;
-            float scale = radius / MathF.Sqrt(1 + t * t);
-
-            var baseVertices = new List<Vector3>
-            {
-                new Vector3(-1,  t,  0) * scale, new Vector3( 1,  t,  0) * scale,
-                new Vector3(-1, -t,  0) * scale, new Vector3( 1, -t,  0) * scale,
-                new Vector3( 0, -1,  t) * scale, new Vector3( 0,  1,  t) * scale,
-                new Vector3( 0, -1, -t) * scale, new Vector3( 0,  1, -t) * scale,
-                new Vector3( t,  0, -1) * scale, new Vector3( t,  0,  1) * scale,
-                new Vector3(-t,  0, -1) * scale, new Vector3(-t,  0,  1) * scale
-            };
-
-            for (int i = 0; i < baseVertices.Count; i++)
-            {
-                baseVertices[i] = Vector3.Normalize(baseVertices[i]) * radius;
-            }
-
-            var baseIndices = new List<uint>
-            {
-                0, 11, 5,   0, 5, 1,    0, 1, 7,    0, 7, 10,   0, 10, 11,
-                1, 5, 9,    5, 11, 4,   11, 10, 2,  10, 7, 6,   7, 1, 8,
-                3, 9, 4,    3, 4, 2,    3, 2, 6,    3, 6, 8,    3, 8, 9,
-                4, 9, 5,    2, 4, 11,   6, 2, 10,   8, 6, 7,    9, 8, 1
-            };
-
-            var currentVertices = new List<Vector3>(baseVertices);
-            var currentIndices = new List<uint>(baseIndices);
-
-            for (int level = 0; level < subdivisions; level++)
-            {
-                var newVertices = new List<Vector3>(currentVertices);
-                var newIndices = new List<uint>();
-                var midPointCache = new Dictionary<(int, int), int>();
-
-                for (int i = 0; i < currentIndices.Count; i += 3)
-                {
-                    uint i1 = currentIndices[i], i2 = currentIndices[i + 1], i3 = currentIndices[i + 2];
-                    int a = GetMidpoint(i1, i2, currentVertices, newVertices, midPointCache, radius);
-                    int b = GetMidpoint(i2, i3, currentVertices, newVertices, midPointCache, radius);
-                    int c = GetMidpoint(i3, i1, currentVertices, newVertices, midPointCache, radius);
-                    newIndices.AddRange(new uint[] { i1, (uint)a, (uint)c, i2, (uint)b, (uint)a, i3, (uint)c, (uint)b, (uint)a, (uint)b, (uint)c });
-                }
-                currentVertices = newVertices;
-                currentIndices = newIndices;
-            }
-
-            outVertices.AddRange(currentVertices);
-            outIndices.AddRange(currentIndices);
+            var (positions, triangles) = IcosphereGeometry.Build(subdivisions, radius);
+            outVertices.AddRange(positions);
+            outIndices.AddRange(triangles);
         }
 
         private Matrix4 GetViewMatrix()

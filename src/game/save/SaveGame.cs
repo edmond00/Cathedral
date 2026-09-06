@@ -1,13 +1,13 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Cathedral.Game.Save;
 
 /// <summary>
-/// One saved run, whole. Five facts, and the survey that produced this list found nothing else that
+/// One saved run, whole. Six facts, and the survey that produced this list found nothing else that
 /// feeds a scene build.
 ///
 /// <para><b>What is absent is the interesting half.</b> No terrain, because the world is a pure
-/// function of <see cref="Seed"/>. No scene contents, because a scene is a pure function of its
+/// function of <see cref="Seed"/> and <see cref="Variant"/>. No scene contents, because a scene is a pure function of its
 /// location id. No time of day, because the hour is drawn fresh on every arrival and discarded. No
 /// travel range, no derived stats, no current HP — all recomputed from what is here.</para>
 /// </summary>
@@ -23,7 +23,7 @@ public sealed class SaveGame
     /// also what lets <see cref="PartyState.Rebuild"/> treat an unknown content id as corruption
     /// rather than as a version difference it should tolerate.</para>
     /// </summary>
-    public const int CurrentVersion = 1;
+    public const int CurrentVersion = 2;
 
     public int Version { get; set; } = CurrentVersion;
 
@@ -32,6 +32,18 @@ public sealed class SaveGame
     /// location sits, and the people inside each one — so no part of the map is stored.
     /// </summary>
     public int Seed { get; set; }
+
+    /// <summary>
+    /// The kind of world the run was played in — <c>WorldVariant.Id</c>.
+    ///
+    /// <para>Normally redundant, and deliberately stored anyway: the variant is a pure function of
+    /// <see cref="Seed"/>, so on any ordinary run this is the seed saying the same thing twice.
+    /// <c>--world-variant</c> is what makes it load-bearing. Under that flag the terrain is not the
+    /// terrain the seed names, and a save continued without the flag would put the avatar back on a
+    /// vertex that is now open ocean — with every location it remembers hanging off vertices that
+    /// are somewhere else entirely. Nothing about that would throw.</para>
+    /// </summary>
+    public string Variant { get; set; } = "";
 
     /// <summary>
     /// The world clock. Not optional: nothing stores an age, a wound's progress or an item depletion,

@@ -124,6 +124,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --npc-audit                        Print the NPC generation report (determinism, trait resolution, body/skill/inventory shape) and exit");
     Console.WriteLine("  --item-audit                       Print the item catalogue report (identity, reachability, weights, trade coverage) and exit");
     Console.WriteLine("  --building-audit                   Print the building/schedule report (section partition, locks, beds, hall staffing) and exit");
+    Console.WriteLine("  --world-variant-audit              Print the world-variant report (land, fields, spawns, marooned spawns, regions) and exit");
     Console.WriteLine("  --playground                       Replace all LLM calls with instant placeholders (no server needed)");
     Console.WriteLine("  --skip-childhood                   Skip the childhood reminescence + get-up phases; randomly fill starting skills/items as if they had run");
     Console.WriteLine("  --mm                               After the childhood reminescence phase, fill every empty memory slot with random unheld modiMentis");
@@ -162,6 +163,10 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --seed <n>                         Fix the master RNG seed for a reproducible run (world, spawn, dice).");
     Console.WriteLine("                                     Names the world outright, so New skips the moon-selection screen");
     Console.WriteLine("  --start-at <name>                  DEBUG: spawn on the first biome/location matching <name> (e.g. village, farm)");
+    Console.WriteLine("  --world-variant <id>               DEBUG: generate every world as that variant instead of the one its seed");
+    Console.WriteLine("                                     names (even-lands, drowned-reach, great-continent, scattered-isles,");
+    Console.WriteLine("                                     riven-spine, worn-country, green-shroud, tilled-plain, empty-marches,");
+    Console.WriteLine("                                     shoal-country). A save made under it will not continue without it");
     Console.WriteLine("  --start-area <name>                DEBUG: open narration in the first area of the location matching <name>");
     Console.WriteLine("                                     (e.g. pigsty, smithy). --start-at picks the location, this picks the room:");
     Console.WriteLine("                                     without it a script lands in whichever area was built first and has to walk");
@@ -269,6 +274,15 @@ for (int i = 0; i < args.Length - 1; i++)
     break;
 }
 
+// --world-variant <id>: generate every world as that variant instead of the one its seed names.
+// Parsed here, before the audits return, so --world-variant-audit could honour it too.
+for (int i = 0; i < args.Length - 1; i++)
+{
+    if (args[i] != "--world-variant") continue;
+    Cathedral.Config.Debug.WorldVariant = args[i + 1];
+    break;
+}
+
 // --location-id <n>: build every scene as that location id. What makes --verb-probe's findings and
 // a real run agree — see Config.Debug.LocationId.
 for (int i = 0; i < args.Length - 1; i++)
@@ -302,6 +316,16 @@ if (args.Length >= 1 && args[0] == "--item-audit")
 if (args.Length >= 1 && args[0] == "--building-audit")
 {
     Console.WriteLine(Cathedral.Game.Scene.Building.BuildingAudit.BuildReport());
+    return;
+}
+
+// World variant audit: build the terrain of every world variant across the first moons a player
+// could pick it on, and check the things that make a world playable rather than merely generatable -
+// land to walk on, fields to hang farms off, somewhere to spawn that is not a bare island. Headless:
+// builds the mesh through IcosphereGeometry, so no window and no GL.
+if (args.Length >= 1 && args[0] == "--world-variant-audit")
+{
+    Console.WriteLine(Cathedral.Glyph.Microworld.WorldVariantAudit.BuildReport());
     return;
 }
 

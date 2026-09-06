@@ -29,7 +29,49 @@ three hundred and eighty-two moons overhead and never the one beneath their feet
 returning to a world set aside and taken up again: its moon is struck from its own sky for as long
 as it is inhabited.
 
-## 2. The compass of a stride
+## 2. The disposition of a world
+
+The number that settles a world settles more than where its land falls. It settles the **disposition**
+of that world: which of ten manners the sphere is composed after.
+
+The terrain is read out of three fields of noise laid over the sphere — one governing water, one
+relief, one the settlement of the land — and a disposition is a set of thresholds and scales those
+three fields are read through. It moves five things:
+
+| | |
+|---|---|
+| **The waterline** | how much of the sphere is sea at all, and therefore how much land there is to walk upon |
+| **The reach of the shore** | how far inland the coast extends above the waterline, and how far below it the shallow sea gives way to deep ocean |
+| **The treeline** | where the ground turns to mountain, and where mountain turns to bare peak |
+| **The temper of the land** | what proportion of the walkable ground is forest, and what proportion is tilled field |
+| **The size of the features** | how broad a continent is before the sea interrupts it, and how long a range of mountains runs |
+
+The consequences reach every other rule in this chapter. A high waterline leaves narrow land between
+long arms of sea, and since **no route on foot may cross water** ([§3](#3-the-compass-of-a-stride)),
+a world so composed is a world of separated countries. A low treeline puts mountain and peak across
+the middle of it, and mountain is crossed at twelve days to the cell against a plain's five
+([§4](#4-the-price-of-a-crossing)) — such a world is not smaller than another, but every journey
+across it is longer, and dearer in heat, and met with more of what lives at that height. A land poor
+in tilled field is a land poor in **farms and villages**, since those stand upon worked ground and
+nowhere else; a land rich in it is thick with them.
+
+Two things about a disposition are worth stating plainly, because both are easy to assume otherwise:
+
+- **It is fixed by the world, not drawn during play.** The disposition follows from the world's own
+  number by a settled rule, so the moon that names a world names its disposition also, and it is
+  known before the world is made. Two travellers who take the same moon walk not merely the same
+  ground but the same kind of ground.
+- **It changes the composition of the sphere and nothing else.** No cost, no hazard chance, no
+  threshold of the body is touched by it. A mountain is crossed at twelve days in every world; a
+  disposition decides only how much mountain there is.
+
+Every disposition is a world that can be lived in. Each is held to a floor of land to walk upon, of
+tilled ground to hold settlements, and of ground fit to wake upon — and to a ceiling on the share of
+possible starting-places that lie upon an island too poor to sustain a run. A world that failed any
+of these would generate perfectly well and simply be unplayable, which is why the bounds are checked
+rather than trusted.
+
+## 3. The compass of a stride
 
 A destination may be set only within a radius of the traveller's present position, measured as a
 straight chord across the sphere and not as a count of steps. That radius is the **lower limbs'**
@@ -45,7 +87,7 @@ round.
 durations and hazards are recorded against the day some other means of crossing exists — but no
 route on foot may enter them.
 
-## 3. The price of a crossing
+## 4. The price of a crossing
 
 Each biome declares what one of its cells costs to cross, and the whole is summed cell by cell along
 the route.
@@ -68,7 +110,7 @@ The durations are calibrated so that a single hop costs several days and a journ
 runs into the hundreds. Time is the principal expense of travel, and the reason a journey is not
 undertaken lightly.
 
-## 4. Hazards
+## 5. Hazards
 
 Each hazard's stated chance is the **independent** probability that it fires upon crossing **one**
 cell of that biome. The chance of meeting a given creature at all across a route is therefore
@@ -84,7 +126,7 @@ steering the party clear.
 
 An encounter interrupts the journey where it occurs.
 
-## 5. Heat, and starvation
+## 6. Heat, and starvation
 
 The heat a route demands is **paid as the route is walked, not on reaching the end of it.** Each leg
 of the journey opens a debt, and the traveller halts where they stand until it is met, consuming
@@ -107,7 +149,7 @@ to sour in its humors is killed, and it is why the state of the queues is a thin
 setting out rather than after. The forecast of a route reports whether the queues as they now stand
 would carry the traveller to the end of it.
 
-## 6. The calendar
+## 7. The calendar
 
 The world keeps a calendar of **days**, and the day is the unit every span is expressed in.
 
@@ -123,7 +165,7 @@ Two things are settled on the traveller's return to the map:
 - **Wounds are swept for healing.** Those that have stood their term close, and the health they cost
   is restored.
 - **Age is checked.** A body that has lived out its term dies of old age. The protagonist's term
-  ending here ends the run; a companion's is caught by the standing question of [§8](#8-companions-and-their-loss),
+  ending here ends the run; a companion's is caught by the standing question of [§9](#9-companions-and-their-loss),
   which needs no particular juncture to be asked at.
 
 The order is deliberate: healing restores what a wound took, and the term of life is itself
@@ -135,7 +177,7 @@ are reckoned by a standing question, wherever the body happens to be ([Chapter I
 §7](01-anatomy.md#7-wounds)). Age is the one end of a life that keeps to a juncture, because the
 calendar keeps to one.
 
-## 7. The periods of the day
+## 8. The periods of the day
 
 Within a day, six coarse **periods** are distinguished — dawn, morning, noon, afternoon, evening,
 night — and they cycle, night returning to dawn.
@@ -149,7 +191,7 @@ stands is decided by their schedule against the period; a building's entry is sh
 what may be attempted at all follows from both. Arriving at a place at two different periods is
 arriving at two different places.
 
-## 8. Companions, and their loss
+## 9. Companions, and their loss
 
 The party is limited by the **heart's** measure — one companion per level of the organ. The limit is
 checked before a destination may be chosen, and a party over strength must be reduced before travel
@@ -181,7 +223,7 @@ fell in, on the same terms as any other death ([Chapter VI
 leaving what they carried. Where they died upon the map, between places, there is no area to hold a
 body and none is left.
 
-## 9. Arrival
+## 10. Arrival
 
 On arrival the traveller enters the place. Where the cell bears a location, the location is built
 and its narration begins; where it bears only a biome, the biome is entered instead. Arriving

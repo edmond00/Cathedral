@@ -1,6 +1,6 @@
 ---
 name: audits
-description: The eleven headless audits that check content rather than code: --outcome-audit, --crime-audit, --dialogue-audit, --npc-audit, --mm-audit, --item-audit, --verb-audit, --mm-grant-csv, --mm-reach-csv, --llm-probe-audit and --building-audit. Use after adding or editing a verb, an outcome, a modus mentis, an item, an NPC archetype, a dialogue tree, a scene factory or a batch of scene content, and to find out which audit covers a change.
+description: The twelve headless audits that check content rather than code: --outcome-audit, --crime-audit, --dialogue-audit, --npc-audit, --mm-audit, --item-audit, --verb-audit, --world-variant-audit, --mm-grant-csv, --mm-reach-csv, --llm-probe-audit and --building-audit. Use after adding or editing a verb, an outcome, a modus mentis, an item, an NPC archetype, a dialogue tree, a scene factory, a world variant or a batch of scene content, and to find out which audit covers a change.
 ---
 
 # The audits
@@ -326,6 +326,41 @@ indefinitely: nothing errored, nothing timed out, the first 495-token batch simp
 
 Run it after touching `LlamaProbe`, and on any machine where the game is inexplicably slow to
 generate — this is the report that says whether it picked the wrong device and by how much.
+
+### Checking the world variants
+
+```bash
+dotnet run -- --world-variant-audit
+```
+
+A world variant is eleven numbers — three feature scales and eight thresholds — read through
+`WorldShape` to turn three Perlin fields into terrain. **Every way of getting them wrong produces a
+world that generates without complaint**, which is what this exists for:
+
+- a waterline half a point too high leaves an archipelago of six-cell islands, and the run ends when
+  the player opens the travel map and finds nowhere to go;
+- a treeline half a point too low buries the fields — and since `PostProcessWorld` hangs every farm
+  and village off a *field* cell, that world has no people in it at all;
+- a coast band raised without the waterline under it leaves the shore below the sea and the deep
+  ocean above the shallows, which still generates, just with no shoreline anywhere.
+
+None of those throws. The audit builds the terrain of every variant on the first sixteen moons a
+player could pick it on, and per world checks land share, field share, spawnable share (the
+plain/field/coast list `InitializeProtagonist` actually draws from), **marooned share** — the
+fraction of possible spawns sitting on a landmass with fewer than a dozen fields, which matters
+because travel is on foot and sea is forbidden — and, on three of the sixteen, the region count.
+It also checks the table itself: ids unique, every `WorldVariant` subclass registered in
+`WorldVariants.All`, every variant reached by some moon in the sky, the shape orderings sound, and
+every name and blurb short enough for the moon box, which does no wrapping and would run the text
+off the border into the dark.
+
+Headless by construction: it builds the mesh through `IcosphereGeometry` and classifies through
+`WorldShape`, both of which the running game uses too, so what it measures is the world a player
+would walk. Sixteen worlds each for ten variants runs in about ten seconds.
+
+Run it after touching a variant's numbers, `WorldShape`, `DetermineBiome`'s ordering, the biome
+thresholds, `InitializeProtagonist`'s spawn list, or anything in `WorldRegions`. Walk what it
+reports with `--world-variant <id>`.
 
 ### Checking buildings, scenes and NPC schedules
 

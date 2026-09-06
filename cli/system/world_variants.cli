@@ -1,0 +1,60 @@
+# A moon does not only name a world — it names what KIND of world, and says so before you take it.
+#
+# Ten variants shift the Perlin thresholds the terrain is read through: where the waterline sits, how
+# high the treeline is, how much of the land is worth farming. Which one a moon gets is a pure
+# function of its world seed, which is what lets the selection box print it beside the seed rather
+# than only after the world has been built.
+#
+# Deliberately runs WITHOUT --seed, for the reason world_selection.cli does: that flag names the
+# world on the command line and skips the screen this is about. Still reproducible — the sky is drawn
+# from a constant, so moon 0 is Armoth in every process, and Armoth's seed hashes to the same variant
+# every time.
+#
+# What is asserted, and what is not: that the box names the variant before CONFIRM, that the run
+# really is built to it, and that the variant is not forced. NOT how much sea or forest that variant
+# produces — that is --world-variant-audit's job, over sixteen worlds per variant, and pinning a
+# biome share here would turn every calibration pass into a red test that says nothing about whether
+# the wiring works.
+#
+# FLAGS: --playground --skip-childhood --debug --no-encounters --location-type test --location-id 0 --npc-static --period noon
+
+wait
+click menu New
+wait mode WorldSelection 20
+
+# Nothing chosen: the World row is empty like the rest of them. The box draws every row in every
+# state, so the label is on screen with nothing beside it.
+expect World
+
+# Armoth is moon 0, its seed is -209322086, and that seed hashes to The Scattered Isles. Named in
+# the box BEFORE the world exists — the whole point of deriving the variant from the seed rather
+# than from the generator.
+click moon Armoth
+wait
+expect The Scattered Isles
+expect small land, strewn across the water
+
+# Take it. The world is generated here.
+click world confirm
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+
+# The run really is that world, and the variant was not forced by a flag — `seed-names` is what the
+# seed would have chosen on its own, and it agrees.
+expect-state world-variant id=scattered-isles
+expect-state world-variant forced=no
+expect-state world-variant seed-names=scattered-isles
+expect-no-state world-variant (no world generated)
+
+# The shape reached the generator rather than sitting in a table unread: The Scattered Isles is the
+# baseline with the continents broken small, so its continent scale is not the baseline's 12.
+expect-state world-variant continent=5.5
+expect-state world-variant settlement=3.0
+
+# And it is on the world line beside the region, which is where a script asking one question about
+# where the avatar stands will look.
+world
+world-variant
+
+quit
