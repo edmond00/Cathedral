@@ -143,22 +143,20 @@ namespace Cathedral.Game
             // the same reason the seed is: this names what CONFIRM will hand over.
             var variant = selected >= 0 ? WorldVariants.ForSeed(SkyMoons.WorldSeed(selected)) : null;
 
+            // The name alone. The variant's own one-line description was drawn under it and is not
+            // any more: three labelled values and a loose sentence read as two different kinds of
+            // box, and the sentence said little the name did not — a classification chosen to be
+            // legible on its own does not need a gloss beside it.
             DrawRow(innerLeft, contentY + 4, "World",
                 variant?.Name ?? "—",
                 variant != null ? Config.WorldSelectionUI.NameColor
                                 : Config.WorldSelectionUI.LabelColor);
 
-            // Directly under the name, with no gap, because it is that name explained. Centred rather
-            // than right-aligned so it does not read as a fourth value in the column above it.
-            if (variant != null)
-                _terminal.Text(_boxX + (_boxW - variant.Blurb.Length) / 2, contentY + 5, variant.Blurb,
-                    Config.WorldSelectionUI.HintColor, Config.WorldSelectionUI.BackgroundColor);
-
-            DrawRow(innerLeft, contentY + 6, "Pointed at",
+            DrawRow(innerLeft, contentY + 5, "Pointed at",
                 hoveredMoon >= 0 ? SkyMoons.Name(hoveredMoon) : "—",
                 Config.WorldSelectionUI.HintColor);
 
-            // Row contentY + 7 is left blank on purpose: it is the gap that keeps the last line of
+            // Row contentY + 6 is left blank on purpose: it is the gap that keeps the last line of
             // text off the buttons.
             DrawButtons(confirmEnabled: selected >= 0);
         }

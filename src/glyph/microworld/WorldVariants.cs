@@ -188,8 +188,8 @@ namespace Cathedral.Glyph.Microworld
         public override string Blurb => "a high waterline, and narrow land";
         public override WorldShape Shape => WorldVariants.Baseline with
         {
-            ContinentScale = 14f,
-            SeaLevel       = 0.11f,
+            ContinentScale = 18f,
+            SeaLevel       = 0.19f,
             CoastBand      = 0.09f,
         };
     }
@@ -217,8 +217,8 @@ namespace Cathedral.Glyph.Microworld
         public override string Blurb => "small land, strewn across the water";
         public override WorldShape Shape => WorldVariants.Baseline with
         {
-            ContinentScale = 5.5f,
-            SeaLevel       = 0.02f,
+            ContinentScale = 7f,
+            SeaLevel       = 0.13f,
         };
     }
 
@@ -303,10 +303,11 @@ namespace Cathedral.Glyph.Microworld
         public override string Blurb => "wide shores, and shallow water beyond";
         public override WorldShape Shape => WorldVariants.Baseline with
         {
-            SeaLevel   = -0.03f,
-            OceanDepth = 0.42f,
-            CoastBand  = 0.20f,
-            FieldLevel = -0.33f,
+            ContinentScale = 8f,
+            SeaLevel       = 0.09f,
+            OceanDepth     = 0.60f,
+            CoastBand      = 0.20f,
+            FieldLevel     = -0.30f,
         };
     }
 

@@ -48,8 +48,9 @@ expect-state world-variant seed-names=insular
 expect-no-state world-variant (no world generated)
 
 # The shape reached the generator rather than sitting in a table unread: Insular is the baseline
-# with the continents broken small, so its continent scale is not the baseline's 12.
-expect-state world-variant continent=5.5
+# with the continents broken small and the waterline raised, so its continent scale is well under
+# the baseline's 12.
+expect-state world-variant continent=7.0
 expect-state world-variant settlement=3.0
 
 # And it is on the world line beside the region, which is where a script asking one question about

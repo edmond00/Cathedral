@@ -364,6 +364,11 @@ namespace Cathedral.Glyph.Microworld
             PrintNoiseStatistics(noiseValues, "Microworld Noise Distribution Statistics");
             PrintGlyphStatistics(glyphCounts, VertexCount, "Microworld Biome-Based Glyph Distribution");
 
+            // Before anything downstream reads a biome: the farms hung off fields, the region
+            // division weighted by travel cost, the spawn. A shore that is not on the sea costs six
+            // days a cell instead of five and colours a tile yellow in the middle of a continent.
+            ReclaimInlandCoast();
+
             PostProcessWorld();
 
             // After PostProcessWorld, because the farms and villages it places are part of the world
@@ -378,6 +383,41 @@ namespace Cathedral.Glyph.Microworld
         }
 
         // ── Regions ─────────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Turns every coast tile that borders no water into plain — see <see cref="CoastRule"/> for
+        /// why the classification alone cannot get this right.
+        /// </summary>
+        private void ReclaimInlandCoast()
+        {
+            var stranded = CoastRule.Stranded(
+                VertexCount,
+                v => vertexData.TryGetValue(v, out var d) ? d.Biome.Name : null,
+                GetNeighboringVertices);
+
+            if (stranded.Count == 0) return;
+
+            var plain = Biomes[CoastRule.Replacement];
+            foreach (int v in stranded)
+            {
+                var data = vertexData[v];
+                data.Biome = plain;
+
+                // A location keeps its own glyph and colour: what stood on the tile did not move
+                // because the ground under it was reclassified. Only a bare tile is repainted.
+                if (!data.Location.HasValue)
+                {
+                    data.GlyphChar = plain.Glyph;
+                    data.Color = new System.Numerics.Vector3(plain.Color.X, plain.Color.Y, plain.Color.Z);
+                }
+
+                vertexData[v] = data;
+                SetVertexGlyph(v, data.GlyphChar, TileColor(v, data),
+                               data.Location?.Size ?? plain.Size);
+            }
+
+            Console.WriteLine($"[PostProcess] {stranded.Count} coast tile(s) touched no water; made plain.");
+        }
 
         /// <summary>
         /// The world's division into regions, or null before a world has been generated.

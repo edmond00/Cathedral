@@ -41,7 +41,7 @@ three fields are read through. It moves five things:
 | | |
 |---|---|
 | **The waterline** | how much of the sphere is sea at all, and therefore how much land there is to walk upon |
-| **The reach of the shore** | how far inland the coast extends above the waterline, and how far below it the shallow sea gives way to deep ocean |
+| **The reach of the shore** | how much of a coastline reads as shore rather than as the country behind it, and how far below the waterline the shallow sea gives way to deep ocean |
 | **The treeline** | where the ground turns to mountain, and where mountain turns to bare peak |
 | **The temper of the land** | what proportion of the walkable ground is forest, and what proportion is tilled field |
 | **The size of the features** | how broad a continent is before the sea interrupts it, and how long a range of mountains runs |
@@ -66,10 +66,28 @@ Two things about a disposition are worth stating plainly, because both are easy 
   disposition decides only how much mountain there is.
 
 Every disposition is a world that can be lived in. Each is held to a floor of land to walk upon, of
-tilled ground to hold settlements, and of ground fit to wake upon — and to a ceiling on the share of
-possible starting-places that lie upon an island too poor to sustain a run. A world that failed any
-of these would generate perfectly well and simply be unplayable, which is why the bounds are checked
-rather than trusted.
+tilled ground to hold settlements, and of country rich enough to spend a life in. A world that failed
+any of these would generate perfectly well and simply be unplayable, which is why the bounds are
+checked rather than trusted.
+
+**A shore is always upon the water.** The three fields of noise settle a shore by a threshold, as
+they settle everything else — a cell reads as shore when its water reading stands a little above the
+waterline — and a threshold upon a field is not the same thing as a distance from the sea. Where the
+field is broad and its slopes gentle, as it is in a world of vast continents, that little band
+reaches a great way inland, and would leave beaches in country that has never seen water. So the
+reckoning is made twice: the noise proposes a shore, and then every cell that borders neither sea nor
+ocean is reduced to ordinary plain. **What a disposition can widen is therefore how completely a
+coastline reads as coast, never how far the coast reaches from the coastline** — a shore is as long
+as the shore is, and a world wanting more of it must break its land up rather than raise a threshold.
+
+**A traveller is never set down where nothing can be reached.** Since no route on foot may cross
+water, the body of land one wakes upon is the whole of the world that life will be lived in — and a
+body of land bearing no tilled ground bears no farm and no village either. The waking place is
+therefore drawn only from land that carries enough field to hold settlements, and the islets and
+spits that carry none are passed over, however pleasant the ground upon them. In an evenly composed
+world this sets aside one or two cells in the hundred; in a world of scattered isles, a third of them
+and sometimes two thirds. Where no land whatever qualifies — which no disposition permits — the rule
+is abandoned rather than obeyed into a game that will not begin.
 
 ## 3. The compass of a stride
 

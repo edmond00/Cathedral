@@ -30,10 +30,22 @@ namespace Cathedral.Glyph.Microworld
     /// field count is the settlement count. Below a floor, the world is uninhabited.</item>
     /// <item>Spawnable cells — <c>InitializeProtagonist</c> only ever starts the player on plain,
     /// field or coast.</item>
-    /// <item>Marooned share — the one that needs the graph. Travel is on foot and sea is forbidden
-    /// (<c>BiomeTravelDatabase.LandForbiddenBiomes</c>), so a spawn on a landmass with no fields on it
-    /// is a run with nothing reachable, however rich the rest of the world is. This counts the share
-    /// of possible spawns in that position.</item>
+    /// <item>Viable spawns — the one that needs the graph. Travel is on foot and sea is forbidden
+    /// (<c>BiomeTravelDatabase.LandForbiddenBiomes</c>), so the landmass under the spawn is the whole
+    /// of the world that run can reach, and one with no fields on it holds no farms and no villages.
+    /// <c>InitializeProtagonist</c> now refuses such ground, so what is checked is that it has enough
+    /// left to choose from. The <c>dead</c> column beside it is the share of otherwise-spawnable
+    /// ground that rule throws away — informational, and properly high in a world of islands.</item>
+    /// <item>The richest country — how many fields the best landmass carries. A world can pass every
+    /// other bound and still be one where the largest country holds a dozen farmsteads.</item>
+    /// <item>Inland coast — how much of the shore the noise band proposed turns out to touch no water
+    /// and is made plain by <see cref="CoastRule"/>. Reported, not faulted: it is waste rather than
+    /// breakage, and it is governed by the <i>feature size</i> rather than by the band. A smooth
+    /// field has shallow gradients, so a fixed band covers more cells the broader the continents are
+    /// — which is why Continental throws away near half of its band at the same width where Insular,
+    /// whose features are small, throws away a twentieth.</item>
+    /// <item>Shallow water — sea as a share of all water. The one part of a coastal disposition the
+    /// coast rule cannot take away, since it is about the water and not about the shore.</item>
     /// <item>Regions — the division the world history will hang off. A world of one region has no
     /// history to tell; a world of four hundred has no history anyone can hold.</item>
     /// </list></para>
@@ -69,12 +81,17 @@ namespace Cathedral.Glyph.Microworld
         // point is to catch a variant that is broken, not to make every variant the same.
         private const float MinLandShare      = 0.18f;
         private const float MaxLandShare      = 0.90f;
-        private const float MinFieldShare     = 0.010f;  // of the whole sphere
+        // Of the LAND, not of the sphere. A world with a high waterline has less of everything, and
+        // measuring its fields against the whole globe faults it for being a drowned world rather
+        // than for being a barren one - which is the question actually being asked. What guards the
+        // absolute number is FieldsForARun below, on the one landmass a run will be spent on.
+        private const float MinFieldShareOfLand = 0.020f;
         private const float MinSpawnableShare = 0.030f;
-        private const float MaxMaroonedShare  = 0.20f;   // of spawnable cells
         private const int   MinRegions        = 6;
         private const int   MaxRegions        = 300;
-        private const int   FieldsForAHome    = 12;      // fields a landmass needs to be worth waking on
+        private const int   MinViableSpawns   = 200;     // cells the spawn rule must have to choose from
+        private const int   FieldsForARun     = 40;      // fields the world's richest country must carry
+        private const int   BlurbRoom        = 56;      // characters a variant's one-line description may run to
 
         public static string BuildReport()
         {
@@ -145,9 +162,11 @@ namespace Cathedral.Glyph.Microworld
             foreach (var group in registered.GroupBy(v => v.Id).Where(g => g.Count() > 1))
                 faults.Add($"variant id '{group.Key}' is used by {group.Count()} variants");
 
-            // The moon box is a fixed-width box that does no wrapping, so a name or a line too long
-            // for it does not overflow visibly - it runs off the border and into the sky behind,
-            // which on a dark screen looks like nothing at all.
+            // The name goes in the moon box, which is fixed-width and does no wrapping: a name too
+            // long for it does not overflow visibly, it runs off the border and into the sky behind,
+            // which on a dark screen looks like nothing at all. The blurb is no longer drawn there -
+            // it belongs to the CLI's variant table and the line the generator logs - so it is held
+            // to one line of that rather than to the box.
             int room = Config.WorldSelectionUI.BoxWidth - 4;
 
             foreach (var v in registered)
@@ -158,10 +177,10 @@ namespace Cathedral.Glyph.Microworld
                 if (WorldVariants.ById(v.Id) != v)
                     faults.Add($"{v.Id}: does not resolve back through WorldVariants.ById");
 
-                if (v.Blurb.Length > room)
-                    faults.Add($"{v.Id}: its line is {v.Blurb.Length} characters and the moon box holds {room}");
+                if (v.Blurb.Length > BlurbRoom)
+                    faults.Add($"{v.Id}: its line is {v.Blurb.Length} characters, past the {BlurbRoom} one line holds");
                 if (v.Name.Length > room / 2)
-                    faults.Add($"{v.Id}: the name \"{v.Name}\" is {v.Name.Length} characters, too long for its row");
+                    faults.Add($"{v.Id}: the name \"{v.Name}\" is {v.Name.Length} characters, too long for its row in the moon box");
             }
 
             // How the sky divides among them. A variant nothing lands on is dead content.
@@ -187,7 +206,7 @@ namespace Cathedral.Glyph.Microworld
             sb.AppendLine(new string('-', Math.Max(variant.Name.Length, 20)));
             sb.AppendLine($"  {variant.Blurb}");
             sb.AppendLine();
-            sb.AppendLine("   seed        land   field  forest   mtn+pk   coast   plain  |  masses  marooned  regions");
+            sb.AppendLine("   seed        land   field  forest   mtn+pk   coast   plain  | inland  shallow  masses    dead  viable  best  regions");
 
             var ordinals = OrdinalsOf(variant).ToList();
             var built = new List<WorldStats>();
@@ -202,8 +221,11 @@ namespace Cathedral.Glyph.Microworld
                 if (i < PrintedRows)
                     sb.AppendLine($"  {seed,11}  {Pct(w.Land, w.Total)}  {Pct(w.Field, w.Total)}  "
                                 + $"{Pct(w.Forest, w.Total)}  {Pct(w.Mountain, w.Total)}  "
-                                + $"{Pct(w.Coast, w.Total)}  {Pct(w.Plain, w.Total)}  |  "
-                                + $"{w.Landmasses,6}  {Pct(w.Marooned, Math.Max(w.Spawnable, 1)),8}  "
+                                + $"{Pct(w.Coast, w.Total)}  {Pct(w.Plain, w.Total)}  | "
+                                + $"{Pct(w.StrandedCoast, Math.Max(w.BandCoast, 1)),6}  "
+                                + $"{Pct(w.Sea, Math.Max(w.Sea + w.Ocean, 1)),7}  "
+                                + $"{w.Landmasses,6}  {Pct(w.Marooned, Math.Max(w.Spawnable, 1)),6}  "
+                                + $"{w.ViableSpawns,6}  {w.BestLandmassFields,4}  "
                                 + $"{(w.Regions > 0 ? w.Regions.ToString() : "-"),7}");
 
                 string where = $"{variant.Id} (moon {ordinal}, seed {seed})";
@@ -212,15 +234,19 @@ namespace Cathedral.Glyph.Microworld
                     faults.Add($"{where}: only {P(land)} of the sphere is land (floor {P(MinLandShare, 0)}) - nowhere to walk");
                 if (land > MaxLandShare)
                     faults.Add($"{where}: {P(land)} of the sphere is land (ceiling {P(MaxLandShare, 0)}) - the sea has stopped shaping it");
-                if (Share(w.Field, w.Total) < MinFieldShare)
-                    faults.Add($"{where}: fields are {P(Share(w.Field, w.Total), 2)} of the sphere (floor {P(MinFieldShare)}) - "
+                if (Share(w.Field, w.Land) < MinFieldShareOfLand)
+                    faults.Add($"{where}: fields are {P(Share(w.Field, w.Land), 2)} of the LAND (floor {P(MinFieldShareOfLand)}) - "
                              + "farms and villages are placed only on fields, so this world is unpeopled");
                 if (Share(w.Spawnable, w.Total) < MinSpawnableShare)
                     faults.Add($"{where}: only {P(Share(w.Spawnable, w.Total), 2)} of the sphere can be spawned on "
                              + $"(floor {P(MinSpawnableShare)}) - InitializeProtagonist wants plain, field or coast");
-                if (w.Spawnable > 0 && Share(w.Marooned, w.Spawnable) > MaxMaroonedShare)
-                    faults.Add($"{where}: {P(Share(w.Marooned, w.Spawnable))} of possible spawns are on a landmass with "
-                             + $"fewer than {FieldsForAHome} fields (ceiling {P(MaxMaroonedShare, 0)}) - that run has nowhere to go");
+                if (w.ViableSpawns < MinViableSpawns)
+                    faults.Add($"{where}: only {w.ViableSpawns} cell(s) sit on a landmass worth waking on "
+                             + $"(floor {MinViableSpawns}) - InitializeProtagonist has almost nothing to draw from, "
+                             + "and falls back to spawning anywhere at all");
+                if (w.BestLandmassFields < FieldsForARun)
+                    faults.Add($"{where}: the richest landmass carries {w.BestLandmassFields} field(s) "
+                             + $"(floor {FieldsForARun}) - the best country in this world is a hamlet");
                 if (w.Regions > 0 && w.Regions < MinRegions)
                     faults.Add($"{where}: {w.Regions} region(s) (floor {MinRegions}) - too few to hang a history on");
                 if (w.Regions > MaxRegions)
@@ -235,9 +261,12 @@ namespace Cathedral.Glyph.Microworld
 
             sb.AppendLine($"  {"worst",11}  {Pct(built.Min(w => w.Land), built[0].Total)}  "
                         + $"{Pct(built.Min(w => w.Field), built[0].Total)}  "
-                        + $"{"",6}   {"",6}   {"",6}   {"",6}  |  "
+                        + $"{"",6}   {"",6}   {"",6}   {"",6}  | "
+                        + $"{(P(built.Max(w => Share(w.StrandedCoast, Math.Max(w.BandCoast, 1))))),6}  "
+                        + $"{(P(built.Min(w => Share(w.Sea, Math.Max(w.Sea + w.Ocean, 1))))),7}  "
                         + $"{built.Max(w => w.Landmasses),6}  "
-                        + $"{(P(built.Max(w => Share(w.Marooned, Math.Max(w.Spawnable, 1))))),8}");
+                        + $"{(P(built.Max(w => Share(w.Marooned, Math.Max(w.Spawnable, 1))))),6}  "
+                        + $"{built.Min(w => w.ViableSpawns),6}  {built.Min(w => w.BestLandmassFields),4}");
 
             sb.AppendLine();
         }
@@ -259,7 +288,9 @@ namespace Cathedral.Glyph.Microworld
 
         private readonly record struct WorldStats(
             int Total, int Land, int Field, int Forest, int Mountain, int Coast, int Plain,
-            int Spawnable, int Marooned, int Landmasses, int Regions);
+            int Spawnable, int Marooned, int ViableSpawns, int BestLandmassFields,
+            int BandCoast, int StrandedCoast, int Sea, int Ocean,
+            int Landmasses, int Regions);
 
         /// <summary>
         /// Classifies every vertex under <paramref name="variant"/> on <paramref name="seed"/> and
@@ -289,7 +320,15 @@ namespace Cathedral.Glyph.Microworld
                 settlement[v] = settle;
             }
 
+            // Exactly what GenerateWorld does next. Skipping it would measure the world the noise
+            // proposed rather than the one the game builds - and the difference between them is the
+            // whole of what a wide coast band claims and does not deliver.
+            int bandCoast = biome.Count(b => BiomeDatabase.CoastBiomes.Contains(b));
+            var stranded = CoastRule.Stranded(n, v => biome[v], v => adjacency[v]);
+            foreach (int v in stranded) biome[v] = CoastRule.Replacement;
+
             int land = 0, field = 0, forest = 0, mountain = 0, coast = 0, plain = 0, spawnable = 0;
+            int sea = 0, ocean = 0;
             for (int v = 0; v < n; v++)
             {
                 bool isLand = !BiomeDatabase.WaterBiomes.Contains(biome[v]);
@@ -302,6 +341,8 @@ namespace Cathedral.Glyph.Microworld
                     case "peak":     mountain++; break;
                     case "coast":    coast++;    break;
                     case "plain":    plain++;    break;
+                    case "sea":      sea++;      break;
+                    case "ocean":    ocean++;    break;
                 }
                 // Exactly InitializeProtagonist's list.
                 if (biome[v] is "plain" or "field" or "coast") spawnable++;
@@ -314,12 +355,19 @@ namespace Cathedral.Glyph.Microworld
             for (int v = 0; v < n; v++)
                 if (biome[v] == "field" && landmassOf[v] >= 0) fieldsPerMass[landmassOf[v]]++;
 
-            int marooned = 0;
+            // Exactly InitializeProtagonist's rule, and its complement: what the spawn may draw from,
+            // and what it throws away.
+            int marooned = 0, viable = 0;
             for (int v = 0; v < n; v++)
             {
                 if (biome[v] is not ("plain" or "field" or "coast")) continue;
-                if (landmassOf[v] < 0 || fieldsPerMass[landmassOf[v]] < FieldsForAHome) marooned++;
+                if (landmassOf[v] >= 0 && fieldsPerMass[landmassOf[v]] >= Config.WorldRegions.FieldsForAHome)
+                    viable++;
+                else
+                    marooned++;
             }
+
+            int bestFields = fieldsPerMass.Length > 0 ? fieldsPerMass.Max() : 0;
 
             // Zero means "not measured on this world", which the report prints as a dash and the
             // bounds skip. Dividing a world is the expensive half and does not need every seed.
@@ -341,7 +389,8 @@ namespace Cathedral.Glyph.Microworld
             }
 
             return new WorldStats(n, land, field, forest, mountain, coast, plain,
-                                  spawnable, marooned, landmassCount, regionCount);
+                                  spawnable, marooned, viable, bestFields,
+                                  bandCoast, stranded.Count, sea, ocean, landmassCount, regionCount);
         }
 
         /// <summary>Connected components of the land graph — the isles and continents.</summary>

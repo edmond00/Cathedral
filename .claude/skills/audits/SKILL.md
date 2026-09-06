@@ -345,10 +345,14 @@ world that generates without complaint**, which is what this exists for:
   ocean above the shallows, which still generates, just with no shoreline anywhere.
 
 None of those throws. The audit builds the terrain of every variant on the first sixteen moons a
-player could pick it on, and per world checks land share, field share, spawnable share (the
-plain/field/coast list `InitializeProtagonist` actually draws from), **marooned share** — the
-fraction of possible spawns sitting on a landmass with fewer than a dozen fields, which matters
-because travel is on foot and sea is forbidden — and, on three of the sixteen, the region count.
+player could pick it on, and per world checks land share, field share **as a fraction of the land**
+(a drowned world has less of everything, and measuring against the whole sphere faults it for being
+drowned rather than for being barren), spawnable share, **viable spawns** — the cells
+`InitializeProtagonist` may actually draw from, being those on a landmass carrying at least
+`Config.WorldRegions.FieldsForAHome` fields — **the richest landmass's field count**, and, on three
+of the sixteen, the region count. The `dead` column beside `viable` is the share of otherwise
+spawnable ground the spawn rule throws away; it is informational and is properly high in a world of
+islands (about 70% at the worst Insular seed, against 6% in a Temperate one).
 It also checks the table itself: ids unique, every `WorldVariant` subclass registered in
 `WorldVariants.All`, every variant reached by some moon in the sky, the shape orderings sound, and
 every name and blurb short enough for the moon box, which does no wrapping and would run the text
@@ -358,8 +362,9 @@ Headless by construction: it builds the mesh through `IcosphereGeometry` and cla
 `WorldShape`, both of which the running game uses too, so what it measures is the world a player
 would walk. Sixteen worlds each for ten variants runs in about ten seconds.
 
-Run it after touching a variant's numbers, `WorldShape`, `DetermineBiome`'s ordering, the biome
-thresholds, `InitializeProtagonist`'s spawn list, or anything in `WorldRegions`. Walk what it
+Run it after touching a variant's numbers, `WorldShape`, the biome thresholds,
+`InitializeProtagonist`'s spawn rule, `Config.WorldRegions.FieldsForAHome`, or anything in
+`WorldRegions`. Walk what it
 reports with `--world-variant <id>`.
 
 ### Checking buildings, scenes and NPC schedules

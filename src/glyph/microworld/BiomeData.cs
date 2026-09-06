@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using OpenTK.Mathematics;
@@ -129,6 +129,12 @@ namespace Cathedral.Glyph.Microworld
         /// why the region division will grow across them but never centre a region on one.
         /// </summary>
         public static readonly HashSet<string> MountainBiomes = new HashSet<string> { "mountain", "peak" };
+
+        /// <summary>
+        /// The shore. Proposed by the water noise and then checked against the map by
+        /// <see cref="CoastRule"/>: a cell keeps this only if it really borders sea or ocean.
+        /// </summary>
+        public static readonly HashSet<string> CoastBiomes = new HashSet<string> { "coast" };
 
         /// <summary>Locations rendered in dark purple on the world sphere.</summary>
         public static readonly HashSet<string> WaterLocations = new HashSet<string>

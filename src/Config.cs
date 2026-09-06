@@ -946,6 +946,16 @@ public static class Config
         /// the whole wheel, and the worst border is fixed by rearranging rather than by widening.</para>
         /// </summary>
         public const int MaxColourSwapPasses = 400;
+
+        /// <summary>
+        /// How many field cells a landmass must carry before the protagonist may wake on it.
+        ///
+        /// <para>Farms and villages are placed only on fields, and travel on foot cannot cross water,
+        /// so this is the line between a country and a rock: below it, a run has nothing within reach
+        /// however rich the rest of the world is. Read by <c>InitializeProtagonist</c> and by
+        /// <c>--world-variant-audit</c>, which measures how much of a variant's ground it excludes.</para>
+        /// </summary>
+        public const int FieldsForAHome = 20;
     }
 
     #endregion
@@ -1056,11 +1066,9 @@ public static class Config
 
         /// <summary>The information/confirmation box at the bottom of the screen.</summary>
         public const int BoxWidth        = 46;
-        // Eleven rows: border, title, gap, chosen, seed, world, the line under the world, pointed-at,
-        // gap, buttons, border. The gap above the buttons is load-bearing — text hard against a
-        // button reads as part of it. The world's line sits directly under its name, with no gap,
-        // because it is that name explained and not a separate fact.
-        public const int BoxHeight       = 11;
+        // Ten rows: border, title, gap, chosen, seed, world, pointed-at, gap, buttons, border. The
+        // gap above the buttons is load-bearing — text hard against a button reads as part of it.
+        public const int BoxHeight       = 10;
         public const int BoxBottomMargin = 8;
 
         public static readonly Vector4 TitleColor      = Colors.BrightYellow;
