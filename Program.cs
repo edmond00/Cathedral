@@ -163,10 +163,9 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --seed <n>                         Fix the master RNG seed for a reproducible run (world, spawn, dice).");
     Console.WriteLine("                                     Names the world outright, so New skips the moon-selection screen");
     Console.WriteLine("  --start-at <name>                  DEBUG: spawn on the first biome/location matching <name> (e.g. village, farm)");
-    Console.WriteLine("  --world-variant <id>               DEBUG: generate every world as that variant instead of the one its seed");
-    Console.WriteLine("                                     names (even-lands, drowned-reach, great-continent, scattered-isles,");
-    Console.WriteLine("                                     riven-spine, worn-country, green-shroud, tilled-plain, empty-marches,");
-    Console.WriteLine("                                     shoal-country). A save made under it will not continue without it");
+    Console.WriteLine("  --world-variant <id>               DEBUG: generate every world as that variant instead of the one its seed names");
+    Console.WriteLine("                                     (temperate, drowned, continental, insular, montane, eroded, sylvan,");
+    Console.WriteLine("                                     arable, desolate, littoral). A save made under it will not continue without it");
     Console.WriteLine("  --start-area <name>                DEBUG: open narration in the first area of the location matching <name>");
     Console.WriteLine("                                     (e.g. pigsty, smithy). --start-at picks the location, this picks the room:");
     Console.WriteLine("                                     without it a script lands in whichever area was built first and has to walk");

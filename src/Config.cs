@@ -158,7 +158,7 @@ public static class Config
 
         /// <summary>
         /// Forces every world to be generated as this variant, whatever variant its seed names. Set
-        /// by <c>--world-variant &lt;id&gt;</c> ("drowned-reach", "riven-spine"...).
+        /// by <c>--world-variant &lt;id&gt;</c> ("drowned", "montane"...).
         ///
         /// <para><b>What it is for.</b> A variant is otherwise reached only by finding a moon that
         /// happens to be it, and there are ten variants over three hundred and eighty moons. This is

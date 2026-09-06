@@ -3,13 +3,13 @@
 #
 # The flag exists because a variant is otherwise reached only by finding a moon that happens to be
 # it, and there are ten of them over three hundred and eighty-three moons. This is how a playtest
-# looks at The Riven Spine on purpose.
+# looks at a mountainous world on purpose.
 #
-# Seed 42 names The Green Shroud on its own, so forcing riven-spine here proves the override really
-# is an override rather than a coincidence — `seed-names` reports what the seed wanted and `forced`
-# reports that it did not get it.
+# Seed 42 names Sylvan on its own, so forcing montane here proves the override really is an override
+# rather than a coincidence — `seed-names` reports what the seed wanted and `forced` reports that it
+# did not get it.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --world-variant riven-spine --no-encounters --silent
+# FLAGS: --playground --skip-childhood --debug --seed 42 --world-variant montane --no-encounters --silent
 
 wait
 click menu New
@@ -17,12 +17,12 @@ wait mode ProtagonistCreation 20
 click continue
 wait mode WorldView 45
 
-expect-state world-variant id=riven-spine
+expect-state world-variant id=montane
 expect-state world-variant forced=yes
-expect-state world-variant seed-names=green-shroud
+expect-state world-variant seed-names=sylvan
 
-# The thresholds are the forced variant's, not the seed's: The Riven Spine drops the treeline from
-# the baseline's 0.300 so mountains start far lower, and stretches the relief scale into ranges.
+# The thresholds are the forced variant's, not the seed's: Montane drops the treeline from the
+# baseline's 0.300 so mountains start far lower, and stretches the relief scale into ranges.
 expect-state world-variant mountain=0.100
 expect-state world-variant relief=6.0
 
@@ -37,7 +37,7 @@ expect-state world-regions borders=distinct
 # world. Continuing without the flag is refused rather than dropping the avatar onto a vertex that
 # is open ocean in the world the seed would have built.
 save roundtrip
-expect-state save variant=riven-spine
+expect-state save variant=montane
 
 world
 quit

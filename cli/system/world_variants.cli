@@ -26,12 +26,12 @@ wait mode WorldSelection 20
 # state, so the label is on screen with nothing beside it.
 expect World
 
-# Armoth is moon 0, its seed is -209322086, and that seed hashes to The Scattered Isles. Named in
-# the box BEFORE the world exists — the whole point of deriving the variant from the seed rather
-# than from the generator.
+# Armoth is moon 0, its seed is -209322086, and that seed hashes to Insular. Named in the box
+# BEFORE the world exists — the whole point of deriving the variant from the seed rather than from
+# the generator.
 click moon Armoth
 wait
-expect The Scattered Isles
+expect Insular
 expect small land, strewn across the water
 
 # Take it. The world is generated here.
@@ -42,13 +42,13 @@ wait mode WorldView 60
 
 # The run really is that world, and the variant was not forced by a flag — `seed-names` is what the
 # seed would have chosen on its own, and it agrees.
-expect-state world-variant id=scattered-isles
+expect-state world-variant id=insular
 expect-state world-variant forced=no
-expect-state world-variant seed-names=scattered-isles
+expect-state world-variant seed-names=insular
 expect-no-state world-variant (no world generated)
 
-# The shape reached the generator rather than sitting in a table unread: The Scattered Isles is the
-# baseline with the continents broken small, so its continent scale is not the baseline's 12.
+# The shape reached the generator rather than sitting in a table unread: Insular is the baseline
+# with the continents broken small, so its continent scale is not the baseline's 12.
 expect-state world-variant continent=5.5
 expect-state world-variant settlement=3.0
 

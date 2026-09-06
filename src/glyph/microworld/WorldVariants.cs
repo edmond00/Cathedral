@@ -131,8 +131,8 @@ namespace Cathedral.Glyph.Microworld
     //  What a world IS, as a type rather than as a string — the same move already made for points
     //  of interest and areas, and made here for the same reason: the world history generation this
     //  was built for will want to ask what kind of world it is writing a history of, and
-    //  `variant is ScatteredIslesVariant` is a build error when that variant is renamed away, where
-    //  `variant.Name == "The Scattered Isles"` is a condition that silently stops matching.
+    //  `variant is InsularVariant` is a build error when that variant is renamed away, where
+    //  `variant.Name == "Insular"` is a condition that silently stops matching.
     //
     //  The registry below is an EXPLICIT ordered array rather than a reflection sweep, because the
     //  order is load-bearing: a moon's variant is its seed's hash modulo the table, so reordering
@@ -141,15 +141,23 @@ namespace Cathedral.Glyph.Microworld
     // ─────────────────────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// One kind of world: a name a player can keep, a line saying what they are in for, and the
-    /// numbers that make it so.
+    /// One kind of world: what that kind is called, a line saying what a traveller is in for, and
+    /// the numbers that make it so.
     /// </summary>
     public abstract class WorldVariant
     {
         /// <summary>The id this variant answers to on the command line and in the CLI. Stable.</summary>
         public abstract string Id { get; }
 
-        /// <summary>What the moon box calls it.</summary>
+        /// <summary>
+        /// What the moon box calls it: <b>a classification, not a place</b>. One word naming the
+        /// kind of terrain, in the manner of a natural philosopher's taxonomy.
+        ///
+        /// <para>These were proper nouns once — The Riven Spine, The Empty Marches, The Scattered
+        /// Isles — and every one read as a particular country somebody could travel to. Which is
+        /// exactly wrong: a variant is not a place but a manner of composing one, and the three
+        /// dozen or so moons that carry it are three dozen different countries.</para>
+        /// </summary>
         public abstract string Name { get; }
 
         /// <summary>One line, in the box under the name. Says what the ground is like, not what it means.</summary>
@@ -162,21 +170,21 @@ namespace Cathedral.Glyph.Microworld
     }
 
     /// <summary>The baseline: mixed ground, half of it under water. The world the game was tuned on.</summary>
-    public sealed class EvenLandsVariant : WorldVariant
+    public sealed class TemperateVariant : WorldVariant
     {
-        public const string Lemma = "even-lands";
+        public const string Lemma = "temperate";
         public override string Id    => Lemma;
-        public override string Name  => "The Even Lands";
-        public override string Blurb => "temperate ground, half of it sea";
+        public override string Name  => "Temperate";
+        public override string Blurb => "mixed ground, evenly divided with the sea";
         public override WorldShape Shape => WorldVariants.Baseline;
     }
 
     /// <summary>Water risen over most of it; what land is left is thin and broken.</summary>
-    public sealed class DrownedReachVariant : WorldVariant
+    public sealed class DrownedVariant : WorldVariant
     {
-        public const string Lemma = "drowned-reach";
+        public const string Lemma = "drowned";
         public override string Id    => Lemma;
-        public override string Name  => "The Drowned Reach";
+        public override string Name  => "Drowned";
         public override string Blurb => "a high waterline, and narrow land";
         public override WorldShape Shape => WorldVariants.Baseline with
         {
@@ -187,11 +195,11 @@ namespace Cathedral.Glyph.Microworld
     }
 
     /// <summary>One mass of land, and the sea an edge to it rather than a division through it.</summary>
-    public sealed class GreatContinentVariant : WorldVariant
+    public sealed class ContinentalVariant : WorldVariant
     {
-        public const string Lemma = "great-continent";
+        public const string Lemma = "continental";
         public override string Id    => Lemma;
-        public override string Name  => "The Great Continent";
+        public override string Name  => "Continental";
         public override string Blurb => "one vast land, the sea only its edge";
         public override WorldShape Shape => WorldVariants.Baseline with
         {
@@ -201,11 +209,11 @@ namespace Cathedral.Glyph.Microworld
     }
 
     /// <summary>Land ground into fragments, none of it far from water.</summary>
-    public sealed class ScatteredIslesVariant : WorldVariant
+    public sealed class InsularVariant : WorldVariant
     {
-        public const string Lemma = "scattered-isles";
+        public const string Lemma = "insular";
         public override string Id    => Lemma;
-        public override string Name  => "The Scattered Isles";
+        public override string Name  => "Insular";
         public override string Blurb => "small land, strewn across the water";
         public override WorldShape Shape => WorldVariants.Baseline with
         {
@@ -215,11 +223,11 @@ namespace Cathedral.Glyph.Microworld
     }
 
     /// <summary>Mountains through everything; the passes matter more than the ground between them.</summary>
-    public sealed class RivenSpineVariant : WorldVariant
+    public sealed class MontaneVariant : WorldVariant
     {
-        public const string Lemma = "riven-spine";
+        public const string Lemma = "montane";
         public override string Id    => Lemma;
-        public override string Name  => "The Riven Spine";
+        public override string Name  => "Montane";
         public override string Blurb => "range upon range, and little between";
         public override WorldShape Shape => WorldVariants.Baseline with
         {
@@ -230,11 +238,11 @@ namespace Cathedral.Glyph.Microworld
     }
 
     /// <summary>Old country, worn flat. Long walks, and nothing to climb.</summary>
-    public sealed class WornCountryVariant : WorldVariant
+    public sealed class ErodedVariant : WorldVariant
     {
-        public const string Lemma = "worn-country";
+        public const string Lemma = "eroded";
         public override string Id    => Lemma;
-        public override string Name  => "The Worn Country";
+        public override string Name  => "Eroded";
         public override string Blurb => "low old ground, worn down to hills";
         public override WorldShape Shape => WorldVariants.Baseline with
         {
@@ -245,11 +253,11 @@ namespace Cathedral.Glyph.Microworld
     }
 
     /// <summary>Forest over most of the land, and the clearings small.</summary>
-    public sealed class GreenShroudVariant : WorldVariant
+    public sealed class SylvanVariant : WorldVariant
     {
-        public const string Lemma = "green-shroud";
+        public const string Lemma = "sylvan";
         public override string Id    => Lemma;
-        public override string Name  => "The Green Shroud";
+        public override string Name  => "Sylvan";
         public override string Blurb => "forest over all of it, and few clearings";
         public override WorldShape Shape => WorldVariants.Baseline with
         {
@@ -259,11 +267,11 @@ namespace Cathedral.Glyph.Microworld
     }
 
     /// <summary>Worked land, thick with farms and villages.</summary>
-    public sealed class TilledPlainVariant : WorldVariant
+    public sealed class ArableVariant : WorldVariant
     {
-        public const string Lemma = "tilled-plain";
+        public const string Lemma = "arable";
         public override string Id    => Lemma;
-        public override string Name  => "The Tilled Plain";
+        public override string Name  => "Arable";
         public override string Blurb => "field after field, and villages between";
         public override WorldShape Shape => WorldVariants.Baseline with
         {
@@ -273,11 +281,11 @@ namespace Cathedral.Glyph.Microworld
     }
 
     /// <summary>Almost nobody. Days between one farm and the next.</summary>
-    public sealed class EmptyMarchesVariant : WorldVariant
+    public sealed class DesolateVariant : WorldVariant
     {
-        public const string Lemma = "empty-marches";
+        public const string Lemma = "desolate";
         public override string Id    => Lemma;
-        public override string Name  => "The Empty Marches";
+        public override string Name  => "Desolate";
         public override string Blurb => "open country, barely worked";
         public override WorldShape Shape => WorldVariants.Baseline with
         {
@@ -287,11 +295,11 @@ namespace Cathedral.Glyph.Microworld
     }
 
     /// <summary>Shallow everywhere: broad shores, and the sea never far inland.</summary>
-    public sealed class ShoalCountryVariant : WorldVariant
+    public sealed class LittoralVariant : WorldVariant
     {
-        public const string Lemma = "shoal-country";
+        public const string Lemma = "littoral";
         public override string Id    => Lemma;
-        public override string Name  => "The Shoal Country";
+        public override string Name  => "Littoral";
         public override string Blurb => "wide shores, and shallow water beyond";
         public override WorldShape Shape => WorldVariants.Baseline with
         {
@@ -309,7 +317,7 @@ namespace Cathedral.Glyph.Microworld
     {
         /// <summary>
         /// The numbers the game was tuned on, and the point every other variant is stated as a
-        /// departure from. <see cref="EvenLandsVariant"/> is this shape unchanged.
+        /// departure from. <see cref="TemperateVariant"/> is this shape unchanged.
         /// </summary>
         public static readonly WorldShape Baseline = new WorldShape(
             ContinentScale:  12f,
@@ -335,16 +343,16 @@ namespace Cathedral.Glyph.Microworld
         /// </summary>
         public static readonly WorldVariant[] All =
         {
-            new EvenLandsVariant(),
-            new DrownedReachVariant(),
-            new GreatContinentVariant(),
-            new ScatteredIslesVariant(),
-            new RivenSpineVariant(),
-            new WornCountryVariant(),
-            new GreenShroudVariant(),
-            new TilledPlainVariant(),
-            new EmptyMarchesVariant(),
-            new ShoalCountryVariant(),
+            new TemperateVariant(),
+            new DrownedVariant(),
+            new ContinentalVariant(),
+            new InsularVariant(),
+            new MontaneVariant(),
+            new ErodedVariant(),
+            new SylvanVariant(),
+            new ArableVariant(),
+            new DesolateVariant(),
+            new LittoralVariant(),
         };
 
         /// <summary>
@@ -381,11 +389,7 @@ namespace Cathedral.Glyph.Microworld
         }
 
         private static string Normalise(string s)
-        {
-            var kept = s.ToLowerInvariant().Where(char.IsLetterOrDigit).ToArray();
-            string t = new string(kept);
-            return t.StartsWith("the", StringComparison.Ordinal) ? t.Substring(3) : t;
-        }
+            => new string(s.ToLowerInvariant().Where(char.IsLetterOrDigit).ToArray());
 
         /// <summary>
         /// FNV-1a, for the same reason <see cref="SkyMoons"/> uses it: <c>string.GetHashCode</c> is
