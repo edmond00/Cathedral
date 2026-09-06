@@ -32,7 +32,11 @@ expect World
 click moon Armoth
 wait
 expect Insular
-expect small land, strewn across the water
+
+# The name and nothing else. The variant's one-line description used to be drawn under it and is
+# not any more - it belongs to `world-variant` and to the line the generator logs, not to a box of
+# labelled values. Asserted as an absence so the row cannot quietly grow it back.
+expect-not strewn across the water
 
 # Take it. The world is generated here.
 click world confirm
