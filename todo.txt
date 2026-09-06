@@ -76,23 +76,111 @@ new MM :
 - solitude
 - shyness
 
-COSMOLOGY :
 
-Adswaru : 1st Principium of the axioms.
+content checker :
+- difficulty -> attack too powerfull
+- realism -> sword price < knife price
+- lore respect -> cosmic sea lore -> but mention of moon/sun 
+- repeativity -> RNG often produce 2 forests with the same layout
+- coherence -> both very large/detailled location and very simple/small location
+* only generale rules/principles, no specific checks
+* automatically adapt to any content, including futur content not already implemented
+
+COSMOLOGY = principium religion
+
+Principium are god-like entities.
+Main idea is that a principium can ask a question to an other principium, and its response is a new principium.
+
+Adswaru : 1st Principium of the reason and the axioms of existence.
 Silance : 2nd Principium of nothing.
-Adswaru+Silance = Repance : 3rd Principium of the destruction.
-Adswaru+Repance = Rede : 4th Principium of the randomness.
-Adswaru+Repance = Rhema : 5th Principium of the consciousness.
-Adswaru+Repance = Rhesis : 6th Principium of the judgment.
-Adswaru+Repance = Qoth : 7th Principium of the reality.
+Adswaru to Silance "Why something exists rather than nothing" = Repance : 3rd Principium of time and destruction. "what exists will disapear into nothing over time"
+Adswaru to Repance "If something that exist always disappear, why do they need to exist in the first place" (Why something need to exist to disappear) = Rede : 4th Principium of the randomness and chaos.  "the disappearence phenomenon is random and chaotic, unpredictable/undetreminable fom the existing thing nature and so for the destruction to happens the thing need to exist"
+Adswaru to Repance "Why the disappearence phenomenon also exist and not only the thing disappearing" = Rhema : 5th Principium of the emotions and sensations. "when things disappear, emotions will be fell, pain or relief, regret or contentment ..."
+Adswaru to Repance "Who will feel what when something disapear" = Rhesis : 6th Principium of the observation and judgment. "I will look at the destruction and judge what kind of things should have what kind of emotion is coherent with the phenomenon"
+Adswaru to Repance "What will disapear" = Qoth : 7th Principium of the reality. "I will create what will be destroyed"
 
-Qoth+Rede : world 1 = random forest --Repance-> ashes
-Qoth+Rhena : world 2 = infinite orgia --Repance-> tears
-Qoth+Rhesis : world 3 = first temple --Repance-> sand 
-ashes+tears+sand : world 4 = cosmic sea
+From there Qoth ask question to create worls, not new principium
 
-night shell > rain shell > ground shell > inner shell 
+Qoth+Rede : "What should I create" : world 1 = random forest --Repance-> ashes and embers : "An endless forest where trees, plants and mushrooms will grows chaoticly in all directions" But Repance saw this world and burn it, reducing it into ashes and embers
+Qoth+Rhema "What should I create" : world 2 = cosmic orgia --Repance-> tears : "An limitless orgia with unlimited dishes and guest of infinite beauty" But Repance saw this world, the food rotten, the guests grow old and ugly and wept over their conditions
+Qoth+Rhesis  "What should I create" : world 3 = eternal temple --Repance-> sand : "A majestic temple of marble and gold from where I could sit enthroned and judge on all things" But Repance saw this world and with time reduce its walls into sand
+Qoth shows the ashes+tears+sand to Adswaru "What should I do with this": ashes should go up, sand should go down, and the tears in the middle: world 4 = cosmic sea under the light of the random forest embers, above the temple sand
 
-random forest -> wood elf / ash elf
-infinite orgia -> blood elf
-first temple -> marble elf
+elfs = populate first world = immortal, continue to exists after their world destruction
+random forest -> wood elf as living humanoid plant -> skin like thin bark / ash elf -> skin like coal
+cosmic orgia -> elfs=guests -> blood elf -> skin like human skin
+eternal temple -> white elf servitor/adorator of Rhesis -> skin like marble
+
+Cosmic sea :
+- giant jellyfish are born in the cosmic sea.
+- giant jellyfish lay gian eggs = moon egg
+- night shell (control day/nigh) > rain shell (let cosmic sea water enter as rain) > outer shell (ground) > superior inner shell > inferior inner shell > embrio
+- vortex linking linking the eggmoon sea to the cosmic sea
+- allow travel to other moons through submarine
+
+PRE-EMPIRE HISTORY
+
+* elfs of the orgia floating incounscious in the cosmic sea
+* an elf fall in the world of Pyr
+* captures and sequestered by 2 twin women
+* drink the elf blood to be immortal
+* sell the elf blood to villagers as potion to heal disease or live longer
+* become know by surrounding village as "witch" leaving in "the old house"
+---
+* King of Ban have a daughter with an  incurable disease
+* Send 3 knights to find a remedy for his daughter : a black knight, a white knight, a blue knight and a golden knight
+* the white knight find the old house but is trapped and killed by the witches
+* the black knight find the old house but is charmed by the witches and becomes their protector
+* the blue knight find the old house but is killed by the black knight
+* stricken with remorse, the black knight slay the 2 witches, burn their corpses and kill himself
+* the golden knight find the old house, the other knights corpses and the emprisoned elf
+* the golden knight bring the elf to the king of Ban
+* Ban keep the elf emprisoned and use his blood to heal his daughter
+* Also drink the elf blood, regain one's youth and granted long life
+* start have incestuous relations with his daughter
+* start powerful incestuous dynasty, called the half-elf empire
+
+EMPIRE HISTORY
+
+- Ban dynasty kept the elf emprisoned during all its reign
+- Keep drink his blood as a ritual, dynasty member granted long life and good health, still end up to die at some point
+- Invent legend of their origin = union between an human princess and an elf prince = half-elf
+- only marriages between family members to keep secret
+- Become more and more esteemed, conquer more and more lands, and up conquer all of Pyr to form an empire
+- at some point, submarine techonology invented in Pyr during Ban empire
+- submarines gradually used to enter the cosmic sea though vortex, explore other eggmoons, then conquer other worlds
+- principium religion born in Pyr, imposed by Ban empire on the other world
+- incestuous relations + elf blood consumption ends up to alter physic/body of the Ban familly
+- gradually look more and more like deformed giants, need to live in giant pyramids because of the size of their body
+- launched several expedition to go deep in the cosmos seam, looking for the ruins and relics of the eternal temple
+- none of this expedition submarines return to Pyr except for 1 submarine of the last expedition
+- few days after the return of this submarine, the Pyr egg suddenly hatched, ending the Pyr world
+
+Religious branchs of Pyr :
+* official (at different period of the empire)
+- Qothism : Hold that Qoth is the sole creator and sustainer of the cosmic sea while other principium represent internal thoughts of Qoth. Hold that Qoth still govern the existence of the cosmic sea.
+- Existantialism : Hold that Qoth is the sole creator and sustainer of the cosmic sea while other principium ceased to exists after the creation of the cosmic sea. Hold that Qoth still govern the existence of the cosmic sea.
+* tolerated
+- Realism : Hold that Qoth is the sole creator of the cosmic sea while other principium ceased to exists after the creation of the cosmic sea but refute that Qoth still govern the existence of the cosmic sea.
+- Eternalism : Hold all the principium for eternity exists and have equal importance in the creation of the cosmic sea.
+- Pluralism: Hold all principium for eternity exists among other unknown principium
+* proscribed
+- Adswarism : Place reason above all else and hold that Adswaru is the unique principium
+- Nihilism : Hold that Silance is the unique principium and refute the existance of the reality
+- Refutism : Refute the existence of Qoth, judged as unessary to reason about the existence
+- Heretism : Refute the existence of the principium
+
+Religious of other worlds before Ban conquest : polytheist
+
+worlds/eggmoons during empire :
+- unvisited, ignorant of the Ban empire
+- visited by research or commercial expeditions but still independant
+- partially conquested, in war for conquest
+- fully conquested, integrated to the empire as colony
+
+POST-EMPIRE HISTORY
+
+- Pyr egg hatched, ending the the Ban dynasty
+- each conquested worlds fall back to middle age like society splitted in realms + indepedant republic cities
+- Ban empire traces are ruins and legend about it
+- principium religion still presist in the old conquested worlds
