@@ -1,95 +1,4 @@
-                 
-#                 ______________
-#                /\.............\   
-#                \/\ proscribed  \  
-#                 \ \  palimpsest \ 
-#                  \ \-------------\ 
-#                   \/\             \ 
-#                    \ \_____________\
-#                     \/_____________/ 
-
-
-Volume 3 Todo list :
-- world rotation arrows buttons
-- world selection menu + world seed
-- world region split + world region graph
-- desert biome
-- calendar
-- name generator refactor
-- history simulator 
-- history simulation -> history event chronology
-- history event chronology -> world impact
-- history related locations : city, castle, port, ...
-- history related content
-- stable, ship, mount, travel refactor, naval battle, ...
-- bank and coins transactions
-
-
-words to prevent :
-photo album
-bullet
-office
-
-new MM :
-- rejection
-- hyperbole
-- oxymoron
-- euphemism
-- avoidance
-- deflection
-- sorry
-- delicatess
-- caresse
-- ponder
-- relax
-- confront
-- resistance
-- gold mining
-- watchdog
-- infiltration
-- buglary
-- narcicism
-- megalomania
-- voyeurism
-- perversity
-- misanthropy
-- philanthropy
-- sadism
-- masochism
-- nihilism
-- solipsism
-- pareidolia
-- optimism/pessimism
-- common sens
-- sarcasm
-- irony
-- critical thinking
-- anxiety
-- contrariness
-- courtesy
-- courage
-- bravery
-- fortitude
-- sense of justice
-- virtue signaling
-- sociopathy
-- solitude
-- shyness
-
-
-content checker :
-- difficulty -> attack too powerfull
-- realism -> sword price < knife price
-- lore respect -> cosmic sea lore -> but mention of moon/sun 
-- repeativity -> RNG often produce 2 forests with the same layout
-- coherence -> both very large/detailled location and very simple/small location
-* only generale rules/principles, no specific checks
-* automatically adapt to any content, including futur content not already implemented
-
-
-## LORE
-
-COSMOLOGY = principium religion
+# COSMOLOGY = principium religion
 
 Principium are god-like entities.
 Main idea is that a principium can ask a question to an other principium, and its response is a new principium.
@@ -137,35 +46,132 @@ Cosmic sea :
 - allow travel to other moons through submarine
 
 
-# PERIOD OF THE BAN EMPIRE
-- the fishing hut
-- the old house
+# SETTINGS
 
-PRE-EMPIRE HISTORY
+- Pyr : world of the Ban dynasty
+	- 1 continent + 1 island
+	- continent = split in 4 republics : Napel, Benepelop, Penaros, Pebelos
+	- island = The yellow island = kingdom of Vu
+- Belune : closest world of Pyr, visible like a moon while other worlds are of the size of stars
+	- original religion : worship cosmic jellyfish
+		- jellyfish workship = dwarfs (creature living between the superior and iferior inner shell) religion 
+			-> jellyfish embrio at the center of the world absob soul of the livings of the world to grow until it hatch into a god like jellyfish where all the souls are unified
+		- human of Belune travel the dwarf kingdom through a cave, report dwarf religion, become prophet
 
+
+# EPISODES OF THE BAN EMPIRE
+
+- the fishing hut (Pyr, Kingdom of Vu)
 * elfs of the orgia floating incounscious in the cosmic sea
 * an elf fall in the world of Pyr
 * captures and sequestered by 2 twin fisher women
 * drink the elf blood to be immortal
 * sell the elf blood to villagers as potion to heal disease or live longer
 * become know by surrounding village as "witch" leaving in "the fishing hut"
----
-* King of Ban have a daughter with an  incurable disease
+* Baron of Ban have a daughter with an incurable disease
 * Send 3 knights to find a remedy for his daughter : a black knight, a white knight, a blue knight and a golden knight
 * the white knight find the old house but is trapped and killed by the witches
 * the black knight find the old house but is charmed by the witches and becomes their protector
 * the blue knight find the old house but is killed by the black knight
 * stricken with remorse, the black knight slay the 2 witches, burn their corpses and kill himself
 * the golden knight find the old house, the other knights corpses and the emprisoned elf
-* the golden knight bring the elf to the king of Ban
+* the golden knight bring the elf to the Baron of Ban
 * Ban keep the elf emprisoned and use his blood to heal his daughter
 * Also drink the elf blood, regain one's youth and granted long life
 * start have incestuous relations with his daughter
-* start powerful incestuous dynasty, called the half-elf empire
+* kept the elf emprisoned during all its reign
+* start powerful incestuous dynasty, called themself the half-elfs, pretend origin of the dynasty is the union of an elf with a human princess
+
+- the old house
+ * use elf blood for long life and business of medicine
+ * long life allow them to gain knowledge and to gain influence as advisor
+ * study elf language, interrogate elf prisonner to understand world origin, redact principium 10 chapters
+ * start a religion, mix of the information they gather from the elf belief and their own spirituality
+ * become with time renown clergy
+ * patriach as chief of the house while other member have different function (religious, blood work, business, advisor, ...)
+ * mostly influent in the 4 republics, specially in Benepelop, while Kingdom of Vu keep primitive spirituality based on meditation
+ * at some point ad the house get larger and after the death of a patriach with 3 sons, split into 3 different houses/branchs
+ * dynastie branchs :
+ 	* study/religious (old house)
+		- full name : Ban
+		- only man head = patriach
+		- clergy branch, charged to teach religion, interpret chapters written by their ancestor, provide spiritual guidance
+		- once adult and after receiving ordination, consume a sip of blood elf based mixture every 11th day as a ritual
+		- provide long life (~500 years) while keeping older and older appearance as time pass
+	* elf blood gestion (red brick house)
+		- full name : Ban-Balnus
+		- man and woman, head = matriach
+		- keep elf prisonner and gather elf blood so other branchs don't have to, work to refine elf blood, make medicine from it and sell them
+		- consume elf blood daily, do not consume other kind of food or drink, can live more than 2000 years, progressively get a monstruous diformed appearance of a giant with time
+	* political/influence (the counsel)
+		- full name : Ban-Aloid
+		- man and woman, head = patriach
+		- hired as advisor of noble houses for political/social/military/history guidance
+		- consume elf blood once during their lifetime at for their 1100th day (around 3 years) as some kind of baptem at the red brick house
+		- provide long life (~200 years), tall size (~2 meters), some elfic appearence but still mostly human appearance
+ * become seperate houses with still relations and few rare union between members of different branches
+
+- the 11th chapter (old house member invent 11th chapter to gain political influence)
+ * 2 young cousins, Akeros Ban-Aloid and Aos Ban, become patriach of their house around the same time
+ * Excepct Aos Ban, only few very old member remain in the old house = Aos Ban have full power over it
+ * With his cousin, plan a strategy to gain political power 
+ * falsify a 11th chapter about prophecy and after life
+ 	- prophecy = cosmic sea will be drained by Repance into marshes
+	- Qoth will create a luxurious garden on this marshes
+	- The souls of the virtuous deads will be invited for an eternal happy life in the Qoth garden
+	- Qoth will judge the souls of the deads that deserve it
+	- rulesto enter the garden :
+	  - food conservation with impur salt or alcohol, only salt/alcohol managed/sold by the old house pur
+	  - sexual intercourse between woman older than the man
+	  - having contact with blood (animal or other human)
+	  - corpses need to be buried with a seed in their hand to be accepted in the garden where they will plant the seed
+	  - Every 11 days (first day of the week), keep silent (do not speak at all), as an echo of Qoth creating the week/world from nothing
+	- those who fail to follow this rules can pay a gold tribute to the old house so their sins can be forgoten
+	  
+	
+- the Qothian war
+
+- the 1st schisme : Who is the main principium ?
+* Early Qothism : Hold that Qoth is the main principium
+* Adswarism : Place reason above all else and hold that Adswaru is the main principium
+* Silihism : Hold that Silance is the main principium and refute the existance of the reality
+* Principlurism: no main principium
+
+
+- the salt war
+- the pyrean empire
+- the first expedition
+
+- the 2nd shisme : Is Qoth the unique principium ?
+* Qothism Existantialist : Hold that Qoth is the sole creator and sustainer of the cosmic sea while other principium ceased to exists after the creation of the cosmic sea
+* Qothism Figurative : Hold that Qoth is the sole creator and sustainer of the cosmic sea while other principium represent internal thoughts of Qoth
+* Qothism Eternalist : Hold all the principium for eternity exists
+
+- the conquest of Belune
+- the 2 heads empire
+
+- the elf and the princess
+* princess try to rescue the elf
+* captured again, princess executed
+* end of the counsel, red brick house become power house
+
+- the great conquests
+- the 9 perl empires
+
+- the assassinat (empire of Pyr assassinate, regence to Belune, try to cease power, war, Belune loose)
+
+- the new conquests
+- the cosmic empire
+- the deep expeditions
+- the hatching
+
+
+
+## the fishing hut
+
 
 EMPIRE HISTORY
 
-- Ban dynasty kept the elf emprisoned during all its reign
 - Keep drink his blood as a ritual, dynasty member granted long life and good health, still end up to die at some point
 - Invent legend of their origin = union between an human princess and an elf prince = half-elf
 - only marriages between family members to keep secret
@@ -179,19 +185,6 @@ EMPIRE HISTORY
 - none of this expedition submarines return to Pyr except for 1 submarine of the last expedition
 - few days after the return of this submarine, the Pyr egg suddenly hatched, ending the Pyr world
 
-Religious branchs of Pyr :
-* official (at different period of the empire)
-- Qothism : Hold that Qoth is the sole creator and sustainer of the cosmic sea while other principium represent internal thoughts of Qoth. Hold that Qoth still govern the existence of the cosmic sea.
-- Existantialism : Hold that Qoth is the sole creator and sustainer of the cosmic sea while other principium ceased to exists after the creation of the cosmic sea. Hold that Qoth still govern the existence of the cosmic sea.
-* tolerated
-- Realism : Hold that Qoth is the sole creator of the cosmic sea while other principium ceased to exists after the creation of the cosmic sea but refute that Qoth still govern the existence of the cosmic sea.
-- Eternalism : Hold all the principium for eternity exists and have equal importance in the creation of the cosmic sea.
-- Pluralism: Hold all principium for eternity exists among other unknown principium
-* proscribed
-- Adswarism : Place reason above all else and hold that Adswaru is the unique principium
-- Nihilism : Hold that Silance is the unique principium and refute the existance of the reality
-- Refutism : Refute the existence of Qoth, judged as unessary to reason about the existence
-- Heretism : Refute the existence of the principium
 
 Religious of other worlds before Ban conquest : polytheist
 
@@ -207,3 +200,4 @@ POST-EMPIRE HISTORY
 - each conquested worlds fall back to middle age like society splitted in realms + indepedant republic cities
 - Ban empire traces are ruins and legend about it
 - principium religion still presist in the old conquested worlds
+- golbins starts to appears in the worlds, no goblin presence mentioned in the empire archives, goblins origin unknown
