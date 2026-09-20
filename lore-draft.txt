@@ -50,7 +50,8 @@ Cosmic sea :
 
 - Pyr : world of the Ban dynasty
 	- 1 continent + 1 island
-	- continent = split in 4 republics : Napel, Benepelop, Penaros, Pebelos
+	- continent = split in 4 republics : Benepelop, Napel, Penaros, Pebelos
+		- continent is shaped like a croissant, with Benepelop at the south extremity, followed by Napel, Penaros and Pebelos and the north extremity
 	- island = The yellow island = kingdom of Vu
 - Belune : closest world of Pyr, visible like a moon while other worlds are of the size of stars
 	- original religion : worship cosmic jellyfish
@@ -138,7 +139,59 @@ Cosmic sea :
  * Aqilon obain tyrannical power over Benepelop
 	  
 	
-- the Aqilonic wars
+- the Aqilonic wars (coalition of Napel, Penaros and Pebelos republics against Benepelop, victory of Benepelop)
+	- context = 8 cities (south to north) :
+		- Benepelop
+			- Avolor (capital)
+			- Kalom
+		- Napel
+			- Yr (capital)
+		- Penaros
+			- Perorigak (capital)
+			- Perostro
+		- Pebelos
+			- Avenas
+			- Sorvas
+			- Dokur (capital, city at the north edge of the croissant)
+	- start with war declaration of Napel againt Benepelop for heresy and illegetim tyrany
+	- number superiority of Napel allow quick capture of Kalom
+	- Akilon charged Lwrash Ban-Balnus, giant of 4 meters expulsed from the  red brick house for his temper and reconverted as general, to retake the city
+	- Lwrash terrorize Napel soldier and trigger epidemics at Kalom by catapulting human body and putrified meat into the city walls
+	- Napel send reinforcemebts troops at Kalom
+	- Akilon take the opportunity to gather an army to take Yr while Napel army occupied at Kalom
+	- Yr taken and most of Napel army massacred at Kalom force Napel to capitulate
+	- coalition of Penaros and Pebelos to take back Napel and stop Akilon
+	- Akilon troops and Lwrash troops reunited at Yr to protect the city
+	- Yr besieged vy armies of Penaros and Pebelos
+	- hundreds days of siege
+	- Akilon secretely dig tunnels to bring out some of if his army
+	- reduce defense to incite opponents to attack the city
+	- prepate hidden fire pits in the city
+	- Coalition army enter the center while Akilon and part of his army escape secretely
+	- city is set on fire, coalition soldier kept inside by Akilon army
+	- Yr burnt but Penaros/Pebelos forces reduced
+	- Coalition army abandon Perorigak to regroup at Perostro, Akilon easily take Perorigak
+	- large river seperating Perorigak and Perostro
+	- many troops and ressources gathered on both sides for days
+	- during an heavy rain night, Akilon army cross the river with makeshift vessels and catch off their opponents
+	- Perostro quikly taken after this and Penaros force to capitulate
+	- Akilon now have large numeric superiority overe Pebelos
+	- Vhomanor, heroic warrior and general of Pebelos, charged to defend Avenas
+	- battle of Avenas, Akilon suffer heavy loss and Vhomanor confront and kill Lwrash during the battle but Akilon still ceised the city
+	- Vhomanor remaining troops withdraw toward Sorvas
+	- mountainous region around Sorvas, Akilon progression slow and suffer losses due to minor skirmishes conducted by Vhomanor
+	- Vhomanor and his troops take refuge at Sorvas
+	- Akilon troops dig into the mountainside to provoque a large collapse and bury the city under snow ice and dirt
+	- corpse of Vhomanor dig out and send at Dokur
+	- Pebelos accept to receive Akilon at Dokur to negotiate capitulation
+	- Akilon fall from his horse and boke his leg
+	- Akilon arrive at Dokur, Pebelos capitulate, birth of the half-elf empire
+	- Akilon leg need to be amputed during his stay at Dokur
+	- Akilon son, Verson II, reign as regent at Avolor during wars
+	- Akilon, sick and weakened by his wound, take time to return to Avolor
+	- rumor of Akilon dying during this journey back
+	- Upon his return, his son does not recognize it and imprison him for usurpation
+	- Akilon die in prison
 
 - the 1st schisme : Who is the main principium ?
 * Early Qothism : Hold that Qoth is the main principium
