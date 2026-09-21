@@ -50,7 +50,7 @@ Cosmic sea :
 
 - Pyr : world of the Ban dynasty
 	- 1 continent + 1 island
-	- continent = split in 4 republics : Benepelop, Napel, Penaros, Pebelos
+	- continent = Vahyr = split in 4 republics : Benepelop, Napel, Penaros, Pebelos
 		- continent is shaped like a croissant, with Benepelop at the south extremity, followed by Napel, Penaros and Pebelos and the north extremity
 	- island = The yellow island = kingdom of Vu
 - Belune : closest world of Pyr, visible like a moon while other worlds are of the size of stars
@@ -58,6 +58,7 @@ Cosmic sea :
 		- jellyfish workship = dwarfs (creature living between the superior and iferior inner shell) religion 
 			-> jellyfish embrio at the center of the world absob soul of the livings of the world to grow until it hatch into a god like jellyfish where all the souls are unified
 		- human of Belune travel the dwarf kingdom through a cave, report dwarf religion, become prophet
+- Vamar : distant by brightest moon of Pyr, as surface mostly constituted of ice
 
 
 # EPISODES OF THE BAN EMPIRE
@@ -88,7 +89,7 @@ Cosmic sea :
  * long life allow them to gain knowledge and to gain influence as advisor
  * study elf language, interrogate elf prisonner to understand world origin, redact principium 10 chapters
  * start a religion, mix of the information they gather from the elf belief and their own spirituality
- * become with time renown clergy
+ * become with time renown clergy of Principism religion
  * patriach as chief of the house while other member have different function (religious, blood work, business, advisor, ...)
  * mostly influent in the 4 republics, specially in Benepelop, while Kingdom of Vu keep primitive spirituality based on meditation
  * at some point ad the house get larger and after the death of a patriach with 3 sons, split into 3 different houses/branchs
@@ -193,7 +194,27 @@ Cosmic sea :
 	- Upon his return, his son does not recognize it and imprison him for usurpation
 	- Akilon die in prison
 
+- the Pahyrian empire
+	- period when the empire control all Pahyr continent
+
 - the 1st schisme : Who is the main principium ?
+	- few generations passed since Akilon
+	- Principism still effervescent unorganized religion of the empire, composed of several independant sects and believes
+	- some sect venerate specific Principium as a God
+	- a sect named the "Childs of Rede", founded by Grizx the Hesitant, become infamous by making human sacrifices by burning people
+		- Grizx spent childhood in an orphan at Perorigak
+		- set fire to the orphan and put in prison for thousands of days
+		- emprisoned in an underground dungeon in total darkness
+		- when released, light of the sun make it blind
+		- see vision of Rede teaching him fire as way to put back entropic equilibrium to the world
+		- live as beggar, debating and preaching in the street 
+		- Many people end up following his sermons.
+		- after his disparition, some of his followers form the "Childs of Rede" sect and starts burning sacrifice
+	- Emperor Poeloc III convene old house assembly to handle the situation put and order
+	- decree Qothism as official sect + 3 sects tolerated
+	- other sects need to convert to one of the tolerated branch
+	- childs of rede arrested and executed
+-> BRANCHS
 * Early Qothism : Hold that Qoth is the main principium
 * Adswarism : Place reason above all else and hold that Adswaru is the main principium
 * Silihism : Hold that Silance is the main principium and refute the existance of the reality
@@ -201,15 +222,59 @@ Cosmic sea :
 
 
 - the salt war
+	- few generations passed
+	- Kingdom of Vu still independant with different religion
+	- sea of Pyr is freshwater not salt water, salt can only be found on mines of Vu
+	- Salt merchants travelling to Pahyr to sell salt
+	- Empire of Pahyr is becoming an increasingly religious society
+	- Emperor Verester II is a fanatical devotee of Qoth
+	- launches a custom to bury alive heretic so than Qoth can grow truth from their misbelieves
+	- Vu merchants executed this way
+	- Vu halt trade with the empire
+	- Salt important for Pahyr economy and society so Empire declare war to Vu
+	- at first, superiority of the fleet of Vu allows them to win battles naval between Vu and Pahyr and repel imperial army
+	- Imperial Inland Seas Transport Guild then invent new type of ship, large semi-submerged galley, faster and more resistant, allowing large imperial army to reach Vu
+	- Then Vu, unaccustomed to land fighting, quickly loose against imperial troops
+	- Jevunavosh, last king of Vu, captured and judged by Verester II, buried alive under tons of salt of an garden of an imperial palace, renamed the Salt Palace, that will become the main residence of the imperial family
+	- empire fully control Pyr
+
+
 - the pyrean empire
-- the first expedition
+	- period when the empire control all Pyr world
+
+- the first expeditions
+	- each eggmoon have at its poles a vortex = large water tornado linking the moon ocean to the cosmic sea
+	- Passing through this vortex, the Imperial Inland Seas Transport Guild (IISTG) explored the cosmic sea and traveled toward Belune
+	- for few generations, regular expeditions and exchange between Pyr and Belune
+	- economical exchanges + introduction of Belune spirituality/religion to Pyr + Qoth missionaries to Belune
+-> IISTG pioners :
+	- discovery of the south vortex : Abkelop Sortav
+	- inventor semi-submerged galley : Forje Nasrop
+	- discovery of the north vortex : Loz Quintiliym
+	- inventor of submarine galley : Arnest Goprufid
+	- first travel to the cosmic sea through the vortex : Kaeros Lougi
+	- first travel to Belune (one-way) : Josu Exculato
+	- first travel to Belune (round-trip) : Barnoix Barnutum
+
 
 - the 2nd shisme : Is Qoth the unique principium ?
-* Qothism Existantialist : Hold that Qoth is the sole creator and sustainer of the cosmic sea while other principium ceased to exists after the creation of the cosmic sea
-* Qothism Figurative : Hold that Qoth is the sole creator and sustainer of the cosmic sea while other principium represent internal thoughts of Qoth
-* Qothism Eternalist : Hold all the principium for eternity exists
+	- during pyrean empire, old house control religious interpretations
+	- old house mostly constitued of religious scholars studying and devating religious theories
+	- most debatted religious issues are related to the nature of Qoth
+	- Firaperc Ban, scholar of the old house, propose theory of the 2 faces of Qoth, or the ontologic duality of Qoth, to explain duality of Qoth both a principium and a omnipotent godly force
+	- Old house convoke council to debate the theory
+	- During council, fire spread in the old house, burning the building and its member = end of the old house branch
+	- seen as Qoth intervention, proof the duality theory is false
+	- 2 distants members of the old house (2 brother of a distance branch : Alos Ban-Goerim and Adelim Ban-Goerim), fight over the inheritance of the old house, proposing 3 different theories
+	- Dusher Polosik, simple priest of a small town, found new independant clergy considering the old house failed in its mission
+	- end up in 3 different branchs/institutions without centralized authority
+-> BRANCHS
+* (Alos) Qothism Genesive : Hold that Qoth is the sole creator and sustainer of the cosmic sea while other principium ceased to exists after the creation of the cosmic sea while remain the only omnipotent force
+* (Adelim) Qothism Figurative : Hold that Qoth is the sole omnipotent creator and sustainer of the cosmic sea while other principium represent internal thoughts of Qoth
+* (Dusher) Qothism Principative : Hold all the principium for eternity exists, refute Qoth omnipotence, refute Qoth can intervene in the current world, still consider Qoth the main principium
 
 - the conquest of Belune
+
 - the 2 heads empire
 
 - the elf and the princess
@@ -223,9 +288,13 @@ Cosmic sea :
 - the assassinat (empire of Pyr assassinate, regence to Belune, try to cease power, war, Belune loose)
 
 - the new conquests
+
 - the cosmic empire
+
 - the deep expeditions
+
 - the hatching
+? last member of Ban, niece and heiress of the last emperor, born 1000 years before hatching, exiled at Belune because extremely difformed (20 meters, all body hairy, 5 arms with hands between 3~11 fingers, can not walk because of heavy head, ..). Legend still alived at current time.
 
 
 
