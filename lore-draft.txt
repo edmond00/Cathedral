@@ -53,12 +53,15 @@ Cosmic sea :
 	- continent = Vahyr = split in 4 republics : Benepelop, Napel, Penaros, Pebelos
 		- continent is shaped like a croissant, with Benepelop at the south extremity, followed by Napel, Penaros and Pebelos and the north extremity
 	- island = The yellow island = kingdom of Vu
+	- croissant continent edge bend on the east like "("
+	- islande on the west, so Pyr can be symbolized like "o("
+	- east ocean = inland seas, west ocean = sea of Vu
 - Belune : closest world of Pyr, visible like a moon while other worlds are of the size of stars
-	- original religion : worship cosmic jellyfish
+	- original religion : Medusosian = worship cosmic jellyfish
 		- jellyfish workship = dwarfs (creature living between the superior and iferior inner shell) religion 
 			-> jellyfish embrio at the center of the world absob soul of the livings of the world to grow until it hatch into a god like jellyfish where all the souls are unified
 		- human of Belune travel the dwarf kingdom through a cave, report dwarf religion, become prophet
-- Vamar : distant by brightest moon of Pyr, as surface mostly constituted of ice
+- Varam : distant by brightest moon of Pyr, as surface mostly constituted of ice
 
 
 # EPISODES OF THE BAN EMPIRE
@@ -194,8 +197,11 @@ Cosmic sea :
 	- Upon his return, his son does not recognize it and imprison him for usurpation
 	- Akilon die in prison
 
-- the Pahyrian empire
-	- period when the empire control all Pahyr continent
+- the Pahyrian empire : period when the empire control all Pahyr continent
+	- religion : various spiritualities still coexist in the population, Akilon iconograpy replacing religion
+	- culture : focus on artistic depiction of Akilon legends
+	- politic : still instable, many dissident political factions that are purged and revolts that are repressed
+	- customs : centralized government and new imperial infrastructure bring prosperity after a period of war
 
 - the 1st schisme : Who is the main principium ?
 	- few generations passed since Akilon
@@ -239,8 +245,11 @@ Cosmic sea :
 	- empire fully control Pyr
 
 
-- the pyrean empire
-	- period when the empire control all Pyr world
+- the pyrean empire : period when the empire control all Pyr world
+	- religion : strong control of religious beliefs, other religion than Qothism severely repressed
+	- culture : strong agriculture and craftsmanship
+	- politic : strong authority of the empire
+	- customs : influence of the clergy on daily life, pious customs
 
 - the first expeditions
 	- each eggmoon have at its poles a vortex = large water tornado linking the moon ocean to the cosmic sea
@@ -272,6 +281,7 @@ Cosmic sea :
 * (Alos) Qothism Genesive : Hold that Qoth is the sole creator and sustainer of the cosmic sea while other principium ceased to exists after the creation of the cosmic sea while remain the only omnipotent force
 * (Adelim) Qothism Figurative : Hold that Qoth is the sole omnipotent creator and sustainer of the cosmic sea while other principium represent internal thoughts of Qoth
 * (Dusher) Qothism Principative : Hold all the principium for eternity exists, refute Qoth omnipotence, refute Qoth can intervene in the current world, still consider Qoth the main principium
++ residual Adswarism/Silihism/Principlurism
 
 - the integration of Belune to the empire
 	- Belune : 
@@ -288,20 +298,34 @@ Cosmic sea :
 
 
 - the 2 heads empire
+	- religion : coexistence of Medusosian and Qothism
+	- culture : refined arts inside the imperial familly (poetry, embroidery, flower and garden arrangement, ink painting, ...)
+	- politic : strong power of the Belune imperial branch that can compete with Pyr branch
+	- customs : growing imperial education system with establishment of schools and academy
 
 - the elf and the princess
 * princess try to rescue the elf
 * captured again, princess executed
 * end of the counsel, red brick house become power house
 
-- the great conquests
-- the 9 perl empires
+- the first expansion
+
+- the 9 perls empire
+	- religion : freedom of beliefs of various spirituality, including growing Medusosian influence on the imperial familly
+	- culture : vibrant artistic scene (paint, sculpture, theater, opera, ...), each worlds with their own artistic movements
+	- politic : relative independance of each worlds of the empire, empirial familly = unity symbol but weak power
+	- customs : characterized by libertine morals
 
 - the assassinat (empire of Pyr assassinate, regence to Belune, try to cease power, war, Belune loose)
 
-- the new conquests
+- the second expansion
 
 - the cosmic empire
+	- religion : freedom of religion among the 6 allowed Principism branchs for the population, other spritualities severely punished, esoteric/occult beliefs growing in the imperial familly
+	- culture :  focus on strong scientific/industrial progress allowing empire expansion (weapon/submarine technologies, ...)
+	- politic : strong power of the empire familly on the population and colonized worlds through military and religious authority
+	- customs : enforced strict uniform military education and social control equlize each worlds cultures, eugenism and local population genocid used for population unification
+
 
 - the deep expeditions
 
