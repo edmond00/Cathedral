@@ -1,4 +1,4 @@
-# COSMOLOGY = principium religion
+# COSMOLOGY (based on Principism)
 
 Principium are god-like entities.
 Main idea is that a principium can ask a question to an other principium, and its response is a new principium.
@@ -41,12 +41,16 @@ eternal temple -> white elf servitor/adorator of Rhesis -> skin like marble
 Cosmic sea :
 - giant jellyfish are born in the cosmic sea.
 - giant jellyfish lay gian eggs = moon egg
-- night shell (control day/nigh) > rain shell (let cosmic sea water enter as rain) > outer shell (ground) > superior inner shell > inferior inner shell > embrio
+- night shell (control day/nigh) > rain shell (let cosmic sea water enter as rain) > outer shell (ground) > superior inner shell > hollow layer > inferior inner shell > embrio
 - vortex linking linking the eggmoon sea to the cosmic sea
 - allow travel to other moons through submarine
 
 
-# SETTINGS
+
+
+# EPISODES OF THE BAN EMPIRE
+
+## SETTINGS
 
 - Pyr : world of the Ban dynasty
 	- 1 continent + 1 island
@@ -58,13 +62,12 @@ Cosmic sea :
 	- east ocean = inland seas, west ocean = sea of Vu
 - Belune : closest world of Pyr, visible like a moon while other worlds are of the size of stars
 	- original religion : Medusosian = worship cosmic jellyfish
-		- jellyfish workship = dwarfs (creature living between the superior and iferior inner shell) religion 
+		- jellyfish workship = dwarfs (creatures living in the hollow layer of comsos sea worlds) religion 
 			-> jellyfish embrio at the center of the world absob soul of the livings of the world to grow until it hatch into a god like jellyfish where all the souls are unified
-		- human of Belune travel the dwarf kingdom through a cave, report dwarf religion, become prophet
+		- human of Belune travel through a cave all the way to a dwarf kingdom in the hollow layer of Belune, report dwarf religion, become prophet
 - Varam : distant by brightest moon of Pyr, as surface mostly constituted of ice
 
-
-# EPISODES OF THE BAN EMPIRE
+## EVENTS
 
 - the fishing hut (Pyr, Kingdom of Vu)
 * elfs of the orgia floating incounscious in the cosmic sea
@@ -142,7 +145,6 @@ Cosmic sea :
  * massacre of rioter, imprison The Awakened Prince that will die in prison, purge of Ekklesia members, chapter adopted as official
  * Aqilon obain tyrannical power over Benepelop
 	  
-	
 - the Aqilonic wars (coalition of Napel, Penaros and Pebelos republics against Benepelop, victory of Benepelop)
 	- context = 8 cities (south to north) :
 		- Benepelop
@@ -226,7 +228,6 @@ Cosmic sea :
 * Silihism : Hold that Silance is the main principium and refute the existance of the reality
 * Principlurism: no main principium
 
-
 - the salt war
 	- few generations passed
 	- Kingdom of Vu still independant with different religion
@@ -243,7 +244,6 @@ Cosmic sea :
 	- Then Vu, unaccustomed to land fighting, quickly loose against imperial troops
 	- Jevunavosh, last king of Vu, captured and judged by Verester II, buried alive under tons of salt of an garden of an imperial palace, renamed the Salt Palace, that will become the main residence of the imperial family
 	- empire fully control Pyr
-
 
 - the pyrean empire : period when the empire control all Pyr world
 	- religion : strong control of religious beliefs, other religion than Qothism severely repressed
@@ -264,7 +264,6 @@ Cosmic sea :
 	- first travel to the cosmic sea through the vortex : Kaeros Lougi
 	- first travel to Belune (one-way) : Josu Exculato
 	- first travel to Belune (round-trip) : Barnoix Barnutum
-
 
 - the 2nd shisme : About the nature of Qoth ?
 	- during pyrean empire, old house control religious interpretations
@@ -294,8 +293,6 @@ Cosmic sea :
 	- during her life, work on the integration of Belune colonies to the empire through infrastructure construction and political and legal unification
 	- Belune become region of the empire under the authority of the empereur and governed Jelebanne descendants with title of King/Queen of Belune
 	- ITS become residence of Belune royal family
-
-
 
 - the 2 heads empire
 	- religion : coexistence of Medusosian and Qothism
@@ -333,9 +330,6 @@ Cosmic sea :
 	- Varam hatched into a cosmic Jellyfish few days after her arrival
 	- start the Beathildism, a sect/faction believing Beathilda is the rightfull empress reincarnated into a god-like cosmic Jellysfish in Varam
 	- Beathildism severely proscribed and repressed but continue to have clandestine existence
-
-
-
 
 - the first expansion :
 	- Ban-Balnus legitimaty disputed = rival faction and popular revolts
@@ -434,37 +428,9 @@ Cosmic sea :
 	- with the end of the central power, each other worlds go back to a less develop and independant socities
 	- legends and rumors of the last empress still alive on Golden Avoria
 
-
-## the fishing hut
-
-
-EMPIRE HISTORY
-
-- Keep drink his blood as a ritual, dynasty member granted long life and good health, still end up to die at some point
-- Invent legend of their origin = union between an human princess and an elf prince = half-elf
-- only marriages between family members to keep secret
-- Become more and more esteemed, conquer more and more lands, and up conquer all of Pyr to form an empire
-- at some point, submarine techonology invented in Pyr during Ban empire
-- submarines gradually used to enter the cosmic sea though vortex, explore other eggmoons, then conquer other worlds
-- principium religion born in Pyr, imposed by Ban empire on the other world
-- incestuous relations + elf blood consumption ends up to alter physic/body of the Ban familly
-- gradually look more and more like deformed giants, need to live in giant pyramids because of the size of their body
-- launched several expedition to go deep in the cosmos seam, looking for the ruins and relics of the eternal temple
-- none of this expedition submarines return to Pyr except for 1 submarine of the last expedition
-- few days after the return of this submarine, the Pyr egg suddenly hatched, ending the Pyr world
-
-
-
-worlds/eggmoons during empire :
-- unvisited, ignorant of the Ban empire
-- visited by research or commercial expeditions but still independant
-- partially conquested, in war for conquest
-- fully conquested, integrated to the empire as colony
-
-POST-EMPIRE HISTORY
-
-- Pyr egg hatched, ending the the Ban dynasty
-- each conquested worlds fall back to middle age like society splitted in realms + indepedant republic cities
-- Ban empire traces are ruins and legend about it
-- principium religion still presist in the old conquested worlds
-- golbins starts to appears in the worlds, no goblin presence mentioned in the empire archives, goblins origin unknown
+- post empire
+	- Pyr egg hatched, ending the the Ban dynasty
+	- each conquested worlds fall back to middle age like society splitted in realms + indepedant republic cities
+	- Ban empire traces are ruins and legend about it
+	- principium religion / empire spiritualities still presist in the old conquested worlds
+	- golbins starts to appears in the worlds, no goblin presence mentioned in the empire archives, goblins origin unknown
