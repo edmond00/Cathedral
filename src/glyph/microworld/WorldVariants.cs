@@ -369,14 +369,19 @@ namespace Cathedral.Glyph.Microworld
         public static WorldVariant Resolve(int worldSeed)
             => ById(Config.Debug.WorldVariant) ?? ForSeed(worldSeed);
 
-        /// <summary>The variant the world on <paramref name="worldSeed"/> is built to.</summary>
+        /// <summary>
+        /// The variant the world on <paramref name="worldSeed"/> is built to: the lore's terrain for a
+        /// world the lore names (Golden Avoria is desolate, Blue Avoria insular — see
+        /// <c>LoreMoons</c>), the seed's hash otherwise.
+        /// </summary>
         ///
         /// <para>Deliberately independent of <see cref="GameRng"/>, and for the same reason
         /// <see cref="SkyMoons"/> is: the world-selection screen names a moon's variant before the
         /// master seed has been touched, and drawing it from a generator would mean the answer
         /// depended on how many other things had drawn first.</para>
         public static WorldVariant ForSeed(int worldSeed)
-            => All[(int)((uint)StableHash($"variant:{worldSeed}") % (uint)All.Length)];
+            => Cathedral.Game.History.Worlds.LoreMoons.VariantForSeed(worldSeed)
+            ?? All[(int)((uint)StableHash($"variant:{worldSeed}") % (uint)All.Length)];
 
         /// <summary>
         /// The variant <paramref name="id"/> names, or null. Matches the id and, as a courtesy to

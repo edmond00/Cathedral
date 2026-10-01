@@ -23,8 +23,13 @@ click continue
 # Reaching the world map IS the save point: EnterWorldViewInteractive autosaves on the way in.
 wait mode WorldView 45
 expect-no-state savefile save none
-expect-state savefile version=3
+expect-state savefile version=4
 expect-state savefile seed=42
+
+# The world's history is not saved, only its fingerprint: Continue regenerates it from the seed and
+# refuses a save whose history comes out different. A zero here would mean no history was built.
+expect-state savefile history=
+expect-no-state savefile history=00000000
 
 # The seed alone no longer names a world — a variant can be forced onto it — so the world's kind is
 # stored beside it and a mismatch is refused on Continue. Seed 42 names Sylvan, and no

@@ -112,6 +112,16 @@ public static class GameRng
     public static Random For(string subsystem) => new Random(DerivedSeed(subsystem));
 
     /// <summary>
+    /// What <see cref="For"/> would return if the master seed were <paramref name="worldSeed"/>, without
+    /// touching the master seed. For building a world that is not the run's own (the history viewer
+    /// previewing a moon before it is confirmed, the audits) on any thread: the draws are identical to
+    /// the ones the world gets once it is the run's, and nothing global is reseeded under the game's
+    /// feet.
+    /// </summary>
+    public static Random ForWorld(int worldSeed, string subsystem)
+        => new Random(unchecked(worldSeed ^ StableHash(subsystem)));
+
+    /// <summary>
     /// The run-long <see cref="Random"/> for <paramref name="subsystem"/>: created once on first use
     /// and shared by every later caller, so the sequence advances across the whole playthrough.
     ///

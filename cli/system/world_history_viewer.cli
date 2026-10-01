@@ -1,0 +1,39 @@
+# The history viewer previews a moon's history on the selection screen, before the moon is taken,
+# and what it previews is the history the run then gets.
+#
+# The window itself is not checked here (it is a WinForms window, and the suite runs --hidden); what
+# is checked is what feeds it. The preview is built headless and off the main thread, from the moon's
+# seed alone, so the one thing that could go wrong silently is that it describes a different past
+# from the one the game generates on CONFIRM. `preview=match` on the world-history line is the game
+# comparing the two hashes itself.
+#
+# Runs without --seed, like world_selection.cli, because the flag skips the selection screen.
+#
+# FLAGS: --playground --skip-childhood --debug --no-encounters --silent --no-save --location-type test --location-id 0 --npc-static --period noon
+
+wait
+click menu New
+wait mode WorldSelection 20
+expect-state world-preview none
+
+# Choosing a moon starts its preview; `wait` outlasts the build.
+click moon Prunil
+wait
+expect-state world-preview Prunil
+expect-state world-preview state=ready
+
+# Changing one's mind previews the new moon instead.
+click moon Belune
+wait
+expect-state world-preview state=ready
+expect-no-state world-preview Prunil
+
+click world confirm
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+
+expect-state world-history Belune
+expect-state world-history preview=match
+
+quit

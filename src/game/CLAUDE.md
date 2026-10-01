@@ -24,6 +24,11 @@ Six things: the master seed, the **world variant**, the clock, the avatar's vert
 the world is a pure function of the seed and the variant, a scene of its location id, and the time of
 day is drawn fresh on every arrival.
 
+A seventh field is a check rather than a fact: **`HistoryHash`**, the fingerprint of the world's
+generated history. The history itself is regenerated with the terrain (see
+`src/game/history/CLAUDE.md`), and Continue refuses a save whose history comes out hashing
+differently, since that can only mean the generator stopped being deterministic.
+
 **The variant is normally redundant and is stored anyway.** `WorldVariants.ForSeed` derives it from
 the master seed, so on any ordinary run the save says the same thing twice. `--world-variant` is what
 makes it load-bearing: under that flag the terrain is not the terrain the seed names, and a save

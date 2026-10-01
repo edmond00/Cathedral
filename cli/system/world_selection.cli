@@ -35,16 +35,22 @@ click moon Armoth
 # `expect` fired in the same breath as the click reads the frame before it.
 wait
 expect Armoth
-expect -209322086
+
+# The box describes the chosen moon's past once its history is built in the background (`wait`
+# outlasts the build): its relation to the empire and how many realms, faiths and factions it has.
+# The seed is no longer shown; it is asserted at the end, off the live run.
+expect Empire
+expect-state world-preview box empire=
+expect-no-state world-preview reading the sky
 
 # Pointing at a SECOND moon must not disturb the first. The two states are drawn differently in the
-# sky — chosen is larger and white, pointed-at smaller and yellow — and the box reads them on
-# separate lines, which is the half of it a script can see.
+# sky — chosen is larger and white, pointed-at smaller and yellow — and the box reads only the chosen
+# one, so the pointed-at moon's name must not take its place.
 point moon Belavel
 wait
 expect Chosen
 expect Armoth
-expect Belavel
+expect-not Belavel
 
 # Pressing empty sky releases the choice without leaving the screen: CONFIRM goes dead again, and
 # `regions` says so.

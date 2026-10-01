@@ -82,6 +82,26 @@ Run `help` for the authoritative list. The essentials:
                             which regions it borders. With a vertex, just that vertex's region.
                             `inspect world-regions` is the assertable form (see below); this one
                             is for reading
+  history [what]            the world's generated history, for reading: summary (default), realms,
+                            faiths (with presence), factions, places, figures, seeds, events (the
+                            last 60), all, empire (the
+                            lore's own chronology). `key K` toggles the realm overlay (R's twin; the
+                            two exclude each other). Assert with `inspect world-history` (counts,
+                            hash, overlay, the avatar's realm), `world-realms` (one line per standing
+                            realm) and `world-events` (every event, dated: `1321 FC: Belune is made…`).
+                            A lore world is reached from the sky without --seed: `click moon Belune`
+                            (see cli/system/world_history_lore_moon.cli). On the selection screen,
+                            `inspect world-preview` reads the chosen moon's previewed history (the
+                            one the history viewer shows; `wait` outlasts its build) and, on a second
+                            line, the moon box's reading (`box empire=... realms= faiths= factions=`);
+                            after
+                            CONFIRM the world-history line carries `preview=match|differ|none`
+  key <name>                press a key. Obeys the window's own routing
+                            (`LocationTravelModeLauncher.DeliversToController`): a key the player's
+                            keyboard would not deliver in the current mode FAILS the run instead of
+                            reaching the controller anyway, which once let `key K` pass while K did
+                            nothing for a player. A new key the game should answer on the map has to
+                            be added there, or it works in scripts only
   destinations              vertices bordering the avatar
   destinations all [filter] every vertex inside the (stat-derived) travel range, not just the
                             neighbours; filter by biome/location name — `destinations all village`

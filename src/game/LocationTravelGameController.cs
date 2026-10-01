@@ -669,6 +669,10 @@ public class LocationTravelGameController : IDisposable
     {
         if (_currentMode == GameMode.Traveling) return false;
 
+        // A moon's history being built for the viewer is work in flight: `wait` must outlast it, or
+        // `inspect world-preview` reads state=building.
+        if (_currentMode == GameMode.WorldSelection && _previewTask is { IsCompleted: false }) return false;
+
         // Fight mode has its own self-advancing phases (dice, movement, the vital-heat box). A
         // script that acted and dumped immediately would otherwise read a half-resolved turn.
         if (_currentMode == GameMode.Fighting && _fightAdapter != null)
@@ -920,7 +924,7 @@ public class LocationTravelGameController : IDisposable
         {
             if (_worldSelectionRenderer != null)
             {
-                _worldSelectionRenderer.Draw(_selectedMoon, _hoveredMoon, _core.MoonCount);
+                _worldSelectionRenderer.Draw(_selectedMoon, _hoveredMoon, _core.MoonCount, MoonHistorySummaryFor(_selectedMoon));
                 _cameraArrowPad?.Draw();
             }
             UpdatePopupTerminal();
@@ -1192,6 +1196,7 @@ public class LocationTravelGameController : IDisposable
         if (_core.Terminal == null) return;
 
         string? destinationName = null;
+        string? destinationRegion = null, destinationRealm = null;
         bool routinesAvailable = false;
         if (_travelPlanner.HasWaypoints)
         {
@@ -1199,6 +1204,7 @@ public class LocationTravelGameController : IDisposable
             destinationName = GetLocationNameAtVertex(destVertex);
             routinesAvailable = _protagonist != null
                 && _protagonist.RecordedRoutines.Any(r => r.LocationId == destVertex);
+            (destinationRegion, destinationRealm) = RegionAndRealmAt(destVertex);
         }
 
         // The arrow pad, drawn before the travel box so that if the two ever overlapped the box —
@@ -1211,9 +1217,24 @@ public class LocationTravelGameController : IDisposable
             maxWaypoints: _travelPlanner.MaxWaypoints,
             estimate: _plannedEstimate,
             destinationName: destinationName,
+            destinationRegion: destinationRegion,
+            destinationRealm: destinationRealm,
             routinesAvailable: routinesAvailable,
             // An overloaded member grounds the whole party until something is put down.
             overloadWarning: _protagonist?.TravelWeightBlocker);
+    }
+
+    /// <summary>
+    /// The region a vertex lies in and the realm that holds it today, by the names the world's history
+    /// gives them: what the travel box says about where a journey ends. Water, or no world yet: nulls.
+    /// "unclaimed" for land no realm holds.
+    /// </summary>
+    private (string? Region, string? Realm) RegionAndRealmAt(int vertex)
+    {
+        var history = _interface.History;
+        int region = _interface.Regions?.RegionAt(vertex) ?? -1;
+        if (history == null || region < 0 || region >= history.RegionNames.Length) return (null, null);
+        return (history.RegionNames[region], history.OwnerOf(region)?.Name ?? "unclaimed");
     }
 
     /// <summary>
@@ -2703,9 +2724,86 @@ public class LocationTravelGameController : IDisposable
             // are the only opaque things on screen, and everything else has to let a click reach the
             // sky behind it.
             SetTransparentWorldOverlay(clickPassthrough: true);
-            _worldSelectionRenderer.Draw(_selectedMoon, _hoveredMoon, _core.MoonCount);
+            _worldSelectionRenderer.Draw(_selectedMoon, _hoveredMoon, _core.MoonCount, MoonHistorySummaryFor(_selectedMoon));
             _cameraArrowPad?.Draw();
         }
+
+        // The history viewer, when viewers are on: it reads the chosen moon's past before the moon
+        // is taken. Re-entrant like the rest — it opens once and is fed whatever is chosen now.
+        Cathedral.Debug.WorldHistoryViewerManager.Show();
+        if (_selectedMoon >= 0) PreviewMoonHistory(_selectedMoon);
+        else Cathedral.Debug.WorldHistoryViewerManager.ShowMessage("Choose a moon to read its history.");
+    }
+
+    // ── The history preview ───────────────────────────────────────────────────────
+
+    // The chosen moon's history, built headless off the main thread while the player is still on the
+    // selection screen. For the viewer, and for `inspect world-preview`; nothing in play reads it.
+    private System.Threading.Tasks.Task<Cathedral.Game.History.WorldHistory>? _previewTask;
+    private volatile int _previewOrdinal = -1;   // read by the preview task's continuation
+
+    /// <summary>
+    /// Starts building the chosen moon's history in the background. Always: the moon box reads its
+    /// relation to the empire and its counts from it, and the history viewer shows it whole.
+    /// </summary>
+    private void PreviewMoonHistory(int ordinal)
+    {
+        _previewOrdinal = ordinal;
+        string name = Cathedral.Glyph.SkyMoons.Name(ordinal);
+        Cathedral.Debug.WorldHistoryViewerManager.ShowMessage($"Building the history of {name}...");
+
+        var task = Cathedral.Game.History.WorldHistoryPreview.BuildAsync(Cathedral.Glyph.SkyMoons.WorldSeed(ordinal));
+        _previewTask = task;
+        task.ContinueWith(t =>
+        {
+            // A later click has moved on: this world is no longer the one being looked at.
+            if (_previewOrdinal != ordinal) return;
+            if (t.IsFaulted)
+            {
+                Console.Error.WriteLine($"[History] preview of {name} failed: {t.Exception?.GetBaseException().Message}");
+                Cathedral.Debug.WorldHistoryViewerManager.ShowMessage($"The history of {name} could not be built: {t.Exception?.GetBaseException().Message}");
+                return;
+            }
+            Console.WriteLine($"[History] preview of {name} ready: {t.Result.Chronology.Count} events, hash {t.Result.Hash:X8}");
+            Cathedral.Debug.WorldHistoryViewerManager.ShowHistory(t.Result);
+        });
+    }
+
+    /// <summary>
+    /// What the moon box says about <paramref name="ordinal"/>'s past, or null while its history is
+    /// still being built (or it is not the moon being previewed).
+    /// </summary>
+    private MoonHistorySummary? MoonHistorySummaryFor(int ordinal)
+    {
+        if (ordinal < 0 || ordinal != _previewOrdinal || _previewTask is not { IsCompletedSuccessfully: true } t) return null;
+        var h = t.Result;
+        int faiths = h.LivingFaiths.Count();
+        int hiddenFaiths = h.LivingFaiths.Count(f => h.PresenceOf(f) == Cathedral.Game.History.FaithPresence.Clandestine);
+        int factions = h.LivingOrganisations.Count();
+        int hiddenFactions = h.LivingOrganisations.Count(o => o.Clandestine);
+        string WithHidden(int n, int hidden) => hidden > 0 ? $"{n} ({hidden} hidden)" : n.ToString();
+        return new MoonHistorySummary(h.EmpireRelation(), h.LivingRealms.Count().ToString(),
+                                      WithHidden(faiths, hiddenFaiths), WithHidden(factions, hiddenFactions));
+    }
+
+    /// <summary>The preview as an assertable line: which moon, whether it is ready, and its hash.</summary>
+    private IReadOnlyList<string> CliPreviewLines()
+    {
+        var t = _previewTask;
+        if (t == null || _previewOrdinal < 0) return new List<string> { "world-preview none" };
+        string name = Cathedral.Glyph.SkyMoons.Name(_previewOrdinal);
+        if (!t.IsCompleted) return new List<string> { $"world-preview moon={_previewOrdinal} name=\"{name}\" state=building" };
+        if (t.IsFaulted) return new List<string> { $"world-preview moon={_previewOrdinal} name=\"{name}\" state=failed" };
+        var h = t.Result;
+        // The second line is the moon box's own reading, the only assertable form of it: the box is
+        // painted text, and `expect` would match the same words anywhere on screen.
+        var box = MoonHistorySummaryFor(_previewOrdinal);
+        return new List<string>
+        {
+            $"world-preview moon={_previewOrdinal} name=\"{name}\" state=ready events={h.Chronology.Count} "
+          + $"standing={h.LivingRealms.Count()} hash={h.Hash.ToString("X8", System.Globalization.CultureInfo.InvariantCulture)}",
+            $"world-preview box empire=\"{box?.Empire}\" realms={box?.Realms} faiths={box?.Faiths} factions={box?.Factions}",
+        };
     }
 
     /// <summary>
@@ -2761,6 +2859,8 @@ public class LocationTravelGameController : IDisposable
             Console.WriteLine("WorldSelection: choice released (clicked empty sky)");
             _selectedMoon = -1;
             _core.SelectMoon(-1);
+            _previewOrdinal = -1;
+            Cathedral.Debug.WorldHistoryViewerManager.ShowMessage("Choose a moon to read its history.");
             _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
             return;
         }
@@ -2770,6 +2870,7 @@ public class LocationTravelGameController : IDisposable
         _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
         Console.WriteLine($"WorldSelection: moon {ordinal} ({Cathedral.Glyph.SkyMoons.Name(ordinal)}) "
                         + $"selected — seed {Cathedral.Glyph.SkyMoons.WorldSeed(ordinal)}");
+        PreviewMoonHistory(ordinal);
     }
 
     /// <summary>
@@ -3379,6 +3480,13 @@ public class LocationTravelGameController : IDisposable
         // for — every other reading (biomes, region counts) also varies by seed.
         if (subject == "world-variant") return CliVariantLines();
 
+        // The world's generated history: a fact about the world, assertable at the map. `history`
+        // prints it for reading; these two are the forms `expect-state` can match.
+        if (subject == "world-history") return CliHistoryLines("state");
+        if (subject == "world-realms") return CliHistoryLines("realms");
+        if (subject == "world-events") return CliHistoryLines("all");
+        if (subject == "world-preview") return CliPreviewLines();
+
         if (_protagonist == null) return null;
         if (subject is not ("routines" or "all")) return null;
 
@@ -3386,6 +3494,77 @@ public class LocationTravelGameController : IDisposable
             .Select(r => $"routine location={r.LocationId} start={r.StartTime} steps={r.Steps.Count} "
                        + $"verbs=[{string.Join(",", r.Steps.Select(x => x.VerbId))}]")
             .ToList();
+    }
+
+    /// <summary>
+    /// The world's history as CLI lines. <paramref name="what"/>: <c>state</c> (one assertable line of
+    /// counts, and the avatar's realm), <c>realms</c>, <c>faiths</c>, <c>places</c>, <c>figures</c>,
+    /// <c>seeds</c>, <c>events</c> (the last 60), <c>all</c> (every event), <c>empire</c> (the lore's
+    /// chronology), or <c>summary</c>.
+    /// </summary>
+    public IReadOnlyList<string> CliHistoryLines(string what)
+    {
+        var h = _interface.History;
+        if (h == null) return new List<string> { "world-history (no world generated)" };
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        string Q(string s) => "\"" + s + "\"";
+
+        switch (what)
+        {
+            case "state":
+            {
+                int avatarRegion = _interface.Regions?.RegionAt(_interface.GetAvatarVertex()) ?? -1;
+                var realm = h.OwnerOf(avatarRegion);
+                // Whether the history the viewer previewed on the selection screen is the one the run
+                // got. It must be: the preview is built headless and off-thread, and a mismatch would
+                // mean the viewer shows a different past from the one the game holds.
+                var preview = _previewTask is { IsCompletedSuccessfully: true } p ? p.Result : null;
+                string previewState = preview == null ? "none" : preview.Hash == h.Hash ? "match" : "differ";
+                return new List<string>
+                {
+                    $"world-history name={Q(h.World.Name)} status={h.World.Status} profile={h.Profile.GetType().Name} "
+                  + $"events={h.Chronology.Count} figures={h.Figures.Count} realms={h.Realms.Count} "
+                  + $"standing={h.LivingRealms.Count()} faiths={h.Religions.Count} living-faiths={h.LivingFaiths.Count()} "
+                  + $"hidden-faiths={h.LivingFaiths.Count(f => h.PresenceOf(f) == Cathedral.Game.History.FaithPresence.Clandestine)} "
+                  + $"factions={h.Organisations.Count} living-factions={h.LivingOrganisations.Count()} places={h.Places.Count} "
+                  + $"wars={h.Wars.Count} hash={h.Hash.ToString("X8", inv)} overlay={(_interface.RealmOverlayEnabled ? "on" : "off")} "
+                  + $"preview={previewState}",
+                    $"world-history avatar region={avatarRegion} realm={Q(realm?.Name ?? "unclaimed")}",
+                };
+            }
+            case "realms":
+                return h.LivingRealms.OrderByDescending(r => r.Regions.Count)
+                    .Select(r => $"realm {Q(r.Name)} government={r.Government} regions={r.Regions.Count} "
+                               + $"capital={r.CapitalRegion} ruler={Q(r.Ruler?.FullName ?? "none")} "
+                               + $"faith={Q(r.StateReligion?.Name ?? "none")} founded={r.Founded}")
+                    .ToList();
+            case "faiths":
+                return h.Religions.Select(r => $"faith {Q(r.Name)} kind={r.Kind} founded={r.Founded} presence={h.PresenceOf(r)} "
+                                             + $"proscribed={(h.Proscribed.Contains(r) ? "yes" : "no")} scope={r.Scope} gods={r.Deities.Count} - {r.Description}")
+                    .ToList();
+            case "factions":
+                return h.Organisations.Select(o => $"faction {Q(o.Name)} kind={o.Kind} founded={o.Founded} "
+                                                 + $"ended={(o.Dissolved.IsKnown ? o.Dissolved.ToString() : "standing")} "
+                                                 + $"hidden={(o.Clandestine ? "yes" : "no")} patron={Q(o.Patron?.Name ?? "none")} "
+                                                 + $"imperial={Q(o.ImperialCounterpart?.Name ?? "none")}")
+                    .ToList();
+            case "places":
+                return h.Places.Select(p => $"place {Q(p.Name)} kind={p.Kind} region={p.Region} founded={p.Founded} ruined={p.Ruined}").ToList();
+            case "figures":
+                return h.Figures.TakeLast(80).Select(f => $"figure {Q(f.FullName)} born={f.Born} died={f.Died}").ToList();
+            case "seeds":
+                return h.SeedStats.OrderBy(kv => kv.Key)
+                    .Select(kv => $"seed {kv.Key} sown={kv.Value.Sown} sprouted={kv.Value.Sprouted} skipped={kv.Value.Skipped}")
+                    .ToList();
+            case "events":
+                return h.Chronology.Events.TakeLast(60).Select(e => e.ToString()).ToList();
+            case "all":
+                return h.Chronology.Events.Select(e => e.ToString()).ToList();
+            case "empire":
+                return h.Empire.Chronology.Events.Select(e => e.ToString()).ToList();
+            default:
+                return h.Summary().Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(l => l.TrimEnd('\r')).ToList();
+        }
     }
 
     /// <summary>
@@ -4555,6 +4734,7 @@ public class LocationTravelGameController : IDisposable
         {
             Seed         = GameRng.MasterSeed,
             Variant      = _interface.Variant.Id,
+            HistoryHash  = _interface.History?.Hash ?? 0,
             Days         = Cathedral.Game.Narrative.GameClock.Days,
             AvatarVertex = _interface.GetAvatarVertex(),
             Party        = Cathedral.Game.Save.PartyState.Capture(_protagonist),
@@ -4636,6 +4816,24 @@ public class LocationTravelGameController : IDisposable
             Console.WriteLine($"Continue: world rebuilt from seed {save.Seed}");
         }
 
+        // The history is regenerated, not read, so it must come out as the run knew it. It always
+        // should (a save is confined to the build that wrote it, and generation is a pure function
+        // of the seed), which makes a mismatch a determinism bug in the generator. Refused rather
+        // than played on, since every book and chronicle would then describe a different past.
+        // Checked after the world is built because the hash is what building it produces; a zero in
+        // the save means the save predates histories, which the version bump already refuses.
+        if (_interface.History is { } history && save.HistoryHash != history.Hash)
+        {
+            Console.Error.WriteLine(
+                $"Continue: the save's world history hashed to {save.HistoryHash:X8}, this build regenerates "
+                + $"{history.Hash:X8} — the history generator is not deterministic. Refusing.");
+            if (!_hasGameStarted) _core.WorldRenderEnabled = false;
+            return false;
+        }
+
+        if (Cathedral.Debug.WorldHistoryViewerManager.IsOpen && _interface.History != null)
+            Cathedral.Debug.WorldHistoryViewerManager.ShowHistory(_interface.History);
+
         if (_isInNarrativeMode) ExitNarrativeMode();
 
         _protagonist = protagonist;
@@ -4694,6 +4892,11 @@ public class LocationTravelGameController : IDisposable
         _core.RebuildForNewSeed();
         _interface.RegenerateWorld();
         _core.WorldRenderEnabled = true;
+
+        // An open history viewer follows the run into its world: the history it shows from here is the
+        // run's own (the same one the preview built, and now the one the game holds).
+        if (Cathedral.Debug.WorldHistoryViewerManager.IsOpen && _interface.History != null)
+            Cathedral.Debug.WorldHistoryViewerManager.ShowHistory(_interface.History);
 
         // The world you are standing in is not one of the moons in your sky. Does nothing when the
         // seed belongs to no moon, which is every run pinned with --seed.
@@ -5802,6 +6005,12 @@ public class LocationTravelGameController : IDisposable
         else if (key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.R && Config.Debug.DeveloperKeys)
         {
             _interface.ToggleRegionOverlay();
+        }
+        // K is R's twin: the sphere by the realm that holds each region today, from the world's
+        // generated history. Its own key rather than a third state of R, so R stays a toggle.
+        else if (key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.K && Config.Debug.DeveloperKeys)
+        {
+            _interface.ToggleRealmOverlay();
         }
     }
 

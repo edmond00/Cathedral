@@ -47,9 +47,15 @@ namespace Cathedral.Glyph
         /// </summary>
         private static readonly List<string> _names = BuildNames(4096);
 
-        /// <summary>The display name of the moon at <paramref name="ordinal"/>.</summary>
+        /// <summary>
+        /// The display name of the moon at <paramref name="ordinal"/>: the lore's name for a world the
+        /// lore names (Belune, the Avorias...), the syllable name otherwise. See
+        /// <c>Cathedral.Game.History.Worlds.LoreMoons</c>, which keeps the first twenty ordinals free
+        /// of lore so that scripts naming them keep working.
+        /// </summary>
         public static string Name(int ordinal)
-            => ordinal >= 0 && ordinal < _names.Count ? _names[ordinal] : $"Moon {ordinal}";
+            => Cathedral.Game.History.Worlds.LoreMoons.NameFor(ordinal)
+            ?? (ordinal >= 0 && ordinal < _names.Count ? _names[ordinal] : $"Moon {ordinal}");
 
         /// <summary>
         /// The master seed the world under <paramref name="ordinal"/> is generated from.

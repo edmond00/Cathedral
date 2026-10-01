@@ -1066,9 +1066,10 @@ public static class Config
 
         /// <summary>The information/confirmation box at the bottom of the screen.</summary>
         public const int BoxWidth        = 46;
-        // Ten rows: border, title, gap, chosen, seed, world, pointed-at, gap, buttons, border. The
-        // gap above the buttons is load-bearing — text hard against a button reads as part of it.
-        public const int BoxHeight       = 10;
+        // Twelve rows: border, title, gap, chosen, world, empire, realms, faiths, factions, gap,
+        // buttons, border. The gap above the buttons is load-bearing — text hard against a button
+        // reads as part of it.
+        public const int BoxHeight       = 12;
         public const int BoxBottomMargin = 8;
 
         public static readonly Vector4 TitleColor      = Colors.BrightYellow;
@@ -1422,7 +1423,9 @@ public static class Config
     {
         // Layout
         public const int BoxWidth = 40;
-        public const int BoxHeight = 12;
+        // Fourteen rows: border, title, gap, destination, region, realm, travel time, vital heat,
+        // encounter risk, starvation risk, warning-or-gap, buttons, gap, border.
+        public const int BoxHeight = 14;
         /// <summary>Cells of empty space between the box bottom edge and the screen bottom.</summary>
         public const int BoxBottomMargin = 8;
 

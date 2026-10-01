@@ -27,6 +27,20 @@ namespace Cathedral.Game;
 /// </summary>
 public static class LocationTravelModeLauncher
 {
+    /// <summary>
+    /// Whether the window passes <paramref name="key"/> on to the controller in <paramref name="mode"/>,
+    /// once Escape, F11 and the D/G dumps have had their turn. R and K (the region and realm overlays)
+    /// go everywhere, since a fight's own R ("run away") is decided inside the controller; every other
+    /// key reaches only a fight or a dialogue.
+    ///
+    /// <para>The CLI's <c>key</c> command asks the same question, which is the point: a script that
+    /// presses a key the player's keyboard would never deliver fails, rather than passing on a path no
+    /// player can take.</para>
+    /// </summary>
+    public static bool DeliversToController(GameMode mode, OpenTK.Windowing.GraphicsLibraryFramework.Keys key)
+        => key is OpenTK.Windowing.GraphicsLibraryFramework.Keys.R or OpenTK.Windowing.GraphicsLibraryFramework.Keys.K
+        || mode is GameMode.Fighting or GameMode.Dialogue;
+
     public static void Launch(int windowWidth = 1200, int windowHeight = 900, bool useLLM = true)
     {
         var camera = new Camera();
@@ -398,18 +412,13 @@ public static class LocationTravelModeLauncher
             // handled here, because OnKeyDown is where the fight's own R ("run away") has to win —
             // see the ordering there. Gated with DeveloperKeys in the same place, not in this
             // branch, so a shipped build still delivers R to a fight.
-            else if (args.Key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.R)
+            // Everything else reaches the controller only where DeliversToController says so. One rule,
+            // read by this handler and by the CLI's `key`, so a script cannot press a key the window
+            // would never pass on (which is how K once did nothing on the map while `key K` passed).
+            else if (gameController is LocationTravelGameController ltgc2
+                     && DeliversToController(ltgc2.CurrentMode, args.Key))
             {
-                (gameController as LocationTravelGameController)?.OnKeyDown(args.Key);
-            }
-            else
-            {
-                // Forward other keys to fight/dialogue modes
-                if (gameController is LocationTravelGameController ltgc2 &&
-                    (ltgc2.CurrentMode == GameMode.Fighting || ltgc2.CurrentMode == GameMode.Dialogue))
-                {
-                    ltgc2.OnKeyDown(args.Key);
-                }
+                ltgc2.OnKeyDown(args.Key);
             }
         };
 

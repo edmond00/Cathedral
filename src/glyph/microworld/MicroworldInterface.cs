@@ -376,6 +376,10 @@ namespace Cathedral.Glyph.Microworld
             // the spawn can already ask which region it is standing in.
             BuildRegions();
 
+            // The world's past, laid over the regions it just divided into. A pure function of the
+            // seed like everything above, so Continue rebuilds it rather than reading it from the save.
+            BuildHistory();
+
             // Initialize protagonist at a random suitable location
             InitializeProtagonist();
 
@@ -462,6 +466,54 @@ namespace Cathedral.Glyph.Microworld
         }
 
         /// <summary>
+        /// The world's history, or null before a world has been generated. Nothing in the game reads
+        /// it yet except the realm overlay and the CLI; books will.
+        /// </summary>
+        public Cathedral.Game.History.WorldHistory? History { get; private set; }
+
+        /// <summary>
+        /// True while the sphere is drawn by the realm that holds each region today. The K key's twin
+        /// of <see cref="RegionOverlayEnabled"/>; the two are exclusive.
+        /// </summary>
+        public bool RealmOverlayEnabled { get; private set; }
+
+        // One colour per standing realm, built with the history. Unclaimed land is drawn dim grey.
+        private readonly Dictionary<Cathedral.Game.History.Realm, WorldRegionPalette.Swatch> _realmSwatches = new();
+        private static readonly WorldRegionPalette.Swatch UnclaimedSwatch = new(0.25f, 0.25f, 0.25f, "unclaimed");
+
+        private void BuildHistory()
+        {
+            if (Regions == null) return;
+            var geography = Cathedral.Game.History.HistoryGeography.Build(
+                Regions, VertexCount, GetNeighboringVertices,
+                v => vertexData.TryGetValue(v, out var d) ? d.Biome.Name : null);
+            History = Cathedral.Game.History.WorldHistoryGenerator.Generate(geography);
+
+            _realmSwatches.Clear();
+            var standing = History.LivingRealms.ToList();
+            var palette = WorldRegionPalette.Build(standing.Count);
+            for (int i = 0; i < standing.Count; i++) _realmSwatches[standing[i]] = palette[i];
+
+            Console.WriteLine($"[History] {History.World.Name} ({History.World.Status}): {History.Chronology.Count} events, "
+                            + $"{standing.Count} standing realm(s), hash {History.Hash:X8}, in {History.GenerationMilliseconds} ms.");
+        }
+
+        /// <summary>Flips the realm overlay (turning the region overlay off) and repaints. Returns the new state.</summary>
+        public bool ToggleRealmOverlay()
+        {
+            if (History == null)
+            {
+                Console.WriteLine("[History] no world generated yet — no realms to colour.");
+                return false;
+            }
+            RealmOverlayEnabled = !RealmOverlayEnabled;
+            if (RealmOverlayEnabled) RegionOverlayEnabled = false;
+            RefreshAllTiles();
+            Console.WriteLine($"[History] realm overlay {(RealmOverlayEnabled ? "ON" : "OFF")} ({_realmSwatches.Count} realms).");
+            return RealmOverlayEnabled;
+        }
+
+        /// <summary>
         /// Flips the region overlay and repaints every tile. Returns the new state.
         /// </summary>
         public bool ToggleRegionOverlay()
@@ -473,6 +525,7 @@ namespace Cathedral.Glyph.Microworld
             }
 
             RegionOverlayEnabled = !RegionOverlayEnabled;
+            if (RegionOverlayEnabled) RealmOverlayEnabled = false;
             RefreshAllTiles();
             Console.WriteLine($"[Regions] overlay {(RegionOverlayEnabled ? "ON" : "OFF")} " +
                               $"({Regions.Regions.Count} regions).");
@@ -904,7 +957,14 @@ namespace Cathedral.Glyph.Microworld
         /// world has been divided yet, or the vertex is water.
         /// </summary>
         private WorldRegionPalette.Swatch? RegionSwatchFor(int vertexIndex)
-            => RegionOverlayEnabled ? Regions?.SwatchAt(vertexIndex) : null;
+        {
+            if (RegionOverlayEnabled) return Regions?.SwatchAt(vertexIndex);
+            if (!RealmOverlayEnabled || Regions == null || History == null) return null;
+            int region = Regions.RegionAt(vertexIndex);
+            if (region < 0) return null;
+            var realm = History.OwnerOf(region);
+            return realm != null && _realmSwatches.TryGetValue(realm, out var s) ? s : UnclaimedSwatch;
+        }
 
         private void RestoreVertexData(int vertexIndex, VertexWorldData data)
         {

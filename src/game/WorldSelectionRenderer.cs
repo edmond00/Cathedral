@@ -19,6 +19,12 @@ namespace Cathedral.Game
     /// buttons. Neither half knows about the other; the controller holds the selected ordinal and
     /// tells both.</para>
     /// </summary>
+    /// <summary>
+    /// What the box says about the chosen moon's past: its relation to the empire, and how many realms,
+    /// faiths and factions it has today. Null while the history is still being built.
+    /// </summary>
+    public sealed record MoonHistorySummary(string Empire, string Realms, string Faiths, string Factions);
+
     public sealed class WorldSelectionRenderer
     {
         private readonly TerminalHUD _terminal;
@@ -70,7 +76,7 @@ namespace Cathedral.Game
         /// in the box only when nothing has been chosen yet — a hover must not overwrite a decision
         /// that has already been made and is waiting on CONFIRM.
         /// </summary>
-        public void Draw(int selected, int hoveredMoon, int moonCount)
+        public void Draw(int selected, int hoveredMoon, int moonCount, MoonHistorySummary? history = null)
         {
             const string ornament = "─ · ─ · ─ · ─ · ─ · ─ · ─ · ─";
             _terminal.CenteredText(Config.WorldSelectionUI.TitleRow - 2, ornament,
@@ -84,7 +90,7 @@ namespace Cathedral.Game
                 "the compass turns the sky  ·  click the empty dark to unchoose",
                 Config.Colors.DarkGray40, Colors.Transparent);
 
-            DrawBox(selected, hoveredMoon);
+            DrawBox(selected, history);
         }
 
         /// <summary>Wipes the whole screen back to transparent so the sky shows through again.</summary>
@@ -96,7 +102,7 @@ namespace Cathedral.Game
             _buttonsPainted = false;
         }
 
-        private void DrawBox(int selected, int hoveredMoon)
+        private void DrawBox(int selected, MoonHistorySummary? history)
         {
             _boxW = Config.WorldSelectionUI.BoxWidth;
             _boxH = Config.WorldSelectionUI.BoxHeight;
@@ -115,48 +121,36 @@ namespace Cathedral.Game
             int contentY  = _boxY + 1;
 
             // The header is drawn in every state, including the empty one — a box that grows a title
-            // only once something is under the cursor jumps as the cursor crosses the sky.
+            // only once something is chosen jumps as the player makes up their mind.
             const string title = "── THE MOONS ──";
             _terminal.Text(_boxX + (_boxW - title.Length) / 2, contentY, title,
                 Config.WorldSelectionUI.TitleColor, Config.WorldSelectionUI.BackgroundColor);
 
-            // Two separate readings, not one: what has been chosen — which is what CONFIRM will take
-            // — and what the cursor happens to be over. They were one line while a hover replaced a
-            // choice in the box, and the player then had no way to tell which of the two moons lit in
-            // the sky the button was about to act on.
+            // Everything below describes the CHOSEN moon, which is what CONFIRM will take. The hovered
+            // moon is lit in the sky and is not repeated here: two moons in one box was a reading the
+            // player had to untangle.
             DrawRow(innerLeft, contentY + 2, "Chosen",
                 selected >= 0 ? SkyMoons.Name(selected) : "—",
                 selected >= 0 ? Config.WorldSelectionUI.NameColor
                               : Config.WorldSelectionUI.LabelColor);
 
-            // The seed is shown because it is the world's whole identity — two players who write it
-            // down walk the same ground — and because it is the one thing about a world that can be
-            // known before entering it. The ordinal behind it is not: that is how the moon is
-            // addressed in code, and the name says the same thing better.
-            DrawRow(innerLeft, contentY + 3, "Seed",
-                selected >= 0 ? SkyMoons.WorldSeed(selected).ToString() : "—",
-                Config.WorldSelectionUI.ValueColor);
-
-            // What KIND of world this moon is. Known before it is built, because the variant is a
-            // pure function of the seed above rather than something the generator decides — which is
-            // the whole reason it can be shown here at all. Tied to the choice, not to the hover, for
-            // the same reason the seed is: this names what CONFIRM will hand over.
+            // What KIND of world this moon is: a pure function of its seed, known before it is built.
             var variant = selected >= 0 ? WorldVariants.ForSeed(SkyMoons.WorldSeed(selected)) : null;
-
-            // The name alone. The variant's own one-line description was drawn under it and is not
-            // any more: three labelled values and a loose sentence read as two different kinds of
-            // box, and the sentence said little the name did not — a classification chosen to be
-            // legible on its own does not need a gloss beside it.
-            DrawRow(innerLeft, contentY + 4, "World",
+            DrawRow(innerLeft, contentY + 3, "World",
                 variant?.Name ?? "—",
                 variant != null ? Config.WorldSelectionUI.NameColor
                                 : Config.WorldSelectionUI.LabelColor);
 
-            DrawRow(innerLeft, contentY + 5, "Pointed at",
-                hoveredMoon >= 0 ? SkyMoons.Name(hoveredMoon) : "—",
-                Config.WorldSelectionUI.HintColor);
+            // Its past, from the history built in the background the moment it was chosen. Until that
+            // is ready the rows say so rather than standing empty, so a slow build reads as work.
+            string Pending(string? value) => selected < 0 ? "—" : value ?? "reading the sky...";
+            var valueColor = Config.WorldSelectionUI.ValueColor;
+            DrawRow(innerLeft, contentY + 4, "Empire",   Pending(history?.Empire),   valueColor);
+            DrawRow(innerLeft, contentY + 5, "Realms",   Pending(history?.Realms),   valueColor);
+            DrawRow(innerLeft, contentY + 6, "Faiths",   Pending(history?.Faiths),   valueColor);
+            DrawRow(innerLeft, contentY + 7, "Factions", Pending(history?.Factions), valueColor);
 
-            // Row contentY + 6 is left blank on purpose: it is the gap that keeps the last line of
+            // Row contentY + 8 is left blank on purpose: it is the gap that keeps the last line of
             // text off the buttons.
             DrawButtons(confirmEnabled: selected >= 0);
         }

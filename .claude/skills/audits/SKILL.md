@@ -1,6 +1,6 @@
 ---
 name: audits
-description: The twelve headless audits that check content rather than code: --outcome-audit, --crime-audit, --dialogue-audit, --npc-audit, --mm-audit, --item-audit, --verb-audit, --world-variant-audit, --mm-grant-csv, --mm-reach-csv, --llm-probe-audit and --building-audit. Use after adding or editing a verb, an outcome, a modus mentis, an item, an NPC archetype, a dialogue tree, a scene factory, a world variant or a batch of scene content, and to find out which audit covers a change.
+description: The thirteen headless audits that check content rather than code: --outcome-audit, --crime-audit, --dialogue-audit, --npc-audit, --mm-audit, --item-audit, --verb-audit, --world-variant-audit, --history-audit, --mm-grant-csv, --mm-reach-csv, --llm-probe-audit and --building-audit. Use after adding or editing a verb, an outcome, a modus mentis, an item, an NPC archetype, a dialogue tree, a scene factory, a world variant, the world history generator or the lore catalogue, or a batch of scene content, and to find out which audit covers a change.
 ---
 
 # The audits
@@ -366,6 +366,39 @@ Run it after touching a variant's numbers, `WorldShape`, the biome thresholds,
 `InitializeProtagonist`'s spawn rule, `Config.WorldRegions.FieldsForAHome`, or anything in
 `WorldRegions`. Walk what it
 reports with `--world-variant <id>`.
+
+### Checking the world histories
+
+```bash
+dotnet run -- --history-audit
+```
+
+Every world carries a generated history (`src/game/history/`, see its `CLAUDE.md`), thousands of
+events long, and **every way of getting one wrong is silent**: a ruler crowned after his death, a
+port in a landlocked region, a realm that still holds land after it was dissolved, a Register numeral
+with a gap below it, a lore beat whose seed was sown after the present and so never sprouted, a
+world written into the shared empire catalogue (a death or a child on a lore figure), and above all
+a history that comes out differently the second time, which Continue refuses with nobody the wiser.
+
+Two halves:
+
+- **The empire.** The hardcoded lore (`EmpireLore`): the Register of Blood (every numbered Ban name
+  has every lower number, in birth order), no one dies before being born or is born to a parent under
+  twelve or long dead, no one accedes outside their own life.
+- **The worlds.** Every named lore moon, two unnamed members of each lore group (Oox's, Fogun's) and
+  the first four generic moons of each imperial status, built headless through `HeadlessWorld` (the
+  same terrain and regions the game builds) and **generated twice**; the two hashes must agree. Per
+  world: ownership table and realm sets agree, standing realms at the present between three and half
+  the regions, every place on ground it can stand on, every war ended, every `ScriptedSeed` sprouted,
+  the imperial chapter matching the status (a held world has contact, conquest, Inquisition and
+  Stranding; an unvisited one has none), the lore name and forced variant right, and generation under
+  two seconds. Last, the empire catalogue's fingerprint is compared before and after all of it.
+
+About forty worlds in a minute or so. It prints a table (regions, events, figures, realms ever and
+standing, faiths, places, wars, milliseconds, hash) and a sample of Belune's lore beats.
+
+Run it after touching anything under `src/game/history/`, the lore catalogue, `LoreMoons`, the region
+division, or a world variant a lore moon is forced to.
 
 ### Checking buildings, scenes and NPC schedules
 

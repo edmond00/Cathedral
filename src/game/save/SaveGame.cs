@@ -4,10 +4,10 @@ namespace Cathedral.Game.Save;
 
 /// <summary>
 /// One saved run, whole. Six facts, and the survey that produced this list found nothing else that
-/// feeds a scene build.
+/// feeds a scene build; plus one check, <see cref="HistoryHash"/>.
 ///
-/// <para><b>What is absent is the interesting half.</b> No terrain, because the world is a pure
-/// function of <see cref="Seed"/> and <see cref="Variant"/>. No scene contents, because a scene is a pure function of its
+/// <para><b>What is absent is the interesting half.</b> No terrain and no history, because the world
+/// and its past are a pure function of <see cref="Seed"/> and <see cref="Variant"/>. No scene contents, because a scene is a pure function of its
 /// location id. No time of day, because the hour is drawn fresh on every arrival and discarded. No
 /// travel range, no derived stats, no current HP — all recomputed from what is here.</para>
 /// </summary>
@@ -23,7 +23,7 @@ public sealed class SaveGame
     /// also what lets <see cref="PartyState.Rebuild"/> treat an unknown content id as corruption
     /// rather than as a version difference it should tolerate.</para>
     /// </summary>
-    public const int CurrentVersion = 3;
+    public const int CurrentVersion = 4;
 
     public int Version { get; set; } = CurrentVersion;
 
@@ -44,6 +44,14 @@ public sealed class SaveGame
     /// are somewhere else entirely. Nothing about that would throw.</para>
     /// </summary>
     public string Variant { get; set; } = "";
+
+    /// <summary>
+    /// The fingerprint of the world's generated history (<c>WorldHistory.Hash</c>). The history itself
+    /// is not stored: like the terrain, it is regenerated from the seed on Continue. This is only
+    /// the check that it came out the same, and a mismatch is refused (see
+    /// <c>TryContinueSavedRun</c>).
+    /// </summary>
+    public int HistoryHash { get; set; }
 
     /// <summary>
     /// The world clock. Not optional: nothing stores an age, a wound's progress or an item depletion,

@@ -118,13 +118,14 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --cli-script <file>                Run a newline-separated command script at startup (implies --cli)");
     Console.WriteLine("  --cli-timeout <seconds>            Hard limit for a --cli run before it closes itself (default 300)");
     Console.WriteLine("  --debug                            Enable debug mode (override LLM/RNG decisions via console) + viewers");
-    Console.WriteLine("  --view                             Show LLM and scene viewers without console decision overriding");
+    Console.WriteLine("  --view                             Show the LLM, scene and world-history viewers without console decision overriding");
     Console.WriteLine("  --dialogue-view                    Open a window graphing every dialogue tree (neutral replica text per node)");
     Console.WriteLine("  --dialogue-audit                   Print the dialogue-tree shape report (reply counts, branch lengths, bad tokens) and exit");
     Console.WriteLine("  --npc-audit                        Print the NPC generation report (determinism, trait resolution, body/skill/inventory shape) and exit");
     Console.WriteLine("  --item-audit                       Print the item catalogue report (identity, reachability, weights, trade coverage) and exit");
     Console.WriteLine("  --building-audit                   Print the building/schedule report (section partition, locks, beds, hall staffing) and exit");
     Console.WriteLine("  --world-variant-audit              Print the world-variant report (land, fields, spawns, marooned spawns, regions) and exit");
+    Console.WriteLine("  --history-audit                    Check the empire's lore history and generate world histories (lore worlds + a sample), report faults and exit");
     Console.WriteLine("  --playground                       Replace all LLM calls with instant placeholders (no server needed)");
     Console.WriteLine("  --skip-childhood                   Skip the childhood reminescence + get-up phases; randomly fill starting skills/items as if they had run");
     Console.WriteLine("  --mm                               After the childhood reminescence phase, fill every empty memory slot with random unheld modiMentis");
@@ -325,6 +326,16 @@ if (args.Length >= 1 && args[0] == "--building-audit")
 if (args.Length >= 1 && args[0] == "--world-variant-audit")
 {
     Console.WriteLine(Cathedral.Glyph.Microworld.WorldVariantAudit.BuildReport());
+    return;
+}
+
+// History audit: check the empire's hardcoded history (the Register of Blood, lifespans, accessions),
+// then generate the history of every lore world and a sample of the rest, twice each, and check them
+// for what fails silently - nondeterminism, a crowned corpse, a landlocked port, a realm holding
+// nothing, a lore beat that never sprouted. Headless: builds worlds through HeadlessWorld.
+if (args.Length >= 1 && args[0] == "--history-audit")
+{
+    Console.WriteLine(Cathedral.Game.History.HistoryAudit.BuildReport());
     return;
 }
 

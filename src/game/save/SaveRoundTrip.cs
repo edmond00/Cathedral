@@ -54,6 +54,7 @@ public static class SaveRoundTrip
         {
             Seed         = reread.Seed,
             Variant      = reread.Variant,
+            HistoryHash  = reread.HistoryHash,
             Days         = reread.Days,
             AvatarVertex = reread.AvatarVertex,
             Party        = PartyState.Capture(rebuilt),
@@ -124,6 +125,7 @@ public static class SaveRoundTrip
             $"save version={save.Version}",
             $"save seed={save.Seed}",
             $"save variant={save.Variant}",
+            $"save history={save.HistoryHash:X8}",
             $"save days={save.Days.ToString("F1", inv)}",
             $"save vertex={save.AvatarVertex}",
             $"save locations={save.Locations.Count}",

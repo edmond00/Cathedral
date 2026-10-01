@@ -217,6 +217,10 @@ public sealed class CliDriver
                 case "world":       CmdWorld();                       break;
                 case "world-regions": CmdWorldRegions(rest);         break;
                 case "world-variant": CmdWorldVariant();             break;
+                case "history":
+                    foreach (var l in _game.CliHistoryLines(rest.Length > 0 ? rest[0].ToLowerInvariant() : "summary"))
+                        CliMode.Emit(l);
+                    break;
                 case "destinations":CmdDestinations(rest);            break;
                 case "click":       CmdClick(rest);                   break;
                 case "point":       CmdPoint(rest);                   break;
@@ -309,6 +313,10 @@ public sealed class CliDriver
           world-variant             which kind of world this is, its thresholds, and the whole table
           world-regions [vertex]    the world's division into regions: sizes, seeds, borders,
                                     palette. With a vertex, just that vertex's region
+          history [what]            the world's generated history: summary (default), realms,
+                                    faiths, places, figures, seeds, events (last 60), all, empire.
+                                    `key K` toggles the realm overlay. To ASSERT, use
+                                    `inspect world-history` / `inspect world-realms`
           destinations              reachable vertices, by name
         Action
           click end-run             the death screen's END RUN button, back to the main menu
@@ -332,7 +340,8 @@ public sealed class CliDriver
                                     outcome banner and so passes on the wrong verb
           inspect [subject]         print the game state an outcome can change, by STABLE id:
                                     items / coins / where / party / wounds / skills / npcs / pois /
-                                    routines / noetic / humors / world-regions / world-variant, or all. What
+                                    routines / noetic / humors / world-regions / world-variant /
+                                    world-history / world-realms / world-events, or all. What
                                     cli/outcome/ asserts on — the
                                     chip says the player was told, this says the world actually
                                     moved. `noetic` carries the phase budget and the acting body's
@@ -1247,6 +1256,16 @@ public sealed class CliDriver
         if (a.Length == 0) { CliMode.Emit("error: key <name>"); return; }
         if (!Enum.TryParse<Keys>(a[0], ignoreCase: true, out var key))
         { CliMode.Emit($"error: unknown key '{a[0]}'"); return; }
+
+        // The window's own rule, not a shortcut around it: a key the player's keyboard would not
+        // deliver here fails the run. Calling the controller directly once let `key K` pass while K
+        // did nothing for a player.
+        if (!LocationTravelModeLauncher.DeliversToController(_game.CurrentMode, key))
+        {
+            CliMode.HasFailedAssertion = true;
+            CliMode.Emit($"FAIL: the window does not deliver {key} in {_game.CurrentMode}, so a player pressing it gets nothing");
+            return;
+        }
         _game.OnKeyDown(key);
         CliMode.Emit($"ok: sent {key}");
     }
