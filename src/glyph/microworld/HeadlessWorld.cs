@@ -7,7 +7,7 @@ namespace Cathedral.Glyph.Microworld
     /// <summary>
     /// A generated world without a window: the biome of every vertex and the division into regions,
     /// derived exactly as <c>MicroworldInterface.GenerateWorld</c> derives them (noise offset from the
-    /// same stream, the same coast rule, the same region input). For audits that need the world a
+    /// same stream, the same <see cref="WorldClassifier"/>, the same region input). For audits that need the world a
     /// player would stand in, not one like it.
     ///
     /// <para>Touches no global state: the terrain stream is drawn through <see cref="GameRng.ForWorld"/>
@@ -37,17 +37,9 @@ namespace Cathedral.Glyph.Microworld
                 (float)(worldRng.NextDouble() * 20000.0 - 10000.0));
 
             int n = positions.Count;
-            var shape = variant.Shape;
-            var biome = new string[n];
-            var settlement = new float[n];
-            for (int v = 0; v < n; v++)
-            {
-                var (water, settle, relief) = shape.Sample(positions[v], offset);
-                biome[v] = shape.BiomeNameFor(water, settle, relief);
-                settlement[v] = settle;
-            }
-            foreach (int v in CoastRule.Stranded(n, v => biome[v], v => adjacency[v]))
-                biome[v] = CoastRule.Replacement;
+            var classified = WorldClassifier.Classify(variant.Shape, n, v => positions[v], v => adjacency[v], offset);
+            var biome = classified.Biome;
+            var settlement = classified.Settlement;
 
             var regions = WorldRegionMap.Build(new WorldRegionInput
             {

@@ -5,11 +5,11 @@
 # A non-zero exit means an `expect`/`wait` failed.
 #
 # The same object, looked at by two bodies. --observe-only pins the phase to the flower patch, and
-# --fill-party gives the party a beast (the cat Nighthunter at seed 42) that the Speak About hand-off
+# --fill-party gives the party a beast (the hyena Brindletail at seed 42) that the Speak About hand-off
 # can pass narration to — the only way to make a companion the ACTING member, which is what the gate
 # reads.
 #
-# GATHER is a Handcraft verb. The protagonist is offered it on the patch; the cat, with the same
+# GATHER is a Handcraft verb. The protagonist is offered it on the patch; the hyena, with the same
 # patch in front of it, is not — the goal is not in its list at all, so `goal gather` falls back and
 # stdout carries
 #   [debug] --goal-only 'gather': no such goal here — drawing from all N.
@@ -47,12 +47,12 @@ choose 2
 choose 0
 choose 0
 advance 12 180
-expect [NIGHTHUNTER]
+expect [BRINDLETAIL]
 
 # --- the beast: no gather in its goals, but it still acts ------------------------
 # The spoken address leaves its own keyword live ('colour-clusters' at this seed) and it points at the
 # same flower patch. `goal gather` prints the fallback line above; the phase then runs on whatever the
-# cat CAN do, which proves the gate narrowed the goal list rather than emptying it.
+# hyena CAN do, which proves the gate narrowed the goal list rather than emptying it.
 goal gather
 click keyword 0
 choose 0
@@ -63,10 +63,10 @@ choose 0
 advance 12 180
 click continue
 advance 12 180
-expect [NIGHTHUNTER]
+expect [BRINDLETAIL]
 state
 
-# This script tests an ABSENCE: the cat must NOT be offered gather. `--goal-only gather` finding
+# This script tests an ABSENCE: the hyena must NOT be offered gather. `--goal-only gather` finding
 # no such goal is therefore the assertion passing, so its miss must not fail the run.
 allow-flag-miss --goal-only
 quit

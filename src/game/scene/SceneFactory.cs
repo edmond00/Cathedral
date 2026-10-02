@@ -465,6 +465,15 @@ public abstract class SceneFactory
 
         /// <summary>Underground: spiders, roaches, mice. No sun-lovers.</summary>
         Subterranean,
+
+        /// <summary>Desert, hot steppe and canyon: scorpions, dung beetles, locusts, lizards, geckos.</summary>
+        Arid,
+
+        /// <summary>Jungle: leeches, army ants, fireflies, butterflies, beetles.</summary>
+        Tropical,
+
+        /// <summary>Ice and snow and the cold steppe: snow fleas, ice worms, and in summer the bloodsuckers.</summary>
+        Frozen,
     }
 
     /// <summary>
@@ -522,6 +531,29 @@ public abstract class SceneFactory
                 () => new Npc.Archetypes.LizardArchetype(),
                 () => new Npc.Archetypes.BeetleArchetype(),
                 () => new Npc.Archetypes.GardenSpiderArchetype(),
+            },
+            SmallLife.Arid => new Func<Npc.ShallowNpcArchetype>[]
+            {
+                () => new Npc.Archetypes.ScorpionArchetype(),
+                () => new Npc.Archetypes.DungBeetleArchetype(),
+                () => new Npc.Archetypes.LocustArchetype(),
+                () => new Npc.Archetypes.LizardArchetype(),
+                () => new Npc.Archetypes.GeckoArchetype(),
+            },
+            SmallLife.Tropical => new Func<Npc.ShallowNpcArchetype>[]
+            {
+                () => new Npc.Archetypes.LeechArchetype(),
+                () => new Npc.Archetypes.ArmyAntArchetype(),
+                () => new Npc.Archetypes.FireflyArchetype(),
+                () => new Npc.Archetypes.ButterflyArchetype(),
+                () => new Npc.Archetypes.BeetleArchetype(),
+            },
+            SmallLife.Frozen => new Func<Npc.ShallowNpcArchetype>[]
+            {
+                () => new Npc.Archetypes.SnowFleaArchetype(),
+                () => new Npc.Archetypes.IceWormArchetype(),
+                () => new Npc.Archetypes.MosquitoArchetype(),
+                () => new Npc.Archetypes.BumblebeeArchetype(),
             },
             _ => new Func<Npc.ShallowNpcArchetype>[]
             {

@@ -149,5 +149,11 @@ public static class VerbLessonSweep
         yield return ("COAST",    id => new Coast.CoastSceneFactory().Build(id));
         yield return ("MOUNTAIN", id => new Mountain.MountainSceneFactory().Build(id));
         yield return ("PEAK",     id => new Peak.PeakSceneFactory().Build(id));
+        // The hot and cold country's factories, from their one list.
+        foreach (var e in Shared.ClimateSceneFactories.All)
+        {
+            var make = e.Create;
+            yield return (e.AuditLabel, id => make().Build(id));
+        }
     }
 }

@@ -13,8 +13,8 @@
 #
 # `fight-wound` exists for this: `fight-end` settles the whole fight and cannot single anybody out,
 # and steering the enemy AI onto one party member for long enough to kill them is not something a
-# script can ask for. The companion is named because at seed 42 --fill-party gives the cat
-# Nighthunter, which companion_handoff.cli already keys on.
+# script can ask for. The companion is named because at seed 42 --fill-party gives the hyena
+# Brindletail, which companion_handoff.cli already keys on.
 #
 # FLAGS: --playground --skip-childhood --fill-party --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Hall" --period dawn --observe-only brewer --auto-dialogue
 
@@ -28,7 +28,7 @@ wait mode LocationInteraction 60
 
 # The companion is in the party before any of this.
 inspect party
-expect-state party Nighthunter
+expect-state party Brindletail
 
 strategy succeed
 goal attack
@@ -51,7 +51,7 @@ click button
 wait mode Fighting 90
 
 # Kill the companion by wounds — hit points, not humors.
-fight-wound Nighthunter
+fight-wound Brindletail
 wait 20
 
 # A dead companion must NOT end the fight: the protagonist is still standing, and CheckFightEnd is
@@ -64,7 +64,7 @@ wait 90
 # The notice is modal over every mode — including narration, which redraws itself every frame and
 # would paint straight over a box gated below the mode dispatch. These two `expect`s scan the
 # rendered screen, so they only pass if it really is on top.
-expect Nighthunter
+expect Brindletail
 expect died of their wounds
 
 click companion-death
@@ -73,9 +73,9 @@ advance 12 180
 
 # Out of the party for good...
 inspect party
-expect-no-state party Nighthunter
+expect-no-state party Brindletail
 # ...and a body left where they fell.
 inspect pois
-expect-state pois Nighthunter's Remains
+expect-state pois Brindletail's Remains
 
 quit

@@ -179,6 +179,14 @@ public class LocationTravelGameController : IDisposable
         ["bear"]    = () => new Cathedral.Game.Npc.Archetypes.BearArchetype(),
         ["bandit"]  = () => new Cathedral.Game.Npc.Archetypes.SavageArchetype(),
         ["brigand"] = () => new Cathedral.Game.Npc.Archetypes.SavageArchetype(),
+        ["lion"]         = () => new Cathedral.Game.Npc.Archetypes.LionArchetype(),
+        ["hyena"]        = () => new Cathedral.Game.Npc.Archetypes.HyenaArchetype(),
+        ["jaguar"]       = () => new Cathedral.Game.Npc.Archetypes.JaguarArchetype(),
+        ["tiger"]        = () => new Cathedral.Game.Npc.Archetypes.TigerArchetype(),
+        ["puma"]         = () => new Cathedral.Game.Npc.Archetypes.PumaArchetype(),
+        ["snow leopard"] = () => new Cathedral.Game.Npc.Archetypes.SnowLeopardArchetype(),
+        ["white bear"]   = () => new Cathedral.Game.Npc.Archetypes.WhiteBearArchetype(),
+        ["white wolf"]   = () => new Cathedral.Game.Npc.Archetypes.WhiteWolfArchetype(),
     };
 
     // Death screen

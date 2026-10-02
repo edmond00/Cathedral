@@ -6,7 +6,7 @@
 # ONLY thing that can end it is anyEnemyAlive going false with a second party fighter still standing.
 # Reaching WorldView is therefore the assertion; there is no weaker way to make it.
 #
-# --fill-party is what puts a companion in the roster: at seed 42 that is the cat Nighthunter, who
+# --fill-party is what puts a companion in the roster: at seed 42 that is the hyena Brindletail, who
 # joins the fight as a party fighter (BuildFighters walks Protagonist.CompanionParty). `expect` on the
 # initiative panel below is what stops this quietly degrading into a solo fight if that ever changes.
 #
@@ -36,7 +36,7 @@ wait mode Fighting 90
 
 # The companion is really in this fight, and on the party's side of it: the initiative panel marks
 # party fighters with ☻ and enemies with ☹.
-expect ☻ Nighthunt
+expect ☻ Brindleta
 expect ☹ Redhorn
 
 strategy succeed
@@ -96,6 +96,6 @@ wait 30
 # The companion came out of it still in the party — a fight that ended by killing the wrong side
 # would have taken them out of it.
 inspect party
-expect-state party Nighthunter
+expect-state party Brindletail
 
 quit

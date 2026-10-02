@@ -1,4 +1,4 @@
-﻿// WorldVariants.cs — the ten kinds of world a moon can turn out to be.
+﻿// WorldVariants.cs — the twenty kinds of world a moon can turn out to be.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -37,6 +37,13 @@ namespace Cathedral.Glyph.Microworld
     /// village in the game is placed, so this is the knob that decides how peopled a world is.</param>
     /// <param name="TownLevel">Below this, a field would be a town. Inert while the city biome is
     /// disabled in <c>BiomeDatabase</c> — kept because the threshold is real and returns with it.</param>
+    /// <param name="TemperatureOffset">Added to the climate layer everywhere: the knob behind every hot
+    /// or cold variant. Zero is the temperate world, which still has its small hot and cold country
+    /// wherever the noise alone crosses a threshold; see <see cref="ClimateRule"/>.</param>
+    /// <param name="ClimateScale">Divisor on the climate layer. Bigger means broader climate zones. At
+    /// the baseline a temperate world's hot and cold country comes as some seven to nine pockets of
+    /// each — tried at two or three broad countries, and at a rash of thirty, and both read worse on the
+    /// map. How rare the pockets are is the thresholds' business (see <see cref="ClimateRule"/>).</param>
     public sealed record WorldShape(
         float ContinentScale,
         float SettlementScale,
@@ -48,7 +55,9 @@ namespace Cathedral.Glyph.Microworld
         float PeakLevel,
         float ForestLevel,
         float FieldLevel,
-        float TownLevel)
+        float TownLevel,
+        float TemperatureOffset = 0f,
+        float ClimateScale = 22f)
     {
         // The three layers are read out of one Perlin field at three offsets far enough apart that
         // they are independent. Fixed, and not part of a variant: moving them would not make a
@@ -56,6 +65,7 @@ namespace Cathedral.Glyph.Microworld
         private static readonly Vector3 WaterOffset      = new Vector3(1337.0f, 2468.0f, 9876.0f);
         private static readonly Vector3 SettlementOffset = new Vector3(5432.0f, 8765.0f, 1234.0f);
         private static readonly Vector3 ReliefOffset     = new Vector3(9999.0f, 3333.0f, 7777.0f);
+        private static readonly Vector3 ClimateOffset    = new Vector3(4242.0f, 6161.0f, 2929.0f);
 
         /// <summary>
         /// The three noise readings at a point on the sphere, under this shape's feature sizes.
@@ -71,6 +81,18 @@ namespace Cathedral.Glyph.Microworld
             return (Perlin.Noise(p1.X, p1.Y, p1.Z),
                     Perlin.Noise(p2.X, p2.Y, p2.Z),
                     Perlin.Noise(p3.X, p3.Y, p3.Z));
+        }
+
+        /// <summary>
+        /// The temperature at a point: a fourth Perlin layer, independent of the other three, plus
+        /// this shape's <see cref="TemperatureOffset"/>. Hot is positive. Read by
+        /// <see cref="ClimateRule"/>, after <see cref="BiomeNameFor"/> has said what the ground would be
+        /// in a temperate world.
+        /// </summary>
+        public float Temperature(Vector3 position, Vector3 worldOffset)
+        {
+            Vector3 p = (ClimateOffset + position + worldOffset) / ClimateScale;
+            return Perlin.Noise(p.X, p.Y, p.Z) + TemperatureOffset;
         }
 
         /// <summary>
@@ -116,6 +138,7 @@ namespace Cathedral.Glyph.Microworld
             if (ContinentScale   <= 0f) yield return "ContinentScale must be positive";
             if (SettlementScale  <= 0f) yield return "SettlementScale must be positive";
             if (ReliefScale      <= 0f) yield return "ReliefScale must be positive";
+            if (ClimateScale     <= 0f) yield return "ClimateScale must be positive";
             if (OceanDepth       <= 0f) yield return "OceanDepth must be positive, or there is no deep water";
             if (CoastBand        <= 0f) yield return "CoastBand must be positive, or there is no shore";
             if (PeakLevel <= MountainLevel)
@@ -219,6 +242,9 @@ namespace Cathedral.Glyph.Microworld
         {
             ContinentScale = 7f,
             SeaLevel       = 0.13f,
+            // A touch more field than the baseline: on small land the climate's pockets take a
+            // larger bite out of the only country a run has.
+            FieldLevel     = -0.35f,
         };
     }
 
@@ -290,7 +316,7 @@ namespace Cathedral.Glyph.Microworld
         public override WorldShape Shape => WorldVariants.Baseline with
         {
             ForestLevel = 0.18f,
-            FieldLevel  = -0.47f,
+            FieldLevel  = -0.45f,
         };
     }
 
@@ -308,6 +334,165 @@ namespace Cathedral.Glyph.Microworld
             OceanDepth     = 0.60f,
             CoastBand      = 0.20f,
             FieldLevel     = -0.30f,
+        };
+    }
+
+    // ── Hot and cold ─────────────────────────────────────────────────────────────
+    //  Each is one of the shapes above, read hot or cold: the offset on the climate layer is what
+    //  makes the world what it is called, and the rest is which temperate world it would otherwise
+    //  have been. ClimateRule decides what the heat or the cold makes of each cell.
+
+    /// <summary>The baseline world, hot: desert where the plains were, jungle where the forest was.</summary>
+    public sealed class TorridVariant : WorldVariant
+    {
+        public const string Lemma = "torrid";
+        public override string Id    => Lemma;
+        public override string Name  => "Torrid";
+        public override string Blurb => "hot country, desert and jungle, the sea between";
+        public override WorldShape Shape => WorldVariants.Baseline with
+        {
+            TemperatureOffset = 0.66f,
+        };
+    }
+
+    /// <summary>Open country burnt dry: dunes, pans and bare rock, and almost nothing green.</summary>
+    public sealed class AridVariant : WorldVariant
+    {
+        public const string Lemma = "arid";
+        public override string Id    => Lemma;
+        public override string Name  => "Arid";
+        public override string Blurb => "dunes and salt-pans, and little else";
+        public override WorldShape Shape => WorldVariants.Baseline with
+        {
+            ForestLevel       = 0.36f,
+            FieldLevel        = -0.47f,
+            TemperatureOffset = 0.74f,
+        };
+    }
+
+    /// <summary>Forest over all of it, and all of it hot: the jungle world.</summary>
+    public sealed class TropicalVariant : WorldVariant
+    {
+        public const string Lemma = "tropical";
+        public override string Id    => Lemma;
+        public override string Name  => "Tropical";
+        public override string Blurb => "jungle over nearly all of it, and steaming shores";
+        public override WorldShape Shape => WorldVariants.Baseline with
+        {
+            ForestLevel       = -0.04f,
+            FieldLevel        = -0.44f,
+            TemperatureOffset = 0.69f,
+        };
+    }
+
+    /// <summary>Ranges baked flat into hot tablelands, cut by canyons, over warm shallow seas.</summary>
+    public sealed class TabularVariant : WorldVariant
+    {
+        public const string Lemma = "tabular";
+        public override string Id    => Lemma;
+        public override string Name  => "Tabular";
+        public override string Blurb => "hot tablelands over warm, shallow seas";
+        public override WorldShape Shape => WorldVariants.Baseline with
+        {
+            ContinentScale    = 9f,
+            SeaLevel          = 0.06f,
+            OceanDepth        = 0.50f,
+            ReliefScale       = 6f,
+            MountainLevel     = 0.14f,
+            PeakLevel         = 0.40f,
+            TemperatureOffset = 0.64f,
+        };
+    }
+
+    /// <summary>One great dry continent, its heart far from any water.</summary>
+    public sealed class XericVariant : WorldVariant
+    {
+        public const string Lemma = "xeric";
+        public override string Id    => Lemma;
+        public override string Name  => "Xeric";
+        public override string Blurb => "one dry continent, the sea far off";
+        public override WorldShape Shape => WorldVariants.Baseline with
+        {
+            ContinentScale    = 20f,
+            SeaLevel          = -0.16f,
+            TemperatureOffset = 0.62f,
+        };
+    }
+
+    /// <summary>The baseline world, cold: steppe where the plains were, ice along the shores.</summary>
+    public sealed class HiemalVariant : WorldVariant
+    {
+        public const string Lemma = "hiemal";
+        public override string Id    => Lemma;
+        public override string Name  => "Hiemal";
+        public override string Blurb => "cold country, steppe and snow, the shores iced";
+        public override WorldShape Shape => WorldVariants.Baseline with
+        {
+            TemperatureOffset = -0.66f,
+        };
+    }
+
+    /// <summary>Range upon range under ice, and snowfields in the passes.</summary>
+    public sealed class GlacialVariant : WorldVariant
+    {
+        public const string Lemma = "glacial";
+        public override string Id    => Lemma;
+        public override string Name  => "Glacial";
+        public override string Blurb => "glaciers on every range, and snow between";
+        public override WorldShape Shape => WorldVariants.Baseline with
+        {
+            ReliefScale       = 6f,
+            MountainLevel     = 0.10f,
+            PeakLevel         = 0.34f,
+            TemperatureOffset = -0.72f,
+        };
+    }
+
+    /// <summary>Dark forest that the cold does not kill, over steppe that it does.</summary>
+    public sealed class BorealVariant : WorldVariant
+    {
+        public const string Lemma = "boreal";
+        public override string Id    => Lemma;
+        public override string Name  => "Boreal";
+        public override string Blurb => "dark forest and cold steppe, the shores frozen";
+        public override WorldShape Shape => WorldVariants.Baseline with
+        {
+            ForestLevel       = 0.05f,
+            FieldLevel        = -0.44f,
+            TemperatureOffset = -0.64f,
+        };
+    }
+
+    /// <summary>Most of it sea, and the sea frozen far out from every shore.</summary>
+    public sealed class PolarVariant : WorldVariant
+    {
+        public const string Lemma = "polar";
+        public override string Id    => Lemma;
+        public override string Name  => "Polar";
+        public override string Blurb => "frozen seas, and a little ice-bound land";
+        public override WorldShape Shape => WorldVariants.Baseline with
+        {
+            ContinentScale    = 16f,
+            SeaLevel          = 0.14f,
+            CoastBand         = 0.09f,
+            TemperatureOffset = -0.80f,
+        };
+    }
+
+    /// <summary>Bare cold steppe, hardly a tree on it, to every horizon.</summary>
+    public sealed class TundralVariant : WorldVariant
+    {
+        public const string Lemma = "tundral";
+        public override string Id    => Lemma;
+        public override string Name  => "Tundral";
+        public override string Blurb => "bare cold steppe to every horizon";
+        public override WorldShape Shape => WorldVariants.Baseline with
+        {
+            ContinentScale    = 16f,
+            SeaLevel          = -0.08f,
+            ForestLevel       = 0.40f,
+            FieldLevel        = -0.47f,
+            TemperatureOffset = -0.69f,
         };
     }
 
@@ -354,6 +539,19 @@ namespace Cathedral.Glyph.Microworld
             new ArableVariant(),
             new DesolateVariant(),
             new LittoralVariant(),
+
+            // Appended rather than interleaved. The table's length is the modulus, so this re-rolled
+            // every moon all the same - but the first ten keep the order they were tuned in.
+            new TorridVariant(),
+            new AridVariant(),
+            new TropicalVariant(),
+            new TabularVariant(),
+            new XericVariant(),
+            new HiemalVariant(),
+            new GlacialVariant(),
+            new BorealVariant(),
+            new PolarVariant(),
+            new TundralVariant(),
         };
 
         /// <summary>

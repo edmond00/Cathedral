@@ -107,8 +107,9 @@ CONFIRM feeds that seed to `StartNewRun`.
 
 **The box also names what KIND of world the moon is**, and can only do so because
 `WorldVariants.ForSeed` is a pure function of the seed rather than something the generator decides
-along the way — one of ten variants, each shifting the thresholds the terrain is read through (where
-the waterline sits, how high the treeline is, how much of the land is worth farming). Like the seed
+along the way — one of twenty variants, each shifting the thresholds the terrain is read through (where
+the waterline sits, how high the treeline is, how much of the land is worth farming, and — for the
+ten climate variants — how far the world is set toward heat or cold; see `ClimateRule`). Like the seed
 above it, the World row follows the **chosen** moon and not the hovered one: it names what CONFIRM
 will hand over. `--world-variant-audit` is what keeps all ten playable; see the `audits` skill. CANCEL and Escape both go back to the menu, having spent
 nothing — the save is not deleted until `StartNewRun` runs. **A press on empty sky releases the

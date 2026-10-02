@@ -161,8 +161,9 @@ map already is.
 
 `LoreMoons.Named` puts 27 lore worlds on fixed sky ordinals, all at 20 or above, since scripts name the
 first moons (Armoth, Belavel). `SkyMoons.Name` and `WorldVariants.ForSeed` both consult it, so a lore
-moon shows its lore name in the moon box and is forced to the terrain the lore describes (the ten
-variants have no desert or ice: Golden Avoria is Desolate, New Varam Montane). Eleven more moons are
+moon shows its lore name in the moon box and is forced to the terrain the lore describes (the
+climate variants carry the lore's deserts and ice: Golden Avoria is Arid, Green Avoria Tropical,
+Zuilkansia Tabular, New Varam Glacial, Nadirine Polar). Eleven more moons are
 Oox's unnamed worlds and twenty-one Fogun's, chosen by a fixed hash, keeping their sky names. **Moving
 an ordinal re-rolls that moon and invalidates saves on it.**
 

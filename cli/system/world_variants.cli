@@ -1,7 +1,7 @@
 # A moon does not only name a world — it names what KIND of world, and says so before you take it.
 #
-# Ten variants shift the Perlin thresholds the terrain is read through: where the waterline sits, how
-# high the treeline is, how much of the land is worth farming. Which one a moon gets is a pure
+# Twenty variants shift the Perlin thresholds the terrain is read through: where the waterline sits, how
+# high the treeline is, how much of the land is worth farming, how hot or cold the world runs. Which one a moon gets is a pure
 # function of its world seed, which is what lets the selection box print it beside the seed rather
 # than only after the world has been built.
 #
@@ -26,17 +26,17 @@ wait mode WorldSelection 20
 # state, so the label is on screen with nothing beside it.
 expect World
 
-# Armoth is moon 0, its seed is -209322086, and that seed hashes to Insular. Named in the box
+# Armoth is moon 0, its seed is -209322086, and that seed hashes to Tabular. Named in the box
 # BEFORE the world exists — the whole point of deriving the variant from the seed rather than from
 # the generator.
 click moon Armoth
 wait
-expect Insular
+expect Tabular
 
 # The name and nothing else. The variant's one-line description used to be drawn under it and is
 # not any more - it belongs to `world-variant` and to the line the generator logs, not to a box of
 # labelled values. Asserted as an absence so the row cannot quietly grow it back.
-expect-not strewn across the water
+expect-not hot tablelands over warm
 
 # Take it. The world is generated here.
 click world confirm
@@ -46,15 +46,16 @@ wait mode WorldView 60
 
 # The run really is that world, and the variant was not forced by a flag — `seed-names` is what the
 # seed would have chosen on its own, and it agrees.
-expect-state world-variant id=insular
+expect-state world-variant id=tabular
 expect-state world-variant forced=no
-expect-state world-variant seed-names=insular
+expect-state world-variant seed-names=tabular
 expect-no-state world-variant (no world generated)
 
-# The shape reached the generator rather than sitting in a table unread: Insular is the baseline
-# with the continents broken small and the waterline raised, so its continent scale is well under
-# the baseline's 12.
-expect-state world-variant continent=7.0
+# The shape reached the generator rather than sitting in a table unread: Tabular is the baseline
+# with the continents broken smaller and the relief made montane, so both scales sit under the
+# baseline's 12 and 8.
+expect-state world-variant continent=9.0
+expect-state world-variant relief=6.0
 expect-state world-variant settlement=3.0
 
 # And it is on the world line beside the region, which is where a script asking one question about

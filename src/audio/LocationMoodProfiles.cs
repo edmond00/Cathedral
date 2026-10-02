@@ -29,6 +29,16 @@ public static class LocationMoodProfiles
         ["ocean"]    = new(new(0.40f, 0.30f, 0.55f), new(0.75f, 0.55f, 0.85f)),
         ["field"]    = new(new(0.05f, 0.05f, 0.10f), new(0.25f, 0.20f, 0.35f)),
 
+        // --- climate biomes --- the hot country warmer and stranger, the cold country colder.
+        ["desert"]      = new(new(0.10f, 0.15f, 0.40f), new(0.35f, 0.40f, 0.70f)),
+        ["hot steppe"]  = new(new(0.05f, 0.15f, 0.25f), new(0.30f, 0.40f, 0.50f)),
+        ["jungle"]      = new(new(0.20f, 0.25f, 0.50f), new(0.45f, 0.50f, 0.80f)),
+        ["canyon"]      = new(new(0.20f, 0.15f, 0.50f), new(0.45f, 0.40f, 0.75f)),
+        ["sea ice"]     = new(new(0.60f, 0.25f, 0.55f), new(0.85f, 0.50f, 0.80f)),
+        ["glacier"]     = new(new(0.70f, 0.30f, 0.65f), new(0.95f, 0.55f, 0.90f)),
+        ["snowfield"]   = new(new(0.60f, 0.20f, 0.55f), new(0.85f, 0.45f, 0.80f)),
+        ["cold steppe"] = new(new(0.50f, 0.15f, 0.40f), new(0.75f, 0.35f, 0.65f)),
+
         // --- location types ---
         ["church"]         = new(new(0.55f, 0.05f, 0.45f), new(0.80f, 0.20f, 0.65f)),
         ["dungeon"]        = new(new(0.65f, 0.45f, 0.65f), new(0.90f, 0.80f, 0.90f)),

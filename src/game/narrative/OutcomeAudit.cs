@@ -275,5 +275,11 @@ public static class OutcomeAudit
         yield return ("MOUNTAIN", id => new Scene.Mountain.MountainSceneFactory().Build(id));
         yield return ("PEAK",     id => new Scene.Peak.PeakSceneFactory().Build(id));
         yield return ("COAST",    id => new Scene.Coast.CoastSceneFactory().Build(id));
+        // The hot and cold country's factories, from their one list.
+        foreach (var e in Scene.Shared.ClimateSceneFactories.All)
+        {
+            var make = e.Create;
+            yield return (e.AuditLabel, id => make().Build(id));
+        }
     }
 }

@@ -32,11 +32,11 @@ as it is inhabited.
 ## 2. The disposition of a world
 
 The number that settles a world settles more than where its land falls. It settles the **disposition**
-of that world: which of ten manners the sphere is composed after.
+of that world: which of twenty manners the sphere is composed after.
 
-The terrain is read out of three fields of noise laid over the sphere — one governing water, one
-relief, one the settlement of the land — and a disposition is a set of thresholds and scales those
-three fields are read through. It moves five things:
+The terrain is read out of four fields of noise laid over the sphere — one governing water, one
+relief, one the settlement of the land, one heat — and a disposition is a set of thresholds and
+scales those fields are read through. It moves six things:
 
 | | |
 |---|---|
@@ -45,6 +45,7 @@ three fields are read through. It moves five things:
 | **The treeline** | where the ground turns to mountain, and where mountain turns to bare peak |
 | **The temper of the land** | what proportion of the walkable ground is forest, and what proportion is tilled field |
 | **The size of the features** | how broad a continent is before the sea interrupts it, and how long a range of mountains runs |
+| **The temper of the air** | how far the whole world is set toward heat or toward cold |
 
 The consequences reach every other rule in this chapter. A high waterline leaves narrow land between
 long arms of sea, and since **no route on foot may cross water** ([§3](#3-the-compass-of-a-stride)),
@@ -76,18 +77,44 @@ waterline — and a threshold upon a field is not the same thing as a distance f
 field is broad and its slopes gentle, as it is in a world of vast continents, that little band
 reaches a great way inland, and would leave beaches in country that has never seen water. So the
 reckoning is made twice: the noise proposes a shore, and then every cell that borders neither sea nor
-ocean is reduced to ordinary plain. **What a disposition can widen is therefore how completely a
+ocean is reduced to ordinary plain. **The converse holds as well: every cell of land that borders the
+sea is shore**, whatever the noise had made of it — a range or a wood that runs down to the water
+ends in a shore, and in cold country that shore is sea ice. Nothing else ever touches the sea. **What a disposition can widen is therefore how completely a
 coastline reads as coast, never how far the coast reaches from the coastline** — a shore is as long
 as the shore is, and a world wanting more of it must break its land up rather than raise a threshold.
+
+**Heat and cold remake the ground.** The fourth field is read last, after the other three have
+settled what a cell would be in a temperate world, and it changes only cells whose reading crosses a
+threshold. Above **0.48** a cell is hot country: mountain and peak become **hot steppe**, plain and
+field become **desert**, forest becomes **jungle**. Below **−0.48** it is cold country: peak becomes
+**glacier**, mountain **snowfield**, plain and field **cold steppe**, and a shore becomes **sea ice**.
+Whatever else stands in hot or cold country keeps its temperate nature — a hot shore is a shore, a cold
+forest a forest.
+
+Two further rules settle the edges. Wherever temperate plain or field would touch desert, it
+becomes **canyon**, the broken ground where grass gives out on sand, as the coast lies between land
+and sea. And the
+sea beside sea ice may freeze in its turn, ring upon ring outward, **each ring wanting 0.08 more cold
+than the one inside it**: a world barely cold has an iced shore, and only a world far below the
+threshold has a frozen sea, which is walked upon like land.
+
+Ten of the twenty dispositions are temperate, their temper set at nothing; even these hold a little
+hot and a little cold country wherever the field alone crosses a threshold — some seven to nine
+pockets of each in a world, a few parts in the hundred of its land. The other ten are set hot or
+cold, by between **0.62** and **0.80**, and are hot or cold country over half their land and often far more. **No farm, village or other
+settlement stands on any ground that heat or cold has remade**, and the tilled field from which every
+settlement is reckoned is absent there by the same rule.
 
 **A traveller is never set down where nothing can be reached.** Since no route on foot may cross
 water, the body of land one wakes upon is the whole of the world that life will be lived in — and a
 body of land bearing no tilled ground bears no farm and no village either. The waking place is
-therefore drawn only from land that carries enough field to hold settlements, and the islets and
-spits that carry none are passed over, however pleasant the ground upon them. In an evenly composed
-world this sets aside one or two cells in the hundred; in a world of scattered isles, a third of them
-and sometimes two thirds. Where no land whatever qualifies — which no disposition permits — the rule
-is abandoned rather than obeyed into a game that will not begin.
+therefore drawn only from land that carries **twenty cells of field** or more, and the islets and
+spits that carry fewer are passed over, however pleasant the ground upon them. Only open ground is
+ever chosen — plain, field or shore. Where fewer than **a hundred and fifty** such cells qualify, as in a world remade by heat or
+cold, the open ground of that country joins it — desert, cold steppe, canyon, hot steppe and
+snowfield — on any body of land of three hundred cells or more, since such a world is unsettled and
+its fields cannot be what decides. Where no land whatever qualifies, the rule is abandoned rather
+than obeyed into a game that will not begin.
 
 ## 3. The compass of a stride
 
@@ -119,6 +146,14 @@ the route.
 | Forest | 8 | 4 | wolf 6 %, bear 2 %, brigand 2 % |
 | Mountain | 12 | 6 | bear 3 %, rockfall 2 % |
 | Peak | 18 | 10 | blizzard 5 %, ice wraith 1 % |
+| Canyon | 8 | 2 | puma 3 %, rockfall 2 % |
+| Desert | 9 | 1 | hyena 3 %, sandstorm 3 % |
+| Hot steppe | 11 | 2 | lion 3 %, hyena 3 % |
+| Jungle | 11 | 2 | jaguar 4 %, tiger 2 %, fever 3 % |
+| Cold steppe | 6 | 5 | white wolf 3 %, blizzard 2 % |
+| Sea ice | 8 | 8 | white bear 3 %, thin ice 2 % |
+| Snowfield | 13 | 9 | snow leopard 2 %, blizzard 4 % |
+| Glacier | 20 | 14 | crevasse 4 %, blizzard 5 % |
 | *(Sea)* | 10 | 8 | storm 3 %, pirate 2 % |
 | *(Ocean)* | 14 | 16 | leviathan 1 %, storm 4 % |
 

@@ -13,13 +13,26 @@ public static class SpeciesRegistry
     public static readonly Species Bear  = new BearSpecies();
     public static readonly Species Boar  = new BoarSpecies();
 
+    // The hot and cold country's beasts. The white bear and white wolf are Bear and Wolf.
+    public static readonly Species Lion        = new LionSpecies();
+    public static readonly Species Tiger       = new TigerSpecies();
+    public static readonly Species Jaguar      = new JaguarSpecies();
+    public static readonly Species Puma        = new PumaSpecies();
+    public static readonly Species SnowLeopard = new SnowLeopardSpecies();
+    public static readonly Species Hyena       = new HyenaSpecies();
+    public static readonly Species Warthog     = new WarthogSpecies();
+
     /// <summary>Every species, in declaration order.</summary>
-    public static readonly Species[] All = { Human, Wolf, Fox, Cat, Dog, Bear, Boar };
+    public static readonly Species[] All =
+    {
+        Human, Wolf, Fox, Cat, Dog, Bear, Boar,
+        Lion, Tiger, Jaguar, Puma, SnowLeopard, Hyena, Warthog,
+    };
 
     /// <summary>
     /// A stable key for <paramref name="species"/>, for saving. Keyed on the type name rather than on
     /// <see cref="Species.DisplayName"/>, which is player-facing prose and free to be reworded, and
-    /// rather than on an <c>Id</c> property, which would mean editing all seven subclasses to record
+    /// rather than on an <c>Id</c> property, which would mean editing every subclass to record
     /// something the type name already says.
     /// </summary>
     public static string IdOf(Species species) => species.GetType().Name;

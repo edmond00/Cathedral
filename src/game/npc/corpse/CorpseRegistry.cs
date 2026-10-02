@@ -119,6 +119,86 @@ public static class CorpseRegistry
                 new ItemElement(new Claw()), new ItemElement(new Claw()),
             }),
 
+        // ── The hot and cold country ─────────────────────────────────────────
+        // Sized against the rest: the great cats as a wolf grown toward a bear, the hyena as a wolf
+        // with a scavenger's gut, the warthog as a smaller boar. White bear and wolf are Bear and Wolf.
+        [typeof(LionSpecies)] = new(
+            "the lion lies heavy in the dust, the great head turned aside, flies already at the eyes",
+            () => new()
+            {
+                new ItemElement(new Hide()),
+                new ItemElement(new Meat()), new ItemElement(new Meat()),
+                new ItemElement(new Hair()),
+                new ItemElement(new Fang()), new ItemElement(new Fang()),
+                new ItemElement(new Claw()),
+                new ItemElement(new Skull()),
+            }),
+
+        [typeof(TigerSpecies)] = new(
+            "the tiger lies stretched its whole enormous length, the stripes still somehow moving",
+            () => new()
+            {
+                new ItemElement(new Pelt()),
+                new ItemElement(new Meat()), new ItemElement(new Meat()),
+                new ItemElement(new Heart()),
+                new ItemElement(new Fang()), new ItemElement(new Fang()),
+                new ItemElement(new Claw()), new ItemElement(new Claw()),
+            }),
+
+        [typeof(JaguarSpecies)] = new(
+            "the jaguar lies coiled on its side, the rosettes dull now, jaws a little open",
+            () => new()
+            {
+                new ItemElement(new Pelt()),
+                new ItemElement(new Meat()), new ItemElement(new Meat()),
+                new ItemElement(new Liver()),
+                new ItemElement(new Fang()), new ItemElement(new Fang()),
+                new ItemElement(new Claw()),
+            }),
+
+        [typeof(PumaSpecies)] = new(
+            "the puma lies long and loose-limbed on the rock, smaller in death than it was",
+            () => new()
+            {
+                new ItemElement(new Pelt()),
+                new ItemElement(new Meat()), new ItemElement(new Meat()),
+                new ItemElement(new Fang()),
+                new ItemElement(new Claw()), new ItemElement(new Claw()),
+                new ItemElement(new Sinew()),
+            }),
+
+        [typeof(SnowLeopardSpecies)] = new(
+            "the snow leopard lies curled in the snow, the thick tail across its face as if asleep",
+            () => new()
+            {
+                new ItemElement(new Pelt()),
+                new ItemElement(new Meat()),
+                new ItemElement(new Tail()),
+                new ItemElement(new Fang()),
+                new ItemElement(new Claw()), new ItemElement(new Claw()),
+            }),
+
+        [typeof(HyenaSpecies)] = new(
+            "the hyena lies sprawled and spotted, the heavy jaw slack over yellow teeth",
+            () => new()
+            {
+                new ItemElement(new Hide()),
+                new ItemElement(new Meat()),
+                new ItemElement(new Liver()),
+                new ItemElement(new Fang()), new ItemElement(new Fang()),
+                new ItemElement(new Bone()),
+            }),
+
+        [typeof(WarthogSpecies)] = new(
+            "the warthog lies on its side, the curved tusks up, the warty face still furious",
+            () => new()
+            {
+                new ItemElement(new Hide()),
+                new ItemElement(new Meat()), new ItemElement(new Meat()),
+                new ItemElement(new Tusk()), new ItemElement(new Tusk()),
+                new ItemElement(new Suet()),
+            }),
+
         [typeof(DogSpecies)] = new(
             "the dog lies with its head lolling, the coarse-furred body slack",
             () => new()

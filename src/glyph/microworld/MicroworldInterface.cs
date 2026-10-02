@@ -298,16 +298,27 @@ namespace Cathedral.Glyph.Microworld
             var noiseValues = new List<float>();
             var glyphCounts = new Dictionary<char, int>();
 
+            // The biome of every vertex, before anything is placed on one: the terrain layers, the
+            // coast held to the sea, heat and cold. Neighbour-aware, so it has to be whole before the
+            // per-vertex pass below reads it — a canyon is decided by what is next door.
+            var classified = WorldClassifier.Classify(_variant.Shape, VertexCount, GetVertexPosition,
+                                                      GetNeighboringVertices, _worldNoiseOffset);
+            if (classified.StrandedCoast > 0)
+                Console.WriteLine($"[PostProcess] {classified.StrandedCoast} coast tile(s) touched no water; made plain.");
+            Console.WriteLine($"[Climate] {classified.Climate.Replaced} cell(s) hot or cold, "
+                            + $"{classified.Climate.Canyon} canyon, {classified.Climate.FrozenSea} of sea frozen over.");
+
             // Apply noise and biome generation to all vertices
             for (int i = 0; i < VertexCount; i++)
             {
                 Vector3 pos = GetVertexPosition(i);
 
                 // Three scales of Perlin noise, read through this world's variant: how big its
-                // features are and where its waterline and treeline sit.
+                // features are and where its waterline and treeline sit. Read again here only for the
+                // statistics; the biome itself is the classifier's.
                 var (perlinNoise1, perlinNoise2, perlinNoise3) = _variant.Shape.Sample(pos, _worldNoiseOffset);
 
-                BiomeType biome = _variant.Shape.BiomeFor(perlinNoise1, perlinNoise2, perlinNoise3);
+                BiomeType biome = Biomes[classified.Biome[i]];
                 
                 // Calculate location spawn chance and determine if a location should spawn
                 LocationType? location = DetermineLocation(biome, pos);
@@ -364,11 +375,6 @@ namespace Cathedral.Glyph.Microworld
             PrintNoiseStatistics(noiseValues, "Microworld Noise Distribution Statistics");
             PrintGlyphStatistics(glyphCounts, VertexCount, "Microworld Biome-Based Glyph Distribution");
 
-            // Before anything downstream reads a biome: the farms hung off fields, the region
-            // division weighted by travel cost, the spawn. A shore that is not on the sea costs six
-            // days a cell instead of five and colours a tile yellow in the middle of a continent.
-            ReclaimInlandCoast();
-
             PostProcessWorld();
 
             // After PostProcessWorld, because the farms and villages it places are part of the world
@@ -387,41 +393,6 @@ namespace Cathedral.Glyph.Microworld
         }
 
         // ── Regions ─────────────────────────────────────────────────────────────────
-
-        /// <summary>
-        /// Turns every coast tile that borders no water into plain — see <see cref="CoastRule"/> for
-        /// why the classification alone cannot get this right.
-        /// </summary>
-        private void ReclaimInlandCoast()
-        {
-            var stranded = CoastRule.Stranded(
-                VertexCount,
-                v => vertexData.TryGetValue(v, out var d) ? d.Biome.Name : null,
-                GetNeighboringVertices);
-
-            if (stranded.Count == 0) return;
-
-            var plain = Biomes[CoastRule.Replacement];
-            foreach (int v in stranded)
-            {
-                var data = vertexData[v];
-                data.Biome = plain;
-
-                // A location keeps its own glyph and colour: what stood on the tile did not move
-                // because the ground under it was reclassified. Only a bare tile is repainted.
-                if (!data.Location.HasValue)
-                {
-                    data.GlyphChar = plain.Glyph;
-                    data.Color = new System.Numerics.Vector3(plain.Color.X, plain.Color.Y, plain.Color.Z);
-                }
-
-                vertexData[v] = data;
-                SetVertexGlyph(v, data.GlyphChar, TileColor(v, data),
-                               data.Location?.Size ?? plain.Size);
-            }
-
-            Console.WriteLine($"[PostProcess] {stranded.Count} coast tile(s) touched no water; made plain.");
-        }
 
         /// <summary>
         /// The world's division into regions, or null before a world has been generated.
@@ -746,17 +717,11 @@ namespace Cathedral.Glyph.Microworld
         // Protagonist Management Methods
         private void InitializeProtagonist()
         {
-            // Find a suitable starting location (preferably plain or field biome)
-            var suitableVertices = new List<int>();
-            
-            foreach (var kvp in vertexData)
-            {
-                var biome = kvp.Value.Biome;
-                if (biome.Name == "plain" || biome.Name == "field" || biome.Name == "coast")
-                {
-                    suitableVertices.Add(kvp.Key);
-                }
-            }
+            // Open ground on a landmass worth waking on — see SpawnRule, which --world-variant-audit
+            // shares so that it measures this spawn and not a description of it.
+            var suitableVertices = SpawnRule.Candidates(VertexCount,
+                v => vertexData.TryGetValue(v, out var d) ? d.Biome.Name : null,
+                GetNeighboringVertices);
 
             if (suitableVertices.Count == 0)
             {
@@ -764,7 +729,7 @@ namespace Cathedral.Glyph.Microworld
                 foreach (var kvp in vertexData)
                 {
                     var biome = kvp.Value.Biome;
-                    if (biome.Name != "sea" && biome.Name != "ocean")
+                    if (!BiomeDatabase.WaterBiomes.Contains(biome.Name))
                     {
                         suitableVertices.Add(kvp.Key);
                     }
@@ -786,10 +751,16 @@ namespace Cathedral.Glyph.Microworld
                 // seed that happens to put one within travel range of the spawn point.
                 if (Config.Debug.StartAt is { Length: > 0 } want)
                 {
-                    var match = suitableVertices.FirstOrDefault(v =>
-                        vertexData.TryGetValue(v, out var d) &&
-                        (d.Location?.Name ?? d.Biome.Name).Contains(want, StringComparison.OrdinalIgnoreCase),
-                        -1);
+                    bool Matches(int v) => vertexData.TryGetValue(v, out var d) &&
+                        (d.Location?.Name ?? d.Biome.Name).Contains(want, StringComparison.OrdinalIgnoreCase);
+
+                    // The spawn candidates first; failing them, any land at all. A world with enough
+                    // temperate ground never offers its desert or glacier as a waking place, and the
+                    // climate biomes are exactly the rare ground this flag exists to reach.
+                    var match = suitableVertices.FirstOrDefault(Matches, -1);
+                    if (match < 0)
+                        match = Enumerable.Range(0, VertexCount).FirstOrDefault(v =>
+                            Matches(v) && !BiomeDatabase.WaterBiomes.Contains(vertexData[v].Biome.Name), -1);
 
                     if (match >= 0)
                     {
@@ -847,8 +818,16 @@ namespace Cathedral.Glyph.Microworld
         /// <summary>
         /// Returns the shader category alpha for a tile:
         ///   1.0 = nature (grayscale), 2.0 = water (dark purple),
-        ///   3.0 = human construction (dark yellow), 4.0 = field (intermediate)
+        ///   3.0 = human construction (dark yellow), 4.0 = field, coast, desert and hot steppe
+        ///   (intermediate).
+        ///   5.0 is the region overlay's, set elsewhere.
         /// </summary>
+        /// <summary>The biomes drawn with the field's warm tint rather than nature's grey.</summary>
+        private static readonly HashSet<string> FieldTinted = new()
+        {
+            "field", "coast", BiomeDatabase.Desert, BiomeDatabase.HotSteppe,
+        };
+
         private static float GetTileCategory(VertexWorldData data)
         {
             if (data.Location.HasValue)
@@ -862,7 +841,7 @@ namespace Cathedral.Glyph.Microworld
                 string n = data.Biome.Name;
                 if (BiomeDatabase.WaterBiomes.Contains(n))     return 2.0f;
                 if (BiomeDatabase.HumanBiomes.Contains(n))     return 3.0f;
-                if (n == "field")                              return 4.0f;
+                if (FieldTinted.Contains(n))                  return 4.0f;
             }
             return 1.0f;
         }

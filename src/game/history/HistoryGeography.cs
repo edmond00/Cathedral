@@ -71,13 +71,25 @@ public sealed class HistoryGeography
         {
             int r = map.RegionAt(v);
             if (r < 0) continue;
+            // The climate's ground is read as the temperate ground it was: a people can live in a
+            // jungle as in a forest, and on desert or cold steppe as on open plain, and the high
+            // ground stays high whatever the weather. The lore's own peoples of the hot and cold
+            // worlds would otherwise have nowhere habitable to stand.
             switch (biomeAt(v))
             {
                 case "field":    field[r]++;    break;
-                case "forest":   forest[r]++;   break;
+                case "forest":
+                case BiomeDatabase.Jungle:     forest[r]++;   break;
                 case "mountain":
-                case "peak":     mountain[r]++; break;
-                case "plain":    plain[r]++;    break;
+                case "peak":
+                case BiomeDatabase.HotSteppe:
+                case BiomeDatabase.Snowfield:
+                case BiomeDatabase.Glacier:    mountain[r]++; break;
+                case "plain":
+                case BiomeDatabase.Desert:
+                case BiomeDatabase.Canyon:
+                case BiomeDatabase.ColdSteppe:
+                case BiomeDatabase.SeaIce:     plain[r]++;    break;
                 case "city":     city[r]++;     break;
             }
             if (!coastal[r])

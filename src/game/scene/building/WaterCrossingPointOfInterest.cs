@@ -20,6 +20,12 @@ public enum WaterKind
 
     /// <summary>A dug channel feeding a mill. Fast, walled and deeper than it looks.</summary>
     MillLeat,
+
+    /// <summary>A lane of open sea between two floes. Black, and cold enough to stop the heart.</summary>
+    Lead,
+
+    /// <summary>A channel of meltwater cut into the ice. Fast, glass-sided and colder than any river.</summary>
+    Meltwater,
 }
 
 /// <summary>
@@ -67,6 +73,8 @@ public class WaterCrossingPointOfInterest : ConnectorPointOfInterest
         WaterKind.Pond     => 5,
         WaterKind.River    => 6,
         WaterKind.Cove     => 7,
+        WaterKind.Meltwater => 6,
+        WaterKind.Lead     => 7,
         _                  => 5,
     };
 
@@ -82,6 +90,11 @@ public class WaterCrossingPointOfInterest : ConnectorPointOfInterest
             null, null,
             new ContusionWound(), new ContusionWound(), new ConcussionsWound(), new BrokenRibsWound(),
         },
+        WaterKind.Lead or WaterKind.Meltwater => new Wound?[]
+        {
+            null, null,
+            new ContusionWound(), new ConcussionsWound(), new BrokenRibsWound(), new ContusionWound(),
+        },
         _ => new Wound?[] { null, null, null, new ContusionWound(), new ConcussionsWound() },
     };
 
@@ -92,6 +105,8 @@ public class WaterCrossingPointOfInterest : ConnectorPointOfInterest
         WaterKind.Pond     => "pond",
         WaterKind.Cove     => "cove",
         WaterKind.MillLeat => "leat",
+        WaterKind.Lead     => "lead",
+        WaterKind.Meltwater => "meltwater",
         _                  => "water",
     };
 }

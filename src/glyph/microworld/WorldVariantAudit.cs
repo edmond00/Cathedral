@@ -92,6 +92,8 @@ namespace Cathedral.Glyph.Microworld
         private const int   MinViableSpawns   = 200;     // cells the spawn rule must have to choose from
         private const int   FieldsForARun     = 40;      // fields the world's richest country must carry
         private const int   BlurbRoom        = 56;      // characters a variant's one-line description may run to
+        private const float MaxTemperateClimateShare = 0.06f; // hot or cold land in a temperate world, each
+        private const float MinClimateShare = 0.45f;          // a hot or cold world's own climate, of its land
 
         public static string BuildReport()
         {
@@ -206,7 +208,8 @@ namespace Cathedral.Glyph.Microworld
             sb.AppendLine(new string('-', Math.Max(variant.Name.Length, 20)));
             sb.AppendLine($"  {variant.Blurb}");
             sb.AppendLine();
-            sb.AppendLine("   seed        land   field  forest   mtn+pk   coast   plain  | inland  shallow  masses    dead  viable  best  regions");
+            sb.AppendLine($"  climate offset {variant.Shape.TemperatureOffset.ToString("+0.00;-0.00;0", CultureInfo.InvariantCulture)}");
+            sb.AppendLine("   seed        land   field  forest   mtn+pk   coast   plain    hot    cold  | inland  shallow  masses    dead  viable  best  regions");
 
             var ordinals = OrdinalsOf(variant).ToList();
             var built = new List<WorldStats>();
@@ -221,7 +224,8 @@ namespace Cathedral.Glyph.Microworld
                 if (i < PrintedRows)
                     sb.AppendLine($"  {seed,11}  {Pct(w.Land, w.Total)}  {Pct(w.Field, w.Total)}  "
                                 + $"{Pct(w.Forest, w.Total)}  {Pct(w.Mountain, w.Total)}  "
-                                + $"{Pct(w.Coast, w.Total)}  {Pct(w.Plain, w.Total)}  | "
+                                + $"{Pct(w.Coast, w.Total)}  {Pct(w.Plain, w.Total)}  "
+                                + $"{Pct(w.Hot, w.Total)}  {Pct(w.Cold, w.Total)}  | "
                                 + $"{Pct(w.StrandedCoast, Math.Max(w.BandCoast, 1)),6}  "
                                 + $"{Pct(w.Sea, Math.Max(w.Sea + w.Ocean, 1)),7}  "
                                 + $"{w.Landmasses,6}  {Pct(w.Marooned, Math.Max(w.Spawnable, 1)),6}  "
@@ -234,19 +238,22 @@ namespace Cathedral.Glyph.Microworld
                     faults.Add($"{where}: only {P(land)} of the sphere is land (floor {P(MinLandShare, 0)}) - nowhere to walk");
                 if (land > MaxLandShare)
                     faults.Add($"{where}: {P(land)} of the sphere is land (ceiling {P(MaxLandShare, 0)}) - the sea has stopped shaping it");
-                if (Share(w.Field, w.Land) < MinFieldShareOfLand)
+                bool climateWorld = IsClimateVariant(variant);
+                if (!climateWorld && Share(w.Field, w.Land) < MinFieldShareOfLand)
                     faults.Add($"{where}: fields are {P(Share(w.Field, w.Land), 2)} of the LAND (floor {P(MinFieldShareOfLand)}) - "
                              + "farms and villages are placed only on fields, so this world is unpeopled");
                 if (Share(w.Spawnable, w.Total) < MinSpawnableShare)
                     faults.Add($"{where}: only {P(Share(w.Spawnable, w.Total), 2)} of the sphere can be spawned on "
-                             + $"(floor {P(MinSpawnableShare)}) - InitializeProtagonist wants plain, field or coast");
+                             + $"(floor {P(MinSpawnableShare)}) - InitializeProtagonist wants open ground");
                 if (w.ViableSpawns < MinViableSpawns)
                     faults.Add($"{where}: only {w.ViableSpawns} cell(s) sit on a landmass worth waking on "
                              + $"(floor {MinViableSpawns}) - InitializeProtagonist has almost nothing to draw from, "
                              + "and falls back to spawning anywhere at all");
-                if (w.BestLandmassFields < FieldsForARun)
+                if (!climateWorld && w.BestLandmassFields < FieldsForARun)
                     faults.Add($"{where}: the richest landmass carries {w.BestLandmassFields} field(s) "
                              + $"(floor {FieldsForARun}) - the best country in this world is a hamlet");
+                if (w.ShoreBreaches > 0)
+                    faults.Add($"{where}: {w.ShoreBreaches} land cell(s) on the water are neither shore nor sea ice");
                 if (w.Regions > 0 && w.Regions < MinRegions)
                     faults.Add($"{where}: {w.Regions} region(s) (floor {MinRegions}) - too few to hang a history on");
                 if (w.Regions > MaxRegions)
@@ -261,12 +268,41 @@ namespace Cathedral.Glyph.Microworld
 
             sb.AppendLine($"  {"worst",11}  {Pct(built.Min(w => w.Land), built[0].Total)}  "
                         + $"{Pct(built.Min(w => w.Field), built[0].Total)}  "
-                        + $"{"",6}   {"",6}   {"",6}   {"",6}  | "
+                        + $"{"",6}   {"",6}   {"",6}   {"",6}   {"",6}  {"",6}  | "
                         + $"{(P(built.Max(w => Share(w.StrandedCoast, Math.Max(w.BandCoast, 1))))),6}  "
                         + $"{(P(built.Min(w => Share(w.Sea, Math.Max(w.Sea + w.Ocean, 1))))),7}  "
                         + $"{built.Max(w => w.Landmasses),6}  "
                         + $"{(P(built.Max(w => Share(w.Marooned, Math.Max(w.Spawnable, 1))))),6}  "
                         + $"{built.Min(w => w.ViableSpawns),6}  {built.Min(w => w.BestLandmassFields),4}");
+
+            // The climate. A temperate world should have a little hot and a little cold country and
+            // not much of either; a climate world should be mostly its climate. Judged over the whole
+            // sample, since one temperate seed with no desert in it is no fault at all.
+            float hotShare  = built.Sum(w => Share(w.Hot,  w.Land)) / built.Count;
+            float coldShare = built.Sum(w => Share(w.Cold, w.Land)) / built.Count;
+            float hotZones  = (float)built.Sum(w => w.HotZones)  / built.Count;
+            float coldZones = (float)built.Sum(w => w.ColdZones) / built.Count;
+            sb.AppendLine($"  climate: hot {P(hotShare)} and cold {P(coldShare)} of the land on average; "
+                        + $"canyon {built.Sum(w => w.Canyon)}, frozen sea {built.Sum(w => w.FrozenSea)} cell(s) over the sample");
+            sb.AppendLine($"  zones:   {hotZones.ToString("F1", CultureInfo.InvariantCulture)} hot and "
+                        + $"{coldZones.ToString("F1", CultureInfo.InvariantCulture)} cold per world on average "
+                        + $"(cold per world: {string.Join(" ", built.Select(w => w.ColdZones))})");
+            float t = variant.Shape.TemperatureOffset;
+            if (t == 0f)
+            {
+                if (hotShare <= 0f || coldShare <= 0f)
+                    faults.Add($"{variant.Id}: a temperate variant with no {(hotShare <= 0f ? "hot" : "cold")} country anywhere in {built.Count} worlds");
+                if (hotShare > MaxTemperateClimateShare || coldShare > MaxTemperateClimateShare)
+                    faults.Add($"{variant.Id}: {P(Math.Max(hotShare, coldShare))} of a temperate variant's land is hot or cold "
+                             + $"(ceiling {P(MaxTemperateClimateShare, 0)}) - the climate pockets have stopped being pockets");
+            }
+            else
+            {
+                float own = t > 0 ? hotShare : coldShare;
+                if (own < MinClimateShare)
+                    faults.Add($"{variant.Id}: only {P(own)} of a {(t > 0 ? "hot" : "cold")} variant's land is {(t > 0 ? "hot" : "cold")} "
+                             + $"(floor {P(MinClimateShare, 0)}) - its offset does not make the world it names");
+            }
 
             sb.AppendLine();
         }
@@ -290,7 +326,53 @@ namespace Cathedral.Glyph.Microworld
             int Total, int Land, int Field, int Forest, int Mountain, int Coast, int Plain,
             int Spawnable, int Marooned, int ViableSpawns, int BestLandmassFields,
             int BandCoast, int StrandedCoast, int Sea, int Ocean,
-            int Landmasses, int Regions);
+            int Landmasses, int Regions,
+            int Hot, int Cold, int Canyon, int FrozenSea,
+            int HotZones, int ColdZones, int ShoreBreaches);
+
+        /// <summary>
+        /// Land cells on the water that are neither shore nor sea ice. Always zero: CoastRule makes
+        /// every such cell shore, and only cold turns shore into anything else.
+        /// </summary>
+        private static int ShoreBreaches(string[] biome, List<int>[] adjacency)
+        {
+            int breaches = 0;
+            for (int v = 0; v < biome.Length; v++)
+            {
+                string b = biome[v];
+                if (BiomeDatabase.WaterBiomes.Contains(b) || BiomeDatabase.CoastBiomes.Contains(b) || b == BiomeDatabase.SeaIce)
+                    continue;
+                if (adjacency[v].Any(w => BiomeDatabase.WaterBiomes.Contains(biome[w]))) breaches++;
+            }
+            return breaches;
+        }
+
+        /// <summary>
+        /// A climate zone too small to count as one: a stray handful of cells over the threshold is a
+        /// speck on the map, not a cold country anyone would name.
+        /// </summary>
+        private const int MinZoneCells = 30;
+
+        /// <summary>
+        /// How many separate hot or cold countries a world has: connected stretches of the sphere,
+        /// water included, whose temperature crosses the threshold, counting only those of
+        /// <see cref="MinZoneCells"/> or more.
+        /// </summary>
+        private static int Zones(float[] temperature, List<int>[] adjacency, Func<float, bool> inZone)
+        {
+            int n = temperature.Length;
+            var (of, count) = SpawnRule.Landmasses(n, v => adjacency[v], v => inZone(temperature[v]));
+            var size = new int[count];
+            for (int v = 0; v < n; v++) if (of[v] >= 0) size[of[v]]++;
+            return size.Count(s => s >= MinZoneCells);
+        }
+
+        /// <summary>
+        /// A variant whose climate offset puts most of it in hot or cold country. Such a world has
+        /// next to no fields, and since hot and cold ground carries no settlement yet, that is the
+        /// design rather than a fault — so the field floors are reported for it and not enforced.
+        /// </summary>
+        private static bool IsClimateVariant(WorldVariant variant) => variant.Shape.TemperatureOffset != 0f;
 
         /// <summary>
         /// Classifies every vertex under <paramref name="variant"/> on <paramref name="seed"/> and
@@ -309,26 +391,17 @@ namespace Cathedral.Glyph.Microworld
                 (float)(worldRng.NextDouble() * 20000.0 - 10000.0));
 
             int n = positions.Count;
-            var shape = variant.Shape;
-            var biome = new string[n];
-            var settlement = new float[n];
 
-            for (int v = 0; v < n; v++)
-            {
-                var (water, settle, relief) = shape.Sample(positions[v], offset);
-                biome[v] = shape.BiomeNameFor(water, settle, relief);
-                settlement[v] = settle;
-            }
+            // Exactly what GenerateWorld does: the shared classifier, coast rule and climate included.
+            // Measuring the noise's proposal instead would measure a world nobody plays - and the
+            // difference between them is the whole of what a wide coast band claims and does not deliver.
+            var classified = WorldClassifier.Classify(variant.Shape, n, v => positions[v], v => adjacency[v], offset);
+            var biome = classified.Biome;
+            var settlement = classified.Settlement;
+            int bandCoast = classified.BandCoast;
 
-            // Exactly what GenerateWorld does next. Skipping it would measure the world the noise
-            // proposed rather than the one the game builds - and the difference between them is the
-            // whole of what a wide coast band claims and does not deliver.
-            int bandCoast = biome.Count(b => BiomeDatabase.CoastBiomes.Contains(b));
-            var stranded = CoastRule.Stranded(n, v => biome[v], v => adjacency[v]);
-            foreach (int v in stranded) biome[v] = CoastRule.Replacement;
-
-            int land = 0, field = 0, forest = 0, mountain = 0, coast = 0, plain = 0, spawnable = 0;
-            int sea = 0, ocean = 0;
+            int land = 0, field = 0, forest = 0, mountain = 0, coast = 0, plain = 0;
+            int sea = 0, ocean = 0, hot = 0, cold = 0;
             for (int v = 0; v < n; v++)
             {
                 bool isLand = !BiomeDatabase.WaterBiomes.Contains(biome[v]);
@@ -343,12 +416,23 @@ namespace Cathedral.Glyph.Microworld
                     case "plain":    plain++;    break;
                     case "sea":      sea++;      break;
                     case "ocean":    ocean++;    break;
+                    case BiomeDatabase.HotSteppe:
+                    case BiomeDatabase.Desert:
+                    case BiomeDatabase.Jungle:
+                    case BiomeDatabase.Canyon:     hot++;  break;
+                    case BiomeDatabase.SeaIce:
+                    case BiomeDatabase.Glacier:
+                    case BiomeDatabase.Snowfield:
+                    case BiomeDatabase.ColdSteppe: cold++; break;
                 }
-                // Exactly InitializeProtagonist's list.
-                if (biome[v] is "plain" or "field" or "coast") spawnable++;
             }
 
-            var (landmassOf, landmassCount) = Landmasses(n, adjacency, v => !BiomeDatabase.WaterBiomes.Contains(biome[v]));
+            // Open ground of either kind, and of it what InitializeProtagonist will actually draw from.
+            int spawnable = 0;
+            for (int v = 0; v < n; v++) if (SpawnRule.IsOpenGround(biome[v])) spawnable++;
+            var candidates = SpawnRule.Candidates(n, v => biome[v], v => adjacency[v]);
+
+            var (landmassOf, landmassCount) = SpawnRule.Landmasses(n, v => adjacency[v], v => !BiomeDatabase.WaterBiomes.Contains(biome[v]));
 
             // Fields per landmass, then the spawns that sit on a landmass carrying too few of them.
             var fieldsPerMass = new int[Math.Max(landmassCount, 1)];
@@ -357,15 +441,8 @@ namespace Cathedral.Glyph.Microworld
 
             // Exactly InitializeProtagonist's rule, and its complement: what the spawn may draw from,
             // and what it throws away.
-            int marooned = 0, viable = 0;
-            for (int v = 0; v < n; v++)
-            {
-                if (biome[v] is not ("plain" or "field" or "coast")) continue;
-                if (landmassOf[v] >= 0 && fieldsPerMass[landmassOf[v]] >= Config.WorldRegions.FieldsForAHome)
-                    viable++;
-                else
-                    marooned++;
-            }
+            int viable = candidates.Count;
+            int marooned = spawnable - viable;
 
             int bestFields = fieldsPerMass.Length > 0 ? fieldsPerMass.Max() : 0;
 
@@ -390,35 +467,11 @@ namespace Cathedral.Glyph.Microworld
 
             return new WorldStats(n, land, field, forest, mountain, coast, plain,
                                   spawnable, marooned, viable, bestFields,
-                                  bandCoast, stranded.Count, sea, ocean, landmassCount, regionCount);
-        }
-
-        /// <summary>Connected components of the land graph — the isles and continents.</summary>
-        private static (int[] Of, int Count) Landmasses(int n, List<int>[] adjacency, Func<int, bool> isLand)
-        {
-            var of = new int[n];
-            Array.Fill(of, -1);
-            int count = 0;
-            var stack = new Stack<int>();
-
-            for (int start = 0; start < n; start++)
-            {
-                if (of[start] >= 0 || !isLand(start)) continue;
-                int id = count++;
-                stack.Push(start);
-                of[start] = id;
-                while (stack.Count > 0)
-                {
-                    int v = stack.Pop();
-                    foreach (int w in adjacency[v])
-                    {
-                        if (of[w] >= 0 || !isLand(w)) continue;
-                        of[w] = id;
-                        stack.Push(w);
-                    }
-                }
-            }
-            return (of, count);
+                                  bandCoast, classified.StrandedCoast, sea, ocean, landmassCount, regionCount,
+                                  hot, cold, classified.Climate.Canyon, classified.Climate.FrozenSea,
+                                  Zones(classified.Temperature, adjacency, ClimateRule.IsHot),
+                                  Zones(classified.Temperature, adjacency, ClimateRule.IsCold),
+                                  ShoreBreaches(biome, adjacency));
         }
 
         private static float Share(int part, int whole) => whole <= 0 ? 0f : (float)part / whole;

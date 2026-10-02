@@ -211,6 +211,12 @@ public static class VerbProbe
         // Coast is registered by the game and was missing here, which is why `fish` and
         // `swim_across` came back unreachable: nothing else in the sample has open water.
         yield return ("COAST",    id => new Coast.CoastSceneFactory().Build(id));
+        // The hot and cold country's factories, from their one list.
+        foreach (var e in Shared.ClimateSceneFactories.All)
+        {
+            var make = e.Create;
+            yield return (e.AuditLabel, id => make().Build(id));
+        }
         // The test location, so --verb-probe can report which verbs it covers. It is not real
         // content: --verb-audit deliberately does NOT sweep it, so a verb reachable only here still
         // shows up there as dead content.

@@ -54,6 +54,11 @@ public static class BuildingAudit
         AuditFactory(sb, warnings, "COAST",    id => new Coast.CoastSceneFactory().Build(id),       inhabited: false);
         AuditFactory(sb, warnings, "MOUNTAIN", id => new Mountain.MountainSceneFactory().Build(id), inhabited: false);
         AuditFactory(sb, warnings, "PEAK",     id => new Peak.PeakSceneFactory().Build(id),         inhabited: false);
+        foreach (var e in Shared.ClimateSceneFactories.All)
+        {
+            var make = e.Create;
+            AuditFactory(sb, warnings, e.AuditLabel, id => make().Build(id), inhabited: false);
+        }
 
         AuditVerbDiscovery(warnings);
         AuditDoorProse(sb, warnings);

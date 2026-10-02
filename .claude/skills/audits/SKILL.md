@@ -360,7 +360,18 @@ off the border into the dark.
 
 Headless by construction: it builds the mesh through `IcosphereGeometry` and classifies through
 `WorldShape`, both of which the running game uses too, so what it measures is the world a player
-would walk. Sixteen worlds each for ten variants runs in about ten seconds.
+would walk. Sixteen worlds each for twenty variants runs in about twenty seconds.
+
+**It classifies through `WorldClassifier`**, the one pipeline the game and `HeadlessWorld` also use
+(terrain layers, then `CoastRule`, then `ClimateRule`), and checks the spawn through `SpawnRule`,
+which `InitializeProtagonist` calls — so neither can drift from the game. It faults any land cell on
+the water that is neither shore nor sea ice (`CoastRule` makes the shore exactly the land on the
+water). Per variant it prints the hot and cold shares of the land and the **zone counts** — connected
+hot or cold stretches of 30+ cells, water included — and faults a temperate variant averaging outside
+1.5–4 zones of either kind, since that is `ClimateScale` gone wrong. It also faults two share bounds: a temperate variant (offset 0) must
+have *some* hot and cold country and no more than 15% of either; a hot or cold variant must be at
+least 45% its own climate. **Climate variants are exempt from the field floors** — hot and cold
+ground carries no settlement yet, so a desert world with few fields is the design, not a fault.
 
 Run it after touching a variant's numbers, `WorldShape`, the biome thresholds,
 `InitializeProtagonist`'s spawn rule, `Config.WorldRegions.FieldsForAHome`, or anything in

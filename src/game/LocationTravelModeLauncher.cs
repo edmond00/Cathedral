@@ -212,6 +212,10 @@ public static class LocationTravelModeLauncher
             gameController.RegisterSceneFactory("peak",     () => new PeakSceneFactory());
             gameController.RegisterSceneFactory("coast",    () => new CoastSceneFactory());
 
+            // The hot and cold country's biomes (see ClimateRule), each keyed by its biome's name.
+            foreach (var climate in Cathedral.Game.Scene.Shared.ClimateSceneFactories.All)
+                gameController.RegisterSceneFactory(climate.Biome, climate.Create);
+
             // The test location: every kind of thing in one place, under names that never change.
             // Attached to no biome, so --location-type test is the only way in and it can never
             // appear in a real world. See TestSceneFactory.

@@ -121,6 +121,14 @@ public sealed class EncounterPromptRenderer
         "bear"    => "With a thunderous roar the creature rears up,\nblocking every path forward.",
         "bandit"  => "An armed figure steps out of hiding,\nweapon drawn and eyes cold.",
         "brigand" => "A hooded figure drops from the branches,\nblade drawn and ready.",
+        "lion"         => "The grass parts and a lion is simply there,\ncloser than the grass could have hidden it.",
+        "hyena"        => "A whooping laugh, then another behind you;\nthe hyena has been following for some time.",
+        "jaguar"       => "Something drops from the branches above\nand lands between you and the way on.",
+        "tiger"        => "A cough in the green, and then the stripes,\nfilling the path from side to side.",
+        "puma"         => "A tawny shape leaps from the rocks above\nand lands crouched across your way.",
+        "snow leopard" => "A patch of snow stands up and becomes a cat,\nits pale eyes fixed on you.",
+        "white bear"   => "A white bear comes over the pressure ridge,\nnose up, and turns toward your scent.",
+        "white wolf"   => "Pale shapes close in out of the blowing snow;\none of them does not stop.",
         _         => "Something dangerous crosses your path,\nblocking the way forward.",
     };
 
