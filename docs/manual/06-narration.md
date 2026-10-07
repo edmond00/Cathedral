@@ -86,6 +86,16 @@ A new phase in the same place sees the whole scene, and every act in it, afresh.
 present that have not yet been attended to, and renders what it finds. One object is chosen; the
 rest wait.
 
+The opening observation of a phase may first take its **bearings**: where the body stands and at
+what period of the day, rendered in the observing modus mentis's own voice. This is done only when
+the area or the period has changed since the bearings were last taken, so that a run of phases in
+one place does not open on the same account each time; and it is done only in the waking world,
+never in recollection nor in the rising from exhaustion. The bearings attend to no object, and
+render one available for closer attention only where they happen to name it outright. The opening
+observation attends to at most three things in all, the later ones only while what has been rendered
+remains brief; the bearings count as the first of the three, so that at least one object, and at
+most two, is attended to after them.
+
 **Deliberation.** A thinking modus mentis is asked what to want, among the acts the observed object
 affords and that have not already been offered. Its moral level narrows the list before it is asked.
 Its answer is a goal, and the goal produces the act.

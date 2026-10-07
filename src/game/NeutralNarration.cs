@@ -58,6 +58,20 @@ public static class NeutralNarration
         => $"{ObservationAttention(isFirst, simpleName, isReminescence)} {ObservationDetail(description, isReminescence)}";
 
     /// <summary>
+    /// Neutral meaning of the area introduction that opens an observation sequence when the area or
+    /// the time of day has changed: where I am (<paramref name="where"/>, the area's prepositional
+    /// context — "inside the barn", "crossing the open grassland"), when (<paramref name="when"/>,
+    /// "at dawn"), and, when the area has one, its richer description as a second sentence.
+    /// </summary>
+    public static string AreaIntroduction(string where, string when, string? description)
+    {
+        var first = $"I find myself {FirstPerson(where.Trim().TrimEnd('.'))}, {when}.";
+        return string.IsNullOrWhiteSpace(description)
+            ? first
+            : $"{first} This place is {NounPhrase(FirstPerson(description))}.";
+    }
+
+    /// <summary>
     /// Trailing sentence appended to a threatening enemy's observation neutral text: it flags the
     /// just-described object as a present danger so the observation persona rewrites a note of caution
     /// into the block. Used only when the first observation of a phase leads with a same-area enemy

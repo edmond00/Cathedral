@@ -221,6 +221,13 @@ public class NarrativeController
     // it is cleared wherever the live text greys into history (see CloseNarrationSegment).
     private readonly ObservationLedger _observationLedger = new();
 
+    // The area and time of day the last area introduction described. An overall observation opens on
+    // an introduction only when either has changed since — every action ends a phase, and repeating
+    // "I find myself inside the barn" after each one would be noise. Area by reference: a new visit
+    // builds new Area objects, so arriving again is a change too.
+    private Cathedral.Game.Scene.Area? _introducedArea;
+    private TimePeriod? _introducedPeriod;
+
     // What the current narration phase has already put an action button on screen for. The thinking
     // side of the same rule the ledger above applies to observations: every goal list narrows by it,
     // so the points spent in one phase explore the scene instead of circling one action. Cleared in
@@ -757,6 +764,18 @@ public class NarrativeController
 
             if (!handled)
             {
+                // Open on an area introduction when the area or the time of day changed since the
+                // last one. Exploration only: childhood reminescence and get-up have no real area.
+                TimePeriod? introPeriod = null;
+                if ((_scene?.Phase is null or NarrationPhase.Exploration)
+                    && _currentNode is Cathedral.Game.Scene.SyntheticNarrationNode { Area: { } introArea }
+                    && (!ReferenceEquals(introArea, _introducedArea) || _introducedPeriod != _graph.CurrentPeriod))
+                {
+                    introPeriod       = _graph.CurrentPeriod;
+                    _introducedArea   = introArea;
+                    _introducedPeriod = _graph.CurrentPeriod;
+                }
+
                 // Generate ONE overall observation (one sentence per sampled outcome), streamed into the box.
                 await _observationController.ExecuteObservationPhaseAsync(
                     _currentNode,
@@ -765,7 +784,8 @@ public class NarrativeController
                     isReminescence: _scene?.Phase == NarrationPhase.ChildhoodReminescence,
                     ledger: _observationLedger,
                     preview: _previewSession,
-                    commit: CommitObservation
+                    commit: CommitObservation,
+                    introPeriod: introPeriod
                 );
             }
 
