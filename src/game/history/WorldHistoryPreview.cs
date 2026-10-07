@@ -43,7 +43,8 @@ public static class WorldHistoryPreview
     {
         var (positions, adjacency) = _sphere.Value;
         var world = HeadlessWorld.Build(worldSeed, positions, adjacency, WorldVariants.Resolve(worldSeed));
-        var geography = HistoryGeography.Build(world.Regions, world.VertexCount, v => world.Adjacency[v], v => world.Biome[v]);
+        var geography = HistoryGeography.Build(world.Regions, world.VertexCount, v => world.Adjacency[v], v => world.Biome[v],
+                                               world.Variant.Shape.SettlementDensity);
         return WorldHistoryGenerator.Generate(geography, worldSeed);
     }
 }

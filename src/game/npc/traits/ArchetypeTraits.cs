@@ -14,5 +14,8 @@ public sealed partial class PersonalityTraitRegistry
         RegisterFarmTraits();         // farmer, farmhand, shepherd, swineherd, dairymaid, poultry keeper
         RegisterWildernessTraits();   // woodcutter, charcoal burner, fisherman, miner
         RegisterSolitaryTraits();     // druid, hermit, savage
+        RegisterSettledTraits();      // orchardist, vintner, planter, picker, groom, drover, gravedigger,
+                                      // guard, captain, priest, monk, scholar, steward, lord,
+                                      // merchant, sailor, innkeeper, clerk
     }
 }

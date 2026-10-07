@@ -62,7 +62,8 @@ public static class HistoryAudit
         {
             int seed = SkyMoons.WorldSeed(ordinal);
             var world = HeadlessWorld.Build(seed, positions, adjacency);
-            var geography = HistoryGeography.Build(world.Regions, world.VertexCount, v => world.Adjacency[v], v => world.Biome[v]);
+            var geography = HistoryGeography.Build(world.Regions, world.VertexCount, v => world.Adjacency[v], v => world.Biome[v],
+                                                   world.Variant.Shape.SettlementDensity);
 
             WorldHistory history, again;
             try
@@ -285,16 +286,33 @@ public static class HistoryAudit
             if (a.Figure.Scope == HistoryScope.World && a.Figure.Died.IsKnown && a.Figure.Died.Round < a.Date.Round)
                 faults.Add($"{where}: {a.Figure.Name} is crowned in {a.Date} after dying in {a.Figure.Died}");
 
-        // Places against the ground they stand on.
+        // Places against the ground they stand on: in their region, on a cell their kind fits, alone on it.
+        var occupied = new Dictionary<int, Place>();
         foreach (var p in h.Places)
         {
             if (p.Region < 0 || p.Region >= regions.Count) { faults.Add($"{where}: {p.Name} stands in no region"); continue; }
-            if (p.Kind == PlaceKind.Port && !regions[p.Region].Coastal)
-                faults.Add($"{where}: the port {p.Name} is in region {p.Region}, which does not touch the sea");
-            if (p.Kind == PlaceKind.Commandery && !regions[p.Region].Coastal)
-                faults.Add($"{where}: the commandery {p.Name} is inland");
             if (p.Ruined.IsKnown && p.Founded.IsKnown && p.Ruined.Round < p.Founded.Round)
                 faults.Add($"{where}: {p.Name} is ruined before it is founded");
+            if (p.Vertex < 0) continue;
+            var cell = regions[p.Region].Cells.FirstOrDefault(c => c.Vertex == p.Vertex);
+            if (cell.Biome == null)
+                faults.Add($"{where}: {p.Name} stands on vertex {p.Vertex}, outside its region {p.Region}");
+            else if (!PlaceSites.Fits(p.Kind, cell))
+                faults.Add($"{where}: the {p.Kind} {p.Name} stands on {cell.Biome}, which a {p.Kind} cannot stand on");
+            if (occupied.TryGetValue(p.Vertex, out var other))
+                faults.Add($"{where}: {p.Name} and {other.Name} share vertex {p.Vertex}");
+            else occupied[p.Vertex] = p;
+        }
+
+        // Every realm that rose on its own builds its founder a castle; one standing a generation and
+        // more without one is a castle seed that never sprouted though the realm had room for it.
+        foreach (var realm in h.Realms.Where(r => r.RoseOnFreeLand && r.Founded.IsKnown))
+        {
+            bool lived = (realm.Dissolved.IsKnown ? realm.Dissolved.Round : present) - realm.Founded.Round > 20;
+            bool hasCastle = h.Places.Any(pl => pl.Kind == PlaceKind.Castle && pl.Builder == realm);
+            bool couldBuild = realm.Regions.Any(r => regions[r].Cells.Any(c => PlaceSites.Fits(PlaceKind.Castle, c)));
+            if (lived && !hasCastle && couldBuild && !realm.Dissolved.IsKnown)
+                faults.Add($"{where}: {realm.Name}, founded {realm.Founded}, has no castle though its land could hold one");
         }
 
         // Wars end, and after they start.

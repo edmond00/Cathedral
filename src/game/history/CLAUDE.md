@@ -178,5 +178,37 @@ past the present, or one whose world was not in the state it expected, gets noti
 - **A new lore world**: an info in `EmpireLore.BuildWorlds`, an entry in `LoreMoons.Named` (a free
   ordinal of 20 or more), a profile. Run `--history-audit`.
 - **A new event type**: only if code needs to ask about it; otherwise it is a `ChronicleEvent`.
-- **Putting history on the map** (a founded city as a location, ruins on a vertex) is not done yet:
-  places are recorded with a region and nothing more.
+- **A new place kind**: a `PlaceKind`, its category in `PlaceSites.CategoryOf` and its ground in
+  `PlaceSites.Fits`, a location key in `SettlementSprawl.LocationKeyOf`, a glyph in
+  `BiomeDatabase.SettledGlyphs`, and a programme in `HistoricSceneFactory`. `--history-audit` fails a
+  place standing where its kind may not.
+
+## History on the map
+
+Every world place stands on a **vertex** (`Place.Vertex`), picked when it is founded by
+`PlaceSites.PickSite` among its region's cells of the right ground: urban places (citadel, port,
+palace, imperial school) on plain, mountain or the steppes, never jungle or snowfield, ports and
+commanderies by water; rural ones (castle, fortress, temples, commandery) on livable ground; isolated
+ones (monastery, mine, sanctuary, burial field, pyramid, and every ruin) where their kind belongs. A
+kind no cell of the region can host is not drawn at all (`DrawPlaceKind`'s filter), and
+`HistorySimulation.NewPlace` falls back to the owner's other regions, then to any.
+
+**Castles are sown, not drawn**: `RealmFoundationSeed` sows a `CastleSeed` for every realm that rises
+on free land (the initial founders and later free-land foundings — never a split or a revolt), and the
+seed re-sows itself until a livable cell is free. The audit holds every such realm that lived twenty
+years to having one.
+
+**The sprawl is a second pass, after history and before play** (`SettlementSprawl`, run from
+`MicroworldInterface.BuildSettlement`): every standing place takes its own cell; urban places sprawl
+one to three city cells, and from those and from every rural place the farmland grows outward one to
+three cells per ring over two or three rings, a third of the outer cells turning into a settlement or
+stock instead. What grows where is `SettlementTable` (the location table): one column per livable
+biome. A ruin does not sprawl, and **no sprawl crosses a border**: a cell is taken only if its region is held by the realm holding the place (`realmAt`). Free space within the realm is the only limit, the biome under a location never changes, and
+forest is not livable. `WorldVariant.SettlementDensity` scales the branching.
+
+**A factory finds its place by its vertex.** `WorldSites` publishes the map, the history and the biome
+lookup; `HistoricSceneFactory` names a castle "the castle of Varsk" from it, `RuinSceneFactory` says
+what a ruin was, `CitySceneFactory` names its streets after the place it grew round, and every
+settled factory builds in the material of the ground it stands on. With no world published (the
+audits), each falls back to a generic place of its kind. `SettledSceneFactories` is the one list of
+location key to factory, read by the launcher and every audit.

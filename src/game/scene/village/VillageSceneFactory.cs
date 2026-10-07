@@ -7,8 +7,10 @@ using Cathedral.Game.Narrative.World.Items;
 using Cathedral.Game.Npc;
 using Cathedral.Game.Npc.Archetypes;
 using Cathedral.Game.Scene.Building;
+using Cathedral.Game.Scene.Settled;
 using Cathedral.Game.Scene.Shared;
 using Cathedral.Fight.Generators;
+using Cathedral.Glyph.Microworld;
 
 namespace Cathedral.Game.Scene.Village;
 
@@ -26,10 +28,43 @@ namespace Cathedral.Game.Scene.Village;
 /// <para>This replaces a flat layout where a workshop was a single outdoor-adjacent area, and every
 /// villager in the place shared one anonymous dormitory. Craftsmen Hall and Sleeping Quarters are
 /// gone; nobody sleeps in a room they do not own.</para>
+///
+/// <para><b>Every settlement of the settled country is a village told in its own climate</b>
+/// (<see cref="SettlementTable.Settlements"/>). The key decides its size and its one great building;
+/// the ground it stands on decides what everything is built of:</para>
+/// <list type="bullet">
+/// <item><b>village</b> - the plain's and the cold steppe's, as it always was.</item>
+/// <item><b>burg</b> - the mountain's and the snowfield's: stone and timber round a longhall, where a
+/// lord keeps a few guards.</item>
+/// <item><b>hamlet</b> - the hot steppe's smallest: mudbrick, a forge and little else.</item>
+/// <item><b>townlet</b> - the hot steppe's market village: more trades, an inn, a merchant's house.</item>
+/// <item><b>fort</b> - the jungle's: a stone outpost, a parade ground for a square, a rampart for a lane,
+/// and a garrison under a captain.</item>
+/// </list>
 /// </summary>
-public class VillageSceneFactory : SceneFactory
+public class VillageSceneFactory : SettledSceneFactory
 {
-    public VillageSceneFactory(string? sessionPath = null) : base(sessionPath) { }
+    private readonly string _key;
+
+    /// <summary>A village of the plain. Takes no session path: a lone string here is a settlement key.</summary>
+    public VillageSceneFactory() : this("village") { }
+
+    public VillageSceneFactory(string key, string? biome = null, string? sessionPath = null) : base(biome, sessionPath)
+    {
+        if (!SettlementTable.AllSettlements.Contains(key))
+            throw new ArgumentException($"VillageSceneFactory: '{key}' is not a settlement");
+        _key = key;
+    }
+
+    protected override string DefaultBiome => FirstBiomeListing(SettlementTable.Settlements, _key);
+
+    private bool IsFort    => _key == "fort";
+    private bool IsBurg    => _key == "burg";
+    private bool IsHamlet  => _key == "hamlet";
+    private bool IsTownlet => _key == "townlet";
+
+    /// <summary>The great buildings beyond the workshops - a longhall, a barracks, an inn - with their people.</summary>
+    private readonly List<(BuildingResult Building, List<NamedNpcArchetype> Roster)> _halls = new();
 
     private Area? _square;
     private LayoutShape _layout;
@@ -40,17 +75,19 @@ public class VillageSceneFactory : SceneFactory
     /// <summary>Houses built for apprentices, paired with the workshop they are bound to.</summary>
     private readonly List<(BuildingResult House, BuildingResult Workshop, CraftsmanArchetype MasterTrade)> _houses = new();
 
-    protected override void BuildSections(Random rng, int locationId, Scene scene)
+    protected override void BuildPlace(Random rng, int locationId, Scene scene)
     {
         // ── 1. The outdoor village ───────────────────────────────────────────
         // The square is always there; how many ways lead off it, what they are called and how they
         // join up is rolled, so two villages are laid out differently rather than differing only in
         // which workshops they happen to contain.
 
-        _square = BuildSquare(rng);
+        _square = IsFort ? BuildParadeGround() : BuildSquare(rng);
         var outdoorAreas = new List<Area> { _square };
 
-        int lanes = rng.Next(1, 4);
+        if (IsFort) outdoorAreas.Add(BuildRampart());
+
+        int lanes = IsHamlet ? rng.Next(1, 3) : IsTownlet ? rng.Next(2, 4) : IsFort ? rng.Next(0, 2) : rng.Next(1, 4);
         foreach (var idx in SampleUniqueIndices(rng, LanePool.Length, lanes))
         {
             var (name, build, context, transition, description, moods) = LanePool[idx];
@@ -76,8 +113,8 @@ public class VillageSceneFactory : SceneFactory
         }
 
         var outdoors = new Section(
-            "Village",
-            new() { "A cluster of workshops and houses around an open square" },
+            Capitalise(_key),
+            new() { SettlementBlurb() },
             seed => new GeometricGenerator { Seed = seed }
         );
         foreach (var area in outdoorAreas) outdoors.Areas.Add(area);
@@ -101,10 +138,18 @@ public class VillageSceneFactory : SceneFactory
         var chosen = new List<(string Name, Func<Area> Hall, CraftsmanArchetype Master, string Noun, BuildingMaterial? Mat)>
         {
             ("Forge", WorkshopSubfactory.BuildForge, new BlacksmithArchetype(), "forge", BuildingMaterial.Stone),
-            ("Mill",  WorkshopSubfactory.BuildMill,  new MillerArchetype(),     "mill",  BuildingMaterial.Stone),
         };
-        foreach (var idx in SampleUniqueIndices(rng, trades.Count, rng.Next(2, 5)))
+        if (!IsHamlet && !IsFort)
+            chosen.Add(("Mill", WorkshopSubfactory.BuildMill, new MillerArchetype(), "mill", BuildingMaterial.Stone));
+        int optional = IsHamlet ? rng.Next(1, 3) : IsFort ? rng.Next(1, 3) : IsTownlet ? rng.Next(3, 5) : rng.Next(2, 5);
+        foreach (var idx in SampleUniqueIndices(rng, trades.Count, optional))
             chosen.Add(trades[idx]);
+
+        // Outside the plain, everything is built of what the climate builds with - the forge and the
+        // mill included, which on the plain are stone because they are the two that must not burn.
+        bool local = Biome != "plain";
+        for (int i = 0; i < chosen.Count; i++)
+            if (local) chosen[i] = chosen[i] with { Mat = RollMaterial(rng) };
 
         // ── 3. Where they stand ──────────────────────────────────────────────
         // Which lane a workshop opens onto is rolled too, so the forge is not always on the same
@@ -134,6 +179,9 @@ public class VillageSceneFactory : SceneFactory
         var wear = BuildingDescriptions.BuildingWear.OrderBy(_ => rng.Next()).ToList();
         int nextWear = 0;
 
+        // ── 3b. The great building, where the settlement has one ────────────
+        BuildGreatHalls(scene, rng, outdoorAreas);
+
         foreach (var (workshop, master) in _workshops.ToList())
         {
             int apprentices = rng.NextDouble() < 0.35 ? 2 : 1;
@@ -152,6 +200,7 @@ public class VillageSceneFactory : SceneFactory
                     BedCount     = 1,
                     FunctionNoun = "house",
                     ExteriorWear = trait,
+                    Material     = local ? RollMaterial(rng) : null,
                 }, rng);
 
                 RegisterBuilding(scene, house);
@@ -159,7 +208,7 @@ public class VillageSceneFactory : SceneFactory
             }
         }
 
-        Console.WriteLine($"VillageSceneFactory: village built — layout={_layout}, {outdoorAreas.Count} outdoor area(s), "
+        Console.WriteLine($"VillageSceneFactory: {_key} built ({Biome}) — layout={_layout}, {outdoorAreas.Count} outdoor area(s), "
                         + $"{_workshops.Count} workshop(s), {_houses.Count} house(s), {scene.AllAreas.Count} areas");
     
         // ── Furnishing: somewhere to sit, somewhere to hide, a hard shortcut, a climb ──
@@ -216,6 +265,98 @@ public class VillageSceneFactory : SceneFactory
          "The open edge of the village where the grazing begins, fenced with hurdles",
          new[] { "open", "grassy", "windy", "wide", "hurdle-fenced" }),
     };
+
+    private string SettlementBlurb() => _key switch
+    {
+        "burg"    => "A huddle of stone and timber houses round a longhall, roofs weighted with stones against the wind",
+        "hamlet"  => "A few flat-roofed mudbrick houses round a well, walls the colour of the ground",
+        "townlet" => "A small market town of mudbrick and whitewash, its lanes shaded with awnings",
+        "fort"    => "A stone outpost cut out of the green, walls squared off against the jungle",
+        _         => "A cluster of workshops and houses around an open square",
+    };
+
+    /// <summary>
+    /// The building a settlement is known by, when it has one: the burg's longhall and its lord, the
+    /// townlet's inn and merchant house, the fort's barracks and garrison. Each is a public hall with
+    /// its own crew, built off the square.
+    /// </summary>
+    private void BuildGreatHalls(Scene scene, Random rng, List<Area> outdoorAreas)
+    {
+        void Hall(string name, string noun, BuildingOccupancy occupancy, List<NamedNpcArchetype> roster)
+        {
+            var b = BuildingFactory.Build(new BuildingSpec
+            {
+                BuildingName = name,
+                RoomPrefix   = name,
+                Access       = BuildingAccess.Public,
+                Occupancy    = occupancy,
+                OutsideArea  = _square!,
+                BedCount     = roster.Count,
+                Material     = RollMaterial(rng),
+                FunctionNoun = noun,
+            }, rng);
+            RegisterBuilding(scene, b);
+            _halls.Add((b, roster));
+        }
+
+        if (IsBurg)
+        {
+            var roster = new List<NamedNpcArchetype> { new LordArchetype() };
+            for (int i = 0, n = rng.Next(1, 3); i < n; i++) roster.Add(new GuardArchetype());
+            Hall("Great House", "longhall", BuildingOccupancy.Communal, roster);
+        }
+        else if (IsTownlet)
+        {
+            Hall("Inn", "inn", BuildingOccupancy.Communal, new List<NamedNpcArchetype> { new InnkeeperArchetype() });
+            Hall("Merchant's House", "merchant's house", BuildingOccupancy.Individual, new List<NamedNpcArchetype> { new MerchantArchetype() });
+        }
+        else if (IsFort)
+        {
+            var roster = new List<NamedNpcArchetype> { new CaptainArchetype() };
+            for (int i = 0, n = rng.Next(3, 6); i < n; i++) roster.Add(new GuardArchetype());
+            Hall("Barracks", "barracks", BuildingOccupancy.Communal, roster);
+        }
+    }
+
+    private static Area BuildParadeGround()
+    {
+        var parade = new ParadeArea(
+            displayName: "Parade Ground",
+            contextDescription: "on the parade ground",
+            transitionDescription: "step out onto the parade ground",
+            descriptions: new() { "A square of beaten red earth inside the walls, swept and drilled on every morning" },
+            moods: new[] { "hot", "open", "drilled", "watched" }
+        );
+        parade.PointsOfInterest.Add(new WellPointOfInterest(
+            displayName: "Cistern Head",
+            descriptions: new() { "A stone cistern head with a chained bucket, the water kept for a siege" },
+            items: new() { new ItemElement(new Rope()) },
+            moods: new[] { "deep", "guarded" }
+        ) { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "provisioning", ["listen"] = "water_voice" } });
+        parade.PointsOfInterest.Add(new BannerPointOfInterest(
+            displayName: "Flagstaff",
+            descriptions: new() { "A tall flagstaff, the colours on it faded by the sun to a ghost of themselves" },
+            moods: new[] { "tall", "faded", "proud" }
+        ) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "heraldry", ["contemplate"] = "fealty" } });
+        return parade;
+    }
+
+    private static Area BuildRampart()
+    {
+        var rampart = new RampartArea(
+            displayName: "Rampart Walk",
+            contextDescription: "on the rampart walk",
+            transitionDescription: "climb to the rampart walk",
+            descriptions: new() { "A walk along the top of the stone wall, the jungle pressing right up to the ditch below" },
+            moods: new[] { "high", "exposed", "watchful", "humid" }
+        );
+        rampart.PointsOfInterest.Add(new BattlementPointOfInterest(
+            displayName: "Embrasure",
+            descriptions: new() { "A notch in the parapet looking out over the cleared ground to the trees" },
+            moods: new[] { "narrow", "commanding" }
+        ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "fortification", ["listen"] = "watchkeeping" } });
+        return rampart;
+    }
 
     private void AddWorkshop(
         Scene scene, Random rng, string name, Func<Area> hallBuilder,
@@ -383,6 +524,22 @@ public class VillageSceneFactory : SceneFactory
 
             if (scheduleByWorkshop.TryGetValue(workshop.Section.DisplayName, out var staff))
                 staff.Add(schedule);
+        }
+
+        // ── The great buildings' people ─────────────────────────────────────
+        foreach (var (hall, roster) in _halls)
+            SpawnCrew(rng, scene, roster, hall.BedAreas, hall.PublicHall, outdoorAreas.Append(hall.PublicHall).ToList(),
+                      hall.PublicHall.ContextDescription, new[] { hall.Section });
+
+        if (IsFort)
+        {
+            TrySpawnShallow(rng, scene, new MastiffArchetype(), outdoorAreas, 0.6);
+            TrySpawnShallow(rng, scene, new ParrotArchetype(), outdoorAreas, 0.5);
+        }
+        else
+        {
+            TrySpawnShallow(rng, scene, new PigeonArchetype(), outdoorAreas, 0.5);
+            TrySpawnShallow(rng, scene, rng.NextDouble() < 0.5 ? new GooseArchetype() : new ChickenArchetype(), outdoorAreas, 0.5);
         }
 
         // ── Keep every shop counter manned ──────────────────────────────────

@@ -151,6 +151,13 @@ public sealed class Realm : HistoricFaction
     /// <summary>The realm this one broke away from or succeeded, if any.</summary>
     public Realm? Predecessor { get; set; }
 
+    /// <summary>
+    /// It rose on its own, on unclaimed land — at the start of history or on free land later — rather
+    /// than splitting from another realm or being proclaimed by the empire. Such a realm builds its
+    /// founder a castle (<c>CastleSeed</c>).
+    /// </summary>
+    public bool RoseOnFreeLand { get; set; }
+
     /// <summary>The title a ruler of this realm carries.</summary>
     public string RulerTitle(Sex sex) => Government switch
     {
@@ -323,8 +330,10 @@ public sealed class Deity : HistoricInfo
 
 public enum PlaceKind
 {
-    City,
-    Town,
+    /// <summary>The fortified heart of a large urban country, founded at a historic moment. Was Town and City.</summary>
+    Citadel,
+    /// <summary>A lord's seat. Every new realm builds one for its founder.</summary>
+    Castle,
     Port,
     Fortress,
     Temple,
@@ -343,8 +352,10 @@ public enum PlaceKind
 }
 
 /// <summary>
-/// A named place, recorded as data: in which region it stands, when it was founded, and when (if
-/// ever) it fell into ruin. History does not yet put places on the map.
+/// A named place: in which region and on which cell of the map it stands, when it was founded, and
+/// when (if ever) it fell into ruin. A world place stands on a vertex of the sphere, chosen by
+/// <see cref="PlaceSites"/> when it was founded, and the country around it is sprawled from it once
+/// history is done (<c>SettlementSprawl</c>).
 /// </summary>
 public sealed class Place : HistoricInfo
 {
@@ -354,6 +365,12 @@ public sealed class Place : HistoricInfo
 
     /// <summary>The region it stands in (<c>WorldRegion.Id</c>), or -1 for an empire place.</summary>
     public int Region { get; set; } = -1;
+
+    /// <summary>
+    /// The sphere vertex it stands on, or -1: an empire place on Pyr, or a world place for which no
+    /// cell of a fitting kind was free anywhere (rare, and then it is recorded but not on the map).
+    /// </summary>
+    public int Vertex { get; set; } = -1;
 
     public HistoricDate Founded { get; set; } = HistoricDate.Unknown;
     public HistoricDate Ruined { get; set; } = HistoricDate.Unknown;

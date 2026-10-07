@@ -71,6 +71,28 @@ public static class BuildingSchedule
     }
 
     /// <summary>
+    /// The day of someone who lives inside a great building and need never leave it: Night in their
+    /// own bed; Dawn at prayer or washing (<paramref name="dawn"/>, when given, else work); Noon and
+    /// Evening at table (<paramref name="table"/>); Morning and Afternoon at their work, one of
+    /// <paramref name="work"/>. Deterministic for a given <paramref name="rng"/> state.
+    /// </summary>
+    public static NpcSchedule ForResident(Area bed, IReadOnlyList<Area> work, Area? table, Area? dawn, Random rng)
+    {
+        if (bed == null) throw new ArgumentNullException(nameof(bed));
+        if (work.Count == 0) return NpcSchedule.Always(bed);
+        Area Work() => work[rng.Next(work.Count)];
+        return NpcSchedule.Roaming(new Dictionary<TimePeriod, Area?>
+        {
+            [TimePeriod.Night]     = bed,
+            [TimePeriod.Dawn]      = dawn ?? Work(),
+            [TimePeriod.Morning]   = Work(),
+            [TimePeriod.Noon]      = table ?? Work(),
+            [TimePeriod.Afternoon] = Work(),
+            [TimePeriod.Evening]   = table ?? Work(),
+        });
+    }
+
+    /// <summary>
     /// Fills any day period where <paramref name="hall"/> would stand empty, by moving one of
     /// <paramref name="cover"/> back to it.
     ///

@@ -64,9 +64,10 @@ namespace Cathedral.Glyph.Microworld
         private const int SampleWorlds = 16;
 
         /// <summary>
-        /// How many of those worlds also get their regions built. Dividing a world costs a hundred
-        /// times what classifying it does, and the region count is the one measurement here that
-        /// barely moves between seeds of the same variant, so it is sampled rather than swept.
+        /// How many of those worlds are also peopled: divided into regions, given a history, and the
+        /// settled country sprawled round history's places. That costs a thousand times what
+        /// classifying a world does, and what it measures moves little between seeds of a variant, so
+        /// it is sampled rather than swept.
         /// </summary>
         private const int RegionSamples = 3;
 
@@ -81,16 +82,14 @@ namespace Cathedral.Glyph.Microworld
         // point is to catch a variant that is broken, not to make every variant the same.
         private const float MinLandShare      = 0.18f;
         private const float MaxLandShare      = 0.90f;
-        // Of the LAND, not of the sphere. A world with a high waterline has less of everything, and
-        // measuring its fields against the whole globe faults it for being a drowned world rather
-        // than for being a barren one - which is the question actually being asked. What guards the
-        // absolute number is FieldsForARun below, on the one landmass a run will be spent on.
-        private const float MinFieldShareOfLand = 0.020f;
-        private const float MinSpawnableShare = 0.030f;
+        private const float MinSpawnableShare = 0.030f;   // open ground, of the sphere
         private const int   MinRegions        = 6;
         private const int   MaxRegions        = 300;
-        private const int   MinViableSpawns   = 200;     // cells the spawn rule must have to choose from
-        private const int   FieldsForARun     = 40;      // fields the world's richest country must carry
+        // On the peopled samples. Sprawl is the cities, farmland, settlements and stock history's
+        // places grew round them: the whole of where people live, and so of what a run can visit.
+        private const int   MinSprawl         = 150;     // sprawled locations in the world
+        private const int   SprawlForARun     = 40;      // sprawled locations on the richest landmass (the old 40 fields)
+        private const int   MinViableSpawns   = 100;     // cells beside the sprawl the spawn rule can draw
         private const int   BlurbRoom        = 56;      // characters a variant's one-line description may run to
         private const float MaxTemperateClimateShare = 0.06f; // hot or cold land in a temperate world, each
         private const float MinClimateShare = 0.45f;          // a hot or cold world's own climate, of its land
@@ -105,6 +104,7 @@ namespace Cathedral.Glyph.Microworld
             sb.AppendLine();
 
             CheckTable(sb, faults);
+            CheckGlyphs(sb, faults);
 
             sb.AppendLine("Building the sphere...");
             int subdivisions = Config.GlyphSphere.SphereSubdivisions;
@@ -142,6 +142,25 @@ namespace Cathedral.Glyph.Microworld
         /// The half that needs no terrain: is the table itself sound, does every variant class appear
         /// in it, and does every variant get reached by some moon.
         /// </summary>
+        /// <summary>
+        /// Every biome and every location draws in a glyph of its own. Two kinds sharing one are two
+        /// kinds the map cannot tell apart, and nothing else would ever notice.
+        /// </summary>
+        private static void CheckGlyphs(StringBuilder sb, List<string> faults)
+        {
+            var owners = BiomeDatabase.Biomes.Values.Select(b => (b.Name, b.Glyph))
+                .Concat(BiomeDatabase.Locations.Values.Select(l => (l.Name, l.Glyph)));
+            int kinds = 0;
+            foreach (var group in owners.GroupBy(o => o.Glyph))
+            {
+                kinds += group.Count();
+                if (group.Count() > 1)
+                    faults.Add($"glyph '{group.Key}' is shared by {string.Join(", ", group.Select(g => g.Name))}");
+            }
+            sb.AppendLine($"GLYPHS: {kinds} biome and location kind(s) checked for a glyph of their own.");
+            sb.AppendLine();
+        }
+
         private static void CheckTable(StringBuilder sb, List<string> faults)
         {
             sb.AppendLine("TABLE");
@@ -209,7 +228,7 @@ namespace Cathedral.Glyph.Microworld
             sb.AppendLine($"  {variant.Blurb}");
             sb.AppendLine();
             sb.AppendLine($"  climate offset {variant.Shape.TemperatureOffset.ToString("+0.00;-0.00;0", CultureInfo.InvariantCulture)}");
-            sb.AppendLine("   seed        land   field  forest   mtn+pk   coast   plain    hot    cold  | inland  shallow  masses    dead  viable  best  regions");
+            sb.AppendLine("   seed        land  forest   mtn+pk   coast   plain    hot    cold  | inland  shallow  masses | sprawl  settl  viable   best  regions");
 
             var ordinals = OrdinalsOf(variant).ToList();
             var built = new List<WorldStats>();
@@ -221,15 +240,16 @@ namespace Cathedral.Glyph.Microworld
                 var w = BuildWorld(variant, seed, positions, adjacency, withRegions: i < RegionSamples);
                 built.Add(w);
 
+                string Num(int x) => x >= 0 ? x.ToString() : "-";
                 if (i < PrintedRows)
-                    sb.AppendLine($"  {seed,11}  {Pct(w.Land, w.Total)}  {Pct(w.Field, w.Total)}  "
+                    sb.AppendLine($"  {seed,11}  {Pct(w.Land, w.Total)}  "
                                 + $"{Pct(w.Forest, w.Total)}  {Pct(w.Mountain, w.Total)}  "
                                 + $"{Pct(w.Coast, w.Total)}  {Pct(w.Plain, w.Total)}  "
                                 + $"{Pct(w.Hot, w.Total)}  {Pct(w.Cold, w.Total)}  | "
                                 + $"{Pct(w.StrandedCoast, Math.Max(w.BandCoast, 1)),6}  "
                                 + $"{Pct(w.Sea, Math.Max(w.Sea + w.Ocean, 1)),7}  "
-                                + $"{w.Landmasses,6}  {Pct(w.Marooned, Math.Max(w.Spawnable, 1)),6}  "
-                                + $"{w.ViableSpawns,6}  {w.BestLandmassFields,4}  "
+                                + $"{w.Landmasses,6} | {Num(w.Sprawl),6}  {Num(w.Settlements),5}  "
+                                + $"{Num(w.ViableSpawns),6}  {Num(w.BestLandmassSprawl),5}  "
                                 + $"{(w.Regions > 0 ? w.Regions.ToString() : "-"),7}");
 
                 string where = $"{variant.Id} (moon {ordinal}, seed {seed})";
@@ -238,20 +258,18 @@ namespace Cathedral.Glyph.Microworld
                     faults.Add($"{where}: only {P(land)} of the sphere is land (floor {P(MinLandShare, 0)}) - nowhere to walk");
                 if (land > MaxLandShare)
                     faults.Add($"{where}: {P(land)} of the sphere is land (ceiling {P(MaxLandShare, 0)}) - the sea has stopped shaping it");
-                bool climateWorld = IsClimateVariant(variant);
-                if (!climateWorld && Share(w.Field, w.Land) < MinFieldShareOfLand)
-                    faults.Add($"{where}: fields are {P(Share(w.Field, w.Land), 2)} of the LAND (floor {P(MinFieldShareOfLand)}) - "
-                             + "farms and villages are placed only on fields, so this world is unpeopled");
                 if (Share(w.Spawnable, w.Total) < MinSpawnableShare)
-                    faults.Add($"{where}: only {P(Share(w.Spawnable, w.Total), 2)} of the sphere can be spawned on "
-                             + $"(floor {P(MinSpawnableShare)}) - InitializeProtagonist wants open ground");
-                if (w.ViableSpawns < MinViableSpawns)
-                    faults.Add($"{where}: only {w.ViableSpawns} cell(s) sit on a landmass worth waking on "
-                             + $"(floor {MinViableSpawns}) - InitializeProtagonist has almost nothing to draw from, "
-                             + "and falls back to spawning anywhere at all");
-                if (!climateWorld && w.BestLandmassFields < FieldsForARun)
-                    faults.Add($"{where}: the richest landmass carries {w.BestLandmassFields} field(s) "
-                             + $"(floor {FieldsForARun}) - the best country in this world is a hamlet");
+                    faults.Add($"{where}: only {P(Share(w.Spawnable, w.Total), 2)} of the sphere is open ground "
+                             + $"(floor {P(MinSpawnableShare)}) - nowhere to live and nowhere to wake");
+                if (w.Sprawl >= 0 && w.Sprawl < MinSprawl)
+                    faults.Add($"{where}: history's places sprawled only {w.Sprawl} location(s) (floor {MinSprawl}) - "
+                             + "this world is unpeopled");
+                if (w.ViableSpawns >= 0 && w.ViableSpawns < MinViableSpawns)
+                    faults.Add($"{where}: only {w.ViableSpawns} cell(s) of open ground lie beside the sprawl "
+                             + $"(floor {MinViableSpawns}) - InitializeProtagonist has almost nothing to draw from");
+                if (w.BestLandmassSprawl >= 0 && w.BestLandmassSprawl < SprawlForARun)
+                    faults.Add($"{where}: the richest landmass carries {w.BestLandmassSprawl} sprawled location(s) "
+                             + $"(floor {SprawlForARun}) - the best country in this world is a hamlet");
                 if (w.ShoreBreaches > 0)
                     faults.Add($"{where}: {w.ShoreBreaches} land cell(s) on the water are neither shore nor sea ice");
                 if (w.Regions > 0 && w.Regions < MinRegions)
@@ -266,14 +284,15 @@ namespace Cathedral.Glyph.Microworld
                 sb.AppendLine($"  {"(+" + (built.Count - PrintedRows) + ")",11}  "
                             + "more world(s) built and checked, not printed");
 
+            var peopled = built.Where(w => w.Sprawl >= 0).ToList();
             sb.AppendLine($"  {"worst",11}  {Pct(built.Min(w => w.Land), built[0].Total)}  "
-                        + $"{Pct(built.Min(w => w.Field), built[0].Total)}  "
                         + $"{"",6}   {"",6}   {"",6}   {"",6}   {"",6}  {"",6}  | "
                         + $"{(P(built.Max(w => Share(w.StrandedCoast, Math.Max(w.BandCoast, 1))))),6}  "
                         + $"{(P(built.Min(w => Share(w.Sea, Math.Max(w.Sea + w.Ocean, 1))))),7}  "
-                        + $"{built.Max(w => w.Landmasses),6}  "
-                        + $"{(P(built.Max(w => Share(w.Marooned, Math.Max(w.Spawnable, 1))))),6}  "
-                        + $"{built.Min(w => w.ViableSpawns),6}  {built.Min(w => w.BestLandmassFields),4}");
+                        + $"{built.Max(w => w.Landmasses),6} | "
+                        + (peopled.Count == 0 ? "" :
+                           $"{peopled.Min(w => w.Sprawl),6}  {peopled.Min(w => w.Settlements),5}  "
+                         + $"{peopled.Min(w => w.ViableSpawns),6}  {peopled.Min(w => w.BestLandmassSprawl),5}"));
 
             // The climate. A temperate world should have a little hot and a little cold country and
             // not much of either; a climate world should be mostly its climate. Judged over the whole
@@ -322,9 +341,10 @@ namespace Cathedral.Glyph.Microworld
             }
         }
 
+        // Sprawl, Settlements, ViableSpawns and BestLandmassSprawl are -1 on a world not peopled.
         private readonly record struct WorldStats(
-            int Total, int Land, int Field, int Forest, int Mountain, int Coast, int Plain,
-            int Spawnable, int Marooned, int ViableSpawns, int BestLandmassFields,
+            int Total, int Land, int Forest, int Mountain, int Coast, int Plain,
+            int Spawnable, int Sprawl, int Settlements, int ViableSpawns, int BestLandmassSprawl,
             int BandCoast, int StrandedCoast, int Sea, int Ocean,
             int Landmasses, int Regions,
             int Hot, int Cold, int Canyon, int FrozenSea,
@@ -368,13 +388,6 @@ namespace Cathedral.Glyph.Microworld
         }
 
         /// <summary>
-        /// A variant whose climate offset puts most of it in hot or cold country. Such a world has
-        /// next to no fields, and since hot and cold ground carries no settlement yet, that is the
-        /// design rather than a fault — so the field floors are reported for it and not enforced.
-        /// </summary>
-        private static bool IsClimateVariant(WorldVariant variant) => variant.Shape.TemperatureOffset != 0f;
-
-        /// <summary>
         /// Classifies every vertex under <paramref name="variant"/> on <paramref name="seed"/> and
         /// counts what came out. The noise offset is derived exactly as <c>GenerateWorld</c> derives
         /// it, so this is that world and not a world like it.
@@ -400,7 +413,7 @@ namespace Cathedral.Glyph.Microworld
             var settlement = classified.Settlement;
             int bandCoast = classified.BandCoast;
 
-            int land = 0, field = 0, forest = 0, mountain = 0, coast = 0, plain = 0;
+            int land = 0, forest = 0, mountain = 0, coast = 0, plain = 0;
             int sea = 0, ocean = 0, hot = 0, cold = 0;
             for (int v = 0; v < n; v++)
             {
@@ -408,7 +421,6 @@ namespace Cathedral.Glyph.Microworld
                 if (isLand) land++;
                 switch (biome[v])
                 {
-                    case "field":    field++;    break;
                     case "forest":   forest++;   break;
                     case "mountain":
                     case "peak":     mountain++; break;
@@ -427,51 +439,54 @@ namespace Cathedral.Glyph.Microworld
                 }
             }
 
-            // Open ground of either kind, and of it what InitializeProtagonist will actually draw from.
             int spawnable = 0;
             for (int v = 0; v < n; v++) if (SpawnRule.IsOpenGround(biome[v])) spawnable++;
-            var candidates = SpawnRule.Candidates(n, v => biome[v], v => adjacency[v]);
 
-            var (landmassOf, landmassCount) = SpawnRule.Landmasses(n, v => adjacency[v], v => !BiomeDatabase.WaterBiomes.Contains(biome[v]));
+            var (_, landmassCount) = SpawnRule.Landmasses(n, v => adjacency[v], v => !BiomeDatabase.WaterBiomes.Contains(biome[v]));
 
-            // Fields per landmass, then the spawns that sit on a landmass carrying too few of them.
-            var fieldsPerMass = new int[Math.Max(landmassCount, 1)];
-            for (int v = 0; v < n; v++)
-                if (biome[v] == "field" && landmassOf[v] >= 0) fieldsPerMass[landmassOf[v]]++;
-
-            // Exactly InitializeProtagonist's rule, and its complement: what the spawn may draw from,
-            // and what it throws away.
-            int viable = candidates.Count;
-            int marooned = spawnable - viable;
-
-            int bestFields = fieldsPerMass.Length > 0 ? fieldsPerMass.Max() : 0;
-
-            // Zero means "not measured on this world", which the report prints as a dash and the
-            // bounds skip. Dividing a world is the expensive half and does not need every seed.
-            int regionCount = 0;
+            // The peopled half — regions, history, sprawl and the spawn they allow — on the sampled
+            // worlds only, built exactly as the game builds it. -1 everywhere else.
+            int regionCount = 0, sprawl = -1, settlements = -1, viable = -1, bestSprawl = -1;
             if (withRegions)
             {
-                var regions = WorldRegionMap.Build(new WorldRegionInput
-                {
-                    VertexCount     = n,
-                    Neighbours      = v => adjacency[v],
-                    IsLand          = v => !BiomeDatabase.WaterBiomes.Contains(biome[v]),
-                    IsSettleable    = v => !BiomeDatabase.WaterBiomes.Contains(biome[v])
-                                           && !BiomeDatabase.MountainBiomes.Contains(biome[v]),
-                    SettlementNoise = v => settlement[v],
-                    StepCostDays    = v => BiomeTravelDatabase.GetFor(biome[v]).DurationDays,
-                    Position        = v => positions[v],
-                });
-                regionCount = regions.Regions.Count;
+                var world = HeadlessWorld.Build(seed, positions, adjacency, variant);
+                regionCount = world.Regions.Regions.Count;
+                var (history, map) = PeopleWorld(world);
+                _ = history;
+                sprawl = map.Sites.Keys.Count(map.IsSprawl);
+                settlements = map.Count(Cathedral.Game.History.SiteRole.Settlement);
+                viable = SpawnRule.Candidates(n, v => world.Biome[v], v => adjacency[v],
+                                              v => map.At(v) != null, map.IsSprawl).Count(v => adjacency[v].Any(map.IsSprawl));
+
+                var (massOf, massCount) = SpawnRule.Landmasses(n, v => adjacency[v], v => !BiomeDatabase.WaterBiomes.Contains(world.Biome[v]));
+                var perMass = new int[Math.Max(massCount, 1)];
+                foreach (int v in map.Sites.Keys) if (map.IsSprawl(v) && massOf[v] >= 0) perMass[massOf[v]]++;
+                bestSprawl = perMass.Max();
             }
 
-            return new WorldStats(n, land, field, forest, mountain, coast, plain,
-                                  spawnable, marooned, viable, bestFields,
+            return new WorldStats(n, land, forest, mountain, coast, plain,
+                                  spawnable, sprawl, settlements, viable, bestSprawl,
                                   bandCoast, classified.StrandedCoast, sea, ocean, landmassCount, regionCount,
                                   hot, cold, classified.Climate.Canyon, classified.Climate.FrozenSea,
                                   Zones(classified.Temperature, adjacency, ClimateRule.IsHot),
                                   Zones(classified.Temperature, adjacency, ClimateRule.IsCold),
                                   ShoreBreaches(biome, adjacency));
+        }
+
+        /// <summary>
+        /// A headless world's history and settled country, built exactly as <c>MicroworldInterface</c>
+        /// builds them (the cave noise aside: a cave only ever blocks a few cells).
+        /// </summary>
+        public static (Cathedral.Game.History.WorldHistory History, Cathedral.Game.History.SettlementMap Map) PeopleWorld(HeadlessWorld world)
+        {
+            var geo = Cathedral.Game.History.HistoryGeography.Build(world.Regions, world.VertexCount, v => world.Adjacency[v],
+                                                                    v => world.Biome[v], world.Variant.Shape.SettlementDensity);
+            var history = Cathedral.Game.History.WorldHistoryGenerator.Generate(geo, world.Seed);
+            var map = Cathedral.Game.History.SettlementSprawl.Build(world.VertexCount, v => world.Biome[v], v => world.Adjacency[v],
+                history.Places, v => false,
+                v => world.Regions.RegionAt(v) is int r && r >= 0 ? history.OwnerOf(r) : null,
+                world.Variant.Shape.SettlementDensity, GameRng.ForWorld(world.Seed, "sprawl"));
+            return (history, map);
         }
 
         private static float Share(int part, int whole) => whole <= 0 ? 0f : (float)part / whole;

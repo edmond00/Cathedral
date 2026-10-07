@@ -35,15 +35,15 @@ The number that settles a world settles more than where its land falls. It settl
 of that world: which of twenty manners the sphere is composed after.
 
 The terrain is read out of four fields of noise laid over the sphere — one governing water, one
-relief, one the settlement of the land, one heat — and a disposition is a set of thresholds and
-scales those fields are read through. It moves six things:
+relief, one the cover of the land, one heat — and a disposition is a set of thresholds and scales
+those fields are read through, together with how thickly the land is settled. It moves six things:
 
 | | |
 |---|---|
 | **The waterline** | how much of the sphere is sea at all, and therefore how much land there is to walk upon |
 | **The reach of the shore** | how much of a coastline reads as shore rather than as the country behind it, and how far below the waterline the shallow sea gives way to deep ocean |
 | **The treeline** | where the ground turns to mountain, and where mountain turns to bare peak |
-| **The temper of the land** | what proportion of the walkable ground is forest, and what proportion is tilled field |
+| **The temper of the land** | what proportion of the walkable ground is forest, and how thickly the settled country spreads over the rest |
 | **The size of the features** | how broad a continent is before the sea interrupts it, and how long a range of mountains runs |
 | **The temper of the air** | how far the whole world is set toward heat or toward cold |
 
@@ -52,9 +52,9 @@ long arms of sea, and since **no route on foot may cross water** ([§3](#3-the-c
 a world so composed is a world of separated countries. A low treeline puts mountain and peak across
 the middle of it, and mountain is crossed at twelve days to the cell against a plain's five
 ([§4](#4-the-price-of-a-crossing)) — such a world is not smaller than another, but every journey
-across it is longer, and dearer in heat, and met with more of what lives at that height. A land poor
-in tilled field is a land poor in **farms and villages**, since those stand upon worked ground and
-nowhere else; a land rich in it is thick with them.
+across it is longer, and dearer in heat, and met with more of what lives at that height. A sparsely
+settled disposition spreads its country thinly about each of history's places, and a thickly settled
+one far wider ([§2a](#2a-the-settled-country)).
 
 Two things about a disposition are worth stating plainly, because both are easy to assume otherwise:
 
@@ -67,7 +67,7 @@ Two things about a disposition are worth stating plainly, because both are easy 
   disposition decides only how much mountain there is.
 
 Every disposition is a world that can be lived in. Each is held to a floor of land to walk upon, of
-tilled ground to hold settlements, and of country rich enough to spend a life in. A world that failed
+settled country across the world, and of a body of land rich enough in it to spend a life in. A world that failed
 any of these would generate perfectly well and simply be unplayable, which is why the bounds are
 checked rather than trusted.
 
@@ -85,13 +85,13 @@ as the shore is, and a world wanting more of it must break its land up rather th
 
 **Heat and cold remake the ground.** The fourth field is read last, after the other three have
 settled what a cell would be in a temperate world, and it changes only cells whose reading crosses a
-threshold. Above **0.48** a cell is hot country: mountain and peak become **hot steppe**, plain and
-field become **desert**, forest becomes **jungle**. Below **−0.48** it is cold country: peak becomes
-**glacier**, mountain **snowfield**, plain and field **cold steppe**, and a shore becomes **sea ice**.
+threshold. Above **0.48** a cell is hot country: mountain and peak become **hot steppe**, plain
+becomes **desert**, forest becomes **jungle**. Below **−0.48** it is cold country: peak becomes
+**glacier**, mountain **snowfield**, plain **cold steppe**, and a shore becomes **sea ice**.
 Whatever else stands in hot or cold country keeps its temperate nature — a hot shore is a shore, a cold
 forest a forest.
 
-Two further rules settle the edges. Wherever temperate plain or field would touch desert, it
+Two further rules settle the edges. Wherever temperate plain would touch desert, it
 becomes **canyon**, the broken ground where grass gives out on sand, as the coast lies between land
 and sea. And the
 sea beside sea ice may freeze in its turn, ring upon ring outward, **each ring wanting 0.08 more cold
@@ -101,20 +101,63 @@ threshold has a frozen sea, which is walked upon like land.
 Ten of the twenty dispositions are temperate, their temper set at nothing; even these hold a little
 hot and a little cold country wherever the field alone crosses a threshold — some seven to nine
 pockets of each in a world, a few parts in the hundred of its land. The other ten are set hot or
-cold, by between **0.62** and **0.80**, and are hot or cold country over half their land and often far more. **No farm, village or other
-settlement stands on any ground that heat or cold has remade**, and the tilled field from which every
-settlement is reckoned is absent there by the same rule.
+cold, by between **0.62** and **0.80**, and are hot or cold country over half their land and often
+far more. Heat and cold do not empty the land: hot steppe, jungle, cold steppe and snowfield are
+settled after their own fashion, and only the barren grounds — desert, canyon, glacier and sea ice —
+hold nothing but the isolated places of history ([§2a](#2a-the-settled-country)).
 
 **A traveller is never set down where nothing can be reached.** Since no route on foot may cross
-water, the body of land one wakes upon is the whole of the world that life will be lived in — and a
-body of land bearing no tilled ground bears no farm and no village either. The waking place is
-therefore drawn only from land that carries **twenty cells of field** or more, and the islets and
-spits that carry fewer are passed over, however pleasant the ground upon them. Only open ground is
-ever chosen — plain, field or shore. Where fewer than **a hundred and fifty** such cells qualify, as in a world remade by heat or
-cold, the open ground of that country joins it — desert, cold steppe, canyon, hot steppe and
-snowfield — on any body of land of three hundred cells or more, since such a world is unsettled and
-its fields cannot be what decides. Where no land whatever qualifies, the rule is abandoned rather
-than obeyed into a game that will not begin.
+water, the body of land one wakes upon is the whole of the world that life will be lived in. The
+waking place is therefore drawn, in this order, from the first of three sets that holds any cell at
+all:
+
+1. **open ground beside the settled country** — a livable cell or a shore, bearing no location of its
+   own, that borders a city, farmland, a settlement or stock;
+2. open ground bearing no location, anywhere, for a world whose history left it unsettled;
+3. any land whatever, rather than a game that will not begin.
+
+Waking beside settled country is what ensures both that there is somewhere to go and that the body
+of land one stands on has people upon it.
+
+## 2a. The settled country
+
+The land is peopled by its history, and the people are laid down in two passes, both settled by the
+world's number like everything else.
+
+**History's places stand on cells of their own.** Every place a world's history founds — a citadel, a
+castle, a temple, a mine, and the rest — is founded upon one cell of its region, chosen among the
+cells whose ground its kind can stand on:
+
+| Kind of place | Stands on |
+|---|---|
+| **Urban** — citadel, port, palace, imperial school | plain, mountain, hot steppe or cold steppe, never jungle or snowfield; a port by the water |
+| **Rural** — castle, fortress, temple, imperial temple, commandery | any livable ground; a commandery by the water |
+| **Isolated** — monastery, mine, sanctuary, burial field, pyramid | the ground of its kind, livable or barren |
+
+A kind no cell of a region can carry is never founded there. Every realm that rises upon free land
+raises a **castle** for its founder soon after its founding. A place that history ruins remains upon
+its cell as a **ruin**, which is isolated whatever it once was.
+
+**The country then spreads from them.** **Livable ground** is plain, mountain, hot steppe, cold steppe,
+jungle and snowfield; forest is left wild, and the barren grounds are not settled. From every place
+still standing, settled country spreads outward over free livable cells:
+
+- an urban place first raises **one to three city cells** about itself, or spreads farmland directly
+  where no city ground is free beside it;
+- from each such city, and from every rural place, **farmland** spreads in rings, two or three rings
+  deep, each cell putting out one to three more upon the free livable cells beside it;
+- **one cell of farmland in three** becomes instead a **settlement** or a place where **stock** is
+  kept, the two in equal measure where that ground keeps stock;
+- **no country crosses a border**: every cell a place's country takes lies in a region held by the
+  realm that holds the place itself, so a place upon a frontier spreads only on its own side;
+- every count of one to three is scaled by the disposition's density and held between one and five,
+  and only the want of free livable ground within the realm ever stops the spread. Isolated places
+  and ruins spread nothing.
+
+What grows, who lives, and what is kept is a matter of the ground: each livable biome has its own
+crops, its own manner of settlement and its own stock, and jungle and snowfield keep none. The ground
+beneath a location is never changed by it — a field on the cold steppe is crossed as cold steppe —
+and a location built upon a cell is built in the materials of that ground.
 
 ## 3. The compass of a stride
 
@@ -135,13 +178,11 @@ route on foot may enter them.
 ## 4. The price of a crossing
 
 Each biome declares what one of its cells costs to cross, and the whole is summed cell by cell along
-the route.
+the route. A cell bearing a location is crossed as the biome beneath it.
 
 | Biome | Days per cell | Heat per cell | Hazards met, per cell |
 |---|---|---|---|
-| City | 3 | 1 | thief 1 % |
 | Plain | 5 | 2 | wolf 2 %, bandit 1 % |
-| Field | 5 | 1 | bandit 1 % |
 | Coast | 6 | 3 | smuggler 1 % |
 | Forest | 8 | 4 | wolf 6 %, bear 2 %, brigand 2 % |
 | Mountain | 12 | 6 | bear 3 %, rockfall 2 % |

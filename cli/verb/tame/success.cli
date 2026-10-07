@@ -47,7 +47,9 @@ expect wolf
 # Difficulty 4 off a three-modus-mentis chain: `strategy succeed` asks for more sixes
 # than there are dice, which used to hang the game outright (NarrativeController caps it).
 goal tame
-click keyword wolf
+# By index: the wolf is the phase's only object, but which of its words is drawn as the keyword
+# ("wolf", "limp", "rolling"...) is a shuffle among equally related words, not a fixed choice.
+click keyword 0
 choose 0
 choose 0
 advance 12 180

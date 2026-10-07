@@ -9,7 +9,6 @@ using Cathedral.Glyph.Microworld;
 using Cathedral.Game;
 using Cathedral.Game.Scene.Farm;
 using Cathedral.Game.Scene.Plain;
-using Cathedral.Game.Scene.Field;
 using Cathedral.Game.Scene.Forest;
 using Cathedral.Game.Scene.Village;
 using Cathedral.Game.Scene.Cave;
@@ -202,11 +201,8 @@ public static class LocationTravelModeLauncher
 
             // Register scene factories for specific biome types. Constructors, not instances — one
             // factory is built per scene so its working state cannot outlive the location.
-            gameController.RegisterSceneFactory("farm",     () => new FarmSceneFactory());
             gameController.RegisterSceneFactory("plain",    () => new PlainSceneFactory());
-            gameController.RegisterSceneFactory("field",    () => new FieldSceneFactory());
             gameController.RegisterSceneFactory("forest",   () => new ForestSceneFactory());
-            gameController.RegisterSceneFactory("village",  () => new VillageSceneFactory());
             gameController.RegisterSceneFactory("cave",     () => new CaveSceneFactory());
             gameController.RegisterSceneFactory("mountain", () => new MountainSceneFactory());
             gameController.RegisterSceneFactory("peak",     () => new PeakSceneFactory());
@@ -215,6 +211,11 @@ public static class LocationTravelModeLauncher
             // The hot and cold country's biomes (see ClimateRule), each keyed by its biome's name.
             foreach (var climate in Cathedral.Game.Scene.Shared.ClimateSceneFactories.All)
                 gameController.RegisterSceneFactory(climate.Biome, climate.Create);
+
+            // The settled country: every location the sprawl and history can put on the map, keyed by
+            // its location name (see SettlementTable). The farm and the village are among them.
+            foreach (var settled in Cathedral.Game.Scene.Settled.SettledSceneFactories.All)
+                gameController.RegisterSceneFactory(settled.Key, settled.Create);
 
             // The test location: every kind of thing in one place, under names that never change.
             // Attached to no biome, so --location-type test is the only way in and it can never

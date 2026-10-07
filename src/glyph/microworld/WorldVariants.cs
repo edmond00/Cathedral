@@ -7,8 +7,8 @@ using OpenTK.Mathematics;
 namespace Cathedral.Glyph.Microworld
 {
     /// <summary>
-    /// The numbers that turn three Perlin fields into a world: how big its features are, where the
-    /// waterline sits, how high the treeline is, how much of the land is worth farming.
+    /// The numbers that turn the Perlin fields into a world: how big its features are, where the
+    /// waterline sits, how high the treeline is, how hot or cold it runs, how thickly it is settled.
     ///
     /// <para>Written as a record so a variant can be stated as the baseline <c>with</c> the two or
     /// three numbers it actually changes. A variant that had to restate all eleven would be a variant
@@ -22,8 +22,9 @@ namespace Cathedral.Glyph.Microworld
     /// </summary>
     /// <param name="ContinentScale">Divisor on the water layer. Bigger means broader continents and
     /// fewer of them; smaller breaks the land into islands.</param>
-    /// <param name="SettlementScale">Divisor on the settlement layer — the one that decides forest,
-    /// field and town. Small on purpose: this is the layer that varies within a day's walk.</param>
+    /// <param name="SettlementScale">Divisor on the settlement layer — the one that decides forest
+    /// from open plain. Small on purpose: this is the layer that varies within a day's walk. (It once
+    /// decided tilled field too; fields now sprawl from history's places, see <c>SettlementSprawl</c>.)</param>
     /// <param name="ReliefScale">Divisor on the mountain layer. Bigger means longer ranges.</param>
     /// <param name="SeaLevel">The waterline. Raise it for more sea, lower it for more land; this is
     /// the single knob behind every drowned or continental variant.</param>
@@ -33,10 +34,6 @@ namespace Cathedral.Glyph.Microworld
     /// <param name="PeakLevel">Where the mountains turn to bare peaks. Must sit above
     /// <see cref="MountainLevel"/> or there are no mountains, only peaks.</param>
     /// <param name="ForestLevel">Above this, the settlement layer reads as forest.</param>
-    /// <param name="FieldLevel">Below this, it reads as tilled field — which is where every farm and
-    /// village in the game is placed, so this is the knob that decides how peopled a world is.</param>
-    /// <param name="TownLevel">Below this, a field would be a town. Inert while the city biome is
-    /// disabled in <c>BiomeDatabase</c> — kept because the threshold is real and returns with it.</param>
     /// <param name="TemperatureOffset">Added to the climate layer everywhere: the knob behind every hot
     /// or cold variant. Zero is the temperate world, which still has its small hot and cold country
     /// wherever the noise alone crosses a threshold; see <see cref="ClimateRule"/>.</param>
@@ -44,6 +41,10 @@ namespace Cathedral.Glyph.Microworld
     /// the baseline a temperate world's hot and cold country comes as some seven to nine pockets of
     /// each — tried at two or three broad countries, and at a rash of thirty, and both read worse on the
     /// map. How rare the pockets are is the thresholds' business (see <see cref="ClimateRule"/>).</param>
+    /// <param name="SettlementDensity">How thickly the world is peopled: scales how often history
+    /// builds a place and how far each place's farmland and settlements sprawl. 1 is the baseline;
+    /// an arable world is denser, a desolate one sparser. This replaced the old field threshold,
+    /// which made a world peopled by painting more of it tilled.</param>
     public sealed record WorldShape(
         float ContinentScale,
         float SettlementScale,
@@ -54,10 +55,9 @@ namespace Cathedral.Glyph.Microworld
         float MountainLevel,
         float PeakLevel,
         float ForestLevel,
-        float FieldLevel,
-        float TownLevel,
         float TemperatureOffset = 0f,
-        float ClimateScale = 22f)
+        float ClimateScale = 22f,
+        float SettlementDensity = 1f)
     {
         // The three layers are read out of one Perlin field at three offsets far enough apart that
         // they are independent. Fixed, and not part of a variant: moving them would not make a
@@ -111,14 +111,11 @@ namespace Cathedral.Glyph.Microworld
             if (relief > PeakLevel)     return "peak";
             if (relief > MountainLevel) return "mountain";
 
-            // TODO: restore the city biome. The threshold is live; the biome it names is not, so a
-            // town reads as the field it stands in.
-            if (settlement < TownLevel) return "field";
-
             if (water <= SeaLevel + CoastBand) return "coast";
 
+            // No tilled field here any more: farmland sprawls from the places history builds, after
+            // history has run (SettlementSprawl). The noise only says wood or open country.
             if (settlement > ForestLevel) return "forest";
-            if (settlement < FieldLevel)  return "field";
 
             return "plain";
         }
@@ -143,10 +140,7 @@ namespace Cathedral.Glyph.Microworld
             if (CoastBand        <= 0f) yield return "CoastBand must be positive, or there is no shore";
             if (PeakLevel <= MountainLevel)
                 yield return $"PeakLevel {PeakLevel} must sit above MountainLevel {MountainLevel}";
-            if (TownLevel > FieldLevel)
-                yield return $"TownLevel {TownLevel} must sit at or below FieldLevel {FieldLevel}";
-            if (FieldLevel >= ForestLevel)
-                yield return $"FieldLevel {FieldLevel} must sit below ForestLevel {ForestLevel}";
+            if (SettlementDensity <= 0f) yield return "SettlementDensity must be positive";
         }
     }
 
@@ -242,9 +236,6 @@ namespace Cathedral.Glyph.Microworld
         {
             ContinentScale = 7f,
             SeaLevel       = 0.13f,
-            // A touch more field than the baseline: on small land the climate's pockets take a
-            // larger bite out of the only country a run has.
-            FieldLevel     = -0.35f,
         };
     }
 
@@ -288,7 +279,6 @@ namespace Cathedral.Glyph.Microworld
         public override WorldShape Shape => WorldVariants.Baseline with
         {
             ForestLevel = -0.04f,
-            FieldLevel  = -0.44f,
         };
     }
 
@@ -301,8 +291,9 @@ namespace Cathedral.Glyph.Microworld
         public override string Blurb => "field after field, and villages between";
         public override WorldShape Shape => WorldVariants.Baseline with
         {
+            // Worked land: history builds often and every place sprawls wide.
+            SettlementDensity = 1.6f,
             ForestLevel = 0.42f,
-            FieldLevel  = -0.16f,
         };
     }
 
@@ -315,8 +306,9 @@ namespace Cathedral.Glyph.Microworld
         public override string Blurb => "open country, barely worked";
         public override WorldShape Shape => WorldVariants.Baseline with
         {
+            // Almost nobody: places are rare and their farmland thin.
+            SettlementDensity = 0.55f,
             ForestLevel = 0.18f,
-            FieldLevel  = -0.45f,
         };
     }
 
@@ -333,7 +325,6 @@ namespace Cathedral.Glyph.Microworld
             SeaLevel       = 0.09f,
             OceanDepth     = 0.60f,
             CoastBand      = 0.20f,
-            FieldLevel     = -0.30f,
         };
     }
 
@@ -364,8 +355,9 @@ namespace Cathedral.Glyph.Microworld
         public override string Blurb => "dunes and salt-pans, and little else";
         public override WorldShape Shape => WorldVariants.Baseline with
         {
+            // Little that grows, and so few who stay.
+            SettlementDensity = 0.7f,
             ForestLevel       = 0.36f,
-            FieldLevel        = -0.47f,
             TemperatureOffset = 0.74f,
         };
     }
@@ -380,7 +372,6 @@ namespace Cathedral.Glyph.Microworld
         public override WorldShape Shape => WorldVariants.Baseline with
         {
             ForestLevel       = -0.04f,
-            FieldLevel        = -0.44f,
             TemperatureOffset = 0.69f,
         };
     }
@@ -458,7 +449,6 @@ namespace Cathedral.Glyph.Microworld
         public override WorldShape Shape => WorldVariants.Baseline with
         {
             ForestLevel       = 0.05f,
-            FieldLevel        = -0.44f,
             TemperatureOffset = -0.64f,
         };
     }
@@ -488,10 +478,11 @@ namespace Cathedral.Glyph.Microworld
         public override string Blurb => "bare cold steppe to every horizon";
         public override WorldShape Shape => WorldVariants.Baseline with
         {
+            // Little that grows, and so few who stay.
+            SettlementDensity = 0.7f,
             ContinentScale    = 16f,
             SeaLevel          = -0.08f,
             ForestLevel       = 0.40f,
-            FieldLevel        = -0.47f,
             TemperatureOffset = -0.69f,
         };
     }
@@ -514,9 +505,7 @@ namespace Cathedral.Glyph.Microworld
             CoastBand:        0.065f,
             MountainLevel:    0.30f,
             PeakLevel:        0.50f,
-            ForestLevel:      0.25f,
-            FieldLevel:      -0.38f,
-            TownLevel:       -0.58f);
+            ForestLevel:      0.25f);
 
         /// <summary>
         /// Every variant, in the order that decides which moon gets which.

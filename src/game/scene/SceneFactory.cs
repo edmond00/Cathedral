@@ -240,6 +240,18 @@ public abstract class SceneFactory
         building.RoofSlipIn?.AttachTo(scene);
     }
 
+    /// <summary>
+    /// Adds a great building (<see cref="Building.EdificeFactory"/>) to the scene: its section, every
+    /// room, and the great door, which — like a small building's entry door — straddles the outdoor
+    /// area it opens from, registered earlier with another section.
+    /// </summary>
+    protected void RegisterEdifice(Scene scene, Building.EdificeResult edifice)
+    {
+        scene.Sections.Add(edifice.Section);
+        RegisterAll(scene, edifice.Section);
+        edifice.EntryDoor.Register(scene);
+    }
+
     private static void RegisterPoI(Scene scene, PointOfInterest poi)
     {
         poi.Register(scene);
@@ -474,6 +486,15 @@ public abstract class SceneFactory
 
         /// <summary>Ice and snow and the cold steppe: snow fleas, ice worms, and in summer the bloodsuckers.</summary>
         Frozen,
+
+        /// <summary>Orchards, groves and vineyards: wasps at the fruit, aphids on the shoots, ladybirds after them.</summary>
+        Orchard,
+
+        /// <summary>Streets, quays and great buildings: roaches, rats, moths, pigeons on every ledge.</summary>
+        Urban,
+
+        /// <summary>Tombs, crypts and burial grounds: scarabs, centipedes, pale spiders, the skull-marked moth.</summary>
+        Tomb,
     }
 
     /// <summary>
@@ -554,6 +575,30 @@ public abstract class SceneFactory
                 () => new Npc.Archetypes.IceWormArchetype(),
                 () => new Npc.Archetypes.MosquitoArchetype(),
                 () => new Npc.Archetypes.BumblebeeArchetype(),
+            },
+            SmallLife.Orchard => new Func<Npc.ShallowNpcArchetype>[]
+            {
+                () => new Npc.Archetypes.WaspArchetype(),
+                () => new Npc.Archetypes.HornetArchetype(),
+                () => new Npc.Archetypes.AphidArchetype(),
+                () => new Npc.Archetypes.LadybirdArchetype(),
+                () => new Npc.Archetypes.BeeArchetype(),
+                () => new Npc.Archetypes.ButterflyArchetype(),
+            },
+            SmallLife.Urban => new Func<Npc.ShallowNpcArchetype>[]
+            {
+                () => new Npc.Archetypes.CockroachArchetype(),
+                () => new Npc.Archetypes.HouseMouseArchetype(),
+                () => new Npc.Archetypes.MothArchetype(),
+                () => new Npc.Archetypes.PigeonArchetype(),
+                () => new Npc.Archetypes.ShipRatArchetype(),
+            },
+            SmallLife.Tomb => new Func<Npc.ShallowNpcArchetype>[]
+            {
+                () => new Npc.Archetypes.ScarabArchetype(),
+                () => new Npc.Archetypes.CentipedeArchetype(),
+                () => new Npc.Archetypes.TombSpiderArchetype(),
+                () => new Npc.Archetypes.DeathsHeadMothArchetype(),
             },
             _ => new Func<Npc.ShallowNpcArchetype>[]
             {

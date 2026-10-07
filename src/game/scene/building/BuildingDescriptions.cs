@@ -22,6 +22,8 @@ public static class BuildingDescriptions
         BuildingMaterial.Stone         => "stone",
         BuildingMaterial.WattleAndDaub => "wattle-and-daub",
         BuildingMaterial.Timber        => "timber-framed",
+        BuildingMaterial.Mudbrick      => "mudbrick",
+        BuildingMaterial.Log           => "log",
         _                              => "wooden",
     };
 
@@ -96,6 +98,48 @@ public static class BuildingDescriptions
         "under turf grown thick with weeds", "roofed in split shingle", "under a mossed slate roof",
     };
 
+    // A mudbrick house is roofed flat, a log one under turf or bark: the climate's own roofs.
+    private static readonly string[] FlatRoof =
+    {
+        "under a flat roof of beaten earth", "under a flat roof laid on palm trunks", "under a parapeted flat roof",
+        "under a flat roof with a water-spout of baked clay",
+    };
+    private static readonly string[] TurfRoof =
+    {
+        "under a turf roof grown with grass", "under a roof of birch bark and sod", "under a steep turf roof weighted with stones",
+    };
+    private static readonly string[] StoneRoof =
+    {
+        "under heavy stone slabs", "under a steep slate roof", "under a mossed slate roof", "roofed in stone flags",
+    };
+
+    /// <summary>
+    /// The materials a climate builds in, most common first: what a city or a settlement on that
+    /// ground is made of. Plain country builds in timber and daub, the mountains and snowfields in
+    /// stone, the hot steppe in mudbrick, the cold steppe in logs; the jungle's forts are stone.
+    /// </summary>
+    public static BuildingMaterial[] MaterialsOf(string biome) => biome switch
+    {
+        "mountain"                                   => new[] { BuildingMaterial.Stone, BuildingMaterial.Stone, BuildingMaterial.Timber },
+        Cathedral.Glyph.Microworld.BiomeDatabase.Snowfield  => new[] { BuildingMaterial.Stone, BuildingMaterial.Log },
+        Cathedral.Glyph.Microworld.BiomeDatabase.HotSteppe  => new[] { BuildingMaterial.Mudbrick, BuildingMaterial.Mudbrick, BuildingMaterial.Stone },
+        Cathedral.Glyph.Microworld.BiomeDatabase.ColdSteppe => new[] { BuildingMaterial.Log, BuildingMaterial.Log, BuildingMaterial.Timber },
+        Cathedral.Glyph.Microworld.BiomeDatabase.Jungle     => new[] { BuildingMaterial.Stone },
+        _                                            => new[] { BuildingMaterial.Timber, BuildingMaterial.WattleAndDaub, BuildingMaterial.Wood, BuildingMaterial.Stone },
+    };
+
+    private static string RollRoof(BuildingMaterial mat, Random rng)
+    {
+        var pool = mat switch
+        {
+            BuildingMaterial.Mudbrick => FlatRoof,
+            BuildingMaterial.Log      => TurfRoof,
+            BuildingMaterial.Stone    => StoneRoof,
+            _                         => BuildingRoof,
+        };
+        return pool[rng.Next(pool.Length)];
+    }
+
     /// <summary>
     /// The whole building as seen from the street: size, wear, material, function and roof. Used only
     /// for the outside view of an entry door, and stored as the section's description.
@@ -108,7 +152,7 @@ public static class BuildingDescriptions
         // The caller forces the wear word when the building is known by it ("the crooked house"), so
         // that the name over the door and the prose describing it agree.
         var wear = forcedWear ?? BuildingWear[rng.Next(BuildingWear.Length)];
-        var roof = BuildingRoof[rng.Next(BuildingRoof.Length)];
+        var roof = RollRoof(mat, rng);
         var noun = functionNoun ?? KindNoun(kind);
         var storey = floors >= 2 ? "two-storey " : "";
 

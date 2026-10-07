@@ -134,7 +134,7 @@ public sealed class WorldHistoryWindow : Form
                 new("Id", 40, r => r.Id.ToString()), new("Name", 140, r => h.RegionNames[r.Id]), new("Landmass", 70, r => r.LandmassId.ToString()),
                 new("Cells", 50, r => r.CellCount.ToString()), new("Coastal", 60, r => r.Coastal ? "yes" : ""),
                 new("Held by now", 260, r => h.OwnerOf(r.Id)?.Name ?? "unclaimed"),
-                new("Country", 220, r => $"{r.FieldCells} field, {r.ForestCells} forest, {r.MountainCells} mountain, {r.PlainCells} plain"),
+                new("Country", 220, r => $"{r.LivableCells} livable, {r.PlainCells} plain, {r.ForestCells} wooded, {r.MountainCells} high"),
             }, r => RegionDetails(h, r), r => Opt(h.OwnerOf(r.Id)).Concat(h.Places.Where(p => p.Region == r.Id)));
         AddEmpire(h.Empire);
     }
@@ -475,7 +475,7 @@ public sealed class WorldHistoryWindow : Form
     {
         var sb = new StringBuilder();
         sb.Append($"{h.RegionNames[r.Id]} (region {r.Id}), landmass {r.LandmassId}, {r.CellCount} cells{(r.Coastal ? ", on the sea" : "")}.\r\n");
-        sb.Append($"{r.FieldCells} field, {r.ForestCells} forest, {r.MountainCells} mountain, {r.PlainCells} plain, {r.CityCells} city.\r\n");
+        sb.Append($"{r.LivableCells} livable (habitability {r.Habitability}), {r.PlainCells} plain, {r.ForestCells} wooded, {r.MountainCells} high.\r\n");
         sb.Append($"Held today by {h.OwnerOf(r.Id)?.Name ?? "no one"}.\r\n");
         sb.Append($"Borders: {string.Join(", ", r.Neighbours.Select(n => h.RegionNames[n]))}.\r\n");
         var places = h.Places.Where(p => p.Region == r.Id).ToList();

@@ -194,20 +194,28 @@ public static class RealmGenerator
         return n.StartsWith("the ") ? n[4..] : n;
     }
 
-    public static PlaceKind DrawPlaceKind(Random rng, RegionProfile region, int round)
+    /// <summary>
+    /// What a realm builds in <paramref name="region"/>, drawn by weight from the kinds the region can
+    /// actually host (<paramref name="canHost"/>, which reads the terrain through <c>PlaceSites</c>):
+    /// a port only where the shore has city ground behind it, a mine only on high rock. Null when the
+    /// region can host nothing at all.
+    /// <para><paramref name="round"/> is the current year: monasteries are rare before year 0.</para>
+    /// </summary>
+    public static PlaceKind? DrawPlaceKind(Random rng, RegionProfile region, int round, Func<PlaceKind, bool> canHost)
     {
         var table = new List<(PlaceKind, int)>
         {
-            (PlaceKind.Town, 30),
-            (PlaceKind.City, region.Habitability > 40 ? 15 : 4),
-            (PlaceKind.Port, region.Coastal ? 20 : 0),
-            (PlaceKind.Fortress, 14),
-            (PlaceKind.Temple, 10),
+            (PlaceKind.Citadel,   region.Habitability > 40 ? 16 : 5),
+            (PlaceKind.Port,      14),
+            (PlaceKind.Castle,    8),
+            (PlaceKind.Fortress,  12),
+            (PlaceKind.Temple,    10),
             (PlaceKind.Sanctuary, 6),
             (PlaceKind.Monastery, round > 0 ? 6 : 1),
-            (PlaceKind.Mine, region.MountainCells > 0 ? 12 : 0),
+            (PlaceKind.Mine,      10),
         };
-        return ReligionGenerator.Weighted(rng, table.Where(t => t.Item2 > 0).ToList());
+        var open = table.Where(t => t.Item2 > 0 && canHost(t.Item1)).ToList();
+        return open.Count == 0 ? null : ReligionGenerator.Weighted(rng, open);
     }
 
     private static readonly string[] Epithets =

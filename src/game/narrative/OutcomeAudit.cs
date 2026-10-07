@@ -266,9 +266,6 @@ public static class OutcomeAudit
 
     private static IEnumerable<(string Label, Func<int, Scene.Scene> Build)> Factories()
     {
-        yield return ("VILLAGE",  id => new Scene.Village.VillageSceneFactory().Build(id));
-        yield return ("FARM",     id => new Scene.Farm.FarmSceneFactory().Build(id));
-        yield return ("FIELD",    id => new Scene.Field.FieldSceneFactory().Build(id));
         yield return ("PLAIN",    id => new Scene.Plain.PlainSceneFactory().Build(id));
         yield return ("FOREST",   id => new Scene.Forest.ForestSceneFactory().Build(id));
         yield return ("CAVE",     id => new Scene.Cave.CaveSceneFactory().Build(id));
@@ -277,6 +274,12 @@ public static class OutcomeAudit
         yield return ("COAST",    id => new Scene.Coast.CoastSceneFactory().Build(id));
         // The hot and cold country's factories, from their one list.
         foreach (var e in Scene.Shared.ClimateSceneFactories.All)
+        {
+            var make = e.Create;
+            yield return (e.AuditLabel, id => make().Build(id));
+        }
+        // The settled country: farmland, stock, settlements, cities and history's places, from their one list.
+        foreach (var e in Scene.Settled.SettledSceneFactories.ForAudit)
         {
             var make = e.Create;
             yield return (e.AuditLabel, id => make().Build(id));

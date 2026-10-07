@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Cathedral.Audio;
 
@@ -82,6 +83,40 @@ public static class LocationMoodProfiles
         ["oasis"]          = new(new(0.20f, 0.05f, 0.30f), new(0.40f, 0.20f, 0.55f)),
         ["assassin_guild"] = new(new(0.40f, 0.55f, 0.35f), new(0.65f, 0.80f, 0.60f)),
         ["villa"]          = new(new(0.20f, 0.15f, 0.15f), new(0.40f, 0.35f, 0.35f)),
+
+        // --- the settled country --- (farmland is by family, below)
+        ["burg"]            = new(new(0.40f, 0.10f, 0.30f), new(0.65f, 0.30f, 0.50f)),
+        ["hamlet"]          = new(new(0.10f, 0.10f, 0.25f), new(0.30f, 0.25f, 0.45f)),
+        ["townlet"]         = new(new(0.05f, 0.15f, 0.20f), new(0.25f, 0.35f, 0.40f)),
+        ["fort"]            = new(new(0.30f, 0.40f, 0.40f), new(0.55f, 0.65f, 0.65f)),
+        ["sheepfold"]       = new(new(0.25f, 0.05f, 0.30f), new(0.45f, 0.20f, 0.50f)),
+        ["ranch"]           = new(new(0.10f, 0.15f, 0.25f), new(0.30f, 0.35f, 0.45f)),
+        ["pasture"]         = new(new(0.40f, 0.10f, 0.35f), new(0.65f, 0.25f, 0.55f)),
+        ["citadel"]         = new(new(0.30f, 0.35f, 0.30f), new(0.55f, 0.60f, 0.55f)),
+        ["palace"]          = new(new(0.25f, 0.30f, 0.40f), new(0.50f, 0.55f, 0.60f)),
+        ["imperial school"] = new(new(0.20f, 0.10f, 0.40f), new(0.40f, 0.25f, 0.60f)),
+        ["fortress"]        = new(new(0.40f, 0.45f, 0.35f), new(0.65f, 0.70f, 0.60f)),
+        ["temple"]          = new(new(0.55f, 0.05f, 0.45f), new(0.80f, 0.20f, 0.65f)),
+        ["imperial temple"] = new(new(0.65f, 0.15f, 0.45f), new(0.88f, 0.35f, 0.70f)),
+        ["commandery"]      = new(new(0.40f, 0.35f, 0.55f), new(0.65f, 0.60f, 0.80f)),
+        ["sanctuary"]       = new(new(0.45f, 0.10f, 0.65f), new(0.70f, 0.30f, 0.85f)),
+        ["burial field"]    = new(new(0.65f, 0.30f, 0.60f), new(0.88f, 0.55f, 0.85f)),
+        ["pyramid"]         = new(new(0.60f, 0.45f, 0.75f), new(0.85f, 0.70f, 0.92f)),
+        ["wreck"]           = new(new(0.55f, 0.35f, 0.60f), new(0.80f, 0.60f, 0.85f)),
+        ["ruin"]            = new(new(0.55f, 0.25f, 0.60f), new(0.80f, 0.55f, 0.85f)),
+    };
+
+    /// <summary>The farmland, by family: an apple orchard plays like a cherry orchard.</summary>
+    private static readonly Dictionary<Cathedral.Glyph.Microworld.SettlementTable.Family, MoodRange> FarmlandProfiles = new()
+    {
+        [Cathedral.Glyph.Microworld.SettlementTable.Family.Field]      = new(new(0.05f, 0.05f, 0.10f), new(0.25f, 0.20f, 0.35f)),
+        [Cathedral.Glyph.Microworld.SettlementTable.Family.Orchard]    = new(new(0.10f, 0.05f, 0.25f), new(0.30f, 0.20f, 0.45f)),
+        [Cathedral.Glyph.Microworld.SettlementTable.Family.Grove]      = new(new(0.20f, 0.05f, 0.35f), new(0.40f, 0.20f, 0.55f)),
+        [Cathedral.Glyph.Microworld.SettlementTable.Family.Plantation] = new(new(0.25f, 0.30f, 0.30f), new(0.50f, 0.55f, 0.55f)),
+        [Cathedral.Glyph.Microworld.SettlementTable.Family.Cellar]     = new(new(0.45f, 0.25f, 0.55f), new(0.70f, 0.50f, 0.80f)),
+        [Cathedral.Glyph.Microworld.SettlementTable.Family.Garden]     = new(new(0.20f, 0.05f, 0.50f), new(0.40f, 0.20f, 0.70f)),
+        [Cathedral.Glyph.Microworld.SettlementTable.Family.Paddy]      = new(new(0.15f, 0.05f, 0.40f), new(0.35f, 0.20f, 0.60f)),
+        [Cathedral.Glyph.Microworld.SettlementTable.Family.Vineyard]   = new(new(0.10f, 0.10f, 0.20f), new(0.30f, 0.25f, 0.40f)),
     };
 
     private static readonly MoodRange Fallback =
@@ -111,9 +146,11 @@ public static class LocationMoodProfiles
     public static MusicMoodState SampleMood(string locationType, int locationId)
     {
         var rng = new Random(locationId ^ 0x3F7A2C1);   // XOR salt to avoid seed 0 collapse
-        var p = Profiles.TryGetValue(locationType.ToLowerInvariant(), out var profile)
-              ? profile
-              : Fallback;
+        string key = locationType.ToLowerInvariant();
+        var p = Profiles.TryGetValue(key, out var profile) ? profile
+              : Cathedral.Glyph.Microworld.SettlementTable.AllAgriculture.Contains(key)
+                    ? FarmlandProfiles[Cathedral.Glyph.Microworld.SettlementTable.FamilyOf(key)]
+                    : Fallback;
 
         float Lerp(float a, float b) => a + (float)rng.NextDouble() * (b - a);
 

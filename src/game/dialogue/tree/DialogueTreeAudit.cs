@@ -232,6 +232,17 @@ public static class DialogueTreeAudit
         new WoodcutterArchetype(), new CharcoalBurnerArchetype(),
         new FishermanArchetype(),  new MinerArchetype(),
         new DruidArchetype(),      new HermitArchetype(), new SavageArchetype(),
+        // The settled country
+        new OrchardistArchetype(), new VintnerArchetype(), new PlanterArchetype(),
+        new PickerArchetype(),     new GroomArchetype(),   new DroverArchetype(),
+        new GravediggerArchetype(),
+        // Arms, faith and the great houses
+        new GuardArchetype(),      new CaptainArchetype(), new PriestArchetype(),
+        new MonkArchetype(),       new ScholarArchetype(), new StewardArchetype(),
+        new LordArchetype(),
+        // Streets and harbours
+        new MerchantArchetype(),   new SailorArchetype(),  new InnkeeperArchetype(),
+        new ClerkArchetype(),
     };
 
     /// <summary>Per-tree measurements. Branch length counts <b>player replies</b>, not nodes.</summary>

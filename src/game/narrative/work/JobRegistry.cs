@@ -127,10 +127,88 @@ public sealed class JobRegistry
             J("churn_hand",     "churn-hand",     CoinType.Copper,  7.5f,"dairycraft", "hard_labor", "patience"),
             J("orchard_picker", "orchard-picker", CoinType.Copper, 10f,  "forage_lore", "athletics", "herblore"),
             J("garden_hand",    "garden-hand",    CoinType.Copper, 10f,  "herblore", "fieldcraft", "peasantry"),
-            J("hay_hauler",     "hay-hauler",     CoinType.Copper, 10f,  "haulage", "cellarcraft", "hard_labor"));
+            J("hay_hauler",     "hay-hauler",     CoinType.Copper, 10f,  "haulage", "cellarcraft", "hard_labor"),
+            J("pig_fattener",   "pig-fattener",   CoinType.Copper, 10f,  "swine_lore", "dunging", "husbandry"),
+            J("breeder_hand",   "breeder's hand", CoinType.Copper,  7.5f,"bloodlines", "husbandry", "beast_sense"));
 
         // The hayward patrols the field margin: a small themed pool reusing the boundary jobs.
         LinkArchetype("hayward", "margin_watch", "reed_cutter", "stone_picker");
+
+        // ── The settled country ──────────────────────────────────────────────
+        // Groves and vineyards pay like the field; plantations a little worse, because there are
+        // always more hands than rows. The great houses and the towns pay like village masters.
+        AddArchetype("orchardist",
+            J("fruit_picker",   "fruit-picker",   CoinType.Copper, 10f,  "pomology", "athletics", "harvestry"),
+            J("tree_pruner",    "pruner",         CoinType.Copper,  7.5f,"pruning", "steady_hand", "pomology"),
+            J("grafting_hand",  "grafting-hand",  CoinType.Copper,  6f,  "grafting", "finesse", "patience"),
+            J("windfall_gleaner","windfall-gleaner",CoinType.Copper,15f, "gleaning", "forage_lore", "peasantry"));
+
+        AddArchetype("vintner",
+            J("grape_picker",   "grape-picker",   CoinType.Copper, 10f,  "viniculture", "harvestry", "hard_labor"),
+            J("vine_dresser",   "vine-dresser",   CoinType.Copper,  7.5f,"pruning", "viniculture", "patience"),
+            J("treader",        "treader",        CoinType.Copper, 12f,  "hard_labor", "endurance", "bouquet"),
+            J("press_hand",     "press-hand",     CoinType.Copper,  9f,  "oil_pressing", "haulage", "cellarcraft"));
+
+        AddArchetype("planter",
+            J("cane_cutter",    "cane-cutter",    CoinType.Copper, 15f,  "canecraft", "hard_labor", "endurance"),
+            J("tea_plucker",    "tea-plucker",    CoinType.Copper, 12f,  "tea_lore", "finesse", "patience"),
+            J("paddy_hand",     "paddy-hand",     CoinType.Copper, 12f,  "paddycraft", "dirty_labor", "hard_labor"),
+            J("weigh_tallier",  "weigh-tallier",  CoinType.Copper,  6f,  "bookkeeping", "tallycraft", "scrutiny"),
+            J("water_carrier",  "water-carrier",  CoinType.Copper, 15f,  "sluicecraft", "haulage", "obedience"),
+            J("terrace_builder","terrace-builder",CoinType.Copper, 12f,  "terracing", "stonework", "hard_labor"));
+
+        AddArchetype("captain",
+            J("sentry",         "sentry",         CoinType.Copper,  7.5f,"watchkeeping", "vigilance", "discipline"),
+            J("wall_mender",    "wall-mender",    CoinType.Copper,  9f,  "fortification", "stonework", "hard_labor"),
+            J("armoury_hand",   "armoury-hand",   CoinType.Copper,  9f,  "arms_care", "fletching", "armoury_lore"),
+            J("runner",         "runner",         CoinType.Copper, 12f,  "signalling", "athletics", "obedience"),
+            J("turnkey",        "turnkey",        CoinType.Copper,  9f,  "jailcraft", "watchkeeping", "vigilance"),
+            J("gate_ward",      "gate-ward",      CoinType.Copper,  9f,  "gatekeeping", "billeting", "bastion_eye"),
+            J("scout",          "scout",          CoinType.Copper,  7.5f,"manhunt", "ambuscade", "patrol"),
+            J("questioner_hand","questioner's hand",CoinType.Copper, 7.5f,"interrogation", "clerkship", "scrutiny"),
+            J("camp_scrounger", "camp-scrounger", CoinType.Copper, 12f,  "looting", "provisioning", "self_preservation"));
+
+        AddArchetype("steward",
+            J("scullion",       "scullion",       CoinType.Copper, 15f,  "dirty_labor", "cookery", "obedience"),
+            J("serving_hand",   "serving-hand",   CoinType.Copper, 10f,  "precedence", "courtesy", "deference"),
+            J("store_tallier",  "store-tallier",  CoinType.Copper,  7.5f,"provisioning", "tallycraft", "bookkeeping"),
+            J("stable_lad",     "stable-lad",     CoinType.Copper, 12f,  "horsemanship", "grooming", "dirty_labor"),
+            J("falconer_boy",   "falconer's boy", CoinType.Copper, 10f,  "falconry", "beast_sense", "patience"),
+            J("hall_musician",  "hall musician",  CoinType.Copper,  7.5f,"lute_playing", "solfege", "courtesy"));
+
+        AddArchetype("merchant",
+            J("porter",         "porter",         CoinType.Copper, 12f,  "haulage", "stevedoring", "hard_labor"),
+            J("counting_clerk", "counting-clerk", CoinType.Copper,  6f,  "bookkeeping", "arithmetic_logic", "scrutiny"),
+            J("stall_crier",    "stall-crier",    CoinType.Copper,  9f,  "hawking", "bargaining", "banter"),
+            J("goods_appraiser","appraiser",      CoinType.Copper,  6f,  "appraisal", "coin_eye", "hallmark"),
+            J("carter",         "carter",         CoinType.Copper, 10f,  "carting", "haulage", "horsemanship"),
+            J("back_runner",    "back-door runner",CoinType.Copper,  9f, "throng", "rooftops", "receiving"));
+
+        AddArchetype("innkeeper",
+            J("potboy",         "potboy",         CoinType.Copper, 12f,  "tapstering", "haulage", "obedience"),
+            J("kitchen_hand",   "kitchen-hand",   CoinType.Copper, 10f,  "cookery", "firecraft", "dirty_labor"),
+            J("ostler",         "ostler",         CoinType.Copper, 12f,  "grooming", "horse_sense", "dirty_labor"),
+            J("bouncer",        "bouncer",        CoinType.Copper,  9f,  "brawling", "iron_nerves", "vigilance"),
+            J("card_dealer",    "card-dealer",    CoinType.Copper,  9f,  "card_sharping", "gambling", "sharp_practice"));
+
+        AddArchetype("priest",
+            J("altar_server",   "altar-server",   CoinType.Copper, 12f,  "liturgy", "incensing", "reverence"),
+            J("bell_hand",      "bell-ringer",    CoinType.Copper, 10f,  "bell_ringing", "athletics", "obedience"),
+            J("grave_hand",     "grave-hand",     CoinType.Copper, 12f,  "sextonry", "hard_labor", "dirty_labor"),
+            J("door_keeper",    "door-keeper",    CoinType.Copper, 12f,  "asylum", "vigil", "liturgy"),
+            J("hired_mourner",  "hired mourner",  CoinType.Copper, 10f,  "obsequies", "mourning", "elegy"),
+            J("almoner",        "almoner's hand", CoinType.Copper,  9f,  "almsgiving", "tithing", "humility"),
+            J("exorcist_acolyte","exorcist's acolyte",CoinType.Copper, 9f,"exorcism", "superstition", "dread"));
+
+        AddArchetype("drover",
+            J("night_drover",   "night drover",   CoinType.Copper,  9f,  "rustling", "droving", "night_ear"),
+            J("brand_hand",     "brand-hand",     CoinType.Copper, 10f,  "branding", "roping", "hard_labor"));
+
+        AddArchetype("monk",
+            J("copyist",        "copyist",        CoinType.Copper,  9f,  "copying", "calligraphy", "patience"),
+            J("garden_brother", "garden-hand",    CoinType.Copper, 12f,  "herblore", "tillage", "cloister_silence"),
+            J("infirmary_hand", "infirmary-hand", CoinType.Copper, 10f,  "physic", "empathy", "dirty_labor"),
+            J("illuminator",    "illuminator",    CoinType.Copper,  6f,  "illumination", "calligraphy", "patience"));
     }
 
     // ── Building helpers ───────────────────────────────────────────────────────

@@ -339,43 +339,41 @@ world that generates without complaint**, which is what this exists for:
 
 - a waterline half a point too high leaves an archipelago of six-cell islands, and the run ends when
   the player opens the travel map and finds nowhere to go;
-- a treeline half a point too low buries the fields — and since `PostProcessWorld` hangs every farm
-  and village off a *field* cell, that world has no people in it at all;
+- a treeline half a point too low buries the livable ground — and since the settled country sprawls
+  only over livable cells (`SettlementSprawl`), that world has almost no people in it at all;
 - a coast band raised without the waterline under it leaves the shore below the sea and the deep
   ocean above the shallows, which still generates, just with no shoreline anywhere.
 
 None of those throws. The audit builds the terrain of every variant on the first sixteen moons a
-player could pick it on, and per world checks land share, field share **as a fraction of the land**
-(a drowned world has less of everything, and measuring against the whole sphere faults it for being
-drowned rather than for being barren), spawnable share, **viable spawns** — the cells
-`InitializeProtagonist` may actually draw from, being those on a landmass carrying at least
-`Config.WorldRegions.FieldsForAHome` fields — **the richest landmass's field count**, and, on three
-of the sixteen, the region count. The `dead` column beside `viable` is the share of otherwise
-spawnable ground the spawn rule throws away; it is informational and is properly high in a world of
-islands (about 70% at the worst Insular seed, against 6% in a Temperate one).
+player could pick it on, and per world checks land share, spawnable share, region count, and — on
+three of the sixteen, the ones it also divides into regions and gives a history (`PeopleWorld`) — the
+**settled country**: at least 150 sprawled locations in the world, at least 40 on the richest
+landmass (the size of a home worth waking in), and at least 100 **viable spawns**, the cells beside
+the sprawl that `SpawnRule` draws the waking place from. The `dead` column is the share of otherwise
+spawnable ground the spawn rule throws away; it is informational and properly high in a world of
+islands.
 It also checks the table itself: ids unique, every `WorldVariant` subclass registered in
-`WorldVariants.All`, every variant reached by some moon in the sky, the shape orderings sound, and
-every name and blurb short enough for the moon box, which does no wrapping and would run the text
-off the border into the dark.
+`WorldVariants.All`, every variant reached by some moon in the sky, the shape orderings sound, every
+name and blurb short enough for the moon box — and **every biome and location kind drawing in a
+glyph of its own** (`BiomeDatabase.SettledGlyphs`), since two kinds sharing one are two kinds the map
+cannot tell apart.
 
 Headless by construction: it builds the mesh through `IcosphereGeometry` and classifies through
 `WorldShape`, both of which the running game uses too, so what it measures is the world a player
-would walk. Sixteen worlds each for twenty variants runs in about twenty seconds.
+would walk.
 
 **It classifies through `WorldClassifier`**, the one pipeline the game and `HeadlessWorld` also use
 (terrain layers, then `CoastRule`, then `ClimateRule`), and checks the spawn through `SpawnRule`,
 which `InitializeProtagonist` calls — so neither can drift from the game. It faults any land cell on
 the water that is neither shore nor sea ice (`CoastRule` makes the shore exactly the land on the
 water). Per variant it prints the hot and cold shares of the land and the **zone counts** — connected
-hot or cold stretches of 30+ cells, water included — and faults a temperate variant averaging outside
-1.5–4 zones of either kind, since that is `ClimateScale` gone wrong. It also faults two share bounds: a temperate variant (offset 0) must
-have *some* hot and cold country and no more than 15% of either; a hot or cold variant must be at
-least 45% its own climate. **Climate variants are exempt from the field floors** — hot and cold
-ground carries no settlement yet, so a desert world with few fields is the design, not a fault.
+hot or cold stretches of 30+ cells, water included — for reading, not judging. It faults two share
+bounds: a temperate variant (offset 0) may have no more than 6% hot or cold land; a hot or cold
+variant must be at least 45% its own climate.
 
-Run it after touching a variant's numbers, `WorldShape`, the biome thresholds,
-`InitializeProtagonist`'s spawn rule, `Config.WorldRegions.FieldsForAHome`, or anything in
-`WorldRegions`. Walk what it
+Run it after touching a variant's numbers, `WorldShape`, the biome thresholds, `SpawnRule`,
+`SettlementSprawl` or `SettlementTable`, `WorldVariant.SettlementDensity`, a settled glyph, or anything
+in `WorldRegions`. Walk what it
 reports with `--world-variant <id>`.
 
 ### Checking the world histories
@@ -419,6 +417,12 @@ invariants that fail *silently* in play — nothing throws, the scene just quiet
 ```bash
 dotnet run -- --building-audit
 ```
+
+It sweeps `SettledSceneFactories.ForAudit` — every location the sprawl and history can put on the
+map (forty-odd agriculture, stock, settlement, city, historical and ruin keys) plus the same factories
+forced onto other ground they can stand on (a mountain city, a snowfield burg), since the climate
+changes what they are built of. It first runs `CropCatalog.Validate`, so a crop the location table
+names and the catalogue lacks fails here rather than on a player's arrival.
 
 Per factory it prints the range of areas, NPCs and doors (and how many are locked at noon), plus the
 sections that were generated and how often. Then it warns about:

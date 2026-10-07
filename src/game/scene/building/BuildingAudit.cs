@@ -5,7 +5,6 @@ using System.Text;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Npc;
 using Cathedral.Game.Scene.Farm;
-using Cathedral.Game.Scene.Field;
 using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Scene.Village;
 
@@ -43,7 +42,6 @@ public static class BuildingAudit
 
         AuditFactory(sb, warnings, "VILLAGE", id => new VillageSceneFactory().Build(id));
         AuditFactory(sb, warnings, "FARM",    id => new FarmSceneFactory().Build(id),  allowedEmptyPeriods: 1);
-        AuditFactory(sb, warnings, "FIELD",   id => new FieldSceneFactory().Build(id), allowedEmptyPeriods: 1);
 
         // The wilderness has no buildings, but the checks that are not about buildings — section
         // partition, node-id slugs, duplicate observation names, doors bypassed by graph edges — apply
@@ -58,6 +56,18 @@ public static class BuildingAudit
         {
             var make = e.Create;
             AuditFactory(sb, warnings, e.AuditLabel, id => make().Build(id), inhabited: false);
+        }
+
+        // The settled country. Every crop must resolve before anything is built: a location the table
+        // names and the catalogue does not would otherwise fail only when a player walked onto it.
+        Agriculture.CropCatalog.Validate();
+        foreach (var e in Settled.SettledSceneFactories.ForAudit)
+        {
+            if (e.Key is "village" or "farm" && !e.AuditLabel.Contains('(')) continue;   // audited above
+            var make = e.Create;
+            // A field or a stock place is a household like the farm: its hall may stand empty while
+            // its master is out, as the farm's does.
+            AuditFactory(sb, warnings, e.AuditLabel, id => make().Build(id), allowedEmptyPeriods: 1);
         }
 
         AuditVerbDiscovery(warnings);

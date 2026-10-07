@@ -375,16 +375,17 @@ namespace Cathedral.Glyph.Microworld
             PrintNoiseStatistics(noiseValues, "Microworld Noise Distribution Statistics");
             PrintGlyphStatistics(glyphCounts, VertexCount, "Microworld Biome-Based Glyph Distribution");
 
-            PostProcessWorld();
-
-            // After PostProcessWorld, because the farms and villages it places are part of the world
-            // the regions divide — and before InitializeProtagonist, so that anything downstream of
-            // the spawn can already ask which region it is standing in.
+            // Before InitializeProtagonist, so that anything downstream of the spawn can already ask
+            // which region it is standing in.
             BuildRegions();
 
             // The world's past, laid over the regions it just divided into. A pure function of the
             // seed like everything above, so Continue rebuilds it rather than reading it from the save.
             BuildHistory();
+
+            // And the peopled country, grown around the places that past put on the map. After history
+            // and never before it: there is nothing to grow from until history has built.
+            BuildSettlement();
 
             // Initialize protagonist at a random suitable location
             InitializeProtagonist();
@@ -457,7 +458,8 @@ namespace Cathedral.Glyph.Microworld
             if (Regions == null) return;
             var geography = Cathedral.Game.History.HistoryGeography.Build(
                 Regions, VertexCount, GetNeighboringVertices,
-                v => vertexData.TryGetValue(v, out var d) ? d.Biome.Name : null);
+                v => vertexData.TryGetValue(v, out var d) ? d.Biome.Name : null,
+                _variant.Shape.SettlementDensity);
             History = Cathedral.Game.History.WorldHistoryGenerator.Generate(geography);
 
             _realmSwatches.Clear();
@@ -717,11 +719,13 @@ namespace Cathedral.Glyph.Microworld
         // Protagonist Management Methods
         private void InitializeProtagonist()
         {
-            // Open ground on a landmass worth waking on — see SpawnRule, which --world-variant-audit
+            // Open ground beside the settled country — see SpawnRule, which --world-variant-audit
             // shares so that it measures this spawn and not a description of it.
             var suitableVertices = SpawnRule.Candidates(VertexCount,
                 v => vertexData.TryGetValue(v, out var d) ? d.Biome.Name : null,
-                GetNeighboringVertices);
+                GetNeighboringVertices,
+                v => vertexData.TryGetValue(v, out var d) && d.Location.HasValue,
+                Settlement.IsSprawl);
 
             if (suitableVertices.Count == 0)
             {
@@ -815,19 +819,19 @@ namespace Cathedral.Glyph.Microworld
             }
         }
 
-        /// <summary>
-        /// Returns the shader category alpha for a tile:
-        ///   1.0 = nature (grayscale), 2.0 = water (dark purple),
-        ///   3.0 = human construction (dark yellow), 4.0 = field, coast, desert and hot steppe
-        ///   (intermediate).
-        ///   5.0 is the region overlay's, set elsewhere.
-        /// </summary>
         /// <summary>The biomes drawn with the field's warm tint rather than nature's grey.</summary>
         private static readonly HashSet<string> FieldTinted = new()
         {
-            "field", "coast", BiomeDatabase.Desert, BiomeDatabase.HotSteppe,
+            "coast", BiomeDatabase.Desert, BiomeDatabase.HotSteppe,
         };
 
+        /// <summary>
+        /// Returns the shader category alpha for a tile:
+        ///   1.0 = nature (grayscale, and every ruin), 2.0 = water (dark purple),
+        ///   3.0 = human construction (dark yellow: settlements, cities, history's places),
+        ///   4.0 = farmland and stock, coast, desert and hot steppe (intermediate).
+        ///   5.0 is the region overlay's, set elsewhere.
+        /// </summary>
         private static float GetTileCategory(VertexWorldData data)
         {
             if (data.Location.HasValue)
@@ -835,80 +839,63 @@ namespace Cathedral.Glyph.Microworld
                 string n = data.Location.Value.Name;
                 if (BiomeDatabase.WaterLocations.Contains(n))  return 2.0f;
                 if (BiomeDatabase.HumanLocations.Contains(n))  return 3.0f;
+                if (BiomeDatabase.FarmlandLocations.Contains(n)) return 4.0f;
             }
             else
             {
                 string n = data.Biome.Name;
                 if (BiomeDatabase.WaterBiomes.Contains(n))     return 2.0f;
-                if (BiomeDatabase.HumanBiomes.Contains(n))     return 3.0f;
                 if (FieldTinted.Contains(n))                  return 4.0f;
             }
             return 1.0f;
         }
 
         /// <summary>
-        /// Post-processes the generated world to fix coherence issues.
-        /// Currently ensures every field tile is adjacent to at least one farm or village.
+        /// The settled country: history's places, and the cities, farmland, settlements and stock
+        /// sprawled around them (see <see cref="Cathedral.Game.History.SettlementSprawl"/>). Empty before
+        /// a world has been generated.
         /// </summary>
-        private void PostProcessWorld()
+        public Cathedral.Game.History.SettlementMap Settlement { get; private set; } = Cathedral.Game.History.SettlementMap.Empty;
+
+        /// <summary>
+        /// Lays the settled country onto the map: each settled cell takes its location, glyph and
+        /// colour. A cave the noise put on a cell a historical place stands on gives way to the place;
+        /// no sprawl takes a cell a cave holds.
+        /// </summary>
+        private void BuildSettlement()
         {
-            int placed = 0;
-            LocationType farm    = Locations["farm"];
-            LocationType village = Locations["village"];
+            Cathedral.Game.History.WorldSites.Clear();
+            if (History == null) return;
 
-            for (int i = 0; i < VertexCount; i++)
+            var map = Cathedral.Game.History.SettlementSprawl.Build(
+                VertexCount,
+                v => vertexData.TryGetValue(v, out var d) ? d.Biome.Name : "",
+                GetNeighboringVertices,
+                History.Places,
+                v => vertexData.TryGetValue(v, out var d) && d.Location.HasValue,
+                v => Regions != null && Regions.RegionAt(v) is int r && r >= 0 ? History.OwnerOf(r) : null,
+                _variant.Shape.SettlementDensity,
+                GameRng.ForWorld(GameRng.MasterSeed, "sprawl"));
+
+            foreach (var (vertex, site) in map.Sites)
             {
-                if (!vertexData.TryGetValue(i, out var data) || data.Biome.Name != "field")
-                    continue;
-
-                var neighbors = GetNeighboringVertices(i);
-
-                // Already satisfied if any neighbor has a farm or village
-                bool satisfied = neighbors.Any(n =>
-                    vertexData.TryGetValue(n, out var nd) &&
-                    nd.Location.HasValue &&
-                    (nd.Location.Value.Name == "farm" || nd.Location.Value.Name == "village"));
-
-                if (satisfied)
-                    continue;
-
-                // Pick placement candidate: self first (if empty), then an empty field neighbor, then force self
-                int candidate = -1;
-                if (!data.Location.HasValue)
-                {
-                    candidate = i;
-                }
-                else
-                {
-                    foreach (int n in neighbors)
-                    {
-                        if (vertexData.TryGetValue(n, out var nd) &&
-                            nd.Biome.Name == "field" && !nd.Location.HasValue)
-                        {
-                            candidate = n;
-                            break;
-                        }
-                    }
-                    if (candidate == -1)
-                        candidate = i; // force-overwrite self as last resort
-                }
-
-                // Randomly pick farm or village (seeded on vertex index + master seed for
-                // per-world determinism)
-                LocationType chosen = new Random(unchecked(i ^ GameRng.MasterSeed)).Next(2) == 0 ? farm : village;
-
-                // Place chosen location on candidate and refresh its visual
-                var cd = vertexData[candidate];
-                cd.Location = chosen;
-                cd.GlyphChar = chosen.Glyph;
-                cd.Color = new System.Numerics.Vector3(chosen.Color.X, chosen.Color.Y, chosen.Color.Z);
-                vertexData[candidate] = cd;
-                SetVertexGlyph(candidate, chosen.Glyph, TileColor(candidate, vertexData[candidate]), chosen.Size);
-                placed++;
+                if (!vertexData.TryGetValue(vertex, out var data)) continue;
+                var location = Locations[site.Key];
+                data.Location = location;
+                data.GlyphChar = location.Glyph;
+                data.Color = new System.Numerics.Vector3(location.Color.X, location.Color.Y, location.Color.Z);
+                vertexData[vertex] = data;
+                waterVertices.Remove(vertex);
+                SetVertexGlyph(vertex, location.Glyph, TileColor(vertex, data), location.Size);
             }
 
-            if (placed > 0)
-                Console.WriteLine($"[PostProcess] Placed {placed} farm(s)/village(s) to satisfy field adjacency.");
+            Settlement = map;
+            Cathedral.Game.History.WorldSites.Publish(map, History,
+                v => vertexData.TryGetValue(v, out var d) ? d.Biome.Name : null);
+            Console.WriteLine($"[Settlement] {map.Count(Cathedral.Game.History.SiteRole.Historic)} place(s), "
+                            + $"{map.Count(Cathedral.Game.History.SiteRole.Ruin)} ruin(s), {map.Count(Cathedral.Game.History.SiteRole.City)} city(ies), "
+                            + $"{map.Count(Cathedral.Game.History.SiteRole.Agriculture)} farmland, {map.Count(Cathedral.Game.History.SiteRole.Settlement)} settlement(s), "
+                            + $"{map.Count(Cathedral.Game.History.SiteRole.Livestock)} stock.");
         }
 
         /// <summary>

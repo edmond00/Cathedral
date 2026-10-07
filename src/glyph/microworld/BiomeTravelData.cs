@@ -71,8 +71,6 @@ namespace Cathedral.Glyph.Microworld
             // durationDays = days of foot travel per world cell.
             ["plain"]    = new BiomeTravelInfo("plain",    durationDays:  5f, vitalHeatPerCell: 2f,
                 new[] { new EncounterEntry("wolf", 0.02f), new EncounterEntry("bandit", 0.01f) }),
-            ["field"]    = new BiomeTravelInfo("field",    durationDays:  5f, vitalHeatPerCell: 1f,
-                new[] { new EncounterEntry("bandit", 0.01f) }),
             ["forest"]   = new BiomeTravelInfo("forest",   durationDays:  8f, vitalHeatPerCell: 4f,
                 new[] { new EncounterEntry("wolf", 0.06f), new EncounterEntry("bear", 0.02f),
                         new EncounterEntry("brigand", 0.02f) }),
@@ -82,8 +80,6 @@ namespace Cathedral.Glyph.Microworld
                 new[] { new EncounterEntry("blizzard", 0.05f), new EncounterEntry("ice wraith", 0.01f) }),
             ["coast"]    = new BiomeTravelInfo("coast",    durationDays:  6f, vitalHeatPerCell: 3f,
                 new[] { new EncounterEntry("smuggler", 0.01f) }),
-            ["city"]     = new BiomeTravelInfo("city",     durationDays:  3f, vitalHeatPerCell: 1f,
-                new[] { new EncounterEntry("thief", 0.01f) }),
 
             // Climate biomes. Heat runs the way the body would expect: hot ground costs little of it
             // and much of everything else (the days are long and the hazards hunt); cold ground

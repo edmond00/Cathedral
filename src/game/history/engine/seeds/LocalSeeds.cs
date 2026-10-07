@@ -94,10 +94,16 @@ public sealed class RealmFoundationSeed : HistorySeed
             : PickHabitable(sim);
         var cluster = sim.GrowCluster(start, sim.Rng.Next(1, 4), r => sim.History.OwnerOf(r) == null);
         var realm = sim.FoundRealm(cluster);
+        realm.RoseOnFreeLand = true;
 
+        // Every new realm gives its founder a seat within a generation, so that no realm is without a
+        // place of its own on the map. Sown rather than built now: a castle is built, not proclaimed.
+        sim.Sow(new CastleSeed(sim.Later(1, 15), realm));
+
+        // Half the time its capital is a town of note from the first: a port where the shore allows it.
         if (!sim.Chance(0.5)) return;
-        var capital = sim.Regions[realm.CapitalRegion];
-        var kind = capital.Coastal && sim.Chance(0.4) ? PlaceKind.Port : sim.Chance(0.5) ? PlaceKind.City : PlaceKind.Town;
+        var kind = sim.Chance(0.4) && sim.CanHost(PlaceKind.Port, realm.CapitalRegion) ? PlaceKind.Port : PlaceKind.Citadel;
+        if (!sim.CanHost(kind, realm.CapitalRegion)) return;
         sim.NewPlace(kind, realm.CapitalRegion, realm, sim.History.RegionNames[realm.CapitalRegion]);
     }
 
@@ -400,7 +406,37 @@ public sealed class ReligionPulseSeed : PulseSeed
     protected override HistorySeed? Next(HistorySimulation sim) => new ReligionPulseSeed(sim.Later(200, 600));
 }
 
-/// <summary>A realm builds: a town, a port, a fortress, a temple, a mine, as its country allows.</summary>
+/// <summary>
+/// A new realm's founder builds a seat. Sown by <see cref="RealmFoundationSeed"/> for every realm that
+/// rises on its own — at the start and on free land later — and not for one split from another, which
+/// inherits the places standing in its regions. Built in the capital when it can stand there, else in
+/// another of the realm's regions; a realm with no livable ground anywhere goes without.
+/// </summary>
+public sealed class CastleSeed : HistorySeed
+{
+    public CastleSeed(int due, Realm realm) : base(due) => Realm = realm;
+
+    public Realm Realm { get; }
+
+    public override bool CanSprout(HistorySimulation sim) => !Realm.Dissolved.IsKnown;
+
+    public override void Sprout(HistorySimulation sim)
+    {
+        // No livable ground yet: the realm may gain some, so the founder's heirs try again later.
+        if (!Realm.Regions.Any(r => sim.CanHost(PlaceKind.Castle, r)))
+        {
+            sim.Sow(new CastleSeed(sim.Later(20, 60), Realm));
+            return;
+        }
+        int region = sim.CanHost(PlaceKind.Castle, Realm.CapitalRegion)
+            ? Realm.CapitalRegion
+            : Realm.Regions.First(r => sim.CanHost(PlaceKind.Castle, r));
+        var castle = sim.NewPlace(PlaceKind.Castle, region, Realm, $"the castle of {sim.History.RegionNames[region]}");
+        castle.Founder = Realm.Founder;
+    }
+}
+
+/// <summary>A realm builds: a citadel, a port, a castle, a fortress, a temple, a mine, as its country allows.</summary>
 public sealed class PlacePulseSeed : PulseSeed
 {
     public PlacePulseSeed(int due) : base(due) { }
@@ -411,11 +447,17 @@ public sealed class PlacePulseSeed : PulseSeed
         if (realms.Count == 0) return;
         var realm = sim.Pick(realms);
         int region = sim.Pick(realm.Regions.ToList());
-        var kind = RealmGenerator.DrawPlaceKind(sim.Rng, sim.Regions[region], sim.Now);
-        sim.NewPlace(kind, region, realm);
+        var kind = RealmGenerator.DrawPlaceKind(sim.Rng, sim.Regions[region], sim.Now, k => sim.CanHost(k, region));
+        if (kind is { } k) sim.NewPlace(k, region, realm);
     }
 
-    protected override HistorySeed? Next(HistorySimulation sim) => new PlacePulseSeed(sim.Later(25, 70));
+    // The pace of building is the world's settlement density: an arable world builds twice as often as
+    // a desolate one, and so has the more places, and the more country sprawled around them.
+    protected override HistorySeed? Next(HistorySimulation sim)
+    {
+        float d = Math.Max(0.1f, sim.History.Geography.Density);
+        return new PlacePulseSeed(sim.Later((int)(25 / d), (int)(70 / d)));
+    }
 }
 
 /// <summary>Plague, famine, flood, earthquake, fire: the world's own misfortunes.</summary>

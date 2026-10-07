@@ -17,7 +17,7 @@ namespace Cathedral.Game.Scene.Farm;
 /// Builds a complete medieval farm scene per the v1 world-content spec (farm.md).
 ///
 /// Sections:
-///   • Farmyard       — Courtyard (hub), Chicken Coop, Pigsty, Sheep Pen, Storage Shed, Dairy Shed
+///   • Farmyard       — Courtyard (hub), Chicken Coop, Pigsty, Rabbit Warren, Storage Shed, optional Duck Pond
 ///   • Farm Grounds   — Vegetable Garden, Orchard
 ///   • Longhouse      — the household's building: public hall, kitchen, dormitories
 ///   • Barracks       — optional second building when the crew outgrows the longhouse
@@ -30,8 +30,12 @@ namespace Cathedral.Game.Scene.Farm;
 /// meant <c>FarmhandArchetype</c> could never spawn at all, since the specialists always filled the
 /// slots first. Now the crew is drawn up first and the buildings are sized to sleep it.</para>
 ///
-/// NPCs: Farmer, Shepherd, Dairymaid, Swineherd, Poultry Keeper, 0–3 Farmhands.
-/// Shallow: Sheep, Pig, Chicken, Cow.
+/// NPCs: Farmer, Swineherd, Poultry Keeper, 0–3 Farmhands.
+/// Shallow: Pig, Piglet, Chicken, Rabbit, and the waterfowl of the pond.
+///
+/// <para><b>A farm keeps the small stock.</b> Since the settled country gave sheep their sheepfolds,
+/// horses their stables and cattle their ranches and pastures, a farm keeps what has no place of its
+/// own: pigs, poultry and rabbits. The sheep pen and the dairy shed it used to roll went with that.</para>
 /// </summary>
 public class FarmSceneFactory : SceneFactory
 {
@@ -40,16 +44,13 @@ public class FarmSceneFactory : SceneFactory
     private BuildingResult? _longhouse, _barracks;
     private LayoutShape _layout;
     private List<NamedNpcArchetype> _roster = new();
-    private Area? _courtyard, _chickenCoop, _pigsty, _sheepPen, _dairyShed, _shed;
+    private Area? _courtyard, _chickenCoop, _pigsty, _warren, _pond, _shed;
     private Area? _vegetableGarden, _orchard;
-    private bool  _hasSheep, _hasDairy;
 
     protected override void BuildSections(Random rng, int locationId, Scene scene)
     {
         // ── 1. Decide farm composition ────────────────────────────────────────
 
-        _hasSheep = rng.NextDouble() < 0.60;
-        _hasDairy = rng.NextDouble() < 0.55;
 
         // ── 2. Build outdoor areas (all PoIs populated before registration) ──
 
@@ -60,8 +61,8 @@ public class FarmSceneFactory : SceneFactory
         _orchard         = BuildOrchard(rng);
         _shed            = BuildStorageShed();
 
-        if (_hasSheep) _sheepPen  = AnimalPenSubfactory.BuildSheepPen();
-        if (_hasDairy) _dairyShed = AnimalPenSubfactory.BuildDairyShed();
+        _warren          = BuildWarren();
+        if (rng.NextDouble() < 0.6) _pond = BuildPond();
 
         // ── 3. Build sections in order so Courtyard is AllAreas[0] ────────────
 
@@ -74,8 +75,8 @@ public class FarmSceneFactory : SceneFactory
         farmyard.Areas.Add(_chickenCoop);
         farmyard.Areas.Add(_pigsty);
         farmyard.Areas.Add(_shed);
-        if (_sheepPen  != null) farmyard.Areas.Add(_sheepPen);
-        if (_dairyShed != null) farmyard.Areas.Add(_dairyShed);
+        farmyard.Areas.Add(_warren);
+        if (_pond != null) farmyard.Areas.Add(_pond);
         scene.Sections.Add(farmyard);
         RegisterAll(scene, farmyard);
 
@@ -95,8 +96,8 @@ public class FarmSceneFactory : SceneFactory
         // the list either way, so it stays the arrival point and the buildings' front yard.
 
         var outdoorAreas = new List<Area> { _courtyard, _chickenCoop, _pigsty, _shed, _vegetableGarden, _orchard };
-        if (_sheepPen  != null) outdoorAreas.Add(_sheepPen);
-        if (_dairyShed != null) outdoorAreas.Add(_dairyShed);
+        outdoorAreas.Add(_warren);
+        if (_pond != null) outdoorAreas.Add(_pond);
 
         _layout = OutdoorLayout.RollShape(rng);
         OutdoorLayout.Connect(scene, outdoorAreas, _layout, "Track", rng);
@@ -138,7 +139,7 @@ public class FarmSceneFactory : SceneFactory
             RegisterBuilding(scene, _barracks);
         }
 
-        Console.WriteLine($"FarmSceneFactory: Built farm — layout={_layout}, sheep={_hasSheep} dairy={_hasDairy}, "
+        Console.WriteLine($"FarmSceneFactory: Built farm — layout={_layout}, pond={_pond != null}, "
                         + $"{_roster.Count} worker(s), {longhouseBeds} longhouse bed(s), {barracksBeds} barracks bed(s)");
     
         // ── Furnishing: somewhere to sit, somewhere to hide, a hard shortcut, a climb ──
@@ -166,8 +167,6 @@ public class FarmSceneFactory : SceneFactory
     {
         var roles = new List<NamedNpcArchetype> { new FarmerArchetype() };
 
-        if (_sheepPen  != null) roles.Add(new ShepherdArchetype());
-        if (_dairyShed != null) roles.Add(new DairymaidArchetype());
         roles.Add(new SwineherdArchetype());
         roles.Add(new PoultryKeeperArchetype());
 
@@ -231,10 +230,15 @@ public class FarmSceneFactory : SceneFactory
         SpawnShallow(rng, scene, new ChickenArchetype(), _chickenCoop!, count: rng.Next(3, 7));
         SpawnShallow(rng, scene, new PigArchetype(),     _pigsty!,      count: rng.Next(1, 4));
 
-        if (_sheepPen != null)
-            SpawnShallow(rng, scene, new SheepArchetype(), _sheepPen, count: rng.Next(2, 7));
-        if (_dairyShed != null)
-            SpawnShallow(rng, scene, new CowArchetype(), _dairyShed, count: rng.Next(1, 3));
+        SpawnShallow(rng, scene, new PigletArchetype(),  _pigsty!,      count: rng.Next(0, 4));
+        SpawnShallow(rng, scene, new RabbitArchetype(),  _warren!,      count: rng.Next(2, 6));
+        if (_pond != null)
+        {
+            SpawnShallow(rng, scene, new DuckArchetype(),  _pond, count: rng.Next(1, 5));
+            SpawnShallow(rng, scene, new GooseArchetype(), _pond, count: rng.Next(0, 4));
+        }
+        if (rng.NextDouble() < 0.3)
+            SpawnShallow(rng, scene, rng.NextDouble() < 0.5 ? new TurkeyArchetype() : new GuineaFowlArchetype(), _chickenCoop!, count: rng.Next(1, 4));
     
         // Small life. Every location has some; which and how many is rolled, so two
         // places of the same kind are not the same place.
@@ -281,17 +285,11 @@ public class FarmSceneFactory : SceneFactory
             "farmer" => BuildingSchedule.ForWorker(
                 bed, hall, new[] { yard, garden, orchard }, rng, awayPeriods: 1),
 
-            "shepherd" when _sheepPen != null =>
-                BuildingSchedule.ForHand(bed, new[] { _sheepPen, _sheepPen, yard, hall }, rng),
-
-            "dairymaid" when _dairyShed != null =>
-                BuildingSchedule.ForHand(bed, new[] { _dairyShed, _dairyShed, hall, yard }, rng),
-
             "swineherd" =>
                 BuildingSchedule.ForHand(bed, new[] { pigsty, pigsty, yard, hall }, rng),
 
             "poultry_keeper" =>
-                BuildingSchedule.ForHand(bed, new[] { chicken, chicken, orchard, hall }, rng),
+                BuildingSchedule.ForHand(bed, new[] { chicken, chicken, _pond ?? _warren!, _warren!, hall }, rng),
 
             _ /* farmhand and any specialist whose outbuilding did not spawn */ =>
                 BuildingSchedule.ForHand(bed, new[] { yard, shed, garden, orchard, hall }, rng),
@@ -370,6 +368,48 @@ public class FarmSceneFactory : SceneFactory
             orchard.PointsOfInterest.Add(tools[idx]());
 
         return orchard;
+    }
+
+    private static Area BuildWarren()
+    {
+        var warren = new WarrenArea(
+            displayName: "Rabbit Warren",
+            contextDescription: "by the rabbit warren",
+            transitionDescription: "go over to the warren",
+            descriptions: new() { "A walled earth bank riddled with burrows, hutches stacked along its foot" },
+            moods: new[] { "earthy", "twitching", "trampled", "busy" }
+        );
+        warren.PointsOfInterest.Add(new HutchPointOfInterest(
+            displayName: "Hutches",
+            descriptions: new() { "Wooden hutches with wire fronts, a doe and her kits in each" },
+            items: new() { new ItemElement(new Hay()), new ItemElement(new Carrot()) },
+            moods: new[] { "stacked", "rustling", "warm" }
+        ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "husbandry", ["smell"] = "byre_sense" } });
+        return warren;
+    }
+
+    private static Area BuildPond()
+    {
+        var pond = new PoolArea(
+            displayName: "Duck Pond",
+            contextDescription: "by the duck pond",
+            transitionDescription: "walk down to the duck pond",
+            descriptions: new() { "A muddy pond with a trampled margin, feathers floating on it" },
+            moods: new[] { "muddy", "noisy", "feathered", "still" }
+        );
+        pond.PointsOfInterest.Add(new NestPointOfInterest(
+            displayName: "Reed Nests",
+            descriptions: new() { "Nests trodden into the reeds at the water's edge" },
+            items: new() { new ItemElement(new DuckEgg()), new ItemElement(new GooseEgg()), new ItemElement(new Feather()) },
+            moods: new[] { "hidden", "damp" }
+        ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "henwifery", ["listen"] = "birdsong" } });
+        pond.PointsOfInterest.Add(new CoopPointOfInterest(
+            displayName: "Goose House",
+            descriptions: new() { "A low wooden house on the bank where the geese are shut in at night" },
+            items: new() { new ItemElement(new Straw()), new ItemElement(new Feather()) },
+            moods: new[] { "low", "muddy", "hissing" }
+        ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "husbandry", ["smell"] = "byre_sense" } });
+        return pond;
     }
 
     private static Area BuildStorageShed()

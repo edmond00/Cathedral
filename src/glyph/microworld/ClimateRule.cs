@@ -60,7 +60,7 @@ namespace Cathedral.Glyph.Microworld
                 return biome switch
                 {
                     "mountain" or "peak" => HotSteppe,
-                    "plain" or "field"   => Desert,
+                    "plain"              => Desert,
                     "forest"             => Jungle,
                     _                    => biome,
                 };
@@ -73,7 +73,7 @@ namespace Cathedral.Glyph.Microworld
                     "coast"            => SeaIce,
                     "peak"             => Glacier,
                     "mountain"         => Snowfield,
-                    "plain" or "field" => ColdSteppe,
+                    "plain"            => ColdSteppe,
                     _                  => biome,
                 };
             }
@@ -101,7 +101,7 @@ namespace Cathedral.Glyph.Microworld
             var canyon = new List<int>();
             for (int v = 0; v < n; v++)
             {
-                if (biome[v] is not ("plain" or "field")) continue;
+                if (biome[v] != "plain") continue;
                 foreach (int w in neighbours(v))
                     if (biome[w] == Desert) { canyon.Add(v); break; }
             }

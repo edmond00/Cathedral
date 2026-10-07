@@ -140,9 +140,6 @@ public static class VerbLessonSweep
 
     private static IEnumerable<(string Label, Func<int, Scene> Build)> Factories()
     {
-        yield return ("VILLAGE",  id => new Village.VillageSceneFactory().Build(id));
-        yield return ("FARM",     id => new Farm.FarmSceneFactory().Build(id));
-        yield return ("FIELD",    id => new Field.FieldSceneFactory().Build(id));
         yield return ("PLAIN",    id => new Plain.PlainSceneFactory().Build(id));
         yield return ("FOREST",   id => new Forest.ForestSceneFactory().Build(id));
         yield return ("CAVE",     id => new Cave.CaveSceneFactory().Build(id));
@@ -151,6 +148,12 @@ public static class VerbLessonSweep
         yield return ("PEAK",     id => new Peak.PeakSceneFactory().Build(id));
         // The hot and cold country's factories, from their one list.
         foreach (var e in Shared.ClimateSceneFactories.All)
+        {
+            var make = e.Create;
+            yield return (e.AuditLabel, id => make().Build(id));
+        }
+        // The settled country: farmland, stock, settlements, cities and history's places, from their one list.
+        foreach (var e in Settled.SettledSceneFactories.ForAudit)
         {
             var make = e.Create;
             yield return (e.AuditLabel, id => make().Build(id));

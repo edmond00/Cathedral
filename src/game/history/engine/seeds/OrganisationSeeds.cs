@@ -24,7 +24,7 @@ public sealed class OrganisationPulseSeed : PulseSeed
         var realms = sim.History.LivingRealms.ToList();
         if (realms.Count == 0) return;
 
-        var towns = sim.History.Places.Where(p => !p.Ruined.IsKnown && p.Kind is PlaceKind.City or PlaceKind.Town or PlaceKind.Port).ToList();
+        var towns = sim.History.Places.Where(p => !p.Ruined.IsKnown && p.Kind is PlaceKind.Citadel or PlaceKind.Port).ToList();
         var hidden = sim.History.LivingFaiths.Where(f => sim.History.PresenceOf(f) == FaithPresence.Clandestine).ToList();
         var heldFaiths = realms.Select(r => r.StateReligion).Where(f => f != null).Distinct().ToList();
         bool atWar = sim.History.Wars.Any(w => !w.Ended.IsKnown);
@@ -34,17 +34,17 @@ public sealed class OrganisationPulseSeed : PulseSeed
         {
             (OrganisationKind.KnightlyOrder,     now > -600 && realms.Any(r => r.Regions.Count >= 2) ? 8 : 0),
             (OrganisationKind.ArtisanGuild,      towns.Count > 0 ? 12 : 0),
-            (OrganisationKind.MerchantGuild,     towns.Any(t => t.Kind is PlaceKind.Port or PlaceKind.City) ? 9 : 0),
+            (OrganisationKind.MerchantGuild,     towns.Any(t => t.Kind is PlaceKind.Port or PlaceKind.Citadel) ? 9 : 0),
             (OrganisationKind.MinersGuild,       sim.Regions.Any(r => r.MountainCells > 0) ? 5 : 0),
             (OrganisationKind.MonasticOrder,     heldFaiths.Count > 0 ? 8 : 0),
-            (OrganisationKind.ScholarsCollege,   now > -300 && towns.Any(t => t.Kind == PlaceKind.City) ? 5 : 0),
+            (OrganisationKind.ScholarsCollege,   now > -300 && towns.Any(t => t.Kind == PlaceKind.Citadel) ? 5 : 0),
             (OrganisationKind.HealersGuild,      towns.Count > 0 ? 4 : 0),
             (OrganisationKind.BardsCompany,      4),
             (OrganisationKind.HuntersLodge,      sim.Regions.Any(r => r.IsForested) ? 5 : 0),
             (OrganisationKind.MercenaryCompany,  atWar ? 7 : 1),
             (OrganisationKind.PirateBrotherhood, sim.Regions.Any(r => r.Coastal) ? 4 : 0),
             (OrganisationKind.ThievesGuild,      towns.Count > 0 ? 4 : 0),
-            (OrganisationKind.AssassinsGuild,    towns.Any(t => t.Kind == PlaceKind.City) ? 2 : 0),
+            (OrganisationKind.AssassinsGuild,    towns.Any(t => t.Kind == PlaceKind.Citadel) ? 2 : 0),
             (OrganisationKind.SecretSociety,     hidden.Count > 0 ? 7 : 3),
         };
         var kind = ReligionGenerator.Weighted(sim.Rng, table.Where(t => t.Item2 > 0).ToList());

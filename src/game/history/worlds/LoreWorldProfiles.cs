@@ -151,7 +151,7 @@ public sealed class BeluneProfile : LoreWorldProfile
         At(sim, 1065, s =>
         {
             foreach (int r in s.Regions.OrderByDescending(r => r.Coastal).ThenByDescending(r => r.Habitability).Take(3).Select(r => r.Id))
-                s.NewPlace(PlaceKind.Town, r, L.Empire, $"the sanatorium of {s.History.RegionNames[r]}");
+                s.NewPlace(PlaceKind.Citadel, r, L.Empire, $"the sanatorium of {s.History.RegionNames[r]}");
             s.Chronicle("The springs", "Aqilon V plants trading posts and sanatoria at the hot springs, whose waters draw out black bile.", L.AqilonV);
             s.Record(new ImperialEvent(s.Today, HistoryScope.World, ImperialStage.ConquestBegun, s.History.World, L.AqilonV,
                 "Belune is taken without a war: the empire's posts and sanatoria become colonies, and the colonies a province in all but name."));
@@ -221,7 +221,7 @@ public sealed class PrunilProfile : LoreWorldProfile
 
     protected override void SowImperial(HistorySimulation sim)
     {
-        PlaceBeat(sim, -800, PlaceKind.City, "Carrow-in-the-Salt", MostMountainous);
+        PlaceBeat(sim, -800, PlaceKind.Citadel, "Carrow-in-the-Salt", MostMountainous);
         OrganisationBeat(sim, -700, OrganisationKind.ThievesGuild, "the Salt Brothers", MostMountainous,
             "Smugglers of salt and gold between the mountain cities, and the hiders of fugitives from Pyr.", clandestine: true);
         Conquest(sim, 1694, 1705, 1722, L.Rosena, "An IISTG expedition sights Prunil; the first landing follows three rounds later.",
@@ -284,7 +284,7 @@ public sealed class AvoriaProfile : LoreWorldProfile
         switch (Which)
         {
             case Kind.Green:
-                PlaceBeat(sim, -600, PlaceKind.Town, "the tree-city of the Canopy Folk", s => Region(s, r => r.ForestCells));
+                PlaceBeat(sim, -600, PlaceKind.Citadel, "the tree-city of the Canopy Folk", s => Region(s, r => r.ForestCells));
                 break;
             case Kind.Blue:
                 Beat(sim, 1850, "The tide-opera", "Singers on floating stages found the tide-opera, which the whole empire will come to love.");
@@ -339,7 +339,7 @@ public sealed class ViolannProfile : LoreWorldProfile
         if (Which == Kind.NewPyr)
         {
             Conquest(sim, 1776, 1780, 1788, L.ViolannIII);
-            PlaceBeat(sim, 1790, PlaceKind.City, "New Avolor", MostHabitable, L.Empire);
+            PlaceBeat(sim, 1790, PlaceKind.Citadel, "New Avolor", MostHabitable, L.Empire);
             Beat(sim, 1795, "The colonists", "Ships from Pyr bring colonists in thousands; New Avolor is laid out on seven hills, with a Clay Hill and a salt market.");
         }
         else

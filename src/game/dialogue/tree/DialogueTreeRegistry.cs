@@ -29,6 +29,15 @@ public class DialogueTreeRegistry
         Register(new ProposeToJoinTree());
         Register(new IntroduceMeTree());
         Register(new GatherKnowledgeTree());
+        // The settled country's conversations (SettledTrees.cs).
+        Register(new AskBlessingTree());
+        Register(new ConfessTree());
+        Register(new PetitionTree());
+        Register(new TalkSoldieringTree());
+        Register(new TalkOfFarPlacesTree());
+        Register(new OfferBribeTree());
+        Register(new AskTeachingTree());
+        Register(new SingAlongTree());
     }
 
     private void Register(DialogueTree tree) => _trees[tree.TreeId] = tree;

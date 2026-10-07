@@ -90,7 +90,8 @@ Two ladders exist:
 | 4 | 2 sixes | 3 sixes |
 
 The first governs small talk and the opening of a trade; the second reconciliation with an enemy,
-the asking of work, and talking one's way out of a crime. A difficulty exceeding the pool is lowered
+the asking of work, talking one's way out of a crime, and the graver of the conversations a calling
+opens — confession, petition, a bribe, and the asking to be taught. A difficulty exceeding the pool is lowered
 to it, so no resolution is unreachable.
 
 The humors may be spent upon this roll as upon any other, to the **viscera's** limit.
@@ -122,6 +123,19 @@ Two acts opt out, and for reasons of their own. **Begging** and **provocation** 
 addressing one who does not know you: behind an introduction, begging would leave the destitute with
 nothing to say to anyone, and provocation would be unreachable against exactly the people worth
 using it upon.
+
+**Some conversations belong to a calling.** A blessing or a confession can be had only of the
+religious; a petition only of a lord, a steward or a captain; talk of soldiering only with a guard or
+a captain; talk of far places only with a merchant or a sailor; a bribe only offered to a guard, a
+clerk, a steward or a captain; teaching asked only of a scholar, a clerk or a monk; and a song joined
+only where someone sings at their work. Who the person is decides whether the matter can be raised at
+all — the rung of the ladder only how well it goes. Three of these opt out of the introduction as
+begging does, because each is by its nature addressed to strangers: a blessing is not refused for not
+having been introduced, a petition is the way an unknown party reaches authority, and a bribe is
+offered to precisely the official who does not know you. Each such conversation teaches by its branch,
+so that what is learned depends on how the matter was put as much as on whether it carried; a refused
+confession, petition or bribe costs a step of regard, while any of the others refused costs
+nothing.
 
 ## 4. Barter
 

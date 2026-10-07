@@ -524,17 +524,61 @@ public sealed class HistorySimulation
         Record(new FactionDissolvedEvent(Today, HistoryScope.World, org, by, how));
     }
 
+    // ── Places on the map ───────────────────────────────────────────────────────
+
+    /// <summary>Every vertex a place stands on, standing or ruined. Two places never share a cell.</summary>
+    private readonly HashSet<int> _sites = new();
+
+    /// <summary>Whether <paramref name="region"/> still has a free cell a place of <paramref name="kind"/> fits.</summary>
+    public bool CanHost(PlaceKind kind, int region)
+        => region >= 0 && region < Regions.Count && PlaceSites.CanHost(kind, Regions[region], _sites);
+
+    /// <summary>
+    /// Founds a place of <paramref name="kind"/> in <paramref name="region"/>, on a cell that suits it
+    /// (<see cref="PlaceSites"/>). Callers that draw the kind ask <see cref="CanHost"/> first, so the
+    /// region normally has room; a lore beat that names a region with none is moved to the nearest one
+    /// that has — first among the same realm's regions, then anywhere — so the lore's place is on the
+    /// map even when the terrain under its intended region does not suit it. Only when no cell
+    /// anywhere fits is it recorded without a vertex.
+    /// </summary>
     public Place NewPlace(PlaceKind kind, int region, HistoricFaction? by, string? name = null)
     {
+        int vertex = CanHost(kind, region)
+            ? PlaceSites.PickSite(kind, Regions[region], _sites, History.Geography.Neighbours, Rng)
+            : -1;
+        if (vertex < 0)
+        {
+            int elsewhere = RegionElsewhere(kind, region);
+            if (elsewhere >= 0)
+            {
+                region = elsewhere;
+                vertex = PlaceSites.PickSite(kind, Regions[region], _sites, History.Geography.Neighbours, Rng);
+            }
+        }
+
         var p = new Place(name ?? Names.PlaceName(), kind, HistoryScope.World)
         {
             Region = region,
+            Vertex = vertex,
             Founded = Today,
             Builder = by,
         };
+        if (vertex >= 0) _sites.Add(vertex);
         History.Places.Add(p);
         Record(new PlaceFoundedEvent(Today, HistoryScope.World, p, by));
         return p;
+    }
+
+    /// <summary>A region that can host <paramref name="kind"/>: one of the owner's, else any; -1 if none.</summary>
+    private int RegionElsewhere(PlaceKind kind, int region)
+    {
+        var owner = region >= 0 ? History.OwnerOf(region) : null;
+        if (owner != null)
+            foreach (int r in owner.Regions)
+                if (CanHost(kind, r)) return r;
+        for (int r = 0; r < Regions.Count; r++)
+            if (CanHost(kind, r)) return r;
+        return -1;
     }
 
     public void Ruin(Place place, string how)

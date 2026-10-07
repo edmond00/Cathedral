@@ -3604,7 +3604,7 @@ public class LocationTravelGameController : IDisposable
           + $"mountain={shape.MountainLevel.ToString("F3", inv)} "
           + $"peak={shape.PeakLevel.ToString("F3", inv)} "
           + $"forest={shape.ForestLevel.ToString("F3", inv)} "
-          + $"field={shape.FieldLevel.ToString("F3", inv)}",
+          + $"density={shape.SettlementDensity.ToString("F2", inv)}",
 
             $"world-variant scales continent={shape.ContinentScale.ToString("F1", inv)} "
           + $"settlement={shape.SettlementScale.ToString("F1", inv)} "
