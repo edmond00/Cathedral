@@ -42,6 +42,15 @@ public static partial class VerbAudit
 {
     private const int SampleSize = 40;
 
+    /// <summary>
+    /// Location ids sampled for a dense city cell, instead of <see cref="SampleSize"/>. A city cell
+    /// holds every trade and every kind of furniture a city can, repeated dozens of times, so a handful
+    /// of cells meets every kind the forty small ones would; and the sweep's cost grows faster than
+    /// the scene (every observable, every period, every verb), which made forty dense cities per
+    /// climate most of the audit's running time.
+    /// </summary>
+    private const int CitySampleSize = 8;
+
     /// <summary>How many merged sleeping observations the sweep exercised. Reported so a zero here —
     /// which would mean the whole sleeping path went untested — cannot pass unnoticed.</summary>
     private static int SleepersProbed;
@@ -64,7 +73,7 @@ public static partial class VerbAudit
         var everOffered = new HashSet<string>();
 
         sb.AppendLine("=== VERB AUDIT ===");
-        sb.AppendLine($"Sampling {SampleSize} location ids per factory, at every time period.");
+        sb.AppendLine($"Sampling {SampleSize} location ids per factory ({CitySampleSize} for a city), at every time period.");
         sb.AppendLine();
 
         AuditVerbDeclarations(sb, warnings);
@@ -72,8 +81,8 @@ public static partial class VerbAudit
         sb.AppendLine("--- COVERAGE BY FACTORY ---");
         sb.AppendLine($"  {"factory",-10} {"observables",11} {"≥1",6} {"≥2",6} {"≥3",6} {"sensory",8}  {"mean",5}");
 
-        foreach (var (label, build) in Factories())
-            AuditFactory(sb, warnings, everOffered, label, build);
+        foreach (var (label, build, samples) in Factories())
+            AuditFactory(sb, warnings, everOffered, label, build, samples);
 
         sb.AppendLine();
         sb.AppendLine($"  targets: ≥2 verbs on {TargetTwoPlusVerbs:P0} of observables, " +
@@ -104,25 +113,30 @@ public static partial class VerbAudit
         return sb.ToString();
     }
 
-    private static IEnumerable<(string Label, Func<int, Scene> Build)> Factories()
+    private static IEnumerable<(string Label, Func<int, Scene> Build, int Samples)> Factories()
     {
-        yield return ("PLAIN",    id => new Plain.PlainSceneFactory().Build(id));
-        yield return ("FOREST",   id => new Forest.ForestSceneFactory().Build(id));
-        yield return ("CAVE",     id => new Cave.CaveSceneFactory().Build(id));
-        yield return ("COAST",    id => new Coast.CoastSceneFactory().Build(id));
-        yield return ("MOUNTAIN", id => new Mountain.MountainSceneFactory().Build(id));
-        yield return ("PEAK",     id => new Peak.PeakSceneFactory().Build(id));
+        yield return ("PLAIN",    id => new Plain.PlainSceneFactory().Build(id),       SampleSize);
+        yield return ("FOREST",   id => new Forest.ForestSceneFactory().Build(id),     SampleSize);
+        yield return ("CAVE",     id => new Cave.CaveSceneFactory().Build(id),         SampleSize);
+        yield return ("COAST",    id => new Coast.CoastSceneFactory().Build(id),       SampleSize);
+        yield return ("MOUNTAIN", id => new Mountain.MountainSceneFactory().Build(id), SampleSize);
+        yield return ("PEAK",     id => new Peak.PeakSceneFactory().Build(id),         SampleSize);
         // The hot and cold country's factories, from their one list.
         foreach (var e in Shared.ClimateSceneFactories.All)
         {
             var make = e.Create;
-            yield return (e.AuditLabel, id => make().Build(id));
+            yield return (e.AuditLabel, id => make().Build(id), SampleSize);
         }
         // The settled country: farmland, stock, settlements, cities and history's places, from their one list.
+        // A city is swept on its default ground only: its climate variants differ in names and materials,
+        // which this audit does not read (--building-audit builds all four), and the one climate-only
+        // kind - the hot steppe's cistern - is met in the hot-steppe citadel's town.
         foreach (var e in Settled.SettledSceneFactories.ForAudit)
         {
+            bool city = e.Key == Cathedral.Glyph.Microworld.SettlementTable.City;
+            if (city && e.AuditLabel.Contains('(')) continue;
             var make = e.Create;
-            yield return (e.AuditLabel, id => make().Build(id));
+            yield return (e.AuditLabel, id => make().Build(id), city ? CitySampleSize : SampleSize);
         }
     }
 
@@ -434,7 +448,7 @@ public static partial class VerbAudit
 
     private static void AuditFactory(
         StringBuilder sb, List<string> warnings, HashSet<string> everOffered,
-        string label, Func<int, Scene> build)
+        string label, Func<int, Scene> build, int samples)
     {
         // Verb counts across every observable of every sampled location, one entry per observable.
         var counts        = new List<int>();
@@ -444,7 +458,7 @@ public static partial class VerbAudit
         // speaking modus mentis — need one, and a default protagonist is the plainest possible player.
         var actor = new Protagonist();
 
-        for (int id = 1; id <= SampleSize; id++)
+        for (int id = 1; id <= samples; id++)
         {
             Scene scene;
             try

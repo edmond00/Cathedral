@@ -27,7 +27,11 @@ namespace Cathedral.Game.Scene.Settled;
 /// <para><b>People in proportion.</b> Every building houses somebody: the inns their keepers, the
 /// merchant houses a merchant and a clerk, each of the city's trades a master in the shop and an
 /// apprentice in a house of their own, the wash house its laundresses, the doss house its beggars,
-/// and the houses one or two porters, water-carriers, clerks or (in a port) sailors.</para>
+/// and the houses one or two porters, water-carriers or clerks.</para>
+///
+/// <para><b>No harbour.</b> City ground is never shore, so a city cell has no waterfront, no harbour
+/// inn and no sailors, even beside a port: those belong to the port's own cell
+/// (<see cref="HistoricSceneFactory"/>), which is the only place in the country with ships.</para>
 ///
 /// <para>Its size is rolled from its own seed, so neighbouring city cells read as different quarters of
 /// one town rather than the same street repeated. Its name, when a world is behind it, is taken from
@@ -51,7 +55,7 @@ public sealed class CitySceneFactory : SettledSceneFactory
     {
         int size = rng.Next(1, 4);
         string name = Site?.Origin is { } origin ? $"Streets of {origin.Name}" : size >= 3 ? "City" : "Town";
-        _plan = BuildDenseTown(rng, scene, size, name, harbour: Site?.Origin?.Kind == History.PlaceKind.Port);
+        _plan = BuildDenseTown(rng, scene, size, name);
         FinishTown(rng, scene);
         Console.WriteLine($"CitySceneFactory: Built {name} — biome={Biome}, size={size}, {scene.AllAreas.Count} areas");
     }
@@ -125,7 +129,7 @@ public sealed class CitySceneFactory : SettledSceneFactory
         }
     }
 
-    private Shared.CityPlan BuildDenseTown(Random rng, Scene scene, int size, string name, bool harbour)
+    private Shared.CityPlan BuildDenseTown(Random rng, Scene scene, int size, string name)
     {
         var plan = Shared.CityLayout.BuildDense(scene, rng, Biome, size, name);
         RegisterAll(scene, plan.Section);
@@ -175,17 +179,13 @@ public sealed class CitySceneFactory : SettledSceneFactory
                 : BuildingSchedule.ForWorker(bed, hall, ways, r, awayPeriods: 2);
 
         // The inns: always one on a square, a coaching inn too in a larger city.
-        var innNames = new List<string> { harbour ? "Harbour Inn" : "Inn" };
+        var innNames = new List<string> { "Inn" };
         if (size >= 2) innNames.Add("Coaching Inn");
         foreach (var innName in innNames)
         {
             var roster = new List<NamedNpcArchetype> { new InnkeeperArchetype() };
-            if (harbour && innName == "Harbour Inn") for (int i = 0, n = rng.Next(1, 3); i < n; i++) roster.Add(new SailorArchetype());
             var inn = Put(innName, "inn", BuildingAccess.Public, BuildingOccupancy.Communal, roster.Count, slots.Take(squares));
-            Crews.Add(new Crew(roster, inn.BedAreas, inn.PublicHall.ContextDescription,
-                (i, who, bed, r) => i == 0 || who is not SailorArchetype
-                    ? AtWork(inn.PublicHall, 1)(i, who, bed, r)
-                    : BuildingSchedule.ForHand(bed, ways, r),
+            Crews.Add(new Crew(roster, inn.BedAreas, inn.PublicHall.ContextDescription, AtWork(inn.PublicHall, 1),
                 new[] { inn.Section }, inn.PublicHall));
         }
 
@@ -263,7 +263,7 @@ public sealed class CitySceneFactory : SettledSceneFactory
         while (slots.Remaining > 0)
         {
             var roster = new List<NamedNpcArchetype>();
-            for (int i = 0, n = rng.NextDouble() < 0.5 ? 1 : 2; i < n; i++) roster.Add(Townsman(rng, harbour));
+            for (int i = 0, n = rng.NextDouble() < 0.5 ? 1 : 2; i < n; i++) roster.Add(Townsman(rng));
             var house = Dwelling(roster.Count, slots.Take(ways));
             Crews.Add(new Crew(roster, house.BedAreas, house.PublicHall.ContextDescription,
                 (_, who, bed, r) => who switch
@@ -280,11 +280,9 @@ public sealed class CitySceneFactory : SettledSceneFactory
     }
 
     /// <summary>One of the people a city house is lived in by.</summary>
-    private static NamedNpcArchetype Townsman(Random rng, bool harbour)
+    private static NamedNpcArchetype Townsman(Random rng)
     {
         double roll = rng.NextDouble();
-        if (harbour && roll < 0.2) return new SailorArchetype();
-        roll = rng.NextDouble();
         return roll < 0.45 ? new PorterArchetype()
              : roll < 0.75 ? new WaterCarrierArchetype()
              : new ClerkArchetype();
