@@ -800,6 +800,8 @@ public static partial class VerbAudit
             ["talk_far_places"]         = "needs a non-stranger",
             ["ask_teaching"]            = "needs a non-stranger",
             ["sing_along"]              = "needs a non-stranger",
+            ["commission_work"]         = "needs a non-stranger",
+            ["hear_gossip"]             = "needs a non-stranger",
         };
         var phaseScoped = unreachable.Keys.ToHashSet();
 

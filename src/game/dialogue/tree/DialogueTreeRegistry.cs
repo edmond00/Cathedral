@@ -38,6 +38,11 @@ public class DialogueTreeRegistry
         Register(new OfferBribeTree());
         Register(new AskTeachingTree());
         Register(new SingAlongTree());
+        // A dense city's trades and streets (CityTrees.cs).
+        Register(new CommissionWorkTree());
+        Register(new AskRemedyTree());
+        Register(new GiveAlmsTree());
+        Register(new HearGossipTree());
     }
 
     private void Register(DialogueTree tree) => _trees[tree.TreeId] = tree;

@@ -17,5 +17,7 @@ public sealed partial class PersonalityTraitRegistry
         RegisterSettledTraits();      // orchardist, vintner, planter, picker, groom, drover, gravedigger,
                                       // guard, captain, priest, monk, scholar, steward, lord,
                                       // merchant, sailor, innkeeper, clerk
+        RegisterCityTraits();         // cobbler, tailor, chandler, butcher, tanner, potter, apothecary,
+                                      // barber, porter, laundress, water-carrier, beggar
     }
 }

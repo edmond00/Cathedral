@@ -196,7 +196,8 @@ public static class VerbProbe
         "strengthen_relationship"
             or "gather_knowledge"
             or "confess" or "talk_soldiering" or "talk_far_places"
-            or "ask_teaching" or "sing_along" => "needs a non-stranger",
+            or "ask_teaching" or "sing_along"
+            or "commission_work" or "hear_gossip" => "needs a non-stranger",
         _                           => "no sampled scene offered it",
     };
 

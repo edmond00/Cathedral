@@ -243,6 +243,11 @@ public static class DialogueTreeAudit
         // Streets and harbours
         new MerchantArchetype(),   new SailorArchetype(),  new InnkeeperArchetype(),
         new ClerkArchetype(),
+        // The trades and callings of a dense city
+        new CobblerArchetype(),    new TailorArchetype(),  new ChandlerArchetype(),
+        new ButcherArchetype(),    new TannerArchetype(),  new PotterArchetype(),
+        new ApothecaryArchetype(), new BarberArchetype(),  new PorterArchetype(),
+        new LaundressArchetype(),  new WaterCarrierArchetype(), new BeggarArchetype(),
     };
 
     /// <summary>Per-tree measurements. Branch length counts <b>player replies</b>, not nodes.</summary>

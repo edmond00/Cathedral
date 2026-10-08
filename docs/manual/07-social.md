@@ -127,12 +127,16 @@ using it upon.
 **Some conversations belong to a calling.** A blessing or a confession can be had only of the
 religious; a petition only of a lord, a steward or a captain; talk of soldiering only with a guard or
 a captain; talk of far places only with a merchant or a sailor; a bribe only offered to a guard, a
-clerk, a steward or a captain; teaching asked only of a scholar, a clerk or a monk; and a song joined
-only where someone sings at their work. Who the person is decides whether the matter can be raised at
-all — the rung of the ladder only how well it goes. Three of these opt out of the introduction as
-begging does, because each is by its nature addressed to strangers: a blessing is not refused for not
-having been introduced, a petition is the way an unknown party reaches authority, and a bribe is
-offered to precisely the official who does not know you. Each such conversation teaches by its branch,
+clerk, a steward or a captain; teaching asked only of a scholar, a clerk or a monk; a song joined
+only where someone sings at their work; work commissioned only of a cobbler, a tailor, a potter, a
+chandler or a tanner; a remedy asked only of an apothecary or a barber; alms given only to a beggar;
+and the gossip of the town heard only from those whose labour takes them into every house — a
+laundress, a water-carrier, a porter or a barber. Who the person is decides whether the matter can be
+raised at all — the rung of the ladder only how well it goes. Five of these opt out of the
+introduction as begging does, because each is by its nature addressed to strangers: a blessing is
+not refused for not having been introduced, a petition is the way an unknown party reaches authority,
+a bribe is offered to precisely the official who does not know you, a remedy is not withheld from the
+sick for being unknown, and alms are given to whoever holds out the bowl. Each such conversation teaches by its branch,
 so that what is learned depends on how the matter was put as much as on whether it carried; a refused
 confession, petition or bribe costs a step of regard, while any of the others refused costs
 nothing.
