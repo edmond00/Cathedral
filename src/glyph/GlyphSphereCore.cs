@@ -340,7 +340,85 @@ namespace Cathedral.Glyph
         /// Gets the popup terminal HUD instance, or null if not initialized
         /// </summary>
         public Cathedral.Terminal.PopupTerminalHUD? PopupTerminal => _popupTerminal;
-        
+
+        // ── Virtual pointer (--record) ────────────────────────────────────────
+
+        /// <summary>
+        /// When true, the operating system's mouse is ignored and only <see cref="InjectPointerMove"/>
+        /// and its siblings move the pointer. Set by <c>--record</c>, whose window is driven by a
+        /// script while the developer keeps using their own mouse on other windows.
+        /// </summary>
+        public bool VirtualPointerOnly { get; set; }
+
+        /// <summary>The injected pointer position, or null when no pointer has been injected yet.</summary>
+        public OpenTK.Mathematics.Vector2? VirtualPointer { get; private set; }
+
+        /// <summary>Where the game believes the pointer is: the injected one under --record, the OS one otherwise.</summary>
+        public OpenTK.Mathematics.Vector2 PointerPosition =>
+            VirtualPointerOnly ? VirtualPointer ?? new OpenTK.Mathematics.Vector2(-1, -1) : MousePosition;
+
+        /// <summary>Moves the virtual pointer, through exactly the path a real mouse move takes.</summary>
+        public void InjectPointerMove(OpenTK.Mathematics.Vector2 position)
+        {
+            VirtualPointer = position;
+            HandlePointerMove(position);
+        }
+
+        /// <summary>Presses a button at the virtual pointer, through exactly the path a real press takes.</summary>
+        public void InjectPointerDown(MouseButton button = MouseButton.Left)
+        {
+            if (VirtualPointer is { } p) HandlePointerDown(p, button);
+        }
+
+        /// <summary>Releases a button, through exactly the path a real release takes.</summary>
+        public void InjectPointerUp(MouseButton button = MouseButton.Left) => HandlePointerUp(button);
+
+        /// <summary>Turns the wheel, through exactly the path a real wheel takes.</summary>
+        public void InjectWheel(float offsetY) => MouseWheelScrolled?.Invoke(offsetY);
+
+        /// <summary>
+        /// Receives every finished frame before it is presented — what <c>--record</c> films. The sink
+        /// names the framebuffer the frame is resolved into, reads it back, and presents it itself.
+        /// </summary>
+        public IFrameSink? FrameSink { get; set; }
+
+        /// <summary>
+        /// The pixel a player would click to pick <paramref name="vertexIndex"/> on the sphere, or false
+        /// when no such pixel exists from this camera angle (behind the globe, off screen, or always
+        /// beaten by a neighbour). Verified with the same picking a click uses, so the pixel returned is
+        /// one that really selects the vertex rather than one that merely projects near it.
+        /// </summary>
+        public bool TryGetClickableVertexPixel(int vertexIndex, out OpenTK.Mathematics.Vector2 screen)
+        {
+            screen = OpenTK.Mathematics.Vector2.Zero;
+            if (vertexIndex < 0 || vertexIndex >= vertices.Count || ClientSize.X <= 0 || ClientSize.Y <= 0) return false;
+
+            var view = GetViewMatrix();
+            var proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60f), (float)ClientSize.X / ClientSize.Y,
+                                                            Config.GlyphSphere.NearClipPlane, Config.GlyphSphere.FarClipPlane);
+            var clip = new Vector4(vertices[vertexIndex].Position, 1.0f) * (view * proj);
+            if (clip.W <= 0) return false;
+            float ndcX = clip.X / clip.W, ndcY = clip.Y / clip.W;
+            if (ndcX < -1 || ndcX > 1 || ndcY < -1 || ndcY > 1) return false;
+            var centre = new OpenTK.Mathematics.Vector2((ndcX + 1.0f) * 0.5f * ClientSize.X, (1.0f - ndcY) * 0.5f * ClientSize.Y);
+
+            // The projected centre usually picks its own vertex; when a neighbour wins it, a small spiral
+            // around it finds the pixel that does not.
+            for (int r = 0; r <= 12; r += 2)
+                for (int k = 0; k < (r == 0 ? 1 : 8); k++)
+                {
+                    float a = k * MathF.PI / 4f;
+                    var p = centre + new OpenTK.Mathematics.Vector2(MathF.Cos(a), MathF.Sin(a)) * r;
+                    if (_terminal != null && _terminal.ConsumesMouseAt(p, ClientSize)) continue;
+                    int hit = FindVertexByMagentaRayIntersection(p);
+                    if (hit == -1) hit = FindClosestVertexInScreenSpace(p);
+                    if (hit != vertexIndex) continue;
+                    screen = p;
+                    return true;
+                }
+            return false;
+        }
+
         /// <summary>
         /// Gets the currently hovered vertex index, or -1 if no vertex is hovered
         /// </summary>
@@ -933,10 +1011,15 @@ namespace Cathedral.Glyph
             if (ClientSize.X > 0 && ClientSize.Y > 0)
             {
                 _postProcess.SetZoom(
-                    MouseState.IsButtonDown(OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Right),
-                    MousePosition.X / ClientSize.X,
-                    1.0f - MousePosition.Y / ClientSize.Y);
+                    !VirtualPointerOnly && MouseState.IsButtonDown(OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Right),
+                    PointerPosition.X / ClientSize.X,
+                    1.0f - PointerPosition.Y / ClientSize.Y);
             }
+
+            // --record: the frame is resolved into the recorder's target instead of the window, so it
+            // can be read back whether or not the window is ever shown. 0 (the window) otherwise.
+            int outputFbo = FrameSink?.BeginFrame(ClientSize.X, ClientSize.Y) ?? 0;
+            _postProcess.OutputFramebuffer = outputFbo;
 
             // Redirect the whole frame into the post-process target (no-op when disabled)
             _postProcess.Begin(ClientSize.X, ClientSize.Y);
@@ -990,6 +1073,8 @@ namespace Cathedral.Glyph
 
             // Final shader layer: resolve the offscreen frame to the window (no-op when disabled)
             _postProcess.End(ClientSize.X, ClientSize.Y);
+
+            FrameSink?.EndFrame(ClientSize.X, ClientSize.Y);
 
             SwapBuffers();
         }
@@ -1193,8 +1278,13 @@ namespace Cathedral.Glyph
         protected override void OnMouseMove(MouseMoveEventArgs e)
         {
             base.OnMouseMove(e);
-            
-            var mouse = MousePosition;
+            if (VirtualPointerOnly) return;   // --record: only the injected pointer moves
+            HandlePointerMove(MousePosition);
+        }
+
+        /// <summary>A pointer move, real or injected (<see cref="InjectPointerMove"/>).</summary>
+        private void HandlePointerMove(OpenTK.Mathematics.Vector2 mouse)
+        {
             
             // Update popup terminal position (only if not in fixed mode)
             if (_popupTerminal != null)
@@ -1263,16 +1353,21 @@ namespace Cathedral.Glyph
         protected override void OnMouseDown(MouseButtonEventArgs e)
         {
             base.OnMouseDown(e);
-            Console.WriteLine($"Mouse button pressed: {e.Button}");
-            
-            var mouse = MousePosition;
+            if (VirtualPointerOnly) return;   // --record: only the injected pointer presses
+            HandlePointerDown(MousePosition, e.Button);
+        }
+
+        /// <summary>A button press, real or injected (<see cref="InjectPointerDown"/>).</summary>
+        private void HandlePointerDown(OpenTK.Mathematics.Vector2 mouse, MouseButton button)
+        {
+            Console.WriteLine($"Mouse button pressed: {button}");
             
             // Check global click handlers first (for UI popups that extend outside terminal bounds)
             if (GlobalMouseClicked != null)
             {
                 foreach (Func<OpenTK.Mathematics.Vector2, MouseButton, bool> handler in GlobalMouseClicked.GetInvocationList())
                 {
-                    if (handler(mouse, e.Button))
+                    if (handler(mouse, button))
                     {
                         Console.WriteLine("Global handler consumed mouse click");
                         return; // A global handler consumed the event
@@ -1281,7 +1376,7 @@ namespace Cathedral.Glyph
             }
             
             // Handle terminal input (HUD takes priority)
-            if (_terminal != null && _terminal.HandleMouseDown(mouse, ClientSize, e.Button))
+            if (_terminal != null && _terminal.HandleMouseDown(mouse, ClientSize, button))
             {
                 Console.WriteLine("Terminal handled mouse click");
                 return; // Terminal handled the event
@@ -1289,7 +1384,7 @@ namespace Cathedral.Glyph
             
             // While a world is being chosen there are no world vertices to hit — the sphere is not
             // even drawn — so the click asks the sky instead.
-            if (e.Button == OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Left
+            if (button == OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Left
                 && SkySelectionEnabled)
             {
                 // -1 included: a press on bare sky is a real answer, and the screen reads it as
@@ -1302,7 +1397,7 @@ namespace Cathedral.Glyph
                 return;
             }
 
-            if (e.Button == OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Left)
+            if (button == OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Left)
             {
                 Console.WriteLine("Left mouse button detected - processing 3D interaction");
                 Console.WriteLine($"Mouse position: {mouse}");
@@ -1332,17 +1427,24 @@ namespace Cathedral.Glyph
         protected override void OnMouseUp(MouseButtonEventArgs e)
         {
             base.OnMouseUp(e);
-            
+            if (VirtualPointerOnly) return;
+            HandlePointerUp(e.Button);
+        }
+
+        /// <summary>A button release, real or injected (<see cref="InjectPointerUp"/>).</summary>
+        private void HandlePointerUp(MouseButton button)
+        {
             // Handle terminal input
             if (_terminal != null)
             {
-                _terminal.HandleMouseUp(e.Button);
+                _terminal.HandleMouseUp(button);
             }
         }
 
         protected override void OnMouseWheel(MouseWheelEventArgs e)
         {
             base.OnMouseWheel(e);
+            if (VirtualPointerOnly) return;
             
             // Fire event for scroll handling
             MouseWheelScrolled?.Invoke(e.OffsetY);

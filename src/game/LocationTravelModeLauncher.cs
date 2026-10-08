@@ -337,6 +337,10 @@ public static class LocationTravelModeLauncher
             // Start accepting scripted/stdin commands now that the controller exists.
             if (Cathedral.Game.Cli.CliMode.IsActive && gameController != null)
             {
+                // --record: the camera and the drawn pointer go up before the driver, which asks for them.
+                if (Cathedral.Game.Record.RecordMode.IsActive)
+                    Cathedral.Game.Record.RecordSession.Start(core);
+
                 cliDriver = new Cathedral.Game.Cli.CliDriver(gameController);
                 cliDriver.Start();
             }
@@ -344,7 +348,8 @@ public static class LocationTravelModeLauncher
             // Restore the window mode the player left in. Done here rather than in the window
             // settings above because borderless-fullscreen is applied to a live window (it needs the
             // monitor the window actually opened on), not requested at construction.
-            if (Cathedral.UserSettings.Fullscreen)
+            // Never while recording: the footage has the size it was asked for, whatever the player's habit.
+            if (Cathedral.UserSettings.Fullscreen && !Cathedral.Game.Record.RecordMode.IsActive)
                 Cathedral.Glyph.WindowMode.Apply(core, true);
 
             Console.WriteLine("\n=== Location Travel Mode Ready ===");
@@ -428,6 +433,9 @@ public static class LocationTravelModeLauncher
         };
 
         core.Run();
+
+        // --record: flush the footage and write the music, timeline and manifest before anything is torn down.
+        Cathedral.Game.Record.RecordSession.Finish();
         
         // Cleanup
         Console.WriteLine("Shutting down...");

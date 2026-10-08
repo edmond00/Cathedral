@@ -68,10 +68,15 @@ public sealed class CliDriver
     /// <summary>Hard deadline for the whole run; the game closes itself when it passes.</summary>
     private DateTime _runDeadline;
 
+    /// <summary>The --record filter: every command passes it first. Null outside a recording.</summary>
+    private readonly Record.RecordGate? _record;
+
     public CliDriver(LocationTravelGameController game)
     {
         _game = game ?? throw new ArgumentNullException(nameof(game));
         _runDeadline = DateTime.UtcNow + CliMode.RunTimeout;
+        if (Record.RecordMode.IsActive && Record.RecordSession.Pointer is { } pointer)
+            _record = new Record.RecordGate(game, this, pointer);
     }
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -125,6 +130,10 @@ public sealed class CliDriver
             return;
         }
 
+        // --record: a gesture or a held shot plays out before anything else runs — a `wait` included,
+        // since the click it follows has not landed until the cursor arrives and presses.
+        if (_record != null && _record.Tick()) return;
+
         // An in-flight `wait` gates everything behind it, so a script reads as a straight sequence.
         if (_waiting)
         {
@@ -147,7 +156,8 @@ public sealed class CliDriver
                     if (pv is { Active: true, Complete: true } && _drainPressesLeft > 0)
                     {
                         _drainPressesLeft--;
-                        CmdClick(new[] { "continue" });
+                        if (_record != null) _record.PressContinue();   // aimed and pressed like any click
+                        else CmdClick(new[] { "continue" });
                         RestartWait($"advance ({_drainPressesLeft} press(es) left)");
                         return;
                     }
@@ -175,16 +185,19 @@ public sealed class CliDriver
             }
         }
 
+        // A started gesture (--record) parks what follows exactly as a wait does.
+        bool Blocked() => _waiting || (_record?.Busy ?? false);
+
         while (_deferred.Count > 0)
         {
             Execute(_deferred.Dequeue());
-            if (_waiting) return;   // a deferred command started another wait
+            if (Blocked()) return;   // a deferred command started another wait
         }
 
         while (_queue.TryDequeue(out var line))
         {
             Execute(line);
-            if (_waiting)
+            if (Blocked())
             {
                 // Park the rest of this batch behind the wait.
                 while (_queue.TryDequeue(out var rest)) _deferred.Enqueue(rest);
@@ -205,6 +218,9 @@ public sealed class CliDriver
         var parts = Tokenize(line);
         string cmd = parts[0].ToLowerInvariant();
         var rest = parts.Skip(1).ToArray();
+
+        // --record: pointer commands become gestures, and what a player cannot do is refused.
+        if (_record != null && _record.Intercept(cmd, rest, line)) return;
 
         try
         {
@@ -1027,9 +1043,30 @@ public sealed class CliDriver
 
     private void CmdTravel(string[] a)
     {
-        if (a.Length == 0) { CliMode.Emit("error: travel <vertex|name>"); return; }
+        var (target, error) = ResolveTravel(a);
+        if (error != null) { CliMode.Emit($"error: {error}"); return; }
+
+        _game.CliClickVertex(target);
+
+        // Two quite different things happen here and the script has to know which. Picking your own
+        // vertex walks straight into the location; picking any other only *plans* a route and leaves
+        // the travel box up, waiting for `travel-go`. Reporting both as "travel requested" is how a
+        // script ends up parked at the travel box until its timeout, with nothing saying why.
+        if (target == _game.CliAvatarVertex)
+            CliMode.Emit($"ok: entering the location at vertex {target} (own vertex)");
+        else
+            CliMode.Emit($"ok: route planned to vertex {target} — call `travel-go` to set out");
+    }
+
+    /// <summary>
+    /// The vertex a <c>travel</c> command names, or an error. Shared with <c>--record</c>, which clicks
+    /// that vertex on the sphere where this driver injects it.
+    /// </summary>
+    internal (int Vertex, string? Error) ResolveTravel(string[] a)
+    {
+        if (a.Length == 0) return (-1, "travel <vertex|name>");
         if (_game.CurrentMode != GameMode.WorldView)
-        { CliMode.Emit($"error: travel only works in WorldView (currently {_game.CurrentMode})"); return; }
+            return (-1, $"travel only works in WorldView (currently {_game.CurrentMode})");
 
         int target;
         if (int.TryParse(a[0], out int explicitVertex))
@@ -1056,11 +1093,7 @@ public sealed class CliDriver
             // named biome, travel-go, wait for arrival, then name it again to go in — is four
             // commands and a race with the travel animation.
             if (want.Equals("here", StringComparison.OrdinalIgnoreCase))
-            {
-                _game.CliClickVertex(_game.CliAvatarVertex);
-                CliMode.Emit($"ok: entering the location at vertex {_game.CliAvatarVertex}");
-                return;
-            }
+                return (_game.CliAvatarVertex, null);
 
             // `travel back` plans a route to the last location the player was inside. A round trip is
             // the only way to reach routine replay — a routine replays on ARRIVAL — and a script
@@ -1078,21 +1111,15 @@ public sealed class CliDriver
                     .FirstOrDefault(v => v != here
                                       && _game.CliWorld.IsVertexTraversable(v)
                                       && !_game.CliWorld.IsOutOfTravelRange(v), -1);
-                if (next < 0) { CliMode.Emit("error: travel neighbour — no traversable neighbour in range"); return; }
-                _game.CliClickVertex(next);
-                CliMode.Emit($"ok: route planned to neighbouring vertex {next} — call `travel-go` to set out");
-                return;
+                return next < 0 ? (-1, "travel neighbour — no traversable neighbour in range") : (next, null);
             }
 
             if (want.Equals("back", StringComparison.OrdinalIgnoreCase))
             {
                 int last = _game.CliLastLocationVertex;
-                if (last < 0) { CliMode.Emit("error: travel back — no location has been entered yet"); return; }
-                if (last == _game.CliAvatarVertex)
-                { CliMode.Emit($"error: travel back — already standing on vertex {last}"); return; }
-                _game.CliClickVertex(last);
-                CliMode.Emit($"ok: route planned back to vertex {last} — call `travel-go` to set out");
-                return;
+                if (last < 0) return (-1, "travel back — no location has been entered yet");
+                if (last == _game.CliAvatarVertex) return (-1, $"travel back — already standing on vertex {last}");
+                return (last, null);
             }
 
             target = -1;
@@ -1108,19 +1135,9 @@ public sealed class CliDriver
                 target = v;
                 break;
             }
-            if (target < 0) { CliMode.Emit($"error: no reachable destination matching \"{want}\" (try `destinations all`)"); return; }
+            if (target < 0) return (-1, $"no reachable destination matching \"{want}\" (try `destinations all`)");
         }
-
-        _game.CliClickVertex(target);
-
-        // Two quite different things happen here and the script has to know which. Picking your own
-        // vertex walks straight into the location; picking any other only *plans* a route and leaves
-        // the travel box up, waiting for `travel-go`. Reporting both as "travel requested" is how a
-        // script ends up parked at the travel box until its timeout, with nothing saying why.
-        if (target == _game.CliAvatarVertex)
-            CliMode.Emit($"ok: entering the location at vertex {target} (own vertex)");
-        else
-            CliMode.Emit($"ok: route planned to vertex {target} — call `travel-go` to set out");
+        return (target, null);
     }
 
     /// <summary>

@@ -124,6 +124,10 @@ public class TerminalThinkingModusMentisPopup
         return false;
     }
     
+    /// <summary>The modus mentis a click at this screen pixel would pick, or null — see the choice popup's twin.</summary>
+    public int? CliIndexAt(float screenX, float screenY, Vector2i windowSize, float cellPixelSize)
+        => IsVisible ? GetModusMentisIndexAtPosition(screenX, screenY, windowSize, cellPixelSize) : null;
+
     /// <summary>
     /// Get the modusMentis index at the given screen pixel position, or null if none.
     /// </summary>

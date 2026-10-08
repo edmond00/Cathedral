@@ -3807,7 +3807,63 @@ public class NarrativeController
         OnMouseClick(region.StartX, region.StartY);
         return null;
     }
-    
+
+    // ── --record: where a player would click ─────────────────────────────────
+
+    /// <summary>The narration's dice box, when a roll is on screen.</summary>
+    public DiceRollComponent? CliDice => _narrationState.IsDiceRollActive ? _dice : null;
+    // The recorder drives the game through the real pointer path, so instead of acting it needs to
+    // know WHERE each thing is. Each lookup resolves its target exactly as the matching Cli* click
+    // above does, and returns the cells (or, for popups, the pixel) a player would aim at.
+
+    /// <summary>The cells a keyword occupies, resolved as <see cref="CliClickKeyword"/> resolves it.</summary>
+    public (int X, int Y, int Width)? CliKeywordSpan(string keyword)
+    {
+        var regions = _ui.KeywordRegions;
+        KeywordRegion? region = int.TryParse(keyword, out int index)
+            ? (index >= 0 && index < regions.Count ? regions[index] : null)
+            : regions.FirstOrDefault(r => r.Keyword.Equals(keyword, StringComparison.OrdinalIgnoreCase));
+        return region == null ? null : (region.StartX, region.Y, Math.Max(1, region.EndX - region.StartX));
+    }
+
+    /// <summary>The first row of an action button, resolved as <see cref="CliClickAction"/> resolves it.</summary>
+    public (int X, int Y, int Width)? CliActionSpan(int actionIndex)
+    {
+        var region = _ui.ActionRegions.FirstOrDefault(r => r.ActionIndex == actionIndex);
+        return region == null ? null : (region.StartX, region.StartY, Math.Max(1, region.EndX - region.StartX));
+    }
+
+    /// <summary>
+    /// A screen pixel that picks choice <paramref name="index"/> of the popup on screen, found by asking
+    /// that popup's own hit-test — the same one a click is routed through, in the same priority order
+    /// as <see cref="OnRawMouseClick"/>. Null when no popup is up or no pixel picks that choice.
+    /// </summary>
+    public OpenTK.Mathematics.Vector2? CliPopupChoicePixel(int index)
+    {
+        var bounds = _core.PopupTerminal?.GetScreenBounds(_core.ClientSize);
+        if (bounds == null) return null;
+
+        Func<float, float, OpenTK.Mathematics.Vector2i, float, int?>? hit =
+              _choicePopup.IsVisible        ? _choicePopup.CliIndexAt
+            : _itemSelectionPopup.IsVisible ? _itemSelectionPopup.CliIndexAt
+            : _modusMentisPopup.IsVisible   ? _modusMentisPopup.CliIndexAt
+            : null;
+        if (hit == null) return null;
+
+        float cell = _terminalInputHandler.GetLayoutInfo(_core.ClientSize).CellSize.X;
+        var (left, top, right, bottom) = bounds.Value;
+        float x = left + Math.Min(right - left, cell * 8f);
+        for (float y = top; y <= bottom; y += cell * 0.25f)
+            if (hit(x, y, _core.ClientSize, cell) == index)
+            {
+                // Aim at the middle of the row rather than its first hit pixel.
+                float y2 = y;
+                while (y2 + 1 <= bottom && hit(x, y2 + 1, _core.ClientSize, cell) == index) y2 += 1;
+                return new OpenTK.Mathematics.Vector2(x, (y + y2) * 0.5f);
+            }
+        return null;
+    }
+
     /// <summary>
     /// Close the thinking modusMentis popup if it's open.
     /// Returns true if popup was closed, false if it wasn't open.

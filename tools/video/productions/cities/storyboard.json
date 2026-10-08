@@ -1,0 +1,154 @@
+{
+  "title": "How cities work",
+  "output": "build/cities_v3.mp4",
+  "size": [
+    1920,
+    1080
+  ],
+  "fps": 30,
+  "voice": {
+    "name": "en_GB-alan-medium",
+    "speed": 0.9,
+    "grit": 0.35
+  },
+  "music": {
+    "export": {
+      "mood": "Creation",
+      "tracks": 4
+    },
+    "level_db": -35,
+    "duck": 0.65
+  },
+  "clicks": {
+    "gain": 0.5
+  },
+  "prepare": [
+    {
+      "creates": "build/data/city_2701.json",
+      "game": "--scene-export city --ids 2701-2701 --out {creates}"
+    },
+    {
+      "creates": "build/data/city_plain.json",
+      "game": "--scene-export city --ids 0-59 --out {creates}"
+    },
+    {
+      "creates": "build/data/city_mountain.json",
+      "game": "--scene-export city --biome \"mountain\" --ids 0-29 --out {creates}"
+    },
+    {
+      "creates": "build/data/city_hot_steppe.json",
+      "game": "--scene-export city --biome \"hot steppe\" --ids 0-29 --out {creates}"
+    },
+    {
+      "creates": "build/data/city_cold_steppe.json",
+      "game": "--scene-export city --biome \"cold steppe\" --ids 0-29 --out {creates}"
+    }
+  ],
+  "recordings": {
+    "city": {
+      "dir": "build/rec_live",
+      "live": true,
+      "flags": "--skip-childhood --seed 42 --no-encounters --allow-reentry --start-at city --period dawn --mm --organs all=3,encephalon=5,viscera=5 --humors hepar=voluptas,pulmones=juvenescence,spleen=laetitia",
+      "note": "A live take (make_video.py live/send): re-recording it means playing it again by hand."
+    }
+  },
+  "manim_file": "scenes.py",
+  "segments": [
+    {
+      "type": "game",
+      "recording": "city",
+      "clip": "map",
+      "zoom": {
+        "factor": 1.5,
+        "center": [
+          720,
+          540
+        ]
+      },
+      "vo": "Now then. Have a look at this little world. That cell there, the one crowded round with farms and orchards, that's a city. Click upon it, and in you go."
+    },
+    {
+      "type": "manim",
+      "scene": "Sprawl",
+      "vo": "It wasn't chance that put it there, mind. Before ever you set foot in a world, its history is written out, and every great place that history raises, a citadel, a port, a palace, is given a cell of its own. Such a place, being a town sort of place, raises one, two or three city cells hard by itself. Each of those gathers farmland about it, ring upon ring, two or three deep. And of all that farmland, one cell in three becomes a village, or a pasture where the beasts are kept. A castle, now, being a country seat, skips the city and goes straight to the ploughing. But none of them will settle past a border. They keep to their own realm's side, as is proper."
+    },
+    {
+      "type": "game",
+      "recording": "city",
+      "clip": "arrive",
+      "vo": "And here's the market square. The fellow tells you what he sees, in his own words, and the words worth acting upon are lit up for you. This one, you'll notice, has his mind on pie."
+    },
+    {
+      "type": "manim",
+      "scene": "Plan",
+      "params": {
+        "data": "./build/data/city_2701.json"
+      },
+      "vo": "Now, whatever you may have been told, a city is no grid of streets. It's more of a web. One square, or two in the greater towns, sits at the heart of it. Streets run off from the squares, and the streets are joined end to end, so there's always some way across. An alley hangs off a single street, which is what makes it an alley, and the gate opens on the first street, where the road comes in. Every house and shop keeps its door on a street or a square."
+    },
+    {
+      "type": "game",
+      "recording": "city",
+      "clip": "act",
+      "vo": "From there it goes as it goes anywhere. You pick one of the lit words, the gaps in the wall here, and you choose how to think on it. He thinks with Vantage, an eye for high places, and settles on a close look at the inn's walls. Then come the dice. Three of them, and not a six among them, so it's failed. But a body keeps its humors, and they can be spent. A dose of Voluptas from the liver turns any die to a six, and there's your success. He learns a little architecture for his trouble, and feels rather proud of himself besides."
+    },
+    {
+      "type": "manim",
+      "scene": "Sizes",
+      "params": {
+        "data": [
+          "./build/data/city_plain.json",
+          "./build/data/city_mountain.json",
+          "./build/data/city_hot_steppe.json",
+          "./build/data/city_cold_steppe.json"
+        ]
+      },
+      "vo": "How big a city grows is settled by its own seed. One, two, or three. That's why two city cells side by side read like different quarters of the one town, and not the same street twice over. Each of these four panels is one measure, averaged over a hundred and fifty cities the game built, with the three sizes side by side. The streets and squares go from six and a half to above nine. The buildings, from seven to thirteen. And the folk living there, from nine to twenty. Better than twice as many."
+    },
+    {
+      "type": "manim",
+      "scene": "Crews",
+      "params": {
+        "data": "./build/data/city_plain.json"
+      },
+      "vo": "And who keeps a city going? Always the same lot. Look at the four boxes. An inn, with its keeper, and in a port a sailor or two lodging between ships. A merchant's house for every step of size, each with a merchant and a clerk. One workshop more than that, out of six trades, where the master works while the apprentice sleeps in a house down the way. And the watch: a guard for each step of size and one besides, with a captain in the largest towns. Now the bars. That's one city, on the average, counted over sixty of them. About three guards and three apprentices, two merchants and their two clerks, one innkeeper, and then a master from a handful of the trades, half a smith here, half a baker there, as the dice fall."
+    },
+    {
+      "type": "manim",
+      "scene": "Styles",
+      "vo": "The ground under a city dresses it after its own fashion. The same seed lays out the same streets in any country, but on the plain you'll find a market square and a high street, in the mountains it climbs by terraces and stairs, on the hot steppe there's a bazaar, and on the cold steppe a fair ground and a sledge way. And each is built of whatever the land gives. Timber, stone, mudbrick, or logs."
+    },
+    {
+      "type": "game",
+      "recording": "city",
+      "clip": "next",
+      "vo": "Well. That's a city for you. Every street a place to stand about in, every door a way in. And he's thoughts to spare yet, eight at a time for a mind as sharp as his, so off he goes down the chandlers' lane. Off you go too, then, and have a look for yourself.",
+      "speed": 1.4
+    },
+    {
+      "type": "card",
+      "min": 4.5,
+      "params": {
+        "heading": "proscribed palimpsest",
+        "lines": [
+          "edmond00.itch.io/proscribed"
+        ],
+        "color": "#D98CFF"
+      }
+    }
+  ],
+  "dither": {
+    "animation": {
+      "levels": 4,
+      "scale": 2
+    },
+    "game": {
+      "levels": 6,
+      "scale": 1
+    }
+  },
+  "fast_forward": {
+    "speed": 8,
+    "min": 1.5
+  }
+}

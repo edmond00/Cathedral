@@ -366,6 +366,40 @@ public class DialogueTreeController
         return null;
     }
 
+    // ── --record: where a player would click ─────────────────────────────────
+
+    /// <summary>The conversation's dice box, when a roll is on screen.</summary>
+    public DiceRollComponent? CliDice => _state.IsDiceRollActive ? _dice : null;
+
+    /// <summary>The CONTINUE a player would press now: the preview box's, else the settled dice box's.</summary>
+    public (int X, int Y, int Width)? CliContinueSpan()
+    {
+        var pv = _state.PreviewContinueRegion;
+        if (_preview.IsActive && pv.Width > 0) return pv;
+        var r = _dice.ContinueButtonRegion;
+        if (_state.IsDiceRollActive && !_state.IsDiceRolling && r.Width > 0) return r;
+        return null;
+    }
+
+    /// <summary>The footer button (END / INTERRUPT), when it is drawn.</summary>
+    public (int X, int Y, int Width)? CliExitSpan()
+        => _state.ExitButtonRegion.Width > 0 ? _state.ExitButtonRegion : null;
+
+    /// <summary>A cell that picks reply <paramref name="index"/>, found with the UI's own hit-test.</summary>
+    public (int X, int Y)? CliOptionCell(int index)
+    {
+        for (int y = 0; y < Config.Terminal.MainHeight; y++)
+            for (int x = 0; x < Config.Terminal.MainWidth; x++)
+                if (_ui.GetOptionIndexAt(x, y) == index)
+                {
+                    // Step a few cells in from the row's first hit, onto the text rather than its margin.
+                    int x2 = x;
+                    while (x2 - x < 6 && _ui.GetOptionIndexAt(x2 + 1, y) == index) x2++;
+                    return (x2, y);
+                }
+        return null;
+    }
+
     /// <summary>Whether the reply-generation preview box is up, its title, text and completeness.</summary>
     public (bool Active, string Title, string Text, bool Complete) CliPreview()
     {

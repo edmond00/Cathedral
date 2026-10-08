@@ -515,3 +515,8 @@ DEPRECATED/
 # installers and anything else that wants to live beside the repo without being part of it.
 # Git never descends into it, so nothing inside needs its own rule.
 local/
+
+# The video pipeline (tools/video): its virtualenv, downloaded voices, and every build product.
+tools/video/.venv/
+tools/video/voices/
+tools/video/productions/*/build/

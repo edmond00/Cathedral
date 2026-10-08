@@ -1,0 +1,74 @@
+# The city footage for "How cities work".
+#
+# Player commands only (this runs under --record), with the real model writing the prose — no
+# --playground. Spawns on the city at vertex 2701 of seed 42 — a port city on the plain, farms and
+# orchards around it — via the flags in storyboard.json:
+#   --skip-childhood --seed 42 --no-encounters --allow-reentry --start-at city --period dawn
+# `clip` names the spans the storyboard cuts; `hold` lets a shot breathe before the next click.
+# Timeouts are long: on the CPU the model takes a minute or more per passage. The cutter
+# fast-forwards those waits (timeline: model-busy / model-idle).
+
+# The model loads before the menu is offered.
+wait mode MainMenu 900
+click menu New
+wait mode ProtagonistCreation 60
+click continue
+wait mode WorldView 300
+
+clip map
+hold 3
+travel here
+wait mode LocationInteraction 900
+hold 0.5
+clip end map
+
+clip arrive
+advance 12 900
+hold 4
+cursor rest
+hold 2
+clip end arrive
+
+regions
+clip act
+click keyword 0
+choose 0
+choose 0
+advance 12 900
+hold 2
+regions
+click action 0
+choose 0
+advance 12 900
+hold 1
+click continue
+advance 12 900
+hold 4
+clip end act
+
+clip next
+click button
+wait 900
+advance 12 900
+hold 4
+clip end next
+
+# The menu, the way a player opens it: Escape, then the protagonist screen and one of its tabs.
+clip menu
+pause
+wait 30
+hold 1.5
+elements
+click menu Protagonist
+wait 30
+hold 2
+elements
+click tab inventory
+wait 30
+hold 3
+click back
+wait 30
+hold 1
+clip end menu
+state
+quit

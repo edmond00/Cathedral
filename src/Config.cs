@@ -401,7 +401,21 @@ public static class Config
         /// this a script cannot reach the buffs at all — and cannot exercise both ends of the
         /// level-derived vital-heat curve, which is the whole of a buff's cost model.</para>
         /// </summary>
-        public static (string[] Ids, int Level)? GrantModiMentis { get; set; } = null;
+        public static (string Id, int Level)[]? GrantModiMentis { get; set; } = null;
+
+        /// <summary>
+        /// Organ part scores to set when the protagonist is accepted, by part id, organ id or "all".
+        /// Set by <c>--organs</c>. Applied before memory and humors are derived from the scores, and
+        /// regardless of the creation point budget — a starting condition, like the rest of this class.
+        /// Inert at null.
+        /// </summary>
+        public static (string Target, int Score)[]? Organs { get; set; } = null;
+
+        /// <summary>
+        /// Humors to fill the protagonist's queues with on acceptance: (queue or "all", humor name).
+        /// Set by <c>--humors</c>. Inert at null.
+        /// </summary>
+        public static (string Queue, string Humor)[]? Humors { get; set; } = null;
 
         /// <summary>
         /// Creature to fight immediately on reaching the world map, e.g. "wolf". Set by

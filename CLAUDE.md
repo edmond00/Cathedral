@@ -132,6 +132,7 @@ every line that left is the same text, moved.
 | `release` skill | on invocation | the ten release steps, and now the packaging, publishing, naming and shipped-build-verification reference behind them |
 | `manual` skill | on invocation | the player manual's style guide, chapter map and procedure |
 | `models` skill | on invocation | maintaining the `models/` folder across machines |
+| `video` skill | on invocation | narrated videos about the game: `--record` (the CLI with a camera, player commands only), storyboards, manim in the game's identity, Piper voice-over, the game's own music; `tools/video/` |
 | `mm-grants` skill | on invocation | writing the modus mentis grant audit by hand |
 
 **When a change alters a rule a player is subject to, invoke the `manual` skill** — that has not moved

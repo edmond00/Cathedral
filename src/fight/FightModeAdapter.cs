@@ -2066,6 +2066,32 @@ public class FightModeAdapter
         return null;
     }
 
+    // ── --record: where a player would click ─────────────────────────────────
+
+    /// <summary>The fight's dice box, while a settled roll waits for its CONTINUE.</summary>
+    public Cathedral.Game.DiceRollComponent? CliDice => _state.Phase == TurnPhase.WaitingForDiceComplete ? _dice : null;
+
+    /// <summary>The settled dice box's CONTINUE, when it is up.</summary>
+    public (int X, int Y, int Width)? CliDiceContinueSpan()
+    {
+        var region = _dice.ContinueButtonRegion;
+        return _state.Phase == TurnPhase.WaitingForDiceComplete && region.Width > 0 ? region : null;
+    }
+
+    /// <summary>The map cell of the fighter <see cref="CliClickFighter"/> would click.</summary>
+    public (int X, int Y)? CliFighterCell(string name)
+    {
+        var target = _state.Fighters.FirstOrDefault(
+            f => f.DisplayName.StartsWith(name, StringComparison.OrdinalIgnoreCase));
+        return target == null ? null : (FightModeUI.CenterX + target.X, FightModeUI.CenterY + target.Y);
+    }
+
+    /// <summary>The END TURN row of the action menu.</summary>
+    public (int X, int Y) CliEndTurnCell() => (3, FightModeUI.EndTurnButtonRow);
+
+    /// <summary>The action menu's bounds, where a skill is looked for by its name.</summary>
+    public (int Right, int Bottom) CliActionMenuBounds() => (FightModeUI.ActionMenuRight, 20);
+
     /// <summary>End the active fighter's turn — the END TURN button.</summary>
     public string? CliEndTurn()
     {

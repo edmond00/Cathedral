@@ -810,6 +810,17 @@ public class ManagementMenuRenderer
     // Hit testing
     // ═══════════════════════════════════════════════════════════════
 
+    /// <summary>
+    /// What a click at (x, y) would press — <c>tab:inventory</c>, <c>back</c> — or null. For
+    /// <c>--record</c>, which aims its pointer at a control by asking this screen's own hit-test.
+    /// </summary>
+    public string? CliControlIdAt(int x, int y)
+    {
+        if (IsOnBackButton(x, y)) return "back";
+        int tab = GetTabAtPosition(x, y);
+        return tab >= 0 && tab < AllTabs.Length && AllTabs[tab].Enabled ? $"tab:{AllTabs[tab].Label.ToLowerInvariant()}" : null;
+    }
+
     private int GetTabAtPosition(int x, int y)
     {
         if (x < PanelLeft || x >= PanelLeft + PanelLeftW) return -1;

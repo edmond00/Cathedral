@@ -53,8 +53,10 @@ for (int i = 0; i < args.Length; i++)
         if (args[i] == "--save-path" && i + 1 < args.Length) savePathOverride = args[i + 1];
         if (args[i] == "--no-save") noSave = true;
     }
+    // --record drives the game through the CLI, so it keeps away from the player's save the same way.
     bool cliActive = System.Array.IndexOf(args, "--cli") >= 0
-                  || System.Array.IndexOf(args, "--cli-script") >= 0;
+                  || System.Array.IndexOf(args, "--cli-script") >= 0
+                  || System.Array.IndexOf(args, "--record") >= 0;
     Cathedral.Game.Save.SaveFile.Configure(savePathOverride, noSave, cliActive);
 
     if (Cathedral.Config.Rng.Seed == null)
@@ -117,6 +119,16 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --cli                              Drive the game from stdin and observe it as text (for scripted/automated verification)");
     Console.WriteLine("  --cli-script <file>                Run a newline-separated command script at startup (implies --cli)");
     Console.WriteLine("  --cli-timeout <seconds>            Hard limit for a --cli run before it closes itself (default 300)");
+    Console.WriteLine("  --record <dir>                     Film a CLI-driven run: player-only commands, a drawn cursor, game.mkv + timeline.jsonl + music.mid");
+    Console.WriteLine("                                     in <dir>. Hidden, silent and CPU-only unless told otherwise (implies --cli)");
+    Console.WriteLine("    --record-visible                 Show the window while recording");
+    Console.WriteLine("    --record-size <WxH>              Footage size (default 1440x1080)");
+    Console.WriteLine("    --record-fps <n>                 Footage frame rate (default 30)");
+    Console.WriteLine("    --record-ffmpeg <exe>            ffmpeg to encode with (default: tools/video's, CATHEDRAL_FFMPEG, PATH)");
+    Console.WriteLine("    --record-cursor-speed <px/s>     How fast the drawn cursor travels (default 1500)");
+    Console.WriteLine("  --export-sfx <dir>                 Write the UI click and hover sounds as WAV files and exit");
+    Console.WriteLine("  --export-music <out.mid> [--seconds n] [--mood m] [--tracks n]  Compose with the game's music engine (silently, in real time) and write MIDI");
+    Console.WriteLine("  --scene-export <key> [--biome b] [--ids a-b] [--out f]  Write a settled factory's scenes (areas, paths, doors, people) as JSON and exit");
     Console.WriteLine("  --debug                            Enable debug mode (override LLM/RNG decisions via console) + viewers");
     Console.WriteLine("  --view                             Show the LLM, scene and world-history viewers without console decision overriding");
     Console.WriteLine("  --dialogue-view                    Open a window graphing every dialogue tree (neutral replica text per node)");
@@ -205,9 +217,12 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --black-bile                       DEBUG: fill all four humor queues with black bile after creation, so the");
     Console.WriteLine("                                     next journey starves the protagonist. The only way a script can stage a");
     Console.WriteLine("                                     starvation death (old age uses --advance-days, wounds --start-fight)");
-    Console.WriteLine("  --grant-mm <id[,id...]>[:lvl]      DEBUG: grant the named modi mentis at <lvl> (default 1) after character");
-    Console.WriteLine("                                     creation. Fighting skills are gated behind their modi mentis, so this is what");
-    Console.WriteLine("                                     makes a given skill reachable — and level sets a buff's vital-heat cost");
+    Console.WriteLine("  --grant-mm <id[:lvl][,id[:lvl]…]>  DEBUG: grant modi mentis, each at its own level (default 1), into free memory slots.");
+    Console.WriteLine("                                     The older 'a,b:3' still means every id at level 3");
+    Console.WriteLine("  --organs <part|organ|all>=<n>[,…] DEBUG: set organ part scores on accepting the protagonist (ignores the point budget),");
+    Console.WriteLine("                                     e.g. all=3,encephalon=5,viscera=5. Memory, noetic points and humors follow from them");
+    Console.WriteLine("  --humors <humor>[,…] | <queue>=<humor>[,…]  DEBUG: fill humor queues (paunch, hepar, spleen, pulmones, or all)");
+    Console.WriteLine("                                     with these humors, e.g. voluptas or hepar=juvenescence,spleen=laetitia");
     Console.WriteLine("  --mm-audit                         Print the modus-mentis content audit (hard-rule violations, coverage, soft stats) and exit");
     Console.WriteLine("  --verb-audit                       Print the verb-coverage audit (verbs per observable vs targets, dead verbs,");
     Console.WriteLine("                                     unresolvable modus-mentis and tool ids, landmark counts) and exit");
@@ -261,6 +276,53 @@ if (args.Any(a => a == "--silent")) Cathedral.Config.Debug.Silent = true;
 // --hidden: create the window without showing it. What run_tests.sh uses so a suite run does not put
 // a hundred windows on screen and take the keyboard focus a hundred times.
 if (args.Any(a => a == "--hidden")) Cathedral.Config.Debug.HiddenWindow = true;
+
+// --record <dir>: film a CLI-driven run (see Cathedral.Game.Record.RecordMode). Parsed here, beside
+// --silent and --hidden, because it sets both — and --debug/--view below read HiddenWindow.
+for (int i = 0; i < args.Length; i++)
+{
+    if (args[i] != "--record") continue;
+    Cathedral.Game.Record.RecordMode.IsActive = true;
+    Cathedral.Game.Record.RecordMode.OutputDir =
+        i + 1 < args.Length && !args[i + 1].StartsWith("--") ? args[i + 1] : "recording";
+    for (int j = 0; j < args.Length - 1; j++)
+    {
+        string v = args[j + 1];
+        switch (args[j])
+        {
+            case "--record-fps" when int.TryParse(v, out int fps):
+                Cathedral.Game.Record.RecordMode.Fps = Math.Clamp(fps, 10, 60); break;
+            case "--record-size":
+                var wh = v.Split('x', 'X');
+                if (wh.Length == 2 && int.TryParse(wh[0], out int rw) && int.TryParse(wh[1], out int rh))
+                { Cathedral.Game.Record.RecordMode.Width = rw; Cathedral.Game.Record.RecordMode.Height = rh; }
+                break;
+            case "--record-ffmpeg":
+                Cathedral.Game.Record.RecordMode.FfmpegPath = v; break;
+            case "--record-cursor-speed" when double.TryParse(v, System.Globalization.NumberStyles.Float,
+                                                              System.Globalization.CultureInfo.InvariantCulture, out double cs):
+                Cathedral.Game.Record.RecordMode.CursorSpeed = Math.Clamp(cs, 200, 6000); break;
+        }
+    }
+    Cathedral.Game.Record.RecordMode.Visible = args.Any(a => a == "--record-visible");
+
+    // A recording runs in the background while its author does something else: no window unless asked
+    // for, nothing played aloud (the music is captured as MIDI instead), and the model on the CPU — the
+    // GPU has taken this machine's desktop down before. --gpu, parsed further down, still overrides that.
+    Cathedral.Config.Debug.HiddenWindow = !Cathedral.Game.Record.RecordMode.Visible;
+    Cathedral.Config.Debug.Silent = true;
+    Cathedral.Config.Debug.ForcedLlmDevice = Cathedral.LLM.LlamaComputeDevice.Cpu;
+    Cathedral.Audio.MidiCapture.Start(() => Cathedral.Game.Record.RecordMode.Now);
+    Cathedral.Game.Record.RecordSession.Configure(args);
+    Cathedral.Game.Cli.CliMode.IsActive = true;
+
+    Console.ForegroundColor = ConsoleColor.Cyan;
+    Console.WriteLine($"*** RECORD MODE: {Cathedral.Game.Record.RecordMode.OutputDir} " +
+                      $"({Cathedral.Game.Record.RecordMode.Width}x{Cathedral.Game.Record.RecordMode.Height} @ {Cathedral.Game.Record.RecordMode.Fps} fps, " +
+                      $"{(Cathedral.Game.Record.RecordMode.Visible ? "visible" : "hidden")}) ***");
+    Console.ResetColor();
+    break;
+}
 
 // --npc-hostile: every NPC counts the protagonist an enemy from the start.
 if (args.Any(a => a == "--npc-hostile")) Cathedral.Config.Debug.NpcHostile = true;
@@ -360,6 +422,30 @@ if (args.Length >= 1 && args[0] == "--outcome-audit")
 if (args.Length >= 1 && args[0] == "--save-audit")
 {
     Cathedral.Game.Save.SaveAudit.Run();
+    return;
+}
+
+// --export-sfx <dir>: the UI click and hover as WAV files — what tools/video lays under a recording.
+if (args.Length >= 2 && args[0] == "--export-sfx")
+{
+    Cathedral.Audio.UiSfxPlayer.ExportWavs(args[1]);
+    Console.WriteLine($"--export-sfx: hover.wav and click.wav written to {args[1]}");
+    return;
+}
+
+// --export-music <out.mid> [--seconds n] [--mood name] [--tracks n]: the game's composer, captured as
+// MIDI with no device open — a soundtrack for tools/video.
+if (args.Length >= 1 && args[0] == "--export-music")
+{
+    Environment.ExitCode = Cathedral.Audio.MusicExport.Run(args);
+    return;
+}
+
+// --scene-export <key> [--biome b] [--ids a-b] [--out file]: settled scenes as JSON, for charts and
+// diagrams drawn from the generator itself. Headless.
+if (args.Length >= 1 && args[0] == "--scene-export")
+{
+    Environment.ExitCode = Cathedral.Debug.SceneExport.Run(args);
     return;
 }
 
@@ -557,7 +643,7 @@ if (args.Any(a => a == "--debug"))
 }
 
 // Check for --cli flag (drive the game from stdin and observe it as text)
-if (args.Any(a => a == "--cli") || args.Any(a => a == "--cli-script"))
+if (args.Any(a => a == "--cli") || args.Any(a => a == "--cli-script") || Cathedral.Game.Record.RecordMode.IsActive)
 {
     Cathedral.Game.Cli.CliMode.IsActive = true;
     for (int i = 0; i < args.Length; i++)
@@ -737,20 +823,33 @@ for (int i = 0; i < args.Length; i++)
     // --grant-mm <id[,id...]>[:level]
     if (args[i] == "--grant-mm" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
     {
-        var spec  = args[i + 1];
-        int level = 1;
-        int colon = spec.LastIndexOf(':');
-        if (colon > 0 && int.TryParse(spec[(colon + 1)..], out var lvl))
-        {
-            level = lvl;
-            spec  = spec[..colon];
-        }
-        var ids = spec.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                      .Select(s => s.Trim())
-                      .Where(s => s.Length > 0)
-                      .ToArray();
-        if (ids.Length > 0)
-            Cathedral.Config.Debug.GrantModiMentis = (ids, level);
+        // Each entry is id[:level]. The original form "a,b:3" — one level after the last id — still
+        // means every id at that level; any other spelling gives each id its own (default 1).
+        var tokens = args[i + 1].Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(t =>
+            {
+                int colon = t.LastIndexOf(':');
+                return colon > 0 && int.TryParse(t[(colon + 1)..], out var l) ? (Id: t[..colon], Level: (int?)l) : (Id: t, Level: (int?)null);
+            }).ToArray();
+        bool sharedLevel = tokens.Length > 1 && tokens[^1].Level != null && tokens[..^1].All(t => t.Level == null);
+        int shared = sharedLevel ? tokens[^1].Level!.Value : 1;
+        if (tokens.Length > 0)
+            Cathedral.Config.Debug.GrantModiMentis = tokens.Select(t => (t.Id, t.Level ?? shared)).ToArray();
+    }
+
+    // --organs <part|organ|all>=<n>[,…]
+    if (args[i] == "--organs" && i + 1 < args.Length)
+    {
+        Cathedral.Config.Debug.Organs = args[i + 1].Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(t => t.Split('=')).Where(p => p.Length == 2 && int.TryParse(p[1], out _))
+            .Select(p => (p[0].ToLowerInvariant(), int.Parse(p[1]))).ToArray();
+    }
+
+    // --humors <humor>[,…] | <queue>=<humor>[,…]
+    if (args[i] == "--humors" && i + 1 < args.Length)
+    {
+        Cathedral.Config.Debug.Humors = args[i + 1].Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(t => t.Split('=') is var p && p.Length == 2 ? (p[0].ToLowerInvariant(), p[1]) : ("all", t)).ToArray();
     }
 }
 
@@ -804,7 +903,10 @@ Console.WriteLine("=== Cathedral - Location Travel Mode ===\n");
 Console.WriteLine("Launching the integrated narrative exploration system...");
 Console.WriteLine("Press Ctrl+C to exit at any time.\n");
 
-Cathedral.Game.LocationTravelModeLauncher.Launch();
+if (Cathedral.Game.Record.RecordMode.IsActive)
+    Cathedral.Game.LocationTravelModeLauncher.Launch(Cathedral.Game.Record.RecordMode.Width, Cathedral.Game.Record.RecordMode.Height);
+else
+    Cathedral.Game.LocationTravelModeLauncher.Launch();
 
 // A --cli run fails its build step when any `expect` assertion failed.
 if (Cathedral.Game.Cli.CliMode.IsActive && Cathedral.Game.Cli.CliMode.HasFailedAssertion)

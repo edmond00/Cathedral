@@ -99,6 +99,13 @@ public class TerminalSimpleChoicePopup
         return index;
     }
 
+    /// <summary>
+    /// The choice a click at this screen pixel would pick, or null. <c>--record</c> aims its pointer
+    /// by asking this, so the pixel it clicks is one this popup really answers to.
+    /// </summary>
+    public int? CliIndexAt(float screenX, float screenY, Vector2i windowSize, float cellPixelSize)
+        => IsVisible ? GetIndexAtPosition(screenX, screenY, windowSize, cellPixelSize) : null;
+
     // ── Internals ────────────────────────────────────────────────
 
     private int? GetIndexAtPosition(float screenX, float screenY, Vector2i windowSize, float cellPixelSize)

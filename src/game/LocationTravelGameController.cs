@@ -287,6 +287,66 @@ public class LocationTravelGameController : IDisposable
     /// <summary>The terminal the CLI dumps as text.</summary>
     public TerminalHUD? CliTerminal => _core.Terminal;
 
+    /// <summary>The window, for <c>--record</c>: it injects its pointer here and projects targets to pixels.</summary>
+    public GlyphSphereCore CliCore => _core;
+
+    /// <summary>
+    /// The first cell the current screen's own hover rule names <paramref name="elementId"/>
+    /// (<c>travel-button</c>, <c>world-confirm</c>, <c>death-end-run</c>, <c>encounter-engage</c>,
+    /// <c>menu:2</c>…), or null. What <c>--record</c> aims at for a button it has no region for: the
+    /// same rule that lights the button decides where it is.
+    /// </summary>
+    public (int X, int Y)? CliFindElementCell(string elementId)
+    {
+        (int X, int Y)? first = null, last = null;
+        for (int y = 0; y < Config.Terminal.MainHeight; y++)
+        {
+            for (int x = 0; x < Config.Terminal.MainWidth; x++)
+            {
+                if (CliElementIdAt(x, y) != elementId) continue;
+                first ??= (x, y);
+                if (y == first.Value.Y) last = (x, y);
+            }
+            if (first != null) break;
+        }
+        return first is { } f && last is { } l ? ((f.X + l.X) / 2, f.Y) : null;
+    }
+
+    /// <summary>
+    /// What the current screen names the control at cell (x, y), or null: its hover rule, or — for the
+    /// protagonist screen, which keeps its hover sounds to itself — that screen's own hit-test.
+    /// </summary>
+    public string? CliElementIdAt(int x, int y) => _currentMode == GameMode.ProtagonistManagement
+        ? _managementMenuRenderer?.CliControlIdAt(x, y)
+        : GetHoverElementId(x, y);
+
+    /// <summary>Every distinct control id on screen now, top to bottom — what `elements` lists.</summary>
+    public IReadOnlyList<string> CliElementIds()
+    {
+        var seen = new List<string>();
+        for (int y = 0; y < Config.Terminal.MainHeight; y++)
+            for (int x = 0; x < Config.Terminal.MainWidth; x++)
+                if (CliElementIdAt(x, y) is { } id && !seen.Contains(id)) seen.Add(id);
+        return seen;
+    }
+
+    /// <summary>The on-screen cell of a camera arrow, or null when the pad is not drawn in this mode.</summary>
+    public (int X, int Y)? CliCameraArrowCell(CameraArrow arrow)
+    {
+        if (!CameraPadActive || _cameraArrowPad == null) return null;
+        var (x, y) = _cameraArrowPad.CellFor(arrow);
+        return x < 0 ? null : (x, y);
+    }
+
+    /// <summary>Whichever dice box is on screen — narration, conversation or fight — or null.</summary>
+    public DiceRollComponent? CliActiveDice =>
+        _currentMode == GameMode.Fighting ? _fightAdapter?.CliDice
+        : _currentMode == GameMode.Dialogue ? _dialogueAdapter?.Controller?.CliDice
+        : _narrativeController?.CliDice;
+
+    /// <summary>The companion-death notice's CONTINUE, when the notice is up.</summary>
+    public (int X, int Y)? CliCompanionDeathCell => _companionDeathBox?.ContinueButtonCell;
+
     /// <summary>The live narration controller, or null outside a narration session.</summary>
     public NarrativeController? CliNarration => _narrativeController;
 
@@ -673,6 +733,22 @@ public class LocationTravelGameController : IDisposable
     /// True when the game is settled: no LLM generation in flight, no travel animation running and
     /// no dice mid-roll. The CLI <c>wait</c> command blocks on this.
     /// </summary>
+    /// <summary>
+    /// True while the game is waiting on the language model — the loading screen, or narration or a
+    /// conversation generating. Narrower than <see cref="CliIsIdle"/>: dice, travel and fight animations
+    /// are not counted. <c>--record</c> logs these spans so a cut can fast-forward through them.
+    /// </summary>
+    public bool CliModelBusy()
+    {
+        if (_currentMode == GameMode.LLMLoading) return true;
+        if (_currentMode == GameMode.Dialogue)
+        {
+            var dlg = _dialogueAdapter?.Controller;
+            return _dialogueAdapter != null && (dlg == null || dlg.CliSnapshot().Loading);
+        }
+        return _narrativeController != null && _narrativeController.CliSnapshot().AnyLoading;
+    }
+
     public bool CliIsIdle()
     {
         if (_currentMode == GameMode.Traveling) return false;
@@ -1960,6 +2036,13 @@ public class LocationTravelGameController : IDisposable
             ClearTravelPlan();
         }
 
+        // The location name that follows the cursor on the world map lives in the mouse-following
+        // popup, and only UpdatePopupTerminal clears it — which the narration branch of Update never
+        // reaches. Left alone, the name of the cell just entered ("city") trailed the cursor through
+        // the whole visit. Cleared here, before the new mode can put a popup of its own up.
+        if (oldMode == GameMode.WorldView && newMode != GameMode.WorldView)
+            _core.PopupTerminal?.Clear();
+
         // Reset cloud speed back to normal whenever travel ends.
         if (oldMode == GameMode.Traveling && newMode != GameMode.Traveling)
             _core.SetCloudSpeedMultiplier(1.0f);
@@ -3193,8 +3276,12 @@ public class LocationTravelGameController : IDisposable
                 // Re-initialize memory with the organ scores the player set during creation.
                 // ResetGameState called InitializeMemory earlier with initial random scores;
                 // now we rebuild modules to reflect the final configured values.
+                // --organs first: memory size and the humor queues are both derived from the scores.
+                StartingBodyMode.ApplyOrgans(protagonist);
                 protagonist.InitializeMemory();
                 protagonist.ReinitializeHumorQueues();
+                // --humors after: rebuilding the queues would overwrite whatever was put in them.
+                StartingBodyMode.ApplyHumors(protagonist);
 
                 // --black-bile is applied HERE, not in ResetGameState. The queues are rebuilt from the
                 // organ scores the player just settled, which overwrites anything put there earlier —
