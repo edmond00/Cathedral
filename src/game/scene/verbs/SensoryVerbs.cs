@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Npc;
 using Cathedral.Game.Npc.Corpse;
 using Cathedral.Game.Narrative.Routines;
 
@@ -182,7 +183,47 @@ public class ListenVerb : SensoryVerb
     public override string? GrantedModusMentisId(Element? target) => "keen_ear";
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
-        => $"listen to {DefiniteTarget(target)}";
+        => target is SceneNpc npc && Speaks(npc) && Interlocutors(scene, pov, npc).FirstOrDefault() is { } other
+            ? Overhearing(target, other)
+            : $"listen to {DefiniteTarget(target)}";
+
+    // ── Overhearing ───────────────────────────────────────────────────────────
+    // "Listen to the miller's apprentice" read as the opening of a conversation, which is a different
+    // verb. A person who speaks is therefore only listened to while they are talking to somebody
+    // else, and the act names both: it is overhearing, and the sentence says so. Anything that does
+    // not speak — a bird, a hive, a wolf — is listened to as before.
+
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
+    {
+        if (!base.IsPossibleFor(scene, pov, target, actor)) return false;
+        return target is not SceneNpc npc || !Speaks(npc) || Interlocutors(scene, pov, npc).Any();
+    }
+
+    /// <summary>One act per person they could be overheard talking with — the introduction's pattern.</summary>
+    public override IEnumerable<VerbAction> ExpandViews(Scene scene, PoV pov, Element target, PartyMember? actor = null)
+    {
+        if (target is SceneNpc npc && Speaks(npc))
+        {
+            if (!IsPossible(scene, pov, target, actor)) yield break;
+            foreach (var other in Interlocutors(scene, pov, npc))
+                yield return new VerbAction(this, Overhearing(target, other), target, variant: other);
+            yield break;
+        }
+
+        foreach (var view in base.ExpandViews(scene, pov, target, actor)) yield return view;
+    }
+
+    // The other speaker is named by role, as the introduction names whom it presents: a name reaches a
+    // prompt only through the labelling of the person in focus, so a second one would arrive raw.
+    private static string Overhearing(Element target, SceneNpc other)
+        => $"listen to {DefiniteTarget(target)} talking with the {((NpcEntity)other.Entity).Archetype.RoleNoun}";
+
+    private static bool Speaks(SceneNpc npc) => npc.Entity is NpcEntity { CanSpeak: true };
+
+    /// <summary>Everyone here, awake and able to speak, whom <paramref name="npc"/> could be talking with.</summary>
+    private static IEnumerable<SceneNpc> Interlocutors(Scene scene, PoV pov, SceneNpc npc)
+        => scene.GetNpcsAt(pov.Where, pov.When)
+                .Where(n => n.Id != npc.Id && n.IsAlive && Speaks(n) && !n.IsSleeping(scene, pov));
 }
 
 /// <summary>Takes in a smell — the sense that carries the most and is asked for the least.</summary>

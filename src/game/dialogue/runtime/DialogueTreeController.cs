@@ -244,9 +244,12 @@ public class DialogueTreeController
             return;
         }
 
-        if (_state.ConversationEnded) return;
-
-        // Preview box CONTINUE — commit the replies and make them selectable.
+        // Preview box CONTINUE — commit the replies and make them selectable. Answered BEFORE the
+        // ended-conversation guard below, because the preview outlives the conversation: the closing
+        // line's commit is what ends it, and the emotional coda is a second part queued behind that
+        // line. Guarded the other way round, its CONTINUE was swallowed and, with the footer hidden
+        // while a preview is up, the game had no way forward at all. The CLI's continue never went
+        // through this guard, which is why every script passed.
         var pv = _state.PreviewContinueRegion;
         if (pv.Width > 0 && my == pv.Y && mx >= pv.X && mx < pv.X + pv.Width)
         {
@@ -255,6 +258,8 @@ public class DialogueTreeController
             _preview.TryContinue();
             return;
         }
+
+        if (_state.ConversationEnded) return;
 
         if (_state.IsDiceRollActive && !_state.IsDiceRolling)
         {
@@ -412,7 +417,12 @@ public class DialogueTreeController
     {
         if (!_preview.IsActive)          return "no preview is active";
         if (!_preview.Snapshot().Complete) return "replies are still generating";
-        _preview.TryContinue();
+        // Through the click handler at the button's own cell, not straight to the preview: calling
+        // TryContinue here once skipped a guard the mouse path applied, and a CONTINUE that did
+        // nothing for a player passed in every script.
+        var pv = _state.PreviewContinueRegion;
+        if (pv.Width <= 0) return "the preview CONTINUE is not on screen";
+        OnMouseClick(pv.X, pv.Y);
         return null;
     }
 

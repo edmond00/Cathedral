@@ -1,0 +1,29 @@
+# listen — a speaker alone in a room is not offered to be listened to
+#
+# The weaver is the only person in the Test Room (--npc-static), so there is nobody for them to be
+# talking with, and listening to them would only read as starting a conversation. `goal listen`
+# therefore finds nothing to pin, which is the assertion: the narrowing flag missing is expected here.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --npc-static --start-area "Test Room" --period noon --observe-only "weaver"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal listen
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+expect-not listen to
+
+allow-flag-miss --goal-only
+quit

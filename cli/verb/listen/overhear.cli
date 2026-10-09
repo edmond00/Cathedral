@@ -1,0 +1,40 @@
+# listen — a person is overheard, never simply listened to
+#
+# "Listen to the miller's apprentice" read as the opening of a conversation, which is another verb's
+# business. A person who speaks is therefore listened to only while somebody else is there for them
+# to be talking with, and the act names both. The brewer shares the Test Hall with the reeve
+# (--npc-static pins them there), so the act is offered — as overhearing.
+#
+# The complement, a speaker alone in a room, is cli/verb/listen/alone.cli.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --npc-static --start-area "Test Hall" --period noon --observe-only "brewer"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal listen
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+expect talking with
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+expect SUCCESS
+expect Modus mentis
+expect-verb listen
+quit
