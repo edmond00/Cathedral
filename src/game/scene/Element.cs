@@ -26,6 +26,14 @@ public abstract class Element
     /// </summary>
     public string StableKey { get; set; } = "";
 
+    /// <summary>
+    /// True for what play made rather than what the factory built — a corpse, a wreck, the salvage
+    /// inside either. A replay rebuilds the scene from the factory, so none of these will be there,
+    /// and a routine step aimed at one could never be walked again: the recorder refuses to record
+    /// such a step (see <c>RoutineRecorder</c>), which is what lets it skip the act that made it.
+    /// </summary>
+    public bool SpawnedDuringVisit { get; set; }
+
     /// <summary>Human-readable display name for UI and logging.</summary>
     public abstract string DisplayName { get; }
 

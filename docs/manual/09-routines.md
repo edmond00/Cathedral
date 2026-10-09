@@ -46,12 +46,19 @@ track to the beds and stopping there is a routine for going to the beds.
 
 Three further provisions:
 
-- A successful act of a kind that cannot be recorded is ordinarily skipped, the chain closing over
-  it and recording continuing.
-- Unless its effects **cannot be reproduced by a replay** — a hand-off to a phase a routine cannot
-  contain, or a one-shot alteration later steps lean upon, such as the forcing of a lock or the
-  removal of a person. Recording then **stops** at that point, rather than leaving behind a routine
-  that quietly assumes something replay will never do.
+- A successful act of a kind that cannot be recorded is **skipped**, the chain closing over it and
+  recording continuing. Catching a creature, breaking furniture, slaying, recruiting, a fight and a
+  conversation are all passed over so. The test is whether leaving the act out would make the
+  routine around it wrong: an effect that lasts to the next visit — a death, a departure, a grudge —
+  holds at replay as well, and one that does not, such as a creature removed, is relied upon by no
+  later step.
+- Recording **stops** only where the act moved the frame by means a replay will not have. The
+  forcing of a lock is the case: it carries the body through a door that the rebuilt scene keeps
+  shut, and a routine left without it would walk from the wrong side.
+- **Nothing made during the visit is recorded.** A corpse, the wreck of broken furniture and what
+  either holds are absent from the scene a replay rebuilds, so an act upon them is skipped like any
+  unrecordable act. This is what makes the skipping of the slaying and the breaking safe: what they
+  made reachable cannot enter a routine.
 - A step handing off to a fight or a conversation is **always** a terminus.
 
 ## 3. Constraints

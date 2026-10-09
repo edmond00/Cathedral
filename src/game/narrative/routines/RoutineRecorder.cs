@@ -28,9 +28,13 @@ namespace Cathedral.Game.Narrative.Routines;
 /// <para>Other rules:</para>
 /// <list type="bullet">
 /// <item>The session's start location + time become every emitted routine's binding.</item>
-/// <item>A successful <i>unrecordable</i> verb is normally skipped — the chain closes over it and
+/// <item>A successful <i>unrecordable</i> step is normally skipped — the chain closes over it and
 ///   recording continues — unless its effects cannot be reproduced by a replay
-///   (<see cref="Verb.BreaksRoutineRecording"/>), in which case the session stops there.</item>
+///   (<see cref="Verb.BreaksRoutineRecording"/>), in which case the session stops there. Skipping is
+///   meant to be permissive and recording strict: an effect breaks only when it neither lasts to
+///   replay time nor is harmless to leave out, and a step aimed at anything this visit spawned
+///   (<see cref="Element.SpawnedDuringVisit"/>) is never recorded, since the replayed scene will not
+///   hold it.</item>
 /// <item>A step that hands off to another phase (fight/dialogue) is always a terminus, even in the
 ///   future case of one that also repositions.</item>
 /// <item>Failed verbs never reach the success hook, so they are naturally ignored.</item>
@@ -92,12 +96,21 @@ public class RoutineRecorder
         var target = action.PreselectedOutcome.Target;
         reports ??= Array.Empty<Outcome>();
 
-        // No target means nothing stable to record or to reason about — close the session.
-        if (target == null) { EmitTrailingPath(); Stop("action had no target"); return; }
+        // A step that cannot be recorded is left out whenever its effects allow it, and ends the
+        // session only when they do not. Three reasons a step is not recordable, all handled alike:
+        // the verb never is, the target cannot be named stably, or the target is something this
+        // visit made (a corpse, a wreck, what lies in either) — a replay rebuilds the scene from the
+        // factory and will not find it. That last test is what lets the act that made it (slay,
+        // break) be skipped: whatever it enabled is unreachable to a recording anyway.
+        var targetRef = target != null
+                     && !target.SpawnedDuringVisit
+                     && verb.CanRecordAsRoutine(scene, povBeforeMove, target, actingMember)
+            ? verb.RoutineTarget(scene, povBeforeMove, target)
+            : null;
 
-        if (!verb.CanRecordAsRoutine(scene, povBeforeMove, target, actingMember))
+        if (targetRef == null)
         {
-            if (verb.BreaksRoutineRecording(scene, povBeforeMove, target, reports))
+            if (BreaksRecording(verb, scene, povBeforeMove, target, reports))
             {
                 EmitTrailingPath();
                 Stop($"'{verb.VerbId}' cannot be left out of a routine");
@@ -109,9 +122,6 @@ public class RoutineRecorder
             }
             return;
         }
-
-        var targetRef = verb.RoutineTarget(scene, povBeforeMove, target);
-        if (targetRef == null) { EmitTrailingPath(); Stop($"'{verb.VerbId}' produced no stable target"); return; }
 
         var step = new RoutineStep
         {
@@ -150,6 +160,17 @@ public class RoutineRecorder
         _path.Add(step);
         _stepsSinceEmit++;
     }
+
+    /// <summary>
+    /// Whether leaving an unrecordable step out would make the routine around it wrong. Read off the
+    /// reports when there is no target to hand the verb — a targetless act is judged by what it does,
+    /// like any other.
+    /// </summary>
+    private static bool BreaksRecording(Verb verb, Scene.Scene scene, PoV pov, Element? target,
+        IReadOnlyList<Outcome> reports)
+        => target != null
+            ? verb.BreaksRoutineRecording(scene, pov, target, reports)
+            : reports.Any(r => r.RoutineChainEffect != RoutineChainEffect.None);
 
     /// <summary>Called when the narration phase ends; saves the trailing prefix, if any.</summary>
     public void FinalizeAtNarrationEnd()

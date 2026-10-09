@@ -159,6 +159,11 @@ The first stands ahead of the others because it alone concerns the frame rather 
 circumstance. One told that a witness is watching will go to another room; one told that the arm is
 ruined will not, and the refusal names the parts that failed and the wounds behind them.
 
+**The missing implement alone leaves the act standing.** Its refusal says what was wanted, that bare
+hands cannot do it, and which implement is wanting; the act may then be taken up again only with an
+implement combined, never bare-handed a second time. Only when nothing combinable is carried is it
+closed like any other refused act.
+
 **A broken manner of the mind is offered and refused, not hidden.** It remains among those that may
 be chosen to observe, to deliberate and to act, and the refusal is what informs of the injury —
 withdrawing it silently would take a body's disciplines away with no account of where they had gone.

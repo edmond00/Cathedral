@@ -8,7 +8,8 @@ namespace Cathedral.Fight;
 /// <summary>
 /// Utility-scoring AI planner. Generates every plausible action the active enemy could
 /// take this turn (end turn, attacks against every reachable target, defensive postures,
-/// utility skills, and several move prefixes), scores each one with the fighter's
+/// utility skills, attempts to learn an attack it does not know — the player's "learnable" row —
+/// and several move prefixes), scores each one with the fighter's
 /// <see cref="AiPersonality"/>, jitters the scores so equal candidates break unpredictably,
 /// and returns the highest-scoring candidate.
 /// </summary>
@@ -28,6 +29,14 @@ public static class FightAI
     private const double ViableActionFloor = 0.05;
     /// <summary>Any step that closes the distance outscores ending the turn, however rough the ground.</summary>
     private const double ClosingMoveFloor = 0.10;
+    /// <summary>Trying a blow one does not know outscores ending the turn, however poor the odds.</summary>
+    private const double LearnFloor = 0.02;
+    /// <summary>
+    /// What an untried blow is worth against the same blow known: the check may fail, and even a
+    /// pass only buys the right to swing, paid for again in CP. Below 1 so a known attack is
+    /// preferred to learning a comparable one.
+    /// </summary>
+    private const double LearnDiscount = 0.6;
 
     public static IFightAction DecideAction(
         Fighter ai,
@@ -109,6 +118,34 @@ public static class FightAI
             candidates.Add(Candidate.SelfSkill(ai, skill, score));
         }
 
+        // ── Learning candidates ────────────────────────────────────────
+        // The player's other option on every turn: attempt a blow not yet known. Without it a
+        // fighter holding no fighting modus mentis — most townsfolk — has no attack at all, and
+        // walks up beside its opponent to pass turn after turn. Attacks only: a defence or a buff
+        // learned is a turn spent on nothing the AI then knows to want.
+        foreach (var skill in ai.GetLearnableSkills(registry))
+        {
+            if (skill.EffectType != FightingSkillEffect.Attack) continue;
+            string mediumKey = LearnMediumKey(ai, skill);
+            if (state.IsActionUsed(ai, mediumKey, LearnActionId(skill))) continue;
+
+            int difficulty = FightResolver.LearningDifficulty(skill, mediumKey);
+            double pLearn  = ChanceOfMoreSixesThan(Math.Max(1, ai.FightLearningStat), difficulty);
+            if (pLearn <= 0) continue;
+
+            foreach (var target in partyFighters)
+            {
+                if (!FightResolver.IsInSkillRange(ai, target, skill)) continue;
+                if (skill.Range > 1 &&
+                    !FightResolver.HasLineOfSight(state.Area, ai.X, ai.Y, target.X, target.Y))
+                    continue;
+
+                double score = Math.Max(LearnFloor,
+                    ScoreAttack(skill, ai, target, personality) * pLearn * LearnDiscount);
+                candidates.Add(Candidate.Learn(ai, target, skill, mediumKey, score));
+            }
+        }
+
         // ── Move candidates ────────────────────────────────────────────
         if (primary != null && !ai.IsImmobilized)
         {
@@ -171,13 +208,20 @@ public static class FightAI
         {
             state.MarkActionUsed(ai, DefaultMediumKey(best.Skill), best.Skill.SkillId);
         }
+        else if (best.Kind == CandidateKind.Learn && best.Skill != null && best.Target != null)
+        {
+            // One attempt per skill per turn: a failed check spends the skill's CP, so retrying would
+            // simply drain the turn into the same roll.
+            state.MarkActionUsed(ai, best.MediumKey!, LearnActionId(best.Skill));
+            ai.LastAttackTargetIdx = state.Fighters.IndexOf(best.Target);
+        }
 
         return best.Build();
     }
 
     // ── Candidate plumbing ─────────────────────────────────────────────
 
-    private enum CandidateKind { End, Attack, SelfSkill, Move }
+    private enum CandidateKind { End, Attack, SelfSkill, Move, Learn }
 
     private readonly struct Candidate
     {
@@ -185,12 +229,14 @@ public static class FightAI
         public double        Score { get; }
         public FightingSkill? Skill { get; }
         public Fighter?      Target { get; }
+        public string?       MediumKey { get; }
         private readonly Func<IFightAction> _build;
 
         private Candidate(CandidateKind kind, double score, FightingSkill? skill,
-                          Fighter? target, Func<IFightAction> build)
+                          Fighter? target, Func<IFightAction> build, string? mediumKey = null)
         {
             Kind = kind; Score = score; Skill = skill; Target = target; _build = build;
+            MediumKey = mediumKey;
         }
 
         public IFightAction Build() => _build();
@@ -206,6 +252,11 @@ public static class FightAI
 
         public static Candidate Move(Fighter ai, List<(int X, int Y)> path, double score) =>
             new(CandidateKind.Move, score, null, null, () => new MoveAction(ai, path));
+
+        public static Candidate Learn(Fighter ai, Fighter target, FightingSkill skill, string mediumKey,
+                                      double score) =>
+            new(CandidateKind.Learn, score, skill, target,
+                () => new LearnSkillAction(ai, target, skill, mediumKey), mediumKey);
     }
 
     // ── Target selection ───────────────────────────────────────────────
@@ -432,6 +483,54 @@ public static class FightAI
         "lower_limbs" => 0.30,
         _             => 0.50,
     };
+
+    // ── Learning helpers ───────────────────────────────────────────────
+
+    /// <summary>Usage-tracking id for a learning attempt, kept apart from using the skill itself.</summary>
+    private static string LearnActionId(FightingSkill s) => "learn:" + s.SkillId;
+
+    /// <summary>
+    /// The medium a learning attempt goes through: whichever of the skill's organs or body parts this
+    /// body has that lists it earliest, since that is the easiest check. Falls back to the default
+    /// key (a weapon skill, or nothing better found), whose difficulty is the skill's best position.
+    /// </summary>
+    private static string LearnMediumKey(Fighter ai, FightingSkill skill)
+    {
+        string? best = null;
+        int bestPos = int.MaxValue;
+        foreach (var m in skill.Mediums)
+        {
+            if (m.Type == MediumType.OrganMedium && m.OrganId != null
+                && ai.Member.GetOrganById(m.OrganId) != null)
+            {
+                int pos = skill.GetMediumPositionForOrganId(m.OrganId);
+                if (pos < bestPos) { bestPos = pos; best = FightModeUI.OrganKeyPrefix + m.OrganId; }
+            }
+            else if (m.Type == MediumType.BodyPartMedium && m.BodyPartId != null
+                     && ai.Member.GetBodyPartById(m.BodyPartId) != null)
+            {
+                int pos = skill.GetMediumPositionForBodyPartId(m.BodyPartId);
+                if (pos < bestPos) { bestPos = pos; best = FightModeUI.BodyPartKeyPrefix + m.BodyPartId; }
+            }
+        }
+        return best ?? DefaultMediumKey(skill);
+    }
+
+    /// <summary>P(more than <paramref name="difficulty"/> sixes on <paramref name="dice"/> d6) — the learning check's odds.</summary>
+    private static double ChanceOfMoreSixesThan(int dice, int difficulty)
+    {
+        double atMost = 0;
+        for (int k = 0; k <= Math.Min(difficulty, dice); k++)
+            atMost += Binomial(dice, k) * Math.Pow(1.0 / 6, k) * Math.Pow(5.0 / 6, dice - k);
+        return Math.Max(0, 1 - atMost);
+    }
+
+    private static double Binomial(int n, int k)
+    {
+        double r = 1;
+        for (int i = 1; i <= k; i++) r = r * (n - k + i) / i;
+        return r;
+    }
 
     // ── Misc helpers ───────────────────────────────────────────────────
 

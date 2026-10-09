@@ -721,6 +721,21 @@ public static class FightResolver
     /// Difficulty is the 1-based index of the skill in its medium skill list.
     /// Succeeds if sixes strictly exceed difficulty.
     /// </summary>
+    /// <summary>
+    /// How many sixes a learning check for <paramref name="skill"/> must beat: its position in the
+    /// medium it is attempted through, less one — so the first skill an organ offers is the easiest.
+    /// A key naming no organ or body part (a weapon, or none) falls back to the skill's best position.
+    /// </summary>
+    public static int LearningDifficulty(FightingSkill skill, string? mediumKey)
+    {
+        string? organId    = FightModeUI.OrganIdFromKey(mediumKey);
+        string? bodyPartId = FightModeUI.BodyPartIdFromKey(mediumKey);
+        int position = organId    != null ? skill.GetMediumPositionForOrganId(organId)
+                     : bodyPartId != null ? skill.GetMediumPositionForBodyPartId(bodyPartId)
+                     : skill.MediumPosition;
+        return Math.Max(0, position - 1);
+    }
+
     public static LearningResult AttemptSkillLearning(Fighter fighter, int difficulty, int[] diceValues)
     {
         int sixes = diceValues.Count(v => v == 6);

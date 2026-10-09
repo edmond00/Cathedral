@@ -1,0 +1,65 @@
+# routine — a one-off act in the middle of a walk does not end the recording
+#
+# Catching a butterfly is not a routine step, and it is not something a replay has to reproduce: the
+# recorder leaves it out and carries on. It used to stop the session there instead
+# (TinyCreatureRemovedOutcome declared Breaking), so everything walked after it — in the reported
+# run, the street, the shop door and the shop — was never recorded at all.
+#
+# So: catch first, walk second, and the walk must still be saved. Before the fix this visit recorded
+# nothing, because the catch came before any prefix existed.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period dawn --observe-only "Butterfly"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+strategy succeed
+
+# The one-off act.
+goal catch
+advance 12 180
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect-verb catch
+expect Caught:
+
+# The walk after it. The footer closes the segment and opens the next phase, pinned to the track.
+observe "Test Field"
+goal move
+click button
+wait 60
+advance 12 180
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect-verb move
+expect Moved to:
+
+observe none
+click button
+wait 60
+advance 12 180
+click button
+wait mode WorldView 90
+
+# Only the walk: the catch was left out, not recorded.
+inspect routines
+expect-state routines verbs=[move]
+quit

@@ -142,11 +142,9 @@ public sealed class TinyCreatureRemovedOutcome : Outcome
         _npc = npc;
     }
 
-    /// <summary>
-    /// Breaking: a replayed routine rebuilds the scene from scratch, and which insects it rolls is
-    /// not the set this one removed.
-    /// </summary>
-    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Breaking;
+    // None: a replay rebuilds the scene with the creature back in it, but nothing any later step
+    // does depends on a mouse being gone, so a routine walked past one is still the same routine.
+    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.None;
 
     protected override void Apply(OutcomeContext ctx)
     {
@@ -176,8 +174,10 @@ public sealed class PoiReplacementOutcome : Outcome
         _replacement = replacement;
     }
 
-    /// <summary>Breaking: a rebuilt scene has the furniture whole again, so no routine may assume otherwise.</summary>
-    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Breaking;
+    // None: a rebuilt scene has the furniture whole again, but the one thing breaking it makes
+    // reachable is the wreck and its salvage, which are SpawnedDuringVisit — the recorder refuses
+    // any step aimed at them, so no routine can come to assume the wreck exists.
+    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.None;
 
     protected override void Apply(OutcomeContext ctx)
     {
@@ -192,8 +192,13 @@ public sealed class PoiReplacementOutcome : Outcome
         // The wreck inherits the original's identity so its description seed, and any depletion
         // already recorded against it, stay put.
         _replacement.StableKey = _original.StableKey;
+        _replacement.SpawnedDuringVisit = true;
         _replacement.Register(ctx.Scene);
-        foreach (var item in _replacement.Items) item.Register(ctx.Scene);
+        foreach (var item in _replacement.Items)
+        {
+            item.SpawnedDuringVisit = true;
+            item.Register(ctx.Scene);
+        }
 
         if (ctx.PoV != null) ctx.PoV.Focus = null;
     }
@@ -242,8 +247,9 @@ public sealed class RecruitedOutcome : Outcome
         _npc = npc;
     }
 
-    /// <summary>Breaking: a rebuilt scene would put them back where they were.</summary>
-    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Breaking;
+    // None: the departure lasts (RemoveNpcFromPlay records it in DepartedNpcs) and so does the
+    // party, so a replay finds the world exactly as this step left it.
+    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.None;
 
     protected override void Apply(OutcomeContext ctx)
     {
@@ -313,8 +319,9 @@ public sealed class NpcSlaynOutcome : Outcome
         _sceneNpc = sceneNpc;
     }
 
-    // Removes an actor from the scene — later steps may only have been possible because of it.
-    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Breaking;
+    // None: the death lasts (DepartedNpcs), so whatever later steps owed to it holds at replay
+    // too — and the body is SpawnedDuringVisit, so nothing done to it is ever recorded.
+    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.None;
 
     protected override void Apply(OutcomeContext ctx)
     {
@@ -354,8 +361,11 @@ public sealed class FightTriggerOutcome : Outcome
                                                             : combatContext;
     }
 
-    // A fight is a phase a routine cannot contain, and it reshapes the scene while it runs.
-    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Breaking;
+    // None: a fight is a phase a routine cannot contain, but it leaves the point of view where it
+    // was, and everything it changes that outlasts it lasts to replay time as well — the dead in
+    // DepartedNpcs, a grudge in NpcEnemies, the bodies SpawnedDuringVisit. Recording carries on
+    // past it, as it does past any conversation.
+    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.None;
 
     protected override void Apply(OutcomeContext ctx)
     {

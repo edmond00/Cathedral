@@ -198,7 +198,15 @@ Certain states **stack** rather than duplicating: a second bleeding deepens the 
 their turn and needs one six to rise.
 
 **Learning under arms.** An unknown fighting skill may be attempted in the midst of a fight, with
-the **cerebellum's** measure in dice.
+the **cerebellum's** measure in dice (never fewer than one). The check must show more sixes than the
+skill's place in the order of the medium it is attempted through, less one — so the first skill a
+medium offers needs a single six, the second two. A pass gives the modus mentis behind it at level 1,
+and the skill is performed at once; a failure costs the skill's cinetic points.
+
+Enemies learn by the same rule. One who knows no blow that can reach is not left idle: they attempt
+the first attacking skill each of their mediums offers, at most once per skill in a turn, and having
+learned one they choose afresh, now knowing it, and pay for the blow as for any other. A known blow
+is preferred to an untried one of like worth, since the check may fail.
 
 **Flight.** Leaving the fight requires the **feet's** measure in dice and one six among them.
 

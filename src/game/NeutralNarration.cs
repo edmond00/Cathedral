@@ -250,6 +250,17 @@ public static class NeutralNarration
         return $"I cannot {FirstPerson(actionDisplay)}: {FirstPerson(r)}";
     }
 
+    /// <summary>
+    /// Refusal for a verb that cannot be done bare-handed (<c>RequiredToolRule</c>). Longer and more
+    /// literal than <see cref="ActionImpossible"/> on purpose: the re-voicing keeps only what it
+    /// cannot avoid, and a strongly-styled modus mentis given "I cannot cut a heart: I would need a
+    /// knife" handed back "I hold still, waiting. It breaks." — with the knife gone. Saying the want,
+    /// the bare hands and the missing tool in three separate clauses leaves it nothing to drop.
+    /// </summary>
+    public static string ToolRequired(string actionDisplay, string tool)
+        => $"I wanted to {FirstPerson(actionDisplay)}, but I cannot do that with my bare hands. " +
+           $"I would need to find {tool} for that, and take it in hand to do this work.";
+
     // ── A modus mentis the body can no longer carry ────────────────────────────
 
     /// <summary>

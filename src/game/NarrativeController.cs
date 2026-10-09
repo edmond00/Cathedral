@@ -526,6 +526,15 @@ public class NarrativeController
     }
 
     /// <summary>
+    /// A coded refusal shown without re-voicing — no modus mentis to voice it, or the rewrite came
+    /// back empty. A missing tool keeps its longer sentence, which is the part worth reading.
+    /// </summary>
+    private static string RawRefusal(ParsedNarrativeAction action, Narrative.Rules.ActionRuleResult result)
+        => result.NeededTool != null
+            ? $"[IMPOSSIBLE] {OutcomeNarrator.RefusalNeutral(action, result.ErrorMessage ?? "", result.NeededTool)}"
+            : $"[IMPOSSIBLE] {result.ErrorMessage}";
+
+    /// <summary>
     /// Start the observation phase while preserving scroll buffer history.
     /// Always reached through <see cref="BeginNarrationSegment"/>, which performs the required
     /// grey-into-history + node reset first.
@@ -1233,7 +1242,15 @@ public class NarrativeController
             if (!ruleResult.Passed)
             {
                 Console.WriteLine($"NarrativeController: Coded rule blocked action — {ruleResult.ErrorMessage}");
-                action.IsImpossible = true;
+                // A missing tool leaves the action standing: "Use Tool" is still the way to do it, so
+                // greying it reads as a dead end that is not one. Only with nothing combinable carried
+                // is it truly that, and then it greys like any other refusal.
+                if (ruleResult.NeededTool != null)
+                {
+                    action.NeedsTool    = true;
+                    action.IsImpossible = GetCombinableItems().Count == 0;
+                }
+                else action.IsImpossible = true;
 
                 // Re-express the refusal in the acting modus mentis's voice when one is resolvable
                 // (e.g. caught-red-handed, under threat); fall back to the raw rule message otherwise.
@@ -1247,13 +1264,14 @@ public class NarrativeController
                 if (refusalMm != null)
                 {
                     refusalText = await _actionExecutor.OutcomeNarrator.NarrateRefusalAsync(
-                        action, refusalMm, ruleResult.ErrorMessage ?? "", _activePartyMember, CancellationToken.None, preview: refusalPart?.Sink);
+                        action, refusalMm, ruleResult.ErrorMessage ?? "", _activePartyMember, CancellationToken.None,
+                        preview: refusalPart?.Sink, neededTool: ruleResult.NeededTool);
                     if (string.IsNullOrWhiteSpace(refusalText))
-                        refusalText = $"[IMPOSSIBLE] {ruleResult.ErrorMessage}";
+                        refusalText = RawRefusal(action, ruleResult);
                 }
                 else
                 {
-                    refusalText = $"[IMPOSSIBLE] {ruleResult.ErrorMessage}";
+                    refusalText = RawRefusal(action, ruleResult);
                 }
 
                 _narrationState.IsLoadingAction = false;
@@ -3158,6 +3176,8 @@ public class NarrativeController
                 // greyed out, and impossible.
                 bool hasItems = action.CombinedItem == null && GetCombinableItems().Count > 0;
                 var disabledIndices = hasItems ? new HashSet<int>() : new HashSet<int> { 1 };
+                // Refused for want of a tool: executing it bare-handed again is the same refusal.
+                if (action.NeedsTool) disabledIndices.Add(0);
 
                 Console.WriteLine($"NarrativeController: Showing action mode choice for '{action.ActionText}' (hasItems={hasItems})");
                 _narrationState.ActionPendingModeSelection = action;
@@ -3678,6 +3698,13 @@ public class NarrativeController
         if (All("noetic"))
             outp.Add($"noetic points={_narrationState.ThinkingAttemptsRemaining}/{actor.MaxNoeticPoints} "
                    + $"tool_proficiency={ToolUsageProficiencyStat.Of(actor)}");
+
+        // The open choice popup, with each option's state. `regions` prints the same thing, but only
+        // emits — and a greyed option differs from a live one by colour alone, so this is what lets a
+        // script assert that a tool refusal leaves "Use Tool" as the only way forward.
+        if (All("popup") && _choicePopup.IsVisible)
+            outp.Add("popup options=[" + string.Join(",", _choicePopup.Choices.Select((c, i) =>
+                         _choicePopup.IsChoiceEnabled(i) ? c : $"{c}(disabled)")) + "]");
 
         if (All("where"))
             outp.Add($"where area=\"{_pov?.Where.DisplayName ?? "-"}\" period={_pov?.When.ToString() ?? "-"} "

@@ -1413,18 +1413,13 @@ public class FightModeAdapter
         _state.PendingTarget = target;
         _state.LearningDiceCount = Math.Max(1, attacker.FightLearningStat);
         // Difficulty comes from position in the specific medium the player accessed the skill through.
-        string? organId     = FightModeUI.OrganIdFromKey(_pendingLearnMediumKey);
-        string? bodyPartId  = FightModeUI.BodyPartIdFromKey(_pendingLearnMediumKey);
-        int position = organId    != null ? skill.GetMediumPositionForOrganId(organId)
-                     : bodyPartId != null ? skill.GetMediumPositionForBodyPartId(bodyPartId)
-                     : skill.MediumPosition;
-        _state.LearningDifficulty = Math.Max(0, position - 1);
+        _state.LearningDifficulty = FightResolver.LearningDifficulty(skill, _pendingLearnMediumKey);
         _state.DiceNumberOfDice = _state.LearningDiceCount;
         _state.DiceDifficulty = _state.LearningDifficulty;
         _state.Phase = TurnPhase.AnimatingDice;
         _state.AddLog(
             $"{attacker.DisplayName} attempts to learn '{skill.RequiredModusMentisId}' " +
-            $"(cerebellum {_state.LearningDiceCount}d, need {_state.LearningDifficulty} sixes).",
+            $"(cerebellum {_state.LearningDiceCount}d, need {_state.LearningDifficulty + 1} six(es)).",
             LogEntryType.Learning);
         BeginDiceRoll();
         _highlightCells = null;
@@ -1523,6 +1518,19 @@ public class FightModeAdapter
                 $"LEARNED {skill.DisplayName}! ({result.SixesCount}/{result.DiceValues.Length} sixes vs diff {result.Difficulty})",
                 LogEntryType.Learning);
             _state.PendingLearnSkill = null;
+
+            // A fighter the AI controls decides again rather than being walked into the skill: the
+            // path below can open the body-part picker, which is the player's to answer, and the
+            // planner already weighs the skill properly now that it is unlocked.
+            if (!active.IsPlayerControlled)
+            {
+                _pendingLearnMediumKey = null;
+                _state.PendingTarget = null;
+                _state.Phase = TurnPhase.SelectingAction;
+                RefreshSkillList();
+                _aiDelayFrames = 5;
+                return;
+            }
 
             // Now that the MM is learned, automatically perform the action the player wanted.
             // For attack skills this fires the attack dice roll; DefensePosture applies immediately.

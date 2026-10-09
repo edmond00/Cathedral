@@ -361,7 +361,9 @@ public sealed class CliDriver
                                     cli/outcome/ asserts on — the
                                     chip says the player was told, this says the world actually
                                     moved. `noetic` carries the phase budget and the acting body's
-                                    tool proficiency, neither of which `expect` can reach
+                                    tool proficiency, neither of which `expect` can reach;
+                                    `popup` the open choice popup's options, each marked
+                                    (disabled) when greyed
           expect-state <subj> <text>  assert `inspect <subj>` reports a line containing <text>.
                                     What cli/outcome/ asserts with: `expect` reads the SCREEN,
                                     this reads the world

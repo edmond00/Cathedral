@@ -324,9 +324,13 @@ public class Scene
     {
         area.PointsOfInterest.Add(poi);
 
+        poi.SpawnedDuringVisit = true;
         RegisterElement(poi);
         foreach (var item in poi.Items)
+        {
+            item.SpawnedDuringVisit = true;
             RegisterElement(item);
+        }
 
         // Virtual replay works on a throwaway scene; queueing an observation off it would make the
         // real narration open on a corpse that was only ever validated, never made.
