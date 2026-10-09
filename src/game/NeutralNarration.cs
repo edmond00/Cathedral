@@ -61,14 +61,25 @@ public static class NeutralNarration
     /// Neutral meaning of the area introduction that opens an observation sequence when the area or
     /// the time of day has changed: where I am (<paramref name="where"/>, the area's prepositional
     /// context — "inside the barn", "crossing the open grassland"), when (<paramref name="when"/>,
-    /// "at dawn"), and, when the area has one, its richer description as a second sentence.
+    /// "at dawn"), when the area has one, its richer description as a second sentence, and, when
+    /// <paramref name="sights"/> is not empty, a closing list of what is around me — short, already
+    /// articled phrases ("a test bench", "a stranger").
     /// </summary>
-    public static string AreaIntroduction(string where, string when, string? description)
+    public static string AreaIntroduction(string where, string when, string? description,
+                                          IReadOnlyList<string>? sights = null)
     {
-        var first = $"I find myself {FirstPerson(where.Trim().TrimEnd('.'))}, {when}.";
-        return string.IsNullOrWhiteSpace(description)
-            ? first
-            : $"{first} This place is {NounPhrase(FirstPerson(description))}.";
+        var parts = new List<string> { $"I find myself {FirstPerson(where.Trim().TrimEnd('.'))}, {when}." };
+        if (!string.IsNullOrWhiteSpace(description))
+            parts.Add($"This place is {NounPhrase(FirstPerson(description))}.");
+        var listed = sights?.Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => FirstPerson(s.Trim())).ToList();
+        if (listed is { Count: > 0 })
+        {
+            var joined = listed.Count == 1
+                ? listed[0]
+                : $"{string.Join(", ", listed.Take(listed.Count - 1))} and {listed[^1]}";
+            parts.Add($"Around me {(listed.Count == 1 ? "is" : "are")} {joined}.");
+        }
+        return string.Join(" ", parts);
     }
 
     /// <summary>

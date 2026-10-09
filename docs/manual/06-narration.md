@@ -90,8 +90,11 @@ The opening observation of a phase may first take its **bearings**: where the bo
 what period of the day, rendered in the observing modus mentis's own voice. This is done only when
 the area or the period has changed since the bearings were last taken, so that a run of phases in
 one place does not open on the same account each time; and it is done only in the waking world,
-never in recollection nor in the rising from exhaustion. The bearings attend to no object, and
-render one available for closer attention only where they happen to name it outright. The opening
+never in recollection nor in the rising from exhaustion. The bearings close by naming, briefly and in
+no particular order, up to five of the things present that have not yet been attended to. Where the
+account names one of them outright, that one — a single one at most, chosen by lot among several —
+is rendered available for closer attention, and counts thereafter as attended to, so that no later
+observation of the phase returns to it. The opening
 observation attends to at most three things in all, the later ones only while what has been rendered
 remains brief; the bearings count as the first of the three, so that at least one object, and at
 most two, is attended to after them.
