@@ -55,7 +55,7 @@ per-device rates and the margin. It ignores the cached answer and writes nothing
 
     backends/vulkan/ggml-vulkan.dll
 
-From `llama-b8851-bin-win-vulkan-x64.zip` — the **same build number** as `../BUILD.txt`.
+From `llama-b11515-bin-win-vulkan-x64.zip` — the **same build number** as `../BUILD.txt`.
 Take only `ggml-vulkan.dll`; the rest of that zip duplicates what is already here.
 
 It is **59 MB** — one file, and the whole cost of GPU support. That covers NVIDIA, AMD and
@@ -77,7 +77,7 @@ representative; do not read it as an argument against GPU support. Worth re-runn
 
 Vulkan already covers NVIDIA. CUDA is faster on it, but the four files needed
 (`ggml-cuda.dll`, `cudart64_12.dll`, `cublas64_12.dll`, `cublasLt64_12.dll`, from
-`llama-b8851-bin-win-cuda-*-x64.zip` plus the matching `cudart-llama-bin-win-cuda-*.zip`) come
+`llama-b11515-bin-win-cuda-*-x64.zip` plus the matching `cudart-llama-bin-win-cuda-*.zip`) come
 to ~420 MB — a fifth of the download, for one vendor already handled, and not faster by enough
 to matter for a 3B model writing prose.
 
@@ -94,8 +94,8 @@ extra runtimes, and covering hardware Vulkan already reaches.
 crashes inside the backend with no usable diagnostic — the DLLs carry no version resource, so
 nothing can check this by reading them.
 
-This applies **within** a toolchain folder, not across them: `models/llama` (b8851) and
-`models/llama-arm64` (b8746) each carry a complete set of ggml libraries and are never loaded
+This applies **within** a toolchain folder, not across them: `models/llama` and
+`models/llama-arm64` each carry a complete set of ggml libraries and are never loaded
 into the same process, so their build numbers are free to differ.
 
 What protects you otherwise is that a backend is always **loaded in a subprocess first**: the probe

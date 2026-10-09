@@ -114,7 +114,7 @@ committed. A CRLF checkout is 502,767 bytes and equally correct — `CommonWordL
 `line.Trim()`, and `\r` is whitespace in .NET, so the terminator never reaches the word list.
 
 The two llama.cpp toolchains record their own upstream zip and build number in
-`llama/BUILD.txt` (b8851, x64) and `llama-arm64/BUILD.txt` (b8746, ARM64). **The build numbers
+`llama/BUILD.txt` (x64) and `llama-arm64/BUILD.txt` (ARM64), both b11515 at present. **The build numbers
 are allowed to differ between the two folders**; what must never differ is a GPU backend under
 `backends/` versus the `ggml-base.dll` beside it in the same folder.
 

@@ -150,7 +150,8 @@ foreach ($t in $Toolchains) {
         continue
     }
 
-    # llama-server prints "version: 8746 (0893f50f2)" and exits — on STDERR, which is why this
+    # llama-server prints "version: 8746 (0893f50f2)" — or, from about b11000, the semver form
+    # "version: 0.6.0-dev (build 11515, commit 3d65c90d0)" — and exits on STDERR, which is why this
     # goes through ProcessStartInfo rather than `& $server --version 2>&1`. In Windows PowerShell
     # 5.1 that redirection wraps every stderr line in a NativeCommandError, which under
     # ErrorActionPreference=Stop throws even though the exe exited 0. Reading the streams directly
@@ -167,7 +168,8 @@ foreach ($t in $Toolchains) {
         $proc = [Diagnostics.Process]::Start($psi)
         $out  = $proc.StandardOutput.ReadToEnd() + $proc.StandardError.ReadToEnd()
         $proc.WaitForExit()
-        if ($out -match 'version:\s*(\d+)') { $actual = $Matches[1] }
+        if     ($out -match 'build\s+(\d+)')           { $actual = $Matches[1] }
+        elseif ($out -match 'version:\s*(\d+)\s+\(') { $actual = $Matches[1] }
     } catch { }
 
     if (-not $actual) {

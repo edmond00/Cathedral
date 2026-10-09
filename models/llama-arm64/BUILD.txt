@@ -1,7 +1,7 @@
-llama.cpp build: b8746
-commit:          0893f50f2
-toolchain:       Clang 19.1.5, Windows arm64
-upstream zip:    llama-b8746-bin-win-cpu-arm64.zip
+llama.cpp build: b11515
+commit:          3d65c90d0
+toolchain:       Clang 20.1.8, Windows arm64
+upstream zip:    llama-b11515-bin-win-cpu-arm64.zip
 license:         MIT (https://github.com/ggml-org/llama.cpp/blob/master/LICENSE)
 
 This file is READ BY THE GAME. LlamaRuntime parses the first line to check that any backend
@@ -23,10 +23,10 @@ shipped 3B model, native beats the same machine running the x64 build under emul
     prompt read    76.1 tok/s native  vs  13.6 emulated   (5.6x)
     generation     13.8 tok/s native  vs   5.4 emulated   (2.6x)
 
-No llama-common.dll. Upstream introduced that library between this build and b8851, so ../llama
-has one and this folder correctly does not. Nothing here imports it.
+Those figures were measured on b8746; this folder is now b11515 and has not been re-measured on
+ARM hardware.
 
-Note the build number differs from ../llama (b8851). That is fine and not the hazard the
+The build number may differ from ../llama's (it currently does not). That is fine and not the hazard the
 backends README warns about: each toolchain carries its own complete set of ggml libraries, so
 nothing is mixed ACROSS folders. What must never differ is a backend under backends/ versus the
 ggml-base.dll beside it in the SAME folder.
@@ -39,12 +39,14 @@ every extra unsigned .exe is another SmartScreen/antivirus prompt for a player.
 kept:
   llama-server.exe        the only thing the game actually runs
   llama-bench.exe         the first-run probe measures backends with this
-  llama.dll, ggml.dll, ggml-base.dll, mtmd.dll
+  llama-server-impl.dll, llama-bench-impl.dll   the programs themselves; each .exe is a launcher
+  llama.dll, llama-common.dll, ggml.dll, ggml-base.dll, mtmd.dll
   ggml-cpu.dll            one, not fourteen — see below
-  libomp140.aarch64.dll   OpenMP runtime the CPU backend links against
+  libomp.dll              OpenMP runtime the CPU backend links against (was libomp140.aarch64.dll)
+  LICENSE-LLVM-OpenMP     its license, since we redistribute it
 
 dropped:
-  ggml-rpc.dll, rpc-server.exe    distributed inference across machines
+  ggml-rpc.dll, ggml-rpc-server.exe    distributed inference across machines
   llama-cli/-tts/-imatrix/-quantize/-perplexity/-mtmd-*/-qwen2vl-* and the rest
 
 That is 22 MB against 84 MB unpruned. Dropping the multimodal CLI front-ends does not cost
