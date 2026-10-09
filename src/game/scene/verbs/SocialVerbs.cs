@@ -107,8 +107,12 @@ public class ProvokeVerb : SocialDialogueVerb
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
         => Available(scene, pov, target, actor) != null;
 
+    // The purpose is spelled out — a fight, one against one — because "say something that cannot be
+    // let pass" left both the action text and the outcome sentence free to read as a mere quarrel.
+    // It names the aim and not the result: whether the goad lands is the provoke tree's check.
     public override string Verbatim(Scene scene, PoV pov, Element target)
-        => $"say something to {NpcPronoun(target)} that cannot be let pass";
+        => $"insult {NpcPronoun(target)} to {NpcPossessive(target)} face, to make {NpcPronoun(target)} " +
+           "fight me, the two of us alone";
 
     public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
         => $"provoke {NpcName(target)}";
