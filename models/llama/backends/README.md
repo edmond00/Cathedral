@@ -58,11 +58,19 @@ per-device rates and the margin. It ignores the cached answer and writes nothing
 From `llama-b11515-bin-win-vulkan-x64.zip` — the **same build number** as `../BUILD.txt`.
 Take only `ggml-vulkan.dll`; the rest of that zip duplicates what is already here.
 
-**Then write `backends/vulkan/BUILD.txt`** with the build on its first line
-(`llama.cpp build: b11515`). The DLL carries no version, so this file is the only way the game's
-startup check (`LlamaInstallCheck`) can tell a pack from another build — which otherwise crashes
-inside the backend and silently drops the game to the CPU. A pack without one is reported on the
-main menu as unverifiable. The same goes for any other pack under `backends/`.
+**`backends/vulkan/BUILD.txt` is tracked in git** and records the pack's build and the SHA-256 of
+its DLL:
+
+    llama.cpp build: b11515
+    ggml-vulkan.dll sha256: 83cde1b2…
+
+The game's startup check (`LlamaInstallCheck`) hashes the DLL on disk against that line. The DLL
+carries no version of its own, so the hash is the only way to tell a pack from another build —
+which otherwise crashes inside the backend and silently drops the game to the CPU. Because the
+record comes through git, every machine is checked against it with nothing to write by hand; a
+machine with the wrong DLL warns on the main menu. When you install or upgrade a pack, rewrite both
+lines (`Get-FileHash ggml-vulkan.dll -Algorithm SHA256`) and commit the file. Any other pack under
+`backends/` follows the same pattern, one `BUILD.txt` per folder.
 
 It is **59 MB** — one file, and the whole cost of GPU support. That covers NVIDIA, AMD and
 Intel from a single binary, including the integrated GPUs that are most of the install base.

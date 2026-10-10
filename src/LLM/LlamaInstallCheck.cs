@@ -46,7 +46,10 @@ public static class LlamaInstallCheck
     /// </summary>
     public const long ExpectedModelBytes = 2_104_932_768;
 
-    /// <summary>The file a backend pack carries to say which build it came from.</summary>
+    /// <summary>
+    /// The tracked file in each backend pack: its build, and the SHA-256 of its DLL as
+    /// <c>&lt;dll name&gt; sha256: &lt;hex&gt;</c>.
+    /// </summary>
     public const string BackendBuildFileName = "BUILD.txt";
 
     private static IReadOnlyList<string>? _problems;
@@ -64,7 +67,16 @@ public static class LlamaInstallCheck
     {
         lock (Gate)
         {
-            return _problems ??= Collect();
+            if (_problems != null) return _problems;
+            _problems = Collect();
+
+            // Logged here, where it is computed, rather than by a caller: the server start is not a
+            // reliable place, since it is skipped outright when a server is already answering.
+            if (_problems.Count == 0)
+                Console.WriteLine($"Install check: llama.cpp b{ExpectedBuild} and {ExpectedModelName} as expected.");
+            foreach (var problem in _problems)
+                Console.WriteLine($"WARNING: Install check: {problem}");
+            return _problems;
         }
     }
 
@@ -121,8 +133,13 @@ public static class LlamaInstallCheck
 
     /// <summary>
     /// A backend pack cannot be asked its build — the DLLs carry no version — and a pack from another
-    /// build crashes inside the backend instead of failing. So each pack carries a BUILD.txt, written
-    /// when it is installed, and that is what is compared.
+    /// build crashes inside the backend instead of failing. So each pack has a <b>tracked</b> BUILD.txt
+    /// recording its build and the SHA-256 of its DLL, and the DLL on disk is hashed against it.
+    ///
+    /// <para>The hash is what makes tracking the file safe. A bare build number travelling through git
+    /// would arrive on every machine whatever DLL sat beside it, and the check would pass exactly where
+    /// it should fail; a hash can only be matched by the right DLL. Hashing ~60 MB costs a fraction of a
+    /// second, once per launch.</para>
     /// </summary>
     private static void CheckBackends(List<string> problems)
     {
@@ -135,12 +152,38 @@ public static class LlamaInstallCheck
                 continue;
             }
 
-            string? found = File.ReadLines(path).Take(5)
+            var lines = File.ReadLines(path).Take(10).ToList();
+
+            string? build = lines
                 .Select(l => Regex.Match(l, @"\bb(\d{3,6})\b"))
                 .FirstOrDefault(x => x.Success)?.Groups[1].Value;
-            if (found != ExpectedBuild.ToString())
-                problems.Add($"The {backend.Name} backend is build {found ?? "unknown"}; this game expects build {ExpectedBuild}.");
+            if (build != ExpectedBuild.ToString())
+            {
+                problems.Add($"The {backend.Name} backend is recorded as build {build ?? "unknown"}; this game expects build {ExpectedBuild}.");
+                continue;
+            }
+
+            // "<dll name> sha256: <hex>" — keyed by the file name, so the record says which DLL it vouches for.
+            string dllName = Path.GetFileName(backend.DllPath);
+            string? recorded = lines
+                .Select(l => Regex.Match(l, $@"^\s*{Regex.Escape(dllName)}\s+sha256:\s*([0-9a-fA-F]{{64}})", RegexOptions.IgnoreCase))
+                .FirstOrDefault(x => x.Success)?.Groups[1].Value;
+            if (recorded == null)
+            {
+                problems.Add($"The {backend.Name} backend's {BackendBuildFileName} records no hash for {dllName}.");
+                continue;
+            }
+
+            string actual = Sha256(backend.DllPath);
+            if (!string.Equals(actual, recorded, StringComparison.OrdinalIgnoreCase))
+                problems.Add($"The {backend.Name} backend's {dllName} is not the build {ExpectedBuild} one (its hash differs).");
         }
+    }
+
+    private static string Sha256(string path)
+    {
+        using var stream = File.OpenRead(path);
+        return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(stream));
     }
 
     // ── The model ────────────────────────────────────────────────────────────

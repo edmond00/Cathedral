@@ -13,8 +13,9 @@ Everything the game loads at runtime that is not code. Five things live here, an
 
 ## What is tracked by git, and why the binaries are not
 
-Only the documentation is committed: this file, `en_scowl_40.txt` (452 KB), and the two
-`BUILD.txt` files plus `llama/backends/README.md`. The ~2.5 GB of binaries beside them are
+Only the documentation is committed: this file, `en_scowl_40.txt` (452 KB), the two
+toolchain `BUILD.txt` files, `llama/backends/README.md`, and one `BUILD.txt` per backend pack
+(its build and its DLL's hash). The ~2.5 GB of binaries beside them are
 deliberately gitignored, **including under Git LFS**, and the reasoning is worth keeping:
 
 - **None of it is authored here.** A third-party quantization, upstream llama.cpp release
@@ -127,7 +128,8 @@ build was made against, and lists every difference on the loading screen, the ma
 
 - **llama.cpp** — the build and commit `llama-server --version` reports, against
   `LlamaInstallCheck.ExpectedBuild` / `ExpectedCommit`, and against the `BUILD.txt` beside it.
-- **each GPU backend** — the `BUILD.txt` inside its pack (see `llama/backends/README.md`).
+- **each GPU backend** — its DLL hashed against the tracked `BUILD.txt` in its pack (see
+  `llama/backends/README.md`).
 - **the model** — `general.name` from the GGUF header and the exact file size, against
   `ExpectedModelName` / `ExpectedModelBytes`. The size is what tells two quantisations, or a
   truncated download, apart.

@@ -29,8 +29,8 @@ release that way without complaint.
 ## The in-game check
 
 `src/LLM/LlamaInstallCheck.cs` is the game's own version of the drift check: at startup it asks
-`llama-server --version` for the real build, reads each backend pack's `BUILD.txt`, and reads the
-model's GGUF name and size, then lists any mismatch on the loading screen and the main menu. Its
+`llama-server --version` for the real build, hashes each backend pack's DLL against the tracked
+`BUILD.txt` in its folder, and reads the model's GGUF name and size, then lists any mismatch on the loading screen and the main menu. Its
 four constants — `ExpectedBuild`, `ExpectedCommit`, `ExpectedModelName`, `ExpectedModelBytes` —
 are **the code's statement of what it was tuned against**, and they move in the same commit as any
 upgrade below. A machine that has not caught up then says so on its next launch instead of
@@ -96,15 +96,18 @@ no version resource, so nothing can catch it by reading them.
 1. Fetch the upstream zip for each architecture (named in each `BUILD.txt`).
 2. Replace the folder contents, keeping `BUILD.txt` and `backends/`.
 3. Update `BUILD.txt` — build number, commit, zip name.
-4. Re-fetch any GPU backend at the **matching** build number, and write its own
-   `backends/<name>/BUILD.txt` (`llama.cpp build: bNNNN` on the first line). Backend packs are not
-   tracked, so this file travels with the pack and is the only record of its build.
+4. Re-fetch any GPU backend at the **matching** build number, and rewrite its tracked
+   `backends/<name>/BUILD.txt`: `llama.cpp build: bNNNN`, and `<dll> sha256: <hex>` from
+   `Get-FileHash <dll> -Algorithm SHA256`. The DLL carries no version, so that hash is the only
+   thing that tells the right DLL from a stale one — a bare build number in git would vouch for
+   whatever DLL happened to be on disk.
 5. Set `LlamaInstallCheck.ExpectedBuild` and `ExpectedCommit` to what `llama-server --version`
    now prints (`version: … (build NNNNN, commit xxxxxxxxx)`).
 6. `./tools/verify_models.ps1`, then `./package.ps1 -NoModel -NoZip` to confirm staging. Launch
    once without `--playground`: the main menu must show no install warning.
-7. Commit the `BUILD.txt` files and `LlamaInstallCheck.cs` together. Every other machine then
-   warns until its own `models/` is upgraded — which is the point.
+7. Commit the `BUILD.txt` files (toolchains and backend packs) and `LlamaInstallCheck.cs`
+   together. Every other machine then warns until its own `models/` is upgraded — which is the
+   point.
 
 ## Swapping the model
 
@@ -126,6 +129,6 @@ short version is that none of it is authored here, LFS does not delta-compress s
 is a permanent full copy, `model.gguf` sits at 98% of GitHub's 2 GiB per-file limit, and every
 clone would pull 2.5 GB. Checksums give the same reproducibility for no bytes.
 
-Tracked under `models/`: `README.md`, `en_scowl_40.txt`, both `BUILD.txt` files, and
-`llama/backends/README.md`. `.gitignore` uses negation patterns to keep exactly those — check
+Tracked under `models/`: `README.md`, `en_scowl_40.txt`, both toolchain `BUILD.txt` files,
+`llama/backends/README.md`, and one `BUILD.txt` per backend pack. `.gitignore` uses negation patterns to keep exactly those — check
 with `git add --dry-run models/`, which must list only text files.

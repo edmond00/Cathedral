@@ -448,6 +448,12 @@ models/llama/*
 !models/llama/backends/
 models/llama/backends/*
 !models/llama/backends/README.md
+# Each backend pack's BUILD.txt records its build and the SHA-256 of its DLL, which the game's
+# startup check (LlamaInstallCheck) hashes against. Tracked so every machine is checked against the
+# same expectation. Git cannot re-include a file inside an excluded folder, hence the folder first.
+!models/llama/backends/*/
+models/llama/backends/*/*
+!models/llama/backends/*/BUILD.txt
 
 # Same again for the native ARM64 toolchain, which "models/llama-*" above would otherwise swallow
 # whole — including its BUILD.txt. Losing that would leave the two toolchains asymmetric: the x64
@@ -456,6 +462,11 @@ models/llama/backends/*
 !models/llama-arm64/
 models/llama-arm64/*
 !models/llama-arm64/BUILD.txt
+!models/llama-arm64/backends/
+models/llama-arm64/backends/*
+!models/llama-arm64/backends/*/
+models/llama-arm64/backends/*/*
+!models/llama-arm64/backends/*/BUILD.txt
 
 # The pre-cleanup models folder, kept locally as an archive (see models/README.md).
 models_old/

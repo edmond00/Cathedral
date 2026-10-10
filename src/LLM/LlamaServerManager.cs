@@ -677,11 +677,8 @@ public class LlamaServerManager : IDisposable
             // Does the install match what this build was made against? Never fatal — the loading screen
             // and the main menu show whatever it finds — but run before the launch, because a wrong
             // build is the usual reason the launch below fails, and the log should say so first.
-            var installProblems = LlamaInstallCheck.Run();
-            if (installProblems.Count == 0)
-                Console.WriteLine($"Install check: llama.cpp b{LlamaInstallCheck.ExpectedBuild} and {LlamaInstallCheck.ExpectedModelName} as expected.");
-            foreach (var problem in installProblems)
-                LogWarning($"Install check: {problem}");
+            // Logs its own result; cached, so a launcher that already ran it costs nothing here.
+            LlamaInstallCheck.Run();
 
             // Start the server, stepping down the ladder if a device fails.
             var isReady = await StartWithFallbackAsync(resolvedServerPath, resolvedModelPath);

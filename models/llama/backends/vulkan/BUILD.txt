@@ -1,0 +1,8 @@
+llama.cpp build: b11515
+ggml-vulkan.dll sha256: 83cde1b2754c83dc10979e262f9d21712e0c524b4dccd974b10dbc24070afbe9
+from:            llama-b11515-bin-win-vulkan-x64.zip (ggml-vulkan.dll only)
+
+Tracked in git and read by LlamaInstallCheck (src/LLM): the build must match
+LlamaInstallCheck.ExpectedBuild and ../../BUILD.txt, and the DLL beside this file must hash to
+the value above. The DLL carries no version of its own, so the hash is the only way to tell a
+pack from another build, which otherwise crashes inside the backend. See ../README.md.
