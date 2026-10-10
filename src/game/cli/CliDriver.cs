@@ -244,6 +244,7 @@ public sealed class CliDriver
                 case "travel":      CmdTravel(rest);                  break;
                 case "travel-go":   CmdTravelGo();                    break;
                 case "routines":    CmdRoutines(rest);                break;
+                case "gather":      CmdGather(rest);                  break;
                 case "manage":      CmdManage(rest);                  break;
                 case "select":      CmdSelect(rest);                  break;
                 case "key":         CmdKey(rest);                     break;
@@ -407,10 +408,14 @@ public sealed class CliDriver
           travel neighbour          plan a route to any bordering vertex (leaving, unnamed)
           travel back               plan a route to the last location entered that is not this one
           routines                  list the routines the planned destination offers
-          routines <n>              replay routine n there (picks it and sets out)
-          routines continue         press CONTINUE on the post-replay outcome box
+          routines <n|kind>         pick routine n — or the first walkable of a kind (goto, meet,
+                                    gather, buy, sell, work) — and set out; entered on arrival
+          gather days <n>|start|continue|leave
+                                    drive the gathering phase a Gather routine opens; assert
+                                    with `inspect gather`
           manage [tab]              open/close the protagonist screen; with a tab name
-                                    (Anatomy, Inventory, Memory, Humors, …) open it there
+                                    (Anatomy, Inventory, Memory, Humors, …) open it there.
+                                    `manage Routines <kind>` shows that kind's slots
           select [item name]        show a carried item's info panel; bare `select` lists them
           key <escape|…>            send a key
           scroll up|down [n]        scroll the shared history buffer
@@ -447,6 +452,8 @@ public sealed class CliDriver
                                     to get from a keyword click to the action list
           wait mode <GameMode>      block until the game reaches a mode (e.g. LocationInteraction);
                                     a timeout is reported as FAIL
+          wait embeddings [secs]    block until the word vectors have loaded, so a later phase's
+                                    keyword ranking is the same on every --playground run
           expect <text>             assert text is on screen; failure sets a non-zero exit code
           expect-not <text>         assert text is absent
           quit                      close the game (exit 1 if any expect failed)
@@ -1101,7 +1108,7 @@ public sealed class CliDriver
                 return (_game.CliAvatarVertex, null);
 
             // `travel back` plans a route to the last location the player was inside. A round trip is
-            // the only way to reach routine replay — a routine replays on ARRIVAL — and a script
+            // the only way to walk a routine — a routine is entered on ARRIVAL — and a script
             // cannot name the vertex it started on, since that is whatever the seed put under the
             // avatar. Plans only, like any other named destination: follow with `travel-go`.
             // `travel neighbour` plans a route to any vertex bordering the avatar. The other half of
@@ -1163,24 +1170,17 @@ public sealed class CliDriver
     }
 
     /// <summary>
-    /// The routine box: <c>routines</c> lists what the planned destination offers, <c>routines
-    /// &lt;n&gt;</c> picks one and sets out (the replay runs on arrival), and <c>routines continue</c>
-    /// presses CONTINUE on the outcome box afterwards, which applies the phase the routine ended on.
+    /// The routine box: <c>routines</c> lists what the planned destination offers, and <c>routines
+    /// &lt;n&gt;</c> — or <c>routines &lt;kind&gt;</c>, the first walkable routine of that kind
+    /// (goto, meet, gather, buy, sell, work) — picks one and sets out; it is entered on arrival.
     ///
-    /// <para>By index rather than by click because both the rows and the ROUTINES button are
+    /// <para>By index or kind rather than by click because both the rows and the ROUTINES button are
     /// hit-tested against rendered boxes whose geometry moves with how many routines exist — the same
-    /// reason <c>travel</c> injects a vertex instead of aiming at the sphere.</para>
+    /// reason <c>travel</c> injects a vertex instead of aiming at the sphere. The kind is there because
+    /// a routine's name carries generated content (a merchant's name), and the order is by kind.</para>
     /// </summary>
     private void CmdRoutines(string[] a)
     {
-        if (a.Length > 0 && a[0].Equals("continue", StringComparison.OrdinalIgnoreCase))
-        {
-            CliMode.Emit(_game.CliDismissRoutineOutcome()
-                ? $"ok: routine outcome dismissed (mode={_game.CurrentMode})"
-                : "error: no routine outcome box on screen");
-            return;
-        }
-
         if (_game.CurrentMode != GameMode.WorldView)
         { CliMode.Emit($"error: routines only works in WorldView (currently {_game.CurrentMode})"); return; }
 
@@ -1193,23 +1193,57 @@ public sealed class CliDriver
         {
             CliMode.Emit($"routines: {entries.Count} for this destination");
             for (int i = 0; i < entries.Count; i++)
-                CliMode.Emit($"  routines {i}  \"{entries[i].Name}\""
-                           + (entries[i].Replayable ? "" : $"  (unreplayable: {entries[i].Reason})"));
+                CliMode.Emit($"  routines {i}  {entries[i].Category}  \"{entries[i].Name}\""
+                           + (entries[i].Available ? "" : $"  (unavailable: {entries[i].Reason})"));
             return;
         }
 
-        if (!int.TryParse(a[0], out int index))
-        { CliMode.Emit($"error: routines <n>|continue (got '{a[0]}')"); return; }
+        int index;
+        if (!int.TryParse(a[0], out index))
+        {
+            string kind = a[0].ToLowerInvariant();
+            index = Enumerable.Range(0, entries.Count)
+                .Where(i => entries[i].Category == kind)
+                .OrderBy(i => entries[i].Available ? 0 : 1)
+                .DefaultIfEmpty(-1)
+                .First();
+            if (index < 0)
+            { CliMode.Emit($"error: no {kind} routine here (routines <n>|<goto|meet|gather|buy|sell|work>)"); return; }
+        }
 
         if (!_game.CliSelectRoutine(index))
         {
             CliMode.Emit(index >= 0 && index < entries.Count
-                ? $"error: routine {index} is not replayable: {entries[index].Reason}"
+                ? $"error: routine {index} cannot be walked: {entries[index].Reason}"
                 : $"error: no routine {index} (offered 0..{entries.Count - 1})");
             return;
         }
 
-        CliMode.Emit($"ok: replaying routine {index} on arrival (mode={_game.CurrentMode})");
+        CliMode.Emit($"ok: entering routine {index} on arrival (mode={_game.CurrentMode})");
+    }
+
+    /// <summary>
+    /// The gathering phase a Gather routine opens: <c>gather days &lt;n&gt;</c> sets the stay,
+    /// <c>gather start</c> stays (rolled at once — a script does not watch the bar), <c>gather
+    /// continue</c> presses CONTINUE on the yield, <c>gather leave</c> leaves without staying. Assert
+    /// with <c>inspect gather</c>.
+    /// </summary>
+    private void CmdGather(string[] a)
+    {
+        if (_game.CurrentMode != GameMode.Gathering)
+        { CliMode.Emit($"error: gather only works in Gathering (currently {_game.CurrentMode})"); return; }
+
+        string sub = a.Length > 0 ? a[0].ToLowerInvariant() : "";
+        bool ok = sub switch
+        {
+            "days"     => a.Length > 1 && int.TryParse(a[1], out int d) && _game.CliGatherSetDays(d),
+            "start"    => _game.CliGatherStart(),
+            "continue" => _game.CliGatherContinue(),
+            "leave"    => _game.CliGatherLeave(),
+            _          => false,
+        };
+        CliMode.Emit(ok ? $"ok: gather {string.Join(' ', a)} (mode={_game.CurrentMode})"
+                        : $"error: gather days <n>|start|continue|leave — '{string.Join(' ', a)}' did nothing here");
     }
 
     /// <summary>
@@ -1244,6 +1278,16 @@ public sealed class CliDriver
         if (!_game.CliSelectManagementTab(tab!))
         {
             CliMode.Emit($"error: unknown tab '{tab}' (have: {string.Join(", ", _game.CliManagementTabs)})");
+            return;
+        }
+
+        // The Routines tab's kinds are a column of rows whose meaning the script knows and whose
+        // position it should not: `manage Routines buy`.
+        if (a.Length > 1)
+        {
+            if (!_game.CliSelectRoutineCategory(a[1]))
+            { CliMode.Emit($"error: unknown routine kind '{a[1]}' (goto, meet, gather, buy, sell, work)"); return; }
+            CliMode.Emit($"ok: management tab {tab}, routines of kind {a[1]}");
             return;
         }
         CliMode.Emit($"ok: management tab {tab}");
@@ -1499,6 +1543,17 @@ public sealed class CliDriver
             _waitDescription = $"mode={mode}";
             if (a.Length >= 3 && int.TryParse(a[2], out int modeSecs))
                 timeout = TimeSpan.FromSeconds(Math.Max(1, modeSecs));
+        }
+        // The word vectors load on a background task (~6s) that a real run hides behind the model
+        // load and --playground has nothing to hide behind, so which keyword a phase highlights
+        // depends on whether they have arrived yet. A script that clicks a keyword in a LATER phase
+        // waits for them first, so the ranking it meets is the same on every run.
+        else if (a.Length >= 1 && a[0].Equals("embeddings", StringComparison.OrdinalIgnoreCase))
+        {
+            _waitCondition = () => Cathedral.Game.Narrative.WordEmbedding.IsReady;
+            _waitDescription = "embeddings loaded";
+            if (a.Length >= 2 && int.TryParse(a[1], out int embSecs))
+                timeout = TimeSpan.FromSeconds(Math.Max(1, embSecs));
         }
         else if (a.Length >= 1 && int.TryParse(a[0], out int secs))
         {

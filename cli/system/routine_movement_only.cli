@@ -1,20 +1,14 @@
-# routine — a walk on its own IS a routine
+# routine — leaving from somewhere else is a Go to routine
 #
-# The other half of the recorder's prefix rule, and the half that is easy to get backwards.
+# A routine is an entry point: an area, an hour and what opens there. The walking that got the
+# player to an area is not recorded at all; what is recorded is that they ended up there. A session
+# that LEAVES the location from an area other than the one it opened in teaches a Go to routine for
+# that area (RoutineRecorder.FinalizeAtNarrationEnd) — following a track somewhere and leaving from
+# there is a "go there" routine.
 #
-# A repositioning step (move, the climbs, the crossings, a door) never emits a routine WHERE IT
-# HAPPENS: it extends the prefix that a later step will be built on, so the walk into the workshop is
-# part of the trade routine rather than a routine of its own. But if the session ends with steps in
-# the prefix that no emission has claimed, that prefix is emitted at the end — following a track
-# somewhere and stopping there is a "go there" routine, not a leftover
-# (see RoutineRecorder.EmitTrailingPath).
-#
-# So: one move, nothing else, and the visit records exactly one routine of one step. The complement —
-# a prefix already consumed by a terminus does NOT emit a second, redundant routine — is asserted at
-# the end of routine_record_replay.cli.
-#
-# Read after LEAVING, because that is when a session's trailing prefix is finalised. `inspect` answers
-# `routines` with no narration in progress for exactly this reason.
+# So: one move, nothing else, and the visit teaches exactly one routine, of kind goto, for the area
+# walked into. Read after LEAVING, because that is when a session's last routine is learned. `inspect`
+# answers `routines` with no narration in progress for exactly this reason.
 #
 # FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --npc-static --start-area "Test Field" --period dawn --observe-only "Test Yard"
 
@@ -26,7 +20,7 @@ wait mode WorldView 60
 travel here
 wait mode LocationInteraction 60
 
-# One successful move — a recordable, repositioning verb — and nothing else.
+# One successful move and nothing else.
 strategy succeed
 goal move
 advance 12 180
@@ -49,16 +43,18 @@ observe none
 
 # Two presses, and the first one is not the exit. A move ends on a node transition, so the footer
 # reads CONTINUE: pressing it closes the segment and opens the next phase in the new area, whose
-# observation preview then has to be drained before the footer becomes LEAVE. Pressing once and
-# waiting for WorldView just sits on that preview box until the wait times out.
+# observation preview then has to be drained before the footer becomes LEAVE.
 click button
 wait 60
 advance 12 180
 click button
 wait mode WorldView 90
 
-# The walk, saved as its own routine. Asserted by verb id rather than by the routine's name, which
-# is built from the destination's display name and is content.
+# The area left from, at the hour it was left at, as a Go to routine — and nothing else.
 inspect routines
-expect-state routines verbs=[move]
+expect-state routines category=goto location=
+expect-state routines Test Yard
+expect-state routines time=Dawn
+expect-no-state routines category=meet
+expect-no-state routines category=gather
 quit

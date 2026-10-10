@@ -22,6 +22,14 @@ namespace Cathedral.Game.Scene;
 public static class PrivacyModel
 {
     /// <summary>
+    /// Whether standing in <paramref name="area"/> is itself trespass — the "where you stand" half,
+    /// and the one place it is asked. <see cref="Verbs.Verb.IsIllegal"/> makes everything done here a
+    /// crime on its strength; the narration header shows it to the player; and no routine is learned
+    /// or walked where it holds.
+    /// </summary>
+    public static bool IsTrespassing(Area area) => area.IsPrivate;
+
+    /// <summary>
     /// Whether <paramref name="target"/> reaches into somebody's private area.
     ///
     /// <para>A connector answers from its own two endpoints, which is both cheaper and safer than a

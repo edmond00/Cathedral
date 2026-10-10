@@ -49,18 +49,32 @@ public class NarrativeUI : TerminalPanelUI
     }
     
     /// <summary>
-    /// Render the header: active agent name (left) and noetic-point counter (right).
-    /// Pass <paramref name="showNoeticPoints"/> as false for phases where noetic points are
-    /// not consumed (childhood reminescence, get-up scene).
+    /// Render the header: active agent name (left), whose ground the party stands on (centre) and
+    /// noetic-point counter (right). Pass <paramref name="showNoeticPoints"/> as false for phases where
+    /// noetic points are not consumed (childhood reminescence, get-up scene).
     /// </summary>
+    /// <param name="trespassing">True in a private area, where everything done is a crime and no
+    /// routine is learned; false on open ground; null where the question does not arise (no real
+    /// location), which draws nothing.</param>
     public void RenderHeader(string activeAgentName, int thinkingAttemptsRemaining, int maxNoeticPoints,
-        bool showNoeticPoints = true)
+        bool showNoeticPoints = true, bool? trespassing = null)
     {
         int headerY = _layout.TOP_PADDING;
 
         // Left: agent name in uppercase brackets
         string agentLabel = $"[{activeAgentName.ToUpper()}]";
         _terminal.Text(_layout.CONTENT_START_X, headerY, agentLabel, Config.NarrativeUI.HeaderColor, Config.NarrativeUI.BackgroundColor);
+
+        // Centre: the ground. Shown in both states rather than only as a warning, so its absence is
+        // never mistaken for safety — the one fact that turns every act here into a crime.
+        if (trespassing is { } trespass)
+        {
+            string ground = trespass ? "◆ TRESPASSING ◆" : "open ground";
+            var fg = trespass ? Config.Colors.BrightRed : Config.NarrativeUI.HistoryColor;
+            int groundX = _layout.CONTENT_START_X
+                        + (_layout.CONTENT_END_X - _layout.CONTENT_START_X - ground.Length) / 2;
+            _terminal.Text(groundX, headerY, ground, fg, Config.NarrativeUI.BackgroundColor);
+        }
 
         // Right: noetic-point counter (only when noetic points are meaningful), named. The markers
         // alone were a row of unexplained circles — the one number the whole narration loop is spent

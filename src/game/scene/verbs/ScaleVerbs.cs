@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Cathedral.Game.Narrative;
-using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Scene.Building;
 
 using Cathedral.Game.Narrative.ModiMentis;
@@ -25,17 +24,6 @@ public abstract class ScaleVerbBase : Verb
 
     public override IReadOnlyList<Wound?> FailurePenalties(Element? target)
         => target is ScalePointOfInterest scale ? scale.FailurePenalties() : NoPenalty;
-
-    public override bool CanRecordAsRoutine(Scene scene, PoV pov, Element target, PartyMember actor)
-        => target is ScalePointOfInterest;
-
-    public override RoutineTargetRef? RoutineTarget(Scene scene, PoV pov, Element target)
-        => target is PointOfInterest poi
-            ? new RoutineTargetRef(RoutineTargetKind.PointOfInterest, poi.ReferenceLemma, poi.DisplayName)
-            : null;
-
-    public override RoutinePhaseKind RoutineTriggeredPhase(Scene scene, PoV pov, Element target)
-        => RoutinePhaseKind.Narration;
 }
 
 /// <summary>Climbs a <see cref="ScalePointOfInterest"/> from its foot to the place above.</summary>

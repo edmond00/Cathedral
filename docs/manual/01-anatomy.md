@@ -147,7 +147,7 @@ value** — which for most is a floor, and for a duration or a price is a ceilin
 | Measure | Source | Formula |
 |---|---|---|
 | Residual Memory | anamnesis | score × 4, bounded 1–20 |
-| Routine Queue | anamnesis | score × 10, never below 10 |
+| Routine Slots | anamnesis | score × 4 per kind of routine, never below 4 |
 | Procedural Memory | cerebellum | score × 4, bounded 1–20 |
 | Fight Learning | cerebellum | score, in dice, never below 1 |
 | Semantic Memory | cerebrum | score × 4, bounded 1–20 |

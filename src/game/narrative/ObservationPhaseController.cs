@@ -683,16 +683,18 @@ public class ObservationPhaseController
     }
 
     /// <summary>
-    /// First observation of a narration phase opened right after a dialogue ended, kept continuous with
-    /// that conversation: the narrator is <paramref name="originObservationModusMentis"/> — the observation
-    /// MM that originated the dialogue's chain of thought — when it is still learned, otherwise a resampled
-    /// one (sensory memory first, like any first observation). The observed object is
-    /// <paramref name="npcOutcome"/> — the NPC that was talked to — with no "what draws you?" selection, and
-    /// it is a single observation regardless of length (no second or third). Follows the same
-    /// rewrite/keyword path as any observation, so a long text still gets two keywords. Returns an empty
-    /// list (so the caller can fall back to the normal phase) when no observation MM is available.
+    /// First observation of a narration phase whose subject was decided for the player: the person a
+    /// dialogue was just held with (kept continuous with that conversation), the one an introduction
+    /// presented, or the one a Meet routine is about. The narrator is
+    /// <paramref name="originObservationModusMentis"/> — for a dialogue, the observation MM that
+    /// originated its chain of thought — when given and still learned, otherwise a resampled one
+    /// (sensory memory first, like any first observation). The observed object is
+    /// <paramref name="npcOutcome"/>, with no "what draws you?" selection, and it is a single observation
+    /// regardless of length (no second or third). Follows the same rewrite/keyword path as any
+    /// observation, so a long text still gets two keywords. Returns an empty list (so the caller can
+    /// fall back to the normal phase) when no observation MM is available.
     /// </summary>
-    public async Task<List<NarrationBlock>> GeneratePostDialogueObservationAsync(
+    public async Task<List<NarrationBlock>> GenerateFocusedObservationAsync(
         NarrativeAnchor npcOutcome,
         ModusMentis? originObservationModusMentis,
         int locationId,
@@ -710,11 +712,11 @@ public class ObservationPhaseController
                 : PickFirstObservationModusMentis(actingMember);
         if (observationModusMentis == null)
         {
-            Console.WriteLine("ObservationPhaseController: No observation modus mentis for post-dialogue observation.");
+            Console.WriteLine("ObservationPhaseController: No observation modus mentis for focused observation.");
             return new List<NarrationBlock>();
         }
 
-        Console.WriteLine($"ObservationPhaseController: Post-dialogue observation of '{npcOutcome.DisplayName}' with {observationModusMentis.DisplayName}");
+        Console.WriteLine($"ObservationPhaseController: Focused observation of '{npcOutcome.DisplayName}' with {observationModusMentis.DisplayName}");
 
         (npcOutcome as INpcContextLabelStampable)?.StampContextLabel(actingMember, _worldContext, locationId);
 
@@ -726,15 +728,15 @@ public class ObservationPhaseController
 
         var part = preview?.BeginAccumulatingPart(PreviewTitles.For(observationModusMentis));
 
-        // Exactly one observation, of the NPC, whatever its length — no follow-up choice. It still goes
-        // on the ledger, so a later request this phase reaches for something other than the person just
-        // spoken to.
+        // Exactly one observation, of the focus, whatever its length — no follow-up choice. It still goes
+        // on the ledger, so a later request this phase reaches for something other than what the phase
+        // opened on.
         await AppendObservationAsync(sentences, allKeywords, slotId, observationModusMentis, npcOutcome, withTransition: false, locationId, ledger, ct, isReminescence: false, innerThought: null, part: part);
 
         if (sentences.Count == 0)
         {
             preview?.Reset();
-            Console.WriteLine("ObservationPhaseController: Post-dialogue observation produced nothing.");
+            Console.WriteLine("ObservationPhaseController: Focused observation produced nothing.");
             return new List<NarrationBlock>();
         }
 
@@ -747,7 +749,7 @@ public class ObservationPhaseController
             SourceObservationType: ObservationType.Focus,
             Sentences: sentences);
 
-        Console.WriteLine($"ObservationPhaseController: Post-dialogue observation complete ({allKeywords.Count} keywords)");
+        Console.WriteLine($"ObservationPhaseController: Focused observation complete ({allKeywords.Count} keywords)");
         var resultBlocks = new List<NarrationBlock> { block };
         FinalizePreview(preview, commit, resultBlocks, part);
         return resultBlocks;

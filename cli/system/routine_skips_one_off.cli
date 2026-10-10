@@ -1,12 +1,10 @@
-# routine — a one-off act in the middle of a walk does not end the recording
+# routine — a one-off act teaches nothing, and does not stop the visit teaching
 #
-# Catching a butterfly is not a routine step, and it is not something a replay has to reproduce: the
-# recorder leaves it out and carries on. It used to stop the session there instead
-# (TinyCreatureRemovedOutcome declared Breaking), so everything walked after it — in the reported
-# run, the street, the shop door and the shop — was never recorded at all.
-#
-# So: catch first, walk second, and the walk must still be saved. Before the fix this visit recorded
-# nothing, because the catch came before any prefix existed.
+# Catching a butterfly is not something to come back for: no routine kind is about it. It used to be
+# worse than nothing — in the old chain recorder it could end the recording, so the walk after it was
+# lost. Routines are entry points now and nothing ends a session's learning; this script keeps the
+# guarantee that matters: catch first, walk second, leave, and the visit has taught exactly the Go to
+# routine for where it left from.
 #
 # FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period dawn --observe-only "Butterfly"
 
@@ -59,7 +57,9 @@ advance 12 180
 click button
 wait mode WorldView 90
 
-# Only the walk: the catch was left out, not recorded.
+# Only the walk: the catch taught nothing.
 inspect routines
-expect-state routines verbs=[move]
+expect-state routines category=goto location=
+expect-state routines Test Field
+expect-no-state routines category=gather
 quit

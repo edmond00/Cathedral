@@ -23,7 +23,7 @@ click continue
 # Reaching the world map IS the save point: EnterWorldViewInteractive autosaves on the way in.
 wait mode WorldView 45
 expect-no-state savefile save none
-expect-state savefile version=5
+expect-state savefile version=6
 expect-state savefile seed=42
 
 # The world's history is not saved, only its fingerprint: Continue regenerates it from the seed and

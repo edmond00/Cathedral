@@ -107,6 +107,13 @@ public enum GameMode
     Working,
 
     /// <summary>
+    /// The protagonist is staying some days at a source — a patch, a seam, a stretch of water — taking
+    /// what grows, a roll per item. Reached only by a Gather routine, on arrival; there is no narration
+    /// under it, and leaving returns to the world map.
+    /// </summary>
+    Gathering,
+
+    /// <summary>
     /// The protagonist has died. Shows a purple death screen with cause of death
     /// and an "End Run" button that returns to the main menu.
     /// </summary>

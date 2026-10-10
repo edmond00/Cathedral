@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using Cathedral.Game.Narrative;
-using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Npc;
 using Cathedral.Game.Npc.Corpse;
 using Cathedral.Game.Scene.Building;
@@ -66,8 +65,6 @@ public sealed class AreaMoveOutcome : Outcome
         _destination = destination;
     }
 
-    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Movement;
-
     protected override void Apply(OutcomeContext ctx)
     {
         if (ctx.PoV == null) return;
@@ -82,8 +79,7 @@ public sealed class AreaMoveOutcome : Outcome
 /// <para>Time of day is PoV state on the same footing as the current area: it is what
 /// <see cref="Scene.GetNpcsAt"/> — and therefore every NPC verb's <c>IsPossible</c> — gates
 /// presence on, so shifting it changes which actions exist just as walking somewhere else does.
-/// The controller notices the change after reports apply and re-places NPCs for the new period; the
-/// headless routine replay needs nothing extra, because its verb gates read <c>pov.When</c> directly.</para>
+/// The controller notices the change after reports apply and re-places NPCs for the new period.</para>
 /// </summary>
 public sealed class TimeShiftOutcome : Outcome
 {
@@ -95,8 +91,6 @@ public sealed class TimeShiftOutcome : Outcome
     {
         _destination = destination;
     }
-
-    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.TimeShift;
 
     protected override void Apply(OutcomeContext ctx)
     {
@@ -142,10 +136,6 @@ public sealed class TinyCreatureRemovedOutcome : Outcome
         _npc = npc;
     }
 
-    // None: a replay rebuilds the scene with the creature back in it, but nothing any later step
-    // does depends on a mouse being gone, so a routine walked past one is still the same routine.
-    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.None;
-
     protected override void Apply(OutcomeContext ctx)
     {
         if (_npc.Entity is ShallowNpcEntity shallow) shallow.IsAlive = false;
@@ -173,11 +163,6 @@ public sealed class PoiReplacementOutcome : Outcome
         _original    = original;
         _replacement = replacement;
     }
-
-    // None: a rebuilt scene has the furniture whole again, but the one thing breaking it makes
-    // reachable is the wreck and its salvage, which are SpawnedDuringVisit — the recorder refuses
-    // any step aimed at them, so no routine can come to assume the wreck exists.
-    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.None;
 
     protected override void Apply(OutcomeContext ctx)
     {
@@ -247,10 +232,6 @@ public sealed class RecruitedOutcome : Outcome
         _npc = npc;
     }
 
-    // None: the departure lasts (RemoveNpcFromPlay records it in DepartedNpcs) and so does the
-    // party, so a replay finds the world exactly as this step left it.
-    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.None;
-
     protected override void Apply(OutcomeContext ctx)
     {
         if (ctx.Actor! is not Protagonist proto) return;
@@ -286,13 +267,6 @@ public sealed class DoorUnlockOutcome : Outcome
         _destination = destination;
     }
 
-    // Moves AND leaves the door unlocked: the scene rebuild replay starts from re-locks it, so a
-    // chain that skipped this step would assume a way through that replay does not have. Both halves
-    // must be declared — Breaking alone left the door out of the movement prefix, so a routine
-    // emitted after passing through one replayed from the wrong side of it.
-    public override RoutineChainEffect RoutineChainEffect
-        => RoutineChainEffect.Movement | RoutineChainEffect.Breaking;
-
     protected override void Apply(OutcomeContext ctx)
     {
         if (ctx.Scene == null || ctx.PoV == null) return;
@@ -318,10 +292,6 @@ public sealed class NpcSlaynOutcome : Outcome
     {
         _sceneNpc = sceneNpc;
     }
-
-    // None: the death lasts (DepartedNpcs), so whatever later steps owed to it holds at replay
-    // too — and the body is SpawnedDuringVisit, so nothing done to it is ever recorded.
-    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.None;
 
     protected override void Apply(OutcomeContext ctx)
     {
@@ -361,12 +331,6 @@ public sealed class FightTriggerOutcome : Outcome
                                                             : combatContext;
     }
 
-    // None: a fight is a phase a routine cannot contain, but it leaves the point of view where it
-    // was, and everything it changes that outlasts it lasts to replay time as well — the dead in
-    // DepartedNpcs, a grudge in NpcEnemies, the bodies SpawnedDuringVisit. Recording carries on
-    // past it, as it does past any conversation.
-    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.None;
-
     protected override void Apply(OutcomeContext ctx)
     {
         if (ctx.Scene == null) return;
@@ -397,13 +361,6 @@ public sealed class DialogueTriggerOutcome : Outcome
         TreeId = treeId;
         Tree   = tree;
     }
-
-    // Deliberately None. A dialogue leaves the world in a state that persists to replay time —
-    // affinity, jobs and trades are stored against the NPC's stable id — so a conversation that is
-    // itself unrecordable (introducing yourself, a one-off tree) can be skipped without invalidating
-    // the steps around it. Recordable dialogue verbs still terminate their own chain through
-    // RoutineTriggeredPhase; that is a separate question from whether a skip is safe.
-    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.None;
 
     protected override void Apply(OutcomeContext ctx)
     {
@@ -467,10 +424,6 @@ public sealed class ReminescenceTransitionOutcome : Outcome
         _fragmentName = fragmentName;
     }
 
-    // Leaves exploration entirely. Never reached while recording (those phases arm no recorder),
-    // declared so the rule holds if that ever changes.
-    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Breaking;
-
     protected override void Apply(OutcomeContext ctx)
     {
         if (ctx.Scene == null) return;
@@ -487,9 +440,6 @@ public sealed class GetUpTransitionOutcome : Outcome
     public override bool ShowInUI => false;
 
     public GetUpTransitionOutcome() : base(string.Empty, OutcomeSeverity.Positive, verbatim: string.Empty) { }
-
-    // Leaves exploration entirely — see ReminescenceTransitionOutcome.
-    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Breaking;
 
     protected override void Apply(OutcomeContext ctx)
     {

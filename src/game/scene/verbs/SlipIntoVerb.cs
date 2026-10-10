@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Cathedral.Game.Narrative;
-using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Scene.Building;
 
 using Cathedral.Game.Narrative.ModiMentis;
@@ -62,19 +61,4 @@ public class SlipIntoVerb : Verb
 
     public override IReadOnlyList<Wound?> FailurePenalties(Element? target)
         => target is SlipIntoPointOfInterest slip ? slip.FailurePenalties() : NoPenalty;
-
-    // ── Routine recording ─────────────────────────────────────────────────────
-    // Recordable: a way in the character has already found once is exactly the sort of thing a
-    // routine is for, and unlike a forced door it leaves nothing behind that a rebuild resets.
-
-    public override bool CanRecordAsRoutine(Scene scene, PoV pov, Element target, PartyMember actor)
-        => target is SlipIntoPointOfInterest;
-
-    public override RoutineTargetRef? RoutineTarget(Scene scene, PoV pov, Element target)
-        => target is PointOfInterest poi
-            ? new RoutineTargetRef(RoutineTargetKind.PointOfInterest, poi.ReferenceLemma, poi.DisplayName)
-            : null;
-
-    public override RoutinePhaseKind RoutineTriggeredPhase(Scene scene, PoV pov, Element target)
-        => RoutinePhaseKind.Narration;
 }

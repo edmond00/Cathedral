@@ -66,10 +66,12 @@ And one that reaches past the party, because a field is stored **as-is** rather 
   per subclass.** `System.Text.Json` writes such a field by its *declared* type, so the subclass's own
   fields go missing in silence, and it refuses to read one back at all — which
   `SaveFile.Read` catches as corruption, so **one such field makes the entire save unloadable**.
-  `RoutineStep.Constraints` was exactly this: every saved routine lost its constraint data, and the
-  first player to record a routine lost the save. Only `cli/system/routine_record_replay.cli` reaches
-  a routine, so it is the script that carries the `save roundtrip` covering that branch —
-  `save_roundtrip.cli` stacks breadth of party state by flags, and no flag records a routine.
+  The old `RoutineStep.Constraints` was exactly this: every saved routine lost its constraint data,
+  and the first player to record a routine lost the save. `Routine` itself is now abstract (one
+  subclass per kind) and carries the attributes; a new kind needs its own `[JsonDerivedType]`. Only
+  the `cli/system/routine_*.cli` scripts reach a routine, so they carry the `save roundtrip` covering
+  that branch — `save_roundtrip.cli` stacks breadth of party state by flags, and no flag records a
+  routine.
 
 ### The seed is per run, not per process
 
@@ -180,7 +182,7 @@ so, and says why.
 |---|---|
 | Fighting | cancels the armed skill or move target; pauses when nothing is armed |
 | LocationInteraction, ChildhoodReminescence, GetUp | closes the thinking popup; otherwise pauses **as an overlay**, leaving narration standing |
-| Dialogue, Working, Trading, EncounterPrompt, WorldView | pauses. None of them is cancelled by it — walking out is the footer INTERRUPT / LEAVE / ENGAGE button's job |
+| Dialogue, Working, Gathering, Trading, EncounterPrompt, WorldView | pauses. None of them is cancelled by it — walking out is the footer INTERRUPT / LEAVE / ENGAGE button's job |
 | ProtagonistCreation | pauses. Not a running phase, but a screen with no other way off it |
 | ProtagonistManagement, Settings | back to the main menu — the same press as their Back button |
 | MainMenu | resumes `MenuReturnMode`, or nothing at all before a run has started |
@@ -741,12 +743,34 @@ critic choice is drawn at random, it also cost a script combining twice its tool
 time. If a consumable ever becomes combinable this comes back as a **property of the item**, not as
 a question.
 
-That removal left `ItemConstraint` with no producer, so it changed meaning rather than being
-deleted: it is now recorded for **every** combined implement and **requires without spending** it.
-That is what it should always have meant — replaying "work the seam for ore" without a pick is not
-a routine that can be walked, whether or not the first pick survived. `Consume` is deliberately a
-no-op rather than removed (the base class calls it for every constraint), and it leaves the virtual
-ledger alone so two steps of one routine can both call for the same knife.
+The same rule carries into routines: a Gather routine records the implement it was learned with
+(`GatherRoutine.ToolItemId`) and **requires without spending** it — "work the seam for ore" without
+a pick is not a routine that can be walked, whether or not the first pick survived.
+
+### Routines are entry points
+
+A routine is **an area, an hour and the phase that opens there** — Go to (narration), Meet
+(narration opened on a person), Buy / Sell (the trade menu), Work (the work menu), Gather (the
+gathering phase, `GameMode.Gathering`, which nothing else opens). One subclass of `Routine` per kind,
+in `src/game/narrative/routines/`. It replaced a recorded chain of verbs replayed headlessly, which
+made every verb and every outcome answer how it bore on a recording (35 verb files of hooks and a
+`RoutineChainEffect` on every report). Now:
+
+- **Learning asks one question**, `RoutineRecorder.IsRecordable` — is the area somewhere the player
+  may stand (`PrivacyModel.IsTrespassing`)? The same test makes every act there a crime and lights
+  the narration header's ◆ TRESPASSING ◆. Nothing about the steps that led there is recorded.
+- **Walking asks one question per kind**, `Routine.Unavailability`, against a scene built **without
+  depletion** (a gathering routine counts the empty slots too). Companions and earlier steps are not
+  consulted; "you know the way" — every path, door and climb to the area is skipped.
+- **The five moments**: a successful gather/extraction verb (recorder, before the reports apply), a
+  conversation opened with a registered tree (`StartDialogueMode`), a trade or hire agreed
+  (`RecordAgreementRoutines`, called from both the played and the `--auto-dialogue` ending), and
+  leaving from an area other than the one the session opened in (Go to).
+- **Slots are per kind** (`RoutineSlotsStat`, anamnesis × 4), sized to the menu's two-column grid.
+
+A Meet routine opens on its person through the **opening focus** (`_openingFocus`), the same field a
+finished conversation and an introduction set — an `Element`, so a point of interest can be focused
+the same way when a kind wants it. `inspect opening` reports what the last phase opened on.
 
 ### Emotions: what an outcome does to the person who caused it
 
@@ -1142,14 +1166,14 @@ an anatomy is one line on its factory — no revisiting 180 modi mentis and 54 v
 Three consequences worth knowing:
 
 - **`Verb.IsPossible` is sealed**; the per-verb condition moved to `protected IsPossibleFor`. The
-  capability test lives in the sealed half so the routine replay engine, the verb audit and the debug
-  window cannot each forget it. The whole `DialogueVerb` family declares `Speech` once, `ExtractionVerb`
+  capability test lives in the sealed half so the verb audit and the debug window cannot each forget
+  it (a Gather routine asks `actor.Can(verb.EffectiveCapabilities)` directly, having no target). The whole `DialogueVerb` family declares `Speech` once, `ExtractionVerb`
   declares `Handcraft` once.
 - **The gate reads the acting member, not the protagonist.** `RefreshSceneVerbs` passes
   `_activePartyMember`, and the actor parameter widened from `Protagonist?` to `PartyMember?`
   throughout (`Scene.View`, `VerbRegistry.GetApplicable`, `IVerbRefreshable.RefreshVerbs`). The two
   places that genuinely need the protagonist — the `max_companions` ceiling in `TameVerb` and
-  `propose_to_join` — do `actor as Protagonist`. `RoutineReplayEngine` used to pass
+  `propose_to_join` — do `actor as Protagonist`. The old routine replay engine passed
   `ActingMember as Protagonist`, i.e. **null** for every companion, skipping every actor-dependent gate.
 - **Learning is refused, not capped.** An MM naming an absent organ contributes +0 to the level cap,
   so it used to be grantable and stuck at level 1 — held, useless, unexplained. Every grant path now

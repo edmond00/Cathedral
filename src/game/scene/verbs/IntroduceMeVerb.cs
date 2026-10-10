@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Narrative;
-using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Npc;
 
 namespace Cathedral.Game.Scene.Verbs;
@@ -42,11 +41,6 @@ public class IntroduceMeVerb : DialogueVerb
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"ask {NpcPronoun(target)} to present me to someone";
-
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
-        => view?.Variant is NpcEntity third
-            ? $"ask {NpcName(target)} to present me to {third.DisplayName}"
-            : $"ask {NpcName(target)} for an introduction";
 
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target, VerbAction view, Item? tool = null)
     {
@@ -92,6 +86,4 @@ public class IntroduceMeVerb : DialogueVerb
             .Distinct()
             .ToList();
     }
-
-    public override string? RoutineVariantKey(VerbAction view) => (view.Variant as NpcEntity)?.NpcId;
 }

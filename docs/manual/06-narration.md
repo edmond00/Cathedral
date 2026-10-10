@@ -187,7 +187,9 @@ were stopped from completing, and you pay for the attempt.
 ## 7. Of crime and of being seen
 
 **Legality is contextual.** No manner of acting is a crime in itself. Standing in another's private
-space makes *anything* done there a trespass, and that test applies to everything at once. Beyond
+space makes *anything* done there a trespass, and that test applies to everything at once. It is
+never hidden: throughout a phase the narration declares whether the ground underfoot is private, and
+private ground teaches no routine (see [IX](09-routines.md)). Beyond
 it, each act that can be a crime has its own condition — striking someone who already counts you an
 enemy is not a crime, for the quarrel was declared before the blow; forcing the lock of a public
 storehouse is nobody's privacy.

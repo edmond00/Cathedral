@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Narrative;
-using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Npc;
 
 using Cathedral.Game.Narrative.ModiMentis;
@@ -41,9 +40,6 @@ public class MurderVerb : Verb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => "kill them where they lie";
 
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
-        => $"kill {SleeperGate.Name(target)} in their sleep";
-
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         var sleeper = SleeperGate.Sleeper(scene, pov, target);
@@ -60,9 +56,6 @@ public class MurderVerb : Verb
     {
         null, null, new ContusionWound(), new CutWound(),
     };
-
-    public override RoutinePhaseKind RoutineTriggeredPhase(Scene scene, PoV pov, Element target)
-        => RoutinePhaseKind.Narration;
 }
 
 /// <summary>
@@ -94,9 +87,6 @@ public class WakeUpVerb : DialogueVerb
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => "wake them";
-
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
-        => $"wake {SleeperGate.Name(target)}";
 
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {

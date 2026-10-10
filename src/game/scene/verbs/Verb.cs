@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Narrative;
-using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Npc;
 
 namespace Cathedral.Game.Scene.Verbs;
@@ -47,7 +46,7 @@ public abstract class Verb
     /// under-reports what is a crime.</para>
     /// </summary>
     public bool IsIllegal(Scene scene, PoV pov, Element? target, PartyMember? actor = null)
-        => pov.Where.IsPrivate || IsIllegalFor(scene, pov, target, actor);
+        => PrivacyModel.IsTrespassing(pov.Where) || IsIllegalFor(scene, pov, target, actor);
 
     /// <summary>
     /// The verb's own condition for being a crime, asked outside anybody's private space.
@@ -93,8 +92,8 @@ public abstract class Verb
     /// Whether this verb can be executed given the current scene state <b>and</b> the acting body.
     ///
     /// <para>Sealed on purpose: the anatomy gate is applied here, once, and the per-verb condition
-    /// lives in <see cref="IsPossibleFor"/>. Direct callers exist outside the scene view — the routine
-    /// replay engine, the verb audit, the debug window — and a gate they could each forget is a gate
+    /// lives in <see cref="IsPossibleFor"/>. Direct callers exist outside the scene view — the verb
+    /// audit, the debug window — and a gate they could each forget is a gate
     /// that does not hold. A null actor means "no particular body" (content audits, tooling) and
     /// passes the capability test.</para>
     /// </summary>
@@ -223,7 +222,7 @@ public abstract class Verb
     /// reads it — a combined tool's effect is normally the die it lends the chain, which is settled
     /// long before this — but <c>attack</c> does, because <i>which</i> weapon struck decides which
     /// blow can be thrown at all. Null everywhere the reports are re-derived outside a live action
-    /// (the outcome audit, a routine replay), which reads correctly as bare hands.
+    /// (the outcome audit), which reads correctly as bare hands.
     /// </param>
     public virtual IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target,
                                                         VerbAction view, Item? tool = null)
@@ -245,89 +244,6 @@ public abstract class Verb
         foreach (var report in SuccessReports(scene, pov, actor, target))
             report.ApplyTo(OutcomeContext.For(actor, scene, pov));
     }
-
-    // ── Routine recording hooks ───────────────────────────────────────────────
-    // A successful verb may be recorded as a step in a learned routine that is later replayed
-    // without narration or skill checks. By default no verb is recordable; recordable verbs
-    // override these. The contract is dynamic: a verb may inspect scene/pov/target and decline
-    // to be recorded in special situations.
-
-    /// <summary>
-    /// Whether a successful execution of this verb on <paramref name="target"/> can be recorded as
-    /// a routine step. Default: false (no verb is recordable until it opts in).
-    /// </summary>
-    public virtual bool CanRecordAsRoutine(Scene scene, PoV pov, Element target, PartyMember actor)
-        => false;
-
-    /// <summary>
-    /// Builds the stable, rebuild-independent reference to this verb's target for routine recording.
-    /// Only meaningful when <see cref="CanRecordAsRoutine"/> returns true.
-    /// </summary>
-    public virtual RoutineTargetRef? RoutineTarget(Scene scene, PoV pov, Element target) => null;
-
-    /// <summary>
-    /// The player-facing name of this verb as a recorded routine step — and, for the last step, the
-    /// name of the routine itself. Evaluated once at record time, while scene/pov/target are still
-    /// live, so whatever it reads from the context is baked into the saved routine.
-    ///
-    /// This exists because <see cref="Verbatim"/> is written for the LLM prompt, where the target has
-    /// already been named in the attention line and is therefore referred back to by pronoun ("meet
-    /// her to talk"). A routine is read cold, months of play later, out of any context — so a verb
-    /// whose verbatim leans on the surrounding prompt overrides this to name the target outright
-    /// ("meet Aldith to talk"). Defaults to the verbatim, which is already concrete for every verb
-    /// that spells its target out ("gather some moss", "climb up the low wall").
-    /// </summary>
-    /// <param name="view">The chosen view when the verb expanded into several actions (e.g. which job
-    /// was requested), or null when the caller has none.</param>
-    public virtual string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
-        => Verbatim(scene, pov, target);
-
-    /// <summary>
-    /// The display name of an NPC target, for <see cref="RoutineLabel"/> overrides that replace the
-    /// verbatim's pronoun with the real name. Falls back to the target's own display name (and to
-    /// "them" when there is none), so a label is never left with a dangling blank.
-    /// </summary>
-    protected static string NpcName(Element target)
-    {
-        string name = (target as SceneNpc)?.Entity.DisplayName?.Trim()
-                      ?? target?.DisplayName?.Trim()
-                      ?? "";
-        return name.Length == 0 ? "them" : name;
-    }
-
-    /// <summary>
-    /// Whether a successful, <i>unrecordable</i> execution of this verb ends the routine being
-    /// recorded, or may simply be left out of it. Skipping is the norm: introducing yourself to a
-    /// stranger, grabbing a one-off item or picking a fight are not routine steps, but the chain of
-    /// steps around them stays perfectly replayable, so recording continues as if they had not
-    /// happened. Only effects that a replayed chain cannot reproduce end the recording.
-    ///
-    /// The decision is read off the reports the execution is about to apply — see
-    /// <see cref="RoutineChainEffect"/> — so it stays correct for verbs that do not exist yet.
-    /// Override only for a verb whose reports do not tell the whole story.
-    /// </summary>
-    public virtual bool BreaksRoutineRecording(Scene scene, PoV pov, Element target,
-                                               IReadOnlyList<Outcome> reports)
-        => reports.Any(r => r.RoutineChainEffect != RoutineChainEffect.None);
-
-    /// <summary>
-    /// The phase this verb transitions into on success, used to decide where a recorded routine
-    /// stops and what happens after replay. Default: <see cref="RoutinePhaseKind.None"/>.
-    /// </summary>
-    public virtual RoutinePhaseKind RoutineTriggeredPhase(Scene scene, PoV pov, Element target)
-        => RoutinePhaseKind.None;
-
-    /// <summary>
-    /// A stable key identifying the chosen <see cref="VerbAction.Variant"/> for routine recording, so
-    /// replay can rebuild the same view (e.g. which job was requested). Default: null (no variant).
-    /// </summary>
-    public virtual string? RoutineVariantKey(VerbAction view) => null;
-
-    /// <summary>
-    /// Rebuilds the <see cref="VerbAction.Variant"/> payload from a key produced by
-    /// <see cref="RoutineVariantKey"/>, used when replaying a recorded step. Default: null.
-    /// </summary>
-    public virtual object? ResolveRoutineVariant(string variantKey) => null;
 
     /// <summary>
     /// The item this verb would add to the actor's inventory on success, or null for verbs that do not

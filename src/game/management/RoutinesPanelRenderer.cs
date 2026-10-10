@@ -1,455 +1,457 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using OpenTK.Mathematics;
 using Cathedral.Terminal;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Routines;
+using Cathedral.Game.Narrative.Work;
+using Cathedral.Game.Npc.Trade;
 using Cathedral.Game.Creation;
+using Cathedral.Game.Dialogue.Affinity;
 
 namespace Cathedral.Game.Management;
 
 /// <summary>
-/// Renders the protagonist's learned routines in the management menu (protagonist-only, like the
-/// journal).
+/// The protagonist's learned routines in the management menu (protagonist-only, like the journal).
 ///
-/// Layout:
-///   Right column (col 70+): the scrollable routine list. Each row carries a clickable
-///     ☑ (locked) / ☐ (unlocked) checkbox that protects the routine from FIFO eviction; clicking
-///     the name selects the routine.
-///   Center pane (cols ~17–66) for the selected routine, in three stacked zones:
-///     TOP    — general info: name, lock state (clickable — the same toggle as the list
-///              checkbox, for the selected routine), start time, requirements, outcomes.
-///     MIDDLE — a transparent "porthole" rectangle that reveals the always-rendered 3D world
-///              behind the HUD; the host drives the world camera to focus on the routine's
-///              location so it reads as a minimap (see <see cref="OnRoutineFocused"/>).
-///     BOTTOM — the ordered list of steps in the routine.
+/// <para>Layout, one zone per question:</para>
+/// <list type="bullet">
+/// <item><b>Right column</b> (col 70+) — the kinds of routine (<see cref="RoutineCategories.All"/>),
+///   each with how many of its slots are filled. Clicking one shows its slots.</item>
+/// <item><b>Top of the centre</b> — that kind's slots, in two columns. Every slot the anamnesis could
+///   ever hold is drawn, so the grid says three things at once: a slot holding a routine (its
+///   ☐/☑ is the eviction lock, clickable), an empty slot this body can fill (○), and a slot beyond
+///   the anamnesis as it stands (×). Names are cut to the column; the full name is below.</item>
+/// <item><b>Middle</b> — a transparent porthole onto the world; the host aims the camera at the
+///   selected routine's location (<see cref="OnRoutineFocused"/>).</item>
+/// <item><b>Bottom</b> — the selected routine in full, with what its kind has to say: a merchant's
+///   catalogue, a job's pay, a person's standing with you, a source's dice.</item>
+/// </list>
 /// </summary>
 public class RoutinesPanelRenderer
 {
     private readonly TerminalHUD _terminal;
 
-    // Hit rows map a screen row to an index in the protagonist's RecordedRoutines list.
-    private readonly List<(int row, int routineIndex)> _hitRows = new();
-    private int _hoveredRow = -1;
-    // Screen row whose lock/unlock checkbox the mouse is currently over (-1 = none). Tracked
-    // separately from _hoveredRow so the checkbox can highlight even on a non-selected routine.
-    private int _hoveredCheckboxRow = -1;
-
-    // Hit area of the center pane's lock line — the same toggle as the list checkbox, applied to
-    // the selected routine. Row is -1 while nothing is selected (no routines).
-    private int _centerLockRow = -1;
-    private int _centerLockWidth = 0;
-    private bool _hoveredCenterLock;
-
-    // Currently selected routine (index into RecordedRoutines), or -1 when none/empty.
-    private int _selectedIndex = -1;
-    private int _lastFocusedLocationId = int.MinValue;
-
-    private const int ListStartRow = 6;
-    private const int MaxRows = 80;
-
-    // List column geometry (right panel).
+    // Right column geometry.
     private static int ListX => BodyArtViewer.PanelContentX;   // col 70
-    private const int ListWidth = 30;                          // clamps within the 100-wide grid
-    private const int CheckboxCols = 2;                        // first 2 cells = lock toggle hit area
+    private const int ListWidth = 28;   // to the frame's right rule
+    private const int CategoryStartRow = 7;
+    private const int CategoryRowStep = 2;
 
-    // Center pane geometry (between the left nav separator at col 15 and the right list at col 70).
+    // Centre geometry (between the left nav separator at col 15 and the right column at col 70).
     private const int CenterLeft = 17;
     private const int CenterRight = 66;
     private const int CenterWidth = CenterRight - CenterLeft + 1;
+    private const int ColumnGap = 2;
+    private const int ColumnWidth = (CenterWidth - ColumnGap) / 2;   // 24
+    private const int CheckboxCols = 2;
+    private const int SlotStartRow = 5;
 
-    // Vertical separator between the center pane and the right list (matches the other tabs' seam).
     private const int SeparatorX = BodyArtViewer.PanelX - 1;   // col 67
-
-    // Half-extent (in cells) of the porthole band above/below the viewport center.
     private const int PortholeHalf = 16;
 
-    // Highlight background for a lock/unlock checkbox the mouse is hovering.
-    private static readonly Vector4 CheckboxHoverBg = new(0.18f, 0.15f, 0.02f, 1.0f);
+    private static readonly Vector4 HoverBg    = new(0.18f, 0.15f, 0.02f, 1.0f);
+    private static readonly Vector4 SelectedBg = new(0.07f, 0.06f, 0.01f, 1.0f);
+
+    // ── Selection ─────────────────────────────────────────────────
+    private RoutineCategory _category = RoutineCategory.GoTo;
+    private readonly Dictionary<RoutineCategory, string> _selectedId = new();
+    private int _lastFocusedLocationId = int.MinValue;
+
+    // ── Hit areas, rebuilt every render ───────────────────────────
+    private readonly List<(int Row, RoutineCategory Category)> _categoryRows = new();
+    private readonly List<(int Row, int X, Routine Routine)> _slotRows = new();
+    private int _lockRow = -1, _lockWidth;
+
+    private (int X, int Y) _hover = (-1, -1);
 
     /// <summary>
-    /// Fired when the selected routine changes (and on activation), with the routine's LocationId.
-    /// The host uses this to center the world camera so the minimap porthole shows that location.
+    /// Fired with the selected routine's LocationId when the selection changes (and on activation).
+    /// The host centres the world camera so the porthole shows that location.
     /// </summary>
     public Action<int>? OnRoutineFocused;
+
+    /// <summary>
+    /// How the person a routine is about stands with the protagonist today — the level and whether
+    /// they count you an enemy — read from the location's stored memory, or null when that location
+    /// was never visited. Set by the host, which owns the location states.
+    /// </summary>
+    public Func<int, string, (AffinityLevel Level, bool Enemy)?>? RelationLookup;
 
     public RoutinesPanelRenderer(TerminalHUD terminal)
     {
         _terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
     }
 
-    /// <summary>True while a routine row or the center lock line is hovered (for SFX feedback).</summary>
-    public bool IsHovering => _hoveredRow >= 0 || _hoveredCenterLock;
+    /// <summary>True while something clickable is hovered (for SFX feedback).</summary>
+    public bool IsHovering => HoveredCategory() != null || HoveredSlot() != null || OverLock();
 
-    public void ClearHover() { _hoveredRow = -1; _hoveredCheckboxRow = -1; _hoveredCenterLock = false; }
+    public void ClearHover() => _hover = (-1, -1);
 
-    /// <summary>
-    /// Called when the Routines tab becomes active. Establishes a default selection (newest routine)
-    /// and fires <see cref="OnRoutineFocused"/> so the host focuses the minimap camera.
-    /// </summary>
-    public void OnActivated(Protagonist protagonist)
+    /// <summary>The kind shown, for <c>--cli</c>.</summary>
+    public RoutineCategory Category => _category;
+
+    /// <summary>Called when the Routines tab becomes active: refocuses the porthole on the selection.</summary>
+    public void OnActivated(Protagonist protagonist) => FireFocus(protagonist, force: true);
+
+    /// <summary>Shows one kind's slots — the right column's click, for <c>--cli</c> too.</summary>
+    public void SelectCategory(RoutineCategory category, Protagonist protagonist)
     {
-        if (protagonist.RecordedRoutines.Count == 0)
-        {
-            _selectedIndex = -1;
-            return;
-        }
-
-        if (_selectedIndex < 0 || _selectedIndex >= protagonist.RecordedRoutines.Count)
-            _selectedIndex = protagonist.RecordedRoutines.Count - 1; // newest
-
-        FireFocus(protagonist, force: true);
+        _category = category;
+        FireFocus(protagonist, force: false);
     }
+
+    private Routine? Selected(Protagonist p)
+    {
+        var mine = p.RoutinesOf(_category);
+        if (mine.Count == 0) return null;
+        if (_selectedId.TryGetValue(_category, out var id) && mine.FirstOrDefault(r => r.Id == id) is { } r)
+            return r;
+        return mine[^1];   // newest
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Render
+    // ═══════════════════════════════════════════════════════════════
 
     public void Render(Protagonist protagonist)
     {
-        _hitRows.Clear();
-        _centerLockRow = -1;
-        int x = ListX;
+        _categoryRows.Clear();
+        _slotRows.Clear();
+        _lockRow = -1;
 
-        // Vertical seam between the center pane and the right list (drawn regardless of contents).
         for (int y = 0; y < _terminal.Height; y++)
             _terminal.SetCell(SeparatorX, y, '│', Config.Colors.DarkGray35, Config.Colors.Black);
 
-        // ── Right column: list header + queue gauge ──────────────────
+        RenderCategories(protagonist);
+
+        int cy = _terminal.Height / 2;
+        int bandTop = cy - PortholeHalf, bandBottom = cy + PortholeHalf;
+
+        RenderSlots(protagonist, bandTop - 2);
+        DottedHLine(bandTop - 1);
+        RenderPorthole(bandTop, bandBottom);
+        DottedHLine(bandBottom + 1);
+        RenderDetail(protagonist, bandBottom + 3);
+    }
+
+    private void RenderCategories(Protagonist p)
+    {
+        int x = ListX;
         _terminal.Text(x, 1, "R O U T I N E S", Config.Colors.BrightYellow, Config.Colors.Black);
-        _terminal.Text(x, 3, "──────────────────────────────", Config.Colors.DarkGray35, Config.Colors.Black);
+        _terminal.Text(x, 3, new string('─', ListWidth), Config.Colors.DarkGray35, Config.Colors.Black);
+        _terminal.Text(x, 4, $"Slots per kind: {p.GetRoutineSlots()}", Config.Colors.LightGray75, Config.Colors.Black);
 
-        int max  = protagonist.GetRoutineQueueSize();
-        int used = protagonist.RecordedRoutines.Count;
-        _terminal.Text(x, 4, $"Queue: {used} / {max}", Config.Colors.LightGray75, Config.Colors.Black);
-
-        if (protagonist.RecordedRoutines.Count == 0)
+        int row = CategoryStartRow;
+        foreach (var c in RoutineCategories.All)
         {
-            _terminal.Text(x, ListStartRow, "No routines learned yet.", Config.Colors.DarkGray35, Config.Colors.Black);
-            _terminal.Text(x, ListStartRow + 2, "Succeed at recordable actions", Config.Colors.DarkGray35, Config.Colors.Black);
-            _terminal.Text(x, ListStartRow + 3, "during narration to learn one.", Config.Colors.DarkGray35, Config.Colors.Black);
-            return;
-        }
+            bool selected = c == _category;
+            bool hovered  = _hover.Y == row && _hover.X >= x && _hover.X < x + ListWidth;
+            int used = p.RoutinesOf(c).Count;
 
-        // Keep selection valid (e.g. after FIFO eviction shifted the list).
-        if (_selectedIndex < 0 || _selectedIndex >= protagonist.RecordedRoutines.Count)
-            _selectedIndex = protagonist.RecordedRoutines.Count - 1;
+            Vector4 fg = selected ? Config.Colors.BrightYellow
+                       : hovered  ? Config.Colors.MediumYellow
+                       : used > 0 ? Config.Colors.LightGray75 : Config.Colors.MediumGray60;
+            Vector4 bg = selected || hovered ? SelectedBg : Config.Colors.Black;
 
-        // ── Right column: list rows (newest first) ───────────────────
-        int rowsShown = 0;
-        for (int i = protagonist.RecordedRoutines.Count - 1; i >= 0 && rowsShown < MaxRows; i--, rowsShown++)
-        {
-            int row = ListStartRow + rowsShown;
-            var routine = protagonist.RecordedRoutines[i];
-            bool hovered  = _hoveredRow == row;
-            bool selected = _selectedIndex == i;
-
-            string box   = routine.Locked ? "☑" : "☐";
-            string label = $"{box} {routine.Name}";
-            if (label.Length > ListWidth) label = label.Substring(0, ListWidth - 1) + "…";
-
-            Vector4 fg = selected
-                ? Config.Colors.BrightYellow
-                : routine.Locked
-                    ? Config.Colors.MediumYellow
-                    : (hovered ? Config.Colors.MediumYellow : Config.Colors.MediumGray60);
-            Vector4 bg = (selected || hovered) ? new Vector4(0.07f, 0.06f, 0.01f, 1.0f) : Config.Colors.Black;
-
+            string count = $"{used} / {p.GetRoutineSlots()}";
+            string label = (selected ? "▸ " : "  ") + c.Label();
             _terminal.FillRect(x, row, ListWidth, 1, ' ', fg, bg);
             _terminal.Text(x, row, label, fg, bg);
+            _terminal.Text(x + ListWidth - count.Length, row, count, fg, bg);
 
-            // Highlight the clickable lock/unlock checkbox when the mouse is over it — on any row,
-            // selected or not, since clicking it toggles the routine's lock.
-            if (_hoveredCheckboxRow == row)
-            {
-                _terminal.FillRect(x, row, CheckboxCols, 1, ' ', Config.Colors.BrightYellow, CheckboxHoverBg);
-                _terminal.Text(x, row, box, Config.Colors.BrightYellow, CheckboxHoverBg);
-            }
-
-            _hitRows.Add((row, i));
+            _categoryRows.Add((row, c));
+            row += CategoryRowStep;
         }
-
-        // ── Center pane: detail for the selected routine ─────────────
-        RenderCenterPane(protagonist.RecordedRoutines[_selectedIndex]);
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // Center pane
-    // ═══════════════════════════════════════════════════════════════
-
-    private void RenderCenterPane(Routine routine)
+    /// <summary>The selected kind's slot grid, from the top of the centre down to <paramref name="lastRow"/>.</summary>
+    private void RenderSlots(Protagonist p, int lastRow)
     {
-        // The three zones are anchored to the porthole band in the middle.
-        int cy         = _terminal.Height / 2;   // 50
-        int bandTop    = cy - PortholeHalf;       // 34
-        int bandBottom = cy + PortholeHalf;       // 66
+        var routines = p.RoutinesOf(_category);
+        int usable   = p.GetRoutineSlots();
+        int rowsFree = lastRow - SlotStartRow + 1;
+        // Every slot the body could ever have, so what an anamnesis point would buy is visible — but
+        // never more than the space holds, nor fewer than what is usable or filled.
+        int grid     = Math.Min(2 * rowsFree, Math.Max(p.GetRoutineSlotsAtBest(), Math.Max(usable, routines.Count)));
+        int rows     = (grid + 1) / 2;
+        int spacing  = rows * 2 <= rowsFree ? 2 : 1;
 
-        RenderTopInfo(routine);
+        string title = string.Join(" ", _category.Label().ToUpperInvariant().ToCharArray());
+        CenterText(CenterLeft, 1, title, Config.Colors.BrightYellow);
+        string count = $"{routines.Count} / {usable}";
+        _terminal.Text(CenterRight + 1 - count.Length, 1, count, Config.Colors.LightGray75, Config.Colors.Black);
+        CenterText(CenterLeft, 2, "☐ learned  ☑ kept  ○ empty  × beyond anamnesis", Config.Colors.DarkGray35);
 
-        // Dotted separators bracket the middle band, dividing the three zones.
-        DottedHLine(CenterLeft, CenterRight, bandTop - 1, Config.Colors.DarkGray35);
-        RenderMiddleBand(bandTop, bandBottom);
-        DottedHLine(CenterLeft, CenterRight, bandBottom + 1, Config.Colors.DarkGray35);
+        var selected = Selected(p);
+        var duplicates = routines.GroupBy(r => r.Name).Where(g => g.Count() > 1).Select(g => g.Key).ToHashSet();
 
-        RenderStepList(routine, bandBottom + 2);
+        for (int i = 0; i < grid; i++)
+        {
+            // Column-major: the left column fills top to bottom first, as a list is read.
+            int col = i / rows, line = i % rows;
+            int x = CenterLeft + col * (ColumnWidth + ColumnGap);
+            int y = SlotStartRow + line * spacing;
+
+            if (i < routines.Count)
+            {
+                var r = routines[i];
+                bool isSel  = selected != null && r.Id == selected.Id;
+                bool hovRow = _hover.Y == y && _hover.X >= x && _hover.X < x + ColumnWidth;
+                bool hovBox = hovRow && _hover.X < x + CheckboxCols;
+                string name = duplicates.Contains(r.Name) ? $"{r.Name} ({r.Time.Label().ToLowerInvariant()})" : r.Name;
+                string label = $"{(r.Locked ? "☑" : "☐")} {name}";
+                if (label.Length > ColumnWidth) label = label.Substring(0, ColumnWidth - 1) + "…";
+
+                Vector4 fg = isSel ? Config.Colors.BrightYellow
+                           : hovRow || r.Locked ? Config.Colors.MediumYellow : Config.Colors.LightGray75;
+                Vector4 bg = isSel || hovRow ? SelectedBg : Config.Colors.Black;
+                _terminal.FillRect(x, y, ColumnWidth, 1, ' ', fg, bg);
+                _terminal.Text(x, y, label, fg, bg);
+                if (hovBox)
+                    _terminal.Text(x, y, r.Locked ? "☑" : "☐", Config.Colors.BrightYellow, HoverBg);
+                _slotRows.Add((y, x, r));
+            }
+            else if (i < usable)
+                _terminal.Text(x, y, "○ empty", Config.Colors.DarkGray35, Config.Colors.Black);
+            else
+                _terminal.Text(x, y, "× ·····", Config.Colors.DarkGray20, Config.Colors.Black);
+        }
     }
 
-    /// <summary>TOP zone: name, lock state, start time, requirements, outcomes.</summary>
-    private void RenderTopInfo(Routine routine)
+    /// <summary>A transparent window onto the always-rendered world, with a small mark at its centre.</summary>
+    private void RenderPorthole(int bandTop, int bandBottom)
     {
-        int x = CenterLeft;
-        int row = 1;
-
-        CenterText(x, row++, routine.Name, Config.Colors.BrightYellow);
-        row++;
-
-        // Lock line — clickable, toggling the same flag as the list checkbox.
-        string lockText = routine.Locked ? "☑ Locked" : "☐ Unlocked";
-        _centerLockRow   = row;
-        _centerLockWidth = lockText.Length;
-        Vector4 lockFg = _hoveredCenterLock
-            ? Config.Colors.BrightYellow
-            : (routine.Locked ? Config.Colors.MediumYellow : Config.Colors.MediumGray60);
-        Vector4 lockBg = _hoveredCenterLock ? CheckboxHoverBg : Config.Colors.Black;
-        _terminal.FillRect(x, row, lockText.Length, 1, ' ', lockFg, lockBg);
-        _terminal.Text(x, row, lockText, lockFg, lockBg);
-        row++;
-        CenterText(x, row++, $"Start: {routine.StartTime.Label()}    Steps: {routine.Steps.Count}", Config.Colors.LightGray75);
-        row++;
-
-        // Requirements (deduped across all steps).
-        CenterText(x, row++, "REQUIREMENTS", Config.Colors.White);
-        var reqs = CollectRequirements(routine);
-        if (reqs.Count == 0)
-            CenterText(x, row++, "  · none", Config.Colors.DarkGray35);
-        else
-            foreach (var r in reqs)
-                CenterText(x, row++, "  · " + r, Config.Colors.MediumGray60);
-        row++;
-
-        // Outcomes.
-        CenterText(x, row++, "OUTCOMES", Config.Colors.White);
-        foreach (var o in CollectOutcomes(routine))
-            CenterText(x, row++, "  · " + o, Config.Colors.MediumGray60);
-    }
-
-    /// <summary>
-    /// MIDDLE zone: a transparent "porthole" onto the always-rendered 3D world, filling the full
-    /// center-pane width so the whole band shows the viewport. The host aims the world camera at the
-    /// routine's location so it lands at the viewport center (cell (Width/2, Height/2)). There is no
-    /// margin or drawn border — the dotted separators above and below frame it. A small yellow
-    /// corner-box marks the center while leaving the center cell — and the cell directly above it —
-    /// fully transparent.
-    /// </summary>
-    private void RenderMiddleBand(int bandTop, int bandBottom)
-    {
-        int cx = _terminal.Width / 2;   // 50
-        int cy = _terminal.Height / 2;  // 50
-
-        // The whole band is the porthole — transparent across the full center-pane width.
+        int cx = _terminal.Width / 2, cy = _terminal.Height / 2;
         for (int y = bandTop; y <= bandBottom; y++)
             for (int sx = CenterLeft; sx <= CenterRight; sx++)
                 _terminal.SetCell(sx, y, ' ', Config.Colors.Transparent, Config.Colors.Transparent);
 
-        // Small yellow corner-box around the center. Only the diagonal corners are drawn, so the
-        // center cell and the cell directly above it stay fully transparent.
         _terminal.SetCell(cx - 1, cy - 1, '┌', Config.Colors.BrightYellow, Config.Colors.Transparent);
         _terminal.SetCell(cx + 1, cy - 1, '┐', Config.Colors.BrightYellow, Config.Colors.Transparent);
         _terminal.SetCell(cx - 1, cy + 1, '└', Config.Colors.BrightYellow, Config.Colors.Transparent);
         _terminal.SetCell(cx + 1, cy + 1, '┘', Config.Colors.BrightYellow, Config.Colors.Transparent);
     }
 
-    /// <summary>Draws a dotted horizontal rule (a dash every other cell) across [x0, x1] on row y.</summary>
-    private void DottedHLine(int x0, int x1, int y, Vector4 color)
-    {
-        for (int gx = x0; gx <= x1; gx += 2)
-            _terminal.SetCell(gx, y, '─', color, Config.Colors.Black);
-    }
+    // ═══════════════════════════════════════════════════════════════
+    // Detail (bottom zone)
+    // ═══════════════════════════════════════════════════════════════
 
-    /// <summary>BOTTOM zone: the ordered steps of the routine, starting just below the middle band.</summary>
-    private void RenderStepList(Routine routine, int startRow)
+    private void RenderDetail(Protagonist p, int row)
     {
         int x = CenterLeft;
-        int row = startRow + 1;   // one empty row before the STEPS header
-
-        CenterText(x, row++, "STEPS", Config.Colors.White);
-
-        for (int i = 0; i < routine.Steps.Count && row < _terminal.Height - 1; i++)
+        var r = Selected(p);
+        if (r == null)
         {
-            var step = routine.Steps[i];
-            string phaseMark = step.TriggeredPhase switch
-            {
-                RoutinePhaseKind.Fight    => " ⚔",
-                RoutinePhaseKind.Dialogue => " 💬",
-                _                          => "",
-            };
-            CenterText(x, row++, $"{i + 1}. {step.DisplayLabel}{phaseMark}", Config.Colors.MediumGray60);
+            CenterText(x, row, $"No {_category.Label().ToLowerInvariant()} routine learned yet.", Config.Colors.MediumGray60);
+            CenterText(x, row + 2, _category.HowLearned(), Config.Colors.DarkGray35);
+            return;
+        }
+
+        CenterText(x, row++, r.Name, Config.Colors.BrightYellow);
+        string where = r.LocationName.Length > 0 ? $"{r.LocationName} · {r.AreaName}" : r.AreaName;
+        CenterText(x, row++, $"{where} · {r.Time.Label().ToLowerInvariant()}", Config.Colors.LightGray75);
+
+        string lockText = r.Locked ? "☑ Kept — never forgotten to make room" : "☐ Forgotten first when this kind is full";
+        _lockRow = row; _lockWidth = Math.Min(lockText.Length, CenterWidth);
+        bool hovLock = OverLock();
+        _terminal.FillRect(x, row, _lockWidth, 1, ' ', Config.Colors.MediumGray60, hovLock ? HoverBg : Config.Colors.Black);
+        CenterText(x, row++, lockText, hovLock ? Config.Colors.BrightYellow
+                                      : r.Locked ? Config.Colors.MediumYellow : Config.Colors.MediumGray60,
+                   hovLock ? HoverBg : Config.Colors.Black);
+        row++;
+
+        int last = _terminal.Height - 2;
+        foreach (var (text, fg) in DetailLines(r, p))
+        {
+            if (row > last) break;
+            CenterText(x, row++, text, fg);
         }
     }
 
-    private static List<string> CollectRequirements(Routine routine)
+    private IEnumerable<(string, Vector4)> DetailLines(Routine r, Protagonist p)
     {
-        var seen = new HashSet<string>();
-        var list = new List<string>();
-        void Add(string s) { if (seen.Add(s)) list.Add(s); }
+        var plain = Config.Colors.MediumGray60;
+        var head  = Config.Colors.White;
+        switch (r)
+        {
+            case GoToRoutine:
+                yield return ("Opens your narration there, at that hour.", plain);
+                break;
 
-        foreach (var step in routine.Steps)
-            foreach (var c in step.Constraints)
-            {
-                switch (c)
+            case MeetRoutine meet:
+                yield return ($"{meet.NpcName}, {meet.NpcDescription}", head);
+                yield return (RelationText(meet), plain);
+                yield return ("Opens your narration with your eyes on them.", plain);
+                break;
+
+            case TradeRoutine trade:
+                yield return ($"{trade.NpcName}, {trade.NpcDescription}", head);
+                yield return (RelationText(trade), plain);
+                yield return ("", plain);
+                yield return (trade.Mode == TradeMode.Sell ? "WHAT THEY BUY" : "WHAT THEY SELL", head);
+                if (trade.Catalogue.Count == 0)
+                    yield return ("  · nothing", Config.Colors.DarkGray35);
+                foreach (var line in trade.Catalogue)
+                    yield return (CatalogueLine(line), plain);
+                break;
+
+            case WorkRoutine work:
+                yield return ($"{work.NpcName}, {work.NpcDescription}", head);
+                yield return (RelationText(work), plain);
+                yield return ("", plain);
+                if (JobRegistry.Instance.GetById(work.JobId) is { } job)
                 {
-                    case ItemConstraint item when !string.IsNullOrWhiteSpace(item.ItemName):
-                        Add($"item: {item.ItemName}");
-                        break;
-                    case ActingMemberConstraint actor when !string.IsNullOrWhiteSpace(actor.MemberKey):
-                        Add($"with: {actor.MemberKey}");
-                        break;
-                    // No modus mentis line: what a routine needs is what the player must bring to it,
-                    // and the skill it happened to be recorded with is neither brought nor required
-                    // (see RoutineStep.ActionModusMentisId). An item is both, so it stays.
+                    yield return ($"As {job.WithArticle()}", head);
+                    yield return ($"  · pay: one {CoinName(job.PayCoin)} every {job.DaysPerCoin.ToString("0.#", CultureInfo.InvariantCulture)} days", plain);
+                    var trains = job.ModusMentisIds
+                        .Select(id => ModusMentisRegistry.Instance.GetModusMentis(id)?.DisplayName ?? id);
+                    yield return ($"  · trains: {string.Join(", ", trains)}", plain);
                 }
-            }
+                else yield return ($"As {work.JobTitle} — work no longer offered", Config.Colors.DarkGray35);
+                break;
 
-        return list;
-    }
-
-    /// <summary>The concrete result of each step, deduped and in order (e.g. "move to the clearing",
-    /// "gain some moss", "start a fight").</summary>
-    private static List<string> CollectOutcomes(Routine routine)
-    {
-        var seen = new HashSet<string>();
-        var list = new List<string>();
-        void Add(string s) { if (!string.IsNullOrWhiteSpace(s) && seen.Add(s)) list.Add(s); }
-
-        foreach (var step in routine.Steps)
-            Add(DescribeStepOutcome(step));
-
-        if (list.Count == 0) list.Add("no lasting change");
-        return list;
-    }
-
-    /// <summary>
-    /// A human-readable result for one recorded step, derived from its verb and target. Steps that
-    /// hand off to another phase describe that transition; the rest map their verb to the concrete
-    /// world change (moving somewhere, gaining an item, …). Falls back to the recorded verbatim.
-    /// </summary>
-    private static string DescribeStepOutcome(RoutineStep step)
-    {
-        switch (step.TriggeredPhase)
-        {
-            case RoutinePhaseKind.Fight:    return $"start a fight with {StepTargetName(step)}";
-            case RoutinePhaseKind.Dialogue: return $"start a dialogue with {StepTargetName(step)}";
+            case GatherRoutine gather:
+                yield return ($"{gather.ItemName} from {gather.SourceName}", head);
+                yield return (gather.NeedsTool ? $"  · needs: {gather.ToolItemName}" : "  · needs no implement", plain);
+                yield return ($"  · dice today: {GatherYield.Dice(gather, p)} per item", plain);
+                yield return ("", plain);
+                yield return ("Stay some days and take what grows back;", Config.Colors.DarkGray35);
+                yield return ("each item is rolled for, and a failure spoils it.", Config.Colors.DarkGray35);
+                break;
         }
-
-        string t = StepTargetName(step);
-        return step.VerbId switch
-        {
-            "move"           => $"move to {t}",
-            "follow_path"    => $"take {t}",
-            "climb_up"       => $"climb up {t}",
-            "climb_down"     => $"climb down {t}",
-            "go_up_stairs"   => $"go up {t}",
-            "go_down_stairs" => $"go down {t}",
-            "open_door"      => $"go through {t}",
-            "gather" or "grab" or "steal" or "cut" => $"gain {t}",
-            _                => step.DisplayLabel,
-        };
     }
 
-    /// <summary>The step target's recorded display name, or a neutral "it" when none was captured.</summary>
-    private static string StepTargetName(RoutineStep step)
+    private string RelationText(NpcRoutine r)
     {
-        string n = step.Target?.DisplayName?.Trim() ?? "";
-        return n.Length == 0 ? "it" : n;
+        var rel = RelationLookup?.Invoke(r.LocationId, r.NpcId);
+        if (rel is not { } known) return "  · relation: unknown";
+        if (known.Enemy) return "  · relation: counts you an enemy";
+        return $"  · relation: {known.Level.ToShortLabel()}";
     }
+
+    private static string CatalogueLine(TradeLine line)
+    {
+        string price = $"{line.Price}{CoinGlyph(line.Coin)}";
+        const int width = 40;
+        string name = line.Name.Length > width - price.Length - 5 ? line.Name[..(width - price.Length - 6)] + "…" : line.Name;
+        return $"  · {name} {new string('.', Math.Max(1, width - 5 - name.Length - price.Length))} {price}";
+    }
+
+    private static char CoinGlyph(CoinType c) => c switch
+    {
+        CoinType.Gold   => Config.Symbols.GoldCoinSymbol,
+        CoinType.Silver => Config.Symbols.SilverCoinSymbol,
+        _               => Config.Symbols.CopperCoinSymbol,
+    };
+
+    private static string CoinName(CoinType c) => c switch
+    {
+        CoinType.Gold   => "gold",
+        CoinType.Silver => "silver",
+        _               => "copper",
+    };
 
     // ═══════════════════════════════════════════════════════════════
     // Input
     // ═══════════════════════════════════════════════════════════════
 
+    /// <summary>Tracks the cursor; true only when it moved onto a different clickable (or off one).</summary>
     public bool ProcessHover(int x, int y)
     {
-        int newHover = HitTest(x, y);
-        int newCheckbox = (newHover >= 0 && x >= ListX && x < ListX + CheckboxCols) ? newHover : -1;
-        bool newCenterLock = HitTestCenterLock(x, y);
-        if (newHover == _hoveredRow && newCheckbox == _hoveredCheckboxRow
-            && newCenterLock == _hoveredCenterLock) return false;
-        _hoveredRow = newHover;
-        _hoveredCheckboxRow = newCheckbox;
-        _hoveredCenterLock = newCenterLock;
-        return true;
+        string? before = HoverKey();
+        _hover = (x, y);
+        return HoverKey() != before;
     }
 
+    private string? HoverKey()
+        => HoveredCategory() is { } c ? $"category:{c}"
+         : HoveredSlot() is { } s     ? $"slot:{s.Routine.Id}:{_hover.X < s.X + CheckboxCols}"
+         : OverLock()                 ? "lock"
+         : null;
+
     /// <summary>
-    /// Handles a click in the routine list or on the center pane's lock line. Clicking either the
-    /// list checkbox cell or the center lock line toggles the lock; clicking a name selects the
-    /// routine (and refocuses the minimap). Returns true when something changed.
+    /// A click on a kind shows it; on a slot's checkbox toggles its lock; on a slot's name selects it
+    /// (and refocuses the porthole); on the detail's lock line toggles the selected one's lock.
+    /// Returns true when something changed.
     /// </summary>
     public bool ProcessClick(int x, int y, Protagonist protagonist)
     {
-        // Center pane: the selected routine's lock line is a second handle on the same flag.
-        if (HitTestCenterLock(x, y)
-            && _selectedIndex >= 0 && _selectedIndex < protagonist.RecordedRoutines.Count)
+        if (CategoryAt(x, y) is { } c)
         {
-            var selected = protagonist.RecordedRoutines[_selectedIndex];
-            selected.Locked = !selected.Locked;
+            if (c == _category) return false;
+            SelectCategory(c, protagonist);
             return true;
         }
 
-        int idx = HitTestIndex(x, y);
-        if (idx < 0 || idx >= protagonist.RecordedRoutines.Count) return false;
-
-        bool onCheckbox = x >= ListX && x < ListX + CheckboxCols;
-        if (onCheckbox)
+        if (SlotAt(x, y) is { } slot)
         {
-            protagonist.RecordedRoutines[idx].Locked = !protagonist.RecordedRoutines[idx].Locked;
-            return true;
-        }
-
-        if (_selectedIndex != idx)
-        {
-            _selectedIndex = idx;
+            if (x < slot.X + CheckboxCols)
+            {
+                slot.Routine.Locked = !slot.Routine.Locked;
+                return true;
+            }
+            _selectedId[_category] = slot.Routine.Id;
             FireFocus(protagonist, force: false);
+            return true;
+        }
+
+        if (OverLock(x, y) && Selected(protagonist) is { } selected)
+        {
+            selected.Locked = !selected.Locked;
             return true;
         }
         return false;
     }
 
+    private RoutineCategory? HoveredCategory() => CategoryAt(_hover.X, _hover.Y);
+    private (int Row, int X, Routine Routine)? HoveredSlot() => SlotAt(_hover.X, _hover.Y);
+    private bool OverLock() => OverLock(_hover.X, _hover.Y);
+
+    private RoutineCategory? CategoryAt(int x, int y)
+    {
+        if (x < ListX || x >= ListX + ListWidth) return null;
+        foreach (var (row, c) in _categoryRows)
+            if (row == y) return c;
+        return null;
+    }
+
+    private (int Row, int X, Routine Routine)? SlotAt(int x, int y)
+    {
+        foreach (var s in _slotRows)
+            if (s.Row == y && x >= s.X && x < s.X + ColumnWidth) return s;
+        return null;
+    }
+
+    private bool OverLock(int x, int y)
+        => _lockRow >= 0 && y == _lockRow && x >= CenterLeft && x < CenterLeft + _lockWidth;
+
     private void FireFocus(Protagonist protagonist, bool force)
     {
-        if (_selectedIndex < 0 || _selectedIndex >= protagonist.RecordedRoutines.Count) return;
-        int locId = protagonist.RecordedRoutines[_selectedIndex].LocationId;
-        if (!force && locId == _lastFocusedLocationId) return;
-        _lastFocusedLocationId = locId;
-        OnRoutineFocused?.Invoke(locId);
-    }
-
-    private int HitTest(int x, int y)
-    {
-        if (x < ListX || x >= ListX + ListWidth) return -1;
-        foreach (var (row, _) in _hitRows)
-            if (y == row) return row;
-        return -1;
-    }
-
-    /// <summary>True when (x, y) falls on the center pane's lock line for the selected routine.</summary>
-    private bool HitTestCenterLock(int x, int y) =>
-        _centerLockRow >= 0 && y == _centerLockRow
-        && x >= CenterLeft && x < CenterLeft + _centerLockWidth;
-
-    private int HitTestIndex(int x, int y)
-    {
-        if (x < ListX || x >= ListX + ListWidth) return -1;
-        foreach (var (row, routineIndex) in _hitRows)
-            if (y == row) return routineIndex;
-        return -1;
+        var r = Selected(protagonist);
+        if (r == null) return;
+        if (!force && r.LocationId == _lastFocusedLocationId) return;
+        _lastFocusedLocationId = r.LocationId;
+        OnRoutineFocused?.Invoke(r.LocationId);
     }
 
     // ═══════════════════════════════════════════════════════════════
     // Drawing helpers
     // ═══════════════════════════════════════════════════════════════
 
-    /// <summary>Draws text in the center pane, truncated to the pane width.</summary>
-    private void CenterText(int x, int y, string text, Vector4 fg)
+    private void DottedHLine(int y)
+    {
+        for (int gx = CenterLeft; gx <= CenterRight; gx += 2)
+            _terminal.SetCell(gx, y, '─', Config.Colors.DarkGray35, Config.Colors.Black);
+    }
+
+    /// <summary>Draws text in the centre, truncated to its width.</summary>
+    private void CenterText(int x, int y, string text, Vector4 fg, Vector4? bg = null)
     {
         if (string.IsNullOrEmpty(text)) return;
         if (text.Length > CenterWidth) text = text.Substring(0, CenterWidth - 1) + "…";
-        _terminal.Text(x, y, text, fg, Config.Colors.Black);
+        _terminal.Text(x, y, text, fg, bg ?? Config.Colors.Black);
     }
 }

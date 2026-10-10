@@ -64,10 +64,6 @@ public class SlayVerb : Verb
             ? $"slay {NpcPronoun(target)}"
             : $"slay the {target.DisplayName.ToLowerInvariant()}";
 
-    // Read out of context in the routines menu, so the pronoun is replaced by the name.
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
-        => $"slay {NpcName(target)}";
-
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         if (target is not SceneNpc npc) return System.Array.Empty<Outcome>();

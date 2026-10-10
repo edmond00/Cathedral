@@ -151,16 +151,21 @@ Run `help` for the authoritative list. The essentials:
   travel neighbour          plan a route to any bordering vertex — leaving, without naming where
   travel back               plan a route to the last location entered that is not this one.
                             Together these two are how a script makes a ROUND TRIP, which is the
-                            only way to reach routine replay (a routine replays on ARRIVAL): the
+                            only way to walk a routine (a routine is entered on ARRIVAL): the
                             vertex a run starts on is whatever the seed put under the avatar, and
                             `travel <name>` prefers the vertex underfoot — it would walk straight
                             back into the location it is trying to leave
-  routines                  list the routines the planned destination offers (opens the box)
-  routines <n>              replay routine n there — picks it and sets out
-  routines continue         press CONTINUE on the post-replay outcome box, which applies the
-                            phase the routine ended on (narration, a dialogue, trade, or work)
+  routines                  list the routines the planned destination offers (opens the box),
+                            each with its kind and, when greyed, why
+  routines <n|kind>         pick routine n — or the first walkable of a kind (goto, meet, gather,
+                            buy, sell, work) — and set out. Entered on arrival: narration (goto,
+                            meet), the trade or work menu, or the gathering phase
+  gather days <n>|start|continue|leave
+                            drive the gathering phase (GameMode.Gathering, only a Gather routine
+                            opens it). `start` rolls at once. Assert with `inspect gather`
   manage [tab]              open/close the protagonist screen; with a tab name
-                            (Anatomy / Inventory / Memory / Humors / …) open it there
+                            (Anatomy / Inventory / Memory / Humors / …) open it there.
+                            `manage Routines <kind>` shows that kind's slots
   select [item name]        show a carried item's info panel; bare `select` lists what
                             is carried (open `manage Inventory` first). The starting kit
                             is random but seed-stable, so discover the names on one run
@@ -199,12 +204,20 @@ Run `help` for the authoritative list. The essentials:
   advance [presses] [secs]  settle, then press the preview box's CONTINUE until it is gone.
                             USE THIS, not a bare `click continue`, to get from a keyword click
                             to the action list — see the trap below
-  wait [secs] | wait mode <GameMode> [secs]
+  wait [secs] | wait mode <GameMode> [secs] | wait embeddings [secs]
+                            `wait embeddings` blocks until the ~6s word-vector load is done.
+                            Put it before the footer press that opens a SECOND phase you will
+                            click a keyword in: whether the vectors have arrived decides which
+                            keyword that phase highlights, so without it the script races the load
   inspect [subject]         the game state an outcome can change, by STABLE id — items, coins,
                             where, party, wounds, skills, npcs, pois, routines, or all. What
                             cli/outcome/ reads: `expect` scans the SCREEN, this reads the world.
+                            `where` carries trespass=yes|no (the header's ◆ TRESPASSING ◆);
+                            `opening` what the phase's first observation was put on (a Meet
+                            routine's person); `routine-slots` each kind's used/usable/grid;
+                            `gather` the gathering phase's forecast and yield.
                             `routines` is answerable with NO narration in progress, because a
-                            session's trailing routine is finalised as that session ENDS — reading
+                            session's Go to routine is learned as that session ENDS — reading
                             it from inside the location reads a moment too early.
                             `world-regions` is answerable at the WORLD MAP and carries the region
                             division: counts, the region under the avatar, and two numbers about

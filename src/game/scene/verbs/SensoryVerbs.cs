@@ -3,7 +3,6 @@ using System.Linq;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Npc;
 using Cathedral.Game.Npc.Corpse;
-using Cathedral.Game.Narrative.Routines;
 
 using Cathedral.Game.Narrative.ModiMentis;
 
@@ -81,12 +80,6 @@ public abstract class SensoryVerb : Verb
 
     // No SuccessReports: the narration is the outcome. The modus-mentis grant is appended by the
     // execution pipeline from GrantedModusMentisId, as it is for every other verb.
-
-    // Not recordable as a routine. A routine replays without narration, and the narration is all
-    // there is here — a replayed "smell the flowers" would be a step that does nothing at all.
-
-    public override RoutinePhaseKind RoutineTriggeredPhase(Scene scene, PoV pov, Element target)
-        => RoutinePhaseKind.Narration;
 }
 
 /// <summary>

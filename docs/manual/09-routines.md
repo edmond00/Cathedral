@@ -1,115 +1,94 @@
 # IX. Of Routines
 
-A **routine** is a thing the body learned to do at a particular place, at a particular hour, and can
-afterwards do again without living through it. Routines are the memory of practice, as distinct from
-the memory of modi mentis: what is stored is not a faculty but a walk.
+A **routine** is a way into a place the body already knows. It is not a record of what was done but
+of where the body ended up, and when, and what it was there for: an **area**, a **period of the
+day**, and the **phase** that opens there. Walking a routine sets the body down in that area at that
+hour, past every path, door, climb and crossing between the location's edge and the spot — the way is
+known, and is not walked again.
 
-## 1. What is recorded
+## 1. The six kinds
 
-A session of narration records itself. Every **successful** act of a recordable kind becomes a
-**step**, carrying:
+| Kind | Learned when | Walking it opens |
+|---|---|---|
+| **Go to** | the body leaves a location from an area other than the one its visit opened in | narration, in that area |
+| **Meet** | a conversation is opened with someone | narration in their area, its first observation upon them |
+| **Gather** | an item is successfully gathered, dug, mined, fished or cut | the gathering stay (§4) |
+| **Buy** | a merchant agrees to sell | the barter, buying, with no conversation before it |
+| **Sell** | a merchant agrees to buy | the barter, selling, with no conversation before it |
+| **Work** | a master agrees to take the body on | the stint of work, with no conversation before it |
 
-- what was done, and in what manner;
-- a **stable reference** to the thing acted upon — an area, a point of interest, a person, an item —
-  by which it can be found again in a scene rebuilt from nothing;
-- the particular form the act took, where it admitted of several;
-- the **constraints** the step required or consumed;
-- the phrase describing what was done, and a plainer label for the reader;
-- the phase, if any, the step hands off to.
+A conversation that came to the body unbidden — a confrontation over something seen — teaches
+nothing: nobody goes back to be caught again.
 
-Failed acts never reach the recorder and are ignored without special provision.
+Each routine is bound to its location, its area and the period in which it was learned. The same
+thing learned twice, at the same place and hour, is kept once. The same thing learned at another hour
+is another routine, since who is present and what is possible differ by the hour.
 
-The session's **location and period** become the binding of everything it emits. A routine may be
-replayed only at that place, and it replays from the point at which the session entered it.
+## 2. Where nothing is learned
 
-## 2. Termini and prefixes
+**No routine is learned on private ground.** Standing where one has no business is itself a trespass
+(see [VI §7](06-narration.md)), and a routine learned there would be a standing invitation back,
+walked with none of the risk. The one test serves both rules: ground that makes every act a crime is
+ground that teaches no routine, and a routine whose area has become private cannot be walked.
 
-Every recordable step is one of exactly two things, and this is the whole of the rule.
+Nothing made during a visit is learned from either. A corpse, the wreck of broken furniture and what
+either holds are absent from the scene of the next visit, so a gathering upon them teaches nothing.
 
-**A repositioning step** moves the point of view — in space (walking to the slope, climbing the
-cliff) or in time (waiting until noon). It is not something the body set out to do; it is how the
-body got somewhere. Time of day is scene state exactly as place is, since it decides who is present
-and therefore what is possible at all. A repositioning step joins the **prefix** and emits nothing
-of itself.
+## 3. Whether a routine can be walked
 
-**A terminus** is anything else: gathering bark, speaking to a neighbour, asking for work — a piece
-of work standing by itself. A terminus **emits a routine there and then**, composed of the prefix so
-far plus the terminus itself, and the session goes on recording.
+A routine is checked against the location as it stands, built afresh, before it may be chosen, and
+once more on arrival. Each kind asks its own question; the area must in every case still exist and
+still be open ground.
 
-Whence an afternoon spent walking to a field, gathering, and speaking to two people is remembered as
-**three** routines — not one chain that replays only if all of it is wanted. The second
-conversation's routine leaves out the first; the walk's routine leaves out the bark gathered on the
-way.
+| Kind | Cannot be walked when |
+|---|---|
+| Go to | — |
+| Meet | the person is gone for good, is elsewhere at that hour, or counts the body an enemy |
+| Buy, Sell | as Meet; or the merchant would no longer trade (see [VII](07-social.md)); or an enemy stands in the area |
+| Work | as Meet; or the work is no longer offered, or the master would not take the body on; or an enemy stands in the area |
+| Gather | the source is gone; nothing of the item grows there at all; the body's anatomy cannot perform the manner of taking it; the implement it was learned with is not carried; or an enemy stands in the area |
 
-A prefix left trailing when narration ends is emitted as a routine in its own right: following a
-track to the beds and stopping there is a routine for going to the beds.
+Companions are not consulted, nor anything done on the way the first time: the way is known. The only
+thing a routine requires the body to bring is **the implement a gathering was learned with** — a seam
+learned with a pick is not worked without one. It is required, never spent.
 
-Three further provisions:
+A routine found unwalkable on arrival is abandoned, and the visit proceeds as any ordinary arrival.
 
-- A successful act of a kind that cannot be recorded is **skipped**, the chain closing over it and
-  recording continuing. Catching a creature, breaking furniture, slaying, recruiting, a fight and a
-  conversation are all passed over so. The test is whether leaving the act out would make the
-  routine around it wrong: an effect that lasts to the next visit — a death, a departure, a grudge —
-  holds at replay as well, and one that does not, such as a creature removed, is relied upon by no
-  later step.
-- Recording **stops** only where the act moved the frame by means a replay will not have. The
-  forcing of a lock is the case: it carries the body through a door that the rebuilt scene keeps
-  shut, and a routine left without it would walk from the wrong side.
-- **Nothing made during the visit is recorded.** A corpse, the wreck of broken furniture and what
-  either holds are absent from the scene a replay rebuilds, so an act upon them is skipped like any
-  unrecordable act. This is what makes the skipping of the slaying and the breaking safe: what they
-  made reachable cannot enter a routine.
-- A step handing off to a fight or a conversation is **always** a terminus.
+## 4. The gathering stay
 
-## 3. Constraints
+A Gather routine opens a phase reached by no other means: a **stay** of a chosen number of days at
+the source, from one to three hundred and sixty.
 
-A step carries with it what it requires, so that the requirement travels with the step and is
-re-checked at replay rather than being assumed.
+**The source has slots, and each regrows.** They are the same item slots that are picked by hand,
+with the same regrowth: a slot taken is empty for ninety days where it grows wild, and for three
+hundred and sixty where it is kept or cultivated. A slot taken by hand is as empty to a stay, and a slot taken in a stay is as
+empty to the hand.
 
-**An item is a constraint.** It is spent, and without it the step genuinely cannot happen. It is
-therefore both a precondition of replay and a line in the routine's stated requirements.
+**Each slot offers an attempt** as soon as it is full, and another each time it has regrown within
+the stay. A short stay takes what is there now; a long one waits for the season.
 
-**The modus mentis used is recorded but not required.** A routine is a thing *you* learned to do,
-not a thing one particular skill learned to do: having forgotten the modus mentis you happened to
-use the first time is no reason to be unable to walk the same walk again. It is kept only because
-replay re-runs the coded rules of action, and morality is read off the acting modus mentis — a
-forgotten modus mentis degrades that check rather than blocking the step.
+**Each attempt is rolled.** The dice are the present levels of the modi mentis of the chain the
+gathering was learned with — observation, thinking and action, as they now stand, a modus mentis
+since forgotten adding nothing — plus the usage level of the implement, if one is required. Never
+fewer than one die. The sixes required are the manner's own difficulty. A success takes the item.
+**A failure spoils it**: the slot is emptied all the same and must regrow, so a clumsy hand costs
+time rather than nothing.
 
-## 4. The store
+**Nothing is taken that cannot be carried.** Once the body cannot hold another item, the stay runs its
+course but no further attempt is made, and the slots not attempted are left as they were.
 
-Learned routines are held in a store sized by the **anamnesis**, at **ten routines per level of the
-organ**, never fewer than ten. It is a queue: what enters at the front pushes the oldest out.
+The clock moves on by the whole stay. When it ends the body returns to the world, not to the
+location: the scene arrived in is long stale.
 
-## 5. Replay
+## 5. The store
 
-A routine may be replayed on arriving at its location. Replay is **headless**: no narration is
-written, no deliberation happens, no critic is consulted and **no dice are cast**. Each step's
-success is simply applied.
+Routines are held **kind by kind**. Each kind has as many slots as **four per point of the
+anamnesis**, never fewer than four; the six kinds fill independently, so many walks never crowd out
+the one merchant known.
 
-Replay proceeds against a **freshly built scene**, and each step is checked in turn:
-
-1. The thing acted upon is **resolved anew** in that scene, by its stable reference. If it is no
-   longer there, replay fails at that step and says so.
-2. The manner of acting is resolved for the scene.
-3. The coded rules of action are re-run.
-4. The constraints are consumed.
-5. The consequences of its success are applied for real.
-
-A routine may also be replayed **virtually** — every step validated against a fresh scene without
-touching any real state — which is how a routine that can no longer be performed is known to be
-unperformable before it is attempted.
-
-Because pruning drops every step that was neither prefix nor terminus, only scene state created by a
-dropped step could be missed. That surfaces as a routine that reports itself unreplayable, never as
-a replay that goes wrong quietly.
-
-**Replay honours the acting body.** Every gate a routine re-runs consults the member actually
-performing the step, exactly as narration does — a companion replaying a routine is subject to its
-own anatomy and capabilities.
-
-The phase the routine's last step hands off to — a fresh narration, a conversation, a barter, a
-stint of work — is entered on the routine's completion. A routine is therefore a way of arriving
-directly at the interesting part of a visit already made.
+When a kind is full, learning another of it forgets the **oldest** of that kind. A routine may be
+**kept**: a kept routine is never forgotten to make room, and when every routine of a kind is kept, a
+new one of that kind is not learned.
 
 ---
 

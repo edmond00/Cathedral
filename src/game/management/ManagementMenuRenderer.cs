@@ -4,6 +4,7 @@ using OpenTK.Mathematics;
 using Cathedral.Terminal;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Creation;
 
 namespace Cathedral.Game.Management;
@@ -125,6 +126,28 @@ public class ManagementMenuRenderer
 
     /// <summary>Fired when the Routines tab is left (tab switch or Back) so the host can restore camera/world state.</summary>
     public Action? OnRoutinesPortholeClosed { get; set; }
+
+    /// <summary>
+    /// How a routine's person stands with the protagonist, by location id and persistent NPC id — the
+    /// host owns the location memory this is read from. See <see cref="RoutinesPanelRenderer.RelationLookup"/>.
+    /// </summary>
+    public Func<int, string, (Cathedral.Game.Dialogue.Affinity.AffinityLevel Level, bool Enemy)?>? RoutineRelationLookup
+    {
+        get => _routinesPanel.RelationLookup;
+        set => _routinesPanel.RelationLookup = value;
+    }
+
+    /// <summary>Shows one kind of routine on the Routines tab, for <c>--cli</c>. False for an unknown kind.</summary>
+    public bool CliSelectRoutineCategory(string id)
+    {
+        var category = Cathedral.Game.Narrative.Routines.RoutineCategories.All
+            .Cast<Cathedral.Game.Narrative.Routines.RoutineCategory?>()
+            .FirstOrDefault(c => c!.Value.CliId() == id.Trim().ToLowerInvariant());
+        if (category == null || !CliSelectTab("Routines")) return false;
+        _routinesPanel.SelectCategory(category.Value, _protagonist);
+        Render();
+        return true;
+    }
 
     public ManagementMenuRenderer(TerminalHUD terminal, Protagonist protagonist, BodyArtData artData,
                                    PopupTerminalHUD? popup = null)

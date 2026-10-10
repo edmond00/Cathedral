@@ -44,8 +44,8 @@ goes, and what it does when it arrives.
 8. [Combat](08-fighting.md) — the turn and its cinetic points; mediums and the skills they bear; the
    blow that opens a fight; the attack and defence pools; wounds, status, terrain and flight; the two
    ways to fall and what decides the field.
-9. [Routines](09-routines.md) — what a session leaves behind, and how it is walked again without
-   being lived again.
+9. [Routines](09-routines.md) — the ways into a place the body already knows: the six kinds, where
+   none is learned, what each requires, the gathering stay, and the slots that hold them.
 
 ## A note on numbers
 

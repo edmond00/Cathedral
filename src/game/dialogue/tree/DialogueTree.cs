@@ -115,12 +115,6 @@ public abstract class DialogueTree
     public abstract IReadOnlyList<Outcome> FailureOutcomes { get; }
 
     /// <summary>
-    /// How a successful trigger of this dialogue interacts with routine recording/replay.
-    /// Default: <see cref="DialogueRoutineBehavior.Interrupt"/> (recording stops before the dialogue).
-    /// </summary>
-    public virtual DialogueRoutineBehavior RoutineBehavior => DialogueRoutineBehavior.Interrupt;
-
-    /// <summary>
     /// The modus mentis a successful resolution of this tree teaches, or null to teach nothing beyond
     /// the experience the chosen replies already earn. Applied by the same known-vs-unknown rule
     /// verbs use — see <c>ModusMentisGrantOutcome</c>.
@@ -170,25 +164,4 @@ public abstract class DialogueTree
     /// with the party member identified by <paramref name="partyMemberId"/>.
     /// </summary>
     public abstract bool IsAvailable(NpcEntity npc, string partyMemberId);
-}
-
-/// <summary>
-/// How a dialogue tree participates in routine recording when a recordable verb triggers it.
-/// </summary>
-public enum DialogueRoutineBehavior
-{
-    /// <summary>Recording stops before the dialogue; the dialogue is never part of the routine.</summary>
-    Interrupt,
-
-    /// <summary>
-    /// The dialogue-trigger step is recorded. Replaying the routine starts the dialogue directly;
-    /// the dialogue's success is not recorded (it is rolled live each replay).
-    /// </summary>
-    IncludeTrigger,
-
-    /// <summary>
-    /// The dialogue's success is baked into the routine. Replaying skips the dialogue and opens the
-    /// follow-on phase (trade / work menu) directly.
-    /// </summary>
-    IncludeSuccess,
 }

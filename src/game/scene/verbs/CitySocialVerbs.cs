@@ -25,9 +25,6 @@ public class CommissionWorkVerb : SocialDialogueVerb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"ask {NpcPronoun(target)} to make something for me";
 
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
-        => $"commission work from {NpcName(target)}";
-
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         var npc = Who(scene, pov, target, actor);
@@ -56,9 +53,6 @@ public class AskRemedyVerb : SocialDialogueVerb
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"ask {NpcPronoun(target)} for a remedy";
-
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
-        => $"ask {NpcName(target)} for a remedy";
 
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
@@ -89,9 +83,6 @@ public class GiveAlmsVerb : SocialDialogueVerb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"give {NpcPronoun(target)} alms";
 
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
-        => $"give alms to {NpcName(target)}";
-
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         var npc = Who(scene, pov, target, actor);
@@ -117,9 +108,6 @@ public class HearGossipVerb : SocialDialogueVerb
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"ask {NpcPronoun(target)} what is being said in town";
-
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
-        => $"hear the gossip from {NpcName(target)}";
 
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {

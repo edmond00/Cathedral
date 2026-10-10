@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Cathedral.Game.Narrative;
-using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Npc;
 using Cathedral.Game.Npc.Archetypes;
 
@@ -29,9 +28,6 @@ public class AskBlessingVerb : SocialDialogueVerb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"ask {NpcPronoun(target)} for a blessing";
 
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
-        => $"ask a blessing of {NpcName(target)}";
-
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         var npc = Who(scene, pov, target, actor);
@@ -57,9 +53,6 @@ public class ConfessVerb : SocialDialogueVerb
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"confess something to {NpcPronoun(target)}";
-
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
-        => $"confess to {NpcName(target)}";
 
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
@@ -90,9 +83,6 @@ public class PetitionVerb : SocialDialogueVerb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"put a petition to {NpcPronoun(target)}";
 
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
-        => $"petition {NpcName(target)}";
-
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         var npc = Who(scene, pov, target, actor);
@@ -119,9 +109,6 @@ public class TalkSoldieringVerb : SocialDialogueVerb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"talk soldiering with {NpcPronoun(target)}";
 
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
-        => $"talk soldiering with {NpcName(target)}";
-
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         var npc = Who(scene, pov, target, actor);
@@ -147,9 +134,6 @@ public class TalkOfFarPlacesVerb : SocialDialogueVerb
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"ask {NpcPronoun(target)} about the places they have been";
-
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
-        => $"talk of far places with {NpcName(target)}";
 
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
@@ -180,9 +164,6 @@ public class OfferBribeVerb : SocialDialogueVerb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"slip {NpcPronoun(target)} something to look the other way";
 
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
-        => $"offer {NpcName(target)} a bribe";
-
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         var npc = Who(scene, pov, target, actor);
@@ -209,9 +190,6 @@ public class AskTeachingVerb : SocialDialogueVerb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"ask {NpcPronoun(target)} to teach me something";
 
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
-        => $"ask {NpcName(target)} to teach you";
-
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         var npc = Who(scene, pov, target, actor);
@@ -237,9 +215,6 @@ public class SingAlongVerb : SocialDialogueVerb
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"join in with whatever {NpcPronoun(target)} is singing";
-
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
-        => $"sing along with {NpcName(target)}";
 
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {

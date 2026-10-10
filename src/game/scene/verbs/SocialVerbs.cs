@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Narrative;
-using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Npc;
 
 using Cathedral.Game.Narrative.ModiMentis;
@@ -68,9 +67,6 @@ public class BegForCoinVerb : SocialDialogueVerb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"ask {NpcPronoun(target)} for a coin";
 
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
-        => $"beg a coin from {NpcName(target)}";
-
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         var npc = Available(scene, pov, target, actor);
@@ -114,9 +110,6 @@ public class ProvokeVerb : SocialDialogueVerb
         => $"insult {NpcPronoun(target)} to {NpcPossessive(target)} face, to make {NpcPronoun(target)} " +
            "fight me, the two of us alone";
 
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
-        => $"provoke {NpcName(target)}";
-
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         var npc = Available(scene, pov, target, actor);
@@ -159,9 +152,6 @@ public class ProposeToJoinVerb : SocialDialogueVerb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"ask {NpcPronoun(target)} to come away with me";
 
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
-        => $"ask {NpcName(target)} to travel with me";
-
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         var npc = Available(scene, pov, target, actor);
@@ -192,9 +182,6 @@ public class GatherKnowledgeVerb : SocialDialogueVerb
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"ask {NpcPronoun(target)} what {NpcSubjectPronoun(target)} knows";
-
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
-        => $"ask {NpcName(target)} what they know";
 
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
@@ -259,9 +246,6 @@ public class PickpocketVerb : Verb
             ? "go through their pockets while they sleep"
             : $"go through {NpcPossessive(target)} pockets";
 
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
-        => $"pick {SleeperGate.Name(target)}'s pocket";
-
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         var sceneNpc = target as SceneNpc ?? (target as SleepingNpcPointOfInterest)?.Sleeper;
@@ -285,9 +269,4 @@ public class PickpocketVerb : Verb
 
         return reports;
     }
-
-    // Not recordable: whose pocket, and what is in it, is not stable across a rebuild.
-
-    public override RoutinePhaseKind RoutineTriggeredPhase(Scene scene, PoV pov, Element target)
-        => RoutinePhaseKind.Narration;
 }

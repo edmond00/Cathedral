@@ -64,10 +64,6 @@ public class AttackVerb : Verb
             ? $"attack {NpcPronoun(target)}"
             : $"attack {DefiniteTarget(target)}";
 
-    // Read out of context in the routines menu, so the pronoun is replaced by the name.
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
-        => $"attack {NpcName(target)}";
-
     /// <summary>
     /// The first blow, what follows from it, and what it taught — in that order, which is the order
     /// they read in as chips.

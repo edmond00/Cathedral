@@ -14,6 +14,7 @@ using Cathedral.LLM;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Items;
 using Cathedral.Game.Narrative.ModiMentis;
+using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Narrative.Sanitizer;
 using Cathedral.Game.Npc;
 using Cathedral.Game.Scene;
@@ -53,7 +54,8 @@ public class LocationTravelGameController : IDisposable
     private DialogueTreeAdapter? _dialogueAdapter = null;
     private TradeMenuAdapter? _tradeAdapter = null;
     private WorkMenuAdapter?  _workAdapter  = null;
-    
+    private GatherMenuAdapter? _gatherAdapter = null;
+
     // LLM loading screen
     private LLMLoadingRenderer? _llmLoadingRenderer;
     private volatile bool _llmBecameReady = false;
@@ -93,12 +95,9 @@ public class LocationTravelGameController : IDisposable
     // Old-age notice shown at the start of WorldView when companions have outlived their lifetime.
     private CompanionDeathBox? _companionDeathBox;
 
-    // Routine replay: list box (travel UI), outcome box (after replay), engine and pending state.
+    // Routines: the list box on the travel plan, and the routine to enter once the trip arrives.
     private TravelRoutinesBox? _travelRoutinesBox;
-    private RoutineOutcomeBox? _routineOutcomeBox;
-    private readonly Cathedral.Game.Narrative.Routines.RoutineReplayEngine _routineReplayEngine = new();
     private Cathedral.Game.Narrative.Routines.Routine? _pendingReplayRoutine;
-    private Cathedral.Game.Narrative.PhaseTransition? _replayFinalTransition;
 
     // Game state
     private GameMode _currentMode;
@@ -108,7 +107,7 @@ public class LocationTravelGameController : IDisposable
     /// <summary>
     /// The last location the player was actually inside, kept after they leave it (unlike
     /// <see cref="_currentLocationVertex"/>, which resets to -1). Exists for the CLI's
-    /// <c>travel back</c>: a round trip is the only way to reach routine replay, and a script cannot
+    /// <c>travel back</c>: a round trip is the only way to walk a routine, and a script cannot
     /// name the vertex it started on — it is whatever the seed put under the avatar.
     /// </summary>
     private int _lastLocationVertex = -1;
@@ -247,6 +246,7 @@ public class LocationTravelGameController : IDisposable
         _fightAdapter != null    ? GameMode.Fighting
         : _dialogueAdapter != null ? GameMode.Dialogue
         : _workAdapter != null   ? GameMode.Working
+        : _gatherAdapter != null ? GameMode.Gathering
         : _tradeAdapter != null  ? GameMode.Trading
         // Narration covers THREE phases — exploration, childhood and get-up — all of which run on
         // one _narrativeController with _isInNarrativeMode set. Returning a flat LocationInteraction
@@ -698,6 +698,11 @@ public class LocationTravelGameController : IDisposable
         _currentMode == GameMode.ProtagonistManagement
         && _managementMenuRenderer?.CliSelectTab(tabName) == true;
 
+    /// <summary>Shows one kind's slots on the Routines tab (goto, meet, gather, buy, sell, work).</summary>
+    public bool CliSelectRoutineCategory(string kind) =>
+        _currentMode == GameMode.ProtagonistManagement
+        && _managementMenuRenderer?.CliSelectRoutineCategory(kind) == true;
+
     /// <summary>Tab labels available on the management screen, or empty when it is closed.</summary>
     public IReadOnlyList<string> CliManagementTabs =>
         _managementMenuRenderer?.CliTabNames ?? Array.Empty<string>();
@@ -1091,6 +1096,14 @@ public class LocationTravelGameController : IDisposable
                 return;
             }
 
+            if (_currentMode == GameMode.Gathering && _gatherAdapter != null)
+            {
+                _gatherAdapter.Update();
+                if (_gatherAdapter.HasRequestedExit)
+                    OnGatherCompleted();
+                return;
+            }
+
             // If popup is visible, handle all mouse updates here for consistent frame-rate timing
             // This ensures uniform refresh rate across the entire popup (both inside and outside terminal bounds)
             if (_narrativeController.IsPopupVisible && _core.Terminal != null)
@@ -1174,13 +1187,7 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
-        // Routine outcome box (after a replay) and routine list box (from travel UI) are modal.
-        if (_currentMode == GameMode.WorldView && _routineOutcomeBox != null)
-        {
-            _routineOutcomeBox.Render();
-            UpdatePopupTerminal();
-            return;
-        }
+        // The routine list box (from the travel UI) is modal.
         if (_currentMode == GameMode.WorldView && _travelRoutinesBox != null)
         {
             _travelRoutinesBox.Render();
@@ -1473,21 +1480,6 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
-        // Routine outcome box is modal: CONTINUE applies the replay's final phase transition.
-        if (_currentMode == GameMode.WorldView && _routineOutcomeBox != null)
-        {
-            if (_routineOutcomeBox.OnMouseClick(x, y))
-            {
-                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
-                var transition = _replayFinalTransition ?? Cathedral.Game.Narrative.ReturnToTravelTransition.Instance;
-                _routineOutcomeBox    = null;
-                _replayFinalTransition = null;
-                _core.Terminal?.Clear(); // wipe the modal box before the next phase paints
-                ApplyPhaseTransition(transition);
-            }
-            return;
-        }
-
         // Routine list box is modal: select a replayable routine, or RETURN to the travel plan.
         if (_currentMode == GameMode.WorldView && _travelRoutinesBox != null)
         {
@@ -1677,6 +1669,14 @@ public class LocationTravelGameController : IDisposable
                 return;
             }
 
+            if (_currentMode == GameMode.Gathering && _gatherAdapter != null)
+            {
+                if (_gatherAdapter.GetHoveredControlId(x, y) != null)
+                    _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+                _gatherAdapter.OnMouseClick(x, y);
+                return;
+            }
+
             // If popup is visible, use raw mouse coordinates
             if (_narrativeController.IsPopupVisible)
             {
@@ -1767,6 +1767,7 @@ public class LocationTravelGameController : IDisposable
         // in silence, which reads as an unresponsive screen next to the menus either side of it.
         GameMode.Trading => _tradeAdapter?.GetHoveredControlId(x, y),
         GameMode.Working => _workAdapter?.GetHoveredControlId(x, y),
+        GameMode.Gathering => _gatherAdapter?.GetHoveredControlId(x, y),
         GameMode.MainMenu => _mainMenuRenderer?.GetEnabledButtonAtPosition(x, y) is { } i and >= 0
             ? $"menu:{i}" : null,
         GameMode.Settings => _settingsMenuRenderer?.GetHoveredControlId(x, y),
@@ -1809,13 +1810,7 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
-        // Routine boxes are modal: route hover to whichever is shown.
-        if (_currentMode == GameMode.WorldView && _routineOutcomeBox != null)
-        {
-            if (_routineOutcomeBox.OnMouseMove(x, y))
-                _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
-            return;
-        }
+        // The routine box is modal: route hover to it.
         if (_currentMode == GameMode.WorldView && _travelRoutinesBox != null)
         {
             if (_travelRoutinesBox.OnMouseMove(x, y))
@@ -1936,6 +1931,12 @@ public class LocationTravelGameController : IDisposable
                 return;
             }
 
+            if (_currentMode == GameMode.Gathering && _gatherAdapter != null)
+            {
+                _gatherAdapter.OnMouseMove(x, y);
+                return;
+            }
+
             // When popup is visible, mouse updates are handled in Update() loop for consistent timing
             // Only handle non-popup interactions here
             if (!_narrativeController.IsPopupVisible)
@@ -1994,6 +1995,9 @@ public class LocationTravelGameController : IDisposable
                 _workAdapter.OnMouseWheel(delta);
                 return;
             }
+
+            if (_currentMode == GameMode.Gathering && _gatherAdapter != null)
+                return;   // nothing scrolls
 
             _narrativeController.OnMouseWheel(delta);
             return;
@@ -2126,6 +2130,7 @@ public class LocationTravelGameController : IDisposable
                 break;
 
             case GameMode.Working:
+            case GameMode.Gathering:
                 OnEnterWorking();
                 break;
 
@@ -2550,14 +2555,14 @@ public class LocationTravelGameController : IDisposable
         // the NEXT journey running its whole progress UI with the avatar standing still.
         _interface.MovementPaused = false;
 
-        // Routine replay: if the player launched travel from the routine box and the routine belongs
-        // to this destination, replay it instead of starting a fresh narration phase.
+        // A routine chosen from the routine box enters its own area, hour and phase instead of the
+        // ordinary arrival.
         if (_pendingReplayRoutine != null && _pendingReplayRoutine.LocationId == vertexIndex)
         {
             var routine = _pendingReplayRoutine;
             _pendingReplayRoutine  = null;
             _currentLocationVertex = vertexIndex;
-            StartRoutineReplay(vertexIndex, routine);
+            EnterRoutine(vertexIndex, routine);
             return;
         }
         _pendingReplayRoutine = null;
@@ -3012,7 +3017,6 @@ public class LocationTravelGameController : IDisposable
     private bool CameraPadActive
         => (_currentMode == GameMode.WorldSelection
             || (_currentMode == GameMode.WorldView && _companionRemovalRenderer == null
-                                                   && _routineOutcomeBox == null
                                                    && _travelRoutinesBox == null))
            && _cameraArrowPad != null;
 
@@ -3372,7 +3376,19 @@ public class LocationTravelGameController : IDisposable
             };
             _managementMenuRenderer.OnRoutinesPortholeClosed = () =>
                 _core.SetNarrationMode(true); // restore dark world shading for the other tabs
-            
+
+            // A Meet/Buy/Sell/Work routine's detail shows how its person stands with you today, read
+            // from the location's memory (keyed by persistent id) without building the scene.
+            _managementMenuRenderer.RoutineRelationLookup = (locId, npcId) =>
+            {
+                if (!_locationStates.TryGetValue(locId, out var state)) return null;
+                var key = Cathedral.Game.Narrative.Protagonist.AffinityKeyConstant;
+                bool enemy = state.NpcEnemies.TryGetValue(npcId, out var foes) && foes.Contains(key);
+                var level = state.NpcAffinity.TryGetValue(npcId, out var table) && table.TryGetValue(key, out var l)
+                    ? l : Cathedral.Game.Dialogue.Affinity.AffinityLevel.Stranger;
+                return (level, enemy);
+            };
+
             _managementMenuRenderer.Render();
         }
     }
@@ -3582,13 +3598,24 @@ public class LocationTravelGameController : IDisposable
         if (subject == "world-events") return CliHistoryLines("all");
         if (subject == "world-preview") return CliPreviewLines();
 
+        // The gathering phase's numbers — days, attempts, dice, chance, and once done the yield. The
+        // menu draws them, but a chance or a count is unassertable as a position on a bar.
+        if (subject == "gather")
+            return _gatherAdapter?.CliLines() ?? new List<string> { "gather (not gathering)" };
+
         if (_protagonist == null) return null;
+
+        // The routine slots per kind — the size of each kind's grid and how many of it are usable,
+        // which the menu shows as ● ○ × and is otherwise only pixels.
+        if (subject == "routine-slots")
+            return Cathedral.Game.Narrative.Routines.RoutineCategories.All
+                .Select(c => $"routine-slots category={c.CliId()} used={_protagonist.RoutinesOf(c).Count} "
+                           + $"usable={_protagonist.GetRoutineSlots()} grid={_protagonist.GetRoutineSlotsAtBest()}")
+                .ToList();
+
         if (subject is not ("routines" or "all")) return null;
 
-        return _protagonist.RecordedRoutines
-            .Select(r => $"routine location={r.LocationId} start={r.StartTime} steps={r.Steps.Count} "
-                       + $"verbs=[{string.Join(",", r.Steps.Select(x => x.VerbId))}]")
-            .ToList();
+        return _protagonist.RecordedRoutines.Select(r => r.CliLine()).ToList();
     }
 
     /// <summary>
@@ -3760,22 +3787,22 @@ public class LocationTravelGameController : IDisposable
     }
 
     /// <summary>
-    /// The rows the open routine box is offering: the routine's name, whether it can still be
-    /// replayed, and why not when it cannot. Empty when the box is closed.
+    /// The rows the open routine box is offering: the routine's name and kind, whether it can be
+    /// walked, and why not when it cannot. Empty when the box is closed.
     /// </summary>
-    public IReadOnlyList<(string Name, bool Replayable, string? Reason)> CliRoutineEntries
-        => _travelRoutinesBox?.CliEntries ?? System.Array.Empty<(string, bool, string?)>();
+    public IReadOnlyList<(string Name, string Category, bool Available, string? Reason)> CliRoutineEntries
+        => _travelRoutinesBox?.CliEntries ?? System.Array.Empty<(string, string, bool, string?)>();
 
     /// <summary>
     /// Picks row <paramref name="index"/> and sets out — the same commit the row click makes, so the
-    /// replay runs on arrival exactly as it would in play. False when the box is closed, the index is
-    /// out of range, or that routine is no longer replayable.
+    /// routine is entered on arrival exactly as it would be in play. False when the box is closed, the
+    /// index is out of range, or that routine cannot be walked.
     /// </summary>
     public bool CliSelectRoutine(int index)
     {
         if (_travelRoutinesBox == null) return false;
         var entries = _travelRoutinesBox.CliEntries;
-        if (index < 0 || index >= entries.Count || !entries[index].Replayable) return false;
+        if (index < 0 || index >= entries.Count || !entries[index].Available) return false;
 
         _pendingReplayRoutine = _travelRoutinesBox.CliRoutineAt(index);
         _travelRoutinesBox    = null;
@@ -3784,24 +3811,22 @@ public class LocationTravelGameController : IDisposable
         return true;
     }
 
-    /// <summary>
-    /// Presses CONTINUE on the post-replay outcome box, applying the phase the routine ended on.
-    /// False when no such box is up. Mirrors the click path in <see cref="OnTerminalCellClicked"/>.
-    /// </summary>
-    public bool CliDismissRoutineOutcome()
-    {
-        if (_routineOutcomeBox == null) return false;
+    // ── The gathering phase (--cli) ──────────────────────────────────────────
+    // Its controls are a slider and three buttons hit-tested against a box whose geometry follows its
+    // contents, so a script drives them by meaning — the days, start, continue, leave — as it drives
+    // the routine box by index.
 
-        var transition = _replayFinalTransition ?? Cathedral.Game.Narrative.ReturnToTravelTransition.Instance;
-        _routineOutcomeBox     = null;
-        _replayFinalTransition = null;
-        _core.Terminal?.Clear();
-        ApplyPhaseTransition(transition);
-        return true;
-    }
+    /// <summary>Sets the stay to <paramref name="days"/> (clamped to the slider's range). False when not gathering.</summary>
+    public bool CliGatherSetDays(int days) => _gatherAdapter?.CliSetDays(days) ?? false;
 
-    /// <summary>True while the post-replay outcome box is on screen (for `wait`).</summary>
-    public bool CliRoutineOutcomeShown => _routineOutcomeBox != null;
+    /// <summary>Presses START. False when not gathering or not on the configure screen.</summary>
+    public bool CliGatherStart() => _gatherAdapter?.CliStart() ?? false;
+
+    /// <summary>Presses CONTINUE on the results. False when there are no results on screen.</summary>
+    public bool CliGatherContinue() => _gatherAdapter?.CliContinue() ?? false;
+
+    /// <summary>Presses LEAVE without staying. False when not on the configure screen.</summary>
+    public bool CliGatherLeave() => _gatherAdapter?.CliLeave() ?? false;
 
     /// <summary>
     /// Ages the party: kills the protagonist outright if they have outlived their lifetime, and
@@ -4453,14 +4478,15 @@ public class LocationTravelGameController : IDisposable
     /// <summary>
     /// Starts Phase 6 Chain-of-Thought narrative interaction.
     /// </summary>
-    private void StartNarrativeInteraction(int vertexIndex, string? startAreaKey = null, Cathedral.Game.Narrative.TimePeriod? startTime = null)
+    private void StartNarrativeInteraction(int vertexIndex, string? startAreaKey = null,
+        Cathedral.Game.Narrative.TimePeriod? startTime = null, string? focusNpcId = null)
     {
         if (!EstablishNarrativeContext(vertexIndex)) return;
 
-        // Start observation phase (async). When continuing after a routine replay, position the
-        // session at the area the routine ended in, at its recorded time period.
+        // Start observation phase (async). A Go to or Meet routine opens at its own area and hour,
+        // and a Meet routine's first observation is of its person.
         if (startAreaKey != null && startTime != null)
-            _narrativeController!.StartAtArea(startAreaKey, startTime.Value);
+            _narrativeController!.StartAtArea(startAreaKey, startTime.Value, focusNpcId);
         else
             _narrativeController!.StartObservationPhase();
 
@@ -4471,7 +4497,7 @@ public class LocationTravelGameController : IDisposable
     /// Builds the scene + <see cref="NarrativeController"/> for a location and switches to
     /// <see cref="GameMode.LocationInteraction"/>, WITHOUT starting the observation phase. Returns
     /// false (and resets narrative state) on failure. Shared by normal narration entry
-    /// (<see cref="StartNarrativeInteraction"/>) and the routine-replay sub-phase bridge.
+    /// (<see cref="StartNarrativeInteraction"/>) and the routines that open straight onto a menu.
     /// </summary>
     private bool EstablishNarrativeContext(int vertexIndex)
     {
@@ -4482,7 +4508,7 @@ public class LocationTravelGameController : IDisposable
         }
 
         // Recorded here because this is the one door every way into a location comes through —
-        // arriving, clicking your own vertex, and the routine-replay sub-phase all land on it.
+        // arriving, clicking your own vertex, and every routine all land on it.
         // Re-entering the same place is not a new step in the history, or one round trip would push
         // the vertex a test wants to go back to out of it.
         if (vertexIndex != _lastLocationVertex)
@@ -4721,6 +4747,7 @@ public class LocationTravelGameController : IDisposable
             // the encounter is still waiting to be engaged when the menu is dismissed.
             case GameMode.Dialogue:        return OpenPauseMenu("dialogue");
             case GameMode.Working:         return OpenPauseMenu("work menu");
+            case GameMode.Gathering:       return OpenPauseMenu("gathering");
             case GameMode.Trading:         return OpenPauseMenu("trade menu");
             case GameMode.EncounterPrompt: return OpenPauseMenu("encounter");
             case GameMode.WorldView:       return OpenPauseMenu("world");
@@ -5120,9 +5147,10 @@ public class LocationTravelGameController : IDisposable
             _core.Terminal.Visible = true;
     }
 
+    /// <summary>Entry for the two time-passing menus, work and gathering, which take the screen alike.</summary>
     private void OnEnterWorking()
     {
-        Console.WriteLine("LocationTravelGameController: Entered Working mode");
+        Console.WriteLine($"LocationTravelGameController: Entered {_currentMode} mode");
         _core.SetNarrationMode(true);
         _core.SetWorldInteractionsEnabled(false);
         _interface.SetWorldInteractionsEnabled(false);
@@ -5162,9 +5190,8 @@ public class LocationTravelGameController : IDisposable
     }
 
     /// <summary>
-    /// The single place that switches game mode in response to a <see cref="PhaseTransition"/>.
-    /// Both the narration flow and routine replay produce transitions; future phase kinds add a
-    /// subclass and one arm here.
+    /// The single place that switches game mode in response to a <see cref="PhaseTransition"/> from
+    /// the narration flow; future phase kinds add a subclass and one arm here.
     /// </summary>
     public void ApplyPhaseTransition(PhaseTransition transition)
     {
@@ -5190,34 +5217,6 @@ public class LocationTravelGameController : IDisposable
                 }
                 break;
 
-            case StartRoutineDialogueTransition rd:
-                StartRoutineSubPhase(rd.Vertex, rd.NpcKey, rd.Time, rd.StartArea?.DisplayName,
-                    npc => StartDialogueMode(new DialogueTriggerOutcome(npc, rd.TreeId)));
-                break;
-
-            case StartRoutineTradeTransition rt:
-                StartRoutineSubPhase(rt.Vertex, rt.NpcKey, rt.Time, rt.StartArea?.DisplayName,
-                    npc => StartTradeMode(npc, rt.Mode));
-                break;
-
-            case StartRoutineWorkTransition rw:
-                StartRoutineSubPhase(rw.Vertex, rw.NpcKey, rw.Time, rw.StartArea?.DisplayName, npc =>
-                {
-                    var job = Cathedral.Game.Narrative.Work.JobRegistry.Instance.GetById(rw.JobId);
-                    if (job == null)
-                    {
-                        Console.Error.WriteLine($"ApplyPhaseTransition: recorded job '{rw.JobId}' no longer exists — returning to travel");
-                        ExitNarrativeMode();
-                        return;
-                    }
-                    StartWorkMode(npc, job);
-                });
-                break;
-
-            case StartNarrationTransition n:
-                StartNarrativeInteraction(n.Vertex, n.StartArea?.DisplayName, n.Time);
-                break;
-
             case ReturnToTravelTransition:
             default:
                 ReturnToWorldView();
@@ -5226,15 +5225,13 @@ public class LocationTravelGameController : IDisposable
     }
 
     /// <summary>
-    /// Bridges a headless routine replay into a location sub-phase: rebuilds narrative context at the
-    /// vertex (without an observation pass), re-resolves the recorded NPC in the fresh scene, and then
-    /// runs <paramref name="open"/> to enter the dialogue / trade / work phase. Because a real
-    /// <see cref="NarrativeController"/> now exists, the normal completion handlers
-    /// (OnDialogueCompleted / OnTradeCompleted / OnWorkCompleted) return the player to narration or
-    /// the world map exactly as after a live visit.
+    /// Enters a Buy, Sell or Work routine: builds narrative context at the vertex (without an
+    /// observation pass) in the routine's area and hour, finds the routine's person in the fresh scene,
+    /// and runs <paramref name="open"/> to enter the menu. Because a real
+    /// <see cref="NarrativeController"/> now exists, the normal completion handlers (OnTradeCompleted /
+    /// OnWorkCompleted) return the player to narration or the world map exactly as after a live visit.
     /// </summary>
-    private void StartRoutineSubPhase(int vertex, string npcKey,
-        Cathedral.Game.Narrative.TimePeriod time, string? startAreaKey,
+    private void StartRoutineSubPhase(int vertex, Cathedral.Game.Narrative.Routines.NpcRoutine routine,
         Action<Cathedral.Game.Npc.NpcEntity> open)
     {
         if (!EstablishNarrativeContext(vertex))
@@ -5244,18 +5241,18 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
-        // Where AND when the replay ended. The area matters as much as the period: the sub-phase
-        // rebuilds the scene at its default opening area, so without it the player walks out of the
-        // trade menu into the square rather than the forge the routine had walked into.
-        _narrativeController!.PrepareForRoutineSubPhase(time, startAreaKey);
+        // The area matters as much as the period: the sub-phase rebuilds the scene at its default
+        // opening area, so without it the player walks out of the trade menu into the square rather
+        // than the forge the routine names.
+        _narrativeController!.PrepareForRoutineSubPhase(routine.Time, routine.AreaName);
 
-        var npc = _narrativeController.Scene?.Npcs
-            .FirstOrDefault(n => n.IsAlive && string.Equals(n.DisplayName, npcKey, StringComparison.OrdinalIgnoreCase))
-            ?.Entity as Cathedral.Game.Npc.NpcEntity;
+        var npc = _narrativeController.Scene is { } scene
+            ? routine.FindNpc(scene)?.Entity as Cathedral.Game.Npc.NpcEntity
+            : null;
 
         if (npc == null)
         {
-            Console.Error.WriteLine($"StartRoutineSubPhase: NPC '{npcKey}' not found in the rebuilt scene — exiting to travel");
+            Console.Error.WriteLine($"StartRoutineSubPhase: '{routine.NpcName}' not found in the rebuilt scene — exiting to travel");
             ExitNarrativeMode();
             return;
         }
@@ -5275,8 +5272,9 @@ public class LocationTravelGameController : IDisposable
     }
 
     /// <summary>
-    /// Opens the routine list box for the current travel destination. Each routine is virtually
-    /// replayed to determine whether it can still be replayed (greyed out otherwise).
+    /// Opens the routine list box for the current travel destination. Each routine is checked against
+    /// a freshly built scene by its own kind's rule (<see cref="Cathedral.Game.Narrative.Routines.Routine.Unavailability"/>)
+    /// and greyed out, with the reason, when it cannot be walked.
     /// </summary>
     private void OpenRoutinesBox()
     {
@@ -5284,19 +5282,19 @@ public class LocationTravelGameController : IDisposable
         if (!_travelPlanner.HasWaypoints) return;
 
         int destVertex = _travelPlanner.FinalDestination;
-        var routines = _protagonist.RecordedRoutines.Where(r => r.LocationId == destVertex).ToList();
+        var routines = Cathedral.Game.Narrative.Routines.RoutineCategories.All
+            .SelectMany(c => _protagonist.RoutinesOf(c))
+            .Where(r => r.LocationId == destVertex)
+            .ToList();
 
-        var entries = new List<TravelRoutinesBox.Entry>();
-        foreach (var r in routines)
-        {
-            var vr = _routineReplayEngine.VirtualReplay(r, _protagonist, () => BuildSceneForVertexOrThrow(destVertex));
-            entries.Add(new TravelRoutinesBox.Entry
+        var ctx = routines.Count > 0 ? RoutineCheckContextFor(destVertex) : null;
+        var entries = routines
+            .Select(r => new TravelRoutinesBox.Entry
             {
-                Routine    = r,
-                Replayable = vr.Replayable,
-                Reason     = vr.Replayable ? null : vr.FailReason,
-            });
-        }
+                Routine = r,
+                Reason  = ctx == null ? "the place cannot be reached" : r.Unavailability(ctx),
+            })
+            .ToList();
 
         // Keep the world non-interactive while the modal box is shown.
         _core.SetWorldInteractionsEnabled(false);
@@ -5312,72 +5310,127 @@ public class LocationTravelGameController : IDisposable
     }
 
     /// <summary>
-    /// Fully replays a routine on arrival and shows the outcome box. The final phase transition is
-    /// applied when the player clicks CONTINUE.
+    /// What a routine at <paramref name="vertex"/> is checked against: a scene built for it as a
+    /// visit would build it, but with <b>no depletion applied</b> — a gathering routine counts the
+    /// empty slots too (see <see cref="Cathedral.Game.Narrative.Routines.RoutineCheckContext"/>).
+    /// Null when the scene cannot be built.
     /// </summary>
-    private void StartRoutineReplay(int vertexIndex, Cathedral.Game.Narrative.Routines.Routine routine)
+    private Cathedral.Game.Narrative.Routines.RoutineCheckContext? RoutineCheckContextFor(int vertex)
+    {
+        var scene = BuildSceneForLocation(vertex, out _, applyDepletion: false);
+        return scene == null || _protagonist == null
+            ? null
+            : new Cathedral.Game.Narrative.Routines.RoutineCheckContext(scene, _protagonist,
+                                                                      Cathedral.Game.Narrative.GameClock.Days);
+    }
+
+    /// <summary>
+    /// Enters a routine on arriving at its location: opens its area at its hour, in the phase its kind
+    /// names. Checked once more first, because the world may have changed on the road — and if it can
+    /// no longer be walked, the visit goes ahead as an ordinary arrival rather than leaving the player
+    /// standing on the map at the end of a journey.
+    /// </summary>
+    private void EnterRoutine(int vertex, Cathedral.Game.Narrative.Routines.Routine routine)
     {
         if (_core.Terminal == null || _protagonist == null) { ReturnToWorldView(); return; }
 
-        Console.WriteLine($"LocationTravelGameController: replaying routine '{routine.Name}' at vertex {vertexIndex}");
-
-        var result = _routineReplayEngine.FullReplay(routine, _protagonist,
-            () => BuildSceneForVertexOrThrow(vertexIndex));
-
-        if (!result.Replayable)
+        var ctx = RoutineCheckContextFor(vertex);
+        var why = ctx == null ? "the place cannot be reached" : routine.Unavailability(ctx);
+        if (why != null)
         {
-            Console.Error.WriteLine($"LocationTravelGameController: routine no longer replayable on arrival — {result.FailReason}");
-            ReturnToWorldView();
+            Console.Error.WriteLine($"LocationTravelGameController: routine '{routine.Name}' cannot be walked on arrival — {why}; ordinary visit instead");
+            StartNarrativeInteraction(vertex);
             return;
         }
 
-        var lines = new List<string>();
-        foreach (var o in result.Outcomes) lines.Add(o.Text);
-        lines.AddRange(result.ExtraLines);
-        lines.Add(PhaseNote(result.FinalTransition));
+        Console.WriteLine($"LocationTravelGameController: entering {routine.Category.CliId()} routine '{routine.Name}' "
+                        + $"at {routine.AreaName} / {routine.Time}");
 
-        _replayFinalTransition = result.FinalTransition;
+        switch (routine)
+        {
+            case Cathedral.Game.Narrative.Routines.GoToRoutine:
+                StartNarrativeInteraction(vertex, routine.AreaName, routine.Time);
+                break;
 
-        // Enter WorldView first (OnEnterWorldView re-enables interactions), THEN show the modal box
-        // and disable interactions so world clicks can't fall through underneath it.
-        SetMode(GameMode.WorldView);
-        _routineOutcomeBox = new RoutineOutcomeBox(_core.Terminal, routine.Name, lines);
-        _core.SetWorldInteractionsEnabled(false);
-        _interface.SetWorldInteractionsEnabled(false);
-        // Modal overlay over the world: reset to transparent rather than a bare Clear, which paints
-        // opaque black and hid the sphere behind the box. Capture clicks so none reach the world.
-        SetTransparentWorldOverlay(clickPassthrough: false);
-        _routineOutcomeBox.Render();
+            case Cathedral.Game.Narrative.Routines.MeetRoutine meet:
+                StartNarrativeInteraction(vertex, meet.AreaName, meet.Time, focusNpcId: meet.NpcId);
+                break;
+
+            case Cathedral.Game.Narrative.Routines.TradeRoutine trade:
+                StartRoutineSubPhase(vertex, trade, npc => StartTradeMode(npc, trade.Mode));
+                break;
+
+            case Cathedral.Game.Narrative.Routines.WorkRoutine work:
+                StartRoutineSubPhase(vertex, work, npc =>
+                {
+                    // Checked by the routine already; a null here means the registry changed under it.
+                    var job = Cathedral.Game.Narrative.Work.JobRegistry.Instance.GetById(work.JobId);
+                    if (job == null) { ExitNarrativeMode(); return; }
+                    StartWorkMode(npc, job);
+                });
+                break;
+
+            case Cathedral.Game.Narrative.Routines.GatherRoutine gather:
+                StartGatherMode(vertex, gather);
+                break;
+        }
     }
 
-    private static string PhaseNote(Cathedral.Game.Narrative.PhaseTransition t) => t switch
+    /// <summary>
+    /// Opens the gathering phase for a Gather routine. Runs inside a narrative context, like work, so
+    /// that pausing, resuming and leaving behave as they do for every other menu-phase; the context's
+    /// own scene has depletion applied, so the phase reads its slots off a second build without it.
+    /// </summary>
+    private void StartGatherMode(int vertex, Cathedral.Game.Narrative.Routines.GatherRoutine routine)
     {
-        Cathedral.Game.Narrative.StartNarrationTransition n     => $"You explore {n.StartArea?.DisplayName ?? "the area"}.",
-        Cathedral.Game.Narrative.StartFightTransition f         => $"A fight breaks out with {f.Enemy.DisplayName}!",
-        Cathedral.Game.Narrative.StartDialogueTransition d      => $"You begin speaking with {d.Npc.DisplayName}.",
-        Cathedral.Game.Narrative.StartRoutineDialogueTransition rd => $"You begin speaking with {rd.NpcKey}.",
-        Cathedral.Game.Narrative.StartRoutineTradeTransition rt => $"You sit down to trade with {rt.NpcKey}.",
-        Cathedral.Game.Narrative.StartRoutineWorkTransition rw  => $"You set to work for {rw.NpcKey}.",
-        _ => "You return to your journey.",
-    };
+        if (_core.Terminal == null || _protagonist == null) return;
+        if (!EstablishNarrativeContext(vertex))
+        {
+            Console.Error.WriteLine("StartGatherMode: could not establish narrative context — returning to travel");
+            ReturnToWorldView();
+            return;
+        }
+        _narrativeController!.PrepareForRoutineSubPhase(routine.Time, routine.AreaName);
 
-    private Cathedral.Game.Scene.Scene BuildSceneForVertexOrThrow(int vertexIndex)
-    {
-        var scene = BuildSceneForVertex(vertexIndex);
-        if (scene == null) throw new InvalidOperationException("Scene factory is unavailable for routine replay.");
-        return scene;
+        var scene  = BuildSceneForLocation(vertex, out _, applyDepletion: false);
+        var verb   = Cathedral.Game.Scene.Verbs.VerbRegistry.Instance.Get(routine.VerbId);
+        var area   = scene == null ? null : routine.FindArea(scene);
+        var source = area == null ? null : Cathedral.Game.Narrative.Routines.GatherYield.FindSource(routine, area);
+        if (scene == null || verb == null || source == null)
+        {
+            Console.Error.WriteLine($"StartGatherMode: '{routine.SourceName}' not found in the rebuilt scene — exiting to travel");
+            ExitNarrativeMode();
+            return;
+        }
+
+        _gatherAdapter = new GatherMenuAdapter(_core.Terminal, _protagonist, routine, verb, source, scene);
+        _narrativeController.CloseNarrationSegment($"gathering at {source.DisplayName}");
+        SetMode(GameMode.Gathering);
     }
 
-    /// <summary>Builds a fresh scene for routine replay (same as a narration start).</summary>
-    private Cathedral.Game.Scene.Scene? BuildSceneForVertex(int vertexIndex)
-        => BuildSceneForLocation(vertexIndex, out _);
+    /// <summary>
+    /// The gathering phase is over. Like work it returns to the world map, not to narration: the stay
+    /// may have run for months, and the scene the player arrived in is long stale.
+    /// </summary>
+    private void OnGatherCompleted()
+    {
+        if (_gatherAdapter == null) return;
+        Console.WriteLine("LocationTravelGameController: gathering finished — returning to world view");
+        _gatherAdapter = null;
+        _core.Terminal?.Clear();
+        ExitNarrativeMode();
+    }
 
     /// <summary>
     /// Builds a fresh scene for a vertex exactly as a narration start would: scene-factory selection,
     /// per-location state (NPC affinity + item depletion) get-or-create, default-enemy flags, and the
     /// shared depletion store + current-depletion application. Returns null when LLM deps aren't ready.
     /// </summary>
-    private Cathedral.Game.Scene.Scene? BuildSceneForLocation(int vertexIndex, out LocationInstanceState? lis)
+    /// <param name="applyDepletion">False to leave every item slot in place — what a routine check
+    /// and the gathering phase want, since they reason about the empty slots too. The depletion store
+    /// is still the location's own, shared, so whatever they write to it is real.</param>
+    private Cathedral.Game.Scene.Scene? BuildSceneForLocation(int vertexIndex, out LocationInstanceState? lis,
+        bool applyDepletion = true)
     {
         lis = null;
         if (_llamaServer == null || _protagonist == null) return null;
@@ -5454,7 +5507,8 @@ public class LocationTravelGameController : IDisposable
 
         // The persistent stores are already shared with the scene (LocationInstanceState.AttachTo,
         // called from SceneFactory.Build); apply the depletion that has regenerated since.
-        ApplyDepletion(scene, Cathedral.Game.Narrative.GameClock.Days);
+        if (applyDepletion)
+            ApplyDepletion(scene, Cathedral.Game.Narrative.GameClock.Days);
 
         // Scene-wide false names: map the protagonist, party companions and every named (human) NPC to
         // simple, sanitizer-safe placeholder names the LLM sees in prompts; real names are restored on
@@ -5595,7 +5649,13 @@ public class LocationTravelGameController : IDisposable
         if (_core.Terminal == null || _narrativeController == null ||
             _llamaServer == null || _modusMentisSlotManager == null)
             return;
-        
+
+        // Opening a conversation with somebody is what teaches a Meet routine. Only a registered
+        // tree, which is one the player chose to open: a prebuilt one is a confrontation that
+        // came to them (caught red-handed), and nobody goes back to be caught again.
+        if (dialogueOutcome.Tree == null)
+            _narrativeController.RecordConversationRoutine(dialogueOutcome.Target);
+
         // --auto-dialogue settles the conversation where it stands and never enters Dialogue mode, so
         // a verb test asserts about its verb rather than about somebody else's dialogue tree. The
         // trees themselves are covered by cli/_systems/dialogue_*.cli.
@@ -5604,6 +5664,9 @@ public class LocationTravelGameController : IDisposable
                    dialogueOutcome.Target, _narrativeController.Protagonist,
                    dialogueOutcome.TreeId, dialogueOutcome.Tree))
         {
+            // The flags a won trade or hire leaves are read here as well as in OnDialogueCompleted,
+            // which this path never reaches: they are what teach a Buy, Sell or Work routine.
+            RecordAgreementRoutines(dialogueOutcome.Target);
             // The flags a won conversation leaves on the NPC are consumed by OnDialogueCompleted,
             // which this path never reaches — so the one that repositions the player is consumed
             // here. Without it --auto-dialogue applied the introduction's standing and skipped the
@@ -5809,6 +5872,9 @@ public class LocationTravelGameController : IDisposable
             RecruitFromDialogue(npc);
         }
 
+        // A trade or a hire agreed is a routine learned — read before the flags are consumed below.
+        RecordAgreementRoutines(npc);
+
         // If a propose-to-buy/sell dialogue succeeded, open the trade menu instead of returning.
         if (npc.TradeRequest != Cathedral.Game.Npc.Trade.TradeMode.None)
         {
@@ -5886,6 +5952,20 @@ public class LocationTravelGameController : IDisposable
         else                  npc.IsAlive = false;
 
         Console.WriteLine($"LocationTravelGameController: {npc.DisplayName} joined the party ({_protagonist.CompanionParty.Count}/{max})");
+    }
+
+    /// <summary>
+    /// Learns the Buy, Sell or Work routine a won conversation has agreed to, from the flags its
+    /// outcomes leave on the NPC. Called from both ways a conversation ends — played out, and settled
+    /// by <c>--auto-dialogue</c> — so the two cannot teach different things.
+    /// </summary>
+    private void RecordAgreementRoutines(Cathedral.Game.Npc.NpcEntity npc)
+    {
+        if (_narrativeController == null) return;
+        if (npc.TradeRequest != Cathedral.Game.Npc.Trade.TradeMode.None)
+            _narrativeController.RecordTradeRoutine(npc, npc.TradeRequest);
+        if (npc.JobRequest is { } job)
+            _narrativeController.RecordWorkRoutine(npc, job);
     }
 
     private void StartTradeMode(Cathedral.Game.Npc.NpcEntity npc, Cathedral.Game.Npc.Trade.TradeMode mode)
@@ -6089,6 +6169,10 @@ public class LocationTravelGameController : IDisposable
         else if (_currentMode == GameMode.Working && _workAdapter != null)
         {
             _workAdapter.OnKeyPress(key);
+        }
+        else if (_currentMode == GameMode.Gathering && _gatherAdapter != null)
+        {
+            // Nothing is keyed: Escape opens the pause menu (the launcher handles it).
         }
         // R repaints the sphere by region instead of by biome — a development view of the world
         // division, with no gameplay behind it yet.

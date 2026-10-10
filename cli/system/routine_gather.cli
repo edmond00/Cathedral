@@ -1,0 +1,95 @@
+# routine — learn a Gather routine, then stay some days at the source
+#
+# A successful gather teaches a Gather routine for the source, the area and the hour. Walking it opens
+# the gathering phase, which exists only for routines: a slider of days, a forecast, and on STAY the
+# clock moves on and every attempt the stay offered is rolled — a success takes the item, a failure
+# spoils it, and either way the slot has to regrow (GatherYield).
+#
+# The ford in Test Field holds a natural item: gathered once here by hand, then depleted for 90 days.
+# A 100-day stay therefore reaches it again — the regrowth is what this asserts, since the slot taken
+# by hand is the only one the stay could otherwise have had. `strategy succeed` forces every roll.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Field" --period dawn --observe-only "Test Ford"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal gather
+advance 12 180
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect-verb gather
+expect Item received:
+
+# Learned on the spot, and not a Go to: the visit is left from where it opened.
+inspect routines
+expect-state routines category=gather location=
+expect-state routines Test Ford
+expect-state routines Test Field
+expect-state routines time=Dawn
+
+# Two presses: the first closes the segment the gather left pending (CONTINUE) and opens the next
+# phase, whose preview is drained before the footer becomes LEAVE.
+observe none
+click button
+wait 60
+advance 12 180
+click button
+wait mode WorldView 90
+expect-no-state routines category=goto
+save roundtrip
+
+travel neighbour
+travel-go
+wait mode LocationInteraction 120
+advance 12 180
+click button
+wait mode WorldView 90
+
+travel back
+routines
+routines gather
+wait mode Gathering 150
+
+inspect gather
+expect-state gather phase=configure
+expect-state gather Test Ford
+
+gather days 100
+inspect gather
+expect-state gather days=100
+expect-no-state gather attempts=0
+gather start
+inspect gather
+expect-state gather phase=done days=100
+expect-no-state gather gathered=0
+expect-state gather spoiled=0
+
+gather continue
+wait mode WorldView 90
+
+# The routines menu: the kind's slots above the map, the routine in full below it.
+inspect routine-slots
+expect-state routine-slots category=gather used=1
+expect-state routine-slots category=buy used=0
+manage Routines gather
+wait 10
+expect G A T H E R
+expect ☐ Gather
+expect from Test Ford
+expect needs no implement
+expect × ·····
+quit

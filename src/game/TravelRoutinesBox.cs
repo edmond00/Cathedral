@@ -2,26 +2,28 @@ using System;
 using System.Collections.Generic;
 using OpenTK.Mathematics;
 using Cathedral.Terminal;
+using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Routines;
 
 namespace Cathedral.Game;
 
 /// <summary>
-/// Modal world-view overlay listing the routines recorded for a travel destination. Routines that
-/// fail virtual replay are greyed out and cannot be selected. Replayable routines are clickable to
-/// start a routine-replay travel; a RETURN button dismisses the box back to the travel plan.
+/// Modal world-view overlay listing the routines learned for a travel destination, kind by kind.
+/// A routine that cannot be walked (its kind's own check, <see cref="Routine.Unavailability"/>) is
+/// greyed out with the reason and cannot be selected; the others are clickable to set out and enter
+/// it on arrival. A RETURN button dismisses the box back to the travel plan.
 /// Modeled on <see cref="CompanionRemovalRenderer"/> (cell-coordinate hit-testing, host-driven SFX).
 /// </summary>
 public class TravelRoutinesBox
 {
     public enum ResultKind { None, Return, Selected }
 
-    /// <summary>One listed routine plus its virtual-replay verdict.</summary>
+    /// <summary>One listed routine plus why it cannot be walked, if it cannot.</summary>
     public sealed class Entry
     {
         public Routine Routine { get; init; } = null!;
-        public bool Replayable { get; init; }
         public string? Reason { get; init; }
+        public bool Available => Reason == null;
     }
 
     private readonly TerminalHUD _terminal;
@@ -46,8 +48,8 @@ public class TravelRoutinesBox
     /// The rows on offer, for <c>--cli</c>. A script picks a routine by index because the rows are
     /// hit-tested against a rendered box whose geometry moves with how many routines exist.
     /// </summary>
-    public IReadOnlyList<(string Name, bool Replayable, string? Reason)> CliEntries
-        => _entries.Select(e => (e.Routine.Name, e.Replayable, e.Reason)).ToList();
+    public IReadOnlyList<(string Name, string Category, bool Available, string? Reason)> CliEntries
+        => _entries.Select(e => (e.Routine.Name, e.Routine.Category.CliId(), e.Available, e.Reason)).ToList();
 
     /// <summary>The routine behind row <paramref name="index"/>, or null when out of range.</summary>
     public Routine? CliRoutineAt(int index)
@@ -74,7 +76,7 @@ public class TravelRoutinesBox
         DrawBorder();
 
         CenteredInBox(_boxY + 1, "— ROUTINES —", TitleColor, BoxBg);
-        CenteredInBox(_boxY + 2, Truncate("Replay a learned routine at this location.", _boxW - 4), SubtitleColor, BoxBg);
+        CenteredInBox(_boxY + 2, Truncate("Go straight to somewhere you know here.", _boxW - 4), SubtitleColor, BoxBg);
 
         if (_entries.Count == 0)
             CenteredInBox(_listStartY, "(no routines for this destination)", DisabledColor, BoxBg);
@@ -109,15 +111,15 @@ public class TravelRoutinesBox
         int x = _boxX + 2;
         int w = _boxW - 4;
         var e = _entries[i];
-        bool hovered = _hoveredRow == i && e.Replayable;
+        bool hovered = _hoveredRow == i && e.Available;
         Vector4 bg = hovered ? HoverBg : BoxBg;
 
         _terminal.FillRect(x, y, w, 1, ' ', BodyColor, bg);
 
-        string label = e.Routine.Name;
-        if (!e.Replayable && !string.IsNullOrWhiteSpace(e.Reason))
+        string label = $"{e.Routine.Category.Label(),-6} {e.Routine.Name} · {e.Routine.Time.Label().ToLowerInvariant()}";
+        if (!e.Available)
             label += $"  ({e.Reason})";
-        Vector4 fg = e.Replayable ? (hovered ? TitleColor : BodyColor) : DisabledColor;
+        Vector4 fg = e.Available ? (hovered ? TitleColor : BodyColor) : DisabledColor;
         _terminal.Text(x, y, Truncate(label, w), fg, bg);
     }
 
@@ -151,7 +153,7 @@ public class TravelRoutinesBox
         if (hit == _entries.Count) return (ResultKind.Return, null);
 
         var e = _entries[hit];
-        return e.Replayable ? (ResultKind.Selected, e.Routine) : (ResultKind.None, null);
+        return e.Available ? (ResultKind.Selected, e.Routine) : (ResultKind.None, null);
     }
 
     private void RedrawElement(int element)

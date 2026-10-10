@@ -28,9 +28,9 @@ public abstract class Element
 
     /// <summary>
     /// True for what play made rather than what the factory built — a corpse, a wreck, the salvage
-    /// inside either. A replay rebuilds the scene from the factory, so none of these will be there,
-    /// and a routine step aimed at one could never be walked again: the recorder refuses to record
-    /// such a step (see <c>RoutineRecorder</c>), which is what lets it skip the act that made it.
+    /// inside either. The next visit rebuilds the scene from the factory, so none of these will be
+    /// there, and a gathering routine aimed at one could never be gone back to: the recorder refuses
+    /// to learn one (see <c>RoutineRecorder</c>).
     /// </summary>
     public bool SpawnedDuringVisit { get; set; }
 

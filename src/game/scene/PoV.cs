@@ -9,12 +9,8 @@ namespace Cathedral.Game.Scene;
 /// <para><b><see cref="Where"/> and <see cref="When"/> are the same kind of thing</b>: coordinates
 /// into the scene that a verb may move the agent along, and that decide together what is reachable
 /// and who is present (<see cref="Scene.GetNpcsAt"/> takes both, and every NPC verb gates on it). A
-/// verb changes either of them by returning a report that declares the matching
-/// <see cref="Cathedral.Game.Narrative.Routines.RoutineChainEffect"/> —
-/// <see cref="AreaMoveOutcome"/> for space, <see cref="TimeShiftOutcome"/> for time — never by
-/// writing here directly. That declaration is what makes the step a <i>repositioning</i> step,
-/// which the routine recorder keeps in every later routine's prefix rather than treating as a piece
-/// of work in its own right.</para>
+/// verb changes either of them by returning a report — <see cref="AreaMoveOutcome"/> for space,
+/// <see cref="TimeShiftOutcome"/> for time — never by writing here directly.</para>
 /// </summary>
 public class PoV
 {

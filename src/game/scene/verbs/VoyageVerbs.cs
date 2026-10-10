@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using Cathedral.Game.Narrative;
-using Cathedral.Game.Narrative.Routines;
 
 using Cathedral.Game.Narrative.ModiMentis;
 
@@ -48,9 +47,6 @@ public class VoyageTowardVerb : Verb
             ? $"set out for the {landscape.Destination.DisplayName.ToLowerInvariant()}"
             : "set out for what I can see from here";
 
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
-        => Verbatim(scene, pov, target);
-
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
         => target is LandscapePointOfInterest landscape
             ? new Outcome[] { new AreaMoveOutcome(landscape.Destination) }
@@ -61,20 +57,4 @@ public class VoyageTowardVerb : Verb
     {
         null, null, null, null, new AnkleFractureRightWound(),
     };
-
-    // ── Routine recording ─────────────────────────────────────────────────────
-    // Recordable, unlike the verb it replaces. That one depended on landmarks revealed this visit,
-    // which a replay does not have; a landscape is scene furniture the rebuild puts back, so a
-    // journey learned once can be walked again.
-
-    public override bool CanRecordAsRoutine(Scene scene, PoV pov, Element target, PartyMember actor)
-        => target is LandscapePointOfInterest;
-
-    public override RoutineTargetRef? RoutineTarget(Scene scene, PoV pov, Element target)
-        => target is PointOfInterest poi
-            ? new RoutineTargetRef(RoutineTargetKind.PointOfInterest, poi.ReferenceLemma, poi.DisplayName)
-            : null;
-
-    public override RoutinePhaseKind RoutineTriggeredPhase(Scene scene, PoV pov, Element target)
-        => RoutinePhaseKind.Narration;
 }

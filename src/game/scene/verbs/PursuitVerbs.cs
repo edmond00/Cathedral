@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Narrative;
-using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Npc;
 using Cathedral.Game.Scene.Building;
 
@@ -65,11 +64,6 @@ public class TrackVerb : Verb
     {
         null, null, null, null, new ContusionWound(),
     };
-
-    // Not recordable: where the sign leads depends on the hour and on a schedule a replay re-rolls.
-
-    public override RoutinePhaseKind RoutineTriggeredPhase(Scene scene, PoV pov, Element target)
-        => RoutinePhaseKind.Narration;
 }
 
 /// <summary>
@@ -103,9 +97,6 @@ public class StalkVerb : Verb
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"follow {NpcPronoun(target)} at a distance and see where {NpcSubjectPronoun(target)} goes";
-
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
-        => $"follow {NpcName(target)} to see where they go";
 
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
@@ -183,9 +174,4 @@ public class StalkVerb : Verb
             yield return connector.Other(area);
         }
     }
-
-    // Not recordable: how long the wait is and where it ends both depend on the hour it started at.
-
-    public override RoutinePhaseKind RoutineTriggeredPhase(Scene scene, PoV pov, Element target)
-        => RoutinePhaseKind.Narration;
 }

@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Narrative;
-using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Scene.Building;
 
 using Cathedral.Game.Narrative.ModiMentis;
@@ -60,19 +59,14 @@ public abstract class ExtractionVerb : Verb
             : new Outcome[] { new ItemAcquisitionOutcome(element) };
     }
 
-    // Recordable: working a seam or a bank is exactly the repeatable labour a routine is for, and the
-    // target resolves by item id in a rebuilt scene the way GATHER's does.
+    /// <summary>
+    /// The item a success would take from <paramref name="poi"/>, or null when it is worked out —
+    /// what a gathering routine reads to name and to count its yield.
+    /// </summary>
+    public ItemElement? YieldOf(PointOfInterest poi) => FirstAvailable(poi);
 
-    public override bool CanRecordAsRoutine(Scene scene, PoV pov, Element target, PartyMember actor)
-        => target is PointOfInterest poi && Accepts(poi) && poi.Items.Count > 0;
-
-    public override RoutineTargetRef? RoutineTarget(Scene scene, PoV pov, Element target)
-        => target is PointOfInterest poi
-            ? new RoutineTargetRef(RoutineTargetKind.PointOfInterest, poi.ReferenceLemma, poi.DisplayName)
-            : null;
-
-    public override RoutinePhaseKind RoutineTriggeredPhase(Scene scene, PoV pov, Element target)
-        => RoutinePhaseKind.Narration;
+    /// <summary>Whether this verb works <paramref name="poi"/> at all — a seam for a pick, water for a rod.</summary>
+    public bool Works(PointOfInterest poi) => Accepts(poi);
 }
 
 /// <summary>Takes fish out of water, with a rod or a net.</summary>
@@ -266,9 +260,4 @@ public class BreakVerb : Verb
         null, null, null,
         new CutWound(), new ContusionWound(), new BrokenHandRightWound(),
     };
-
-    // Not recordable: a replayed routine rebuilds the scene with the furniture whole again.
-
-    public override RoutinePhaseKind RoutineTriggeredPhase(Scene scene, PoV pov, Element target)
-        => RoutinePhaseKind.Narration;
 }

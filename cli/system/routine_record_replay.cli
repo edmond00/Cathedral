@@ -1,28 +1,23 @@
-# routine — record, then replay
+# routine — learn a Buy routine, then walk it straight into the trade menu
 #
-# The full round trip of the routine system, which nothing else covered: a routine is recorded by
-# playing, the player leaves and comes back, and the routine replays on arrival into the sub-phase it
-# ended on. Both halves are in one script because the replay needs a routine, and recording one is
-# most of the work.
+# The round trip of the routine system: a routine is learned by playing, the player leaves and comes
+# back, and the routine enters its own area and hour in the phase it names — here the trade menu,
+# with no walk and no conversation in front of it.
 #
-# WHAT IS RECORDED. The routine is [move, propose_to_buy], which is the shape a real one takes: a
-# repositioning step only extends the prefix (walking somewhere is how you get somewhere, not what
-# you went to do), and the first non-repositioning step is the terminus that emits the routine. So
-# the walk into the wood is IN the routine but is not a routine of its own.
+# WHAT IS LEARNED. Walking into the wood is not recorded at all. Opening a conversation with the
+# farmer teaches a Meet routine; her agreeing to sell teaches a Buy routine (the auto-dialogue path
+# reads the same flags the played one does — LocationTravelGameController.RecordAgreementRoutines);
+# and leaving from the wood, which is not where the visit opened, teaches a Go to routine.
 #
-# WHAT THE REPLAY MUST GET RIGHT. Replay walks the steps headlessly and hands the game a phase
-# transition. That transition has to carry BOTH where and when the replay ended — the trade menu is
-# opened from a rebuilt scene, and the rebuild starts at the location's default opening area (Test
-# Yard). The three routine bridges used to carry the period alone, so leaving the trade menu put the
-# player back in the yard instead of the wood the routine had walked into. `expect-state where Test
-# Wood` at the end is that bug, and it is the whole reason this script exists.
+# WHAT ENTERING MUST GET RIGHT. The trade menu is opened from a rebuilt scene, and the rebuild starts
+# at the location's default opening area (Test Yard). The routine carries its area so the scene is
+# repositioned before the menu opens; `expect-state where Test Wood` at the end is that — without it
+# the player would close the menu and find themselves in the yard.
 #
-# THE SETUP. The farmer sells crops and roams: at noon she is in Test Wood, which is one plain path
-# from Test Yard — the only seller in the location reachable without unlocking a door.
-# --npc-affinity is what makes propose_to_buy possible at all (TradeGate wants an acquaintance).
-# --observe-only pins the FIRST phase, in the yard, on the wood; the `observe` command pins the
-# second, in the wood, on the farmer — a flag cannot do that, because the second phase is generated
-# mid-run.
+# THE SETUP. The farmer sells crops and roams: at noon she is in Test Wood, one plain path from Test
+# Yard. --npc-affinity is what makes propose_to_buy possible at all (TradeGate wants an
+# acquaintance), and is also what lets the Buy routine be walked. --observe-only pins the FIRST
+# phase, in the yard, on the wood; the `observe` command pins the second, in the wood, on the farmer.
 #
 # FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --npc-affinity CloseFriend --location-type test --location-id 0 --start-area "Test Yard" --period noon --observe-only "Test Wood"
 
@@ -35,7 +30,7 @@ travel here
 wait mode LocationInteraction 60
 strategy succeed
 
-# --- step 1: walk into the wood (a prefix step, not a routine of its own) ------
+# --- walk into the wood ------------------------------------------------------
 goal move
 advance 12 180
 click keyword 0
@@ -50,14 +45,19 @@ advance 12 180
 
 # Pinned BEFORE the footer press: that press closes the segment and generates the next phase's
 # observation, so a filter set after it would arrive too late to steer anything.
+# The second phase is clicked into: settle the word-vector load first, or which keyword it
+# highlights depends on a race (see `wait embeddings`).
+wait embeddings 60
 observe farmer
 goal propose_to_buy
 click button
 wait 60
 advance 12 180
 expect-state where Test Wood
+# Open ground: the wood is nobody's, so what is learned here can be walked.
+expect-state where trespass=no
 
-# --- step 2: the trade, which is the terminus that emits the routine ----------
+# --- the trade, which teaches the Meet and the Buy routines -------------------
 click keyword 0
 choose 0
 choose 0
@@ -68,31 +68,38 @@ advance 12 180
 click continue
 advance 12 180
 
-# The recorder's rule, asserted by verb ids rather than by the routine's name: the name is built
-# from the NPC's rolled name and is content, free to change.
+# Learned as it happens — asserted by kind and place, never by name: the name carries the
+# farmer's rolled name, which is content.
 inspect routines
-expect-state routines verbs=[move,propose_to_buy]
+expect-state routines category=meet location=
+expect-state routines category=buy location=
+expect-state routines Test Wood
+expect-state routines time=Noon
 
 # --- leave, go elsewhere, and come back on the routine ------------------------
-# `travel neighbour` and `travel back` exist because a script cannot name either vertex: the one it
-# started on is whatever the seed put under the avatar, and `travel <name>` prefers the vertex
-# underfoot, which would walk straight back into the location it is trying to leave.
 observe none
 click button
 wait mode WorldView 90
 
-# And exactly one routine, not two. The move was consumed by the trade's emission, so the prefix has
-# nothing new to say and the end-of-session pass must not emit it a second time as a bare "go to the
-# wood". The complementary case — a walk that NO emission claimed — is routine_movement_only.cli.
-expect-no-state routines steps=1
+# Leaving from the wood, not the yard it opened in, is the Go to routine.
+expect-state routines category=goto location=
 
-# A recorded routine must survive the save, and this is the only script in the suite that HAS one —
-# cli/system/save_roundtrip.cli stacks breadth of party state by flags, and no flag records a
-# routine, so the routine branch of the save went untested until it broke in a player's file. What
-# broke was RoutineStep.Constraints: a list of an abstract type, which System.Text.Json wrote by the
-# DECLARED type (silently dropping each constraint's own fields) and then refused to read back at
-# all, making the whole save unloadable. This is the assertion that says so.
+# Routines go into the save as a list of an abstract type, which System.Text.Json drops the fields
+# of — and refuses to read back — unless every kind is registered. One unregistered kind would make
+# the whole save unloadable; this is the assertion that says so, for the three kinds learned here.
 save roundtrip
+
+# The routines menu shows a Buy routine with the merchant's catalogue and their standing with you,
+# read from the location's memory without building the scene.
+manage Routines buy
+wait 10
+expect B U Y
+expect WHAT THEY SELL
+# The line is asserted, not its level: TestSceneFactory spawns its people without the location's
+# affinity store (every real factory passes it), so the test location remembers no standing at all.
+expect relation:
+manage
+wait mode WorldView 30
 
 travel neighbour
 travel-go
@@ -103,16 +110,11 @@ wait mode WorldView 90
 
 travel back
 routines
-routines 0
-wait mode WorldView 150
+routines buy
+wait mode Trading 150
 
-# CONTINUE on the outcome box applies the phase the routine ended on. For a trade terminus that is
-# the trade menu itself — reached without the walk and without the conversation, which is what a
-# routine is for.
-routines continue
-wait mode Trading 60
-
-# And the point of the whole script: the replay resumed in the area it ended in, not the one the
-# rebuilt scene opens at.
+# The point of the whole script: the menu opened in the routine's own area, not the one the rebuilt
+# scene opens at.
 expect-state where Test Wood
+expect-state where period=Noon
 quit

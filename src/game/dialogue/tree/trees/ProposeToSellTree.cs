@@ -38,9 +38,6 @@ public class ProposeToSellTree : DialogueTree
     /// <summary>What succeeding at this conversation teaches: talking a price into being.</summary>
     public override string? GrantedModusMentisId => "bargaining";
 
-    // Success opens the sell menu; a routine bakes in that success so replaying opens trade directly.
-    public override DialogueRoutineBehavior RoutineBehavior => DialogueRoutineBehavior.IncludeSuccess;
-
 
     /// <summary>
     /// Selling teaches the harder half of trade: what is not mentioned, and how coin is tested when
