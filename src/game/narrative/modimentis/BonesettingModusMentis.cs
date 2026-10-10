@@ -12,7 +12,7 @@ public class BonesettingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Puts back what has come out of place and sets what has broken: the pull, the twist, the click of a joint going home, the splint bound tight. Feels a break through the skin.";
     public override string SkillMeans       => "the setting of broken bones and joints";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "hands", "arms" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;

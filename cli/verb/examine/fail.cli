@@ -7,7 +7,7 @@
 # pins people to one room; --observe-only pins the phase to one object, which is why the keyword is
 # clicked by index (which word the prose highlights is not something a test can know).
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Crown" --period dawn --observe-only "Test Giant Tree"
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Crown" --period dawn --observe-only "Test Giant Tree" --grant-mm woodcraft --means-only woodcraft
 
 wait
 click menu New

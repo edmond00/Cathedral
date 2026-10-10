@@ -181,6 +181,14 @@ public static class NeutralNarration
     /// </summary>
     public static string ActionRefusal(string verbVerbatim) => $"I don't want to {FirstPerson(verbVerbatim)}.";
 
+    /// <summary>
+    /// The same refusal when a coded rule made it (<c>WillingnessOptions.ImposedRefusal</c>). The reason
+    /// is part of the sentence: the persona never reasoned its way to it, so there is no inner thought
+    /// to carry it, and a reason left to the rewrite is the first thing a strong style drops.
+    /// </summary>
+    public static string ActionRefusal(string verbVerbatim, string reason)
+        => $"I don't want to {FirstPerson(verbVerbatim)}: {FirstPerson(reason)}.";
+
     // ── VerbAction outcomes ────────────────────────────────────────────────────────
     // actionDisplay is already a clean verb phrase (e.g. "climb the tree"), so it is used verbatim.
 

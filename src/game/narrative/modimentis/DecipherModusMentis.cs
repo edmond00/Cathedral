@@ -13,7 +13,7 @@ public class DecipherModusMentis : ModusMentis
     public override string MenuDescription =>
         "Takes an unclear text one uncertain syllable at a time, weighing likely letters and comparing hands. Trusts the laboured reading over the confident one, and holds a sign in doubt until later in the line settles it.";
     public override string SkillMeans       => "the deciphering of damaged, coded or obscure writing";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "eyes", "cerebrum" };
 
     /// <summary>Stands on letters, number or institutions.</summary>

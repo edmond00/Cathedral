@@ -12,7 +12,7 @@ public class ReceivingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Buys stolen goods and sells them on: knows what a thing is worth hot and what it will fetch cold, which marks must be taken off, and which buyers ask no questions.";
     public override string SkillMeans       => "the buying and selling of stolen goods";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "cerebrum", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;

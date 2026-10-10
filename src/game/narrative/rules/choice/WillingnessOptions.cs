@@ -17,6 +17,16 @@ namespace Cathedral.Game.Narrative.Rules.Choice;
 /// </summary>
 public sealed record WillingnessOptions(IReadOnlyList<string> Stances, string? DeclineOption)
 {
+    /// <summary>
+    /// Set when a rule has already decided the answer is no, with the first-person reason why. The
+    /// modus mentis is then not asked at all — a refusal the persona might decline to give is no rule —
+    /// and the reason is written into the refusal itself rather than left for the rewrite to supply.
+    /// </summary>
+    public string? ImposedRefusal { get; init; }
+
+    /// <summary>Imposes the refusal, for <paramref name="reason"/>.</summary>
+    public WillingnessOptions Refusing(string reason) => this with { ImposedRefusal = reason };
+
     /// <summary>Drops the refusal, leaving the modus mentis to answer only with a degree of assent.</summary>
     public WillingnessOptions WithoutDecline() => this with { DeclineOption = null };
 

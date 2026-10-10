@@ -1,0 +1,34 @@
+# examine — refused by an action modus mentis that does not observe
+#
+# Examining is the observing office turned on one object, so only a modus mentis with the
+# Observation function may take part in it (ExamineNeedsObservationRules). An action modus mentis
+# without it refuses outright: it is not asked whether it wants to, and the refusal carries its
+# reason in the sentence itself — "I want to act, not to stand and observe" — because a reason left
+# to the rewrite is the first thing a strong style drops.
+#
+# Snatch is an Action-only modus mentis; --means-only pins the playground's choice of means to it.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Crown" --period dawn --observe-only "Test Giant Tree" --grant-mm snatch --means-only snatch
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal examine
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+
+# No action button: the means refused, so the thought ends on the refusal.
+# Asserted on the half that fits one row; the sentence wraps before "observe".
+expect I want to act, not to stand and
+expect-not SUCCESS
+quit

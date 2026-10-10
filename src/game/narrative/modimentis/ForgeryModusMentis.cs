@@ -12,7 +12,7 @@ public class ForgeryModusMentis : ModusMentis
     public override string MenuDescription =>
         "Makes false documents look true: copies the hand, ages the parchment, cuts a seal from wax and lifts it onto another. Knows what a clerk checks first and makes that part perfect.";
     public override string SkillMeans       => "the making of false documents";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;

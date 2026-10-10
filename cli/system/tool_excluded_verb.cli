@@ -14,7 +14,7 @@
 #     much like any other failure, so only the counter shows it was charged for — and `state` emits
 #     it but `expect` scans the rendered terminal, hence `inspect noetic`.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-item knife --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon --observe-only "Test Rack"
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-item knife --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon --observe-only "Test Rack" --grant-mm woodcraft --means-only woodcraft
 
 wait
 click menu New

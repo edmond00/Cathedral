@@ -470,6 +470,17 @@ public static class Config
         /// for a thinking phase where no goal matches, which then draws as usual.</para>
         /// </summary>
         public static string? GoalOnly { get; set; } = null;
+
+        /// <summary>
+        /// Modus mentis id the playground's choice of MEANS must land on — the action modus mentis that
+        /// carries the goal out. Set by <c>--means-only &lt;mm-id&gt;</c> and the CLI's <c>means</c>
+        /// command. Null (the default) leaves it to the RNG.
+        ///
+        /// <para>Needed once willingness rules began to refuse by kind of mind: examining is refused by
+        /// any action modus mentis without the Observation function, so a script that means to examine
+        /// is otherwise at the mercy of which of the kit's action modi mentis the draw picks.</para>
+        /// </summary>
+        public static string? MeansOnly { get; set; } = null;
     }
 
     #endregion

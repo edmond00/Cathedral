@@ -175,6 +175,12 @@ there is a voice and whether there is any manner of the mind left able to use it
 **Rules of choice** narrow what is *offered*. They **withhold**, silently, and **cost nothing**,
 because nothing was refused. Character belongs here — that never occurred to me.
 
+**Examining belongs to the observing modi mentis.** One that does not bear the Observation function
+takes no part in examining an object closely, on either side of the chain. As the thinking modus
+mentis it is never offered that goal; as the acting one, chosen to carry it out, it refuses at once
+and is not asked — the refusal states that it would act rather than stand and observe. The other
+senses are under no such rule.
+
 The distinction has a practical edge: an act blocked by a rule of action is an act you attempted and
 were stopped from completing, and you pay for the attempt.
 

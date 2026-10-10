@@ -250,6 +250,7 @@ public sealed class CliDriver
                 case "scroll":      CmdScroll(rest);                  break;
                 case "strategy":    CmdStrategy(rest);                break;
                 case "goal":        CmdGoal(rest);                    break;
+                case "means":       CmdMeans(rest);                   break;
                 case "observe":     CmdObserve(rest);                 break;
                 case "fight-end":   CmdFightEnd(rest);                break;
                 case "fight-deplete": CmdFightDeplete(rest);          break;
@@ -418,6 +419,8 @@ public sealed class CliDriver
                                     pin action outcomes (needs --debug)
           goal <verb-id|none>       pin the playground's goal choice to one verb (e.g. `goal tame`),
                                     set before the keyword click it should apply to
+          means <mm-id|none>        pin the playground's choice of means — the action modus mentis
+                                    that carries the goal out — the way `goal` pins the goal
           fight-end <victory|death|runaway>
                                     force-resolve a fight to test its transition
           fight-deplete [enemies|companions|<fighter>]
@@ -1364,6 +1367,28 @@ public sealed class CliDriver
         if (!PlaygroundMode.IsActive)
             CliMode.Emit("warning: --playground is not enabled, so the goal is chosen by the persona, not this");
         CliMode.Emit($"ok: goal={want}");
+    }
+
+    /// <summary>
+    /// Pins the playground's choice of means — which action modus mentis carries the goal out — the way
+    /// <c>goal</c> pins the goal. Same switch as <c>--means-only</c>; <c>means none</c> hands it back.
+    /// </summary>
+    private static void CmdMeans(string[] a)
+    {
+        if (a.Length == 0) { CliMode.Emit($"means={Config.Debug.MeansOnly ?? "auto"}"); return; }
+
+        string want = a[0].ToLowerInvariant();
+        if (want is "none" or "auto" or "off")
+        {
+            Config.Debug.MeansOnly = null;
+            CliMode.Emit("ok: means=auto");
+            return;
+        }
+
+        Config.Debug.MeansOnly = want;
+        if (!PlaygroundMode.IsActive)
+            CliMode.Emit("warning: --playground is not enabled, so the means is chosen by the persona, not this");
+        CliMode.Emit($"ok: means={want}");
     }
 
     private void CmdFightEnd(string[] a)

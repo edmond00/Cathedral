@@ -169,15 +169,17 @@ public class ThinkingExecutor
             ? null
             : choiceCtx with { ModusMentis = skill, Goal = resolved };
 
-        var (fit, fitThought) = autoSuccess
-            ? (PersonaFit.Willing, (string?)null)
+        var (fit, fitThought, imposedReason) = autoSuccess
+            ? (PersonaFit.Willing, (string?)null, (string?)null)
             : await AskPersonaFitAsync(actionSlot, skill, goalPhrase, overallLocation, areaLocation, observedPhrase, fitCtx, cancellationToken, actionPart);
 
         // "unwilling to do it" → the skill refuses; produce a first-person refusal outcome, no action.
         // The fit want explains the refusal, so it rides into the rewrite as the inner thought.
         if (fit.Cancels)
         {
-            string refusalNeutral = NeutralNarration.ActionRefusal(goalPhrase);
+            string refusalNeutral = imposedReason != null
+                ? NeutralNarration.ActionRefusal(goalPhrase, imposedReason)
+                : NeutralNarration.ActionRefusal(goalPhrase);
             string refusalText = await _rewriter.RewriteAsync(
                 actionSlot, refusalNeutral, NarrationKind.Outcome, skill.PersonaReminder2,
                 styleInstruction: skill.StyleInstruction, innerThought: fitThought, preview: actionPart?.NextSegment(), ct: cancellationToken);
@@ -267,19 +269,28 @@ public class ThinkingExecutor
     /// caller renders the refusal outcome). The selector resets the slot in and out, so the
     /// following action rewrite starts from the system prompt. In playground mode picks Willing.
     /// </summary>
-    private async Task<(PersonaFit Fit, string? Reasoning)> AskPersonaFitAsync(
+    private async Task<(PersonaFit Fit, string? Reasoning, string? ImposedReason)> AskPersonaFitAsync(
         int actionSlot, ModusMentis skill, string goalPhrase,
         string? overallLocation, string? areaLocation, string? observedPhrase,
         Rules.Choice.ChoiceRuleContext? choiceCtx, CancellationToken ct,
         PreviewPart? part = null)
     {
-        if (PlaygroundMode.IsActive) return (PersonaFit.Willing, null);
-
         // Coded rules narrow the answers before they are offered. A skill with no refusal left cannot
         // land on PersonaFit.Refused at all — the decline option is simply not in the prompt.
         var options = choiceCtx == null
             ? DefaultWillingness
             : Rules.Choice.ChoiceRulesChecker.FilterWillingness(DefaultWillingness, choiceCtx);
+
+        // A rule that has already said no is answered without a question — and ahead of the playground
+        // stand-in, since a coded rule is deterministic and has nothing to stand in for.
+        if (options.ImposedRefusal != null)
+        {
+            Console.WriteLine($"ThinkingExecutor: Persona-fit for '{goalPhrase}' ({skill.DisplayName}): "
+                            + $"refused by rule — {options.ImposedRefusal}");
+            return (PersonaFit.Refused, null, options.ImposedRefusal);
+        }
+
+        if (PlaygroundMode.IsActive) return (PersonaFit.Willing, null, null);
 
         string situation = ThinkingPromptConstructor.SituationLine(overallLocation, areaLocation, observedPhrase).TrimEnd();
         string lead = situation.Length == 0 ? "" : situation + " ";
@@ -308,7 +319,7 @@ public class ThinkingExecutor
             null                => options.DeclineOption != null ? PersonaFit.Refused : PersonaFit.Reluctant,
             _                   => PersonaFit.Willing, // unrecognised → proceed at base difficulty
         };
-        return (fit, chosen.Reasoning);
+        return (fit, chosen.Reasoning, null);
     }
 
     // ── Decision: GOAL ─────────────────────────────────────────────────────────
@@ -408,6 +419,22 @@ public class ThinkingExecutor
         return outcomes;
     }
 
+    /// <summary>The <see cref="GoalOnlyFilter"/> of the means: <c>--means-only</c> / the CLI's <c>means</c>.</summary>
+    private static List<ModusMentis> MeansOnlyFilter(List<ModusMentis> skills)
+    {
+        var wanted = Config.Debug.MeansOnly;
+        if (string.IsNullOrWhiteSpace(wanted)) return skills;
+
+        var matched = skills
+            .Where(s => string.Equals(s.ModusMentisId, wanted, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        if (matched.Count > 0) return matched;
+
+        Cathedral.Game.DebugFlagAudit.Miss("--means-only", wanted, $"all {skills.Count} action modi mentis");
+        return skills;
+    }
+
     // ── Decision: HOW (skill) ──────────────────────────────────────────────────
 
     private async Task<(ModusMentis? Skill, string? Reasoning)> ChooseSkillAsync(
@@ -423,7 +450,10 @@ public class ThinkingExecutor
     {
         if (actionModiMentis.Count == 0) return (null, null);
         if (PlaygroundMode.IsActive)
-            return (actionModiMentis[_rng.Next(actionModiMentis.Count)], null);
+        {
+            var pool = MeansOnlyFilter(actionModiMentis);
+            return (pool[_rng.Next(pool.Count)], null);
+        }
 
         // The goal is fixed; the Modus Mentis reasons over the available means ("How do you want to do
         // it?") and the neutral critic maps that to one skill — or to the decline option, which is the

@@ -207,6 +207,9 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --goal-only <verb-id>              DEBUG: the playground's goal choice must land on this verb (e.g. tame). Without");
     Console.WriteLine("                                     it --playground draws uniformly over every goal the observed object offers.");
     Console.WriteLine("                                     The CLI's `goal` command sets the same thing, for a script that needs to change it");
+    Console.WriteLine("  --means-only <mm-id>               DEBUG: the playground's choice of means (which action modus mentis carries the");
+    Console.WriteLine("                                     goal out) must land on this one. Examining is refused by any action modus mentis");
+    Console.WriteLine("                                     without Observation, so an examine script names one. CLI twin: `means`");
     Console.WriteLine("  --advance-days <n>                 DEBUG: push the world clock forward <n> days on first arrival at the world");
     Console.WriteLine("                                     map. The clock only moves on travel and work, and a wound takes 100-1000");
     Console.WriteLine("                                     days to close, so this is how a script sees healing without simulating years");
@@ -810,6 +813,9 @@ for (int i = 0; i < args.Length; i++)
 
     if (args[i] == "--goal-only" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
         Cathedral.Config.Debug.GoalOnly = args[i + 1];
+
+    if (args[i] == "--means-only" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
+        Cathedral.Config.Debug.MeansOnly = args[i + 1];
 
     if (args[i] == "--advance-days" && i + 1 < args.Length &&
         double.TryParse(args[i + 1], System.Globalization.NumberStyles.Float,
