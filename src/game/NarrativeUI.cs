@@ -469,10 +469,13 @@ public class NarrativeUI : TerminalPanelUI
         
         int currentX = startX;
 
-        // Segments arrive in text order, so the Nth highlighted occurrence of a word on this line is
-        // the entry whose recorded occurrence index is N. Matching on the word ALONE would be
-        // ambiguous exactly where it now matters — two sentences about two men, wrapped onto one
-        // line, both offering "man" and each acting on a different person.
+        // Each highlighted occurrence is wired to the entry recorded for the SAME occurrence — two
+        // sentences about two men, wrapped onto one line, both offer "man" and each acts on a different
+        // person, so matching on the word alone would be ambiguous. The occurrence comes from the
+        // segment itself, counted over every match on the line. Counting only the HIGHLIGHTED ones, as
+        // this once did, broke the moment an unhighlighted use of the word came first on the line —
+        // which the area introduction made routine by naming the objects around me: "door" in the list,
+        // then the door observed, and the highlighted one wired to nothing.
         var seenPerKeyword = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var segment in segments)
@@ -483,8 +486,9 @@ public class NarrativeUI : TerminalPanelUI
                 if (thinkingAttemptsRemaining > 0 && !dimContent)
                 {
                     string kw = segment.KeywordValue!;
-                    seenPerKeyword.TryGetValue(kw, out int occurrence);
-                    seenPerKeyword[kw] = occurrence + 1;
+                    seenPerKeyword.TryGetValue(kw, out int highlightedSoFar);
+                    seenPerKeyword[kw] = highlightedSoFar + 1;
+                    int occurrence = segment.Occurrence ?? highlightedSoFar;
 
                     // Track keyword region for click detection, including source block for modusMentis
                     // chain and the anchor this occurrence acts on.

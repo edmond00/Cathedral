@@ -15,6 +15,14 @@ public class TextSegment
     public string Text { get; set; } = "";
     public bool IsKeyword { get; set; }
     public string? KeywordValue { get; set; }  // The actual keyword if IsKeyword=true
+
+    /// <summary>
+    /// Which occurrence of <see cref="KeywordValue"/> on its line this segment is, counting every
+    /// whole-word match on the line, highlighted or not — the same count the scroll buffer recorded it
+    /// by. Set only by <see cref="KeywordRenderer.ParseNarrationWithKeywordsAtOccurrences"/>; null
+    /// where every occurrence is highlighted.
+    /// </summary>
+    public int? Occurrence { get; set; }
 }
 
 /// <summary>
@@ -286,7 +294,7 @@ public class KeywordRenderer
             return segments;
         }
 
-        var matches = new List<(int Start, int Length, string Keyword, string MatchedText)>();
+        var matches = new List<(int Start, int Length, string Keyword, string MatchedText, int Occurrence)>();
 
         for (int ki = 0; ki < keywords.Count; ki++)
         {
@@ -319,27 +327,34 @@ public class KeywordRenderer
             if (targetOccurrence < deduped.Count)
             {
                 var chosen = deduped[targetOccurrence];
-                matches.Add((chosen.Start, chosen.Length, keyword, chosen.MatchedText));
+                matches.Add((chosen.Start, chosen.Length, keyword, chosen.MatchedText, targetOccurrence));
             }
         }
 
         // Remove overlapping matches (keep first encountered)
         matches = matches.OrderBy(m => m.Start).ThenByDescending(m => m.Length).ToList();
-        var nonOverlapping = new List<(int Start, int Length, string Keyword, string MatchedText)>();
+        var nonOverlapping = new List<(int Start, int Length, string Keyword, string MatchedText, int Occurrence)>();
         foreach (var match in matches)
         {
             if (!nonOverlapping.Any(e => match.Start < e.Start + e.Length && match.Start + match.Length > e.Start))
                 nonOverlapping.Add(match);
         }
         nonOverlapping = nonOverlapping.OrderBy(m => m.Start).ToList();
-        nonOverlapping = RemoveAdjacentKeywords(nonOverlapping, narrationText);
+        // RemoveAdjacentKeywords works on the four-field shape; the occurrence is re-attached after.
+        var occurrenceAt = nonOverlapping.ToDictionary(m => m.Start, m => m.Occurrence);
+        var kept = RemoveAdjacentKeywords(
+            nonOverlapping.Select(m => (m.Start, m.Length, m.Keyword, m.MatchedText)).ToList(), narrationText);
 
         int currentPos = 0;
-        foreach (var match in nonOverlapping)
+        foreach (var match in kept)
         {
             if (match.Start > currentPos)
                 segments.Add(new TextSegment { Text = narrationText.Substring(currentPos, match.Start - currentPos) });
-            segments.Add(new TextSegment { Text = match.MatchedText, IsKeyword = true, KeywordValue = match.Keyword });
+            segments.Add(new TextSegment
+            {
+                Text = match.MatchedText, IsKeyword = true, KeywordValue = match.Keyword,
+                Occurrence = occurrenceAt[match.Start],
+            });
             currentPos = match.Start + match.Length;
         }
         if (currentPos < narrationText.Length)
