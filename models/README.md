@@ -114,9 +114,26 @@ committed. A CRLF checkout is 502,767 bytes and equally correct — `CommonWordL
 `line.Trim()`, and `\r` is whitespace in .NET, so the terminator never reaches the word list.
 
 The two llama.cpp toolchains record their own upstream zip and build number in
-`llama/BUILD.txt` (x64) and `llama-arm64/BUILD.txt` (ARM64), both b11515 at present. **The build numbers
-are allowed to differ between the two folders**; what must never differ is a GPU backend under
-`backends/` versus the `ggml-base.dll` beside it in the same folder.
+`llama/BUILD.txt` (x64) and `llama-arm64/BUILD.txt` (ARM64), both b11515 at present. Nothing
+breaks if the two folders differ — they are never loaded into one process — but keep them equal:
+the game's startup check holds whichever one runs to a single expected build. What must never
+differ is a GPU backend under `backends/` versus the `ggml-base.dll` beside it in the same folder.
+
+## If the game says the install does not match
+
+At startup `LlamaInstallCheck` (`src/LLM/LlamaInstallCheck.cs`) compares this folder with what the
+build was made against, and lists every difference on the loading screen, the main menu and in
+`log.txt`. It never stops the game. It checks:
+
+- **llama.cpp** — the build and commit `llama-server --version` reports, against
+  `LlamaInstallCheck.ExpectedBuild` / `ExpectedCommit`, and against the `BUILD.txt` beside it.
+- **each GPU backend** — the `BUILD.txt` inside its pack (see `llama/backends/README.md`).
+- **the model** — `general.name` from the GGUF header and the exact file size, against
+  `ExpectedModelName` / `ExpectedModelBytes`. The size is what tells two quantisations, or a
+  truncated download, apart.
+
+The fix is to bring this folder in line with the Provenance table above, or — if the change was
+deliberate — to update those constants (see the `models` skill).
 
 ## Changing the model
 

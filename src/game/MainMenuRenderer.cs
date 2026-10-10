@@ -109,6 +109,10 @@ public class MainMenuRenderer
             DrawButton(i);
         }
 
+        // Below the buttons, which end at row 54: what is wrong with the language model install, if
+        // anything. Here as well as on the loading screen because this one stays up to be read.
+        InstallWarningBlock.Draw(_terminal, FirstButtonRow + _buttons.Count * ButtonSpacing + 4);
+
         // Edge rules against the sphere, drawn last so nothing overwrites them
         _terminal.DrawSideRails();
     }

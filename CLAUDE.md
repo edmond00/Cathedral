@@ -131,7 +131,7 @@ every line that left is the same text, moved.
 | `runtime` skill | on invocation | `models/model.gguf` and the llama.cpp backends, `-ngl`, the first-run probe, the connection-pool and streaming contracts, server-start fallback, `log.txt` and the `logs/` tree, the crash report, the Settings screen |
 | `release` skill | on invocation | the ten release steps, and now the packaging, publishing, naming and shipped-build-verification reference behind them |
 | `manual` skill | on invocation | the player manual's style guide, chapter map and procedure |
-| `models` skill | on invocation | maintaining the `models/` folder across machines |
+| `models` skill | on invocation | maintaining the `models/` folder across machines; **upgrading llama.cpp or swapping the model**, including the expected versions in `src/LLM/LlamaInstallCheck.cs` that must move in the same commit |
 | `video` skill | on invocation | narrated videos about the game: `--record` (the CLI with a camera, player commands only), storyboards, manim in the game's identity, Piper voice-over, the game's own music; `tools/video/` |
 | `mm-grants` skill | on invocation | writing the modus mentis grant audit by hand |
 

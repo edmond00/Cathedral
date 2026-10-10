@@ -115,10 +115,15 @@ public static class LocationTravelModeLauncher
                     LLMLogger.Initialize();
                 }
 
+                // The install check, here and synchronously (about half a second): the loading screen
+                // and the main menu draw its result on their first frame and do not redraw for it, so
+                // it must be settled before either appears. The server start reuses the cached result.
+                Cathedral.LLM.LlamaInstallCheck.Run();
+
                 try
                 {
                     llamaServer = new LlamaServerManager();
-                    
+
                     // Set up server ready callback
                     bool serverReady = false;
                     llamaServer.ServerReady += (sender, e) =>

@@ -111,6 +111,9 @@ public class LLMLoadingRenderer
             "This may take 30–120 seconds on first run",
             Config.Colors.DarkGray35, Config.Colors.Black);
 
+        // ── Install mismatches, if any ───────────────────────────────────────
+        InstallWarningBlock.Draw(_terminal, titleY + 18);
+
         // Edge rules against the sphere, drawn last so nothing overwrites them. This screen is
         // opaque black to the terminal's edges exactly like the main menu and the settings screen,
         // so without them the panel bleeds into the skybox — and this is the FIRST screen a player

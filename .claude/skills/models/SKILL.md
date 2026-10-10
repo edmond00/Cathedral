@@ -26,6 +26,17 @@ a 2 GB fetch is not a verifier's decision to make.
 `b8851` out of a committed file while its own `llama-server` reports `8746` — and will build a
 release that way without complaint.
 
+## The in-game check
+
+`src/LLM/LlamaInstallCheck.cs` is the game's own version of the drift check: at startup it asks
+`llama-server --version` for the real build, reads each backend pack's `BUILD.txt`, and reads the
+model's GGUF name and size, then lists any mismatch on the loading screen and the main menu. Its
+four constants — `ExpectedBuild`, `ExpectedCommit`, `ExpectedModelName`, `ExpectedModelBytes` —
+are **the code's statement of what it was tuned against**, and they move in the same commit as any
+upgrade below. A machine that has not caught up then says so on its next launch instead of
+running silently on the wrong runtime. It runs only when the server starts, so `--playground`
+runs and the test suite never see it.
+
 ## The diagnostic ladder
 
 When two copies of a file differ, work down this list before assuming either is wrong. Every rung
@@ -75,8 +86,9 @@ line endings, GloVe a prefix.
 
 ## Upgrading llama.cpp
 
-Both toolchains are separate downloads and **their build numbers may legitimately differ** —
-they carry complete, independent sets of ggml libraries and are never loaded into one process.
+Both toolchains are separate downloads, carry complete, independent sets of ggml libraries and are
+never loaded into one process — but **upgrade them together**: the in-game check expects one build,
+so a toolchain left behind warns on every machine that uses it.
 What must never differ is a GPU backend under `backends/` versus the `ggml-base.dll` beside it in
 the *same* folder; that crashes inside the backend with no usable diagnostic, and the DLLs carry
 no version resource, so nothing can catch it by reading them.
@@ -84,15 +96,24 @@ no version resource, so nothing can catch it by reading them.
 1. Fetch the upstream zip for each architecture (named in each `BUILD.txt`).
 2. Replace the folder contents, keeping `BUILD.txt` and `backends/`.
 3. Update `BUILD.txt` — build number, commit, zip name.
-4. Re-fetch any GPU backend at the **matching** build number.
-5. `./tools/verify_models.ps1`, then `./package.ps1 -NoModel -NoZip` to confirm staging.
+4. Re-fetch any GPU backend at the **matching** build number, and write its own
+   `backends/<name>/BUILD.txt` (`llama.cpp build: bNNNN` on the first line). Backend packs are not
+   tracked, so this file travels with the pack and is the only record of its build.
+5. Set `LlamaInstallCheck.ExpectedBuild` and `ExpectedCommit` to what `llama-server --version`
+   now prints (`version: … (build NNNNN, commit xxxxxxxxx)`).
+6. `./tools/verify_models.ps1`, then `./package.ps1 -NoModel -NoZip` to confirm staging. Launch
+   once without `--playground`: the main menu must show no install warning.
+7. Commit the `BUILD.txt` files and `LlamaInstallCheck.cs` together. Every other machine then
+   warns until its own `models/` is upgraded — which is the point.
 
 ## Swapping the model
 
 The file is always `models/model.gguf` — there is no setting and no path anywhere in the code.
-After swapping, update the provenance table in `models/README.md` (size, SHA-256, source) and the
-expectations at the top of `tools/verify_models.ps1`, which are duplicated there on purpose: a
-verifier that reads its expectations from the prose it is checking can only agree with itself.
+After swapping, update the provenance table in `models/README.md` (size, SHA-256, source), the
+expectations at the top of `tools/verify_models.ps1`, and `LlamaInstallCheck.ExpectedModelName` /
+`ExpectedModelBytes` (the GGUF `general.name` and the exact byte size). All three are duplicated
+on purpose: a verifier that reads its expectations from the prose it is checking can only agree
+with itself. A swap made only to experiment needs none of this — the game warns and runs anyway.
 
 The compute probe re-runs automatically, because its cache is keyed on the model's size and
 timestamp. Note the sampling constants in `Config.LLM` were tuned on a 3B model and are not

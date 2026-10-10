@@ -4,13 +4,16 @@ toolchain:       Clang 20.1.8, Windows x86_64
 upstream zip:    llama-b11515-bin-win-cpu-x64.zip
 license:         MIT (https://github.com/ggml-org/llama.cpp/blob/master/LICENSE)
 
-This file is READ BY THE GAME. LlamaRuntime parses the first line to check that any backend
-pack under backends/ was built from the same revision, so keep the "llama.cpp build: bNNNN"
-format if you update this folder.
+This file is READ BY THE GAME, so keep the "llama.cpp build: bNNNN" format on the first line.
+LlamaInstallCheck (src/LLM) asks llama-server for its real build at startup and warns, on the
+loading screen and the main menu, when that build differs from LlamaInstallCheck.ExpectedBuild
+or from the number written here. Each GPU backend pack carries its own BUILD.txt, checked the
+same way. Upgrading: see the `models` skill.
 
 Mixing backend DLLs across build numbers does not fail cleanly — ggml-base.dll and a backend
 from different revisions share a C++ ABI that is not stable between them, so the symptom is a
-crash inside the backend with no diagnostic. That check exists to turn that into a message.
+crash inside the backend with no diagnostic. The backend's own BUILD.txt is what lets the game
+turn that into a message, since the DLLs carry no version of their own.
 
 ── what was kept, and why ────────────────────────────────────────────────────────────────
 

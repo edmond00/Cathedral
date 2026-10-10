@@ -58,6 +58,12 @@ per-device rates and the margin. It ignores the cached answer and writes nothing
 From `llama-b11515-bin-win-vulkan-x64.zip` — the **same build number** as `../BUILD.txt`.
 Take only `ggml-vulkan.dll`; the rest of that zip duplicates what is already here.
 
+**Then write `backends/vulkan/BUILD.txt`** with the build on its first line
+(`llama.cpp build: b11515`). The DLL carries no version, so this file is the only way the game's
+startup check (`LlamaInstallCheck`) can tell a pack from another build — which otherwise crashes
+inside the backend and silently drops the game to the CPU. A pack without one is reported on the
+main menu as unverifiable. The same goes for any other pack under `backends/`.
+
 It is **59 MB** — one file, and the whole cost of GPU support. That covers NVIDIA, AMD and
 Intel from a single binary, including the integrated GPUs that are most of the install base.
 

@@ -674,6 +674,15 @@ public class LlamaServerManager : IDisposable
             // its first await would otherwise run on the caller's thread, which is the UI's.
             await Task.Run(() => LlamaProbe.EnsureProbed(ReportProbeStage));
 
+            // Does the install match what this build was made against? Never fatal — the loading screen
+            // and the main menu show whatever it finds — but run before the launch, because a wrong
+            // build is the usual reason the launch below fails, and the log should say so first.
+            var installProblems = LlamaInstallCheck.Run();
+            if (installProblems.Count == 0)
+                Console.WriteLine($"Install check: llama.cpp b{LlamaInstallCheck.ExpectedBuild} and {LlamaInstallCheck.ExpectedModelName} as expected.");
+            foreach (var problem in installProblems)
+                LogWarning($"Install check: {problem}");
+
             // Start the server, stepping down the ladder if a device fails.
             var isReady = await StartWithFallbackAsync(resolvedServerPath, resolvedModelPath);
 
