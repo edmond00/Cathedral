@@ -33,6 +33,7 @@ public class CoastSceneFactory : SceneFactory
     private bool _isEstuary;
     private bool _hasFisherman;
     private Area? _sandyBeach, _rockyShore, _cliffBase, _cliffTop, _tidePoolZone, _estuaryFlat;
+    private Area? _netShed;
     private readonly List<Area> _allAreas = new();
 
     protected override void BuildSections(Random rng, int locationId, Scene scene)
@@ -148,6 +149,17 @@ public class CoastSceneFactory : SceneFactory
                 moods: new[] { "sheer", "wet", "salt-bitten", "vertiginous" }
             );
             cliff.AttachTo(scene);
+        }
+
+        // The net shed above the beach camp, where the catch is salted and sold. Not in _allAreas, so
+        // nothing wild is placed in it.
+        if (_hasFisherman && _sandyBeach != null)
+        {
+            _netShed = CampSubfactory.BuildNetShed();
+            shoreSection.Areas.Add(_netShed);
+            RegisterAll(scene, _netShed);
+            OutdoorLayout.Link(scene, _sandyBeach, _netShed, "Shore Path");
+            scene.Stores.Add(_netShed);
         }
 
         Console.WriteLine($"CoastSceneFactory: {_identity}{(_isEstuary ? "/estuary" : "")}, fish={_fish}, fisherman={_hasFisherman}");
@@ -368,15 +380,17 @@ public class CoastSceneFactory : SceneFactory
             scene.Npcs.Add(sceneNpc);
             var beachId = _sandyBeach;
             var rockyId = _rockyShore ?? _sandyBeach;
+            // Evening in the net shed, salting down the catch — and the one time it can be bought.
             scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Roaming(new()
             {
                 [TimePeriod.Dawn]      = beachId,
                 [TimePeriod.Morning]   = null,
                 [TimePeriod.Noon]      = null,
                 [TimePeriod.Afternoon] = rockyId,
-                [TimePeriod.Evening]   = beachId,
+                [TimePeriod.Evening]   = _netShed ?? beachId,
                 [TimePeriod.Night]     = beachId,
             });
+            if (_netShed != null) TradeAt(entity, _netShed);
         }
 
         TrySpawnShallow(rng, scene, new SealArchetype(),    0.20);

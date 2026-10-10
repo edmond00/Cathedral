@@ -186,7 +186,7 @@ public sealed class CitySceneFactory : SettledSceneFactory
             var roster = new List<NamedNpcArchetype> { new InnkeeperArchetype() };
             var inn = Put(innName, "inn", BuildingAccess.Public, BuildingOccupancy.Communal, roster.Count, slots.Take(squares));
             Crews.Add(new Crew(roster, inn.BedAreas, inn.PublicHall.ContextDescription, AtWork(inn.PublicHall, 1),
-                new[] { inn.Section }, inn.PublicHall));
+                new[] { inn.Section }, inn.PublicHall, TradesAt: _ => inn.PublicHall));
         }
 
         // The alehouse and its brewer.
@@ -194,7 +194,7 @@ public sealed class CitySceneFactory : SettledSceneFactory
             var ale = Put("Alehouse", "alehouse", BuildingAccess.Public, BuildingOccupancy.Individual, 1, slots.Take(back),
                           Shared.WorkshopSubfactory.BuildAlehouse);
             Crews.Add(new Crew(new NamedNpcArchetype[] { new BrewerArchetype() }, ale.BedAreas, ale.PublicHall.ContextDescription,
-                AtWork(ale.PublicHall, 1), new[] { ale.Section }, ale.PublicHall));
+                AtWork(ale.PublicHall, 1), new[] { ale.Section }, ale.PublicHall, TradesAt: _ => ale.PublicHall));
         }
 
         // Merchants, each with a clerk.
@@ -203,7 +203,7 @@ public sealed class CitySceneFactory : SettledSceneFactory
             var roster = new List<NamedNpcArchetype> { new MerchantArchetype(), new ClerkArchetype() };
             var house = Put(MerchantHouses[m], "merchant's house", BuildingAccess.Public, BuildingOccupancy.Communal, 2, slots.Take(front));
             Crews.Add(new Crew(roster, house.BedAreas, house.PublicHall.ContextDescription, AtWork(house.PublicHall, 1),
-                new[] { house.Section }, house.PublicHall));
+                new[] { house.Section }, house.PublicHall, TradesAt: _ => house.PublicHall));
         }
 
         // The trades, each with an apprentice in a house of their own.
@@ -219,7 +219,7 @@ public sealed class CitySceneFactory : SettledSceneFactory
                 (i, _, bed, r) => i == 0
                     ? BuildingSchedule.ForWorker(bed, shop.PublicHall, ways, r, awayPeriods: r.NextDouble() < 0.5 ? 1 : 2)
                     : BuildingSchedule.ForWorker(bed, shop.PublicHall, ways.Append(home.PublicHall).ToList(), r, awayPeriods: 2),
-                new[] { shop.Section }, shop.PublicHall));
+                new[] { shop.Section }, shop.PublicHall, TradesAt: _ => shop.PublicHall));
         }
 
         // The watch, at the gate.
@@ -242,7 +242,7 @@ public sealed class CitySceneFactory : SettledSceneFactory
             var wash = Put("Wash House", "wash house", BuildingAccess.Public, BuildingOccupancy.Communal, roster.Count, slots.Take(front),
                            Shared.CityTradeSubfactory.BuildWashHouse);
             Crews.Add(new Crew(roster, wash.BedAreas, wash.PublicHall.ContextDescription, AtWork(wash.PublicHall, 1),
-                new[] { wash.Section }, wash.PublicHall));
+                new[] { wash.Section }, wash.PublicHall, TradesAt: _ => wash.PublicHall));
         }
 
         // The doss house, where the beggars sleep when they have the copper; by day they are in the squares.

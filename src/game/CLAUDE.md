@@ -1267,6 +1267,35 @@ A verb that joins this set must also be named in `VerbAudit`'s `unreachable` tab
 `VerbProbe.WhyUnreached`: the sweeps build scenes with no instance state, so their stand-in actor is
 a stranger to everyone and an affinity-gated verb is *correctly* never offered.
 
+### Trade happens on premises
+
+`TradeGate.CanTrade` asks a second question beside acquaintance: **is the player standing in one of
+the trader's `NpcEntity.TradeAreaIds`?** The goods are kept somewhere — a workshop counter, a barn,
+a woodshed — and are not carried about, so a smith met in the street does not sell. `request_job`
+uses only the acquaintance half (`TradeGate.IsAcquainted`): work is offered by a person, wherever met.
+
+**Empty premises means trades nowhere, not everywhere.** The scene factory fills them at spawn
+(`SceneFactory.TradeAt`): a town crew's `Crew.TradesAt`, a rural crew's store (`SpawnCrew(store:)`,
+`Crew.Store`), the edifice entrance for a great building's keeper. A trader the factory forgets is a
+seller nobody can buy from, and nothing in play says so — **`--building-audit` is what does**: every
+trader must have premises and be in them at least one day period, and every store in `Scene.Stores`
+(barns, fodder lofts, the farm's shed — the rural ones) must hold a trader at every day period. The
+wilderness stores (woodshed, net shed, ore store) are held to the visit only; a lone woodcutter
+cannot mind his shed all day.
+
+Staffing a store and a hall from the same hands goes through **`StaffingLocks`**: each trader's one
+guaranteed store visit (`EnsureVisit`) and every staffing assignment is locked, so the hall pass
+cannot pull the only keeper out of the store, or a trader off the only visit they have. Staffing the
+two without locks failed both checks in a few percent of locations, in opposite directions.
+
+Most people do not trade at all — soldiers, nobles, clergy, scholars, clerks and the street poor have
+no `SellTag`/`BuyTag`. A great building trades through its keeper: the steward, a `Quartermaster`,
+a `Sacristan` or a `Cellarer`.
+
+The test location is the exception: there a person trades wherever their schedule takes them, because
+it is a fixture and the trade scripts meet the farmer in the wood. `cli/verb/propose_to_buy/on_premises.cli`
+and `off_premises.cli` exercise the real rule on the farm, whose area names are written out.
+
 ### A lesson from the circumstances, not only from the act
 
 `CircumstanceGrants` answers a different question from the verb's own grant: not "what did I just

@@ -34,6 +34,7 @@ public sealed class LivestockSceneFactory : SettledSceneFactory
     private readonly List<Area> _ground = new();
     private readonly List<Area> _sheds  = new();
     private readonly List<Area> _all    = new();
+    private Area? _store;
     private List<NamedNpcArchetype> _roster = new();
     private BuildingResult? _hall, _bunk;
     private List<Area> _beds = new();
@@ -62,13 +63,13 @@ public sealed class LivestockSceneFactory : SettledSceneFactory
                 _ground.Add(Paddock("Horse Paddock", "A railed paddock of cropped grass, hoof-churned by the gate"));
                 if (rng.NextDouble() < 0.5) _ground.Add(Paddock("Exercise Ring", "A sanded ring where horses are lunged on a long line"));
                 _sheds.Add(Tackroom());
-                _sheds.Add(Fodder());
+                _sheds.Add(_store = Fodder());
                 break;
             case Kind.Sheepfold:
                 _ground.Add(FoldArea("Sheepfold", "A drystone fold, sheep packed in it tight"));
                 _ground.Add(AnimalPenSubfactory.BuildSheepPen());
                 _ground.Add(Paddock("High Pasture", "A slope of thin turf above the fold, cropped close"));
-                _sheds.Add(Shearing());
+                _sheds.Add(_store = Shearing());
                 if (rng.NextDouble() < 0.6) _sheds.Add(Lambing());
                 break;
             case Kind.Ranch:
@@ -76,11 +77,12 @@ public sealed class LivestockSceneFactory : SettledSceneFactory
                 _ground.Add(Corral("Branding Pen", "A small pen with a fire-pit and a snubbing post"));
                 _sheds.Add(Trough());
                 _sheds.Add(Tackroom());
+                _sheds.Add(_store = Smokehouse());
                 break;
             default:
                 _ground.Add(Paddock("Open Pasture", "Grass to the horizon, bitten short and wind-combed"));
                 _ground.Add(Byre());
-                _sheds.Add(AnimalPenSubfactory.BuildDairyShed());
+                _sheds.Add(_store = AnimalPenSubfactory.BuildDairyShed());
                 if (rng.NextDouble() < 0.5) _sheds.Add(Dairy());
                 break;
         }
@@ -241,6 +243,21 @@ public sealed class LivestockSceneFactory : SettledSceneFactory
         return a;
     }
 
+    /// <summary>The ranch's store: what the herd gives besides itself, hung up and salted down.</summary>
+    private Area Smokehouse()
+    {
+        var a = new StoreArea("Smokehouse", "in the smokehouse", "step into the smokehouse",
+            new() { "A low windowless house dark with smoke, strips of meat hung from the rafters and hides stacked by the door" },
+            new[] { "smoky", "dark", "salt-smelling" });
+        a.PointsOfInterest.Add(new RackPointOfInterest("Meat Rails", new() { "Rails under the roof hung thick with strips of drying meat" },
+            Items(() => new DriedMeat(), () => new DriedMeat(), () => new Tallow()), new[] { "smoky", "hanging" })
+            { Senses = SensoryProfile.Odorous, VerbModiMentis = Teach(("examine", "husbandry"), ("smell", "byre_sense")) });
+        a.PointsOfInterest.Add(new CratePointOfInterest("Hide Stack", new() { "Salted hides folded hair-in and stacked for the tanner" },
+            Items(() => new Hide(), () => new Hide()), new[] { "salted", "stiff" })
+            { Senses = SensoryProfile.Odorous, VerbModiMentis = Teach(("examine", "branding")) });
+        return a;
+    }
+
     private Area Dairy()
     {
         var a = new DairyArea("Dairy", "in the dairy", "step into the dairy",
@@ -272,7 +289,8 @@ public sealed class LivestockSceneFactory : SettledSceneFactory
         if (_hall is null || _yard is null) return;
         var owns = new[] { _hall.Section }.Concat(_bunk != null ? new[] { _bunk.Section } : Array.Empty<Section>()).ToArray();
         SpawnCrew(rng, scene, _roster, _beds, _hall.PublicHall, _all, _key, owns,
-            who => who is DairymaidArchetype ? _sheds : _ground.Concat(new[] { _yard }).ToList());
+            who => who is DairymaidArchetype ? _sheds : _ground.Concat(new[] { _yard }).ToList(),
+            store: _store);
 
         var main = _ground[0];
         switch (_kind)

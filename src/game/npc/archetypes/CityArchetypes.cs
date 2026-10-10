@@ -430,8 +430,6 @@ public class PorterArchetype : SettledArchetype
     public override string TradeModusMentisId => "haulage";
     public override SocialCategory? Social => SocialCategory.Urban;
     public override string RoleNoun => "porter";
-    public override ItemTag? SellTag => ItemTag.Crop;
-    public override ItemTag? BuyTag  => ItemTag.Foodstuff;
     public override int ModiMentisCount => 7;
     public override IReadOnlyList<string> CanIntroduceToArchetypes => new[] { "merchant", "innkeeper" };
     public override string IntroductionRelation => "who I carry for";
@@ -536,8 +534,6 @@ public class WaterCarrierArchetype : SettledArchetype
     public override string TradeModusMentisId => "water_bearing";
     public override SocialCategory? Social => SocialCategory.Urban;
     public override string RoleNoun => "water-carrier";
-    public override ItemTag? SellTag => ItemTag.Foodstuff;
-    public override ItemTag? BuyTag  => ItemTag.Foodstuff;
     public override int ModiMentisCount => 7;
     public override IReadOnlyList<string> CanIntroduceToArchetypes => new[] { "innkeeper", "laundress" };
     public override string IntroductionRelation => "one of my houses";
@@ -589,8 +585,6 @@ public class BeggarArchetype : SettledArchetype
     public override string TradeModusMentisId => "beggary";
     public override SocialCategory? Social => SocialCategory.Pauper;
     public override string RoleNoun => "beggar";
-    public override ItemTag? SellTag => ItemTag.Forage;
-    public override ItemTag? BuyTag  => ItemTag.Foodstuff;
     public override int ModiMentisCount => 7;
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]

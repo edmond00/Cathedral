@@ -137,31 +137,55 @@ public abstract class SettledSceneFactory : SceneFactory
     /// <paramref name="work"/>; everyone else works <paramref name="work"/> (each by their own list
     /// when <paramref name="workOf"/> gives one); the hall is covered by the hands. Night is always the
     /// sleeper's own bed.
+    ///
+    /// <para><b>With a <paramref name="store"/></b> the place trades from it rather than from the hall:
+    /// it is every trader's premises, the master spends their one period out in it, every hand who
+    /// trades is in it at least once a day, and the trading hands keep it manned at every day period —
+    /// staffed before the hall, and neither staffing pass pulls anyone off the other place. Without
+    /// one the hall is where its people trade.</para>
     /// </summary>
     protected void SpawnCrew(Random rng, Scene scene, IReadOnlyList<NamedNpcArchetype> roster, IReadOnlyList<Area> beds,
                              Area hall, IReadOnlyList<Area> work, string context, Section[] masterOwns,
-                             Func<NamedNpcArchetype, IReadOnlyList<Area>?>? workOf = null)
+                             Func<NamedNpcArchetype, IReadOnlyList<Area>?>? workOf = null, Area? store = null)
     {
-        var hands = new List<NpcSchedule>();
+        var premises = store ?? hall;
+        var hands    = new List<NpcSchedule>();
+        var keepers  = new List<NpcSchedule>();
+        var locks    = new StaffingLocks();
         for (int i = 0; i < roster.Count && i < beds.Count; i++)
         {
             var who = roster[i];
             if (i == 0)
             {
                 // Elsewhere is everywhere but the hall itself, or the one period out could be spent in it.
-                var away = work.Where(a => a.Id != hall.Id).ToList();
+                var away = store != null && IsTrader(who)
+                    ? new List<Area> { store }
+                    : work.Where(a => a.Id != hall.Id).ToList();
                 var day = BuildingSchedule.ForWorker(beds[i], hall, away, rng, awayPeriods: 1);
-                SpawnResident(rng, scene, who, context, day, masterOwns);
+                TradeAt(SpawnResident(rng, scene, who, context, day, masterOwns), premises);
             }
             else
             {
                 var day = BuildingSchedule.ForHand(beds[i], workOf?.Invoke(who) ?? work, rng);
+                if (IsTrader(who))
+                {
+                    BuildingSchedule.EnsureVisit(day, premises, rng, locks);
+                    keepers.Add(day);
+                }
                 hands.Add(day);
-                SpawnResident(rng, scene, who, context, day);
+                TradeAt(SpawnResident(rng, scene, who, context, day), premises);
             }
         }
-        if (hands.Count > 0) BuildingSchedule.StaffPublicHall(hall, hands);
+        if (store != null)
+        {
+            scene.Stores.Add(store);
+            BuildingSchedule.StaffPublicHall(store, keepers, locks);
+        }
+        if (hands.Count > 0) BuildingSchedule.StaffPublicHall(hall, hands, locks);
     }
+
+    /// <summary>Whether people of this kind trade at all — the roster is drawn before anyone is spawned.</summary>
+    protected static bool IsTrader(NamedNpcArchetype who) => who.SellTag != null || who.BuyTag != null;
 
     // ── Queued crews ──────────────────────────────────────────────────────────
 
@@ -169,26 +193,51 @@ public abstract class SettledSceneFactory : SceneFactory
     /// People waiting to be spawned: drawn up and housed during <see cref="BuildPlace"/>, given their
     /// day in <see cref="SpawnQueuedCrews"/>. <paramref name="Day"/> builds each one's schedule from
     /// their place in the roster and their bed.
+    ///
+    /// <para>Where they trade: <paramref name="Store"/> when the crew has one, which every trader of
+    /// it then keeps (see <see cref="SpawnCrew"/>); otherwise whatever <paramref name="TradesAt"/>
+    /// names for each of them — a shop's counter for its master and apprentice, the entrance of a
+    /// great building for its steward. A trader given neither trades nowhere.</para>
     /// </summary>
     protected sealed record Crew(
         IReadOnlyList<NamedNpcArchetype> Roster, IReadOnlyList<Area> Beds, string Context,
-        Func<int, NamedNpcArchetype, Area, Random, NpcSchedule> Day, Section[] MasterOwns, Area? Hall = null);
+        Func<int, NamedNpcArchetype, Area, Random, NpcSchedule> Day, Section[] MasterOwns, Area? Hall = null,
+        Func<NamedNpcArchetype, Area?>? TradesAt = null, Area? Store = null);
 
     protected readonly List<Crew> Crews = new();
 
-    /// <summary>Spawns every queued crew; a crew with a hall has it covered by everyone but its master.</summary>
+    /// <summary>
+    /// Spawns every queued crew; a crew with a hall has it covered by everyone but its master, and a
+    /// crew with a store has it kept by its traders first.
+    /// </summary>
     protected void SpawnQueuedCrews(Random rng, Scene scene)
     {
         foreach (var crew in Crews)
         {
-            var cover = new List<NpcSchedule>();
+            var cover   = new List<NpcSchedule>();
+            var keepers = new List<NpcSchedule>();
+            var locks   = new StaffingLocks();
             for (int i = 0; i < crew.Roster.Count && i < crew.Beds.Count; i++)
             {
-                var day = crew.Day(i, crew.Roster[i], crew.Beds[i], rng);
+                var who      = crew.Roster[i];
+                var day      = crew.Day(i, who, crew.Beds[i], rng);
+                var premises = crew.Store ?? crew.TradesAt?.Invoke(who);
+                if (premises != null && IsTrader(who))
+                {
+                    BuildingSchedule.EnsureVisit(day, premises, rng, locks);
+                    if (i > 0) keepers.Add(day);
+                }
                 if (i > 0) cover.Add(day);
-                SpawnResident(rng, scene, crew.Roster[i], crew.Context, day, i == 0 ? crew.MasterOwns : Array.Empty<Section>());
+                var entity = SpawnResident(rng, scene, who, crew.Context, day, i == 0 ? crew.MasterOwns : Array.Empty<Section>());
+                if (premises != null) TradeAt(entity, premises);
             }
-            if (crew.Hall != null && cover.Count > 0) BuildingSchedule.StaffPublicHall(crew.Hall, cover);
+            if (crew.Store != null)
+            {
+                scene.Stores.Add(crew.Store);
+                BuildingSchedule.StaffPublicHall(crew.Store, keepers, locks);
+            }
+            if (crew.Hall != null && cover.Count > 0)
+                BuildingSchedule.StaffPublicHall(crew.Hall, cover, locks);
         }
     }
 
@@ -251,7 +300,7 @@ public abstract class SettledSceneFactory : SceneFactory
             (i, who, bed, r) => i == 0 || who is not SailorArchetype
                 ? AtWork(inn.PublicHall, 1)(i, who, bed, r)
                 : BuildingSchedule.ForHand(bed, streets, r),
-            new[] { inn.Section }, inn.PublicHall));
+            new[] { inn.Section }, inn.PublicHall, TradesAt: _ => inn.PublicHall));
 
         // Merchants, each with a clerk.
         var entrances = Shared.OutdoorLayout.DistributeEntrances(front, size + 3, rng);
@@ -262,7 +311,7 @@ public abstract class SettledSceneFactory : SceneFactory
             var roster = new List<NamedNpcArchetype> { new MerchantArchetype(), new ClerkArchetype() };
             var house = Put(houses[m % houses.Length], "merchant's house", BuildingAccess.Public, BuildingOccupancy.Communal, 2, entrances[e++]);
             Crews.Add(new Crew(roster, house.BedAreas, house.PublicHall.ContextDescription, AtWork(house.PublicHall, 1),
-                new[] { house.Section }, house.PublicHall));
+                new[] { house.Section }, house.PublicHall, TradesAt: _ => house.PublicHall));
         }
 
         // Workshops, each with an apprentice in a house of their own.
@@ -282,7 +331,7 @@ public abstract class SettledSceneFactory : SceneFactory
                 (i, _, bed, r) => i == 0
                     ? BuildingSchedule.ForWorker(bed, shop.PublicHall, streets, r, awayPeriods: r.NextDouble() < 0.5 ? 1 : 2)
                     : BuildingSchedule.ForWorker(bed, shop.PublicHall, streets.Append(home.PublicHall).ToList(), r, awayPeriods: 2),
-                new[] { shop.Section }, shop.PublicHall));
+                new[] { shop.Section }, shop.PublicHall, TradesAt: _ => shop.PublicHall));
         }
 
         // The watch.

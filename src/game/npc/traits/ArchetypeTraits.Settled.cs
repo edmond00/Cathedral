@@ -5,7 +5,7 @@ using Cathedral.Game.Narrative.World.Items;
 
 namespace Cathedral.Game.Npc.Traits;
 
-/// <summary>Reserved traits for the people of the settled country: orchardist, vintner, planter, picker, groom, drover, gravedigger, guard, captain, priest, monk, scholar, steward, lord, merchant, sailor, innkeeper, clerk.</summary>
+/// <summary>Reserved traits for the people of the settled country: orchardist, vintner, planter, picker, groom, drover, gravedigger, guard, captain, priest, monk, scholar, steward, lord, merchant, sailor, innkeeper, clerk, quartermaster, sacristan, cellarer.</summary>
 public sealed partial class PersonalityTraitRegistry
 {
     private void RegisterSettledTraits()
@@ -1107,6 +1107,187 @@ public sealed partial class PersonalityTraitRegistry
                 Appearance  = "smells of dust and old parchment",
                 Persona     = "You know where every document in the archive is, back three hundred years, and you are often the only one who can find anything.",
                 Opinions    = new[] { (DialogueTopic.Stories, "the old records tell a different history from the one in the books") },
+            });
+
+        // ── Quartermaster ─────────────────────────────────────────────────────────
+        Add("quartermaster",
+            new PersonalityTrait
+            {
+                TraitId     = "quartermaster_counts_everything",
+                DisplayName = "Counts Everything Twice",
+                ModiMentis  = new[] { "tallycraft", "bookkeeping", "caution" },
+                Items       = new Func<Item>[] { () => new Ledgerbook() },
+                Appearance  = "mouths numbers under their breath, and their eyes go to every crate in a room",
+                Persona     = "You count everything twice and trust nobody's count but your own. You have caught three thieves this way and you are waiting for the fourth.",
+                Opinions    = new[] { (DialogueTopic.Trade, "I know how many spearheads came in on the last cart. I will know how many are missing tomorrow") },
+            },
+            new PersonalityTrait
+            {
+                TraitId     = "quartermaster_old_soldier",
+                DisplayName = "Old Soldier",
+                ModiMentis  = new[] { "arms_care", "armoury_lore", "clenched_grit" },
+                Wounds      = new Func<Wound>[] { () => new KneeFractureRightWound() },
+                Appearance  = "walks with a stiff leg and keeps every blade in the stores oiled",
+                Persona     = "A bad knee took you off the wall and put you in the stores. You know arms better than anyone in the garrison and you resent not using them.",
+                Opinions    = new[] { (DialogueTopic.Work, "I stood on that wall for twenty years. Now I count what the young ones drop off it") },
+            },
+            new PersonalityTrait
+            {
+                TraitId     = "quartermaster_sharp_dealer",
+                DisplayName = "Sharp Dealer",
+                ModiMentis  = new[] { "sharp_practice", "provisioning", "appraisal" },
+                Appearance  = "smiles at every price offered and agrees to none of them",
+                Persona     = "You buy cheap and sell dear and you do not see why a garrison should be any different from a market. The captain looks the other way.",
+                Opinions    = new[] { (DialogueTopic.Trade, "a farmer who brings his grain to a fort has already decided to take less for it. I only help him") },
+            },
+            new PersonalityTrait
+            {
+                TraitId     = "quartermaster_siege_veteran",
+                DisplayName = "Fed a Siege",
+                ModiMentis  = new[] { "siegecraft", "thrift", "discipline" },
+                Appearance  = "eats every crumb on the plate and watches others leave theirs",
+                Persona     = "You kept a garrison alive through a winter siege on half rations, and you have never wasted a crust since. Plenty frightens you more than want does.",
+                Opinions    = new[] { (DialogueTopic.Food, "I have seen men boil their belts. Eat what you are given and be glad of it") },
+            },
+            new PersonalityTrait
+            {
+                TraitId     = "quartermaster_smith_trained",
+                DisplayName = "Smith-Trained",
+                ModiMentis  = new[] { "metalcraft", "arms_care" },
+                Items       = new Func<Item>[] { () => new Whetstone() },
+                Appearance  = "burn-scarred forearms and a smith's thick wrists",
+                Persona     = "You were a smith's boy before you were a soldier, and you mend half the garrison's blades yourself rather than pay for it. You judge a soldier by the state of their edge.",
+                Opinions    = new[] { (DialogueTopic.Work, "a notched blade tells me how a man fought and how he looks after his things. Mostly badly") },
+            },
+            new PersonalityTrait
+            {
+                TraitId     = "quartermaster_gossip_of_the_gate",
+                DisplayName = "Hears Everything at the Gate",
+                ModiMentis  = new[] { "gossip", "watchkeeping", "eavesdropping" },
+                Appearance  = "always somehow near the gate when a cart comes in",
+                Persona     = "Every carter, pedlar and farmer passes your table at the gate and you collect what they say as carefully as what they bring. You know the country's news before the captain does.",
+                Opinions    = new[] { (DialogueTopic.Roads, "the carters talk while I count. I hear about the roads a week before anyone else") },
+            });
+
+        // ── Sacristan ─────────────────────────────────────────────────────────────
+        Add("sacristan",
+            new PersonalityTrait
+            {
+                TraitId     = "sacristan_candle_maker",
+                DisplayName = "Dips the Candles",
+                ModiMentis  = new[] { "chandlery", "patience", "liturgy" },
+                Items       = new Func<Item>[] { () => new Candle() },
+                Appearance  = "fingers glazed with old wax, a faint smell of tallow",
+                Persona     = "You make every candle in the temple yourself and you can tell at a glance whose hands dipped any candle in the land. Bought candles offend you.",
+                Opinions    = new[] { (DialogueTopic.Work, "beeswax for the altar, tallow for the door. Anyone who mixes them up has no business in a temple") },
+            },
+            new PersonalityTrait
+            {
+                TraitId     = "sacristan_keeper_of_the_plate",
+                DisplayName = "Keeper of the Plate",
+                ModiMentis  = new[] { "vigilance", "gatekeeping", "reverence" },
+                Appearance  = "never more than a step from the treasury door, and always facing it",
+                Persona     = "The gold and silver of the temple are your charge and you would rather die than lose a spoon of it. Every stranger is a thief until they leave.",
+                Opinions    = new[] { (DialogueTopic.Neighbours, "people come to pray. Some of them come to look at the plate while they pray. I watch those") },
+            },
+            new PersonalityTrait
+            {
+                TraitId     = "sacristan_bell_deaf",
+                DisplayName = "Deaf from the Bell",
+                ModiMentis  = new[] { "bell_ringing", "endurance" },
+                Organs      = new[] { ("left_ear", -1), ("right_ear", -1) },
+                Appearance  = "turns the head to listen, and speaks a little too loud",
+                Persona     = "Thirty years of ringing the great bell have taken half your hearing. You read lips now, and you hear the bell better than anyone.",
+                Opinions    = new[] { (DialogueTopic.Omens, "the bell rang itself once, in a storm. Nobody believes me. I was standing under it") },
+            },
+            new PersonalityTrait
+            {
+                TraitId     = "sacristan_seller_of_relics",
+                DisplayName = "Sells Doubtful Relics",
+                ModiMentis  = new[] { "sharp_practice", "pilgrimage", "masquerade" },
+                Appearance  = "a small drawer under the candle tray that is kept locked",
+                Persona     = "You sell pilgrims a splinter of the saint's staff for a silver piece and you have sold a forest of them. You tell yourself the faith is real even if the splinter is not.",
+                Opinions    = new[] { (DialogueTopic.Trade, "a pilgrim who walks a hundred miles wants to carry something home. Who am I to send them away empty") },
+            },
+            new PersonalityTrait
+            {
+                TraitId     = "sacristan_herb_garden",
+                DisplayName = "Keeps the Incense Garden",
+                ModiMentis  = new[] { "herblore", "incensing", "patience" },
+                Items       = new Func<Item>[] { () => new Incense() },
+                Appearance  = "resin under the fingernails and a smell of cedar",
+                Persona     = "You grow and blend the temple's incense yourself from a walled garden, and you buy any herb a stranger brings you to try in it. Your blends are better than the priests know.",
+                Opinions    = new[] { (DialogueTopic.Seasons, "the resins weep best in high summer. I cut the bark at dawn, before the sun dries them") },
+            },
+            new PersonalityTrait
+            {
+                TraitId     = "sacristan_humble_lay_brother",
+                DisplayName = "Never Took Orders",
+                ModiMentis  = new[] { "humility", "devotion", "almsgiving" },
+                Appearance  = "plain undyed robe, and stands aside for everyone",
+                Persona     = "You were never thought clever enough to be ordained and you have served the temple forty years as a layman. You give half of what the candles bring to the beggars on the steps.",
+                Opinions    = new[] { (DialogueTopic.Neighbours, "the beggars on the steps are as much the temple's as the priests are. More, some days") },
+            });
+
+        // ── Cellarer ──────────────────────────────────────────────────────────────
+        Add("cellarer",
+            new PersonalityTrait
+            {
+                TraitId     = "cellarer_master_brewer",
+                DisplayName = "Master Brewer",
+                ModiMentis  = new[] { "brewcraft", "bouquet", "patience" },
+                Items       = new Func<Item>[] { () => new Ale() },
+                Appearance  = "a round red face, and the brewhouse smell in the habit",
+                Persona     = "Your ale is famous three valleys over and you are not as humble about it as a brother should be. You have a secret in the mash and tell nobody.",
+                Opinions    = new[] { (DialogueTopic.Food, "bread is the body of the house and ale is its soul. I keep both, and the soul is the harder") },
+            },
+            new PersonalityTrait
+            {
+                TraitId     = "cellarer_cheesemaker",
+                DisplayName = "Turns the Cheeses",
+                ModiMentis  = new[] { "dairycraft", "thrift", "husbandry" },
+                Items       = new Func<Item>[] { () => new Cheese() },
+                Appearance  = "salt-cracked hands and a knife always at the belt for a taste",
+                Persona     = "You turn every cheese in the cellar by hand each morning and you know each one by name. You think most of the brothers do not deserve them.",
+                Opinions    = new[] { (DialogueTopic.Seasons, "a cheese made in spring is eaten at midwinter. I live half a year ahead") },
+            },
+            new PersonalityTrait
+            {
+                TraitId     = "cellarer_gourmand",
+                DisplayName = "Tastes Everything",
+                ModiMentis  = new[] { "gluttony", "hospitality", "appraisal" },
+                Appearance  = "a habit let out twice at the seams",
+                Persona     = "You taste everything that leaves your cellar, and some of it more than once. You hold that a cellarer who does not eat cannot judge food, and you judge a great deal.",
+                Opinions    = new[] { (DialogueTopic.Trade, "I will buy your grain if it is good. I will know if it is good. I will taste it") },
+            },
+            new PersonalityTrait
+            {
+                TraitId     = "cellarer_miser",
+                DisplayName = "Counts the Loaves",
+                ModiMentis  = new[] { "thrift", "bookkeeping", "avarice" },
+                Items       = new Func<Item>[] { () => new Ledgerbook() },
+                Appearance  = "a key on a cord round the neck that never comes off",
+                Persona     = "You account for every loaf and every cup, and the brothers grumble that the abbey is rich and the table is poor. You are saving for a lean year that has not come yet.",
+                Opinions    = new[] { (DialogueTopic.Harvest, "seven fat years and seven lean. Everyone forgets the second half") },
+            },
+            new PersonalityTrait
+            {
+                TraitId     = "cellarer_open_gate",
+                DisplayName = "Feeds Every Traveller",
+                ModiMentis  = new[] { "hospitality", "almsgiving", "piety" },
+                Appearance  = "a crust and a cup always ready on the gate-table",
+                Persona     = "The rule says to receive every guest as the god himself and you take it to the letter. No traveller leaves your gate hungry, and the accounts suffer for it.",
+                Opinions    = new[] { (DialogueTopic.Roads, "whoever comes up that road gets bread and ale. I do not ask who they are until they have eaten") },
+            },
+            new PersonalityTrait
+            {
+                TraitId     = "cellarer_scalded",
+                DisplayName = "Scalded at the Copper",
+                ModiMentis  = new[] { "caution", "brewcraft" },
+                Wounds      = new Func<Wound>[] { () => new ScarWound() },
+                Appearance  = "a shiny scar down one forearm from wrist to elbow",
+                Persona     = "A boiling copper split and scalded you badly when you were a novice. You still brew, and you never stand downwind of a mash tun now.",
+                Opinions    = new[] { (DialogueTopic.Health, "a burn heals slow and it itches for a year. Mind the copper and keep your sleeves down") },
             });
     }
 }

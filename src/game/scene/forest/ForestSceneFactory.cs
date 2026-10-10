@@ -32,6 +32,7 @@ public class ForestSceneFactory : SceneFactory
     private bool _hasCharcoalBurner;
     private bool _hasStream;
     private Area? _clearing;
+    private Area? _woodshed;
     private readonly List<Area> _allAreas = new();
 
     protected override void BuildSections(Random rng, int locationId, Scene scene)
@@ -135,6 +136,17 @@ public class ForestSceneFactory : SceneFactory
             a.PointsOfInterest.Add(path);
             b.PointsOfInterest.Add(path);
             path.Register(scene);
+        }
+
+        // The woodshed beside the camp, where the cut wood and the charcoal are kept and sold. Off the
+        // track rather than on it, and not in _allAreas: the beasts do not den in it.
+        if (_hasWoodcutter || _hasCharcoalBurner)
+        {
+            _woodshed = CampSubfactory.BuildWoodshed();
+            edge.Areas.Add(_woodshed);
+            RegisterAll(scene, _woodshed);
+            OutdoorLayout.Link(scene, _clearing!, _woodshed, "Track");
+            scene.Stores.Add(_woodshed);
         }
 
         Console.WriteLine($"ForestSceneFactory: {_type} forest, {_allAreas.Count} areas, woodcutter={_hasWoodcutter}, charcoal={_hasCharcoalBurner}");
@@ -279,11 +291,13 @@ public class ForestSceneFactory : SceneFactory
     {
         if (_clearing is null || _allAreas.Count == 0) return;
 
+        // Each stacks their work in the woodshed once a day, which is when they can be traded with:
+        // the woodcutter at evening with the day's cut, the burner at noon between firings.
         if (_hasWoodcutter)
-            SpawnNamed(rng, scene, new WoodcutterArchetype(), BuildWoodcutterSchedule());
+            TradeAt(SpawnNamed(rng, scene, new WoodcutterArchetype(), BuildWoodcutterSchedule(TimePeriod.Evening)), _woodshed!);
 
         if (_hasCharcoalBurner)
-            SpawnNamed(rng, scene, new CharcoalBurnerArchetype(), BuildWoodcutterSchedule());
+            TradeAt(SpawnNamed(rng, scene, new CharcoalBurnerArchetype(), BuildWoodcutterSchedule(TimePeriod.Noon)), _woodshed!);
 
         // Beasts
         TrySpawnNamed(rng, scene, new BoarArchetype(), 0.40);
@@ -303,7 +317,7 @@ public class ForestSceneFactory : SceneFactory
         SprinkleSmallLife(rng, scene, scene.AllAreas, SmallLife.Woodland, 3, 6);
 }
 
-    private NpcSchedule BuildWoodcutterSchedule()
+    private NpcSchedule BuildWoodcutterSchedule(TimePeriod atShed)
     {
         var clearing = _clearing!;
         // Pick deep-wood area for morning; fall back to clearing if unavailable
@@ -319,10 +333,11 @@ public class ForestSceneFactory : SceneFactory
             [TimePeriod.Afternoon] = hauleId,
             [TimePeriod.Evening]   = clearing,
             [TimePeriod.Night]     = clearing,
+            [atShed]               = _woodshed!,
         });
     }
 
-    private void SpawnNamed(Random rng, Scene scene, NamedNpcArchetype archetype, NpcSchedule schedule)
+    private NpcEntity SpawnNamed(Random rng, Scene scene, NamedNpcArchetype archetype, NpcSchedule schedule)
     {
         // Affinity persists per NPC: Spawn resolves the table by the NPC's stable id.
         var entity = archetype.Spawn(rng, _clearing!.ContextDescription,
@@ -331,6 +346,7 @@ public class ForestSceneFactory : SceneFactory
         sceneNpc.Register(scene);
         scene.Npcs.Add(sceneNpc);
         scene.NpcSchedules[sceneNpc.Id] = schedule;
+        return entity;
     }
 
     private void TrySpawnNamed(Random rng, Scene scene, NamedNpcArchetype archetype, double chance)

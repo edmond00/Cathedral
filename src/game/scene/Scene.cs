@@ -33,6 +33,14 @@ public class Scene
     /// <summary>NPC UUID → schedule (which area at which time period).</summary>
     public Dictionary<Guid, NpcSchedule> NpcSchedules { get; } = new();
 
+    /// <summary>
+    /// The stores of a working place in the country — a barn, a fodder loft, a woodcutter's shed: the
+    /// areas where its produce is kept and where its people trade it. Registered by the factory that
+    /// builds one, so <c>--building-audit</c> can hold each to being manned through the day. A
+    /// workshop counter is not listed here: it is a public hall, and the hall checks cover it.
+    /// </summary>
+    public List<Area> Stores { get; } = new();
+
     /// <summary>Verbs applicable in this scene (subset from global VerbRegistry).</summary>
     public List<Verb> Verbs { get; } = new();
 

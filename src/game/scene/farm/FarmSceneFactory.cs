@@ -192,7 +192,10 @@ public class FarmSceneFactory : SceneFactory
             .ToList();
 
         var hall      = _longhouse.PublicHall;
+        var store     = _shed!;
         var schedules = new List<NpcSchedule>();
+        var keepers   = new List<NpcSchedule>();
+        var locks     = new StaffingLocks();
 
         for (int i = 0; i < _roster.Count && i < beds.Count; i++)
         {
@@ -211,6 +214,14 @@ public class FarmSceneFactory : SceneFactory
             var schedule = BuildScheduleForRole(archetype.ArchetypeId, bed, hall, rng);
             schedules.Add(schedule);
 
+            // The storage shed is where the farm's produce is kept, and so where its people trade.
+            TradeAt(entity, store);
+            if (i > 0 && entity.Trades)
+            {
+                BuildingSchedule.EnsureVisit(schedule, store, rng, locks);
+                keepers.Add(schedule);
+            }
+
             var sceneNpc = new SceneNpc(entity);
             sceneNpc.Register(scene);
             scene.Npcs.Add(sceneNpc);
@@ -222,8 +233,11 @@ public class FarmSceneFactory : SceneFactory
         // Hands may be pulled in to the hall; the farmer never is. Unlike a village workshop, a farm
         // hall is allowed to stand empty for the one period its master is out — there is no counter
         // to mind, only a household — so no one is drafted to cover it.
+        // The shed is kept first, by whoever trades: someone is always there to sell to.
+        scene.Stores.Add(store);
+        BuildingSchedule.StaffPublicHall(store, keepers, locks);
         if (schedules.Count > 1)
-            BuildingSchedule.StaffPublicHall(hall, schedules.Skip(1).ToList());
+            BuildingSchedule.StaffPublicHall(hall, schedules.Skip(1).ToList(), locks);
 
         // ── Shallow animals ─────────────────────────────────────────────────
 
@@ -280,10 +294,10 @@ public class FarmSceneFactory : SceneFactory
 
         return archetypeId switch
         {
-            // The farmer is the one who does business here, so the hall is their workplace and they
-            // step out for only one period of the day.
+            // The farmer is the one who does business here, so the hall is their workplace and the
+            // one period they step out is spent at the storage shed, where the produce is sold.
             "farmer" => BuildingSchedule.ForWorker(
-                bed, hall, new[] { yard, garden, orchard }, rng, awayPeriods: 1),
+                bed, hall, new[] { shed }, rng, awayPeriods: 1),
 
             "swineherd" =>
                 BuildingSchedule.ForHand(bed, new[] { pigsty, pigsty, yard, hall }, rng),

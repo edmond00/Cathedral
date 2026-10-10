@@ -502,7 +502,7 @@ public class VillageSceneFactory : SettledSceneFactory
                 rng:         rng,
                 awayPeriods: rng.NextDouble() < 0.5 ? 1 : 2);
 
-            SpawnInto(rng, scene, master, building, schedule);
+            TradeAt(SpawnInto(rng, scene, master, building, schedule), building.PublicHall);
 
             // The master is deliberately absent from the cover list — see StaffPublicHall.
             scheduleByWorkshop[building.Section.DisplayName] = new List<NpcSchedule>();
@@ -520,7 +520,7 @@ public class VillageSceneFactory : SettledSceneFactory
                 rng:         rng,
                 awayPeriods: 2);
 
-            SpawnInto(rng, scene, archetype, house, schedule);
+            TradeAt(SpawnInto(rng, scene, archetype, house, schedule), workshop.PublicHall);
 
             if (scheduleByWorkshop.TryGetValue(workshop.Section.DisplayName, out var staff))
                 staff.Add(schedule);
@@ -561,7 +561,7 @@ public class VillageSceneFactory : SettledSceneFactory
     /// existed no villager owned anything, so a thief in a workshop faced whoever happened to be
     /// standing nearest.
     /// </summary>
-    private void SpawnInto(
+    private NpcEntity SpawnInto(
         Random rng, Scene scene, NamedNpcArchetype archetype, BuildingResult home, NpcSchedule schedule)
     {
         var entity = archetype.Spawn(rng, home.PublicHall.ContextDescription,
@@ -575,5 +575,6 @@ public class VillageSceneFactory : SettledSceneFactory
         scene.NpcSchedules[sceneNpc.Id] = schedule;
 
         Console.WriteLine($"VillageSceneFactory: Spawned {entity.DisplayName} ({archetype.ArchetypeId}) in {home.Section.DisplayName}");
+        return entity;
     }
 }

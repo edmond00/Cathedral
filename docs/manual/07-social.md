@@ -147,6 +147,19 @@ A conversation may open a merchant's catalogue. What a person stocks follows fro
 catalogue is assembled from the kinds of goods that trade deals in, so not everything that exists is
 something somebody sells.
 
+**Not every person trades, and none trades everywhere.** Those who keep a craft, a shop, a store or
+a house of business trade; soldiers, nobles, clergy, scholars and the labouring poor of the streets
+do not, and a great building trades through the one of its people charged with its stores. A
+person's goods are not carried upon them: they are kept on their **premises** — the counter of a
+workshop or an inn, the barn or shed of a farm, the store of a stable or a fold, a woodcutter's or a
+fisherman's shed, the entrance hall of a great building — and a trade may be proposed only while
+both parties stand there. The same person met elsewhere will talk, but will not deal.
+
+Every trader comes to their premises at least once in the day. A shop counter, and the store of a
+farm or a stock-keeping place, is kept by somebody able to trade at every period between dawn and
+evening; a solitary worker of the wild keeps their shed for a single period only, and must be met
+there then.
+
 Prices stand in one denomination each, and **there is no conversion between denominations**: a
 purchase must be met with coins of the item's own kind. A merchant's price is the item's reference
 price with a small variation upon it, confined to the range one to a hundred.

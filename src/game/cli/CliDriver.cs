@@ -265,6 +265,7 @@ public sealed class CliDriver
                 case "expect":      CmdExpect(rest, expectPresent: true);  break;
                 case "expect-not":  CmdExpect(rest, expectPresent: false); break;
                 case "expect-verb": CmdExpectVerb(rest);              break;
+                case "expect-no-verb": CmdExpectNoVerb(rest);         break;
                 case "inspect":     CmdInspect(rest);                  break;
                 case "expect-state":    CmdExpectState(rest, want: true);  break;
                 case "expect-no-state": CmdExpectState(rest, want: false); break;
@@ -356,6 +357,9 @@ public sealed class CliDriver
           expect-verb <verb-id>     assert which verb the last executed action carried. What a
                                     verb test must assert: `expect SUCCESS` matches ANY action's
                                     outcome banner and so passes on the wrong verb
+          expect-no-verb <verb-id>  assert an action ran and it was NOT that verb. For a gate that
+                                    withholds a verb: `goal` falls back to the other goals when its
+                                    verb is not offered, so the action that runs is the proof
           inspect [subject]         print the game state an outcome can change, by STABLE id:
                                     items / coins / where / party / wounds / skills / npcs / pois /
                                     routines / noetic / humors / world-regions / world-variant /
@@ -1843,6 +1847,34 @@ public sealed class CliDriver
             return;
         }
         CliMode.Emit($"FAIL: expected verb '{a[0]}' but '{actual}' was executed");
+        CliMode.HasFailedAssertion = true;
+    }
+
+    /// <summary>
+    /// The negative of <see cref="CmdExpectVerb"/>: an action ran, and it was not this verb. What a
+    /// gate test asserts — `goal` pinned to a withheld verb falls back to the goals that remain, so
+    /// whichever ran instead is the evidence the gate held. Requires that something ran, or a
+    /// script that stalled before acting would pass.
+    /// </summary>
+    private void CmdExpectNoVerb(string[] a)
+    {
+        if (a.Length == 0) { CliMode.Emit("error: expect-no-verb <verb-id>"); return; }
+        var n = _game.CliNarration;
+        if (n == null) { CliMode.Emit("error: not in narration"); return; }
+
+        var actual = n.CliLastExecutedVerbId();
+        if (actual == null)
+        {
+            CliMode.Emit($"FAIL: expected some verb other than '{a[0]}' — no action has been executed yet");
+            CliMode.HasFailedAssertion = true;
+            return;
+        }
+        if (!string.Equals(actual, a[0], StringComparison.OrdinalIgnoreCase))
+        {
+            CliMode.Emit($"PASS: executed verb was '{actual}', not '{a[0]}'");
+            return;
+        }
+        CliMode.Emit($"FAIL: verb '{a[0]}' was executed");
         CliMode.HasFailedAssertion = true;
     }
 

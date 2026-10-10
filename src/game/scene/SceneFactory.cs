@@ -260,6 +260,18 @@ public abstract class SceneFactory
     }
 
     /// <summary>
+    /// Makes <paramref name="premises"/> places where <paramref name="npc"/> trades — the only places,
+    /// since <c>TradeGate</c> offers no trade anywhere else. Does nothing for someone who trades
+    /// nothing, so a crew can be passed through it whole. The schedule is the caller's business: see
+    /// <see cref="Building.BuildingSchedule.EnsureVisit"/> for holding a trader to their store.
+    /// </summary>
+    protected static void TradeAt(Npc.NpcEntity npc, params Area[] premises)
+    {
+        if (!npc.Trades) return;
+        foreach (var area in premises) npc.TradeAreaIds.Add(area.Id);
+    }
+
+    /// <summary>
     /// A wandering day: the creature moves between two or three of <paramref name="range"/>, changing
     /// where it is every period or two.
     ///

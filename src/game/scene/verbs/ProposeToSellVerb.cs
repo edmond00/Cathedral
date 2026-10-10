@@ -9,7 +9,8 @@ namespace Cathedral.Game.Scene.Verbs;
 /// <summary>
 /// Proposes to sell a category of goods to an NPC (the NPC's <see cref="NpcEntity.BuyTag"/>).
 /// On success it opens the propose-to-sell dialogue; only succeeding THAT dialogue opens the
-/// sell menu. Gated to acquaintances and above — you must have met the NPC first.
+/// sell menu. Gated to acquaintances and above — you must have met the NPC first — and to the NPC's
+/// premises (see <see cref="TradeGate"/>).
 /// </summary>
 public class ProposeToSellVerb : DialogueVerb
 {
@@ -27,7 +28,7 @@ public class ProposeToSellVerb : DialogueVerb
         if (npc.BuyTag is null) return false;
         if (!scene.GetNpcsAt(pov.Where, pov.When).Exists(n => n.Id == sceneNpc.Id)) return false;
 
-        return TradeGate.CanTrade(npc, actor);
+        return TradeGate.CanTrade(npc, actor, pov.Where);
     }
 
     public override string Verbatim(Scene scene, PoV pov, Element target)

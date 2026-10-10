@@ -238,6 +238,10 @@ Run `help` for the authoritative list. The essentials:
                             assert an outcome of that id was applied this run. `expect <chip>`
                             proves what the player was TOLD; this proves what ran — the only way
                             to assert the outcomes that show no chip at all
+  expect-no-verb <verb-id>  assert an action ran and it was NOT that verb. The assertion for a
+                            gate that withholds a verb: `goal` pinned to it falls back to the
+                            goals left, so whatever ran instead is the proof (pair it with
+                            `allow-flag-miss --goal-only`). See cli/verb/propose_to_buy/off_premises.cli
   expect <text> | expect-not <text>
   crash-report [text]       force a crash report and preserve log.txt under a name the next launch
                             cannot overwrite. Asserts on its own behalf — it reads the preserved

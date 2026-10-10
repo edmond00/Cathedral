@@ -313,10 +313,10 @@ public sealed class HistoricSceneFactory : SettledSceneFactory
             {
                 var work = WorkOf(who, e, outside);
                 if (work.Count == 0) work = new List<Area> { e.Entrance };
-                bool devout = who is PriestArchetype or MonkArchetype;
+                bool devout = who is PriestArchetype or MonkArchetype or SacristanArchetype or CellarerArchetype;
                 return BuildingSchedule.ForResident(bed, work, table, devout ? dawn : null, r);
             },
-            new[] { e.Section }));
+            new[] { e.Section }, TradesAt: who => TradesAt(who, e)));
     }
 
     private string PrefixOf() => _kind switch
@@ -421,21 +421,21 @@ public sealed class HistoricSceneFactory : SettledSceneFactory
         void Add(Func<NamedNpcArchetype> make, int min, int max) { for (int i = 0, n = rng.Next(min, max + 1); i < n; i++) r.Add(make()); }
         switch (_kind)
         {
-            case PlaceKind.Castle:         r.Add(new LordArchetype()); r.Add(new StewardArchetype()); r.Add(new CaptainArchetype());
+            case PlaceKind.Castle:         r.Add(new LordArchetype()); r.Add(new StewardArchetype()); r.Add(new CaptainArchetype()); r.Add(new QuartermasterArchetype());
                                            Add(() => new GuardArchetype(), 3, 5); Add(() => new ClerkArchetype(), 1, 1); Add(() => new PriestArchetype(), 0, 1); break;
-            case PlaceKind.Fortress:       r.Add(new CaptainArchetype()); Add(() => new GuardArchetype(), 6, 9); Add(() => new ClerkArchetype(), 1, 1); break;
-            case PlaceKind.Commandery:     r.Add(new CaptainArchetype()); Add(() => new GuardArchetype(), 5, 7); Add(() => new ClerkArchetype(), 2, 2);
+            case PlaceKind.Fortress:       r.Add(new CaptainArchetype()); r.Add(new QuartermasterArchetype()); Add(() => new GuardArchetype(), 6, 9); Add(() => new ClerkArchetype(), 1, 1); break;
+            case PlaceKind.Commandery:     r.Add(new CaptainArchetype()); r.Add(new QuartermasterArchetype()); Add(() => new GuardArchetype(), 5, 7); Add(() => new ClerkArchetype(), 2, 2);
                                            Add(() => new PriestArchetype(), 1, 1); Add(() => new ScholarArchetype(), 0, 1); break;
-            case PlaceKind.Temple:         r.Add(new PriestArchetype()); Add(() => new PriestArchetype(), 1, 2); Add(() => new MonkArchetype(), 1, 2); r.Add(new GravediggerArchetype()); break;
-            case PlaceKind.ImperialTemple: r.Add(new PriestArchetype()); Add(() => new PriestArchetype(), 2, 3); Add(() => new MonkArchetype(), 2, 3);
+            case PlaceKind.Temple:         r.Add(new PriestArchetype()); r.Add(new SacristanArchetype()); Add(() => new PriestArchetype(), 1, 2); Add(() => new MonkArchetype(), 1, 2); r.Add(new GravediggerArchetype()); break;
+            case PlaceKind.ImperialTemple: r.Add(new PriestArchetype()); r.Add(new SacristanArchetype()); Add(() => new PriestArchetype(), 2, 3); Add(() => new MonkArchetype(), 2, 3);
                                            Add(() => new GuardArchetype(), 2, 2); Add(() => new ClerkArchetype(), 1, 1); break;
-            case PlaceKind.Monastery:      r.Add(new PriestArchetype()); Add(() => new MonkArchetype(), 6, 10); break;
+            case PlaceKind.Monastery:      r.Add(new PriestArchetype()); r.Add(new CellarerArchetype()); Add(() => new MonkArchetype(), 6, 10); break;
             case PlaceKind.Pyramid:        r.Add(new PriestArchetype()); Add(() => new GuardArchetype(), 2, 3); break;
             case PlaceKind.Palace:         r.Add(new LordArchetype()); r.Add(new StewardArchetype()); r.Add(new CaptainArchetype());
                                            Add(() => new GuardArchetype(), 4, 6); Add(() => new ClerkArchetype(), 2, 2); r.Add(new ScholarArchetype()); r.Add(new PriestArchetype()); break;
             case PlaceKind.ImperialSchool: r.Add(new ScholarArchetype()); Add(() => new ScholarArchetype(), 2, 4); Add(() => new ClerkArchetype(), 2, 2); r.Add(new StewardArchetype()); break;
             case PlaceKind.Port:           r.Add(new MerchantArchetype()); Add(() => new ClerkArchetype(), 2, 3); Add(() => new GuardArchetype(), 2, 2); break;
-            default:                       r.Add(new LordArchetype()); r.Add(new StewardArchetype()); r.Add(new CaptainArchetype());
+            default:                       r.Add(new LordArchetype()); r.Add(new StewardArchetype()); r.Add(new CaptainArchetype()); r.Add(new QuartermasterArchetype());
                                            Add(() => new GuardArchetype(), 4, 6); Add(() => new ClerkArchetype(), 1, 2); break;
         }
         return r;
@@ -455,11 +455,26 @@ public sealed class HistoricSceneFactory : SettledSceneFactory
             MonkArchetype      => e.Of(EdificeRoom.Scriptorium, EdificeRoom.Library, EdificeRoom.Kitchen, EdificeRoom.Infirmary, EdificeRoom.Brewhouse, EdificeRoom.Workshop).Concat(outside),
             ScholarArchetype   => e.Of(EdificeRoom.Lecture, EdificeRoom.Classroom, EdificeRoom.Library, EdificeRoom.Observatory),
             MerchantArchetype  => e.Of(EdificeRoom.Countinghouse, EdificeRoom.Store).Concat(outside.Take(3)),
+            QuartermasterArchetype => e.Of(EdificeRoom.Armoury, EdificeRoom.Store, EdificeRoom.Guardroom).Append(e.Entrance),
+            SacristanArchetype => e.Of(EdificeRoom.Chapel, EdificeRoom.GreatHall, EdificeRoom.Treasury, EdificeRoom.Crypt),
+            CellarerArchetype  => e.Of(EdificeRoom.Cellar, EdificeRoom.Larder, EdificeRoom.Kitchen, EdificeRoom.Brewhouse).Append(e.Entrance),
             GravediggerArchetype => e.Of(EdificeRoom.Crypt).Concat(outside),
             _                  => e.Of(EdificeRoom.GreatHall),
         };
         return rooms.Distinct().ToList();
     }
+
+    /// <summary>
+    /// Where each kind of resident trades, or null for those who do not. A great building trades at its
+    /// entrance, where a caller is met — a public room in every programme. A port's merchant keeps
+    /// the counting house, and a temple's sacristan the candle tray in its great hall.
+    /// </summary>
+    private static Area? TradesAt(NamedNpcArchetype who, EdificeResult e) => who switch
+    {
+        MerchantArchetype  => e.First(EdificeRoom.Countinghouse) ?? e.Entrance,
+        SacristanArchetype => e.First(EdificeRoom.GreatHall) ?? e.Entrance,
+        _                  => e.Entrance,
+    };
 
     /// <summary>What is particular to this kind of great building, on top of the default furniture.</summary>
     private bool Furnish(EdificeRoom role, Area room, Random rng)
@@ -549,7 +564,9 @@ public sealed class HistoricSceneFactory : SettledSceneFactory
         FurnitureSubfactory.AddExtractionPoints(rng, _outdoors, setting);
     }
 
-    private void Lodge(Random rng, Scene scene, string name, string noun, List<NamedNpcArchetype> roster)
+    /// <param name="store">Where the site's people keep and trade what they work, when it has one;
+    /// without one they trade at the lodge's hall.</param>
+    private void Lodge(Random rng, Scene scene, string name, string noun, List<NamedNpcArchetype> roster, Area? store = null)
     {
         var (hall, bunk, beds) = HouseCrew(rng, scene, roster, _outdoors[0], _outdoors, name, noun);
         var work = _outdoors.ToList();
@@ -557,7 +574,7 @@ public sealed class HistoricSceneFactory : SettledSceneFactory
         Crews.Add(new Crew(roster, beds, hall.PublicHall.ContextDescription,
             (i, _, bed, r) => i == 0 ? BuildingSchedule.ForWorker(bed, hall.PublicHall, work, r, awayPeriods: 1)
                                      : BuildingSchedule.ForHand(bed, work, r),
-            owns, hall.PublicHall));
+            owns, hall.PublicHall, TradesAt: _ => hall.PublicHall, Store: store));
         AddRoofLandscapes(scene);
     }
 
@@ -579,11 +596,17 @@ public sealed class HistoricSceneFactory : SettledSceneFactory
             "A grey slope of waste rock tipped from the carts, nothing growing on it", new[] { "barren", "loose", "grey" },
             new RubblePointOfInterest("Waste Rock", new() { "Broken rock with a little ore still in it" }, Items(() => new Rock(), () => new CopperOre()), new[] { "loose", "sharp" })
             { Senses = SensoryProfile.Examinable, VerbModiMentis = Teach(("examine", "gleaning")) });
+        var store = Open((n, c, t, d, m) => new ShedArea(n, c, t, d, m), "Ore Shed", "in the ore shed",
+            "A lean-to shed of rough boards where the dressed ore is sacked and the tools are kept", new[] { "dusty", "cramped", "grey" },
+            new SackPointOfInterest("Ore Sacks", new() { "Sacks of dressed ore, tied and marked for the smelter" }, Items(() => new IronOre(), () => new CopperOre(), () => new Sack()), new[] { "heavy", "marked" })
+            { Senses = SensoryProfile.Examinable, VerbModiMentis = Teach(("examine", "veinsight")) },
+            new ToolPointOfInterest("Pick Rack", new() { "Picks and wedges racked by the door, their points freshly drawn" }, Items(() => new Pick(), () => new MinersLamp()), new[] { "racked", "sharp" })
+            { Senses = SensoryProfile.Examinable, VerbModiMentis = Teach(("examine", "delving")) });
         FinishOpenSite(rng, scene, PlaceName, "The workings and the yard at their mouth", FurnitureSubfactory.Setting.Highland);
         var roster = new List<NamedNpcArchetype> { new MinerArchetype() };
         for (int i = 0, n = rng.Next(2, 5); i < n; i++) roster.Add(new MinerArchetype());
         if (rng.NextDouble() < 0.6) roster.Add(new ClerkArchetype());
-        Lodge(rng, scene, "Miners' Lodge", "lodge", roster);
+        Lodge(rng, scene, "Miners' Lodge", "lodge", roster, store);
     }
 
     private void BuildSanctuary(Random rng, Scene scene)

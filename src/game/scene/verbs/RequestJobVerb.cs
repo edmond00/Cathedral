@@ -57,6 +57,6 @@ public class RequestJobVerb : DialogueVerb
         if (!npc.CanSpeak || !npc.IsAlive) return null;
         if (!JobRegistry.Instance.HasJobs(npc.Archetype.ArchetypeId)) return null;
         if (!scene.GetNpcsAt(pov.Where, pov.When).Exists(n => n.Id == sceneNpc.Id)) return null;
-        return TradeGate.CanTrade(npc, actor) ? npc : null;
+        return TradeGate.IsAcquainted(npc, actor) ? npc : null;
     }
 }

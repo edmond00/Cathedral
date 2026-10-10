@@ -530,6 +530,8 @@ public static class NpcAudit
         new GuardArchetype(),      new CaptainArchetype(), new PriestArchetype(),
         new MonkArchetype(),       new ScholarArchetype(), new StewardArchetype(),
         new LordArchetype(),
+        // The keepers a great building trades through
+        new QuartermasterArchetype(), new SacristanArchetype(), new CellarerArchetype(),
         // Streets and harbours
         new MerchantArchetype(),   new SailorArchetype(),  new InnkeeperArchetype(),
         new ClerkArchetype(),

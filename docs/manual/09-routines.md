@@ -44,7 +44,7 @@ still be open ground.
 |---|---|
 | Go to | — |
 | Meet | the person is gone for good, is elsewhere at that hour, or counts the body an enemy |
-| Buy, Sell | as Meet; or the merchant would no longer trade (see [VII](07-social.md)); or an enemy stands in the area |
+| Buy, Sell | as Meet; or the area is not the merchant's premises; or the merchant would no longer trade (see [VII](07-social.md)); or an enemy stands in the area |
 | Work | as Meet; or the work is no longer offered, or the master would not take the body on; or an enemy stands in the area |
 | Gather | the source is gone; nothing of the item grows there at all; the body's anatomy cannot perform the manner of taking it; the implement it was learned with is not carried; or an enemy stands in the area |
 

@@ -22,6 +22,9 @@ namespace Cathedral.Game.Scene.Building;
 /// <item>an area-graph edge duplicating a door, which lets movement walk straight past the lock;</item>
 /// <item>an NPC with nowhere to sleep, or a bed shared by two people;</item>
 /// <item>a public hall standing empty during a day period — a shop nobody minds;</item>
+/// <item>a trader with no premises, or whose day never brings them there — trade happens only on
+/// premises, so either is a seller nobody can buy from;</item>
+/// <item>a farm's or a stock place's store with no trader in it during a day period;</item>
 /// <item>stable keys that are missing, colliding, or different across two builds of one location.</item>
 /// </list>
 ///
@@ -77,7 +80,8 @@ public static class BuildingAudit
         if (warnings.Count == 0)
         {
             sb.AppendLine("No warnings — every building partitions cleanly, every worker has a bed,");
-            sb.AppendLine("and every public hall is manned through the day.");
+            sb.AppendLine("every public hall and every store is manned through the day, and every trader");
+            sb.AppendLine("reaches their premises.");
             return sb.ToString();
         }
 
@@ -157,11 +161,13 @@ public static class BuildingAudit
             CheckLockRules(warnings, label, id, doors);
             CheckStableKeys(warnings, label, id, scene);
             CheckNoStutter(warnings, label, id, scene);
+            CheckTradersReachTheirPremises(warnings, label, id, scene);
             if (inhabited)
             {
                 CheckBeds(warnings, label, id, scene);
                 CheckHallStaffing(warnings, label, id, scene, allowedEmptyPeriods);
                 CheckMastersLeaveTheirHall(warnings, label, id, scene);
+                CheckStoreStaffing(warnings, label, id, scene);
             }
         }
 
@@ -359,6 +365,51 @@ public static class BuildingAudit
             .SelectMany(a => a.PointsOfInterest)
             .OfType<ScalePointOfInterest>()
             .Any(sp => sp.TopArea.Id == area.Id);
+
+    /// <summary>
+    /// Every trader can be traded with: they have premises, the premises are areas of this scene, and
+    /// their day brings them there at least once. Trade happens only on premises (<c>TradeGate</c>),
+    /// so a seller who never stands in their own store is someone nobody can buy from — and nothing in
+    /// play says so; the verb is simply never offered.
+    ///
+    /// <para>Applied to every factory, the wilderness included: a woodcutter's shed is held to it as
+    /// a forge is.</para>
+    /// </summary>
+    private static void CheckTradersReachTheirPremises(List<string> w, string label, int id, Scene scene)
+    {
+        var areaIds = scene.AllAreas.Select(a => a.Id).ToHashSet();
+        foreach (var npc in scene.Npcs)
+        {
+            if (npc.Entity is not NpcEntity named || !named.Trades) continue;
+            if (named.TradeAreaIds.Count == 0)
+            {
+                w.Add($"{label} {id}: trader '{npc.DisplayName}' ({named.Archetype.ArchetypeId}) has no premises, so trades nowhere");
+                continue;
+            }
+            if (named.TradeAreaIds.Any(a => !areaIds.Contains(a)))
+                w.Add($"{label} {id}: trader '{npc.DisplayName}' trades in an area that is not in the scene");
+            if (!scene.NpcSchedules.TryGetValue(npc.Id, out var schedule)) continue;
+            if (!BuildingSchedule.DayPeriods.Any(p => named.TradesIn(schedule.GetArea(p))))
+                w.Add($"{label} {id}: trader '{npc.DisplayName}' ({named.Archetype.ArchetypeId}) is never at their premises during the day");
+        }
+    }
+
+    /// <summary>
+    /// A store — a farm's barn, a stable's fodder loft — must have somebody who trades in it at every
+    /// day period, as a village counter must. Only for inhabited places: a lone woodcutter cannot
+    /// mind his woodshed all day and still cut wood, and is held to the visit above instead.
+    /// </summary>
+    private static void CheckStoreStaffing(List<string> w, string label, int id, Scene scene)
+    {
+        foreach (var store in scene.Stores)
+        {
+            var empty = BuildingSchedule.DayPeriods
+                .Where(p => !scene.GetNpcsAt(store, p).Any(n => n.Entity is NpcEntity e && e.TradesIn(store)))
+                .ToList();
+            if (empty.Count > 0)
+                w.Add($"{label} {id}: store '{store.DisplayName}' has no trader in it at {string.Join(", ", empty)}");
+        }
+    }
 
     /// <summary>
     /// Every master must be out of their own public hall for at least one day period.

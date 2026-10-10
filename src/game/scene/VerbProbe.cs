@@ -190,7 +190,7 @@ public static class VerbProbe
         "cut"                       => "needs a corpse, which only exists after a kill",
         "get_up"                    => "get-up phase only",
         "remember"                  => "childhood phase only",
-        "propose_to_buy"  or "propose_to_sell" => "needs acquaintance-or-better with a trader",
+        "propose_to_buy"  or "propose_to_sell" => "needs acquaintance-or-better with a trader, met on their premises",
         "propose_to_join"           => "needs close-acquaintance-or-better, and room in the party",
         "request_job"               => "needs acquaintance-or-better with an employer",
         "strengthen_relationship"

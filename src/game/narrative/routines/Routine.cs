@@ -246,7 +246,10 @@ public sealed class TradeRoutine : NpcRoutine
     {
         var why = PersonUnavailability(ctx, area, out var npc);
         if (why != null) return why;
-        if (!TradeGate.CanTrade(npc!, ctx.Protagonist)) return $"{NpcName} will not trade with you";
+        // Trade happens on premises: a trade routine recorded where the trader keeps their goods is
+        // walkable only at an hour that finds them there.
+        if (!npc!.TradesIn(area)) return $"{NpcName} does not trade here";
+        if (!TradeGate.CanTrade(npc!, ctx.Protagonist, area)) return $"{NpcName} will not trade with you";
         if ((Mode == TradeMode.Sell ? npc!.BuyCatalog : npc!.SellCatalog) == null) return $"{NpcName} no longer trades";
         if (EnemyThere(ctx, area) is { } enemy) return $"{enemy.DisplayName} is there";
         return null;
@@ -268,7 +271,8 @@ public sealed class WorkRoutine : NpcRoutine
         var why = PersonUnavailability(ctx, area, out var npc);
         if (why != null) return why;
         if (JobRegistry.Instance.GetById(JobId) == null) return "that work no longer exists";
-        if (!TradeGate.CanTrade(npc!, ctx.Protagonist)) return $"{NpcName} will not take you on";
+        // Work needs the introduction only — a job is offered by a person, wherever they are met.
+        if (!TradeGate.IsAcquainted(npc!, ctx.Protagonist)) return $"{NpcName} will not take you on";
         if (EnemyThere(ctx, area) is { } enemy) return $"{enemy.DisplayName} is there";
         return null;
     }

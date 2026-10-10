@@ -107,20 +107,56 @@ public static class BuildingSchedule
     /// workshop with two apprentices splits the duty instead of chaining one of them to the shop for
     /// every hour the master is out.</para>
     ///
+    /// <para><paramref name="locks"/>, when given, holds assignments no staffing pass may undo: whoever
+    /// is locked at a period is not pulled away then, and every assignment this pass makes is locked in
+    /// turn. A farm's hands mind both the longhouse and the barn — staff the barn first, then the hall
+    /// with the same locks, and covering the one can never empty the other or take a trader off the
+    /// one visit to their store they are held to (<see cref="EnsureVisit"/>). Not limited to halls:
+    /// a store is staffed the same way.</para>
+    ///
     /// Mutates the passed schedules in place.
     /// </summary>
-    public static void StaffPublicHall(Area hall, IReadOnlyList<NpcSchedule> cover)
+    public static void StaffPublicHall(Area hall, IReadOnlyList<NpcSchedule> cover, StaffingLocks? locks = null)
     {
         if (hall == null || cover.Count == 0) return;
 
         int next = 0;
         foreach (var period in DayPeriods)
         {
-            if (cover.Any(s => s.GetArea(period)?.Id == hall.Id)) continue;
+            // Already manned: lock whoever mans it, so a later pass cannot take them away.
+            var there = cover.FirstOrDefault(s => s.GetArea(period)?.Id == hall.Id);
+            if (there != null) { locks?.Add((there, period)); continue; }
 
-            cover[next % cover.Count].Set(period, hall);
-            next++;
+            for (int k = 0; k < cover.Count; k++)
+            {
+                var s = cover[(next + k) % cover.Count];
+                if (locks != null && locks.Contains((s, period))) continue;
+                s.Set(period, hall);
+                locks?.Add((s, period));
+                next += k + 1;
+                break;
+            }
         }
+    }
+
+    /// <summary>
+    /// Makes sure <paramref name="schedule"/> spends at least one day period in <paramref name="area"/>,
+    /// moving one period other than Dawn there when it never does. What holds a trader to their
+    /// premises: a seller whose day never brings them to their own store is someone nobody can buy
+    /// from. Call it before any staffing pass, since it may move someone off a place they covered —
+    /// and pass the staffing's <paramref name="locks"/>, so the visit is locked and survives it.
+    /// </summary>
+    public static void EnsureVisit(NpcSchedule schedule, Area area, Random rng, StaffingLocks? locks = null)
+    {
+        var at = DayPeriods.Where(p => schedule.GetArea(p)?.Id == area.Id).ToList();
+        if (at.Count == 0)
+        {
+            var candidates = DayPeriods.Skip(1).ToList();
+            var period = candidates[rng.Next(candidates.Count)];
+            schedule.Set(period, area);
+            at.Add(period);
+        }
+        locks?.Add((schedule, at[0]));
     }
 
     /// <summary>
@@ -130,4 +166,22 @@ public static class BuildingSchedule
     /// </summary>
     public static int AwayPeriodCount(NpcSchedule schedule, Area workplace)
         => DayPeriods.Count(p => schedule.GetArea(p)?.Id != workplace.Id);
+}
+
+/// <summary>
+/// Assignments a staffing pass may not undo — see <see cref="BuildingSchedule.StaffPublicHall"/>.
+/// One set per crew, shared by every pass over it.
+/// </summary>
+public sealed class StaffingLocks : HashSet<(NpcSchedule Schedule, TimePeriod Period)>
+{
+    public StaffingLocks() : base(new Comparer()) { }
+
+    // By reference for the schedule: two schedules with the same day are still two people.
+    private sealed class Comparer : IEqualityComparer<(NpcSchedule Schedule, TimePeriod Period)>
+    {
+        public bool Equals((NpcSchedule Schedule, TimePeriod Period) x, (NpcSchedule Schedule, TimePeriod Period) y)
+            => ReferenceEquals(x.Schedule, y.Schedule) && x.Period == y.Period;
+        public int GetHashCode((NpcSchedule Schedule, TimePeriod Period) o)
+            => HashCode.Combine(System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(o.Schedule), o.Period);
+    }
 }

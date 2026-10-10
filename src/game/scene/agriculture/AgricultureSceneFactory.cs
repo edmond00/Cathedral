@@ -40,6 +40,7 @@ public sealed class AgricultureSceneFactory : SettledSceneFactory
     private readonly List<Area> _work = new();
     private readonly List<Area> _all  = new();
     private Area? _margin;
+    private Area? _store;
     private List<NamedNpcArchetype> _roster = new();
     private BuildingResult? _hall, _bunk;
     private List<Area> _beds = new();
@@ -65,6 +66,7 @@ public sealed class AgricultureSceneFactory : SettledSceneFactory
         var qualifiers = SampleUniqueIndices(rng, RowPrefixes.Length - 1, rowCount).Select(i => RowPrefixes[i + 1]).ToList();
         for (int i = 0; i < rowCount; i++) _rows.Add(BuildRows(i == 0 ? "" : qualifiers[i]));
         _work.AddRange(BuildWorkAreas(rng));
+        _store = _work.FirstOrDefault(IsStore) ?? AddStore();
         if (!Underground) _margin = BuildMargin(rng);
 
         var crop = new Section(
@@ -276,14 +278,16 @@ public sealed class AgricultureSceneFactory : SettledSceneFactory
         switch (_family)
         {
             case Family.Field:
-                yield return _crop.Byproduct?.Invoke() is Straw ? Threshing() : BarnArea();
+                if (_crop.Byproduct?.Invoke() is Straw) yield return Threshing();
+                yield return BarnArea();
                 break;
             case Family.Orchard:
-                yield return _crop.Made != null ? PressHouse() : Packing();
+                if (_crop.Made != null) yield return PressHouse();
+                yield return Packing();
                 break;
             case Family.Grove:
                 yield return _crop.Made != null ? PressHouse() : Drying();
-                if (rng.NextDouble() < 0.5) yield return Packing();
+                yield return Packing();
                 break;
             case Family.Plantation:
                 yield return _crop.Made != null ? PressHouse() : Drying();
@@ -306,6 +310,32 @@ public sealed class AgricultureSceneFactory : SettledSceneFactory
                 yield return WineCellar();
                 break;
         }
+    }
+
+    /// <summary>
+    /// The place's store: where the crop is kept once it is in, and so where its people trade it. A
+    /// barn, a packing shed, a cellar store or a wine cellar when the work areas already hold one;
+    /// otherwise <see cref="AddStore"/> builds it.
+    /// </summary>
+    private static bool IsStore(Area a) => a is Cathedral.Game.Scene.BarnArea or PackingArea or StoreArea or CellarArea;
+
+    /// <summary>A store for the families whose work areas do not keep the crop: the garden's and the paddy's.</summary>
+    private Area AddStore()
+    {
+        var (name, text, poi) = _family == Family.Garden
+            ? ("Leaf Store", "A dry dim room of chests and jars where the cured leaf is kept from the damp",
+               (PointOfInterest)new ChestPointOfInterest("Tea Chests", new() { "Lined chests of cured leaf, each stencilled with the garden's mark" },
+                   Items(() => new TeaBrick(), () => new TeaLeaf(), () => new TeaLeaf()), new[] { "lined", "fragrant" })
+                   { Senses = SensoryProfile.Fragrant, VerbModiMentis = Teach(("examine", "tea_lore"), ("smell", "tea_lore")) })
+            : ("Granary", "A raised granary on stone feet, the grain heaped inside out of reach of the rats",
+               (PointOfInterest)new SackPointOfInterest("Grain Heap", new() { "Threshed grain heaped against the boards, sacks waiting beside it" },
+                   Items(_crop.Yield, _crop.Yield, () => new Sack()), new[] { "heaped", "dry" })
+                   { Senses = SensoryProfile.Odorous, VerbModiMentis = Teach(("examine", "harvestry"), ("smell", "petrichor")) });
+        var a = new StoreArea(name, $"in the {name.ToLowerInvariant()}", $"step into the {name.ToLowerInvariant()}",
+            new() { text }, new[] { "dry", "dim", "quiet" });
+        a.PointsOfInterest.Add(poi);
+        _work.Add(a);
+        return a;
     }
 
     private Area Threshing()
@@ -511,7 +541,8 @@ public sealed class AgricultureSceneFactory : SettledSceneFactory
                 break;
             case Family.Cellar:
                 roles.Add(new FarmerArchetype());
-                Add(() => new FarmhandArchetype(), 1, 3);
+                Add(() => new PickerArchetype(), 1, 2);   // gathers the crop and keeps the store
+                Add(() => new FarmhandArchetype(), 0, 2);
                 break;
             case Family.Vineyard:
                 roles.Add(new VintnerArchetype());
@@ -534,7 +565,8 @@ public sealed class AgricultureSceneFactory : SettledSceneFactory
         SpawnCrew(rng, scene, _roster, _beds, _hall.PublicHall, work, SectionName().ToLowerInvariant(), owns,
             who => who is PlowmanArchetype or ReaperArchetype or PickerArchetype ? _rows
                  : who is HaywardArchetype && _margin != null ? new[] { _margin, _rows[0] }
-                 : null);
+                 : null,
+            store: _store);
 
         SprinkleSmallLife(rng, scene, _all, _family switch
         {

@@ -123,7 +123,9 @@ public sealed class RuinSceneFactory : SettledSceneFactory
             corner.PointsOfInterest.Add(bedroll);
             bedroll.Register(scene);
             var day = BuildingSchedule.ForHand(corner, _areas, rng);
-            SpawnResident(rng, scene, new HermitArchetype(), "among the ruins", day);
+            // What a hermit has to trade is what they have gathered, and it is kept by the pallet.
+            BuildingSchedule.EnsureVisit(day, corner, rng);
+            TradeAt(SpawnResident(rng, scene, new HermitArchetype(), "among the ruins", day), corner);
         }
 
         TrySpawnShallow(rng, scene, new OwlArchetype(), _areas, 0.6);

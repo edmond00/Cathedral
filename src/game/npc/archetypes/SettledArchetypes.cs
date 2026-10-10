@@ -347,8 +347,6 @@ public class GravediggerArchetype : SettledArchetype
     public override string TradeModusMentisId => "sextonry";
     public override SocialCategory? Social => SocialCategory.Peasant;
     public override string RoleNoun => "gravedigger";
-    public override ItemTag? SellTag => ItemTag.Craftware;
-    public override ItemTag? BuyTag  => ItemTag.Tool;
     public override int ModiMentisCount => 7;
     public override IReadOnlyList<string> CanIntroduceToArchetypes => new[] { "priest" };
     public override string IntroductionRelation => "the priest";
@@ -401,7 +399,6 @@ public class GuardArchetype : SettledArchetype
     public override string TradeModusMentisId => "soldiery";
     public override SocialCategory? Social => SocialCategory.Military;
     public override string RoleNoun => "guard";
-    public override ItemTag? BuyTag  => ItemTag.Foodstuff;
     public override int ModiMentisCount => 8;
     public override int AuthorityLevel => 1;
     public override IReadOnlyList<string> CanIntroduceToArchetypes => new[] { "captain", "steward" };
@@ -456,7 +453,6 @@ public class CaptainArchetype : SettledArchetype
     public override string TradeModusMentisId => "siegecraft";
     public override SocialCategory? Social => SocialCategory.Military;
     public override string RoleNoun => "captain";
-    public override ItemTag? BuyTag  => ItemTag.Ironwork;
     public override int ModiMentisCount => 10;
     public override int AuthorityLevel => 2;
 
@@ -508,8 +504,6 @@ public class PriestArchetype : SettledArchetype
     public override string TradeModusMentisId => "liturgy";
     public override SocialCategory? Social => SocialCategory.Religious;
     public override string RoleNoun => "priest";
-    public override ItemTag? SellTag => ItemTag.Herb;
-    public override ItemTag? BuyTag  => ItemTag.Foodstuff;
     public override int ModiMentisCount => 9;
     public override int AuthorityLevel => 1;
 
@@ -562,8 +556,6 @@ public class MonkArchetype : SettledArchetype
     public override string TradeModusMentisId => "copying";
     public override SocialCategory? Social => SocialCategory.Religious;
     public override string RoleNoun => "monk";
-    public override ItemTag? SellTag => ItemTag.Foodstuff;
-    public override ItemTag? BuyTag  => ItemTag.Craftware;
     public override int ModiMentisCount => 8;
     public override IReadOnlyList<string> CanIntroduceToArchetypes => new[] { "priest" };
     public override string IntroductionRelation => "the abbot";
@@ -616,8 +608,6 @@ public class ScholarArchetype : SettledArchetype
     public override string TradeModusMentisId => "pedagogy";
     public override SocialCategory? Social => SocialCategory.Bourgeois;
     public override string RoleNoun => "scholar";
-    public override ItemTag? SellTag => ItemTag.Craftware;
-    public override ItemTag? BuyTag  => ItemTag.Craftware;
     public override int ModiMentisCount => 9;
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]
@@ -723,8 +713,6 @@ public class LordArchetype : SettledArchetype
     public override string TradeModusMentisId => "statecraft";
     public override SocialCategory? Social => SocialCategory.Aristocrat;
     public override string RoleNoun => "lord";
-    public override ItemTag? SellTag => ItemTag.Ironwork;
-    public override ItemTag? BuyTag  => ItemTag.Textile;
     public override int ModiMentisCount => 10;
     public override int AuthorityLevel => 2;
 
@@ -830,8 +818,6 @@ public class SailorArchetype : SettledArchetype
     public override string TradeModusMentisId => "seamanship";
     public override SocialCategory? Social => SocialCategory.Urban;
     public override string RoleNoun => "sailor";
-    public override ItemTag? SellTag => ItemTag.Fish;
-    public override ItemTag? BuyTag  => ItemTag.Foodstuff;
     public override int ModiMentisCount => 7;
     public override IReadOnlyList<string> CanIntroduceToArchetypes => new[] { "merchant" };
     public override string IntroductionRelation => "the shipowner";
@@ -938,8 +924,6 @@ public class ClerkArchetype : SettledArchetype
     public override string TradeModusMentisId => "clerkship";
     public override SocialCategory? Social => SocialCategory.Urban;
     public override string RoleNoun => "clerk";
-    public override ItemTag? SellTag => ItemTag.Craftware;
-    public override ItemTag? BuyTag  => ItemTag.Craftware;
     public override int ModiMentisCount => 8;
     public override IReadOnlyList<string> CanIntroduceToArchetypes => new[] { "steward", "captain" };
     public override string IntroductionRelation => "my superior";
