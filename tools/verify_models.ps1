@@ -194,9 +194,35 @@ foreach ($t in $Toolchains) {
         Write-Host "        GPU backends: $(($backends | ForEach-Object { $_.Name }) -join ', ')" -ForegroundColor DarkGray
         foreach ($b in $backends) {
             # A backend from a different revision than the ggml-base.dll beside it crashes inside
-            # the backend with no usable diagnostic, and the DLLs carry no version resource — so
-            # the folder's own BUILD.txt is the only thing that can be checked.
-            Write-Host "          $($b.Name): must be b$declared (nothing can verify this by reading the DLL)" -ForegroundColor DarkGray
+            # the backend with no usable diagnostic, and the DLLs carry no version resource — so the
+            # pack's tracked BUILD.txt records a build and a SHA-256 per DLL, and the hash is the only
+            # thing that tells the right DLL from a stale one. Same check as LlamaInstallCheck.
+            $packBuild = Join-Path $b.FullName "BUILD.txt"
+            if (-not (Test-Path $packBuild)) {
+                Bad "$($t.Folder)/backends/$($b.Name)/BUILD.txt is missing — nothing vouches for this pack's DLLs"
+                continue
+            }
+            $lines = Get-Content $packBuild
+            $pm = $lines | Select-String -Pattern '^\s*llama\.cpp build:\s*b(\d+)' | Select-Object -First 1
+            $packDeclared = if ($pm) { $pm.Matches[0].Groups[1].Value } else { $null }
+            if ($packDeclared -ne $declared) {
+                Bad "$($t.Folder)/backends/$($b.Name): BUILD.txt declares b$packDeclared but the toolchain is b$declared"
+            }
+            foreach ($dll in Get-ChildItem $b.FullName -Filter "ggml-*.dll") {
+                $hm = $lines | Select-String -Pattern ('^\s*' + [regex]::Escape($dll.Name) + '\s+sha256:\s*([0-9a-fA-F]{64})') | Select-Object -First 1
+                if (-not $hm) {
+                    Bad "$($t.Folder)/backends/$($b.Name)/$($dll.Name) has no sha256 line in its BUILD.txt"
+                    continue
+                }
+                $want = $hm.Matches[0].Groups[1].Value.ToLowerInvariant()
+                $got  = (Get-FileHash $dll.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+                if ($got -ne $want) {
+                    Bad "$($t.Folder)/backends/$($b.Name)/$($dll.Name) hash mismatch — stale pack`n          got      $got`n          expected $want"
+                    $fixes += "# $($t.Folder)/backends/$($b.Name) is stale. Re-fetch $($dll.Name) from the zip named in`n#   models/$($t.Folder)/backends/$($b.Name)/BUILD.txt."
+                } else {
+                    Ok "$($t.Folder)/backends/$($b.Name)/$($dll.Name)  (b$packDeclared, sha256 verified)"
+                }
+            }
         }
     } else {
         Write-Host "        GPU backends: none (CPU only — supported)" -ForegroundColor DarkGray
