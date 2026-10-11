@@ -114,6 +114,13 @@ public abstract class Routine
     /// <summary>What the menu calls it, settled at record time while every name is to hand.</summary>
     public string Name { get; set; } = "";
 
+    /// <summary>
+    /// What every menu shows. <see cref="Name"/> unless a kind can say it better from what it holds —
+    /// which is how a routine saved under an older wording reads correctly the moment it is shown,
+    /// instead of only after it is learned again.
+    /// </summary>
+    [JsonIgnore] public virtual string DisplayName => Name;
+
     /// <summary>When true, protected from eviction when its kind's slots are full.</summary>
     public bool Locked { get; set; }
 
@@ -250,7 +257,8 @@ public sealed class TradeRoutine : NpcRoutine
         // walkable only at an hour that finds them there.
         if (!npc!.TradesIn(area)) return $"{NpcName} does not trade here";
         if (!TradeGate.CanTrade(npc!, ctx.Protagonist, area)) return $"{NpcName} will not trade with you";
-        if ((Mode == TradeMode.Sell ? npc!.BuyCatalog : npc!.SellCatalog) == null) return $"{NpcName} no longer trades";
+        // BuyCatalog is what the NPC sells — what the player BUYS — as in TradeMenuRenderer.
+        if ((Mode == TradeMode.Buy ? npc!.BuyCatalog : npc!.SellCatalog) == null) return $"{NpcName} no longer trades";
         if (EnemyThere(ctx, area) is { } enemy) return $"{enemy.DisplayName} is there";
         return null;
     }
@@ -295,19 +303,20 @@ public sealed class GatherRoutine : Routine
     public string ToolItemId { get; set; } = "";
     public string ToolItemName { get; set; } = "";
 
-    /// <summary>
-    /// The modi mentis of the chain the act was performed with, observation to action. Their levels
-    /// — whatever they are by the time the routine is walked — are the dice each item is rolled with,
-    /// as they were the dice of the act; one since forgotten simply adds nothing.
-    /// </summary>
-    public List<string> ChainModusMentisIds { get; set; } = new();
-
     [JsonIgnore] public override RoutineCategory Category => RoutineCategory.Gather;
     [JsonIgnore] protected override string TargetKey => $"{VerbId}:{SourceName}:{ItemId}";
     [JsonIgnore] protected override string CliTarget
         => $"verb={VerbId} source=\"{SourceName}\" item={ItemId} tool={(NeedsTool ? ToolItemId : "-")}";
 
     [JsonIgnore] public bool NeedsTool => ToolItemId.Length > 0;
+
+    /// <summary>
+    /// Rebuilt from what the routine holds rather than read from <see cref="Routine.Name"/>, so a
+    /// routine saved as "Gather Reindeer Moss at Reindeer Moss" no longer says the item twice.
+    /// </summary>
+    [JsonIgnore] public override string DisplayName
+        => RoutineRecorder.GatherName(VerbRegistry.Instance.Get(VerbId)?.DisplayName ?? Name.Split(' ')[0],
+                                      ItemName, SourceName);
 
     protected override string? TargetUnavailability(RoutineCheckContext ctx, Area area)
     {

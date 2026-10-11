@@ -2278,6 +2278,10 @@ public class NarrativeController
             ApplyTimePeriod(_pov.When);
         }
 
+        // Every area walked into is a go-to routine, not only the one the location is left from.
+        if (_recorder != null && _pov != null && areaBefore != null && areaBefore.Id != _pov.Where.Id)
+            _recorder.OnAreaEntered(_pov);
+
         // UI-visible chips for the outcome block.
         var uiReports = allReports.Where(r => r.ShowInUI).ToList();
 
@@ -4134,6 +4138,41 @@ public class NarrativeController
 
         Console.WriteLine($"NarrativeController: walked to {presented.DisplayName} in {where.DisplayName} "
                         + $"(node '{_currentNode.NodeId}') — next observation is of them");
+        return true;
+    }
+
+    /// <summary>
+    /// Takes the player to the premises of a trader who agreed to lead them there, at the first hour
+    /// the trader keeps them (<see cref="TradeGate.NextOnPremises"/>) — now if they are already there
+    /// by then, else later in the day, the time passing as it does when the player waits. The phase
+    /// that follows opens on the trader, as an introduction's does on the person introduced.
+    /// Returns false, and moves nobody, when the trader's day never brings them there.
+    /// </summary>
+    public bool WalkToPremises(NpcEntity trader)
+    {
+        if (_scene == null || _pov == null) return false;
+
+        var sceneNpc = _scene.Npcs.FirstOrDefault(n => ReferenceEquals(n.Entity, trader));
+        if (sceneNpc == null || TradeGate.NextOnPremises(_scene, sceneNpc, _pov.When) is not { } visit)
+        {
+            Console.WriteLine($"NarrativeController: {trader.DisplayName} keeps no premises at any hour — no walk");
+            return false;
+        }
+
+        if (visit.When != _pov.When)
+        {
+            Console.WriteLine($"NarrativeController: waiting until {visit.When} for {trader.DisplayName}'s premises");
+            ApplyTimePeriod(visit.When);
+        }
+
+        _pov.Where = visit.Area;
+        _pov.Focus = sceneNpc;
+        if (NodeForArea(visit.Area) is { } node)
+            _currentNode = node;
+        _openingFocus = sceneNpc;
+
+        Console.WriteLine($"NarrativeController: led by {trader.DisplayName} to {visit.Area.DisplayName} "
+                        + $"at {visit.When} — next observation is of them");
         return true;
     }
 

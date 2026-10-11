@@ -1431,6 +1431,17 @@ namespace Cathedral.Glyph.Microworld
         public int GetAvatarVertex() => _protagonistVertex;
 
         /// <summary>
+        /// Puts the avatar back on <paramref name="vertexIndex"/> — a retreat, not a journey: no path,
+        /// no step event, no arrival. Used when the party flees an encounter met on the last step of
+        /// a journey, so it stands where it came from rather than on a place it never entered.
+        /// </summary>
+        public void ReturnAvatarTo(int vertexIndex)
+        {
+            if (vertexIndex < 0 || vertexIndex == _protagonistVertex) return;
+            PlaceProtagonist(vertexIndex, centerCamera: true);
+        }
+
+        /// <summary>
         /// Re-asserts the protagonist glyph on the current vertex.
         /// Call when returning to WorldView to recover from any glyph overwrite that
         /// may have occurred during path cleanup or travel-range recalculation.

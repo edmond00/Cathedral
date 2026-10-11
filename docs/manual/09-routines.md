@@ -10,11 +10,11 @@ known, and is not walked again.
 
 | Kind | Learned when | Walking it opens |
 |---|---|---|
-| **Go to** | the body leaves a location from an area other than the one its visit opened in | narration, in that area |
+| **Go to** | the body walks into an area other than the one its visit opened in — every such area, at the hour it is reached — and the area a location is left from | narration, in that area |
 | **Meet** | a conversation is opened with someone | narration in their area, its first observation upon them |
 | **Gather** | an item is successfully gathered, dug, mined, fished or cut | the gathering stay (§4) |
-| **Buy** | a merchant agrees to sell | the barter, buying, with no conversation before it |
-| **Sell** | a merchant agrees to buy | the barter, selling, with no conversation before it |
+| **Buy** | a merchant agrees to sell | the barter, buying, with no conversation before it; the body returns to the world when it closes |
+| **Sell** | a merchant agrees to buy | the barter, selling, with no conversation before it; the body returns to the world when it closes |
 | **Work** | a master agrees to take the body on | the stint of work, with no conversation before it |
 
 A conversation that came to the body unbidden — a confrontation over something seen — teaches
@@ -22,7 +22,9 @@ nothing: nobody goes back to be caught again.
 
 Each routine is bound to its location, its area and the period in which it was learned. The same
 thing learned twice, at the same place and hour, is kept once. The same thing learned at another hour
-is another routine, since who is present and what is possible differ by the hour.
+is another routine, since who is present and what is possible differ by the hour. Learned again, a
+routine already held is refreshed in what it records — a merchant's present catalogue — and keeps its
+place.
 
 ## 2. Where nothing is learned
 
@@ -60,22 +62,17 @@ A Gather routine opens a phase reached by no other means: a **stay** of a chosen
 the source, from one to three hundred and sixty.
 
 **The source has slots, and each regrows.** They are the same item slots that are picked by hand,
-with the same regrowth: a slot taken is empty for ninety days where it grows wild, and for three
-hundred and sixty where it is kept or cultivated. A slot taken by hand is as empty to a stay, and a slot taken in a stay is as
-empty to the hand.
+with the same regrowth: a slot taken is empty for nine days where it grows wild, and for thirty-six
+where it is kept or cultivated. A slot taken by hand is as empty to a stay, and a slot taken in a
+stay is as empty to the hand.
 
-**Each slot offers an attempt** as soon as it is full, and another each time it has regrown within
-the stay. A short stay takes what is there now; a long one waits for the season.
-
-**Each attempt is rolled.** The dice are the present levels of the modi mentis of the chain the
-gathering was learned with — observation, thinking and action, as they now stand, a modus mentis
-since forgotten adding nothing — plus the usage level of the implement, if one is required. Never
-fewer than one die. The sixes required are the manner's own difficulty. A success takes the item.
-**A failure spoils it**: the slot is emptied all the same and must regrow, so a clumsy hand costs
-time rather than nothing.
+**Each slot gives its item** as soon as it is full, and again each time it has regrown within the
+stay. **Nothing is rolled**: the gathering was learned by doing it once, and the routine is the
+knowing how. The yield is therefore fixed by the stay alone — a short stay takes what is there now,
+and every further regrowth the days allow adds one more of each slot's item.
 
 **Nothing is taken that cannot be carried.** Once the body cannot hold another item, the stay runs its
-course but no further attempt is made, and the slots not attempted are left as they were.
+course but nothing further is taken, and the slots not reached are left as they were.
 
 The clock moves on by the whole stay. When it ends the body returns to the world, not to the
 location: the scene arrived in is long stale.

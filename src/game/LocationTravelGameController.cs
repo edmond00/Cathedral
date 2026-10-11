@@ -53,6 +53,14 @@ public class LocationTravelGameController : IDisposable
     private FightModeAdapter? _fightAdapter = null;
     private DialogueTreeAdapter? _dialogueAdapter = null;
     private TradeMenuAdapter? _tradeAdapter = null;
+
+    /// <summary>
+    /// True while the open trade menu was entered from a Buy or Sell routine rather than from a
+    /// conversation. Such a trade was the whole of the visit — the routine skipped the way there — so
+    /// closing it returns to the world map, as a work stint and a gathering stay do, instead of
+    /// dropping the player into a narration they never began.
+    /// </summary>
+    private bool _tradeFromRoutine;
     private WorkMenuAdapter?  _workAdapter  = null;
     private GatherMenuAdapter? _gatherAdapter = null;
 
@@ -169,6 +177,16 @@ public class LocationTravelGameController : IDisposable
     /// re-fired by the interface.
     /// </summary>
     private int _pendingArrivalVertex = -1;
+
+    /// <summary>
+    /// The vertex the avatar stood on before its latest step — where a flight from an encounter on
+    /// that step goes back to. Set at the start of every journey and moved on with every step.
+    /// </summary>
+    private int _stepOriginVertex = -1;
+    private int _avatarVertexBeforeStep = -1;
+
+    /// <summary>Where the latest journey set out from — for <c>inspect avatar</c>.</summary>
+    private int _tripOriginVertex = -1;
 
     // Maps BiomeTravelDatabase creature names to the archetype that spawns them.
     // Creature names without a fight-capable archetype (e.g. "blizzard") are absent and skipped.
@@ -1496,7 +1514,8 @@ public class LocationTravelGameController : IDisposable
             }
             else if (kind == TravelRoutinesBox.ResultKind.Return)
             {
-                _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+                // A press, not a hover: SmallInteraction is the hover tick and reads as no click at all.
+                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
                 _travelRoutinesBox = null;
                 _core.SetWorldInteractionsEnabled(true);
                 _interface.SetWorldInteractionsEnabled(true);
@@ -1580,7 +1599,8 @@ public class LocationTravelGameController : IDisposable
             }
             if (_travelInfoRenderer.IsOverClearButton(x, y))
             {
-                _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+                // A press, not a hover — SmallInteraction is the hover tick.
+                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
                 ClearTravelPlan();
                 return;
             }
@@ -2334,6 +2354,11 @@ public class LocationTravelGameController : IDisposable
             _forbiddenFlashVertex = -1;
         }
         _forbiddenFlashFramesLeft = 0;
+
+        // Every pass above repaints cells from what they hold underneath, and a cell the avatar
+        // stands on holds the place, not the avatar — a playtester saw the protagonist vanish on
+        // CLEAR. Put it back last, whatever the passes did.
+        _interface.RefreshProtagonistGlyph();
     }
 
     /// <summary>
@@ -2383,6 +2408,9 @@ public class LocationTravelGameController : IDisposable
         _tripVhDebt        = 0f;
         _tripTotalCells    = pathVertices.Count - 1;
         _tripCellsTraveled = 0;
+        _avatarVertexBeforeStep = pathVertices[0];
+        _stepOriginVertex       = pathVertices[0];
+        _tripOriginVertex       = pathVertices[0];
 
         // Capture the trip's in-game duration before the estimate is cleared; added to the global
         // clock when the protagonist arrives (the estimate is gone by then).
@@ -2412,6 +2440,10 @@ public class LocationTravelGameController : IDisposable
     {
         if (_currentMode != GameMode.Traveling) return;
         if (_protagonist == null) return;
+
+        // Where this step came from, before anything below can start an encounter on it.
+        _stepOriginVertex       = _avatarVertexBeforeStep;
+        _avatarVertexBeforeStep = vertexIndex;
 
         _tripCellsTraveled++;
 
@@ -3591,6 +3623,15 @@ public class LocationTravelGameController : IDisposable
         // for — every other reading (biomes, region counts) also varies by seed.
         if (subject == "world-variant") return CliVariantLines();
 
+        // Where the avatar stands against the last journey's two ends — how a script tells that a
+        // flight from an encounter on the last step fell back to where it came from.
+        if (subject == "avatar")
+        {
+            int v = _interface.GetAvatarVertex();
+            string on = v == _tripOriginVertex ? "origin" : v == _destinationVertex ? "destination" : "elsewhere";
+            return new List<string> { $"avatar vertex={v} trip-origin={_tripOriginVertex} trip-destination={_destinationVertex} on={on}" };
+        }
+
         // The world's generated history: a fact about the world, assertable at the map. `history`
         // prints it for reading; these two are the forms `expect-state` can match.
         if (subject == "world-history") return CliHistoryLines("state");
@@ -3827,6 +3868,14 @@ public class LocationTravelGameController : IDisposable
 
     /// <summary>Presses LEAVE without staying. False when not on the configure screen.</summary>
     public bool CliGatherLeave() => _gatherAdapter?.CliLeave() ?? false;
+
+    /// <summary>Presses the trade menu's LEAVE. False when no trade menu is open.</summary>
+    public bool CliTradeLeave()
+    {
+        if (_tradeAdapter == null) return false;
+        _tradeAdapter.CliLeave();
+        return true;
+    }
 
     /// <summary>
     /// Ages the party: kills the protagonist outright if they have outlived their lifetime, and
@@ -5357,7 +5406,7 @@ public class LocationTravelGameController : IDisposable
                 break;
 
             case Cathedral.Game.Narrative.Routines.TradeRoutine trade:
-                StartRoutineSubPhase(vertex, trade, npc => StartTradeMode(npc, trade.Mode));
+                StartRoutineSubPhase(vertex, trade, npc => StartTradeMode(npc, trade.Mode, fromRoutine: true));
                 break;
 
             case Cathedral.Game.Narrative.Routines.WorkRoutine work:
@@ -5677,6 +5726,11 @@ public class LocationTravelGameController : IDisposable
                 dialogueOutcome.Target.IntroductionGranted = null;
                 WalkToIntroduction(presented);
             }
+            if (dialogueOutcome.Target.LeadToPremisesGranted)
+            {
+                dialogueOutcome.Target.LeadToPremisesGranted = false;
+                _narrativeController.WalkToPremises(dialogueOutcome.Target);
+            }
             _narrativeController.OnDialogueCompleted(dialogueOutcome.Target);
             return;
         }
@@ -5737,8 +5791,14 @@ public class LocationTravelGameController : IDisposable
             if (result == FightAdapterResult.Runaway)
             {
                 // Abandon the in-flight travel and let the player pick a new destination. Any
-                // arrival held over the fight goes with it — fleeing ends the journey, and the
-                // avatar is standing on the vertex either way.
+                // arrival held over the fight goes with it — fleeing ends the journey.
+                //
+                // An encounter on the LAST step stood between the party and the destination, so a
+                // party that flees has not reached it: it falls back to the cell it came from.
+                // Left on the destination instead, it stood on a place it never entered and could
+                // not travel to — the map refuses a journey to the vertex underfoot.
+                if (_pendingArrivalVertex >= 0 && _stepOriginVertex >= 0)
+                    _interface.ReturnAvatarTo(_stepOriginVertex);
                 _pendingArrivalVertex = -1;
                 _interface.MovementPaused = true;
                 _interface.CancelTravel();
@@ -5863,6 +5923,14 @@ public class LocationTravelGameController : IDisposable
             WalkToIntroduction(presented);
         }
 
+        // If a trader agreed to lead the player to their premises, walk there — at the first hour
+        // they keep it, the trader in focus. The introduction's hand-off, for a place.
+        if (npc.LeadToPremisesGranted)
+        {
+            npc.LeadToPremisesGranted = false;   // consume the flag
+            _narrativeController?.WalkToPremises(npc);
+        }
+
         // If a propose-to-join dialogue succeeded, take them into the party and out of the scene.
         // Deferred to here for the same reason trade and work are: a dialogue outcome can reach the
         // NPC and nothing else, so the flag is the only thing it can set.
@@ -5968,10 +6036,12 @@ public class LocationTravelGameController : IDisposable
             _narrativeController.RecordWorkRoutine(npc, job);
     }
 
-    private void StartTradeMode(Cathedral.Game.Npc.NpcEntity npc, Cathedral.Game.Npc.Trade.TradeMode mode)
+    private void StartTradeMode(Cathedral.Game.Npc.NpcEntity npc, Cathedral.Game.Npc.Trade.TradeMode mode,
+                                bool fromRoutine = false)
     {
         if (_core.Terminal == null || _narrativeController == null)
             return;
+        _tradeFromRoutine = fromRoutine;
 
         _tradeAdapter = new TradeMenuAdapter(
             protagonist: _narrativeController.Protagonist,
@@ -5985,7 +6055,8 @@ public class LocationTravelGameController : IDisposable
     }
 
     /// <summary>
-    /// Called when the trade menu reports completion. Begins a fresh narration segment.
+    /// Called when the trade menu reports completion. Begins a fresh narration segment — or, for a
+    /// trade a routine opened, returns to the world map (see <see cref="_tradeFromRoutine"/>).
     /// </summary>
     private void OnTradeCompleted()
     {
@@ -5995,6 +6066,15 @@ public class LocationTravelGameController : IDisposable
         Console.WriteLine($"LocationTravelGameController: Trade completed with {npc.DisplayName}");
         _tradeAdapter = null;
         _core.Terminal?.Clear();
+
+        if (_tradeFromRoutine)
+        {
+            _tradeFromRoutine = false;
+            Console.WriteLine("LocationTravelGameController: routine trade finished — returning to world view");
+            ExitNarrativeMode();
+            return;
+        }
+
         SetMode(GameMode.LocationInteraction);
 
         // The trade menu draws no narration text of its own, so leave a one-line trace before the

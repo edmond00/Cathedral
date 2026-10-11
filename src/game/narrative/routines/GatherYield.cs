@@ -9,11 +9,11 @@ namespace Cathedral.Game.Narrative.Routines;
 /// <summary>One item slot of a gathering source, and the day it is (or will be) there to take.</summary>
 public sealed record GatherSlot(ItemElement Element, double AvailableAt, double RegenDays);
 
-/// <summary>What a stay of some days would come to, before any die is rolled.</summary>
-public sealed record GatherForecast(int Days, int Attempts, int Dice, int Difficulty, double Chance)
+/// <summary>What a stay of some days will come to.</summary>
+public sealed record GatherForecast(int Days, int Attempts)
 {
-    /// <summary>The yield the dice make likely — attempts × chance, rounded to the nearest item.</summary>
-    public int Expected => (int)Math.Round(Attempts * Chance, MidpointRounding.AwayFromZero);
+    /// <summary>What the stay yields: every attempt it offers takes its item.</summary>
+    public int Expected => Attempts;
 }
 
 /// <summary>What a stay actually yielded.</summary>
@@ -21,8 +21,7 @@ public sealed class GatherResult
 {
     public int Days { get; init; }
     public int Gathered { get; set; }
-    public int Spoiled { get; set; }
-    /// <summary>Attempts never made because nothing more could be carried.</summary>
+    /// <summary>Items never taken because nothing more could be carried.</summary>
     public int NoRoom { get; set; }
     public Dictionary<string, int> ByItem { get; } = new();
 }
@@ -35,15 +34,12 @@ public sealed class GatherResult
 ///   picks from, with the same depletion stamps (<see cref="Scene.Scene.ItemDepletions"/>) and the same
 ///   regrowth (<see cref="PointOfInterest.RegenDays"/>) — so a bush stripped by hand is just as bare
 ///   to a routine, and the other way round.</item>
-/// <item><b>A stay is a number of days.</b> Every slot offers one attempt as soon as it is full, and
-///   another each time it has regrown within the stay. A short stay takes what is there now; a long
-///   one waits for the season.</item>
-/// <item><b>Every attempt is rolled.</b> The dice are those of the chain the act was learned with —
-///   its modi mentis at their present levels — plus the implement's usage level; the difficulty is
-///   the verb's. Success takes the item. <b>Failure spoils it</b>: the slot is emptied all the same and
-///   has to regrow, so a clumsy hand costs time rather than nothing.</item>
+/// <item><b>A stay is a number of days, and the yield grows with it.</b> Every slot gives its item as
+///   soon as it is full, and again each time it has regrown within the stay. There is no roll: the
+///   gathering was learned by doing it once, and a routine is the knowing how — what a stay costs is
+///   the days, and what it is worth is how long they were.</item>
 /// <item><b>Nothing is taken that cannot be carried.</b> Once the pack refuses an item the stay goes
-///   on but nothing more is attempted.</item>
+///   on but nothing more is taken.</item>
 /// </list>
 /// </summary>
 public static class GatherYield
@@ -87,47 +83,6 @@ public static class GatherYield
     public static Item? CarriedTool(GatherRoutine routine, PartyMember member)
         => routine.NeedsTool ? member.GetAllItems().FirstOrDefault(i => i.ItemId == routine.ToolItemId) : null;
 
-    /// <summary>
-    /// The dice each attempt is rolled with: the present effective levels of the chain the act was
-    /// learned with (a modus mentis no longer held adds nothing), plus the implement's usage level —
-    /// the same sum narration rolls. Never fewer than one die.
-    /// </summary>
-    public static int Dice(GatherRoutine routine, Protagonist protagonist)
-    {
-        int total = 0;
-        foreach (var id in routine.ChainModusMentisIds)
-        {
-            var held = protagonist.LearnedModiMentis.FirstOrDefault(m => m.ModusMentisId == id);
-            if (held != null) total += Math.Max(0, protagonist.GetEffectiveModusMentisLevel(held));
-        }
-        total += CarriedTool(routine, protagonist)?.UsageLevel ?? 0;
-        return Math.Max(1, total);
-    }
-
-    /// <summary>Sixes needed per attempt: the verb's own difficulty against the source.</summary>
-    public static int Difficulty(Verb verb, PointOfInterest source, IReadOnlyList<GatherSlot> slots)
-        => Math.Max(1, verb is GatherVerb && slots.Count > 0
-            ? verb.DifficultyFor(slots[0].Element)
-            : verb.DifficultyFor(source));
-
-    /// <summary>The chance that <paramref name="dice"/> d6 show at least <paramref name="sixes"/> sixes.</summary>
-    public static double Chance(int dice, int sixes)
-    {
-        if (sixes <= 0) return 1.0;
-        if (sixes > dice) return 0.0;
-        double p = 0.0;
-        for (int k = sixes; k <= dice; k++)
-            p += Binomial(dice, k) * Math.Pow(1.0 / 6.0, k) * Math.Pow(5.0 / 6.0, dice - k);
-        return Math.Min(1.0, p);
-    }
-
-    private static double Binomial(int n, int k)
-    {
-        double r = 1.0;
-        for (int i = 1; i <= k; i++) r = r * (n - k + i) / i;
-        return r;
-    }
-
     /// <summary>Every attempt a stay of <paramref name="days"/> offers, in the order they come.</summary>
     public static List<(double At, GatherSlot Slot)> Attempts(IReadOnlyList<GatherSlot> slots, double now, int days)
     {
@@ -140,19 +95,17 @@ public static class GatherYield
         return attempts.OrderBy(a => a.Item1).ToList();
     }
 
-    public static GatherForecast Forecast(IReadOnlyList<GatherSlot> slots, double now, int days, int dice, int difficulty)
-        => new(days, Attempts(slots, now, days).Count, dice, difficulty, Chance(dice, difficulty));
+    public static GatherForecast Forecast(IReadOnlyList<GatherSlot> slots, double now, int days)
+        => new(days, Attempts(slots, now, days).Count);
 
     /// <summary>
-    /// Walks the stay: rolls each attempt in turn, puts what succeeds in the protagonist's pack, and
-    /// stamps every attempted slot as picked on the day it was attempted. The clock is the caller's
-    /// to advance.
+    /// Walks the stay: takes each item in turn into the protagonist's pack, and stamps every slot taken
+    /// as picked on the day it was taken. The clock is the caller's to advance.
     /// </summary>
     public static GatherResult Run(IReadOnlyList<GatherSlot> slots, Scene.Scene scene, Protagonist protagonist,
-        double now, int days, int dice, int difficulty)
+        double now, int days)
     {
         var result = new GatherResult { Days = days };
-        var rng    = GameRng.Stream("routine_gather");
         bool full  = false;
 
         foreach (var (at, slot) in Attempts(slots, now, days))
@@ -160,36 +113,15 @@ public static class GatherYield
             if (full) { result.NoRoom++; continue; }
 
             var item = ItemRegistry.GetById(slot.Element.Item.ItemId) ?? slot.Element.Item;
-            if (!protagonist.CanAcquireItem(item)) { full = true; result.NoRoom++; continue; }
+            if (!protagonist.CanAcquireItem(item) || !protagonist.AcquireItem(item)) { full = true; result.NoRoom++; continue; }
 
-            if (Roll(rng, dice, difficulty) && protagonist.AcquireItem(item))
-            {
-                result.Gathered++;
-                result.ByItem[item.DisplayName] = result.ByItem.GetValueOrDefault(item.DisplayName) + 1;
-            }
-            else result.Spoiled++;
-
+            result.Gathered++;
+            result.ByItem[item.DisplayName] = result.ByItem.GetValueOrDefault(item.DisplayName) + 1;
             if (slot.Element.DepletionKey.Length > 0)
                 scene.ItemDepletions[slot.Element.DepletionKey] = at;
         }
 
-        Console.WriteLine($"GatherYield: {days} day(s), {dice} dice vs {difficulty} — " +
-                          $"{result.Gathered} gathered, {result.Spoiled} spoiled, {result.NoRoom} left for want of room");
+        Console.WriteLine($"GatherYield: {days} day(s) — {result.Gathered} gathered, {result.NoRoom} left for want of room");
         return result;
-    }
-
-    /// <summary>
-    /// One attempt. <c>--debug</c>'s <c>strategy</c> forces it either way, as it forces narration's
-    /// rolls — which is what lets a script assert a yield.
-    /// </summary>
-    private static bool Roll(Random rng, int dice, int difficulty)
-    {
-        if (DebugMode.IsActive && DebugMode.CurrentStrategy == DebugStrategy.Succeed)     return true;
-        if (DebugMode.IsActive && DebugMode.CurrentStrategy == DebugStrategy.FailDiceRoll) return false;
-
-        int sixes = 0;
-        for (int i = 0; i < dice; i++)
-            if (rng.Next(1, 7) == 6) sixes++;
-        return sixes >= difficulty;
     }
 }

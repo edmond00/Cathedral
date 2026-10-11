@@ -117,6 +117,20 @@ public static class JsonConstraintGenerator
         string alternatives = string.Join(
             " | ", prefixes.Select(p => "\"" + p.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\""));
         string opening = prefixes.Count == 1 ? alternatives : $"( {alternatives} )";
+
+        // An opening that ends on a space hands over at a word boundary, and the next word is lower
+        // case: "I want to open", never "I want to I can open". With a free first character the model,
+        // offered several openings, took one and then began its sentence again with another — the
+        // filter accepts the restart, since every opening is also plain text. Forcing the first letter
+        // lower makes a second "I ..." unreachable.
+        // Only where several openings compete: a single one (the rewriter's "I ") gives the model
+        // nothing to restart with, and its narration is left exactly as it was.
+        if (prefixes.Count > 1 && prefixes.All(p => p.EndsWith(' ')))
+        {
+            int restMin = Math.Max(0, bodyMin - 1);
+            int restMax = Math.Max(restMin, bodyMax - 1);
+            return $"root ::= {opening} [a-z] {charClass}{{{restMin},{restMax}}}\n";
+        }
         return $"root ::= {opening} {charClass}{{{bodyMin},{bodyMax}}}\n";
     }
 

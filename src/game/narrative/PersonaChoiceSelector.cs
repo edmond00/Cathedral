@@ -97,6 +97,26 @@ public static class PersonaOpenings
     private static readonly string[] WillingnessPrefixes =
         { "I am ", "I want to ", "I can ", "I could ", "I should ", "I don't ", "I can't ", "I shouldn't " };
 
+    /// <summary>
+    /// "I want to i can open the door" → "I can open the door". The grammar makes the first word after
+    /// an opening lower case, which keeps a second capital "I" out; a model set on restarting can still
+    /// write "i can", so an answer that opens twice keeps the second opening, which is the one the
+    /// sentence was built on.
+    /// </summary>
+    public static string CollapseRepeatedOpening(string text, PersonaOpening opening)
+    {
+        foreach (var first in Prefixes(opening))
+        {
+            if (!text.StartsWith(first, StringComparison.Ordinal)) continue;
+            string rest = text[first.Length..];
+            foreach (var second in Prefixes(opening))
+                if (rest.StartsWith(second, StringComparison.OrdinalIgnoreCase))
+                    return second + rest[second.Length..];
+            break;
+        }
+        return text;
+    }
+
     private static string Quote(IReadOnlyList<string> prefixes)
     {
         var quoted = prefixes.Select(p => $"\"{p.TrimEnd()}\"").ToList();
@@ -257,7 +277,7 @@ public class PersonaChoiceSelector
                   onTokenStreamed: (t, _) => preview.OnToken(t))
             : await _llm.GenerateConstrainedStringAsync(
                   slotId, reasoningPrompt, gbnfGrammar: grammar, ReasoningMaxTokens, skipReset: false);
-        reasoning = reasoning.Trim();
+        reasoning = PersonaOpenings.CollapseRepeatedOpening(reasoning.Trim(), prompt.Opening);
         preview?.OnComplete(reasoning);
         if (reasoning.Length == 0) return new PersonaChoice<T>(candidates[0].Item, null);   // no signal → first real option
 

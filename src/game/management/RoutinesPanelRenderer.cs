@@ -62,7 +62,7 @@ public class RoutinesPanelRenderer
 
     // ── Hit areas, rebuilt every render ───────────────────────────
     private readonly List<(int Row, RoutineCategory Category)> _categoryRows = new();
-    private readonly List<(int Row, int X, Routine Routine)> _slotRows = new();
+    private readonly List<(int Row, int X, int Width, Routine Routine)> _slotRows = new();
     private int _lockRow = -1, _lockWidth;
 
     private (int X, int Y) _hover = (-1, -1);
@@ -167,7 +167,11 @@ public class RoutinesPanelRenderer
         }
     }
 
-    /// <summary>The selected kind's slot grid, from the top of the centre down to <paramref name="lastRow"/>.</summary>
+    /// <summary>
+    /// The selected kind's slot grid, from the top of the centre down to <paramref name="lastRow"/>.
+    /// Each column is as wide as its longest entry, and the pair is centred in the zone: two columns of
+    /// short names pinned to the left edge read as a list that lost its other half.
+    /// </summary>
     private void RenderSlots(Protagonist p, int lastRow)
     {
         var routines = p.RoutinesOf(_category);
@@ -176,48 +180,67 @@ public class RoutinesPanelRenderer
         // Every slot the body could ever have, so what an anamnesis point would buy is visible — but
         // never more than the space holds, nor fewer than what is usable or filled.
         int grid     = Math.Min(2 * rowsFree, Math.Max(p.GetRoutineSlotsAtBest(), Math.Max(usable, routines.Count)));
-        int rows     = (grid + 1) / 2;
+        int rows     = Math.Max(1, (grid + 1) / 2);
         int spacing  = rows * 2 <= rowsFree ? 2 : 1;
+        // Centred vertically as well: the grid used to hang from the top of the pane, leaving a band
+        // of empty rows above the map whenever a body has few slots.
+        int top      = SlotStartRow + Math.Max(0, (rowsFree - ((rows - 1) * spacing + 1)) / 2);
 
         string title = string.Join(" ", _category.Label().ToUpperInvariant().ToCharArray());
-        CenterText(CenterLeft, 1, title, Config.Colors.BrightYellow);
+        CenteredText(1, title, Config.Colors.BrightYellow);
         string count = $"{routines.Count} / {usable}";
         _terminal.Text(CenterRight + 1 - count.Length, 1, count, Config.Colors.LightGray75, Config.Colors.Black);
-        CenterText(CenterLeft, 2, "☐ learned  ☑ kept  ○ empty  × beyond anamnesis", Config.Colors.DarkGray35);
+        CenteredText(2, "☐ learned  ☑ kept  ○ empty  × beyond anamnesis", Config.Colors.DarkGray35);
 
         var selected = Selected(p);
-        var duplicates = routines.GroupBy(r => r.Name).Where(g => g.Count() > 1).Select(g => g.Key).ToHashSet();
+        var duplicates = routines.GroupBy(r => r.DisplayName).Where(g => g.Count() > 1).Select(g => g.Key).ToHashSet();
+
+        // Labels first, so each column can be sized to what it holds.
+        var labels = new string[grid];
+        for (int i = 0; i < grid; i++)
+        {
+            if (i < routines.Count)
+            {
+                var r = routines[i];
+                string name = duplicates.Contains(r.DisplayName) ? $"{r.DisplayName} ({r.Time.Label().ToLowerInvariant()})" : r.DisplayName;
+                string label = $"{(r.Locked ? "☑" : "☐")} {name}";
+                labels[i] = label.Length > ColumnWidth ? label.Substring(0, ColumnWidth - 1) + "…" : label;
+            }
+            else labels[i] = i < usable ? "○ empty" : "× ·····";
+        }
+        int cols = grid > rows ? 2 : 1;
+        var widths = new int[cols];
+        for (int i = 0; i < grid; i++) widths[i / rows] = Math.Max(widths[i / rows], labels[i].Length);
+        int gap   = ColumnGap + 2;
+        int total = widths.Sum() + (cols - 1) * gap;
+        int left  = CenterLeft + Math.Max(0, (CenterWidth - total) / 2);
 
         for (int i = 0; i < grid; i++)
         {
             // Column-major: the left column fills top to bottom first, as a list is read.
             int col = i / rows, line = i % rows;
-            int x = CenterLeft + col * (ColumnWidth + ColumnGap);
-            int y = SlotStartRow + line * spacing;
+            int x = col == 0 ? left : left + widths[0] + gap;
+            int w = widths[col];
+            int y = top + line * spacing;
 
             if (i < routines.Count)
             {
                 var r = routines[i];
                 bool isSel  = selected != null && r.Id == selected.Id;
-                bool hovRow = _hover.Y == y && _hover.X >= x && _hover.X < x + ColumnWidth;
+                bool hovRow = _hover.Y == y && _hover.X >= x && _hover.X < x + w;
                 bool hovBox = hovRow && _hover.X < x + CheckboxCols;
-                string name = duplicates.Contains(r.Name) ? $"{r.Name} ({r.Time.Label().ToLowerInvariant()})" : r.Name;
-                string label = $"{(r.Locked ? "☑" : "☐")} {name}";
-                if (label.Length > ColumnWidth) label = label.Substring(0, ColumnWidth - 1) + "…";
 
                 Vector4 fg = isSel ? Config.Colors.BrightYellow
                            : hovRow || r.Locked ? Config.Colors.MediumYellow : Config.Colors.LightGray75;
                 Vector4 bg = isSel || hovRow ? SelectedBg : Config.Colors.Black;
-                _terminal.FillRect(x, y, ColumnWidth, 1, ' ', fg, bg);
-                _terminal.Text(x, y, label, fg, bg);
+                _terminal.FillRect(x, y, w, 1, ' ', fg, bg);
+                _terminal.Text(x, y, labels[i], fg, bg);
                 if (hovBox)
                     _terminal.Text(x, y, r.Locked ? "☑" : "☐", Config.Colors.BrightYellow, HoverBg);
-                _slotRows.Add((y, x, r));
+                _slotRows.Add((y, x, w, r));
             }
-            else if (i < usable)
-                _terminal.Text(x, y, "○ empty", Config.Colors.DarkGray35, Config.Colors.Black);
             else
-                _terminal.Text(x, y, "× ·····", Config.Colors.DarkGray20, Config.Colors.Black);
+                _terminal.Text(x, y, labels[i], i < usable ? Config.Colors.DarkGray35 : Config.Colors.DarkGray20, Config.Colors.Black);
         }
     }
 
@@ -250,7 +273,7 @@ public class RoutinesPanelRenderer
             return;
         }
 
-        CenterText(x, row++, r.Name, Config.Colors.BrightYellow);
+        CenterText(x, row++, r.DisplayName, Config.Colors.BrightYellow);
         string where = r.LocationName.Length > 0 ? $"{r.LocationName} · {r.AreaName}" : r.AreaName;
         CenterText(x, row++, $"{where} · {r.Time.Label().ToLowerInvariant()}", Config.Colors.LightGray75);
 
@@ -264,14 +287,27 @@ public class RoutinesPanelRenderer
         row++;
 
         int last = _terminal.Height - 2;
-        foreach (var (text, fg) in DetailLines(r, p))
+        foreach (var (text, fg, coin) in DetailLines(r, p))
         {
             if (row > last) break;
-            CenterText(x, row++, text, fg);
+            CenterText(x, row, text, fg);
+            // A price's coin keeps its own metal colour, as in the trade menu: the glyph is the line's
+            // last character, so it is repainted over the plain text.
+            if (coin is { } c && text.Length > 0 && text.Length <= CenterWidth)
+                _terminal.SetCell(x + text.Length - 1, row, CoinGlyph(c), CoinColor(c), Config.Colors.Black);
+            row++;
         }
     }
 
-    private IEnumerable<(string, Vector4)> DetailLines(Routine r, Protagonist p)
+    private IEnumerable<(string Text, Vector4 Fg, CoinType? Coin)> DetailLines(Routine r, Protagonist p)
+    {
+        foreach (var (text, fg) in PlainDetailLines(r, p)) yield return (text, fg, null);
+        if (r is TradeRoutine trade)
+            foreach (var line in trade.Catalogue)
+                yield return (CatalogueLine(line), Config.Colors.MediumGray60, line.Coin);
+    }
+
+    private IEnumerable<(string, Vector4)> PlainDetailLines(Routine r, Protagonist p)
     {
         var plain = Config.Colors.MediumGray60;
         var head  = Config.Colors.White;
@@ -294,9 +330,7 @@ public class RoutinesPanelRenderer
                 yield return (trade.Mode == TradeMode.Sell ? "WHAT THEY BUY" : "WHAT THEY SELL", head);
                 if (trade.Catalogue.Count == 0)
                     yield return ("  · nothing", Config.Colors.DarkGray35);
-                foreach (var line in trade.Catalogue)
-                    yield return (CatalogueLine(line), plain);
-                break;
+                break;   // the catalogue lines follow, coloured — see DetailLines
 
             case WorkRoutine work:
                 yield return ($"{work.NpcName}, {work.NpcDescription}", head);
@@ -314,12 +348,12 @@ public class RoutinesPanelRenderer
                 break;
 
             case GatherRoutine gather:
-                yield return ($"{gather.ItemName} from {gather.SourceName}", head);
+                yield return (RoutineRecorder.SameThing(gather.ItemName, gather.SourceName)
+                    ? gather.SourceName : $"{gather.ItemName} from {gather.SourceName}", head);
                 yield return (gather.NeedsTool ? $"  · needs: {gather.ToolItemName}" : "  · needs no implement", plain);
-                yield return ($"  · dice today: {GatherYield.Dice(gather, p)} per item", plain);
                 yield return ("", plain);
-                yield return ("Stay some days and take what grows back;", Config.Colors.DarkGray35);
-                yield return ("each item is rolled for, and a failure spoils it.", Config.Colors.DarkGray35);
+                yield return ("Stay some days and take what grows back:", Config.Colors.DarkGray35);
+                yield return ("the longer the stay, the more it yields.", Config.Colors.DarkGray35);
                 break;
         }
     }
@@ -345,6 +379,13 @@ public class RoutinesPanelRenderer
         CoinType.Gold   => Config.Symbols.GoldCoinSymbol,
         CoinType.Silver => Config.Symbols.SilverCoinSymbol,
         _               => Config.Symbols.CopperCoinSymbol,
+    };
+
+    private static Vector4 CoinColor(CoinType c) => c switch
+    {
+        CoinType.Gold   => Config.Colors.CoinGold,
+        CoinType.Silver => Config.Colors.CoinSilver,
+        _               => Config.Colors.CoinCopper,
     };
 
     private static string CoinName(CoinType c) => c switch
@@ -407,7 +448,7 @@ public class RoutinesPanelRenderer
     }
 
     private RoutineCategory? HoveredCategory() => CategoryAt(_hover.X, _hover.Y);
-    private (int Row, int X, Routine Routine)? HoveredSlot() => SlotAt(_hover.X, _hover.Y);
+    private (int Row, int X, int Width, Routine Routine)? HoveredSlot() => SlotAt(_hover.X, _hover.Y);
     private bool OverLock() => OverLock(_hover.X, _hover.Y);
 
     private RoutineCategory? CategoryAt(int x, int y)
@@ -418,10 +459,10 @@ public class RoutinesPanelRenderer
         return null;
     }
 
-    private (int Row, int X, Routine Routine)? SlotAt(int x, int y)
+    private (int Row, int X, int Width, Routine Routine)? SlotAt(int x, int y)
     {
         foreach (var s in _slotRows)
-            if (s.Row == y && x >= s.X && x < s.X + ColumnWidth) return s;
+            if (s.Row == y && x >= s.X && x < s.X + s.Width) return s;
         return null;
     }
 
@@ -445,6 +486,13 @@ public class RoutinesPanelRenderer
     {
         for (int gx = CenterLeft; gx <= CenterRight; gx += 2)
             _terminal.SetCell(gx, y, '─', Config.Colors.DarkGray35, Config.Colors.Black);
+    }
+
+    /// <summary>Draws text centred across the centre zone.</summary>
+    private void CenteredText(int y, string text, Vector4 fg)
+    {
+        if (text.Length > CenterWidth) text = text.Substring(0, CenterWidth - 1) + "…";
+        _terminal.Text(CenterLeft + (CenterWidth - text.Length) / 2, y, text, fg, Config.Colors.Black);
     }
 
     /// <summary>Draws text in the centre, truncated to its width.</summary>

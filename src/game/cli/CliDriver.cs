@@ -245,6 +245,7 @@ public sealed class CliDriver
                 case "travel-go":   CmdTravelGo();                    break;
                 case "routines":    CmdRoutines(rest);                break;
                 case "gather":      CmdGather(rest);                  break;
+                case "trade":       CmdTrade(rest);                   break;
                 case "manage":      CmdManage(rest);                  break;
                 case "select":      CmdSelect(rest);                  break;
                 case "key":         CmdKey(rest);                     break;
@@ -414,6 +415,7 @@ public sealed class CliDriver
           routines                  list the routines the planned destination offers
           routines <n|kind>         pick routine n — or the first walkable of a kind (goto, meet,
                                     gather, buy, sell, work) — and set out; entered on arrival
+          trade leave               close the trade menu without settling anything
           gather days <n>|start|continue|leave
                                     drive the gathering phase a Gather routine opens; assert
                                     with `inspect gather`
@@ -1248,6 +1250,18 @@ public sealed class CliDriver
         };
         CliMode.Emit(ok ? $"ok: gather {string.Join(' ', a)} (mode={_game.CurrentMode})"
                         : $"error: gather days <n>|start|continue|leave — '{string.Join(' ', a)}' did nothing here");
+    }
+
+    /// <summary>
+    /// The trade menu. Only <c>leave</c>: what is bought and sold is clicked through the real menu,
+    /// but a script that only needs to get out of it — to see where closing it leads — says so.
+    /// </summary>
+    private void CmdTrade(string[] a)
+    {
+        string sub = a.Length > 0 ? a[0].ToLowerInvariant() : "";
+        bool ok = sub == "leave" && _game.CliTradeLeave();
+        CliMode.Emit(ok ? $"ok: trade leave (mode={_game.CurrentMode})"
+                        : $"error: trade leave — no trade menu open (currently {_game.CurrentMode})");
     }
 
     /// <summary>

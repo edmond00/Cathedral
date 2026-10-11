@@ -1488,10 +1488,15 @@ public class FightModeAdapter
         }
     }
 
-    private void FinishLearningRoll(Fighter active)
+    /// <param name="silent">The roll was made without the dice box (an AI's check), so there is no
+    /// box to close and no closing sound to play.</param>
+    private void FinishLearningRoll(Fighter active, bool silent = false)
     {
-        _dice.Hide();
-        _sfx?.Invoke(GameEventType.NeutralOutcome); // box closes
+        if (!silent)
+        {
+            _dice.Hide();
+            _sfx?.Invoke(GameEventType.NeutralOutcome); // box closes
+        }
         var skill = _state.PendingLearnSkill!;
         var diceValues = _state.DiceFinalValues ?? Array.Empty<int>();
         int difficulty = _state.LearningDifficulty;
@@ -1873,6 +1878,18 @@ public class FightModeAdapter
 
         if (_state.Phase == TurnPhase.AnimatingMovement)
             return;
+
+        // An enemy trying a skill it does not know rolls silently, as its knockdown recovery does:
+        // the dice box is the player's own instrument, and opening it — with a Continue to press — for
+        // a check the player has no part in stopped the fight for nothing. The log says what happened.
+        if (_state.Phase == TurnPhase.AnimatingDice && _state.PendingLearnSkill != null && _state.PendingSkill == null)
+        {
+            var values = new int[Math.Max(1, _state.DiceNumberOfDice)];
+            for (int i = 0; i < values.Length; i++) values[i] = _rng.Next(1, 7);
+            _state.DiceFinalValues = values;
+            FinishLearningRoll(ai, silent: true);
+            return;
+        }
 
         if (_state.Phase == TurnPhase.AnimatingDice)
         {

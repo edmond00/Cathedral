@@ -48,13 +48,13 @@ public class ProposeToBuyTree : DialogueTree
 
     public override IReadOnlyList<Outcome> FailureOutcomes => System.Array.Empty<Outcome>();
 
-    /// <summary>A branch end. Opening a stall is not high-stakes, so the easy ladder applies.</summary>
+    /// <summary>A branch end. Opening a stall is not high-stakes, so the Simple ladder applies — a formality, like an introduction.</summary>
     private static ResolutionNode End(string id, int depth,
                                       string success, string successIndirect,
                                       string failure, string failureIndirect,
                                       params System.Type[] lessons) => new(
         nodeId:                 id,
-        difficulty:             BranchDifficulty.Easy(depth),
+        difficulty:             BranchDifficulty.Simple(depth),
         successReplica:         success,
         successReplicaIndirect: successIndirect,
         failureReplica:         failure,
@@ -404,12 +404,9 @@ public class ProposeToBuyTree : DialogueTree
 
     public override bool IsAvailable(NpcEntity npc, string partyMemberId)
     {
+        // No introduction needed: trade happens on the trader's premises, where dealing with a
+        // stranger is the whole business (see TradeGate). An enemy still will not deal.
         if (npc.SellTag is null) return false;
-        if (npc.AffinityTable.IsEnemy(partyMemberId)) return false;
-        var level = npc.AffinityTable.GetLevel(partyMemberId);
-        return level is AffinityLevel.DistantAcquaintance
-                     or AffinityLevel.CloseAcquaintance
-                     or AffinityLevel.DistantFriend
-                     or AffinityLevel.CloseFriend;
+        return !npc.AffinityTable.IsEnemy(partyMemberId);
     }
 }

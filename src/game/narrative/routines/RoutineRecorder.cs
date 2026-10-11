@@ -19,7 +19,8 @@ namespace Cathedral.Game.Narrative.Routines;
 /// <item><b>Meet</b> — a conversation opened with somebody.</item>
 /// <item><b>Buy / Sell</b> — a merchant agreeing to trade.</item>
 /// <item><b>Work</b> — a master agreeing to take the player on.</item>
-/// <item><b>Go to</b> — leaving the location from an area other than the one the session opened in.</item>
+/// <item><b>Go to</b> — walking into an area other than the one the session opened in (each one,
+/// at the hour of arrival), and the area the location is left from.</item>
 /// </list>
 ///
 /// <para><b>One rule decides whether anything is learned: <see cref="IsRecordable"/>.</b> Nothing is
@@ -89,8 +90,7 @@ public class RoutineRecorder
             ItemName            = item.Item.DisplayName,
             ToolItemId          = tool?.ItemId ?? "",
             ToolItemName        = tool?.DisplayName ?? "",
-            ChainModusMentisIds = ChainOf(action),
-            Name                = $"{verb.DisplayName} {item.Item.DisplayName} at {source.DisplayName}",
+            Name                = GatherName(verb.DisplayName, item.Item.DisplayName, source.DisplayName),
         }, pov);
     }
 
@@ -101,7 +101,9 @@ public class RoutineRecorder
     /// <summary>A merchant agreed to trade.</summary>
     public void OnTrade(PoV pov, NpcEntity npc, TradeMode mode)
     {
-        var catalog = mode == TradeMode.Sell ? npc.BuyCatalog : npc.SellCatalog;
+        // BuyCatalog is what the NPC sells — what the player BUYS — as in TradeMenuRenderer. This was
+        // the other way round, so a buy routine listed what the merchant would buy.
+        var catalog = mode == TradeMode.Buy ? npc.BuyCatalog : npc.SellCatalog;
         var routine = Person(new TradeRoutine { Mode = mode }, npc,
             mode == TradeMode.Sell ? $"Sell to {npc.DisplayName}" : $"Buy from {npc.DisplayName}");
         if (catalog != null)
@@ -117,17 +119,43 @@ public class RoutineRecorder
                          $"Work as {job.Title} for {npc.DisplayName}"), pov);
 
     /// <summary>
-    /// The session is ending. Leaving from somewhere other than where it opened is a place worth
-    /// going back to — following a track to the vegetable beds and leaving from there is a "go to
-    /// the beds" routine.
+    /// The player has just walked into an area. Every area reached on foot, other than the one the
+    /// session opened in, is a place worth going back to — a walk across the tundra to the thaw lake
+    /// teaches the way to both, not only to the last. Learned at the hour of arrival.
+    /// </summary>
+    public void OnAreaEntered(PoV pov)
+    {
+        if (_openedAt != null && pov.Where.Id == _openedAt.Id) return;
+        if (_wentTo.Add(pov.Where.Id))
+            Record(new GoToRoutine { Name = $"Go to {pov.Where.DisplayName}" }, pov);
+    }
+
+    /// <summary>The areas a go-to has been learned for this session, so each is learned once.</summary>
+    private readonly HashSet<Guid> _wentTo = new();
+
+    /// <summary>
+    /// The session is ending. The area left from is a go-to like any other — and the only one when
+    /// the session reached it some way other than an act of walking.
     /// </summary>
     public void FinalizeAtNarrationEnd(PoV? pov)
     {
-        if (pov == null || (_openedAt != null && pov.Where.Id == _openedAt.Id)) return;
-        Record(new GoToRoutine { Name = $"Go to {pov.Where.DisplayName}" }, pov);
+        if (pov == null) return;
+        OnAreaEntered(pov);
     }
 
     // ── Plumbing ──────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// "Gather Reindeer Moss at Reindeer Moss" says the item twice: a patch is often named for what
+    /// grows on it. The source is named only when it says something the item does not.
+    /// </summary>
+    public static string GatherName(string verb, string item, string source)
+        => SameThing(item, source) ? $"{verb} {item}" : $"{verb} {item} at {source}";
+
+    /// <summary>Whether one name already contains the other ("Moss" / "Reindeer Moss").</summary>
+    public static bool SameThing(string item, string source)
+        => source.Contains(item, StringComparison.OrdinalIgnoreCase)
+        || item.Contains(source, StringComparison.OrdinalIgnoreCase);
 
     private static T Person<T>(T routine, NpcEntity npc, string name) where T : NpcRoutine
     {
@@ -155,20 +183,5 @@ public class RoutineRecorder
         if (_protagonist.RecordRoutine(routine))
             Console.WriteLine($"RoutineRecorder: learned {routine.Category.CliId()} routine '{routine.Name}' " +
                               $"at {routine.AreaName} / {routine.Time}");
-    }
-
-    /// <summary>
-    /// The modi mentis the act was rolled with, observation to action — every element of the chain
-    /// except the implement's stand-in, whose level the gathering phase reads off the carried
-    /// implement instead.
-    /// </summary>
-    private static List<string> ChainOf(ParsedNarrativeAction action)
-    {
-        var ids = new List<string>();
-        for (ModusMentisChainElement? e = action; e != null; e = e.ChainOrigin)
-            if (e.ChainModusMentis is { } mm and not SyntheticItemModusMentis)
-                ids.Add(mm.ModusMentisId);
-        ids.Reverse();
-        return ids;
     }
 }

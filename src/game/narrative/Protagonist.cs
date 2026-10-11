@@ -114,7 +114,16 @@ public class Protagonist : PartyMember
     /// </summary>
     public bool RecordRoutine(Routine routine)
     {
-        if (RecordedRoutines.Any(r => r.Signature == routine.Signature)) return false;
+        // Learned again: keep the one already held (its lock, its place in the eviction order), but
+        // refresh what it shows — so a name or a catalogue written wrong by an older build mends
+        // itself the next time the player passes that way.
+        if (RecordedRoutines.FirstOrDefault(r => r.Signature == routine.Signature) is { } known)
+        {
+            known.Name = routine.Name;
+            if (known is TradeRoutine knownTrade && routine is TradeRoutine trade)
+                knownTrade.Catalogue = trade.Catalogue;
+            return false;
+        }
 
         var sameKind = RoutinesOf(routine.Category);
         if (sameKind.Count >= GetRoutineSlots())

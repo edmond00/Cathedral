@@ -13,11 +13,10 @@ namespace Cathedral.Game.Management;
 
 /// <summary>
 /// The gathering phase, opened only by a Gather routine. The player picks how many days to stay at
-/// the source with a slider; a live forecast shows how many attempts the stay offers, the dice each
-/// attempt is rolled with and the yield they make likely. Staying plays the same time-passing beat as
-/// the work menu — the bar refills while <see cref="GameClock"/> advances in step — and only then
-/// rolls the attempts and fills the pack (<see cref="GatherYield.Run"/>), showing the yield with a
-/// Continue button. Rendered like the work menu: a centered bordered box over the visible world.
+/// the source with a slider; a live forecast shows what the stay will yield, which is simply how many
+/// times the source fills within it. Gathering plays the same time-passing beat as the work menu — the
+/// bar refills while <see cref="GameClock"/> advances in step — and only then fills the pack
+/// (<see cref="GatherYield.Run"/>), showing the yield with a Continue button. Rendered like the work menu: a centered bordered box over the visible world.
 /// ESC is NOT handled here — the launcher opens the pause menu.
 /// </summary>
 public sealed class GatherMenuRenderer
@@ -25,9 +24,8 @@ public sealed class GatherMenuRenderer
     private enum Phase { Configure, Staying, Done }
 
     // ── Duration range ────────────────────────────────────────────
-    // A day takes what is there now; a year sees a wild source regrow four times and a cultivated one
-    // once (ResourceRegen) — long enough for both to matter, short enough that the slider still
-    // resolves single weeks.
+    // A day takes what is there now; a year sees a wild source regrow forty times and a cultivated one
+    // ten (ResourceRegen). The bar's forty cells are nine days apiece — one wild regrowth per cell.
     private const int MinDays = 1;
     private const int MaxDays = 360;
     private const int ArrowStepDays = 5;
@@ -66,8 +64,6 @@ public sealed class GatherMenuRenderer
     private readonly PointOfInterest _source;
     private readonly Scene.Scene   _scene;
     private readonly IReadOnlyList<GatherSlot> _slots;
-    private readonly int _dice;
-    private readonly int _difficulty;
     private readonly double _regenDays;
 
     // ── State ─────────────────────────────────────────────────────
@@ -103,14 +99,12 @@ public sealed class GatherMenuRenderer
         _source      = source;
         _scene       = scene;
         _slots       = GatherYield.Slots(routine, verb, source, scene, GameClock.Days);
-        _dice        = GatherYield.Dice(routine, protagonist);
-        _difficulty  = GatherYield.Difficulty(verb, source, _slots);
         _regenDays   = source.RegenDays;
     }
 
     private int BarX0 => _boxX + (BoxW - BarWidth) / 2;
 
-    private GatherForecast Forecast => GatherYield.Forecast(_slots, GameClock.Days, _days, _dice, _difficulty);
+    private GatherForecast Forecast => GatherYield.Forecast(_slots, GameClock.Days, _days);
 
     // ═══════════════════════════════════════════════════════════════
     // Input
@@ -207,7 +201,7 @@ public sealed class GatherMenuRenderer
             GameClock.Advance(_days - _daysAdvanced);
             _daysAdvanced = _days;
         }
-        _result = GatherYield.Run(_slots, _scene, _protagonist, _startDay, _days, _dice, _difficulty);
+        _result = GatherYield.Run(_slots, _scene, _protagonist, _startDay, _days);
         _phase  = Phase.Done;
     }
 
@@ -249,14 +243,14 @@ public sealed class GatherMenuRenderer
         if (_phase == Phase.Done && _result != null)
             return new List<string>
             {
-                $"gather phase=done days={_result.Days} gathered={_result.Gathered} spoiled={_result.Spoiled} noroom={_result.NoRoom}",
+                $"gather phase=done days={_result.Days} gathered={_result.Gathered} noroom={_result.NoRoom}",
             };
 
         var f = Forecast;
         return new List<string>
         {
             $"gather phase={(_phase == Phase.Configure ? "configure" : "staying")} days={_days} attempts={f.Attempts} "
-          + $"dice={f.Dice} difficulty={f.Difficulty} chance={f.Chance.ToString("F3", inv)} expected={f.Expected} "
+          + $"expected={f.Expected} regen={_regenDays.ToString("0.#", inv)} "
           + $"source=\"{_source.DisplayName}\" item={_routine.ItemId} slots={_slots.Count}",
         };
     }
@@ -282,7 +276,8 @@ public sealed class GatherMenuRenderer
         var lines = ForecastLines(f);
 
         // (blank) title subtitle <break> duration / blank / slider <break(yield)> lines… <break> buttons (blank)
-        DrawBox(15 + lines.Count);
+        // = 1 + 2 + 3 + 3 + 3 + lines + 3 + 1 + 1. Two short of that put the buttons on the bottom border.
+        DrawBox(17 + lines.Count);
 
         int y = _boxY + 2;
         CenteredInBox(y++, Truncate($"Gathering at {_source.DisplayName}", BoxW - 4), Title, Bg);
@@ -319,15 +314,10 @@ public sealed class GatherMenuRenderer
     {
         var lines = new List<(string, Vector4)>
         {
-            ($"{f.Attempts} attempt{(f.Attempts == 1 ? "" : "s")} — it grows back every {_regenDays:0} days",
-             f.Attempts > 0 ? Value : Dim),
-            ($"{f.Dice} dice, {f.Difficulty} six{(f.Difficulty == 1 ? "" : "es")} needed — {Percent(f.Chance)} each",
-             f.Chance > 0 ? Value : Dim),
-            (f.Chance <= 0 ? "beyond your dice — every attempt would spoil"
-             : f.Attempts == 0 ? "nothing ripens in so short a stay"
-             : f.Expected == 0 ? $"likely yield: perhaps one {_routine.ItemName}, likelier none"
-             : $"likely yield: about {f.Expected} × {_routine.ItemName}",
-             f.Chance > 0 && f.Attempts > 0 ? Good : Dim),
+            ($"it grows back every {DaysText((int)Math.Round(_regenDays))}", Value),
+            (f.Expected == 0 ? "nothing ripens in so short a stay"
+             : $"yield: {f.Expected} × {_routine.ItemName}",
+             f.Expected > 0 ? Good : Dim),
         };
         if (_routine.NeedsTool)
             lines.Add(($"with your {_routine.ToolItemName}", Label));
@@ -350,7 +340,7 @@ public sealed class GatherMenuRenderer
 
         DrawBox(7);
         int y = _boxY + 2;
-        CenteredInBox(y, Truncate($"You stay at {_source.DisplayName}…", BoxW - 4), Title, Bg);
+        CenteredInBox(y, Truncate($"You gather at {_source.DisplayName}…", BoxW - 4), Title, Bg);
         y += 2;
 
         int filled = (int)Math.Round(progress * BarWidth);
@@ -371,8 +361,6 @@ public sealed class GatherMenuRenderer
             lines.Add(("Nothing gathered.", Dim));
         foreach (var (name, count) in _result.ByItem.OrderBy(kv => kv.Key))
             lines.Add(($"Gathered {count} × {name}", Good));
-        if (_result.Spoiled > 0)
-            lines.Add(($"{_result.Spoiled} spoiled by a clumsy hand", Label));
         if (_result.NoRoom > 0)
             lines.Add(($"{_result.NoRoom} left where they grew — no room to carry them", Label));
 
@@ -444,7 +432,7 @@ public sealed class GatherMenuRenderer
     private void DrawConfigureButtons(int y)
     {
         const string leaveLabel   = "[ Leave ]";
-        const string confirmLabel = "[ Stay ]";
+        const string confirmLabel = "[ Gather ]";
         _buttonsRow = y;
 
         int total = leaveLabel.Length + ButtonGap + confirmLabel.Length;
@@ -480,10 +468,4 @@ public sealed class GatherMenuRenderer
         s.Length <= max ? s : (max <= 1 ? s.Substring(0, Math.Max(0, max)) : s.Substring(0, max - 1) + "…");
 
     private static string DaysText(int d) => d == 1 ? "1 day" : $"{d} days";
-
-    private static string Percent(double p)
-        => p <= 0 ? "no chance"
-         : p >= 0.995 ? "certain"
-         : p < 0.01 ? "under 1%"
-         : $"{Math.Round(p * 100):0}%";
 }

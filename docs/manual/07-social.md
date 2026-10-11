@@ -81,18 +81,27 @@ would make a long branch nearly free; the difficulty therefore rises with depth,
 slowly than the pool does, so that committing to a longer exchange remains modestly the better play
 rather than being a pure tax.
 
-Two ladders exist:
+Three ladders exist:
 
-| Depth in replies | Ordinary matters | Matters of consequence |
-|---|---|---|
-| 2 | 1 six | 2 sixes |
-| 3 | 2 sixes | 2 sixes |
-| 4 | 2 sixes | 3 sixes |
+| Depth in replies | Formalities | Ordinary matters | Matters of consequence |
+|---|---|---|---|
+| 2 | 1 six | 3 sixes | 4 sixes |
+| 3 | 2 sixes | 4 sixes | 4 sixes |
+| 4 | 2 sixes | 4 sixes | 5 sixes |
 
-The first governs small talk and the opening of a trade; the second reconciliation with an enemy,
-the asking of work, talking one's way out of a crime, and the graver of the conversations a calling
-opens — confession, petition, a bribe, and the asking to be taught. A difficulty exceeding the pool is lowered
-to it, so no resolution is unreachable.
+The **formalities** are the introduction and the proposing of a trade, either way. **Ordinary
+matters** are small talk and the lesser asks: the deepening of a relation, begging, the gathering
+of knowledge, gossip, a
+commission, a remedy, alms, a blessing, talk of soldiering or of far places, a song, and the asking
+to be led to a trader's premises. **Matters of consequence** are reconciliation with an enemy, the
+asking of work, an invitation to travel together, the asking of an introduction to another,
+provocation, the waking of a sleeper, talking one's way out of a crime, and the graver of the
+conversations a calling opens — confession, petition, a bribe, and the asking to be taught.
+
+The two higher ladders stand two sixes above where the replies alone would put them, because the
+replies are not the only dice: regard, garments and beauty all swell the pool. A difficulty exceeding
+the pool is lowered to it, so no resolution is unreachable — but at that point every die must show
+a six.
 
 The humors may be spent upon this roll as upon any other, to the **viscera's** limit.
 
@@ -115,11 +124,17 @@ consequences a disposition may be moved by. The rule is the same one, and is giv
 ## 3. Introduction, and what it gates
 
 **The introduction is the gate for conversation.** Presenting oneself is what turns a stranger into
-a distant acquaintance, and nearly everything else stands behind it: barter, hire, the deepening of
-a relation, the gathering of knowledge, and the asking of a third party to vouch for you — the last
-because asking one who does not know you to vouch for you cannot work in that order.
+a distant acquaintance, and most of what asks something of a person stands behind it: hire, the
+deepening of a relation, the gathering of knowledge, the asking to be led to a trader's premises,
+and the asking of a third party to vouch for you — the last because asking one who does not know you
+to vouch for you cannot work in that order.
 
-Two acts opt out, and for reasons of their own. **Begging** and **provocation** are each *about*
+**It is not the only way to be known.** Any conversation brought to its end — carried, refused, or
+walked out of — leaves the other knowing you: at least a distant acquaintance, unless the
+conversation itself set something worse, as a refusal that costs a step of regard does, or as walking
+away does. Barter is the commonest such meeting, since it needs no introduction (§4).
+
+Two further acts opt out, and for reasons of their own. **Begging** and **provocation** are each *about*
 addressing one who does not know you: behind an introduction, begging would leave the destitute with
 nothing to say to anyone, and provocation would be unreachable against exactly the people worth
 using it upon.
@@ -154,6 +169,15 @@ person's goods are not carried upon them: they are kept on their **premises** �
 workshop or an inn, the barn or shed of a farm, the store of a stable or a fold, a woodcutter's or a
 fisherman's shed, the entrance hall of a great building — and a trade may be proposed only while
 both parties stand there. The same person met elsewhere will talk, but will not deal.
+
+**Barter needs no introduction.** A shop deals with strangers, and since trade is only ever proposed
+on the premises, asking to buy or to sell is the one asking nobody needs to be presented for. Only
+one who counts you an enemy refuses it.
+
+**A trader met elsewhere may be asked to lead the way.** One who knows you, met away from their
+premises, may be asked to take you there: carried, the conversation sets you down on their premises
+with them, at the first period of the day at which they keep them — at once if that is now, otherwise
+later in the day, the time passing as it does in waiting.
 
 Every trader comes to their premises at least once in the day. A shop counter, and the store of a
 farm or a stock-keeping place, is kept by somebody able to trade at every period between dawn and

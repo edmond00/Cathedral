@@ -49,7 +49,7 @@ public class TravelRoutinesBox
     /// hit-tested against a rendered box whose geometry moves with how many routines exist.
     /// </summary>
     public IReadOnlyList<(string Name, string Category, bool Available, string? Reason)> CliEntries
-        => _entries.Select(e => (e.Routine.Name, e.Routine.Category.CliId(), e.Available, e.Reason)).ToList();
+        => _entries.Select(e => (e.Routine.DisplayName, e.Routine.Category.CliId(), e.Available, e.Reason)).ToList();
 
     /// <summary>The routine behind row <paramref name="index"/>, or null when out of range.</summary>
     public Routine? CliRoutineAt(int index)
@@ -61,6 +61,7 @@ public class TravelRoutinesBox
     private static Vector4 BodyColor     => Config.Colors.LightPurpleGray;
     private static Vector4 SubtitleColor => Config.Colors.MediumGray60; // grey, distinct from the clickable rows
     private static Vector4 DisabledColor => Config.Colors.Purple;
+    private static Vector4 KindColor     => Config.Colors.MediumYellow;   // the kind tag, apart from the name
 
     public void Render()
     {
@@ -116,11 +117,16 @@ public class TravelRoutinesBox
 
         _terminal.FillRect(x, y, w, 1, ' ', BodyColor, bg);
 
-        string label = $"{e.Routine.Category.Label(),-6} {e.Routine.Name} · {e.Routine.Time.Label().ToLowerInvariant()}";
+        // The kind is a tag, not the start of the sentence: drawn apart, upper-cased and in its own
+        // colour, or "Go to   Go to the Hall" reads as one line with a stutter.
+        string tag = $"{e.Routine.Category.Label().ToUpperInvariant(),-6}";
+        string label = $"{e.Routine.DisplayName} · {e.Routine.Time.Label().ToLowerInvariant()}";
         if (!e.Available)
             label += $"  ({e.Reason})";
         Vector4 fg = e.Available ? (hovered ? TitleColor : BodyColor) : DisabledColor;
-        _terminal.Text(x, y, Truncate(label, w), fg, bg);
+        Vector4 tagFg = e.Available ? KindColor : DisabledColor;
+        _terminal.Text(x, y, tag, tagFg, bg);
+        _terminal.Text(x + tag.Length + 1, y, Truncate(label, w - tag.Length - 1), fg, bg);
     }
 
     private void DrawReturn()

@@ -127,6 +127,13 @@ public class NpcEntity : INpcEntity
     public NpcEntity? IntroductionGranted { get; set; }
 
     /// <summary>
+    /// Set when this trader agreed to take the player to their premises (<c>ask_to_be_led</c>), so the
+    /// controller can move the player there — the introduction's hand-off, for a place instead of a
+    /// person.
+    /// </summary>
+    public bool LeadToPremisesGranted { get; set; }
+
+    /// <summary>
     /// Set to true by a "caught red-handed" dialogue when the NPC demands combat
     /// instead of accepting an apology or lie. Checked by the game controller
     /// after dialogue ends to transition into fight mode.

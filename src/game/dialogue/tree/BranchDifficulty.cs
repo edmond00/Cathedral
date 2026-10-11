@@ -12,17 +12,30 @@ namespace Cathedral.Game.Dialogue.Tree;
 /// </para>
 ///
 /// <para>
-/// Two ladders: <see cref="Easy"/> for conversations the player should usually win (small talk,
-/// opening a trade), and <see cref="Hard"/> for the ones with real stakes (reconciling with an
-/// enemy, asking for work, talking your way out of a crime). Both start where the hand-authored
-/// difficulties used to sit at depth 2, so nothing gets harder than it was before.
+/// Three ladders. <see cref="Simple"/> for the conversations that are a formality — an introduction,
+/// asking to buy or sell. <see cref="Easy"/> for asks the player should usually manage, and
+/// <see cref="Hard"/> for the ones with real stakes (reconciling with an enemy, asking for work,
+/// talking your way out of a crime).
+/// </para>
+///
+/// <para>
+/// <b>Easy and Hard sit above the pool's other sources.</b> The replies are not the only dice: the
+/// listener's regard, a flattering garment and a fair face all add to the pool
+/// (<c>DialogueTreeController.StartResolution</c>), so a ladder tuned to the replies alone was won
+/// nearly every time. Both carry a fixed <see cref="Raise"/> over where they began; Simple does not.
 /// </para>
 /// </summary>
 public static class BranchDifficulty
 {
-    /// <summary>Small talk and low-stakes asks: 2 replies → 1 six, 3 → 2, 4 → 2.</summary>
-    public static int Easy(int depth) => depth <= 2 ? 1 : 2;
+    /// <summary>Sixes added to Easy and Hard over the replies-only ladders they started as.</summary>
+    public const int Raise = 2;
 
-    /// <summary>Stakes on the table: 2 replies → 2 sixes, 3 → 2, 4 → 3.</summary>
-    public static int Hard(int depth) => depth >= 4 ? 3 : 2;
+    /// <summary>Formalities: 2 replies → 1 six, 3 → 2, 4 → 2.</summary>
+    public static int Simple(int depth) => depth <= 2 ? 1 : 2;
+
+    /// <summary>Ordinary asks: 2 replies → 3 sixes, 3 → 4, 4 → 4.</summary>
+    public static int Easy(int depth) => Simple(depth) + Raise;
+
+    /// <summary>Stakes on the table: 2 replies → 4 sixes, 3 → 4, 4 → 5.</summary>
+    public static int Hard(int depth) => (depth >= 4 ? 3 : 2) + Raise;
 }

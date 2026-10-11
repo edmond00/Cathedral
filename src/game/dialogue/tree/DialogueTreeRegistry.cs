@@ -43,6 +43,8 @@ public class DialogueTreeRegistry
         Register(new AskRemedyTree());
         Register(new GiveAlmsTree());
         Register(new HearGossipTree());
+        // Being taken to where a trader keeps their goods (AskToBeLedTree.cs).
+        Register(new AskToBeLedTree());
     }
 
     private void Register(DialogueTree tree) => _trees[tree.TreeId] = tree;

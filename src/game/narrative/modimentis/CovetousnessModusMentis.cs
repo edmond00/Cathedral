@@ -29,6 +29,7 @@ public class CovetousnessModusMentis : ModusMentis
     {
         new(typeof(ItemAcquisitionOutcome), () => new VoluptasHumor()),
         new(typeof(OpenTradeMenuOutcome), () => new VoluptasHumor()),
+        new(typeof(LedToPremisesOutcome), () => new VoluptasHumor()),
         new(typeof(CoinGrantOutcome), () => new VoluptasHumor()),
     };
 

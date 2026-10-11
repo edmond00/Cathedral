@@ -22,6 +22,9 @@ public class TradeMenuAdapter
     /// <summary>True once the player confirmed the exchange or left the menu.</summary>
     public bool HasRequestedExit => _renderer.IsComplete;
 
+    /// <summary>Presses LEAVE — see <see cref="TradeMenuRenderer.CliLeave"/>.</summary>
+    public void CliLeave() => _renderer.CliLeave();
+
     public TradeMenuAdapter(Protagonist protagonist, NpcEntity npc, TradeMode mode, TerminalHUD terminal)
     {
         TargetNpc = npc;

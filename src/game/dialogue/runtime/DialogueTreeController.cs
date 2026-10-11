@@ -449,14 +449,24 @@ public class DialogueTreeController
     /// What the conversation actually changed, as the very chips the narration panel uses for an
     /// action's outcome — same <see cref="Outcome"/> type, same severity colours, same centred
     /// band. A dialogue outcome and an action outcome should not look like different systems.
+    /// <para>And the same sound: narration plays the outcome cue as its chips appear, so a conversation's
+    /// chips arriving in silence read as a different, lesser event. Negative when anything went against
+    /// the player, positive otherwise.</para>
     /// </summary>
-    private void AppendOutcomeReports(List<Outcome> reports) => Append(new NarrationBlock(
-        Type: NarrationBlockType.Outcome,
-        ModusMentis: null!,
-        Text: "",
-        Keywords: null,
-        Actions: null,
-        OutcomeReports: reports));
+    private void AppendOutcomeReports(List<Outcome> reports)
+    {
+        Append(new NarrationBlock(
+            Type: NarrationBlockType.Outcome,
+            ModusMentis: null!,
+            Text: "",
+            Keywords: null,
+            Actions: null,
+            OutcomeReports: reports));
+        if (reports.Count > 0)
+            _ambianceEngine?.TriggerGameEvent(reports.Any(r => r.Severity == OutcomeSeverity.Negative)
+                ? Cathedral.Audio.GameEventType.NegativeOutcome
+                : Cathedral.Audio.GameEventType.PositiveOutcome);
+    }
 
     private void Append(NarrationBlock block)
     {

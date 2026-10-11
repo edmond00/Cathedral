@@ -1,13 +1,13 @@
 # routine — learn a Gather routine, then stay some days at the source
 #
 # A successful gather teaches a Gather routine for the source, the area and the hour. Walking it opens
-# the gathering phase, which exists only for routines: a slider of days, a forecast, and on STAY the
-# clock moves on and every attempt the stay offered is rolled — a success takes the item, a failure
-# spoils it, and either way the slot has to regrow (GatherYield).
+# the gathering phase, which exists only for routines: a slider of days, a forecast, and on GATHER the
+# clock moves on and every time the source filled within the stay its item is taken — no roll; the
+# yield grows with the days (GatherYield).
 #
-# The ford in Test Field holds a natural item: gathered once here by hand, then depleted for 90 days.
-# A 100-day stay therefore reaches it again — the regrowth is what this asserts, since the slot taken
-# by hand is the only one the stay could otherwise have had. `strategy succeed` forces every roll.
+# The ford in Test Field holds a natural item: gathered once here by hand, then depleted for 9 days.
+# A 100-day stay therefore reaches it again, many times over — the regrowth is what this asserts, since
+# the slot taken by hand is the only one the stay could otherwise have had.
 #
 # FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Field" --period dawn --observe-only "Test Ford"
 
@@ -76,7 +76,6 @@ gather start
 inspect gather
 expect-state gather phase=done days=100
 expect-no-state gather gathered=0
-expect-state gather spoiled=0
 
 gather continue
 wait mode WorldView 90

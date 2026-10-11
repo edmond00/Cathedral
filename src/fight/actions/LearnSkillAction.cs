@@ -11,7 +11,8 @@ namespace Cathedral.Fight.Actions;
 /// walked up beside the player and passed every turn with a full pool of CP. The player in the same
 /// position tries a punch and may learn it; this is the same rule, played from the other side.</para>
 ///
-/// <para>Only the roll is set up here. The window animates it and resolves it in
+/// <para>Only the roll is set up here. The adapter rolls it <b>silently</b> — no dice box, the
+/// result in the fight log, as an AI's knockdown recovery is — and resolves it in
 /// <c>FinishLearningRoll</c> like the player's own, except that a fighter the AI controls is not
 /// handed straight into the skill afterwards: it decides again, now knowing it, and pays for it as
 /// for any other blow.</para>

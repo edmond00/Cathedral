@@ -238,6 +238,11 @@ Run `help` for the authoritative list. The essentials:
                             assert an outcome of that id was applied this run. `expect <chip>`
                             proves what the player was TOLD; this proves what ran — the only way
                             to assert the outcomes that show no chip at all
+  trade leave               close the trade menu without settling anything — enough to assert
+                            where closing it leads (a routine's trade returns to the world map)
+  inspect avatar            the avatar's vertex against the last journey's ends:
+                            `on=origin|destination|elsewhere`. How cli/system/fight_runaway_travel_arrival.cli
+                            proves a flight from a last-step encounter falls back to where it came from
   expect-no-verb <verb-id>  assert an action ran and it was NOT that verb. The assertion for a
                             gate that withholds a verb: `goal` pinned to it falls back to the
                             goals left, so whatever ran instead is the proof (pair it with

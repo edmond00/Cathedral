@@ -1,0 +1,40 @@
+# ask_to_be_led — success
+#
+# The poultry keeper trades from the farm's Storage Shed, and at location id 1 spends the afternoon at
+# the Duck Pond — met there, she is a trader off her premises, which is the only place the verb is
+# offered. --npc-affinity because the verb sits behind the introduction; --auto-dialogue settles the
+# conversation it opens, so the assertion is about the verb. Where it leads is the outcome's test
+# (cli/outcome/led_to_premises/).
+#
+# The real farm rather than the test location: there every person trades wherever they stand, so a
+# trader is never off their premises and this verb is offered on nobody.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --npc-affinity CloseFriend --location-type farm --location-id 1 --start-area "Duck Pond" --period afternoon --observe-only "poultry_keeper"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal ask_to_be_led
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect SUCCESS
+expect Conversation:
+expect-verb ask_to_be_led
+expect-outcome dialogue_trigger
+quit

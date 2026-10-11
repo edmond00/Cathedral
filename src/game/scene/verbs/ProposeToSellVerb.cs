@@ -9,8 +9,8 @@ namespace Cathedral.Game.Scene.Verbs;
 /// <summary>
 /// Proposes to sell a category of goods to an NPC (the NPC's <see cref="NpcEntity.BuyTag"/>).
 /// On success it opens the propose-to-sell dialogue; only succeeding THAT dialogue opens the
-/// sell menu. Gated to acquaintances and above — you must have met the NPC first — and to the NPC's
-/// premises (see <see cref="TradeGate"/>).
+/// sell menu. Gated to the NPC's premises, and to anyone who does not count
+/// you an enemy — no introduction is needed (see <see cref="TradeGate"/>).
 /// </summary>
 public class ProposeToSellVerb : DialogueVerb
 {

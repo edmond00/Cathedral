@@ -8,11 +8,11 @@ namespace Cathedral.Game.Scene;
 /// </summary>
 public static class ResourceRegen
 {
-    /// <summary>Natural resources (wild plants, fruit, fungi, rock): 90 days.</summary>
-    public const double NaturalDays = 90;
+    /// <summary>Natural resources (wild plants, fruit, fungi, rock): 9 days.</summary>
+    public const double NaturalDays = 9;
 
-    /// <summary>Man-made / cultivated stock (caches, crops, crafted goods): 360 days.</summary>
-    public const double ManMadeDays = 360;
+    /// <summary>Man-made / cultivated stock (caches, crops, crafted goods): 36 days.</summary>
+    public const double ManMadeDays = 36;
 }
 
 /// <summary>

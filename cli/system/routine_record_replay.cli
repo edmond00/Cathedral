@@ -117,4 +117,9 @@ wait mode Trading 150
 # scene opens at.
 expect-state where Test Wood
 expect-state where period=Noon
+
+# A trade a routine opened was the whole visit, so closing it returns to the world map rather than
+# dropping into a narration that never began.
+trade leave
+wait mode WorldView 60
 quit

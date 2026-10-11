@@ -765,7 +765,18 @@ made every verb and every outcome answer how it bore on a recording (35 verb fil
 - **The five moments**: a successful gather/extraction verb (recorder, before the reports apply), a
   conversation opened with a registered tree (`StartDialogueMode`), a trade or hire agreed
   (`RecordAgreementRoutines`, called from both the played and the `--auto-dialogue` ending), and
-  leaving from an area other than the one the session opened in (Go to).
+  walking into an area other than the one the session opened in (Go to — **every** such area, at
+  the hour of arrival, via `OnAreaEntered` after an action's reports apply; the area left from is
+  caught at session end). Recording only the area left from lost every area walked through.
+- **Learned again, refreshed.** A routine whose `Signature` is already held is not added, but its
+  name and (for a trade) catalogue are rewritten from the new one — how a routine an older build
+  recorded wrong mends itself. The catalogue direction is the trade menu's: `TradeMode.Buy` reads
+  `NpcEntity.BuyCatalog` (what the NPC *sells*). The recorder had it inverted.
+- **A Buy/Sell routine returns to the world map** when its trade menu closes (`_tradeFromRoutine`),
+  as Work and Gather always did; a trade opened from a conversation still returns to narration.
+- **A gathering stay rolls nothing.** Every slot gives its item each time it fills within the stay,
+  so the yield is linear in the days (`GatherYield`). Regrowth is `ResourceRegen`: 9 days wild,
+  36 cultivated — the same clock hand-picking reads.
 - **Slots are per kind** (`RoutineSlotsStat`, anamnesis × 4), sized to the menu's two-column grid.
 
 A Meet routine opens on its person through the **opening focus** (`_openingFocus`), the same field a
@@ -1255,7 +1266,7 @@ consequences the arithmetic will get wrong if you let it:
   it reads is the one that outcome removes.
 
 **The introduction is the gate for conversation.** `meet_stranger` is what turns a stranger into a
-distant acquaintance, and everything else sits behind it: trade and work through `TradeGate`,
+distant acquaintance, and most else sits behind it: work through `TradeGate.IsAcquainted`, `ask_to_be_led`,
 `strengthen_relationship` and `gather_knowledge` through their own stranger check,
 `introduce_me` because asking somebody who does not know you to vouch for you cannot work in that
 order. `SocialDialogueVerb.RequiresAcquaintance` is the switch; **`beg_for_coin` and `provoke` opt
@@ -1269,10 +1280,23 @@ a stranger to everyone and an affinity-gated verb is *correctly* never offered.
 
 ### Trade happens on premises
 
-`TradeGate.CanTrade` asks a second question beside acquaintance: **is the player standing in one of
-the trader's `NpcEntity.TradeAreaIds`?** The goods are kept somewhere — a workshop counter, a barn,
-a woodshed — and are not carried about, so a smith met in the street does not sell. `request_job`
-uses only the acquaintance half (`TradeGate.IsAcquainted`): work is offered by a person, wherever met.
+`TradeGate.CanTrade` asks two questions: **is the player standing in one of the trader's
+`NpcEntity.TradeAreaIds`?**, and is the trader not an enemy. **No introduction**: the goods are kept
+somewhere — a workshop counter, a barn, a woodshed — and are not carried about, so a smith met in
+the street does not sell, and a shop deals with strangers. Bartering is therefore also a way of
+meeting someone, since every conversation that ends marks first contact. `request_job` instead uses
+`TradeGate.IsAcquainted`: work is offered by a person, wherever met, and only to somebody known.
+
+**`ask_to_be_led` is the bridge.** A trader met off their premises, by somebody who knows them, can
+be asked to lead the way (`AskToBeLedVerb`, `AskToBeLedTree`, Easy ladder). Success raises
+`NpcEntity.LeadToPremisesGranted`, and the controller calls `NarrativeController.WalkToPremises`
+after the conversation — both endings, played and `--auto-dialogue`, exactly as the introduction's
+hand-off. The destination is `TradeGate.NextOnPremises`: the first period, from now round the day,
+at which the trader's schedule puts them on their premises; a later period is reached through
+`ApplyTimePeriod`, as waiting reaches it. Not offered when that search finds nothing — and so never
+under `--npc-static`, which pins everyone to one area. Its scripts run on the farm
+(`--location-type farm --location-id 1`, poultry keeper at the Duck Pond in the afternoon), since in
+the test location everyone trades wherever they stand and so is never off their premises.
 
 **Empty premises means trades nowhere, not everywhere.** The scene factory fills them at spawn
 (`SceneFactory.TradeAt`): a town crew's `Crew.TradesAt`, a rural crew's store (`SpawnCrew(store:)`,
@@ -1331,10 +1355,13 @@ anything, which is what lets `--mm-reach-csv` count this as a route instead of g
 thirteen. Begging a reeve teaches `humility` where begging a farmhand teaches `weeping`; a provocation
 aimed at authority teaches `insolence` where one aimed at a peer teaches `boasting`.
 
-**Mind the difficulty ladder when gating on it.** `BranchDifficulty.Hard` only reaches 3 at depth 4,
-so a `Difficulty >= 3` gate inside a tree whose branches are two deep is a branch that never happens
-— which is exactly how `insolence`, `dramaturgy` and `open_mindedness` were written, wired and
-unreachable. `--dialogue-audit` prints each tree's branch lengths; read them before choosing a gate,
+**Mind the difficulty ladder when gating on it.** There are three — `Simple` (the introduction and
+proposing a trade), `Easy` and `Hard` — and the latter two carry `BranchDifficulty.Raise` (2) over the
+replies-only numbers they began as, because regard, attire and beauty swell the pool too. So a number
+says nothing on its own: the old `Hard` reached 3 only at depth 4, and a `Difficulty >= 3` gate inside
+a two-deep tree was a branch that never happened — which is exactly how `insolence`, `dramaturgy` and
+`open_mindedness` were written, wired and unreachable — while today every Easy branch clears it. No
+tree gates on difficulty now; key on the person or the branch instead. `--dialogue-audit` prints each tree's branch lengths; read them before choosing a gate,
 or key on the person instead, which every tree can answer.
 
 **The caught-red-handed trees are built by a factory and never registered**, so anything reading
