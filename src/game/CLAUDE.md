@@ -1176,6 +1176,10 @@ they are decided separately:
 The direction matters: content declares what it *needs*, anatomies declare what they *have*. Adding
 an anatomy is one line on its factory — no revisiting 180 modi mentis and 54 verbs.
 
+**A Speaking modus mentis must require `Speech` — R16, fatal at startup.** It is the only thing
+between a beast and Speak About: that option is greyed when the acting member holds no Speaking
+modus mentis, and checks nothing about the body. A forgotten declaration failed nowhere else.
+
 Three consequences worth knowing:
 
 - **`Verb.IsPossible` is sealed**; the per-verb condition moved to `protected IsPossibleFor`. The

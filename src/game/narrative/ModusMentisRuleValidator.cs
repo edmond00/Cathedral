@@ -27,6 +27,7 @@ namespace Cathedral.Game.Narrative;
 ///   R13 a MM with neither Thinking nor VerbAction is MoralLevel.Medium — nothing reads its morality
 ///   R14 no MM has both Action and Emotion
 ///   R15 MM has Emotion ⇔ it declares >= 1 emotion trigger, and every trigger's humor can be felt
+///   R16 MM has Speaking ⇒ it requires AnatomyCapability.Speech
 ///
 /// Soft targets (reported by the audit, never fatal):
 ///   ~80% two-organ MMs vs ~20% one-region MMs
@@ -189,6 +190,17 @@ public static class ModusMentisRuleValidator
                                    + $"'{trigger.Humor().Name}', which declares no FeelsLike — the emotion "
                                    + "narration would have nothing to say");
             }
+
+            // R16 — a Speaking modus mentis requires Speech. This is the only thing that keeps a beast
+            // from holding one, and holding one is all Speak About checks: a beast that has taken the
+            // narration would otherwise light the option up and address a companion, and a beast
+            // companion would be handed replies in a conversation. Omitting the declaration fails
+            // nowhere else — the modus mentis still validates, still teaches, and simply reaches a
+            // wolf as well.
+            if (fns.Contains(ModusMentisFunction.Speaking)
+                && !mm.RequiredCapabilities.HasFlag(AnatomyCapability.Speech))
+                violations.Add($"[R16] {mm.ModusMentisId}: has the Speaking function but does not require "
+                               + "AnatomyCapability.Speech — a beast could learn it and Speak About would open for it");
 
             // R5 — exactly 1 region XOR exactly 2 distinct organs, canonical ids only
             var organs = mm.Organs;
