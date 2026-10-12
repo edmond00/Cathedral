@@ -503,8 +503,8 @@ public static class Config
             "Proscribed Palimpsest";
 #endif
 
-        public const string Chapter = "Volume 2";
-        public const string ChapterSubtitle = "Of Shame and the Opened Body";
+        public const string Chapter = "Volume 3";
+        public const string ChapterSubtitle = "Chorography of the Lesser Moons";
     }
 
     /// <summary>

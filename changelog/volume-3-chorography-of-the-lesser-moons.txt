@@ -1,0 +1,56 @@
+Volume 3 - Chorography of the Lesser Moons
+2026-10-12
+
+Added
+  - A new run now begins by choosing a world: pick one of the moons in the sky. Each moon
+    is always the same world, so a world can be shared by name. The moon you stand on is
+    missing from your own sky.
+  - Twenty kinds of world, from scattered isles to continents, including hot and cold
+    climates with desert, jungle, canyon, steppe, glacier, snowfield and sea ice.
+  - Every world now has a generated history: realms, wars, successions, faiths and
+    organisations, built around the empire's lore. The moon box shows a world's realms
+    and faiths before you choose it, and the travel box names the region and realm ahead.
+  - Settled country: history's places stand on the map, with cities, farmland, villages,
+    hamlets, burgs, forts, ruins and great buildings growing around them.
+  - Cities are now dense, with around 74 buildings and 87 named people per city cell,
+    and new trades: cobbler, tailor, chandler, butcher, tanner, potter, apothecary and
+    barber-surgeon, plus porters, laundresses, water-carriers and beggars.
+  - Hot and cold country brings new beasts (lion, tiger, jaguar, puma, snow leopard,
+    hyena, warthog, white bear, white wolf) and many new small animals.
+  - Over 200 new items, about 160 new modi mentis and over 20 new kinds of person,
+    with new conversations tied to a person's calling: commission work, ask for a remedy,
+    give alms, hear the gossip.
+  - Routines are now ways back into places you know: Go to, Meet, Gather, Buy, Sell and
+    Work. A Gather routine is a stay of up to a year that yields the item each time it
+    regrows.
+  - A known trader met away from their shop can be asked to lead you there.
+  - An observation now opens with where you are and what is around you, whenever the
+    area or the time of day changes.
+  - The game warns on the loading screen and the main menu when the language model or
+    llama.cpp is not the version it expects.
+  - A free demo: the full game, limited to three runs.
+
+Changed
+  - Trade happens only on a trader's premises: a shop counter, a farm's store, a great
+    building's entrance. Guards, priests, scholars and others no longer trade.
+  - Proposing to buy or sell no longer needs an introduction.
+  - Conversations come in three difficulties: Simple (introduction, buy, sell), Easy
+    and Hard.
+  - Only an observing modus mentis is offered Examine now. Other modi mentis refuse it.
+  - Noetic points are now half the encephalon score plus one (was a third plus one).
+  - An NPC with no fighting modus mentis now attempts blows instead of passing its turn.
+  - Refusing a verb for lack of a tool now says which tool is needed, and the action
+    stays available through Use Tool.
+  - Listen is offered only when two people are talking, and names both.
+  - Provoke now says plainly that it insults someone into a fight.
+  - The language model runs faster: about 29% faster at reading prompts.
+  - Saves from Volume 2 cannot be continued.
+
+Fixed
+  - The game no longer locks up after a conversation ends on an emotion.
+  - Clicking a highlighted word now works when the same word appears earlier in the line.
+  - Fleeing an encounter on the last step of a journey no longer leaves you in the wrong
+    place.
+  - Beaches appear only beside water.
+  - Dice glyphs are no longer smudged at small sizes.
+  - Many smaller fixes to routines, the routines menu, gathering and narration wording.
