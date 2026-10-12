@@ -14,4 +14,4 @@
 # Nothing in the working tree can confirm that and dist/ cannot be used to try - see
 # "Hotfixes" in SKILL.md.
 
-6f2fc2b8ccf206af8dd1b0941f70963dd1aa6846 2026-08-30 Volume 2 - Of Shame and the Opened Body
+edcec27b88dc904551e7d460f405ea85f1e7884e 2026-10-13 Volume 3 - Chorography of the Lesser Moons

@@ -259,12 +259,15 @@ git commit -m "Volume <N> - <Subtitle>"
 commit of its own to carry a message, which is exactly what is wanted here. Force the merge commit:
 
 ```bash
+git show develop:changelog/volume-<N>-<slug>.txt > "$TEMP/release-msg.txt"
 git checkout main
-git merge --no-ff develop -F changelog/volume-<N>-<slug>.txt
+git merge --no-ff develop -F "$TEMP/release-msg.txt"
 ```
 
 `-F` rather than `-m`: the changelog is the message, verbatim, and this is what makes `git log main`
-a readable release history.
+a readable release history. It is read from a copy taken off `develop` because `-F` reads the file
+**before** the merge brings it onto `main`, where it does not yet exist: pointing `-F` at the path
+in the working tree fails with "could not read file" (harmlessly — nothing is merged).
 
 ### 9. Package and publish
 
