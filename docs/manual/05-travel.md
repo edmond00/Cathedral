@@ -5,7 +5,161 @@ The world is a sphere divided into cells. Each cell bears a **biome**, and some 
 movement is paid for three times over: in days, in vital heat, and in the risk of what is met on the
 way.
 
-## 1. The compass of a stride
+## 1. The choosing of a world
+
+The sphere is not one sphere but many. Every world the game can build is settled entire by a single
+number — its terrain, where each location falls upon it, the cost of every edge between two cells,
+and the people who will be found inside each place — so that two travellers given the same number
+walk the same ground, and no part of a world is decided after the fact.
+
+That number is not asked for directly. Beyond the world hangs a further sphere, of stars, and among
+the stars are **three hundred and eighty-three moons**. Each moon stands for one world and for
+nothing else; each bears a name, and the name, the moon and the world beneath it are fixed for all
+players and all time. The sky is not drawn from the world's own number — were it so, a moon would
+cease to be itself in the instant it was taken — but from a constant, so that the sky above one
+world is the sky above every other.
+
+A run begins by taking one moon out of that sky. Until it is taken, no world exists: the sphere is
+unmade, and what stands in its place is the star-field alone. Taking it settles the number, and the
+world is generated from it before a protagonist is composed (Chapter I, §9). Nothing is spent by
+looking; a choice may be set down again without cost, since nothing has yet been made.
+
+**The moon of the world one stands upon is absent from that world's sky.** A traveller may count
+three hundred and eighty-two moons overhead and never the one beneath their feet. The same holds on
+returning to a world set aside and taken up again: its moon is struck from its own sky for as long
+as it is inhabited.
+
+## 2. The disposition of a world
+
+The number that settles a world settles more than where its land falls. It settles the **disposition**
+of that world: which of twenty manners the sphere is composed after.
+
+The terrain is read out of four fields of noise laid over the sphere — one governing water, one
+relief, one the cover of the land, one heat — and a disposition is a set of thresholds and scales
+those fields are read through, together with how thickly the land is settled. It moves six things:
+
+| | |
+|---|---|
+| **The waterline** | how much of the sphere is sea at all, and therefore how much land there is to walk upon |
+| **The reach of the shore** | how much of a coastline reads as shore rather than as the country behind it, and how far below the waterline the shallow sea gives way to deep ocean |
+| **The treeline** | where the ground turns to mountain, and where mountain turns to bare peak |
+| **The temper of the land** | what proportion of the walkable ground is forest, and how thickly the settled country spreads over the rest |
+| **The size of the features** | how broad a continent is before the sea interrupts it, and how long a range of mountains runs |
+| **The temper of the air** | how far the whole world is set toward heat or toward cold |
+
+The consequences reach every other rule in this chapter. A high waterline leaves narrow land between
+long arms of sea, and since **no route on foot may cross water** ([§3](#3-the-compass-of-a-stride)),
+a world so composed is a world of separated countries. A low treeline puts mountain and peak across
+the middle of it, and mountain is crossed at twelve days to the cell against a plain's five
+([§4](#4-the-price-of-a-crossing)) — such a world is not smaller than another, but every journey
+across it is longer, and dearer in heat, and met with more of what lives at that height. A sparsely
+settled disposition spreads its country thinly about each of history's places, and a thickly settled
+one far wider ([§2a](#2a-the-settled-country)).
+
+Two things about a disposition are worth stating plainly, because both are easy to assume otherwise:
+
+- **It is fixed by the world, not drawn during play.** The disposition follows from the world's own
+  number by a settled rule, so the moon that names a world names its disposition also, and it is
+  known before the world is made. Two travellers who take the same moon walk not merely the same
+  ground but the same kind of ground.
+- **It changes the composition of the sphere and nothing else.** No cost, no hazard chance, no
+  threshold of the body is touched by it. A mountain is crossed at twelve days in every world; a
+  disposition decides only how much mountain there is.
+
+Every disposition is a world that can be lived in. Each is held to a floor of land to walk upon, of
+settled country across the world, and of a body of land rich enough in it to spend a life in. A world that failed
+any of these would generate perfectly well and simply be unplayable, which is why the bounds are
+checked rather than trusted.
+
+**A shore is always upon the water.** The three fields of noise settle a shore by a threshold, as
+they settle everything else — a cell reads as shore when its water reading stands a little above the
+waterline — and a threshold upon a field is not the same thing as a distance from the sea. Where the
+field is broad and its slopes gentle, as it is in a world of vast continents, that little band
+reaches a great way inland, and would leave beaches in country that has never seen water. So the
+reckoning is made twice: the noise proposes a shore, and then every cell that borders neither sea nor
+ocean is reduced to ordinary plain. **The converse holds as well: every cell of land that borders the
+sea is shore**, whatever the noise had made of it — a range or a wood that runs down to the water
+ends in a shore, and in cold country that shore is sea ice. Nothing else ever touches the sea. **What a disposition can widen is therefore how completely a
+coastline reads as coast, never how far the coast reaches from the coastline** — a shore is as long
+as the shore is, and a world wanting more of it must break its land up rather than raise a threshold.
+
+**Heat and cold remake the ground.** The fourth field is read last, after the other three have
+settled what a cell would be in a temperate world, and it changes only cells whose reading crosses a
+threshold. Above **0.48** a cell is hot country: mountain and peak become **hot steppe**, plain
+becomes **desert**, forest becomes **jungle**. Below **−0.48** it is cold country: peak becomes
+**glacier**, mountain **snowfield**, plain **cold steppe**, and a shore becomes **sea ice**.
+Whatever else stands in hot or cold country keeps its temperate nature — a hot shore is a shore, a cold
+forest a forest.
+
+Two further rules settle the edges. Wherever temperate plain would touch desert, it
+becomes **canyon**, the broken ground where grass gives out on sand, as the coast lies between land
+and sea. And the
+sea beside sea ice may freeze in its turn, ring upon ring outward, **each ring wanting 0.08 more cold
+than the one inside it**: a world barely cold has an iced shore, and only a world far below the
+threshold has a frozen sea, which is walked upon like land.
+
+Ten of the twenty dispositions are temperate, their temper set at nothing; even these hold a little
+hot and a little cold country wherever the field alone crosses a threshold — some seven to nine
+pockets of each in a world, a few parts in the hundred of its land. The other ten are set hot or
+cold, by between **0.62** and **0.80**, and are hot or cold country over half their land and often
+far more. Heat and cold do not empty the land: hot steppe, jungle, cold steppe and snowfield are
+settled after their own fashion, and only the barren grounds — desert, canyon, glacier and sea ice —
+hold nothing but the isolated places of history ([§2a](#2a-the-settled-country)).
+
+**A traveller is never set down where nothing can be reached.** Since no route on foot may cross
+water, the body of land one wakes upon is the whole of the world that life will be lived in. The
+waking place is therefore drawn, in this order, from the first of three sets that holds any cell at
+all:
+
+1. **open ground beside the settled country** — a livable cell or a shore, bearing no location of its
+   own, that borders a city, farmland, a settlement or stock;
+2. open ground bearing no location, anywhere, for a world whose history left it unsettled;
+3. any land whatever, rather than a game that will not begin.
+
+Waking beside settled country is what ensures both that there is somewhere to go and that the body
+of land one stands on has people upon it.
+
+## 2a. The settled country
+
+The land is peopled by its history, and the people are laid down in two passes, both settled by the
+world's number like everything else.
+
+**History's places stand on cells of their own.** Every place a world's history founds — a citadel, a
+castle, a temple, a mine, and the rest — is founded upon one cell of its region, chosen among the
+cells whose ground its kind can stand on:
+
+| Kind of place | Stands on |
+|---|---|
+| **Urban** — citadel, port, palace, imperial school | plain, mountain, hot steppe or cold steppe, never jungle or snowfield; a port by the water |
+| **Rural** — castle, fortress, temple, imperial temple, commandery | any livable ground; a commandery by the water |
+| **Isolated** — monastery, mine, sanctuary, burial field, pyramid | the ground of its kind, livable or barren |
+
+A kind no cell of a region can carry is never founded there. Every realm that rises upon free land
+raises a **castle** for its founder soon after its founding. A place that history ruins remains upon
+its cell as a **ruin**, which is isolated whatever it once was.
+
+**The country then spreads from them.** **Livable ground** is plain, mountain, hot steppe, cold steppe,
+jungle and snowfield; forest is left wild, and the barren grounds are not settled. From every place
+still standing, settled country spreads outward over free livable cells:
+
+- an urban place first raises **one to three city cells** about itself, or spreads farmland directly
+  where no city ground is free beside it;
+- from each such city, and from every rural place, **farmland** spreads in rings, two or three rings
+  deep, each cell putting out one to three more upon the free livable cells beside it;
+- **one cell of farmland in three** becomes instead a **settlement** or a place where **stock** is
+  kept, the two in equal measure where that ground keeps stock;
+- **no country crosses a border**: every cell a place's country takes lies in a region held by the
+  realm that holds the place itself, so a place upon a frontier spreads only on its own side;
+- every count of one to three is scaled by the disposition's density and held between one and five,
+  and only the want of free livable ground within the realm ever stops the spread. Isolated places
+  and ruins spread nothing.
+
+What grows, who lives, and what is kept is a matter of the ground: each livable biome has its own
+crops, its own manner of settlement and its own stock, and jungle and snowfield keep none. The ground
+beneath a location is never changed by it — a field on the cold steppe is crossed as cold steppe —
+and a location built upon a cell is built in the materials of that ground.
+
+## 3. The compass of a stride
 
 A destination may be set only within a radius of the traveller's present position, measured as a
 straight chord across the sphere and not as a count of steps. That radius is the **lower limbs'**
@@ -21,20 +175,26 @@ round.
 durations and hazards are recorded against the day some other means of crossing exists — but no
 route on foot may enter them.
 
-## 2. The price of a crossing
+## 4. The price of a crossing
 
 Each biome declares what one of its cells costs to cross, and the whole is summed cell by cell along
-the route.
+the route. A cell bearing a location is crossed as the biome beneath it.
 
 | Biome | Days per cell | Heat per cell | Hazards met, per cell |
 |---|---|---|---|
-| City | 3 | 1 | thief 1 % |
 | Plain | 5 | 2 | wolf 2 %, bandit 1 % |
-| Field | 5 | 1 | bandit 1 % |
 | Coast | 6 | 3 | smuggler 1 % |
 | Forest | 8 | 4 | wolf 6 %, bear 2 %, brigand 2 % |
 | Mountain | 12 | 6 | bear 3 %, rockfall 2 % |
 | Peak | 18 | 10 | blizzard 5 %, ice wraith 1 % |
+| Canyon | 8 | 2 | puma 3 %, rockfall 2 % |
+| Desert | 9 | 1 | hyena 3 %, sandstorm 3 % |
+| Hot steppe | 11 | 2 | lion 3 %, hyena 3 % |
+| Jungle | 11 | 2 | jaguar 4 %, tiger 2 %, fever 3 % |
+| Cold steppe | 6 | 5 | white wolf 3 %, blizzard 2 % |
+| Sea ice | 8 | 8 | white bear 3 %, thin ice 2 % |
+| Snowfield | 13 | 9 | snow leopard 2 %, blizzard 4 % |
+| Glacier | 20 | 14 | crevasse 4 %, blizzard 5 % |
 | *(Sea)* | 10 | 8 | storm 3 %, pirate 2 % |
 | *(Ocean)* | 14 | 16 | leviathan 1 %, storm 4 % |
 
@@ -44,7 +204,7 @@ The durations are calibrated so that a single hop costs several days and a journ
 runs into the hundreds. Time is the principal expense of travel, and the reason a journey is not
 undertaken lightly.
 
-## 3. Hazards
+## 5. Hazards
 
 Each hazard's stated chance is the **independent** probability that it fires upon crossing **one**
 cell of that biome. The chance of meeting a given creature at all across a route is therefore
@@ -60,7 +220,7 @@ steering the party clear.
 
 An encounter interrupts the journey where it occurs.
 
-## 4. Heat, and starvation
+## 6. Heat, and starvation
 
 The heat a route demands is **paid as the route is walked, not on reaching the end of it.** Each leg
 of the journey opens a debt, and the traveller halts where they stand until it is met, consuming
@@ -83,7 +243,7 @@ to sour in its humors is killed, and it is why the state of the queues is a thin
 setting out rather than after. The forecast of a route reports whether the queues as they now stand
 would carry the traveller to the end of it.
 
-## 5. The calendar
+## 7. The calendar
 
 The world keeps a calendar of **days**, and the day is the unit every span is expressed in.
 
@@ -99,7 +259,7 @@ Two things are settled on the traveller's return to the map:
 - **Wounds are swept for healing.** Those that have stood their term close, and the health they cost
   is restored.
 - **Age is checked.** A body that has lived out its term dies of old age. The protagonist's term
-  ending here ends the run; a companion's is caught by the standing question of [§7](#7-companions-and-their-loss),
+  ending here ends the run; a companion's is caught by the standing question of [§9](#9-companions-and-their-loss),
   which needs no particular juncture to be asked at.
 
 The order is deliberate: healing restores what a wound took, and the term of life is itself
@@ -111,7 +271,7 @@ are reckoned by a standing question, wherever the body happens to be ([Chapter I
 §7](01-anatomy.md#7-wounds)). Age is the one end of a life that keeps to a juncture, because the
 calendar keeps to one.
 
-## 6. The periods of the day
+## 8. The periods of the day
 
 Within a day, six coarse **periods** are distinguished — dawn, morning, noon, afternoon, evening,
 night — and they cycle, night returning to dawn.
@@ -125,7 +285,7 @@ stands is decided by their schedule against the period; a building's entry is sh
 what may be attempted at all follows from both. Arriving at a place at two different periods is
 arriving at two different places.
 
-## 7. Companions, and their loss
+## 9. Companions, and their loss
 
 The party is limited by the **heart's** measure — one companion per level of the organ. The limit is
 checked before a destination may be chosen, and a party over strength must be reduced before travel
@@ -157,7 +317,7 @@ fell in, on the same terms as any other death ([Chapter VI
 leaving what they carried. Where they died upon the map, between places, there is no area to hold a
 body and none is left.
 
-## 8. Arrival
+## 10. Arrival
 
 On arrival the traveller enters the place. Where the cell bears a location, the location is built
 and its narration begins; where it bears only a biome, the biome is entered instead. Arriving

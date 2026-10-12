@@ -9,7 +9,6 @@ using Cathedral.Glyph.Microworld;
 using Cathedral.Game;
 using Cathedral.Game.Scene.Farm;
 using Cathedral.Game.Scene.Plain;
-using Cathedral.Game.Scene.Field;
 using Cathedral.Game.Scene.Forest;
 using Cathedral.Game.Scene.Village;
 using Cathedral.Game.Scene.Cave;
@@ -27,6 +26,20 @@ namespace Cathedral.Game;
 /// </summary>
 public static class LocationTravelModeLauncher
 {
+    /// <summary>
+    /// Whether the window passes <paramref name="key"/> on to the controller in <paramref name="mode"/>,
+    /// once Escape, F11 and the D/G dumps have had their turn. R and K (the region and realm overlays)
+    /// go everywhere, since a fight's own R ("run away") is decided inside the controller; every other
+    /// key reaches only a fight or a dialogue.
+    ///
+    /// <para>The CLI's <c>key</c> command asks the same question, which is the point: a script that
+    /// presses a key the player's keyboard would never deliver fails, rather than passing on a path no
+    /// player can take.</para>
+    /// </summary>
+    public static bool DeliversToController(GameMode mode, OpenTK.Windowing.GraphicsLibraryFramework.Keys key)
+        => key is OpenTK.Windowing.GraphicsLibraryFramework.Keys.R or OpenTK.Windowing.GraphicsLibraryFramework.Keys.K
+        || mode is GameMode.Fighting or GameMode.Dialogue;
+
     public static void Launch(int windowWidth = 1200, int windowHeight = 900, bool useLLM = true)
     {
         var camera = new Camera();
@@ -102,10 +115,15 @@ public static class LocationTravelModeLauncher
                     LLMLogger.Initialize();
                 }
 
+                // The install check, here and synchronously (about half a second): the loading screen
+                // and the main menu draw its result on their first frame and do not redraw for it, so
+                // it must be settled before either appears. The server start reuses the cached result.
+                Cathedral.LLM.LlamaInstallCheck.Run();
+
                 try
                 {
                     llamaServer = new LlamaServerManager();
-                    
+
                     // Set up server ready callback
                     bool serverReady = false;
                     llamaServer.ServerReady += (sender, e) =>
@@ -176,23 +194,33 @@ public static class LocationTravelModeLauncher
         // Generate world and set up game controller when core is loaded
         core.CoreLoaded += () =>
         {
-            Console.WriteLine("Core loaded - generating microworld...");
-            microworldInterface.GenerateWorld();
-            
+            // No world is generated here any more. A world belongs to a run, and a run does not
+            // exist yet: New builds one for the moon the player picks out of the sky, and Continue
+            // builds the one its save was played in. Until then the sphere is empty and the core is
+            // told not to draw it (GlyphSphereCore.WorldRenderEnabled), so the main menu and the
+            // world-selection screen both open on nothing but stars.
+            core.WorldRenderEnabled = false;
+
             Console.WriteLine("Creating game controller...");
             gameController = new LocationTravelGameController(core, microworldInterface, ambianceEngine);
 
             // Register scene factories for specific biome types. Constructors, not instances — one
             // factory is built per scene so its working state cannot outlive the location.
-            gameController.RegisterSceneFactory("farm",     () => new FarmSceneFactory());
             gameController.RegisterSceneFactory("plain",    () => new PlainSceneFactory());
-            gameController.RegisterSceneFactory("field",    () => new FieldSceneFactory());
             gameController.RegisterSceneFactory("forest",   () => new ForestSceneFactory());
-            gameController.RegisterSceneFactory("village",  () => new VillageSceneFactory());
             gameController.RegisterSceneFactory("cave",     () => new CaveSceneFactory());
             gameController.RegisterSceneFactory("mountain", () => new MountainSceneFactory());
             gameController.RegisterSceneFactory("peak",     () => new PeakSceneFactory());
             gameController.RegisterSceneFactory("coast",    () => new CoastSceneFactory());
+
+            // The hot and cold country's biomes (see ClimateRule), each keyed by its biome's name.
+            foreach (var climate in Cathedral.Game.Scene.Shared.ClimateSceneFactories.All)
+                gameController.RegisterSceneFactory(climate.Biome, climate.Create);
+
+            // The settled country: every location the sprawl and history can put on the map, keyed by
+            // its location name (see SettlementTable). The farm and the village are among them.
+            foreach (var settled in Cathedral.Game.Scene.Settled.SettledSceneFactories.All)
+                gameController.RegisterSceneFactory(settled.Key, settled.Create);
 
             // The test location: every kind of thing in one place, under names that never change.
             // Attached to no biome, so --location-type test is the only way in and it can never
@@ -314,6 +342,10 @@ public static class LocationTravelModeLauncher
             // Start accepting scripted/stdin commands now that the controller exists.
             if (Cathedral.Game.Cli.CliMode.IsActive && gameController != null)
             {
+                // --record: the camera and the drawn pointer go up before the driver, which asks for them.
+                if (Cathedral.Game.Record.RecordMode.IsActive)
+                    Cathedral.Game.Record.RecordSession.Start(core);
+
                 cliDriver = new Cathedral.Game.Cli.CliDriver(gameController);
                 cliDriver.Start();
             }
@@ -321,7 +353,8 @@ public static class LocationTravelModeLauncher
             // Restore the window mode the player left in. Done here rather than in the window
             // settings above because borderless-fullscreen is applied to a live window (it needs the
             // monitor the window actually opened on), not requested at construction.
-            if (Cathedral.UserSettings.Fullscreen)
+            // Never while recording: the footage has the size it was asked for, whatever the player's habit.
+            if (Cathedral.UserSettings.Fullscreen && !Cathedral.Game.Record.RecordMode.IsActive)
                 Cathedral.Glyph.WindowMode.Apply(core, true);
 
             Console.WriteLine("\n=== Location Travel Mode Ready ===");
@@ -330,7 +363,7 @@ public static class LocationTravelModeLauncher
             Console.WriteLine("  - Click on locations to travel");
             Console.WriteLine("  - Click on protagonist to interact with current location");
             Console.WriteLine("  - ESC to leave location interaction");
-            Console.WriteLine("  - Arrow keys to rotate camera");
+            Console.WriteLine("  - Arrow keys to rotate camera (or the on-screen arrow pad)");
             Console.WriteLine("  - W/S to zoom in/out");
             Console.WriteLine("  - C to toggle debug camera");
             Console.WriteLine("  - D to dump game state\n");
@@ -390,18 +423,24 @@ public static class LocationTravelModeLauncher
                     Console.WriteLine("G key: Graph visualization only available in narrative mode (enter a location first)");
                 }
             }
-            else
+            // R paints the world by region instead of by biome. Forwarded in every mode rather than
+            // handled here, because OnKeyDown is where the fight's own R ("run away") has to win —
+            // see the ordering there. Gated with DeveloperKeys in the same place, not in this
+            // branch, so a shipped build still delivers R to a fight.
+            // Everything else reaches the controller only where DeliversToController says so. One rule,
+            // read by this handler and by the CLI's `key`, so a script cannot press a key the window
+            // would never pass on (which is how K once did nothing on the map while `key K` passed).
+            else if (gameController is LocationTravelGameController ltgc2
+                     && DeliversToController(ltgc2.CurrentMode, args.Key))
             {
-                // Forward other keys to fight/dialogue modes
-                if (gameController is LocationTravelGameController ltgc2 &&
-                    (ltgc2.CurrentMode == GameMode.Fighting || ltgc2.CurrentMode == GameMode.Dialogue))
-                {
-                    ltgc2.OnKeyDown(args.Key);
-                }
+                ltgc2.OnKeyDown(args.Key);
             }
         };
 
         core.Run();
+
+        // --record: flush the footage and write the music, timeline and manifest before anything is torn down.
+        Cathedral.Game.Record.RecordSession.Finish();
         
         // Cleanup
         Console.WriteLine("Shutting down...");

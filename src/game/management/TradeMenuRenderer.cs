@@ -72,6 +72,9 @@ public sealed class TradeMenuRenderer
     /// <summary>Set once the player confirms or leaves the menu.</summary>
     public bool IsComplete { get; private set; }
 
+    /// <summary>Presses LEAVE, for <c>--cli</c>: closes the menu without settling anything.</summary>
+    public void CliLeave() => IsComplete = true;
+
     public TradeMenuRenderer(TerminalHUD terminal, Protagonist protagonist, NpcEntity npc, TradeMode mode)
     {
         _terminal = terminal;

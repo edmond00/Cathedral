@@ -232,6 +232,24 @@ public static class DialogueTreeAudit
         new WoodcutterArchetype(), new CharcoalBurnerArchetype(),
         new FishermanArchetype(),  new MinerArchetype(),
         new DruidArchetype(),      new HermitArchetype(), new SavageArchetype(),
+        // The settled country
+        new OrchardistArchetype(), new VintnerArchetype(), new PlanterArchetype(),
+        new PickerArchetype(),     new GroomArchetype(),   new DroverArchetype(),
+        new GravediggerArchetype(),
+        // Arms, faith and the great houses
+        new GuardArchetype(),      new CaptainArchetype(), new PriestArchetype(),
+        new MonkArchetype(),       new ScholarArchetype(), new StewardArchetype(),
+        new LordArchetype(),
+        // The keepers a great building trades through
+        new QuartermasterArchetype(), new SacristanArchetype(), new CellarerArchetype(),
+        // Streets and harbours
+        new MerchantArchetype(),   new SailorArchetype(),  new InnkeeperArchetype(),
+        new ClerkArchetype(),
+        // The trades and callings of a dense city
+        new CobblerArchetype(),    new TailorArchetype(),  new ChandlerArchetype(),
+        new ButcherArchetype(),    new TannerArchetype(),  new PotterArchetype(),
+        new ApothecaryArchetype(), new BarberArchetype(),  new PorterArchetype(),
+        new LaundressArchetype(),  new WaterCarrierArchetype(), new BeggarArchetype(),
     };
 
     /// <summary>Per-tree measurements. Branch length counts <b>player replies</b>, not nodes.</summary>
@@ -260,7 +278,7 @@ public static class DialogueTreeAudit
         var nodesById = new Dictionary<string, HashSet<DialogueNode>>();
 
         // Every depth each resolution is actually reached at, to cross-check its authored difficulty
-        // against the ladders in BranchDifficulty. A node whose difficulty matches neither ladder at
+        // against the ladders in BranchDifficulty. A node whose difficulty matches no ladder at
         // its real depth is almost always an authoring slip — the depth was counted wrong.
         var resolutionDepths = new Dictionary<ResolutionNode, SortedSet<int>>();
 
@@ -287,11 +305,12 @@ public static class DialogueTreeAudit
             // A forced node never rolls, so its difficulty is meaningless — skip it.
             if (res.Mode != ResolutionMode.DiceCheck) continue;
 
-            if (depths.All(d => res.Difficulty != BranchDifficulty.Easy(d)
+            if (depths.All(d => res.Difficulty != BranchDifficulty.Simple(d)
+                             && res.Difficulty != BranchDifficulty.Easy(d)
                              && res.Difficulty != BranchDifficulty.Hard(d)))
                 m.Warnings.Add(
                     $"resolution '{res.NodeId}' needs {res.Difficulty} six(es) at depth " +
-                    $"{string.Join("/", depths)} — neither ladder gives that; the authored depth is likely wrong");
+                    $"{string.Join("/", depths)} — no ladder gives that; the authored depth is likely wrong");
         }
 
         return m;

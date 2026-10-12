@@ -244,9 +244,12 @@ public class DialogueTreeController
             return;
         }
 
-        if (_state.ConversationEnded) return;
-
-        // Preview box CONTINUE — commit the replies and make them selectable.
+        // Preview box CONTINUE — commit the replies and make them selectable. Answered BEFORE the
+        // ended-conversation guard below, because the preview outlives the conversation: the closing
+        // line's commit is what ends it, and the emotional coda is a second part queued behind that
+        // line. Guarded the other way round, its CONTINUE was swallowed and, with the footer hidden
+        // while a preview is up, the game had no way forward at all. The CLI's continue never went
+        // through this guard, which is why every script passed.
         var pv = _state.PreviewContinueRegion;
         if (pv.Width > 0 && my == pv.Y && mx >= pv.X && mx < pv.X + pv.Width)
         {
@@ -255,6 +258,8 @@ public class DialogueTreeController
             _preview.TryContinue();
             return;
         }
+
+        if (_state.ConversationEnded) return;
 
         if (_state.IsDiceRollActive && !_state.IsDiceRolling)
         {
@@ -366,6 +371,40 @@ public class DialogueTreeController
         return null;
     }
 
+    // ── --record: where a player would click ─────────────────────────────────
+
+    /// <summary>The conversation's dice box, when a roll is on screen.</summary>
+    public DiceRollComponent? CliDice => _state.IsDiceRollActive ? _dice : null;
+
+    /// <summary>The CONTINUE a player would press now: the preview box's, else the settled dice box's.</summary>
+    public (int X, int Y, int Width)? CliContinueSpan()
+    {
+        var pv = _state.PreviewContinueRegion;
+        if (_preview.IsActive && pv.Width > 0) return pv;
+        var r = _dice.ContinueButtonRegion;
+        if (_state.IsDiceRollActive && !_state.IsDiceRolling && r.Width > 0) return r;
+        return null;
+    }
+
+    /// <summary>The footer button (END / INTERRUPT), when it is drawn.</summary>
+    public (int X, int Y, int Width)? CliExitSpan()
+        => _state.ExitButtonRegion.Width > 0 ? _state.ExitButtonRegion : null;
+
+    /// <summary>A cell that picks reply <paramref name="index"/>, found with the UI's own hit-test.</summary>
+    public (int X, int Y)? CliOptionCell(int index)
+    {
+        for (int y = 0; y < Config.Terminal.MainHeight; y++)
+            for (int x = 0; x < Config.Terminal.MainWidth; x++)
+                if (_ui.GetOptionIndexAt(x, y) == index)
+                {
+                    // Step a few cells in from the row's first hit, onto the text rather than its margin.
+                    int x2 = x;
+                    while (x2 - x < 6 && _ui.GetOptionIndexAt(x2 + 1, y) == index) x2++;
+                    return (x2, y);
+                }
+        return null;
+    }
+
     /// <summary>Whether the reply-generation preview box is up, its title, text and completeness.</summary>
     public (bool Active, string Title, string Text, bool Complete) CliPreview()
     {
@@ -378,7 +417,12 @@ public class DialogueTreeController
     {
         if (!_preview.IsActive)          return "no preview is active";
         if (!_preview.Snapshot().Complete) return "replies are still generating";
-        _preview.TryContinue();
+        // Through the click handler at the button's own cell, not straight to the preview: calling
+        // TryContinue here once skipped a guard the mouse path applied, and a CONTINUE that did
+        // nothing for a player passed in every script.
+        var pv = _state.PreviewContinueRegion;
+        if (pv.Width <= 0) return "the preview CONTINUE is not on screen";
+        OnMouseClick(pv.X, pv.Y);
         return null;
     }
 
@@ -405,14 +449,24 @@ public class DialogueTreeController
     /// What the conversation actually changed, as the very chips the narration panel uses for an
     /// action's outcome — same <see cref="Outcome"/> type, same severity colours, same centred
     /// band. A dialogue outcome and an action outcome should not look like different systems.
+    /// <para>And the same sound: narration plays the outcome cue as its chips appear, so a conversation's
+    /// chips arriving in silence read as a different, lesser event. Negative when anything went against
+    /// the player, positive otherwise.</para>
     /// </summary>
-    private void AppendOutcomeReports(List<Outcome> reports) => Append(new NarrationBlock(
-        Type: NarrationBlockType.Outcome,
-        ModusMentis: null!,
-        Text: "",
-        Keywords: null,
-        Actions: null,
-        OutcomeReports: reports));
+    private void AppendOutcomeReports(List<Outcome> reports)
+    {
+        Append(new NarrationBlock(
+            Type: NarrationBlockType.Outcome,
+            ModusMentis: null!,
+            Text: "",
+            Keywords: null,
+            Actions: null,
+            OutcomeReports: reports));
+        if (reports.Count > 0)
+            _ambianceEngine?.TriggerGameEvent(reports.Any(r => r.Severity == OutcomeSeverity.Negative)
+                ? Cathedral.Audio.GameEventType.NegativeOutcome
+                : Cathedral.Audio.GameEventType.PositiveOutcome);
+    }
 
     private void Append(NarrationBlock block)
     {

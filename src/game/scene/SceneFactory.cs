@@ -240,11 +240,35 @@ public abstract class SceneFactory
         building.RoofSlipIn?.AttachTo(scene);
     }
 
+    /// <summary>
+    /// Adds a great building (<see cref="Building.EdificeFactory"/>) to the scene: its section, every
+    /// room, and the great door, which — like a small building's entry door — straddles the outdoor
+    /// area it opens from, registered earlier with another section.
+    /// </summary>
+    protected void RegisterEdifice(Scene scene, Building.EdificeResult edifice)
+    {
+        scene.Sections.Add(edifice.Section);
+        RegisterAll(scene, edifice.Section);
+        edifice.EntryDoor.Register(scene);
+    }
+
     private static void RegisterPoI(Scene scene, PointOfInterest poi)
     {
         poi.Register(scene);
         foreach (var itemElement in poi.Items)
             itemElement.Register(scene);
+    }
+
+    /// <summary>
+    /// Makes <paramref name="premises"/> places where <paramref name="npc"/> trades — the only places,
+    /// since <c>TradeGate</c> offers no trade anywhere else. Does nothing for someone who trades
+    /// nothing, so a crew can be passed through it whole. The schedule is the caller's business: see
+    /// <see cref="Building.BuildingSchedule.EnsureVisit"/> for holding a trader to their store.
+    /// </summary>
+    protected static void TradeAt(Npc.NpcEntity npc, params Area[] premises)
+    {
+        if (!npc.Trades) return;
+        foreach (var area in premises) npc.TradeAreaIds.Add(area.Id);
     }
 
     /// <summary>
@@ -465,6 +489,24 @@ public abstract class SceneFactory
 
         /// <summary>Underground: spiders, roaches, mice. No sun-lovers.</summary>
         Subterranean,
+
+        /// <summary>Desert, hot steppe and canyon: scorpions, dung beetles, locusts, lizards, geckos.</summary>
+        Arid,
+
+        /// <summary>Jungle: leeches, army ants, fireflies, butterflies, beetles.</summary>
+        Tropical,
+
+        /// <summary>Ice and snow and the cold steppe: snow fleas, ice worms, and in summer the bloodsuckers.</summary>
+        Frozen,
+
+        /// <summary>Orchards, groves and vineyards: wasps at the fruit, aphids on the shoots, ladybirds after them.</summary>
+        Orchard,
+
+        /// <summary>Streets, quays and great buildings: roaches, rats, moths, pigeons on every ledge.</summary>
+        Urban,
+
+        /// <summary>Tombs, crypts and burial grounds: scarabs, centipedes, pale spiders, the skull-marked moth.</summary>
+        Tomb,
     }
 
     /// <summary>
@@ -522,6 +564,53 @@ public abstract class SceneFactory
                 () => new Npc.Archetypes.LizardArchetype(),
                 () => new Npc.Archetypes.BeetleArchetype(),
                 () => new Npc.Archetypes.GardenSpiderArchetype(),
+            },
+            SmallLife.Arid => new Func<Npc.ShallowNpcArchetype>[]
+            {
+                () => new Npc.Archetypes.ScorpionArchetype(),
+                () => new Npc.Archetypes.DungBeetleArchetype(),
+                () => new Npc.Archetypes.LocustArchetype(),
+                () => new Npc.Archetypes.LizardArchetype(),
+                () => new Npc.Archetypes.GeckoArchetype(),
+            },
+            SmallLife.Tropical => new Func<Npc.ShallowNpcArchetype>[]
+            {
+                () => new Npc.Archetypes.LeechArchetype(),
+                () => new Npc.Archetypes.ArmyAntArchetype(),
+                () => new Npc.Archetypes.FireflyArchetype(),
+                () => new Npc.Archetypes.ButterflyArchetype(),
+                () => new Npc.Archetypes.BeetleArchetype(),
+            },
+            SmallLife.Frozen => new Func<Npc.ShallowNpcArchetype>[]
+            {
+                () => new Npc.Archetypes.SnowFleaArchetype(),
+                () => new Npc.Archetypes.IceWormArchetype(),
+                () => new Npc.Archetypes.MosquitoArchetype(),
+                () => new Npc.Archetypes.BumblebeeArchetype(),
+            },
+            SmallLife.Orchard => new Func<Npc.ShallowNpcArchetype>[]
+            {
+                () => new Npc.Archetypes.WaspArchetype(),
+                () => new Npc.Archetypes.HornetArchetype(),
+                () => new Npc.Archetypes.AphidArchetype(),
+                () => new Npc.Archetypes.LadybirdArchetype(),
+                () => new Npc.Archetypes.BeeArchetype(),
+                () => new Npc.Archetypes.ButterflyArchetype(),
+            },
+            SmallLife.Urban => new Func<Npc.ShallowNpcArchetype>[]
+            {
+                () => new Npc.Archetypes.CockroachArchetype(),
+                () => new Npc.Archetypes.HouseMouseArchetype(),
+                () => new Npc.Archetypes.MothArchetype(),
+                () => new Npc.Archetypes.PigeonArchetype(),
+                () => new Npc.Archetypes.ShipRatArchetype(),
+            },
+            SmallLife.Tomb => new Func<Npc.ShallowNpcArchetype>[]
+            {
+                () => new Npc.Archetypes.ScarabArchetype(),
+                () => new Npc.Archetypes.CentipedeArchetype(),
+                () => new Npc.Archetypes.TombSpiderArchetype(),
+                () => new Npc.Archetypes.DeathsHeadMothArchetype(),
             },
             _ => new Func<Npc.ShallowNpcArchetype>[]
             {

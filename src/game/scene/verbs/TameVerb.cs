@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Narrative;
-using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Npc;
 
 using Cathedral.Game.Narrative.ModiMentis;
@@ -58,9 +57,6 @@ public class TameVerb : Verb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"win {NpcPronoun(target)} over and keep {NpcPronoun(target)} with me";
 
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
-        => $"tame {NpcName(target)}";
-
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
         => target is SceneNpc sceneNpc && sceneNpc.Entity is NpcEntity
             ? new Outcome[] { new RecruitedOutcome(sceneNpc) }
@@ -75,9 +71,4 @@ public class TameVerb : Verb
     /// <summary>How many companions this character can keep — the heart-derived <c>max_companions</c>.</summary>
     internal static int MaxCompanions(PartyMember actor)
         => actor.DerivedStats.FirstOrDefault(s => s.Name == "max_companions")?.GetValue(actor) ?? 0;
-
-    // Not recordable: the animal is gone from the scene afterwards, so a replay has nothing to tame.
-
-    public override RoutinePhaseKind RoutineTriggeredPhase(Scene scene, PoV pov, Element target)
-        => RoutinePhaseKind.Narration;
 }

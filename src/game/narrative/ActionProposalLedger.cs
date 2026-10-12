@@ -25,6 +25,11 @@ namespace Cathedral.Game.Narrative;
 /// rest of them. The target and variant are held by reference, which is what keeps two identical
 /// PoIs, or two people of the same trade, separate.</para>
 ///
+/// <para><b>And by what it says.</b> Two variants that read identically are one action to the player:
+/// overhearing a merchant "talking with the clerk", when two clerks stand in the hall, expanded into two
+/// acts with one sentence between them, and the second was offered again after the first was shown.
+/// So an action is also proposed when its verb, target and wording match one already offered.</para>
+///
 /// <para><b>Proposed, not merely thought of.</b> An action is recorded when its button reaches the
 /// screen. A goal the thinking modus mentis settled on and the action modus mentis then refused was
 /// never offered to the player, so it stays available — the refusal is the character's, and asking
@@ -42,14 +47,22 @@ public sealed class ActionProposalLedger
     /// </summary>
     private readonly HashSet<(string VerbId, Element? Target, object? Variant)> _proposed = new();
 
+    /// <summary>The same actions by what they say — see the class remarks.</summary>
+    private readonly HashSet<(string VerbId, Element? Target, string Verbatim)> _proposedWording = new();
+
     /// <summary>How many distinct actions have been proposed so far this phase.</summary>
     public int Count => _proposed.Count;
 
     /// <summary>Records an action as proposed. Called when its button reaches the screen.</summary>
-    public void Propose(VerbAction action) => _proposed.Add(KeyOf(action));
+    public void Propose(VerbAction action)
+    {
+        _proposed.Add(KeyOf(action));
+        _proposedWording.Add(WordingOf(action));
+    }
 
     /// <summary>True when this verb has already been offered against this exact target this phase.</summary>
-    public bool WasProposed(VerbAction action) => _proposed.Contains(KeyOf(action));
+    public bool WasProposed(VerbAction action)
+        => _proposed.Contains(KeyOf(action)) || _proposedWording.Contains(WordingOf(action));
 
     /// <summary>
     /// The subset of <paramref name="goals"/> not yet proposed, in the given order. Anything that is
@@ -59,8 +72,15 @@ public sealed class ActionProposalLedger
         => goals.Where(g => g is not VerbAction va || !WasProposed(va)).ToList();
 
     /// <summary>Forgets everything — a new narration phase begins.</summary>
-    public void Clear() => _proposed.Clear();
+    public void Clear()
+    {
+        _proposed.Clear();
+        _proposedWording.Clear();
+    }
 
     private static (string, Element?, object?) KeyOf(VerbAction action)
         => (action.Verb.VerbId, action.Target, action.Variant);
+
+    private static (string, Element?, string) WordingOf(VerbAction action)
+        => (action.Verb.VerbId, action.Target, action.Verbatim);
 }

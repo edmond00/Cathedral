@@ -103,6 +103,9 @@ public sealed class HumorQueue
             _items[i] = CreateSecretedHumor(organScore, rng);
     }
 
+    /// <summary>Puts <paramref name="humor"/> in one slot (0 = the head). For <c>--humors</c>' mixed fills.</summary>
+    public void SetAt(int index, BodyHumor humor) => _items[index] = humor;
+
     /// <summary>
     /// Fill every slot with the provided humor instance.
     /// Used during protagonist creation to start with a pure Blood baseline.

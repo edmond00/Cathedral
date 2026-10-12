@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using Cathedral.Game.Narrative;
-using Cathedral.Game.Narrative.Routines;
 
 using Cathedral.Game.Narrative.ModiMentis;
 
@@ -51,31 +50,9 @@ public class MoveToAreaVerb : Verb
         return $"move to {DefiniteTarget(target)}";
     }
 
-    // A routine step always names the destination: the area's TransitionDescription describes the
-    // walk ("push through the gap in the hedge") and can leave a step list saying where you went
-    // through without saying where you ended up.
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
-        => $"move to {DefiniteTarget(target)}";
-
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         if (target is not Area targetArea) return System.Array.Empty<Outcome>();
         return new[] { new AreaMoveOutcome(targetArea) };
     }
-
-    // ── Routine recording ─────────────────────────────────────────────────────
-    // Moving between areas is the first recordable verb. It can later decline for special areas
-    // (e.g. one-way/event areas) by inspecting the target here.
-
-    public override bool CanRecordAsRoutine(Scene scene, PoV pov, Element target, PartyMember actor)
-        => target is Area;
-
-    public override RoutineTargetRef? RoutineTarget(Scene scene, PoV pov, Element target)
-        => target is Area area
-            ? new RoutineTargetRef(RoutineTargetKind.Area, area.ReferenceLemma, area.DisplayName)
-            : null;
-
-    // Moving starts a fresh narration phase at the destination area.
-    public override RoutinePhaseKind RoutineTriggeredPhase(Scene scene, PoV pov, Element target)
-        => RoutinePhaseKind.Narration;
 }

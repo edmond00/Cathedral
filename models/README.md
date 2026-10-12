@@ -13,8 +13,9 @@ Everything the game loads at runtime that is not code. Five things live here, an
 
 ## What is tracked by git, and why the binaries are not
 
-Only the documentation is committed: this file, `en_scowl_40.txt` (452 KB), and the two
-`BUILD.txt` files plus `llama/backends/README.md`. The ~2.5 GB of binaries beside them are
+Only the documentation is committed: this file, `en_scowl_40.txt` (452 KB), the two
+toolchain `BUILD.txt` files, `llama/backends/README.md`, and one `BUILD.txt` per backend pack
+(its build and its DLL's hash). The ~2.5 GB of binaries beside them are
 deliberately gitignored, **including under Git LFS**, and the reasoning is worth keeping:
 
 - **None of it is authored here.** A third-party quantization, upstream llama.cpp release
@@ -114,9 +115,27 @@ committed. A CRLF checkout is 502,767 bytes and equally correct — `CommonWordL
 `line.Trim()`, and `\r` is whitespace in .NET, so the terminator never reaches the word list.
 
 The two llama.cpp toolchains record their own upstream zip and build number in
-`llama/BUILD.txt` (b8851, x64) and `llama-arm64/BUILD.txt` (b8746, ARM64). **The build numbers
-are allowed to differ between the two folders**; what must never differ is a GPU backend under
-`backends/` versus the `ggml-base.dll` beside it in the same folder.
+`llama/BUILD.txt` (x64) and `llama-arm64/BUILD.txt` (ARM64), both b11515 at present. Nothing
+breaks if the two folders differ — they are never loaded into one process — but keep them equal:
+the game's startup check holds whichever one runs to a single expected build. What must never
+differ is a GPU backend under `backends/` versus the `ggml-base.dll` beside it in the same folder.
+
+## If the game says the install does not match
+
+At startup `LlamaInstallCheck` (`src/LLM/LlamaInstallCheck.cs`) compares this folder with what the
+build was made against, and lists every difference on the loading screen, the main menu and in
+`log.txt`. It never stops the game. It checks:
+
+- **llama.cpp** — the build and commit `llama-server --version` reports, against
+  `LlamaInstallCheck.ExpectedBuild` / `ExpectedCommit`, and against the `BUILD.txt` beside it.
+- **each GPU backend** — its DLL hashed against the tracked `BUILD.txt` in its pack (see
+  `llama/backends/README.md`).
+- **the model** — `general.name` from the GGUF header and the exact file size, against
+  `ExpectedModelName` / `ExpectedModelBytes`. The size is what tells two quantisations, or a
+  truncated download, apart.
+
+The fix is to bring this folder in line with the Provenance table above, or — if the change was
+deliberate — to update those constants (see the `models` skill).
 
 ## Changing the model
 

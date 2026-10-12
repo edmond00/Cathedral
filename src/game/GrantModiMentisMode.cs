@@ -33,7 +33,6 @@ public static class GrantModiMentisMode
         var spec = Config.Debug.GrantModiMentis;
         if (spec == null) return;
 
-        var (ids, level) = spec.Value;
         if (member.MemoryModules.Count == 0) member.InitializeMemory();
 
         var all = ModusMentisRegistry.Instance.GetAllModiMentis();
@@ -42,14 +41,14 @@ public static class GrantModiMentisMode
         var unknown  = new List<string>();
         var unslotted = new List<string>();
 
-        foreach (var id in ids)
+        foreach (var (id, level) in spec)
         {
             // Already held: just raise it. Re-granting would duplicate the entry.
             var held = member.ModiMentis.FirstOrDefault(m => m.ModusMentisId == id);
             if (held != null)
             {
                 held.Level = level;
-                raised.Add(id);
+                raised.Add($"{id}:{level}");
                 continue;
             }
 
@@ -68,14 +67,14 @@ public static class GrantModiMentisMode
             else              unslotted.Add(id);
 
             member.ModiMentis.Add(instance);
-            granted.Add(id);
+            granted.Add($"{id}:{level}");
         }
 
         Console.ForegroundColor = ConsoleColor.Magenta;
         if (granted.Count > 0)
-            Console.WriteLine($"*** --grant-mm: granted {string.Join(", ", granted)} at level {level} ***");
+            Console.WriteLine($"*** --grant-mm: granted {string.Join(", ", granted)} ***");
         if (raised.Count > 0)
-            Console.WriteLine($"*** --grant-mm: raised {string.Join(", ", raised)} to level {level} ***");
+            Console.WriteLine($"*** --grant-mm: raised {string.Join(", ", raised)} ***");
         if (unslotted.Count > 0)
             Console.WriteLine($"*** --grant-mm: no free memory slot for {string.Join(", ", unslotted)} — held anyway ***");
         if (unknown.Count > 0)

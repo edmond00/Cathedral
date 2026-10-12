@@ -58,6 +58,31 @@ public static class NeutralNarration
         => $"{ObservationAttention(isFirst, simpleName, isReminescence)} {ObservationDetail(description, isReminescence)}";
 
     /// <summary>
+    /// Neutral meaning of the area introduction that opens an observation sequence when the area or
+    /// the time of day has changed: where I am (<paramref name="where"/>, the area's prepositional
+    /// context — "inside the barn", "crossing the open grassland"), when (<paramref name="when"/>,
+    /// "at dawn"), when the area has one, its richer description as a second sentence, and, when
+    /// <paramref name="sights"/> is not empty, a closing list of what is around me — short, already
+    /// articled phrases ("a test bench", "a stranger").
+    /// </summary>
+    public static string AreaIntroduction(string where, string when, string? description,
+                                          IReadOnlyList<string>? sights = null)
+    {
+        var parts = new List<string> { $"I find myself {FirstPerson(where.Trim().TrimEnd('.'))}, {when}." };
+        if (!string.IsNullOrWhiteSpace(description))
+            parts.Add($"This place is {NounPhrase(FirstPerson(description))}.");
+        var listed = sights?.Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => FirstPerson(s.Trim())).ToList();
+        if (listed is { Count: > 0 })
+        {
+            var joined = listed.Count == 1
+                ? listed[0]
+                : $"{string.Join(", ", listed.Take(listed.Count - 1))} and {listed[^1]}";
+            parts.Add($"Around me {(listed.Count == 1 ? "is" : "are")} {joined}.");
+        }
+        return string.Join(" ", parts);
+    }
+
+    /// <summary>
     /// Trailing sentence appended to a threatening enemy's observation neutral text: it flags the
     /// just-described object as a present danger so the observation persona rewrites a note of caution
     /// into the block. Used only when the first observation of a phase leads with a same-area enemy
@@ -156,6 +181,14 @@ public static class NeutralNarration
     /// </summary>
     public static string ActionRefusal(string verbVerbatim) => $"I don't want to {FirstPerson(verbVerbatim)}.";
 
+    /// <summary>
+    /// The same refusal when a coded rule made it (<c>WillingnessOptions.ImposedRefusal</c>). The reason
+    /// is part of the sentence: the persona never reasoned its way to it, so there is no inner thought
+    /// to carry it, and a reason left to the rewrite is the first thing a strong style drops.
+    /// </summary>
+    public static string ActionRefusal(string verbVerbatim, string reason)
+        => $"I don't want to {FirstPerson(verbVerbatim)}: {FirstPerson(reason)}.";
+
     // ── VerbAction outcomes ────────────────────────────────────────────────────────
     // actionDisplay is already a clean verb phrase (e.g. "climb the tree"), so it is used verbatim.
 
@@ -224,6 +257,17 @@ public static class NeutralNarration
         if (r.Length == 0) return $"I cannot {FirstPerson(actionDisplay)} here.";
         return $"I cannot {FirstPerson(actionDisplay)}: {FirstPerson(r)}";
     }
+
+    /// <summary>
+    /// Refusal for a verb that cannot be done bare-handed (<c>RequiredToolRule</c>). Longer and more
+    /// literal than <see cref="ActionImpossible"/> on purpose: the re-voicing keeps only what it
+    /// cannot avoid, and a strongly-styled modus mentis given "I cannot cut a heart: I would need a
+    /// knife" handed back "I hold still, waiting. It breaks." — with the knife gone. Saying the want,
+    /// the bare hands and the missing tool in three separate clauses leaves it nothing to drop.
+    /// </summary>
+    public static string ToolRequired(string actionDisplay, string tool)
+        => $"I wanted to {FirstPerson(actionDisplay)}, but I cannot do that with my bare hands. " +
+           $"I would need to find {tool} for that, and take it in hand to do this work.";
 
     // ── A modus mentis the body can no longer carry ────────────────────────────
 

@@ -1,0 +1,50 @@
+# Every world is generated with a history laid over its regions, and the developer overlay paints
+# the realms that hold them today.
+#
+# What there is to assert without pinning content (how many realms a world ends with is a property
+# of the seed and of the generator's tuning, and belongs to --history-audit, not to a script):
+#
+#   - the history exists, with events, figures and realms, and a hash;
+#   - the avatar stands in a region some realm holds or in unclaimed land, and the line says which;
+#   - realms are listed with a government and a ruler;
+#   - the K overlay is off until asked for, and it and the R overlay exclude each other;
+#   - the history hash survives the save round trip (the history itself is regenerated, never saved).
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --silent --no-save
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 45
+
+expect-no-state world-history (no world generated)
+expect-state world-history events=
+expect-state world-history hash=
+expect-state world-history overlay=off
+expect-state world-history avatar region=
+expect-state world-realms government=
+expect-state world-realms ruler=
+
+history
+history realms
+
+# K paints the realms; R takes over with the regions and turns K off; R again leaves both off.
+key K
+expect-state world-history overlay=on
+key R
+expect-state world-regions overlay=on
+expect-state world-history overlay=off
+key R
+expect-state world-regions overlay=off
+expect-state world-history overlay=off
+
+# The TRAVEL PLAN box names the destination's region and the realm holding it, from the history.
+travel neighbour
+wait
+expect TRAVEL PLAN
+expect Region
+expect Realm
+
+save roundtrip
+quit

@@ -11,6 +11,10 @@ public enum BuildingMaterial
     Stone,
     WattleAndDaub,
     Timber,
+    /// <summary>Sun-dried brick under a flat earthen roof: the hot steppe's way of building.</summary>
+    Mudbrick,
+    /// <summary>Squared logs notched at the corners under turf: the cold steppe's.</summary>
+    Log,
 }
 
 /// <summary>

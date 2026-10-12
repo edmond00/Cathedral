@@ -22,14 +22,18 @@ args = Cathedral.ShipArguments.Filter(args);
 // ── Master seed: resolved FIRST, before any other flag is looked at ──────────
 // Every other flag handler below sets a static on some mode class, and touching one of those runs
 // its static initializers — several of which ask GameRng for a stream. The first such ask resolves
-// the master seed permanently, so parsing --seed any later than this silently produced a time-based
-// run with --seed on the command line (which is exactly what happened with --skip-childhood).
+// the master seed permanently, so parsing --seed any later than this silently produced a run on the
+// boot default with --seed on the command line (which is exactly what happened with
+// --skip-childhood) — and, now, one that stops at the moon-selection screen it was meant to skip.
 // Nothing above this line may touch game state.
 for (int i = 0; i < args.Length; i++)
 {
     if (args[i] == "--seed" && i + 1 < args.Length && int.TryParse(args[i + 1], out int parsedSeed))
     {
         Cathedral.Config.Rng.Seed = parsedSeed;
+        // Pinned by hand, which is a different thing from a seed recovered from a save below: this
+        // one names the world to play, and so skips the screen that would ask which world to play.
+        Cathedral.Config.Rng.SeedPinned = true;
         break;
     }
 }
@@ -49,9 +53,20 @@ for (int i = 0; i < args.Length; i++)
         if (args[i] == "--save-path" && i + 1 < args.Length) savePathOverride = args[i + 1];
         if (args[i] == "--no-save") noSave = true;
     }
+    // --record drives the game through the CLI, so it keeps away from the player's save the same way.
     bool cliActive = System.Array.IndexOf(args, "--cli") >= 0
-                  || System.Array.IndexOf(args, "--cli-script") >= 0;
+                  || System.Array.IndexOf(args, "--cli-script") >= 0
+                  || System.Array.IndexOf(args, "--record") >= 0;
     Cathedral.Game.Save.SaveFile.Configure(savePathOverride, noSave, cliActive);
+    // The demo's run counter is not the save: --save-path and --no-save leave it alone, and so does
+    // deleting the save. Pure file IO, so it may sit up here with the save's own setup.
+    Cathedral.DemoLimit.Configure(args);
+    // Which product this is, on one line publish.ps1's smoke test reads: it refuses to push a demo to
+    // the paid channel, or the full game to the demo channel. The two builds differ by one constant,
+    // and nothing else about the staged folder would tell them apart.
+    Console.WriteLine(Cathedral.DemoLimit.IsActive
+        ? $"Build: demo, {Cathedral.DemoLimit.MaxRuns} run(s)"
+        : "Build: full");
 
     if (Cathedral.Config.Rng.Seed == null)
         Cathedral.Config.Rng.Seed = Cathedral.Game.Save.SaveFile.PeekSeed();
@@ -113,13 +128,25 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --cli                              Drive the game from stdin and observe it as text (for scripted/automated verification)");
     Console.WriteLine("  --cli-script <file>                Run a newline-separated command script at startup (implies --cli)");
     Console.WriteLine("  --cli-timeout <seconds>            Hard limit for a --cli run before it closes itself (default 300)");
+    Console.WriteLine("  --record <dir>                     Film a CLI-driven run: player-only commands, a drawn cursor, game.mkv + timeline.jsonl + music.mid");
+    Console.WriteLine("                                     in <dir>. Hidden, silent and CPU-only unless told otherwise (implies --cli)");
+    Console.WriteLine("    --record-visible                 Show the window while recording");
+    Console.WriteLine("    --record-size <WxH>              Footage size (default 1440x1080)");
+    Console.WriteLine("    --record-fps <n>                 Footage frame rate (default 30)");
+    Console.WriteLine("    --record-ffmpeg <exe>            ffmpeg to encode with (default: tools/video's, CATHEDRAL_FFMPEG, PATH)");
+    Console.WriteLine("    --record-cursor-speed <px/s>     How fast the drawn cursor travels (default 1500)");
+    Console.WriteLine("  --export-sfx <dir>                 Write the UI click and hover sounds as WAV files and exit");
+    Console.WriteLine("  --export-music <out.mid> [--seconds n] [--mood m] [--tracks n]  Compose with the game's music engine (silently, in real time) and write MIDI");
+    Console.WriteLine("  --scene-export <key> [--biome b] [--ids a-b] [--out f]  Write a settled factory's scenes (areas, paths, doors, people) as JSON and exit");
     Console.WriteLine("  --debug                            Enable debug mode (override LLM/RNG decisions via console) + viewers");
-    Console.WriteLine("  --view                             Show LLM and scene viewers without console decision overriding");
+    Console.WriteLine("  --view                             Show the LLM, scene and world-history viewers without console decision overriding");
     Console.WriteLine("  --dialogue-view                    Open a window graphing every dialogue tree (neutral replica text per node)");
     Console.WriteLine("  --dialogue-audit                   Print the dialogue-tree shape report (reply counts, branch lengths, bad tokens) and exit");
     Console.WriteLine("  --npc-audit                        Print the NPC generation report (determinism, trait resolution, body/skill/inventory shape) and exit");
     Console.WriteLine("  --item-audit                       Print the item catalogue report (identity, reachability, weights, trade coverage) and exit");
     Console.WriteLine("  --building-audit                   Print the building/schedule report (section partition, locks, beds, hall staffing) and exit");
+    Console.WriteLine("  --world-variant-audit              Print the world-variant report (land, fields, spawns, marooned spawns, regions) and exit");
+    Console.WriteLine("  --history-audit                    Check the empire's lore history and generate world histories (lore worlds + a sample), report faults and exit");
     Console.WriteLine("  --playground                       Replace all LLM calls with instant placeholders (no server needed)");
     Console.WriteLine("  --skip-childhood                   Skip the childhood reminescence + get-up phases; randomly fill starting skills/items as if they had run");
     Console.WriteLine("  --mm                               After the childhood reminescence phase, fill every empty memory slot with random unheld modiMentis");
@@ -155,8 +182,12 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --no-llm-probe                     Skip first-run compute-device detection; use whatever is already saved");
     Console.WriteLine("  --no-developer-keys                Disable the developer keyboard shortcuts (D/M/F/G/H/J, C/V, W/S zoom),");
     Console.WriteLine("                                     leaving arrows/Space/Escape — i.e. behave as a shipped build does");
-    Console.WriteLine("  --seed <n>                         Fix the master RNG seed for a reproducible run (world, spawn, dice)");
+    Console.WriteLine("  --seed <n>                         Fix the master RNG seed for a reproducible run (world, spawn, dice).");
+    Console.WriteLine("                                     Names the world outright, so New skips the moon-selection screen");
     Console.WriteLine("  --start-at <name>                  DEBUG: spawn on the first biome/location matching <name> (e.g. village, farm)");
+    Console.WriteLine("  --world-variant <id>               DEBUG: generate every world as that variant instead of the one its seed names");
+    Console.WriteLine("                                     (temperate, drowned, continental, insular, montane, eroded, sylvan,");
+    Console.WriteLine("                                     arable, desolate, littoral). A save made under it will not continue without it");
     Console.WriteLine("  --start-area <name>                DEBUG: open narration in the first area of the location matching <name>");
     Console.WriteLine("                                     (e.g. pigsty, smithy). --start-at picks the location, this picks the room:");
     Console.WriteLine("                                     without it a script lands in whichever area was built first and has to walk");
@@ -185,6 +216,9 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --goal-only <verb-id>              DEBUG: the playground's goal choice must land on this verb (e.g. tame). Without");
     Console.WriteLine("                                     it --playground draws uniformly over every goal the observed object offers.");
     Console.WriteLine("                                     The CLI's `goal` command sets the same thing, for a script that needs to change it");
+    Console.WriteLine("  --means-only <mm-id>               DEBUG: the playground's choice of means (which action modus mentis carries the");
+    Console.WriteLine("                                     goal out) must land on this one. Examining is refused by any action modus mentis");
+    Console.WriteLine("                                     without Observation, so an examine script names one. CLI twin: `means`");
     Console.WriteLine("  --advance-days <n>                 DEBUG: push the world clock forward <n> days on first arrival at the world");
     Console.WriteLine("                                     map. The clock only moves on travel and work, and a wound takes 100-1000");
     Console.WriteLine("                                     days to close, so this is how a script sees healing without simulating years");
@@ -195,9 +229,12 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --black-bile                       DEBUG: fill all four humor queues with black bile after creation, so the");
     Console.WriteLine("                                     next journey starves the protagonist. The only way a script can stage a");
     Console.WriteLine("                                     starvation death (old age uses --advance-days, wounds --start-fight)");
-    Console.WriteLine("  --grant-mm <id[,id...]>[:lvl]      DEBUG: grant the named modi mentis at <lvl> (default 1) after character");
-    Console.WriteLine("                                     creation. Fighting skills are gated behind their modi mentis, so this is what");
-    Console.WriteLine("                                     makes a given skill reachable — and level sets a buff's vital-heat cost");
+    Console.WriteLine("  --grant-mm <id[:lvl][,id[:lvl]…]>  DEBUG: grant modi mentis, each at its own level (default 1), into free memory slots.");
+    Console.WriteLine("                                     The older 'a,b:3' still means every id at level 3");
+    Console.WriteLine("  --organs <part|organ|all>=<n>[,…] DEBUG: set organ part scores on accepting the protagonist (ignores the point budget),");
+    Console.WriteLine("                                     e.g. all=3,encephalon=5,viscera=5. Memory, noetic points and humors follow from them");
+    Console.WriteLine("  --humors <humor>[,…] | <queue>=<humor>[,…]  DEBUG: fill humor queues (paunch, hepar, spleen, pulmones, or all)");
+    Console.WriteLine("                                     with these humors, e.g. voluptas or hepar=juvenescence,spleen=laetitia");
     Console.WriteLine("  --mm-audit                         Print the modus-mentis content audit (hard-rule violations, coverage, soft stats) and exit");
     Console.WriteLine("  --verb-audit                       Print the verb-coverage audit (verbs per observable vs targets, dead verbs,");
     Console.WriteLine("                                     unresolvable modus-mentis and tool ids, landmark counts) and exit");
@@ -209,6 +246,11 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("                                     enmity surviving a rebuild and a save) and exit");
     Console.WriteLine("  --llm-probe-audit                  Re-measure every compute device (prompt-read and generate rates, cost per");
     Console.WriteLine("                                     request) and print which one wins and why, ignoring the cached result, and exit");
+    Console.WriteLine("  --demo                             Behave as a demo build: limited runs (Config.Demo.MaxRuns), demo line on the menu");
+    Console.WriteLine("  --demo-max-runs <n>                Demo mode with n runs instead of the configured number");
+    Console.WriteLine("  --demo-state-dir <dir>             Demo mode with both run-count copies kept under <dir> instead of AppData");
+    Console.WriteLine("  --demo-reset                       With --demo-state-dir: start from a fresh installation (for CLI scripts)");
+    Console.WriteLine("  --demo-audit                       Check the demo run limit (tampering, missing/corrupt/inconsistent copies, the limit) and exit");
     Console.WriteLine("  --help, -h                         Show this help message");
     return;
 }
@@ -252,6 +294,53 @@ if (args.Any(a => a == "--silent")) Cathedral.Config.Debug.Silent = true;
 // a hundred windows on screen and take the keyboard focus a hundred times.
 if (args.Any(a => a == "--hidden")) Cathedral.Config.Debug.HiddenWindow = true;
 
+// --record <dir>: film a CLI-driven run (see Cathedral.Game.Record.RecordMode). Parsed here, beside
+// --silent and --hidden, because it sets both — and --debug/--view below read HiddenWindow.
+for (int i = 0; i < args.Length; i++)
+{
+    if (args[i] != "--record") continue;
+    Cathedral.Game.Record.RecordMode.IsActive = true;
+    Cathedral.Game.Record.RecordMode.OutputDir =
+        i + 1 < args.Length && !args[i + 1].StartsWith("--") ? args[i + 1] : "recording";
+    for (int j = 0; j < args.Length - 1; j++)
+    {
+        string v = args[j + 1];
+        switch (args[j])
+        {
+            case "--record-fps" when int.TryParse(v, out int fps):
+                Cathedral.Game.Record.RecordMode.Fps = Math.Clamp(fps, 10, 60); break;
+            case "--record-size":
+                var wh = v.Split('x', 'X');
+                if (wh.Length == 2 && int.TryParse(wh[0], out int rw) && int.TryParse(wh[1], out int rh))
+                { Cathedral.Game.Record.RecordMode.Width = rw; Cathedral.Game.Record.RecordMode.Height = rh; }
+                break;
+            case "--record-ffmpeg":
+                Cathedral.Game.Record.RecordMode.FfmpegPath = v; break;
+            case "--record-cursor-speed" when double.TryParse(v, System.Globalization.NumberStyles.Float,
+                                                              System.Globalization.CultureInfo.InvariantCulture, out double cs):
+                Cathedral.Game.Record.RecordMode.CursorSpeed = Math.Clamp(cs, 200, 6000); break;
+        }
+    }
+    Cathedral.Game.Record.RecordMode.Visible = args.Any(a => a == "--record-visible");
+
+    // A recording runs in the background while its author does something else: no window unless asked
+    // for, nothing played aloud (the music is captured as MIDI instead), and the model on the CPU — the
+    // GPU has taken this machine's desktop down before. --gpu, parsed further down, still overrides that.
+    Cathedral.Config.Debug.HiddenWindow = !Cathedral.Game.Record.RecordMode.Visible;
+    Cathedral.Config.Debug.Silent = true;
+    Cathedral.Config.Debug.ForcedLlmDevice = Cathedral.LLM.LlamaComputeDevice.Cpu;
+    Cathedral.Audio.MidiCapture.Start(() => Cathedral.Game.Record.RecordMode.Now);
+    Cathedral.Game.Record.RecordSession.Configure(args);
+    Cathedral.Game.Cli.CliMode.IsActive = true;
+
+    Console.ForegroundColor = ConsoleColor.Cyan;
+    Console.WriteLine($"*** RECORD MODE: {Cathedral.Game.Record.RecordMode.OutputDir} " +
+                      $"({Cathedral.Game.Record.RecordMode.Width}x{Cathedral.Game.Record.RecordMode.Height} @ {Cathedral.Game.Record.RecordMode.Fps} fps, " +
+                      $"{(Cathedral.Game.Record.RecordMode.Visible ? "visible" : "hidden")}) ***");
+    Console.ResetColor();
+    break;
+}
+
 // --npc-hostile: every NPC counts the protagonist an enemy from the start.
 if (args.Any(a => a == "--npc-hostile")) Cathedral.Config.Debug.NpcHostile = true;
 
@@ -261,6 +350,15 @@ for (int i = 0; i < args.Length - 1; i++)
 {
     if (args[i] != "--location-type") continue;
     Cathedral.Config.Debug.LocationType = args[i + 1];
+    break;
+}
+
+// --world-variant <id>: generate every world as that variant instead of the one its seed names.
+// Parsed here, before the audits return, so --world-variant-audit could honour it too.
+for (int i = 0; i < args.Length - 1; i++)
+{
+    if (args[i] != "--world-variant") continue;
+    Cathedral.Config.Debug.WorldVariant = args[i + 1];
     break;
 }
 
@@ -300,6 +398,26 @@ if (args.Length >= 1 && args[0] == "--building-audit")
     return;
 }
 
+// World variant audit: build the terrain of every world variant across the first moons a player
+// could pick it on, and check the things that make a world playable rather than merely generatable -
+// land to walk on, fields to hang farms off, somewhere to spawn that is not a bare island. Headless:
+// builds the mesh through IcosphereGeometry, so no window and no GL.
+if (args.Length >= 1 && args[0] == "--world-variant-audit")
+{
+    Console.WriteLine(Cathedral.Glyph.Microworld.WorldVariantAudit.BuildReport());
+    return;
+}
+
+// History audit: check the empire's hardcoded history (the Register of Blood, lifespans, accessions),
+// then generate the history of every lore world and a sample of the rest, twice each, and check them
+// for what fails silently - nondeterminism, a crowned corpse, a landlocked port, a realm holding
+// nothing, a lore beat that never sprouted. Headless: builds worlds through HeadlessWorld.
+if (args.Length >= 1 && args[0] == "--history-audit")
+{
+    Console.WriteLine(Cathedral.Game.History.HistoryAudit.BuildReport());
+    return;
+}
+
 // Verb-coverage audit: how much there is to DO in each location type, against the design targets.
 // Headless — builds scenes and asks every verb whether it applies; no LLM, no window.
 if (args.Length >= 1 && args[0] == "--verb-audit")
@@ -318,9 +436,41 @@ if (args.Length >= 1 && args[0] == "--outcome-audit")
     return;
 }
 
+// Demo run limit: tampering, missing and corrupted copies, inconsistent copies and the limit itself,
+// against throwaway folders. Headless; never touches the real state files.
+if (args.Length >= 1 && args[0] == "--demo-audit")
+{
+    Cathedral.DemoLimitAudit.Run();
+    return;
+}
+
 if (args.Length >= 1 && args[0] == "--save-audit")
 {
     Cathedral.Game.Save.SaveAudit.Run();
+    return;
+}
+
+// --export-sfx <dir>: the UI click and hover as WAV files — what tools/video lays under a recording.
+if (args.Length >= 2 && args[0] == "--export-sfx")
+{
+    Cathedral.Audio.UiSfxPlayer.ExportWavs(args[1]);
+    Console.WriteLine($"--export-sfx: hover.wav and click.wav written to {args[1]}");
+    return;
+}
+
+// --export-music <out.mid> [--seconds n] [--mood name] [--tracks n]: the game's composer, captured as
+// MIDI with no device open — a soundtrack for tools/video.
+if (args.Length >= 1 && args[0] == "--export-music")
+{
+    Environment.ExitCode = Cathedral.Audio.MusicExport.Run(args);
+    return;
+}
+
+// --scene-export <key> [--biome b] [--ids a-b] [--out file]: settled scenes as JSON, for charts and
+// diagrams drawn from the generator itself. Headless.
+if (args.Length >= 1 && args[0] == "--scene-export")
+{
+    Environment.ExitCode = Cathedral.Debug.SceneExport.Run(args);
     return;
 }
 
@@ -518,7 +668,7 @@ if (args.Any(a => a == "--debug"))
 }
 
 // Check for --cli flag (drive the game from stdin and observe it as text)
-if (args.Any(a => a == "--cli") || args.Any(a => a == "--cli-script"))
+if (args.Any(a => a == "--cli") || args.Any(a => a == "--cli-script") || Cathedral.Game.Record.RecordMode.IsActive)
 {
     Cathedral.Game.Cli.CliMode.IsActive = true;
     for (int i = 0; i < args.Length; i++)
@@ -686,6 +836,9 @@ for (int i = 0; i < args.Length; i++)
     if (args[i] == "--goal-only" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
         Cathedral.Config.Debug.GoalOnly = args[i + 1];
 
+    if (args[i] == "--means-only" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
+        Cathedral.Config.Debug.MeansOnly = args[i + 1];
+
     if (args[i] == "--advance-days" && i + 1 < args.Length &&
         double.TryParse(args[i + 1], System.Globalization.NumberStyles.Float,
                         System.Globalization.CultureInfo.InvariantCulture, out var advDays))
@@ -698,20 +851,33 @@ for (int i = 0; i < args.Length; i++)
     // --grant-mm <id[,id...]>[:level]
     if (args[i] == "--grant-mm" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
     {
-        var spec  = args[i + 1];
-        int level = 1;
-        int colon = spec.LastIndexOf(':');
-        if (colon > 0 && int.TryParse(spec[(colon + 1)..], out var lvl))
-        {
-            level = lvl;
-            spec  = spec[..colon];
-        }
-        var ids = spec.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                      .Select(s => s.Trim())
-                      .Where(s => s.Length > 0)
-                      .ToArray();
-        if (ids.Length > 0)
-            Cathedral.Config.Debug.GrantModiMentis = (ids, level);
+        // Each entry is id[:level]. The original form "a,b:3" — one level after the last id — still
+        // means every id at that level; any other spelling gives each id its own (default 1).
+        var tokens = args[i + 1].Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(t =>
+            {
+                int colon = t.LastIndexOf(':');
+                return colon > 0 && int.TryParse(t[(colon + 1)..], out var l) ? (Id: t[..colon], Level: (int?)l) : (Id: t, Level: (int?)null);
+            }).ToArray();
+        bool sharedLevel = tokens.Length > 1 && tokens[^1].Level != null && tokens[..^1].All(t => t.Level == null);
+        int shared = sharedLevel ? tokens[^1].Level!.Value : 1;
+        if (tokens.Length > 0)
+            Cathedral.Config.Debug.GrantModiMentis = tokens.Select(t => (t.Id, t.Level ?? shared)).ToArray();
+    }
+
+    // --organs <part|organ|all>=<n>[,…]
+    if (args[i] == "--organs" && i + 1 < args.Length)
+    {
+        Cathedral.Config.Debug.Organs = args[i + 1].Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(t => t.Split('=')).Where(p => p.Length == 2 && int.TryParse(p[1], out _))
+            .Select(p => (p[0].ToLowerInvariant(), int.Parse(p[1]))).ToArray();
+    }
+
+    // --humors <humor>[,…] | <queue>=<humor>[,…]
+    if (args[i] == "--humors" && i + 1 < args.Length)
+    {
+        Cathedral.Config.Debug.Humors = args[i + 1].Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(t => t.Split('=') is var p && p.Length == 2 ? (p[0].ToLowerInvariant(), p[1]) : ("all", t)).ToArray();
     }
 }
 
@@ -765,7 +931,10 @@ Console.WriteLine("=== Cathedral - Location Travel Mode ===\n");
 Console.WriteLine("Launching the integrated narrative exploration system...");
 Console.WriteLine("Press Ctrl+C to exit at any time.\n");
 
-Cathedral.Game.LocationTravelModeLauncher.Launch();
+if (Cathedral.Game.Record.RecordMode.IsActive)
+    Cathedral.Game.LocationTravelModeLauncher.Launch(Cathedral.Game.Record.RecordMode.Width, Cathedral.Game.Record.RecordMode.Height);
+else
+    Cathedral.Game.LocationTravelModeLauncher.Launch();
 
 // A --cli run fails its build step when any `expect` assertion failed.
 if (Cathedral.Game.Cli.CliMode.IsActive && Cathedral.Game.Cli.CliMode.HasFailedAssertion)

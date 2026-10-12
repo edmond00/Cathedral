@@ -4,9 +4,9 @@
 # A non-zero exit means an `expect`/`wait` failed.
 #
 # --fill-party is what makes this reachable: Speak About needs a companion, and recruiting one in play
-# is a long approach. At seed 42 the party is filled with the cat Nighthunter, and the protagonist is
+# is a long approach. At seed 42 the party is filled with the hyena Brindletail, and the protagonist is
 # Kenryc Greygate — both names are seed-stable, which is what the `expect`s below key on. The panel
-# header names the ACTIVE member, so "[NIGHTHUNTER]" on screen is the assertion that the hand-off held.
+# header names the ACTIVE member, so "[BRINDLETAIL]" on screen is the assertion that the hand-off held.
 #
 # FLAGS: --playground --skip-childhood --fill-party --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon
 
@@ -36,7 +36,7 @@ advance 12 180
 # The address is ONE spoken block (call attention + describe + ask, merged into a single request),
 # and the narration has passed to the companion.
 expect come and look at this
-expect [NIGHTHUNTER]
+expect [BRINDLETAIL]
 
 # The companion acts: their own thinking phase, action, dice, outcome.
 strategy succeed
@@ -56,6 +56,6 @@ advance 12 180
 click button
 wait 60
 advance 12 180
-expect [NIGHTHUNTER]
+expect [BRINDLETAIL]
 
 quit

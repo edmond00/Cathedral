@@ -319,6 +319,13 @@ public class ParsedNarrativeAction : ModusMentisChainElement
     public bool IsImpossible { get; set; } = false;
 
     /// <summary>
+    /// Set when a coded rule refused this action for want of an implement (<c>RequiredToolRule</c>).
+    /// The action stays lit, since it is still the way forward, and its popup offers only "Use Tool":
+    /// executing it bare-handed again would be the same refusal, charged again.
+    /// </summary>
+    public bool NeedsTool { get; set; } = false;
+
+    /// <summary>
     /// When set (item-combined actions), acts as the chain leaf instead of ActionModusMentis.
     /// Holds a SyntheticItemModusMentis whose DisplayName = item name and Level = item.UsageLevel,
     /// so that the UI shows the item name as the action button prefix and the chain is:

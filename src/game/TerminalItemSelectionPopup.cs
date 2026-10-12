@@ -137,6 +137,10 @@ public class TerminalItemSelectionPopup
         }
     }
 
+    /// <summary>The item a click at this screen pixel would pick, or null — see the choice popup's twin.</summary>
+    public int? CliIndexAt(float screenX, float screenY, Vector2i windowSize, float cellPixelSize)
+        => IsVisible ? GetItemIndexAtPosition(screenX, screenY, windowSize, cellPixelSize) : null;
+
     private int? GetItemIndexAtPosition(float screenX, float screenY, Vector2i windowSize, float cellPixelSize)
     {
         var bounds = _popup.GetScreenBounds(windowSize);

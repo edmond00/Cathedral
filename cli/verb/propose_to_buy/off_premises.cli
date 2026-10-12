@@ -1,0 +1,38 @@
+# propose_to_buy — a trader met off their premises is not offered the trade
+#
+# The other half of on_premises.cli. The poultry keeper sells foodstuff and is a close friend under
+# --npc-affinity, so every condition but one is met: at location id 1 under --npc-static they stand in
+# the Chicken Coop, and the farm trades only from its Storage Shed. `goal propose_to_buy` therefore
+# finds no such goal and falls back to the others (stdout carries the --goal-only miss line), and
+# whatever runs instead is the assertion.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --npc-affinity CloseFriend --location-type farm --location-id 1 --npc-static --start-area "Chicken Coop" --period noon --observe-only "poultry_keeper"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal propose_to_buy
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect-no-verb propose_to_buy
+
+# This script tests an ABSENCE: `--goal-only propose_to_buy` finding no such goal is the gate
+# holding, so its miss must not fail the run.
+allow-flag-miss --goal-only
+quit

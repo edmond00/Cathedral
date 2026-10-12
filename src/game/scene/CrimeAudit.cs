@@ -47,6 +47,7 @@ public static class CrimeAudit
         AuditVerbLegality(sb, failures);
         AuditGoalRules(sb, failures);
         AuditWillingnessRules(sb, failures);
+        AuditExamineRules(sb, failures);
         AuditWitnessReach(sb, failures);
         AuditDiscreteness(sb, failures);
         AuditApproach(sb, failures);
@@ -248,6 +249,58 @@ public static class CrimeAudit
         Case("Low morality, asked to do something legal", MoralLevel.Low,  lawful!, true);
         Case("Medium morality, asked to commit a crime", MoralLevel.Medium, crime!, true);
         Case("High morality, asked to commit a crime",  MoralLevel.High,   crime!,  true);
+        sb.AppendLine();
+    }
+
+    // ── 4b. Examining belongs to the observing modi mentis ───────────────────
+
+    /// <summary>
+    /// The two halves of the examine rules (<see cref="ExamineGoalNeedsObservationRule"/>,
+    /// <see cref="ExamineActionNeedsObservationRule"/>): a thinking modus mentis without
+    /// the Observation function is not offered examining, and an action modus mentis without it is
+    /// made to refuse — with the refusal imposed (no question asked) rather than merely allowed. The
+    /// other goal in the fixture is a crime, so Medium morality is used throughout to keep the
+    /// morality rules out of the count.
+    /// </summary>
+    private static void AuditExamineRules(StringBuilder sb, List<string> failures)
+    {
+        sb.AppendLine("--- CHOICE RULES: examining, by whether the modus mentis observes ---");
+
+        var (scene, _, examine, other) = BuildGoalFixture(failures);
+        if (scene == null) { sb.AppendLine("  (fixture unavailable — skipped)"); sb.AppendLine(); return; }
+
+        var pov   = new PoV(scene.AllAreas.First(), TimePeriod.Noon);
+        var actor = new Protagonist();
+        ChoiceRuleContext Ctx(bool observes)
+            => new(scene, pov, actor, new MoralityProbe(MoralLevel.Medium, observes));
+
+        var both = new List<NarrativeAnchor> { examine!, other! };
+        void GoalCase(string name, bool observes, int expected, bool expectExamine)
+        {
+            var got = ChoiceRulesChecker.FilterGoals(both, Ctx(observes));
+            bool hasExamine = got.Any(o => o == examine);
+            bool ok = got.Count == expected && hasExamine == expectExamine;
+            sb.AppendLine($"  {(ok ? "✓" : "✗")} {name,-52} {got.Count} goal(s){(hasExamine ? ", incl. examining" : "")}");
+            if (!ok) failures.Add($"{name}: expected {expected} goal(s) {(expectExamine ? "with" : "without")} "
+                                  + $"examining, got {got.Count} {(hasExamine ? "with" : "without")} it");
+        }
+        GoalCase("thinking, observes: examine + another goal",     true,  2, true);
+        GoalCase("thinking, does not observe: examine + another",   false, 1, false);
+
+        var full = new WillingnessOptions(
+            new[] { "eager to do it", "willing to do it", "reluctant to do it" }, "unwilling to do it");
+        void WillCase(string name, bool observes, NarrativeAnchor goal, bool expectImposed)
+        {
+            var got = ChoiceRulesChecker.FilterWillingness(full, Ctx(observes) with { Goal = goal });
+            bool imposed = got.ImposedRefusal != null;
+            bool ok = imposed == expectImposed;
+            sb.AppendLine($"  {(ok ? "✓" : "✗")} {name,-52} {(imposed ? "refused by rule" : "asked")}");
+            if (!ok) failures.Add($"{name}: expected {(expectImposed ? "an imposed refusal" : "the question asked")}, "
+                                  + $"got {(imposed ? "an imposed refusal" : "the question asked")}");
+        }
+        WillCase("action, observes, asked to examine",          true,  examine!, false);
+        WillCase("action, does not observe, asked to examine",  false, examine!, true);
+        WillCase("action, does not observe, asked to do else",  false, other!,   false);
         sb.AppendLine();
     }
 
@@ -490,22 +543,35 @@ public static class CrimeAudit
     }
 
     /// <summary>
-    /// A modus mentis that exists only to carry a <see cref="MoralLevel"/>. Using a real one would
-    /// tie each case to a piece of content that can be re-tuned, and the rules read nothing else.
+    /// A modus mentis that exists only to carry a <see cref="MoralLevel"/> — and whether it observes.
+    /// Using a real one would tie each case to a piece of content that can be re-tuned, and the rules
+    /// read nothing else.
+    ///
+    /// <para>It observes by default, and must for the morality cases: their lawful goal is examining,
+    /// which a mind without the Observation function is never offered
+    /// (<see cref="ExamineGoalNeedsObservationRule"/>) — so a non-observing probe would lose that goal
+    /// to a rule the morality cases are not about, and count it as a morality failure.</para>
     /// </summary>
     private sealed class MoralityProbe : ModusMentis
     {
+        private readonly bool _observes;
         public override string ModusMentisId   => $"morality_probe_{MoralLevel.ToString().ToLowerInvariant()}";
         public override string DisplayName     => $"{MoralLevel} Probe";
         public override string MenuDescription => "audit fixture";
         public override string SkillMeans      => "the audit's own hands";
-        public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+        public override ModusMentisFunction[] Functions => _observes
+            ? new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking }
+            : new[] { ModusMentisFunction.Thinking };
         public override string[] Organs        => new[] { "cerebrum", "eyes" };
         public override Cathedral.Game.Narrative.Memory.ModusMentisMemoryType MemoryType
             => Cathedral.Game.Narrative.Memory.ModusMentisMemoryType.Semantic;
         public override MoralLevel MoralLevel { get; }
 
-        public MoralityProbe(MoralLevel morality) => MoralLevel = morality;
+        public MoralityProbe(MoralLevel morality, bool observes = true)
+        {
+            MoralLevel = morality;
+            _observes  = observes;
+        }
     }
 
     private static IEnumerable<(string Label, Func<int, Scene> Build)> Factories()

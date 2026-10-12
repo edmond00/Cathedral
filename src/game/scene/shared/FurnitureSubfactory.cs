@@ -22,7 +22,16 @@ namespace Cathedral.Game.Scene.Shared;
 public static class FurnitureSubfactory
 {
     /// <summary>Which flavour of furniture a location gets. Drives every pool below.</summary>
-    public enum Setting { Settlement, Farmland, Woodland, Water, Highland, Underground }
+    /// <summary>
+    /// Which flavour of furniture a location gets. Drives every pool below. The last three are the
+    /// hot and cold country's (see <c>ClimateRule</c>): <see cref="Arid"/> for desert, hot steppe and
+    /// canyon, <see cref="Jungle"/>, and <see cref="Frozen"/> for everything the cold makes.
+    /// </summary>
+    public enum Setting { Settlement, Farmland, Woodland, Water, Highland, Underground, Arid, Jungle, Frozen }
+
+    /// <summary>Wild ground: its furniture is the land's own, not anything somebody put there.</summary>
+    private static bool IsWild(Setting setting)
+        => setting is Setting.Woodland or Setting.Highland or Setting.Arid or Setting.Jungle or Setting.Frozen;
 
     // ── Sitting ───────────────────────────────────────────────────────────────
 
@@ -64,6 +73,21 @@ public static class FurnitureSubfactory
                 ("Sheltered Ledge", "ledge", "A shelf of rock out of the wind, worn hollow by whoever sat here before", new[] { "sheltered", "wind-scoured", "cold" }),
                 ("Boulder Seat",    "boulder", "A boulder with one side split away flat, at the height of a chair", new[] { "split", "grey", "bare" }),
             },
+            Setting.Arid => new[]
+            {
+                ("Shade Rock",    "rock",  "A rock leaning far enough over to throw a seat's worth of shade at noon", new[] { "shaded", "hot-sided", "wind-polished" }),
+                ("Bleached Log",  "log",   "A log of some long-dead tree, silver-grey and hard as horn, half in the sand", new[] { "bleached", "cracked", "sun-hot" }),
+            },
+            Setting.Jungle => new[]
+            {
+                ("Buttress Root", "root",  "The great flange of a buttress root, a seat between two of its walls", new[] { "mossed", "damp", "sheltered" }),
+                ("Fallen Giant",  "trunk", "A fallen trunk so wide it is sat on like a wall, furred with moss and fern", new[] { "rotting", "green", "broad" }),
+            },
+            Setting.Frozen => new[]
+            {
+                ("Snow Bench",    "bench", "A step of wind-packed snow hard enough to sit on and cut square by the wind", new[] { "packed", "wind-cut", "cold" }),
+                ("Lee Stone",     "stone", "A stone standing out of the snow, its lee side bare and dry", new[] { "sheltered", "lichened", "cold" }),
+            },
             _ => new[]
             {
                 ("Rock Shelf",  "shelf", "A ledge of rock at sitting height, dry where the seep does not reach", new[] { "dry", "cold", "smooth" }),
@@ -84,7 +108,7 @@ public static class FurnitureSubfactory
 
             area.PointsOfInterest.Add(new SitSpotPointOfInterest(
                 spec.Name, spec.Lemma, new List<string> { spec.Desc }, spec.Moods,
-                isNatural: setting is Setting.Woodland or Setting.Highland,
+                isNatural: IsWild(setting),
                 verbModiMentis: new Dictionary<string, string>
                 {
                     ["contemplate"] = "meditation",
@@ -133,6 +157,21 @@ public static class FurnitureSubfactory
             {
                 ("Rock Cleft", "cleft", "A split in the rock face wide enough to back into and be gone from view", new[] { "narrow", "cold", "wind-quiet" }),
             },
+            Setting.Arid => new[]
+            {
+                ("Sand Scoop",  "scoop",  "A hollow scooped by the wind in the lee of a dune, deep enough to lie in unseen", new[] { "hot", "shifting", "low" }),
+                ("Rock Shadow", "shadow", "A slot of shadow under a tilted slab, black against the glare", new[] { "black", "cool", "narrow" }),
+            },
+            Setting.Jungle => new[]
+            {
+                ("Fern Screen", "fern",   "A wall of tree ferns, fronds overlapping, that closes behind whoever pushes in", new[] { "green", "dripping", "dense" }),
+                ("Root Cave",   "cave",   "A cave of roots under a strangler fig, its old host long since rotted away", new[] { "hollow", "dark", "close" }),
+            },
+            Setting.Frozen => new[]
+            {
+                ("Snow Hollow", "hollow", "A hollow dug by the wind under a drift's lip, blue-dark inside", new[] { "blue", "muffled", "close" }),
+                ("Ice Block",   "block",  "A tilted block of ice the size of a cart, with a dark gap behind it", new[] { "tilted", "glassy", "cold" }),
+            },
             _ => new[]
             {
                 ("Side Niche", "niche", "A worked-out niche in the tunnel wall, black past the first foot of it", new[] { "black", "damp", "close" }),
@@ -152,7 +191,7 @@ public static class FurnitureSubfactory
 
             area.PointsOfInterest.Add(new HidingPointOfInterest(
                 spec.Name, spec.Lemma, new List<string> { spec.Desc }, spec.Moods,
-                isNatural: setting is Setting.Woodland or Setting.Highland,
+                isNatural: IsWild(setting),
                 verbModiMentis: new Dictionary<string, string> { ["listen"] = "keen_ear" })
             {
                 Senses = new SensoryProfile(Examine: true, Listen: true),
@@ -215,6 +254,9 @@ public static class FurnitureSubfactory
             Setting.Woodland    => rng.NextDouble() < 0.5 ? CrossingKind.Brambles  : CrossingKind.FallenTrunk,
             Setting.Highland    => CrossingKind.Scree,
             Setting.Underground => CrossingKind.Scree,
+            Setting.Arid        => rng.NextDouble() < 0.5 ? CrossingKind.Quicksand : CrossingKind.BoulderChoke,
+            Setting.Jungle      => rng.NextDouble() < 0.6 ? CrossingKind.Lianas    : CrossingKind.FallenTrunk,
+            Setting.Frozen      => rng.NextDouble() < 0.5 ? CrossingKind.SnowBridge : CrossingKind.ThinIce,
             _                   => rng.NextDouble() < 0.5 ? CrossingKind.Nettles   : CrossingKind.Brambles,
         };
 
@@ -225,6 +267,11 @@ public static class FurnitureSubfactory
             CrossingKind.FallenTrunk => ("Fallen Trunk",    "A great trunk down across the gap, barkless and rounded and a long way up",       new[] { "barkless", "rounded", "slick" }),
             CrossingKind.Scree       => ("Scree Slide",     "A tongue of loose stone that shifts underfoot at the first weight put on it",     new[] { "loose", "shifting", "grey" }),
             CrossingKind.Nettles     => ("Nettle Bed",      "A bed of nettles grown waist-high where nothing has trodden them",                new[] { "waist-high", "rank", "stinging" }),
+            CrossingKind.Quicksand   => ("Quicksand",       "A flat of sand darker than the rest, with a skin on it that trembles when trodden near", new[] { "dark", "trembling", "smooth" }),
+            CrossingKind.BoulderChoke => ("Boulder Choke",  "A gap choked with fallen blocks the size of carts, wedged one on another",       new[] { "wedged", "sun-hot", "jagged" }),
+            CrossingKind.Lianas      => ("Liana Curtain",   "A curtain of lianas and creeper hung across the way, thick as a man's wrist",     new[] { "hanging", "tangled", "dripping" }),
+            CrossingKind.ThinIce     => ("Thin Ice",        "A stretch of new grey ice, dark where the water shows through it",                new[] { "grey", "creaking", "thin" }),
+            CrossingKind.SnowBridge  => ("Snow Bridge",     "A bridge of old snow sagging over a crevasse, its edges blue with depth",         new[] { "sagging", "blue-edged", "silent" }),
             _                        => ("Thorn Hedge",     "A laid hedge of thorn, grown thick and pleached to turn stock",                   new[] { "laid", "thick", "thorn-set" }),
         };
 
@@ -233,11 +280,20 @@ public static class FurnitureSubfactory
             $"{spec.Name} ({a.DisplayName}–{b.DisplayName})",
             new List<string> { spec.Desc },
             spec.Moods,
-            verbModiMentis: new Dictionary<string, string> { ["examine"] = "hedgecraft" })
+            verbModiMentis: new Dictionary<string, string> { ["examine"] = CrossingLore(kind) })
         {
             Senses = SensoryProfile.Examinable,
         }.AttachTo(scene);
     }
+
+    /// <summary>What looking hard at an obstacle teaches: hedge lore for growth, the ground for the rest.</summary>
+    private static string CrossingLore(CrossingKind kind) => kind switch
+    {
+        CrossingKind.Quicksand or CrossingKind.ThinIce or CrossingKind.SnowBridge => "survivalism",
+        CrossingKind.BoulderChoke or CrossingKind.Scree                          => "stonework",
+        _                                                                        => "hedgecraft",
+    };
+
 
     private static void AddWaterCrossing(Random rng, Scene scene, Area a, Area b, Setting setting)
     {
@@ -246,6 +302,9 @@ public static class FurnitureSubfactory
             Setting.Water      => rng.NextDouble() < 0.5 ? WaterKind.Cove : WaterKind.River,
             Setting.Settlement => WaterKind.MillLeat,
             Setting.Highland   => WaterKind.Creek,
+            Setting.Arid       => WaterKind.Pond,
+            Setting.Jungle     => rng.NextDouble() < 0.6 ? WaterKind.River : WaterKind.Pond,
+            Setting.Frozen     => rng.NextDouble() < 0.5 ? WaterKind.Lead  : WaterKind.Meltwater,
             _                  => rng.NextDouble() < 0.5 ? WaterKind.Creek : WaterKind.Pond,
         };
 
@@ -255,6 +314,8 @@ public static class FurnitureSubfactory
             WaterKind.Creek    => ("Creek",       "A fast narrow watercourse cut down into its own bed, cold the whole year",       new[] { "fast", "cold", "narrow" }),
             WaterKind.Pond     => ("Pond",        "Still water gone green at the edges, deeper in the middle than it looks",        new[] { "still", "green", "flat" }),
             WaterKind.Cove     => ("Cove",        "A bite of sea between two arms of rock, swelling and dropping against them",     new[] { "swelling", "cold", "green-black" }),
+            WaterKind.Lead     => ("Open Lead",   "A lane of black sea open between two floes, steaming in the cold",              new[] { "black", "steaming", "still" }),
+            WaterKind.Meltwater => ("Meltwater Channel", "A channel cut into the ice by its own melt, glass-sided and racing",   new[] { "racing", "blue", "glass-sided" }),
             _                  => ("Mill Leat",   "A cut channel running fast and straight, walled in stone and deeper than a man", new[] { "fast", "straight", "walled" }),
         };
 
@@ -264,20 +325,28 @@ public static class FurnitureSubfactory
         var catchable  = new List<ItemElement>();
         if (holdsFish)
         {
-            Func<Narrative.Item>[] stock = kind == WaterKind.Cove
-                ? new Func<Narrative.Item>[]
-                  {
-                      () => new Narrative.World.Items.Herring(),
-                      () => new Narrative.World.Items.Mackerel(),
-                      () => new Narrative.World.Items.Cod(),
-                  }
-                : new Func<Narrative.Item>[]
-                  {
-                      () => new Narrative.World.Items.Trout(),
-                      () => new Narrative.World.Items.Perch(),
-                      () => new Narrative.World.Items.Eel(),
-                      () => new Narrative.World.Items.Pike(),
-                  };
+            Func<Narrative.Item>[] stock = (kind, setting) switch
+            {
+                (WaterKind.Cove or WaterKind.Lead, _) => new Func<Narrative.Item>[]
+                {
+                    () => new Narrative.World.Items.Herring(),
+                    () => new Narrative.World.Items.Cod(),
+                    () => (kind == WaterKind.Lead ? new Narrative.World.Items.ArcticChar() : new Narrative.World.Items.Mackerel()),
+                },
+                (WaterKind.Meltwater, _) => new Func<Narrative.Item>[] { () => new Narrative.World.Items.ArcticChar() },
+                (_, Setting.Jungle or Setting.Arid) => new Func<Narrative.Item>[]
+                {
+                    () => new Narrative.World.Items.Catfish(),
+                    () => new Narrative.World.Items.Eel(),
+                },
+                _ => new Func<Narrative.Item>[]
+                {
+                    () => new Narrative.World.Items.Trout(),
+                    () => new Narrative.World.Items.Perch(),
+                    () => new Narrative.World.Items.Eel(),
+                    () => new Narrative.World.Items.Pike(),
+                },
+            };
 
             for (int n = rng.Next(2, 5); n > 0; n--)
                 catchable.Add(new ItemElement(stock[rng.Next(stock.Length)]()));
@@ -359,6 +428,12 @@ public static class FurnitureSubfactory
                     new Func<Narrative.Item>[] { () => new Narrative.World.Items.Loam() }),
                 Setting.Highland or Setting.Underground => ("Clay Bank", "clay", "A cut bank of grey clay, slick where water has run down it",
                     new Func<Narrative.Item>[] { () => new Narrative.World.Items.Clay() }),
+                Setting.Arid => ("Ochre Bank", "ochre", "A bank of soft red earth, the colour coming off on anything that brushes it",
+                    new Func<Narrative.Item>[] { () => new Narrative.World.Items.Ochre() }),
+                Setting.Jungle => ("Black Mud", "mud", "Rich black mud under the leaf litter, warm and stinking and full of roots",
+                    new Func<Narrative.Item>[] { () => new Narrative.World.Items.Loam() }),
+                Setting.Frozen => ("Silt Bed", "silt", "A bed of grey silt dropped by old meltwater, frozen hard a hand's depth down",
+                    new Func<Narrative.Item>[] { () => new Narrative.World.Items.RockFlour() }),
                 _ => ("Peat Cut", "peat", "A worked peat cut with the turves stacked to dry along its edge",
                     new Func<Narrative.Item>[] { () => new Narrative.World.Items.Peat() }),
             };
@@ -414,6 +489,10 @@ public static class FurnitureSubfactory
                     (n, c, t, d, m) => new HeadlandArea(n, c, t, d, m),
                     "A shelf of turf at the top of the rock, with the whole bay opened out below",
                     "Rock Stair", "A break in the rock where the strata step up, wet most of the way"),
+                Setting.Jungle => (ScaleKind.Tree, "Canopy", "canopy",
+                    (n, c, t, d, m) => new CanopyArea(n, c, t, d, m),
+                    "A crotch high in a kapok, among bromeliads and ants, with the green roof of the jungle all round",
+                    "Kapok Trunk", "A kapok whose spines have worn to knobs low down, and whose lianas make a ladder above"),
                 Setting.Underground => (ScaleKind.Ladder, "Upper Gallery", "gallery",
                     (n, c, t, d, m) => new GalleryArea(n, c, t, d, m),
                     "A worked-out gallery above the main level, its floor the roof of the workings below",

@@ -21,7 +21,13 @@ namespace Cathedral.Game.Narrative;
 /// chose, which becomes the clickable keyword mapped back to its observation object.
 ///
 /// Which observation objects are described is an LLM decision: the Modus Mentis picks the object
-/// matching its persona interest (by NeutralName). There is no overall-area opener.
+/// matching its persona interest (by NeutralName).
+///
+/// The overall phase may open on an area introduction — where and when I am — when the caller asks
+/// for one (the area or the time of day changed since the last; exploration only). It lists up to five
+/// of the objects present, takes the first of the three slots, carries at most one keyword — only if it
+/// names an object outright, which then counts as observed for the phase — and is always
+/// followed by at least one real observation (see <see cref="AppendAreaIntroductionAsync"/>).
 ///
 /// Every choice list is narrowed by the phase's <see cref="ObservationLedger"/>: an object observed
 /// earlier in this narration phase is not offered again, so successive observations reach for new
@@ -80,6 +86,7 @@ public class ObservationPhaseController
         ObservationLedger? ledger = null,
         LlmPreviewSession? preview = null,
         Action<List<NarrationBlock>>? commit = null,
+        TimePeriod? introPeriod = null,
         CancellationToken ct = default)
     {
         ledger ??= new ObservationLedger();
@@ -145,7 +152,22 @@ public class ObservationPhaseController
         // joined Observation block, deferred to that CONTINUE (see FinalizePreview).
         var part = preview?.BeginAccumulatingPart(PreviewTitles.For(modusMentis));
 
-        var (first, firstThought) = await SelectObservationObjectAsync(slotId, candidates, modusMentis, ledger, locationId, ct, isReminescence, overall, area, part: part);
+        // Area introduction: when the caller asks for one (the area or the time of day changed since
+        // the last one), the block opens on where and when I am, and what is around me, before any
+        // object is singled out. An object the introduction took its keyword from is retired here —
+        // from this block's pool and from the ledger — exactly as an observed object would be.
+        string? introText = null;
+        if (introPeriod is { } period && currentNode is Cathedral.Game.Scene.SyntheticNarrationNode { Area: { } introArea })
+        {
+            NarrativeAnchor? introAnchor;
+            (introText, introAnchor) = await AppendAreaIntroductionAsync(sentences, allKeywords, slotId, modusMentis,
+                introArea, period, candidates, ledger, locationId, ct, part);
+            if (introAnchor != null) candidates.Remove(introAnchor);
+        }
+
+        // The first real observation is mandatory: an introduction that retired an object has made the
+        // ledger non-empty, but the persona still may not decline here.
+        var (first, firstThought) = await SelectObservationObjectAsync(slotId, candidates, modusMentis, ledger, locationId, ct, isReminescence, overall, area, part: part, offerDecline: false);
 
         if (first == null)
         {
@@ -159,7 +181,8 @@ public class ObservationPhaseController
             // length rules in AppendFollowUpObservationsAsync. The candidate pool is the deduplicated
             // set; objects already observed are excluded from every follow-up choice.
             await AppendFollowUpObservationsAsync(sentences, allKeywords, slotId, modusMentis,
-                candidates, new List<NarrativeAnchor> { first }, firstText, locationId, ledger, ct, isReminescence, overall, area, part);
+                candidates, new List<NarrativeAnchor> { first }, firstText, locationId, ledger, ct, isReminescence, overall, area, part,
+                introText);
         }
 
         if (sentences.Count == 0)
@@ -378,6 +401,114 @@ public class ObservationPhaseController
     }
 
     /// <summary>
+    /// Appends the area introduction that opens a block when the area or the time of day has changed:
+    /// where I am and when, what the place is, and what is around me
+    /// (<see cref="NeutralNarration.AreaIntroduction"/>) — from the area's <c>ContextDescription</c>,
+    /// one of its <c>Descriptions</c>, and the short phrases of up to
+    /// <see cref="IntroductionSightsMax"/> objects drawn from <paramref name="pool"/> in random order —
+    /// rewritten in the persona's voice.
+    ///
+    /// <para>The keyword is optional: if the rewritten text uses the reference lemma or the head of
+    /// the name of an object in <paramref name="pool"/>, that word becomes the keyword (one at most,
+    /// drawn among the matches), linked to that object. The list of sights is what makes this likely.
+    /// A matched object counts as attended to: it goes on <paramref name="ledger"/> and is returned so
+    /// the caller drops it from the block's pool, exactly as an observed object would be. Otherwise the
+    /// introduction carries no keyword — the mandatory observation that follows supplies one.</para>
+    ///
+    /// Returns the text (null when the rewrite failed — the block then proceeds as if no introduction
+    /// had been asked for) and the object the keyword was linked to, if any.
+    /// </summary>
+    private async Task<(string? Text, NarrativeAnchor? Anchor)> AppendAreaIntroductionAsync(
+        List<NarrationSentence> sentences,
+        List<string> allKeywords,
+        int slotId,
+        ModusMentis modusMentis,
+        Cathedral.Game.Scene.Area introArea,
+        TimePeriod period,
+        List<NarrativeAnchor> pool,
+        ObservationLedger ledger,
+        int locationId,
+        CancellationToken ct,
+        PreviewPart? part)
+    {
+        var sink = part?.NextSegment();
+        try
+        {
+            string? description = null;
+            if (introArea.Descriptions.Count > 0)
+            {
+                var rng = Cathedral.Game.Scene.SceneViewAdapter.DescriptionRng(introArea, locationId);
+                description = introArea.Descriptions[rng.Next(introArea.Descriptions.Count)];
+            }
+
+            var sights = pool.OrderBy(_ => _random.Next())
+                             .Take(IntroductionSightsMax)
+                             .Select(o => GetNeutralPhrase(o, locationId))
+                             .ToList();
+
+            var neutral = NeutralNarration.AreaIntroduction(introArea.ContextDescription, period.Phrase(), description, sights);
+            var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, preview: sink, ct: ct);
+
+            var (keyword, anchor) = MatchIntroductionKeyword(text, pool);
+            var kws = keyword != null ? new List<string> { keyword } : new List<string>();
+            sentences.Add(new NarrationSentence(text, kws, anchor));
+            allKeywords.AddRange(kws);
+            if (anchor != null) ledger.Observe(anchor);
+            Console.WriteLine($"ObservationPhaseController: Area introduction of '{introArea.DisplayName}' " +
+                              (anchor != null ? $"(keyword '{keyword}' → '{anchor.DisplayName}')" : "(no keyword)"));
+            return (text, anchor);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"ObservationPhaseController: Area introduction failed: {ex.Message}");
+            return (null, null);
+        }
+    }
+
+    /// <summary>How many objects the area introduction lists as being around me.</summary>
+    private const int IntroductionSightsMax = 5;
+
+    /// <summary>
+    /// Finds a word of an area introduction that names an object of <paramref name="pool"/> outright —
+    /// its reference lemma, or the head (last word) of its neutral name — and returns that word with
+    /// the object. A draw among all matches, so the same introduction does not always link the same
+    /// thing.
+    ///
+    /// <para>A person matches by the head of their name only, never by lemma: every NPC shares the
+    /// stand-in lemma "body", which would tie any mention of a body to whoever came first.</para>
+    ///
+    /// <para>No match is made when the pool holds a single object. The matched object is retired from
+    /// the block, and retiring the only one would leave the mandatory observation nothing to look at.</para>
+    /// </summary>
+    private (string? Keyword, NarrativeAnchor? Anchor) MatchIntroductionKeyword(string text, List<NarrativeAnchor> pool)
+    {
+        if (pool.Count < 2) return (null, null);
+
+        var words = NounExtractor.ExtractKeywordCandidates(text);
+        var matches = new List<(string Keyword, NarrativeAnchor Anchor)>();
+        foreach (var anchor in pool)
+        {
+            if (anchor is not ObservationObject obs) continue;
+            bool isPerson = anchor is Cathedral.Game.Scene.SyntheticNpcObservationObject;
+            var lemma = isPerson ? "" : obs.ReferenceLemma.Trim();
+            var head  = (obs.NeutralName.Split(' ', StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? "")
+                        .Trim('(', ')', ',', '.', '\'', '"');
+            foreach (var (surface, wordLemma) in words)
+            {
+                bool hit = Same(wordLemma, lemma) || Same(surface, lemma)
+                        || Same(wordLemma, head)  || Same(surface, head);
+                if (hit) { matches.Add((surface, anchor)); break; }
+            }
+        }
+        if (matches.Count == 0) return (null, null);
+        var pick = matches[_random.Next(matches.Count)];
+        return (pick.Keyword, pick.Anchor);
+
+        static bool Same(string a, string b)
+            => b.Length > 0 && a.Equals(b, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
     /// After the first object of a phase has been observed, appends a second and (conditionally) a third
     /// observation, gated on the length of what has been produced so far (thresholds in
     /// <see cref="Config.Narrative"/>):
@@ -397,6 +528,10 @@ public class ObservationPhaseController
     /// nothing more worth attending to, and no third observation is attempted — the persona said it was
     /// done looking. A pool that is merely empty stays silent, as before: that is bookkeeping, not a
     /// thought the character had.</para>
+    ///
+    /// <para>With <paramref name="introText"/> (an area introduction opened the block) the
+    /// introduction takes the first slot: the skip rule and the second observation are dropped, and
+    /// only the conditional last observation remains, gated on the introduction plus the first.</para>
     /// </summary>
     private async Task AppendFollowUpObservationsAsync(
         List<NarrationSentence> sentences,
@@ -412,16 +547,22 @@ public class ObservationPhaseController
         bool isReminescence,
         string? overall,
         string? area,
-        PreviewPart? part)
+        PreviewPart? part,
+        string? introText = null)
     {
+        // An area introduction counts as the first of the three slots: the observation already made
+        // is the second, and the only follow-up left is the conditional last one, gated on the
+        // introduction and that observation together.
+        bool introduced = introText != null;
+
         // A first observation long enough on its own stops the phase here.
-        if ((firstText?.Length ?? 0) > Config.Narrative.ObservationSkipSecondThreshold)
+        if (!introduced && (firstText?.Length ?? 0) > Config.Narrative.ObservationSkipSecondThreshold)
             return;
 
         // Second observation over the still-unobserved objects, reached via a transition.
-        string? secondText = null;
+        string? secondText = introText;
         var remaining = candidates.Where(c => !observed.Contains(c)).ToList();
-        if (remaining.Count > 0)
+        if (!introduced && remaining.Count > 0)
         {
             bool declineOffered = !ledger.IsEmpty;
             var (second, secondThought) = await SelectObservationObjectAsync(slotId, remaining, modusMentis, ledger, locationId, ct, isReminescence, overall, area, part: part);
@@ -542,16 +683,18 @@ public class ObservationPhaseController
     }
 
     /// <summary>
-    /// First observation of a narration phase opened right after a dialogue ended, kept continuous with
-    /// that conversation: the narrator is <paramref name="originObservationModusMentis"/> — the observation
-    /// MM that originated the dialogue's chain of thought — when it is still learned, otherwise a resampled
-    /// one (sensory memory first, like any first observation). The observed object is
-    /// <paramref name="npcOutcome"/> — the NPC that was talked to — with no "what draws you?" selection, and
-    /// it is a single observation regardless of length (no second or third). Follows the same
-    /// rewrite/keyword path as any observation, so a long text still gets two keywords. Returns an empty
-    /// list (so the caller can fall back to the normal phase) when no observation MM is available.
+    /// First observation of a narration phase whose subject was decided for the player: the person a
+    /// dialogue was just held with (kept continuous with that conversation), the one an introduction
+    /// presented, or the one a Meet routine is about. The narrator is
+    /// <paramref name="originObservationModusMentis"/> — for a dialogue, the observation MM that
+    /// originated its chain of thought — when given and still learned, otherwise a resampled one
+    /// (sensory memory first, like any first observation). The observed object is
+    /// <paramref name="npcOutcome"/>, with no "what draws you?" selection, and it is a single observation
+    /// regardless of length (no second or third). Follows the same rewrite/keyword path as any
+    /// observation, so a long text still gets two keywords. Returns an empty list (so the caller can
+    /// fall back to the normal phase) when no observation MM is available.
     /// </summary>
-    public async Task<List<NarrationBlock>> GeneratePostDialogueObservationAsync(
+    public async Task<List<NarrationBlock>> GenerateFocusedObservationAsync(
         NarrativeAnchor npcOutcome,
         ModusMentis? originObservationModusMentis,
         int locationId,
@@ -569,11 +712,11 @@ public class ObservationPhaseController
                 : PickFirstObservationModusMentis(actingMember);
         if (observationModusMentis == null)
         {
-            Console.WriteLine("ObservationPhaseController: No observation modus mentis for post-dialogue observation.");
+            Console.WriteLine("ObservationPhaseController: No observation modus mentis for focused observation.");
             return new List<NarrationBlock>();
         }
 
-        Console.WriteLine($"ObservationPhaseController: Post-dialogue observation of '{npcOutcome.DisplayName}' with {observationModusMentis.DisplayName}");
+        Console.WriteLine($"ObservationPhaseController: Focused observation of '{npcOutcome.DisplayName}' with {observationModusMentis.DisplayName}");
 
         (npcOutcome as INpcContextLabelStampable)?.StampContextLabel(actingMember, _worldContext, locationId);
 
@@ -585,15 +728,15 @@ public class ObservationPhaseController
 
         var part = preview?.BeginAccumulatingPart(PreviewTitles.For(observationModusMentis));
 
-        // Exactly one observation, of the NPC, whatever its length — no follow-up choice. It still goes
-        // on the ledger, so a later request this phase reaches for something other than the person just
-        // spoken to.
+        // Exactly one observation, of the focus, whatever its length — no follow-up choice. It still goes
+        // on the ledger, so a later request this phase reaches for something other than what the phase
+        // opened on.
         await AppendObservationAsync(sentences, allKeywords, slotId, observationModusMentis, npcOutcome, withTransition: false, locationId, ledger, ct, isReminescence: false, innerThought: null, part: part);
 
         if (sentences.Count == 0)
         {
             preview?.Reset();
-            Console.WriteLine("ObservationPhaseController: Post-dialogue observation produced nothing.");
+            Console.WriteLine("ObservationPhaseController: Focused observation produced nothing.");
             return new List<NarrationBlock>();
         }
 
@@ -606,7 +749,7 @@ public class ObservationPhaseController
             SourceObservationType: ObservationType.Focus,
             Sentences: sentences);
 
-        Console.WriteLine($"ObservationPhaseController: Post-dialogue observation complete ({allKeywords.Count} keywords)");
+        Console.WriteLine($"ObservationPhaseController: Focused observation complete ({allKeywords.Count} keywords)");
         var resultBlocks = new List<NarrationBlock> { block };
         FinalizePreview(preview, commit, resultBlocks, part);
         return resultBlocks;
@@ -818,6 +961,9 @@ public class ObservationPhaseController
     /// persona forced to pick from two leftovers it cares nothing for would attend to them out of
     /// character, and it needs a way to say so. Withholding it while the ledger is empty is what keeps
     /// the request that opens a phase from producing a block with no keyword to click.</para>
+    ///
+    /// <para><paramref name="offerDecline"/> false withholds it regardless: the observation after an
+    /// area introduction is mandatory even when the introduction retired an object.</para>
     /// </summary>
     private async Task<PersonaChoice<NarrativeAnchor>> SelectObservationObjectAsync(
         int slotId,
@@ -829,7 +975,8 @@ public class ObservationPhaseController
         bool isReminescence = false,
         string? overallLocation = null,
         string? areaLocation = null,
-        PreviewPart? part = null)
+        PreviewPart? part = null,
+        bool offerDecline = true)
     {
         if (candidates.Count == 0) return new PersonaChoice<NarrativeAnchor>(null, null);
 
@@ -841,7 +988,7 @@ public class ObservationPhaseController
             "What do you want to focus on?", "what they want to focus on");
         // The free reasoning streams into the box as a dimmer inner thought before the observation
         // rewrite. Playground mode never declines (the selector short-circuits to a real option).
-        string? decline = ledger.IsEmpty
+        string? decline = ledger.IsEmpty || !offerDecline
             ? null
             : isReminescence ? "let the recollection go, nothing more is surfacing"
                              : "let your focus go, nothing else here is worth attending to";

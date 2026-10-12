@@ -43,9 +43,6 @@ public class RequestJobTree : DialogueTree
     /// <summary>What succeeding at this conversation teaches: putting yourself forward for work.</summary>
     public override string? GrantedModusMentisId => "enterprise";
 
-    // Success opens the work menu; a routine bakes in that success so replaying opens work directly.
-    public override DialogueRoutineBehavior RoutineBehavior => DialogueRoutineBehavior.IncludeSuccess;
-
 
     /// <summary>
     /// Asking for work is bearing before it is anything else - and before somebody with authority,

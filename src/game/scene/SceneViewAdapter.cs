@@ -367,6 +367,12 @@ public class SyntheticNpcObservationObject : ObservationObject, INpcContextLabel
     /// </summary>
     public NpcEntity? NpcEntity => _npc.Entity as NpcEntity;
 
+    /// <summary>
+    /// The scene NPC behind this observation, named or not — what an opening focus holds, so the
+    /// phase can be opened on whoever it was (see <c>NarrativeController.IsObservationOf</c>).
+    /// </summary>
+    public SceneNpc SceneNpc => _npc;
+
     public SyntheticNpcObservationObject(SceneNpc npc, SceneViewEntry entry)
     {
         _npc        = npc;

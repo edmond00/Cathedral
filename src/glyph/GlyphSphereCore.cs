@@ -63,6 +63,10 @@ namespace Cathedral.Glyph
         
         // Mouse interaction
         int hoveredVertexIndex = -1;
+
+        // The moon under the cursor while the sky is being chosen from, so MoonHovered fires on
+        // change rather than on every mouse move.
+        private int _hoveredMoon = -1;
         int lastHoveredVertexIndex = -2;
         private bool _worldInteractionsEnabled = true;
         private bool _isNarrationMode = false; // Track if in narration/location interaction mode
@@ -138,6 +142,183 @@ namespace Cathedral.Glyph
         {
             _isNarrationMode = isNarration;
         }
+
+        /// <summary>
+        /// Whether the world — the glyph sphere, its opaque backdrop and the clouds over it — is
+        /// drawn at all. False leaves the star sphere alone in the frame.
+        ///
+        /// <para>Not a darkening, which is what <see cref="SetNarrationMode"/> does: the backdrop
+        /// sphere exists precisely to hide the stars behind the world, so a world that is merely dim
+        /// still blocks the sky. The world-selection screen needs the whole sky, and before a world
+        /// has been generated at all there is nothing to draw but an unpainted sphere.</para>
+        /// </summary>
+        public bool WorldRenderEnabled { get; set; } = true;
+
+        /// <summary>
+        /// When true, mouse movement and clicks are tested against the moons in the sky instead of
+        /// the vertices of the world, raising <see cref="MoonHovered"/> and <see cref="MoonClicked"/>.
+        /// Set only by the world-selection screen.
+        /// </summary>
+        public bool SkySelectionEnabled { get; set; } = false;
+
+        /// <summary>Fires with the ordinal of the moon under the cursor, or -1 when none is.</summary>
+        public event Action<int>? MoonHovered;
+
+        /// <summary>
+        /// Fires with the ordinal of a clicked moon, or <b>-1 when the click landed on empty sky</b>.
+        /// The empty case is not nothing: it is how a choice is taken back, the same way clicking off
+        /// a selection dismisses it anywhere else.
+        /// </summary>
+        public event Action<int>? MoonClicked;
+
+        /// <summary>How many moons the sky holds; 0 before the sky renderer has initialised.</summary>
+        public int MoonCount => _skyCloudRenderer?.MoonCount ?? 0;
+
+        /// <summary>The moon currently blanked out of the sky, or -1.</summary>
+        public int HiddenMoon => _skyCloudRenderer?.HiddenMoon ?? -1;
+
+        /// <summary>Lights the moon at <paramref name="ordinal"/> under the cursor; -1 lights none.</summary>
+        public void HighlightMoon(int ordinal) => _skyCloudRenderer?.SetHighlightedMoon(ordinal);
+
+        /// <summary>Marks the moon at <paramref name="ordinal"/> as chosen; -1 chooses none.</summary>
+        public void SelectMoon(int ordinal) => _skyCloudRenderer?.SetSelectedMoon(ordinal);
+
+        /// <summary>Blanks the moon at <paramref name="ordinal"/> out of the sky; -1 blanks none.</summary>
+        public void HideMoon(int ordinal) => _skyCloudRenderer?.SetHiddenMoon(ordinal);
+
+        /// <summary>
+        /// The ordinal of the moon nearest <paramref name="mousePos"/> on screen, or -1 when the
+        /// cursor is not near one.
+        ///
+        /// <para>Screen-space rather than the ray/sphere intersection the world uses: a moon is a
+        /// billboard on a sphere of radius 400 with the camera inside it, so "how far is the cursor
+        /// from it in pixels" is both the cheaper question and the one the player is actually
+        /// asking. The blanked moon is skipped — it is not in the sky to be clicked.</para>
+        /// </summary>
+        public int FindMoonAtScreen(OpenTK.Mathematics.Vector2 mousePos)
+        {
+            if (_skyCloudRenderer == null || ClientSize.X <= 0 || ClientSize.Y <= 0) return -1;
+
+            var view = GetViewMatrix();
+            var proj = Matrix4.CreatePerspectiveFieldOfView(
+                MathHelper.DegreesToRadians(60f), (float)ClientSize.X / ClientSize.Y,
+                Config.GlyphSphere.NearClipPlane, Config.GlyphSphere.FarClipPlane);
+            var viewProj = view * proj;
+
+            float radius = Config.SkyCloud.MoonPickPixelRadius;
+            float bestDist = radius * radius;
+            int best = -1;
+
+            for (int i = 0; i < _skyCloudRenderer.MoonCount; i++)
+            {
+                if (i == _skyCloudRenderer.HiddenMoon) continue;
+
+                var clip = new Vector4(_skyCloudRenderer.MoonPosition(i), 1.0f) * viewProj;
+                if (clip.W <= 0) continue;
+
+                float ndcX = clip.X / clip.W, ndcY = clip.Y / clip.W;
+                if (ndcX < -1 || ndcX > 1 || ndcY < -1 || ndcY > 1) continue;
+
+                float sx = (ndcX + 1.0f) * 0.5f * ClientSize.X;
+                float sy = (1.0f - ndcY) * 0.5f * ClientSize.Y;
+
+                float dx = sx - mousePos.X, dy = sy - mousePos.Y;
+                float d2 = dx * dx + dy * dy;
+                if (d2 < bestDist)
+                {
+                    bestDist = d2;
+                    best = i;
+                }
+            }
+            return best;
+        }
+
+        /// <summary>
+        /// The screen position of a moon, for the CLI: a script drives the selection screen through
+        /// the same hover-then-click path a player does, and needs a pixel to aim at. Returns false
+        /// when the moon is behind the camera or off screen.
+        /// </summary>
+        public bool TryGetMoonScreenPosition(int ordinal, out OpenTK.Mathematics.Vector2 screen)
+        {
+            screen = OpenTK.Mathematics.Vector2.Zero;
+            if (_skyCloudRenderer == null || ordinal < 0 || ordinal >= _skyCloudRenderer.MoonCount) return false;
+            if (ClientSize.X <= 0 || ClientSize.Y <= 0) return false;
+
+            var view = GetViewMatrix();
+            var proj = Matrix4.CreatePerspectiveFieldOfView(
+                MathHelper.DegreesToRadians(60f), (float)ClientSize.X / ClientSize.Y,
+                Config.GlyphSphere.NearClipPlane, Config.GlyphSphere.FarClipPlane);
+            var clip = new Vector4(_skyCloudRenderer.MoonPosition(ordinal), 1.0f) * (view * proj);
+            if (clip.W <= 0) return false;
+
+            float ndcX = clip.X / clip.W, ndcY = clip.Y / clip.W;
+            if (ndcX < -1 || ndcX > 1 || ndcY < -1 || ndcY > 1) return false;
+
+            screen = new OpenTK.Mathematics.Vector2(
+                (ndcX + 1.0f) * 0.5f * ClientSize.X,
+                (1.0f - ndcY) * 0.5f * ClientSize.Y);
+            return true;
+        }
+
+        /// <summary>
+        /// Drives the sky's hover and click at a screen position, for the CLI. Deliberately the same
+        /// two calls <c>OnMouseMove</c> and <c>OnMouseDown</c> make, so a script that picks a moon
+        /// goes through the same picking a player's cursor does rather than around it.
+        /// </summary>
+        public void CliPickSkyAt(OpenTK.Mathematics.Vector2 screen, bool click)
+        {
+            int moon = FindMoonAtScreen(screen);
+            if (moon != _hoveredMoon)
+            {
+                _hoveredMoon = moon;
+                MoonHovered?.Invoke(moon);
+            }
+            if (click) MoonClicked?.Invoke(moon);
+        }
+
+        /// <summary>
+        /// A screen position with no moon near it and no terminal cell owning it, for the CLI's
+        /// "click the empty dark" — the gesture that releases a choice. False when the view is so
+        /// crowded that no such point exists, which the caller should report rather than guess at.
+        /// </summary>
+        public bool TryFindEmptySkyPoint(out OpenTK.Mathematics.Vector2 screen)
+        {
+            screen = OpenTK.Mathematics.Vector2.Zero;
+            if (ClientSize.X <= 0 || ClientSize.Y <= 0) return false;
+
+            // A coarse sweep rather than a search: the sky holds a few hundred moons across a whole
+            // sphere, so almost any point is empty and the first probe nearly always answers.
+            for (int gy = 1; gy < 8; gy++)
+                for (int gx = 1; gx < 8; gx++)
+                {
+                    var p = new OpenTK.Mathematics.Vector2(
+                        ClientSize.X * gx / 8f, ClientSize.Y * gy / 8f);
+                    if (FindMoonAtScreen(p) >= 0) continue;
+                    if (_terminal != null && _terminal.ConsumesMouseAt(p, ClientSize)) continue;
+                    screen = p;
+                    return true;
+                }
+            return false;
+        }
+
+        /// <summary>
+        /// Turns the camera to put the moon at <paramref name="ordinal"/> in front of it. The CLI's
+        /// way of reaching a moon that is behind the player's head, and the same yaw/pitch a player
+        /// would arrive at with the arrow pad.
+        /// </summary>
+        public bool FaceMoon(int ordinal)
+        {
+            if (_skyCloudRenderer == null || ordinal < 0 || ordinal >= _skyCloudRenderer.MoonCount) return false;
+
+            var p = Vector3.Normalize(_skyCloudRenderer.MoonPosition(ordinal));
+
+            // The camera looks from -camDir * distance towards the origin, with camDir built from
+            // yaw/pitch exactly as below — so facing a point means solving that for the point.
+            float pitch = MathHelper.RadiansToDegrees(MathF.Asin(Math.Clamp(p.Y, -1f, 1f)));
+            float yaw   = MathHelper.RadiansToDegrees(MathF.Atan2(p.Z, p.X));
+            _camera.SetCameraParameters(yaw, Math.Clamp(pitch, -85f, 85f), _camera.Distance);
+            return true;
+        }
         
         // Terminal HUD
         private Cathedral.Terminal.TerminalHUD? _terminal;
@@ -159,7 +340,85 @@ namespace Cathedral.Glyph
         /// Gets the popup terminal HUD instance, or null if not initialized
         /// </summary>
         public Cathedral.Terminal.PopupTerminalHUD? PopupTerminal => _popupTerminal;
-        
+
+        // ── Virtual pointer (--record) ────────────────────────────────────────
+
+        /// <summary>
+        /// When true, the operating system's mouse is ignored and only <see cref="InjectPointerMove"/>
+        /// and its siblings move the pointer. Set by <c>--record</c>, whose window is driven by a
+        /// script while the developer keeps using their own mouse on other windows.
+        /// </summary>
+        public bool VirtualPointerOnly { get; set; }
+
+        /// <summary>The injected pointer position, or null when no pointer has been injected yet.</summary>
+        public OpenTK.Mathematics.Vector2? VirtualPointer { get; private set; }
+
+        /// <summary>Where the game believes the pointer is: the injected one under --record, the OS one otherwise.</summary>
+        public OpenTK.Mathematics.Vector2 PointerPosition =>
+            VirtualPointerOnly ? VirtualPointer ?? new OpenTK.Mathematics.Vector2(-1, -1) : MousePosition;
+
+        /// <summary>Moves the virtual pointer, through exactly the path a real mouse move takes.</summary>
+        public void InjectPointerMove(OpenTK.Mathematics.Vector2 position)
+        {
+            VirtualPointer = position;
+            HandlePointerMove(position);
+        }
+
+        /// <summary>Presses a button at the virtual pointer, through exactly the path a real press takes.</summary>
+        public void InjectPointerDown(MouseButton button = MouseButton.Left)
+        {
+            if (VirtualPointer is { } p) HandlePointerDown(p, button);
+        }
+
+        /// <summary>Releases a button, through exactly the path a real release takes.</summary>
+        public void InjectPointerUp(MouseButton button = MouseButton.Left) => HandlePointerUp(button);
+
+        /// <summary>Turns the wheel, through exactly the path a real wheel takes.</summary>
+        public void InjectWheel(float offsetY) => MouseWheelScrolled?.Invoke(offsetY);
+
+        /// <summary>
+        /// Receives every finished frame before it is presented — what <c>--record</c> films. The sink
+        /// names the framebuffer the frame is resolved into, reads it back, and presents it itself.
+        /// </summary>
+        public IFrameSink? FrameSink { get; set; }
+
+        /// <summary>
+        /// The pixel a player would click to pick <paramref name="vertexIndex"/> on the sphere, or false
+        /// when no such pixel exists from this camera angle (behind the globe, off screen, or always
+        /// beaten by a neighbour). Verified with the same picking a click uses, so the pixel returned is
+        /// one that really selects the vertex rather than one that merely projects near it.
+        /// </summary>
+        public bool TryGetClickableVertexPixel(int vertexIndex, out OpenTK.Mathematics.Vector2 screen)
+        {
+            screen = OpenTK.Mathematics.Vector2.Zero;
+            if (vertexIndex < 0 || vertexIndex >= vertices.Count || ClientSize.X <= 0 || ClientSize.Y <= 0) return false;
+
+            var view = GetViewMatrix();
+            var proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60f), (float)ClientSize.X / ClientSize.Y,
+                                                            Config.GlyphSphere.NearClipPlane, Config.GlyphSphere.FarClipPlane);
+            var clip = new Vector4(vertices[vertexIndex].Position, 1.0f) * (view * proj);
+            if (clip.W <= 0) return false;
+            float ndcX = clip.X / clip.W, ndcY = clip.Y / clip.W;
+            if (ndcX < -1 || ndcX > 1 || ndcY < -1 || ndcY > 1) return false;
+            var centre = new OpenTK.Mathematics.Vector2((ndcX + 1.0f) * 0.5f * ClientSize.X, (1.0f - ndcY) * 0.5f * ClientSize.Y);
+
+            // The projected centre usually picks its own vertex; when a neighbour wins it, a small spiral
+            // around it finds the pixel that does not.
+            for (int r = 0; r <= 12; r += 2)
+                for (int k = 0; k < (r == 0 ? 1 : 8); k++)
+                {
+                    float a = k * MathF.PI / 4f;
+                    var p = centre + new OpenTK.Mathematics.Vector2(MathF.Cos(a), MathF.Sin(a)) * r;
+                    if (_terminal != null && _terminal.ConsumesMouseAt(p, ClientSize)) continue;
+                    int hit = FindVertexByMagentaRayIntersection(p);
+                    if (hit == -1) hit = FindClosestVertexInScreenSpace(p);
+                    if (hit != vertexIndex) continue;
+                    screen = p;
+                    return true;
+                }
+            return false;
+        }
+
         /// <summary>
         /// Gets the currently hovered vertex index, or -1 if no vertex is hovered
         /// </summary>
@@ -752,10 +1011,15 @@ namespace Cathedral.Glyph
             if (ClientSize.X > 0 && ClientSize.Y > 0)
             {
                 _postProcess.SetZoom(
-                    MouseState.IsButtonDown(OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Right),
-                    MousePosition.X / ClientSize.X,
-                    1.0f - MousePosition.Y / ClientSize.Y);
+                    !VirtualPointerOnly && MouseState.IsButtonDown(OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Right),
+                    PointerPosition.X / ClientSize.X,
+                    1.0f - PointerPosition.Y / ClientSize.Y);
             }
+
+            // --record: the frame is resolved into the recorder's target instead of the window, so it
+            // can be read back whether or not the window is ever shown. 0 (the window) otherwise.
+            int outputFbo = FrameSink?.BeginFrame(ClientSize.X, ClientSize.Y) ?? 0;
+            _postProcess.OutputFramebuffer = outputFbo;
 
             // Redirect the whole frame into the post-process target (no-op when disabled)
             _postProcess.Begin(ClientSize.X, ClientSize.Y);
@@ -771,14 +1035,20 @@ namespace Cathedral.Glyph
             // Render sky stars first (behind everything)
             _skyCloudRenderer?.RenderSky(view, proj);
 
-            // Render background sphere (opaque backdrop, hides stars behind world)
-            RenderBackgroundSphere(view, proj);
+            // The world and everything that belongs to it. Skipped whole while the sky is being
+            // chosen from, and before a world exists at all — the backdrop sphere is opaque, so
+            // leaving it in would show a blank ball where the stars should be.
+            if (WorldRenderEnabled)
+            {
+                // Render background sphere (opaque backdrop, hides stars behind world)
+                RenderBackgroundSphere(view, proj);
 
-            // Render main sphere
-            RenderGlyphSphere(view, proj);
+                // Render main sphere
+                RenderGlyphSphere(view, proj);
 
-            // Render cloud layer over the world (semi-transparent)
-            _skyCloudRenderer?.RenderClouds(view, proj);
+                // Render cloud layer over the world (semi-transparent)
+                _skyCloudRenderer?.RenderClouds(view, proj);
+            }
 
             // Render debug markers if enabled
             if (debugShowMarkers)
@@ -804,13 +1074,32 @@ namespace Cathedral.Glyph
             // Final shader layer: resolve the offscreen frame to the window (no-op when disabled)
             _postProcess.End(ClientSize.X, ClientSize.Y);
 
+            FrameSink?.EndFrame(ClientSize.X, ClientSize.Y);
+
             SwapBuffers();
         }
+
+        /// <summary>
+        /// A standing request to turn the camera, in degrees per second, from something that is not
+        /// the keyboard — the on-screen arrow pad holds one of these down while its arrow is pressed.
+        ///
+        /// <para>Applied here, in the render loop, rather than by the caller: the game's own update
+        /// runs at 10 Hz, and a camera turned once per update crawls in visible six-degree steps
+        /// while the frame behind it is drawn sixty times a second. The arrow keys have always been
+        /// read here for exactly that reason, and the pad is meant to be the same control.</para>
+        /// </summary>
+        public float CameraTurnYawPerSecond   { get; set; }
+        public float CameraTurnPitchPerSecond { get; set; }
 
         private void HandleInput(FrameEventArgs args)
         {
             // Let camera handle its input first
             bool cameraHandled = _camera.ProcessInput(KeyboardState, args);
+
+            // Then whatever the arrow pad is asking for, at frame rate and in the same units.
+            if (CameraTurnYawPerSecond != 0f || CameraTurnPitchPerSecond != 0f)
+                _camera.Rotate(CameraTurnYawPerSecond   * (float)args.Time,
+                               CameraTurnPitchPerSecond * (float)args.Time);
 
             // Development shortcuts — render debugging and live post-process tuning. Inert in a
             // shipped build (see Config.Debug.DeveloperKeys), where a stray D or F would otherwise
@@ -989,8 +1278,13 @@ namespace Cathedral.Glyph
         protected override void OnMouseMove(MouseMoveEventArgs e)
         {
             base.OnMouseMove(e);
-            
-            var mouse = MousePosition;
+            if (VirtualPointerOnly) return;   // --record: only the injected pointer moves
+            HandlePointerMove(MousePosition);
+        }
+
+        /// <summary>A pointer move, real or injected (<see cref="InjectPointerMove"/>).</summary>
+        private void HandlePointerMove(OpenTK.Mathematics.Vector2 mouse)
+        {
             
             // Update popup terminal position (only if not in fixed mode)
             if (_popupTerminal != null)
@@ -1010,6 +1304,21 @@ namespace Cathedral.Glyph
             debugRayOrigin = rayOrig;
             debugRayDirection = rayDir;
             debugMousePos = mouse;
+
+            // The sky is picked from instead of the world while a world is being chosen. Same rule
+            // about the terminal owning the mouse: the confirmation box and the arrow pad are opaque
+            // and take precedence over whatever moon is behind them.
+            if (SkySelectionEnabled)
+            {
+                bool overTerminal = _terminal != null && _terminal.ConsumesMouseAt(mouse, ClientSize);
+                int newMoon = overTerminal ? -1 : FindMoonAtScreen(mouse);
+                if (newMoon != _hoveredMoon)
+                {
+                    _hoveredMoon = newMoon;
+                    MoonHovered?.Invoke(newMoon);
+                }
+                return;
+            }
 
             // Find hovered vertex (only if mouse is not over an opaque terminal cell
             // and world interactions are enabled). In WorldView the terminal stays
@@ -1044,16 +1353,21 @@ namespace Cathedral.Glyph
         protected override void OnMouseDown(MouseButtonEventArgs e)
         {
             base.OnMouseDown(e);
-            Console.WriteLine($"Mouse button pressed: {e.Button}");
-            
-            var mouse = MousePosition;
+            if (VirtualPointerOnly) return;   // --record: only the injected pointer presses
+            HandlePointerDown(MousePosition, e.Button);
+        }
+
+        /// <summary>A button press, real or injected (<see cref="InjectPointerDown"/>).</summary>
+        private void HandlePointerDown(OpenTK.Mathematics.Vector2 mouse, MouseButton button)
+        {
+            Console.WriteLine($"Mouse button pressed: {button}");
             
             // Check global click handlers first (for UI popups that extend outside terminal bounds)
             if (GlobalMouseClicked != null)
             {
                 foreach (Func<OpenTK.Mathematics.Vector2, MouseButton, bool> handler in GlobalMouseClicked.GetInvocationList())
                 {
-                    if (handler(mouse, e.Button))
+                    if (handler(mouse, button))
                     {
                         Console.WriteLine("Global handler consumed mouse click");
                         return; // A global handler consumed the event
@@ -1062,13 +1376,28 @@ namespace Cathedral.Glyph
             }
             
             // Handle terminal input (HUD takes priority)
-            if (_terminal != null && _terminal.HandleMouseDown(mouse, ClientSize, e.Button))
+            if (_terminal != null && _terminal.HandleMouseDown(mouse, ClientSize, button))
             {
                 Console.WriteLine("Terminal handled mouse click");
                 return; // Terminal handled the event
             }
             
-            if (e.Button == OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Left)
+            // While a world is being chosen there are no world vertices to hit — the sphere is not
+            // even drawn — so the click asks the sky instead.
+            if (button == OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Left
+                && SkySelectionEnabled)
+            {
+                // -1 included: a press on bare sky is a real answer, and the screen reads it as
+                // taking the choice back.
+                int moon = FindMoonAtScreen(mouse);
+                Console.WriteLine(moon >= 0
+                    ? $"Sky selection: moon ordinal {moon} clicked"
+                    : "Sky selection: clicked empty sky");
+                MoonClicked?.Invoke(moon);
+                return;
+            }
+
+            if (button == OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Left)
             {
                 Console.WriteLine("Left mouse button detected - processing 3D interaction");
                 Console.WriteLine($"Mouse position: {mouse}");
@@ -1098,17 +1427,24 @@ namespace Cathedral.Glyph
         protected override void OnMouseUp(MouseButtonEventArgs e)
         {
             base.OnMouseUp(e);
-            
+            if (VirtualPointerOnly) return;
+            HandlePointerUp(e.Button);
+        }
+
+        /// <summary>A button release, real or injected (<see cref="InjectPointerUp"/>).</summary>
+        private void HandlePointerUp(MouseButton button)
+        {
             // Handle terminal input
             if (_terminal != null)
             {
-                _terminal.HandleMouseUp(e.Button);
+                _terminal.HandleMouseUp(button);
             }
         }
 
         protected override void OnMouseWheel(MouseWheelEventArgs e)
         {
             base.OnMouseWheel(e);
+            if (VirtualPointerOnly) return;
             
             // Fire event for scroll handling
             MouseWheelScrolled?.Invoke(e.OffsetY);
@@ -1288,116 +1624,23 @@ namespace Cathedral.Glyph
             Console.WriteLine($"Generated {vertices.Count} vertices with pathfinding noise (seed: {pathfindingSeed})");
         }
 
+        /// <summary>
+        /// Builds the world sphere's vertices from <see cref="IcosphereGeometry"/>. The mesh itself
+        /// lives there so that the background sphere and the headless world audits get the same one.
+        /// </summary>
         private void BuildIcosphere(int subdivisions, float radius)
         {
-            // Create base icosahedron
-            float t = (1.0f + MathF.Sqrt(5.0f)) / 2.0f; // golden ratio
-            float scale = radius / MathF.Sqrt(1 + t * t);
+            var (positions, triangles) = IcosphereGeometry.Build(subdivisions, radius);
 
-            // 12 vertices of icosahedron
-            var baseVertices = new List<Vector3>
-            {
-                new Vector3(-1,  t,  0) * scale,
-                new Vector3( 1,  t,  0) * scale,
-                new Vector3(-1, -t,  0) * scale,
-                new Vector3( 1, -t,  0) * scale,
-                
-                new Vector3( 0, -1,  t) * scale,
-                new Vector3( 0,  1,  t) * scale,
-                new Vector3( 0, -1, -t) * scale,
-                new Vector3( 0,  1, -t) * scale,
-                
-                new Vector3( t,  0, -1) * scale,
-                new Vector3( t,  0,  1) * scale,
-                new Vector3(-t,  0, -1) * scale,
-                new Vector3(-t,  0,  1) * scale
-            };
-
-            // Normalize to sphere surface
-            for (int i = 0; i < baseVertices.Count; i++)
-            {
-                baseVertices[i] = Vector3.Normalize(baseVertices[i]) * radius;
-            }
-
-            // 20 triangular faces of icosahedron
-            var baseIndices = new List<uint>
-            {
-                // 5 faces around point 0
-                0, 11, 5,   0, 5, 1,    0, 1, 7,    0, 7, 10,   0, 10, 11,
-                
-                // 5 adjacent faces
-                1, 5, 9,    5, 11, 4,   11, 10, 2,  10, 7, 6,   7, 1, 8,
-                
-                // 5 faces around point 3
-                3, 9, 4,    3, 4, 2,    3, 2, 6,    3, 6, 8,    3, 8, 9,
-                
-                // 5 adjacent faces
-                4, 9, 5,    2, 4, 11,   6, 2, 10,   8, 6, 7,    9, 8, 1
-            };
-
-            // Start with base icosahedron
-            var currentVertices = new List<Vector3>(baseVertices);
-            var currentIndices = new List<uint>(baseIndices);
-
-            // Subdivide
-            for (int level = 0; level < subdivisions; level++)
-            {
-                var newVertices = new List<Vector3>(currentVertices);
-                var newIndices = new List<uint>();
-                var midPointCache = new Dictionary<(int, int), int>();
-
-                // Process each triangle
-                for (int i = 0; i < currentIndices.Count; i += 3)
-                {
-                    uint i1 = currentIndices[i];
-                    uint i2 = currentIndices[i + 1];
-                    uint i3 = currentIndices[i + 2];
-
-                    // Get midpoints (or create them)
-                    int a = GetMidpoint(i1, i2, currentVertices, newVertices, midPointCache, radius);
-                    int b = GetMidpoint(i2, i3, currentVertices, newVertices, midPointCache, radius);
-                    int c = GetMidpoint(i3, i1, currentVertices, newVertices, midPointCache, radius);
-
-                    // Create 4 new triangles from 1 old triangle
-                    newIndices.AddRange(new uint[] { i1, (uint)a, (uint)c });
-                    newIndices.AddRange(new uint[] { i2, (uint)b, (uint)a });
-                    newIndices.AddRange(new uint[] { i3, (uint)c, (uint)b });
-                    newIndices.AddRange(new uint[] { (uint)a, (uint)b, (uint)c });
-                }
-
-                currentVertices = newVertices;
-                currentIndices = newIndices;
-            }
-
-            // Convert to vertex objects
             vertices.Clear();
             indices.Clear();
 
-            foreach (var pos in currentVertices)
+            foreach (var pos in positions)
             {
                 vertices.Add(new Vertex { Position = pos, GlyphIndex = 0, GlyphChar = Config.GlyphSphere.DefaultGlyph, Noise = 0, Color = Vector4.One, Size = 1.0f });
             }
 
-            indices.AddRange(currentIndices);
-        }
-
-        private int GetMidpoint(uint i1, uint i2, List<Vector3> oldVertices, List<Vector3> newVertices, Dictionary<(int, int), int> cache, float radius)
-        {
-            var key = i1 < i2 ? ((int)i1, (int)i2) : ((int)i2, (int)i1);
-
-            if (cache.TryGetValue(key, out int cachedIndex))
-            {
-                return cachedIndex;
-            }
-
-            Vector3 mid = (oldVertices[(int)i1] + oldVertices[(int)i2]) / 2.0f;
-            mid = Vector3.Normalize(mid) * radius;
-
-            int newIndex = newVertices.Count;
-            newVertices.Add(mid);
-            cache[key] = newIndex;
-
-            return newIndex;
+            indices.AddRange(triangles);
         }
 
         private void BuildBackgroundSphere(int subdivisions, int unused, float radius)
@@ -1428,56 +1671,9 @@ namespace Cathedral.Glyph
 
         private void BuildIcosphereGeometry(int subdivisions, float radius, List<Vector3> outVertices, List<uint> outIndices)
         {
-            // Same as BuildIcosphere but outputs to provided lists
-            float t = (1.0f + MathF.Sqrt(5.0f)) / 2.0f;
-            float scale = radius / MathF.Sqrt(1 + t * t);
-
-            var baseVertices = new List<Vector3>
-            {
-                new Vector3(-1,  t,  0) * scale, new Vector3( 1,  t,  0) * scale,
-                new Vector3(-1, -t,  0) * scale, new Vector3( 1, -t,  0) * scale,
-                new Vector3( 0, -1,  t) * scale, new Vector3( 0,  1,  t) * scale,
-                new Vector3( 0, -1, -t) * scale, new Vector3( 0,  1, -t) * scale,
-                new Vector3( t,  0, -1) * scale, new Vector3( t,  0,  1) * scale,
-                new Vector3(-t,  0, -1) * scale, new Vector3(-t,  0,  1) * scale
-            };
-
-            for (int i = 0; i < baseVertices.Count; i++)
-            {
-                baseVertices[i] = Vector3.Normalize(baseVertices[i]) * radius;
-            }
-
-            var baseIndices = new List<uint>
-            {
-                0, 11, 5,   0, 5, 1,    0, 1, 7,    0, 7, 10,   0, 10, 11,
-                1, 5, 9,    5, 11, 4,   11, 10, 2,  10, 7, 6,   7, 1, 8,
-                3, 9, 4,    3, 4, 2,    3, 2, 6,    3, 6, 8,    3, 8, 9,
-                4, 9, 5,    2, 4, 11,   6, 2, 10,   8, 6, 7,    9, 8, 1
-            };
-
-            var currentVertices = new List<Vector3>(baseVertices);
-            var currentIndices = new List<uint>(baseIndices);
-
-            for (int level = 0; level < subdivisions; level++)
-            {
-                var newVertices = new List<Vector3>(currentVertices);
-                var newIndices = new List<uint>();
-                var midPointCache = new Dictionary<(int, int), int>();
-
-                for (int i = 0; i < currentIndices.Count; i += 3)
-                {
-                    uint i1 = currentIndices[i], i2 = currentIndices[i + 1], i3 = currentIndices[i + 2];
-                    int a = GetMidpoint(i1, i2, currentVertices, newVertices, midPointCache, radius);
-                    int b = GetMidpoint(i2, i3, currentVertices, newVertices, midPointCache, radius);
-                    int c = GetMidpoint(i3, i1, currentVertices, newVertices, midPointCache, radius);
-                    newIndices.AddRange(new uint[] { i1, (uint)a, (uint)c, i2, (uint)b, (uint)a, i3, (uint)c, (uint)b, (uint)a, (uint)b, (uint)c });
-                }
-                currentVertices = newVertices;
-                currentIndices = newIndices;
-            }
-
-            outVertices.AddRange(currentVertices);
-            outIndices.AddRange(currentIndices);
+            var (positions, triangles) = IcosphereGeometry.Build(subdivisions, radius);
+            outVertices.AddRange(positions);
+            outIndices.AddRange(triangles);
         }
 
         private Matrix4 GetViewMatrix()
@@ -2247,7 +2443,14 @@ void main() {
     if (texLuminance > uGlyphCutoff) {
         float colorLuminance = dot(vColor.rgb, vec3(0.299, 0.587, 0.114));
 
-        if (vColor.a > 3.5) {
+        if (vColor.a > 4.5) {
+            // Region overlay - the rgb IS the colour, drawn as given.
+            // Every branch below reduces the vertex colour to a luminance and re-tints it from
+            // this alpha, which is what keeps the map to its three tones. The region view wants
+            // one distinguishable colour per region and cannot be said in three tones, so it is
+            // the one caller that opts out. Only the developer R key sets this.
+            FragColor = vec4(vColor.rgb, 1.0);
+        } else if (vColor.a > 3.5) {
             // Agricultural field - midpoint between grayscale and dark yellow
             float v = mix(0.2, 0.72, colorLuminance);
             FragColor = vec4(mix(colorLuminance, v, 0.5),
@@ -2310,7 +2513,10 @@ void main() {
     if (texLuminance > uGlyphCutoff) {
         float colorLuminance = dot(vColor.rgb, vec3(0.299, 0.587, 0.114));
 
-        if (vColor.a > 3.5) {
+        if (vColor.a > 4.5) {
+            // Region overlay, dimmed - see the note in the undimmed world shader
+            FragColor = vec4(vColor.rgb * uDarkeningFactor, 1.0);
+        } else if (vColor.a > 3.5) {
             // Agricultural field - midpoint between grayscale and dark yellow, dimmed
             float v = mix(0.2, 0.72, colorLuminance) * uDarkeningFactor;
             float L = colorLuminance * uDarkeningFactor;

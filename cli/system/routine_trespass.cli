@@ -1,0 +1,60 @@
+# routine — nothing is learned where the player has no business standing
+#
+# Standing in a private area is trespass: every act there is a crime (Verb.IsIllegal), the narration
+# header says ◆ TRESPASSING ◆, and no routine is learned — one would be a standing invitation back,
+# walked with none of the risk. All three read the one test, PrivacyModel.IsTrespassing.
+#
+# The test location's back room is private, reached from the public hall by an unlocked door. Walk
+# through it and leave from inside: in public ground that would teach a Go to routine; here it must
+# teach nothing.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Hall" --period noon --observe-only "Test Room Door"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# The hall is public.
+expect-state where trespass=no
+expect open ground
+
+strategy succeed
+goal open_door
+advance 12 180
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect-verb open_door
+expect Moved to:
+
+observe none
+click button
+wait 60
+advance 12 180
+
+# The room is not.
+expect-state where Test Room
+expect-state where trespass=yes
+expect TRESPASSING
+
+# The weaver lives in that room, so the footer is RUNAWAY rather than LEAVE — an escape roll, which
+# `strategy succeed` lets through. The visit then ends from inside the room.
+click button
+advance 12 180
+click continue
+advance 12 180
+wait mode WorldView 90
+
+inspect routines
+expect-no-state routines category=goto
+quit

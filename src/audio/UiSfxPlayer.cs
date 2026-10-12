@@ -64,13 +64,35 @@ internal sealed class UiSfxPlayer : IDisposable
         _clickPtr    = _clickHandle.AddrOfPinnedObject();
     }
 
+    // Both ticks go through WinMM rather than the MIDI device, so --silent (which works by opening no
+    // device) never reached them: a hidden test run, or a --record running in the background, ticked on
+    // the developer's speakers at every hover. They answer the flag themselves.
+
     /// <summary>Play a faint hi-hat tick for mouse-over UI feedback.</summary>
     public void PlayHover()
-        => PlaySound(_hoverPtr, nint.Zero, SND_ASYNC | SND_NODEFAULT | SND_MEMORY);
+    {
+        if (Cathedral.Config.Debug.Silent) return;
+        PlaySound(_hoverPtr, nint.Zero, SND_ASYNC | SND_NODEFAULT | SND_MEMORY);
+    }
 
     /// <summary>Play a short digital click for mouse-button UI feedback.</summary>
     public void PlayClick()
-        => PlaySound(_clickPtr, nint.Zero, SND_ASYNC | SND_NODEFAULT | SND_MEMORY);
+    {
+        if (Cathedral.Config.Debug.Silent) return;
+        PlaySound(_clickPtr, nint.Zero, SND_ASYNC | SND_NODEFAULT | SND_MEMORY);
+    }
+
+    /// <summary>
+    /// Writes the two ticks as WAV files (<c>hover.wav</c>, <c>click.wav</c>) — <c>--export-sfx</c>, which
+    /// is where tools/video gets the click it lays under a recording's cursor. The very bytes the game
+    /// plays, so the video's click is the game's click.
+    /// </summary>
+    public static void ExportWavs(string directory)
+    {
+        Directory.CreateDirectory(directory);
+        File.WriteAllBytes(Path.Combine(directory, "hover.wav"), BuildHoverWav());
+        File.WriteAllBytes(Path.Combine(directory, "click.wav"), BuildClickWav());
+    }
 
     // ── PCM generation ────────────────────────────────────────────────────────
 

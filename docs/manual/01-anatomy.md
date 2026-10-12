@@ -135,10 +135,10 @@ value** — which for most is a floor, and for a duration or a price is a ceilin
 
 | Measure | Source | Formula |
 |---|---|---|
-| Noetic Points | encephalon | ⌈(score + 3) ÷ 3⌉, never below 1 |
+| Noetic Points | encephalon | ⌊score ÷ 2⌋ + 1 — an encephalon of 5 is worth 3, the ceiling of 23 is worth 12 |
 | Working Memory | encephalon | score + 2, bounded 1–25 |
 | Countenance | visage | score ÷ 5, in dice — a visage at its ceiling of 22 is worth 4 |
-| Health Points | trunk | ⌈(score + 3) ÷ 3⌉, never below 1 |
+| Health Points | trunk | ⌊score ÷ 3⌋ + 1 |
 | Natural Defence | lower limbs | score ÷ 3, in dice |
 | Max Travel Distance | lower limbs | from 4.0 units at nought to 14.8 at the region's ceiling, linearly |
 
@@ -147,7 +147,7 @@ value** — which for most is a floor, and for a duration or a price is a ceilin
 | Measure | Source | Formula |
 |---|---|---|
 | Residual Memory | anamnesis | score × 4, bounded 1–20 |
-| Routine Queue | anamnesis | score × 10, never below 10 |
+| Routine Slots | anamnesis | score × 4 per kind of routine, never below 4 |
 | Procedural Memory | cerebellum | score × 4, bounded 1–20 |
 | Fight Learning | cerebellum | score, in dice, never below 1 |
 | Semantic Memory | cerebrum | score × 4, bounded 1–20 |
@@ -214,7 +214,7 @@ borne.** A body dies when the count reaches the maximum.
 moment of a visit — by a blow struck in a fight, or by the hurt that a failed act sometimes exacts of
 whoever attempted it — and the mortal one ends the protagonist at the instant it is taken, with no
 phase to be finished first and no return to the map to be waited for. A companion so wounded is lost
-to the party at the same instant, on the terms of [Chapter V §7](05-travel.md#7-companions-and-their-loss).
+to the party at the same instant, on the terms of [Chapter V §9](05-travel.md#9-companions-and-their-loss).
 
 **The exhaustion of the humors is reckoned by the same standing question**, and for the same reason:
 the queues are drawn upon by a bleeding and by every exertion a fight is paid for with, so they may

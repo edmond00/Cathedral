@@ -28,20 +28,11 @@ public static class ItemPickup
     /// Picks <paramref name="item"/>: places it in the acting member's inventory, removes it from its
     /// holding PoI, and records the depletion timestamp (the protagonist's current game time). If the
     /// inventory is full the item is left in the world untouched (pickup is normally pre-gated by the
-    /// coded inventory-capacity rule). During routine virtual replay (<see cref="Scene.IsVirtualReplay"/>)
-    /// nothing real is mutated — the item is only removed from the disposable scene so multi-pick
-    /// routines can validate.
+    /// coded inventory-capacity rule).
     /// </summary>
     public static void Pick(Scene scene, PoV pov, PartyMember actor, ItemElement item, bool includeCorpse = false)
     {
         var poi = FindHoldingPoI(pov, item, includeCorpse);
-
-        // Validation-only during virtual replay: advance the disposable scene, touch nothing real.
-        if (scene.IsVirtualReplay)
-        {
-            poi?.Items.Remove(item);
-            return;
-        }
 
         // Acquire first; if there is no room, drop the item (leave it in the world) rather than lose it.
         if (!actor.AcquireItem(item.Item)) return;

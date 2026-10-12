@@ -111,7 +111,6 @@ public class DialogueViewWindow : Form
             ScrollBars  = RichTextBoxScrollBars.Vertical,
             Text = $"Tree id : {tree.TreeId}\r\n"
                  + $"Verb    : {tree.AssociatedVerbId}\r\n"
-                 + $"Routine : {tree.RoutineBehavior}\r\n"
                  + $"Subject : {tree.Description}\r\n"
                  + $"Success : {string.Join(", ", tree.SuccessOutcomes.Select(o => o.DisplayName))}\r\n"
                  + $"Failure : {string.Join(", ", tree.FailureOutcomes.Select(o => o.DisplayName))}",

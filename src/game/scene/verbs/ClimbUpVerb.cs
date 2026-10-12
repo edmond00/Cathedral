@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Cathedral.Game.Narrative;
-using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Scene.Building;
 
 using Cathedral.Game.Narrative.ModiMentis;
@@ -53,17 +52,4 @@ public class ClimbUpVerb : Verb
         new TibiaFractureLeftWound(),
         new BrokenArmRightWound(),
     };
-
-    // ── Routine recording ─────────────────────────────────────────────────────
-    // Replay skips the climb skill check — a "practised" route is the point of a routine.
-    public override bool CanRecordAsRoutine(Scene scene, PoV pov, Element target, PartyMember actor)
-        => target is CliffPointOfInterest;
-
-    public override RoutineTargetRef? RoutineTarget(Scene scene, PoV pov, Element target)
-        => target is PointOfInterest poi
-            ? new RoutineTargetRef(RoutineTargetKind.PointOfInterest, poi.ReferenceLemma, poi.DisplayName)
-            : null;
-
-    public override RoutinePhaseKind RoutineTriggeredPhase(Scene scene, PoV pov, Element target)
-        => RoutinePhaseKind.Narration;
 }

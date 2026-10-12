@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using OpenTK.Mathematics;
 using Cathedral.Terminal;
 
@@ -13,9 +14,11 @@ public sealed class EncounterPromptRenderer
 {
     private readonly TerminalHUD _terminal;
 
-    // Layout — same width as the death screen
-    private const int BoxW = 44;
-    private const int BoxH = 14;
+    // Layout. Wider than the death screen: the flavour lines run to 45 characters, and the box used
+    // to be 44 with a 40-column inside, so the longer halves ran out over the border. The flavour is
+    // also word-wrapped to the inside and the height follows it, so a new line cannot do that again.
+    private const int BoxW = 52;
+    private int _boxH;
 
     private int _boxX, _boxY;
     private int _btnX, _btnY;
@@ -65,17 +68,21 @@ public sealed class EncounterPromptRenderer
     {
         _terminal.Visible = true;
 
+        int innerW = BoxW - 4;
+        var flavor = Wrap(GetFlavor(creatureType), innerW);
+
+        // title, blank, name, blank, divider, blank, flavour…, blank, biome, button, blank — plus borders
+        _boxH = 12 + flavor.Count;
         _boxX = (_terminal.Width  - BoxW) / 2;
-        _boxY = (_terminal.Height - BoxH) / 2;
+        _boxY = (_terminal.Height - _boxH) / 2;
 
         // Background fill
-        for (int dy = 0; dy < BoxH; dy++)
+        for (int dy = 0; dy < _boxH; dy++)
             for (int dx = 0; dx < BoxW; dx++)
                 _terminal.SetCell(_boxX + dx, _boxY + dy, ' ', BgColor, BgColor);
 
-        DrawBox(_boxX, _boxY, BoxW, BoxH);
+        DrawBox(_boxX, _boxY, BoxW, _boxH);
 
-        int innerW = BoxW - 4;
         int row    = _boxY + 1;
 
         // Title
@@ -90,8 +97,7 @@ public sealed class EncounterPromptRenderer
         DrawCentered(row, new string('─', innerW), DividerColor);
         row += 2;
 
-        // Flavor text (up to two lines split on \n)
-        var flavor = GetFlavor(creatureType).Split('\n');
+        // Flavor text, wrapped to the inside of the box (the authored \n breaks are kept)
         foreach (var line in flavor)
         {
             DrawCentered(row, line, TextColor);
@@ -104,7 +110,7 @@ public sealed class EncounterPromptRenderer
         DrawCentered(row, $"in the {biomeName}", TextColor);
 
         // Engage button — 3 rows above bottom border
-        _btnY = _boxY + BoxH - 3;
+        _btnY = _boxY + _boxH - 3;
         _btnX = _boxX + (BoxW - BtnW) / 2;
 
         bool hover = IsOverEngageButton(_hoverX, _hoverY);
@@ -121,8 +127,37 @@ public sealed class EncounterPromptRenderer
         "bear"    => "With a thunderous roar the creature rears up,\nblocking every path forward.",
         "bandit"  => "An armed figure steps out of hiding,\nweapon drawn and eyes cold.",
         "brigand" => "A hooded figure drops from the branches,\nblade drawn and ready.",
+        "lion"         => "The grass parts and a lion is simply there,\ncloser than the grass could have hidden it.",
+        "hyena"        => "A whooping laugh, then another behind you;\nthe hyena has been following for some time.",
+        "jaguar"       => "Something drops from the branches above\nand lands between you and the way on.",
+        "tiger"        => "A cough in the green, and then the stripes,\nfilling the path from side to side.",
+        "puma"         => "A tawny shape leaps from the rocks above\nand lands crouched across your way.",
+        "snow leopard" => "A patch of snow stands up and becomes a cat,\nits pale eyes fixed on you.",
+        "white bear"   => "A white bear comes over the pressure ridge,\nnose up, and turns toward your scent.",
+        "white wolf"   => "Pale shapes close in out of the blowing snow;\none of them does not stop.",
         _         => "Something dangerous crosses your path,\nblocking the way forward.",
     };
+
+    /// <summary>Word-wraps <paramref name="text"/> to <paramref name="width"/>, keeping its own line breaks.</summary>
+    private static List<string> Wrap(string text, int width)
+    {
+        var lines = new List<string>();
+        foreach (var para in text.Split('\n'))
+        {
+            var line = "";
+            foreach (var word in para.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (line.Length > 0 && line.Length + 1 + word.Length > width)
+                {
+                    lines.Add(line);
+                    line = word;
+                }
+                else line = line.Length == 0 ? word : line + " " + word;
+            }
+            if (line.Length > 0) lines.Add(line);
+        }
+        return lines;
+    }
 
     private static string Capitalize(string s)
         => s.Length == 0 ? s : char.ToUpperInvariant(s[0]) + s[1..];

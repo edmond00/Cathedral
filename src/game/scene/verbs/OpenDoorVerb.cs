@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using Cathedral.Game.Narrative;
-using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Scene.Building;
 
 using Cathedral.Game.Narrative.ModiMentis;
@@ -60,18 +59,4 @@ public class OpenDoorVerb : Verb
         var destination = pov.Where.Id == door.FrontArea.Id ? door.BackArea : door.FrontArea;
         return new[] { new AreaMoveOutcome(destination) };
     }
-
-    // ── Routine recording ─────────────────────────────────────────────────────
-    // Only passing through an already-unlocked door (handled here); forcing a locked door is the
-    // illegal UnlockDoorVerb, which is not recordable.
-    public override bool CanRecordAsRoutine(Scene scene, PoV pov, Element target, PartyMember actor)
-        => target is DoorPointOfInterest;
-
-    public override RoutineTargetRef? RoutineTarget(Scene scene, PoV pov, Element target)
-        => target is PointOfInterest poi
-            ? new RoutineTargetRef(RoutineTargetKind.PointOfInterest, poi.ReferenceLemma, poi.DisplayName)
-            : null;
-
-    public override RoutinePhaseKind RoutineTriggeredPhase(Scene scene, PoV pov, Element target)
-        => RoutinePhaseKind.Narration;
 }

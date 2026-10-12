@@ -99,6 +99,46 @@ public class DiceRollComponent
     /// <summary>True when humor modifiers are active for the current roll.</summary>
     public bool HumorEnabled => _humorEnabled;
 
+    // ── --record: where a player would click ─────────────────────────────────
+
+    /// <summary>The queues in button order, for naming them: paunch, hepar, spleen, pulmones.</summary>
+    public static readonly string[] CliQueueNames = { "paunch", "hepar", "spleen", "pulmones" };
+
+    /// <summary>The humor button of queue <paramref name="queue"/> (button order), once drawn.</summary>
+    public (int X, int Y, int Width)? CliHumorButton(int queue)
+        => _humorEnabled && queue >= 0 && queue < _humorButtons.Length && _humorButtons[queue].Width > 0
+            ? _humorButtons[queue] : null;
+
+    /// <summary>The cell of primary die <paramref name="index"/>, once the roll has settled and been drawn.</summary>
+    public (int X, int Y)? CliDieCell(int index)
+        => index >= 0 && index < _primaryDiceCells.Length ? _primaryDiceCells[index] : null;
+
+    /// <summary>
+    /// The roll as a player reads it: the dice, whether it currently succeeds, the humor budget, and
+    /// each queue's spendable humor with what it does. What <c>dice</c> prints under --record.
+    /// </summary>
+    public IReadOnlyList<string> CliDescribe()
+    {
+        var lines = new List<string>
+        {
+            $"dice [{string.Join(" ", FinalPrimaryValues)}] {(IsCurrentlySuccess ? "SUCCESS" : "failing")}"
+            + (_humorEnabled ? $"  humors spent {_humorApplied}/{_humorLimit}" : "  (no humors on this roll)")
+            + (_selectedQueue >= 0 ? $"  selected={CliQueueNames[_selectedQueue]}" : ""),
+        };
+        if (!_humorEnabled) return lines;
+        var queues = HumorQueuesOrdered();
+        for (int q = 0; q < queues.Length; q++)
+        {
+            var h = queues[q].PeekConsumable();
+            string what = h?.TransmutingVirtue?.Description ?? "unusable";
+            string dice = h?.TransmutingVirtue is { } v
+                ? string.Join(",", FinalPrimaryValues.Select((d, i) => (d, i)).Where(t => v.CanApplyTo(t.d)).Select(t => t.i))
+                : "";
+            lines.Add($"  click humor {CliQueueNames[q]}  {h?.Name ?? "-"}  {what}  applies to dice [{dice}]");
+        }
+        return lines;
+    }
+
     /// <summary>
     /// Live success state, recomputed after every humor modifier
     /// (single: primary sixes ≥ Difficulty; dual: primary sixes &gt; secondary sixes).

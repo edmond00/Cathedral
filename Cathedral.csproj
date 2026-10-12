@@ -28,6 +28,13 @@
     <DefineConstants Condition="'$(Ship)' == 'true'">$(DefineConstants);SHIP</DefineConstants>
 
     <!--
+      Demo builds: the full game with a limited number of runs (DemoLimit, Config.Demo.MaxRuns).
+      package.ps1 -Demo passes -p:Demo=true alongside Ship. Content is identical; only the run
+      allowance, the window title and the menu's demo line differ.
+    -->
+    <DefineConstants Condition="'$(Demo)' == 'true'">$(DefineConstants);DEMO</DefineConstants>
+
+    <!--
       The game is "Proscribed Palimpsest" to a player and "Cathedral" to everyone working on it.
       Only the shipped executable is renamed, deliberately: run_tests.sh guards the suite with
       `Get-Process -Name Cathedral`, and that guard is what stops a leftover run from racing a new

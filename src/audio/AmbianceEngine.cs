@@ -151,7 +151,23 @@ public sealed class AmbianceEngine : IDisposable
 
     // ── Startup / shutdown ───────────────────────────────────────────────────
 
-    /// <summary>Opens MIDI device and starts background loops. Returns true if a device was found.</summary>
+    /// <summary>
+    /// Whether anything is listening to the MIDI this engine sends: a device, or a <see cref="MidiCapture"/>
+    /// (<c>--record</c>, which opens no device so the recording plays nothing aloud).
+    /// </summary>
+    private bool CanSend => _device != null || MidiCapture.IsActive;
+
+    /// <summary>Every event this engine emits, to the device and to the capture when one is running.</summary>
+    private void Send(MidiEvent ev)
+    {
+        MidiCapture.Record(ev);
+        _device?.SendEvent(ev);
+    }
+
+    /// <summary>
+    /// Opens MIDI device and starts background loops. Returns true if anything will hear the music —
+    /// a device, or a <see cref="MidiCapture"/>.
+    /// </summary>
     public bool Start()
     {
         if (_running) return IsDeviceOpen;
@@ -187,7 +203,7 @@ public sealed class AmbianceEngine : IDisposable
         // Pre-warm all SFX patches so the Windows GS synth loads them before the first
         // real interaction.  Sending a zero-velocity NoteOn (effectively silent) forces
         // the patch into memory; the program-change cache then skips the send at runtime.
-        if (_device != null)
+        if (CanSend)
         {
             int sfxCh = ProceduralMidiComposer.SfxChannel;
             foreach (int patch in new[]
@@ -204,7 +220,9 @@ public sealed class AmbianceEngine : IDisposable
             }
         }
 
-        return IsDeviceOpen;
+        // A capture keeps the engine alive with no device: the music is still composed, and written
+        // to a file instead of played (--record).
+        return CanSend;
     }
 
     public void Stop()
@@ -293,7 +311,7 @@ public sealed class AmbianceEngine : IDisposable
         // and no 400 ms cooldown is consumed. MIDI device doesn't even need to be open.
         if (evt == GameEventType.SmallInteraction) { _uiSfx.PlayHover(); return; }
 
-        if (_device == null) return;
+        if (!CanSend) return;
 
         // #10: Cooldown — block music signal overwrite if < 400 ms since last event
         // (SFX and interrupt always fire regardless; only track signal assignment is gated).
@@ -382,7 +400,7 @@ public sealed class AmbianceEngine : IDisposable
     /// <summary>Fires a short sound effect asynchronously on the SFX MIDI channel.</summary>
     public void PlaySoundEffect(SoundEffectType sfx)
     {
-        if (_device == null) return;
+        if (!CanSend) return;
         _ = Task.Run(() => PlaySfxInternal(sfx));
     }
 
@@ -1014,7 +1032,7 @@ public sealed class AmbianceEngine : IDisposable
         finally
         {
             // Silence this channel
-            if (_device != null)
+            if (CanSend)
             {
                 try { SendNoteOff(channel, 0); } catch { /* ignore */ }
             }
@@ -1356,7 +1374,7 @@ public sealed class AmbianceEngine : IDisposable
         if (evt == GameEventType.SmallInteraction) { _uiSfx.PlayHover(); return; }
         if (evt == GameEventType.StrongInteraction) { _uiSfx.PlayClick(); return; }
 
-        if (_device == null) return;
+        if (!CanSend) return;
         int ch = ProceduralMidiComposer.SfxChannel;
 
         switch (evt)
@@ -1423,7 +1441,7 @@ public sealed class AmbianceEngine : IDisposable
 
     private void PlaySfxInternal(SoundEffectType sfx)
     {
-        if (_device == null) return;
+        if (!CanSend) return;
 
         int ch = ProceduralMidiComposer.SfxChannel;
         SendProgramChange(ch, ProceduralMidiComposer.PatchLeadSawtooth);
@@ -1507,7 +1525,7 @@ public sealed class AmbianceEngine : IDisposable
 
     private void SendNoteOn(int ch, int note, int velocity)
     {
-        if (_device == null) return;
+        if (!CanSend) return;
         // Apply the user master volume. Velocity 0 is used as a silent NoteOff
         // equivalent, so leave it untouched; only scale audible notes.
         if (velocity > 0)
@@ -1519,26 +1537,26 @@ public sealed class AmbianceEngine : IDisposable
         {
             var ev = new NoteOnEvent((SevenBitNumber)note, (SevenBitNumber)velocity);
             ev.Channel = (FourBitNumber)ch;
-            _device.SendEvent(ev);
+            Send(ev);
         }
         catch { /* device disconnected */ }
     }
 
     private void SendNoteOff(int ch, int note)
     {
-        if (_device == null) return;
+        if (!CanSend) return;
         try
         {
             var ev = new NoteOffEvent((SevenBitNumber)(note & 0x7F), (SevenBitNumber)0);
             ev.Channel = (FourBitNumber)ch;
-            _device.SendEvent(ev);
+            Send(ev);
         }
         catch { /* device disconnected */ }
     }
 
     private void SendProgramChange(int ch, int patch)
     {
-        if (_device == null) return;
+        if (!CanSend) return;
         // Skip if the channel already has this patch — avoids the ~5-15 ms Windows GS
         // re-load delay that would push note-ons to the next audio cycle.
         if (_channelPatch[ch] == patch) return;
@@ -1547,15 +1565,15 @@ public sealed class AmbianceEngine : IDisposable
         {
             var ev = new ProgramChangeEvent((SevenBitNumber)patch);
             ev.Channel = (FourBitNumber)ch;
-            _device.SendEvent(ev);
+            Send(ev);
         }
         catch { /* device disconnected */ }
     }
 
     private void TurnAllNotesOff()
     {
-        if (_device == null) return;
-        try { _device.TurnAllNotesOff(); } catch { /* ignore */ }
+        if (!CanSend) return;
+        try { _device?.TurnAllNotesOff(); } catch { /* ignore */ }
     }
 
     /// <summary>
@@ -1576,12 +1594,12 @@ public sealed class AmbianceEngine : IDisposable
     /// </summary>
     private void SendCC(int ch, int cc, int value)
     {
-        if (_device == null) return;
+        if (!CanSend) return;
         try
         {
             var ev = new ControlChangeEvent((SevenBitNumber)cc, (SevenBitNumber)Math.Clamp(value, 0, 127));
             ev.Channel = (FourBitNumber)ch;
-            _device.SendEvent(ev);
+            Send(ev);
         }
         catch { /* device disconnected */ }
     }

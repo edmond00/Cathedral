@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using Cathedral.Game.Narrative;
-using Cathedral.Game.Narrative.Routines;
 
 using Cathedral.Game.Narrative.ModiMentis;
 
@@ -46,20 +45,4 @@ public class SitAndWaitVerb : Verb
 
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
         => new Outcome[] { new TimeShiftOutcome(pov.When.Next()) };
-
-    // ── Routine recording ─────────────────────────────────────────────────────
-    // Recordable, but TimeShiftOutcome declares RoutineChainEffect.TimeShift, so the recorder treats
-    // it as repositioning rather than as a piece of work — which is exactly right: waiting until
-    // afternoon is a prefix to whatever the character actually came to do.
-
-    public override bool CanRecordAsRoutine(Scene scene, PoV pov, Element target, PartyMember actor)
-        => target is SitSpotPointOfInterest;
-
-    public override RoutineTargetRef? RoutineTarget(Scene scene, PoV pov, Element target)
-        => target is PointOfInterest poi
-            ? new RoutineTargetRef(RoutineTargetKind.PointOfInterest, poi.ReferenceLemma, poi.DisplayName)
-            : null;
-
-    public override RoutinePhaseKind RoutineTriggeredPhase(Scene scene, PoV pov, Element target)
-        => RoutinePhaseKind.Narration;
 }

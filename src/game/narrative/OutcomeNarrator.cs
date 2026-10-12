@@ -177,7 +177,9 @@ public class OutcomeNarrator
 
     /// <summary>
     /// Narrates a coded-rule refusal (witness present, under threat, …) in the action Modus Mentis's
-    /// voice. <paramref name="reason"/> is the rule's first-person reason phrase.
+    /// voice. <paramref name="reason"/> is the rule's first-person reason phrase;
+    /// <paramref name="neededTool"/>, when set, says the refusal is a missing implement and is
+    /// narrated as one (<see cref="NeutralNarration.ToolRequired"/>).
     /// </summary>
     public async Task<string> NarrateRefusalAsync(
         ParsedNarrativeAction action,
@@ -185,15 +187,22 @@ public class OutcomeNarrator
         string reason,
         PartyMember protagonist,
         CancellationToken cancellationToken = default,
-        ILlmPreviewSink? preview = null)
+        ILlmPreviewSink? preview = null,
+        string? neededTool = null)
     {
-        string neutral = NeutralNarration.ActionImpossible(ActionDisplay(action), reason);
+        string neutral = RefusalNeutral(action, reason, neededTool);
 
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
         return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
             actionModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
             styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
     }
+
+    /// <summary>The neutral sentence a refusal is re-voiced from — also the fallback shown when it cannot be.</summary>
+    public static string RefusalNeutral(ParsedNarrativeAction action, string reason, string? neededTool)
+        => neededTool != null
+            ? NeutralNarration.ToolRequired(ActionDisplay(action), neededTool)
+            : NeutralNarration.ActionImpossible(ActionDisplay(action), reason);
 
     /// <summary>
     /// Narrates a modus mentis the body can no longer carry, in that modus mentis's own voice —

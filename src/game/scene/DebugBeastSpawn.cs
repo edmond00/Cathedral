@@ -36,6 +36,18 @@ public static class DebugBeastSpawn
             ["fox"]        = () => new FoxArchetype(),
             ["cat"]        = () => new StrayCatArchetype(),
             ["stray cat"]  = () => new StrayCatArchetype(),
+            ["lion"]         = () => new LionArchetype(),
+            ["hyena"]        = () => new HyenaArchetype(),
+            ["jaguar"]       = () => new JaguarArchetype(),
+            ["tiger"]        = () => new TigerArchetype(),
+            ["puma"]         = () => new PumaArchetype(),
+            ["warthog"]      = () => new WarthogArchetype(),
+            ["snow leopard"] = () => new SnowLeopardArchetype(),
+            ["snow_leopard"] = () => new SnowLeopardArchetype(),
+            ["white bear"]   = () => new WhiteBearArchetype(),
+            ["white_bear"]   = () => new WhiteBearArchetype(),
+            ["white wolf"]   = () => new WhiteWolfArchetype(),
+            ["white_wolf"]   = () => new WhiteWolfArchetype(),
         };
 
     /// <summary>

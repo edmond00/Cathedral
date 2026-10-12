@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Cathedral.Game.Narrative.Routines;
 
 namespace Cathedral.Game.Narrative;
 
@@ -20,11 +19,6 @@ namespace Cathedral.Game.Narrative;
 /// than from a hand-written severity, so a humor added later is coloured correctly without anyone
 /// remembering to say so. Zero heat reads Neutral — no mind state has zero today, but Phlegm does,
 /// and the rule should not depend on that staying true.</para>
-///
-/// <para><see cref="RoutineChainEffect"/> is deliberately <c>None</c>. An emotion moves neither the
-/// point of view nor the clock, so a routine recorded around one is still valid — and a routine
-/// REPLAY does not raise emotions at all (there is no narration there to carry the text), which is
-/// why nothing here needs to survive one.</para>
 /// </summary>
 public sealed class EmotionOutcome : Outcome
 {
@@ -77,6 +71,4 @@ public sealed class EmotionOutcome : Outcome
         for (int i = 0; i < Count; i++)
             member.HumorQueues.ProduceHumor(TargetOrganId, _factory());
     }
-
-    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.None;
 }

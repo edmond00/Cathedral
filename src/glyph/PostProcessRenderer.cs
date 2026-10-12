@@ -289,12 +289,18 @@ namespace Cathedral.Glyph
             return true;
         }
 
+        /// <summary>
+        /// Where <see cref="End"/> resolves the frame: 0 is the window. <c>--record</c> points it at
+        /// the recorder's own target, which reads the finished frame back and presents it itself.
+        /// </summary>
+        public int OutputFramebuffer { get; set; }
+
         /// <summary>Resolves the offscreen frame to the window through the dither shader.</summary>
         public void End(int width, int height)
         {
             if (!PassActive || width <= 0 || height <= 0) return;
 
-            GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, OutputFramebuffer);
             GL.Viewport(0, 0, width, height);
 
             // The blit owns every pixel; depth and blending would only interfere.

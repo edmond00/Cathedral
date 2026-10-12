@@ -29,9 +29,10 @@ goes, and what it does when it arrives.
 
 **The World**
 
-5. [Travel](05-travel.md) — the sphere and its cells; the compass of a body's stride; the price of a
-   crossing in days, in heat and in hazard; the calendar and the periods of the day; the party a
-   heart sustains, and the three ways it is lost.
+5. [Travel](05-travel.md) — the choosing of a world out of the moons and the disposition it is
+   composed after; the sphere and its cells; the compass of a body's stride; the price of a crossing
+   in days, in heat and in hazard; the calendar and the periods of the day; the party a heart
+   sustains, and the three ways it is lost.
 
 **The Conduct of a Visit**
 
@@ -43,8 +44,8 @@ goes, and what it does when it arrives.
 8. [Combat](08-fighting.md) — the turn and its cinetic points; mediums and the skills they bear; the
    blow that opens a fight; the attack and defence pools; wounds, status, terrain and flight; the two
    ways to fall and what decides the field.
-9. [Routines](09-routines.md) — what a session leaves behind, and how it is walked again without
-   being lived again.
+9. [Routines](09-routines.md) — the ways into a place the body already knows: the six kinds, where
+   none is learned, what each requires, the gathering stay, and the slots that hold them.
 
 ## A note on numbers
 

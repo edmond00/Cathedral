@@ -14,6 +14,7 @@ using Cathedral.LLM;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Items;
 using Cathedral.Game.Narrative.ModiMentis;
+using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Narrative.Sanitizer;
 using Cathedral.Game.Npc;
 using Cathedral.Game.Scene;
@@ -52,8 +53,17 @@ public class LocationTravelGameController : IDisposable
     private FightModeAdapter? _fightAdapter = null;
     private DialogueTreeAdapter? _dialogueAdapter = null;
     private TradeMenuAdapter? _tradeAdapter = null;
+
+    /// <summary>
+    /// True while the open trade menu was entered from a Buy or Sell routine rather than from a
+    /// conversation. Such a trade was the whole of the visit — the routine skipped the way there — so
+    /// closing it returns to the world map, as a work stint and a gathering stay do, instead of
+    /// dropping the player into a narration they never began.
+    /// </summary>
+    private bool _tradeFromRoutine;
     private WorkMenuAdapter?  _workAdapter  = null;
-    
+    private GatherMenuAdapter? _gatherAdapter = null;
+
     // LLM loading screen
     private LLMLoadingRenderer? _llmLoadingRenderer;
     private volatile bool _llmBecameReady = false;
@@ -65,6 +75,19 @@ public class LocationTravelGameController : IDisposable
     private MainMenuRenderer? _mainMenuRenderer;
     private SettingsMenuRenderer? _settingsMenuRenderer;
     private bool _hasGameStarted = false;
+
+    // World selection — the sky a new run picks its world out of.
+    private WorldSelectionRenderer? _worldSelectionRenderer;
+    /// <summary>Ordinal of the moon the player has clicked and not yet confirmed, or -1.</summary>
+    private int _selectedMoon = -1;
+    /// <summary>Ordinal of the moon under the cursor, or -1. Purely for the box's preview line.</summary>
+    private int _hoveredMoon = -1;
+
+    // The four on-screen camera arrows, shared by the world map and the world-selection sky. One
+    // instance: only one of those two modes is ever on screen, and the pad has no per-mode state.
+    private CameraArrowPad? _cameraArrowPad;
+    /// <summary>The arrow being held down with the mouse, turning the camera every frame.</summary>
+    private CameraArrow _heldArrow = CameraArrow.None;
     
     // Protagonist creation
     private ProtagonistCreationRenderer? _protagonistCreationRenderer;
@@ -80,12 +103,9 @@ public class LocationTravelGameController : IDisposable
     // Old-age notice shown at the start of WorldView when companions have outlived their lifetime.
     private CompanionDeathBox? _companionDeathBox;
 
-    // Routine replay: list box (travel UI), outcome box (after replay), engine and pending state.
+    // Routines: the list box on the travel plan, and the routine to enter once the trip arrives.
     private TravelRoutinesBox? _travelRoutinesBox;
-    private RoutineOutcomeBox? _routineOutcomeBox;
-    private readonly Cathedral.Game.Narrative.Routines.RoutineReplayEngine _routineReplayEngine = new();
     private Cathedral.Game.Narrative.Routines.Routine? _pendingReplayRoutine;
-    private Cathedral.Game.Narrative.PhaseTransition? _replayFinalTransition;
 
     // Game state
     private GameMode _currentMode;
@@ -95,7 +115,7 @@ public class LocationTravelGameController : IDisposable
     /// <summary>
     /// The last location the player was actually inside, kept after they leave it (unlike
     /// <see cref="_currentLocationVertex"/>, which resets to -1). Exists for the CLI's
-    /// <c>travel back</c>: a round trip is the only way to reach routine replay, and a script cannot
+    /// <c>travel back</c>: a round trip is the only way to walk a routine, and a script cannot
     /// name the vertex it started on — it is whatever the seed put under the avatar.
     /// </summary>
     private int _lastLocationVertex = -1;
@@ -158,6 +178,16 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     private int _pendingArrivalVertex = -1;
 
+    /// <summary>
+    /// The vertex the avatar stood on before its latest step — where a flight from an encounter on
+    /// that step goes back to. Set at the start of every journey and moved on with every step.
+    /// </summary>
+    private int _stepOriginVertex = -1;
+    private int _avatarVertexBeforeStep = -1;
+
+    /// <summary>Where the latest journey set out from — for <c>inspect avatar</c>.</summary>
+    private int _tripOriginVertex = -1;
+
     // Maps BiomeTravelDatabase creature names to the archetype that spawns them.
     // Creature names without a fight-capable archetype (e.g. "blizzard") are absent and skipped.
     private static readonly Dictionary<string, Func<Cathedral.Game.Npc.NamedNpcArchetype>> TravelEncounterArchetypes = new()
@@ -166,6 +196,14 @@ public class LocationTravelGameController : IDisposable
         ["bear"]    = () => new Cathedral.Game.Npc.Archetypes.BearArchetype(),
         ["bandit"]  = () => new Cathedral.Game.Npc.Archetypes.SavageArchetype(),
         ["brigand"] = () => new Cathedral.Game.Npc.Archetypes.SavageArchetype(),
+        ["lion"]         = () => new Cathedral.Game.Npc.Archetypes.LionArchetype(),
+        ["hyena"]        = () => new Cathedral.Game.Npc.Archetypes.HyenaArchetype(),
+        ["jaguar"]       = () => new Cathedral.Game.Npc.Archetypes.JaguarArchetype(),
+        ["tiger"]        = () => new Cathedral.Game.Npc.Archetypes.TigerArchetype(),
+        ["puma"]         = () => new Cathedral.Game.Npc.Archetypes.PumaArchetype(),
+        ["snow leopard"] = () => new Cathedral.Game.Npc.Archetypes.SnowLeopardArchetype(),
+        ["white bear"]   = () => new Cathedral.Game.Npc.Archetypes.WhiteBearArchetype(),
+        ["white wolf"]   = () => new Cathedral.Game.Npc.Archetypes.WhiteWolfArchetype(),
     };
 
     // Death screen
@@ -226,6 +264,7 @@ public class LocationTravelGameController : IDisposable
         _fightAdapter != null    ? GameMode.Fighting
         : _dialogueAdapter != null ? GameMode.Dialogue
         : _workAdapter != null   ? GameMode.Working
+        : _gatherAdapter != null ? GameMode.Gathering
         : _tradeAdapter != null  ? GameMode.Trading
         // Narration covers THREE phases — exploration, childhood and get-up — all of which run on
         // one _narrativeController with _isInNarrativeMode set. Returning a flat LocationInteraction
@@ -265,6 +304,66 @@ public class LocationTravelGameController : IDisposable
 
     /// <summary>The terminal the CLI dumps as text.</summary>
     public TerminalHUD? CliTerminal => _core.Terminal;
+
+    /// <summary>The window, for <c>--record</c>: it injects its pointer here and projects targets to pixels.</summary>
+    public GlyphSphereCore CliCore => _core;
+
+    /// <summary>
+    /// The first cell the current screen's own hover rule names <paramref name="elementId"/>
+    /// (<c>travel-button</c>, <c>world-confirm</c>, <c>death-end-run</c>, <c>encounter-engage</c>,
+    /// <c>menu:2</c>…), or null. What <c>--record</c> aims at for a button it has no region for: the
+    /// same rule that lights the button decides where it is.
+    /// </summary>
+    public (int X, int Y)? CliFindElementCell(string elementId)
+    {
+        (int X, int Y)? first = null, last = null;
+        for (int y = 0; y < Config.Terminal.MainHeight; y++)
+        {
+            for (int x = 0; x < Config.Terminal.MainWidth; x++)
+            {
+                if (CliElementIdAt(x, y) != elementId) continue;
+                first ??= (x, y);
+                if (y == first.Value.Y) last = (x, y);
+            }
+            if (first != null) break;
+        }
+        return first is { } f && last is { } l ? ((f.X + l.X) / 2, f.Y) : null;
+    }
+
+    /// <summary>
+    /// What the current screen names the control at cell (x, y), or null: its hover rule, or — for the
+    /// protagonist screen, which keeps its hover sounds to itself — that screen's own hit-test.
+    /// </summary>
+    public string? CliElementIdAt(int x, int y) => _currentMode == GameMode.ProtagonistManagement
+        ? _managementMenuRenderer?.CliControlIdAt(x, y)
+        : GetHoverElementId(x, y);
+
+    /// <summary>Every distinct control id on screen now, top to bottom — what `elements` lists.</summary>
+    public IReadOnlyList<string> CliElementIds()
+    {
+        var seen = new List<string>();
+        for (int y = 0; y < Config.Terminal.MainHeight; y++)
+            for (int x = 0; x < Config.Terminal.MainWidth; x++)
+                if (CliElementIdAt(x, y) is { } id && !seen.Contains(id)) seen.Add(id);
+        return seen;
+    }
+
+    /// <summary>The on-screen cell of a camera arrow, or null when the pad is not drawn in this mode.</summary>
+    public (int X, int Y)? CliCameraArrowCell(CameraArrow arrow)
+    {
+        if (!CameraPadActive || _cameraArrowPad == null) return null;
+        var (x, y) = _cameraArrowPad.CellFor(arrow);
+        return x < 0 ? null : (x, y);
+    }
+
+    /// <summary>Whichever dice box is on screen — narration, conversation or fight — or null.</summary>
+    public DiceRollComponent? CliActiveDice =>
+        _currentMode == GameMode.Fighting ? _fightAdapter?.CliDice
+        : _currentMode == GameMode.Dialogue ? _dialogueAdapter?.Controller?.CliDice
+        : _narrativeController?.CliDice;
+
+    /// <summary>The companion-death notice's CONTINUE, when the notice is up.</summary>
+    public (int X, int Y)? CliCompanionDeathCell => _companionDeathBox?.ContinueButtonCell;
 
     /// <summary>The live narration controller, or null outside a narration session.</summary>
     public NarrativeController? CliNarration => _narrativeController;
@@ -482,6 +581,109 @@ public class LocationTravelGameController : IDisposable
         => _currentMode == GameMode.MainMenu ? _mainMenuRenderer?.CliButtons() : null;
 
     /// <summary>
+    /// The world-selection screen's two buttons with their cells, or null when that screen is not up.
+    /// Same shape as <see cref="CliMenuButtons"/>, so <c>regions</c> can print them the same way.
+    /// </summary>
+    public IReadOnlyList<(string Label, bool Enabled, int X, int Y)>? CliWorldSelectionButtons()
+    {
+        if (_currentMode != GameMode.WorldSelection || _worldSelectionRenderer == null) return null;
+
+        var (cx, cy) = _worldSelectionRenderer.ConfirmCell();
+        var (kx, ky) = _worldSelectionRenderer.CancelCell();
+        return new List<(string, bool, int, int)>
+        {
+            ("Confirm", _worldSelectionRenderer.ConfirmEnabled, cx, cy),
+            ("Cancel",  true,                                   kx, ky),
+        };
+    }
+
+    /// <summary>How many moons the sky holds, and which one is selected. For <c>regions</c>.</summary>
+    public (int Count, int Selected, int Hovered) CliMoonState()
+        => (_core.MoonCount, _selectedMoon, _hoveredMoon);
+
+    /// <summary>
+    /// Picks a moon by ordinal from a script: turns the camera onto it, then hovers and clicks it
+    /// through the real sky picking. Returns an error string, or null on success.
+    ///
+    /// <para>The camera move is not a shortcut around the picking — it is the arrow pad's job done in
+    /// one step. A moon on the far side of the sky is genuinely not clickable until the sky has been
+    /// turned, and a script that clicked one anyway would be testing a path no player has.</para>
+    /// </summary>
+    public string? CliSelectMoon(int ordinal)
+    {
+        if (_currentMode != GameMode.WorldSelection) return "not on the world-selection screen";
+        if (ordinal < 0 || ordinal >= _core.MoonCount)
+            return $"no moon with ordinal {ordinal} (the sky holds {_core.MoonCount})";
+        if (ordinal == _core.HiddenMoon) return $"moon {ordinal} is the world you are already in";
+
+        if (!_core.FaceMoon(ordinal)) return $"could not turn the sky towards moon {ordinal}";
+        if (!_core.TryGetMoonScreenPosition(ordinal, out var screen))
+            return $"moon {ordinal} is not on screen even after turning towards it";
+
+        _core.CliPickSkyAt(screen, click: false);
+        _core.CliPickSkyAt(screen, click: true);
+        return _selectedMoon == ordinal ? null : $"the click landed on moon {_selectedMoon}, not {ordinal}";
+    }
+
+    /// <summary>
+    /// Moves the cursor onto a moon without pressing, from a script. The hover and the choice are
+    /// separate states with separate looks, and this is the only way to drive one without the other
+    /// — which is what makes "a choice survives pointing at something else" assertable.
+    /// </summary>
+    public string? CliPointAtMoon(int ordinal)
+    {
+        if (_currentMode != GameMode.WorldSelection) return "not on the world-selection screen";
+        if (ordinal < 0 || ordinal >= _core.MoonCount)
+            return $"no moon with ordinal {ordinal} (the sky holds {_core.MoonCount})";
+
+        if (!_core.FaceMoon(ordinal)) return $"could not turn the sky towards moon {ordinal}";
+        if (!_core.TryGetMoonScreenPosition(ordinal, out var screen))
+            return $"moon {ordinal} is not on screen even after turning towards it";
+
+        _core.CliPickSkyAt(screen, click: false);
+        return _hoveredMoon == ordinal ? null : $"the cursor landed on moon {_hoveredMoon}, not {ordinal}";
+    }
+
+    /// <summary>
+    /// Presses a patch of empty sky, which releases the chosen moon without leaving the screen.
+    /// Returns an error string, or null on success.
+    /// </summary>
+    public string? CliClickEmptySky()
+    {
+        if (_currentMode != GameMode.WorldSelection) return "not on the world-selection screen";
+        if (!_core.TryFindEmptySkyPoint(out var screen)) return "found no empty patch of sky to press";
+
+        _core.CliPickSkyAt(screen, click: true);
+        return _selectedMoon < 0 ? null : $"moon {_selectedMoon} is still chosen";
+    }
+
+    /// <summary>
+    /// Presses one of the four camera arrows from a script, through the same cell click a player
+    /// makes. Returns an error string, or null on success.
+    /// </summary>
+    public string? CliPressCameraArrow(CameraArrow arrow)
+    {
+        if (!CameraPadActive) return "the camera arrows are not on screen in this mode";
+
+        var (x, y) = _cameraArrowPad!.CellFor(arrow);
+        if (x < 0) return $"no cell for the {arrow} arrow";
+
+        CliHoverCell(x, y);
+        CliClickCell(x, y);
+
+        // A scripted press is a tap: nothing is still held down, so the standing rate the pad hands
+        // the render loop has to be put back at once. Left standing it would turn the camera for the
+        // rest of the run.
+        _heldArrow = CameraArrow.None;
+        _core.CameraTurnYawPerSecond   = 0f;
+        _core.CameraTurnPitchPerSecond = 0f;
+        return null;
+    }
+
+    /// <summary>The camera's current facing, so a script can prove an arrow actually turned it.</summary>
+    public (float Yaw, float Pitch) CliCameraFacing() => (_core.Camera.Yaw, _core.Camera.Pitch);
+
+    /// <summary>
     /// Opens the protagonist-management screen (anatomy / inventory / memory tabs) from wherever the
     /// game currently is, and closes it again on the second call.
     ///
@@ -513,6 +715,11 @@ public class LocationTravelGameController : IDisposable
     public bool CliSelectManagementTab(string tabName) =>
         _currentMode == GameMode.ProtagonistManagement
         && _managementMenuRenderer?.CliSelectTab(tabName) == true;
+
+    /// <summary>Shows one kind's slots on the Routines tab (goto, meet, gather, buy, sell, work).</summary>
+    public bool CliSelectRoutineCategory(string kind) =>
+        _currentMode == GameMode.ProtagonistManagement
+        && _managementMenuRenderer?.CliSelectRoutineCategory(kind) == true;
 
     /// <summary>Tab labels available on the management screen, or empty when it is closed.</summary>
     public IReadOnlyList<string> CliManagementTabs =>
@@ -549,9 +756,29 @@ public class LocationTravelGameController : IDisposable
     /// True when the game is settled: no LLM generation in flight, no travel animation running and
     /// no dice mid-roll. The CLI <c>wait</c> command blocks on this.
     /// </summary>
+    /// <summary>
+    /// True while the game is waiting on the language model — the loading screen, or narration or a
+    /// conversation generating. Narrower than <see cref="CliIsIdle"/>: dice, travel and fight animations
+    /// are not counted. <c>--record</c> logs these spans so a cut can fast-forward through them.
+    /// </summary>
+    public bool CliModelBusy()
+    {
+        if (_currentMode == GameMode.LLMLoading) return true;
+        if (_currentMode == GameMode.Dialogue)
+        {
+            var dlg = _dialogueAdapter?.Controller;
+            return _dialogueAdapter != null && (dlg == null || dlg.CliSnapshot().Loading);
+        }
+        return _narrativeController != null && _narrativeController.CliSnapshot().AnyLoading;
+    }
+
     public bool CliIsIdle()
     {
         if (_currentMode == GameMode.Traveling) return false;
+
+        // A moon's history being built for the viewer is work in flight: `wait` must outlast it, or
+        // `inspect world-preview` reads state=building.
+        if (_currentMode == GameMode.WorldSelection && _previewTask is { IsCompleted: false }) return false;
 
         // Fight mode has its own self-advancing phases (dice, movement, the vital-heat box). A
         // script that acted and dumped immediately would otherwise read a half-resolved turn.
@@ -673,6 +900,10 @@ public class LocationTravelGameController : IDisposable
         // Wire up global mouse click handler for popup interactions
         _core.GlobalMouseClicked += OnGlobalMouseClicked;
 
+        // The sky's own hover and click, raised only while the core is in sky-selection mode.
+        _core.MoonHovered += OnMoonHovered;
+        _core.MoonClicked += OnMoonClicked;
+
         // Travel planning: install the land travel constraint (forbids sea/ocean) on
         // the microworld interface so pathfinding skips impassable cells, and stand up
         // the waypoint queue + bottom UI.
@@ -685,7 +916,10 @@ public class LocationTravelGameController : IDisposable
         // Initialize terminal UI (if terminal is available)
         InitializeTerminalUI();
         if (_core.Terminal != null)
+        {
             _travelInfoRenderer = new TravelInfoRenderer(_core.Terminal);
+            _cameraArrowPad     = new CameraArrowPad(_core.Terminal);
+        }
         
         // Show main menu on startup
         SetMode(GameMode.MainMenu);
@@ -787,6 +1021,23 @@ public class LocationTravelGameController : IDisposable
             _ambianceEngine.SetActiveTrackCount(trackCount);
         }
 
+        // The camera arrows turn the camera for as long as one is held down, in either of the two
+        // modes that draw them. Before the mode dispatch below, which returns early all over.
+        UpdateCameraPad(deltaTime);
+
+        // World selection: repaint the box every frame so the hover preview and the button
+        // highlights follow the cursor, exactly as the travel box does on the world map.
+        if (_currentMode == GameMode.WorldSelection)
+        {
+            if (_worldSelectionRenderer != null)
+            {
+                _worldSelectionRenderer.Draw(_selectedMoon, _hoveredMoon, _core.MoonCount, MoonHistorySummaryFor(_selectedMoon));
+                _cameraArrowPad?.Draw();
+            }
+            UpdatePopupTerminal();
+            return;
+        }
+
         // Update protagonist creation blink animation
         if (_currentMode == GameMode.ProtagonistCreation && _protagonistCreationRenderer != null)
         {
@@ -860,6 +1111,14 @@ public class LocationTravelGameController : IDisposable
                 {
                     OnWorkCompleted();
                 }
+                return;
+            }
+
+            if (_currentMode == GameMode.Gathering && _gatherAdapter != null)
+            {
+                _gatherAdapter.Update();
+                if (_gatherAdapter.HasRequestedExit)
+                    OnGatherCompleted();
                 return;
             }
 
@@ -946,13 +1205,7 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
-        // Routine outcome box (after a replay) and routine list box (from travel UI) are modal.
-        if (_currentMode == GameMode.WorldView && _routineOutcomeBox != null)
-        {
-            _routineOutcomeBox.Render();
-            UpdatePopupTerminal();
-            return;
-        }
+        // The routine list box (from the travel UI) is modal.
         if (_currentMode == GameMode.WorldView && _travelRoutinesBox != null)
         {
             _travelRoutinesBox.Render();
@@ -1052,6 +1305,7 @@ public class LocationTravelGameController : IDisposable
         if (_core.Terminal == null) return;
 
         string? destinationName = null;
+        string? destinationRegion = null, destinationRealm = null;
         bool routinesAvailable = false;
         if (_travelPlanner.HasWaypoints)
         {
@@ -1059,7 +1313,12 @@ public class LocationTravelGameController : IDisposable
             destinationName = GetLocationNameAtVertex(destVertex);
             routinesAvailable = _protagonist != null
                 && _protagonist.RecordedRoutines.Any(r => r.LocationId == destVertex);
+            (destinationRegion, destinationRealm) = RegionAndRealmAt(destVertex);
         }
+
+        // The arrow pad, drawn before the travel box so that if the two ever overlapped the box —
+        // the one carrying the decision — would win.
+        if (CameraPadActive) _cameraArrowPad!.Draw();
 
         _travelInfoRenderer.Erase();
         _travelInfoRenderer.Draw(
@@ -1067,9 +1326,24 @@ public class LocationTravelGameController : IDisposable
             maxWaypoints: _travelPlanner.MaxWaypoints,
             estimate: _plannedEstimate,
             destinationName: destinationName,
+            destinationRegion: destinationRegion,
+            destinationRealm: destinationRealm,
             routinesAvailable: routinesAvailable,
             // An overloaded member grounds the whole party until something is put down.
             overloadWarning: _protagonist?.TravelWeightBlocker);
+    }
+
+    /// <summary>
+    /// The region a vertex lies in and the realm that holds it today, by the names the world's history
+    /// gives them: what the travel box says about where a journey ends. Water, or no world yet: nulls.
+    /// "unclaimed" for land no realm holds.
+    /// </summary>
+    private (string? Region, string? Realm) RegionAndRealmAt(int vertex)
+    {
+        var history = _interface.History;
+        int region = _interface.Regions?.RegionAt(vertex) ?? -1;
+        if (history == null || region < 0 || region >= history.RegionNames.Length) return (null, null);
+        return (history.RegionNames[region], history.OwnerOf(region)?.Name ?? "unclaimed");
     }
 
     /// <summary>
@@ -1224,21 +1498,6 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
-        // Routine outcome box is modal: CONTINUE applies the replay's final phase transition.
-        if (_currentMode == GameMode.WorldView && _routineOutcomeBox != null)
-        {
-            if (_routineOutcomeBox.OnMouseClick(x, y))
-            {
-                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
-                var transition = _replayFinalTransition ?? Cathedral.Game.Narrative.ReturnToTravelTransition.Instance;
-                _routineOutcomeBox    = null;
-                _replayFinalTransition = null;
-                _core.Terminal?.Clear(); // wipe the modal box before the next phase paints
-                ApplyPhaseTransition(transition);
-            }
-            return;
-        }
-
         // Routine list box is modal: select a replayable routine, or RETURN to the travel plan.
         if (_currentMode == GameMode.WorldView && _travelRoutinesBox != null)
         {
@@ -1255,7 +1514,8 @@ public class LocationTravelGameController : IDisposable
             }
             else if (kind == TravelRoutinesBox.ResultKind.Return)
             {
-                _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+                // A press, not a hover: SmallInteraction is the hover tick and reads as no click at all.
+                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
                 _travelRoutinesBox = null;
                 _core.SetWorldInteractionsEnabled(true);
                 _interface.SetWorldInteractionsEnabled(true);
@@ -1313,6 +1573,19 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
+        // The camera arrows sit over both the world map and the selection sky, and are checked
+        // before either screen's own buttons — they are drawn on top of both.
+        if (TryPressCameraArrow(x, y)) return;
+
+        // World selection: the confirmation box's two buttons. A press anywhere else on the screen
+        // is either a moon (handled in the core, which sees the raw click) or nothing.
+        if (_currentMode == GameMode.WorldSelection && _worldSelectionRenderer != null)
+        {
+            if (_worldSelectionRenderer.IsOverConfirmButton(x, y)) { ConfirmWorldSelection(); return; }
+            if (_worldSelectionRenderer.IsOverCancelButton(x, y))  { CancelWorldSelection();  return; }
+            return;
+        }
+
         // WorldView: only the TRAVEL and CLEAR buttons on the bottom travel info box
         // are clickable (everything else is transparent and falls through to the world
         // sphere via TerminalHUD.TransparentClickPassthrough).
@@ -1326,7 +1599,8 @@ public class LocationTravelGameController : IDisposable
             }
             if (_travelInfoRenderer.IsOverClearButton(x, y))
             {
-                _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+                // A press, not a hover — SmallInteraction is the hover tick.
+                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
                 ClearTravelPlan();
                 return;
             }
@@ -1412,6 +1686,14 @@ public class LocationTravelGameController : IDisposable
                 if (_workAdapter.GetHoveredControlId(x, y) != null)
                     _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
                 _workAdapter.OnMouseClick(x, y);
+                return;
+            }
+
+            if (_currentMode == GameMode.Gathering && _gatherAdapter != null)
+            {
+                if (_gatherAdapter.GetHoveredControlId(x, y) != null)
+                    _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+                _gatherAdapter.OnMouseClick(x, y);
                 return;
             }
 
@@ -1505,6 +1787,7 @@ public class LocationTravelGameController : IDisposable
         // in silence, which reads as an unresponsive screen next to the menus either side of it.
         GameMode.Trading => _tradeAdapter?.GetHoveredControlId(x, y),
         GameMode.Working => _workAdapter?.GetHoveredControlId(x, y),
+        GameMode.Gathering => _gatherAdapter?.GetHoveredControlId(x, y),
         GameMode.MainMenu => _mainMenuRenderer?.GetEnabledButtonAtPosition(x, y) is { } i and >= 0
             ? $"menu:{i}" : null,
         GameMode.Settings => _settingsMenuRenderer?.GetHoveredControlId(x, y),
@@ -1515,6 +1798,10 @@ public class LocationTravelGameController : IDisposable
             : _travelInfoRenderer.IsOverTravelButton(x, y)   ? "travel-button"
             : _travelInfoRenderer.IsOverClearButton(x, y)    ? "travel-clear-button"
             : _travelInfoRenderer.IsOverRoutinesButton(x, y) ? "travel-routines-button"
+            : null,
+        GameMode.WorldSelection => _worldSelectionRenderer == null ? null
+            : _worldSelectionRenderer.IsOverConfirmButton(x, y) ? "world-confirm"
+            : _worldSelectionRenderer.IsOverCancelButton(x, y)  ? "world-cancel"
             : null,
         GameMode.Death => _deathScreenRenderer?.IsOverEndRunButton(x, y) == true ? "death-end-run" : null,
         GameMode.EncounterPrompt => _encounterPromptRenderer?.IsOverEngageButton(x, y) == true ? "encounter-engage" : null,
@@ -1543,13 +1830,7 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
-        // Routine boxes are modal: route hover to whichever is shown.
-        if (_currentMode == GameMode.WorldView && _routineOutcomeBox != null)
-        {
-            if (_routineOutcomeBox.OnMouseMove(x, y))
-                _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
-            return;
-        }
+        // The routine box is modal: route hover to it.
         if (_currentMode == GameMode.WorldView && _travelRoutinesBox != null)
         {
             if (_travelRoutinesBox.OnMouseMove(x, y))
@@ -1561,6 +1842,10 @@ public class LocationTravelGameController : IDisposable
         _mouseCellX = x;
         _mouseCellY = y;
         _travelInfoRenderer?.SetHover(x, y);
+        _worldSelectionRenderer?.SetHover(x, y);
+        if (CameraPadActive && _cameraArrowPad!.SetHover(x, y)
+            && _cameraArrowPad.Hovered != CameraArrow.None)
+            _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
         _deathScreenRenderer?.SetHover(x, y);
         _encounterPromptRenderer?.SetHover(x, y);
 
@@ -1666,6 +1951,12 @@ public class LocationTravelGameController : IDisposable
                 return;
             }
 
+            if (_currentMode == GameMode.Gathering && _gatherAdapter != null)
+            {
+                _gatherAdapter.OnMouseMove(x, y);
+                return;
+            }
+
             // When popup is visible, mouse updates are handled in Update() loop for consistent timing
             // Only handle non-popup interactions here
             if (!_narrativeController.IsPopupVisible)
@@ -1725,6 +2016,9 @@ public class LocationTravelGameController : IDisposable
                 return;
             }
 
+            if (_currentMode == GameMode.Gathering && _gatherAdapter != null)
+                return;   // nothing scrolls
+
             _narrativeController.OnMouseWheel(delta);
             return;
         }
@@ -1766,6 +2060,13 @@ public class LocationTravelGameController : IDisposable
             ClearTravelPlan();
         }
 
+        // The location name that follows the cursor on the world map lives in the mouse-following
+        // popup, and only UpdatePopupTerminal clears it — which the narration branch of Update never
+        // reaches. Left alone, the name of the cell just entered ("city") trailed the cursor through
+        // the whole visit. Cleared here, before the new mode can put a popup of its own up.
+        if (oldMode == GameMode.WorldView && newMode != GameMode.WorldView)
+            _core.PopupTerminal?.Clear();
+
         // Reset cloud speed back to normal whenever travel ends.
         if (oldMode == GameMode.Traveling && newMode != GameMode.Traveling)
             _core.SetCloudSpeedMultiplier(1.0f);
@@ -1791,6 +2092,12 @@ public class LocationTravelGameController : IDisposable
     /// <summary>The mode-specific setup half of <see cref="SetMode"/>, shared with the repaint.</summary>
     private void RunModeEnter(GameMode newMode)
     {
+        // Whether the world is drawn at all, decided in one place for every mode rather than in each
+        // OnEnter. Two conditions, and both are easy to get wrong from inside a single mode: there
+        // may be no world yet (nothing is generated until a run starts), and the world-selection
+        // screen wants the sky unobstructed even when a previous run has left a world standing.
+        _core.WorldRenderEnabled = _interface.IsWorldGenerated && newMode != GameMode.WorldSelection;
+
         // Handle mode-specific setup
         switch (newMode)
         {
@@ -1804,6 +2111,10 @@ public class LocationTravelGameController : IDisposable
 
             case GameMode.Settings:
                 OnEnterSettings();
+                break;
+
+            case GameMode.WorldSelection:
+                OnEnterWorldSelection();
                 break;
                 
             case GameMode.WorldView:
@@ -1839,6 +2150,7 @@ public class LocationTravelGameController : IDisposable
                 break;
 
             case GameMode.Working:
+            case GameMode.Gathering:
                 OnEnterWorking();
                 break;
 
@@ -2042,6 +2354,11 @@ public class LocationTravelGameController : IDisposable
             _forbiddenFlashVertex = -1;
         }
         _forbiddenFlashFramesLeft = 0;
+
+        // Every pass above repaints cells from what they hold underneath, and a cell the avatar
+        // stands on holds the place, not the avatar — a playtester saw the protagonist vanish on
+        // CLEAR. Put it back last, whatever the passes did.
+        _interface.RefreshProtagonistGlyph();
     }
 
     /// <summary>
@@ -2091,6 +2408,9 @@ public class LocationTravelGameController : IDisposable
         _tripVhDebt        = 0f;
         _tripTotalCells    = pathVertices.Count - 1;
         _tripCellsTraveled = 0;
+        _avatarVertexBeforeStep = pathVertices[0];
+        _stepOriginVertex       = pathVertices[0];
+        _tripOriginVertex       = pathVertices[0];
 
         // Capture the trip's in-game duration before the estimate is cleared; added to the global
         // clock when the protagonist arrives (the estimate is gone by then).
@@ -2120,6 +2440,10 @@ public class LocationTravelGameController : IDisposable
     {
         if (_currentMode != GameMode.Traveling) return;
         if (_protagonist == null) return;
+
+        // Where this step came from, before anything below can start an encounter on it.
+        _stepOriginVertex       = _avatarVertexBeforeStep;
+        _avatarVertexBeforeStep = vertexIndex;
 
         _tripCellsTraveled++;
 
@@ -2263,14 +2587,14 @@ public class LocationTravelGameController : IDisposable
         // the NEXT journey running its whole progress UI with the avatar standing still.
         _interface.MovementPaused = false;
 
-        // Routine replay: if the player launched travel from the routine box and the routine belongs
-        // to this destination, replay it instead of starting a fresh narration phase.
+        // A routine chosen from the routine box enters its own area, hour and phase instead of the
+        // ordinary arrival.
         if (_pendingReplayRoutine != null && _pendingReplayRoutine.LocationId == vertexIndex)
         {
             var routine = _pendingReplayRoutine;
             _pendingReplayRoutine  = null;
             _currentLocationVertex = vertexIndex;
-            StartRoutineReplay(vertexIndex, routine);
+            EnterRoutine(vertexIndex, routine);
             return;
         }
         _pendingReplayRoutine = null;
@@ -2420,12 +2744,35 @@ public class LocationTravelGameController : IDisposable
             // EITHER exists, and the callback picks between them.
             _mainMenuRenderer.HasGameStarted = _hasGameStarted;
             _mainMenuRenderer.CanContinue    = _hasGameStarted || HasReadableSave;
+
+            // A demo says how many runs are left, and greys New out once none are. Read fresh every
+            // time the menu opens: a run spent a moment ago must show here on the way back.
+            if (DemoLimit.IsActive)
+            {
+                var demo = DemoLimit.Status();
+                _mainMenuRenderer.CanStartNew     = demo.CanStartRun;
+                _mainMenuRenderer.NoticeLine      = demo.MenuLine;
+                _mainMenuRenderer.NoticeIsWarning = !demo.CanStartRun;
+                Console.WriteLine($"Demo: {demo.State}, {demo.RunsUsed}/{demo.MaxRuns} run(s) used"
+                                + (demo.Detail.Length > 0 ? $" ({demo.Detail})" : ""));
+            }
             _mainMenuRenderer.SetButtons(
                 onNew: () =>
                 {
-                    // Spends the save and gives the run a world of its own — see StartNewRun.
-                    StartNewRun();
-                    SetMode(GameMode.ProtagonistCreation);
+                    // Which world? Normally the player answers by picking a moon out of the sky, and
+                    // nothing is spent or built until they confirm one — so backing out of that
+                    // screen leaves the save on disk exactly as it was.
+                    //
+                    // --seed answers it on the command line instead, and a screen that asked a
+                    // question already answered would only be an extra keypress in front of every
+                    // scripted run.
+                    if (Config.Rng.SeedPinned && Config.Rng.Seed.HasValue)
+                    {
+                        if (!StartNewRun(Config.Rng.Seed.Value)) { OnEnterMainMenu(); return; }   // still on the menu: redraw it
+                        SetMode(GameMode.ProtagonistCreation);
+                        return;
+                    }
+                    SetMode(GameMode.WorldSelection);
                 },
                 onContinue: () =>
                 {
@@ -2466,6 +2813,323 @@ public class LocationTravelGameController : IDisposable
             // Render the menu
             _mainMenuRenderer.Render();
         }
+    }
+
+    // ── World selection ──────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Opens the sky a new run picks its world out of: no world drawn, no world interactions, the
+    /// star sphere alone, and the moons made clickable.
+    /// </summary>
+    private void OnEnterWorldSelection()
+    {
+        Console.WriteLine("LocationTravelGameController: Entered WorldSelection mode");
+        _ambianceEngine?.SetFilter(MusicFilter.None);
+        _ambianceEngine?.SetMood(MusicMoodState.Neutral);
+        _ambianceEngine?.SetActiveTrackCount(1);
+
+        // Not narration mode: that greys the world down, and there is no world here to grey. The
+        // sky is the subject of the screen and is drawn at full strength.
+        _core.SetNarrationMode(false);
+
+        // The world's own hover and click are off and the sky's are on. Both matter: the sphere is
+        // not drawn, but its vertices are still there to be hit, and a click that quietly travelled
+        // somewhere in an ungenerated world is the kind of thing that surfaces three phases later.
+        _core.SetWorldInteractionsEnabled(false);
+        _interface.SetWorldInteractionsEnabled(false);
+        _core.SkySelectionEnabled = true;
+
+        // Far enough back that a good spread of sky is in frame at once, and still well inside the
+        // star sphere. Same lever the world map uses for its own framing.
+        _core.Camera.SetDistance(Config.GlyphSphere.CameraZoomWorldView);
+
+        // Re-entrant, like every other OnEnter — a modal notice dismissed over this screen repaints
+        // it through RedrawCurrentMode, and a repaint that quietly discarded the player's choice
+        // would be indistinguishable from a click that never registered. The choice is cleared on
+        // the way OUT instead, in LeaveWorldSelection, which both exits go through.
+        _hoveredMoon = -1;
+        _core.HighlightMoon(-1);
+        _core.SelectMoon(_selectedMoon);
+
+        // The whole sky is back. A moon is blanked only while its world is being lived in, and
+        // standing here the player lives in none — without this, the world a previous run of this
+        // process was played in would be the one world unchoosable.
+        _core.HideMoon(-1);
+
+        if (_core.Terminal != null)
+        {
+            _worldSelectionRenderer ??= new WorldSelectionRenderer(_core.Terminal);
+
+            // Transparent with passthrough, exactly as the world map is: the box and the arrow pad
+            // are the only opaque things on screen, and everything else has to let a click reach the
+            // sky behind it.
+            SetTransparentWorldOverlay(clickPassthrough: true);
+            _worldSelectionRenderer.Draw(_selectedMoon, _hoveredMoon, _core.MoonCount, MoonHistorySummaryFor(_selectedMoon));
+            _cameraArrowPad?.Draw();
+        }
+
+        // The history viewer, when viewers are on: it reads the chosen moon's past before the moon
+        // is taken. Re-entrant like the rest — it opens once and is fed whatever is chosen now.
+        Cathedral.Debug.WorldHistoryViewerManager.Show();
+        if (_selectedMoon >= 0) PreviewMoonHistory(_selectedMoon);
+        else Cathedral.Debug.WorldHistoryViewerManager.ShowMessage("Choose a moon to read its history.");
+    }
+
+    // ── The history preview ───────────────────────────────────────────────────────
+
+    // The chosen moon's history, built headless off the main thread while the player is still on the
+    // selection screen. For the viewer, and for `inspect world-preview`; nothing in play reads it.
+    private System.Threading.Tasks.Task<Cathedral.Game.History.WorldHistory>? _previewTask;
+    private volatile int _previewOrdinal = -1;   // read by the preview task's continuation
+
+    /// <summary>
+    /// Starts building the chosen moon's history in the background. Always: the moon box reads its
+    /// relation to the empire and its counts from it, and the history viewer shows it whole.
+    /// </summary>
+    private void PreviewMoonHistory(int ordinal)
+    {
+        _previewOrdinal = ordinal;
+        string name = Cathedral.Glyph.SkyMoons.Name(ordinal);
+        Cathedral.Debug.WorldHistoryViewerManager.ShowMessage($"Building the history of {name}...");
+
+        var task = Cathedral.Game.History.WorldHistoryPreview.BuildAsync(Cathedral.Glyph.SkyMoons.WorldSeed(ordinal));
+        _previewTask = task;
+        task.ContinueWith(t =>
+        {
+            // A later click has moved on: this world is no longer the one being looked at.
+            if (_previewOrdinal != ordinal) return;
+            if (t.IsFaulted)
+            {
+                Console.Error.WriteLine($"[History] preview of {name} failed: {t.Exception?.GetBaseException().Message}");
+                Cathedral.Debug.WorldHistoryViewerManager.ShowMessage($"The history of {name} could not be built: {t.Exception?.GetBaseException().Message}");
+                return;
+            }
+            Console.WriteLine($"[History] preview of {name} ready: {t.Result.Chronology.Count} events, hash {t.Result.Hash:X8}");
+            Cathedral.Debug.WorldHistoryViewerManager.ShowHistory(t.Result);
+        });
+    }
+
+    /// <summary>
+    /// What the moon box says about <paramref name="ordinal"/>'s past, or null while its history is
+    /// still being built (or it is not the moon being previewed).
+    /// </summary>
+    private MoonHistorySummary? MoonHistorySummaryFor(int ordinal)
+    {
+        if (ordinal < 0 || ordinal != _previewOrdinal || _previewTask is not { IsCompletedSuccessfully: true } t) return null;
+        var h = t.Result;
+        int faiths = h.LivingFaiths.Count();
+        int hiddenFaiths = h.LivingFaiths.Count(f => h.PresenceOf(f) == Cathedral.Game.History.FaithPresence.Clandestine);
+        int factions = h.LivingOrganisations.Count();
+        int hiddenFactions = h.LivingOrganisations.Count(o => o.Clandestine);
+        string WithHidden(int n, int hidden) => hidden > 0 ? $"{n} ({hidden} hidden)" : n.ToString();
+        return new MoonHistorySummary(h.EmpireRelation(), h.LivingRealms.Count().ToString(),
+                                      WithHidden(faiths, hiddenFaiths), WithHidden(factions, hiddenFactions));
+    }
+
+    /// <summary>The preview as an assertable line: which moon, whether it is ready, and its hash.</summary>
+    private IReadOnlyList<string> CliPreviewLines()
+    {
+        var t = _previewTask;
+        if (t == null || _previewOrdinal < 0) return new List<string> { "world-preview none" };
+        string name = Cathedral.Glyph.SkyMoons.Name(_previewOrdinal);
+        if (!t.IsCompleted) return new List<string> { $"world-preview moon={_previewOrdinal} name=\"{name}\" state=building" };
+        if (t.IsFaulted) return new List<string> { $"world-preview moon={_previewOrdinal} name=\"{name}\" state=failed" };
+        var h = t.Result;
+        // The second line is the moon box's own reading, the only assertable form of it: the box is
+        // painted text, and `expect` would match the same words anywhere on screen.
+        var box = MoonHistorySummaryFor(_previewOrdinal);
+        return new List<string>
+        {
+            $"world-preview moon={_previewOrdinal} name=\"{name}\" state=ready events={h.Chronology.Count} "
+          + $"standing={h.LivingRealms.Count()} hash={h.Hash.ToString("X8", System.Globalization.CultureInfo.InvariantCulture)}",
+            $"world-preview box empire=\"{box?.Empire}\" realms={box?.Realms} faiths={box?.Faiths} factions={box?.Factions}",
+        };
+    }
+
+    /// <summary>
+    /// Puts everything the selection screen switched on back, whichever way it is being left.
+    /// Shared by CONFIRM and CANCEL so neither can forget half of it.
+    /// </summary>
+    private void LeaveWorldSelection()
+    {
+        _core.SkySelectionEnabled = false;
+        _core.HighlightMoon(-1);
+        _core.SelectMoon(-1);
+        _selectedMoon = -1;
+        _hoveredMoon  = -1;
+        _heldArrow    = CameraArrow.None;
+        _core.CameraTurnYawPerSecond   = 0f;
+        _core.CameraTurnPitchPerSecond = 0f;
+        _worldSelectionRenderer?.Erase();
+        _cameraArrowPad?.Erase();
+    }
+
+    /// <summary>The cursor moved onto (or off) a moon. Fired by the core, only in this mode.</summary>
+    private void OnMoonHovered(int ordinal)
+    {
+        if (_currentMode != GameMode.WorldSelection) return;
+        if (ordinal == _hoveredMoon) return;
+
+        _hoveredMoon = ordinal;
+
+        // The highlight follows the cursor whatever else is going on, including over a choice already
+        // made: the two are drawn differently (a chosen moon is larger and white, a pointed-at one
+        // smaller and yellow), so both can be on screen at once and a player can weigh a second moon
+        // against the one they have without giving it up first.
+        _core.HighlightMoon(ordinal);
+
+        if (ordinal >= 0)
+            _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+    }
+
+    /// <summary>
+    /// A moon was clicked, or the empty sky was. Selects it; the world is not built until CONFIRM.
+    ///
+    /// <para>A press on bare sky unchooses, which is the ordinary meaning of clicking off a
+    /// selection and saves the player hunting for a button to do it with. It is not the same as
+    /// CANCEL: the screen stays open and another moon can be taken.</para>
+    /// </summary>
+    private void OnMoonClicked(int ordinal)
+    {
+        if (_currentMode != GameMode.WorldSelection) return;
+
+        if (ordinal < 0)
+        {
+            if (_selectedMoon < 0) return; // nothing was chosen; a press on empty sky says nothing
+            Console.WriteLine("WorldSelection: choice released (clicked empty sky)");
+            _selectedMoon = -1;
+            _core.SelectMoon(-1);
+            _previewOrdinal = -1;
+            Cathedral.Debug.WorldHistoryViewerManager.ShowMessage("Choose a moon to read its history.");
+            _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+            return;
+        }
+
+        _selectedMoon = ordinal;
+        _core.SelectMoon(ordinal);
+        _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+        Console.WriteLine($"WorldSelection: moon {ordinal} ({Cathedral.Glyph.SkyMoons.Name(ordinal)}) "
+                        + $"selected — seed {Cathedral.Glyph.SkyMoons.WorldSeed(ordinal)}");
+        PreviewMoonHistory(ordinal);
+    }
+
+    /// <summary>
+    /// Takes the chosen moon: builds its world, blanks it out of the sky, and hands the run on to
+    /// protagonist creation. Nothing before this point has spent the save or touched the master seed.
+    /// </summary>
+    private void ConfirmWorldSelection()
+    {
+        if (_selectedMoon < 0) return;
+
+        int ordinal = _selectedMoon;
+        int seed    = Cathedral.Glyph.SkyMoons.WorldSeed(ordinal);
+        Console.WriteLine($"WorldSelection: confirmed {Cathedral.Glyph.SkyMoons.Name(ordinal)} "
+                        + $"(moon {ordinal}, seed {seed})");
+
+        _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+        LeaveWorldSelection();
+
+        // StartNewRun blanks the moon itself, from the seed — one rule covering this path and the
+        // continued-save one alike, rather than two callers each remembering to do it.
+        // Refused only by a demo with no runs left — the menu greys New out first, so this is the
+        // backstop for a count that changed underneath it. The menu then says why.
+        if (!StartNewRun(seed)) { SetMode(GameMode.MainMenu); return; }
+
+        SetMode(GameMode.ProtagonistCreation);
+    }
+
+    /// <summary>Abandons the choice and goes back to the menu. Costs nothing: no save was spent.</summary>
+    private void CancelWorldSelection()
+    {
+        Console.WriteLine("WorldSelection: cancelled");
+        _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+        LeaveWorldSelection();
+        SetMode(GameMode.MainMenu);
+    }
+
+    /// <summary>
+    /// Blanks whichever moon stands for <paramref name="seed"/>. Does nothing when no moon does,
+    /// which is every world reached by <c>--seed</c> rather than by picking one.
+    /// </summary>
+    private void HideMoonForSeed(int seed)
+    {
+        int ordinal = Cathedral.Glyph.SkyMoons.OrdinalForSeed(seed, _core.MoonCount);
+        if (ordinal >= 0) _core.HideMoon(ordinal);
+    }
+
+    // ── The camera arrow pad ─────────────────────────────────────────────────────────────
+
+    /// <summary>The two modes the arrow pad is drawn in — the only two with a camera to turn.</summary>
+    private bool CameraPadActive
+        => (_currentMode == GameMode.WorldSelection
+            || (_currentMode == GameMode.WorldView && _companionRemovalRenderer == null
+                                                   && _travelRoutinesBox == null))
+           && _cameraArrowPad != null;
+
+    /// <summary>
+    /// Keeps the camera turning while an arrow is held down.
+    ///
+    /// <para>It does not turn the camera itself: it hands the core a standing rate in degrees per
+    /// second, which the render loop applies at frame rate. This update runs at 10 Hz, and a camera
+    /// turned from here would move in six-degree jerks under a sixty-frame-a-second sky. The press
+    /// itself is handled in the click router, which turns it one fixed step at once so that a click
+    /// too short to span a frame still does something.</para>
+    /// </summary>
+    private void UpdateCameraPad(float deltaTime)
+    {
+        bool held = _cameraArrowPad != null
+                 && _core.Terminal != null
+                 && CameraPadActive
+                 && _core.Terminal.InputHandler.IsLeftMouseDown
+                 && _heldArrow != CameraArrow.None
+                 // Held means "still down, still over the arrow it went down on". Dragging off the
+                 // pad releases it, which is what every other button in the game does.
+                 && _cameraArrowPad.Hovered == _heldArrow;
+
+        if (!held) _heldArrow = CameraArrow.None;
+
+        float rate = held ? Config.CameraPad.RotationSpeed : 0f;
+        _core.CameraTurnYawPerSecond = _heldArrow switch
+        {
+            CameraArrow.Left  => -rate,
+            CameraArrow.Right => +rate,
+            _                 => 0f,
+        };
+        _core.CameraTurnPitchPerSecond = _heldArrow switch
+        {
+            CameraArrow.Up   => +rate,
+            CameraArrow.Down => -rate,
+            _                => 0f,
+        };
+    }
+
+    /// <summary>Applies one arrow's worth of rotation, in the same sense the arrow keys do.</summary>
+    private void ApplyCameraArrow(CameraArrow arrow, float degrees)
+    {
+        switch (arrow)
+        {
+            case CameraArrow.Left:  _core.Camera.Rotate(-degrees, 0f); break;
+            case CameraArrow.Right: _core.Camera.Rotate(+degrees, 0f); break;
+            case CameraArrow.Up:    _core.Camera.Rotate(0f, +degrees); break;
+            case CameraArrow.Down:  _core.Camera.Rotate(0f, -degrees); break;
+        }
+    }
+
+    /// <summary>
+    /// Routes a press to the arrow pad. Returns true when it landed on an arrow, so the caller stops
+    /// looking for something else under the cursor.
+    /// </summary>
+    private bool TryPressCameraArrow(int x, int y)
+    {
+        if (!CameraPadActive) return false;
+
+        var arrow = _cameraArrowPad!.ArrowAt(x, y);
+        if (arrow == CameraArrow.None) return false;
+
+        _heldArrow = arrow;
+        ApplyCameraArrow(arrow, Config.CameraPad.ClickStep);
+        _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+        return true;
     }
 
     private void OnEnterSettings()
@@ -2662,8 +3326,12 @@ public class LocationTravelGameController : IDisposable
                 // Re-initialize memory with the organ scores the player set during creation.
                 // ResetGameState called InitializeMemory earlier with initial random scores;
                 // now we rebuild modules to reflect the final configured values.
+                // --organs first: memory size and the humor queues are both derived from the scores.
+                StartingBodyMode.ApplyOrgans(protagonist);
                 protagonist.InitializeMemory();
                 protagonist.ReinitializeHumorQueues();
+                // --humors after: rebuilding the queues would overwrite whatever was put in them.
+                StartingBodyMode.ApplyHumors(protagonist);
 
                 // --black-bile is applied HERE, not in ResetGameState. The queues are rebuilt from the
                 // organ scores the player just settled, which overwrites anything put there earlier —
@@ -2754,7 +3422,19 @@ public class LocationTravelGameController : IDisposable
             };
             _managementMenuRenderer.OnRoutinesPortholeClosed = () =>
                 _core.SetNarrationMode(true); // restore dark world shading for the other tabs
-            
+
+            // A Meet/Buy/Sell/Work routine's detail shows how its person stands with you today, read
+            // from the location's memory (keyed by persistent id) without building the scene.
+            _managementMenuRenderer.RoutineRelationLookup = (locId, npcId) =>
+            {
+                if (!_locationStates.TryGetValue(locId, out var state)) return null;
+                var key = Cathedral.Game.Narrative.Protagonist.AffinityKeyConstant;
+                bool enemy = state.NpcEnemies.TryGetValue(npcId, out var foes) && foes.Contains(key);
+                var level = state.NpcAffinity.TryGetValue(npcId, out var table) && table.TryGetValue(key, out var l)
+                    ? l : Cathedral.Game.Dialogue.Affinity.AffinityLevel.Stranger;
+                return (level, enemy);
+            };
+
             _managementMenuRenderer.Render();
         }
     }
@@ -2947,13 +3627,208 @@ public class LocationTravelGameController : IDisposable
                        .ToList()
                    ?? new List<string> { "menu (not on the main menu)" };
 
+        // The world division. A fact about the world rather than about the run, readable at the map
+        // where the overlay is looked at — and the only assertable form of it, since `world-regions`
+        // emits to the CLI stream and `expect` reads the rendered screen.
+        if (subject == "world-regions") return CliRegionLines();
+
+        // Which KIND of world this is. Assertable rather than merely printed, because a script that
+        // pins a variant with --world-variant has no other way to prove it got the world it asked
+        // for — every other reading (biomes, region counts) also varies by seed.
+        if (subject == "world-variant") return CliVariantLines();
+
+        // Where the avatar stands against the last journey's two ends — how a script tells that a
+        // flight from an encounter on the last step fell back to where it came from.
+        if (subject == "avatar")
+        {
+            int v = _interface.GetAvatarVertex();
+            string on = v == _tripOriginVertex ? "origin" : v == _destinationVertex ? "destination" : "elsewhere";
+            return new List<string> { $"avatar vertex={v} trip-origin={_tripOriginVertex} trip-destination={_destinationVertex} on={on}" };
+        }
+
+        // The world's generated history: a fact about the world, assertable at the map. `history`
+        // prints it for reading; these two are the forms `expect-state` can match.
+        if (subject == "world-history") return CliHistoryLines("state");
+        if (subject == "world-realms") return CliHistoryLines("realms");
+        if (subject == "world-events") return CliHistoryLines("all");
+        if (subject == "world-preview") return CliPreviewLines();
+
+        // The gathering phase's numbers — days, attempts, dice, chance, and once done the yield. The
+        // menu draws them, but a chance or a count is unassertable as a position on a bar.
+        if (subject == "gather")
+            return _gatherAdapter?.CliLines() ?? new List<string> { "gather (not gathering)" };
+
         if (_protagonist == null) return null;
+
+        // The routine slots per kind — the size of each kind's grid and how many of it are usable,
+        // which the menu shows as ● ○ × and is otherwise only pixels.
+        if (subject == "routine-slots")
+            return Cathedral.Game.Narrative.Routines.RoutineCategories.All
+                .Select(c => $"routine-slots category={c.CliId()} used={_protagonist.RoutinesOf(c).Count} "
+                           + $"usable={_protagonist.GetRoutineSlots()} grid={_protagonist.GetRoutineSlotsAtBest()}")
+                .ToList();
+
         if (subject is not ("routines" or "all")) return null;
 
-        return _protagonist.RecordedRoutines
-            .Select(r => $"routine location={r.LocationId} start={r.StartTime} steps={r.Steps.Count} "
-                       + $"verbs=[{string.Join(",", r.Steps.Select(x => x.VerbId))}]")
-            .ToList();
+        return _protagonist.RecordedRoutines.Select(r => r.CliLine()).ToList();
+    }
+
+    /// <summary>
+    /// The world's history as CLI lines. <paramref name="what"/>: <c>state</c> (one assertable line of
+    /// counts, and the avatar's realm), <c>realms</c>, <c>faiths</c>, <c>places</c>, <c>figures</c>,
+    /// <c>seeds</c>, <c>events</c> (the last 60), <c>all</c> (every event), <c>empire</c> (the lore's
+    /// chronology), or <c>summary</c>.
+    /// </summary>
+    public IReadOnlyList<string> CliHistoryLines(string what)
+    {
+        var h = _interface.History;
+        if (h == null) return new List<string> { "world-history (no world generated)" };
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        string Q(string s) => "\"" + s + "\"";
+
+        switch (what)
+        {
+            case "state":
+            {
+                int avatarRegion = _interface.Regions?.RegionAt(_interface.GetAvatarVertex()) ?? -1;
+                var realm = h.OwnerOf(avatarRegion);
+                // Whether the history the viewer previewed on the selection screen is the one the run
+                // got. It must be: the preview is built headless and off-thread, and a mismatch would
+                // mean the viewer shows a different past from the one the game holds.
+                var preview = _previewTask is { IsCompletedSuccessfully: true } p ? p.Result : null;
+                string previewState = preview == null ? "none" : preview.Hash == h.Hash ? "match" : "differ";
+                return new List<string>
+                {
+                    $"world-history name={Q(h.World.Name)} status={h.World.Status} profile={h.Profile.GetType().Name} "
+                  + $"events={h.Chronology.Count} figures={h.Figures.Count} realms={h.Realms.Count} "
+                  + $"standing={h.LivingRealms.Count()} faiths={h.Religions.Count} living-faiths={h.LivingFaiths.Count()} "
+                  + $"hidden-faiths={h.LivingFaiths.Count(f => h.PresenceOf(f) == Cathedral.Game.History.FaithPresence.Clandestine)} "
+                  + $"factions={h.Organisations.Count} living-factions={h.LivingOrganisations.Count()} places={h.Places.Count} "
+                  + $"wars={h.Wars.Count} hash={h.Hash.ToString("X8", inv)} overlay={(_interface.RealmOverlayEnabled ? "on" : "off")} "
+                  + $"preview={previewState}",
+                    $"world-history avatar region={avatarRegion} realm={Q(realm?.Name ?? "unclaimed")}",
+                };
+            }
+            case "realms":
+                return h.LivingRealms.OrderByDescending(r => r.Regions.Count)
+                    .Select(r => $"realm {Q(r.Name)} government={r.Government} regions={r.Regions.Count} "
+                               + $"capital={r.CapitalRegion} ruler={Q(r.Ruler?.FullName ?? "none")} "
+                               + $"faith={Q(r.StateReligion?.Name ?? "none")} founded={r.Founded}")
+                    .ToList();
+            case "faiths":
+                return h.Religions.Select(r => $"faith {Q(r.Name)} kind={r.Kind} founded={r.Founded} presence={h.PresenceOf(r)} "
+                                             + $"proscribed={(h.Proscribed.Contains(r) ? "yes" : "no")} scope={r.Scope} gods={r.Deities.Count} - {r.Description}")
+                    .ToList();
+            case "factions":
+                return h.Organisations.Select(o => $"faction {Q(o.Name)} kind={o.Kind} founded={o.Founded} "
+                                                 + $"ended={(o.Dissolved.IsKnown ? o.Dissolved.ToString() : "standing")} "
+                                                 + $"hidden={(o.Clandestine ? "yes" : "no")} patron={Q(o.Patron?.Name ?? "none")} "
+                                                 + $"imperial={Q(o.ImperialCounterpart?.Name ?? "none")}")
+                    .ToList();
+            case "places":
+                return h.Places.Select(p => $"place {Q(p.Name)} kind={p.Kind} region={p.Region} founded={p.Founded} ruined={p.Ruined}").ToList();
+            case "figures":
+                return h.Figures.TakeLast(80).Select(f => $"figure {Q(f.FullName)} born={f.Born} died={f.Died}").ToList();
+            case "seeds":
+                return h.SeedStats.OrderBy(kv => kv.Key)
+                    .Select(kv => $"seed {kv.Key} sown={kv.Value.Sown} sprouted={kv.Value.Sprouted} skipped={kv.Value.Skipped}")
+                    .ToList();
+            case "events":
+                return h.Chronology.Events.TakeLast(60).Select(e => e.ToString()).ToList();
+            case "all":
+                return h.Chronology.Events.Select(e => e.ToString()).ToList();
+            case "empire":
+                return h.Empire.Chronology.Events.Select(e => e.ToString()).ToList();
+            default:
+                return h.Summary().Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(l => l.TrimEnd('\r')).ToList();
+        }
+    }
+
+    /// <summary>
+    /// The world's variant, as assertable lines: which one, what its numbers are, and — separately —
+    /// which one this world's seed names. The two differ exactly when <c>--world-variant</c> is in
+    /// play, and telling them apart is the whole reason the second line exists.
+    /// </summary>
+    private IReadOnlyList<string> CliVariantLines()
+    {
+        if (!_interface.IsWorldGenerated)
+            return new List<string> { "world-variant (no world generated)" };
+
+        var v = _interface.Variant;
+        var shape = v.Shape;
+        var bySeed = Cathedral.Glyph.Microworld.WorldVariants.ForSeed(GameRng.MasterSeed);
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+
+        return new List<string>
+        {
+            $"world-variant id={v.Id} name=\"{v.Name}\" "
+          + $"forced={(v == bySeed ? "no" : "yes")} seed-names={bySeed.Id}",
+
+            // Invariant culture, for the reason the region header carries it: left alone this
+            // machine writes "0,25" and every script asserting on the line fails somewhere it has
+            // never been run.
+            $"world-variant shape sea={shape.SeaLevel.ToString("F3", inv)} "
+          + $"oceandepth={shape.OceanDepth.ToString("F3", inv)} "
+          + $"coastband={shape.CoastBand.ToString("F3", inv)} "
+          + $"mountain={shape.MountainLevel.ToString("F3", inv)} "
+          + $"peak={shape.PeakLevel.ToString("F3", inv)} "
+          + $"forest={shape.ForestLevel.ToString("F3", inv)} "
+          + $"density={shape.SettlementDensity.ToString("F2", inv)}",
+
+            $"world-variant scales continent={shape.ContinentScale.ToString("F1", inv)} "
+          + $"settlement={shape.SettlementScale.ToString("F1", inv)} "
+          + $"relief={shape.ReliefScale.ToString("F1", inv)}",
+        };
+    }
+
+    /// <summary>
+    /// The world's region division, as assertable lines. The header carries the counts and the
+    /// overlay state; the avatar line says which region the party is standing in; and
+    /// <c>conflicts=</c> is the number of bordering region pairs that ended up sharing a colour and
+    /// <c>minborder=</c> is how far apart the closest bordering pair anywhere on the world is, 0..1.
+    /// Between them they are the whole of what a script can check about the colouring — the overlay
+    /// itself is pixels, and `dump` sees the terminal grid rather than the sphere. conflicts is the
+    /// hard invariant; minborder is the quality, and it falling is how a palette change that looks
+    /// fine on one seed and muddy on another gets caught.
+    /// </summary>
+    private IReadOnlyList<string> CliRegionLines()
+    {
+        var map = _interface.Regions;
+        if (map == null) return new List<string> { "world-regions (no world generated)" };
+
+        int conflicts = 0;
+        float minBorder = float.MaxValue;
+        foreach (var r in map.Regions)
+            foreach (int o in r.Neighbours)
+            {
+                if (o <= r.Id) continue;
+                if (map.Regions[o].PaletteIndex == r.PaletteIndex) conflicts++;
+                minBorder = Math.Min(minBorder, WorldRegionPalette.Distance(
+                    map.Palette[r.PaletteIndex], map.Palette[map.Regions[o].PaletteIndex]));
+            }
+        if (minBorder == float.MaxValue) minBorder = 0f;   // a world of nothing but isles
+
+        int avatar = _interface.GetAvatarVertex();
+        var lines = new List<string>
+        {
+            // Invariant culture, because a script asserts on this text and the machine's decimal
+            // separator is not the script's business — this run prints "0,494" left to itself.
+            $"world-regions count={map.Regions.Count} landmasses={map.LandmassCount} " +
+            $"conflicts={conflicts} " +
+            $"minborder={minBorder.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)} " +
+            $"borders={(minBorder >= WorldRegionPalette.MinBorderContrast ? "distinct" : "muddy")} " +
+            $"overlay={(_interface.RegionOverlayEnabled ? "on" : "off")}",
+
+            $"world-regions avatar vertex={avatar} region={map.RegionAt(avatar)} " +
+            $"landmass={map.LandmassAt(avatar)}",
+        };
+
+        foreach (var r in map.Regions)
+            lines.Add($"world-regions region={r.Id} landmass={r.LandmassId} cells={r.CellCount} " +
+                      $"seed={r.SeedVertex} swatch=\"{map.Palette[r.PaletteIndex].Name}\" " +
+                      $"borders={r.Neighbours.Count}");
+
+        return lines;
     }
 
     /// <summary>Opens the routine box for the planned destination. False when no trip is planned.</summary>
@@ -2967,22 +3842,22 @@ public class LocationTravelGameController : IDisposable
     }
 
     /// <summary>
-    /// The rows the open routine box is offering: the routine's name, whether it can still be
-    /// replayed, and why not when it cannot. Empty when the box is closed.
+    /// The rows the open routine box is offering: the routine's name and kind, whether it can be
+    /// walked, and why not when it cannot. Empty when the box is closed.
     /// </summary>
-    public IReadOnlyList<(string Name, bool Replayable, string? Reason)> CliRoutineEntries
-        => _travelRoutinesBox?.CliEntries ?? System.Array.Empty<(string, bool, string?)>();
+    public IReadOnlyList<(string Name, string Category, bool Available, string? Reason)> CliRoutineEntries
+        => _travelRoutinesBox?.CliEntries ?? System.Array.Empty<(string, string, bool, string?)>();
 
     /// <summary>
     /// Picks row <paramref name="index"/> and sets out — the same commit the row click makes, so the
-    /// replay runs on arrival exactly as it would in play. False when the box is closed, the index is
-    /// out of range, or that routine is no longer replayable.
+    /// routine is entered on arrival exactly as it would be in play. False when the box is closed, the
+    /// index is out of range, or that routine cannot be walked.
     /// </summary>
     public bool CliSelectRoutine(int index)
     {
         if (_travelRoutinesBox == null) return false;
         var entries = _travelRoutinesBox.CliEntries;
-        if (index < 0 || index >= entries.Count || !entries[index].Replayable) return false;
+        if (index < 0 || index >= entries.Count || !entries[index].Available) return false;
 
         _pendingReplayRoutine = _travelRoutinesBox.CliRoutineAt(index);
         _travelRoutinesBox    = null;
@@ -2991,24 +3866,30 @@ public class LocationTravelGameController : IDisposable
         return true;
     }
 
-    /// <summary>
-    /// Presses CONTINUE on the post-replay outcome box, applying the phase the routine ended on.
-    /// False when no such box is up. Mirrors the click path in <see cref="OnTerminalCellClicked"/>.
-    /// </summary>
-    public bool CliDismissRoutineOutcome()
-    {
-        if (_routineOutcomeBox == null) return false;
+    // ── The gathering phase (--cli) ──────────────────────────────────────────
+    // Its controls are a slider and three buttons hit-tested against a box whose geometry follows its
+    // contents, so a script drives them by meaning — the days, start, continue, leave — as it drives
+    // the routine box by index.
 
-        var transition = _replayFinalTransition ?? Cathedral.Game.Narrative.ReturnToTravelTransition.Instance;
-        _routineOutcomeBox     = null;
-        _replayFinalTransition = null;
-        _core.Terminal?.Clear();
-        ApplyPhaseTransition(transition);
+    /// <summary>Sets the stay to <paramref name="days"/> (clamped to the slider's range). False when not gathering.</summary>
+    public bool CliGatherSetDays(int days) => _gatherAdapter?.CliSetDays(days) ?? false;
+
+    /// <summary>Presses START. False when not gathering or not on the configure screen.</summary>
+    public bool CliGatherStart() => _gatherAdapter?.CliStart() ?? false;
+
+    /// <summary>Presses CONTINUE on the results. False when there are no results on screen.</summary>
+    public bool CliGatherContinue() => _gatherAdapter?.CliContinue() ?? false;
+
+    /// <summary>Presses LEAVE without staying. False when not on the configure screen.</summary>
+    public bool CliGatherLeave() => _gatherAdapter?.CliLeave() ?? false;
+
+    /// <summary>Presses the trade menu's LEAVE. False when no trade menu is open.</summary>
+    public bool CliTradeLeave()
+    {
+        if (_tradeAdapter == null) return false;
+        _tradeAdapter.CliLeave();
         return true;
     }
-
-    /// <summary>True while the post-replay outcome box is on screen (for `wait`).</summary>
-    public bool CliRoutineOutcomeShown => _routineOutcomeBox != null;
 
     /// <summary>
     /// Ages the party: kills the protagonist outright if they have outlived their lifetime, and
@@ -3660,14 +4541,15 @@ public class LocationTravelGameController : IDisposable
     /// <summary>
     /// Starts Phase 6 Chain-of-Thought narrative interaction.
     /// </summary>
-    private void StartNarrativeInteraction(int vertexIndex, string? startAreaKey = null, Cathedral.Game.Narrative.TimePeriod? startTime = null)
+    private void StartNarrativeInteraction(int vertexIndex, string? startAreaKey = null,
+        Cathedral.Game.Narrative.TimePeriod? startTime = null, string? focusNpcId = null)
     {
         if (!EstablishNarrativeContext(vertexIndex)) return;
 
-        // Start observation phase (async). When continuing after a routine replay, position the
-        // session at the area the routine ended in, at its recorded time period.
+        // Start observation phase (async). A Go to or Meet routine opens at its own area and hour,
+        // and a Meet routine's first observation is of its person.
         if (startAreaKey != null && startTime != null)
-            _narrativeController!.StartAtArea(startAreaKey, startTime.Value);
+            _narrativeController!.StartAtArea(startAreaKey, startTime.Value, focusNpcId);
         else
             _narrativeController!.StartObservationPhase();
 
@@ -3678,7 +4560,7 @@ public class LocationTravelGameController : IDisposable
     /// Builds the scene + <see cref="NarrativeController"/> for a location and switches to
     /// <see cref="GameMode.LocationInteraction"/>, WITHOUT starting the observation phase. Returns
     /// false (and resets narrative state) on failure. Shared by normal narration entry
-    /// (<see cref="StartNarrativeInteraction"/>) and the routine-replay sub-phase bridge.
+    /// (<see cref="StartNarrativeInteraction"/>) and the routines that open straight onto a menu.
     /// </summary>
     private bool EstablishNarrativeContext(int vertexIndex)
     {
@@ -3689,7 +4571,7 @@ public class LocationTravelGameController : IDisposable
         }
 
         // Recorded here because this is the one door every way into a location comes through —
-        // arriving, clicking your own vertex, and the routine-replay sub-phase all land on it.
+        // arriving, clicking your own vertex, and every routine all land on it.
         // Re-entering the same place is not a new step in the history, or one round trip would push
         // the vertex a test wants to go back to out of it.
         if (vertexIndex != _lastLocationVertex)
@@ -3928,6 +4810,7 @@ public class LocationTravelGameController : IDisposable
             // the encounter is still waiting to be engaged when the menu is dismissed.
             case GameMode.Dialogue:        return OpenPauseMenu("dialogue");
             case GameMode.Working:         return OpenPauseMenu("work menu");
+            case GameMode.Gathering:       return OpenPauseMenu("gathering");
             case GameMode.Trading:         return OpenPauseMenu("trade menu");
             case GameMode.EncounterPrompt: return OpenPauseMenu("encounter");
             case GameMode.WorldView:       return OpenPauseMenu("world");
@@ -3939,6 +4822,13 @@ public class LocationTravelGameController : IDisposable
             case GameMode.ProtagonistCreation: return OpenPauseMenu("protagonist creation");
 
             // ── Escape goes back one screen ───────────────────────────────────────────────
+
+            // Choosing a world is not a running phase and nothing has been spent yet, so Escape is
+            // the CANCEL button — the same call, so the two cannot drift.
+            case GameMode.WorldSelection:
+                Console.WriteLine("ESC pressed - abandoning world selection");
+                CancelWorldSelection();
+                return true;
 
             // Both are opened FROM the main menu and both have a Back button; Escape is the same
             // press. Settings had no Escape at all, which on a screen whose only exit is one small
@@ -4028,6 +4918,8 @@ public class LocationTravelGameController : IDisposable
         return new Cathedral.Game.Save.SaveGame
         {
             Seed         = GameRng.MasterSeed,
+            Variant      = _interface.Variant.Id,
+            HistoryHash  = _interface.History?.Hash ?? 0,
             Days         = Cathedral.Game.Narrative.GameClock.Days,
             AvatarVertex = _interface.GetAvatarVertex(),
             Party        = Cathedral.Game.Save.PartyState.Capture(_protagonist),
@@ -4073,12 +4965,59 @@ public class LocationTravelGameController : IDisposable
             return false;
         }
 
+        // The seed alone no longer names a world: --world-variant can build a different kind of
+        // terrain on it. Same refusal, and for the same reason — the avatar's vertex means nothing
+        // in a world that was shaped differently.
+        //
+        // Asked of WorldVariants.Resolve rather than of the interface, because the world is not
+        // generated until forty lines below this: the interface's own variant at this moment is
+        // whatever the last run left there, or the table's first entry on a cold start.
+        var wantVariant = Cathedral.Glyph.Microworld.WorldVariants.ById(save.Variant);
+        var haveVariant = Cathedral.Glyph.Microworld.WorldVariants.Resolve(GameRng.MasterSeed);
+        if (wantVariant != null && wantVariant != haveVariant)
+        {
+            Console.Error.WriteLine(
+                $"Continue: the save was played in {wantVariant.Name} ({save.Variant}), this process builds "
+                + $"{haveVariant.Name} ({haveVariant.Id}) — refusing. Drop --world-variant, or pass "
+                + $"--world-variant {save.Variant}.");
+            return false;
+        }
+
         var protagonist = save.Party.Rebuild();
         if (protagonist == null)
         {
             Console.Error.WriteLine("Continue: the save could not be rebuilt; leaving the run untouched.");
             return false;
         }
+
+        // The world is built here rather than at startup. The process already booted on this save's
+        // seed (see the seed block in Program.cs) and the check above proved it, so generating now
+        // reproduces exactly the world this run was played in. Done AFTER the protagonist has been
+        // rebuilt, so a save this build can no longer read costs nothing and changes nothing.
+        if (!_interface.IsWorldGenerated)
+        {
+            _interface.GenerateWorld();
+            _core.WorldRenderEnabled = true;
+            Console.WriteLine($"Continue: world rebuilt from seed {save.Seed}");
+        }
+
+        // The history is regenerated, not read, so it must come out as the run knew it. It always
+        // should (a save is confined to the build that wrote it, and generation is a pure function
+        // of the seed), which makes a mismatch a determinism bug in the generator. Refused rather
+        // than played on, since every book and chronicle would then describe a different past.
+        // Checked after the world is built because the hash is what building it produces; a zero in
+        // the save means the save predates histories, which the version bump already refuses.
+        if (_interface.History is { } history && save.HistoryHash != history.Hash)
+        {
+            Console.Error.WriteLine(
+                $"Continue: the save's world history hashed to {save.HistoryHash:X8}, this build regenerates "
+                + $"{history.Hash:X8} — the history generator is not deterministic. Refusing.");
+            if (!_hasGameStarted) _core.WorldRenderEnabled = false;
+            return false;
+        }
+
+        if (Cathedral.Debug.WorldHistoryViewerManager.IsOpen && _interface.History != null)
+            Cathedral.Debug.WorldHistoryViewerManager.ShowHistory(_interface.History);
 
         if (_isInNarrativeMode) ExitNarrativeMode();
 
@@ -4104,52 +5043,63 @@ public class LocationTravelGameController : IDisposable
             return false;
         }
 
-        // The loaded run now owns the world the process booted with, so a later New must build its own
-        // rather than replaying this one's.
-        _worldClaimed   = true;
+        // Same rule as a new run's: the world under your feet is not above your head.
+        HideMoonForSeed(save.Seed);
+
         _hasGameStarted = true;
         Console.WriteLine($"Continue: restored day {save.Days:F1} at vertex {save.AvatarVertex}, "
                         + $"{save.Locations.Count} location(s) remembered");
         return true;
     }
 
-    /// <summary>
-    /// True once a run has taken possession of the world this process booted with. Set by the first
-    /// New or Continue; from then on, a further New has to build a world of its own.
-    /// </summary>
-    private bool _worldClaimed = false;
 
     /// <summary>
-    /// Begins a new run: spends the save, gives the run a world, and clears the previous one out.
+    /// Begins a new run on <paramref name="worldSeed"/>: spends the save, builds that world, and
+    /// clears any previous one out. Returns false, having built nothing, when a demo has no run to spend.
     ///
     /// <para><b>The seed is per run, not per process.</b> The world — terrain, where each location
-    /// sits, and the people inside it — is a pure function of the master seed, and a save restores its
-    /// own seed at startup so Continue rebuilds nothing. That leaves New: without a fresh seed, a new
-    /// run started after loading would be played in the dead run's world. (This was true before saves
-    /// existed too — two News in one process gave the identical world.)</para>
+    /// sits, and the people inside it — is a pure function of the master seed. Nothing is generated
+    /// at startup any more, so every New generates: either the world of the moon just confirmed, or,
+    /// under <c>--seed</c>, the world that flag names.</para>
     ///
-    /// <para>The first New of a process is the exception, and deliberately so: the world it booted
-    /// with is nobody's yet, so it is simply claimed. That is the ordinary launch-then-play path, and
-    /// it therefore carries none of the regeneration's risk.</para>
-    ///
-    /// <para><c>--seed</c> still wins, so a pinned run replays identically however many times it is
-    /// restarted, and the CLI suite is untouched.</para>
+    /// <para>This used to claim the world the process booted with for the first run of a process and
+    /// regenerate only from the second onwards. That distinction is gone with the boot-time
+    /// generation that created it, and with it the class of bug where the first run and every
+    /// subsequent one took different paths through the same code.</para>
     /// </summary>
-    public void StartNewRun()
+    public bool StartNewRun(int worldSeed)
     {
+        // A demo's run is spent before anything else, the save included: persisted first, so that no
+        // crash, kill or restored save between here and the first step of the run can refund it. A
+        // refusal builds nothing and leaves the save where it was.
+        if (!DemoLimit.TryConsumeRun(out var demo))
+        {
+            Console.WriteLine($"Demo: new run refused — {demo.State}, {demo.RunsUsed}/{demo.MaxRuns} used"
+                            + (demo.Detail.Length > 0 ? $" ({demo.Detail})" : ""));
+            return false;
+        }
+        if (DemoLimit.IsActive) Console.WriteLine($"Demo: run {demo.RunsUsed} of {demo.MaxRuns} started");
+
         // Erased FIRST: a crash part-way through setup must not leave a save pointing at a world that
         // no longer exists.
         Cathedral.Game.Save.SaveFile.Delete();
 
-        if (_worldClaimed)
-        {
-            GameRng.Reseed(Config.Rng.Seed ?? Environment.TickCount);
-            _core.RebuildForNewSeed();
-            _interface.RegenerateWorld();
-        }
-        _worldClaimed = true;
+        GameRng.Reseed(worldSeed);
+        _core.RebuildForNewSeed();
+        _interface.RegenerateWorld();
+        _core.WorldRenderEnabled = true;
+
+        // An open history viewer follows the run into its world: the history it shows from here is the
+        // run's own (the same one the preview built, and now the one the game holds).
+        if (Cathedral.Debug.WorldHistoryViewerManager.IsOpen && _interface.History != null)
+            Cathedral.Debug.WorldHistoryViewerManager.ShowHistory(_interface.History);
+
+        // The world you are standing in is not one of the moons in your sky. Does nothing when the
+        // seed belongs to no moon, which is every run pinned with --seed.
+        HideMoonForSeed(worldSeed);
 
         ResetGameState();
+        return true;
     }
 
     /// <summary>
@@ -4272,9 +5222,10 @@ public class LocationTravelGameController : IDisposable
             _core.Terminal.Visible = true;
     }
 
+    /// <summary>Entry for the two time-passing menus, work and gathering, which take the screen alike.</summary>
     private void OnEnterWorking()
     {
-        Console.WriteLine("LocationTravelGameController: Entered Working mode");
+        Console.WriteLine($"LocationTravelGameController: Entered {_currentMode} mode");
         _core.SetNarrationMode(true);
         _core.SetWorldInteractionsEnabled(false);
         _interface.SetWorldInteractionsEnabled(false);
@@ -4314,9 +5265,8 @@ public class LocationTravelGameController : IDisposable
     }
 
     /// <summary>
-    /// The single place that switches game mode in response to a <see cref="PhaseTransition"/>.
-    /// Both the narration flow and routine replay produce transitions; future phase kinds add a
-    /// subclass and one arm here.
+    /// The single place that switches game mode in response to a <see cref="PhaseTransition"/> from
+    /// the narration flow; future phase kinds add a subclass and one arm here.
     /// </summary>
     public void ApplyPhaseTransition(PhaseTransition transition)
     {
@@ -4342,34 +5292,6 @@ public class LocationTravelGameController : IDisposable
                 }
                 break;
 
-            case StartRoutineDialogueTransition rd:
-                StartRoutineSubPhase(rd.Vertex, rd.NpcKey, rd.Time, rd.StartArea?.DisplayName,
-                    npc => StartDialogueMode(new DialogueTriggerOutcome(npc, rd.TreeId)));
-                break;
-
-            case StartRoutineTradeTransition rt:
-                StartRoutineSubPhase(rt.Vertex, rt.NpcKey, rt.Time, rt.StartArea?.DisplayName,
-                    npc => StartTradeMode(npc, rt.Mode));
-                break;
-
-            case StartRoutineWorkTransition rw:
-                StartRoutineSubPhase(rw.Vertex, rw.NpcKey, rw.Time, rw.StartArea?.DisplayName, npc =>
-                {
-                    var job = Cathedral.Game.Narrative.Work.JobRegistry.Instance.GetById(rw.JobId);
-                    if (job == null)
-                    {
-                        Console.Error.WriteLine($"ApplyPhaseTransition: recorded job '{rw.JobId}' no longer exists — returning to travel");
-                        ExitNarrativeMode();
-                        return;
-                    }
-                    StartWorkMode(npc, job);
-                });
-                break;
-
-            case StartNarrationTransition n:
-                StartNarrativeInteraction(n.Vertex, n.StartArea?.DisplayName, n.Time);
-                break;
-
             case ReturnToTravelTransition:
             default:
                 ReturnToWorldView();
@@ -4378,15 +5300,13 @@ public class LocationTravelGameController : IDisposable
     }
 
     /// <summary>
-    /// Bridges a headless routine replay into a location sub-phase: rebuilds narrative context at the
-    /// vertex (without an observation pass), re-resolves the recorded NPC in the fresh scene, and then
-    /// runs <paramref name="open"/> to enter the dialogue / trade / work phase. Because a real
-    /// <see cref="NarrativeController"/> now exists, the normal completion handlers
-    /// (OnDialogueCompleted / OnTradeCompleted / OnWorkCompleted) return the player to narration or
-    /// the world map exactly as after a live visit.
+    /// Enters a Buy, Sell or Work routine: builds narrative context at the vertex (without an
+    /// observation pass) in the routine's area and hour, finds the routine's person in the fresh scene,
+    /// and runs <paramref name="open"/> to enter the menu. Because a real
+    /// <see cref="NarrativeController"/> now exists, the normal completion handlers (OnTradeCompleted /
+    /// OnWorkCompleted) return the player to narration or the world map exactly as after a live visit.
     /// </summary>
-    private void StartRoutineSubPhase(int vertex, string npcKey,
-        Cathedral.Game.Narrative.TimePeriod time, string? startAreaKey,
+    private void StartRoutineSubPhase(int vertex, Cathedral.Game.Narrative.Routines.NpcRoutine routine,
         Action<Cathedral.Game.Npc.NpcEntity> open)
     {
         if (!EstablishNarrativeContext(vertex))
@@ -4396,18 +5316,18 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
-        // Where AND when the replay ended. The area matters as much as the period: the sub-phase
-        // rebuilds the scene at its default opening area, so without it the player walks out of the
-        // trade menu into the square rather than the forge the routine had walked into.
-        _narrativeController!.PrepareForRoutineSubPhase(time, startAreaKey);
+        // The area matters as much as the period: the sub-phase rebuilds the scene at its default
+        // opening area, so without it the player walks out of the trade menu into the square rather
+        // than the forge the routine names.
+        _narrativeController!.PrepareForRoutineSubPhase(routine.Time, routine.AreaName);
 
-        var npc = _narrativeController.Scene?.Npcs
-            .FirstOrDefault(n => n.IsAlive && string.Equals(n.DisplayName, npcKey, StringComparison.OrdinalIgnoreCase))
-            ?.Entity as Cathedral.Game.Npc.NpcEntity;
+        var npc = _narrativeController.Scene is { } scene
+            ? routine.FindNpc(scene)?.Entity as Cathedral.Game.Npc.NpcEntity
+            : null;
 
         if (npc == null)
         {
-            Console.Error.WriteLine($"StartRoutineSubPhase: NPC '{npcKey}' not found in the rebuilt scene — exiting to travel");
+            Console.Error.WriteLine($"StartRoutineSubPhase: '{routine.NpcName}' not found in the rebuilt scene — exiting to travel");
             ExitNarrativeMode();
             return;
         }
@@ -4427,8 +5347,9 @@ public class LocationTravelGameController : IDisposable
     }
 
     /// <summary>
-    /// Opens the routine list box for the current travel destination. Each routine is virtually
-    /// replayed to determine whether it can still be replayed (greyed out otherwise).
+    /// Opens the routine list box for the current travel destination. Each routine is checked against
+    /// a freshly built scene by its own kind's rule (<see cref="Cathedral.Game.Narrative.Routines.Routine.Unavailability"/>)
+    /// and greyed out, with the reason, when it cannot be walked.
     /// </summary>
     private void OpenRoutinesBox()
     {
@@ -4436,19 +5357,19 @@ public class LocationTravelGameController : IDisposable
         if (!_travelPlanner.HasWaypoints) return;
 
         int destVertex = _travelPlanner.FinalDestination;
-        var routines = _protagonist.RecordedRoutines.Where(r => r.LocationId == destVertex).ToList();
+        var routines = Cathedral.Game.Narrative.Routines.RoutineCategories.All
+            .SelectMany(c => _protagonist.RoutinesOf(c))
+            .Where(r => r.LocationId == destVertex)
+            .ToList();
 
-        var entries = new List<TravelRoutinesBox.Entry>();
-        foreach (var r in routines)
-        {
-            var vr = _routineReplayEngine.VirtualReplay(r, _protagonist, () => BuildSceneForVertexOrThrow(destVertex));
-            entries.Add(new TravelRoutinesBox.Entry
+        var ctx = routines.Count > 0 ? RoutineCheckContextFor(destVertex) : null;
+        var entries = routines
+            .Select(r => new TravelRoutinesBox.Entry
             {
-                Routine    = r,
-                Replayable = vr.Replayable,
-                Reason     = vr.Replayable ? null : vr.FailReason,
-            });
-        }
+                Routine = r,
+                Reason  = ctx == null ? "the place cannot be reached" : r.Unavailability(ctx),
+            })
+            .ToList();
 
         // Keep the world non-interactive while the modal box is shown.
         _core.SetWorldInteractionsEnabled(false);
@@ -4464,72 +5385,127 @@ public class LocationTravelGameController : IDisposable
     }
 
     /// <summary>
-    /// Fully replays a routine on arrival and shows the outcome box. The final phase transition is
-    /// applied when the player clicks CONTINUE.
+    /// What a routine at <paramref name="vertex"/> is checked against: a scene built for it as a
+    /// visit would build it, but with <b>no depletion applied</b> — a gathering routine counts the
+    /// empty slots too (see <see cref="Cathedral.Game.Narrative.Routines.RoutineCheckContext"/>).
+    /// Null when the scene cannot be built.
     /// </summary>
-    private void StartRoutineReplay(int vertexIndex, Cathedral.Game.Narrative.Routines.Routine routine)
+    private Cathedral.Game.Narrative.Routines.RoutineCheckContext? RoutineCheckContextFor(int vertex)
+    {
+        var scene = BuildSceneForLocation(vertex, out _, applyDepletion: false);
+        return scene == null || _protagonist == null
+            ? null
+            : new Cathedral.Game.Narrative.Routines.RoutineCheckContext(scene, _protagonist,
+                                                                      Cathedral.Game.Narrative.GameClock.Days);
+    }
+
+    /// <summary>
+    /// Enters a routine on arriving at its location: opens its area at its hour, in the phase its kind
+    /// names. Checked once more first, because the world may have changed on the road — and if it can
+    /// no longer be walked, the visit goes ahead as an ordinary arrival rather than leaving the player
+    /// standing on the map at the end of a journey.
+    /// </summary>
+    private void EnterRoutine(int vertex, Cathedral.Game.Narrative.Routines.Routine routine)
     {
         if (_core.Terminal == null || _protagonist == null) { ReturnToWorldView(); return; }
 
-        Console.WriteLine($"LocationTravelGameController: replaying routine '{routine.Name}' at vertex {vertexIndex}");
-
-        var result = _routineReplayEngine.FullReplay(routine, _protagonist,
-            () => BuildSceneForVertexOrThrow(vertexIndex));
-
-        if (!result.Replayable)
+        var ctx = RoutineCheckContextFor(vertex);
+        var why = ctx == null ? "the place cannot be reached" : routine.Unavailability(ctx);
+        if (why != null)
         {
-            Console.Error.WriteLine($"LocationTravelGameController: routine no longer replayable on arrival — {result.FailReason}");
-            ReturnToWorldView();
+            Console.Error.WriteLine($"LocationTravelGameController: routine '{routine.Name}' cannot be walked on arrival — {why}; ordinary visit instead");
+            StartNarrativeInteraction(vertex);
             return;
         }
 
-        var lines = new List<string>();
-        foreach (var o in result.Outcomes) lines.Add(o.Text);
-        lines.AddRange(result.ExtraLines);
-        lines.Add(PhaseNote(result.FinalTransition));
+        Console.WriteLine($"LocationTravelGameController: entering {routine.Category.CliId()} routine '{routine.Name}' "
+                        + $"at {routine.AreaName} / {routine.Time}");
 
-        _replayFinalTransition = result.FinalTransition;
+        switch (routine)
+        {
+            case Cathedral.Game.Narrative.Routines.GoToRoutine:
+                StartNarrativeInteraction(vertex, routine.AreaName, routine.Time);
+                break;
 
-        // Enter WorldView first (OnEnterWorldView re-enables interactions), THEN show the modal box
-        // and disable interactions so world clicks can't fall through underneath it.
-        SetMode(GameMode.WorldView);
-        _routineOutcomeBox = new RoutineOutcomeBox(_core.Terminal, routine.Name, lines);
-        _core.SetWorldInteractionsEnabled(false);
-        _interface.SetWorldInteractionsEnabled(false);
-        // Modal overlay over the world: reset to transparent rather than a bare Clear, which paints
-        // opaque black and hid the sphere behind the box. Capture clicks so none reach the world.
-        SetTransparentWorldOverlay(clickPassthrough: false);
-        _routineOutcomeBox.Render();
+            case Cathedral.Game.Narrative.Routines.MeetRoutine meet:
+                StartNarrativeInteraction(vertex, meet.AreaName, meet.Time, focusNpcId: meet.NpcId);
+                break;
+
+            case Cathedral.Game.Narrative.Routines.TradeRoutine trade:
+                StartRoutineSubPhase(vertex, trade, npc => StartTradeMode(npc, trade.Mode, fromRoutine: true));
+                break;
+
+            case Cathedral.Game.Narrative.Routines.WorkRoutine work:
+                StartRoutineSubPhase(vertex, work, npc =>
+                {
+                    // Checked by the routine already; a null here means the registry changed under it.
+                    var job = Cathedral.Game.Narrative.Work.JobRegistry.Instance.GetById(work.JobId);
+                    if (job == null) { ExitNarrativeMode(); return; }
+                    StartWorkMode(npc, job);
+                });
+                break;
+
+            case Cathedral.Game.Narrative.Routines.GatherRoutine gather:
+                StartGatherMode(vertex, gather);
+                break;
+        }
     }
 
-    private static string PhaseNote(Cathedral.Game.Narrative.PhaseTransition t) => t switch
+    /// <summary>
+    /// Opens the gathering phase for a Gather routine. Runs inside a narrative context, like work, so
+    /// that pausing, resuming and leaving behave as they do for every other menu-phase; the context's
+    /// own scene has depletion applied, so the phase reads its slots off a second build without it.
+    /// </summary>
+    private void StartGatherMode(int vertex, Cathedral.Game.Narrative.Routines.GatherRoutine routine)
     {
-        Cathedral.Game.Narrative.StartNarrationTransition n     => $"You explore {n.StartArea?.DisplayName ?? "the area"}.",
-        Cathedral.Game.Narrative.StartFightTransition f         => $"A fight breaks out with {f.Enemy.DisplayName}!",
-        Cathedral.Game.Narrative.StartDialogueTransition d      => $"You begin speaking with {d.Npc.DisplayName}.",
-        Cathedral.Game.Narrative.StartRoutineDialogueTransition rd => $"You begin speaking with {rd.NpcKey}.",
-        Cathedral.Game.Narrative.StartRoutineTradeTransition rt => $"You sit down to trade with {rt.NpcKey}.",
-        Cathedral.Game.Narrative.StartRoutineWorkTransition rw  => $"You set to work for {rw.NpcKey}.",
-        _ => "You return to your journey.",
-    };
+        if (_core.Terminal == null || _protagonist == null) return;
+        if (!EstablishNarrativeContext(vertex))
+        {
+            Console.Error.WriteLine("StartGatherMode: could not establish narrative context — returning to travel");
+            ReturnToWorldView();
+            return;
+        }
+        _narrativeController!.PrepareForRoutineSubPhase(routine.Time, routine.AreaName);
 
-    private Cathedral.Game.Scene.Scene BuildSceneForVertexOrThrow(int vertexIndex)
-    {
-        var scene = BuildSceneForVertex(vertexIndex);
-        if (scene == null) throw new InvalidOperationException("Scene factory is unavailable for routine replay.");
-        return scene;
+        var scene  = BuildSceneForLocation(vertex, out _, applyDepletion: false);
+        var verb   = Cathedral.Game.Scene.Verbs.VerbRegistry.Instance.Get(routine.VerbId);
+        var area   = scene == null ? null : routine.FindArea(scene);
+        var source = area == null ? null : Cathedral.Game.Narrative.Routines.GatherYield.FindSource(routine, area);
+        if (scene == null || verb == null || source == null)
+        {
+            Console.Error.WriteLine($"StartGatherMode: '{routine.SourceName}' not found in the rebuilt scene — exiting to travel");
+            ExitNarrativeMode();
+            return;
+        }
+
+        _gatherAdapter = new GatherMenuAdapter(_core.Terminal, _protagonist, routine, verb, source, scene);
+        _narrativeController.CloseNarrationSegment($"gathering at {source.DisplayName}");
+        SetMode(GameMode.Gathering);
     }
 
-    /// <summary>Builds a fresh scene for routine replay (same as a narration start).</summary>
-    private Cathedral.Game.Scene.Scene? BuildSceneForVertex(int vertexIndex)
-        => BuildSceneForLocation(vertexIndex, out _);
+    /// <summary>
+    /// The gathering phase is over. Like work it returns to the world map, not to narration: the stay
+    /// may have run for months, and the scene the player arrived in is long stale.
+    /// </summary>
+    private void OnGatherCompleted()
+    {
+        if (_gatherAdapter == null) return;
+        Console.WriteLine("LocationTravelGameController: gathering finished — returning to world view");
+        _gatherAdapter = null;
+        _core.Terminal?.Clear();
+        ExitNarrativeMode();
+    }
 
     /// <summary>
     /// Builds a fresh scene for a vertex exactly as a narration start would: scene-factory selection,
     /// per-location state (NPC affinity + item depletion) get-or-create, default-enemy flags, and the
     /// shared depletion store + current-depletion application. Returns null when LLM deps aren't ready.
     /// </summary>
-    private Cathedral.Game.Scene.Scene? BuildSceneForLocation(int vertexIndex, out LocationInstanceState? lis)
+    /// <param name="applyDepletion">False to leave every item slot in place — what a routine check
+    /// and the gathering phase want, since they reason about the empty slots too. The depletion store
+    /// is still the location's own, shared, so whatever they write to it is real.</param>
+    private Cathedral.Game.Scene.Scene? BuildSceneForLocation(int vertexIndex, out LocationInstanceState? lis,
+        bool applyDepletion = true)
     {
         lis = null;
         if (_llamaServer == null || _protagonist == null) return null;
@@ -4606,7 +5582,8 @@ public class LocationTravelGameController : IDisposable
 
         // The persistent stores are already shared with the scene (LocationInstanceState.AttachTo,
         // called from SceneFactory.Build); apply the depletion that has regenerated since.
-        ApplyDepletion(scene, Cathedral.Game.Narrative.GameClock.Days);
+        if (applyDepletion)
+            ApplyDepletion(scene, Cathedral.Game.Narrative.GameClock.Days);
 
         // Scene-wide false names: map the protagonist, party companions and every named (human) NPC to
         // simple, sanitizer-safe placeholder names the LLM sees in prompts; real names are restored on
@@ -4747,7 +5724,13 @@ public class LocationTravelGameController : IDisposable
         if (_core.Terminal == null || _narrativeController == null ||
             _llamaServer == null || _modusMentisSlotManager == null)
             return;
-        
+
+        // Opening a conversation with somebody is what teaches a Meet routine. Only a registered
+        // tree, which is one the player chose to open: a prebuilt one is a confrontation that
+        // came to them (caught red-handed), and nobody goes back to be caught again.
+        if (dialogueOutcome.Tree == null)
+            _narrativeController.RecordConversationRoutine(dialogueOutcome.Target);
+
         // --auto-dialogue settles the conversation where it stands and never enters Dialogue mode, so
         // a verb test asserts about its verb rather than about somebody else's dialogue tree. The
         // trees themselves are covered by cli/_systems/dialogue_*.cli.
@@ -4756,6 +5739,9 @@ public class LocationTravelGameController : IDisposable
                    dialogueOutcome.Target, _narrativeController.Protagonist,
                    dialogueOutcome.TreeId, dialogueOutcome.Tree))
         {
+            // The flags a won trade or hire leaves are read here as well as in OnDialogueCompleted,
+            // which this path never reaches: they are what teach a Buy, Sell or Work routine.
+            RecordAgreementRoutines(dialogueOutcome.Target);
             // The flags a won conversation leaves on the NPC are consumed by OnDialogueCompleted,
             // which this path never reaches — so the one that repositions the player is consumed
             // here. Without it --auto-dialogue applied the introduction's standing and skipped the
@@ -4765,6 +5751,11 @@ public class LocationTravelGameController : IDisposable
             {
                 dialogueOutcome.Target.IntroductionGranted = null;
                 WalkToIntroduction(presented);
+            }
+            if (dialogueOutcome.Target.LeadToPremisesGranted)
+            {
+                dialogueOutcome.Target.LeadToPremisesGranted = false;
+                _narrativeController.WalkToPremises(dialogueOutcome.Target);
             }
             _narrativeController.OnDialogueCompleted(dialogueOutcome.Target);
             return;
@@ -4826,8 +5817,14 @@ public class LocationTravelGameController : IDisposable
             if (result == FightAdapterResult.Runaway)
             {
                 // Abandon the in-flight travel and let the player pick a new destination. Any
-                // arrival held over the fight goes with it — fleeing ends the journey, and the
-                // avatar is standing on the vertex either way.
+                // arrival held over the fight goes with it — fleeing ends the journey.
+                //
+                // An encounter on the LAST step stood between the party and the destination, so a
+                // party that flees has not reached it: it falls back to the cell it came from.
+                // Left on the destination instead, it stood on a place it never entered and could
+                // not travel to — the map refuses a journey to the vertex underfoot.
+                if (_pendingArrivalVertex >= 0 && _stepOriginVertex >= 0)
+                    _interface.ReturnAvatarTo(_stepOriginVertex);
                 _pendingArrivalVertex = -1;
                 _interface.MovementPaused = true;
                 _interface.CancelTravel();
@@ -4952,6 +5949,14 @@ public class LocationTravelGameController : IDisposable
             WalkToIntroduction(presented);
         }
 
+        // If a trader agreed to lead the player to their premises, walk there — at the first hour
+        // they keep it, the trader in focus. The introduction's hand-off, for a place.
+        if (npc.LeadToPremisesGranted)
+        {
+            npc.LeadToPremisesGranted = false;   // consume the flag
+            _narrativeController?.WalkToPremises(npc);
+        }
+
         // If a propose-to-join dialogue succeeded, take them into the party and out of the scene.
         // Deferred to here for the same reason trade and work are: a dialogue outcome can reach the
         // NPC and nothing else, so the flag is the only thing it can set.
@@ -4960,6 +5965,9 @@ public class LocationTravelGameController : IDisposable
             npc.JoinRequested = false;   // consume the flag
             RecruitFromDialogue(npc);
         }
+
+        // A trade or a hire agreed is a routine learned — read before the flags are consumed below.
+        RecordAgreementRoutines(npc);
 
         // If a propose-to-buy/sell dialogue succeeded, open the trade menu instead of returning.
         if (npc.TradeRequest != Cathedral.Game.Npc.Trade.TradeMode.None)
@@ -5040,10 +6048,26 @@ public class LocationTravelGameController : IDisposable
         Console.WriteLine($"LocationTravelGameController: {npc.DisplayName} joined the party ({_protagonist.CompanionParty.Count}/{max})");
     }
 
-    private void StartTradeMode(Cathedral.Game.Npc.NpcEntity npc, Cathedral.Game.Npc.Trade.TradeMode mode)
+    /// <summary>
+    /// Learns the Buy, Sell or Work routine a won conversation has agreed to, from the flags its
+    /// outcomes leave on the NPC. Called from both ways a conversation ends — played out, and settled
+    /// by <c>--auto-dialogue</c> — so the two cannot teach different things.
+    /// </summary>
+    private void RecordAgreementRoutines(Cathedral.Game.Npc.NpcEntity npc)
+    {
+        if (_narrativeController == null) return;
+        if (npc.TradeRequest != Cathedral.Game.Npc.Trade.TradeMode.None)
+            _narrativeController.RecordTradeRoutine(npc, npc.TradeRequest);
+        if (npc.JobRequest is { } job)
+            _narrativeController.RecordWorkRoutine(npc, job);
+    }
+
+    private void StartTradeMode(Cathedral.Game.Npc.NpcEntity npc, Cathedral.Game.Npc.Trade.TradeMode mode,
+                                bool fromRoutine = false)
     {
         if (_core.Terminal == null || _narrativeController == null)
             return;
+        _tradeFromRoutine = fromRoutine;
 
         _tradeAdapter = new TradeMenuAdapter(
             protagonist: _narrativeController.Protagonist,
@@ -5057,7 +6081,8 @@ public class LocationTravelGameController : IDisposable
     }
 
     /// <summary>
-    /// Called when the trade menu reports completion. Begins a fresh narration segment.
+    /// Called when the trade menu reports completion. Begins a fresh narration segment — or, for a
+    /// trade a routine opened, returns to the world map (see <see cref="_tradeFromRoutine"/>).
     /// </summary>
     private void OnTradeCompleted()
     {
@@ -5067,6 +6092,15 @@ public class LocationTravelGameController : IDisposable
         Console.WriteLine($"LocationTravelGameController: Trade completed with {npc.DisplayName}");
         _tradeAdapter = null;
         _core.Terminal?.Clear();
+
+        if (_tradeFromRoutine)
+        {
+            _tradeFromRoutine = false;
+            Console.WriteLine("LocationTravelGameController: routine trade finished — returning to world view");
+            ExitNarrativeMode();
+            return;
+        }
+
         SetMode(GameMode.LocationInteraction);
 
         // The trade menu draws no narration text of its own, so leave a one-line trace before the
@@ -5241,6 +6275,27 @@ public class LocationTravelGameController : IDisposable
         else if (_currentMode == GameMode.Working && _workAdapter != null)
         {
             _workAdapter.OnKeyPress(key);
+        }
+        else if (_currentMode == GameMode.Gathering && _gatherAdapter != null)
+        {
+            // Nothing is keyed: Escape opens the pause menu (the launcher handles it).
+        }
+        // R repaints the sphere by region instead of by biome — a development view of the world
+        // division, with no gameplay behind it yet.
+        //
+        // Below the mode dispatch and not above it, unlike F11: R is already the fight's "run away",
+        // and a key that means one thing on the world and another inside a battle has to lose to the
+        // battle. Everything above returns into an adapter, so this line is only reached in the
+        // modes that are actually looking at the sphere.
+        else if (key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.R && Config.Debug.DeveloperKeys)
+        {
+            _interface.ToggleRegionOverlay();
+        }
+        // K is R's twin: the sphere by the realm that holds each region today, from the world's
+        // generated history. Its own key rather than a third state of R, so R stays a toggle.
+        else if (key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.K && Config.Debug.DeveloperKeys)
+        {
+            _interface.ToggleRealmOverlay();
         }
     }
 

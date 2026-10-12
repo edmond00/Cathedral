@@ -13,7 +13,7 @@ public class VigilanceModusMentis : ModusMentis
     public override string MenuDescription =>
         "Spreads attention across a fight, catching threats and openings before others register them. Keeps a defensive awareness running, and inclines toward noticing danger early rather than reacting late.";
     public override string SkillMeans       => "the constant alertness that notices threats and openings first";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Fighting };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action, ModusMentisFunction.Fighting };
     public override string[] Organs        => new[] { "eyes", "legs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

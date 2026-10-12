@@ -9,7 +9,8 @@ namespace Cathedral.Game.Scene.Verbs;
 /// <summary>
 /// Proposes to sell a category of goods to an NPC (the NPC's <see cref="NpcEntity.BuyTag"/>).
 /// On success it opens the propose-to-sell dialogue; only succeeding THAT dialogue opens the
-/// sell menu. Gated to acquaintances and above — you must have met the NPC first.
+/// sell menu. Gated to the NPC's premises, and to anyone who does not count
+/// you an enemy — no introduction is needed (see <see cref="TradeGate"/>).
 /// </summary>
 public class ProposeToSellVerb : DialogueVerb
 {
@@ -27,7 +28,7 @@ public class ProposeToSellVerb : DialogueVerb
         if (npc.BuyTag is null) return false;
         if (!scene.GetNpcsAt(pov.Where, pov.When).Exists(n => n.Id == sceneNpc.Id)) return false;
 
-        return TradeGate.CanTrade(npc, actor);
+        return TradeGate.CanTrade(npc, actor, pov.Where);
     }
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
@@ -35,14 +36,6 @@ public class ProposeToSellVerb : DialogueVerb
         var npc = (target as SceneNpc)?.Entity as NpcEntity;
         string goods = npc?.BuyTag?.Label() ?? "goods";
         return $"meet {NpcPronoun(target)} to propose to sell {goods}";
-    }
-
-    // Read out of context in the routines menu, so the pronoun is replaced by the name.
-    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbAction? view = null)
-    {
-        var npc = (target as SceneNpc)?.Entity as NpcEntity;
-        string goods = npc?.BuyTag?.Label() ?? "goods";
-        return $"meet {NpcName(target)} to sell {goods}";
     }
 
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)

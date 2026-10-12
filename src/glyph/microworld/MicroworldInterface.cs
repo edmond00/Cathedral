@@ -32,6 +32,12 @@ namespace Cathedral.Glyph.Microworld
         // Computed once in GenerateWorld and reused by the recompute fallback.
         private Vector3 _worldNoiseOffset;
 
+        // Which KIND of world this is: the thresholds and feature sizes the noise is read through.
+        // Resolved once in GenerateWorld, from the master seed, and reused by the recompute fallback
+        // for the same reason the offset is — a vertex must classify the same way whichever path
+        // asks about it.
+        private WorldVariant _variant = WorldVariants.All[0];
+
         // Protagonist system
         private int _protagonistVertex = -1;
         private VertexWorldData? _originalProtagonistData;
@@ -217,7 +223,7 @@ namespace Cathedral.Glyph.Microworld
             {
                 if (i == _protagonistVertex) continue;
                 if (vertexData.TryGetValue(i, out var data))
-                    SetVertexGlyph(i, data.GlyphChar, TileColor(data), data.Location?.Size ?? data.Biome.Size);
+                    SetVertexGlyph(i, data.GlyphChar, TileColor(i, data), data.Location?.Size ?? data.Biome.Size);
             }
             _outOfRangeVertices.Clear();
             RebuildConstrainedGraph();
@@ -226,11 +232,14 @@ namespace Cathedral.Glyph.Microworld
         private void ApplyDarkening(int vertexIndex)
         {
             if (!vertexData.TryGetValue(vertexIndex, out var data)) return;
+            // Dim whatever the tile would otherwise be, overlay included: out-of-range has to keep
+            // reading as out-of-range while the regions are on screen.
+            var lit = TileColor(vertexIndex, data);
             var dark = new Vector4(
-                data.Color.X / 255f * TravelRangeDarkenFactor,
-                data.Color.Y / 255f * TravelRangeDarkenFactor,
-                data.Color.Z / 255f * TravelRangeDarkenFactor,
-                GetTileCategory(data));
+                lit.X * TravelRangeDarkenFactor,
+                lit.Y * TravelRangeDarkenFactor,
+                lit.Z * TravelRangeDarkenFactor,
+                lit.W);
             SetVertexGlyph(vertexIndex, data.GlyphChar, dark, data.Location?.Size ?? data.Biome.Size);
         }
 
@@ -253,6 +262,16 @@ namespace Cathedral.Glyph.Microworld
         /// </summary>
         public void SetExternalTravelControl(bool enabled) => _externalTravelControl = enabled;
 
+        /// <summary>
+        /// True once a world has been generated into this interface.
+        ///
+        /// <para>Worth a flag rather than a null check because the world is no longer built at
+        /// startup: a new run builds it when its moon is confirmed, and a continued run builds it
+        /// when the save is read. Between the window opening and either of those the sphere carries
+        /// no biomes at all, and everything that would read one has to know not to ask.</para>
+        /// </summary>
+        public bool IsWorldGenerated { get; private set; }
+
         public override void GenerateWorld()
         {
             Console.WriteLine("Generating microworld biomes using Perlin noise...");
@@ -270,30 +289,36 @@ namespace Cathedral.Glyph.Microworld
                 (float)(worldRng.NextDouble() * 20000.0 - 10000.0),
                 (float)(worldRng.NextDouble() * 20000.0 - 10000.0));
 
+            // The variant is a pure function of the seed, NOT a draw from worldRng: the
+            // world-selection screen names it before the seed has been taken, and a screen that
+            // could not say what it was about to give the player would be worth nothing.
+            _variant = ResolveVariant();
+            Console.WriteLine($"[World] {_variant.Name} ({_variant.Id}) - {_variant.Blurb}");
+
             var noiseValues = new List<float>();
             var glyphCounts = new Dictionary<char, int>();
+
+            // The biome of every vertex, before anything is placed on one: the terrain layers, the
+            // coast held to the sea, heat and cold. Neighbour-aware, so it has to be whole before the
+            // per-vertex pass below reads it — a canyon is decided by what is next door.
+            var classified = WorldClassifier.Classify(_variant.Shape, VertexCount, GetVertexPosition,
+                                                      GetNeighboringVertices, _worldNoiseOffset);
+            if (classified.StrandedCoast > 0)
+                Console.WriteLine($"[PostProcess] {classified.StrandedCoast} coast tile(s) touched no water; made plain.");
+            Console.WriteLine($"[Climate] {classified.Climate.Replaced} cell(s) hot or cold, "
+                            + $"{classified.Climate.Canyon} canyon, {classified.Climate.FrozenSea} of sea frozen over.");
 
             // Apply noise and biome generation to all vertices
             for (int i = 0; i < VertexCount; i++)
             {
                 Vector3 pos = GetVertexPosition(i);
-                
-                // Multi-scale Perlin noise like the original Unity code
-                Vector3 off1 = new Vector3(1337.0f, 2468.0f, 9876.0f);
-                Vector3 off2 = new Vector3(5432.0f, 8765.0f, 1234.0f);
-                Vector3 off3 = new Vector3(9999.0f, 3333.0f, 7777.0f);
 
-                Vector3 sp = pos + _worldNoiseOffset;
-                Vector3 p1 = (off1 + sp) / 12f;
-                Vector3 p2 = (off2 + sp) / 3f;
-                Vector3 p3 = (off3 + sp) / 8f;
-                
-                float perlinNoise1 = Perlin.Noise(p1.X, p1.Y, p1.Z);
-                float perlinNoise2 = Perlin.Noise(p2.X, p2.Y, p2.Z);
-                float perlinNoise3 = Perlin.Noise(p3.X, p3.Y, p3.Z);
-                
-                // Determine biome based on the three noise layers (matching Unity logic)
-                BiomeType biome = DetermineBiome(perlinNoise1, perlinNoise2, perlinNoise3);
+                // Three scales of Perlin noise, read through this world's variant: how big its
+                // features are and where its waterline and treeline sit. Read again here only for the
+                // statistics; the biome itself is the classifier's.
+                var (perlinNoise1, perlinNoise2, perlinNoise3) = _variant.Shape.Sample(pos, _worldNoiseOffset);
+
+                BiomeType biome = Biomes[classified.Biome[i]];
                 
                 // Calculate location spawn chance and determine if a location should spawn
                 LocationType? location = DetermineLocation(biome, pos);
@@ -324,6 +349,7 @@ namespace Cathedral.Glyph.Microworld
                     Biome = biome,
                     Location = location,
                     NoiseValue = avgNoise,
+                    SettlementNoise = perlinNoise2,
                     GlyphChar = glyphChar,
                     Color = color
                 };
@@ -334,7 +360,7 @@ namespace Cathedral.Glyph.Microworld
                     waterVertices.Add(i);
                 }
                 
-                SetVertexGlyph(i, glyphChar, TileColor(vertexData[i]), size);
+                SetVertexGlyph(i, glyphChar, TileColor(i, vertexData[i]), size);
                 
                 // Collect statistics
                 noiseValues.Add(avgNoise);
@@ -349,10 +375,155 @@ namespace Cathedral.Glyph.Microworld
             PrintNoiseStatistics(noiseValues, "Microworld Noise Distribution Statistics");
             PrintGlyphStatistics(glyphCounts, VertexCount, "Microworld Biome-Based Glyph Distribution");
 
-            PostProcessWorld();
+            // Before InitializeProtagonist, so that anything downstream of the spawn can already ask
+            // which region it is standing in.
+            BuildRegions();
+
+            // The world's past, laid over the regions it just divided into. A pure function of the
+            // seed like everything above, so Continue rebuilds it rather than reading it from the save.
+            BuildHistory();
+
+            // And the peopled country, grown around the places that past put on the map. After history
+            // and never before it: there is nothing to grow from until history has built.
+            BuildSettlement();
 
             // Initialize protagonist at a random suitable location
             InitializeProtagonist();
+
+            IsWorldGenerated = true;
+        }
+
+        // ── Regions ─────────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// The world's division into regions, or null before a world has been generated.
+        /// Purely descriptive for now: nothing in the game reads it except the developer overlay.
+        /// </summary>
+        public WorldRegionMap? Regions { get; private set; }
+
+        /// <summary>
+        /// True while the sphere is drawn by region rather than by biome. Toggled by the developer
+        /// R key and by the CLI's <c>key R</c>; never on in a shipped build, which has no way in.
+        /// </summary>
+        public bool RegionOverlayEnabled { get; private set; }
+
+        private void BuildRegions()
+        {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            Regions = WorldRegionMap.Build(new WorldRegionInput
+            {
+                VertexCount     = VertexCount,
+                Neighbours      = GetNeighboringVertices,
+                IsLand          = v => vertexData.TryGetValue(v, out var d)
+                                       && !BiomeDatabase.WaterBiomes.Contains(d.Biome.Name),
+                // DetermineBiome tests the mountain layer before it reads the settlement one, so
+                // above the treeline the settlement noise decides nothing at all and its value there
+                // says nothing about where people are.
+                IsSettleable    = v => vertexData.TryGetValue(v, out var d)
+                                       && !BiomeDatabase.WaterBiomes.Contains(d.Biome.Name)
+                                       && !BiomeDatabase.MountainBiomes.Contains(d.Biome.Name),
+                SettlementNoise = v => vertexData.TryGetValue(v, out var d) ? d.SettlementNoise : 0f,
+                // A location sits on top of its biome and does not change what it costs to walk
+                // across, which is exactly what BiomeTravelDatabase says about locations.
+                StepCostDays    = v => vertexData.TryGetValue(v, out var d)
+                                       ? BiomeTravelDatabase.GetFor(d.Biome.Name).DurationDays
+                                       : 1f,
+                Position        = GetVertexPosition,
+            });
+            sw.Stop();
+
+            int land = Regions.Regions.Sum(r => r.CellCount);
+            Console.WriteLine($"[Regions] {Regions.Regions.Count} region(s) over {Regions.LandmassCount} " +
+                              $"landmass(es), {land} land cells, in {sw.ElapsedMilliseconds} ms.");
+        }
+
+        /// <summary>
+        /// The world's history, or null before a world has been generated. Nothing in the game reads
+        /// it yet except the realm overlay and the CLI; books will.
+        /// </summary>
+        public Cathedral.Game.History.WorldHistory? History { get; private set; }
+
+        /// <summary>
+        /// True while the sphere is drawn by the realm that holds each region today. The K key's twin
+        /// of <see cref="RegionOverlayEnabled"/>; the two are exclusive.
+        /// </summary>
+        public bool RealmOverlayEnabled { get; private set; }
+
+        // One colour per standing realm, built with the history. Unclaimed land is drawn dim grey.
+        private readonly Dictionary<Cathedral.Game.History.Realm, WorldRegionPalette.Swatch> _realmSwatches = new();
+        private static readonly WorldRegionPalette.Swatch UnclaimedSwatch = new(0.25f, 0.25f, 0.25f, "unclaimed");
+
+        private void BuildHistory()
+        {
+            if (Regions == null) return;
+            var geography = Cathedral.Game.History.HistoryGeography.Build(
+                Regions, VertexCount, GetNeighboringVertices,
+                v => vertexData.TryGetValue(v, out var d) ? d.Biome.Name : null,
+                _variant.Shape.SettlementDensity);
+            History = Cathedral.Game.History.WorldHistoryGenerator.Generate(geography);
+
+            _realmSwatches.Clear();
+            var standing = History.LivingRealms.ToList();
+            var palette = WorldRegionPalette.Build(standing.Count);
+            for (int i = 0; i < standing.Count; i++) _realmSwatches[standing[i]] = palette[i];
+
+            Console.WriteLine($"[History] {History.World.Name} ({History.World.Status}): {History.Chronology.Count} events, "
+                            + $"{standing.Count} standing realm(s), hash {History.Hash:X8}, in {History.GenerationMilliseconds} ms.");
+        }
+
+        /// <summary>Flips the realm overlay (turning the region overlay off) and repaints. Returns the new state.</summary>
+        public bool ToggleRealmOverlay()
+        {
+            if (History == null)
+            {
+                Console.WriteLine("[History] no world generated yet — no realms to colour.");
+                return false;
+            }
+            RealmOverlayEnabled = !RealmOverlayEnabled;
+            if (RealmOverlayEnabled) RegionOverlayEnabled = false;
+            RefreshAllTiles();
+            Console.WriteLine($"[History] realm overlay {(RealmOverlayEnabled ? "ON" : "OFF")} ({_realmSwatches.Count} realms).");
+            return RealmOverlayEnabled;
+        }
+
+        /// <summary>
+        /// Flips the region overlay and repaints every tile. Returns the new state.
+        /// </summary>
+        public bool ToggleRegionOverlay()
+        {
+            if (Regions == null)
+            {
+                Console.WriteLine("[Regions] no world generated yet — nothing to colour.");
+                return false;
+            }
+
+            RegionOverlayEnabled = !RegionOverlayEnabled;
+            if (RegionOverlayEnabled) RealmOverlayEnabled = false;
+            RefreshAllTiles();
+            Console.WriteLine($"[Regions] overlay {(RegionOverlayEnabled ? "ON" : "OFF")} " +
+                              $"({Regions.Regions.Count} regions).");
+            return RegionOverlayEnabled;
+        }
+
+        /// <summary>
+        /// Repaints every tile from its stored data, honouring the travel-range darkening — and
+        /// puts the committed travel plan back on top, which the repaint would otherwise erase. The
+        /// hovered preview is not restored because it is redrawn by the next mouse move anyway; a
+        /// plan the player has already clicked out is not.
+        /// </summary>
+        private void RefreshAllTiles()
+        {
+            var path = _plannedPathVertices.ToList();
+            var waypoints = _plannedWaypointVertices.ToList();
+
+            for (int i = 0; i < VertexCount; i++)
+            {
+                if (i == _protagonistVertex) continue;
+                if (vertexData.TryGetValue(i, out var data))
+                    RestoreVertexData(i, data);
+            }
+
+            if (path.Count > 1) ShowPlannedPath(path, waypoints);
         }
 
         public override (string primaryType, string secondaryType, float noiseValue) GetWorldInfoAt(int vertexIndex)
@@ -397,46 +568,36 @@ namespace Cathedral.Glyph.Microworld
             return new System.Numerics.Vector3(0, 255, 0); // Default green
         }
 
-        // Biome determination logic (from original code)
-        private BiomeType DetermineBiome(float perlinNoise1, float perlinNoise2, float perlinNoise3)
+        /// <summary>
+        /// Which kind of world this is. A pure function of the master seed (or of
+        /// <c>--world-variant</c>), so the moon box can name it before the world exists.
+        /// </summary>
+        public WorldVariant Variant => _variant;
+
+        /// <summary>
+        /// The variant this world is built to: the one the seed names, unless <c>--world-variant</c>
+        /// overrides it. The override is debug-only and does not reach a shipped build, which has no
+        /// way to pass a flag.
+        /// </summary>
+        private static WorldVariant ResolveVariant()
         {
-            // Based on Unity Microworld.cs biome classification logic (exact match)
-            // perlinNoise1: water classification (-1 to 1 range)
-            // perlinNoise2: cities/forests/fields classification (-1 to 1 range)  
-            // perlinNoise3: mountains classification (-1 to 1 range)
+            var resolved = WorldVariants.Resolve(GameRng.MasterSeed);
 
-            // WATER (perlinNoise1)
-            if (perlinNoise1 <= -0.25f)
-                return Biomes["ocean"];
-            if (perlinNoise1 <= 0.0f)
-                return Biomes["sea"];
+            // The rule itself lives in WorldVariants.Resolve, which the continue guard also reads.
+            // What is left here is the reporting, and it belongs here because this is the one place
+            // a world is actually built: a miss recorded at every caller would fail a script twice
+            // for one mistyped flag.
+            if (Config.Debug.WorldVariant is { Length: > 0 } want)
+            {
+                if (WorldVariants.ById(want) != null)
+                    Console.WriteLine($"[debug] --world-variant \"{want}\" -> {resolved.Name}");
+                else
+                    Cathedral.Game.DebugFlagAudit.Miss("--world-variant", want,
+                        "the variant this seed names. Known: "
+                        + string.Join(", ", WorldVariants.All.Select(v => v.Id)));
+            }
 
-            // MOUNTAIN (perlinNoise3)
-            if (perlinNoise3 > 0.5f)
-                return Biomes["peak"];
-            if (perlinNoise3 > 0.3f)
-                return Biomes["mountain"];
-
-            // CITY (perlinNoise2) — tightened from -0.4 to -0.58
-            // if (perlinNoise2 < -0.58f)
-            //     return Biomes["city"];
-            if (perlinNoise2 < -0.58f)
-                return Biomes["field"]; // TODO: restore city biome
-
-            // COAST (perlinNoise1)
-            if (perlinNoise1 <= 0.065f)
-                return Biomes["coast"];
-
-            // FOREST (perlinNoise2)
-            if (perlinNoise2 > 0.25f)
-                return Biomes["forest"];
-
-            // FIELD (perlinNoise2) — tightened from -0.15 to -0.38
-            if (perlinNoise2 < -0.38f)
-                return Biomes["field"];
-
-            // PLAIN (default fallback)
-            return Biomes["plain"];
+            return resolved;
         }
 
         private LocationType? DetermineLocation(BiomeType biome, Vector3 position)
@@ -485,20 +646,8 @@ namespace Cathedral.Glyph.Microworld
             // Fallback: recalculate if not found
             Vector3 pos = GetVertexPosition(vertexIndex);
             
-            Vector3 off1 = new Vector3(1337.0f, 2468.0f, 9876.0f);
-            Vector3 off2 = new Vector3(5432.0f, 8765.0f, 1234.0f);
-            Vector3 off3 = new Vector3(9999.0f, 3333.0f, 7777.0f);
-
-            Vector3 sp = pos + _worldNoiseOffset;
-            Vector3 p1 = (off1 + sp) / 12f;
-            Vector3 p2 = (off2 + sp) / 3f;
-            Vector3 p3 = (off3 + sp) / 8f;
-            
-            float perlinNoise1 = Perlin.Noise(p1.X, p1.Y, p1.Z);
-            float perlinNoise2 = Perlin.Noise(p2.X, p2.Y, p2.Z);
-            float perlinNoise3 = Perlin.Noise(p3.X, p3.Y, p3.Z);
-            
-            BiomeType biome = DetermineBiome(perlinNoise1, perlinNoise2, perlinNoise3);
+            var (perlinNoise1, perlinNoise2, perlinNoise3) = _variant.Shape.Sample(pos, _worldNoiseOffset);
+            BiomeType biome = _variant.Shape.BiomeFor(perlinNoise1, perlinNoise2, perlinNoise3);
             LocationType? location = DetermineLocation(biome, pos);
             float avgNoise = (perlinNoise1 + perlinNoise2 + perlinNoise3) / 3.0f;
             
@@ -562,7 +711,7 @@ namespace Cathedral.Glyph.Microworld
                     vertexData[vertexIndex] = updatedData;
                     
                     // Update the visual representation with original biome size
-                    SetVertexGlyph(vertexIndex, newGlyph, TileColor(data), data.Biome.Size);
+                    SetVertexGlyph(vertexIndex, newGlyph, TileColor(vertexIndex, data), data.Biome.Size);
                 }
             }
         }
@@ -570,17 +719,13 @@ namespace Cathedral.Glyph.Microworld
         // Protagonist Management Methods
         private void InitializeProtagonist()
         {
-            // Find a suitable starting location (preferably plain or field biome)
-            var suitableVertices = new List<int>();
-            
-            foreach (var kvp in vertexData)
-            {
-                var biome = kvp.Value.Biome;
-                if (biome.Name == "plain" || biome.Name == "field" || biome.Name == "coast")
-                {
-                    suitableVertices.Add(kvp.Key);
-                }
-            }
+            // Open ground beside the settled country — see SpawnRule, which --world-variant-audit
+            // shares so that it measures this spawn and not a description of it.
+            var suitableVertices = SpawnRule.Candidates(VertexCount,
+                v => vertexData.TryGetValue(v, out var d) ? d.Biome.Name : null,
+                GetNeighboringVertices,
+                v => vertexData.TryGetValue(v, out var d) && d.Location.HasValue,
+                Settlement.IsSprawl);
 
             if (suitableVertices.Count == 0)
             {
@@ -588,7 +733,7 @@ namespace Cathedral.Glyph.Microworld
                 foreach (var kvp in vertexData)
                 {
                     var biome = kvp.Value.Biome;
-                    if (biome.Name != "sea" && biome.Name != "ocean")
+                    if (!BiomeDatabase.WaterBiomes.Contains(biome.Name))
                     {
                         suitableVertices.Add(kvp.Key);
                     }
@@ -610,10 +755,16 @@ namespace Cathedral.Glyph.Microworld
                 // seed that happens to put one within travel range of the spawn point.
                 if (Config.Debug.StartAt is { Length: > 0 } want)
                 {
-                    var match = suitableVertices.FirstOrDefault(v =>
-                        vertexData.TryGetValue(v, out var d) &&
-                        (d.Location?.Name ?? d.Biome.Name).Contains(want, StringComparison.OrdinalIgnoreCase),
-                        -1);
+                    bool Matches(int v) => vertexData.TryGetValue(v, out var d) &&
+                        (d.Location?.Name ?? d.Biome.Name).Contains(want, StringComparison.OrdinalIgnoreCase);
+
+                    // The spawn candidates first; failing them, any land at all. A world with enough
+                    // temperate ground never offers its desert or glacier as a waking place, and the
+                    // climate biomes are exactly the rare ground this flag exists to reach.
+                    var match = suitableVertices.FirstOrDefault(Matches, -1);
+                    if (match < 0)
+                        match = Enumerable.Range(0, VertexCount).FirstOrDefault(v =>
+                            Matches(v) && !BiomeDatabase.WaterBiomes.Contains(vertexData[v].Biome.Name), -1);
 
                     if (match >= 0)
                     {
@@ -668,10 +819,18 @@ namespace Cathedral.Glyph.Microworld
             }
         }
 
+        /// <summary>The biomes drawn with the field's warm tint rather than nature's grey.</summary>
+        private static readonly HashSet<string> FieldTinted = new()
+        {
+            "coast", BiomeDatabase.Desert, BiomeDatabase.HotSteppe,
+        };
+
         /// <summary>
         /// Returns the shader category alpha for a tile:
-        ///   1.0 = nature (grayscale), 2.0 = water (dark purple),
-        ///   3.0 = human construction (dark yellow), 4.0 = field (intermediate)
+        ///   1.0 = nature (grayscale, and every ruin), 2.0 = water (dark purple),
+        ///   3.0 = human construction (dark yellow: settlements, cities, history's places),
+        ///   4.0 = farmland and stock, coast, desert and hot steppe (intermediate).
+        ///   5.0 is the region overlay's, set elsewhere.
         /// </summary>
         private static float GetTileCategory(VertexWorldData data)
         {
@@ -680,91 +839,105 @@ namespace Cathedral.Glyph.Microworld
                 string n = data.Location.Value.Name;
                 if (BiomeDatabase.WaterLocations.Contains(n))  return 2.0f;
                 if (BiomeDatabase.HumanLocations.Contains(n))  return 3.0f;
+                if (BiomeDatabase.FarmlandLocations.Contains(n)) return 4.0f;
             }
             else
             {
                 string n = data.Biome.Name;
                 if (BiomeDatabase.WaterBiomes.Contains(n))     return 2.0f;
-                if (BiomeDatabase.HumanBiomes.Contains(n))     return 3.0f;
-                if (n == "field")                              return 4.0f;
+                if (FieldTinted.Contains(n))                  return 4.0f;
             }
             return 1.0f;
         }
 
         /// <summary>
-        /// Post-processes the generated world to fix coherence issues.
-        /// Currently ensures every field tile is adjacent to at least one farm or village.
+        /// The settled country: history's places, and the cities, farmland, settlements and stock
+        /// sprawled around them (see <see cref="Cathedral.Game.History.SettlementSprawl"/>). Empty before
+        /// a world has been generated.
         /// </summary>
-        private void PostProcessWorld()
+        public Cathedral.Game.History.SettlementMap Settlement { get; private set; } = Cathedral.Game.History.SettlementMap.Empty;
+
+        /// <summary>
+        /// Lays the settled country onto the map: each settled cell takes its location, glyph and
+        /// colour. A cave the noise put on a cell a historical place stands on gives way to the place;
+        /// no sprawl takes a cell a cave holds.
+        /// </summary>
+        private void BuildSettlement()
         {
-            int placed = 0;
-            LocationType farm    = Locations["farm"];
-            LocationType village = Locations["village"];
+            Cathedral.Game.History.WorldSites.Clear();
+            if (History == null) return;
 
-            for (int i = 0; i < VertexCount; i++)
+            var map = Cathedral.Game.History.SettlementSprawl.Build(
+                VertexCount,
+                v => vertexData.TryGetValue(v, out var d) ? d.Biome.Name : "",
+                GetNeighboringVertices,
+                History.Places,
+                v => vertexData.TryGetValue(v, out var d) && d.Location.HasValue,
+                v => Regions != null && Regions.RegionAt(v) is int r && r >= 0 ? History.OwnerOf(r) : null,
+                _variant.Shape.SettlementDensity,
+                GameRng.ForWorld(GameRng.MasterSeed, "sprawl"));
+
+            foreach (var (vertex, site) in map.Sites)
             {
-                if (!vertexData.TryGetValue(i, out var data) || data.Biome.Name != "field")
-                    continue;
-
-                var neighbors = GetNeighboringVertices(i);
-
-                // Already satisfied if any neighbor has a farm or village
-                bool satisfied = neighbors.Any(n =>
-                    vertexData.TryGetValue(n, out var nd) &&
-                    nd.Location.HasValue &&
-                    (nd.Location.Value.Name == "farm" || nd.Location.Value.Name == "village"));
-
-                if (satisfied)
-                    continue;
-
-                // Pick placement candidate: self first (if empty), then an empty field neighbor, then force self
-                int candidate = -1;
-                if (!data.Location.HasValue)
-                {
-                    candidate = i;
-                }
-                else
-                {
-                    foreach (int n in neighbors)
-                    {
-                        if (vertexData.TryGetValue(n, out var nd) &&
-                            nd.Biome.Name == "field" && !nd.Location.HasValue)
-                        {
-                            candidate = n;
-                            break;
-                        }
-                    }
-                    if (candidate == -1)
-                        candidate = i; // force-overwrite self as last resort
-                }
-
-                // Randomly pick farm or village (seeded on vertex index + master seed for
-                // per-world determinism)
-                LocationType chosen = new Random(unchecked(i ^ GameRng.MasterSeed)).Next(2) == 0 ? farm : village;
-
-                // Place chosen location on candidate and refresh its visual
-                var cd = vertexData[candidate];
-                cd.Location = chosen;
-                cd.GlyphChar = chosen.Glyph;
-                cd.Color = new System.Numerics.Vector3(chosen.Color.X, chosen.Color.Y, chosen.Color.Z);
-                vertexData[candidate] = cd;
-                SetVertexGlyph(candidate, chosen.Glyph, TileColor(vertexData[candidate]), chosen.Size);
-                placed++;
+                if (!vertexData.TryGetValue(vertex, out var data)) continue;
+                var location = Locations[site.Key];
+                data.Location = location;
+                data.GlyphChar = location.Glyph;
+                data.Color = new System.Numerics.Vector3(location.Color.X, location.Color.Y, location.Color.Z);
+                vertexData[vertex] = data;
+                waterVertices.Remove(vertex);
+                SetVertexGlyph(vertex, location.Glyph, TileColor(vertex, data), location.Size);
             }
 
-            if (placed > 0)
-                Console.WriteLine($"[PostProcess] Placed {placed} farm(s)/village(s) to satisfy field adjacency.");
+            Settlement = map;
+            Cathedral.Game.History.WorldSites.Publish(map, History,
+                v => vertexData.TryGetValue(v, out var d) ? d.Biome.Name : null);
+            Console.WriteLine($"[Settlement] {map.Count(Cathedral.Game.History.SiteRole.Historic)} place(s), "
+                            + $"{map.Count(Cathedral.Game.History.SiteRole.Ruin)} ruin(s), {map.Count(Cathedral.Game.History.SiteRole.City)} city(ies), "
+                            + $"{map.Count(Cathedral.Game.History.SiteRole.Agriculture)} farmland, {map.Count(Cathedral.Game.History.SiteRole.Settlement)} settlement(s), "
+                            + $"{map.Count(Cathedral.Game.History.SiteRole.Livestock)} stock.");
         }
 
-        private static Vector4 TileColor(VertexWorldData data) =>
-            new Vector4(data.Color.X / 255.0f, data.Color.Y / 255.0f, data.Color.Z / 255.0f, GetTileCategory(data));
+        /// <summary>
+        /// The vertex colour handed to the sphere shader: rgb the shader reduces to a luminance, and
+        /// the tile category in the alpha, which is what it actually tints from.
+        ///
+        /// <para>With the region overlay on, land takes its region's colour instead, under the
+        /// alpha that tells the shader to draw the rgb as given rather than re-tint it — the one
+        /// place in the game where a vertex colour reaches the screen unchanged. Water is left
+        /// alone: purple is the sea's, and a region drawn in it would read as water.</para>
+        /// </summary>
+        private Vector4 TileColor(int vertexIndex, VertexWorldData data)
+        {
+            var swatch = RegionSwatchFor(vertexIndex);
+            if (swatch != null)
+                return new Vector4(swatch.Value.R, swatch.Value.G, swatch.Value.B,
+                                   WorldRegionPalette.OverlayCategory);
+
+            return new Vector4(data.Color.X / 255.0f, data.Color.Y / 255.0f, data.Color.Z / 255.0f,
+                               GetTileCategory(data));
+        }
+
+        /// <summary>
+        /// The region swatch this vertex should be drawn in, or null when the overlay is off, no
+        /// world has been divided yet, or the vertex is water.
+        /// </summary>
+        private WorldRegionPalette.Swatch? RegionSwatchFor(int vertexIndex)
+        {
+            if (RegionOverlayEnabled) return Regions?.SwatchAt(vertexIndex);
+            if (!RealmOverlayEnabled || Regions == null || History == null) return null;
+            int region = Regions.RegionAt(vertexIndex);
+            if (region < 0) return null;
+            var realm = History.OwnerOf(region);
+            return realm != null && _realmSwatches.TryGetValue(realm, out var s) ? s : UnclaimedSwatch;
+        }
 
         private void RestoreVertexData(int vertexIndex, VertexWorldData data)
         {
             if (_outOfRangeVertices.Contains(vertexIndex))
                 ApplyDarkening(vertexIndex);
             else
-                SetVertexGlyph(vertexIndex, data.GlyphChar, TileColor(data), data.Location?.Size ?? data.Biome.Size);
+                SetVertexGlyph(vertexIndex, data.GlyphChar, TileColor(vertexIndex, data), data.Location?.Size ?? data.Biome.Size);
         }
 
         public void HandleVertexHovered(int vertexIndex)
@@ -1258,6 +1431,17 @@ namespace Cathedral.Glyph.Microworld
         public int GetAvatarVertex() => _protagonistVertex;
 
         /// <summary>
+        /// Puts the avatar back on <paramref name="vertexIndex"/> — a retreat, not a journey: no path,
+        /// no step event, no arrival. Used when the party flees an encounter met on the last step of
+        /// a journey, so it stands where it came from rather than on a place it never entered.
+        /// </summary>
+        public void ReturnAvatarTo(int vertexIndex)
+        {
+            if (vertexIndex < 0 || vertexIndex == _protagonistVertex) return;
+            PlaceProtagonist(vertexIndex, centerCamera: true);
+        }
+
+        /// <summary>
         /// Re-asserts the protagonist glyph on the current vertex.
         /// Call when returning to WorldView to recover from any glyph overwrite that
         /// may have occurred during path cleanup or travel-range recalculation.
@@ -1420,6 +1604,15 @@ namespace Cathedral.Glyph.Microworld
             public BiomeType Biome;
             public LocationType? Location;
             public float NoiseValue;
+
+            /// <summary>
+            /// The second Perlin layer alone — the one <see cref="DetermineBiome"/> reads for city,
+            /// field and forest, where lower is more settled. Kept beside the average because the
+            /// region division seeds itself on this layer's peaks, and the average of all three has
+            /// the water layer and the mountain layer mixed into it.
+            /// </summary>
+            public float SettlementNoise;
+
             public char GlyphChar;
             public System.Numerics.Vector3 Color;
         }

@@ -28,6 +28,21 @@ public enum CrossingKind
 
     /// <summary>A dry-stone wall or thorn hedge laid as a boundary. Made to stop livestock, not people.</summary>
     Hedgerow,
+
+    /// <summary>Sand that takes a foot and does not give it back. Slow, and frightening rather than hard.</summary>
+    Quicksand,
+
+    /// <summary>A curtain of lianas and creeper grown across the way. Cut, climbed or forced through.</summary>
+    Lianas,
+
+    /// <summary>Sea ice gone thin over moving water. Most of the danger is in not being able to tell.</summary>
+    ThinIce,
+
+    /// <summary>A bridge of old snow over a crevasse. It holds, until it does not.</summary>
+    SnowBridge,
+
+    /// <summary>A gully choked with fallen blocks, each the size of a cart. Scrambled over, not walked.</summary>
+    BoulderChoke,
 }
 
 /// <summary>
@@ -73,6 +88,11 @@ public class CrossingPointOfInterest : ConnectorPointOfInterest
         CrossingKind.FallenTrunk => 4,
         CrossingKind.Scree       => 5,
         CrossingKind.Brambles    => 5,
+        CrossingKind.Quicksand   => 4,
+        CrossingKind.Lianas      => 4,
+        CrossingKind.BoulderChoke => 4,
+        CrossingKind.ThinIce     => 5,
+        CrossingKind.SnowBridge  => 6,
         _                        => 4,
     };
 
@@ -86,6 +106,8 @@ public class CrossingPointOfInterest : ConnectorPointOfInterest
         CrossingKind.Hedgerow    => "vaulting",
         CrossingKind.Brambles    => "hedgecraft",
         CrossingKind.Nettles     => "hedgecraft",
+        CrossingKind.Lianas      => "hedgecraft",
+        CrossingKind.BoulderChoke => "vaulting",
         _                        => "surefoot",
     };
 
@@ -117,6 +139,23 @@ public class CrossingPointOfInterest : ConnectorPointOfInterest
             null, null, null, null,
             new CutWound(), new ShoulderDislocationRightWound(),
         },
+        CrossingKind.Quicksand => new Wound?[] { null, null, null, null, new KneeFractureRightWound(), new ContusionWound() },
+        CrossingKind.Lianas => new Wound?[] { null, null, null, null, new CutWound(), new ContusionWound() },
+        CrossingKind.ThinIce => new Wound?[]
+        {
+            null, null, null,
+            new ContusionWound(), new BrokenRibsWound(), new ConcussionsWound(),
+        },
+        CrossingKind.SnowBridge => new Wound?[]
+        {
+            null, null,
+            new ContusionWound(), new TibiaFractureLeftWound(), new BrokenRibsWound(), new ConcussionsWound(),
+        },
+        CrossingKind.BoulderChoke => new Wound?[]
+        {
+            null, null, null,
+            new ContusionWound(), new BrokenHandRightWound(), new AnkleFractureLeftWound(),
+        },
         _ => new Wound?[] { null, null, null, new ContusionWound() },
     };
 
@@ -132,6 +171,11 @@ public class CrossingPointOfInterest : ConnectorPointOfInterest
         CrossingKind.Scree       => "scree",
         CrossingKind.Nettles     => "nettle",
         CrossingKind.Hedgerow    => "hedge",
+        CrossingKind.Quicksand   => "quicksand",
+        CrossingKind.Lianas      => "liana",
+        CrossingKind.ThinIce     => "ice",
+        CrossingKind.SnowBridge  => "snow",
+        CrossingKind.BoulderChoke => "boulder",
         _                        => "crossing",
     };
 }

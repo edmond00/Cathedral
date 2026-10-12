@@ -14,7 +14,7 @@
 #     much like any other failure, so only the counter shows it was charged for — and `state` emits
 #     it but `expect` scans the rendered terminal, hence `inspect noetic`.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-item knife --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon --observe-only "Test Rack"
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-item knife --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon --observe-only "Test Rack" --grant-mm woodcraft --means-only woodcraft
 
 wait
 click menu New
@@ -53,9 +53,9 @@ advance 12 180
 regions
 inspect noetic
 
-# The point was taken. A starting protagonist's encephalon gives a pool of 2, of which the
-# deliberation above spent one and this refusal spent the other.
-expect-state noetic points=0/2
+# The point was taken. A starting protagonist's encephalon gives a pool of 3, of which the
+# deliberation above spent one and this refusal spent another.
+expect-state noetic points=1/3
 
 # And the band is Low, not None — so the refusal above was the VERB's doing and not the body's.
 # Without this the script would still pass if hands ever fell to nought, having proved the wrong

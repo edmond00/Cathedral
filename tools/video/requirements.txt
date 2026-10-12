@@ -1,0 +1,10 @@
+# The video pipeline (tools/video). Installed into tools/video/.venv by setup.ps1.
+manim==0.21.0          # animations; renders through PyAV, so no system ffmpeg is needed
+piper-tts>=1.3         # local, free neural TTS (bundles espeak-ng)
+imageio-ffmpeg         # a static ffmpeg inside the venv, used for every cut and encode
+numpy
+scipy
+soundfile
+mido                   # reading the game's MIDI
+pillow
+networkx               # graph layouts (also a manim dependency)

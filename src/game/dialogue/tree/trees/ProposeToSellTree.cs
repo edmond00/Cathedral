@@ -38,9 +38,6 @@ public class ProposeToSellTree : DialogueTree
     /// <summary>What succeeding at this conversation teaches: talking a price into being.</summary>
     public override string? GrantedModusMentisId => "bargaining";
 
-    // Success opens the sell menu; a routine bakes in that success so replaying opens trade directly.
-    public override DialogueRoutineBehavior RoutineBehavior => DialogueRoutineBehavior.IncludeSuccess;
-
 
     /// <summary>
     /// Selling teaches the harder half of trade: what is not mentioned, and how coin is tested when
@@ -65,7 +62,7 @@ public class ProposeToSellTree : DialogueTree
                                       string failure, string failureIndirect,
                                       params System.Type[] lessons) => new(
         nodeId:                 id,
-        difficulty:             BranchDifficulty.Easy(depth),
+        difficulty:             BranchDifficulty.Simple(depth),
         successReplica:         success,
         successReplicaIndirect: successIndirect,
         failureReplica:         failure,
@@ -415,12 +412,9 @@ public class ProposeToSellTree : DialogueTree
 
     public override bool IsAvailable(NpcEntity npc, string partyMemberId)
     {
+        // No introduction needed: trade happens on the trader's premises, where dealing with a
+        // stranger is the whole business (see TradeGate). An enemy still will not deal.
         if (npc.BuyTag is null) return false;
-        if (npc.AffinityTable.IsEnemy(partyMemberId)) return false;
-        var level = npc.AffinityTable.GetLevel(partyMemberId);
-        return level is AffinityLevel.DistantAcquaintance
-                     or AffinityLevel.CloseAcquaintance
-                     or AffinityLevel.DistantFriend
-                     or AffinityLevel.CloseFriend;
+        return !npc.AffinityTable.IsEnemy(partyMemberId);
     }
 }

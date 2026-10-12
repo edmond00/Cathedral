@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Narrative;
-using Cathedral.Game.Narrative.Routines;
 
 using Cathedral.Game.Narrative.ModiMentis;
 
@@ -107,11 +106,4 @@ public class HideAndWaitVerb : Verb
         if (names.Count == 1) return names[0];
         return string.Join(", ", names.Take(names.Count - 1)) + " and " + names[^1];
     }
-
-    // ── Routine recording ─────────────────────────────────────────────────────
-    // Not recordable: how long the wait lasts depends on who happens to be moving that day, so a
-    // replayed chain built on "and then it was evening" would be wrong the next time round.
-
-    public override RoutinePhaseKind RoutineTriggeredPhase(Scene scene, PoV pov, Element target)
-        => RoutinePhaseKind.Narration;
 }

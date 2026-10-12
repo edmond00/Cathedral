@@ -17,7 +17,9 @@ public sealed class TravelProgressRenderer
     // Layout — reuse TravelUI box dimensions
     private int _boxX, _boxY;
     private const int BoxW = Config.TravelUI.BoxWidth;   // 40
-    private const int BoxH = Config.TravelUI.BoxHeight;  // 12
+    // Its own height, no longer the planning box's: that one grew two rows (region, realm) which the
+    // progress box has nothing to put in.
+    private const int BoxH = 12;
 
     // Bar geometry (innerW = BoxW - 4 = 36)
     private const int LabelW   = 5;   // "Trip " / "VH   "

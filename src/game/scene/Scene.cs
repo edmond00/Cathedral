@@ -33,6 +33,14 @@ public class Scene
     /// <summary>NPC UUID → schedule (which area at which time period).</summary>
     public Dictionary<Guid, NpcSchedule> NpcSchedules { get; } = new();
 
+    /// <summary>
+    /// The stores of a working place in the country — a barn, a fodder loft, a woodcutter's shed: the
+    /// areas where its produce is kept and where its people trade it. Registered by the factory that
+    /// builds one, so <c>--building-audit</c> can hold each to being manned through the day. A
+    /// workshop counter is not listed here: it is a public hall, and the hall checks cover it.
+    /// </summary>
+    public List<Area> Stores { get; } = new();
+
     /// <summary>Verbs applicable in this scene (subset from global VerbRegistry).</summary>
     public List<Verb> Verbs { get; } = new();
 
@@ -54,12 +62,6 @@ public class Scene
     /// that happens on the next arrival. Written only through <see cref="RemoveNpcFromPlay"/>.
     /// </summary>
     public HashSet<string> DepartedNpcs { get; set; } = new();
-
-    /// <summary>
-    /// True while this scene is a throwaway used for routine <i>virtual</i> replay. Picking verbs must
-    /// not mutate real state (inventory, depletion timestamps) when set.
-    /// </summary>
-    public bool IsVirtualReplay { get; set; }
 
     /// <summary>
     /// Which narration phase this scene belongs to. Defaults to <see cref="NarrationPhase.Exploration"/>.
@@ -96,9 +98,6 @@ public class Scene
     /// a pure function of the location id — hands back the individual who left, so a tamed wolf pads
     /// beside you and waits in the clearing at the same time, and anyone killed is alive on the next
     /// visit. It is exactly the kind of step a fifth departure route would forget.</para>
-    ///
-    /// <para>Virtual replay is exempt from the persistent half: a throwaway scene must not be able to
-    /// empty a real location.</para>
     /// </summary>
     public void RemoveNpcFromPlay(SceneNpc npc)
     {
@@ -108,8 +107,7 @@ public class Scene
         DisplacedNpcs.Remove(npc.Id);
         PendingArrivalObservations.Remove(npc);
 
-        if (!IsVirtualReplay)
-            DepartedNpcs.Add(npc.Entity.PersistentId);
+        DepartedNpcs.Add(npc.Entity.PersistentId);
     }
 
     // ── Element registration ──────────────────────────────────────────────────
@@ -324,13 +322,15 @@ public class Scene
     {
         area.PointsOfInterest.Add(poi);
 
+        poi.SpawnedDuringVisit = true;
         RegisterElement(poi);
         foreach (var item in poi.Items)
+        {
+            item.SpawnedDuringVisit = true;
             RegisterElement(item);
+        }
 
-        // Virtual replay works on a throwaway scene; queueing an observation off it would make the
-        // real narration open on a corpse that was only ever validated, never made.
-        if (poi is Npc.Corpse.CorpsePointOfInterest corpse && !IsVirtualReplay)
+        if (poi is Npc.Corpse.CorpsePointOfInterest corpse)
             PendingCorpseObservations.Add(corpse);
     }
 

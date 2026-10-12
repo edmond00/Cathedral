@@ -26,6 +26,17 @@ public static class TimePeriodExtensions
     /// <summary>Human-readable label (e.g. "Dawn", "Night").</summary>
     public static string Label(this TimePeriod p) => p.ToString();
 
+    /// <summary>The period as an adverbial phrase for narration ("at dawn", "in the afternoon").</summary>
+    public static string Phrase(this TimePeriod p) => p switch
+    {
+        TimePeriod.Dawn      => "at dawn",
+        TimePeriod.Morning   => "in the morning",
+        TimePeriod.Noon      => "at noon",
+        TimePeriod.Afternoon => "in the afternoon",
+        TimePeriod.Evening   => "in the evening",
+        _                    => "at night",
+    };
+
     /// <summary>
     /// The period after this one, wrapping from Night back round to Dawn. The unit of every waiting
     /// verb: sitting on a bench moves you one of these forward.

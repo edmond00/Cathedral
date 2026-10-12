@@ -86,6 +86,19 @@ A new phase in the same place sees the whole scene, and every act in it, afresh.
 present that have not yet been attended to, and renders what it finds. One object is chosen; the
 rest wait.
 
+The opening observation of a phase may first take its **bearings**: where the body stands and at
+what period of the day, rendered in the observing modus mentis's own voice. This is done only when
+the area or the period has changed since the bearings were last taken, so that a run of phases in
+one place does not open on the same account each time; and it is done only in the waking world,
+never in recollection nor in the rising from exhaustion. The bearings close by naming, briefly and in
+no particular order, up to five of the things present that have not yet been attended to. Where the
+account names one of them outright, that one — a single one at most, chosen by lot among several —
+is rendered available for closer attention, and counts thereafter as attended to, so that no later
+observation of the phase returns to it. The opening
+observation attends to at most three things in all, the later ones only while what has been rendered
+remains brief; the bearings count as the first of the three, so that at least one object, and at
+most two, is attended to after them.
+
 **Deliberation.** A thinking modus mentis is asked what to want, among the acts the observed object
 affords and that have not already been offered. Its moral level narrows the list before it is asked.
 Its answer is a goal, and the goal produces the act.
@@ -146,6 +159,11 @@ The first stands ahead of the others because it alone concerns the frame rather 
 circumstance. One told that a witness is watching will go to another room; one told that the arm is
 ruined will not, and the refusal names the parts that failed and the wounds behind them.
 
+**The missing implement alone leaves the act standing.** Its refusal says what was wanted, that bare
+hands cannot do it, and which implement is wanting; the act may then be taken up again only with an
+implement combined, never bare-handed a second time. Only when nothing combinable is carried is it
+closed like any other refused act.
+
 **A broken manner of the mind is offered and refused, not hidden.** It remains among those that may
 be chosen to observe, to deliberate and to act, and the refusal is what informs of the injury —
 withdrawing it silently would take a body's disciplines away with no account of where they had gone.
@@ -157,13 +175,21 @@ there is a voice and whether there is any manner of the mind left able to use it
 **Rules of choice** narrow what is *offered*. They **withhold**, silently, and **cost nothing**,
 because nothing was refused. Character belongs here — that never occurred to me.
 
+**Examining belongs to the observing modi mentis.** One that does not bear the Observation function
+takes no part in examining an object closely, on either side of the chain. As the thinking modus
+mentis it is never offered that goal; as the acting one, chosen to carry it out, it refuses at once
+and is not asked — the refusal states that it would act rather than stand and observe. The other
+senses are under no such rule.
+
 The distinction has a practical edge: an act blocked by a rule of action is an act you attempted and
 were stopped from completing, and you pay for the attempt.
 
 ## 7. Of crime and of being seen
 
 **Legality is contextual.** No manner of acting is a crime in itself. Standing in another's private
-space makes *anything* done there a trespass, and that test applies to everything at once. Beyond
+space makes *anything* done there a trespass, and that test applies to everything at once. It is
+never hidden: throughout a phase the narration declares whether the ground underfoot is private, and
+private ground teaches no routine (see [IX](09-routines.md)). Beyond
 it, each act that can be a crime has its own condition — striking someone who already counts you an
 enemy is not a crime, for the quarrel was declared before the blow; forcing the lock of a public
 storehouse is nobody's privacy.

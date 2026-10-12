@@ -100,7 +100,8 @@ docs/manual/06-narration.md      the phase, noetic points, observation, thinking
 docs/manual/07-social.md         affinity, the conversation check, introduction, trade, work
 docs/manual/08-fighting.md       turns, cinetic points, mediums, fighting skills, the attack
                                  and defence pools, wounds, terrain, flight
-docs/manual/09-routines.md       recording, termini and prefixes, constraints, replay
+docs/manual/09-routines.md       routines as entry points: the six kinds, where none is learned,
+                                 each kind's check, the gathering stay, the slots per kind
 ```
 
 Order is deliberate: the body, then what it carries, then the world it crosses, then the four

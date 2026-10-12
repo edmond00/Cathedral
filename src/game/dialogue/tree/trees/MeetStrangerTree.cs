@@ -79,7 +79,7 @@ public class MeetStrangerTree : DialogueTree
                                       string failure, string failureIndirect,
                                       params System.Type[] lessons) => new(
         nodeId:                 id,
-        difficulty:             BranchDifficulty.Easy(depth),
+        difficulty:             BranchDifficulty.Simple(depth),
         successReplica:         success,
         successReplicaIndirect: successIndirect,
         failureReplica:         failure,

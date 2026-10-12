@@ -30,6 +30,7 @@ public class EnterpriseModusMentis : ModusMentis
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {
         new(typeof(OpenTradeMenuOutcome), () => new LaetitiaHumor()),
+        new(typeof(LedToPremisesOutcome), () => new LaetitiaHumor()),
     };
 
     public override string PersonaPrompt => @"You are the inner voice of ENTERPRISE, the long-headed trader who looks at any new ware and immediately wonders where it came from, who handled it on the way, and what it would cost to bring back ten more.

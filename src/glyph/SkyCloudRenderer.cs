@@ -1,4 +1,4 @@
-// SkyCloudRenderer.cs - Decorative cloud and star sky spheres
+﻿// SkyCloudRenderer.cs - Decorative cloud and star sky spheres
 // Cloud sphere: slightly larger than the world, rotates slowly with Perlin noise patterns
 // Sky sphere: much larger, contains stars/planets/moons as scattered glyphs
 // Purely visual - no gameplay interaction
@@ -54,6 +54,19 @@ namespace Cathedral.Glyph
         private List<DecorativeVertex> _skyVertices = new();
         private float[] _skyStaticData = null!;
 
+        // The moons, in the order they were generated: instance index per ordinal. The
+        // world-selection screen speaks in ordinals (see SkyMoons) and the buffer speaks in instance
+        // indices, and this is the only place the two are related.
+        private readonly List<int> _moonInstances = new();
+
+        // Three states a moon can be in besides ordinary, and they are independent: lit under the
+        // cursor, chosen and waiting on confirmation, or blanked because the player is standing on
+        // it. -1 for none. Each is a per-instance edit to the static buffer rather than a rebuild —
+        // a rebuild is 10,000 instances of work for one glyph's worth of change.
+        private int _highlightedMoon = -1;
+        private int _selectedMoon    = -1;
+        private int _hiddenMoon      = -1;
+
         // Cloud rotation (two axes for organic wind-like drift)
         private Vector3 _rotAxis1, _rotAxis2;
         private float _rotSpeed1, _rotSpeed2;
@@ -90,6 +103,12 @@ namespace Cathedral.Glyph
             _skyStaticData = BuildInstanceData(_skyVertices, Matrix4.Identity);
             UploadBufferData(_skyInstanceVbo, _skyStaticData);
 
+            // A moon may already have been blanked before there was a buffer to blank it in — a run
+            // continued from a save asks for it while the window is still opening. Apply it now.
+            RewriteMoon(_hiddenMoon);
+            RewriteMoon(_selectedMoon);
+            RewriteMoon(_highlightedMoon);
+
             // Initialize cloud rotation with two random axes for organic movement
             var rng = new Random(7777);
             _rotAxis1 = Vector3.Normalize(new Vector3(
@@ -106,7 +125,8 @@ namespace Cathedral.Glyph
             // Initial cloud buffer upload
             UpdateCloudInstanceBuffer();
 
-            Console.WriteLine($"SkyCloudRenderer initialized: {_cloudActiveCount} cloud glyphs, {_skyActiveCount} star glyphs");
+            Console.WriteLine($"SkyCloudRenderer initialized: {_cloudActiveCount} cloud glyphs, "
+                            + $"{_skyActiveCount} star glyphs, {_moonInstances.Count} of them moons");
         }
 
         /// <summary>
@@ -138,6 +158,126 @@ namespace Cathedral.Glyph
             GL.BindVertexArray(_skyVao);
             GL.DrawElementsInstanced(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, IntPtr.Zero, _skyActiveCount);
             GL.BindVertexArray(0);
+        }
+
+        // ── The moons ────────────────────────────────────────────────────────────────────────
+
+        /// <summary>How many moons the sky holds. Ordinals run 0..MoonCount-1.</summary>
+        public int MoonCount => _moonInstances.Count;
+
+        /// <summary>The world-space position of the moon at <paramref name="ordinal"/>.</summary>
+        public Vector3 MoonPosition(int ordinal)
+            => (ordinal >= 0 && ordinal < _moonInstances.Count)
+                ? _skyVertices[_moonInstances[ordinal]].Position
+                : Vector3.Zero;
+
+        /// <summary>The moon currently blanked out of the sky, or -1.</summary>
+        public int HiddenMoon => _hiddenMoon;
+
+        /// <summary>
+        /// Lights the moon at <paramref name="ordinal"/> under the cursor and puts the previous one
+        /// back. Pass -1 to light none. A blanked moon is never lit — it is not there to be pointed
+        /// at.
+        ///
+        /// <para>Independent of <see cref="SetSelectedMoon"/>: pointing at a second moon while a
+        /// first one is chosen lights the second and leaves the first standing, which is what lets a
+        /// player read one against the other before changing their mind.</para>
+        /// </summary>
+        public void SetHighlightedMoon(int ordinal)
+        {
+            if (ordinal == _highlightedMoon) return;
+            int previous = _highlightedMoon;
+            _highlightedMoon = (ordinal == _hiddenMoon) ? -1 : ordinal;
+            RewriteMoon(previous);
+            RewriteMoon(_highlightedMoon);
+        }
+
+        /// <summary>
+        /// Marks the moon at <paramref name="ordinal"/> as the chosen one, in its own larger and
+        /// paler form, and puts the previously chosen one back. Pass -1 to choose none.
+        /// </summary>
+        public void SetSelectedMoon(int ordinal)
+        {
+            if (ordinal == _selectedMoon) return;
+            int previous = _selectedMoon;
+            _selectedMoon = (ordinal == _hiddenMoon) ? -1 : ordinal;
+            RewriteMoon(previous);
+            RewriteMoon(_selectedMoon);
+        }
+
+        /// <summary>
+        /// Blanks the moon at <paramref name="ordinal"/> out of the sky and puts the previously
+        /// blanked one back. Pass -1 to blank none.
+        ///
+        /// <para>Blanked by shrinking its quad to nothing rather than by painting it black or clear.
+        /// Black would still be a black square over whatever is behind it, and clear depends on the
+        /// blend state the sky pass happens to inherit; a zero-size quad rasterises no pixels under
+        /// any state.</para>
+        /// </summary>
+        public void SetHiddenMoon(int ordinal)
+        {
+            if (ordinal == _hiddenMoon) return;
+            int previous = _hiddenMoon;
+            _hiddenMoon = ordinal;
+            if (_highlightedMoon == ordinal) _highlightedMoon = -1;
+            if (_selectedMoon    == ordinal) _selectedMoon    = -1;
+            RewriteMoon(previous);
+            RewriteMoon(_hiddenMoon);
+        }
+
+        /// <summary>
+        /// Re-uploads the eighteen floats of one moon's instance, taking its current lit/blanked
+        /// state into account. Silent no-op before the buffer exists, so state can be set at any
+        /// time and applied when the renderer initialises.
+        /// </summary>
+        private void RewriteMoon(int ordinal)
+        {
+            if (ordinal < 0 || ordinal >= _moonInstances.Count) return;
+            if (_skyStaticData == null || _skyInstanceVbo == 0) return;
+
+            int instance = _moonInstances[ordinal];
+            int b = instance * 18;
+
+            var v = _skyVertices[instance];
+            float size;
+            Vector4 color;
+
+            // Blanked outranks chosen outranks lit. A chosen moon that is also under the cursor
+            // keeps its chosen form: what CONFIRM will take must never be in doubt.
+            if (ordinal == _hiddenMoon)
+            {
+                size  = 0f;
+                color = v.Color;
+            }
+            else if (ordinal == _selectedMoon)
+            {
+                size  = Cathedral.Config.GlyphSphere.QuadSize * v.Size
+                      * Cathedral.Config.SkyCloud.MoonSelectedScale;
+                color = Cathedral.Config.SkyCloud.MoonSelectedColor;
+            }
+            else if (ordinal == _highlightedMoon)
+            {
+                size  = Cathedral.Config.GlyphSphere.QuadSize * v.Size
+                      * Cathedral.Config.SkyCloud.MoonHighlightScale;
+                color = Cathedral.Config.SkyCloud.MoonHighlightColor;
+            }
+            else
+            {
+                size  = Cathedral.Config.GlyphSphere.QuadSize * v.Size;
+                color = v.Color;
+            }
+
+            _skyStaticData[b + 9]  = size;
+            _skyStaticData[b + 14] = color.X;
+            _skyStaticData[b + 15] = color.Y;
+            _skyStaticData[b + 16] = color.Z;
+            _skyStaticData[b + 17] = color.W;
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer, _skyInstanceVbo);
+            GL.BufferSubData(BufferTarget.ArrayBuffer,
+                new IntPtr(b * sizeof(float)), 18 * sizeof(float),
+                ref _skyStaticData[b]);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
         }
 
         /// <summary>
@@ -242,9 +382,12 @@ namespace Cathedral.Glyph
             var positions = BuildIcospherePositions(
                 Cathedral.Config.SkyCloud.SkySubdivisions,
                 Cathedral.Config.SkyCloud.SkySphereRadius);
-            var rng = new Random(9999);
+            // Not GameRng: the sky must be the same sky in every run, because a moon in it names a
+            // world. See Config.SkyCloud.SkySeed.
+            var rng = new Random(Cathedral.Config.SkyCloud.SkySeed);
 
             _skyVertices.Clear();
+            _moonInstances.Clear();
             foreach (var pos in positions)
             {
                 if (rng.NextDouble() > Cathedral.Config.SkyCloud.StarDensity)
@@ -319,6 +462,9 @@ namespace Cathedral.Glyph
                     float tint = (float)rng.NextDouble() * 0.3f;
                     color = new Vector4(0.9f + tint * 0.1f, 0.9f + tint * 0.05f, 0.8f - tint * 0.2f, 1.0f);
                 }
+
+                if (starChar == Cathedral.Config.SkyCloud.MoonChar)
+                    _moonInstances.Add(_skyVertices.Count);
 
                 _skyVertices.Add(new DecorativeVertex
                 {

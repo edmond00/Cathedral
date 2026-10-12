@@ -34,6 +34,12 @@
 .PARAMETER Yes
     Skip the confirmation prompt. For unattended use.
 
+.PARAMETER Demo
+    Publish the demo (package.ps1 -Demo) to its own channel, $DemoTarget below, from
+    dist-demo/ProscribedPalimpsest-Demo. The smoke test then insists the staged build reports itself
+    as a demo, and without -Demo it insists on the full game — so neither can reach the other's
+    channel by a mixed-up folder.
+
 .PARAMETER SkipSmokeTest
     Do not launch the staged build before uploading. The smoke test costs about a minute and is
     the only check that the artifact actually runs, so skip it only when re-pushing something you
@@ -43,14 +49,17 @@
     ./publish.ps1 -Status
     ./publish.ps1
     ./publish.ps1 -UserVersion 0.1.0
+    ./publish.ps1 -Demo -Status
+    ./publish.ps1 -Demo
 #>
 param(
     [string]$Target,
     [string]$UserVersion,
-    [string]$StageDir = "dist/ProscribedPalimpsest",
+    [string]$StageDir,
     [switch]$Status,
     [switch]$Yes,
-    [switch]$SkipSmokeTest
+    [switch]$SkipSmokeTest,
+    [switch]$Demo
 )
 
 $ErrorActionPreference = "Stop"
@@ -69,6 +78,17 @@ $ManualPdf = "ProscribedPalimpsest-Manual.pdf"
 # From the page URL edmond00.itch.io/proscribed: user "edmond00", game slug "proscribed".
 # The channel is "windows" because itch reads the platform from the channel name.
 $DefaultTarget = "edmond00/proscribed:windows"
+
+# The demo: same page, its own channel. Still contains "windows" so itch offers it on Windows. The
+# first push to it uploads the whole folder, model included — butler diffs within a channel, not
+# across them — and every later one sends only what changed, as the full game's does. Marking its
+# upload as a free demo while the game itself is paid is a one-time setting on the itch page that
+# butler cannot make; see "The demo" in the release skill.
+$DemoTarget = "edmond00/proscribed:windows-demo"
+
+if ([string]::IsNullOrWhiteSpace($StageDir)) {
+    $StageDir = if ($Demo) { "dist-demo/ProscribedPalimpsest-Demo" } else { "dist/ProscribedPalimpsest" }
+}
 
 function Step($text) { Write-Host "`n== $text" -ForegroundColor Cyan }
 function Note($text) { Write-Host "   $text" -ForegroundColor DarkGray }
@@ -143,7 +163,7 @@ Note $(if ($haveApiKey) { "using BUTLER_API_KEY from the environment" } else { "
 
 # ── 3. Resolve the target ────────────────────────────────────────────────────
 
-if ([string]::IsNullOrWhiteSpace($Target)) { $Target = $DefaultTarget }
+if ([string]::IsNullOrWhiteSpace($Target)) { $Target = if ($Demo) { $DemoTarget } else { $DefaultTarget } }
 if ([string]::IsNullOrWhiteSpace($Target)) {
     Fail @"
 No target. Pass -Target user/game:channel, or set `$DefaultTarget at the top of this script.
@@ -244,6 +264,7 @@ if (-not $SkipSmokeTest) {
 
     $sawWindow = $false
     $sawServer = $false
+    $expectedBuild = if ($Demo) { "Build: demo" } else { "Build: full" }
     $crashed = $false
 
     # Generous: a cold read of a 2 GB model from a slow disk, plus first-run device detection.
@@ -278,6 +299,17 @@ if (-not $SkipSmokeTest) {
                else { "the language model server never became ready" }
         Fail "the staged build did not start: $why. Nothing has been uploaded."
     }
+
+    # Which product is this? The game prints it on startup, and it is the only thing that tells a demo
+    # folder from a full one: same files, same executable name, one compile constant apart. Pushing
+    # the demo to the paid channel would hand the game away with a run limit nobody paid to remove;
+    # the reverse would give the full game away free.
+    $buildLine = Select-String -Path $outFile -Pattern "^Build: " -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $buildLine -or -not $buildLine.Line.StartsWith($expectedBuild)) {
+        $saw = if ($buildLine) { "'$($buildLine.Line.Trim())'" } else { "no Build: line" }
+        Fail "the staged build is the wrong product for $Target - expected '$expectedBuild', saw $saw. Nothing has been uploaded. Re-package with$(if (-not $Demo) { 'out' }) -Demo."
+    }
+    Note $buildLine.Line.Trim()
 
     $title = "unknown"
     try { $title = (Get-Content $outFile -ErrorAction SilentlyContinue | Select-String "Using model" | Select-Object -First 1).ToString().Trim() } catch { }

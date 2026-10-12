@@ -71,8 +71,6 @@ namespace Cathedral.Glyph.Microworld
             // durationDays = days of foot travel per world cell.
             ["plain"]    = new BiomeTravelInfo("plain",    durationDays:  5f, vitalHeatPerCell: 2f,
                 new[] { new EncounterEntry("wolf", 0.02f), new EncounterEntry("bandit", 0.01f) }),
-            ["field"]    = new BiomeTravelInfo("field",    durationDays:  5f, vitalHeatPerCell: 1f,
-                new[] { new EncounterEntry("bandit", 0.01f) }),
             ["forest"]   = new BiomeTravelInfo("forest",   durationDays:  8f, vitalHeatPerCell: 4f,
                 new[] { new EncounterEntry("wolf", 0.06f), new EncounterEntry("bear", 0.02f),
                         new EncounterEntry("brigand", 0.02f) }),
@@ -82,8 +80,27 @@ namespace Cathedral.Glyph.Microworld
                 new[] { new EncounterEntry("blizzard", 0.05f), new EncounterEntry("ice wraith", 0.01f) }),
             ["coast"]    = new BiomeTravelInfo("coast",    durationDays:  6f, vitalHeatPerCell: 3f,
                 new[] { new EncounterEntry("smuggler", 0.01f) }),
-            ["city"]     = new BiomeTravelInfo("city",     durationDays:  3f, vitalHeatPerCell: 1f,
-                new[] { new EncounterEntry("thief", 0.01f) }),
+
+            // Climate biomes. Heat runs the way the body would expect: hot ground costs little of it
+            // and much of everything else (the days are long and the hazards hunt); cold ground
+            // burns it. The hazards are the country's own beasts, met on the road.
+            [BiomeDatabase.Desert]     = new BiomeTravelInfo(BiomeDatabase.Desert,     durationDays:  9f, vitalHeatPerCell: 1f,
+                new[] { new EncounterEntry("hyena", 0.03f), new EncounterEntry("sandstorm", 0.03f) }),
+            [BiomeDatabase.HotSteppe]  = new BiomeTravelInfo(BiomeDatabase.HotSteppe,  durationDays: 11f, vitalHeatPerCell: 2f,
+                new[] { new EncounterEntry("lion", 0.03f), new EncounterEntry("hyena", 0.03f) }),
+            [BiomeDatabase.Jungle]     = new BiomeTravelInfo(BiomeDatabase.Jungle,     durationDays: 11f, vitalHeatPerCell: 2f,
+                new[] { new EncounterEntry("jaguar", 0.04f), new EncounterEntry("tiger", 0.02f),
+                        new EncounterEntry("fever", 0.03f) }),
+            [BiomeDatabase.Canyon]     = new BiomeTravelInfo(BiomeDatabase.Canyon,     durationDays:  8f, vitalHeatPerCell: 2f,
+                new[] { new EncounterEntry("puma", 0.03f), new EncounterEntry("rockfall", 0.02f) }),
+            [BiomeDatabase.ColdSteppe] = new BiomeTravelInfo(BiomeDatabase.ColdSteppe, durationDays:  6f, vitalHeatPerCell: 5f,
+                new[] { new EncounterEntry("white wolf", 0.03f), new EncounterEntry("blizzard", 0.02f) }),
+            [BiomeDatabase.Snowfield]  = new BiomeTravelInfo(BiomeDatabase.Snowfield,  durationDays: 13f, vitalHeatPerCell: 9f,
+                new[] { new EncounterEntry("snow leopard", 0.02f), new EncounterEntry("blizzard", 0.04f) }),
+            [BiomeDatabase.Glacier]    = new BiomeTravelInfo(BiomeDatabase.Glacier,    durationDays: 20f, vitalHeatPerCell: 14f,
+                new[] { new EncounterEntry("crevasse", 0.04f), new EncounterEntry("blizzard", 0.05f) }),
+            [BiomeDatabase.SeaIce]     = new BiomeTravelInfo(BiomeDatabase.SeaIce,     durationDays:  8f, vitalHeatPerCell: 8f,
+                new[] { new EncounterEntry("white bear", 0.03f), new EncounterEntry("thin ice", 0.02f) }),
 
             // Water biomes are registered so ship travel can pick them up later. They are
             // forbidden for land travel (see LandForbiddenBiomes below).

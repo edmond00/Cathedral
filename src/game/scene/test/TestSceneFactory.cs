@@ -349,11 +349,18 @@ public sealed class TestSceneFactory : SceneFactory
         return sceneNpc;
     }
 
+    /// <summary>
+    /// A person, who trades wherever their day takes them. A real location gives a trader one store;
+    /// this one is a fixture, and the trade scripts meet the farmer in the wood
+    /// (<c>routine_record_replay.cli</c>) as readily as the brewer in the hall.
+    /// </summary>
     private static void Person_(Scene scene, Random rng, NamedNpcArchetype archetype, Area area, NpcSchedule schedule)
     {
-        var sceneNpc = new SceneNpc(archetype.Spawn(rng, area.ContextDescription));
+        var entity = archetype.Spawn(rng, area.ContextDescription);
+        var sceneNpc = new SceneNpc(entity);
         sceneNpc.Register(scene);
         scene.Npcs.Add(sceneNpc);
         scene.NpcSchedules[sceneNpc.Id] = schedule;
+        TradeAt(entity, schedule.ActivePeriods.Select(p => p.Area).Distinct().ToArray());
     }
 }

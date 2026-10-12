@@ -190,19 +190,19 @@ public static class VerbProbe
         "cut"                       => "needs a corpse, which only exists after a kill",
         "get_up"                    => "get-up phase only",
         "remember"                  => "childhood phase only",
-        "propose_to_buy"  or "propose_to_sell" => "needs acquaintance-or-better with a trader",
+        "ask_to_be_led"             => "needs a non-stranger who trades, met away from their premises",
         "propose_to_join"           => "needs close-acquaintance-or-better, and room in the party",
         "request_job"               => "needs acquaintance-or-better with an employer",
         "strengthen_relationship"
-            or "gather_knowledge"   => "needs a non-stranger",
+            or "gather_knowledge"
+            or "confess" or "talk_soldiering" or "talk_far_places"
+            or "ask_teaching" or "sing_along"
+            or "commission_work" or "hear_gossip" => "needs a non-stranger",
         _                           => "no sampled scene offered it",
     };
 
     private static IEnumerable<(string Label, Func<int, Scene> Build)> Factories()
     {
-        yield return ("VILLAGE",  id => new Village.VillageSceneFactory().Build(id));
-        yield return ("FARM",     id => new Farm.FarmSceneFactory().Build(id));
-        yield return ("FIELD",    id => new Field.FieldSceneFactory().Build(id));
         yield return ("PLAIN",    id => new Plain.PlainSceneFactory().Build(id));
         yield return ("FOREST",   id => new Forest.ForestSceneFactory().Build(id));
         yield return ("CAVE",     id => new Cave.CaveSceneFactory().Build(id));
@@ -211,6 +211,18 @@ public static class VerbProbe
         // Coast is registered by the game and was missing here, which is why `fish` and
         // `swim_across` came back unreachable: nothing else in the sample has open water.
         yield return ("COAST",    id => new Coast.CoastSceneFactory().Build(id));
+        // The hot and cold country's factories, from their one list.
+        foreach (var e in Shared.ClimateSceneFactories.All)
+        {
+            var make = e.Create;
+            yield return (e.AuditLabel, id => make().Build(id));
+        }
+        // The settled country: farmland, stock, settlements, cities and history's places, from their one list.
+        foreach (var e in Settled.SettledSceneFactories.ForAudit)
+        {
+            var make = e.Create;
+            yield return (e.AuditLabel, id => make().Build(id));
+        }
         // The test location, so --verb-probe can report which verbs it covers. It is not real
         // content: --verb-audit deliberately does NOT sweep it, so a verb reachable only here still
         // shows up there as dead content.

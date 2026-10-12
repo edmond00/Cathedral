@@ -1,0 +1,34 @@
+# Fleeing a travel encounter that fired on the journey's LAST step leaves the party where it came from.
+#
+# The encounter on the last step stands between the party and the destination: the step has been
+# taken, and the arrival announced and held, when the fight opens. A party that runs has not reached
+# the place. It used to be left standing on it all the same — unentered, and unenterable, because the
+# map refuses a journey to the vertex underfoot ("you have been there — choose somewhere else"). It
+# now falls back to the cell the step left from, which for a one-cell journey is where it set out.
+#
+# --encounter-on-arrival stages that step, as in fight_victory_travel_arrival.cli, which is the
+# victory half of the same case.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --encounter-on-arrival wolf
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+
+# One cell, so the step the encounter interrupts is also the first: the origin is the cell it left.
+travel neighbour
+travel-go
+
+wait mode EncounterPrompt 90
+click engage
+wait mode Fighting 90
+
+fight-end runaway
+wait mode WorldView 90
+
+inspect avatar
+expect-state avatar on=origin
+expect-no-state avatar on=destination
+quit

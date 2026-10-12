@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -68,10 +68,15 @@ public sealed class CliDriver
     /// <summary>Hard deadline for the whole run; the game closes itself when it passes.</summary>
     private DateTime _runDeadline;
 
+    /// <summary>The --record filter: every command passes it first. Null outside a recording.</summary>
+    private readonly Record.RecordGate? _record;
+
     public CliDriver(LocationTravelGameController game)
     {
         _game = game ?? throw new ArgumentNullException(nameof(game));
         _runDeadline = DateTime.UtcNow + CliMode.RunTimeout;
+        if (Record.RecordMode.IsActive && Record.RecordSession.Pointer is { } pointer)
+            _record = new Record.RecordGate(game, this, pointer);
     }
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -125,6 +130,10 @@ public sealed class CliDriver
             return;
         }
 
+        // --record: a gesture or a held shot plays out before anything else runs — a `wait` included,
+        // since the click it follows has not landed until the cursor arrives and presses.
+        if (_record != null && _record.Tick()) return;
+
         // An in-flight `wait` gates everything behind it, so a script reads as a straight sequence.
         if (_waiting)
         {
@@ -147,7 +156,8 @@ public sealed class CliDriver
                     if (pv is { Active: true, Complete: true } && _drainPressesLeft > 0)
                     {
                         _drainPressesLeft--;
-                        CmdClick(new[] { "continue" });
+                        if (_record != null) _record.PressContinue();   // aimed and pressed like any click
+                        else CmdClick(new[] { "continue" });
                         RestartWait($"advance ({_drainPressesLeft} press(es) left)");
                         return;
                     }
@@ -175,16 +185,19 @@ public sealed class CliDriver
             }
         }
 
+        // A started gesture (--record) parks what follows exactly as a wait does.
+        bool Blocked() => _waiting || (_record?.Busy ?? false);
+
         while (_deferred.Count > 0)
         {
             Execute(_deferred.Dequeue());
-            if (_waiting) return;   // a deferred command started another wait
+            if (Blocked()) return;   // a deferred command started another wait
         }
 
         while (_queue.TryDequeue(out var line))
         {
             Execute(line);
-            if (_waiting)
+            if (Blocked())
             {
                 // Park the rest of this batch behind the wait.
                 while (_queue.TryDequeue(out var rest)) _deferred.Enqueue(rest);
@@ -206,6 +219,9 @@ public sealed class CliDriver
         string cmd = parts[0].ToLowerInvariant();
         var rest = parts.Skip(1).ToArray();
 
+        // --record: pointer commands become gestures, and what a player cannot do is refused.
+        if (_record != null && _record.Intercept(cmd, rest, line)) return;
+
         try
         {
             switch (cmd)
@@ -215,18 +231,28 @@ public sealed class CliDriver
                 case "dump":        CmdDump(rest);                    break;
                 case "regions":     CmdRegions();                     break;
                 case "world":       CmdWorld();                       break;
+                case "world-regions": CmdWorldRegions(rest);         break;
+                case "world-variant": CmdWorldVariant();             break;
+                case "history":
+                    foreach (var l in _game.CliHistoryLines(rest.Length > 0 ? rest[0].ToLowerInvariant() : "summary"))
+                        CliMode.Emit(l);
+                    break;
                 case "destinations":CmdDestinations(rest);            break;
                 case "click":       CmdClick(rest);                   break;
+                case "point":       CmdPoint(rest);                   break;
                 case "choose":      CmdChoose(rest);                  break;
                 case "travel":      CmdTravel(rest);                  break;
                 case "travel-go":   CmdTravelGo();                    break;
                 case "routines":    CmdRoutines(rest);                break;
+                case "gather":      CmdGather(rest);                  break;
+                case "trade":       CmdTrade(rest);                   break;
                 case "manage":      CmdManage(rest);                  break;
                 case "select":      CmdSelect(rest);                  break;
                 case "key":         CmdKey(rest);                     break;
                 case "scroll":      CmdScroll(rest);                  break;
                 case "strategy":    CmdStrategy(rest);                break;
                 case "goal":        CmdGoal(rest);                    break;
+                case "means":       CmdMeans(rest);                   break;
                 case "observe":     CmdObserve(rest);                 break;
                 case "fight-end":   CmdFightEnd(rest);                break;
                 case "fight-deplete": CmdFightDeplete(rest);          break;
@@ -240,6 +266,7 @@ public sealed class CliDriver
                 case "expect":      CmdExpect(rest, expectPresent: true);  break;
                 case "expect-not":  CmdExpect(rest, expectPresent: false); break;
                 case "expect-verb": CmdExpectVerb(rest);              break;
+                case "expect-no-verb": CmdExpectNoVerb(rest);         break;
                 case "inspect":     CmdInspect(rest);                  break;
                 case "expect-state":    CmdExpectState(rest, want: true);  break;
                 case "expect-no-state": CmdExpectState(rest, want: false); break;
@@ -302,7 +329,14 @@ public sealed class CliDriver
           state                     current mode + phase flags (loading, dice, noetic, …)
           dump [--color]            the terminal grid as text; --color annotates greyed lines
           regions                   what is actionable right now (the handles `click` accepts)
-          world                     avatar vertex, biome, location, travel range
+          world                     avatar vertex, biome, location, travel range, region
+          world-variant             which kind of world this is, its thresholds, and the whole table
+          world-regions [vertex]    the world's division into regions: sizes, seeds, borders,
+                                    palette. With a vertex, just that vertex's region
+          history [what]            the world's generated history: summary (default), realms,
+                                    faiths, places, figures, seeds, events (last 60), all, empire.
+                                    `key K` toggles the realm overlay. To ASSERT, use
+                                    `inspect world-history` / `inspect world-realms`
           destinations              reachable vertices, by name
         Action
           click end-run             the death screen's END RUN button, back to the main menu
@@ -324,12 +358,19 @@ public sealed class CliDriver
           expect-verb <verb-id>     assert which verb the last executed action carried. What a
                                     verb test must assert: `expect SUCCESS` matches ANY action's
                                     outcome banner and so passes on the wrong verb
+          expect-no-verb <verb-id>  assert an action ran and it was NOT that verb. For a gate that
+                                    withholds a verb: `goal` falls back to the other goals when its
+                                    verb is not offered, so the action that runs is the proof
           inspect [subject]         print the game state an outcome can change, by STABLE id:
                                     items / coins / where / party / wounds / skills / npcs / pois /
-                                    routines / noetic / humors, or all. What cli/outcome/ asserts on — the
+                                    routines / noetic / humors / world-regions / world-variant /
+                                    world-history / world-realms / world-events, or all. What
+                                    cli/outcome/ asserts on — the
                                     chip says the player was told, this says the world actually
                                     moved. `noetic` carries the phase budget and the acting body's
-                                    tool proficiency, neither of which `expect` can reach
+                                    tool proficiency, neither of which `expect` can reach;
+                                    `popup` the open choice popup's options, each marked
+                                    (disabled) when greyed
           expect-state <subj> <text>  assert `inspect <subj>` reports a line containing <text>.
                                     What cli/outcome/ asserts with: `expect` reads the SCREEN,
                                     this reads the world
@@ -354,6 +395,15 @@ public sealed class CliDriver
           click engage              the travel encounter prompt's ENGAGE button
           click companion-death     the companion-death notice's CONTINUE — modal over every mode
           click menu <label>        press a main-menu button (New, Continue, …)
+          click moon <name|n>       pick a world off the world-selection sky, by moon name or
+                                    ordinal. Turns the sky towards it first, as the arrows would
+          click sky                 press an empty patch of the world-selection sky, which releases
+                                    the chosen moon without leaving the screen
+          point moon <name|n>       hover a moon without choosing it. Hovering and choosing are
+                                    separate states with separate looks; `click moon` drives both
+          click world <confirm|cancel>  the world-selection screen's two buttons
+          click arrow <direction>   press an on-screen camera arrow (left|right|up|down), the
+                                    mouse's copy of the arrow keys
           click button              press the footer button (LEAVE/INTERRUPT/END/CONTINUE)
           click continue            confirm the dice overlay
           click cell <x> <y>        raw terminal cell click (escape hatch)
@@ -363,10 +413,15 @@ public sealed class CliDriver
           travel neighbour          plan a route to any bordering vertex (leaving, unnamed)
           travel back               plan a route to the last location entered that is not this one
           routines                  list the routines the planned destination offers
-          routines <n>              replay routine n there (picks it and sets out)
-          routines continue         press CONTINUE on the post-replay outcome box
+          routines <n|kind>         pick routine n — or the first walkable of a kind (goto, meet,
+                                    gather, buy, sell, work) — and set out; entered on arrival
+          trade leave               close the trade menu without settling anything
+          gather days <n>|start|continue|leave
+                                    drive the gathering phase a Gather routine opens; assert
+                                    with `inspect gather`
           manage [tab]              open/close the protagonist screen; with a tab name
-                                    (Anatomy, Inventory, Memory, Humors, …) open it there
+                                    (Anatomy, Inventory, Memory, Humors, …) open it there.
+                                    `manage Routines <kind>` shows that kind's slots
           select [item name]        show a carried item's info panel; bare `select` lists them
           key <escape|…>            send a key
           scroll up|down [n]        scroll the shared history buffer
@@ -375,6 +430,8 @@ public sealed class CliDriver
                                     pin action outcomes (needs --debug)
           goal <verb-id|none>       pin the playground's goal choice to one verb (e.g. `goal tame`),
                                     set before the keyword click it should apply to
+          means <mm-id|none>        pin the playground's choice of means — the action modus mentis
+                                    that carries the goal out — the way `goal` pins the goal
           fight-end <victory|death|runaway>
                                     force-resolve a fight to test its transition
           fight-deplete [enemies|companions|<fighter>]
@@ -401,6 +458,8 @@ public sealed class CliDriver
                                     to get from a keyword click to the action list
           wait mode <GameMode>      block until the game reaches a mode (e.g. LocationInteraction);
                                     a timeout is reported as FAIL
+          wait embeddings [secs]    block until the word vectors have loaded, so a later phase's
+                                    keyword ranking is the same on every --playground run
           expect <text>             assert text is on screen; failure sets a non-zero exit code
           expect-not <text>         assert text is absent
           quit                      close the game (exit 1 if any expect failed)
@@ -529,6 +588,23 @@ public sealed class CliDriver
     {
         bool any = false;
 
+        if (_game.CliWorldSelectionButtons() is { } world)
+        {
+            var (count, selected, _) = _game.CliMoonState();
+            CliMode.Emit(selected >= 0
+                ? $"  moon {selected} selected: {Cathedral.Glyph.SkyMoons.Name(selected)} "
+                  + $"(seed {Cathedral.Glyph.SkyMoons.WorldSeed(selected)}, "
+                  + $"{Cathedral.Glyph.Microworld.WorldVariants.ForSeed(Cathedral.Glyph.SkyMoons.WorldSeed(selected)).Id})"
+                : "  no moon selected yet");
+            CliMode.Emit($"  click moon <name|ordinal>  ({count} moons, ordinals 0..{count - 1})");
+            CliMode.Emit("  point moon <name|ordinal>  (hover it without choosing it)");
+            CliMode.Emit("  click sky  (press empty sky — releases the chosen moon)");
+            foreach (var (label, enabled, _, _) in world)
+                CliMode.Emit($"  click world \"{label}\"{(enabled ? "" : "  (disabled)")}");
+            CliMode.Emit("  click arrow left|right|up|down  (turn the sky)");
+            return;
+        }
+
         if (_game.CliMenuButtons() is { } menu)
         {
             foreach (var (label, enabled, _, _) in menu)
@@ -634,7 +710,60 @@ public sealed class CliDriver
     {
         int v = _game.CliAvatarVertex;
         var (location, biome) = _game.CliWorld.GetCurrentLocationInfo();
-        CliMode.Emit($"avatar_vertex={v} biome=\"{biome.Name}\" location=\"{location?.Name ?? "-"}\" mode={_game.CurrentMode}");
+        var regions = _game.CliWorld.Regions;
+        CliMode.Emit($"avatar_vertex={v} biome=\"{biome.Name}\" location=\"{location?.Name ?? "-"}\" " +
+                     $"region={regions?.RegionAt(v) ?? -1} landmass={regions?.LandmassAt(v) ?? -1} " +
+                     $"variant={_game.CliWorld.Variant.Id} " +
+                     $"mode={_game.CurrentMode}");
+    }
+
+    /// <summary>
+    /// Prints the kind of world this is, and the numbers behind it. The whole table is listed after
+    /// it, marked, so a script can see what it did NOT get as well as what it did.
+    /// </summary>
+    private void CmdWorldVariant()
+    {
+        var live = _game.CliWorld.Variant;
+        var bySeed = Cathedral.Glyph.Microworld.WorldVariants.ForSeed(GameRng.MasterSeed);
+
+        CliMode.Emit($"variant={live.Id} name=\"{live.Name}\" seed-names={bySeed.Id} " +
+                     $"forced={(live == bySeed ? "no" : "yes")}");
+        CliMode.Emit($"  {live.Blurb}");
+        foreach (var v in Cathedral.Glyph.Microworld.WorldVariants.All)
+            CliMode.Emit($"  {(v == live ? "*" : " ")} {v.Id,-18} {v.Name}");
+    }
+
+    /// <summary>
+    /// Prints the world's division into regions — the thing the developer R key colours in. Bare, it
+    /// lists every region; with a vertex argument, only the region covering that vertex.
+    /// </summary>
+    private void CmdWorldRegions(string[] a)
+    {
+        var map = _game.CliWorld.Regions;
+        if (map == null) { CliMode.Emit("error: no world generated"); return; }
+
+        if (a.Length > 0)
+        {
+            if (!int.TryParse(a[0], out int vertex)) { CliMode.Emit("error: world-regions [vertex]"); return; }
+            int id = map.RegionAt(vertex);
+            if (id < 0) { CliMode.Emit($"vertex {vertex}: water (no region)"); return; }
+            EmitRegion(map.Regions[id], vertex);
+            return;
+        }
+
+        CliMode.Emit($"regions={map.Regions.Count} landmasses={map.LandmassCount} " +
+                     $"overlay={(_game.CliWorld.RegionOverlayEnabled ? "on" : "off")}");
+        foreach (var r in map.Regions) EmitRegion(r, null);
+    }
+
+    private void EmitRegion(Cathedral.Glyph.Microworld.WorldRegion r, int? queriedVertex)
+    {
+        var (biome, location, _) = _game.CliWorld.GetDetailedBiomeInfoAt(r.SeedVertex);
+        string swatch = _game.CliWorld.Regions!.Palette[r.PaletteIndex].Name;
+        string where = queriedVertex is int v ? $"vertex {v}: " : "  ";
+        CliMode.Emit($"{where}region {r.Id}  landmass {r.LandmassId}  {r.CellCount} cells  " +
+                     $"seed {r.SeedVertex} (\"{location?.Name ?? biome.Name}\")  " +
+                     $"swatch \"{swatch}\"  borders [{string.Join(", ", r.Neighbours.OrderBy(x => x))}]");
     }
 
     /// <summary>
@@ -812,6 +941,52 @@ public sealed class CliDriver
                 CliMode.Emit("ok: confirmed dice");
                 break;
             }
+            case "moon":
+            {
+                if (a.Length < 2) { CliMode.Emit("error: click moon <name|ordinal>"); return; }
+
+                int ordinal = ResolveMoon(string.Join(' ', a[1..]).Trim('\"'));
+                if (ordinal < 0) return;
+
+                Report(_game.CliSelectMoon(ordinal),
+                    $"selected moon {ordinal} ({Cathedral.Glyph.SkyMoons.Name(ordinal)}, "
+                    + $"seed {Cathedral.Glyph.SkyMoons.WorldSeed(ordinal)}, "
+                    + $"{Cathedral.Glyph.Microworld.WorldVariants.ForSeed(Cathedral.Glyph.SkyMoons.WorldSeed(ordinal)).Id})");
+                break;
+            }
+            case "sky":
+            {
+                Report(_game.CliClickEmptySky(), "pressed empty sky (choice released)");
+                break;
+            }
+            case "world":
+            {
+                if (a.Length < 2) { CliMode.Emit("error: click world <confirm|cancel>"); return; }
+                var buttons = _game.CliWorldSelectionButtons();
+                if (buttons == null) { CliMode.Emit("error: not on the world-selection screen"); return; }
+
+                var match = buttons.FirstOrDefault(b => b.Label.Contains(a[1], StringComparison.OrdinalIgnoreCase));
+                if (match.Label == null) { CliMode.Emit($"error: no world-selection button matching \"{a[1]}\""); return; }
+                if (!match.Enabled)      { CliMode.Emit($"error: \"{match.Label}\" is disabled — no moon chosen yet"); return; }
+                _game.CliHoverCell(match.X, match.Y);
+                _game.CliClickCell(match.X, match.Y);
+                CliMode.Emit($"ok: pressed \"{match.Label}\"");
+                break;
+            }
+            case "arrow":
+            {
+                if (a.Length < 2) { CliMode.Emit("error: click arrow left|right|up|down"); return; }
+                if (!Enum.TryParse<Cathedral.Game.CameraArrow>(a[1], ignoreCase: true, out var arrow)
+                    || arrow == Cathedral.Game.CameraArrow.None)
+                { CliMode.Emit($"error: unknown arrow '{a[1]}' (left|right|up|down)"); return; }
+
+                var before = _game.CliCameraFacing();
+                string? err = _game.CliPressCameraArrow(arrow);
+                var after  = _game.CliCameraFacing();
+                Report(err, $"pressed the {arrow} arrow (yaw {before.Yaw:F1}\u00b0 -> {after.Yaw:F1}\u00b0, "
+                          + $"pitch {before.Pitch:F1}\u00b0 -> {after.Pitch:F1}\u00b0)");
+                break;
+            }
             case "menu":
             {
                 if (a.Length < 2) { CliMode.Emit("error: click menu <label>"); return; }
@@ -840,6 +1015,42 @@ public sealed class CliDriver
         }
     }
 
+    /// <summary>
+    /// <c>point moon &lt;name|ordinal&gt;</c> — put the cursor on a moon without pressing.
+    ///
+    /// <para>Hovering and choosing are separate states on the world-selection screen, drawn
+    /// differently and held at the same time. <c>click moon</c> drives both at once, so this is the
+    /// only way a script can show that a choice survives the cursor wandering off it.</para>
+    /// </summary>
+    private void CmdPoint(string[] a)
+    {
+        if (a.Length < 2 || !a[0].Equals("moon", StringComparison.OrdinalIgnoreCase))
+        { CliMode.Emit("error: point moon <name|ordinal>"); return; }
+
+        int ordinal = ResolveMoon(string.Join(' ', a[1..]).Trim('"'));
+        if (ordinal < 0) return;
+
+        Report(_game.CliPointAtMoon(ordinal),
+            $"pointed at moon {ordinal} ({Cathedral.Glyph.SkyMoons.Name(ordinal)})");
+    }
+
+    /// <summary>
+    /// A moon ordinal from a name or a number, or -1 having already reported why not. Names are
+    /// stable across processes (the sky is drawn from a constant), so a script may use either.
+    /// </summary>
+    private int ResolveMoon(string token)
+    {
+        if (int.TryParse(token, out int parsed)) return parsed;
+
+        var (count, _, _) = _game.CliMoonState();
+        for (int i = 0; i < count; i++)
+            if (string.Equals(Cathedral.Glyph.SkyMoons.Name(i), token, StringComparison.OrdinalIgnoreCase))
+                return i;
+
+        CliMode.Emit($"error: no moon named \"{token}\"");
+        return -1;
+    }
+
     private void CmdChoose(string[] a)
     {
         if (a.Length < 1 || !int.TryParse(a[0], out int idx)) { CliMode.Emit("error: choose <n>"); return; }
@@ -850,9 +1061,30 @@ public sealed class CliDriver
 
     private void CmdTravel(string[] a)
     {
-        if (a.Length == 0) { CliMode.Emit("error: travel <vertex|name>"); return; }
+        var (target, error) = ResolveTravel(a);
+        if (error != null) { CliMode.Emit($"error: {error}"); return; }
+
+        _game.CliClickVertex(target);
+
+        // Two quite different things happen here and the script has to know which. Picking your own
+        // vertex walks straight into the location; picking any other only *plans* a route and leaves
+        // the travel box up, waiting for `travel-go`. Reporting both as "travel requested" is how a
+        // script ends up parked at the travel box until its timeout, with nothing saying why.
+        if (target == _game.CliAvatarVertex)
+            CliMode.Emit($"ok: entering the location at vertex {target} (own vertex)");
+        else
+            CliMode.Emit($"ok: route planned to vertex {target} — call `travel-go` to set out");
+    }
+
+    /// <summary>
+    /// The vertex a <c>travel</c> command names, or an error. Shared with <c>--record</c>, which clicks
+    /// that vertex on the sphere where this driver injects it.
+    /// </summary>
+    internal (int Vertex, string? Error) ResolveTravel(string[] a)
+    {
+        if (a.Length == 0) return (-1, "travel <vertex|name>");
         if (_game.CurrentMode != GameMode.WorldView)
-        { CliMode.Emit($"error: travel only works in WorldView (currently {_game.CurrentMode})"); return; }
+            return (-1, $"travel only works in WorldView (currently {_game.CurrentMode})");
 
         int target;
         if (int.TryParse(a[0], out int explicitVertex))
@@ -879,14 +1111,10 @@ public sealed class CliDriver
             // named biome, travel-go, wait for arrival, then name it again to go in — is four
             // commands and a race with the travel animation.
             if (want.Equals("here", StringComparison.OrdinalIgnoreCase))
-            {
-                _game.CliClickVertex(_game.CliAvatarVertex);
-                CliMode.Emit($"ok: entering the location at vertex {_game.CliAvatarVertex}");
-                return;
-            }
+                return (_game.CliAvatarVertex, null);
 
             // `travel back` plans a route to the last location the player was inside. A round trip is
-            // the only way to reach routine replay — a routine replays on ARRIVAL — and a script
+            // the only way to walk a routine — a routine is entered on ARRIVAL — and a script
             // cannot name the vertex it started on, since that is whatever the seed put under the
             // avatar. Plans only, like any other named destination: follow with `travel-go`.
             // `travel neighbour` plans a route to any vertex bordering the avatar. The other half of
@@ -901,21 +1129,15 @@ public sealed class CliDriver
                     .FirstOrDefault(v => v != here
                                       && _game.CliWorld.IsVertexTraversable(v)
                                       && !_game.CliWorld.IsOutOfTravelRange(v), -1);
-                if (next < 0) { CliMode.Emit("error: travel neighbour — no traversable neighbour in range"); return; }
-                _game.CliClickVertex(next);
-                CliMode.Emit($"ok: route planned to neighbouring vertex {next} — call `travel-go` to set out");
-                return;
+                return next < 0 ? (-1, "travel neighbour — no traversable neighbour in range") : (next, null);
             }
 
             if (want.Equals("back", StringComparison.OrdinalIgnoreCase))
             {
                 int last = _game.CliLastLocationVertex;
-                if (last < 0) { CliMode.Emit("error: travel back — no location has been entered yet"); return; }
-                if (last == _game.CliAvatarVertex)
-                { CliMode.Emit($"error: travel back — already standing on vertex {last}"); return; }
-                _game.CliClickVertex(last);
-                CliMode.Emit($"ok: route planned back to vertex {last} — call `travel-go` to set out");
-                return;
+                if (last < 0) return (-1, "travel back — no location has been entered yet");
+                if (last == _game.CliAvatarVertex) return (-1, $"travel back — already standing on vertex {last}");
+                return (last, null);
             }
 
             target = -1;
@@ -931,19 +1153,9 @@ public sealed class CliDriver
                 target = v;
                 break;
             }
-            if (target < 0) { CliMode.Emit($"error: no reachable destination matching \"{want}\" (try `destinations all`)"); return; }
+            if (target < 0) return (-1, $"no reachable destination matching \"{want}\" (try `destinations all`)");
         }
-
-        _game.CliClickVertex(target);
-
-        // Two quite different things happen here and the script has to know which. Picking your own
-        // vertex walks straight into the location; picking any other only *plans* a route and leaves
-        // the travel box up, waiting for `travel-go`. Reporting both as "travel requested" is how a
-        // script ends up parked at the travel box until its timeout, with nothing saying why.
-        if (target == _game.CliAvatarVertex)
-            CliMode.Emit($"ok: entering the location at vertex {target} (own vertex)");
-        else
-            CliMode.Emit($"ok: route planned to vertex {target} — call `travel-go` to set out");
+        return (target, null);
     }
 
     /// <summary>
@@ -964,24 +1176,17 @@ public sealed class CliDriver
     }
 
     /// <summary>
-    /// The routine box: <c>routines</c> lists what the planned destination offers, <c>routines
-    /// &lt;n&gt;</c> picks one and sets out (the replay runs on arrival), and <c>routines continue</c>
-    /// presses CONTINUE on the outcome box afterwards, which applies the phase the routine ended on.
+    /// The routine box: <c>routines</c> lists what the planned destination offers, and <c>routines
+    /// &lt;n&gt;</c> — or <c>routines &lt;kind&gt;</c>, the first walkable routine of that kind
+    /// (goto, meet, gather, buy, sell, work) — picks one and sets out; it is entered on arrival.
     ///
-    /// <para>By index rather than by click because both the rows and the ROUTINES button are
+    /// <para>By index or kind rather than by click because both the rows and the ROUTINES button are
     /// hit-tested against rendered boxes whose geometry moves with how many routines exist — the same
-    /// reason <c>travel</c> injects a vertex instead of aiming at the sphere.</para>
+    /// reason <c>travel</c> injects a vertex instead of aiming at the sphere. The kind is there because
+    /// a routine's name carries generated content (a merchant's name), and the order is by kind.</para>
     /// </summary>
     private void CmdRoutines(string[] a)
     {
-        if (a.Length > 0 && a[0].Equals("continue", StringComparison.OrdinalIgnoreCase))
-        {
-            CliMode.Emit(_game.CliDismissRoutineOutcome()
-                ? $"ok: routine outcome dismissed (mode={_game.CurrentMode})"
-                : "error: no routine outcome box on screen");
-            return;
-        }
-
         if (_game.CurrentMode != GameMode.WorldView)
         { CliMode.Emit($"error: routines only works in WorldView (currently {_game.CurrentMode})"); return; }
 
@@ -994,23 +1199,69 @@ public sealed class CliDriver
         {
             CliMode.Emit($"routines: {entries.Count} for this destination");
             for (int i = 0; i < entries.Count; i++)
-                CliMode.Emit($"  routines {i}  \"{entries[i].Name}\""
-                           + (entries[i].Replayable ? "" : $"  (unreplayable: {entries[i].Reason})"));
+                CliMode.Emit($"  routines {i}  {entries[i].Category}  \"{entries[i].Name}\""
+                           + (entries[i].Available ? "" : $"  (unavailable: {entries[i].Reason})"));
             return;
         }
 
-        if (!int.TryParse(a[0], out int index))
-        { CliMode.Emit($"error: routines <n>|continue (got '{a[0]}')"); return; }
+        int index;
+        if (!int.TryParse(a[0], out index))
+        {
+            string kind = a[0].ToLowerInvariant();
+            index = Enumerable.Range(0, entries.Count)
+                .Where(i => entries[i].Category == kind)
+                .OrderBy(i => entries[i].Available ? 0 : 1)
+                .DefaultIfEmpty(-1)
+                .First();
+            if (index < 0)
+            { CliMode.Emit($"error: no {kind} routine here (routines <n>|<goto|meet|gather|buy|sell|work>)"); return; }
+        }
 
         if (!_game.CliSelectRoutine(index))
         {
             CliMode.Emit(index >= 0 && index < entries.Count
-                ? $"error: routine {index} is not replayable: {entries[index].Reason}"
+                ? $"error: routine {index} cannot be walked: {entries[index].Reason}"
                 : $"error: no routine {index} (offered 0..{entries.Count - 1})");
             return;
         }
 
-        CliMode.Emit($"ok: replaying routine {index} on arrival (mode={_game.CurrentMode})");
+        CliMode.Emit($"ok: entering routine {index} on arrival (mode={_game.CurrentMode})");
+    }
+
+    /// <summary>
+    /// The gathering phase a Gather routine opens: <c>gather days &lt;n&gt;</c> sets the stay,
+    /// <c>gather start</c> stays (rolled at once — a script does not watch the bar), <c>gather
+    /// continue</c> presses CONTINUE on the yield, <c>gather leave</c> leaves without staying. Assert
+    /// with <c>inspect gather</c>.
+    /// </summary>
+    private void CmdGather(string[] a)
+    {
+        if (_game.CurrentMode != GameMode.Gathering)
+        { CliMode.Emit($"error: gather only works in Gathering (currently {_game.CurrentMode})"); return; }
+
+        string sub = a.Length > 0 ? a[0].ToLowerInvariant() : "";
+        bool ok = sub switch
+        {
+            "days"     => a.Length > 1 && int.TryParse(a[1], out int d) && _game.CliGatherSetDays(d),
+            "start"    => _game.CliGatherStart(),
+            "continue" => _game.CliGatherContinue(),
+            "leave"    => _game.CliGatherLeave(),
+            _          => false,
+        };
+        CliMode.Emit(ok ? $"ok: gather {string.Join(' ', a)} (mode={_game.CurrentMode})"
+                        : $"error: gather days <n>|start|continue|leave — '{string.Join(' ', a)}' did nothing here");
+    }
+
+    /// <summary>
+    /// The trade menu. Only <c>leave</c>: what is bought and sold is clicked through the real menu,
+    /// but a script that only needs to get out of it — to see where closing it leads — says so.
+    /// </summary>
+    private void CmdTrade(string[] a)
+    {
+        string sub = a.Length > 0 ? a[0].ToLowerInvariant() : "";
+        bool ok = sub == "leave" && _game.CliTradeLeave();
+        CliMode.Emit(ok ? $"ok: trade leave (mode={_game.CurrentMode})"
+                        : $"error: trade leave — no trade menu open (currently {_game.CurrentMode})");
     }
 
     /// <summary>
@@ -1047,6 +1298,16 @@ public sealed class CliDriver
             CliMode.Emit($"error: unknown tab '{tab}' (have: {string.Join(", ", _game.CliManagementTabs)})");
             return;
         }
+
+        // The Routines tab's kinds are a column of rows whose meaning the script knows and whose
+        // position it should not: `manage Routines buy`.
+        if (a.Length > 1)
+        {
+            if (!_game.CliSelectRoutineCategory(a[1]))
+            { CliMode.Emit($"error: unknown routine kind '{a[1]}' (goto, meet, gather, buy, sell, work)"); return; }
+            CliMode.Emit($"ok: management tab {tab}, routines of kind {a[1]}");
+            return;
+        }
         CliMode.Emit($"ok: management tab {tab}");
     }
 
@@ -1079,6 +1340,16 @@ public sealed class CliDriver
         if (a.Length == 0) { CliMode.Emit("error: key <name>"); return; }
         if (!Enum.TryParse<Keys>(a[0], ignoreCase: true, out var key))
         { CliMode.Emit($"error: unknown key '{a[0]}'"); return; }
+
+        // The window's own rule, not a shortcut around it: a key the player's keyboard would not
+        // deliver here fails the run. Calling the controller directly once let `key K` pass while K
+        // did nothing for a player.
+        if (!LocationTravelModeLauncher.DeliversToController(_game.CurrentMode, key))
+        {
+            CliMode.HasFailedAssertion = true;
+            CliMode.Emit($"FAIL: the window does not deliver {key} in {_game.CurrentMode}, so a player pressing it gets nothing");
+            return;
+        }
         _game.OnKeyDown(key);
         CliMode.Emit($"ok: sent {key}");
     }
@@ -1158,6 +1429,28 @@ public sealed class CliDriver
         if (!PlaygroundMode.IsActive)
             CliMode.Emit("warning: --playground is not enabled, so the goal is chosen by the persona, not this");
         CliMode.Emit($"ok: goal={want}");
+    }
+
+    /// <summary>
+    /// Pins the playground's choice of means — which action modus mentis carries the goal out — the way
+    /// <c>goal</c> pins the goal. Same switch as <c>--means-only</c>; <c>means none</c> hands it back.
+    /// </summary>
+    private static void CmdMeans(string[] a)
+    {
+        if (a.Length == 0) { CliMode.Emit($"means={Config.Debug.MeansOnly ?? "auto"}"); return; }
+
+        string want = a[0].ToLowerInvariant();
+        if (want is "none" or "auto" or "off")
+        {
+            Config.Debug.MeansOnly = null;
+            CliMode.Emit("ok: means=auto");
+            return;
+        }
+
+        Config.Debug.MeansOnly = want;
+        if (!PlaygroundMode.IsActive)
+            CliMode.Emit("warning: --playground is not enabled, so the means is chosen by the persona, not this");
+        CliMode.Emit($"ok: means={want}");
     }
 
     private void CmdFightEnd(string[] a)
@@ -1268,6 +1561,17 @@ public sealed class CliDriver
             _waitDescription = $"mode={mode}";
             if (a.Length >= 3 && int.TryParse(a[2], out int modeSecs))
                 timeout = TimeSpan.FromSeconds(Math.Max(1, modeSecs));
+        }
+        // The word vectors load on a background task (~6s) that a real run hides behind the model
+        // load and --playground has nothing to hide behind, so which keyword a phase highlights
+        // depends on whether they have arrived yet. A script that clicks a keyword in a LATER phase
+        // waits for them first, so the ranking it meets is the same on every run.
+        else if (a.Length >= 1 && a[0].Equals("embeddings", StringComparison.OrdinalIgnoreCase))
+        {
+            _waitCondition = () => Cathedral.Game.Narrative.WordEmbedding.IsReady;
+            _waitDescription = "embeddings loaded";
+            if (a.Length >= 2 && int.TryParse(a[1], out int embSecs))
+                timeout = TimeSpan.FromSeconds(Math.Max(1, embSecs));
         }
         else if (a.Length >= 1 && int.TryParse(a[0], out int secs))
         {
@@ -1557,6 +1861,34 @@ public sealed class CliDriver
             return;
         }
         CliMode.Emit($"FAIL: expected verb '{a[0]}' but '{actual}' was executed");
+        CliMode.HasFailedAssertion = true;
+    }
+
+    /// <summary>
+    /// The negative of <see cref="CmdExpectVerb"/>: an action ran, and it was not this verb. What a
+    /// gate test asserts — `goal` pinned to a withheld verb falls back to the goals that remain, so
+    /// whichever ran instead is the evidence the gate held. Requires that something ran, or a
+    /// script that stalled before acting would pass.
+    /// </summary>
+    private void CmdExpectNoVerb(string[] a)
+    {
+        if (a.Length == 0) { CliMode.Emit("error: expect-no-verb <verb-id>"); return; }
+        var n = _game.CliNarration;
+        if (n == null) { CliMode.Emit("error: not in narration"); return; }
+
+        var actual = n.CliLastExecutedVerbId();
+        if (actual == null)
+        {
+            CliMode.Emit($"FAIL: expected some verb other than '{a[0]}' — no action has been executed yet");
+            CliMode.HasFailedAssertion = true;
+            return;
+        }
+        if (!string.Equals(actual, a[0], StringComparison.OrdinalIgnoreCase))
+        {
+            CliMode.Emit($"PASS: executed verb was '{actual}', not '{a[0]}'");
+            return;
+        }
+        CliMode.Emit($"FAIL: verb '{a[0]}' was executed");
         CliMode.HasFailedAssertion = true;
     }
 

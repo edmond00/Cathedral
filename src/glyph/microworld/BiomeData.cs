@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using OpenTK.Mathematics;
@@ -61,17 +61,43 @@ namespace Cathedral.Glyph.Microworld
             ["forest"]   = new BiomeType("forest",   '⬤', new Vector3(0,   85,  0  ), 1.3f, 0.03f, seed => new NoisyGenerator    { Seed = seed, Density = 0.62f }),
             ["mountain"] = new BiomeType("mountain", '◭', new Vector3(130, 130, 130), 1.3f, 0.05f, seed => new WaveGenerator     { Seed = seed }),
             ["peak"]     = new BiomeType("peak",     '⋀', new Vector3(255, 255, 255), 1.3f, 0.2f,  seed => new WaveGenerator     { Seed = seed }),
-            ["coast"]    = new BiomeType("coast",    ':', new Vector3(255, 255, 0  ), 1.3f, 0.2f,  seed => new RadiantGenerator  { Seed = seed }),
-            ["city"]     = new BiomeType("city",     '☷', new Vector3(150, 100, 100), 1.3f, 0.4f,  seed => new GeometricGenerator{ Seed = seed }),
+            ["coast"]    = new BiomeType("coast",    ':', new Vector3(80,  200, 0  ), 1.3f, 0.2f,  seed => new RadiantGenerator  { Seed = seed }),
             ["sea"]      = new BiomeType("sea",      '~', new Vector3(30,  30,  225), 1f,   0.01f, seed => new WaveGenerator     { Seed = seed }),
             ["ocean"]    = new BiomeType("ocean",    '≈', new Vector3(10,  10,  200), 1f,   0.02f, seed => new WaveGenerator     { Seed = seed }),
-            ["field"]    = new BiomeType("field",    '⣿', new Vector3(80,  200, 0  ), 1.2f, 0.1f,  seed => new NoisyGenerator    { Seed = seed, Density = 0.88f }),
+
+            // ── Climate biomes ──────────────────────────────────────────────────────────
+            // Never proposed by the noise directly: ClimateRule turns a temperate biome into one of
+            // these where the climate layer reads hot or cold. No location may stand on any of them
+            // yet — hot and cold country is unsettled until it is given settlements of its own.
+            // Colours follow the map's convention: the sphere shader keeps nature to a grey scale and
+            // reads only the luminance. Desert and hot steppe are the exception: they are drawn with
+            // the field's colour and tint (as the coast is), so the hot country reads warm rather than
+            // as snow. Sea ice and cold steppe share one pale grey.
+            [HotSteppe]  = new BiomeType(HotSteppe,  '↼', new Vector3(80,  200, 0  ), 1.3f, 0.05f, seed => new NoisyGenerator    { Seed = seed, Density = 0.82f }),
+            [Desert]     = new BiomeType(Desert,     '∩', new Vector3(80,  200, 0  ), 1.2f, 0.05f, seed => new RadiantGenerator  { Seed = seed, CentreDensity = 0.95f, EdgeDensity = 0.70f }),
+            [Jungle]     = new BiomeType(Jungle,     '♠', new Vector3(0,   85,  0  ), 1.3f, 0.05f, seed => new NoisyGenerator    { Seed = seed, Density = 0.52f }),
+            [Canyon]     = new BiomeType(Canyon,     '⇌', new Vector3(130, 130, 130), 1.2f, 0.05f, seed => new CorridorGenerator { Seed = seed }),
+            [SeaIce]     = new BiomeType(SeaIce,     '⬟', new Vector3(255, 255, 0  ), 1.1f, 0.05f, seed => new GeometricGenerator{ Seed = seed }),
+            [Glacier]    = new BiomeType(Glacier,    '⁂', new Vector3(255, 255, 255), 1.3f, 0.05f, seed => new WaveGenerator     { Seed = seed }),
+            [Snowfield]  = new BiomeType(Snowfield,  '⁘', new Vector3(255, 255, 255), 1.3f, 0.05f, seed => new NoisyGenerator    { Seed = seed, Density = 0.9f }),
+            [ColdSteppe] = new BiomeType(ColdSteppe, '↽', new Vector3(255, 255, 0  ), 1.3f, 0.05f, seed => new NoisyGenerator    { Seed = seed, Density = 0.86f }),
         };
+
+        // The climate biomes' names, as constants: ClimateRule writes them and a dozen tables key on
+        // them, and a typo in one of those would be a biome with no travel cost and no scene.
+        public const string HotSteppe  = "hot steppe";
+        public const string Desert     = "desert";
+        public const string Jungle     = "jungle";
+        public const string Canyon     = "canyon";
+        public const string SeaIce     = "sea ice";
+        public const string Glacier    = "glacier";
+        public const string Snowfield  = "snowfield";
+        public const string ColdSteppe = "cold steppe";
 
         public static readonly Dictionary<string, LocationType> Locations = new Dictionary<string, LocationType>
         {
-            ["farm"] = new LocationType("farm", '⑇', new Vector3(150, 100, 100), 1.3f, new HashSet<string> { "field" }),
-            ["village"] = new LocationType("village", '⑆', new Vector3(150, 100, 100), 1.3f, new HashSet<string> { "field" }),
+            // Farms, villages and every other settled place are not drawn per vertex any more: they are
+            // put on the map by history and its sprawl (see RegisterSettledLocations below).
             ["cave"] = new LocationType("cave", '⟑', new Vector3(100, 100, 100), 1.3f, new HashSet<string> { "mountain" }),
             // ["church"] = new LocationType("church", '☨', new Vector3(100, 100, 100), 1.3f, new HashSet<string> { "plain", "field", "city" }),
             // ["dungeon"] = new LocationType("dungeon", '⍝', new Vector3(60, 60, 60), 1.3f, new HashSet<string> { "mountain" }),
@@ -115,13 +141,125 @@ namespace Cathedral.Glyph.Microworld
             // ["villa"] = new LocationType("villa", '◈', new Vector3(220, 120, 80), 1.3f, new HashSet<string> { "city" }),
         };
 
+        // ── Settled locations ──
+        // Placed by history (its places) and by the settlement sprawl around them, never drawn per
+        // vertex: their AllowedBiomes are empty so DetermineLocation cannot pick them.
+
+        /// <summary>The map glyph of each agriculture layout family.</summary>
+        /// <summary>
+        /// One glyph per settled location, never shared: the map must tell a radish field from a turnip
+        /// field at a glance. Glyphs that look alike mark locations that are alike - farmland is
+        /// braille (fields dense, orchards and groves in the right-hand column, plantations sparse) save
+        /// the cellars, which are solid blocks; villages and stock the small circled and barred marks,
+        /// towns and cities the trigrams, great buildings and the fort the boxed and ringed shapes. <c>--world-variant-audit</c> refuses a repeat.
+        /// </summary>
+        private static readonly Dictionary<string, char> SettledGlyphs = new()
+        {
+            // fields
+            ["wheat field"] = '⣿', ["barley field"] = '⣾', ["rye field"] = '⣽', ["oat field"] = '⣻',
+            ["corn field"] = '⣷', ["hay field"] = '⣯', ["hop field"] = '⣟', ["cotton field"] = '⣶',
+            ["pea field"] = '⣵', ["bean field"] = '⣳', ["cabbage field"] = '⣮', ["carrot field"] = '⣭',
+            ["onion field"] = '⣫', ["turnip field"] = '⣝', ["radish field"] = '⣛', ["potato field"] = '⣗',
+            ["tomato field"] = '⣞',
+            // orchards and groves
+            ["apple orchard"] = '⢷', ["pear orchard"] = '⢾', ["cherry orchard"] = '⢿', ["mango orchard"] = '⢽',
+            ["olive grove"] = '⢹', ["citrus grove"] = '⢺', ["almond grove"] = '⢻', ["orange grove"] = '⢼',
+            ["coconut grove"] = '⢸',
+            // plantations, garden, paddy, vineyard; the cellars as the solid blocks they are dug into
+            ["banana plantation"] = '⠷', ["sugarcane plantation"] = '⠾', ["spice plantation"] = '⠿',
+            ["mushroom cellar"] = '▰', ["endive cellar"] = '▮', ["tea garden"] = '⠻', ["rice paddy"] = '⠼',
+            ["vineyard"] = '⠽',
+            // stock
+            ["farm"] = '⑇', ["stable"] = '≐', ["sheepfold"] = '≑', ["ranch"] = '≒', ["pasture"] = '≓',
+            // where people live
+            ["village"] = '⑆', ["burg"] = '⑈', ["hamlet"] = '⑉', ["fort"] = '▦', ["townlet"] = '☴',
+            [SettlementTable.City] = '☷',
+            // history's places: the urban ones as large settlements, the rest as great buildings
+            ["citadel"] = '☰', ["port"] = '☵', ["palace"] = '☲', ["imperial school"] = '☳',
+            ["castle"] = '▣', ["fortress"] = '▩', ["temple"] = '◎', ["imperial temple"] = '◉',
+            ["commandery"] = '⌬', ["monastery"] = '◈', ["mine"] = '⏣', ["sanctuary"] = '◴',
+            ["burial field"] = '▤', ["pyramid"] = '▲', ["wreck"] = '⍾',
+            [SettlementTable.Ruin] = '◲',
+        };
+
+        /// <summary>The history-placed location keys: every kind of historical place, and the ruin.</summary>
+        public static readonly string[] HistoricLocations =
+        {
+            "citadel", "port", "palace", "imperial school", "castle", "fortress", "temple", "imperial temple",
+            "commandery", "monastery", "mine", "sanctuary", "burial field", "pyramid", "wreck",
+        };
+
+        /// <summary>Agriculture and livestock: drawn with the field's warm tint on the sphere.</summary>
+        public static readonly HashSet<string> FarmlandLocations = new();
+
+        static BiomeDatabase()
+        {
+            var tilled = new Vector3(80, 200, 0);
+            var built = new Vector3(150, 100, 100);
+            foreach (var name in SettlementTable.AllAgriculture)
+            {
+                Locations[name] = new LocationType(name, SettledGlyphs[name], tilled, 1.2f, new HashSet<string>());
+                FarmlandLocations.Add(name);
+            }
+            foreach (var name in SettlementTable.AllLivestock)
+            {
+                Locations[name] = new LocationType(name, SettledGlyphs[name], tilled, 1.2f, new HashSet<string>());
+                FarmlandLocations.Add(name);
+            }
+            foreach (var name in SettlementTable.AllSettlements.Append(SettlementTable.City).Concat(HistoricLocations))
+            {
+                Locations[name] = new LocationType(name, SettledGlyphs[name], built, 1.3f, new HashSet<string>());
+                HumanLocations.Add(name);
+            }
+            Locations[SettlementTable.Ruin] = new LocationType(SettlementTable.Ruin, SettledGlyphs[SettlementTable.Ruin],
+                                                               new Vector3(120, 120, 120), 1.2f, new HashSet<string>());
+        }
+
         // ── Tile category sets (used by the world sphere shader for coloring) ──
 
         /// <summary>Biomes rendered in dark purple on the world sphere.</summary>
         public static readonly HashSet<string> WaterBiomes = new HashSet<string> { "sea", "ocean" };
 
-        /// <summary>Biomes rendered in dark yellow on the world sphere.</summary>
-        public static readonly HashSet<string> HumanBiomes = new HashSet<string> { "city" };
+        /// <summary>
+        /// The high ground. <c>DetermineBiome</c> tests the mountain noise layer BEFORE the field
+        /// and city thresholds, so on these tiles the settlement layer decides nothing — which is
+        /// why the region division will grow across them but never centre a region on one.
+        /// </summary>
+        /// <para>The climate's high ground belongs here for the same reason: hot steppe, snowfield and
+        /// glacier are what a mountain or a peak becomes, and the settlement layer was never read there.</para>
+        public static readonly HashSet<string> MountainBiomes = new HashSet<string>
+        {
+            "mountain", "peak", HotSteppe, Snowfield, Glacier,
+        };
+
+        /// <summary>
+        /// The ground people live on: where history's urban and rural places may stand and where their
+        /// farmland and settlements sprawl (see <c>PlaceSites</c> and <c>SettlementSprawl</c>). Forest is
+        /// left wild on purpose, and so is every barren biome — desert, canyon, coast, peak, glacier,
+        /// sea ice — which hold isolated places only.
+        /// </summary>
+        public static readonly HashSet<string> LivableBiomes = new HashSet<string>
+        {
+            "plain", "mountain", HotSteppe, ColdSteppe, Jungle, Snowfield,
+        };
+
+        /// <summary>The livable ground a city may stand on: all of it but jungle and snowfield.</summary>
+        public static readonly HashSet<string> CityBiomes = new HashSet<string>
+        {
+            "plain", "mountain", HotSteppe, ColdSteppe,
+        };
+
+        /// <summary>The biomes <see cref="ClimateRule"/> produces. None of them carries a location yet.</summary>
+        public static readonly HashSet<string> ClimateBiomes = new HashSet<string>
+        {
+            HotSteppe, Desert, Jungle, Canyon, SeaIce, Glacier, Snowfield, ColdSteppe,
+        };
+
+        /// <summary>
+        /// The shore. Proposed by the water noise and then checked against the map by
+        /// <see cref="CoastRule"/>: a cell keeps this only if it really borders sea or ocean.
+        /// </summary>
+        public static readonly HashSet<string> CoastBiomes = new HashSet<string> { "coast" };
 
         /// <summary>Locations rendered in dark purple on the world sphere.</summary>
         public static readonly HashSet<string> WaterLocations = new HashSet<string>

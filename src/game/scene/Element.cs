@@ -26,6 +26,14 @@ public abstract class Element
     /// </summary>
     public string StableKey { get; set; } = "";
 
+    /// <summary>
+    /// True for what play made rather than what the factory built — a corpse, a wreck, the salvage
+    /// inside either. The next visit rebuilds the scene from the factory, so none of these will be
+    /// there, and a gathering routine aimed at one could never be gone back to: the recorder refuses
+    /// to learn one (see <c>RoutineRecorder</c>).
+    /// </summary>
+    public bool SpawnedDuringVisit { get; set; }
+
     /// <summary>Human-readable display name for UI and logging.</summary>
     public abstract string DisplayName { get; }
 

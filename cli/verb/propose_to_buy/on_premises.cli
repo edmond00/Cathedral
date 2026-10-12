@@ -1,0 +1,40 @@
+# propose_to_buy — on a trader's premises, in a real location
+#
+# success.cli runs in the test location, whose people trade wherever they stand. This one runs on
+# the farm, where trade happens only on premises (TradeGate): the farm's premises are its Storage
+# Shed, and at location id 1 under --npc-static the swineherd stands in it. The pair with
+# off_premises.cli is the rule itself — the same farm, the same affinity, a trader in the store is
+# offered the trade and a trader in the coop is not.
+#
+# The farm is used rather than a rolled location because its area names are written out in
+# FarmSceneFactory, not drawn: "Storage Shed" and "Chicken Coop" stay what they are.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --npc-affinity CloseFriend --location-type farm --location-id 1 --npc-static --start-area "Storage Shed" --period noon --observe-only "swineherd"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal propose_to_buy
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect SUCCESS
+expect Conversation:
+expect-verb propose_to_buy
+expect-outcome dialogue_trigger
+quit

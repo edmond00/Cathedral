@@ -127,6 +127,13 @@ public class NpcEntity : INpcEntity
     public NpcEntity? IntroductionGranted { get; set; }
 
     /// <summary>
+    /// Set when this trader agreed to take the player to their premises (<c>ask_to_be_led</c>), so the
+    /// controller can move the player there — the introduction's hand-off, for a place instead of a
+    /// person.
+    /// </summary>
+    public bool LeadToPremisesGranted { get; set; }
+
+    /// <summary>
     /// Set to true by a "caught red-handed" dialogue when the NPC demands combat
     /// instead of accepting an apology or lie. Checked by the game controller
     /// after dialogue ends to transition into fight mode.
@@ -154,6 +161,23 @@ public class NpcEntity : INpcEntity
 
     /// <summary>Tag of the goods this NPC buys (player can sell). Null = buys nothing.</summary>
     public Narrative.ItemTag? BuyTag => Archetype.BuyTag;
+
+    /// <summary>True when this NPC trades in either direction.</summary>
+    public bool Trades => SellTag != null || BuyTag != null;
+
+    /// <summary>
+    /// The areas this NPC trades in — their premises: a workshop's counter, a farm's barn, a
+    /// woodcutter's shed. Filled by the scene factory at spawn, like <see cref="OwnedSectionIds"/>.
+    ///
+    /// <para><b>Empty means they trade nowhere</b>, not everywhere. The goods are not carried about —
+    /// a smith's iron is at the forge — so meeting a trader in the street opens no trade; it is
+    /// <c>TradeGate</c> that reads this. Area ids are minted per build and so is this entity, so the
+    /// two always belong to the same scene.</para>
+    /// </summary>
+    public HashSet<Guid> TradeAreaIds { get; } = new();
+
+    /// <summary>Whether <paramref name="area"/> is one of this NPC's premises.</summary>
+    public bool TradesIn(Area? area) => area != null && TradeAreaIds.Contains(area.Id);
 
     /// <summary>
     /// Set by a successful propose-to-buy / propose-to-sell dialogue. Checked by the game

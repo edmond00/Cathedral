@@ -2,39 +2,44 @@ Volume 2 - Of Shame and the Opened Body
 2026-08-30
 
 Added
-  - Striking somebody now lands a blow. The swing itself is narrated - what you hit
-    them with, what it broke, what it taught you - before the fight begins. A miss
-    still starts the fight, and hands them the first move.
-  - What you do now moves you. One disposition you hold answers the act, secretes
-    humors into the spleen, and says so in its own voice.
-  - Three new mind states: Constantia, which steadies a poor roll; Pudor, the shame
-    that hollows out an ordinary one; and Nausea.
-  - Over a hundred new modi mentis, fifty-one of them dispositions that can be stirred.
-  - A carcass now gives up four to eight parts. A person is butchered like anything
-    else, and what they carried lies beside the body rather than inside it.
-  - A companion can die - of wounds, of spent humors, or of age - and leaves a body
-    behind them in the room where they fell.
-  - A conversation teaches a lesson drawn from the branch and from who you spoke to.
-    Begging a reeve is not what begging a farmhand is.
-  - Settings now sizes and weights the glyphs of the world separately from those of
-    the interface.
+  - Attacking an NPC now resolves a first blow before the fight begins. The swing is
+    narrated - the implement used, the wound dealt, the lesson learned. A miss still
+    starts the fight and gives the enemy the first move.
+  - Actions can now provoke an emotion. One of the dispositions you hold answers what
+    you did, secretes humors into the spleen, and narrates its reaction in its own voice.
+  - Three new humors: Constantia, which turns a 1 into a 3; Pudor, which turns a 4 into
+    a 2; and Nausea, which turns a 5 into a 3.
+  - Over a hundred new modi mentis, fifty-one of them dispositions that can provoke an
+    emotion.
+  - Butchering a carcass now yields four to eight parts. NPC corpses can be butchered
+    the same way, and whatever the NPC carried is dropped beside the body rather than
+    found inside it.
+  - Companions can now die - of wounds, of spent humors or of age - and leave a corpse
+    in the room where they fell.
+  - Conversations now teach a modus mentis chosen from the dialogue branch and from who
+    you spoke to, so begging a reeve teaches something different from begging a farmhand.
+  - Settings now sets the size and weight of the world's glyphs separately from the
+    interface's.
 
 Changed
-  - A wound no longer merely slows a discipline's growth - it can take it away. A
-    ruined organ drags the ceiling under its base, and the modus mentis reads BROKEN,
-    is refused in its own voice when you reach for it, and leaves your replies.
-  - Implements are judged before they are argued about. A hand with no craft in it
-    may use none at all, a weapon is a weapon whatever it was made for, and a thing
-    made for one purpose is refused for every other - with a different refusal for each.
-  - A combined implement is never consumed. The knife survives the carcass.
-  - An observation no longer avoids the object's own word, and varies which of the
-    words that suit it is offered.
+  - A wound can now disable a modus mentis outright, where before it only slowed its
+    growth. A ruined organ drags the level ceiling below the base level; the modus
+    mentis then reads BROKEN, is refused when selected, and no longer appears among
+    your dialogue replies.
+  - Tool use is now judged before the model is asked. No handcraft proficiency means no
+    tool may be used at all; a fighting verb accepts any weapon and refuses anything
+    that is not one; and an item made for one verb is refused for every other. Each
+    case has its own refusal message.
+  - Combining an item with a tool no longer consumes the tool.
+  - Observing an object no longer excludes the object's own word from the words it
+    offers, and varies which of the fitting words it gives.
 
 Fixed
-  - A fight lost inside a location now ends the run, as one lost on the road always did.
-  - An enemy bled dry is dead afterwards, rather than standing in the room at full health.
-  - Being ambushed on the last step of a journey no longer strands you on the world map
-    with nothing to press.
+  - Losing a fight inside a location now ends the run, as losing one on the road already did.
+  - An enemy killed by bleeding is now dead after the fight, instead of standing in the
+    room at full health.
+  - Being ambushed on the last step of a journey no longer leaves you on the world map
+    with no action available.
 
 Internal
   - Twenty-one new test scripts, and a new audit of how a player reaches each modus mentis.

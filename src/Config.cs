@@ -19,20 +19,46 @@ public static class Config
         /// dice rolls, travel-path jitter, etc. all derive from it (see <see cref="GameRng"/>).
         ///
         /// <list type="bullet">
-        /// <item><c>null</c> (default) → a fresh time-based seed each launch, so every run
-        /// gets a different world.</item>
+        /// <item><c>null</c> (default) → <see cref="BootSeed"/>, a constant. The launch itself is
+        /// not where a world comes from any more: a run gets its seed from the moon it is started
+        /// on, or from a save, and until then there is no world at all.</item>
         /// <item>a fixed integer → the exact same run can be replayed by making the same
-        /// decisions.</item>
+        /// decisions, and the moon-selection screen is skipped since the world is already named.</item>
         /// </list>
         ///
         /// Set it here, or pass <c>--seed &lt;n&gt;</c> on the command line (the CLI flag
-        /// overrides this value). The resolved seed is printed at startup so a time-based
-        /// run can be pinned afterwards.
+        /// overrides this value). The resolved seed is printed at startup, and a run's own seed is
+        /// printed again when its world is built, so any world can be pinned afterwards.
         ///
         /// Note: this does not affect the LLM (its sampling is nondeterministic and carries
         /// no seed), nor RNG already seeded from world data such as NPC or location ids.
         /// </summary>
         public static int? Seed { get; set; } = null;
+
+        /// <summary>
+        /// The master seed a launch resolves to when nothing else names one.
+        ///
+        /// <para><b>A constant, not the clock.</b> It used to be <c>Environment.TickCount</c>, because
+        /// the world was generated at startup and a fresh world each launch was the point. It is not
+        /// generated at startup any more — a run takes its seed from the moon it is started on — so a
+        /// time-based value here would leave one last source of launch-to-launch variation governing
+        /// nothing anybody can see, and would make the seed printed at startup a different number
+        /// every time for no reason. Every run is now reproducible from the moon it names.</para>
+        /// </summary>
+        public const int BootSeed = 1;
+
+        /// <summary>
+        /// True when the seed above was pinned on the command line with <c>--seed</c>, as opposed to
+        /// being read back out of a save file (which <c>Program.cs</c> also writes into
+        /// <see cref="Seed"/>, for a different reason).
+        ///
+        /// <para>The distinction is what the world-selection screen turns on. A new run normally
+        /// picks its world by clicking a moon; a run whose seed was pinned on the command line has
+        /// already been told which world to play, so the screen would have nothing to ask and is
+        /// skipped. Testing <see cref="Seed"/> alone would skip it whenever a save merely existed —
+        /// the save's seed is loaded into that same field so Continue can rebuild its world.</para>
+        /// </summary>
+        public static bool SeedPinned { get; set; } = false;
     }
 
     /// <summary>
@@ -129,6 +155,23 @@ public static class Config
         /// when nothing in the world matches.
         /// </summary>
         public static string? StartAt { get; set; } = null;
+
+        /// <summary>
+        /// Forces every world to be generated as this variant, whatever variant its seed names. Set
+        /// by <c>--world-variant &lt;id&gt;</c> ("drowned", "montane"...).
+        ///
+        /// <para><b>What it is for.</b> A variant is otherwise reached only by finding a moon that
+        /// happens to be it, and there are ten variants over three hundred and eighty moons. This is
+        /// how a playtest looks at one on purpose, and how <c>--world-variant-audit</c>'s findings can
+        /// be walked rather than only read.</para>
+        ///
+        /// <para><b>A save made under this flag will not continue without it.</b> The variant is part
+        /// of the world's identity and is written into the save; continuing on a mismatch is refused
+        /// rather than dropping the player into terrain that is not the terrain they left.</para>
+        ///
+        /// <para>Inert at its default of null: the seed decides, as it does in a shipped build.</para>
+        /// </summary>
+        public static string? WorldVariant { get; set; } = null;
 
         /// <summary>
         /// Forces every scene to be built as though it were this location id, whatever vertex the
@@ -358,7 +401,21 @@ public static class Config
         /// this a script cannot reach the buffs at all — and cannot exercise both ends of the
         /// level-derived vital-heat curve, which is the whole of a buff's cost model.</para>
         /// </summary>
-        public static (string[] Ids, int Level)? GrantModiMentis { get; set; } = null;
+        public static (string Id, int Level)[]? GrantModiMentis { get; set; } = null;
+
+        /// <summary>
+        /// Organ part scores to set when the protagonist is accepted, by part id, organ id or "all".
+        /// Set by <c>--organs</c>. Applied before memory and humors are derived from the scores, and
+        /// regardless of the creation point budget — a starting condition, like the rest of this class.
+        /// Inert at null.
+        /// </summary>
+        public static (string Target, int Score)[]? Organs { get; set; } = null;
+
+        /// <summary>
+        /// Humors to fill the protagonist's queues with on acceptance: (queue or "all", humor name).
+        /// Set by <c>--humors</c>. Inert at null.
+        /// </summary>
+        public static (string Queue, string Humor)[]? Humors { get; set; } = null;
 
         /// <summary>
         /// Creature to fight immediately on reaching the world map, e.g. "wolf". Set by
@@ -413,6 +470,17 @@ public static class Config
         /// for a thinking phase where no goal matches, which then draws as usual.</para>
         /// </summary>
         public static string? GoalOnly { get; set; } = null;
+
+        /// <summary>
+        /// Modus mentis id the playground's choice of MEANS must land on — the action modus mentis that
+        /// carries the goal out. Set by <c>--means-only &lt;mm-id&gt;</c> and the CLI's <c>means</c>
+        /// command. Null (the default) leaves it to the RNG.
+        ///
+        /// <para>Needed once willingness rules began to refuse by kind of mind: examining is refused by
+        /// any action modus mentis without the Observation function, so a script that means to examine
+        /// is otherwise at the mercy of which of the kit's action modi mentis the draw picks.</para>
+        /// </summary>
+        public static string? MeansOnly { get; set; } = null;
     }
 
     #endregion
@@ -428,10 +496,27 @@ public static class Config
         /// at the window so the launchers cannot drift from the menu, which is how the title bar
         /// came to read "Cathedral - Location Travel Mode" in a shipped build.
         /// </summary>
-        public const string WindowTitle = "Proscribed Palimpsest";
+        public const string WindowTitle =
+#if DEMO
+            "Proscribed Palimpsest (Demo)";
+#else
+            "Proscribed Palimpsest";
+#endif
 
-        public const string Chapter = "Volume 2";
-        public const string ChapterSubtitle = "Of Shame and the Opened Body";
+        public const string Chapter = "Volume 3";
+        public const string ChapterSubtitle = "Chorography of the Lesser Moons";
+    }
+
+    /// <summary>
+    /// The demo build: the full game, with a limited number of runs. See <see cref="DemoLimit"/>.
+    /// Compiled in by <c>package.ps1 -Demo</c> (the DEMO constant); <c>--demo</c> in development.
+    /// </summary>
+    public static class Demo {
+        /// <summary>Runs a demo installation may start. A run is spent when a world is confirmed.</summary>
+        public const int MaxRuns = 3;
+
+        /// <summary>Where the menu sends a player whose runs are spent.</summary>
+        public const string StorePage = "edmond00.itch.io/proscribed";
     }
     
     public static class Terminal
@@ -458,6 +543,46 @@ public static class Config
         public const int MainHeight = 100;
         public const int MainCellSize = 35;
         public const int MainFontSize = 35;
+
+        /// <summary>
+        /// How many atlas texels the terminal rasters per <see cref="MainCellSize"/> pixel. The
+        /// atlas is drawn at this multiple of the cell and font size and minified back down by the
+        /// GPU; <b>every size on this class stays in cell units</b>, because <c>GlyphAtlas</c>
+        /// applies the factor inside its own constructor and nothing outside it reads the raster
+        /// size. Two windows also size themselves off <see cref="MainCellSize"/> directly
+        /// (<c>FightAreaTestLauncher</c>, <c>ImageToTextModeLauncher</c>), which is exactly why the
+        /// factor lives in the atlas and not in this constant.
+        ///
+        /// <para><b>It exists because a 1:1 raster has no detail left to give.</b> The grid is
+        /// 100x100, so a 1440-tall panel is a 14px cell and a die — quad-scaled to about 23px — was
+        /// being rastered into 35 and minified to 23. Its pips were three source pixels across,
+        /// which is not enough to resolve a pip from the rule beside it however thin the
+        /// emboldening pen is set: at that size the pen was the whole difference between a 5px pip
+        /// and a 3px one, and 3px still blurred back into a blob. Rastering at 70 and letting
+        /// minification average it down is what actually separates them.</para>
+        ///
+        /// <para><b>This is worth nothing without mipmaps and must not be raised without them.</b>
+        /// A plain <c>Linear</c> min filter samples a 2x2 texel neighbourhood no matter how far it
+        /// is minifying, so at 3x it reads two texels in every three and drops the rest — that is
+        /// undersampling, and it aliases and shimmers rather than smoothing. The averaging this
+        /// depends on is the mip chain, which is why <c>CreateTexture</c> builds one and filters
+        /// <c>LinearMipmapLinear</c>. <see cref="GlyphAtlasPadding"/> is the other half: the mip
+        /// levels this actually reaches must not blend one glyph into its neighbour.</para>
+        /// </summary>
+        public const int AtlasSupersample = 2;
+
+        /// <summary>
+        /// Transparent gutter between atlas cells, in cell units — the atlas multiplies it by
+        /// <see cref="AtlasSupersample"/> like everything else it rasters.
+        ///
+        /// <para>It was 2 texels, which is the right answer for a bilinear sample off the base
+        /// level and the wrong one once there is a mip chain: each level halves the gutter, so a
+        /// 2-texel gutter is gone by level 2 and coarse levels start averaging a neighbouring
+        /// glyph into this one's edge. 4 cell units is 8 texels at the shipped supersample, which
+        /// still leaves 2 clear texels at level 2 — past the level a 100x100 grid on a 4K panel
+        /// asks for, and past the level a 1200x900 window asks for either.</para>
+        /// </summary>
+        public const int GlyphAtlasPadding = 4;
         
         // Popup terminal dimensions
         public const int PopupWidth = 40;
@@ -773,6 +898,110 @@ public static class Config
 
     #endregion
 
+    #region World Regions
+
+    /// <summary>
+    /// How the generated world is divided into regions. See
+    /// <c>src/glyph/microworld/WorldRegions.cs</c> for what each step does.
+    ///
+    /// <para>The numbers are all calibrated against the sphere the game actually builds: subdivision
+    /// 6 at radius 45, which is ~41,000 vertices about 0.8 world units apart, roughly half of them
+    /// land. Changing <see cref="GlyphSphere.SphereSubdivisions"/> or
+    /// <see cref="GlyphSphere.SphereRadius"/> changes what all of these mean.</para>
+    /// </summary>
+    public static class WorldRegions
+    {
+        /// <summary>
+        /// Diffusion passes applied to the settlement noise before its peaks are read as region
+        /// centres. Each pass spreads a value by one vertex, so the smoothing radius grows as the
+        /// square root: 90 passes is about seven world units, which is the scale a region wants and
+        /// well above the three-unit speckle the raw layer is sampled at.
+        /// </summary>
+        public const int SmoothingPasses = 90;
+
+        /// <summary>
+        /// How much of a seed's neighbourhood must be settleable land for it to be a region's heart,
+        /// as the fraction the smoothing kernel sees — so 0.55 means the majority of what lies within
+        /// about ten world units is habitable ground rather than sea or mountain.
+        ///
+        /// <para>This is not the same rule as "the seed is on settleable land", and it is not
+        /// redundant with it. The smoothed field is a weighted mean over settleable land divided by
+        /// how much of it was in reach, and dividing by a small number is a noisy estimate: on a
+        /// spit or a headland the mean is taken over a handful of cells and swings much wider than
+        /// it does inland, so the largest values in a world land on its beaches. Two thirds of the
+        /// region seeds of a test world sat on a coast tile, against coast being a sixth of its
+        /// settleable land. A region's heart belongs in the middle of its country.</para>
+        ///
+        /// <para>A landmass with nothing clearing this — an atoll, a narrow isle — falls back to its
+        /// most habitable settleable vertex, and then to any land at all. Every landmass is a region
+        /// regardless.</para>
+        /// </summary>
+        public const float MinSeedCoverage = 0.55f;
+
+        /// <summary>
+        /// Minimum distance, in world units, between two region seeds on the same landmass. At 17 a
+        /// region covers ~250 square units, which puts a score of them around the equator - large
+        /// enough that a region is a place a history could be told about, small enough that a
+        /// continent is divided into a good many. Seeds on different landmasses never crowd each
+        /// other.
+        /// </summary>
+        public const float MinSeedSeparation = 17.0f;
+
+        /// <summary>
+        /// A region above this many cells is split by adding a seed at its far end. This is the
+        /// floor under a landmass whose settlement field is too smooth to have offered enough peaks
+        /// of its own.
+        /// </summary>
+        public const int MaxRegionCells = 700;
+
+        /// <summary>
+        /// A region below this many cells is folded into the neighbour it shares the most border
+        /// with - unless it is an isle, which has no land neighbour to fold into and stays.
+        /// </summary>
+        public const int MinRegionCells = 40;
+
+        /// <summary>
+        /// Hard ceiling on region count, so a pathological world cannot run the splitter away. Well
+        /// clear of what a world actually produces (fifty-odd): this is a guard, not a target, and a
+        /// world that reaches it has something wrong with it rather than a lot of regions.
+        /// </summary>
+        public const int MaxRegions = 200;
+
+        /// <summary>How many times the splitter may add seeds and regrow. Each pass is one Dijkstra.</summary>
+        public const int MaxSplitPasses = 12;
+
+        /// <summary>How many times the absorber may sweep. Each sweep can only shrink the region count.</summary>
+        public const int MaxAbsorbPasses = 4;
+
+        /// <summary>
+        /// How many times the colour assignment may improve its worst border by swapping two
+        /// regions' colours. Each pass is one swap; the search stops early the moment no swap helps,
+        /// so this is a ceiling and not a cost.
+        ///
+        /// <para>It exists because the greedy assignment alone leaves the worst border on the world
+        /// at about a third of the scale — roughly red against orange — and the regions coloured
+        /// last are the ones stuck with it. Oversampling the palette instead was tried and is worse
+        /// than it looks: with more colours than regions the greedy takes the most extreme it can
+        /// find every time and converges on a handful of hues, so a world came out holding "red at
+        /// 2 degrees", "red at 4 degrees" and "red at 5 degrees" — all unique, none of them telling
+        /// two regions apart. The palette is therefore exactly one colour per region, spread over
+        /// the whole wheel, and the worst border is fixed by rearranging rather than by widening.</para>
+        /// </summary>
+        public const int MaxColourSwapPasses = 400;
+
+        /// <summary>
+        /// How many field cells a landmass must carry before the protagonist may wake on it.
+        ///
+        /// <para>Farms and villages are placed only on fields, and travel on foot cannot cross water,
+        /// so this is the line between a country and a rock: below it, a run has nothing within reach
+        /// however rich the rest of the world is. Read by <c>InitializeProtagonist</c> and by
+        /// <c>--world-variant-audit</c>, which measures how much of a variant's ground it excludes.</para>
+        /// </summary>
+        public const int FieldsForAHome = 20;
+    }
+
+    #endregion
+
     #region PostProcess Configuration
 
     /// <summary>
@@ -830,6 +1059,121 @@ public static class Config
         public const float SkyStarMinSize = 1.2f;
         public const float SkyStarMaxSize = 6.0f;
         public const float StarDensity = 0.25f;           // 25% of vertices become stars
+
+        /// <summary>
+        /// The seed the sky is drawn from — which vertices become bodies, and which of those are
+        /// moons. Deliberately a constant and NOT <see cref="GameRng"/>: the sky is the same sky in
+        /// every run on every machine, because a moon in it names a world. Seeding it from the master
+        /// seed would make the moon a player picked stop existing the moment they picked it.
+        /// </summary>
+        public const int SkySeed = 9999;
+
+        /// <summary>The last (rarest) character in <see cref="SkyChars"/> — the moons, and the only
+        /// bodies the world-selection screen lets a player click.</summary>
+        public const char MoonChar = 'O';
+
+        /// <summary>Screen-space radius, in pixels, within which a click counts as hitting a moon.</summary>
+        public const float MoonPickPixelRadius = 26f;
+
+        /// <summary>Multiplier applied to a moon's quad size while it is hovered on the selection screen.</summary>
+        public const float MoonHighlightScale = 1.5f;
+
+        /// <summary>Colour a hovered moon is repainted in — the same bright yellow every hovered
+        /// control in the game uses.</summary>
+        public static readonly Vector4 MoonHighlightColor = new(1.0f, 1.0f, 0.4f, 1.0f);
+
+        /// <summary>
+        /// Multiplier and colour for the moon that has been <b>chosen</b>, as distinct from the one
+        /// merely under the cursor. The two states co-exist — a choice stands while the cursor goes on
+        /// wandering the sky — so they cannot share a look, or the player would have no way to tell
+        /// what CONFIRM is about to take from what they happen to be pointing at. Chosen is bigger and
+        /// white; hovered is smaller and yellow.
+        /// </summary>
+        public const float MoonSelectedScale = 2.3f;
+
+        public static readonly Vector4 MoonSelectedColor = new(1.0f, 1.0f, 1.0f, 1.0f);
+    }
+
+    #endregion
+
+    #region World Selection
+
+    /// <summary>
+    /// The screen where a new run picks its world by clicking a moon out of the sky.
+    /// </summary>
+    public static class WorldSelectionUI
+    {
+        public const int TitleRow  = 6;
+        public const int HintRow   = 8;
+
+        /// <summary>The information/confirmation box at the bottom of the screen.</summary>
+        public const int BoxWidth        = 46;
+        // Twelve rows: border, title, gap, chosen, world, empire, realms, faiths, factions, gap,
+        // buttons, border. The gap above the buttons is load-bearing — text hard against a button
+        // reads as part of it.
+        public const int BoxHeight       = 12;
+        public const int BoxBottomMargin = 8;
+
+        public static readonly Vector4 TitleColor      = Colors.BrightYellow;
+        public static readonly Vector4 HintColor       = Colors.MediumGray50;
+        public static readonly Vector4 BorderColor     = Colors.DarkYellowGrey;
+        public static readonly Vector4 BackgroundColor = Colors.BlackTransparent;
+        public static readonly Vector4 LabelColor      = Colors.MediumGray50;
+        public static readonly Vector4 ValueColor      = Colors.White;
+        public static readonly Vector4 NameColor       = Colors.BrightYellow;
+
+        // CONFIRM — the primary chip, yellow like TRAVEL.
+        public static readonly Vector4 ConfirmTextColor            = Colors.Black;
+        public static readonly Vector4 ConfirmBackgroundColor      = Colors.BrightYellow;
+        public static readonly Vector4 ConfirmHoverTextColor       = Colors.Black;
+        public static readonly Vector4 ConfirmHoverBackgroundColor = Colors.White;
+
+        // CANCEL — the muted chip, grey like CLEAR.
+        public static readonly Vector4 CancelTextColor             = Colors.LightGray85;
+        public static readonly Vector4 CancelBackgroundColor       = Colors.DarkGray35;
+        public static readonly Vector4 CancelHoverTextColor        = Colors.Black;
+        public static readonly Vector4 CancelHoverBackgroundColor  = Colors.LightGray85;
+    }
+
+    #endregion
+
+    #region Camera Pad
+
+    /// <summary>
+    /// The four on-screen arrows that turn the camera, so the sky and the world can both be looked
+    /// around with the mouse alone. The arrow keys still work and do exactly the same thing; this is
+    /// the mouse's copy of them, not a second control.
+    /// </summary>
+    public static class CameraPad
+    {
+        /// <summary>Cells between the rose's right edge and the right edge of the grid.</summary>
+        public const int RightMargin = 5;
+        /// <summary>
+        /// Cells between the rose's top edge and the top of the grid. Two, which puts the rose clear
+        /// above the world-selection screen's hint line — that line is centred and long enough to
+        /// reach the rose's column, and the two were printing through each other.
+        /// </summary>
+        public const int TopMargin   = 2;
+
+        public const int Width  = 13;
+        public const int Height = 5;
+
+        /// <summary>Degrees per second while an arrow is held down — the keyboard's rotation speed.</summary>
+        public const float RotationSpeed = 60f;
+
+        /// <summary>
+        /// Degrees turned by a single click. A press that is released before the next frame would
+        /// otherwise move the camera by an invisible fraction of a degree and read as a dead button.
+        /// </summary>
+        public const float ClickStep = 6f;
+
+        // No frame and no fill: the rose is drawn as ink on the sky, the way a compass is drawn in
+        // the corner of a map. Only the inked cells take a click — everything around them stays
+        // transparent and falls through to whatever is behind.
+        public static readonly Vector4 ArrowColor      = Colors.LightGray75;
+        public static readonly Vector4 RayColor        = Colors.DarkYellowGrey;
+        public static readonly Vector4 LabelColor      = Colors.MediumGray60;
+        public static readonly Vector4 ArrowHoverColor = Colors.BrightYellow;
     }
     
     #endregion
@@ -1121,7 +1465,9 @@ public static class Config
     {
         // Layout
         public const int BoxWidth = 40;
-        public const int BoxHeight = 12;
+        // Fourteen rows: border, title, gap, destination, region, realm, travel time, vital heat,
+        // encounter risk, starvation risk, warning-or-gap, buttons, gap, border.
+        public const int BoxHeight = 14;
         /// <summary>Cells of empty space between the box bottom edge and the screen bottom.</summary>
         public const int BoxBottomMargin = 8;
 
@@ -1502,11 +1848,12 @@ public static class Config
     /// <summary>
     /// Per-glyph sizing for characters that need to read larger than ordinary text.
     ///
-    /// <para><b>There are two knobs and they do different things.</b> <see cref="Factors"/> is the
-    /// <i>raster</i> size — the point size the glyph is drawn at inside its atlas cell.
+    /// <para><b>There are three knobs and they do different things.</b> <see cref="Factors"/> is
+    /// the <i>raster</i> size — the point size the glyph is drawn at inside its atlas cell.
     /// <see cref="QuadScales"/> is the <i>quad</i> size — how much of the screen that cell is
-    /// stretched over, on top of <see cref="Terminal.GlyphScale"/>. Glyphs in neither dictionary
-    /// are 1.0 in both.</para>
+    /// stretched over, on top of <see cref="Terminal.GlyphScale"/>. <see cref="StrokeScales"/> is
+    /// the <i>weight</i> — a multiplier on the emboldening pen this glyph is stroked with.
+    /// Glyphs in none of the three dictionaries are 1.0 in all of them.</para>
     ///
     /// <para><b>The raster factor has a hard ceiling and it is not obvious.</b> The atlas cell is
     /// 35px and the glyph is centred in it; ink drawn past the cell edge is simply not sampled —
@@ -1516,7 +1863,10 @@ public static class Config
     /// each die was drawn 3px taller than its cell and lost the bottom rule of its box, which
     /// reads on screen as a die with a broken outline. They fit at 1.80, the side views at 1.60,
     /// at every weight on <see cref="Terminal.GlyphWeightSteps"/> — the emboldening pen widens
-    /// the ink, so the ceiling is lowest at HEAVY and that is the one to check against.</para>
+    /// the ink, so the ceiling is lowest at HEAVY and that is the one to check against. (The dice
+    /// now take a <see cref="StrokeScales"/> of 0.0 — no pen at all — so for them the ceiling no
+    /// longer moves with the weight. The raster factors were left where they are, since 1.80 was
+    /// chosen against the cell, not against the pen.)</para>
     ///
     /// <para>Past that ceiling the only way to make a glyph bigger is to give it a bigger quad,
     /// which is what <see cref="QuadScales"/> is for. It costs nothing but it does overflow the
@@ -1532,7 +1882,8 @@ public static class Config
             { '⎆', 1.7f },
 
             // Dice faces — the largest raster that still fits the atlas cell at every glyph
-            // weight. Their on-screen size comes from QuadScales, not from here.
+            // weight. Their on-screen size comes from QuadScales and their weight from
+            // StrokeScales; this is only how much of the atlas cell the ink covers.
             { '⚀', 1.8f },
             { '⚁', 1.8f },
             { '⚂', 1.8f },
@@ -1587,6 +1938,54 @@ public static class Config
         };
 
         /// <summary>
+        /// Per-glyph multiplier on the emboldening pen — the stroke laid down alongside the fill
+        /// when the glyph is rastered, whose width is <c>Terminal.GlyphStrokeFactor</c> of the font
+        /// size. Below 1.0 the glyph is drawn thinner than its neighbours at the same weight; the
+        /// floor is 0.0, which is the bare outline of the face with no emboldening at all.
+        ///
+        /// <para><b>Why an enlarged glyph needs this.</b> The pen scales off the font actually
+        /// used, so a glyph carrying a <see cref="Factors"/> of 1.80 is stroked with a pen 1.80x
+        /// wider than an ordinary letter's — and its stems were already 1.80x wider before the pen
+        /// touched them. The emboldening exists to keep a hairline stem alive through minification
+        /// to a 9px cell; a stem that starts at nearly twice the size does not need it, and gets
+        /// bold instead. The knob is the correction.</para>
+        ///
+        /// <para>The dice are where it shows. At NORMAL the six's pips fused into two solid bars
+        /// and the bars met the frame of the die; at HEAVY the four's pips closed on the corners.
+        /// The roll's side views take the same scale as its faces — a die must not change weight as
+        /// it tumbles, the same reason their raster factors are matched at 1.60 against 1.80.</para>
+        ///
+        /// <para><b>For the dice the pen is a cliff, not a dial, and 0.0 is the only useful
+        /// setting.</b> Measured down the six's pip stack in the 35px atlas cell, every scale from
+        /// 0.15 to 0.40 produces the identical raster — pips 5px tall separated by 2px — because
+        /// the pen at those widths is sub-pixel (0.19px to 0.50px) and its partial-coverage ring
+        /// still lands a whole pixel of ink on each side of every pip. Only at exactly 0.0 do the
+        /// pips fall to 3px and the gap between them double to 4px. So a value chosen to be
+        /// "slightly thinner" buys nothing at all; the choice is emboldened or not.</para>
+        ///
+        /// <para>The consequence is that the dice no longer answer the weight row in Settings.
+        /// That is the honest trade and not a regression: across the whole ladder the pen was only
+        /// ever making them fatter, never legibly bolder, because their stems start at 1.80x. The
+        /// die's own frame is 2px of real outline at this raster and survives minification without
+        /// help. If the pips ever need to be genuinely further apart than this, the lever is the
+        /// atlas cell — there are only 3px of pip to work with — and not this knob.</para>
+        /// </summary>
+        public static readonly Dictionary<char, float> StrokeScales = new()
+        {
+            { '⚀', 0.0f },
+            { '⚁', 0.0f },
+            { '⚂', 0.0f },
+            { '⚃', 0.0f },
+            { '⚄', 0.0f },
+            { '⚅', 0.0f },
+
+            { '⬖', 0.0f },
+            { '⬗', 0.0f },
+            { '⬘', 0.0f },
+            { '⬙', 0.0f },
+        };
+
+        /// <summary>
         /// Gets the raster size factor for a glyph. Returns 1.0 for normal-sized glyphs.
         /// </summary>
         public static float GetFactor(char c)
@@ -1600,6 +1999,15 @@ public static class Config
         public static float GetQuadScale(char c)
         {
             return QuadScales.TryGetValue(c, out float scale) ? scale : 1.0f;
+        }
+
+        /// <summary>
+        /// Gets the emboldening-pen multiplier for a glyph. Returns 1.0 for glyphs stroked at the
+        /// weight the player chose.
+        /// </summary>
+        public static float GetStrokeScale(char c)
+        {
+            return StrokeScales.TryGetValue(c, out float scale) ? scale : 1.0f;
         }
     }
     

@@ -1413,18 +1413,13 @@ public class FightModeAdapter
         _state.PendingTarget = target;
         _state.LearningDiceCount = Math.Max(1, attacker.FightLearningStat);
         // Difficulty comes from position in the specific medium the player accessed the skill through.
-        string? organId     = FightModeUI.OrganIdFromKey(_pendingLearnMediumKey);
-        string? bodyPartId  = FightModeUI.BodyPartIdFromKey(_pendingLearnMediumKey);
-        int position = organId    != null ? skill.GetMediumPositionForOrganId(organId)
-                     : bodyPartId != null ? skill.GetMediumPositionForBodyPartId(bodyPartId)
-                     : skill.MediumPosition;
-        _state.LearningDifficulty = Math.Max(0, position - 1);
+        _state.LearningDifficulty = FightResolver.LearningDifficulty(skill, _pendingLearnMediumKey);
         _state.DiceNumberOfDice = _state.LearningDiceCount;
         _state.DiceDifficulty = _state.LearningDifficulty;
         _state.Phase = TurnPhase.AnimatingDice;
         _state.AddLog(
             $"{attacker.DisplayName} attempts to learn '{skill.RequiredModusMentisId}' " +
-            $"(cerebellum {_state.LearningDiceCount}d, need {_state.LearningDifficulty} sixes).",
+            $"(cerebellum {_state.LearningDiceCount}d, need {_state.LearningDifficulty + 1} six(es)).",
             LogEntryType.Learning);
         BeginDiceRoll();
         _highlightCells = null;
@@ -1493,10 +1488,15 @@ public class FightModeAdapter
         }
     }
 
-    private void FinishLearningRoll(Fighter active)
+    /// <param name="silent">The roll was made without the dice box (an AI's check), so there is no
+    /// box to close and no closing sound to play.</param>
+    private void FinishLearningRoll(Fighter active, bool silent = false)
     {
-        _dice.Hide();
-        _sfx?.Invoke(GameEventType.NeutralOutcome); // box closes
+        if (!silent)
+        {
+            _dice.Hide();
+            _sfx?.Invoke(GameEventType.NeutralOutcome); // box closes
+        }
         var skill = _state.PendingLearnSkill!;
         var diceValues = _state.DiceFinalValues ?? Array.Empty<int>();
         int difficulty = _state.LearningDifficulty;
@@ -1523,6 +1523,19 @@ public class FightModeAdapter
                 $"LEARNED {skill.DisplayName}! ({result.SixesCount}/{result.DiceValues.Length} sixes vs diff {result.Difficulty})",
                 LogEntryType.Learning);
             _state.PendingLearnSkill = null;
+
+            // A fighter the AI controls decides again rather than being walked into the skill: the
+            // path below can open the body-part picker, which is the player's to answer, and the
+            // planner already weighs the skill properly now that it is unlocked.
+            if (!active.IsPlayerControlled)
+            {
+                _pendingLearnMediumKey = null;
+                _state.PendingTarget = null;
+                _state.Phase = TurnPhase.SelectingAction;
+                RefreshSkillList();
+                _aiDelayFrames = 5;
+                return;
+            }
 
             // Now that the MM is learned, automatically perform the action the player wanted.
             // For attack skills this fires the attack dice roll; DefensePosture applies immediately.
@@ -1866,6 +1879,18 @@ public class FightModeAdapter
         if (_state.Phase == TurnPhase.AnimatingMovement)
             return;
 
+        // An enemy trying a skill it does not know rolls silently, as its knockdown recovery does:
+        // the dice box is the player's own instrument, and opening it — with a Continue to press — for
+        // a check the player has no part in stopped the fight for nothing. The log says what happened.
+        if (_state.Phase == TurnPhase.AnimatingDice && _state.PendingLearnSkill != null && _state.PendingSkill == null)
+        {
+            var values = new int[Math.Max(1, _state.DiceNumberOfDice)];
+            for (int i = 0; i < values.Length; i++) values[i] = _rng.Next(1, 7);
+            _state.DiceFinalValues = values;
+            FinishLearningRoll(ai, silent: true);
+            return;
+        }
+
         if (_state.Phase == TurnPhase.AnimatingDice)
         {
             BeginDiceRoll();
@@ -2065,6 +2090,32 @@ public class FightModeAdapter
         OnCellClicked(region.X, region.Y);
         return null;
     }
+
+    // ── --record: where a player would click ─────────────────────────────────
+
+    /// <summary>The fight's dice box, while a settled roll waits for its CONTINUE.</summary>
+    public Cathedral.Game.DiceRollComponent? CliDice => _state.Phase == TurnPhase.WaitingForDiceComplete ? _dice : null;
+
+    /// <summary>The settled dice box's CONTINUE, when it is up.</summary>
+    public (int X, int Y, int Width)? CliDiceContinueSpan()
+    {
+        var region = _dice.ContinueButtonRegion;
+        return _state.Phase == TurnPhase.WaitingForDiceComplete && region.Width > 0 ? region : null;
+    }
+
+    /// <summary>The map cell of the fighter <see cref="CliClickFighter"/> would click.</summary>
+    public (int X, int Y)? CliFighterCell(string name)
+    {
+        var target = _state.Fighters.FirstOrDefault(
+            f => f.DisplayName.StartsWith(name, StringComparison.OrdinalIgnoreCase));
+        return target == null ? null : (FightModeUI.CenterX + target.X, FightModeUI.CenterY + target.Y);
+    }
+
+    /// <summary>The END TURN row of the action menu.</summary>
+    public (int X, int Y) CliEndTurnCell() => (3, FightModeUI.EndTurnButtonRow);
+
+    /// <summary>The action menu's bounds, where a skill is looked for by its name.</summary>
+    public (int Right, int Bottom) CliActionMenuBounds() => (FightModeUI.ActionMenuRight, 20);
 
     /// <summary>End the active fighter's turn — the END TURN button.</summary>
     public string? CliEndTurn()

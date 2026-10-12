@@ -13,7 +13,7 @@
 #
 # The hand-off itself is companion_handoff.cli's subject; this repeats it as far as the companion's
 # first act, which is what leaves the footer offering to open another segment rather than to leave
-# the place — killing the cat before it has acted strands the session on a LEAVE, and the return of
+# the place — killing the hyena before it has acted strands the session on a LEAVE, and the return of
 # the narration is then unobservable. See companion_death_wounds.cli for the notice and the body,
 # which are the same here and are not re-asserted.
 #
@@ -37,8 +37,8 @@ choose 0
 choose 0
 advance 12 180
 
-# The cat has the narration.
-expect [NIGHTHUNTER]
+# The hyena has the narration.
+expect [BRINDLETAIL]
 
 # It takes its turn at the scene — its own observation, deliberation, act and dice.
 strategy succeed
@@ -53,21 +53,21 @@ click continue
 advance 12 180
 
 # And is killed by what the narration deals out, being the body that was acting.
-wound Nighthunter
+wound Brindletail
 wait 60
 
 # The notice comes up with nothing clicked, over the narration.
-expect Nighthunter
+expect Brindletail
 expect died of their wounds
 click companion-death
 wait 60
 
 # Gone from the party...
 inspect party
-expect-no-state party Nighthunter
+expect-no-state party Brindletail
 # ...and a body in the room they were narrating in.
 inspect pois
-expect-state pois Nighthunter's Remains
+expect-state pois Brindletail's Remains
 
 # The session survives them: the next segment opens with the protagonist narrating again, rather
 # than on a member who is no longer in the party.

@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Narrative;
-using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Npc;
 
 using Cathedral.Game.Narrative.ModiMentis;
@@ -31,12 +30,6 @@ public abstract class TinyCreatureVerb : Verb
 
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
         => Tiny(scene, pov, target) != null;
-
-    // Not recordable. Which insects are where is rolled fresh on every visit, so a routine step
-    // pointing at "the beetle" would resolve to nothing the next time through.
-
-    public override RoutinePhaseKind RoutineTriggeredPhase(Scene scene, PoV pov, Element target)
-        => RoutinePhaseKind.Narration;
 }
 
 /// <summary>

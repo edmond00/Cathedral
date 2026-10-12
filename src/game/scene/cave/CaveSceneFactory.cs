@@ -33,6 +33,7 @@ public class CaveSceneFactory : SceneFactory
     private CaveType _type;
     private bool _hasMiner;
     private Area? _entrance, _mainShaft, _oreChamber, _coalSeam;
+    private Area? _oreStore;
     private readonly List<Area> _allAreas = new();
 
     protected override void BuildSections(Random rng, int locationId, Scene scene)
@@ -130,6 +131,17 @@ public class CaveSceneFactory : SceneFactory
             _mainShaft.PointsOfInterest.Add(path);
             b.PointsOfInterest.Add(path);
             path.Register(scene);
+        }
+
+        // The ore store off the cave mouth, where the miner keeps what they dig and sells it. Not in
+        // _allAreas, so nothing wild is placed in it.
+        if (_hasMiner)
+        {
+            _oreStore = CampSubfactory.BuildOreStore();
+            mouth.Areas.Add(_oreStore);
+            RegisterAll(scene, _oreStore);
+            OutdoorLayout.Link(scene, _entrance!, _oreStore, "Passage");
+            scene.Stores.Add(_oreStore);
         }
 
         Console.WriteLine($"CaveSceneFactory: {_type} cave, {_allAreas.Count} areas, miner={_hasMiner}");
@@ -308,6 +320,7 @@ public class CaveSceneFactory : SceneFactory
             sceneNpc.Register(scene);
             scene.Npcs.Add(sceneNpc);
             scene.NpcSchedules[sceneNpc.Id] = BuildMinerSchedule();
+            TradeAt(entity, _oreStore!);
         }
 
         // Cave Spider (rare)
@@ -334,7 +347,7 @@ public class CaveSceneFactory : SceneFactory
             [TimePeriod.Morning]   = ore,
             [TimePeriod.Noon]      = entrance,
             [TimePeriod.Afternoon] = shaft,
-            [TimePeriod.Evening]   = entrance,
+            [TimePeriod.Evening]   = _oreStore ?? entrance,   // sacking the day's ore, and selling it
             [TimePeriod.Night]     = entrance,
         });
     }

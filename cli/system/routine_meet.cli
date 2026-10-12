@@ -1,0 +1,78 @@
+# routine — a Meet routine opens narration on the person, where and when they are
+#
+# Opening a conversation with somebody teaches a Meet routine for their area and the hour. Walking it
+# opens an ordinary narration session there — at that hour, past the walk — whose FIRST observation
+# is of that person: the same opening focus a finished conversation uses (NarrativeController's
+# opening focus), here set by the routine instead.
+#
+# The farmer roams; at noon she is in Test Wood. --npc-affinity keeps the conversation lawful and
+# friendly. See routine_record_replay.cli for the Buy half of the same visit.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --npc-affinity CloseFriend --location-type test --location-id 0 --start-area "Test Yard" --period noon --observe-only "Test Wood"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+strategy succeed
+
+goal move
+advance 12 180
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+# The second phase is clicked into: settle the word-vector load first, or which keyword it
+# highlights depends on a race (see `wait embeddings`).
+wait embeddings 60
+observe farmer
+goal propose_to_buy
+click button
+wait 60
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+observe none
+click button
+wait mode WorldView 90
+expect-state routines category=meet location=
+
+travel neighbour
+travel-go
+wait mode LocationInteraction 120
+advance 12 180
+click button
+wait mode WorldView 90
+
+travel back
+routines meet
+wait mode LocationInteraction 150
+advance 12 180
+
+# Narration, in her area and at her hour, without the walk from the yard.
+expect-state where Test Wood
+expect-state where period=Noon
+# And opened on her: the phase's first observation is of the farmer. Asserted by her persistent id's
+# archetype prefix — the rest of it is her generated name.
+inspect opening
+expect-state opening focus=npc
+expect-state opening farmer_
+quit

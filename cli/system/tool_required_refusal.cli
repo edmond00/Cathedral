@@ -1,0 +1,76 @@
+# A tool-gated verb refused bare-handed: the refusal names the tool, and the action stays the way on.
+#
+# Reported from a real run: cutting the heart out of a corpse with no knife was refused, the persona
+# re-voiced "I cannot cut a heart: I would need a knife for that" as "I hold still, waiting. It
+# breaks." — the knife gone — and the action was then drawn greyed out yet still clickable, so a
+# second Execute was the same refusal charged again. Three things are asserted here:
+#
+#   * the refusal sentence is the longer, explicit one (NeutralNarration.ToolRequired): what was
+#     wanted, that bare hands cannot do it, and which tool to find. Under --playground the rewrite
+#     is a stand-in, so this asserts the neutral text the persona is handed — the half a test can see;
+#   * clicking the action again offers "Use Tool" only — Execute is disabled;
+#   * "Use Tool" with the knife then carries the cut through.
+#
+# The corpse is made the way cli/verb/cut/success.cli makes it: slay the chicken, knife combined.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-item knife --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon --observe-only "chicken"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# ── Make the corpse ──────────────────────────────────────────────────────────
+strategy succeed
+goal slay
+advance 12 180
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 1
+choose 0
+advance 12 180
+click action 1
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect Slain:
+
+# ── Cut it bare-handed ───────────────────────────────────────────────────────
+click button
+advance 12 180
+goal cut
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+
+click action 0
+choose 0
+advance 12 180
+# Split in two because the line wraps between "find" and "a knife" — `expect` matches one row.
+expect with my bare hands. I would need to find
+expect a knife for that
+
+# ── The action is still the way on, and only through a tool ──────────────────
+click action 0
+inspect popup
+expect-state popup Execute(disabled)
+expect-no-state popup Use Tool(disabled)
+choose 1
+choose 0
+advance 12 180
+click action 1
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect Item received:
+expect-verb cut
+quit

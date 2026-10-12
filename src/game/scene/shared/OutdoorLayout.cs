@@ -90,7 +90,7 @@ public static class OutdoorLayout
     /// the spur shape can roll the same cross-link twice, and a second path between two areas would
     /// be a duplicate display name in both of them.
     /// </summary>
-    private static void Link(Scene scene, Area a, Area b, string pathType)
+    public static void Link(Scene scene, Area a, Area b, string pathType)
     {
         if (a.Id == b.Id) return;
         if (scene.AreaGraph.TryGetValue(a.Id, out var already) && already.Contains(b.Id)) return;

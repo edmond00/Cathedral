@@ -1,0 +1,7 @@
+zone_encephalon,0
+zone_muzzle,1
+zone_trunk,2
+zone_left_forelimbs,3
+zone_right_forelimbs,4
+zone_left_hindlimbs,5
+zone_right_hindlimbs,6

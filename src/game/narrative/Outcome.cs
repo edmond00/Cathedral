@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Cathedral.Game.Dialogue.Affinity;
-using Cathedral.Game.Narrative.Routines;
 
 namespace Cathedral.Game.Narrative;
 
@@ -67,22 +66,6 @@ public abstract class Outcome : INarratable
 
     /// <summary>False for internal bookkeeping outcomes that should not appear as UI chips.</summary>
     public virtual bool ShowInUI => true;
-
-    /// <summary>
-    /// What this effect does to a routine being recorded — see <see cref="RoutineChainEffect"/>.
-    ///
-    /// <para><b>Declare this on any new report that moves the point of view — in space or in time —
-    /// or hands off to another phase.</b> The default (<see cref="RoutineChainEffect.None"/>) says
-    /// "a routine chain around this is still valid", which is right for ordinary state changes and
-    /// wrong for those. The value is a flag set, so a report that does two of these things declares
-    /// both (see <c>DoorUnlockOutcome</c>, which moves you and leaves a door unlocked). A forgotten
-    /// <see cref="RoutineChainEffect.Movement"/> or <see cref="RoutineChainEffect.TimeShift"/> is
-    /// caught at runtime — the narration controller compares the area and the period before and
-    /// after applying reports and logs an error when either moved with nothing declaring it — but
-    /// the routine recorded in that session is already wrong, so declare it here rather than relying
-    /// on the warning.</para>
-    /// </summary>
-    public virtual RoutineChainEffect RoutineChainEffect => RoutineChainEffect.None;
 
     protected Outcome(string text, OutcomeSeverity severity, string verbatim)
     {

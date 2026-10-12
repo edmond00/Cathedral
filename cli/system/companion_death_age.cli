@@ -7,10 +7,10 @@
 # age reached, and the body is now left as well, which it never used to be.
 #
 # The clock is pushed from inside the location rather than with --advance-days, for two reasons. The
-# body needs an area to lie in, and there is none on the world map. And a cat outlives a person: at
-# this seed Nighthunter's span runs past 48,000 days while a protagonist's heart tops out at 43,200 —
+# body needs an area to lie in, and there is none on the world map. And a hyena outlives a person: at
+# this seed Brindletail's span runs past 48,000 days while a protagonist's heart tops out at 43,200 —
 # so on the world map the protagonist's own old-age check (which runs first, and ends the run) would
-# always fire before the cat's. Inside a session that check does not run, which is what leaves the
+# always fire before the hyena's. Inside a session that check does not run, which is what leaves the
 # companion's death reachable on its own.
 #
 # FLAGS: --playground --skip-childhood --fill-party --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Hall" --period dawn
@@ -24,15 +24,15 @@ travel here
 wait mode LocationInteraction 60
 
 inspect party
-expect-state party Nighthunter
+expect-state party Brindletail
 
-# Well past the cat's span. `clock` is the only way to move the world clock from inside a visit —
+# Well past the hyena's span. `clock` is the only way to move the world clock from inside a visit —
 # it otherwise advances on travel arrival and work stints alone.
 clock 45000
 wait 30
 
 # The sweep runs every tick outside a fight, so the notice comes up without anything being clicked.
-expect Nighthunter
+expect Brindletail
 expect died at
 
 click companion-death
@@ -40,8 +40,8 @@ wait 60
 advance 12 180
 
 inspect party
-expect-no-state party Nighthunter
+expect-no-state party Brindletail
 inspect pois
-expect-state pois Nighthunter's Remains
+expect-state pois Brindletail's Remains
 
 quit

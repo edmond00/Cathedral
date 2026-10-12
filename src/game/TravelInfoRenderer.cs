@@ -96,7 +96,8 @@ namespace Cathedral.Game
         /// disabled until the player lightens the load.
         /// </summary>
         public void Draw(int waypointCount, int maxWaypoints, TravelEstimate? estimate,
-            string? destinationName, bool routinesAvailable = false, string? overloadWarning = null)
+            string? destinationName, bool routinesAvailable = false, string? overloadWarning = null,
+            string? destinationRegion = null, string? destinationRealm = null)
         {
             _routinesEnabled = routinesAvailable;
             _blockReason     = overloadWarning;
@@ -146,24 +147,33 @@ namespace Cathedral.Game
             DrawRow(innerLeft, valueCol, contentY + 2, "Destination",
                 Truncate(destinationName ?? "—", _boxW - 18),
                 Config.TravelUI.ValueAccentColor);
-            DrawRow(innerLeft, valueCol, contentY + 3, "Travel time",
+            // Where the journey ends in the world's history: the region by its own name, and the realm
+            // that holds it today. Realm names run long ("the Principality of ..."), so both are cut to
+            // the column rather than allowed to push into the label.
+            DrawRow(innerLeft, valueCol, contentY + 3, "Region",
+                Truncate(destinationRegion ?? "—", _boxW - 13),
+                Config.TravelUI.ValueColor);
+            DrawRow(innerLeft, valueCol, contentY + 4, "Realm",
+                Truncate(destinationRealm ?? "—", _boxW - 12),
+                Config.TravelUI.ValueColor);
+            DrawRow(innerLeft, valueCol, contentY + 5, "Travel time",
                 FormatDuration(estimate.TotalDurationDays),
                 Config.TravelUI.ValueColor);
-            DrawRow(innerLeft, valueCol, contentY + 4, "Vital heat",
+            DrawRow(innerLeft, valueCol, contentY + 6, "Vital heat",
                 estimate.TotalVitalHeat.ToString("F1"),
                 Config.TravelUI.ValueColor);
-            DrawRow(innerLeft, valueCol, contentY + 5, "Encounter risk",
+            DrawRow(innerLeft, valueCol, contentY + 7, "Encounter risk",
                 Pct(estimate.TotalEncounterChance),
                 ColorForRisk(estimate.TotalEncounterChance));
-            DrawRow(innerLeft, valueCol, contentY + 6, "Starvation risk",
+            DrawRow(innerLeft, valueCol, contentY + 8, "Starvation risk",
                 estimate.StarvationRisk ? "yes" : "no",
                 estimate.StarvationRisk ? Config.TravelUI.DangerColor : Config.TravelUI.ValueColor);
 
-            // Row contentY + 7 is normally padding above the buttons; an overload warning takes it,
+            // Row contentY + 9 is normally padding above the buttons; an overload warning takes it,
             // directly above the two buttons it has just disabled.
-            DrawOverloadWarning(innerLeft, contentY + 7);
+            DrawOverloadWarning(innerLeft, contentY + 9);
 
-            // Empty row (contentY + 9) — visual padding below the buttons.
+            // Empty row (contentY + 11) — visual padding below the buttons.
             DrawButtons(estimate);
             MarkPainted();
         }

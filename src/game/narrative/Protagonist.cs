@@ -90,33 +90,51 @@ public class Protagonist : PartyMember
     public ChildhoodHistory ChildhoodHistory { get; } = new();
 
     /// <summary>
-    /// Learned routines, oldest first. A FIFO queue whose capacity is the anamnesis-derived
-    /// <c>routine_queue_size</c> stat. Locked routines are protected from eviction.
+    /// Learned routines, oldest first, every kind together. Each kind (<see cref="RoutineCategory"/>)
+    /// has its own slots — <see cref="GetRoutineSlots"/> of them — and fills and evicts on its own.
     /// </summary>
     public List<Routine> RecordedRoutines { get; set; } = new();
 
-    /// <summary>Maximum number of routines that can be held, from the anamnesis derived stat.</summary>
-    public int GetRoutineQueueSize()
-        => DerivedStats.First(s => s.Name == "routine_queue_size").GetValue(this);
+    private DerivedStat RoutineSlotsStat => DerivedStats.First(s => s is RoutineSlotsStat);
+
+    /// <summary>How many routines of each kind can be held, from the anamnesis.</summary>
+    public int GetRoutineSlots() => RoutineSlotsStat.GetValue(this);
+
+    /// <summary>The most this body could ever hold of one kind — the anamnesis at its full score.</summary>
+    public int GetRoutineSlotsAtBest() => RoutineSlotsStat.GetValueAtMaxScore(this);
+
+    /// <summary>The routines of one kind, oldest first.</summary>
+    public List<Routine> RoutinesOf(RoutineCategory category)
+        => RecordedRoutines.Where(r => r.Category == category).ToList();
 
     /// <summary>
-    /// Records a routine into the FIFO queue. When the queue is full, the oldest UNLOCKED routine is
-    /// evicted to make room; if every routine is locked, the new routine is discarded.
+    /// Learns a routine, unless an identical one is already held (same kind, place, hour and target).
+    /// When its kind is full the oldest UNLOCKED routine of that kind makes room; when every one of
+    /// them is locked, the new routine is not learned. Returns whether it was.
     /// </summary>
-    public void RecordRoutine(Routine routine)
+    public bool RecordRoutine(Routine routine)
     {
-        int size = GetRoutineQueueSize();
-        if (RecordedRoutines.Count < size)
+        // Learned again: keep the one already held (its lock, its place in the eviction order), but
+        // refresh what it shows — so a name or a catalogue written wrong by an older build mends
+        // itself the next time the player passes that way.
+        if (RecordedRoutines.FirstOrDefault(r => r.Signature == routine.Signature) is { } known)
         {
-            RecordedRoutines.Add(routine);
-            return;
+            known.Name = routine.Name;
+            if (known is TradeRoutine knownTrade && routine is TradeRoutine trade)
+                knownTrade.Catalogue = trade.Catalogue;
+            return false;
         }
 
-        int oldestUnlocked = RecordedRoutines.FindIndex(r => !r.Locked);
-        if (oldestUnlocked < 0) return; // queue full and all locked → discard new routine
+        var sameKind = RoutinesOf(routine.Category);
+        if (sameKind.Count >= GetRoutineSlots())
+        {
+            var oldestUnlocked = sameKind.FirstOrDefault(r => !r.Locked);
+            if (oldestUnlocked == null) return false;
+            RecordedRoutines.Remove(oldestUnlocked);
+        }
 
-        RecordedRoutines.RemoveAt(oldestUnlocked);
         RecordedRoutines.Add(routine);
+        return true;
     }
 
     // ── PartyMember abstract ─────────────────────────────────────

@@ -14,4 +14,4 @@
 # Nothing in the working tree can confirm that and dist/ cannot be used to try - see
 # "Hotfixes" in SKILL.md.
 
-c1e5fbe203820557c9f2181734948dacf19663b4 2026-08-15 Volume 1 - Turnips and Radishes
+6f2fc2b8ccf206af8dd1b0941f70963dd1aa6846 2026-08-30 Volume 2 - Of Shame and the Opened Body

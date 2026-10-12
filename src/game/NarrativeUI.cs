@@ -49,18 +49,32 @@ public class NarrativeUI : TerminalPanelUI
     }
     
     /// <summary>
-    /// Render the header: active agent name (left) and noetic-point counter (right).
-    /// Pass <paramref name="showNoeticPoints"/> as false for phases where noetic points are
-    /// not consumed (childhood reminescence, get-up scene).
+    /// Render the header: active agent name (left), whose ground the party stands on (centre) and
+    /// noetic-point counter (right). Pass <paramref name="showNoeticPoints"/> as false for phases where
+    /// noetic points are not consumed (childhood reminescence, get-up scene).
     /// </summary>
+    /// <param name="trespassing">True in a private area, where everything done is a crime and no
+    /// routine is learned; false on open ground; null where the question does not arise (no real
+    /// location), which draws nothing.</param>
     public void RenderHeader(string activeAgentName, int thinkingAttemptsRemaining, int maxNoeticPoints,
-        bool showNoeticPoints = true)
+        bool showNoeticPoints = true, bool? trespassing = null)
     {
         int headerY = _layout.TOP_PADDING;
 
         // Left: agent name in uppercase brackets
         string agentLabel = $"[{activeAgentName.ToUpper()}]";
         _terminal.Text(_layout.CONTENT_START_X, headerY, agentLabel, Config.NarrativeUI.HeaderColor, Config.NarrativeUI.BackgroundColor);
+
+        // Centre: the ground. Shown in both states rather than only as a warning, so its absence is
+        // never mistaken for safety — the one fact that turns every act here into a crime.
+        if (trespassing is { } trespass)
+        {
+            string ground = trespass ? "◆ TRESPASSING ◆" : "open ground";
+            var fg = trespass ? Config.Colors.BrightRed : Config.NarrativeUI.HistoryColor;
+            int groundX = _layout.CONTENT_START_X
+                        + (_layout.CONTENT_END_X - _layout.CONTENT_START_X - ground.Length) / 2;
+            _terminal.Text(groundX, headerY, ground, fg, Config.NarrativeUI.BackgroundColor);
+        }
 
         // Right: noetic-point counter (only when noetic points are meaningful), named. The markers
         // alone were a row of unexplained circles — the one number the whole narration loop is spent
@@ -469,10 +483,13 @@ public class NarrativeUI : TerminalPanelUI
         
         int currentX = startX;
 
-        // Segments arrive in text order, so the Nth highlighted occurrence of a word on this line is
-        // the entry whose recorded occurrence index is N. Matching on the word ALONE would be
-        // ambiguous exactly where it now matters — two sentences about two men, wrapped onto one
-        // line, both offering "man" and each acting on a different person.
+        // Each highlighted occurrence is wired to the entry recorded for the SAME occurrence — two
+        // sentences about two men, wrapped onto one line, both offer "man" and each acts on a different
+        // person, so matching on the word alone would be ambiguous. The occurrence comes from the
+        // segment itself, counted over every match on the line. Counting only the HIGHLIGHTED ones, as
+        // this once did, broke the moment an unhighlighted use of the word came first on the line —
+        // which the area introduction made routine by naming the objects around me: "door" in the list,
+        // then the door observed, and the highlighted one wired to nothing.
         var seenPerKeyword = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var segment in segments)
@@ -483,8 +500,9 @@ public class NarrativeUI : TerminalPanelUI
                 if (thinkingAttemptsRemaining > 0 && !dimContent)
                 {
                     string kw = segment.KeywordValue!;
-                    seenPerKeyword.TryGetValue(kw, out int occurrence);
-                    seenPerKeyword[kw] = occurrence + 1;
+                    seenPerKeyword.TryGetValue(kw, out int highlightedSoFar);
+                    seenPerKeyword[kw] = highlightedSoFar + 1;
+                    int occurrence = segment.Occurrence ?? highlightedSoFar;
 
                     // Track keyword region for click detection, including source block for modusMentis
                     // chain and the anchor this occurrence acts on.

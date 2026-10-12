@@ -522,5 +522,23 @@ public static class NpcAudit
         new WoodcutterArchetype(), new CharcoalBurnerArchetype(),
         new FishermanArchetype(),  new MinerArchetype(),
         new DruidArchetype(),      new HermitArchetype(), new SavageArchetype(),
+        // The settled country
+        new OrchardistArchetype(), new VintnerArchetype(), new PlanterArchetype(),
+        new PickerArchetype(),     new GroomArchetype(),   new DroverArchetype(),
+        new GravediggerArchetype(),
+        // Arms, faith and the great houses
+        new GuardArchetype(),      new CaptainArchetype(), new PriestArchetype(),
+        new MonkArchetype(),       new ScholarArchetype(), new StewardArchetype(),
+        new LordArchetype(),
+        // The keepers a great building trades through
+        new QuartermasterArchetype(), new SacristanArchetype(), new CellarerArchetype(),
+        // Streets and harbours
+        new MerchantArchetype(),   new SailorArchetype(),  new InnkeeperArchetype(),
+        new ClerkArchetype(),
+        // The trades and callings of a dense city
+        new CobblerArchetype(),    new TailorArchetype(),  new ChandlerArchetype(),
+        new ButcherArchetype(),    new TannerArchetype(),  new PotterArchetype(),
+        new ApothecaryArchetype(), new BarberArchetype(),  new PorterArchetype(),
+        new LaundressArchetype(),  new WaterCarrierArchetype(), new BeggarArchetype(),
     };
 }

@@ -81,14 +81,15 @@ public class NarrativeController
     private FightTriggerOutcome? _deferredFightOutcome = null;
     private DialogueTriggerOutcome? _pendingDialogueOutcome = null;
 
-    // Continuity context captured when a dialogue becomes pending and consumed by the next observation
-    // phase: the NPC talked to and the observation modus mentis that originated the dialogue's chain of
-    // thought (null when the dialogue had no such origin). See SetPendingDialogue / GenerateObservationsAsync.
-    private NpcEntity? _postDialogueNpc = null;
-    private ModusMentis? _postDialogueObservationMM = null;
+    // What the next observation phase opens on, when something other than the persona has decided it,
+    // and the observation modus mentis to narrate it with (null: pick one). Consumed by that phase.
+    // Set by a conversation (the person just spoken to), an introduction (the person just presented)
+    // and a Meet routine (the person it is about). An Element rather than a person, so anything with an
+    // observation of its own can be opened on the same way — see TryGenerateFocusObservationAsync.
+    private Element? _openingFocus = null;
+    private ModusMentis? _openingFocusMM = null;
 
-    // Records recordable successful verbs into a learned routine for this narration session.
-    // Non-null only for scene-backed Exploration narration.
+    // Learns routines from this narration session. Non-null only for scene-backed Exploration narration.
     private RoutineRecorder? _recorder = null;
     
     // Random for dice rolls — the run-long shared stream, not a per-controller generator: a new
@@ -220,6 +221,13 @@ public class NarrativeController
     // narrows its choice list by this, so a phase explores the scene instead of circling one object;
     // it is cleared wherever the live text greys into history (see CloseNarrationSegment).
     private readonly ObservationLedger _observationLedger = new();
+
+    // The area and time of day the last area introduction described. An overall observation opens on
+    // an introduction only when either has changed since — every action ends a phase, and repeating
+    // "I find myself inside the barn" after each one would be noise. Area by reference: a new visit
+    // builds new Area objects, so arriving again is a change too.
+    private Cathedral.Game.Scene.Area? _introducedArea;
+    private TimePeriod? _introducedPeriod;
 
     // What the current narration phase has already put an action button on screen for. The thinking
     // side of the same rule the ledger above applies to observations: every goal list narrows by it,
@@ -452,16 +460,19 @@ public class NarrativeController
     /// Start the observation phase (generates observations asynchronously).
     /// This clears all history - use for initial start only.
     /// </summary>
-    public void StartObservationPhase(TimePeriod? forcedPeriod = null)
+    /// <param name="openingFocus">What the first observation is of — a Meet routine's person — or null
+    /// to let the persona choose as usual. Set here rather than after, because the phase is generated
+    /// on a task this method starts.</param>
+    public void StartObservationPhase(TimePeriod? forcedPeriod = null, Element? openingFocus = null)
     {
         _narrationState.Clear();
         _scrollBuffer.Clear();
         _activePartyMember = _protagonist;
         _memberNoeticPoints.Clear();
         _observationLedger.Clear();
-        // New session — drop any stale post-dialogue continuity context.
-        _postDialogueNpc = null;
-        _postDialogueObservationMM = null;
+        // New session — any focus left over from an earlier one is stale.
+        _openingFocus   = openingFocus;
+        _openingFocusMM = null;
 
         // Place NPCs into nodes based on the supplied time period, or a random one when none is given.
         // --period pins it for the whole run: several rules (every entry door shutting at night) only
@@ -470,9 +481,7 @@ public class NarrativeController
         ApplyTimePeriod(period);
         Console.WriteLine($"NarrativeController: Time period is {period}");
 
-        // Begin recording a routine for scene-backed Exploration sessions (other phases opt out).
-        if (_scene != null && _scene.Phase == NarrationPhase.Exploration)
-            _recorder = new RoutineRecorder(_protagonist, _locationId, period);
+        ArmRoutineRecorder();
 
         _narrationState.IsLoadingObservations = true;
         _narrationState.LoadingMessage = ObservationLoadingMessage();
@@ -484,19 +493,17 @@ public class NarrativeController
     }
     
     /// <summary>
-    /// Initializes a scene-backed session enough to open a sub-phase (dialogue / trade / work)
-    /// directly, WITHOUT running an observation pass. Used by the routine-replay bridge, where a
-    /// recorded routine jumps straight into the dialogue (or its baked-in follow-on phase) it ended
-    /// on. Places NPCs for the period so the target is present, and arms a recorder so anything the
-    /// player does after the sub-phase is still recordable — exactly like a normal visit, minus the
+    /// Initializes a scene-backed session enough to open a sub-phase (trade / work) directly, WITHOUT
+    /// running an observation pass. Used by the Buy, Sell and Work routines, which enter straight into
+    /// the menu. Places NPCs for the period so the merchant is present, and arms a recorder so anything
+    /// the player does after the sub-phase is still recordable — exactly like a normal visit, minus the
     /// opening narration.
     ///
-    /// <para><paramref name="startAreaLemma"/> is where the headless replay ended. It is not
-    /// cosmetic: the scene is rebuilt here, so without it the point of view sits on the location's
-    /// default opening area and everything after the sub-phase happens there — a routine that walked
-    /// into a forge to trade put the player back in the village square the moment the trade menu
-    /// closed. Set BEFORE <see cref="ApplyTimePeriod"/>, which places NPCs and re-gates every verb
-    /// against the point of view.</para>
+    /// <para><paramref name="startAreaKey"/> is the routine's area. It is not cosmetic: the scene is
+    /// rebuilt here, so without it the point of view sits on the location's default opening area and
+    /// everything after the sub-phase happens there — a routine into a forge would put the player back
+    /// in the village square the moment the trade menu closed. Set BEFORE <see cref="ApplyTimePeriod"/>,
+    /// which places NPCs and re-gates every verb against the point of view.</para>
     /// </summary>
     public void PrepareForRoutineSubPhase(TimePeriod period, string? startAreaKey = null)
     {
@@ -506,17 +513,66 @@ public class NarrativeController
         _memberNoeticPoints.Clear();
         _observationLedger.Clear();
         _proposalLedger.Clear();
-        _postDialogueNpc = null;
-        _postDialogueObservationMM = null;
+        _openingFocus   = null;
+        _openingFocusMM = null;
 
         MovePointOfViewToArea(startAreaKey);
         ApplyTimePeriod(period);
         Console.WriteLine($"NarrativeController: routine sub-phase prepared at period {period}"
                         + $", area '{_pov?.Where.DisplayName ?? "-"}'");
 
-        if (_scene != null && _scene.Phase == NarrationPhase.Exploration)
-            _recorder = new RoutineRecorder(_protagonist, _locationId, period);
+        ArmRoutineRecorder();
     }
+
+    /// <summary>
+    /// Starts learning routines for this session, from where it opened. Exploration only: childhood
+    /// and get-up have no real location to come back to.
+    /// </summary>
+    private void ArmRoutineRecorder()
+    {
+        if (_scene != null && _scene.Phase == NarrationPhase.Exploration)
+            _recorder = new RoutineRecorder(_protagonist, _locationId, _worldContext?.DisplayName ?? "", _pov?.Where);
+    }
+
+    // ── Routine moments the game controller sees first ─────────────────────────
+    // A conversation, a trade and a hire are all settled outside this class (the dialogue runs in its
+    // own mode, and --auto-dialogue settles it without one), so the controller reports them here; the
+    // point of view they were agreed at is this class's.
+
+    /// <summary>A conversation was opened with <paramref name="npc"/>.</summary>
+    public void RecordConversationRoutine(NpcEntity npc)
+    {
+        if (_recorder != null && _pov != null) _recorder.OnConversation(_pov, npc);
+    }
+
+    /// <summary>A merchant agreed to trade.</summary>
+    public void RecordTradeRoutine(NpcEntity npc, Cathedral.Game.Npc.Trade.TradeMode mode)
+    {
+        if (_recorder != null && _pov != null) _recorder.OnTrade(_pov, npc, mode);
+    }
+
+    /// <summary>A master agreed to take the player on.</summary>
+    public void RecordWorkRoutine(NpcEntity npc, Cathedral.Game.Narrative.Work.Job job)
+    {
+        if (_recorder != null && _pov != null) _recorder.OnWork(_pov, npc, job);
+    }
+
+    /// <summary>
+    /// Whether the player is standing somewhere they have no business being — what the narration
+    /// header shows, and the condition under which nothing they do is lawful and no routine is learned.
+    /// False outside a real location.
+    /// </summary>
+    public bool IsTrespassing
+        => _scene?.Phase == NarrationPhase.Exploration && _pov != null && PrivacyModel.IsTrespassing(_pov.Where);
+
+    /// <summary>
+    /// A coded refusal shown without re-voicing — no modus mentis to voice it, or the rewrite came
+    /// back empty. A missing tool keeps its longer sentence, which is the part worth reading.
+    /// </summary>
+    private static string RawRefusal(ParsedNarrativeAction action, Narrative.Rules.ActionRuleResult result)
+        => result.NeededTool != null
+            ? $"[IMPOSSIBLE] {OutcomeNarrator.RefusalNeutral(action, result.ErrorMessage ?? "", result.NeededTool)}"
+            : $"[IMPOSSIBLE] {result.ErrorMessage}";
 
     /// <summary>
     /// Start the observation phase while preserving scroll buffer history.
@@ -713,13 +769,14 @@ public class NarrativeController
                 _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
             }
 
-            // If a dialogue just ended, open this phase with a single observation of that NPC, narrated by
-            // the observation modus mentis that originated the dialogue (see GeneratePostDialogueObservationAsync).
-            // The context is consumed once; if the NPC has left the scene we fall through to the normal phase.
-            var postDialogueNpc = _postDialogueNpc;
-            var postDialogueMM  = _postDialogueObservationMM;
-            _postDialogueNpc = null;
-            _postDialogueObservationMM = null;
+            // If something has decided what this phase opens on — the person a dialogue was just held
+            // with, or the one a Meet routine is about — open with a single observation of it (see
+            // GenerateFocusedObservationAsync). Consumed once; if it is not observable from here we fall
+            // through to the normal phase.
+            var focus   = _openingFocus;
+            var focusMM = _openingFocusMM;
+            _openingFocus   = null;
+            _openingFocusMM = null;
 
             // Arrival-first: somebody who heard a failed action and has just walked in opens the
             // phase. Ahead of the corpse opener — both are one-shot events, but an arrival is the
@@ -746,17 +803,29 @@ public class NarrativeController
 
             // Threat-first: a same-area (visual) enemy opens the phase with a forced, caution-flavoured
             // observation of that enemy — the same condition that turns the exit button into RUNAWAY.
-            // This takes precedence over post-dialogue continuity.
+            // This takes precedence over the opening focus.
             if (!handled)
                 handled = await TryGenerateThreatObservationAsync(CommitObservation);
 
-            // Otherwise, if a dialogue just ended, open with a single observation of that NPC.
+            // Otherwise, if something was put in focus, open with a single observation of it.
             if (!handled)
-                handled = postDialogueNpc != null
-                    && await TryGeneratePostDialogueObservationAsync(postDialogueNpc, postDialogueMM, CommitObservation);
+                handled = focus != null
+                    && await TryGenerateFocusObservationAsync(focus, focusMM, CommitObservation);
 
             if (!handled)
             {
+                // Open on an area introduction when the area or the time of day changed since the
+                // last one. Exploration only: childhood reminescence and get-up have no real area.
+                TimePeriod? introPeriod = null;
+                if ((_scene?.Phase is null or NarrationPhase.Exploration)
+                    && _currentNode is Cathedral.Game.Scene.SyntheticNarrationNode { Area: { } introArea }
+                    && (!ReferenceEquals(introArea, _introducedArea) || _introducedPeriod != _graph.CurrentPeriod))
+                {
+                    introPeriod       = _graph.CurrentPeriod;
+                    _introducedArea   = introArea;
+                    _introducedPeriod = _graph.CurrentPeriod;
+                }
+
                 // Generate ONE overall observation (one sentence per sampled outcome), streamed into the box.
                 await _observationController.ExecuteObservationPhaseAsync(
                     _currentNode,
@@ -765,7 +834,8 @@ public class NarrativeController
                     isReminescence: _scene?.Phase == NarrationPhase.ChildhoodReminescence,
                     ledger: _observationLedger,
                     preview: _previewSession,
-                    commit: CommitObservation
+                    commit: CommitObservation,
+                    introPeriod: introPeriod
                 );
             }
 
@@ -819,13 +889,6 @@ public class NarrativeController
         return message;
     }
 
-    /// <summary>
-    /// Runs the post-dialogue continuity observation when possible: resolves <paramref name="npc"/> to
-    /// an observable object in the current node and, if it is still there, generates a single observation
-    /// of it via <see cref="ObservationPhaseController.GeneratePostDialogueObservationAsync"/> (which reuses
-    /// <paramref name="originMM"/> when still learned, else resamples). Returns false — so the caller runs
-    /// the normal phase — when the NPC has left the scene or nothing was produced.
-    /// </summary>
     /// <summary>
     /// Runs the under-threat opener when a same-area (visual) enemy is present: resolves the threat to
     /// an observable object in the current node and, if found, leads the phase with a single
@@ -929,23 +992,56 @@ public class NarrativeController
         return blocks.Count > 0;
     }
 
-    private async Task<bool> TryGeneratePostDialogueObservationAsync(
-        NpcEntity npc, ModusMentis? originMM, Action<List<NarrationBlock>> commit)
+    /// <summary>
+    /// Opens the phase on <paramref name="focus"/> when it can: finds the observation object that is
+    /// <i>of</i> it in the current node and generates a single observation of that via
+    /// <see cref="ObservationPhaseController.GenerateFocusedObservationAsync"/> (which reuses
+    /// <paramref name="originMM"/> when still learned, else picks one). Returns false — so the caller
+    /// runs the normal phase — when it is not observable from here or nothing was produced.
+    /// </summary>
+    private async Task<bool> TryGenerateFocusObservationAsync(
+        Element focus, ModusMentis? originMM, Action<List<NarrationBlock>> commit)
     {
-        var npcOutcome = _currentNode.GetAllDirectConcreteOutcomes()
-            .OfType<SyntheticNpcObservationObject>()
-            .FirstOrDefault(o => ReferenceEquals(o.NpcEntity, npc));
-        if (npcOutcome == null)
+        var anchor = _currentNode.GetAllDirectConcreteOutcomes().FirstOrDefault(o => IsObservationOf(o, focus));
+        if (anchor == null)
         {
-            Console.WriteLine($"NarrativeController: Post-dialogue NPC '{npc.DisplayName}' left the scene — normal observation.");
+            Console.WriteLine($"NarrativeController: focus '{focus.DisplayName}' is not observable here — normal observation.");
             return false;
         }
 
-        var blocks = await _observationController.GeneratePostDialogueObservationAsync(
-            npcOutcome, originMM, _protagonist.CurrentLocationId, _activePartyMember,
+        var blocks = await _observationController.GenerateFocusedObservationAsync(
+            anchor, originMM, _protagonist.CurrentLocationId, _activePartyMember,
             ledger: _observationLedger, preview: _previewSession, commit: commit);
+        if (blocks.Count > 0)
+            _lastOpeningFocus = focus switch
+            {
+                SceneNpc npc        => $"opening focus=npc id=\"{npc.Entity.PersistentId}\"",
+                PointOfInterest poi => $"opening focus=poi name=\"{poi.DisplayName}\"",
+                _                   => $"opening focus=other name=\"{focus.DisplayName}\"",
+            };
         return blocks.Count > 0;
     }
+
+    // What the last phase opened on by an opening focus, for `inspect opening` — the one way a script
+    // can tell a Meet routine (or a finished conversation) opened on its person: the prose is
+    // placeholder under --playground, and a person's name is generated content.
+    private string? _lastOpeningFocus;
+
+    /// <summary>
+    /// Whether <paramref name="anchor"/> is the observation of <paramref name="focus"/>. The two kinds
+    /// of thing a phase can be opened on today; anything that gets an observation object of its own can
+    /// be added here and focused the same way.
+    /// </summary>
+    private static bool IsObservationOf(NarrativeAnchor anchor, Element focus) => focus switch
+    {
+        SceneNpc npc        => anchor is SyntheticNpcObservationObject o && ReferenceEquals(o.SceneNpc, npc),
+        PointOfInterest poi => anchor is SyntheticObservationObject o && ReferenceEquals(o.PointOfInterest, poi),
+        _                   => false,
+    };
+
+    /// <summary>The scene's own element for a person, which is what a focus holds.</summary>
+    private SceneNpc? SceneNpcOf(NpcEntity npc)
+        => _scene?.Npcs.FirstOrDefault(n => ReferenceEquals(n.Entity, npc));
 
     /// <summary>
     /// Records a pending dialogue and captures the continuity context for the observation phase that will
@@ -955,9 +1051,9 @@ public class NarrativeController
     /// </summary>
     private void SetPendingDialogue(DialogueTriggerOutcome outcome, ModusMentisChainElement? chainOrigin)
     {
-        _pendingDialogueOutcome    = outcome;
-        _postDialogueNpc           = outcome.Target;
-        _postDialogueObservationMM = TraceObservationModusMentis(chainOrigin);
+        _pendingDialogueOutcome = outcome;
+        _openingFocus           = SceneNpcOf(outcome.Target);
+        _openingFocusMM         = TraceObservationModusMentis(chainOrigin);
     }
 
     /// <summary>
@@ -1213,7 +1309,15 @@ public class NarrativeController
             if (!ruleResult.Passed)
             {
                 Console.WriteLine($"NarrativeController: Coded rule blocked action — {ruleResult.ErrorMessage}");
-                action.IsImpossible = true;
+                // A missing tool leaves the action standing: "Use Tool" is still the way to do it, so
+                // greying it reads as a dead end that is not one. Only with nothing combinable carried
+                // is it truly that, and then it greys like any other refusal.
+                if (ruleResult.NeededTool != null)
+                {
+                    action.NeedsTool    = true;
+                    action.IsImpossible = GetCombinableItems().Count == 0;
+                }
+                else action.IsImpossible = true;
 
                 // Re-express the refusal in the acting modus mentis's voice when one is resolvable
                 // (e.g. caught-red-handed, under threat); fall back to the raw rule message otherwise.
@@ -1227,13 +1331,14 @@ public class NarrativeController
                 if (refusalMm != null)
                 {
                     refusalText = await _actionExecutor.OutcomeNarrator.NarrateRefusalAsync(
-                        action, refusalMm, ruleResult.ErrorMessage ?? "", _activePartyMember, CancellationToken.None, preview: refusalPart?.Sink);
+                        action, refusalMm, ruleResult.ErrorMessage ?? "", _activePartyMember, CancellationToken.None,
+                        preview: refusalPart?.Sink, neededTool: ruleResult.NeededTool);
                     if (string.IsNullOrWhiteSpace(refusalText))
-                        refusalText = $"[IMPOSSIBLE] {ruleResult.ErrorMessage}";
+                        refusalText = RawRefusal(action, ruleResult);
                 }
                 else
                 {
-                    refusalText = $"[IMPOSSIBLE] {ruleResult.ErrorMessage}";
+                    refusalText = RawRefusal(action, ruleResult);
                 }
 
                 _narrationState.IsLoadingAction = false;
@@ -2146,13 +2251,12 @@ public class NarrativeController
         // they go last — after the verb's own reports and after its lesson.
         allReports.AddRange(practiceReports);
 
-        // Record this verb into the in-progress routine BEFORE applying reports, so the recorder
-        // evaluates the verb against the pre-move PoV. The reports come along because they carry the
-        // RoutineChainEffect the recorder decides on (skip vs stop, and what counts as movement).
+        // Let the recorder see a successful verb BEFORE its reports apply: a gathering routine is learned
+        // off the source while the item is still on it, from where the player stood to take it.
         if (result.Succeeded && _recorder != null && _scene != null && _pov != null
             && result.ActualOutcome is VerbAction)
         {
-            _recorder.OnVerbSucceeded(result.Action, _scene, _pov, _activePartyMember, allReports);
+            _recorder.OnVerbSucceeded(result.Action, _scene, _pov);
         }
 
         // Remember where and when we were before reports apply. The area drives continuing narration
@@ -2166,28 +2270,6 @@ public class NarrativeController
         foreach (var report in allReports)
             report.ApplyTo(OutcomeContext.For(_activePartyMember, _scene, _pov));
 
-        // Self-check for the routine recorder's one silent failure mode: a report that relocates the
-        // player without declaring it. The recorder cannot see the move (it runs before Apply, by
-        // design), so it would build routines on a stale prefix. Shout rather than record something
-        // subtly wrong. Space and time are checked separately so the message names the right flag.
-        if (!ReferenceEquals(areaBefore, _pov?.Where)
-            && !allReports.Any(r => r.RoutineChainEffect.HasFlag(RoutineChainEffect.Movement)))
-        {
-            Console.Error.WriteLine(
-                $"NarrativeController: '{result.Action.Verb?.VerbId}' moved the point of view but none of its " +
-                "reports declared RoutineChainEffect.Movement — routine recording will mis-track position. " +
-                "Declare it on the report that moves the PoV.");
-        }
-
-        if (periodBefore != _pov?.When
-            && !allReports.Any(r => r.RoutineChainEffect.HasFlag(RoutineChainEffect.TimeShift)))
-        {
-            Console.Error.WriteLine(
-                $"NarrativeController: '{result.Action.Verb?.VerbId}' changed the time of day but none of its " +
-                "reports declared RoutineChainEffect.TimeShift — routine recording will mis-track it. " +
-                "Declare it on the report that shifts the period.");
-        }
-
         // A verb that shifted the period only wrote PoV.When; route it back through the single writer
         // so the graph's period, NPC placement and verb gating all follow it to the new time of day.
         if (_pov != null && periodBefore != null && periodBefore != _pov.When)
@@ -2195,6 +2277,10 @@ public class NarrativeController
             Console.WriteLine($"NarrativeController: time of day advanced {periodBefore} → {_pov.When}");
             ApplyTimePeriod(_pov.When);
         }
+
+        // Every area walked into is a go-to routine, not only the one the location is left from.
+        if (_recorder != null && _pov != null && areaBefore != null && areaBefore.Id != _pov.Where.Id)
+            _recorder.OnAreaEntered(_pov);
 
         // UI-visible chips for the outcome block.
         var uiReports = allReports.Where(r => r.ShowInUI).ToList();
@@ -2569,7 +2655,8 @@ public class NarrativeController
         bool showNoetic = _scene?.Phase != NarrationPhase.ChildhoodReminescence
                        && _scene?.Phase != NarrationPhase.GetUp;
         _ui.RenderHeader(_activePartyMember.DisplayName, _narrationState.ThinkingAttemptsRemaining,
-            _activePartyMember.MaxNoeticPoints, showNoetic);
+            _activePartyMember.MaxNoeticPoints, showNoetic,
+            trespassing: _scene?.Phase == NarrationPhase.Exploration && _pov != null ? IsTrespassing : null);
 
         // The footer exit button is only (re)rendered in the interactive states below. Clear its
         // click region each frame so stale zones don't linger during dice/loading/error states.
@@ -3138,6 +3225,8 @@ public class NarrativeController
                 // greyed out, and impossible.
                 bool hasItems = action.CombinedItem == null && GetCombinableItems().Count > 0;
                 var disabledIndices = hasItems ? new HashSet<int>() : new HashSet<int> { 1 };
+                // Refused for want of a tool: executing it bare-handed again is the same refusal.
+                if (action.NeedsTool) disabledIndices.Add(0);
 
                 Console.WriteLine($"NarrativeController: Showing action mode choice for '{action.ActionText}' (hasItems={hasItems})");
                 _narrationState.ActionPendingModeSelection = action;
@@ -3659,24 +3748,32 @@ public class NarrativeController
             outp.Add($"noetic points={_narrationState.ThinkingAttemptsRemaining}/{actor.MaxNoeticPoints} "
                    + $"tool_proficiency={ToolUsageProficiencyStat.Of(actor)}");
 
+        // The open choice popup, with each option's state. `regions` prints the same thing, but only
+        // emits — and a greyed option differs from a live one by colour alone, so this is what lets a
+        // script assert that a tool refusal leaves "Use Tool" as the only way forward.
+        if (All("popup") && _choicePopup.IsVisible)
+            outp.Add("popup options=[" + string.Join(",", _choicePopup.Choices.Select((c, i) =>
+                         _choicePopup.IsChoiceEnabled(i) ? c : $"{c}(disabled)")) + "]");
+
+        // trespass= is what the header's TRESPASSING tag shows, and the condition under which every act
+        // is a crime and no routine is learned — assertable, where the tag is only a colour on screen.
         if (All("where"))
             outp.Add($"where area=\"{_pov?.Where.DisplayName ?? "-"}\" period={_pov?.When.ToString() ?? "-"} "
-                   + $"day={(int)Cathedral.Game.Narrative.GameClock.Days}");
+                   + $"day={(int)Cathedral.Game.Narrative.GameClock.Days} trespass={(IsTrespassing ? "yes" : "no")}");
 
         if (All("party"))
             foreach (var c in _protagonist.CompanionParty)
                 outp.Add($"companion \"{c.DisplayName}\" species=\"{c.PartyDescription}\"");
 
-        // Recorded routines, by the only two things about them that are stable: the location they
-        // replay at and the ordered verb ids they walk. Names and step labels come from content
-        // (an NPC's rolled name is in them), so a test that spelled one would break the day somebody
-        // renamed a room. Reported here rather than read off the routines panel because recording
-        // happens with no UI open at all — the panel is where a player reads them, not where they
-        // are made.
+        if (All("opening"))
+            outp.Add(_lastOpeningFocus ?? "opening focus=none");
+
+        // Learned routines — see Routine.CliLine. Reported here rather than read off the routines panel
+        // because recording happens with no UI open at all: the panel is where a player reads them,
+        // not where they are made.
         if (All("routines"))
             foreach (var r in _protagonist.RecordedRoutines)
-                outp.Add($"routine location={r.LocationId} start={r.StartTime} steps={r.Steps.Count} "
-                       + $"verbs=[{string.Join(",", r.Steps.Select(s => s.VerbId))}]");
+                outp.Add(r.CliLine());
 
         if (All("wounds"))
             foreach (var w in actor.Wounds)
@@ -3787,7 +3884,63 @@ public class NarrativeController
         OnMouseClick(region.StartX, region.StartY);
         return null;
     }
-    
+
+    // ── --record: where a player would click ─────────────────────────────────
+
+    /// <summary>The narration's dice box, when a roll is on screen.</summary>
+    public DiceRollComponent? CliDice => _narrationState.IsDiceRollActive ? _dice : null;
+    // The recorder drives the game through the real pointer path, so instead of acting it needs to
+    // know WHERE each thing is. Each lookup resolves its target exactly as the matching Cli* click
+    // above does, and returns the cells (or, for popups, the pixel) a player would aim at.
+
+    /// <summary>The cells a keyword occupies, resolved as <see cref="CliClickKeyword"/> resolves it.</summary>
+    public (int X, int Y, int Width)? CliKeywordSpan(string keyword)
+    {
+        var regions = _ui.KeywordRegions;
+        KeywordRegion? region = int.TryParse(keyword, out int index)
+            ? (index >= 0 && index < regions.Count ? regions[index] : null)
+            : regions.FirstOrDefault(r => r.Keyword.Equals(keyword, StringComparison.OrdinalIgnoreCase));
+        return region == null ? null : (region.StartX, region.Y, Math.Max(1, region.EndX - region.StartX));
+    }
+
+    /// <summary>The first row of an action button, resolved as <see cref="CliClickAction"/> resolves it.</summary>
+    public (int X, int Y, int Width)? CliActionSpan(int actionIndex)
+    {
+        var region = _ui.ActionRegions.FirstOrDefault(r => r.ActionIndex == actionIndex);
+        return region == null ? null : (region.StartX, region.StartY, Math.Max(1, region.EndX - region.StartX));
+    }
+
+    /// <summary>
+    /// A screen pixel that picks choice <paramref name="index"/> of the popup on screen, found by asking
+    /// that popup's own hit-test — the same one a click is routed through, in the same priority order
+    /// as <see cref="OnRawMouseClick"/>. Null when no popup is up or no pixel picks that choice.
+    /// </summary>
+    public OpenTK.Mathematics.Vector2? CliPopupChoicePixel(int index)
+    {
+        var bounds = _core.PopupTerminal?.GetScreenBounds(_core.ClientSize);
+        if (bounds == null) return null;
+
+        Func<float, float, OpenTK.Mathematics.Vector2i, float, int?>? hit =
+              _choicePopup.IsVisible        ? _choicePopup.CliIndexAt
+            : _itemSelectionPopup.IsVisible ? _itemSelectionPopup.CliIndexAt
+            : _modusMentisPopup.IsVisible   ? _modusMentisPopup.CliIndexAt
+            : null;
+        if (hit == null) return null;
+
+        float cell = _terminalInputHandler.GetLayoutInfo(_core.ClientSize).CellSize.X;
+        var (left, top, right, bottom) = bounds.Value;
+        float x = left + Math.Min(right - left, cell * 8f);
+        for (float y = top; y <= bottom; y += cell * 0.25f)
+            if (hit(x, y, _core.ClientSize, cell) == index)
+            {
+                // Aim at the middle of the row rather than its first hit pixel.
+                float y2 = y;
+                while (y2 + 1 <= bottom && hit(x, y2 + 1, _core.ClientSize, cell) == index) y2 += 1;
+                return new OpenTK.Mathematics.Vector2(x, (y + y2) * 0.5f);
+            }
+        return null;
+    }
+
     /// <summary>
     /// Close the thinking modusMentis popup if it's open.
     /// Returns true if popup was closed, false if it wasn't open.
@@ -3876,26 +4029,30 @@ public class NarrativeController
     public bool HasDeferredFight => _deferredFightOutcome != null;
 
     /// <summary>
-    /// Saves any routine still being recorded for this session. Called by the game controller when
-    /// the narration phase ends (returns to world travel).
+    /// Lets the session's recorder learn its last routine — where the player is leaving from. Called
+    /// by the game controller when the narration phase ends (returns to world travel).
     /// </summary>
     public void FinalizeRoutineRecording()
     {
-        _recorder?.FinalizeAtNarrationEnd();
+        _recorder?.FinalizeAtNarrationEnd(_pov);
         _recorder = null;
     }
 
     /// <summary>
-    /// Starts narration positioned at a specific area and time period (used when continuing into
-    /// narration after a routine replay ends at a moved-to area). Falls back to a normal start when
-    /// the area cannot be resolved.
+    /// Starts narration positioned at a specific area and time period — a Go to or Meet routine.
+    /// Falls back to the opening area when the area cannot be resolved.
     /// </summary>
-    public void StartAtArea(string areaKey, TimePeriod time)
+    /// <param name="focusNpcId">The <see cref="INpcEntity.PersistentId"/> of the person the first
+    /// observation is of (a Meet routine), or null for the persona's own choice.</param>
+    public void StartAtArea(string areaKey, TimePeriod time, string? focusNpcId = null)
     {
         // Only the area is set here — StartObservationPhase(time) below routes the period through
         // ApplyTimePeriod, the single writer of PoV.When + graph period.
         MovePointOfViewToArea(areaKey);
-        StartObservationPhase(time);
+        var focus = focusNpcId == null
+            ? null
+            : _scene?.Npcs.FirstOrDefault(n => n.IsAlive && n.Entity.PersistentId == focusNpcId);
+        StartObservationPhase(time, focus);
     }
 
     /// <summary>
@@ -3946,13 +4103,13 @@ public class NarrativeController
     /// <para>Three writes, and it was missing two of them. Moving <c>PoV.Where</c> alone is not
     /// moving: the observation phase runs against <c>_currentNode</c>, so the point of view said one
     /// area while everything the player could see and act on still came from the old one — the walk
-    /// happened on paper and nowhere else. And <c>_postDialogueNpc</c> was still the go-between, set
-    /// when the conversation was triggered, so the first observation after being introduced to the
-    /// reeve was of the bondman who introduced you.</para>
+    /// happened on paper and nowhere else. And the opening focus was still the go-between, set when
+    /// the conversation was triggered, so the first observation after being introduced to the reeve
+    /// was of the bondman who introduced you.</para>
     ///
-    /// <para>Lives here rather than in the game controller because the PoV, the node and the
-    /// post-dialogue context are this class's invariants; reaching in to set one of the three from
-    /// outside is what let them drift apart.</para>
+    /// <para>Lives here rather than in the game controller because the PoV, the node and the opening
+    /// focus are this class's invariants; reaching in to set one of the three from outside is what let
+    /// them drift apart.</para>
     /// </summary>
     public bool WalkToIntroducedNpc(NpcEntity presented)
     {
@@ -3977,10 +4134,45 @@ public class NarrativeController
         // The phase that follows opens on the person just introduced, not on the go-between — that
         // is what makes the introduction read as an arrival, and puts the conversation it unlocked
         // one click away.
-        _postDialogueNpc = presented;
+        _openingFocus = sceneNpc;
 
         Console.WriteLine($"NarrativeController: walked to {presented.DisplayName} in {where.DisplayName} "
                         + $"(node '{_currentNode.NodeId}') — next observation is of them");
+        return true;
+    }
+
+    /// <summary>
+    /// Takes the player to the premises of a trader who agreed to lead them there, at the first hour
+    /// the trader keeps them (<see cref="TradeGate.NextOnPremises"/>) — now if they are already there
+    /// by then, else later in the day, the time passing as it does when the player waits. The phase
+    /// that follows opens on the trader, as an introduction's does on the person introduced.
+    /// Returns false, and moves nobody, when the trader's day never brings them there.
+    /// </summary>
+    public bool WalkToPremises(NpcEntity trader)
+    {
+        if (_scene == null || _pov == null) return false;
+
+        var sceneNpc = _scene.Npcs.FirstOrDefault(n => ReferenceEquals(n.Entity, trader));
+        if (sceneNpc == null || TradeGate.NextOnPremises(_scene, sceneNpc, _pov.When) is not { } visit)
+        {
+            Console.WriteLine($"NarrativeController: {trader.DisplayName} keeps no premises at any hour — no walk");
+            return false;
+        }
+
+        if (visit.When != _pov.When)
+        {
+            Console.WriteLine($"NarrativeController: waiting until {visit.When} for {trader.DisplayName}'s premises");
+            ApplyTimePeriod(visit.When);
+        }
+
+        _pov.Where = visit.Area;
+        _pov.Focus = sceneNpc;
+        if (NodeForArea(visit.Area) is { } node)
+            _currentNode = node;
+        _openingFocus = sceneNpc;
+
+        Console.WriteLine($"NarrativeController: led by {trader.DisplayName} to {visit.Area.DisplayName} "
+                        + $"at {visit.When} — next observation is of them");
         return true;
     }
 
