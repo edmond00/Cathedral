@@ -50,7 +50,7 @@ inspect noetic
 
 # The point was taken, exactly as for an act that admits no implement at all. The lenses were
 # offered, refused without a critic call, and charged for.
-expect-state noetic points=0/2
+expect-state noetic points=1/3
 
 # Low, not None — the refusal was the LENSES' doing. At None every combination fails and this
 # script would pass while proving nothing about MadeForVerbIds.

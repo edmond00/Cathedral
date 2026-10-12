@@ -135,10 +135,10 @@ value** — which for most is a floor, and for a duration or a price is a ceilin
 
 | Measure | Source | Formula |
 |---|---|---|
-| Noetic Points | encephalon | ⌈(score + 3) ÷ 3⌉, never below 1 |
+| Noetic Points | encephalon | ⌊score ÷ 2⌋ + 1 — an encephalon of 5 is worth 3, the ceiling of 23 is worth 12 |
 | Working Memory | encephalon | score + 2, bounded 1–25 |
 | Countenance | visage | score ÷ 5, in dice — a visage at its ceiling of 22 is worth 4 |
-| Health Points | trunk | ⌈(score + 3) ÷ 3⌉, never below 1 |
+| Health Points | trunk | ⌊score ÷ 3⌋ + 1 |
 | Natural Defence | lower limbs | score ÷ 3, in dice |
 | Max Travel Distance | lower limbs | from 4.0 units at nought to 14.8 at the region's ceiling, linearly |
 

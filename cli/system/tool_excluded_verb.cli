@@ -53,9 +53,9 @@ advance 12 180
 regions
 inspect noetic
 
-# The point was taken. A starting protagonist's encephalon gives a pool of 2, of which the
-# deliberation above spent one and this refusal spent the other.
-expect-state noetic points=0/2
+# The point was taken. A starting protagonist's encephalon gives a pool of 3, of which the
+# deliberation above spent one and this refusal spent another.
+expect-state noetic points=1/3
 
 # And the band is Low, not None — so the refusal above was the VERB's doing and not the body's.
 # Without this the script would still pass if hands ever fell to nought, having proved the wrong

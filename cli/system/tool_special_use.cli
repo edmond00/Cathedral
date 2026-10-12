@@ -49,9 +49,9 @@ advance 12 180
 regions
 inspect noetic
 
-# Unchanged: an accepted combination is free. The deliberation took the pool from 2 to 1 and
+# Unchanged: an accepted combination is free. The deliberation took the pool from 3 to 2 and
 # nothing since has touched it.
-expect-state noetic points=1/2
+expect-state noetic points=2/3
 expect-state noetic tool_proficiency=Low
 
 click action 1

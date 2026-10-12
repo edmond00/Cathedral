@@ -617,11 +617,13 @@ A phase's budget is **noetic points**, one spent per observation, thinking or it
 the pool refills at the phase boundary (`CloseNarrationSegment`). Three rules decide how far that
 budget reaches, and they were designed together — changing one alone re-breaks what the others fix.
 
-- **The pool is the encephalon score divided by three** (`NoeticPointsStat`), **rounded up**. At one
-  point per level a segment was never really spent: a player could work through every object in a
-  room and still have attempts left, so nothing had to be chosen over anything else. Rounded up
-  because flooring lands a starting character on exactly 1, which buys the one thought and nothing
-  else — no focus observation, no Speak-About hand-off (that spends the speaker's own point).
+- **The pool is `encephalon / 2 + 1`** (`NoeticPointsStat`, integer division, floored at 1): one
+  point per two levels, plus one — 3 for an encephalon of 5 (every organ at 1), 12 at the human maximum of 23.
+  At one point per level a segment was never really spent: a player could work through every object
+  in a room and still have attempts left, so nothing had to be chosen over anything else; one per
+  three proved too tight. The `+ 1` keeps the weakest minds off exactly 1, which buys the one
+  thought and nothing else — no focus observation, no Speak-About hand-off (that spends the
+  speaker's own point).
 - **An accepted tool costs nothing; a refused one costs a point.** Combining is part of the action
   already on screen, and only one item may ever be combined with it. Charging for the *accepted*
   case made the tool-gated verbs (`dig`, `mine`, `fish`, `cut_wood`, `break`) *impossible* once the
