@@ -1,0 +1,42 @@
+id,name,where,handicap
+0,black eye,left eye,medium
+1,black eye,right eye,medium
+2,pierced eye,left eye,high
+3,pierced eye,right eye,high
+4,perforated eardrum,left ear,high
+5,perforated eardrum,right ear,high
+6,skull fracture,encephalon,high
+7,concussions,encephalon,medium
+8,broken nose,nose,high
+9,broken teeths,teeth,high
+a,torned out tongue,tongue,high
+b,broken backbone,backbone,high
+c,broken arm,left arm,high
+d,broken arm,right arm,high
+e,knee fracture,left leg,high
+f,knee fracture,right leg,high
+g,broken ribs,lungs,high
+h,foot amputee,left foot,high
+i,foot amputee,right foot,high
+j,fingers amputee,right hand,high
+k,fingers amputee,left hand,high
+l,tibia fracture,left leg,medium
+m,tibia fracture,right leg,medium
+n,shoulder dislocation,left arm,medium
+o,shoulder dislocation,right arm,medium
+p,evisceration,viscera,high
+q,pierced paunch,paunch,high
+r,genital mutilation,genitories,high
+s,disfigured,visage,high
+t,wrist fracture,left hand,medium
+u,wrist fracture,right hand,medium
+v,ankle fracture,left foot,medium
+w,ankle fracture,right foot,medium
+x,broken hand,left hand,medium
+y,broken hand,right hand,medium
+z,broken foot,left foot,medium
+A,broken foot,right foot,medium
+B,scar,visage,medium
+*,contusion,*,low
+*,cut,*,low
+*,puncture,*,low

@@ -134,6 +134,7 @@ every line that left is the same text, moved.
 | `models` skill | on invocation | maintaining the `models/` folder across machines; **upgrading llama.cpp or swapping the model**, including the expected versions in `src/LLM/LlamaInstallCheck.cs` that must move in the same commit |
 | `video` skill | on invocation | narrated videos about the game: `--record` (the CLI with a camera, player commands only), storyboards, manim in the game's identity, Piper voice-over, the game's own music; `tools/video/` |
 | `mm-grants` skill | on invocation | writing the modus mentis grant audit by hand |
+| `anatomy-art` skill | on invocation | generating body ASCII art (`assets/art/body/<name>/`) from labelled shapes with `tools/art/`, sharing proposals as PNGs, and the art direction: anatomical, retro/glitchy, the organ glyph vocabulary |
 
 **When a change alters a rule a player is subject to, invoke the `manual` skill** — that has not moved
 and is stated in full above.
