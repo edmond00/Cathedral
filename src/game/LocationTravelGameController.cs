@@ -2744,6 +2744,18 @@ public class LocationTravelGameController : IDisposable
             // EITHER exists, and the callback picks between them.
             _mainMenuRenderer.HasGameStarted = _hasGameStarted;
             _mainMenuRenderer.CanContinue    = _hasGameStarted || HasReadableSave;
+
+            // A demo says how many runs are left, and greys New out once none are. Read fresh every
+            // time the menu opens: a run spent a moment ago must show here on the way back.
+            if (DemoLimit.IsActive)
+            {
+                var demo = DemoLimit.Status();
+                _mainMenuRenderer.CanStartNew     = demo.CanStartRun;
+                _mainMenuRenderer.NoticeLine      = demo.MenuLine;
+                _mainMenuRenderer.NoticeIsWarning = !demo.CanStartRun;
+                Console.WriteLine($"Demo: {demo.State}, {demo.RunsUsed}/{demo.MaxRuns} run(s) used"
+                                + (demo.Detail.Length > 0 ? $" ({demo.Detail})" : ""));
+            }
             _mainMenuRenderer.SetButtons(
                 onNew: () =>
                 {
@@ -2756,7 +2768,7 @@ public class LocationTravelGameController : IDisposable
                     // scripted run.
                     if (Config.Rng.SeedPinned && Config.Rng.Seed.HasValue)
                     {
-                        StartNewRun(Config.Rng.Seed.Value);
+                        if (!StartNewRun(Config.Rng.Seed.Value)) { OnEnterMainMenu(); return; }   // still on the menu: redraw it
                         SetMode(GameMode.ProtagonistCreation);
                         return;
                     }
@@ -3019,7 +3031,9 @@ public class LocationTravelGameController : IDisposable
 
         // StartNewRun blanks the moon itself, from the seed — one rule covering this path and the
         // continued-save one alike, rather than two callers each remembering to do it.
-        StartNewRun(seed);
+        // Refused only by a demo with no runs left — the menu greys New out first, so this is the
+        // backstop for a count that changed underneath it. The menu then says why.
+        if (!StartNewRun(seed)) { SetMode(GameMode.MainMenu); return; }
 
         SetMode(GameMode.ProtagonistCreation);
     }
@@ -5041,7 +5055,7 @@ public class LocationTravelGameController : IDisposable
 
     /// <summary>
     /// Begins a new run on <paramref name="worldSeed"/>: spends the save, builds that world, and
-    /// clears any previous one out.
+    /// clears any previous one out. Returns false, having built nothing, when a demo has no run to spend.
     ///
     /// <para><b>The seed is per run, not per process.</b> The world — terrain, where each location
     /// sits, and the people inside it — is a pure function of the master seed. Nothing is generated
@@ -5053,8 +5067,19 @@ public class LocationTravelGameController : IDisposable
     /// generation that created it, and with it the class of bug where the first run and every
     /// subsequent one took different paths through the same code.</para>
     /// </summary>
-    public void StartNewRun(int worldSeed)
+    public bool StartNewRun(int worldSeed)
     {
+        // A demo's run is spent before anything else, the save included: persisted first, so that no
+        // crash, kill or restored save between here and the first step of the run can refund it. A
+        // refusal builds nothing and leaves the save where it was.
+        if (!DemoLimit.TryConsumeRun(out var demo))
+        {
+            Console.WriteLine($"Demo: new run refused — {demo.State}, {demo.RunsUsed}/{demo.MaxRuns} used"
+                            + (demo.Detail.Length > 0 ? $" ({demo.Detail})" : ""));
+            return false;
+        }
+        if (DemoLimit.IsActive) Console.WriteLine($"Demo: run {demo.RunsUsed} of {demo.MaxRuns} started");
+
         // Erased FIRST: a crash part-way through setup must not leave a save pointing at a world that
         // no longer exists.
         Cathedral.Game.Save.SaveFile.Delete();
@@ -5074,6 +5099,7 @@ public class LocationTravelGameController : IDisposable
         HideMoonForSeed(worldSeed);
 
         ResetGameState();
+        return true;
     }
 
     /// <summary>

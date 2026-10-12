@@ -1,0 +1,28 @@
+# A demo build counts runs, spends one when a run is started, and greys New out when none are left.
+#
+# --demo-max-runs 1 turns a development build into a one-run demo, and --demo-state-dir with
+# --demo-reset keeps its counter in a throwaway folder that starts empty every time — the real
+# counter lives in AppData and is never touched by a test. The tampering, missing-copy and
+# inconsistent-copy rules are --demo-audit; this is the half only the running game can show: the menu
+# line, New refusing, and Continue still resuming a run, because resuming spends nothing.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --silent --no-save --demo-max-runs 1 --demo-state-dir .tmp-cli-save/demo-limit --demo-reset
+
+wait
+expect 1 run left of 1
+expect-state menu New enabled
+click menu New
+wait mode ProtagonistCreation 20
+
+# The run was spent the moment it started, not when it ends or saves.
+pause
+wait mode MainMenu 20
+expect runs are spent
+expect-state menu New disabled
+expect-state menu Continue enabled
+
+# Continue is a run already paid for.
+click menu Continue
+wait mode ProtagonistCreation 20
+
+quit

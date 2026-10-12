@@ -496,10 +496,27 @@ public static class Config
         /// at the window so the launchers cannot drift from the menu, which is how the title bar
         /// came to read "Cathedral - Location Travel Mode" in a shipped build.
         /// </summary>
-        public const string WindowTitle = "Proscribed Palimpsest";
+        public const string WindowTitle =
+#if DEMO
+            "Proscribed Palimpsest (Demo)";
+#else
+            "Proscribed Palimpsest";
+#endif
 
         public const string Chapter = "Volume 2";
         public const string ChapterSubtitle = "Of Shame and the Opened Body";
+    }
+
+    /// <summary>
+    /// The demo build: the full game, with a limited number of runs. See <see cref="DemoLimit"/>.
+    /// Compiled in by <c>package.ps1 -Demo</c> (the DEMO constant); <c>--demo</c> in development.
+    /// </summary>
+    public static class Demo {
+        /// <summary>Runs a demo installation may start. A run is spent when a world is confirmed.</summary>
+        public const int MaxRuns = 3;
+
+        /// <summary>Where the menu sends a player whose runs are spent.</summary>
+        public const string StorePage = "edmond00.itch.io/proscribed";
     }
     
     public static class Terminal

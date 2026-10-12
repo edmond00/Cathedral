@@ -30,6 +30,12 @@
     Do not rebuild the PDF manual; ship whatever is already in docs/manual/. Only for a machine
     without Chrome — the shipped manual is then as old as the last successful build.
 
+.PARAMETER Demo
+    Build the demo: the same game and the same payload, compiled with DEMO (-p:Demo=true), which
+    limits it to Config.Demo.MaxRuns runs (see src/DemoLimit.cs) and adds "(Demo)" to the window
+    title. Stages into dist-demo/ProscribedPalimpsest-Demo by default, so packaging the demo never
+    wipes the full game's dist/ and the reverse. The executable keeps its name.
+
 .PARAMETER ReadyToRun
     Precompile to native code. Roughly 30% larger, noticeably faster to start. Off by default
     because it makes the build slower and is not needed to verify a package is correct.
@@ -37,15 +43,17 @@
 .EXAMPLE
     ./package.ps1
     ./package.ps1 -NoModel -NoZip      # fast check that staging works
+    ./package.ps1 -Demo                # the demo, into dist-demo/
 #>
 param(
-    [string]$OutputDir     = "dist",
+    [string]$OutputDir,
     [string]$Configuration = "Release",
     [string]$Runtime       = "win-x64",
     [switch]$NoModel,
     [switch]$NoZip,
     [switch]$ReadyToRun,
-    [switch]$SkipManual
+    [switch]$SkipManual,
+    [switch]$Demo
 )
 
 $ErrorActionPreference = "Stop"
@@ -58,7 +66,15 @@ $ShipName  = "ProscribedPalimpsest"
 $ShipExe   = "$ShipName.exe"
 $ManualPdf = "$ShipName-Manual.pdf"
 
-$stage = Join-Path $root (Join-Path $OutputDir $ShipName)
+# The demo stages under its own output folder and its own folder name. Its own folder because this
+# script wipes $OutputDir at the start, and packaging one product must not destroy the other; its
+# own name because that folder is what a player unpacks, and "ProscribedPalimpsest-Demo" says which
+# one they have. The EXECUTABLE keeps its name — publish.ps1, the smoke test and every support
+# instruction say ProscribedPalimpsest.exe.
+if ([string]::IsNullOrWhiteSpace($OutputDir)) { $OutputDir = if ($Demo) { "dist-demo" } else { "dist" } }
+$StageName = if ($Demo) { "$ShipName-Demo" } else { $ShipName }
+
+$stage = Join-Path $root (Join-Path $OutputDir $StageName)
 
 function Step($text) { Write-Host "`n== $text" -ForegroundColor Cyan }
 function Note($text) { Write-Host "   $text" -ForegroundColor DarkGray }
@@ -250,6 +266,8 @@ $publishArgs = @(
     "-p:SatelliteResourceLanguages=en"
 )
 if ($ReadyToRun) { $publishArgs += "-p:PublishReadyToRun=true" }
+# DEMO: the run limit. Nothing else in the build changes; see src/DemoLimit.cs.
+if ($Demo) { $publishArgs += "-p:Demo=true"; Note "DEMO build: limited to Config.Demo.MaxRuns runs" }
 
 # Deliberately not redirected with 2>&1. In Windows PowerShell 5.1 that wraps every stderr line
 # from a native command in an ErrorRecord and clears $?, which under ErrorActionPreference=Stop
@@ -377,7 +395,7 @@ if ($NoZip) {
 Step "Archiving"
 
 $stamp = Get-Date -Format "yyyyMMdd"
-$zip = Join-Path $root (Join-Path $OutputDir "$ShipName-win64-$stamp.zip")
+$zip = Join-Path $root (Join-Path $OutputDir "$StageName-win64-$stamp.zip")
 
 # ZipFile, not Compress-Archive: the cmdlet in Windows PowerShell 5.1 fails on inputs above 2 GB,
 # and this package is larger than that before the model is even counted.

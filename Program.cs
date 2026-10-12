@@ -58,6 +58,15 @@ for (int i = 0; i < args.Length; i++)
                   || System.Array.IndexOf(args, "--cli-script") >= 0
                   || System.Array.IndexOf(args, "--record") >= 0;
     Cathedral.Game.Save.SaveFile.Configure(savePathOverride, noSave, cliActive);
+    // The demo's run counter is not the save: --save-path and --no-save leave it alone, and so does
+    // deleting the save. Pure file IO, so it may sit up here with the save's own setup.
+    Cathedral.DemoLimit.Configure(args);
+    // Which product this is, on one line publish.ps1's smoke test reads: it refuses to push a demo to
+    // the paid channel, or the full game to the demo channel. The two builds differ by one constant,
+    // and nothing else about the staged folder would tell them apart.
+    Console.WriteLine(Cathedral.DemoLimit.IsActive
+        ? $"Build: demo, {Cathedral.DemoLimit.MaxRuns} run(s)"
+        : "Build: full");
 
     if (Cathedral.Config.Rng.Seed == null)
         Cathedral.Config.Rng.Seed = Cathedral.Game.Save.SaveFile.PeekSeed();
@@ -237,6 +246,11 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("                                     enmity surviving a rebuild and a save) and exit");
     Console.WriteLine("  --llm-probe-audit                  Re-measure every compute device (prompt-read and generate rates, cost per");
     Console.WriteLine("                                     request) and print which one wins and why, ignoring the cached result, and exit");
+    Console.WriteLine("  --demo                             Behave as a demo build: limited runs (Config.Demo.MaxRuns), demo line on the menu");
+    Console.WriteLine("  --demo-max-runs <n>                Demo mode with n runs instead of the configured number");
+    Console.WriteLine("  --demo-state-dir <dir>             Demo mode with both run-count copies kept under <dir> instead of AppData");
+    Console.WriteLine("  --demo-reset                       With --demo-state-dir: start from a fresh installation (for CLI scripts)");
+    Console.WriteLine("  --demo-audit                       Check the demo run limit (tampering, missing/corrupt/inconsistent copies, the limit) and exit");
     Console.WriteLine("  --help, -h                         Show this help message");
     return;
 }
@@ -419,6 +433,14 @@ if (args.Length >= 1 && args[0] == "--verb-audit")
 if (args.Length >= 1 && args[0] == "--outcome-audit")
 {
     Console.WriteLine(Cathedral.Game.Narrative.OutcomeAudit.BuildReport());
+    return;
+}
+
+// Demo run limit: tampering, missing and corrupted copies, inconsistent copies and the limit itself,
+// against throwaway folders. Headless; never touches the real state files.
+if (args.Length >= 1 && args[0] == "--demo-audit")
+{
+    Cathedral.DemoLimitAudit.Run();
     return;
 }
 

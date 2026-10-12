@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using OpenTK.Mathematics;
 using Cathedral.Terminal;
@@ -42,6 +42,20 @@ public class MainMenuRenderer
     /// </summary>
     public bool? CanContinue { get; set; }
 
+    /// <summary>
+    /// Whether New can start a run. False only in a demo whose runs are spent or whose run record is
+    /// locked; see <see cref="DemoLimit"/>. Continue is unaffected — resuming a run spends nothing.
+    /// </summary>
+    public bool CanStartNew { get; set; } = true;
+
+    /// <summary>One line between the title block and the buttons, or empty for none. The demo's allowance.</summary>
+    public string NoticeLine { get; set; } = "";
+
+    /// <summary>Whether <see cref="NoticeLine"/> is a refusal (drawn brighter) rather than a count.</summary>
+    public bool NoticeIsWarning { get; set; }
+
+    private const int NoticeRow = 39;
+
     public MainMenuRenderer(TerminalHUD terminal)
     {
         _terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
@@ -53,7 +67,7 @@ public class MainMenuRenderer
     public void SetButtons(Action onNew, Action onContinue, Action onProtagonist, Action onSettings, Action onExit)
     {
         _buttons.Clear();
-        _buttons.Add(new MenuButton("New", onNew, true));
+        _buttons.Add(new MenuButton("New", onNew, CanStartNew));
         _buttons.Add(new MenuButton("Continue", onContinue, CanContinue ?? HasGameStarted));
         _buttons.Add(new MenuButton("Protagonist", onProtagonist, HasGameStarted));
         _buttons.Add(new MenuButton("Settings", onSettings, true));
@@ -102,6 +116,10 @@ public class MainMenuRenderer
             Config.Colors.MediumGray60, Config.Colors.Black);
         _terminal.CenteredText(TitleOrnamentBottomRow, ornament,
             Config.Colors.DarkGray35,   Config.Colors.Black);
+
+        if (NoticeLine.Length > 0)
+            _terminal.CenteredText(NoticeRow, NoticeLine,
+                NoticeIsWarning ? Config.Colors.BrightYellow : Config.Colors.MediumGray50, Config.Colors.Black);
 
         // Draw buttons
         for (int i = 0; i < _buttons.Count; i++)

@@ -1,6 +1,6 @@
 ---
 name: release
-description: Publish a new version of the game to itch.io — work out what changed since the last published build, write the changelog, name and number the new Volume, review the build for regressions, merge develop into main, package and upload. Use whenever asked to release, publish, ship or update the live version of Proscribed Palimpsest, or to prepare release notes for one.
+description: Publish a new version of the game to itch.io — work out what changed since the last published build, write the changelog, name and number the new Volume, review the build for regressions, merge develop into main, package and upload — the full game and the demo, every time. Use whenever asked to release, publish, ship or update the live version of Proscribed Palimpsest, or to prepare release notes for one.
 ---
 
 # Releasing Proscribed Palimpsest
@@ -275,7 +275,16 @@ from develop:
 ./package.ps1                 # rebuilds the manual, stages, zips. Minutes.
 ./publish.ps1 -Status         # read-only: what is on the channel now
 ./publish.ps1 -Yes
+
+./package.ps1 -Demo -SkipManual   # the demo, into dist-demo/ (the manual was just built)
+./publish.ps1 -Demo -Status
+./publish.ps1 -Demo -Yes
 ```
+
+**Every release ships both.** The demo is the same commit compiled with one more constant, so a
+release that updates only the paid channel leaves the free download a Volume behind — the build
+most new players meet first. See "The demo" below for what differs and why the order does not
+matter. One `-Yes` question to the user may cover both pushes, if it names both channels.
 
 **`-Yes` is not optional here, and the reason is a trap.** `publish.ps1` prompts for confirmation and
 *cancels rather than throwing* when nothing can answer it — which is what a non-interactive session
@@ -291,6 +300,55 @@ and for nothing else.
 When butler finishes, **remind the user to upload the manual PDF by hand**. `publish.ps1` cannot:
 butler only replaces builds in channels it owns and the PDF on the page has no channel. The script
 closes with a reminder naming the freshly built file; repeat it, with the full path.
+
+### The demo
+
+The demo is the full game with a limited number of runs, published as a second download on the same
+itch page. It is not a separate branch or a cut-down build: `package.ps1 -Demo` passes
+`-p:Demo=true`, which defines `DEMO`, and that constant changes exactly three things —
+`DemoLimit.IsActive` (src/DemoLimit.cs), "(Demo)" in the window title, and the run-count line on
+the main menu. Content is identical, so nothing in steps 2–6 needs doing twice.
+
+| | full game | demo |
+|---|---|---|
+| package | `./package.ps1` → `dist/ProscribedPalimpsest/` | `./package.ps1 -Demo` → `dist-demo/ProscribedPalimpsest-Demo/` |
+| channel | `edmond00/proscribed:windows` | `edmond00/proscribed:windows-demo` |
+| on itch | paid | marked as a demo, so it downloads free |
+| startup line | `Build: full` | `Build: demo, <n> run(s)` |
+
+**The smoke test is what keeps them apart.** Both folders hold an identically named executable and
+the same files; only a compile constant differs. `publish.ps1` reads the `Build:` line the game
+prints at startup and refuses to push a demo to the paid channel or the full game to the demo one.
+That check lives in the smoke test, which is one more reason `-SkipSmokeTest` is for re-pushing a
+build already started once and nothing else.
+
+**The run limit** is `Config.Demo.MaxRuns`. A run is spent when a world is confirmed (New → pick a
+moon), persisted before the world is built; Continue spends nothing. Changing the number is a
+one-line commit and, since it is player-facing, a line in the changelog. `--demo-audit` (in
+`run_tests.sh audits`) and `cli/system/demo_limit.cli` cover it; `--demo`, `--demo-max-runs`,
+`--demo-state-dir` and `--demo-reset` put a development build in demo mode and are stripped from
+shipped builds like every development flag, so a demo cannot be lifted from its own command line.
+
+**It is casual tamper resistance, not protection**, and must never be described otherwise. The count
+is kept in two HMAC-signed copies (`%APPDATA%\ProscribedPalimpsest\demo.state` and
+`%LOCALAPPDATA%\ProscribedPalimpsest-cache\index.bin`), apart from the save and the install folder;
+an edited, corrupted or mismatched copy locks New rather than resetting it. But the key is a constant
+in the executable, so anyone who decompiles it can sign any count, and deleting or restoring both
+copies together is indistinguishable from a fresh install. That is accepted: it stops editing a file
+or reinstalling, which is what a casual player would try.
+
+**One-time itch setup, by hand** — butler cannot do either, and they are not part of a normal release:
+
+1. Before the first demo push: set the game's price under *Edit game → Pricing*. That is what makes
+   the existing `windows` download paid.
+2. After the first `publish.ps1 -Demo` lands: on *Edit game → Uploads*, open the `windows-demo`
+   upload and tick **"This file is a demo and can be downloaded for free"**. Without it the demo is
+   behind the same price as the game. Give it a display name ("Demo") so the page reads clearly.
+
+The first push to `windows-demo` uploads the whole folder, model included (~2.2 GB): butler diffs
+within a channel, not across them. Later pushes send only what changed. The demo and the full game
+share `%APPDATA%\ProscribedPalimpsest\`, so a player who buys the game keeps their save; the full
+game never reads `demo.state`.
 
 ### 10. Reset develop and record
 
