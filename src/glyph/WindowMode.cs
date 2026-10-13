@@ -42,6 +42,9 @@ public static class WindowMode
             window.WindowBorder = WindowBorder.Hidden;
             window.Location     = new Vector2i(monitor.ClientArea.Min.X, monitor.ClientArea.Min.Y);
             window.ClientSize   = new Vector2i(monitor.ClientArea.Size.X, monitor.ClientArea.Size.Y);
+            // Once more after the resize: a window grown past the screen edge can be nudged by
+            // Windows, and a borderless window anywhere but the corner hangs off the monitor.
+            window.Location     = new Vector2i(monitor.ClientArea.Min.X, monitor.ClientArea.Min.Y);
         }
         else
         {

@@ -1077,7 +1077,22 @@ namespace Cathedral.Glyph
             FrameSink?.EndFrame(ClientSize.X, ClientSize.Y);
 
             SwapBuffers();
+
+            if (AfterFirstFrame is { } once)
+            {
+                AfterFirstFrame = null;
+                once();
+            }
         }
+
+        /// <summary>
+        /// Runs once, after the first frame has been presented — when the window is on screen and
+        /// Windows has finished placing it. Restoring fullscreen at startup goes here: applied during
+        /// load, before the window is shown, the borderless window landed at Windows' default
+        /// position (96,96 on a 2560x1440 monitor) instead of the monitor's corner, hanging off the
+        /// screen with the click area visibly out of step with the drawing until the next resize.
+        /// </summary>
+        public Action? AfterFirstFrame { get; set; }
 
         /// <summary>
         /// A standing request to turn the camera, in degrees per second, from something that is not

@@ -4143,6 +4143,11 @@ public class LocationTravelGameController : IDisposable
         if (_deathScreenRenderer == null)
             _deathScreenRenderer = new DeathScreenRenderer(_core.Terminal);
 
+        // Modal overlay over the world, like the encounter prompt and the companion-death notice.
+        // Death arrives from a fight or a narration, both of which fill the whole terminal with
+        // opaque cells — drawn over those, the box sat on a black screen.
+        _core.Terminal.TransparentClickPassthrough = false;
+        _core.Terminal.Clear();
         _deathScreenRenderer.Draw(_deathCause);
     }
 

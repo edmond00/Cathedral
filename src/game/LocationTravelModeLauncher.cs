@@ -350,12 +350,13 @@ public static class LocationTravelModeLauncher
                 cliDriver.Start();
             }
 
-            // Restore the window mode the player left in. Done here rather than in the window
-            // settings above because borderless-fullscreen is applied to a live window (it needs the
-            // monitor the window actually opened on), not requested at construction.
+            // Restore the window mode the player left in. Not in the window settings above because
+            // borderless-fullscreen is applied to a live window (it needs the monitor the window
+            // actually opened on), and not here directly either: before the first frame the window
+            // is not yet shown, and Windows placed it off the monitor's corner (see AfterFirstFrame).
             // Never while recording: the footage has the size it was asked for, whatever the player's habit.
             if (Cathedral.UserSettings.Fullscreen && !Cathedral.Game.Record.RecordMode.IsActive)
-                Cathedral.Glyph.WindowMode.Apply(core, true);
+                core.AfterFirstFrame = () => Cathedral.Glyph.WindowMode.Apply(core, true);
 
             Console.WriteLine("\n=== Location Travel Mode Ready ===");
             Console.WriteLine("Controls:");
