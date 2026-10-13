@@ -34,7 +34,10 @@ public class RememberVerb : Verb
     public override string Verbatim(Scene scene, PoV pov, Element target)
     {
         if (target is FragmentPointOfInterest frag)
-            return $"try to remember what was this {frag.Fragment.Name} from my childhood";
+            // Fragment names carry their own article ("a whisper", "numbers and symbols"), so the
+            // name goes in as a whole noun phrase. "what was this {name}" read "what was this a
+            // whisper", and the narrator copied the broken phrase into the prose word for word.
+            return $"try to remember {frag.Fragment.Name} from my childhood";
         return "try to remember";
     }
 

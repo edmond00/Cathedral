@@ -120,6 +120,15 @@ namespace Cathedral.Game
             _y = Config.CameraPad.TopMargin;
             _painted = true;
 
+            // The gaps inside an arm — between "►" and "E", beside the "▲" — are part of its hit
+            // rectangle but would hold no ink, and a blank transparent cell falls through to the sky
+            // before this class ever sees the press. A near-invisible background makes them opaque
+            // to the passthrough rule (it tests the background's alpha) without drawing anything.
+            for (int dy = 0; dy < Height; dy++)
+                for (int dx = 0; dx < Width; dx++)
+                    if (ArrowAt(_x + dx, _y + dy) != CameraArrow.None)
+                        _terminal.SetCell(_x + dx, _y + dy, ' ', Colors.Transparent, Config.CameraPad.HitMaskColor);
+
             // Nothing is cleared first and no background is painted: every cell this does not ink
             // stays as it was, which over a transparent overlay means the sky shows through it.
             Ink(MidX,     MidY - 2, 'N', CameraArrow.Up,    InkRole.Label);

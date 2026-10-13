@@ -1174,6 +1174,9 @@ public static class Config
         public static readonly Vector4 RayColor        = Colors.DarkYellowGrey;
         public static readonly Vector4 LabelColor      = Colors.MediumGray60;
         public static readonly Vector4 ArrowHoverColor = Colors.BrightYellow;
+        /// <summary>Background of the blank cells inside an arm: just over the terminal's 0.01
+        /// passthrough threshold, so a press there reaches the rose, and too faint to see.</summary>
+        public static readonly Vector4 HitMaskColor    = new(0f, 0f, 0f, 0.02f);
     }
     
     #endregion
