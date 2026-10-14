@@ -165,6 +165,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("                                     about the verb rather than walk somebody else's tree");
     Console.WriteLine("  --npc-static                       DEBUG: pin every NPC to one area all day instead of following their schedule.");
     Console.WriteLine("  --silent                           DEBUG: open no audio device — no music, no sound effects. Used by the test suite.");
+    Console.WriteLine("  --no-embeddings                    DEBUG: run without models/embeddings/glove.6B.100d.txt (keywords ranked by length). For CI.");
     Console.WriteLine("  --hidden                           DEBUG: create the window without showing it — no window on screen, no focus");
     Console.WriteLine("                                     taken. The GL context and every mode still run. Used by the test suite.");
     Console.WriteLine("                                     Where somebody stands at a given hour is drawn from the location seed, so an");
@@ -289,6 +290,10 @@ if (args.Any(a => a == "--npc-static")) Cathedral.Config.Debug.NpcStatic = true;
 
 // --silent: open no audio device. The test suite passes this on every script.
 if (args.Any(a => a == "--silent")) Cathedral.Config.Debug.Silent = true;
+
+// --no-embeddings: go on without the GloVe vectors rather than exiting. For CI and containers that do
+// not carry the 822 MB file; keyword ranking falls back to word length. See Config.Debug.NoEmbeddings.
+if (args.Any(a => a == "--no-embeddings")) Cathedral.Config.Debug.NoEmbeddings = true;
 
 // --hidden: create the window without showing it. What run_tests.sh uses so a suite run does not put
 // a hundred windows on screen and take the keyboard focus a hundred times.

@@ -262,6 +262,20 @@ public static class Config
         public static bool Silent { get; set; } = false;
 
         /// <summary>
+        /// Runs without the GloVe word vectors (<c>models/embeddings/glove.6B.100d.txt</c>) instead of
+        /// exiting for want of them. Set by <c>--no-embeddings</c>.
+        ///
+        /// <para>For a machine that cannot have the file: a CI runner or container that does not fetch
+        /// 822 MB, or a sandbox whose network policy blocks the download. Keyword ranking then takes the
+        /// path it already takes before the vectors finish loading — by word length — so a
+        /// <c>--playground</c> script sees what it would see racing an unfinished load. <c>wait
+        /// embeddings</c> returns at once and says so.</para>
+        ///
+        /// <para>Inert at its default of false: without the flag a missing file still ends the run.</para>
+        /// </summary>
+        public static bool NoEmbeddings { get; set; } = false;
+
+        /// <summary>
         /// Opens the game window but never shows it. Set by <c>--hidden</c>; <c>run_tests.sh</c>
         /// passes it on every script, for the same reason it passes <c>--silent</c>: a full run
         /// launches the game a hundred-odd times, and each launch otherwise puts a window on screen

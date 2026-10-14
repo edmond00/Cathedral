@@ -187,7 +187,9 @@ public static class CrashReport
         {
             sb.AppendLine($"  OS:            {Environment.OSVersion} ({RuntimeInformation.OSDescription})");
             sb.AppendLine($"  Runtime:       {RuntimeInformation.FrameworkDescription}, {RuntimeInformation.ProcessArchitecture}");
-            sb.AppendLine($"  Wine:          {DetectWine() ?? "not detected (running on Windows)"}");
+            sb.AppendLine(OperatingSystem.IsWindows()
+                ? $"  Wine:          {DetectWine() ?? "not detected (running on Windows)"}"
+                : "  Wine:          no (a native build; the OS line above is the host)");
             sb.AppendLine($"  Processors:    {Environment.ProcessorCount}");
             sb.AppendLine($"  Working dir:   {Environment.CurrentDirectory}");
             sb.AppendLine($"  Process up:    {(DateTime.Now - System.Diagnostics.Process.GetCurrentProcess().StartTime).TotalMinutes:F1} min");
@@ -208,6 +210,8 @@ public static class CrashReport
     /// </summary>
     private static string? DetectWine()
     {
+        // kernel32 and ntdll exist only on Windows (and under Wine, which is Windows to this code).
+        if (!OperatingSystem.IsWindows()) return null;
         try
         {
             IntPtr ntdll = GetModuleHandleW("ntdll.dll");

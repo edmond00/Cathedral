@@ -46,6 +46,11 @@ public static class WordEmbedding
         try
         {
             var path = ResolveVectorsPath();
+            if (path == null && Cathedral.Config.Debug.NoEmbeddings)
+            {
+                Console.WriteLine($"WordEmbedding: {VectorsFileName} absent; running without vectors (--no-embeddings).");
+                return;
+            }
             if (path == null)
             {
                 Console.Error.WriteLine($"WordEmbedding: required vectors file '{VectorsFileName}' not found in models/embeddings/.");

@@ -18,7 +18,12 @@ set -uo pipefail
 cd "$(dirname "$0")"
 
 AUDITS=(crime mm verb building dialogue npc item outcome save world-variant history demo)
-CLI_TIMEOUT=200
+# Overridable from the environment for slow machines (Mesa's software GL under Xvfb, a CI runner):
+# `CLI_TIMEOUT=400 ./run_tests.sh cli`. The default is what a developer's machine needs.
+CLI_TIMEOUT="${CLI_TIMEOUT:-200}"
+# Extra flags for every CLI script, from the environment — e.g. a container without the GloVe file:
+# `CLI_EXTRA_FLAGS=--no-embeddings ./run_tests.sh cli`. Empty by default.
+read -r -a CLI_EXTRA <<< "${CLI_EXTRA_FLAGS:-}"
 LOG_DIR="${TMPDIR:-/tmp}/cathedral-tests"
 mkdir -p "$LOG_DIR"
 LOCK="$LOG_DIR/run_tests.lock"
@@ -33,16 +38,38 @@ LOCK="$LOG_DIR/run_tests.lock"
 # So: refuse to start if anything is already running, and trap every exit path to clean up. Because
 # the guard proves no Cathedral.exe existed when we started, any that exists at exit is ours — which
 # is what makes it safe to kill them all without touching a game somebody opened to play.
+#
+# The game process is "Cathedral" on both platforms (Cathedral.exe on Windows, the Cathedral apphost
+# on Linux). On Windows (Git Bash / MSYS) it is found through PowerShell, as it always was; anywhere
+# else through pgrep/pkill, matching the process name exactly so nothing merely containing the word
+# is touched. Note a WSL shell takes the second path: the suite it runs builds a Linux binary.
+
+case "$(uname -s)" in
+    MINGW*|MSYS*|CYGWIN*) ON_WINDOWS=1 ;;
+    *)                    ON_WINDOWS=0 ;;
+esac
 
 game_count() {
-    powershell.exe -NoProfile -NonInteractive -Command \
-        "@(Get-Process -Name Cathedral -ErrorAction SilentlyContinue).Count" 2>/dev/null | tr -d '\r\n '
+    if [ $ON_WINDOWS = 1 ]; then
+        powershell.exe -NoProfile -NonInteractive -Command \
+            "@(Get-Process -Name Cathedral -ErrorAction SilentlyContinue).Count" 2>/dev/null | tr -d '\r\n '
+    else
+        pgrep -x Cathedral | wc -l | tr -d ' '
+    fi
+}
+
+kill_games() {
+    if [ $ON_WINDOWS = 1 ]; then
+        powershell.exe -NoProfile -NonInteractive -Command \
+            "Get-Process -Name Cathedral -ErrorAction SilentlyContinue | Stop-Process -Force" >/dev/null 2>&1
+    else
+        pkill -KILL -x Cathedral >/dev/null 2>&1
+    fi
 }
 
 cleanup() {
     local code=$?
-    powershell.exe -NoProfile -NonInteractive -Command \
-        "Get-Process -Name Cathedral -ErrorAction SilentlyContinue | Stop-Process -Force" >/dev/null 2>&1
+    kill_games
     rm -f "$LOCK"
     exit $code
 }
@@ -55,9 +82,13 @@ fi
 
 running=$(game_count)
 if [ "${running:-0}" != "0" ]; then
-    echo "$running Cathedral.exe instance(s) already running — a leftover suite, or the game is open." >&2
+    echo "$running Cathedral instance(s) already running — a leftover suite, or the game is open." >&2
     echo "Close them before testing; results from a shared build output are not trustworthy:" >&2
-    echo "  powershell -c \"Get-Process Cathedral | Stop-Process -Force\"" >&2
+    if [ $ON_WINDOWS = 1 ]; then
+        echo "  powershell -c \"Get-Process Cathedral | Stop-Process -Force\"" >&2
+    else
+        echo "  pkill -x Cathedral" >&2
+    fi
     exit 3
 fi
 
@@ -137,7 +168,7 @@ run_cli() {
         # gets into a location with `travel here`, and the spawn vertex is the only one it can name
         # without knowing what the seed generated. No script is testing that refusal.
         timeout $((CLI_TIMEOUT + 60)) dotnet run --no-build -- "${argv[@]}" --silent --hidden --allow-reentry \
-            --cli-timeout "$CLI_TIMEOUT" --cli-script "$s" > "$log" 2>&1
+            ${CLI_EXTRA[@]+"${CLI_EXTRA[@]}"} --cli-timeout "$CLI_TIMEOUT" --cli-script "$s" > "$log" 2>&1
         local code=$?
 
         # Kill anything this script left behind before starting the next one. `timeout` kills the
@@ -145,8 +176,7 @@ run_cli() {
         # hangs and gets timed out leaves a live game holding the build output, and every test after
         # it races that. The startup guard proved none was running when the suite began, so any alive
         # now is this script's.
-        powershell.exe -NoProfile -NonInteractive -Command \
-            "Get-Process -Name Cathedral -ErrorAction SilentlyContinue | Stop-Process -Force" >/dev/null 2>&1
+        kill_games
 
         # The driver's own verdict line is authoritative, not the exit code. The game can crash in
         # WinForms teardown *after* printing "Cleanup complete" — long after every assertion has been

@@ -1568,8 +1568,9 @@ public sealed class CliDriver
         // waits for them first, so the ranking it meets is the same on every run.
         else if (a.Length >= 1 && a[0].Equals("embeddings", StringComparison.OrdinalIgnoreCase))
         {
-            _waitCondition = () => Cathedral.Game.Narrative.WordEmbedding.IsReady;
-            _waitDescription = "embeddings loaded";
+            // Under --no-embeddings they never arrive; the ranking is the fallback on every run anyway.
+            _waitCondition = () => Cathedral.Game.Narrative.WordEmbedding.IsReady || Cathedral.Config.Debug.NoEmbeddings;
+            _waitDescription = Cathedral.Config.Debug.NoEmbeddings ? "embeddings (none: --no-embeddings)" : "embeddings loaded";
             if (a.Length >= 2 && int.TryParse(a[1], out int embSecs))
                 timeout = TimeSpan.FromSeconds(Math.Max(1, embSecs));
         }

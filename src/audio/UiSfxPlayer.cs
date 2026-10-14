@@ -17,8 +17,14 @@ internal sealed class UiSfxPlayer : IDisposable
 {
     // ── WinMM P/Invoke ────────────────────────────────────────────────────────
     // Use nint so we can pass the pinned pointer directly (no managed marshalling).
-    [DllImport("winmm.dll")]
-    private static extern bool PlaySound(nint pszSound, nint hmod, uint fdwSound);
+    [DllImport("winmm.dll", EntryPoint = "PlaySound")]
+    private static extern bool WinMMPlaySound(nint pszSound, nint hmod, uint fdwSound);
+
+    // WinMM exists only on Windows. Elsewhere the ticks are silent until the cross-platform audio path
+    // replaces this player (see tools/linux/PORT-BRIEF.md, step 5); without the guard the first call
+    // throws DllNotFoundException from the AmbianceEngine constructor and takes the game down.
+    private static bool PlaySound(nint pszSound, nint hmod, uint fdwSound) =>
+        OperatingSystem.IsWindows() && WinMMPlaySound(pszSound, hmod, fdwSound);
 
     private const uint SND_ASYNC     = 0x0001;
     private const uint SND_NODEFAULT = 0x0002;
@@ -229,6 +235,7 @@ internal sealed class BrownNoiseStreamer : IDisposable
     public void Start()
     {
         if (_hwo != nint.Zero) return;
+        if (!OperatingSystem.IsWindows()) return;   // waveOut is WinMM; silent elsewhere, as with no device
         if (waveOutOpen(out _hwo, WAVE_MAPPER, _fmt, nint.Zero, nint.Zero, CALLBACK_NULL) != 0)
         {
             _hwo = nint.Zero;
