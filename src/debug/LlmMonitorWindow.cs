@@ -1,3 +1,4 @@
+#if WINDOWS
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -594,3 +595,5 @@ public sealed class LlmMonitorWindow : Form
         return "[" + new string('█', filled) + new string('░', w - filled) + "]";
     }
 }
+
+#endif

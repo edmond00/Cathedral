@@ -1,3 +1,4 @@
+#if WINDOWS
 using Label       = System.Windows.Forms.Label;
 using Orientation = System.Windows.Forms.Orientation;
 using FontStyle   = System.Drawing.FontStyle;
@@ -257,3 +258,5 @@ public class DialogueViewWindow : Form
         return panel;
     }
 }
+
+#endif

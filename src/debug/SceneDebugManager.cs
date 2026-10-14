@@ -1,3 +1,4 @@
+#if WINDOWS
 using System;
 using System.Threading;
 using System.Windows.Forms;
@@ -101,3 +102,24 @@ public static class SceneDebugManager
         }
     }
 }
+
+#else
+using Cathedral.Game;
+using Cathedral.Game.Scene;
+
+namespace Cathedral.Debug;
+
+/// <summary>The scene debug window off Windows: says once that it is unavailable, otherwise does nothing.</summary>
+public static class SceneDebugManager
+{
+    public static void Show(Cathedral.Game.Scene.Scene scene, PoV? pov, int locationId)
+    {
+        if (!DebugMode.ShowViewers) return;
+        PlatformNotice.WindowUnavailable("scene debug");
+    }
+
+    public static void UpdatePoV(PoV pov) { }
+
+    public static void Close() { }
+}
+#endif

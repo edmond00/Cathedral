@@ -1,3 +1,4 @@
+#if WINDOWS
 using System;
 using System.Threading;
 using System.Windows.Forms;
@@ -41,3 +42,14 @@ public static class DialogueViewLauncher
         }
     }
 }
+
+#else
+namespace Cathedral.Debug;
+
+/// <summary><c>--dialogue-view</c> off Windows: the viewer is WinForms. <c>--dialogue-audit</c> is
+/// its text counterpart and runs everywhere.</summary>
+public static class DialogueViewLauncher
+{
+    public static void Launch() => PlatformNotice.WindowUnavailable("dialogue viewer", "--dialogue-audit prints the text report.");
+}
+#endif

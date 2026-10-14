@@ -1,3 +1,4 @@
+#if WINDOWS
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -691,3 +692,5 @@ public sealed class WorldHistoryWindow : Form
         };
     }
 }
+
+#endif
