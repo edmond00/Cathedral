@@ -479,6 +479,9 @@ models/llama-linux/backends/*
 models/llama-linux/backends/*/*
 !models/llama-linux/backends/*/BUILD.txt
 
+# The SoundFont for the OpenAL audio path: tens of MB, third-party, fetched (see assets/audio/README.md).
+assets/audio/*.sf2
+
 # The pre-cleanup models folder, kept locally as an archive (see models/README.md).
 models_old/
 

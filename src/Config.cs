@@ -276,6 +276,20 @@ public static class Config
         public static bool NoEmbeddings { get; set; } = false;
 
         /// <summary>
+        /// Which audio path to take (<c>--audio winmm|openal</c>). Null means the platform's own:
+        /// WinMM and the system MIDI synth on Windows, OpenAL with an in-process SoundFont synth
+        /// everywhere else. Exists so the OpenAL path can be heard on Windows beside the one players
+        /// have always had. Inert at its default of null. See <see cref="Cathedral.Audio.AudioOutput"/>.
+        /// </summary>
+        public static Cathedral.Audio.AudioBackend? AudioBackend { get; set; } = null;
+
+        /// <summary>
+        /// A SoundFont to use instead of <c>assets/audio/soundfont.sf2</c> (<c>--soundfont &lt;file&gt;</c>),
+        /// for comparing candidates on the OpenAL path. Inert at its default of null.
+        /// </summary>
+        public static string? SoundFontPath { get; set; } = null;
+
+        /// <summary>
         /// Opens the game window but never shows it. Set by <c>--hidden</c>; <c>run_tests.sh</c>
         /// passes it on every script, for the same reason it passes <c>--silent</c>: a full run
         /// launches the game a hundred-odd times, and each launch otherwise puts a window on screen

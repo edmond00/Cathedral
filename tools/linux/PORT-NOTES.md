@@ -159,3 +159,61 @@ gibberish, so this proves the process and HTTP plumbing, **not narration quality
 **What the developer should still do with the real model** (or I can, given network access to
 huggingface.co): `bash tools/linux/fetch-assets.sh --glove --model`, then one `--cpu` run to a
 location, and read the narration.
+
+## Step 5 — Audio
+
+- **`src/audio/AudioOutput.cs`**: `AudioBackend { WinMM, OpenAL }`, three small interfaces —
+  `IUiSfx` (hover/click), `INoiseStream` (the brown-noise wash), `IMidiOut` (where the music's MIDI
+  goes) — and `AudioOutput`, which picks the backend once per process and builds them.
+  `AmbianceEngine` now asks `AudioOutput` for its three outputs and otherwise does not know which
+  path it is on. **Windows defaults to WinMM**: `UiSfxPlayer` and `BrownNoiseStreamer` are the same
+  classes as before (they now implement the interfaces), and `DeviceMidiOut` is the old
+  `OpenBestDevice` lifted out of the engine verbatim (GS Wavetable preferred, else the first device).
+- **`src/audio/OpenAlAudio.cs`**: one shared OpenAL Soft device/context opened on first need (via
+  `OpenTK.Audio.OpenAL`, already a dependency); `OpenAlUiSfx` plays the very same tick samples from
+  buffers through four rotating sources; `OpenAlNoiseStream` loops WinMM's two noise blocks back to
+  back; `SoundFontMidiOut` renders the engine's MIDI with **MeltySynth 2.4.1** (MIT, pure C#,
+  netstandard2.1, new `PackageReference`) and streams it into one OpenAL source — 512-frame blocks,
+  4 queued, ~50 ms latency, one lock around the synth because the engine sends from several threads.
+  Every failure (no `libopenal.so.1` / `openal32.dll`, no device, no SoundFont) is a log line and
+  silence, the same state as a machine with no MIDI device.
+- The PCM generators were refactored so both paths share the samples (`UiSfxPlayer.HoverSamples` /
+  `ClickSamples`, `BrownNoiseStreamer.BrownNoiseSamples`). **`--export-sfx` output is byte-identical
+  before and after** (click `cb36a1e6…`, hover `7f7c2305…`), so Windows plays the same ticks. The
+  noise refactor is the same arithmetic moved into a function.
+- **Flags**: `--audio winmm|openal` (Windows: default winmm; elsewhere openal is the only path and
+  `winmm` says so and falls back) and `--soundfont <file>` (for comparing fonts). Both inert by
+  default, both in `--help`. `--silent` still opens nothing on either path.
+- The SoundFont is loaded from **`assets/audio/soundfont.sf2`** (cwd first, then up from the
+  executable), gitignored; provenance and the candidates are in `assets/audio/README.md`.
+- One behaviour difference on Windows, failure case only: `PrepareForEventsSending` used to run
+  outside `OpenBestDevice`'s try/catch, so a device that opened but could not prepare would have
+  thrown out of `AmbianceEngine.Start`; now it is inside, and means "no music". Not a path any
+  machine is known to take.
+
+Verified here (no sound card; "audible" was not checkable, "not silent" was):
+
+| check | result |
+|---|---|
+| playground script, audio on, OpenAL Soft's `wave` driver writing the mix to a file | OpenAL opened, `music through SoundFont soundfont.sf2 (MeltySynth, OpenAL)`, script passes, 16 s capture with ticks peaking at 0.3 FS |
+| `--music` (engine alone) through the same capture | music present, RMS 0.003–0.007 (~−45 dBFS). The engine plays very softly by design — `--export-music` shows note velocities 5–48, mean 23 — so how loud this should sit against the GS synth is for the A/B |
+| `--soundfont /nonexistent.sf2` | "no such file", "no music output", script passes |
+| `dotnet build -r win-x64` | 0 errors; `MeltySynth.dll` and `OpenTK.Audio.OpenAL.dll` in the output |
+
+**On Windows, `--audio openal` needs OpenAL Soft**: OpenTK loads `openal32.dll` and does not ship
+it. Drop OpenAL Soft's `soft_oal.dll` (from openal-soft.org's Windows binaries, LGPL-2.1), renamed
+`openal32.dll`, beside the game, plus `assets/audio/soundfont.sf2`. Without it the flag gives a
+clear log line and silence.
+
+## Open decisions for the developer
+
+1. **The SoundFont** (step 5). Candidates with size, licence and SHA-256 in `assets/audio/README.md`:
+   GeneralUser GS 2.0.3 (32 MB, own permissive licence with a sample-provenance caveat; suggested),
+   FluidR3_GM 3.1 (148 MB, MIT), TimGM6mb 1.3 (6 MB, GPL-2). Which one ships, and whether the
+   GeneralUser caveat is acceptable, is yours.
+2. **Whether to unify audio on Windows** (step 5): keep WinMM + GS Wavetable as the default, or move
+   Windows to OpenAL + the SoundFont too. A/B with `--audio openal` (needs `openal32.dll`, see
+   step 5). Unifying would also mean shipping OpenAL Soft (LGPL-2.1) in the Windows build.
+3. **`--no-embeddings`** (step 3): I added it because the GloVe file cannot be fetched here and the
+   game exits without it even in playground. Keep it as a CI/container convenience, or would you
+   rather the suite always ran with real vectors (which means a 822 MB fetch in every CI run)?
