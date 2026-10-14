@@ -243,6 +243,73 @@ Found while making it work here:
 | `docker build` (mirror base, proxy args) | OK, ~3.5 min cold |
 | `docker run ... cli examine`, run alone | (see the full run below) |
 
+## Step 7 — Stretch
+
+- **`.github/workflows/linux.yml`**: on push to `develop` (and by hand), two parallel jobs on
+  `ubuntu-24.04` — `audits` and `cli` — each doing `cloud-setup.sh --no-llama`, `dotnet build
+  Cathedral.csproj -r linux-x64`, then `xvfb-run ... ./run_tests.sh <part>` with
+  `CLI_EXTRA_FLAGS=--no-embeddings` and `CLI_TIMEOUT=400`; logs uploaded as artifacts. No model
+  download. **Not run**: GitHub Actions cannot be exercised from here, and the branch cannot be
+  pushed yet. The YAML parses; the commands are the ones run by hand in steps 3 and 6. Note it only
+  triggers on `develop`, so it first runs once this branch is merged.
+- **`package.ps1 -Runtime linux-x64`**: `$LinuxTarget` switches the executable name (no `.exe`),
+  the payload (`models/llama-linux` instead of `llama` + `llama-arm64`, plus
+  `assets/audio/soundfont.sf2` as *optional*), the junk list (every `.dll` beside the executable:
+  DryWetMidi's natives are Windows-only), the verification (server, bench, BUILD.txt, ≥10
+  `libggml-cpu-*.so`, GPU packs by `libggml-*.so`) and the archive: a **`.tar.gz` written by
+  `tools/linux/make_tarball.py`** (Python's `tarfile`), with modes set by name — 0755 for the game,
+  `llama-*` and every `*.so*`, 0644 otherwise — because NTFS has no executable bit to read. Every
+  change is behind `$LinuxTarget`; the win-x64 path is the same code as before.
+  Tested here with **pwsh 7.4.6** (installed as a dotnet tool):
+  - `-Runtime linux-x64 -NoModel -SkipManual` (with a placeholder PDF, since the manual is a
+    gitignored build artifact and building it needs Chrome): 91 files, 0.10 GB tarball; modes
+    verified with `tar -tv`; unpacked, `./ProscribedPalimpsest --help` runs, and a bare launch with
+    the stand-in model opened the window, OpenAL and the SoundFont, read `models/llama-linux` and
+    its Vulkan pack, reached `LLMLoading` — and then exited for want of GloVe, as it must: a shipped
+    build accepts only `--cpu --gpu --no-llm-probe --silent --help`, so `--no-embeddings` (and the
+    CLI) are rightly unavailable there. **A complete shipped-build smoke test needs the real model
+    and GloVe.**
+  - the default win-x64 path: publishes, stages the same payload, then fails verification only on
+    the missing `models/llama/llama-server.exe` — which this checkout does not have. Expected.
+- **Skills and `models/README.md`**: the models skill counts three toolchains and says how the Linux
+  one is upgraded (`cloud-setup.sh` after `ExpectedBuild` moves); the runtime skill names the Linux
+  layout (`llama-linux/`, `libggml-*.so`, `LD_LIBRARY_PATH`, `$ORIGIN`); the release skill's note on
+  the test guard mentions `pgrep`; `models/README.md` counts `llama-linux/BUILD.txt` as tracked.
+  `tools/verify_models.ps1` was **not** extended to the Linux toolchain.
+
+## What the developer must check by hand on Windows before merging
+
+1. **`dotnet build` with no arguments** still produces `bin/Debug/net8.0-windows/Cathedral.exe` and
+   the game runs as before. (Here: the evaluation was simulated with `-p:CathedralWindows=true`, and
+   `-r win-x64` builds clean — but nothing has run on Windows.)
+2. **The debug windows**: `--dialogue-view`, and `--view` / `--debug` opening the scene, LLM monitor
+   and world-history viewers. Their code is unchanged inside `#if WINDOWS`, but confirm they open.
+3. **Audio, default path**: music, hover/click ticks, and the brown-noise wash under a model call,
+   a dice roll and a journey — all through `AudioOutput` now, with the same WinMM/GS classes.
+   `--silent` still silent. `--export-sfx` is byte-identical here; listen anyway.
+4. **Audio, `--audio openal`**: put OpenAL Soft's `soft_oal.dll` renamed `openal32.dll` beside the
+   exe and a SoundFont at `assets/audio/soundfont.sf2`, then A/B it against the default (level,
+   timbre, latency of the ticks). Without the DLL it must log and stay silent, not crash.
+5. **`./run_tests.sh` from Git Bash**: the guard and cleanup take the PowerShell branch
+   (`uname -s` = `MINGW*`); start a second suite while one runs and confirm it refuses.
+6. **`./package.ps1`** (Windows, default) produces the same zip as before, and the smoke test in
+   `publish.ps1` passes.
+7. **CRLF**: with `.gitattributes` in place, a fresh Windows checkout gives `*.sh` LF line endings.
+
+## What could not be verified here, and why
+
+- **The real model and narration quality**: `huggingface.co` is denied by this sandbox's network
+  policy. Verified with a random-weight stand-in (step 4) instead.
+- **GloVe-backed keyword ranking**: Stanford's hosts and Hugging Face are denied. Every Linux run
+  here used `--no-embeddings`.
+- **A GPU, CUDA, real Vulkan**: no GPU. Vulkan was exercised only through Mesa's lavapipe (software).
+- **Audible output**: no sound device. Checked "not silent" by having OpenAL Soft's `wave` driver
+  write the mix to a file.
+- **Real display drivers, Wayland, HiDPI, fullscreen, input feel**: only Xvfb + llvmpipe (GLX).
+  GLFW under a Wayland session (XWayland or native) is untried.
+- **Windows itself** (see the list above), and **GitHub Actions**.
+- **Pushing**: the branch could not be pushed from this session (see Environment).
+
 ## Open decisions for the developer
 
 1. **The SoundFont** (step 5). Candidates with size, licence and SHA-256 in `assets/audio/README.md`:
@@ -255,3 +322,6 @@ Found while making it work here:
 3. **`--no-embeddings`** (step 3): I added it because the GloVe file cannot be fetched here and the
    game exits without it even in playground. Keep it as a CI/container convenience, or would you
    rather the suite always ran with real vectors (which means a 822 MB fetch in every CI run)?
+4. **Whether to publish a Linux build on itch.io.** `package.ps1 -Runtime linux-x64` produces one,
+   but the `release` skill and `publish.ps1` are unchanged: no butler channel, no smoke test for it,
+   no changelog line. That is a release decision, so it is left alone here.
