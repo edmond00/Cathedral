@@ -573,7 +573,8 @@ deliberate and is drawn at exactly one line — what a player can see:
 | the itch page | the repository name and the csproj file name |
 
 **Only the shipped executable is renamed**, by an `AssemblyName` conditioned on the same `Ship`
-flag. `run_tests.sh` guards the suite with `Get-Process -Name Cathedral`, and that guard is what
+flag. `run_tests.sh` guards the suite with `Get-Process -Name Cathedral` (`pgrep -x Cathedral` off
+Windows), and that guard is what
 stops a leftover run from racing a new one; renaming the development binary would break it
 *silently*, because the guard would simply stop finding anything and read as "all clear".
 

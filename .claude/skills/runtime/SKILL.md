@@ -40,6 +40,12 @@ by host ISA, with no help from us. Running `llama-server.exe --version` prints t
 load_backend: loaded CPU backend from ...\ggml-cpu-skylakex.dll
 ```
 
+**On Linux** the same folder is `models/llama-linux/` (`LlamaRuntime.LlamaDirectory` picks it on
+any Linux host, with no fallback to the Windows one): `llama-server` and `llama-bench` without an
+extension, `libggml-*.so` in place of `ggml-*.dll`, and `LD_LIBRARY_PATH` playing `PATH`'s part for a
+backend's dependencies. The server itself needs no `LD_LIBRARY_PATH`: it carries `RUNPATH=$ORIGIN`.
+`tools/linux/cloud-setup.sh` fetches and prunes it; `models/llama-linux/BUILD.txt` lists what it kept.
+
 A GPU backend joins the same mechanism through the `GGML_BACKEND_PATH` environment variable, set by
 `LlamaRuntime.ApplyBackend`. Three things about that are easy to get wrong:
 
