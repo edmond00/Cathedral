@@ -36,6 +36,14 @@
     title. Stages into dist-demo/ProscribedPalimpsest-Demo by default, so packaging the demo never
     wipes the full game's dist/ and the reverse. The executable keeps its name.
 
+.PARAMETER Runtime
+    The target. win-x64 (the default) is the Windows package as it has always been. linux-x64
+    packages for Linux: the same game self-contained for Linux, models/llama-linux in place of the
+    two Windows toolchains, the SoundFont the Linux audio path plays its music with, and a .tar.gz
+    instead of a zip, written with explicit file modes so the game and llama-server arrive
+    executable even when the package is built on Windows (tools/linux/make_tarball.py). Needs a
+    Python on PATH.
+
 .PARAMETER ReadyToRun
     Precompile to native code. Roughly 30% larger, noticeably faster to start. Off by default
     because it makes the build slower and is not needed to verify a package is correct.
@@ -44,6 +52,7 @@
     ./package.ps1
     ./package.ps1 -NoModel -NoZip      # fast check that staging works
     ./package.ps1 -Demo                # the demo, into dist-demo/
+    ./package.ps1 -Runtime linux-x64   # the Linux package, a .tar.gz
 #>
 param(
     [string]$OutputDir,
@@ -63,7 +72,9 @@ $root = $PSScriptRoot
 # and the Debug binary all keep it — but nothing a player downloads should say it. The csproj
 # renames the executable under the same Ship flag; these two must agree.
 $ShipName  = "ProscribedPalimpsest"
-$ShipExe   = "$ShipName.exe"
+# Linux executables carry no extension. Everything Linux-specific below hangs off this one test.
+$LinuxTarget = $Runtime -like "linux-*"
+$ShipExe   = if ($LinuxTarget) { $ShipName } else { "$ShipName.exe" }
 $ManualPdf = "$ShipName-Manual.pdf"
 
 # The demo stages under its own output folder and its own folder name. Its own folder because this
@@ -96,18 +107,30 @@ $Payload = @(
     # The language model. Always this name — see models/README.md.
     @{ Path = "models/model.gguf";                Required = $true;  Big = $true }
 
-    # The llama.cpp runtime, including any GPU backend under backends/.
-    @{ Path = "models/llama";                     Required = $true  }
+    # The llama.cpp toolchains: Windows x64 and ARM64, or the Linux one. Exactly one platform's,
+    # since neither can run the other's executables.
+    if (-not $LinuxTarget) {
+        # The llama.cpp runtime, including any GPU backend under backends/.
+        @{ Path = "models/llama";                 Required = $true  }
 
-    # The native ARM64 runtime, for Windows-on-ARM machines (Snapdragon X and successors).
-    # LlamaRuntime picks this over models/llama when OSArchitecture is Arm64 and it is present,
-    # so shipping it is the whole of ARM64 support — the GAME stays x64 and runs emulated, while
-    # the server it starts runs native. That works because the server is a subprocess spoken to
-    # over HTTP, so its architecture is independent of the game's.
-    #
-    # Worth the 22 MB: measured on a Snapdragon X, native reads prompts 5.6x faster than the same
-    # build emulated (76.1 vs 13.6 tok/s), and prompt reading is most of this game's LLM wait.
-    @{ Path = "models/llama-arm64";               Required = $true  }
+        # The native ARM64 runtime, for Windows-on-ARM machines (Snapdragon X and successors).
+        # LlamaRuntime picks this over models/llama when OSArchitecture is Arm64 and it is present,
+        # so shipping it is the whole of ARM64 support — the GAME stays x64 and runs emulated, while
+        # the server it starts runs native. That works because the server is a subprocess spoken to
+        # over HTTP, so its architecture is independent of the game's.
+        #
+        # Worth the 22 MB: measured on a Snapdragon X, native reads prompts 5.6x faster than the same
+        # build emulated (76.1 vs 13.6 tok/s), and prompt reading is most of this game's LLM wait.
+        @{ Path = "models/llama-arm64";           Required = $true  }
+    } else {
+        # The Linux runtime (see tools/linux/cloud-setup.sh, which fetches and prunes it), including
+        # any GPU backend under backends/.
+        @{ Path = "models/llama-linux";           Required = $true  }
+
+        # The SoundFont the Linux audio path renders the music with (assets/audio/README.md).
+        # Optional: without it the game is silent but for its UI ticks, and says so in the log.
+        @{ Path = "assets/audio/soundfont.sf2";   Required = $false; Big = $true }
+    }
 
     # GloVe vectors. WordEmbedding treats these as mandatory and errors out without them.
     @{ Path = "models/embeddings";                Required = $true;  Big = $true }
@@ -282,9 +305,12 @@ if (-not (Test-Path $exe)) { Fail "no $ShipExe in the publish output" }
 # 32-bit MIDI native in a process that is x64 by <PlatformTarget>. Small, but the point of the
 # single-file bundle is that what remains beside the executable is the short list a player can
 # look at and see nothing out of place.
-foreach ($junk in @("*.dylib", "*Native32.dll")) {
+# On Linux every .dll the SDK copies is Windows-only (DryWetMidi's MIDI native in both widths): the
+# managed assemblies are inside the bundle, so nothing beside the executable may be a .dll at all.
+$junkPatterns = if ($LinuxTarget) { @("*.dylib", "*.dll") } else { @("*.dylib", "*Native32.dll") }
+foreach ($junk in $junkPatterns) {
     Get-ChildItem $stage -File -Filter $junk -ErrorAction SilentlyContinue | ForEach-Object {
-        Note ("removed {0} (cannot load on win-x64)" -f $_.Name)
+        Note ("removed {0} (cannot load on {1})" -f $_.Name, $Runtime)
         Remove-Item $_.FullName -Force
     }
 }
@@ -339,8 +365,13 @@ foreach ($item in $Payload) {
 
 Step "Verifying"
 
-$mustExist = @($ShipExe, $ManualPdf, "assets/fonts/FreeMono.ttf", "models/llama/llama-server.exe",
-               "models/llama-arm64/llama-server.exe")
+$mustExist = if ($LinuxTarget) {
+    @($ShipExe, $ManualPdf, "assets/fonts/FreeMono.ttf", "models/llama-linux/llama-server",
+      "models/llama-linux/llama-bench", "models/llama-linux/BUILD.txt")
+} else {
+    @($ShipExe, $ManualPdf, "assets/fonts/FreeMono.ttf", "models/llama/llama-server.exe",
+      "models/llama-arm64/llama-server.exe")
+}
 if (-not $NoModel) { $mustExist += @("models/model.gguf", "models/embeddings/glove.6B.100d.txt") }
 
 $missing = $mustExist | Where-Object { -not (Test-Path (Join-Path $stage $_)) }
@@ -352,6 +383,21 @@ Note ("checked {0} required paths, all present" -f $mustExist.Count)
 #
 # x64 ONLY. The ARM64 toolchain ships a single ggml-cpu.dll because ARM64 has no equivalent
 # microarchitecture fan-out, so applying this count to it would fail a correct package.
+if ($LinuxTarget) {
+    # The same fan-out as on Windows: one CPU backend per microarchitecture, chosen at runtime.
+    $cpuBackends = (Get-ChildItem (Join-Path $stage "models/llama-linux") -Filter "libggml-cpu-*.so").Count
+    if ($cpuBackends -lt 10) { Fail "only $cpuBackends libggml-cpu-*.so present; expected the full set" }
+    Note "$cpuBackends CPU backends (linux x64)"
+
+    $gpuBackends = Get-ChildItem (Join-Path $stage "models/llama-linux/backends") -Directory -ErrorAction SilentlyContinue |
+                   Where-Object { (Get-ChildItem $_.FullName -Filter "libggml-*.so").Count -gt 0 }
+    if ($gpuBackends) {
+        Note ("GPU backends: " + (($gpuBackends | ForEach-Object { $_.Name }) -join ", "))
+    } else {
+        Write-Host "   NOTE: no GPU backend bundled — every player runs on CPU." -ForegroundColor Yellow
+        Write-Host "         tools/linux/cloud-setup.sh --vulkan fetches the Vulkan one." -ForegroundColor Yellow
+    }
+} else {
 $cpuBackends = (Get-ChildItem (Join-Path $stage "models/llama") -Filter "ggml-cpu-*.dll").Count
 if ($cpuBackends -lt 10) { Fail "only $cpuBackends ggml-cpu-*.dll present; expected the full set" }
 Note "$cpuBackends CPU backends (x64)"
@@ -380,6 +426,7 @@ if ($gpuBackends) {
     Write-Host "   NOTE: no GPU backend bundled — every player runs on CPU." -ForegroundColor Yellow
     Write-Host "         See models/llama/backends/README.md." -ForegroundColor Yellow
 }
+}
 
 $staged = (Get-ChildItem $stage -Recurse -File | Measure-Object Length -Sum).Sum
 Note ("package: {0:N1} GB across {1:N0} files" -f ($staged / 1GB), (Get-ChildItem $stage -Recurse -File).Count)
@@ -395,6 +442,30 @@ if ($NoZip) {
 Step "Archiving"
 
 $stamp = Get-Date -Format "yyyyMMdd"
+
+if ($LinuxTarget) {
+    # A tar.gz written by Python with the modes set by name (tools/linux/make_tarball.py): built on
+    # Windows, nothing on disk carries an executable bit, so a zip would unpack on Linux with a game
+    # that will not start. tarfile is in Python's standard library, so any interpreter will do.
+    $python = $null
+    foreach ($src in (Get-Command python3, python -All -ErrorAction SilentlyContinue |
+                      Select-Object -ExpandProperty Source -Unique)) {
+        & $src -c "import tarfile"
+        if ($LASTEXITCODE -eq 0) { $python = $src; break }
+    }
+    if (-not $python) { Fail "no Python on PATH to write the .tar.gz with (tools/linux/make_tarball.py)" }
+
+    $tarball = Join-Path $root (Join-Path $OutputDir "$StageName-linux64-$stamp.tar.gz")
+    & $python (Join-Path $root "tools/linux/make_tarball.py") $stage $tarball $ShipExe
+    if ($LASTEXITCODE -ne 0) { Fail "make_tarball.py returned $LASTEXITCODE" }
+
+    $tarBytes = (Get-Item $tarball).Length
+    Note ("{0}  ({1:N2} GB)" -f (Split-Path $tarball -Leaf), ($tarBytes / 1GB))
+    Step "Done"
+    Write-Host "   $tarball"
+    exit 0
+}
+
 $zip = Join-Path $root (Join-Path $OutputDir "$StageName-win64-$stamp.zip")
 
 # ZipFile, not Compress-Archive: the cmdlet in Windows PowerShell 5.1 fails on inputs above 2 GB,
