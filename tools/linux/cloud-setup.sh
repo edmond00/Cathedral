@@ -81,8 +81,16 @@ else
     # Upstream has changed its asset naming more than once (zip vs tar.gz), so ask the API
     # rather than guess a URL.
     URL=$(curl -sSL "https://api.github.com/repos/ggml-org/llama.cpp/releases/tags/b$BUILD" \
-          | jq -r '.assets[].browser_download_url' \
-          | grep -E 'bin-ubuntu-x64\.(zip|tar\.gz)$' | head -1)
+          | jq -r '.assets[]?.browser_download_url' 2>/dev/null \
+          | grep -E 'bin-ubuntu-x64\.(zip|tar\.gz)$' | head -1 || true)
+    # The API can be unreachable where the download host is not (a cloud session gates the REST
+    # API per repository). Fall back to the names upstream has used, newest first.
+    if [ -z "$URL" ]; then
+        for ext in tar.gz zip; do
+            CAND="https://github.com/ggml-org/llama.cpp/releases/download/b$BUILD/llama-b$BUILD-bin-ubuntu-x64.$ext"
+            if curl -sSfIL -o /dev/null "$CAND" 2>/dev/null; then URL="$CAND"; break; fi
+        done
+    fi
     if [ -z "$URL" ]; then
         say "ERROR: no ubuntu-x64 asset in release b$BUILD. Assets are:"
         curl -sSL "https://api.github.com/repos/ggml-org/llama.cpp/releases/tags/b$BUILD" \
