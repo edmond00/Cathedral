@@ -241,7 +241,7 @@ Found while making it work here:
 | check | result |
 |---|---|
 | `docker build` (mirror base, proxy args) | OK, ~3.5 min cold |
-| `docker run ... cli examine`, run alone | (see the full run below) |
+| `docker run --rm -v "$PWD/models:/src/models" cathedral-tests` (everything; image built from the step-5 tree, so it includes the audio abstraction) | **205/205 pass**: 12/12 audits + 193/193 CLI scripts, ~71 min on 4 vCPU (shared with other work). No GloVe in the mount, so the entry point added `--no-embeddings` and said so |
 
 ## Step 7 — Stretch
 
