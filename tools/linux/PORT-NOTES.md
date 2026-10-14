@@ -7,10 +7,9 @@ step; open questions for the developer are collected at the end.
 
 - Cloud session, Ubuntu (Linux 6.18 kernel), no GPU, no sound device.
 - .NET SDK 8.0.131 from apt (`cloud-setup.sh`).
-- **Pushing was refused** at the start of the session: the git proxy has no write credential for
-  `edmond00/cathedral` (the Claude GitHub App is not installed on it / GitHub not linked). Work is
-  committed locally on `linux-port` and pushed once access works; any commit not yet on
-  `origin/linux-port` when the session ends is listed in the final summary.
+- **Pushing was refused** for most of the session: the Claude GitHub App was not yet installed on
+  `edmond00/cathedral`. Every step was committed locally as it was finished, and all of them were
+  pushed together once the app was installed.
 - `cloud-setup.sh` failed at the llama.cpp step on its first run: in a cloud session the GitHub
   REST API is gated per repository, so `api.github.com/repos/ggml-org/llama.cpp/releases/...`
   returned an access message instead of the release, and `jq` choked on it. The release asset
@@ -308,7 +307,6 @@ Found while making it work here:
 - **Real display drivers, Wayland, HiDPI, fullscreen, input feel**: only Xvfb + llvmpipe (GLX).
   GLFW under a Wayland session (XWayland or native) is untried.
 - **Windows itself** (see the list above), and **GitHub Actions**.
-- **Pushing**: the branch could not be pushed from this session (see Environment).
 
 ## Open decisions for the developer
 
