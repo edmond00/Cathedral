@@ -53,10 +53,23 @@ public static class LlamaRuntime
     /// </summary>
     public const string ModelFileName = "model.gguf";
 
-    public const string ServerExecutableName = "llama-server.exe";
-    public const string BenchExecutableName  = "llama-bench.exe";
+    /// <summary>
+    /// Executables carry <c>.exe</c> on Windows and nothing elsewhere; backend libraries are
+    /// <c>ggml-*.dll</c> on Windows and <c>libggml-*.so</c> on Linux. Everything that names one of
+    /// these files goes through the four members below.
+    /// </summary>
+    public static readonly string ServerExecutableName = OperatingSystem.IsWindows() ? "llama-server.exe" : "llama-server";
+    public static readonly string BenchExecutableName  = OperatingSystem.IsWindows() ? "llama-bench.exe"  : "llama-bench";
+    private static readonly string LibraryPrefix    = OperatingSystem.IsWindows() ? ""     : "lib";
+    private static readonly string LibraryExtension = OperatingSystem.IsWindows() ? ".dll" : ".so";
+
     private const string LlamaFolderName      = "llama";
     private const string LlamaArm64FolderName = "llama-arm64";
+    /// <summary>
+    /// The Linux toolchain, beside the Windows ones rather than in place of them, so one
+    /// <c>models/</c> folder serves both (a WSL2 shell and Windows reading the same checkout).
+    /// </summary>
+    private const string LlamaLinuxFolderName = "llama-linux";
     private const string BackendsFolderName   = "backends";
     private const string BuildFileName        = "BUILD.txt";
 
@@ -65,14 +78,21 @@ public static class LlamaRuntime
     /// The CPU variants already load themselves from beside the executable, and loading a second
     /// copy through <c>GGML_BACKEND_PATH</c> would register a duplicate device.
     /// </summary>
-    private static readonly string[] NonBackendPrefixes = { "ggml-cpu", "ggml-base", "ggml-rpc" };
+    private static readonly string[] NonBackendPrefixes =
+        { LibraryPrefix + "ggml-cpu", LibraryPrefix + "ggml-base", LibraryPrefix + "ggml-rpc" };
 
     private static string? _llamaDirectory;
     private static bool    _llamaDirectoryResolved;
 
     /// <summary>
-    /// The llama.cpp toolchain this machine should run: <c>models/llama-arm64</c> on an ARM64 host
-    /// that shipped one, else <c>models/llama</c>. Null when the models directory is missing.
+    /// The llama.cpp toolchain this machine should run: <c>models/llama-linux</c> on Linux,
+    /// <c>models/llama-arm64</c> on an ARM64 Windows host that shipped one, else <c>models/llama</c>.
+    /// Null when the models directory is missing.
+    ///
+    /// <para><b>Linux is an operating system, not a preference.</b> A Windows executable cannot run
+    /// there at all, so unlike the ARM64 case there is no fallback to <c>models/llama</c>: a Linux
+    /// install without <c>llama-linux</c> resolves to a folder that does not exist, and the server
+    /// start reports the missing executable by name.</para>
     ///
     /// <para><b>An architecture is not a backend, and is not probed.</b> CUDA and Vulkan are plugin
     /// DLLs loaded into the server at runtime, so they can be measured against each other. An
@@ -98,6 +118,9 @@ public static class LlamaRuntime
             if (_llamaDirectoryResolved) return _llamaDirectory;
             _llamaDirectoryResolved = true;
 
+            if (OperatingSystem.IsLinux())
+                return _llamaDirectory = ModelsDirectory.PathTo(LlamaLinuxFolderName);
+
             if (RuntimeInformation.OSArchitecture == Architecture.Arm64)
             {
                 var native = ModelsDirectory.PathTo(LlamaArm64FolderName);
@@ -115,6 +138,10 @@ public static class LlamaRuntime
     public static bool IsArm64Toolchain =>
         LlamaDirectory != null &&
         Path.GetFileName(LlamaDirectory).Equals(LlamaArm64FolderName, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Which toolchain, in a word, for the log and the probe report.</summary>
+    public static string ToolchainLabel =>
+        IsArm64Toolchain ? "arm64 native" : OperatingSystem.IsLinux() ? "linux x64" : "x64";
 
     /// <summary>The server executable. Null when the models directory is missing.</summary>
     public static string? ServerPath => Combine(LlamaDirectory, ServerExecutableName);
@@ -171,7 +198,7 @@ public static class LlamaRuntime
             string? dll;
             try
             {
-                dll = Directory.EnumerateFiles(dir, "ggml-*.dll")
+                dll = Directory.EnumerateFiles(dir, $"{LibraryPrefix}ggml-*{LibraryExtension}")
                                .FirstOrDefault(f => !NonBackendPrefixes.Any(p =>
                                    Path.GetFileName(f).StartsWith(p, StringComparison.OrdinalIgnoreCase)));
             }
@@ -214,6 +241,18 @@ public static class LlamaRuntime
         startInfo.Environment["PATH"] = string.IsNullOrEmpty(existingPath)
             ? backend.Directory
             : $"{backend.Directory}{Path.PathSeparator}{existingPath}";
+
+        // Linux's dynamic loader reads LD_LIBRARY_PATH, not PATH, for the same job. The server and
+        // its own libraries need neither: llama-server carries RUNPATH=$ORIGIN.
+        if (!OperatingSystem.IsWindows())
+        {
+            var ld = startInfo.Environment.TryGetValue("LD_LIBRARY_PATH", out var l) && !string.IsNullOrEmpty(l)
+                ? l
+                : Environment.GetEnvironmentVariable("LD_LIBRARY_PATH") ?? string.Empty;
+            startInfo.Environment["LD_LIBRARY_PATH"] = string.IsNullOrEmpty(ld)
+                ? backend.Directory
+                : $"{backend.Directory}{Path.PathSeparator}{ld}";
+        }
     }
 
     /// <summary>
@@ -264,7 +303,6 @@ public static class LlamaRuntime
             : "backends installed: " + string.Join(", ", backends.Select(b => b.Name));
         // Which toolchain, because on a Snapdragon the difference between native and emulated is
         // 5.6x on prompt processing — and nothing else in the log would say which one ran.
-        var arch = IsArm64Toolchain ? "arm64 native" : "x64";
-        return $"llama.cpp {build} ({arch}); {backendText}";
+        return $"llama.cpp {build} ({ToolchainLabel}); {backendText}";
     }
 }

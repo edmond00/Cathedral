@@ -1,0 +1,72 @@
+llama.cpp build: b11515
+commit:          3d65c90d0
+toolchain:       upstream release, Ubuntu x86_64 (GNU)
+upstream asset:  llama-b11515-bin-ubuntu-x64.tar.gz
+license:         MIT (https://github.com/ggml-org/llama.cpp/blob/master/LICENSE)
+
+This file is READ BY THE GAME, so keep the "llama.cpp build: bNNNN" format on the first line.
+Fetched and pruned by tools/linux/cloud-setup.sh; the binaries are gitignored, this file is not.
+
+── what was kept, and why ─────────────────────────────────────────────────────
+
+The ldd closure of llama-server and llama-bench that lives in this folder (each
+versioned library with its symlink), plus the CPU backends ggml loads by directory
+scan. llama-server carries RUNPATH=$ORIGIN, so it finds them with no LD_LIBRARY_PATH.
+Needed from the OS: libstdc++6, libgomp1, libssl3 (libcrypto).
+
+kept:
+  LICENSE
+  libggml-base.so.0
+  libggml-base.so.0.26.0
+  libggml-cpu-alderlake.so
+  libggml-cpu-cannonlake.so
+  libggml-cpu-cascadelake.so
+  libggml-cpu-cooperlake.so
+  libggml-cpu-haswell.so
+  libggml-cpu-icelake.so
+  libggml-cpu-ivybridge.so
+  libggml-cpu-piledriver.so
+  libggml-cpu-sandybridge.so
+  libggml-cpu-sapphirerapids.so
+  libggml-cpu-skylakex.so
+  libggml-cpu-sse42.so
+  libggml-cpu-x64.so
+  libggml-cpu-zen4.so
+  libggml.so.0
+  libggml.so.0.26.0
+  libllama-bench-impl.so
+  libllama-common.so.0
+  libllama-common.so.0.6.0
+  libllama-server-impl.so
+  libllama.so.0
+  libllama.so.0.6.0
+  libmtmd.so.0
+  libmtmd.so.0.6.0
+  llama-bench
+  llama-server
+
+sha256:
+  94f29bbed6a22c35b992c5c6ebf0e7c92f13b836b90f36f461c9cf2f0f1d010d  LICENSE
+  12df38711356a17dfa2b02ab3830818bc2af7d9dfdb02b5c2740a8500c676557  libggml-base.so.0.26.0
+  4fc8d2e35e67680d7b465fd075cb5e11be35659f1293bf58becd4535fd3c7eb8  libggml-cpu-alderlake.so
+  dfc0ac8f968d34a919e7009d9a59b2c661be50af23ac4555a602b01516fb2c50  libggml-cpu-cannonlake.so
+  f45cb0338b7e60bb7dfb53aa9e5e1c77c992d249843698d80b17f5c869760fc6  libggml-cpu-cascadelake.so
+  9cdf33a1bf0d837ec932ffed37f873e1370ed753139c63b50a7fd31fd84034ac  libggml-cpu-cooperlake.so
+  bbca6e1788620735294a78bf6d7ce4dc5ca67db0d57912b0969f00f8aa0d8cc0  libggml-cpu-haswell.so
+  115cd202c3039175c49cc2eb803b4b30d17396620ce1c8f5001077198d3ab24b  libggml-cpu-icelake.so
+  dd07d8b303c14913ac60aa0f3f0d02d13248fdba43fa05f2dd8ceed1afeed3ba  libggml-cpu-ivybridge.so
+  99bffd05ed4bc444f63ffb82245cf0d6f1645ee05f1ad03584ab3ef06a191874  libggml-cpu-piledriver.so
+  37165f8e4607c7afeb6e84c3bfb964892d1a087fde073729d0c35776bf8c057c  libggml-cpu-sandybridge.so
+  3ccbc63dccd3514cca3112a89ed16b6e006a6c340d9fd57d666097b5a8c4c62a  libggml-cpu-sapphirerapids.so
+  c812042f334492b5651cbc4ad153ea595392f47fa3b311426986690719bac9f1  libggml-cpu-skylakex.so
+  fe96db3cbd2867ff5d7ab398b09de0b96da9cf39a38bee83ad28aeabc852aa34  libggml-cpu-sse42.so
+  f78d138740d0385c4105aea2f8e145f7e9f595e74185e3ea9e2ecd45f6de5cca  libggml-cpu-x64.so
+  44e26057ba3bc4a9f5c51b2aa5de4c756156af20a87d350295b1925604610a94  libggml-cpu-zen4.so
+  354c630e37df7982af7b2d032aafdb0548f8e2f3a255ff0778027e531a357b82  libggml.so.0.26.0
+  990aafe8d673a0ba17ad7b844768fe8e8a908c0296ea05b5874eb8d79c0b1cf8  libllama-bench-impl.so
+  ef64c17c39b772d06e0cc992c586d70226ab9b7e09568aec88d4828bd6f07a35  libllama-common.so.0.6.0
+  921315adadf7ec6f9cf6dff953b9b3da96aff03f19e806bd23249e6debbac44f  libllama-server-impl.so
+  d2b172c7bebce69d27a30211ba3d3fc7ff1e4bff5874390b1281517a98194f28  libllama.so.0.6.0
+  083123323a9840a5aa1b3c4a6ad62be2c96098e9cda5b8a4c1b87a74dd8682c3  libmtmd.so.0.6.0
+  0fa99e4d3d395647f8e829576b1182d65b5a0046f19764fdfac3f2d059691cb4  llama-bench
+  cbb247ad34e83b10bc1958542801e4cb480d2c2ace2d37bbccb260453a7b1b95  llama-server

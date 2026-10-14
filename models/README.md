@@ -1,6 +1,6 @@
 # models/
 
-Everything the game loads at runtime that is not code. Five things live here, and only
+Everything the game loads at runtime that is not code. Six things live here, and only
 `model.gguf` is meant to be swapped by a player.
 
 | path | what | required |
@@ -8,6 +8,7 @@ Everything the game loads at runtime that is not code. Five things live here, an
 | `model.gguf` | the language model driving all narration | yes — the game exits without it |
 | `llama/` | the llama.cpp runtime that serves it (x64) | yes |
 | `llama-arm64/` | the same runtime built for Windows-on-ARM | yes on ARM64 hosts |
+| `llama-linux/` | the same runtime for Linux x64 (fetched and pruned by `tools/linux/cloud-setup.sh`) | yes on Linux |
 | `embeddings/glove.6B.100d.txt` | GloVe vectors for `WordEmbedding` | yes |
 | `en_scowl_40.txt` | SCOWL common-word list for the narration sanitizer | no — layer-2 guard disables itself |
 

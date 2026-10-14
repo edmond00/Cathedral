@@ -108,3 +108,54 @@ Results:
 | `dotnet run -- --help` | OK, exit 0 |
 | `./run_tests.sh audits` | **12/12 pass** (crime, mm, verb, building, dialogue, npc, item, outcome, save, world-variant, history, demo). 20 min 29 s on 4 vCPU — verb and building take most of it |
 | `cli/verb/examine/success.cli` under Xvfb, `--no-embeddings` | pass, 14 s |
+
+## Step 4 — llama.cpp on Linux
+
+- `LlamaRuntime`: `ServerExecutableName` / `BenchExecutableName` are `static readonly` now (were
+  `const`; nothing used them in a constant context), `llama-server.exe` / `llama-bench.exe` on
+  Windows and `llama-server` / `llama-bench` elsewhere. Backend discovery looks for `ggml-*.dll` on
+  Windows and `libggml-*.so` elsewhere, with the non-backend prefixes (`cpu`, `base`, `rpc`)
+  prefixed `lib` to match. Linux resolves `models/llama-linux` — and, unlike ARM64, never falls back
+  to `models/llama`, since a Windows executable cannot run there. `ApplyBackend` also prepends the
+  backend folder to `LD_LIBRARY_PATH` off Windows (the Linux twin of the `PATH` prepend).
+  `LlamaRuntime.ToolchainLabel` (`x64` / `arm64 native` / `linux x64`) feeds the startup line and the
+  probe report. `LlamaInstallCheck` hashes whatever `DiscoverBackends` returns, so it needed only
+  its message to name the real folder instead of `models/llama`.
+- `llama-server` carries `RUNPATH=$ORIGIN` and finds its `.so` files from its own folder with no
+  `LD_LIBRARY_PATH`. A backend pack in `backends/vulkan/` resolves `libggml-base.so.0` from the
+  server, which has already loaded it.
+- **Pruning** is done by `cloud-setup.sh` itself, so every machine gets the same folder: the `ldd`
+  closure of `llama-server` + `llama-bench` that lives in the folder (with symlink targets), plus
+  the 14 `libggml-cpu-*.so`, `LICENSE` and `BUILD.txt` — 30 entries, 41 MB. `BUILD.txt` is written
+  deterministically (kept list + SHA-256 of every file) and is tracked; re-running setup rewrites it
+  byte-for-byte. System libraries left to the OS: libstdc++6, libgomp1, libssl3.
+- `.gitignore` mirrors the ARM64 block for `models/llama-linux/` (BUILD.txt and
+  `backends/*/BUILD.txt` tracked, the rest ignored). `models/README.md` table has a `llama-linux/`
+  row.
+- **Vulkan**: `cloud-setup.sh --vulkan` fetches `libggml-vulkan.so` from upstream's Ubuntu Vulkan
+  build into `models/llama-linux/backends/vulkan/` with a tracked `BUILD.txt` (build + hash), and
+  installs `libvulkan1` + `mesa-vulkan-drivers`. There is no GPU here; Mesa's **lavapipe** (software
+  Vulkan) gives one device, which llama.cpp hides as CPU-type unless `GGML_VK_VISIBLE_DEVICES=0`.
+  With that set, the probe's two-candidate path runs. **Real Vulkan on a real GPU is untested.**
+
+### The LLM run — with a stand-in model
+
+The real model **cannot be fetched here**: `huggingface.co` is denied by the network policy, like
+the GloVe hosts. To exercise the Linux plumbing anyway, I generated a **1-layer random-weight llama
+GGUF** (21 MB, 40k-token vocabulary taken from `models/en_scowl_40.txt`, ChatML template) with the
+`gguf` Python package and put it at `models/model.gguf` (gitignored; not committed). It produces
+gibberish, so this proves the process and HTTP plumbing, **not narration quality**:
+
+| check | result |
+|---|---|
+| `--llm-probe-audit`, CPU only | "CPU (no GPU backend installed)", no bench needed — correct |
+| `--llm-probe-audit` with the Vulkan pack + `GGML_VK_VISIBLE_DEVICES=0` | `llama-bench` ran for CPU and for `vulkan — llvmpipe`, table printed, CPU chosen by the usual rule |
+| real (non-playground) run, `--cpu`, to `LocationInteraction` | server started from `models/llama-linux`, loaded, `Using model: tiny-random-test (llama.cpp b11515 (linux x64); backends installed: vulkan)`; first observation request streamed a full reply (`done=y eof=y`, 802 chars); the next failed with HTTP 400 *context exceeded*, because the random model's gibberish is fed back into the next prompt — a property of the stand-in, not of the port |
+| install check | only "model.gguf is tiny-random-test; this game expects qwen2.5-3b-instruct" — the server build check and the Vulkan pack's hash both pass |
+| game quits normally | "Stopping llama server...", no `llama-server` left |
+| `SIGTERM` to the game | server gone (`ProcessExit` hook runs) |
+| `SIGKILL` to the game | server **orphaned** (reparented to init). Same as a hard kill on Windows, where there is no job object either; not changed. A Linux fix would be `prctl(PR_SET_PDEATHSIG)` in the child, which `ProcessStartInfo` cannot express — would need a tiny wrapper |
+
+**What the developer should still do with the real model** (or I can, given network access to
+huggingface.co): `bash tools/linux/fetch-assets.sh --glove --model`, then one `--cpu` run to a
+location, and read the narration.
