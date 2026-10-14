@@ -5,6 +5,8 @@
 #
 #   bash tools/linux/cloud-setup.sh            the CPU toolchain
 #   bash tools/linux/cloud-setup.sh --vulkan   also the Vulkan backend pack and the Vulkan loader
+#   bash tools/linux/cloud-setup.sh --no-llama packages and SDK only (the Docker image: models/ is
+#                                              mounted at run time, never baked in)
 #
 # What it installs:
 #   - the .NET 8 SDK                      (apt if the distro carries it, dotnet-install.sh otherwise)
@@ -30,11 +32,12 @@ if [ "$(id -u)" != "0" ]; then SUDO="sudo"; fi
 
 say() { echo "[setup] $*"; }
 
-WANT_VULKAN=0
+WANT_VULKAN=0; WANT_LLAMA=1
 for a in "$@"; do
     case "$a" in
-        --vulkan) WANT_VULKAN=1 ;;
-        *) echo "usage: $0 [--vulkan]" >&2; exit 2 ;;
+        --vulkan)   WANT_VULKAN=1 ;;
+        --no-llama) WANT_LLAMA=0 ;;
+        *) echo "usage: $0 [--vulkan] [--no-llama]" >&2; exit 2 ;;
     esac
 done
 
@@ -79,9 +82,11 @@ dotnet --info | head -5
 # The version is read from the code, not written here, so this script cannot drift from the
 # game's install check.
 
-BUILD=$(sed -nE 's/.*ExpectedBuild[[:space:]]*=[[:space:]]*([0-9]+).*/\1/p' src/LLM/LlamaInstallCheck.cs)
-COMMIT=$(sed -nE 's/.*ExpectedCommit[[:space:]]*=[[:space:]]*"([0-9a-f]+)".*/\1/p' src/LLM/LlamaInstallCheck.cs)
-[ -n "$BUILD" ] || { say "ERROR: could not read ExpectedBuild from LlamaInstallCheck.cs"; exit 1; }
+if [ $WANT_LLAMA = 1 ]; then
+    BUILD=$(sed -nE 's/.*ExpectedBuild[[:space:]]*=[[:space:]]*([0-9]+).*/\1/p' src/LLM/LlamaInstallCheck.cs)
+    COMMIT=$(sed -nE 's/.*ExpectedCommit[[:space:]]*=[[:space:]]*"([0-9a-f]+)".*/\1/p' src/LLM/LlamaInstallCheck.cs)
+    [ -n "$BUILD" ] || { say "ERROR: could not read ExpectedBuild from LlamaInstallCheck.cs"; exit 1; }
+fi
 DEST="$ROOT/models/llama-linux"
 
 # The tracked record of this toolchain. Deterministic (sorted, no dates), so re-running setup
@@ -113,7 +118,9 @@ write_build_txt() {  # upstream asset url
     } > "$DEST/BUILD.txt"
 }
 
-if [ -x "$DEST/llama-server" ] && head -1 "$DEST/BUILD.txt" 2>/dev/null | grep -q "b$BUILD"; then
+if [ $WANT_LLAMA = 0 ]; then
+    say "llama.cpp skipped (--no-llama)"
+elif [ -x "$DEST/llama-server" ] && head -1 "$DEST/BUILD.txt" 2>/dev/null | grep -q "b$BUILD"; then
     say "llama.cpp b$BUILD already in models/llama-linux"
 else
     say "llama.cpp b$BUILD (Ubuntu x64 CPU) -> models/llama-linux"
@@ -180,7 +187,7 @@ fi
 # GGML_VK_VISIBLE_DEVICES names them (GGML_VK_VISIBLE_DEVICES=0) — which is how the probe's
 # two-candidate path can be exercised without a GPU.
 
-if [ $WANT_VULKAN = 1 ]; then
+if [ $WANT_VULKAN = 1 ] && [ $WANT_LLAMA = 1 ]; then
     $SUDO apt-get install -y -qq --no-install-recommends libvulkan1 mesa-vulkan-drivers >/dev/null
     VK="$DEST/backends/vulkan"
     if [ -f "$VK/libggml-vulkan.so" ] && [ "$(sha256sum "$VK/libggml-vulkan.so" | cut -d' ' -f1)" = \

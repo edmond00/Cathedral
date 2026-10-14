@@ -108,6 +108,10 @@ Results:
 | `dotnet run -- --help` | OK, exit 0 |
 | `./run_tests.sh audits` | **12/12 pass** (crime, mm, verb, building, dialogue, npc, item, outcome, save, world-variant, history, demo). 20 min 29 s on 4 vCPU — verb and building take most of it |
 | `cli/verb/examine/success.cli` under Xvfb, `--no-embeddings` | pass, 14 s |
+| **`CLI_TIMEOUT=400 CLI_EXTRA_FLAGS=--no-embeddings xvfb-run -a ./run_tests.sh cli`** | **193/193 pass**, 0 failed, ~53 min on 4 vCPU (~15 s per script). Includes the two scripts that `wait embeddings` |
+
+No file-name case mismatches or backslash paths turned up anywhere in the suite. The default 200 s
+`CLI_TIMEOUT` would also have done: no script came near it.
 
 ## Step 4 — llama.cpp on Linux
 
@@ -204,6 +208,40 @@ Verified here (no sound card; "audible" was not checkable, "not silent" was):
 it. Drop OpenAL Soft's `soft_oal.dll` (from openal-soft.org's Windows binaries, LGPL-2.1), renamed
 `openal32.dll`, beside the game, plus `assets/audio/soundfont.sf2`. Without it the flag gives a
 clear log line and silence.
+
+## Step 6 — Docker
+
+- `tools/linux/Dockerfile`: Ubuntu 24.04 (`ARG BASE_IMAGE`, default `ubuntu:24.04`), then
+  **`cloud-setup.sh --no-llama`**, so the package list lives in one place. `--no-llama` is new: packages
+  and SDK only, since `models/` is mounted rather than baked in. Then `tini`, a restore layer, the
+  source, and `dotnet build`. Entry point `tools/linux/docker-entrypoint.sh`: `xvfb-run -a
+  ./run_tests.sh "$@"` (all by default), `CLI_TIMEOUT=400` unless set, and `--no-embeddings` added
+  only when the mounted `models/` has no GloVe file.
+- `.dockerignore` at the root: `bin/ obj/ dist*/ models/ logs/ local/ cache/`, plus `.git/`,
+  `DEPRECATED/`, the video venv and `*.sf2`. Context is ~48 MB.
+- `tools/linux/README.md`: the exact `docker build` / `docker run` commands for a Linux/WSL2 shell
+  and for **Windows PowerShell with Docker Desktop** (`-v "${PWD}\models:/src/models"`), log
+  mounting, the options, and the one-suite-per-machine caveat below.
+- `tools/linux/extra-ca/` (gitignored but for `.gitkeep`): CA certificates copied into the image, for
+  building behind a TLS-intercepting proxy. Empty by default, and then it changes nothing.
+
+Found while making it work here:
+
+- **Docker Hub rate-limited this sandbox** (`429 Too Many Requests`), hence `BASE_IMAGE`;
+  `mirror.gcr.io/library/ubuntu:24.04` is the same image. The build here used it, with
+  `--network host`, the proxy as build args, and the proxy CA in `extra-ca/`.
+- **`xvfb-run` as PID 1 hangs** before running anything: it waits for Xvfb's SIGUSR1, which a PID 1
+  does not get. `tini` is PID 1 now, and it also forwards `docker stop` to the suite's trap.
+- **A suite on a Linux host kills the games in a container running alongside it.** `run_tests.sh`
+  does `pkill -x Cathedral` after every script, and the host sees the container's processes. The
+  first container smoke runs died with SIGKILL (exit 137) for exactly this reason while the host
+  suite was running. Documented in the README; the guard itself is unchanged. It is right for one
+  machine, and the conflict needs a Linux host plus a container running at the same time.
+
+| check | result |
+|---|---|
+| `docker build` (mirror base, proxy args) | OK, ~3.5 min cold |
+| `docker run ... cli examine`, run alone | (see the full run below) |
 
 ## Open decisions for the developer
 

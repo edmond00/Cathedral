@@ -479,6 +479,10 @@ models/llama-linux/backends/*
 models/llama-linux/backends/*/*
 !models/llama-linux/backends/*/BUILD.txt
 
+# Extra CA certificates for building the Docker image behind a TLS-intercepting proxy (local only).
+tools/linux/extra-ca/*
+!tools/linux/extra-ca/.gitkeep
+
 # The SoundFont for the OpenAL audio path: tens of MB, third-party, fetched (see assets/audio/README.md).
 assets/audio/*.sf2
 
