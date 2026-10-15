@@ -1,0 +1,44 @@
+# thinking — a principled means refuses a crime while it is thought out, not after the click
+#
+# Ripelore chooses to steal from the chest and Discipline, a high-morality action modus mentis, is
+# pinned as the means. HighMoralityRefusesCrimeRule refuses it during the think, unasked: the
+# refusal is narrated and no button is produced — the act is never offered, so no point can be
+# spent attempting it. The refusal reaches the proposal ledger like any other: Scientific Research,
+# a different mind, is still offered stealing, and since it was refused once already this phase the
+# means is narrowed to those the willingness rules let through. `means none` hands the draw back to
+# the RNG, so the button can only appear if that narrowing kept Discipline out.
+#
+# Buttons are asserted as "] <goal>" — the tail of "[Snatch ●] steal …" — which the prose never
+# contains.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Room" --period dawn --observe-only "Test Chest" --grant-mm discipline,snatch,scientific_research --means-only discipline
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal steal
+advance 12 180
+
+# Ripelore; Discipline refuses to steal, before any button exists.
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+expect against every principle I hold
+expect-not ] steal
+
+# Scientific Research: still offered stealing, carried out by a means that would not refuse.
+means none
+click keyword 0
+choose 0
+choose 2
+advance 12 180
+expect ] steal
+
+quit

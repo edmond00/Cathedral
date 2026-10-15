@@ -1010,7 +1010,7 @@ Morality now has four distinct behaviours, two per side of the chain:
 
 | | thinking MM | action MM |
 |---|---|---|
-| **High** | crimes are dropped from its goal list (`HighMoralityAvoidsCrimeRule`) — filtering everything away is a legitimate result and reads as ignore | refuses outright (`IllegalActionHighMoralityRule`) |
+| **High** | crimes are dropped from its goal list (`HighMoralityAvoidsCrimeRule`) — filtering everything away is a legitimate result and reads as ignore | refuses while the action is thought out, before any button (`HighMoralityRefusesCrimeRule`); `IllegalActionHighMoralityRule` remains as a backstop for paths that skip willingness |
 | **Low** | if any goal on offer is a crime, **only** the crimes are offered (`LowMoralityPrefersCrimeRule`) | cannot refuse — the decline option is withheld, leaving eager/willing/reluctant (`LowMoralityNeverRefusesCrimeRule`) |
 
 Both sides are needed because the goal and the means are two separate LLM decisions: a scrupulous

@@ -31,6 +31,7 @@ public static class ChoiceRulesChecker
     /// <summary>Rules that narrow how an action modus mentis may answer "do you want to do it?".</summary>
     private static readonly IReadOnlyList<IWillingnessRule> WillingnessRules = new List<IWillingnessRule>
     {
+        new HighMoralityRefusesCrimeRule(),
         new LowMoralityNeverRefusesCrimeRule(),
         new ExamineActionNeedsObservationRule(),
     };

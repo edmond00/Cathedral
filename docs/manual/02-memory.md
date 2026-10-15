@@ -187,7 +187,8 @@ function a modus mentis bears, since that decides where in the machinery it is c
 - A **thinking** modus mentis is asked what to want. It settles on a goal from what the observed
   object affords, and its moral level decides whether crimes are offered to it at all.
 - An **action** modus mentis is asked whether it is willing, and how willingly. Its moral level
-  decides whether refusal is available to it. Its discretion decides what a failure costs.
+  decides whether it refuses a crime outright or may not refuse one at all. Its discretion decides
+  what a failure costs.
 - A **speaking** modus mentis furnishes a reply in conversation, and its level joins the pool that
   settles the exchange.
 - A **fighting** modus mentis unlocks a fighting skill and lends its level to that skill's dice. It

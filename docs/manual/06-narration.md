@@ -116,7 +116,9 @@ once and beyond every acting modus mentis held. Its moral level narrows the list
 Its answer is a goal, and the goal produces the act.
 
 **Execution.** An acting modus mentis is asked whether it is willing, and how willingly. Its degrees
-of assent map to a modifier upon the difficulty, and its refusal cancels the act outright.
+of assent map to a modifier upon the difficulty, and its refusal cancels the act outright. Its moral
+level may settle the answer before it is asked: a high one refuses a crime, a low one may not refuse
+one (see §7).
 
 **The die pool is the sum of the levels of every modus mentis in the chain** — the one that
 observed, the one that deliberated, the one that acts — together with the whole level of any
@@ -164,8 +166,8 @@ presentational.
 acting modus mentis's own voice; and it **costs a point**. Circumstance belongs here — that man is
 watching, that door needs a key, there is nowhere left to put a log. Eight such rules exist: a manner
 of the mind the frame can no longer carry, a tongue too damaged to speak, an affinity too poor to
-address, a crime refused on principle, a crime refused before a witness, an act impossible under
-threat, a missing required implement, and a carrying capacity already met.
+address, a crime refused before a witness, an act impossible under threat, a missing required
+implement, a blow with nothing left to strike it, and a carrying capacity already met.
 
 The first stands ahead of the others because it alone concerns the frame rather than the
 circumstance. One told that a witness is watching will go to another room; one told that the arm is
@@ -193,6 +195,12 @@ mentis it is never offered that goal; as the acting one, chosen to carry it out,
 and is not asked — the refusal states that it would act rather than stand and observe. The other
 senses are under no such rule.
 
+**Principle refuses a crime before it is offered.** A high-moral acting modus mentis chosen to carry
+out a crime refuses at once and is not asked, while the act is still being deliberated — no act is
+offered, and no point is spent on an attempt. The refusal is remembered as any other (see §4): the
+same thinking modus mentis is not offered that goal again in the phase, and another that chooses it is
+offered as means only those that would not refuse it.
+
 The distinction has a practical edge: an act blocked by a rule of action is an act you attempted and
 were stopped from completing, and you pay for the attempt.
 
@@ -210,7 +218,7 @@ storehouse is nobody's privacy.
 
 | | A thinking modus mentis | An acting modus mentis |
 |---|---|---|
-| **High** | Crimes are dropped from its list of goals. Filtering everything away is a legitimate result. | Refuses outright. |
+| **High** | Crimes are dropped from its list of goals. Filtering everything away is a legitimate result. | Refuses at once, unasked, before the act is offered. |
 | **Low** | If any goal on offer is a crime, **only** the crimes are offered. | Cannot refuse: the option to decline is withheld. |
 
 Both halves are needed, because the goal and the means are two separate decisions: a scrupulous
