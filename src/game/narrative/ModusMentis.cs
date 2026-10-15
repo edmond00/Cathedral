@@ -21,8 +21,10 @@ public abstract class ModusMentis
     /// <summary>
     /// Player-facing manual entry shown in the memory menu's detail box — a factual,
     /// third-person explanation of what this modusMentis governs and when it helps.
-    /// Unlike <see cref="SkillMeans"/> / <see cref="PersonaTone"/> this is NEVER fed to the LLM,
-    /// so it is written as neutral game documentation rather than in-character flavour.
+    /// Unlike <see cref="SkillMeans"/> / <see cref="PersonaTone"/> it is neutral game documentation
+    /// rather than in-character flavour — which is exactly why <see cref="ChoiceJudge"/> reads it: the
+    /// neutral judge of what this modus mentis would choose is told what it governs in these words.
+    /// So it must say what the modus mentis is drawn to and good at, not merely how it scores.
     /// The detail box word-wraps to roughly 34 columns by ~11 lines, so keep it under ~60 words
     /// and use continuous prose (no manual line breaks — the renderer wraps on spaces).
     /// </summary>

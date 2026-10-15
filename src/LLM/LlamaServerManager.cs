@@ -286,7 +286,7 @@ public class LlamaServerManager : IDisposable
     /// <para>The distinction that matters: a fallback <i>invents an answer</i>, a retry <i>re-asks the
     /// question</i>. Nothing was processed, so there is no state to be inconsistent with and no
     /// substituted result to mistake for a real one. That is why this is not the kind of silent
-    /// recovery <see cref="Cathedral.Game.Narrative.PersonaMatchCritic"/> had its fallback removed for.</para>
+    /// recovery <see cref="Cathedral.Game.Narrative.ChoiceJudge"/> refuses to make.</para>
     ///
     /// <para><b>`.NET` already does this for us — but only for verbs it may safely replay, and every
     /// request we make is a POST.</b> That asymmetry is the whole shape of the bug and is why it took
@@ -1075,7 +1075,7 @@ public class LlamaServerManager : IDisposable
                 ["top_p"] = Config.LLM.TopP,
             };
 
-            // No grammar → unconstrained free-text generation (persona reasoning). llama.cpp treats
+            // No grammar → unconstrained free-text generation. llama.cpp treats
             // an empty grammar as constraining to the empty string, so omit the key entirely.
             if (!string.IsNullOrEmpty(gbnfGrammar))
                 requestData["grammar"] = gbnfGrammar;

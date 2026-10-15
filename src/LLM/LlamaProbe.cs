@@ -99,7 +99,7 @@ public static class LlamaProbe
     /// <summary>
     /// The shape of a typical request, used to weigh the two measured rates against each other.
     /// <para>Cathedral is prompt-heavy and generation-light, and not by a little. Persona choices
-    /// (<c>PersonaMatchCritic</c>, 4 tokens), item-use criticism (20–60) and the rewriter (64) all
+    /// (<c>ChoiceJudge</c>, 4 tokens), item-use criticism (20–60) and the rewriter (64) all
     /// answer several hundred tokens of scene with a phrase; only narration itself reaches
     /// <c>Config.LLM.GenerationMaxTokens</c>. Observed prompts in a live run ran 220–495 tokens.
     /// These two numbers encode that: they are not a benchmark, they are the ratio that decides

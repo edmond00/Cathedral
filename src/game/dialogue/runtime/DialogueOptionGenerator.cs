@@ -16,11 +16,10 @@ namespace Cathedral.Game.Dialogue.Runtime;
 /// <list type="number">
 ///   <item>sample <c>N</c> speaking Modi Mentis from the party member's known skills, where
 ///         <c>N = min(speech-fluency, held speaking MMs)</c> ([SpeechFluencyStat]);</item>
-///   <item>each sampled MM chooses among the node's options by their <b>intent</b> (not the neutral
-///         text) via <see cref="PersonaChoiceSelector"/> — it reasons in its own voice, then the
-///         neutral critic maps that to one option;</item>
-///   <item>that MM then rewrites the chosen option's neutral replica in its own voice (same slot,
-///         freshly reset by the selection pass) to produce one shown option.</item>
+///   <item>for each sampled MM the choice judge picks among the node's options by their
+///         <b>intent</b> (not the neutral text) via <see cref="PersonaChoiceSelector"/>;</item>
+///   <item>that MM then rewrites the chosen option's neutral replica in its own voice (its slot
+///         freshly reset) to produce one shown option.</item>
 /// </list>
 /// Two MMs may pick the same option and word it differently. Dialogue has no refusal — every sampled
 /// MM contributes a reply. The chosen option's MM later contributes its level to the dice pool.
@@ -30,6 +29,7 @@ public class DialogueOptionGenerator
     private readonly PersonaChoiceSelector  _selector;
     private readonly PersonaRewriter        _rewriter;
     private readonly ModusMentisSlotManager _slots;
+    private readonly LlamaServerManager     _llm;
     private readonly Random                 _rng = GameRng.Stream("dialogue-options");
 
     public DialogueOptionGenerator(LlamaServerManager llm, ModusMentisSlotManager slots)
@@ -37,6 +37,7 @@ public class DialogueOptionGenerator
         _selector = new PersonaChoiceSelector(llm);
         _rewriter = new PersonaRewriter(llm);
         _slots    = slots;
+        _llm      = llm;
     }
 
     /// <param name="previousNpcReplica">
@@ -78,29 +79,26 @@ public class DialogueOptionGenerator
         // warmly"), not verbatim lines, so they are told, not quoted.
         string Action(PlayerOption o) => DialogueTemplate.Expand(o.Intent, ctx);
 
-        var prompt = new PersonaChoicePrompt(
-            BuildContextText(ctx, subject, previousNpcReplica), "What do you want to say?", "what they want to say");
+        string situation = BuildContextText(ctx, subject, previousNpcReplica);
 
         foreach (var mm in sampled)
         {
             try
             {
                 int slot = await _slots.GetOrCreateSlotForModusMentisAsync(mm);
+                // The rewrite below keeps history, so it starts from the system prompt alone — no
+                // earlier turn's reply colours this one.
+                _llm.ResetInstance(slot);
 
-                // The MM reasons over the replies and the neutral critic maps that to one. Dialogue has
-                // no refusal: no decline option is offered, so the MM always contributes a reply.
-                // The MM's free reasoning streams first (dimmer, parenthesized), switching the box title
-                // to this reply's MM; the critic then maps it to an option.
-                var opt = (await _selector.SelectAsync(
-                    slot, mm, node.Options, Action, prompt,
-                    preview: part?.NextSegment(PreviewTitles.For(mm), isFree: true), ct: ct)).Item;
+                // The choice judge picks the reply this MM would give. Dialogue has no refusal: no
+                // decline option is offered, so the MM always contributes a reply.
+                var opt = await _selector.SelectAsync(ChoiceKind.Reply, mm, node.Options, Action, situation, ct: ct);
                 if (opt == null) continue;                            // only if the option list was empty
 
-                // The chosen reply's rewrite streams next as the normal "- " line.
-                var sink = part?.NextSegment();
+                // The chosen reply's rewrite streams as a "- " line, switching the box title to its MM.
+                var sink = part?.NextSegment(PreviewTitles.For(mm));
 
-                // Rewrite the chosen option's replica in the MM's voice (fresh slot — the grading
-                // requests reset themselves so no single option's evaluation colours the rewrite).
+                // Rewrite the chosen option's replica in the MM's voice.
                 string expanded  = DialogueTemplate.Expand(opt.Replica, ctx);
                 string? addressee = ctx.Names.Placeholder("npc");
                 string text = await _rewriter.RewriteAsync(

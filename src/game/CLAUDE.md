@@ -611,6 +611,31 @@ share one mutable outcome object across every conversation in the process.
 `Report(text)` settles that wording and sets `Reported`; an outcome that never reports changed nothing
 observable, and `ShowInUI` follows. That replaced returning `null` from `Apply`.
 
+### How a modus mentis chooses: the choice judge
+
+Six bounded decisions — which object to attend to, whether to keep a handed focus, the goal, the
+means, the willingness, the dialogue reply — go through `PersonaChoiceSelector` to **`ChoiceJudge`**:
+one neutral slot per `ChoiceKind`, each with its own system prompt, reading the modus mentis's
+`DisplayName`, `MenuDescription` and `PersonaTone` and answering one letter. The persona's voice is
+heard only in the rewrite that narrates the choice.
+
+It replaced a two-stage pass: the modus mentis answered in its own voice first (free text, shown dim
+in the preview box and passed to the rewrite as an "inner thought"), and a neutral matcher mapped the
+answer onto the list. Measured on CPU with the shipped model, that was ~3.2 s a decision against
+~0.9 s, less accurate and much less stable — the free text drifted toward the model's own
+preferences (a cruel mind bribing its way past a guard, a covetous one never stealing), and the
+matcher faithfully carried the drift through. Three things went with it and should not come back
+piecemeal: `PersonaMatchCritic`, the `innerThought` hint on `PersonaRewriter`, and the "free"
+segment kind in the preview box.
+
+Two things to know:
+
+- **A willingness scale is listed in order** (eager → unwilling, refusal last) and never shuffled;
+  every other list is shuffled with the decline last.
+- **The selector used to reset the modus mentis's slot** before every choice. Rewrites that keep
+  history (`keepHistory: true`) relied on that to stay bounded, so the observation follow-ups and the
+  dialogue replies now reset the slot themselves at the same points.
+
 ### The economy of a narration phase: noetic points and the two ledgers
 
 A phase's budget is **noetic points**, one spent per observation, thinking or item combination, and
@@ -655,9 +680,8 @@ budget reaches, and they were designed together — changing one alone re-breaks
     branch has no script, because the `--skip-childhood` kit at seed 42 already holds an observing
     action modus mentis and no flag removes one.
 
-The compensations for a smaller pool are that last rule plus a **visible decline**: the goal choice
-offers "do something else entirely" to the persona itself, not only to the match critic as a hidden
-catch-all. With the goal list shrinking request by request, a mind left holding two leftovers it
+The compensations for a smaller pool are that last rule plus a **decline**: the goal choice offers
+"do something else entirely" as a real answer. With the goal list shrinking request by request, a mind left holding two leftovers it
 cares nothing for needs a way to say so instead of committing to one. When the list empties
 completely the ignore branch fires with no question asked at all — the same "nothing here worth
 doing" line in the thinking modus mentis's voice.

@@ -38,7 +38,7 @@ public static class SourceVocabulary
     /// Builds the exemption set from the texts a request was given. Nulls and blanks are skipped, so
     /// callers can pass their optional prompt pieces straight through.
     /// <para>
-    /// Pass only game-authored text. Model-authored text (the persona's own free reasoning, say) must
+    /// Pass only game-authored text. Model-authored text (an earlier rewrite, say) must
     /// stay out: exempting it would let one hallucinated name license itself in every later sentence.
     /// </para>
     /// </summary>

@@ -1380,18 +1380,18 @@ public class LocationTravelGameController : IDisposable
             }
         });
 
-        // Persona-match critic: the shared neutral instance that maps each persona's free-text want to
-        // one of the offered options (see PersonaChoiceSelector). Own slot, initialised once.
+        // Choice judge: the neutral slots, one per decision kind, that decide what a modus mentis
+        // chooses (see PersonaChoiceSelector). Initialised once.
         _ = Task.Run(async () =>
         {
             try
             {
-                await Cathedral.Game.Narrative.PersonaMatchCritic.InitializeAsync(llamaServer);
-                Console.WriteLine("LocationTravelGameController: PersonaMatchCritic initialized");
+                await Cathedral.Game.Narrative.ChoiceJudge.InitializeAsync(llamaServer);
+                Console.WriteLine("LocationTravelGameController: ChoiceJudge initialized");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"LocationTravelGameController: Failed to initialize PersonaMatchCritic - {ex.Message}");
+                Console.WriteLine($"LocationTravelGameController: Failed to initialize ChoiceJudge - {ex.Message}");
             }
         });
 

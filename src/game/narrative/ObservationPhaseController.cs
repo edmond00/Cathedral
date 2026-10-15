@@ -143,10 +143,8 @@ public class ObservationPhaseController
         string? overall = _worldContext?.GenerateContextDescription(locationId);
         string? area    = currentNode.GenerateNeutralDescription(locationId);
 
-        // First observation: the Modus Mentis reasons over every candidate and the neutral critic maps
-        // that to one object (or the decline option). A null result means nothing here drew it at all —
-        // a single "nothing draws me" block. The focus reasoning rides into the observation rewrite as
-        // the inner thought behind why this object drew the persona.
+        // First observation: the choice judge picks one object for this Modus Mentis (or the decline
+        // option). A null result means nothing here drew it at all — a single "nothing draws me" block.
         // Both observation sentences (same modus mentis) stream into ONE preview part and are shown
         // stacked; CONTINUE unlocks only once the second finishes. The phase still commits as one
         // joined Observation block, deferred to that CONTINUE (see FinalizePreview).
@@ -167,15 +165,18 @@ public class ObservationPhaseController
 
         // The first real observation is mandatory: an introduction that retired an object has made the
         // ledger non-empty, but the persona still may not decline here.
-        var (first, firstThought) = await SelectObservationObjectAsync(slotId, candidates, modusMentis, ledger, locationId, ct, isReminescence, overall, area, part: part, offerDecline: false);
+        var first = await SelectObservationObjectAsync(candidates, modusMentis, ledger, locationId, ct, isReminescence, overall, area, offerDecline: false);
+        // A choice used to be asked on this slot and wiped its history; the rewrite that follows
+        // keeps history, so the slot is still cleared here to keep the block's context bounded.
+        _observationExecutor.ResetSlot(slotId);
 
         if (first == null)
         {
-            await AppendNothingObservationAsync(sentences, slotId, modusMentis, isReminescence, ct, innerThought: firstThought, part: part);
+            await AppendNothingObservationAsync(sentences, slotId, modusMentis, isReminescence, ct, part: part);
         }
         else
         {
-            var firstText = await AppendObservationAsync(sentences, allKeywords, slotId, modusMentis, first, withTransition: false, locationId, ledger, ct, isReminescence: isReminescence, innerThought: firstThought, part: part);
+            var firstText = await AppendObservationAsync(sentences, allKeywords, slotId, modusMentis, first, withTransition: false, locationId, ledger, ct, isReminescence: isReminescence, part: part);
 
             // Second (and possibly third) observation, gated on how long the first one(s) ran — see the
             // length rules in AppendFollowUpObservationsAsync. The candidate pool is the deduplicated
@@ -274,21 +275,19 @@ public class ObservationPhaseController
 
         // 0. Keep focus or lose interest? The new Modus Mentis may interrupt the chain of thought
         //    right here: losing interest yields a single "not interested" sentence — no observation,
-        //    no keywords — and nothing else happens. Either way its reasoning rides into the next
-        //    rewrite as the inner thought behind keeping (or dropping) the focus.
-        // Both focus sentences (same modus mentis) stream into one stacked preview part. The keep-focus
-        // free reasoning opens the box before the first observation rewrite.
+        //    no keywords — and nothing else happens.
+        // Both focus sentences (same modus mentis) stream into one stacked preview part.
         var part = preview?.BeginAccumulatingPart(PreviewTitles.For(observationModusMentis));
 
-        var (keeps, focusThought) = await AskKeepFocusAsync(slotId, observationModusMentis, focusOutcome, focusPhrase, ct, isReminescence, overall, area, part: part);
+        var keeps = await AskKeepFocusAsync(observationModusMentis, focusOutcome, focusPhrase, ct, isReminescence, overall, area);
         if (!keeps)
-            return await BuildNotInterestedBlockAsync(slotId, observationModusMentis, focusPhrase, isReminescence, ct, innerThought: focusThought, preview: preview, commit: commit, part: part);
+            return await BuildNotInterestedBlockAsync(slotId, observationModusMentis, focusPhrase, isReminescence, ct, preview: preview, commit: commit, part: part);
 
         var allKeywords = new List<string>();
         var sentences = new List<NarrationSentence>();
 
         // 1. Observe the clicked object (no transition) — it is always the first observation.
-        var firstText = await AppendObservationAsync(sentences, allKeywords, slotId, observationModusMentis, focusOutcome, withTransition: false, locationId, ledger, ct, isReminescence: isReminescence, innerThought: focusThought, part: part);
+        var firstText = await AppendObservationAsync(sentences, allKeywords, slotId, observationModusMentis, focusOutcome, withTransition: false, locationId, ledger, ct, isReminescence: isReminescence, part: part);
 
         // 2. A second (and possibly third) object, reached via a transition and gated on the same length
         //    rules as the overall phase (see AppendFollowUpObservationsAsync). The candidate pool drops
@@ -352,7 +351,6 @@ public class ObservationPhaseController
         ObservationLedger ledger,
         CancellationToken ct,
         bool isReminescence = false,
-        string? innerThought = null,
         PreviewPart? part = null,
         string? trailingNeutral = null)
     {
@@ -363,7 +361,6 @@ public class ObservationPhaseController
             // (two or three short styled sentences) rather than two separate calls: the attention
             // line names the object ("drawn to" / "shifts to"), the detail line gives its richer
             // description. The rewrite is forced into first person ("I ...") to anchor the PoV.
-            // The focus-choice reasoning (when given) is the inner thought behind attending to this.
             var neutral = NeutralNarration.Observation(
                 isFirst: !withTransition,
                 GetNeutralPhrase(outcome, locationId),
@@ -373,7 +370,7 @@ public class ObservationPhaseController
             // text so the persona rewrite styles it into the block rather than tacking on plain prose.
             if (!string.IsNullOrWhiteSpace(trailingNeutral))
                 neutral = $"{neutral} {trailingNeutral.Trim()}";
-            var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, innerThought: innerThought, preview: sink, ct: ct);
+            var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, preview: sink, ct: ct);
 
             // Keywords are chosen by rule from the final (sanitized) text — the word(s) most related
             // to the object. A long observation gets two distinct keywords, both linked to this same
@@ -565,16 +562,19 @@ public class ObservationPhaseController
         if (!introduced && remaining.Count > 0)
         {
             bool declineOffered = !ledger.IsEmpty;
-            var (second, secondThought) = await SelectObservationObjectAsync(slotId, remaining, modusMentis, ledger, locationId, ct, isReminescence, overall, area, part: part);
+            var second = await SelectObservationObjectAsync(remaining, modusMentis, ledger, locationId, ct, isReminescence, overall, area);
+            // A choice used to be asked on this slot and wiped its history; the rewrite that follows
+            // keeps history, so the slot is still cleared here to keep the block's context bounded.
+            _observationExecutor.ResetSlot(slotId);
             if (second == null)
             {
                 // Refused: close the block in voice and stop — nothing more here is worth attending to.
                 if (declineOffered)
-                    await AppendNothingObservationAsync(sentences, slotId, modusMentis, isReminescence, ct, innerThought: secondThought, part: part, nothingMore: true);
+                    await AppendNothingObservationAsync(sentences, slotId, modusMentis, isReminescence, ct, part: part, nothingMore: true);
                 return;
             }
 
-            secondText = await AppendObservationAsync(sentences, allKeywords, slotId, modusMentis, second, withTransition: true, locationId, ledger, ct, isReminescence: isReminescence, innerThought: secondThought, part: part);
+            secondText = await AppendObservationAsync(sentences, allKeywords, slotId, modusMentis, second, withTransition: true, locationId, ledger, ct, isReminescence: isReminescence, part: part);
             observed.Add(second);
         }
 
@@ -585,15 +585,18 @@ public class ObservationPhaseController
             && stillRemaining.Count > Config.Narrative.ObservationThirdMinRemaining)
         {
             bool declineOffered = !ledger.IsEmpty;
-            var (third, thirdThought) = await SelectObservationObjectAsync(slotId, stillRemaining, modusMentis, ledger, locationId, ct, isReminescence, overall, area, part: part);
+            var third = await SelectObservationObjectAsync(stillRemaining, modusMentis, ledger, locationId, ct, isReminescence, overall, area);
+            // A choice used to be asked on this slot and wiped its history; the rewrite that follows
+            // keeps history, so the slot is still cleared here to keep the block's context bounded.
+            _observationExecutor.ResetSlot(slotId);
             if (third == null)
             {
                 if (declineOffered)
-                    await AppendNothingObservationAsync(sentences, slotId, modusMentis, isReminescence, ct, innerThought: thirdThought, part: part, nothingMore: true);
+                    await AppendNothingObservationAsync(sentences, slotId, modusMentis, isReminescence, ct, part: part, nothingMore: true);
                 return;
             }
 
-            await AppendObservationAsync(sentences, allKeywords, slotId, modusMentis, third, withTransition: true, locationId, ledger, ct, isReminescence: isReminescence, innerThought: thirdThought, part: part);
+            await AppendObservationAsync(sentences, allKeywords, slotId, modusMentis, third, withTransition: true, locationId, ledger, ct, isReminescence: isReminescence, part: part);
         }
     }
 
@@ -731,7 +734,7 @@ public class ObservationPhaseController
         // Exactly one observation, of the focus, whatever its length — no follow-up choice. It still goes
         // on the ledger, so a later request this phase reaches for something other than what the phase
         // opened on.
-        await AppendObservationAsync(sentences, allKeywords, slotId, observationModusMentis, npcOutcome, withTransition: false, locationId, ledger, ct, isReminescence: false, innerThought: null, part: part);
+        await AppendObservationAsync(sentences, allKeywords, slotId, observationModusMentis, npcOutcome, withTransition: false, locationId, ledger, ct, isReminescence: false, part: part);
 
         if (sentences.Count == 0)
         {
@@ -803,7 +806,7 @@ public class ObservationPhaseController
         {
             await AppendObservationAsync(sentences, allKeywords, slotId,
                 observationModusMentis, corpseOutcomes[i], withTransition: i > 0, locationId, ledger, ct,
-                isReminescence: false, innerThought: null, part: part);
+                isReminescence: false, part: part);
         }
 
         if (sentences.Count == 0)
@@ -871,7 +874,7 @@ public class ObservationPhaseController
         // Exactly one observation, of the enemy, whatever its length — no follow-up choice. The
         // threat-caution sentence rides into the same rewrite as the observation itself.
         await AppendObservationAsync(sentences, allKeywords, slotId, observationModusMentis,
-            threatOutcome, withTransition: false, locationId, ledger, ct, isReminescence: false, innerThought: null,
+            threatOutcome, withTransition: false, locationId, ledger, ct, isReminescence: false,
             part: part, trailingNeutral: NeutralNarration.ThreatCaution());
 
         if (sentences.Count == 0)
@@ -950,10 +953,9 @@ public class ObservationPhaseController
             .ToList();
 
     /// <summary>
-    /// The Modus Mentis reasons over the candidate objects ("What do you want to focus on?") and the
-    /// neutral <see cref="PersonaMatchCritic"/> maps that to one object — the one it wants to attend to
-    /// — or to the decline option, in which case this returns <c>null</c> and the caller renders the
-    /// refusal line. Returns a random object in playground mode (no LLM).
+    /// The <see cref="ChoiceJudge"/> picks the object this Modus Mentis attends to — or the decline
+    /// option, in which case this returns <c>null</c> and the caller renders the refusal line. Returns
+    /// a random object in playground mode (no LLM).
     ///
     /// <para><paramref name="candidates"/> arrives already stripped of everything this narration phase
     /// has observed, so the list shrinks request by request. The refusal option — "let your focus go" —
@@ -965,8 +967,7 @@ public class ObservationPhaseController
     /// <para><paramref name="offerDecline"/> false withholds it regardless: the observation after an
     /// area introduction is mandatory even when the introduction retired an object.</para>
     /// </summary>
-    private async Task<PersonaChoice<NarrativeAnchor>> SelectObservationObjectAsync(
-        int slotId,
+    private async Task<NarrativeAnchor?> SelectObservationObjectAsync(
         List<NarrativeAnchor> candidates,
         ModusMentis modusMentis,
         ObservationLedger ledger,
@@ -975,59 +976,49 @@ public class ObservationPhaseController
         bool isReminescence = false,
         string? overallLocation = null,
         string? areaLocation = null,
-        PreviewPart? part = null,
         bool offerDecline = true)
     {
-        if (candidates.Count == 0) return new PersonaChoice<NarrativeAnchor>(null, null);
+        if (candidates.Count == 0) return null;
 
         // Each object is offered as the act of attending to it — "focus on the plowman of the field
         // (a woman)" — via GetNeutralPhrase (proper names stay verbatim; common-noun objects gain
-        // "a"/"an").
-        var prompt = new PersonaChoicePrompt(
-            ThinkingPromptConstructor.SituationLine(overallLocation, areaLocation, null),
-            "What do you want to focus on?", "what they want to focus on");
-        // The free reasoning streams into the box as a dimmer inner thought before the observation
-        // rewrite. Playground mode never declines (the selector short-circuits to a real option).
+        // "a"/"an"). Playground mode never declines (the selector short-circuits to a real option).
         string? decline = ledger.IsEmpty || !offerDecline
             ? null
             : isReminescence ? "let the recollection go, nothing more is surfacing"
                              : "let your focus go, nothing else here is worth attending to";
         return await _selector.SelectAsync(
-            slotId, modusMentis, candidates,
+            ChoiceKind.Focus, modusMentis, candidates,
             c => $"focus on {GetNeutralPhrase(c, locationId)}",
-            prompt, declineOption: decline, preview: part?.NextSegment(isFree: true), ct: ct);
+            ThinkingPromptConstructor.SituationLine(overallLocation, areaLocation, null),
+            declineOption: decline, ct: ct);
     }
 
     /// <summary>
-    /// Asks the (new) focus Modus Mentis whether it keeps its focus on the handed object or loses
-    /// interest, via the same persona-reasoning → neutral-critic pass as every other choice: the
-    /// options are "keep your focus on X" and, as the decline option, "lose interest in X" — a
-    /// <c>null</c> pick means the persona lost interest. Playground mode never declines (the
-    /// selector picks the only real option), and the childhood-reminescence MM always keeps the
-    /// handed memory: a fragment the player reached for is the phase's only way forward, since
-    /// REMEMBER is the sole action there.
+    /// Asks the <see cref="ChoiceJudge"/> whether the (new) focus Modus Mentis keeps its focus on the
+    /// handed object or loses interest: the options are "keep your focus on X" and, as the decline
+    /// option, "turn your attention elsewhere instead" — a decline means it lost interest. Playground
+    /// mode never declines (the selector picks the only real option), and the childhood-reminescence
+    /// MM always keeps the handed memory: a fragment the player reached for is the phase's only way
+    /// forward, since REMEMBER is the sole action there.
     /// </summary>
-    private async Task<(bool Keeps, string? Reasoning)> AskKeepFocusAsync(
-        int slotId,
+    private async Task<bool> AskKeepFocusAsync(
         ModusMentis modusMentis,
         NarrativeAnchor focusOutcome,
         string focusPhrase,
         CancellationToken ct,
         bool isReminescence,
         string? overallLocation,
-        string? areaLocation,
-        PreviewPart? part = null)
+        string? areaLocation)
     {
-        if (isReminescence && modusMentis.ModusMentisId == "childhood_reminescence") return (true, null);
+        if (isReminescence && modusMentis.ModusMentisId == "childhood_reminescence") return true;
 
-        var prompt = new PersonaChoicePrompt(
-            ThinkingPromptConstructor.SituationLine(overallLocation, areaLocation, focusPhrase),
-            "What do you want to do?", "what they want to do");
         var kept = await _selector.SelectAsync(
-            slotId, modusMentis, new[] { focusOutcome },
+            ChoiceKind.KeepFocus, modusMentis, new[] { focusOutcome },
             _ => $"keep your focus on {focusPhrase}",
-            prompt, declineOption: "turn my attention elsewhere instead", preview: part?.NextSegment(isFree: true), ct: ct);
-        return (kept.Item != null, kept.Reasoning);
+            ThinkingPromptConstructor.SituationLine(overallLocation, areaLocation, focusPhrase),
+            declineOption: "turn your attention elsewhere instead", ct: ct);
+        return kept != null;
     }
 
     /// <summary>
@@ -1041,7 +1032,6 @@ public class ObservationPhaseController
         string focusPhrase,
         bool isReminescence,
         CancellationToken ct,
-        string? innerThought = null,
         LlmPreviewSession? preview = null,
         Action<List<NarrationBlock>>? commit = null,
         PreviewPart? part = null)
@@ -1050,7 +1040,7 @@ public class ObservationPhaseController
         string text;
         try
         {
-            text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, innerThought: innerThought, preview: part?.NextSegment(), ct: ct);
+            text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, preview: part?.NextSegment(), ct: ct);
         }
         catch (Exception ex)
         {
@@ -1088,7 +1078,6 @@ public class ObservationPhaseController
         ModusMentis modusMentis,
         bool isReminescence,
         CancellationToken ct,
-        string? innerThought = null,
         PreviewPart? part = null,
         bool nothingMore = false)
     {
@@ -1098,7 +1087,7 @@ public class ObservationPhaseController
             var neutral = nothingMore
                 ? NeutralNarration.ObservationNothingMore(isReminescence)
                 : NeutralNarration.ObservationNothing(isReminescence);
-            var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, innerThought: innerThought, preview: sink, ct: ct);
+            var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, preview: sink, ct: ct);
             sentences.Add(new NarrationSentence(text, new List<string>()));
             Console.WriteLine("ObservationPhaseController: nothing drew the persona's attention (declined).");
         }

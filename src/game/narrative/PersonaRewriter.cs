@@ -48,12 +48,6 @@ public class PersonaRewriter
     /// </summary>
     /// <param name="forcedPrefix">When set (e.g. <c>"I "</c>), the rewritten text is constrained by
     /// GBNF to start with this literal — used to force a first-person opening on the observation opener.</param>
-    /// <param name="innerThought">
-    /// The persona's own free-text reasoning behind the choice this sentence narrates (see
-    /// <see cref="PersonaChoice{T}.Reasoning"/>), quoted in the prompt as the inner thought behind
-    /// the neutral line — a flavour hint the rewrite may echo, never new facts to state. Ignored for
-    /// <see cref="NarrationKind.DialogueReplica"/>.
-    /// </param>
     /// <param name="speakerName">
     /// For <see cref="NarrationKind.DialogueReplica"/> only: the speaker's (placeholder) name, so the
     /// prompt can name the speaker ("You are Bob, the speaker"). Pass the placeholder, not the
@@ -69,7 +63,6 @@ public class PersonaRewriter
         string? forcedPrefix = null,
         string? styleInstruction = null,
         string? dialogueContext = null,
-        string? innerThought = null,
         string? speakerName = null,
         Preview.ILlmPreviewSink? preview = null,
         CancellationToken ct = default)
@@ -82,7 +75,6 @@ public class PersonaRewriter
         addressee       = addressee       == null ? null : NameFaking.Fake(addressee);
         dialogueContext = dialogueContext == null ? null : NameFaking.Fake(dialogueContext);
         speakerName     = speakerName     == null ? null : NameFaking.Fake(speakerName);
-        innerThought    = innerThought    == null ? null : NameFaking.Fake(innerThought);
 
         if (PlaygroundMode.IsActive)
         {
@@ -101,7 +93,7 @@ public class PersonaRewriter
             NarrationKind.Speaking =>
                 BuildSpeakingPrompt(neutralText, addressee, footer),
             _ =>
-                BuildPrompt(neutralText, InstructionFor(kind), footer, innerThought),
+                BuildPrompt(neutralText, InstructionFor(kind), footer),
         };
         // Every first-person narration kind opens with "I " so a small model cannot drift into a
         // detached, non-first-person opening (e.g. "Data flows through my eyes..."). An explicit
@@ -110,7 +102,7 @@ public class PersonaRewriter
         forcedPrefix ??= DefaultForcedPrefix(kind);
 
         // The rewrite is emitted as raw text (no JSON envelope) whose charset excludes the double-quote:
-        // the prompt shows the neutral line and the inner thought inside quotes, and a small model copies
+        // the prompt shows the neutral line inside quotes, and a small model copies
         // that framing back into its answer ("...with warmth, \"I focus on this lane\""). Quoting itself
         // reads badly in narration and then breaks the sanitizer downstream, whose JSON envelope ends its
         // string at the first quote and truncates the passage. A spoken kind is structured instead: a
@@ -127,9 +119,7 @@ public class PersonaRewriter
                   maxLen: Config.Narrative.MaxNarrativeTextLength);
 
         // Everything game-authored that went INTO the prompt: the answer may echo any of it verbatim, and
-        // when it does, the sanitizer must not treat it as the model's invention. innerThought is
-        // deliberately absent — it is the persona's own words, so a name hallucinated there would
-        // otherwise license itself here. See SourceVocabulary.
+        // when it does, the sanitizer must not treat it as the model's invention. See SourceVocabulary.
         var sourceVocabulary = SourceVocabulary.From(neutralText, addressee, dialogueContext, speakerName);
         preview?.OnSourceVocabulary(sourceVocabulary);
 
@@ -315,18 +305,10 @@ public class PersonaRewriter
 
     // ── Prompt construction ────────────────────────────────────────────────────
 
-    private static string BuildPrompt(string neutralText, string instruction, string footer, string? innerThought = null)
+    private static string BuildPrompt(string neutralText, string instruction, string footer)
     {
-        // The persona's own words from the choice this sentence narrates, offered back as the
-        // thought behind the line — flavour to echo, not content to add. The precedence clause is
-        // load-bearing: a reluctant choice's thought can argue AGAINST the action, and without it
-        // the model follows the mood and swaps the deed for what the thought would rather do.
-        string thought = string.IsNullOrWhiteSpace(innerThought)
-            ? ""
-            : $"\nA passing thought accompanies it: \"{innerThought.Trim().Trim('"')}\" — use it to colour the mood and wording only. It changes nothing about what is done: the sentence above states what actually happens, and wherever the thought pulls elsewhere, the sentence wins.\n";
-
         return $@"Re-express the following sentence in your own voice: ""{neutralText}""
-{thought}
+
 This sentence is written in the first person, and that ""I"" is you — it describes your own perception, thought or action, not anyone else's.
 
 {instruction}

@@ -145,8 +145,8 @@ public static class NeutralNarration
     /// <summary>
     /// Neutral reasoning for the "ignore and move on" path: the thinking Modus Mentis was offered the
     /// goals this object affords and settled on none of them — either because the object affords
-    /// nothing, or because its free reasoning wandered to something that was never on the list, which
-    /// the match critic reports through its catch-all option (see <c>ThinkingExecutor.ChooseGoalAsync</c>).
+    /// nothing, or because the choice judge found none of them worth this mind's while and took the
+    /// decline option (see <c>ThinkingExecutor.ChooseGoalAsync</c>).
     /// Both mean the same thing to the player: nothing here is worth acting on, look elsewhere.
     /// </summary>
     public static string ReasoningIgnore(string targetPhrase, bool isReminescence = false)
@@ -183,8 +183,7 @@ public static class NeutralNarration
 
     /// <summary>
     /// The same refusal when a coded rule made it (<c>WillingnessOptions.ImposedRefusal</c>). The reason
-    /// is part of the sentence: the persona never reasoned its way to it, so there is no inner thought
-    /// to carry it, and a reason left to the rewrite is the first thing a strong style drops.
+    /// is part of the sentence: nothing else in the prompt carries it, and a reason left to the rewrite is the first thing a strong style drops.
     /// </summary>
     public static string ActionRefusal(string verbVerbatim, string reason)
         => $"I don't want to {FirstPerson(verbVerbatim)}: {FirstPerson(reason)}.";
