@@ -644,7 +644,16 @@ budget reaches, and they were designed together — changing one alone re-breaks
     before each thinking request, so the `VerbAction` recorded and the one filtered are never the
     same object. Recorded when the button reaches the screen, so a goal the *action* modus mentis
     refused stays available — that refusal was one mind's, and asking again with another is the move
-    that should work.
+    that should work. **Not to the thinking modus mentis that chose it**, though: `Refuse` records
+    the goal against that mind (by instance), and `NotRefusedFor` drops it from that mind's later
+    goal lists in the phase, since the same mind would converge on it and be refused again.
+    **A second attempt by another mind is not left to be refused either** (`WasRefused`): the goal
+    is withheld from everyone when no held action modus mentis passes the willingness rules for it
+    (`ThinkingExecutor.CanCarryOut`, a silent `ChoiceRuleContext.Probe`), and otherwise the means
+    pool is narrowed to those that pass and the decline option is dropped.
+    `cli/system/thinking_refused_goal_per_mind.cli` covers the possible branch; the impossible
+    branch has no script, because the `--skip-childhood` kit at seed 42 already holds an observing
+    action modus mentis and no flag removes one.
 
 The compensations for a smaller pool are that last rule plus a **visible decline**: the goal choice
 offers "do something else entirely" to the persona itself, not only to the match critic as a hidden

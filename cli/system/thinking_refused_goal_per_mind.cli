@@ -1,0 +1,53 @@
+# thinking — a goal refused by the means is withheld from the mind that chose it, and only that one
+#
+# Ripelore chooses to examine the tree and Snatch, which does not observe, refuses it
+# (ExamineActionNeedsObservationRule). Asked again about the same object, Ripelore is no longer
+# offered examining — it would converge on it and be refused the same way — so the pinned goal
+# misses and it settles on the only other goal there is. Scientific Research, a different mind, is
+# still offered examining — and since it was refused once already this phase, the means is no longer
+# left to chance: only an action modus mentis that observes is offered, with no refusal left to it.
+# `means none` hands the draw back to the RNG, so the button can only appear if that narrowing ran.
+#
+# Buttons are asserted as "] <goal>" — the tail of "[Snatch ●] climb …" — which the prose never
+# contains. The second think's own button is the proof of the first half: the goal draw is pinned
+# to examine, so examine would have been taken had it still been on offer.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Crown" --period dawn --observe-only "Test Giant Tree" --grant-mm snatch,woodcraft,scientific_research --means-only snatch
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal examine
+advance 12 180
+
+# Think with Ripelore; Snatch refuses to examine.
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+expect I want to act, not to stand and
+
+# Ripelore again: examining is withheld, so the button is something else.
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+expect ] climb back down the test giant tree
+expect-not ] examine the test giant tree closely
+
+# Scientific Research: still offered examining, carried out by an observing means.
+means none
+click keyword 0
+choose 0
+choose 2
+advance 12 180
+expect ] examine the test giant tree closely
+
+allow-flag-miss --goal-only
+quit

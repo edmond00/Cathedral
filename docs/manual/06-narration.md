@@ -78,6 +78,17 @@ recorded when it is actually offered. A goal that deliberation settled upon and 
 mentis then *refused* was never offered, and so remains available: the refusal was that mind's, and
 asking again with another mind is precisely the move that ought to work.
 
+It remains available to every thinking modus mentis **but the one that chose it**. That mind is not
+offered the same act again within the phase, for asked about the same object it would settle on the
+same goal and meet the same refusal. A companion's modus mentis of the same name is a different mind,
+and is not bound by it.
+
+**An act once refused is not refused a second time.** Before it is offered again within the phase, it
+is tested against the rules of choice that refuse outright: if no acting modus mentis the body holds
+could carry it out under them — an examination where none of them observes — it is offered to no mind
+for the rest of the phase. If some can, the next mind to choose it is offered only those as the means,
+and the one chosen answers only with a degree of assent; it may not refuse.
+
 A new phase in the same place sees the whole scene, and every act in it, afresh.
 
 ## 5. The three steps of an act
@@ -100,7 +111,8 @@ remains brief; the bearings count as the first of the three, so that at least on
 most two, is attended to after them.
 
 **Deliberation.** A thinking modus mentis is asked what to want, among the acts the observed object
-affords and that have not already been offered. Its moral level narrows the list before it is asked.
+affords and that have not already been offered, nor already chosen by it and refused, nor refused
+once and beyond every acting modus mentis held. Its moral level narrows the list before it is asked.
 Its answer is a goal, and the goal produces the act.
 
 **Execution.** An acting modus mentis is asked whether it is willing, and how willingly. Its degrees

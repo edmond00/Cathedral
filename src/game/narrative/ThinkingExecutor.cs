@@ -100,7 +100,7 @@ public class ThinkingExecutor
             : null;
 
         // ── Decision 1: GOAL ────────────────────────────────────────────────────
-        var (resolved, goalThought) = await ChooseGoalAsync(thinkingSlot, subOutcomes, thinkingModusMentis, overallLocation, areaLocation, observedPhrase, choiceCtx, proposed, cancellationToken, reasoningPart);
+        var (resolved, goalThought) = await ChooseGoalAsync(thinkingSlot, subOutcomes, thinkingModusMentis, actionModiMentis, overallLocation, areaLocation, observedPhrase, choiceCtx, proposed, cancellationToken, reasoningPart);
         bool isIgnore = resolved is VerbAction vIgnore && vIgnore.Verb is IgnoreVerb;
 
         // ── Early exit: IGNORE (reasoning only, no action) ──────────────────────
@@ -119,8 +119,22 @@ public class ThinkingExecutor
 
         string goalPhrase = resolved.ToNaturalLanguageString();
 
+        // A second attempt at a goal already refused this phase is not left to be refused again: only
+        // the action modi mentis the coded rules let carry it out are offered as the means, and the one
+        // chosen is not asked whether it would rather not. ChooseGoalAsync has already withheld the goal
+        // when none could, so the narrowed pool is never empty in play; the fallback is for safety.
+        bool secondAttempt = choiceCtx != null && resolved is VerbAction retried && proposed?.WasRefused(retried) == true;
+        var meansPool = actionModiMentis;
+        if (secondAttempt)
+        {
+            var able = actionModiMentis.Where(s => CanCarryOut(s, resolved, choiceCtx!)).ToList();
+            if (able.Count > 0) meansPool = able;
+            Console.WriteLine($"ThinkingExecutor: '{goalPhrase}' was refused earlier this phase — "
+                            + $"offering only the {able.Count} means able to carry it out, with no refusal.");
+        }
+
         // ── Decision 2: HOW (which action skill) ────────────────────────────────
-        var (skill, skillThought) = await ChooseSkillAsync(thinkingSlot, goalPhrase, actionModiMentis, thinkingModusMentis, overallLocation, areaLocation, observedPhrase, cancellationToken, reasoningPart);
+        var (skill, skillThought) = await ChooseSkillAsync(thinkingSlot, goalPhrase, meansPool, thinkingModusMentis, overallLocation, areaLocation, observedPhrase, cancellationToken, reasoningPart);
         if (skill == null)
         {
             if (actionModiMentis.Count == 0)
@@ -171,12 +185,15 @@ public class ThinkingExecutor
 
         var (fit, fitThought, imposedReason) = autoSuccess
             ? (PersonaFit.Willing, (string?)null, (string?)null)
-            : await AskPersonaFitAsync(actionSlot, skill, goalPhrase, overallLocation, areaLocation, observedPhrase, fitCtx, cancellationToken, actionPart);
+            : await AskPersonaFitAsync(actionSlot, skill, goalPhrase, overallLocation, areaLocation, observedPhrase, fitCtx, cancellationToken, actionPart, mayDecline: !secondAttempt);
 
         // "unwilling to do it" → the skill refuses; produce a first-person refusal outcome, no action.
         // The fit want explains the refusal, so it rides into the rewrite as the inner thought.
         if (fit.Cancels)
         {
+            if (resolved is VerbAction refusedGoal)
+                proposed?.Refuse(thinkingModusMentis, refusedGoal);
+
             string refusalNeutral = imposedReason != null
                 ? NeutralNarration.ActionRefusal(goalPhrase, imposedReason)
                 : NeutralNarration.ActionRefusal(goalPhrase);
@@ -273,13 +290,17 @@ public class ThinkingExecutor
         int actionSlot, ModusMentis skill, string goalPhrase,
         string? overallLocation, string? areaLocation, string? observedPhrase,
         Rules.Choice.ChoiceRuleContext? choiceCtx, CancellationToken ct,
-        PreviewPart? part = null)
+        PreviewPart? part = null, bool mayDecline = true)
     {
         // Coded rules narrow the answers before they are offered. A skill with no refusal left cannot
         // land on PersonaFit.Refused at all — the decline option is simply not in the prompt.
         var options = choiceCtx == null
             ? DefaultWillingness
             : Rules.Choice.ChoiceRulesChecker.FilterWillingness(DefaultWillingness, choiceCtx);
+
+        // A second attempt at a refused goal: the means was picked from those the rules allow, and it
+        // answers only with a degree of assent — one refusal of the same act per phase is enough.
+        if (!mayDecline) options = options.WithoutDecline();
 
         // A rule that has already said no is answered without a question — and ahead of the playground
         // stand-in, since a coded rule is deterministic and has nothing to stand in for.
@@ -322,12 +343,23 @@ public class ThinkingExecutor
         return (fit, chosen.Reasoning, null);
     }
 
+    /// <summary>
+    /// Whether the coded willingness rules let <paramref name="skill"/> carry out <paramref name="goal"/>
+    /// at all — i.e. impose no refusal. Asked as a silent probe: nothing is offered or refused by it.
+    /// The persona's own willingness is not consulted; this is only what the rules forbid outright.
+    /// </summary>
+    private static bool CanCarryOut(ModusMentis skill, NarrativeAnchor goal, Rules.Choice.ChoiceRuleContext ctx)
+        => Rules.Choice.ChoiceRulesChecker.FilterWillingness(
+               DefaultWillingness, ctx with { ModusMentis = skill, Goal = goal, Probe = true })
+           .ImposedRefusal == null;
+
     // ── Decision: GOAL ─────────────────────────────────────────────────────────
 
     private async Task<(NarrativeAnchor Outcome, string? Reasoning)> ChooseGoalAsync(
         int thinkingSlot,
         List<NarrativeAnchor> subOutcomes,
         ModusMentis thinkingModusMentis,
+        List<ModusMentis> actionModiMentis,
         string? overallLocation,
         string? areaLocation,
         string? observedPhrase,
@@ -346,14 +378,39 @@ public class ThinkingExecutor
         // about the same object reaches for something new instead of re-offering what the player has
         // already been handed. Before the coded rules, for the same reason the ledger is consulted
         // before them everywhere else: what has been offered is not this mind's business to weigh.
+        // A goal this same mind already chose this phase and saw refused is not offered to it again —
+        // it would converge on it, be refused again, and spend the point on nothing. Another mind
+        // asked about the same object is still offered it.
         if (proposed != null)
+        {
             realOutcomes = proposed.Remaining(realOutcomes);
+            int before = realOutcomes.Count;
+            realOutcomes = proposed.NotRefusedFor(thinkingModusMentis, realOutcomes);
+            if (realOutcomes.Count < before)
+                Console.WriteLine($"ThinkingExecutor: [{thinkingModusMentis.DisplayName}] already saw "
+                                + $"{before - realOutcomes.Count} goal(s) refused this phase — withholding them.");
+        }
 
         // Coded rules narrow the list to what this mind may be shown at all — a principled modus
         // mentis is not offered crimes, an unscrupulous one is offered nothing else. Applied before
         // the empty check on purpose: filtering everything away IS a decision, and it reads as ignore.
         if (choiceCtx != null)
             realOutcomes = Rules.Choice.ChoiceRulesChecker.FilterGoals(realOutcomes, choiceCtx).ToList();
+
+        // A goal already refused this phase is offered again only if some action modus mentis held
+        // could carry it out under the coded rules. When none can, a second choice of it could only be
+        // refused a second time, so it is withheld from every mind for the rest of the phase.
+        if (choiceCtx != null && proposed != null)
+        {
+            int before = realOutcomes.Count;
+            realOutcomes = realOutcomes
+                .Where(g => g is not VerbAction va || !proposed.WasRefused(va)
+                            || actionModiMentis.Any(s => CanCarryOut(s, g, choiceCtx)))
+                .ToList();
+            if (realOutcomes.Count < before)
+                Console.WriteLine($"ThinkingExecutor: {before - realOutcomes.Count} goal(s) refused earlier "
+                                + "this phase and beyond every action modus mentis held — withholding them.");
+        }
 
         // Nothing left to offer. The caller's ignore branch narrates the same "nothing here worth
         // doing" line the decline option produces, in this modus mentis's voice — but with no

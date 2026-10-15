@@ -35,6 +35,18 @@ namespace Cathedral.Game.Narrative;
 /// never offered to the player, so it stays available — the refusal is the character's, and asking
 /// again with a different mind is exactly the move that should work.</para>
 ///
+/// <para><b>Except to the mind that already asked.</b> A refused goal is recorded against the thinking
+/// modus mentis that chose it (<see cref="Refuse"/>), and only that one stops being offered it: the
+/// same mind asked about the same object would converge on the same goal, be refused the same way,
+/// and spend a noetic point on nothing. Keyed by the <see cref="ModusMentis"/> instance, so a
+/// companion's copy of the same modus mentis is a different mind.</para>
+///
+/// <para><b>And a second attempt is not left to be refused again.</b> Once a goal has been refused by
+/// anyone this phase (<see cref="WasRefused"/>), the next mind that chooses it is held to what the
+/// coded rules allow: the goal is withheld when no action modus mentis held could carry it out, and
+/// otherwise only those that can are offered as the means, with no refusal left to them. That logic
+/// lives in <c>ThinkingExecutor</c>; this class only remembers what was refused.</para>
+///
 /// <para>Cleared wherever the live text greys into history (<c>NarrativeController.CloseNarrationSegment</c>),
 /// alongside the observation ledger: a new phase in the same place sees the whole scene, and every
 /// action in it, again.</para>
@@ -49,6 +61,12 @@ public sealed class ActionProposalLedger
 
     /// <summary>The same actions by what they say — see the class remarks.</summary>
     private readonly HashSet<(string VerbId, Element? Target, string Verbatim)> _proposedWording = new();
+
+    /// <summary>Actions an action modus mentis refused, by the thinking modus mentis that chose them.</summary>
+    private readonly Dictionary<ModusMentis, HashSet<(string VerbId, Element? Target, object? Variant)>> _refusedFor = new();
+
+    /// <summary>Every action refused this phase, whichever mind chose it.</summary>
+    private readonly HashSet<(string VerbId, Element? Target, object? Variant)> _refused = new();
 
     /// <summary>How many distinct actions have been proposed so far this phase.</summary>
     public int Count => _proposed.Count;
@@ -71,11 +89,38 @@ public sealed class ActionProposalLedger
     public List<NarrativeAnchor> Remaining(IEnumerable<NarrativeAnchor> goals)
         => goals.Where(g => g is not VerbAction va || !WasProposed(va)).ToList();
 
+    /// <summary>
+    /// Records that the goal <paramref name="thinking"/> chose was refused by the action modus mentis
+    /// asked to carry it out. Called when the refusal is decided, before it is narrated.
+    /// </summary>
+    public void Refuse(ModusMentis thinking, VerbAction action)
+    {
+        if (!_refusedFor.TryGetValue(thinking, out var refused))
+            _refusedFor[thinking] = refused = new();
+        refused.Add(KeyOf(action));
+        _refused.Add(KeyOf(action));
+    }
+
+    /// <summary>True when this action has already been chosen and refused this phase, by any mind.</summary>
+    public bool WasRefused(VerbAction action) => _refused.Contains(KeyOf(action));
+
+    /// <summary>
+    /// The subset of <paramref name="goals"/> that <paramref name="thinking"/> has not already chosen
+    /// and seen refused this phase. Every other thinking modus mentis is still offered them.
+    /// </summary>
+    public List<NarrativeAnchor> NotRefusedFor(ModusMentis thinking, IEnumerable<NarrativeAnchor> goals)
+    {
+        if (!_refusedFor.TryGetValue(thinking, out var refused)) return goals.ToList();
+        return goals.Where(g => g is not VerbAction va || !refused.Contains(KeyOf(va))).ToList();
+    }
+
     /// <summary>Forgets everything — a new narration phase begins.</summary>
     public void Clear()
     {
         _proposed.Clear();
         _proposedWording.Clear();
+        _refusedFor.Clear();
+        _refused.Clear();
     }
 
     private static (string, Element?, object?) KeyOf(VerbAction action)
