@@ -69,7 +69,7 @@ public sealed class FirstBlowOutcome : Outcome
         if (target is not NpcEntity npc)
             return new FirstBlowOutcome(target, attack, null, withheld: false,
                 $"First blow: {skillName}",
-                $"struck {target.DisplayName} down with {with}");
+                $"struck {NeutralNarration.NpcPhrase(target)} down with {with}");
 
         // Down to the last hit point: they get their guard up in time. See the class note — this is
         // what keeps a first blow from leaving a body nobody removed from play.

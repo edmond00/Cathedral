@@ -67,12 +67,14 @@ public static class DialogueTreeAudit
         }
 
         warnings.AddRange(CheckTokensExpand(trees));
+        warnings.AddRange(CheckSplicedSentences(trees));
         warnings.AddRange(CheckLessonsResolve(trees));
 
         sb.AppendLine();
         if (warnings.Count == 0)
         {
-            sb.AppendLine("No warnings — every branch is 2–4 replies, and every token expands for every archetype.");
+            sb.AppendLine("No warnings — every branch is 2–4 replies, every token expands for every archetype, "
+                        + "and no spliced line opens a sentence in lower case.");
         }
         else
         {
@@ -120,6 +122,70 @@ public static class DialogueTreeAudit
                     yield return $"  {archetype.ArchetypeId}: {{{token}}} was left unexpanded";
             }
         }
+    }
+
+    /// <summary>
+    /// Expands every line holding a token, for a real NPC of every speaking archetype, and reports a
+    /// sentence that opens in lower case. A token's value is written for one place and spliced into
+    /// many, and the seam is where it shows: an opinion written to sit mid-sentence, set as a sentence
+    /// of its own, read "thank you for asking. my back." — and the rewrite copies what it is given.
+    /// One report per line, naming the first archetype it breaks for.
+    /// </summary>
+    private static IEnumerable<string> CheckSplicedSentences(IEnumerable<DialogueTree> trees)
+    {
+        var lines = new SortedSet<string>();
+        foreach (var tree in trees)
+            CollectTreeLines(tree, lines);
+        lines.RemoveWhere(l => !TokenPattern.IsMatch(l));
+
+        var pc = new Protagonist();
+        var contexts = SpeakingArchetypes().Select(a =>
+        {
+            var npc = a.Spawn(new Random(1));
+            npc.PendingJobOffer = JobRegistry.Instance.SampleJobs(npc.NpcId, a.ArchetypeId, 1).FirstOrDefault();
+            return (a.ArchetypeId, Ctx: new DialogueContext(pc, npc, world: null, locationId: 0, DialogueNameTable.Build(pc, npc)));
+        }).ToList();
+
+        var lowerAfterStop = new Regex(@"[.!?]\s+[a-z]");
+        foreach (string line in lines)
+            foreach (var (archetypeId, ctx) in contexts)
+            {
+                string expanded = DialogueTemplate.Expand(line, ctx);
+                var m = lowerAfterStop.Match(expanded);
+                if (!m.Success) continue;
+                int at = Math.Max(0, m.Index - 30);
+                yield return $"  {archetypeId}: a sentence opens in lower case — \"…{expanded.Substring(at, Math.Min(70, expanded.Length - at))}…\"";
+                break;
+            }
+    }
+
+    /// <summary>Every line of a tree, verbatim.</summary>
+    private static void CollectTreeLines(DialogueTree tree, SortedSet<string> into)
+    {
+        var seen = new HashSet<string>();
+        Walk(tree.EntryNode);
+
+        void Walk(DialogueNode node)
+        {
+            if (!seen.Add(node.NodeId)) return;
+            switch (node)
+            {
+                case ResolutionNode res:
+                    Add(res.SuccessReplica); Add(res.SuccessReplicaIndirect);
+                    Add(res.FailureReplica); Add(res.FailureReplicaIndirect);
+                    break;
+                case NpcLineNode npc:
+                    Add(npc.Replica); Add(npc.ReplicaIndirect); Add(npc.ReplicaHeard);
+                    foreach (var opt in npc.Options)
+                    {
+                        Add(opt.Replica); Add(opt.ReplicaIndirect); Add(opt.Intent);
+                        Walk(opt.Next);
+                    }
+                    break;
+            }
+        }
+
+        void Add(string? text) { if (!string.IsNullOrEmpty(text)) into.Add(text!); }
     }
 
     /// <summary>Every token appearing anywhere in a tree, as bare <c>scope:field</c> keys.</summary>

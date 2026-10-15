@@ -4687,7 +4687,9 @@ public class NarrativeController
                 return;
             }
 
-            string itemContext = $"{item.DisplayName} ({item.Description})";
+            // Lower-cased with an article, never the bare display name: the critic repeats whatever it is
+            // shown, and its reason is read into the refusal ("I think Hairpin is too narrow").
+            string itemContext = $"{item.WithArticle()} ({item.Description})";
             Console.WriteLine($"NarrativeController: Item combination — action='{action.DisplayText}', item='{itemContext}'");
 
             var gatedVerb    = action.PreselectedOutcome?.Verb;
@@ -4716,8 +4718,8 @@ public class NarrativeController
                 var appropriatenessTree = gatedVerb is { RequiresTool: true }
                     ? CriticTrees.BuildToolSubstitutionTree(
                           goalDescription, CriticTrees.ToolPhrase(gatedVerb.ReferenceToolIds),
-                          item.DisplayName, criticContext)
-                    : CriticTrees.BuildItemAppropriatenessTree(goalDescription, item.DisplayName, criticContext);
+                          NeutralNarration.ItemPhrase(item.DisplayName), criticContext)
+                    : CriticTrees.BuildItemAppropriatenessTree(goalDescription, NeutralNarration.ItemPhrase(item.DisplayName), criticContext);
                 var appropriatenessResult = await _actionExecutor.ItemUseCritic.EvaluateTreeAsync(appropriatenessTree);
 
                 // The critic judges the implement; the body judges itself. A verdict it returns as

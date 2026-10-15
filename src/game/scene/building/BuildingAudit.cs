@@ -466,7 +466,7 @@ public static class BuildingAudit
                 var desc = poi.Descriptions.Count > 0 ? poi.Descriptions[rng.Next(poi.Descriptions.Count)]
                                                       : poi.DisplayName.ToLowerInvariant();
                 var mood = SceneViewAdapter.PickMood(poi.Moods, desc, rng);
-                Check(mood == null ? desc : $"{mood} {desc}", $"description of '{poi.DisplayName}'");
+                Check(mood == null ? desc : SceneViewAdapter.WithMood(mood, desc), $"description of '{poi.DisplayName}'");
             }
         }
 

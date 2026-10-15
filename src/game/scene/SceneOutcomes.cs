@@ -60,7 +60,7 @@ public sealed class AreaMoveOutcome : Outcome
 
     public AreaMoveOutcome(Area destination)
         : base($"Moved to: {destination.DisplayName}", OutcomeSeverity.Neutral,
-               $"made my way to {destination.DisplayName}")
+               $"made my way to {NeutralNarration.AreaPhrase(destination.DisplayName)}")
     {
         _destination = destination;
     }
@@ -158,7 +158,7 @@ public sealed class PoiReplacementOutcome : Outcome
 
     public PoiReplacementOutcome(PointOfInterest original, PointOfInterest replacement)
         : base($"Broken: {original.DisplayName}", OutcomeSeverity.Neutral,
-               $"broke {original.DisplayName.ToLowerInvariant()} apart")
+               $"broke the {original.DisplayName.ToLowerInvariant()} apart")
     {
         _original    = original;
         _replacement = replacement;
@@ -201,7 +201,7 @@ public sealed class SleeperRousedOutcome : Outcome
 
     public SleeperRousedOutcome(SceneNpc npc)
         : base($"Woken: {npc.Entity.DisplayName}", OutcomeSeverity.Neutral,
-               $"woke {npc.Entity.DisplayName}")
+               $"woke {NeutralNarration.NpcPhrase(npc.Entity)}")
     {
         _npc = npc;
     }
@@ -227,7 +227,7 @@ public sealed class RecruitedOutcome : Outcome
 
     public RecruitedOutcome(SceneNpc npc)
         : base($"Joined you: {npc.Entity.DisplayName}", OutcomeSeverity.Positive,
-               $"took {npc.Entity.DisplayName} along with me")
+               $"took {NeutralNarration.NpcPhrase(npc.Entity)} along with me")
     {
         _npc = npc;
     }
@@ -261,7 +261,7 @@ public sealed class DoorUnlockOutcome : Outcome
 
     public DoorUnlockOutcome(DoorPointOfInterest door, Area destination)
         : base($"Door unlocked — entered {destination.DisplayName}", OutcomeSeverity.Neutral,
-               $"unlocked the way into {destination.DisplayName}")
+               $"unlocked the way into {NeutralNarration.AreaPhrase(destination.DisplayName)}")
     {
         _door        = door;
         _destination = destination;
@@ -288,7 +288,7 @@ public sealed class NpcSlaynOutcome : Outcome
 
     public NpcSlaynOutcome(SceneNpc sceneNpc)
         : base($"Slain: {sceneNpc.DisplayName}", OutcomeSeverity.Negative,
-               $"killed {sceneNpc.DisplayName}")
+               $"killed {NeutralNarration.NpcPhrase(sceneNpc.Entity)}")
     {
         _sceneNpc = sceneNpc;
     }

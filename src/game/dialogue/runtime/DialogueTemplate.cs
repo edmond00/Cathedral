@@ -123,7 +123,17 @@ public static class DialogueTemplate
             var resolver = Resolve(key);
             if (resolver != null)
             {
-                try { return resolver(ctx); }
+                try
+                {
+                    string value = resolver(ctx);
+                    string before = text![..m.Index];
+                    if (IsOpinion(key)) return FitOpinion(value, before, text[(m.Index + m.Length)..]);
+                    // Any token set at the start of a sentence opens it with a capital — a value is
+                    // written for its usual place, mid-sentence ("ironwork, chiefly. a war axe…").
+                    return StartsSentence(before) && value.Length > 0
+                        ? char.ToUpperInvariant(value[0]) + value[1..]
+                        : value;
+                }
                 catch (Exception ex)
                 {
                     Console.Error.WriteLine($"DialogueTemplate: field '{{{key}}}' failed: {ex.Message}");
@@ -133,6 +143,48 @@ public static class DialogueTemplate
             Console.Error.WriteLine($"DialogueTemplate: unknown field '{{{key}}}' left verbatim.");
             return m.Value;
         });
+    }
+
+    /// <summary>Whether text following <paramref name="before"/> opens a sentence.</summary>
+    private static bool StartsSentence(string before)
+    {
+        string prev = before.TrimEnd();
+        return prev.Length == 0 || ".!?\"".Contains(prev[^1]);
+    }
+
+    private static bool IsOpinion(string key) => key.StartsWith(OpinionPrefix, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Opening words an opinion keeps capitalised mid-sentence: "I" and its contractions,
+    /// and the calendar's proper names.</summary>
+    private static readonly HashSet<string> KeepsCapital = new(StringComparer.Ordinal)
+        { "I", "I'm", "I've", "I'd", "I'll", "Sunday", "Sundays", "Lent", "Easter", "Christmas", "Michaelmas" };
+
+    /// <summary>
+    /// Fits an opinion into the sentence around its token. Opinions are written to sit mid-sentence —
+    /// "of the work I think {npc:opinion_work}." — so most open in lower case and none carries a
+    /// closing stop; but the same token also stands as a sentence of its own ("Well enough, thank you
+    /// for asking. {npc:opinion_health} And you?"), and spliced in verbatim that read "asking. my back.
+    /// … says the same word And you?" — which the rewrite then copied. So: capitalised at the start of
+    /// a sentence, lower-cased in the middle of one (bar <see cref="KeepsCapital"/>), and closed with a
+    /// stop when a new sentence follows it.
+    /// </summary>
+    private static string FitOpinion(string value, string before, string after)
+    {
+        value = value.Trim();
+        if (value.Length == 0) return value;
+
+        bool startsSentence = StartsSentence(before);
+        string firstWord = value.Split(' ', 2)[0].TrimEnd(',', '.', ';');
+        if (startsSentence)
+            value = char.ToUpperInvariant(value[0]) + value[1..];
+        else if (!KeepsCapital.Contains(firstWord) && value.Length > 1 && char.IsUpper(value[0]) && !char.IsUpper(value[1]))
+            value = char.ToLowerInvariant(value[0]) + value[1..];
+
+        string next = after.TrimStart();
+        bool newSentenceFollows = next.Length > 0 && char.IsUpper(next[0]) && after.Length > next.Length;
+        if (newSentenceFollows && !".!?".Contains(value[^1]))
+            value += ".";
+        return value;
     }
 
     /// <summary>

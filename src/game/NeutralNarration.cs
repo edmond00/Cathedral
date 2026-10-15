@@ -529,6 +529,34 @@ public static class NeutralNarration
         return words[^1].ToLowerInvariant().Trim('.', ',', '!', '?', '"', '\'', '(', ')');
     }
 
+    // ── Names in a neutral sentence ────────────────────────────────────────────
+    //
+    // A display name is title-cased for the screen ("Wadi", "Trailcraft", "Pig"), and a neutral
+    // sentence that pastes it in reads like a proper name — which the rewrite then copies: "I made my
+    // way to Wadi, learned Trailcraft." Only a real proper name keeps its capital. Which is which is
+    // decided by TYPE, never by capitalisation: NounPhrase's capital test cannot tell "Wadi" from
+    // "Hugh Furrow", and every display name would pass it.
+
+    /// <summary>An area as a sentence names it: "the wadi", "the cooper's workshop", "the tar street".
+    /// Areas are places, not names — the same convention as the move goal ("walk to the tar street")
+    /// and the situation line ("in the salt pan").</summary>
+    public static string AreaPhrase(string displayName) => $"the {displayName.Trim().ToLowerInvariant()}";
+
+    /// <summary>A modus mentis as a sentence names it: "trailcraft", "keen ear" — a craft, not a person.</summary>
+    public static string ModusMentisPhrase(string displayName) => displayName.Trim().ToLowerInvariant();
+
+    /// <summary>
+    /// Somebody as a sentence names them. A named NPC — a person, or a beast given a name — keeps its
+    /// proper name; shallow wildlife has only its kind, so it is "the pig", "the crow".
+    /// </summary>
+    public static string NpcPhrase(Cathedral.Game.Npc.INpcEntity npc)
+        => npc is Cathedral.Game.Npc.ShallowNpcEntity
+            ? $"the {npc.DisplayName.Trim().ToLowerInvariant()}"
+            : npc.DisplayName;
+
+    /// <summary>"the hairpin" — an item named on its own, definite, lower-cased as <c>Item.WithArticle</c> is.</summary>
+    public static string ItemPhrase(string displayName) => $"the {displayName.Trim().ToLowerInvariant()}";
+
     // ── Noun-phrase normalisation ──────────────────────────────────────────────
 
     private static readonly HashSet<string> Determiners = new(StringComparer.OrdinalIgnoreCase)

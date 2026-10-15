@@ -608,6 +608,14 @@ hands out a fresh set per access** — `SuccessOutcomes => new[] {…}`, express
 `{ get; } = …`. Trees are singletons in `DialogueTreeRegistry`, so an initialised auto-property would
 share one mutable outcome object across every conversation in the process.
 
+**A `Verbatim` never pastes a raw `DisplayName`.** Display names are title-cased for the screen,
+and a neutral sentence that carries one reads as a proper name the rewrite then copies — "I made my
+way to Wadi, learned Trailcraft." Name things through `NeutralNarration.AreaPhrase` ("the wadi"),
+`ModusMentisPhrase` ("trailcraft"), `NpcPhrase` (a named NPC keeps its name, shallow wildlife is
+"the pig") and `ItemPhrase` / `Item.WithArticle`. Which is a proper name is decided by **type**:
+`NounPhrase`'s capital test cannot tell "Wadi" from "Hugh Furrow". The chip (`Text`) keeps the
+display name — it is read on screen beside the memory panel.
+
 `Report(text)` settles that wording and sets `Reported`; an outcome that never reports changed nothing
 observable, and `ShowInUI` follows. That replaced returning `null` from `Apply`.
 

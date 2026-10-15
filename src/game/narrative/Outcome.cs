@@ -172,7 +172,7 @@ public sealed class SkillAcquisitionOutcome : Outcome
 
     public SkillAcquisitionOutcome(ModusMentis template)
         : base($"Modus mentis acquired: {template.DisplayName}", OutcomeSeverity.Positive,
-               $"learned {template.DisplayName}")
+               $"learned {NeutralNarration.ModusMentisPhrase(template.DisplayName)}")
     {
         _template = template;
     }
@@ -220,7 +220,7 @@ public sealed class ModusMentisGrantOutcome : Outcome
     private ModusMentisGrantOutcome(ModusMentis template, bool alreadyKnown)
         : base(alreadyKnown ? string.Empty : $"Modus mentis learned: {template.DisplayName}",
                OutcomeSeverity.Positive,
-               alreadyKnown ? string.Empty : $"learned {template.DisplayName}")
+               alreadyKnown ? string.Empty : $"learned {NeutralNarration.ModusMentisPhrase(template.DisplayName)}")
     {
         _template     = template;
         _alreadyKnown = alreadyKnown;
@@ -412,7 +412,7 @@ public sealed class WoundInflictionOutcome : Outcome
         => $"Wound: {w.WoundName} — {WoundLocation(w)}";
 
     private static string FormatVerbatim(WoundInstance w)
-        => $"suffered {w.WoundName.ToLowerInvariant()} to my {WoundLocation(w)}";
+        => $"suffered {NeutralNarration.NounPhrase(w.WoundName.ToLowerInvariant())} to my {WoundLocation(w)}";
 
     protected override void Apply(OutcomeContext ctx)
         => ctx.Actor!.Wounds.Add(Wound);
