@@ -58,7 +58,8 @@ public class PersonaChoiceSelector
         Func<T, string> describe,
         string situation,
         string? declineOption = null,
-        CancellationToken ct = default) where T : class
+        CancellationToken ct = default,
+        string? question = null) where T : class
     {
         if (items == null || items.Count == 0) return null;
 
@@ -91,7 +92,7 @@ public class PersonaChoiceSelector
         var options = candidates.Select(c => (c.Label, Item: (T?)c.Item)).ToList();
         if (hasDecline) options.Add((Label: decline, Item: (T?)null));
 
-        int idx = await ChoiceJudge.PickAsync(kind, evaluator, situation, options.Select(o => o.Label).ToList(), ct);
+        int idx = await ChoiceJudge.PickAsync(kind, evaluator, situation, options.Select(o => o.Label).ToList(), question, ct);
         return options[idx].Item;   // null item ⇒ decline was chosen
     }
 

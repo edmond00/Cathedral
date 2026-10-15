@@ -222,6 +222,9 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --means-only <mm-id>               DEBUG: the playground's choice of means (which action modus mentis carries the");
     Console.WriteLine("                                     goal out) must land on this one. Examining is refused by any action modus mentis");
     Console.WriteLine("                                     without Observation, so an examine script names one. CLI twin: `means`");
+    Console.WriteLine("  --refuse-focus                     DEBUG: every focus observation's modus mentis turns away from the clicked object");
+    Console.WriteLine("                                     and observes another instead. --playground never declines, so this is the only");
+    Console.WriteLine("                                     way a script reaches that branch");
     Console.WriteLine("  --advance-days <n>                 DEBUG: push the world clock forward <n> days on first arrival at the world");
     Console.WriteLine("                                     map. The clock only moves on travel and work, and a wound takes 100-1000");
     Console.WriteLine("                                     days to close, so this is how a script sees healing without simulating years");
@@ -863,6 +866,9 @@ for (int i = 0; i < args.Length; i++)
 
     if (args[i] == "--means-only" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
         Cathedral.Config.Debug.MeansOnly = args[i + 1];
+
+    if (args[i] == "--refuse-focus")
+        Cathedral.Config.Debug.RefuseFocus = true;
 
     if (args[i] == "--advance-days" && i + 1 < args.Length &&
         double.TryParse(args[i + 1], System.Globalization.NumberStyles.Float,

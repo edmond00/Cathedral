@@ -632,6 +632,17 @@ Two things to know:
 
 - **A willingness scale is listed in order** (eager → unwilling, refusal last) and never shuffled;
   every other list is shuffled with the decline last.
+- **How a question is put matters more than what it says.** Asked "keep it, or turn elsewhere?", the
+  keep-focus judge turned away from 72% of everything; asked whether the thing "holds anything for
+  this faculty", yes or no, it kept 51% and judged every labelled case right. Asked "how
+  willingly?", the willingness judge called a cutpurse reluctant to pick a pocket. Benchmark a
+  rewording against labelled cases before shipping it; a bias like the first one only shows over many
+  calls.
+- **A refused focus is not a dead end.** The modus mentis picks another unobserved object (no
+  decline), and the dismissal and the new observation are one neutral text, rewritten together; the
+  keyword is the new object's, filtered so no word naming the dismissed one can be chosen. Only with
+  nothing left unobserved does the keyword-less "not interested" block remain. `--refuse-focus`
+  forces the branch, since `--playground` never declines; `cli/system/focus_turned_away.cli`.
 - **The selector used to reset the modus mentis's slot** before every choice. Rewrites that keep
   history (`keepHistory: true`) relied on that to stay bounded, so the observation follow-ups and the
   dialogue replies now reset the slot themselves at the same points.

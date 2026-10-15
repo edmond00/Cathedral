@@ -124,6 +124,16 @@ public static class NeutralNarration
             ? $"I am not interested in the memory of {targetPhrase}, and let it fade."
             : $"I am not interested in {targetPhrase}, and turn my attention away.";
 
+    /// <summary>
+    /// The same refusal when the Modus Mentis turns to something else instead: just the dismissal of
+    /// <paramref name="targetPhrase"/>, which opens the neutral text and is followed by the observation
+    /// of what it turned to (<see cref="Observation"/> with a transition), both rewritten together.
+    /// </summary>
+    public static string ObservationTurnedAway(string targetPhrase, bool isReminescence = false)
+        => isReminescence
+            ? $"I am not interested in the memory of {targetPhrase}."
+            : $"I am not interested in {targetPhrase}.";
+
     // ── Thinking ───────────────────────────────────────────────────────────────
 
     /// <summary>

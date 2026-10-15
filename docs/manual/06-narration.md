@@ -97,6 +97,12 @@ A new phase in the same place sees the whole scene, and every act in it, afresh.
 present that have not yet been attended to, and renders what it finds. One object is chosen; the
 rest wait.
 
+Attention may also be directed: a thing already rendered may be given to an observing modus mentis
+to attend to closely. That modus mentis may decline it, and if so turns to another thing of its own
+choosing among those not yet attended to — the refusal and the new observation rendered as one
+movement, the new thing available for closer attention like any other. Only when nothing is left
+unattended does the refusal stand alone, and lead nowhere.
+
 The opening observation of a phase may first take its **bearings**: where the body stands and at
 what period of the day, rendered in the observing modus mentis's own voice. This is done only when
 the area or the period has changed since the bearings were last taken, so that a run of phases in

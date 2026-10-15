@@ -90,10 +90,11 @@ public static class ChoiceJudge
     /// narration uses ("You are in a farm, in the yard."); they are converted to the third person here,
     /// since the judge is an observer of the character, not the character. For
     /// <see cref="ChoiceKind.Means"/> the labels are the candidate modi mentis themselves.
+    /// <paramref name="question"/> replaces the kind's own question, for one that names something.
     /// </summary>
     public static async Task<int> PickAsync(
         ChoiceKind kind, ModusMentis faculty, string situation, IReadOnlyList<string> options,
-        CancellationToken ct = default)
+        string? question = null, CancellationToken ct = default)
     {
         if (options == null || options.Count == 0) return -1;
         if (options.Count > MaxOptions)
@@ -104,7 +105,7 @@ public static class ChoiceJudge
                 $"ChoiceJudge is not ready (initialized={_initialized}, " +
                 $"serverReady={_llm?.IsServerReady.ToString() ?? "no server"}).");
 
-        string prompt  = BuildPrompt(kind, faculty, situation, options);
+        string prompt  = BuildPrompt(kind, faculty, situation, options, question);
         string grammar = BuildLetterGrammar(options.Count);
         string reply = await _llm.GenerateConstrainedStringAsync(_slots[kind], prompt, grammar, maxTokens: 4, skipReset: false);
         int idx = LetterToIndex(reply);
@@ -127,13 +128,13 @@ public static class ChoiceJudge
         return sb.ToString();
     }
 
-    private static string BuildPrompt(ChoiceKind kind, ModusMentis faculty, string situation, IReadOnlyList<string> options)
+    private static string BuildPrompt(ChoiceKind kind, ModusMentis faculty, string situation, IReadOnlyList<string> options, string? question)
     {
         var sb = new StringBuilder();
         sb.Append(kind == ChoiceKind.Means ? "The thinking faculty: " : "The faculty: ").Append(Describe(faculty)).Append("\n\n");
         if (!string.IsNullOrWhiteSpace(situation))
             sb.Append("The situation: ").Append(ToThirdPerson(Regex.Replace(situation.Trim(), @"\s+", " "))).Append("\n\n");
-        sb.Append(Questions[kind]).Append('\n');
+        sb.Append(question ?? Questions[kind]).Append('\n');
         for (int i = 0; i < options.Count; i++)
             sb.Append(Letter(i)).Append(" - ").Append(ToThirdPerson(options[i].Trim())).Append('\n');
         sb.Append("\nAnswer with the letter and nothing else.");
@@ -157,7 +158,7 @@ public static class ChoiceJudge
     private static readonly Dictionary<ChoiceKind, string> Questions = new()
     {
         [ChoiceKind.Focus]       = "Which would it attend to?",
-        [ChoiceKind.KeepFocus]   = "Does it keep its attention there?",
+        [ChoiceKind.KeepFocus]   = "Does it hold anything for this faculty?",   // callers name the thing
         [ChoiceKind.Goal]        = "Which would it be most drawn to?",
         [ChoiceKind.Means]       = "Which practical faculty will it use?",
         [ChoiceKind.Willingness] = "How far does this act belong to this faculty?",
@@ -215,12 +216,16 @@ Guidelines:
 - If the list ends with an option to let the attention go, choose it when nothing listed is anything this faculty would care about.
 - Answer with the letter of your choice.",
 
+        // Asked "does it keep its attention there?" against "turn elsewhere", the judge turned away
+        // from almost everything — 28% kept, Exploration dropping a slip face in a desert. Asked
+        // whether the thing holds anything for the faculty, it kept 51% and judged every labelled
+        // case right.
         [ChoiceKind.KeepFocus] = @"You are the ATTENTION JUDGE. You are neutral and analytical, with no personality and no morals of your own.
 
-A character's mind is made of faculties, each with its own nature, concerns and skills. You are given the description of ONE faculty and a thing the character's attention has just been handed to. Decide whether this faculty would keep its attention on that thing or turn it elsewhere.
+A character's mind is made of faculties, each with its own nature, concerns and skills. You are given the description of ONE faculty and a thing in front of the character. Decide whether the thing holds anything for this faculty.
 
 Guidelines:
-- Keep it when the thing touches what this faculty knows, does or cares about; turn elsewhere when it is nothing to this faculty.
+- Judge by what this faculty knows, does, notices or cares about.
 - Answer with the letter of your choice.",
 
         [ChoiceKind.Goal] = @"You are the GOAL CHOOSER. You are neutral and analytical, with no personality of your own.

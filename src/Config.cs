@@ -509,6 +509,17 @@ public static class Config
         /// is otherwise at the mercy of which of the kit's action modi mentis the draw picks.</para>
         /// </summary>
         public static string? MeansOnly { get; set; } = null;
+
+        /// <summary>
+        /// Every focus observation's modus mentis turns away from the clicked object, as if the choice
+        /// judge had answered "turn elsewhere". Set by <c>--refuse-focus</c>. False (the default) asks
+        /// the judge.
+        ///
+        /// <para><c>--playground</c> never declines a choice, so without this the turned-away branch —
+        /// the dismissal rewritten together with the object it turned to — cannot be reached by a
+        /// script at all.</para>
+        /// </summary>
+        public static bool RefuseFocus { get; set; } = false;
     }
 
     #endregion
