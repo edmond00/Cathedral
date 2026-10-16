@@ -135,8 +135,19 @@ public class NarrationState
 /// that produced it removes the constraint: the keyword is resolved by <i>which occurrence was
 /// clicked</i>, which the renderer has always known, so identical words in different sentences are
 /// simply different links.</para>
+///
+/// <para><paramref name="KeywordAnchors"/>, when given, is parallel to <paramref name="Keywords"/> and
+/// overrides <paramref name="Anchor"/> word by word. An area introduction is the sentence that needs
+/// it: it names several objects at once, each keyword linked to its own
+/// (<see cref="IntroductionKeywordLinker"/>).</para>
 /// </summary>
-public record NarrationSentence(string Text, List<string> Keywords, NarrativeAnchor? Anchor = null);
+public record NarrationSentence(string Text, List<string> Keywords, NarrativeAnchor? Anchor = null,
+                                IReadOnlyList<NarrativeAnchor>? KeywordAnchors = null)
+{
+    /// <summary>What the <paramref name="index"/>-th keyword acts on.</summary>
+    public NarrativeAnchor? AnchorOf(int index)
+        => KeywordAnchors != null && index < KeywordAnchors.Count ? KeywordAnchors[index] : Anchor;
+}
 
 /// <summary>
 /// One selectable player reply carried by a <see cref="NarrationBlockType.DialogueOptions"/> block.

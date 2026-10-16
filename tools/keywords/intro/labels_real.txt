@@ -1,0 +1,28 @@
+r0 |
+r1 | flour=0 sacks=0 miller=1 apprentice=1 young~1
+r2 | tenement~0 door=0 statue=1 tar~2 street=2 ivy-grown~3 house~3 inn~4 wall=4
+r3 | water-carrier=4
+r4 | clerk=0 trestle~1 table=1 doors=2,3 dormitory~2 pantry~3 shutter=4
+r5 |
+r6 | sedge~1
+r7 |
+r8 |
+r9 | musk~3
+r10 | crane=3 sedge~2
+r11 | hearth=1
+r12 | barn=0 potato~3
+r13 |
+r14 | kelp~0 bed=0 rocky~2 shore=2
+r15 | kelp~0 bed=0 shore-tide~1 pool~1 zone~1 path=1 sandy~2 beach=2 snail=3 lizard=4
+r16 | stony~0 desert=0 rock~1 slip~2 face=2
+r17 |
+r18 | wadi=0 stony~1 desert=1
+r19 | wadi-oasis~0 palm~0 track=0 acacia=1 boulder=2 choke~2
+r20 | stony~0 desert=0 stone~1 shadow~1 crust=3
+r21 | weathered~0 stele=0 wind-scoured~1 rock=1 field~2 track=2 pan=4
+r22 | smoke-stained~0 house~0 door=0 slump-walled~3 wayside~1 cross=1 square-back=2
+r23 | millstone=1 miller=4 man~4 broken~2 shutter=2
+r24 | citadel~0 great~0 door=0 wool~1 street=1 weather-beaten~2 house~2 carpenter=3 man~3 fountain=4
+r25 | counting~0 house~0 wall=0 cross~1 hanging~2 signs=2 guildhall~4
+r26 | stone~0 bench=0 pottergate=1 square-chandlers~2 lane~2 way=2 carpenter~3 workshop~3 door=3 wool~4 street=4
+r27 | soot-darkened~0 house~0 wall=0 guard=1 citadel~1 carpenter~4 workshop~4

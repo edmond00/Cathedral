@@ -152,15 +152,15 @@ public class ObservationPhaseController
 
         // Area introduction: when the caller asks for one (the area or the time of day changed since
         // the last one), the block opens on where and when I am, and what is around me, before any
-        // object is singled out. An object the introduction took its keyword from is retired here —
+        // object is singled out. Every object the introduction linked a keyword to is retired here —
         // from this block's pool and from the ledger — exactly as an observed object would be.
         string? introText = null;
         if (introPeriod is { } period && currentNode is Cathedral.Game.Scene.SyntheticNarrationNode { Area: { } introArea })
         {
-            NarrativeAnchor? introAnchor;
-            (introText, introAnchor) = await AppendAreaIntroductionAsync(sentences, allKeywords, slotId, modusMentis,
+            List<NarrativeAnchor> introAnchors;
+            (introText, introAnchors) = await AppendAreaIntroductionAsync(sentences, allKeywords, slotId, modusMentis,
                 introArea, period, candidates, ledger, locationId, ct, part);
-            if (introAnchor != null) candidates.Remove(introAnchor);
+            foreach (var a in introAnchors) candidates.Remove(a);
         }
 
         // The first real observation is mandatory: an introduction that retired an object has made the
@@ -451,17 +451,16 @@ public class ObservationPhaseController
     /// <see cref="IntroductionSightsMax"/> objects drawn from <paramref name="pool"/> in random order —
     /// rewritten in the persona's voice.
     ///
-    /// <para>The keyword is optional: if the rewritten text uses the reference lemma or the head of
-    /// the name of an object in <paramref name="pool"/>, that word becomes the keyword (one at most,
-    /// drawn among the matches), linked to that object. The list of sights is what makes this likely.
-    /// A matched object counts as attended to: it goes on <paramref name="ledger"/> and is returned so
-    /// the caller drops it from the block's pool, exactly as an observed object would be. Otherwise the
-    /// introduction carries no keyword — the mandatory observation that follows supplies one.</para>
+    /// <para>Every object of <paramref name="pool"/> the rewritten text names gets a keyword of its own,
+    /// linked to it (<see cref="IntroductionKeywordLinker"/>); the list of sights is what makes that
+    /// likely. A linked object counts as attended to: it goes on <paramref name="ledger"/> and is
+    /// returned so the caller drops it from the block's pool, exactly as an observed object would be.
+    /// One object is always left unlinked, for the mandatory observation that follows.</para>
     ///
     /// Returns the text (null when the rewrite failed — the block then proceeds as if no introduction
-    /// had been asked for) and the object the keyword was linked to, if any.
+    /// had been asked for) and the objects keywords were linked to.
     /// </summary>
-    private async Task<(string? Text, NarrativeAnchor? Anchor)> AppendAreaIntroductionAsync(
+    private async Task<(string? Text, List<NarrativeAnchor> Anchors)> AppendAreaIntroductionAsync(
         List<NarrationSentence> sentences,
         List<string> allKeywords,
         int slotId,
@@ -492,19 +491,22 @@ public class ObservationPhaseController
             var neutral = NeutralNarration.AreaIntroduction(introArea.ContextDescription, period.Phrase(), description, sights);
             var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, preview: sink, ct: ct);
 
-            var (keyword, anchor) = MatchIntroductionKeyword(text, pool);
-            var kws = keyword != null ? new List<string> { keyword } : new List<string>();
-            sentences.Add(new NarrationSentence(text, kws, anchor));
+            var links = LinkIntroductionKeywords(text, introArea.ContextDescription, pool);
+            var kws = links.Select(l => l.Keyword).ToList();
+            var anchors = links.Select(l => l.Anchor).ToList();
+            sentences.Add(new NarrationSentence(text, kws, anchors.FirstOrDefault(), anchors));
             allKeywords.AddRange(kws);
-            if (anchor != null) ledger.Observe(anchor);
+            foreach (var a in anchors) ledger.Observe(a);
             Console.WriteLine($"ObservationPhaseController: Area introduction of '{introArea.DisplayName}' " +
-                              (anchor != null ? $"(keyword '{keyword}' → '{anchor.DisplayName}')" : "(no keyword)"));
-            return (text, anchor);
+                              (links.Count > 0
+                                  ? $"(keywords: {string.Join(", ", links.Select(l => $"'{l.Keyword}' → '{l.Anchor.DisplayName}'"))})"
+                                  : "(no keyword)"));
+            return (text, anchors);
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"ObservationPhaseController: Area introduction failed: {ex.Message}");
-            return (null, null);
+            return (null, new List<NarrativeAnchor>());
         }
     }
 
@@ -512,43 +514,21 @@ public class ObservationPhaseController
     private const int IntroductionSightsMax = 5;
 
     /// <summary>
-    /// Finds a word of an area introduction that names an object of <paramref name="pool"/> outright —
-    /// its reference lemma, or the head (last word) of its neutral name — and returns that word with
-    /// the object. A draw among all matches, so the same introduction does not always link the same
-    /// thing.
+    /// The keywords of an area introduction, each linked to the object of <paramref name="pool"/> it
+    /// names (<see cref="IntroductionKeywordLinker"/>).
     ///
-    /// <para>A person matches by the head of their name only, never by lemma: every NPC shares the
-    /// stand-in lemma "body", which would tie any mention of a body to whoever came first.</para>
-    ///
-    /// <para>No match is made when the pool holds a single object. The matched object is retired from
-    /// the block, and retiring the only one would leave the mandatory observation nothing to look at.</para>
+    /// <para>One object is always left unlinked: a linked object is retired from the block, and the
+    /// mandatory observation that follows needs something to look at. So no link is made when the pool
+    /// holds a single object, and when every object was named the last link in reading order is
+    /// dropped.</para>
     /// </summary>
-    private (string? Keyword, NarrativeAnchor? Anchor) MatchIntroductionKeyword(string text, List<NarrativeAnchor> pool)
+    private static List<(string Keyword, NarrativeAnchor Anchor)> LinkIntroductionKeywords(
+        string text, string whereClause, List<NarrativeAnchor> pool)
     {
-        if (pool.Count < 2) return (null, null);
-
-        var words = NounExtractor.ExtractKeywordCandidates(text);
-        var matches = new List<(string Keyword, NarrativeAnchor Anchor)>();
-        foreach (var anchor in pool)
-        {
-            if (anchor is not ObservationObject obs) continue;
-            bool isPerson = anchor is Cathedral.Game.Scene.SyntheticNpcObservationObject;
-            var lemma = isPerson ? "" : obs.ReferenceLemma.Trim();
-            var head  = (obs.NeutralName.Split(' ', StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? "")
-                        .Trim('(', ')', ',', '.', '\'', '"');
-            foreach (var (surface, wordLemma) in words)
-            {
-                bool hit = Same(wordLemma, lemma) || Same(surface, lemma)
-                        || Same(wordLemma, head)  || Same(surface, head);
-                if (hit) { matches.Add((surface, anchor)); break; }
-            }
-        }
-        if (matches.Count == 0) return (null, null);
-        var pick = matches[_random.Next(matches.Count)];
-        return (pick.Keyword, pick.Anchor);
-
-        static bool Same(string a, string b)
-            => b.Length > 0 && a.Equals(b, StringComparison.OrdinalIgnoreCase);
+        if (pool.Count < 2) return new();
+        var links = IntroductionKeywordLinker.Link(text, whereClause, pool, NounExtractor.ExtractKeywordCandidates(text));
+        if (links.Count >= pool.Count) links.RemoveAt(links.Count - 1);
+        return links;
     }
 
     /// <summary>

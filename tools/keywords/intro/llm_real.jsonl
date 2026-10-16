@@ -1,0 +1,28 @@
+{"cid": "r0", "out": "A: heart\nB: -\nC: -\nD: well-drawn\nE: -\n", "links": {"0": "heart", "3": "well-drawn"}, "secs": 2.3}
+{"cid": "r1", "out": "A: flour\nB: apprentice\nC: -\nD: -\nE: -\n", "links": {"0": "flour", "1": "apprentice"}, "secs": 2.0}
+{"cid": "r2", "out": "A: wind-scoured\nB: statue\nC: tar\nD: ivy-grown\nE: inn\n", "links": {"0": "wind-scoured", "1": "statue", "2": "tar", "3": "ivy-grown", "4": "inn"}, "secs": 1.0}
+{"cid": "r3", "out": "A: tar\nB: -\nC: -\nD: -\nE: water-carrier\n", "links": {"0": "tar", "4": "water-carrier"}, "secs": 1.7}
+{"cid": "r4", "out": "A: clerk\nB: trestle\nC: doors\nD: -\nE: shutter\n", "links": {"0": "clerk", "1": "trestle", "2": "doors", "4": "shutter"}, "secs": 1.0}
+{"cid": "r5", "out": "A: lichen\nB: -\nC: -\nD: -\nE: lichen\n", "links": {"0": "lichen", "4": "lichen"}, "secs": 1.7}
+{"cid": "r6", "out": "A: thaw\nB: sedge\nC: -\nD: -\nE: -\n", "links": {"0": "thaw", "1": "sedge"}, "secs": 1.7}
+{"cid": "r7", "out": "A: merchant\nB: -\nC: -\nD: -\nE: -\n", "links": {"0": "merchant"}, "secs": 1.7}
+{"cid": "r8", "out": "A: frost-chilled\nB: -\nC: lichens\nD: tenses\nE: lichens\n", "links": {"0": "frost-chilled", "2": "lichens", "3": "tenses", "4": "lichens"}, "secs": 2.1}
+{"cid": "r9", "out": "A: moss\nB: land\nC: -\nD: musk\nE: -\n", "links": {"0": "moss", "1": "land", "3": "musk"}, "secs": 1.8}
+{"cid": "r10", "out": "A: thaw\nB: -\nC: sedge\nD: crane\nE: -\n", "links": {"0": "thaw", "2": "sedge", "3": "crane"}, "secs": 1.6}
+{"cid": "r11", "out": "A: hall\nB: hearth\nC: -\nD: -\nE: -\n", "links": {"0": "hall", "1": "hearth"}, "secs": 1.8}
+{"cid": "r12", "out": "A: barn\nB: potato\nC: -\nD: potato\nE: rows\n", "links": {"0": "barn", "1": "potato", "3": "potato", "4": "rows"}, "secs": 1.8}
+{"cid": "r13", "out": "A: body\nB: strip\nC: -\nD: -\nE: cabbage\n", "links": {"0": "body", "1": "strip", "4": "cabbage"}, "secs": 1.7}
+{"cid": "r14", "out": "A: kelp\nB: -\nC: rocky\nD: -\nE: -\n", "links": {"0": "kelp", "2": "rocky"}, "secs": 1.6}
+{"cid": "r15", "out": "A: kelp\nB: path\nC: beach\nD: snail\nE: lizard\n", "links": {"0": "kelp", "1": "path", "2": "beach", "3": "snail", "4": "lizard"}, "secs": 1.8}
+{"cid": "r16", "out": "A: stony\nB: shadow\nC: -\nD: salt\nE: pan\n", "links": {"0": "stony", "1": "shadow", "3": "salt", "4": "pan"}, "secs": 1.8}
+{"cid": "r17", "out": "A: square\nB: -\nC: -\nD: -\nE: square\n", "links": {"0": "square", "4": "square"}, "secs": 1.6}
+{"cid": "r18", "out": "A: wadi\nB: stony\nC: -\nD: -\nE: dune\n", "links": {"0": "wadi", "1": "stony", "4": "dune"}, "secs": 1.8}
+{"cid": "r19", "out": "A: wadi-oasis\nB: acacia\nC: boulder\nD: -\nE: -\n", "links": {"0": "wadi-oasis", "1": "acacia", "2": "boulder"}, "secs": 1.9}
+{"cid": "r20", "out": "A: stony\nB: -\nC: -\nD: salt\nE: salt\n", "links": {"0": "stony", "3": "salt", "4": "salt"}, "secs": 1.7}
+{"cid": "r21", "out": "A: weathered\nB: whispers\nC: stony\nD: -\nE: -\n", "links": {"0": "weathered", "1": "whispers", "2": "stony"}, "secs": 1.7}
+{"cid": "r22", "out": "A: smoke-stained\nB: -\nC: square-back\nD: slump-walled\nE: -\n", "links": {"0": "smoke-stained", "2": "square-back", "3": "slump-walled"}, "secs": 1.1}
+{"cid": "r23", "out": "A: millstone\nB: millstone\nC: mill\nD: -\nE: miller\n", "links": {"0": "millstone", "1": "millstone", "2": "mill", "4": "miller"}, "secs": 1.8}
+{"cid": "r24", "out": "A: citadel\nB: wool\nC: -\nD: carpenter\nE: fountain\n", "links": {"0": "citadel", "1": "wool", "3": "carpenter", "4": "fountain"}, "secs": 2.1}
+{"cid": "r25", "out": "A: counting\nB: -\nC: hanging\nD: -\nE: guildhall\n", "links": {"0": "counting", "2": "hanging", "4": "guildhall"}, "secs": 1.7}
+{"cid": "r26", "out": "A: stone\nB: -\nC: guildhall\nD: carpenter\nE: wool\n", "links": {"0": "stone", "2": "guildhall", "3": "carpenter", "4": "wool"}, "secs": 1.8}
+{"cid": "r27", "out": "A: soot-darkened\nB: guard\nC: -\nD: -\nE: workshop\n", "links": {"0": "soot-darkened", "1": "guard", "4": "workshop"}, "secs": 1.7}

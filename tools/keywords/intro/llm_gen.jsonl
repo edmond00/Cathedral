@@ -1,0 +1,117 @@
+{"cid": "g0", "out": "A: drying\nB: -\nC: -\nD: -\nE: -\nF: -\nG: -\nH: lemons\n", "links": {"0": "drying", "7": "lemons"}, "secs": 2.5}
+{"cid": "g1", "out": "A: straw\nB: wooden\nC: straw\nD: wooden\nE: -\nF: -\nG: straw\nH: wooden\nI: -\nJ: clothes\nK: -\nL: -\nM: planter\n", "links": {"0": "straw", "1": "wooden", "2": "straw", "3": "wooden", "6": "straw", "7": "wooden", "9": "clothes", "12": "planter"}, "secs": 3.5}
+{"cid": "g2", "out": "A: clay\nB: crockery\nC: herbs\nD: -\nE: door\n", "links": {"0": "clay", "1": "crockery", "2": "herbs", "4": "door"}, "secs": 1.8}
+{"cid": "g3", "out": "A: straw\nB: wooden\nC: prayer\nD: -\n", "links": {"0": "straw", "1": "wooden", "2": "prayer"}, "secs": 1.6}
+{"cid": "g4", "out": "A: orchard\nB: -\nC: rows\nD: rows\nE: -\nF: windbreak\n", "links": {"0": "orchard", "2": "rows", "3": "rows", "5": "windbreak"}, "secs": 1.9}
+{"cid": "g5", "out": "A: ditch\nB: packing\nC: gate\nD: thorn\nE: shed\n", "links": {"0": "ditch", "1": "packing", "2": "gate", "3": "thorn", "4": "shed"}, "secs": 1.9}
+{"cid": "g6", "out": "A: wormwood\nB: sage\nC: -\nD: rye\nE: thorn\nF: peat\nG: rye\n", "links": {"0": "wormwood", "1": "sage", "3": "rye", "4": "thorn", "5": "peat", "6": "rye"}, "secs": 2.4}
+{"cid": "g7", "out": "A: straw\nB: pear\nC: track\nD: picker\nE: rows\nF: windbreak\n", "links": {"0": "straw", "1": "pear", "2": "track", "3": "picker", "4": "rows", "5": "windbreak"}, "secs": 2.0}
+{"cid": "g8", "out": "A: garden\nB: -\nC: landing\n", "links": {"0": "garden", "2": "landing"}, "secs": 1.2}
+{"cid": "g9", "out": "A: mash\nB: abbey\n", "links": {"0": "mash", "1": "abbey"}, "secs": 1.2}
+{"cid": "g10", "out": "A: gorge\nB: main\nC: -\nD: rat\nE: shaft\n", "links": {"0": "gorge", "1": "main", "3": "rat", "4": "shaft"}, "secs": 1.7}
+{"cid": "g11", "out": "A: brindlemane\nB: grassland\nC: flower\nD: -\nE: grassland\nF: -\nG: grassland\nH: -\nI: grassland\nJ: -\nK: -\nL: grassland\nM: grassland\n", "links": {"0": "brindlemane", "1": "grassland", "2": "flower", "4": "grassland", "6": "grassland", "8": "grassland", "11": "grassland", "12": "grassland"}, "secs": 4.2}
+{"cid": "g12", "out": "A: sea\nB: sea\nC: sea\nD: sea\nE: gate\n", "links": {"0": "sea", "1": "sea", "2": "sea", "3": "sea", "4": "gate"}, "secs": 1.7}
+{"cid": "g13", "out": "A: ribbons\nB: -\nC: slot\nD: -\nE: puma\nF: ringtail\nG: dung\nH: wash\n", "links": {"0": "ribbons", "2": "slot", "4": "puma", "5": "ringtail", "6": "dung", "7": "wash"}, "secs": 2.4}
+{"cid": "g14", "out": "A: wrack\nB: hulls\nC: -\nD: hulls\nE: -\n", "links": {"0": "wrack", "1": "hulls", "3": "hulls"}, "secs": 2.0}
+{"cid": "g15", "out": "A: crop\nB: -\nC: -\nD: -\nE: door\nF: wall\nG: -\nH: woman\nI: beetle\nJ: hayward\n", "links": {"0": "crop", "4": "door", "5": "wall", "7": "woman", "8": "beetle", "9": "hayward"}, "secs": 2.7}
+{"cid": "g16", "out": "A: clearing\nB: -\nC: -\nD: glimmer\nE: -\nF: -\nG: -\nH: clearing\nI: -\nJ: -\nK: -\nL: -\nM: -\nN: -\nO: -\nP: -\n", "links": {"0": "clearing", "3": "glimmer", "7": "clearing"}, "secs": 3.4}
+{"cid": "g17", "out": "A: tomb\nB: barrow\nC: -\nD: alley\nE: scarab\nF: moth\nG: field\n", "links": {"0": "tomb", "1": "barrow", "3": "alley", "4": "scarab", "5": "moth", "6": "field"}, "secs": 2.1}
+{"cid": "g18", "out": "A: roofless\nB: -\nC: undercroft\nD: undercroft\nE: -\nF: -\nG: -\nH: -\nI: undercroft\nJ: roofless\nK: walls\n", "links": {"0": "roofless", "2": "undercroft", "3": "undercroft", "8": "undercroft", "9": "roofless", "10": "walls"}, "secs": 2.9}
+{"cid": "g19", "out": "A: tool\nB: sunken\n", "links": {"0": "tool", "1": "sunken"}, "secs": 1.3}
+{"cid": "g20", "out": "A: track\nB: trap\nC: -\nD: -\nE: -\nF: field\n", "links": {"0": "track", "1": "trap", "5": "field"}, "secs": 1.7}
+{"cid": "g21", "out": "A: bean\nB: -\nC: -\nD: straw\nE: -\nF: bean\n", "links": {"0": "bean", "3": "straw", "5": "bean"}, "secs": 1.9}
+{"cid": "g22", "out": "A: stone\nB: trestle\nC: -\nD: door\nE: kitchen\nF: pantry\nG: hall\n", "links": {"0": "stone", "1": "trestle", "3": "door", "4": "kitchen", "5": "pantry", "6": "hall"}, "secs": 2.4}
+{"cid": "g23", "out": "A: broader\nB: tapestry\nC: -\nD: -\nE: passage\nF: -\n", "links": {"0": "broader", "1": "tapestry", "4": "passage"}, "secs": 2.0}
+{"cid": "g24", "out": "A: clay\nB: crockery\nC: -\nD: -\nE: longhouse\nF: -\n", "links": {"0": "clay", "1": "crockery", "4": "longhouse"}, "secs": 2.0}
+{"cid": "g25", "out": "A: cooking\nB: -\nC: herbs\nD: house\n", "links": {"0": "cooking", "2": "herbs", "3": "house"}, "secs": 1.5}
+{"cid": "g26", "out": "A: stone\nB: -\nC: bench\nD: door\nE: door\nF: -\nG: door\nH: -\n", "links": {"0": "stone", "2": "bench", "3": "door", "4": "door", "6": "door"}, "secs": 2.7}
+{"cid": "g27", "out": "A: books\nB: reading\nC: -\nD: mouse\n", "links": {"0": "books", "1": "reading", "3": "mouse"}, "secs": 1.6}
+{"cid": "g28", "out": "A: paddy\nB: chest\nC: juniper\nD: -\nE: dormitory\n", "links": {"0": "paddy", "1": "chest", "2": "juniper", "4": "dormitory"}, "secs": 1.8}
+{"cid": "g29", "out": "A: rubble\nB: main\nC: main\n", "links": {"0": "rubble", "1": "main", "2": "main"}, "secs": 1.3}
+{"cid": "g30", "out": "A: straw\nB: rows\nC: -\nD: -\nE: wallow\nF: -\nG: -\nH: -\nI: -\nJ: -\nK: rows\n", "links": {"0": "straw", "1": "rows", "4": "wallow", "10": "rows"}, "secs": 2.7}
+{"cid": "g31", "out": "A: rows\nB: -\nC: rows\nD: -\nE: -\nF: -\nG: -\nH: rows\n", "links": {"0": "rows", "2": "rows", "7": "rows"}, "secs": 2.1}
+{"cid": "g32", "out": "A: cabbages\nB: -\nC: strip\nD: strip\nE: -\nF: -\nG: -\nH: -\nI: strip\nJ: -\n", "links": {"0": "cabbages", "2": "strip", "3": "strip", "8": "strip"}, "secs": 2.5}
+{"cid": "g33", "out": "A: straw\nB: -\nC: straw\nD: wooden\nE: washstand\nF: door\n", "links": {"0": "straw", "2": "straw", "3": "wooden", "4": "washstand", "5": "door"}, "secs": 2.1}
+{"cid": "g34", "out": "A: cordwainers\nB: -\nC: -\nD: cordwainers\nE: -\nF: -\nG: -\nH: guildhall\nI: cordwainers\n", "links": {"0": "cordwainers", "3": "cordwainers", "7": "guildhall", "8": "cordwainers"}, "secs": 2.6}
+{"cid": "g35", "out": "A: forested\nB: mushrooms\nC: moss\nD: -\nE: slope\nF: squirrel\nG: -\nH: -\nI: -\nJ: -\nK: stream\n", "links": {"0": "forested", "1": "mushrooms", "2": "moss", "4": "slope", "5": "squirrel", "10": "stream"}, "secs": 2.9}
+{"cid": "g36", "out": "A: stairs\nB: -\n", "links": {"0": "stairs"}, "secs": 1.0}
+{"cid": "g37", "out": "A: cooking\nB: shelf\nC: -\nD: longhouse\nE: staircase\n", "links": {"0": "cooking", "1": "shelf", "3": "longhouse", "4": "staircase"}, "secs": 1.7}
+{"cid": "g38", "out": "A: reindeer\nB: cloudberry\nC: -\nD: moss\nE: tundra\nF: hunger\nG: wolf\nH: -\nI: -\n", "links": {"0": "reindeer", "1": "cloudberry", "3": "moss", "4": "tundra", "5": "hunger", "6": "wolf"}, "secs": 2.9}
+{"cid": "g39", "out": "A: anvil\nB: -\nC: -\nD: -\nE: -\nF: forge\nG: -\nH: -\nI: forge\n", "links": {"0": "anvil", "5": "forge", "8": "forge"}, "secs": 2.1}
+{"cid": "g40", "out": "A: wrack\nB: beach\nC: -\nD: -\nE: hull\nF: -\n", "links": {"0": "wrack", "1": "beach", "4": "hull"}, "secs": 2.0}
+{"cid": "g41", "out": "A: bed\nB: foot\nC: abbey\n", "links": {"0": "bed", "1": "foot", "2": "abbey"}, "secs": 1.3}
+{"cid": "g42", "out": "A: windbreak\nB: orange\nC: -\nD: -\nE: grove\n", "links": {"0": "windbreak", "1": "orange", "4": "grove"}, "secs": 1.7}
+{"cid": "g43", "out": "A: oak\nB: boulder\nC: flower\nD: hill\nE: -\nF: -\nG: -\nH: bee\nI: hill\n", "links": {"0": "oak", "1": "boulder", "2": "flower", "3": "hill", "7": "bee", "8": "hill"}, "secs": 2.2}
+{"cid": "g44", "out": "A: sage\nB: wormwood\nC: sage\nD: hop\nE: butterfly\nF: hop\n", "links": {"0": "sage", "1": "wormwood", "2": "sage", "3": "hop", "4": "butterfly", "5": "hop"}, "secs": 2.2}
+{"cid": "g45", "out": "A: bines\nB: -\nC: strip\nD: hedge\nE: -\nF: cricket\nG: strip\n", "links": {"0": "bines", "2": "strip", "3": "hedge", "5": "cricket", "6": "strip"}, "secs": 2.0}
+{"cid": "g46", "out": "A: hearth\nB: -\nC: -\nD: door\nE: door\nF: -\nG: -\nH: reaper\nI: reaper\n", "links": {"0": "hearth", "3": "door", "4": "door", "7": "reaper", "8": "reaper"}, "secs": 2.6}
+{"cid": "g47", "out": "A: pingo\nB: -\nC: pingo\nD: thaw\nE: -\nF: lichen\nG: thaw\nH: -\n", "links": {"0": "pingo", "2": "pingo", "3": "thaw", "5": "lichen", "6": "thaw"}, "secs": 2.6}
+{"cid": "g48", "out": "A: lemon\nB: -\nC: grove\nD: grove\nE: -\nF: -\nG: -\nH: -\nI: -\nJ: -\nK: -\nL: -\nM: -\nN: -\n", "links": {"0": "lemon", "2": "grove", "3": "grove"}, "secs": 3.3}
+{"cid": "g49", "out": "A: crop\nB: -\nC: -\nD: -\nE: -\nF: -\nG: -\nH: -\nI: cart\nJ: -\nK: -\n", "links": {"0": "crop", "8": "cart"}, "secs": 2.7}
+{"cid": "g50", "out": "A: breathing\nB: -\nC: pack\nD: flank\nE: bench\nF: -\nG: -\nH: -\nI: ridge\n", "links": {"0": "breathing", "2": "pack", "3": "flank", "4": "bench", "8": "ridge"}, "secs": 2.5}
+{"cid": "g51", "out": "A: linen\nB: tapestry\nC: chamber\n", "links": {"0": "linen", "1": "tapestry", "2": "chamber"}, "secs": 1.4}
+{"cid": "g52", "out": "A: stone\nB: -\nC: stone\nD: -\nE: sanctum\n", "links": {"0": "stone", "2": "stone", "4": "sanctum"}, "secs": 1.6}
+{"cid": "g53", "out": "A: straw\nB: wooden\nC: -\nD: field\n", "links": {"0": "straw", "1": "wooden", "3": "field"}, "secs": 1.4}
+{"cid": "g54", "out": "A: storage\nB: shelf\nC: -\nD: door\n", "links": {"0": "storage", "1": "shelf", "3": "door"}, "secs": 1.6}
+{"cid": "g55", "out": "A: crenellations\nB: stair\nC: -\nD: courts\n", "links": {"0": "crenellations", "1": "stair", "3": "courts"}, "secs": 1.7}
+{"cid": "g56", "out": "A: fortress\nB: brazier\nC: -\nD: door\n", "links": {"0": "fortress", "1": "brazier", "3": "door"}, "secs": 1.7}
+{"cid": "g57", "out": "A: pingo\nB: lichen\nC: pingo\nD: -\nE: -\nF: -\nG: pingo\nH: ice\nI: -\nJ: lemming\n", "links": {"0": "pingo", "1": "lichen", "2": "pingo", "6": "pingo", "7": "ice", "9": "lemming"}, "secs": 2.7}
+{"cid": "g58", "out": "A: rock\nB: -\nC: seat\nD: cleft\nE: slide\nF: bank\nG: -\nH: way\n", "links": {"0": "rock", "2": "seat", "3": "cleft", "4": "slide", "5": "bank", "7": "way"}, "secs": 2.4}
+{"cid": "g59", "out": "A: crop\nB: root\nC: -\nD: threshing\nE: -\nF: reaper\nG: clamp\nH: floor\nI: -\n", "links": {"0": "crop", "1": "root", "3": "threshing", "5": "reaper", "6": "clamp", "7": "floor"}, "secs": 2.4}
+{"cid": "g60", "out": "A: clay\nB: -\nC: -\nD: -\nE: longhouse\n", "links": {"0": "clay", "4": "longhouse"}, "secs": 1.6}
+{"cid": "g61", "out": "A: clay\nB: herbs\nC: -\nD: -\nE: lodge\n", "links": {"0": "clay", "1": "herbs", "4": "lodge"}, "secs": 1.7}
+{"cid": "g62", "out": "A: crust\nB: lichen\nC: ridge\nD: slide\nE: -\nF: ridge\n", "links": {"0": "crust", "1": "lichen", "2": "ridge", "3": "slide", "5": "ridge"}, "secs": 2.2}
+{"cid": "g63", "out": "A: crenellations\nB: -\nC: distant\nD: distant\nE: gate\n", "links": {"0": "crenellations", "2": "distant", "3": "distant", "4": "gate"}, "secs": 1.8}
+{"cid": "g64", "out": "A: straw\nB: wooden\nC: straw\nD: wooden\nE: washstand\nF: miners\n", "links": {"0": "straw", "1": "wooden", "2": "straw", "3": "wooden", "4": "washstand", "5": "miners"}, "secs": 2.1}
+{"cid": "g65", "out": "A: hearth\nB: shelves\nC: -\nD: stable\nE: -\n", "links": {"0": "hearth", "1": "shelves", "3": "stable"}, "secs": 1.6}
+{"cid": "g66", "out": "A: -\nB: -\nC: -\nD: -\nE: -\nF: -\nG: -\nH: snowfield\nI: castle\n", "links": {"7": "snowfield", "8": "castle"}, "secs": 2.5}
+{"cid": "g67", "out": "A: clay\nB: shelves\nC: -\nD: dawn-longhouse\n", "links": {"0": "clay", "1": "shelves", "3": "dawn-longhouse"}, "secs": 1.5}
+{"cid": "g68", "out": "A: ditch\nB: -\nC: -\nD: -\nE: ditch\n", "links": {"0": "ditch", "4": "ditch"}, "secs": 1.6}
+{"cid": "g69", "out": "A: cordwood\nB: -\nC: -\nD: root\nE: -\nF: beetle\nG: woodshed\n", "links": {"0": "cordwood", "3": "root", "5": "beetle", "6": "woodshed"}, "secs": 2.2}
+{"cid": "g70", "out": "A: courtyard\nB: courtyard\nC: courtyard\nD: courtyard\nE: -\nF: courtyard\nG: -\nH: -\nI: farm\nJ: farm\nK: -\nL: -\nM: -\nN: -\nO: -\nP: -\n", "links": {"0": "courtyard", "1": "courtyard", "2": "courtyard", "3": "courtyard", "5": "courtyard", "8": "farm", "9": "farm"}, "secs": 3.5}
+{"cid": "g71", "out": "A: hearths\nB: -\nC: castle\n", "links": {"0": "hearths", "2": "castle"}, "secs": 1.2}
+{"cid": "g72", "out": "A: straw\nB: -\nC: straw\nD: -\nE: straw\nF: -\nG: -\nH: field\n", "links": {"0": "straw", "2": "straw", "4": "straw", "7": "field"}, "secs": 2.4}
+{"cid": "g73", "out": "A: ore\nB: ore\nC: -\nD: -\nE: ore\n", "links": {"0": "ore", "1": "ore", "4": "ore"}, "secs": 1.6}
+{"cid": "g74", "out": "A: stacks\nB: -\n", "links": {"0": "stacks"}, "secs": 1.0}
+{"cid": "g75", "out": "A: oats\nB: scarecrow\nC: -\nD: -\nE: -\nF: -\nG: feed\nH: -\nI: -\nJ: -\nK: -\n", "links": {"0": "oats", "1": "scarecrow", "6": "feed"}, "secs": 2.5}
+{"cid": "g76", "out": "A: wall\nB: -\nC: scree\nD: seams\nE: -\nF: wall\n", "links": {"0": "wall", "2": "scree", "3": "seams", "5": "wall"}, "secs": 1.9}
+{"cid": "g77", "out": "A: hearth\nB: trestle\nC: -\nD: door\nE: hall\nF: pantry\nG: -\nH: -\nI: shutter\nJ: planter\nK: picker\n", "links": {"0": "hearth", "1": "trestle", "3": "door", "4": "hall", "5": "pantry", "8": "shutter", "9": "planter", "10": "picker"}, "secs": 3.2}
+{"cid": "g78", "out": "A: straw\nB: wooden\nC: straw\nD: -\nE: washstand\nF: -\n", "links": {"0": "straw", "1": "wooden", "2": "straw", "4": "washstand"}, "secs": 2.1}
+{"cid": "g79", "out": "A: thaw\nB: -\nC: -\nD: -\nE: -\nF: -\nG: -\nH: -\nI: tundra\n", "links": {"0": "thaw", "8": "tundra"}, "secs": 2.3}
+{"cid": "g80", "out": "A: clay\nB: -\nC: -\nD: -\nE: planter\nF: -\n", "links": {"0": "clay", "4": "planter"}, "secs": 1.9}
+{"cid": "g81", "out": "A: aphid\nB: press-house\nC: packing\nD: picker\nE: -\nF: aphid\nG: press-house\nH: packing\n", "links": {"0": "aphid", "1": "press-house", "2": "packing", "3": "picker", "5": "aphid", "6": "press-house", "7": "packing"}, "secs": 2.6}
+{"cid": "g82", "out": "A: strongboxes\nB: castle\n", "links": {"0": "strongboxes", "1": "castle"}, "secs": 1.2}
+{"cid": "g83", "out": "A: bed\nB: -\nC: -\nD: -\nE: -\nF: -\n", "links": {"0": "bed"}, "secs": 2.0}
+{"cid": "g84", "out": "A: barley\nB: -\nC: barley\nD: -\nE: -\nF: plowman\nG: barley\n", "links": {"0": "barley", "2": "barley", "5": "plowman", "6": "barley"}, "secs": 2.2}
+{"cid": "g85", "out": "A: bines\nB: -\nC: hop-poles\nD: -\nE: -\nF: -\nG: -\nH: -\nI: -\nJ: -\nK: -\nL: -\nM: -\n", "links": {"0": "bines", "2": "hop-poles"}, "secs": 2.8}
+{"cid": "g86", "out": "A: cooking\nB: shelves\nC: -\nD: -\nE: door\nF: -\n", "links": {"0": "cooking", "1": "shelves", "4": "door"}, "secs": 1.9}
+{"cid": "g87", "out": "A: corral\nB: -\nC: feed\nD: -\nE: -\nF: drover\nG: -\nH: yard\n", "links": {"0": "corral", "2": "feed", "5": "drover", "7": "yard"}, "secs": 2.5}
+{"cid": "g88", "out": "A: ore\nB: ore\nC: -\nD: -\nE: -\nF: ore\n", "links": {"0": "ore", "1": "ore", "5": "ore"}, "secs": 1.7}
+{"cid": "g89", "out": "A: sheaves\nB: -\nC: bunds\nD: butcher\nE: wall\nF: -\nG: -\nH: paddy\n", "links": {"0": "sheaves", "2": "bunds", "3": "butcher", "4": "wall", "7": "paddy"}, "secs": 2.7}
+{"cid": "g90", "out": "A: lichen\nB: -\nC: -\nD: -\nE: -\nF: -\nG: -\nH: -\nI: -\nJ: -\nK: -\nL: fish\n", "links": {"0": "lichen", "11": "fish"}, "secs": 2.7}
+{"cid": "g91", "out": "A: gorge\nB: rock\nC: -\nD: gorge\nE: -\nF: -\nG: -\nH: stream\n", "links": {"0": "gorge", "1": "rock", "3": "gorge", "7": "stream"}, "secs": 2.1}
+{"cid": "g92", "out": "A: cotton\nB: -\nC: strip\nD: -\nE: -\nF: -\nG: -\nH: bolls\n", "links": {"0": "cotton", "2": "strip", "7": "bolls"}, "secs": 1.9}
+{"cid": "g93", "out": "A: straw\nB: wooden\nC: -\nD: wooden\nE: -\nF: wooden\nG: rush\nH: clothes\nI: field\n", "links": {"0": "straw", "1": "wooden", "3": "wooden", "5": "wooden", "6": "rush", "7": "clothes", "8": "field"}, "secs": 2.5}
+{"cid": "g94", "out": "A: onion\nB: scarecrow\nC: -\nD: gate\nE: -\nF: strip\n", "links": {"0": "onion", "1": "scarecrow", "3": "gate", "5": "strip"}, "secs": 1.8}
+{"cid": "g95", "out": "A: clay\nB: -\nC: mortar\nD: door\n", "links": {"0": "clay", "2": "mortar", "3": "door"}, "secs": 1.5}
+{"cid": "g96", "out": "A: earth\nB: square\nC: -\nD: -\nE: -\nF: -\nG: -\nH: -\nI: -\nJ: -\nK: -\nL: square\n", "links": {"0": "earth", "1": "square", "11": "square"}, "secs": 2.6}
+{"cid": "g97", "out": "A: straw\nB: -\nC: straw\nD: -\nE: -\nF: -\nG: -\nH: reaper\nI: reaper\n", "links": {"0": "straw", "2": "straw", "7": "reaper", "8": "reaper"}, "secs": 2.4}
+{"cid": "g98", "out": "A: tapestry\nB: fortress\nC: -\nD: fortress\nE: fortress\nF: -\nG: fortress\n", "links": {"0": "tapestry", "1": "fortress", "3": "fortress", "4": "fortress", "6": "fortress"}, "secs": 2.0}
+{"cid": "g99", "out": "A: polynya\nB: -\nC: lead\nD: ice\nE: polynya\n", "links": {"0": "polynya", "2": "lead", "3": "ice", "4": "polynya"}, "secs": 1.8}
+{"cid": "g100", "out": "A: row\nB: -\nC: strip\nD: -\nE: cart\nF: -\nG: plowman\nH: strip\nI: -\n", "links": {"0": "row", "2": "strip", "4": "cart", "6": "plowman", "7": "strip"}, "secs": 2.3}
+{"cid": "g101", "out": "A: crates\nB: door\n", "links": {"0": "crates", "1": "door"}, "secs": 1.2}
+{"cid": "g102", "out": "A: linen\nB: tapestry\nC: door\n", "links": {"0": "linen", "1": "tapestry", "2": "door"}, "secs": 1.2}
+{"cid": "g103", "out": "A: cabbage\nB: -\nC: cabbage\nD: -\nE: herb\nF: butterfly\nG: -\nH: -\nI: herb\n", "links": {"0": "cabbage", "2": "cabbage", "4": "herb", "5": "butterfly", "8": "herb"}, "secs": 2.2}
+{"cid": "g104", "out": "A: snail\nB: -\nC: candle\nD: door\nE: kitchen\nF: store\nG: -\nH: -\nI: -\nJ: -\nK: -\nL: -\n", "links": {"0": "snail", "2": "candle", "3": "door", "4": "kitchen", "5": "store"}, "secs": 3.3}
+{"cid": "g105", "out": "A: crenellations\nB: -\nC: footings\nD: -\nE: -\nF: guard\n", "links": {"0": "crenellations", "2": "footings", "5": "guard"}, "secs": 1.9}
+{"cid": "g106", "out": "A: tool\nB: -\nC: field\n", "links": {"0": "tool", "2": "field"}, "secs": 1.4}
+{"cid": "g107", "out": "A: clay\nB: -\nC: -\nD: -\nE: rain-streaked\n", "links": {"0": "clay", "4": "rain-streaked"}, "secs": 1.8}
+{"cid": "g108", "out": "A: straw-padded\nB: wooden\nC: -\nD: bunks\n", "links": {"0": "straw-padded", "1": "wooden", "3": "bunks"}, "secs": 1.6}
+{"cid": "g109", "out": "A: hearth\nB: shelves\nC: -\nD: field\n", "links": {"0": "hearth", "1": "shelves", "3": "field"}, "secs": 1.3}
+{"cid": "g110", "out": "A: tools\nB: firewood\nC: -\nD: door\n", "links": {"0": "tools", "1": "firewood", "3": "door"}, "secs": 1.5}
+{"cid": "g111", "out": "A: straw\nB: wooden\nC: straw\nD: wooden\nE: psalter\nF: field\n", "links": {"0": "straw", "1": "wooden", "2": "straw", "3": "wooden", "4": "psalter", "5": "field"}, "secs": 2.4}
+{"cid": "g112", "out": "A: field\nB: -\nC: work\nD: store\n", "links": {"0": "field", "2": "work", "3": "store"}, "secs": 1.6}
+{"cid": "g113", "out": "A: rows\nB: -\nC: rows\nD: rows\nE: rows\nF: rows\nG: -\nH: -\nI: scent\nJ: -\nK: -\nL: -\nM: -\n", "links": {"0": "rows", "2": "rows", "3": "rows", "4": "rows", "5": "rows", "8": "scent"}, "secs": 3.4}
+{"cid": "g114", "out": "A: vines\nB: -\nC: vines\nD: -\nE: -\nF: -\nG: -\nH: -\nI: vines\nJ: -\n", "links": {"0": "vines", "2": "vines", "8": "vines"}, "secs": 2.4}
+{"cid": "g115", "out": "A: rock\nB: -\nC: main\nD: -\nE: -\nF: -\nG: -\n", "links": {"0": "rock", "2": "main"}, "secs": 1.9}
+{"cid": "g116", "out": "A: storage\nB: shelves\nC: pantry\n", "links": {"0": "storage", "1": "shelves", "2": "pantry"}, "secs": 1.3}

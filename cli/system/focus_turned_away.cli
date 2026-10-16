@@ -1,12 +1,17 @@
 # focus — a modus mentis that turns away from the clicked object observes another instead
 #
-# Ripelore is asked to focus on the test room door and turns away (--refuse-focus stands in for the
+# Ripelore is asked to focus on the test door and turns away (--refuse-focus stands in for the
 # choice judge answering "turn elsewhere", which --playground never does). It is not a dead end:
 # Ripelore picks another unobserved object, and one text both dismisses the door and observes the
 # new one — so the block carries a keyword, and the keyword names the new object, never the door.
 # The follow-up observations run after it as they do after a kept focus.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Room" --period dawn --refuse-focus
+# The Test Yard, not the Test Room: the area introduction crosses off every object it names, and in
+# the four-object Test Room that left nothing unobserved to turn to — the keyword-less "not
+# interested" branch, not this one. The door is clicked by name for the same reason: it is one of
+# several keywords the introduction links.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Yard" --period dawn --refuse-focus
 
 wait
 click menu New
@@ -17,19 +22,19 @@ travel here
 wait mode LocationInteraction 60
 advance 12 180
 
-# Observe the door with Ripelore; it turns to the weaver instead.
-click keyword 0
+# Observe the door with Ripelore; it turns to the yard–rock track instead.
+click keyword door
 choose 1
 choose 0
 advance 12 180
-expect I am not interested in a test room door. My attention shifts to the weaver
+expect I am not interested in a test door. My attention shifts to a yard–rock track
 
-# The turn carried the new object's keyword, wired to the weaver: observing through "man" focuses
-# on the weaver (and, under --refuse-focus, turns away from it in turn).
-click keyword man
+# The turn carried the new object's keyword, wired to the track: observing through "track" focuses
+# on the track (and, under --refuse-focus, turns away from it in turn).
+click keyword track
 choose 1
 choose 1
 advance 12 180
-expect I am not interested in the weaver
+expect I am not interested in a yard–rock track
 
 quit

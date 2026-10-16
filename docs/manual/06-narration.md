@@ -108,10 +108,13 @@ what period of the day, rendered in the observing modus mentis's own voice. This
 the area or the period has changed since the bearings were last taken, so that a run of phases in
 one place does not open on the same account each time; and it is done only in the waking world,
 never in recollection nor in the rising from exhaustion. The bearings close by naming, briefly and in
-no particular order, up to five of the things present that have not yet been attended to. Where the
-account names one of them outright, that one — a single one at most, chosen by lot among several —
-is rendered available for closer attention, and counts thereafter as attended to, so that no later
-observation of the phase returns to it. The opening
+no particular order, up to five of the things present that have not yet been attended to. Every
+thing present that the account names outright — a thing by its own name, a person by role, name or
+sex — is rendered available for closer attention through the word that names it, and counts
+thereafter as attended to, so that no later observation of the phase returns to it. A word naming
+the area itself names no thing in it, and a word several things share goes to the one whose name
+surrounds it, or to none. One thing present is always left unnamed, for the observation that
+follows. The opening
 observation attends to at most three things in all, the later ones only while what has been rendered
 remains brief; the bearings count as the first of the three, so that at least one object, and at
 most two, is attended to after them.
