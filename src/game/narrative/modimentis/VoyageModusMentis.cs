@@ -3,7 +3,7 @@ using Cathedral.Game.Narrative.Memory;
 namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
-/// Voyage — long-road steadiness; a wanderer drawn forward by old manuscripts and unmapped horizons.
+/// Voyage — long-road steadiness; a wanderer who paces the long road to last.
 /// Multi-function (Thinking + VerbAction).
 /// </summary>
 public class VoyageModusMentis : ModusMentis
@@ -17,7 +17,7 @@ public class VoyageModusMentis : ModusMentis
     public override string[] Organs        => new[] { "lower_limbs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
-    public override string PersonaTone     => "a wanderer drawn forward by old manuscripts and unmapped horizons";
+    public override string PersonaTone     => "a wanderer who paces the long road to last, drawn on by unmapped horizons";
     public override string PersonaReminder  => "manuscript-driven wanderer";
     public override string PersonaReminder2 => "someone who treats every road as a chapter unread";
     public override string StyleInstruction =>

@@ -20,7 +20,7 @@ public class ArcheologyModusMentis : ModusMentis
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
-    public override string PersonaTone     => "a dreamer who once dreamt a golden arch and ever since has read the ground for ruin";
+    public override string PersonaTone     => "a reader of old ground who wants every buried wall uncovered, ever since a dream of a golden arch";
     public override string PersonaReminder  => "arch-dreamt antiquary";
     public override string PersonaReminder2 => "someone whose eye is caught by a half-buried lintel in any field";
     public override string StyleInstruction =>

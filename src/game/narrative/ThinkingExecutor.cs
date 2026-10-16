@@ -255,6 +255,8 @@ public class ThinkingExecutor
         public static readonly PersonaFit Willing   = new(0,  false);
         public static readonly PersonaFit Reluctant = new(+1, false);
         public static readonly PersonaFit Refused   = new(0,  true);
+
+        public override string ToString() => Cancels ? "refused" : $"difficulty {DifficultyModifier:+0;-0;0}";
     }
 
     /// <summary>
@@ -272,9 +274,9 @@ public class ThinkingExecutor
         DeclineOption: "unwilling to do it");
 
     /// <summary>
-    /// Asks how strongly the action skill is drawn to the action, through the choice judge like every
-    /// other choice (<see cref="PersonaChoiceSelector"/>): "eager to do it" (−1 difficulty), "willing
-    /// to do it" (0), "reluctant to do it" (+1), or the decline option "unwilling to do it" (cancels
+    /// Asks how strongly the action skill is drawn to the action, through the choice judge's
+    /// willingness scale (<see cref="ChoiceJudge.JudgeWillingnessAsync"/>): "eager to do it" (−1
+    /// difficulty), "willing to do it" (0), "reluctant to do it" (+1), or "unwilling to do it" (cancels
     /// the action — caller renders the refusal outcome). In playground mode picks Willing.
     /// </summary>
     private async Task<(PersonaFit Fit, string? ImposedReason)> AskPersonaFitAsync(
@@ -306,26 +308,38 @@ public class ThinkingExecutor
 
         string situation = ThinkingPromptConstructor.SituationLine(overallLocation, areaLocation, observedPhrase).TrimEnd();
         string lead = situation.Length == 0 ? "" : situation + " ";
-        // The judge reads the scale with each degree defined (ChoiceJudge.StanceLabel), in order and
-        // with the refusal last; the stance strings themselves are what comes back.
-        static string Bare(string stance) => ChoiceJudge.StanceLabel(stance.Replace(" to do it", ""));
-        var chosen = await _selector.SelectAsync(
-            ChoiceKind.Willingness, skill, options.Stances, Bare,
-            $"{lead}You are considering whether to {goalPhrase}.",
-            declineOption: options.DeclineOption is { } d ? Bare(d) : null, ct: ct);
+        // The judge always reads the whole scale (its thresholds are set on the whole scale) and the
+        // answer is then narrowed to what the rules left on offer: a stance taken away falls to the
+        // next weaker one, and a refusal taken away to the weakest assent.
+        var judged = await ChoiceJudge.JudgeWillingnessAsync(
+            skill, $"{lead}You are considering whether to {goalPhrase}.", ct);
+        var fit = Offered(judged);
 
-        Console.WriteLine($"ThinkingExecutor: Persona-fit for '{goalPhrase}' ({skill.DisplayName}): {chosen ?? "unwilling to do it"}");
-        var fit = chosen switch
-        {
-            "eager to do it"    => PersonaFit.Eager,
-            "willing to do it"  => PersonaFit.Willing,
-            "reluctant to do it" => PersonaFit.Reluctant,
-            // Null is the decline. Without one on offer there is no refusal to express, so the least
-            // eager stance stands in rather than cancelling an action this skill could not decline.
-            null                => options.DeclineOption != null ? PersonaFit.Refused : PersonaFit.Reluctant,
-            _                   => PersonaFit.Willing, // unrecognised → proceed at base difficulty
-        };
+        Console.WriteLine($"ThinkingExecutor: Persona-fit for '{goalPhrase}' ({skill.DisplayName}): {judged} -> {fit}");
         return (fit, null);
+
+        PersonaFit Offered(Willingness w)
+        {
+            if (w == Willingness.Unwilling)
+                return options.DeclineOption != null ? PersonaFit.Refused : WeakestAssent();
+            string stance = w switch
+            {
+                Willingness.Eager   => "eager to do it",
+                Willingness.Willing => "willing to do it",
+                _                   => "reluctant to do it",
+            };
+            int at = DefaultWillingness.Stances.ToList().IndexOf(stance);
+            foreach (var s in DefaultWillingness.Stances.Skip(at))
+                if (options.Stances.Contains(s)) return FitOf(s);
+            return WeakestAssent();
+        }
+        PersonaFit WeakestAssent() => options.Stances.Count > 0 ? FitOf(options.Stances[^1]) : PersonaFit.Reluctant;
+        static PersonaFit FitOf(string stance) => stance switch
+        {
+            "eager to do it"     => PersonaFit.Eager,
+            "willing to do it"   => PersonaFit.Willing,
+            _                    => PersonaFit.Reluctant,
+        };
     }
 
     /// <summary>

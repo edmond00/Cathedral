@@ -14,10 +14,9 @@ namespace Cathedral.Game.Narrative;
 /// <list type="number">
 /// <item>render the options — the real ones plus, where the site allows it, a <i>decline</i> option
 ///       ("let your focus go", "do something else entirely") — in one shuffled order, to defeat
-///       position bias; the decline always last, and a willingness scale in its own order, since an
-///       ordinal scale read out of order is harder to judge than one read in it;</item>
+///       position bias; the decline always last;</item>
 /// <item>hand the modus mentis, the situation and the lettered list to the judge for
-///       <see cref="ChoiceKind"/>, which answers with one letter.</item>
+///       <see cref="ChoiceKind"/>, which scores every letter and decides from the scores.</item>
 /// </list>
 /// If the judge lands on the decline option the call returns <c>null</c> — the caller's existing
 /// failure path (nothing to observe / ignore &amp; move on / refusal) fires. In playground mode it
@@ -26,6 +25,9 @@ namespace Cathedral.Game.Narrative;
 /// <para>The modus mentis is not asked to answer in its own voice first, and nothing it might have
 /// said is carried into the narration that follows: the rewrite of the chosen line is the only place
 /// its voice is heard. See <see cref="ChoiceJudge"/> for why.</para>
+///
+/// <para>Willingness is not chosen here: it is a scale, read whole by
+/// <see cref="ChoiceJudge.JudgeWillingnessAsync"/>.</para>
 ///
 /// <para>At most 26 options reach the judge (one letter each); if there are more, the real options
 /// are sampled down first.</para>
@@ -86,13 +88,14 @@ public class PersonaChoiceSelector
         if (candidates.Count > maxReal)
             candidates = candidates.OrderBy(_ => _random.Next()).Take(maxReal).ToList();
 
-        if (kind != ChoiceKind.Willingness) Shuffle(candidates);
+        Shuffle(candidates);
 
         // Real options, plus the decline option (a null-Item sentinel) last.
         var options = candidates.Select(c => (c.Label, Item: (T?)c.Item)).ToList();
         if (hasDecline) options.Add((Label: decline, Item: (T?)null));
 
-        int idx = await ChoiceJudge.PickAsync(kind, evaluator, situation, options.Select(o => o.Label).ToList(), question, ct);
+        int idx = await ChoiceJudge.PickAsync(kind, evaluator, situation, options.Select(o => o.Label).ToList(), question, ct,
+                                              declineIndex: hasDecline ? options.Count - 1 : -1);
         return options[idx].Item;   // null item ⇒ decline was chosen
     }
 

@@ -624,8 +624,22 @@ observable, and `ShowInUI` follows. That replaced returning `null` from `Apply`.
 Six bounded decisions — which object to attend to, whether to keep a handed focus, the goal, the
 means, the willingness, the dialogue reply — go through `PersonaChoiceSelector` to **`ChoiceJudge`**:
 one neutral slot per `ChoiceKind`, each with its own system prompt, reading the modus mentis's
-`DisplayName`, `MenuDescription` and `PersonaTone` and answering one letter. The persona's voice is
-heard only in the rewrite that narrates the choice.
+`DisplayName`, `MenuDescription` and `PersonaTone` (and, for a means, `SkillMeans`). The persona's
+voice is heard only in the rewrite that narrates the choice.
+
+**The decision is read from the scores of every letter, not from a sampled one** (one forward pass,
+`LlamaServerManager.GetFirstTokenLogProbsAsync`, no grammar). Most kinds take the likeliest letter;
+the goal's decline and the willingness scale use log-odds thresholds (`ChoiceJudge`'s constants),
+which took the bench from 92.3% to 94.5% and spread the four willingness degrees evenly where the
+likeliest letter almost never said "eager". Willingness is therefore not a pick from a list at all:
+`JudgeWillingnessAsync` always reads the whole scale and the caller narrows the answer to what the
+rules leave on offer. The model is near-certain on ~90% of answers, wrong ones included, so a
+confident mistake is fixed in the descriptions and the prompts, never by a threshold.
+
+**Invoke the `choice-judge` skill before adding or editing a modus mentis or a judge.** It has the
+writing rules both must follow — the judge matches words before natures, so a description that says
+"waits" picks "sit and wait" — and `tools/judge/`, the labelled benchmark and the description audit
+that measure them against the shipped model.
 
 It replaced a two-stage pass: the modus mentis answered in its own voice first (free text, shown dim
 in the preview box and passed to the rewrite as an "inner thought"), and a neutral matcher mapped the
@@ -636,10 +650,12 @@ matcher faithfully carried the drift through. Three things went with it and shou
 piecemeal: `PersonaMatchCritic`, the `innerThought` hint on `PersonaRewriter`, and the "free"
 segment kind in the preview box.
 
-Two things to know:
+Things to know:
 
 - **A willingness scale is listed in order** (eager → unwilling, refusal last) and never shuffled;
   every other list is shuffled with the decline last.
+- **Every decision logs its log-odds** (`ChoiceJudge:` lines). The willingness splits are bench
+  medians and the game's real mix of acts differs, so these lines are what to re-tune them from.
 - **How a question is put matters more than what it says.** Asked "keep it, or turn elsewhere?", the
   keep-focus judge turned away from 72% of everything; asked whether the thing "holds anything for
   this faculty", yes or no, it kept 51% and judged every labelled case right. Asked "how

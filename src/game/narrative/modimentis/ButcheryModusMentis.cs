@@ -12,7 +12,7 @@ public class ButcheryModusMentis : ModusMentis
     public override string DisplayName => "Butchery";
     public override string MenuDescription =>
         "Sees a body as an assembly of parts joined along natural seams, knowing where joints part and vessels run. Approaches flesh as a disassembly problem with efficient and wasteful routes, and works it without squeamishness.";
-    public override string SkillMeans => "precise anatomical cutting";
+    public override string SkillMeans => "the cutting of carcasses into joints";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs => new[] { "hands", "viscera" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

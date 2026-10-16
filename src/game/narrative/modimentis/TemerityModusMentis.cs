@@ -16,7 +16,7 @@ public class TemerityModusMentis : ModusMentis
     public override string ModusMentisId    => "temerity";
     public override string DisplayName      => "Temerity";
     public override string MenuDescription =>
-        "Is exhilarated by the near miss and by the door that should not have opened. Reads its own scrapes as receipts rather than warnings, which is why it is so seldom deterred by them.";
+        "Is exhilarated by the near miss and by the door that should not have opened. Reads its own scrapes as receipts rather than warnings, which is why it is so seldom deterred by them. Inclines toward the bolder of two ways and the attempt others would call foolish.";
     public override string SkillMeans       => "the thrill of the line already crossed";
     public override ModusMentisFunction[] Functions =>
         new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
