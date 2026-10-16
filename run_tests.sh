@@ -6,6 +6,11 @@
 #   ./run_tests.sh audits          the audits only (fast — no window, no LLM)
 #   ./run_tests.sh cli             the CLI scripts only
 #   ./run_tests.sh cli gather      the CLI scripts under cli/gather/
+#   ./run_tests.sh cli gather cli/system/focus_turned_away.cli
+#                                  several filters at once; a script path runs that script alone
+#
+# The full run takes well over an hour, so it is the release gate, not the check for every change:
+# while working on one thing, run the audits and the scripts that cover it (see CLAUDE.md).
 #
 # Each CLI script carries its own flags on a `# FLAGS:` header line, so a test that needs a
 # particular biome, room, hour or object says so in the one place somebody reading it will look.
@@ -128,19 +133,28 @@ run_audits() {
     done
 }
 
+# True when script $1 is selected by any of the filters that follow it (none selects everything).
+# A filter matches a whole range (`verb`, `outcome`, `system`), one folder inside a range (`gather` →
+# cli/verb/gather/, `item_acquisition` → cli/outcome/item_acquisition/), or one script by its path
+# (`cli/system/focus_turned_away.cli`, with or without the `cli/` and the `.cli`). Naming a range or a
+# folder is the common partial run; naming scripts is the targeted run for one change.
+selected() {
+    local s="$1"; shift
+    [ $# -eq 0 ] && return 0
+    local f
+    for f in "$@"; do
+        f="${f#cli/}"; f="${f%.cli}"
+        [[ "$s" == cli/$f/* || "$s" == cli/*/$f/* || "$s" == "cli/$f.cli" ]] && return 0
+    done
+    return 1
+}
+
 run_cli() {
-    local filter="${1:-}"
     echo "── CLI VERB SCRIPTS ──"
     local scripts
     mapfile -t scripts < <(find cli -name '*.cli' | sort)
     for s in "${scripts[@]}"; do
-        # A filter matches either a whole range (`cli verb`, `cli outcome`, `cli system`) or one
-        # folder inside a range (`cli gather` → cli/verb/gather/, `cli item_acquisition` →
-        # cli/outcome/item_acquisition/). Naming the range is the common case for a partial run;
-        # naming the folder is what you type while writing one test.
-        if [ -n "$filter" ] && [[ "$s" != cli/$filter/* ]] && [[ "$s" != cli/*/$filter/* ]]; then
-            continue
-        fi
+        selected "$s" "$@" || continue
 
         local flags
         flags=$(grep -m1 '^# FLAGS:' "$s" | sed 's/^# FLAGS: *//')
@@ -201,9 +215,9 @@ dotnet build -v q --nologo > "$LOG_DIR/build.log" 2>&1 || {
 
 case "${1:-all}" in
     audits) run_audits ;;
-    cli)    run_cli "${2:-}" ;;
+    cli)    shift; run_cli "$@" ;;
     all)    run_audits; run_cli ;;
-    *)      echo "usage: $0 [all|audits|cli [verb]]"; exit 2 ;;
+    *)      echo "usage: $0 [all|audits|cli [range|folder|script ...]]"; exit 2 ;;
 esac
 
 echo

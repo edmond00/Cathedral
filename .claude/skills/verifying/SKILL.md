@@ -330,16 +330,34 @@ quit
 ### The test suite
 
 ```bash
-./run_tests.sh              # every audit, then every CLI script
-./run_tests.sh audits       # the headless audits only (seconds) — eight of them
+./run_tests.sh              # every audit, then every CLI script — the release gate
+./run_tests.sh audits       # the headless audits only (seconds)
 ./run_tests.sh cli          # the CLI scripts only
-./run_tests.sh cli gather   # just cli/gather/
+./run_tests.sh cli gather   # just cli/verb/gather/
+./run_tests.sh cli examine cli/system/focus_turned_away.cli   # several folders and/or single scripts
 ```
 
 Exit code is the number of failures. `--playground` makes every animation instant
 (`Config.AnimationsAreInstant`: the 5-second dice tumble, the vital-heat bar, the fight AI's pause,
-movement framing), which takes a script from ~45 s to ~12 s — the difference between a suite you run
-and one you don't.
+movement framing), which takes a script's own run from ~45 s to ~12 s — but with the launch, the
+world build and the shutdown a script still costs about half a minute, and there are nearly two
+hundred of them.
+
+**So the full suite runs before a release, not after every change.** It takes well over an hour; the
+`release` skill runs it as a gate, and otherwise only when the user asks. While working on a task,
+run the audits plus the scripts that reach what you touched:
+
+- **a verb** — its folder (`cli examine`), and the folder of any outcome it produces;
+- **an outcome** — its `cli/outcome/<id>/` folder, and the folders of the verbs that produce it;
+- **a system** — the `cli/system/` scripts about it. Grep `cli/` for the feature's name, the flag
+  that reaches it and the text it prints; a script whose `expect` lines quote that text is affected;
+- **anything every phase passes through** (narration, observation, keywords, the preview box) —
+  also the `cli/system/` scripts that do **not** pass `--observe-only`, since those are the ones that
+  see a whole scene: `grep -L -- --observe-only $(grep -rl '^# FLAGS:' cli/system)`.
+
+Report which scripts ran and that the full suite did not. When a targeted run turns up a failure,
+read the script before changing it: a script that is right about the old behaviour and wrong about
+the new is updated in the same change, and one that caught a real regression is not.
 
 **Layout: three ranges, and each answers a different question.**
 
@@ -540,6 +558,14 @@ neither is a script's to guarantee. (Catalyst loads on a background task, so a s
 early gets the rule-based fallback and a different word.) Clicking by index means "whatever this
 phase opened on". Name-matching stays right for hand-written scripts: it reads as intent and
 survives reordering.
+
+**Except after an area introduction.** A phase that opens on its bearings (a new area or period, no
+`--observe-only` narrowing it to one object) links a keyword to **every** object the introduction
+names, and those keywords come first — under `--playground` the introduction echoes its list of
+sights verbatim, so that is up to five. `keyword 0` is then the first thing the introduction named,
+not the object the phase observed. Each of those objects is also crossed off, so a small area can be
+left with nothing unobserved: `cli/system/focus_turned_away.cli` moved from the four-object Test Room
+to the Test Yard for that reason.
 
 ### Extending the CLI for a new feature
 

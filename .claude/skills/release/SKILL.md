@@ -187,7 +187,10 @@ behind it. Work in this order — cheapest first, and stop to fix rather than pr
    (crime, mm, verb, building, dialogue, npc, item, outcome, save). Zero failures required.
 3. **`./run_tests.sh cli`** — the full script suite. Exit code is the failure count. A failure here
    blocks the release; do not publish around a red suite on the theory that the failing script is
-   stale.
+   stale. This is the **only** place the whole suite is run as a matter of course — work between
+   releases runs the audits and the scripts covering each change (`CLAUDE.md`, "Verifying a
+   change") — so a breakage one change caused in a script nobody thought to run surfaces here, and
+   `git log` since the last tag is where to look for it.
 4. **`tests/save_reload.sh`** — the two-launch save check, deliberately not wired into
    `run_tests.sh` because it spans two processes. `CLAUDE.md` says to run it by hand before a
    release; this is that moment.
