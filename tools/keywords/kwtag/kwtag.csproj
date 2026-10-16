@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Catalyst" Version="26.3.60" />
+    <PackageReference Include="Catalyst.Models.English" Version="1.0.30952" />
+    <Compile Include="..\..\..\src\game\narrative\NounExtractor.cs" />
+  </ItemGroup>
+</Project>

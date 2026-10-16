@@ -79,6 +79,8 @@
     <Compile Remove="DEPRECATED\**" />
     <EmbeddedResource Remove="DEPRECATED\**" />
     <None Remove="DEPRECATED\**" />
+    <!-- tools/ holds scratch tools with their own projects (tools/keywords/kwtag) -->
+    <Compile Remove="tools\**" />
   </ItemGroup>
 
   <!--
