@@ -2366,18 +2366,8 @@ public class NarrativeController
             return;
         }
 
-        // Only heard, from a room away: they come to look. Nothing is confronted yet — the point of
-        // this rung is that it leaves room to leave. What it costs is that they are now standing in
-        // the room with you, which closes the free exit and makes the next slip a caught one.
-        if (!result.Succeeded && result.NpcDrawnIn != null && _scene != null && _pov != null)
-        {
-            var arriving = _scene.Npcs.FirstOrDefault(n => ReferenceEquals(n.Entity, result.NpcDrawnIn));
-            if (arriving != null)
-                _scene.DrawNpcTo(arriving, _pov.Where);
-            else
-                Console.Error.WriteLine(
-                    $"NarrativeController: '{result.NpcDrawnIn.DisplayName}' was drawn in but is not a scene NPC — nobody arrives.");
-        }
+        // Only heard, from a room away: they come to look. That rung is NpcDrawnInOutcome, applied with
+        // the other reports above, so it carries a chip and a line in the narration.
 
         // Handle outcome based on type - show continue button for next step
         // A fight needs no arm here: every route to one goes through scene.PendingFightRequest, which

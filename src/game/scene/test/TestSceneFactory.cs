@@ -172,7 +172,7 @@ public sealed class TestSceneFactory : SceneFactory
         RegisterAll(scene, outdoors);
         RegisterAll(scene, building);
 
-        AddPeople(scene, yard, hall, room, wood, den);
+        AddPeople(scene, yard, hall, room, wood, den, shore, roof);
 
         Console.WriteLine($"TestSceneFactory: built the test location — {scene.AllAreas.Count} areas, "
                           + $"{scene.Npcs.Count} people, nothing rolled");
@@ -286,7 +286,7 @@ public sealed class TestSceneFactory : SceneFactory
     /// brewer</c>), never by the generated name: names come from the name generator, which is content
     /// like any other and free to change.
     /// </summary>
-    private static void AddPeople(Scene scene, Area yard, Area hall, Area room, Area wood, Area den)
+    private static void AddPeople(Scene scene, Area yard, Area hall, Area room, Area wood, Area den, Area shore, Area roof)
     {
         var names = new Random(20260809);
 
@@ -329,6 +329,14 @@ public sealed class TestSceneFactory : SceneFactory
         // this has to name the individual that is actually in the scene, not a wolf in the abstract.
         yard.PointsOfInterest.Add(new FootprintPointOfInterest(wolf, "Test Wolf Print",
             new List<string> { "Four toes and a pad, pressed into the mud and pointing at the wood" }));
+
+        // Two animals that are somebody's, each alone on public ground, so a crime against one is heard
+        // rather than seen and brings somebody over (npc_drawn_in). Earshot is the whole section: on
+        // the shore the wolf in the den hears it and, an enemy outranking a witness, comes first; on
+        // the roof the building holds no enemy, so a witness from the hall comes instead. Drawn last
+        // so every name above keeps its draw.
+        Creature_(scene, names, new GoatArchetype(), shore);
+        Creature_(scene, names, new GoatArchetype(), roof);
     }
 
     private static SceneNpc Creature_(Scene scene, Random rng, ShallowNpcArchetype archetype, Area area)

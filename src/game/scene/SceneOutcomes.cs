@@ -210,6 +210,43 @@ public sealed class SleeperRousedOutcome : Outcome
 }
 
 /// <summary>
+/// Somebody within earshot heard an action go wrong and walks over to look: they stand in the actor's
+/// area for the rest of the visit (<see cref="Scene.DrawNpcTo"/>) and open the next observation.
+///
+/// <para>A consequence like any other, so it carries a chip and a line in the outcome narration. It
+/// used to be written straight into the scene by the controller, and the player saw nothing until a
+/// stranger was standing beside them and the exit had become a RUNAWAY roll with no visible cause.</para>
+///
+/// <para>Two kinds of people come: an enemy, who heard their quarry, and a witness, who heard a crime.
+/// What happens next is theirs to decide; this only brings them.</para>
+/// </summary>
+public sealed class NpcDrawnInOutcome : Outcome
+{
+    private readonly NpcEntity _npc;
+
+    public NpcDrawnInOutcome(NpcEntity npc)
+        : base($"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(npc)} heard it and comes to look",
+               OutcomeSeverity.Negative,
+               $"was heard by {NeutralNarration.NpcPhrase(npc)}, who comes over to see what happened")
+    {
+        _npc = npc;
+    }
+
+    protected override void Apply(OutcomeContext ctx)
+    {
+        if (ctx.Scene == null || ctx.PoV == null) return;
+        var arriving = ctx.Scene.Npcs.FirstOrDefault(n => ReferenceEquals(n.Entity, _npc));
+        if (arriving == null)
+        {
+            Console.Error.WriteLine($"NpcDrawnInOutcome: '{_npc.DisplayName}' is not a scene NPC — nobody arrives.");
+            return;
+        }
+        ctx.Scene.DrawNpcTo(arriving, ctx.PoV.Where);
+        Report($"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(_npc, ctx.Actor)} heard it and comes to look");
+    }
+}
+
+/// <summary>
 /// Takes an NPC out of the location and puts them in the party.
 ///
 /// <para>The body joins as it is. An <c>NpcEntity</c> wraps an <c>EnemyCombatant</c>, which is a

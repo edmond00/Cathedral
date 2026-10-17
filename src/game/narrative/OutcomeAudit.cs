@@ -208,6 +208,7 @@ public static class OutcomeAudit
         ["no_dialogue_consequence"] = "built by DialogueTreeController when a branch resolved with no outcomes",
         ["recruited"]               = "tame, which needs an already-appeased beast",
         ["corpse_item_acquisition"] = "cut, which needs a corpse",
+        ["npc_drawn_in"]            = "the failure branch, when an enemy or a witness to a crime is within earshot",
         ["affinity_change"]         = "appease, which needs a hostile NPC",
         // Not produced by a verb or a tree at all: it is produced BY the other outcomes, after
         // they are gathered, by EmotionResolver — so no sweep over verbs or trees can find it.

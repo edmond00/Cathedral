@@ -1096,7 +1096,7 @@ Three rungs of one ladder, identical for witnesses and enemies except in what th
 | effective | witness | enemy |
 |---|---|---|
 | **Visual** | caught red-handed → the tree | they attack, on their initiative |
-| **Audio** | **they come to look** — `Scene.DrawNpcTo` moves them into your area | same |
+| **Audio** | **they come to look** — `NpcDrawnInOutcome` (chip and narration line) moves them into your area through `Scene.DrawNpcTo` | same |
 | **None** | nothing | nothing |
 
 **The Audio rung is an approach, not a verdict.** Nothing is confronted yet; what it costs is that

@@ -1,0 +1,50 @@
+# npc_drawn_in — an enemy within earshot hears a crime go wrong and comes to look
+#
+# The goat on the Test Shore is somebody's (the test location is not wilderness), so slaying it is a
+# crime. Nobody stands on the shore, but earshot is the whole outdoor section, and the wolf in the
+# den is an enemy: an enemy outranks a witness, so the wolf is the one who comes. The roll is forced
+# to fail and the means pinned to Brute Force, which is not discreet — a discreet modus mentis is not
+# heard from another area, and nobody would come.
+#
+# The arrival is an ordinary outcome: it applies and it shows a chip.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-item knife --grant-mm brute_force --means-only brute_force --location-type test --location-id 0 --start-area "Test Shore" --period noon --observe-only "goat"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy fail-dice
+goal slay
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+
+click action 0
+choose 1
+regions
+choose 0
+advance 12 180
+
+regions
+click action 1
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+expect FAILURE
+expect-verb slay
+expect-outcome npc_drawn_in
+expect The wolf heard it and comes to look
+expect-no-outcome npc_slayn
+
+quit
