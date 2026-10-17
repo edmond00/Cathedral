@@ -1,0 +1,58 @@
+# confronted — a witness who came for you blocks every act but the few that answer them
+#
+# A crime on the Test Roof fails within earshot of the hall, and the brewer comes up to look. He came
+# because of you, so he confronts you: the exit is RUNAWAY, and a lawful act (contemplating him)
+# is refused before any roll — the witness-side twin of an enemy in the room. Walking off to the next
+# area used to end it for the price of one move.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-item knife --grant-mm brute_force --means-only brute_force --location-type test --location-id 0 --start-area "Test Roof" --period noon --observe-only "goat"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy fail-dice
+goal slay
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+
+click action 0
+choose 1
+regions
+choose 0
+advance 12 180
+
+regions
+click action 1
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+expect-outcome npc_drawn_in
+
+# The brewer opens the next phase. Now try something lawful.
+click button
+advance 12 180
+expect RUNAWAY
+goal contemplate
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+click action 0
+choose 0
+advance 12 180
+expect watching me
+expect-no-outcome dialogue_trigger
+quit

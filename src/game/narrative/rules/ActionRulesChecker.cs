@@ -25,6 +25,7 @@ public static class ActionRulesChecker
         new IllegalActionHighMoralityRule(),
         new IllegalActionVisualWitnessRule(),
         new UnderThreatImpossibleRule(),
+        new ConfrontedImpossibleRule(),
         new RequiredToolRule(),
         new FirstBlowMediumRule(),
         new InventoryCapacityRule(),

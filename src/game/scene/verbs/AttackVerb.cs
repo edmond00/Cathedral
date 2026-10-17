@@ -44,6 +44,9 @@ public class AttackVerb : Verb
     /// <summary>Attack is a combat verb — valid to attempt even under direct threat.</summary>
     public override bool CanBeUsedUnderThreat => true;
 
+    /// <summary>Striking at a witness who confronts you is an answer to them — the worst one.</summary>
+    public override bool CanBeUsedWhenConfronted => true;
+
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (target is not SceneNpc sceneNpc) return false;

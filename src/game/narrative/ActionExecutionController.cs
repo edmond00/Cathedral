@@ -56,6 +56,12 @@ public class ActionEvaluationResult
     /// </summary>
     public Cathedral.Game.Scene.ThreatContext ThreatContext { get; set; }
         = Cathedral.Game.Scene.ThreatContext.None;
+
+    /// <summary>
+    /// A witness confronting the actor, if any (<see cref="Cathedral.Game.Scene.ConfrontationSelector"/>).
+    /// Any act that fails in front of them — lawful or not, discreet or not — gets the actor caught.
+    /// </summary>
+    public Cathedral.Game.Npc.NpcEntity? Confronter { get; set; }
 }
 
 /// <summary>
@@ -551,6 +557,14 @@ public class ActionExecutionController
             var enemy = evalResult.ThreatContext.Threat;
             Console.WriteLine($"⚔ [THREAT] failed in front of the enemy — fight with {enemy?.DisplayName ?? "them"}.");
             return new FailureConsequences(wound, null, enemy, null);
+        }
+
+        // A witness already confronting you catches any slip at all: they are watching you, not the
+        // act, so it need not be a crime, and discretion does not hide it in the same room.
+        if (evalResult.Confronter != null)
+        {
+            Console.WriteLine($"👁 [CONFRONTED] failed in front of {evalResult.Confronter.DisplayName} — caught red-handed.");
+            return new FailureConsequences(wound, evalResult.Confronter, null, null);
         }
 
         if (effWitness == Cathedral.Game.Scene.WitnessType.Visual)

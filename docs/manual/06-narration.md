@@ -60,7 +60,8 @@ therefore not upon reaching for a thing but upon reaching for the wrong one. And
 act's own resolution** costs nothing beyond the deliberation that produced it.
 
 A body that has spent the pool without succeeding can only leave. That is the intended shape, and it
-is why departure is never gated on anything except an armed presence in the room.
+is why departure is gated on nothing except somebody in the room with a reason to stop it — an enemy,
+or a witness confronting the body (§7).
 
 ## 4. The two ledgers
 
@@ -173,13 +174,14 @@ presentational.
 
 **Rules of action** judge an act already chosen. They **reject** it; the reason is given in the
 acting modus mentis's own voice; and it **costs a point**. Circumstance belongs here — that man is
-watching, that door needs a key, there is nowhere left to put a log. Eight such rules exist: a manner
+watching, that door needs a key, there is nowhere left to put a log. Nine such rules exist: a manner
 of the mind the frame can no longer carry, a tongue too damaged to speak, an affinity too poor to
-address, a crime refused before a witness, an act impossible under threat, a missing required
-implement, a blow with nothing left to strike it, and a carrying capacity already met.
+address, a crime refused before a witness, an act impossible under threat, an act impossible under a
+confronting witness's eye, a missing required implement, a blow with nothing left to strike it, and a
+carrying capacity already met.
 
 The first stands ahead of the others because it alone concerns the frame rather than the
-circumstance. One told that a witness is watching will go to another room; one told that the arm is
+circumstance. One told that a witness is watching will try another way; one told that the arm is
 ruined will not, and the refusal names the parts that failed and the wounds behind them.
 
 **The missing implement alone leaves the act standing.** Its refusal says what was wanted, that bare
@@ -262,10 +264,30 @@ Three rungs, identical for a witness and for an enemy save in what the top rung 
 | **Audio** | **They come to look.** They move into the area. | The same. |
 | **None** | Nothing. | Nothing. |
 
-The middle rung is an approach, not a verdict. Nothing is yet confronted; what it costs is that
-somebody is now standing in the room, which closes the free exit and makes the *next* slip a caught
-one. Earshot is not the same as the walkable graph: a door is a gate, not a wall, and both sides of
-every connector are within earshot of one another.
+The middle rung is an approach, not a verdict. Nothing is yet said; what it costs is that somebody
+now stands in the room, having come on the body's account, and that is a confrontation (below).
+Earshot is not the walkable graph but the whole **section** an area belongs to — a building, or the
+stretch of open ground it lies in, for a door is a gate and not a wall. Being heard is announced as
+a consequence of the failed act, and the one who came opens the next observation: an enemy as the
+one who came looking, a witness as the one who came to see what the noise was.
+
+**Under threat, and confronted.** Two presences in the area stop a body short, and they are kept
+deliberately alike. An **enemy** in the area permits only the acts that answer them — to strike, to
+kill, to appease, to reconcile, to tame — and any act that fails before them begins a fight, the
+enemy striking first. A **confronting witness** is one standing in the area with a reason to stop the
+body: either they came on its account, drawn by a heard crime, or the ground is private and they see
+the trespass every act there is. A person merely standing in a public place confronts nobody. A
+confronting witness permits only striking at them or killing them, and any act that fails before
+them, lawful or not, is caught red-handed: the confrontation, worded after the crime they heard, or
+trespass where they heard none. In both cases a **discreet** modus mentis may still attempt any act,
+for the permission to act at close quarters is what discretion buys; it does not buy safety, and a
+discreet act that fails in the same room is seen.
+
+**Flight.** While either presence stands in the area the free departure becomes a **runaway**: one
+roll of as many dice as the feet's runaway score, needing a single six. Success leaves the place.
+Failure begins the fight with an enemy, or the confrontation with a witness. A confrontation ends
+with the conversation it opens: a witness who came on the body's account then returns to the day
+they were drawn from, unless the conversation has made an enemy of them.
 
 **Enmity persists across visits.** Walking away from a fight ends the fight, not the quarrel.
 

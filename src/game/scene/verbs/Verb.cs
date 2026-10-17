@@ -78,6 +78,13 @@ public abstract class Verb
     public virtual bool CanBeUsedUnderThreat => false;
 
     /// <summary>
+    /// Whether this verb may be used while a witness confronts the actor (see
+    /// <see cref="ConfrontationSelector"/>). False for everything but the acts that answer them:
+    /// striking at them, and facing them.
+    /// </summary>
+    public virtual bool CanBeUsedWhenConfronted => false;
+
+    /// <summary>
     /// What the acting body must be able to do for this verb to be offered at all — speech for
     /// anything that opens a conversation, handcraft for tools, locks and carrying. Default
     /// <see cref="AnatomyCapability.None"/>: available to every anatomy.

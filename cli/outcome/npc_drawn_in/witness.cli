@@ -63,4 +63,10 @@ click continue
 advance 12 180
 expect-state dialogue caught_red_handed_murderer
 
+# The conversation over, the confrontation is too: the brewer goes back to the hall and the exit is
+# free again.
+advance 12 180
+expect LEAVE
+expect-not RUNAWAY
+
 quit

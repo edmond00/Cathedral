@@ -1317,8 +1317,17 @@ public class NarrativeController
                 : ThreatContext.None;
 
             // Run all coded rules; a failure here is absolute — no LLM retry, no noetic cost.
+            // A witness confronting you: a drawn-in witness who came for you, or anyone in sight on
+            // private ground. An enemy in the room outranks them, as everywhere else.
+            var confronter = (_scene != null && _pov != null && threatContext.Level != ThreatLevel.Visual)
+                ? ConfrontationSelector.Confronter(_scene, _pov, _protagonist)
+                : null;
+
             var ruleCtx = new Narrative.Rules.ActionRuleContext(
-                action, _activePartyMember, _scene, _pov, witnessContext, threatContext);
+                action, _activePartyMember, _scene, _pov, witnessContext, threatContext)
+            {
+                Confronter = confronter,
+            };
             var ruleResult = Narrative.Rules.ActionRulesChecker.Check(ruleCtx);
             if (!ruleResult.Passed)
             {
@@ -1413,6 +1422,7 @@ public class NarrativeController
                 threatContext,
                 CancellationToken.None
             );
+            evalResult.Confronter = confronter;
             
             // Handle plausibility failure
             if (!evalResult.IsPlausible)
@@ -2370,7 +2380,9 @@ public class NarrativeController
         // Seen by a witness: they confront you, and the tree decides what that becomes.
         if (!result.Succeeded && result.CaughtByWitness != null && _pov != null)
         {
-            var crimeType = CrimeKinds.Of(result.Action.Verb, _pov.Where.IsPrivate);
+            var crimeType = _scene != null
+                ? ConfrontationSelector.CrimeFor(_scene, result.CaughtByWitness, result.Action.Verb, _pov.Where.IsPrivate)
+                : CrimeKinds.Of(result.Action.Verb, _pov.Where.IsPrivate);
             Console.WriteLine($"NarrativeController: Witness '{result.CaughtByWitness.DisplayName}' caught the failed illegal action (crime: {crimeType})");
             var catchTree = CaughtRedHandedTreeFactory.Create(crimeType);
             SetPendingDialogue(new Cathedral.Game.Scene.DialogueTriggerOutcome(result.CaughtByWitness, tree: catchTree), result.Action);
@@ -4216,20 +4228,12 @@ public class NarrativeController
         if (threat.Level == ThreatLevel.Visual && threat.Threat != null)
             return (ExitButtonKind.RunawayEnemy, threat.Threat);
 
-        // A bystander who can see you leave, and a reason for them to stop you: either you are
-        // standing somewhere you have no business being, or they came in here after you.
-        //
-        // The second condition is what makes the approach cost something. Three crimes happen in the
-        // open — pickpocket, stalk, attack — so a witness drawn to a public square by a botched one
-        // would, on the privacy test alone, watch you stroll away.
-        var witness = WitnessSelector.ComputeContext(_scene, _pov);
-        if (witness.Type == WitnessType.Visual && witness.Witness != null)
-        {
-            var sceneNpc = _scene.Npcs.FirstOrDefault(n => ReferenceEquals(n.Entity, witness.Witness));
-            bool cameForYou = sceneNpc != null && _scene.DisplacedNpcs.ContainsKey(sceneNpc.Id);
-            if (_pov.Where.IsPrivate || cameForYou)
-                return (ExitButtonKind.RunawayWitness, witness.Witness);
-        }
+        // A witness confronting you — one who came in here after you, or anyone in sight on ground you
+        // have no business standing on. ConfrontationSelector is the one place that is decided, so the
+        // exit, the rules of action and the failure ladder cannot disagree about who is watching.
+        var confronter = ConfrontationSelector.Confronter(_scene, _pov, _protagonist);
+        if (confronter != null)
+            return (ExitButtonKind.RunawayWitness, confronter);
 
         return (ExitButtonKind.Leave, null);
     }
@@ -4417,9 +4421,9 @@ public class NarrativeController
         {
             // They came because they heard a crime: they accuse you of that one. Otherwise they caught you
             // on private ground, and what they saw is trespass.
-            var heard = _scene?.Npcs.FirstOrDefault(n => ReferenceEquals(n.Entity, target)) is { } targetNpc
-                        && _scene.HeardCrimes.TryGetValue(targetNpc.Id, out var crime)
-                ? crime : CriminalAffinityType.Intruder;
+            var heard = _scene != null
+                ? ConfrontationSelector.CrimeFor(_scene, target, null, _pov?.Where.IsPrivate ?? true)
+                : CriminalAffinityType.Intruder;
             Console.WriteLine($"NarrativeController: RUNAWAY failed — witness '{target.DisplayName}' confronts ({heard})");
             var catchTree = CaughtRedHandedTreeFactory.Create(heard);
             // A runaway confrontation has no observation→thinking→action origin — resample the narrator.
@@ -4547,13 +4551,16 @@ public class NarrativeController
     public void OnDialogueCompleted(NpcEntity npc)
     {
         Console.WriteLine($"NarrativeController: Dialogue completed with {npc.DisplayName}");
+
+        // A witness who came for you has had their say: the confrontation is over.
+        if (_scene != null) ConfrontationSelector.Release(_scene, npc, _protagonist);
         
         // No modus mentis: a system note — an MM here would print its skill header (e.g.
         // "[DISCIPLINE ▪]") before the segment separator without any LLM involvement.
         var block = new NarrationBlock(
             Type: NarrationBlockType.Outcome,
             ModusMentis: null!,
-            Text: $"You finished talking with {npc.DisplayName}.",
+            Text: $"You finished talking with {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc)}.",
             Keywords: null,
             Actions: null
         );
