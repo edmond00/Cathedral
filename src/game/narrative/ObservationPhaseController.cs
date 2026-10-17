@@ -871,6 +871,7 @@ public class ObservationPhaseController
     /// threat" lead-in used when a visual threat is present (the same condition that turns the exit
     /// button into RUNAWAY). Like the post-dialogue opener, the observed object is imposed
     /// (<paramref name="threatOutcome"/>, no "what draws you?" selection) and it is one observation
+    /// (an earshot arrival passes its own <paramref name="trailingNeutral"/>: a witness is no threat)
     /// regardless of length (no second or third). Unlike it, the narrator is freshly sampled (sensory
     /// memory first, like any first observation) and a threat-caution sentence is folded into the
     /// neutral text so the persona rewrites a note of danger into the block. Returns an empty list
@@ -884,7 +885,8 @@ public class ObservationPhaseController
         ObservationLedger? ledger = null,
         LlmPreviewSession? preview = null,
         Action<List<NarrationBlock>>? commit = null,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        string? trailingNeutral = null)
     {
         ledger ??= new ObservationLedger();
         var observationModusMentis = PickFirstObservationModusMentis(actingMember);
@@ -910,7 +912,7 @@ public class ObservationPhaseController
         // threat-caution sentence rides into the same rewrite as the observation itself.
         await AppendObservationAsync(sentences, allKeywords, slotId, observationModusMentis,
             threatOutcome, withTransition: false, locationId, ledger, ct, isReminescence: false,
-            part: part, trailingNeutral: NeutralNarration.ThreatCaution());
+            part: part, trailingNeutral: trailingNeutral ?? NeutralNarration.ThreatCaution());
 
         if (sentences.Count == 0)
         {

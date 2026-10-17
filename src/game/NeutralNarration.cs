@@ -92,6 +92,21 @@ public static class NeutralNarration
         => "This one means me harm, right here — I must stay wary and ready.";
 
     /// <summary>
+    /// Trailing sentence for an enemy who heard an action go wrong and has just walked in (an
+    /// earshot arrival): the caution of <see cref="ThreatCaution"/>, and why they are here.
+    /// </summary>
+    public static string ArrivalEnemyCaution()
+        => "They heard me and have come looking for me — this one means me harm, and I must stay wary and ready.";
+
+    /// <summary>
+    /// Trailing sentence for a witness who heard a crime go wrong and has just walked in. Not a
+    /// threat: they came to see what the noise was, and what they saw is the trouble — they will not
+    /// simply watch me walk away.
+    /// </summary>
+    public static string ArrivalWitnessNotice()
+        => "They have come to see what the noise was, and they have seen what I was doing; they will not let me simply walk away.";
+
+    /// <summary>
     /// Neutral meaning for a failed observation: the Modus Mentis found nothing here worth its
     /// attention (every candidate object was graded "averse" in the persona evaluation). Re-expressed
     /// in the observation persona's voice as the whole observation block.

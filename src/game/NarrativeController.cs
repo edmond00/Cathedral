@@ -953,9 +953,16 @@ public class NarrativeController
                 continue;
             }
 
+            // An enemy came looking for their quarry; a witness came to see what the noise was. Only
+            // the first is a threat, and saying otherwise told the player a curious reaper meant harm.
+            bool isEnemy = arrival.Entity is Cathedral.Game.Npc.NpcEntity npc
+                           && npc.AffinityTable.IsEnemy(_protagonist.AffinityKey);
+            Console.WriteLine($"NarrativeController: arrival of '{arrival.Entity.DisplayName}' ({(isEnemy ? "enemy" : "witness")}) opens the phase");
             var blocks = await _observationController.GenerateThreatObservationAsync(
                 outcome, _protagonist.CurrentLocationId, _activePartyMember,
-                ledger: _observationLedger, preview: _previewSession, commit: commit);
+                ledger: _observationLedger, preview: _previewSession, commit: commit,
+                trailingNeutral: isEnemy ? NeutralNarration.ArrivalEnemyCaution()
+                                         : NeutralNarration.ArrivalWitnessNotice());
             if (blocks.Count > 0) return true;
         }
 

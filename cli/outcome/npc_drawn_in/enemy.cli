@@ -47,4 +47,10 @@ expect-outcome npc_drawn_in
 expect The wolf heard it and comes to look
 expect-no-outcome npc_slayn
 
+# The next observation opens on the enemy, who came looking for their quarry.
+click button
+advance 12 180
+expect They heard me and have come looking for me
+expect RUNAWAY
+
 quit

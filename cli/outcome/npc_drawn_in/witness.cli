@@ -47,4 +47,12 @@ expect heard it and comes to look
 expect-not The wolf heard it
 expect-no-outcome npc_slayn
 
+# The next observation opens on the witness, and says why they are there: not as a threat. They came
+# for you, so the free exit is closed.
+click button
+advance 12 180
+expect they have seen what I was doing
+expect-not means me harm
+expect RUNAWAY
+
 quit
