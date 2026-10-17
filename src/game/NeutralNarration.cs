@@ -546,13 +546,12 @@ public static class NeutralNarration
     public static string ModusMentisPhrase(string displayName) => displayName.Trim().ToLowerInvariant();
 
     /// <summary>
-    /// Somebody as a sentence names them. A named NPC — a person, or a beast given a name — keeps its
-    /// proper name; shallow wildlife has only its kind, so it is "the pig", "the crow".
+    /// Somebody as a sentence names them (<see cref="Cathedral.Game.Npc.NpcLabelResolver.ShortLabel"/>):
+    /// a person by their proper name once introduced and by their role before — "the reeve" — a beast
+    /// and shallow wildlife by their kind, "the hyena", "the pig".
     /// </summary>
-    public static string NpcPhrase(Cathedral.Game.Npc.INpcEntity npc)
-        => npc is Cathedral.Game.Npc.ShallowNpcEntity
-            ? $"the {npc.DisplayName.Trim().ToLowerInvariant()}"
-            : npc.DisplayName;
+    public static string NpcPhrase(Cathedral.Game.Npc.INpcEntity npc, Cathedral.Game.Narrative.PartyMember? actor = null)
+        => Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc, actor);
 
     /// <summary>"the hairpin" — an item named on its own, definite, lower-cased as <c>Item.WithArticle</c> is.</summary>
     public static string ItemPhrase(string displayName) => $"the {displayName.Trim().ToLowerInvariant()}";

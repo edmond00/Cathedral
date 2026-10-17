@@ -25,7 +25,7 @@ public class UnderThreatImpossibleRule : IActionRule
         if (ctx.ActionModusMentis?.ActsDiscretely == true) return ActionRuleResult.Pass();
         if (ctx.ThreatContext.Level != ThreatLevel.Visual) return ActionRuleResult.Pass();
 
-        var enemyName = ctx.ThreatContext.Threat?.DisplayName ?? "an enemy";
+        var enemyName = ctx.ThreatContext.Threat is { } threat ? Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(threat, ctx.Actor) : "an enemy";
         return ActionRuleResult.Fail($"I cannot, while under the threat of {enemyName} right here.");
     }
 }

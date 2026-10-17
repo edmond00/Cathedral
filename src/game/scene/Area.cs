@@ -31,9 +31,26 @@ public class Area : Element
     public string[] Moods { get; }
 
     /// <summary>
-    /// When true, entering or taking items from this area without permission is an illegal action.
+    /// Whose ground this is: somebody's (<see cref="AreaTenure.Private"/>), everybody's
+    /// (<see cref="AreaTenure.Public"/>) or nobody's (<see cref="AreaTenure.Wild"/>). Factories set
+    /// private and public; wild is stamped afterwards by <see cref="SceneFactory"/> on the open ground
+    /// of a wilderness location. <see cref="PrivacyModel"/> is what reads it.
     /// </summary>
-    public bool IsPrivate { get; set; }
+    public AreaTenure Tenure { get; set; }
+
+    /// <summary>
+    /// When true, entering or taking items from this area without permission is an illegal action.
+    /// Setting it false makes the area public, never wild — the wilderness pass runs after every
+    /// factory has had its say.
+    /// </summary>
+    public bool IsPrivate
+    {
+        get => Tenure == AreaTenure.Private;
+        set => Tenure = value ? AreaTenure.Private : AreaTenure.Public;
+    }
+
+    /// <summary>Nobody's ground: see <see cref="AreaTenure.Wild"/>.</summary>
+    public bool IsWild => Tenure == AreaTenure.Wild;
 
 
     public Area(
@@ -53,4 +70,21 @@ public class Area : Element
         Moods      = moods ?? System.Array.Empty<string>();
         IsPrivate  = isPrivate;
     }
+}
+
+/// <summary>Whose ground an <see cref="Area"/> is — the question <see cref="PrivacyModel"/> answers from.</summary>
+public enum AreaTenure
+{
+    /// <summary>Everybody's: a street, a square, a farm's field. Lawful to stand in; its beasts are somebody's.</summary>
+    Public,
+
+    /// <summary>Somebody's: a house, a bedroom, a back room. Anything done here is trespass.</summary>
+    Private,
+
+    /// <summary>
+    /// Nobody's: the open ground of a forest, a plain, a cave, a coast, a mountain or a climate biome.
+    /// Lawful to stand in, and a beast that lives here belongs to no one, so striking or killing it is
+    /// hunting, not a crime. Crimes against people are crimes here as anywhere.
+    /// </summary>
+    Wild,
 }

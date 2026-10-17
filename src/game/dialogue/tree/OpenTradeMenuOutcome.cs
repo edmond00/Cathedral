@@ -29,7 +29,7 @@ public class OpenTradeMenuOutcome : Outcome
         var npc = ctx.Npc!;
         npc.TradeRequest = _mode;
         Report(_mode == TradeMode.Buy
-                ? $"{npc.DisplayName} agrees to sell to you"
-                : $"{npc.DisplayName} agrees to buy from you");
+                ? $"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(npc)} agrees to sell to you"
+                : $"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(npc)} agrees to buy from you");
     }
 }

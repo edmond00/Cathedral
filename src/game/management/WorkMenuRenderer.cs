@@ -229,7 +229,7 @@ public sealed class WorkMenuRenderer
         DrawBox(18 + skillRows);
 
         int y = _boxY + 2;   // one blank row under the top border
-        CenteredInBox(y, Truncate($"Working for {_npc.DisplayName} as {_job.WithArticle()}", BoxW - 4), Title, Bg);
+        CenteredInBox(y, Truncate($"Working for {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(_npc)} as {_job.WithArticle()}", BoxW - 4), Title, Bg);
         y++;
         DrawSectionBreak(ref y);
 
@@ -313,7 +313,7 @@ public sealed class WorkMenuRenderer
         // (blank) title (blank) bar (blank) counter (blank)
         DrawBox(7);
         int y = _boxY + 2;
-        CenteredInBox(y, Truncate($"You work as {_job.WithArticle()} for {_npc.DisplayName}…", BoxW - 4), Title, Bg);
+        CenteredInBox(y, Truncate($"You work as {_job.WithArticle()} for {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(_npc)}…", BoxW - 4), Title, Bg);
         y += 2;
 
         // Same geometry as the duration slider, so it reads as that bar filling up.

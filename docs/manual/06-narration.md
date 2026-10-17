@@ -7,8 +7,8 @@ the machinery of the preceding chapters is actually spent.
 
 A **location** is built as a set of **areas** — rooms, yards, tracks, clearings — joined by paths
 and by **connectors**, the latter being doors, stairs, cliffs, crossings and the like. An area holds
-**points of interest**, and a point of interest may hold **items**. Certain areas are private, which
-has consequences of law (§7).
+**points of interest**, and a point of interest may hold **items**. Every area is of one of three
+tenures — private, public or wild — which has consequences of law (§7).
 
 A **point of view** is a pair: *where* the acting body stands, and *when* — the period of the day.
 Both are scene state, and both decide what may be attempted. Moving between areas changes the first;
@@ -222,6 +222,16 @@ private ground teaches no routine (see [IX](09-routines.md)). Beyond
 it, each act that can be a crime has its own condition — striking someone who already counts you an
 enemy is not a crime, for the quarrel was declared before the blow; forcing the lock of a public
 storehouse is nobody's privacy.
+
+**Ground has three tenures.** *Private* ground is somebody's, and makes every act a trespass.
+*Public* ground is everybody's: the streets, yards and fields of a farm, a village or a city. *Wild*
+ground is nobody's: the open ground of a forest, a plain, a cave, a coast, a mountain, a peak and
+the climate biomes. A store kept there — a woodshed, a net shed, an ore store — is somebody's stock
+and remains public. The tenure decides one thing besides trespass: whether a beast belongs to
+anybody. Striking or killing a beast that is not already an enemy is a crime on public and on
+private ground, where the creature is taken to be somebody's; on wild ground it is hunting, and no
+crime at all. A person is never game: every crime against a person is a crime on wild ground as
+anywhere.
 
 **Morality has four distinct behaviours**, two on each side of the chain:
 

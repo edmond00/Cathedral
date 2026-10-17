@@ -109,8 +109,8 @@ public class StalkVerb : Verb
             new TimeShiftOutcome(period),
             new AreaMoveOutcome(arrival),
             new NoticeOutcome(
-                $"{npc.Entity.DisplayName} went to {scene.GetAreaOf(npc, period)?.DisplayName ?? "somewhere else"}",
-                $"followed {npc.Entity.DisplayName} and saw where they went"),
+                $"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(npc.Entity, actor)} went to {scene.GetAreaOf(npc, period)?.DisplayName ?? "somewhere else"}",
+                $"followed {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc.Entity, actor)} and saw where they went"),
         };
     }
 

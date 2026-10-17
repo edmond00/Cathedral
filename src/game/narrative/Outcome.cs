@@ -159,7 +159,7 @@ public abstract class Outcome : INarratable
                  : delta < 0 ? OutcomeSeverity.Negative
                              : OutcomeSeverity.Neutral;
 
-        Report($"{npc.DisplayName}: {before.ToShortLabel()} → {after.ToShortLabel()}");
+        Report($"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(npc)}: {before.ToShortLabel()} → {after.ToShortLabel()}");
     }
 }
 

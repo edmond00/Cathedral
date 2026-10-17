@@ -102,7 +102,7 @@ public class HideAndWaitVerb : Verb
 
     private static string Names(List<SceneNpc> npcs)
     {
-        var names = npcs.Select(n => n.Entity.DisplayName).ToList();
+        var names = npcs.Select(n => Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(n.Entity)).ToList();
         if (names.Count == 1) return names[0];
         return string.Join(", ", names.Take(names.Count - 1)) + " and " + names[^1];
     }

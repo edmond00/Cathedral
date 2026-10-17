@@ -23,6 +23,9 @@ namespace Cathedral.Game.Scene.Coast;
 /// </summary>
 public class CoastSceneFactory : SceneFactory
 {
+    /// <summary>Wilderness: its open ground is nobody's (see <see cref="AreaTenure.Wild"/>).</summary>
+    protected override bool IsWilderness => true;
+
     public CoastSceneFactory(string? sessionPath = null) : base(sessionPath) { }
 
     private enum CoastIdentity { Sandy, Rocky, Clifftop }

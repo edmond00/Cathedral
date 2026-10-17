@@ -104,7 +104,7 @@ public class DialogueTreeAdapter
         // While setting up, keep the standard panel frame with a generating message
         // at the bottom — a smooth transition from the narration panel.
         _ui.RenderSetupFrame(
-            $"Starting dialogue with {_npc.DisplayName}…",
+            $"Starting dialogue with {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(_npc)}…",
             _failed ? $"Dialogue failed: {_errorMessage}" : null);
     }
 

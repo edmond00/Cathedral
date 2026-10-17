@@ -1,4 +1,6 @@
 using System.Linq;
+using Cathedral.Game.Npc;
+using Cathedral.Game.Narrative;
 using Cathedral.Game.Scene.Building;
 
 namespace Cathedral.Game.Scene;
@@ -28,6 +30,17 @@ public static class PrivacyModel
     /// or walked where it holds.
     /// </summary>
     public static bool IsTrespassing(Area area) => area.IsPrivate;
+
+    /// <summary>
+    /// Whether striking at <paramref name="target"/> from <paramref name="pov"/> is hunting: the
+    /// target is a beast (shallow wildlife, or a named creature without a human anatomy) and the
+    /// ground is <see cref="AreaTenure.Wild"/>, so the beast is nobody's. On public or private ground
+    /// the same beast is somebody's — the farm's pig, the village's dog — and the blow stays a crime.
+    /// People are never game, wherever they stand.
+    /// </summary>
+    public static bool IsHunting(PoV pov, Element? target)
+        => pov.Where.IsWild
+           && target is SceneNpc { Entity: ShallowNpcEntity or NpcEntity { Combatant.AnatomyType: not AnatomyType.Human } };
 
     /// <summary>
     /// Whether <paramref name="target"/> reaches into somebody's private area.

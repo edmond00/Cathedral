@@ -38,6 +38,7 @@ public abstract class SceneFactory
         _locationState?.AttachTo(scene);
 
         BuildSections(rng, locationId, scene);
+        MarkWilderness(scene);
         BuildNpcs(rng, locationId, scene);
         DropDepartedNpcs(scene);
         PlaceBeastSign(scene);
@@ -48,6 +49,27 @@ public abstract class SceneFactory
         WriteSceneToLog(scene, locationId);
 
         return scene;
+    }
+
+    /// <summary>
+    /// Whether this factory builds wilderness — ground that belongs to nobody. False for anything
+    /// settled (farms, villages, cities, ruins) and for the scenes that stand outside the world (the
+    /// test location, the get-up room, a reminiscence).
+    /// </summary>
+    protected virtual bool IsWilderness => false;
+
+    /// <summary>
+    /// Stamps <see cref="AreaTenure.Wild"/> on the open ground of a wilderness location: every area
+    /// the factory left public, except a store. A woodshed, a net shed or an ore store is somebody's
+    /// stock even in the middle of a forest, and stays public ground like a market stall would.
+    /// Private areas are left alone.
+    /// </summary>
+    private void MarkWilderness(Scene scene)
+    {
+        if (!IsWilderness) return;
+        foreach (var area in scene.AllAreas)
+            if (area.Tenure == AreaTenure.Public && !scene.Stores.Contains(area))
+                area.Tenure = AreaTenure.Wild;
     }
 
     /// <summary>

@@ -213,7 +213,6 @@ public class PickpocketVerb : Verb
     /// <summary>Taking from somebody's pockets is a crime wherever they are standing.</summary>
     protected override bool IsIllegalFor(Scene scene, PoV pov, Element? target, PartyMember? actor) => true;
 
-    /// <summary>What a success teaches: taking from a person without them knowing.</summary>
     /// <summary>
     /// What lifting a purse teaches. Not <c>petty_thief</c>, which STEAL keeps: taking from a shelf
     /// and taking from a body that is still wearing it are different trades, and only one of them is
@@ -237,6 +236,10 @@ public class PickpocketVerb : Verb
 
         if (target is not SceneNpc sceneNpc) return false;
         if (sceneNpc.Entity is not NpcEntity npc || !npc.IsAlive) return false;
+        // Only a body that carries things has a purse to lift: a hyena has no pockets. Asked of the
+        // target's capabilities, the same flag the actor needs, so an anatomy added later with hands
+        // and a belt is a mark without anyone listing it.
+        if (!npc.Combatant.Can(AnatomyCapability.Handcraft)) return false;
 
         return scene.GetNpcsAt(pov.Where, pov.When).Any(n => n.Id == sceneNpc.Id);
     }

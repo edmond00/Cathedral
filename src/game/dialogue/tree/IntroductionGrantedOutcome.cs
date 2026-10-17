@@ -41,6 +41,6 @@ public class IntroductionGrantedOutcome : Outcome
 
         npc.IntroductionGranted = third;   // the controller walks the player over
 
-        Report($"{npc.DisplayName} will present you to {third.DisplayName}");
+        Report($"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(npc)} will present you to {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(third)}");
     }
 }

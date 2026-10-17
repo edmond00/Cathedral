@@ -343,8 +343,8 @@ public sealed class TradeMenuRenderer
         _terminal.Fill(' ', Config.Colors.White, Outside);
 
         string title = _mode == TradeMode.Buy
-            ? $"Buying from {_npc.DisplayName}"
-            : $"Selling to {_npc.DisplayName}";
+            ? $"Buying from {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(_npc)}"
+            : $"Selling to {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(_npc)}";
 
         if (Offers.Count == 0)
         {
@@ -353,7 +353,7 @@ public sealed class TradeMenuRenderer
             int ey = _boxY + 2;
             CenteredInBox(ey++, Truncate(title, BoxW - 4), Title, Bg);
             DrawSectionBreak(ref ey);
-            CenteredInBox(ey++, Truncate($"{_npc.DisplayName} has nothing to trade.", BoxW - 4), Label, Bg);
+            CenteredInBox(ey++, Truncate($"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(_npc)} has nothing to trade.", BoxW - 4), Label, Bg);
             DrawSectionBreak(ref ey);
             DrawButtons(ey, withConfirm: false);
             return;

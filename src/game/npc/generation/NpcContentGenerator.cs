@@ -65,7 +65,7 @@ public static class NpcContentGenerator
         GrantArchetypeSkills(archetype, body, rng);
         GiveBelongings(archetype, body, rng);
 
-        var traits = PersonalityTraitRegistry.Instance.Deal(archetype.ArchetypeId, rng);
+        var traits = PersonalityTraitRegistry.Instance.Deal(archetype.ArchetypeId, isHuman, rng);
         foreach (var trait in traits)
             trait.ApplyGameplay(body, rng);
 

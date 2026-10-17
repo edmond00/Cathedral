@@ -495,12 +495,18 @@ no knees. It then goes into the save verbatim, and `PartyState.Rebuild` resolves
 body's **own** catalogue and fails closed: one such wound, taken at generation and never noticed,
 makes the whole save unloadable a dozen sessions later.
 
-That is not hypothetical. Global personality traits are dealt to every anatomy and eight of the
-sixty carry a human wound, so roughly **one beast in four** was given one; taming it and saving cost
-the run. `PersonalityTrait.ApplyGameplay` now refuses the wound and logs it, exactly as
-`NpcSkillGrant` refuses an unlearnable skill — expected for a global trait, a content fault for an
-archetype's own, which `--npc-audit` names. There is deliberately no translation to a beast
-equivalent: nothing sensibly maps a missing finger onto a wolf.
+That is not hypothetical. Global personality traits used to be dealt to every anatomy and eight of
+the sixty carry a human wound, so roughly **one beast in four** was given one; taming it and saving
+cost the run. `PersonalityTrait.ApplyGameplay` refuses the wound and logs it, exactly as
+`NpcSkillGrant` refuses an unlearnable skill — and an archetype's own trait doing it is a content
+fault `--npc-audit` names. There is deliberately no translation to a beast equivalent: nothing
+sensibly maps a missing finger onto a wolf.
+
+**The global trait pool is now dealt to people only** (`PersonalityTraitRegistry.Deal`). Refusing
+the wound was not enough, because a trait is two-sided and its *text* still landed: a hyena was
+described with "hands that look like they have set a great many small broken things" and dressed
+"with more care than the work warrants". Every global trait is written about a person; a beast gets
+its archetype's traits, if any.
 
 ### A wound takes a modus mentis away, not just its growth
 
@@ -611,10 +617,19 @@ share one mutable outcome object across every conversation in the process.
 **A `Verbatim` never pastes a raw `DisplayName`.** Display names are title-cased for the screen,
 and a neutral sentence that carries one reads as a proper name the rewrite then copies — "I made my
 way to Wadi, learned Trailcraft." Name things through `NeutralNarration.AreaPhrase` ("the wadi"),
-`ModusMentisPhrase` ("trailcraft"), `NpcPhrase` (a named NPC keeps its name, shallow wildlife is
-"the pig") and `ItemPhrase` / `Item.WithArticle`. Which is a proper name is decided by **type**:
-`NounPhrase`'s capital test cannot tell "Wadi" from "Hugh Furrow". The chip (`Text`) keeps the
-display name — it is read on screen beside the memory panel.
+`ModusMentisPhrase` ("trailcraft"), `NpcPhrase` (see below) and `ItemPhrase` / `Item.WithArticle`.
+Which is a proper name is decided by **type**: `NounPhrase`'s capital test cannot tell "Wadi" from
+"Hugh Furrow". The chip (`Text`) keeps the display name of a place or an item — it is read on screen
+beside the memory panel.
+
+**An NPC's proper name is not known until they give it.** Every sentence the player reads about an
+NPC — a verbatim, a chip, a rule's refusal, a segment caption, a menu title, the dialogue header —
+names them through `NpcLabelResolver.ShortLabel` (or `NpcPhrase`, which is the same thing): a person
+by their role until the acting member has been introduced ("the reeve"), by name after; a beast and
+shallow wildlife always by their kind ("the hyena", "the pig"). The observation prompts use the
+longer `NpcLabelResolver.Resolve`, which follows the same two rules. A raw `npc.DisplayName` in such
+a sentence is a leak — the threat refusal once read "under the threat of Ashgorge right here" about a
+hyena nobody had met. Logs and the companion's own chips ("Joined you: …") keep the name.
 
 `Report(text)` settles that wording and sets `Reported`; an outcome that never reports changed nothing
 observable, and `ShowInUI` follows. That replaced returning `null` from `Apply`.
@@ -1026,6 +1041,13 @@ it. The verb's own half is `protected IsIllegalFor`. What that buys:
 - `attack` / `slay` against somebody who **already counts you an enemy** is not a crime — the quarrel
   was declared before the blow. `murder` (on a sleeper) stays unconditional: a sleeper has declared
   nothing;
+- `attack` / `slay` against a **beast on wild ground** is hunting, not a crime
+  (`PrivacyModel.IsHunting`). An area's `Tenure` is `Private`, `Public` or `Wild`; factories set the
+  first two (`IsPrivate` is a view onto it), and `SceneFactory.MarkWilderness` stamps `Wild` on every
+  public area of a factory whose `IsWilderness` is true (plain, forest, cave, coast, mountain, peak,
+  every `ClimateSceneFactory`) — except `scene.Stores`, since a woodshed is somebody's stock. On public
+  ground the same beast is somebody's (the farm's pig) and the blow stays a crime. People are never
+  game: crimes against them do not read the tenure;
 - `unlock_door`, `slip_into` and `break` ask `PrivacyModel.ReachesPrivateArea(scene, target)`, **not
   `pov.Where`**. A house door is listed in the street's PoIs *and* the room's, so reading the actor's
   own area would call a burglary from the street lawful. A public storehouse's lock is nobody's

@@ -28,6 +28,6 @@ public class JoinPartyOutcome : Outcome
     {
         var npc = ctx.Npc!;
         npc.JoinRequested = true;
-        Report($"{npc.DisplayName} will travel with you");
+        Report($"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(npc)} will travel with you");
     }
 }

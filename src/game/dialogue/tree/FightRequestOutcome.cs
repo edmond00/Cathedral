@@ -34,6 +34,6 @@ public class FightRequestOutcome : Outcome
         var npc = ctx.Npc!;
         npc.FightRequestedByDialogue = true;
         npc.FightIsPersonal          = _personal;
-        Report($"{npc.DisplayName} demands a fight");
+        Report($"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(npc)} demands a fight");
     }
 }

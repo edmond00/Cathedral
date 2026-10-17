@@ -200,7 +200,7 @@ public sealed class SleeperRousedOutcome : Outcome
     private readonly SceneNpc _npc;
 
     public SleeperRousedOutcome(SceneNpc npc)
-        : base($"Woken: {npc.Entity.DisplayName}", OutcomeSeverity.Neutral,
+        : base($"Woken: {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc.Entity)}", OutcomeSeverity.Neutral,
                $"woke {NeutralNarration.NpcPhrase(npc.Entity)}")
     {
         _npc = npc;
@@ -287,7 +287,7 @@ public sealed class NpcSlaynOutcome : Outcome
     private readonly SceneNpc _sceneNpc;
 
     public NpcSlaynOutcome(SceneNpc sceneNpc)
-        : base($"Slain: {sceneNpc.DisplayName}", OutcomeSeverity.Negative,
+        : base($"Slain: {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(sceneNpc.Entity)}", OutcomeSeverity.Negative,
                $"killed {NeutralNarration.NpcPhrase(sceneNpc.Entity)}")
     {
         _sceneNpc = sceneNpc;
@@ -323,11 +323,11 @@ public sealed class FightTriggerOutcome : Outcome
     public string? ContextLabel { get; set; }
 
     public FightTriggerOutcome(NpcEntity npc, string combatContext = "")
-        : base($"Combat begins: {npc.DisplayName}", OutcomeSeverity.Negative,
-               $"provoked {npc.DisplayName} into a fight")
+        : base($"Combat begins: {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc)}", OutcomeSeverity.Negative,
+               $"provoked {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc)} into a fight")
     {
         Target        = npc;
-        CombatContext = string.IsNullOrEmpty(combatContext) ? $"combat with {npc.DisplayName}"
+        CombatContext = string.IsNullOrEmpty(combatContext) ? $"combat with {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc)}"
                                                             : combatContext;
     }
 

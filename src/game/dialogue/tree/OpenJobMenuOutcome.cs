@@ -38,6 +38,6 @@ public class OpenJobMenuOutcome : Outcome
             return;
         }
 
-        Report($"{npc.DisplayName} takes you on as {npc.JobRequest.WithArticle()}");
+        Report($"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(npc)} takes you on as {npc.JobRequest.WithArticle()}");
     }
 }

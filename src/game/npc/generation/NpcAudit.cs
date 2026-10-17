@@ -406,9 +406,9 @@ public static class NpcAudit
         if (npc.CanSpeak && string.IsNullOrWhiteSpace(npc.WayToSpeakDescription))
             yield return $"{who}: speaks but has no persona prompt";
 
-        // Expected against the pool actually available: a beast archetype has no trait pool of its
-        // own, so it is dealt the global draw alone and a flat count would warn about every animal.
-        int expectedTraits = PersonalityTraitRegistry.GlobalDraw
+        // Expected against the pools actually open to it: the global pool is for people only, and a
+        // beast archetype has no pool of its own, so a beast is usually dealt nothing at all.
+        int expectedTraits = (npc.Combatant.AnatomyType == AnatomyType.Human ? PersonalityTraitRegistry.GlobalDraw : 0)
                              + Math.Min(PersonalityTraitRegistry.ArchetypeDraw,
                                         PersonalityTraitRegistry.Instance.ForArchetype(who).Count);
         if (npc.Text.TraitIds.Count != expectedTraits)

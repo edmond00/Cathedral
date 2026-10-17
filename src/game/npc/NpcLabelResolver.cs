@@ -30,6 +30,10 @@ public static class NpcLabelResolver
         string roleClause   = npc.Archetype.BuildRoleClause(locationNoun);
 
         var affinity = npc.AffinityTable;
+        // A beast never introduces itself, so it is never known by name — however it has been
+        // appeased — until it joins the party, where it stops being a scene NPC at all.
+        if (npc.Combatant.AnatomyType != AnatomyType.Human)
+            return roleClause;
         if (affinity.IsStranger(key) || affinity.GetLevel(key) == AffinityLevel.Stranger)
         {
             // Stranger: no name yet. For a human, the role clause leads and a person descriptor
@@ -44,6 +48,38 @@ public static class NpcLabelResolver
         // swapped for its scene false name so the LLM (and sanitizer) only see a simple placeholder;
         // NameFaking restores the real name in the generated output.
         return $"{affinity.GetLevel(key).ToFirstPersonRelation(NameFaking.Fake(npc.DisplayName))}, {roleClause}";
+    }
+
+    /// <summary>
+    /// The short name a player-facing sentence uses for <paramref name="npc"/>: its proper name once
+    /// <paramref name="actor"/> (the protagonist when null) has been introduced to a person, and its
+    /// role until then — "the reeve", "the hyena". Shallow wildlife has only its kind ("the pig"), and a
+    /// beast is always its kind, as in <see cref="Resolve"/>.
+    ///
+    /// <para>Every sentence the player reads about an NPC goes through here or through
+    /// <see cref="Resolve"/> — refusals, chips, segment captions, menu titles. A proper name read
+    /// before the introduction is a leak: the introduction is how a name is learned, and a hyena has
+    /// none to give.</para>
+    /// </summary>
+    public static string ShortLabel(INpcEntity npc, PartyMember? actor = null)
+    {
+        if (npc is not NpcEntity named)
+            return $"the {npc.DisplayName.Trim().ToLowerInvariant()}";
+        if (named.Combatant.AnatomyType != AnatomyType.Human)
+            return named.Archetype.BuildRoleClause("");
+
+        var affinity = named.AffinityTable;
+        string key = actor?.AffinityKey ?? "Protagonist";
+        return affinity.IsStranger(key) || affinity.GetLevel(key) == AffinityLevel.Stranger
+            ? named.Archetype.BuildRoleClause("")
+            : named.DisplayName;
+    }
+
+    /// <summary><see cref="ShortLabel"/> opening a sentence: "The reeve is there".</summary>
+    public static string ShortLabelCapitalized(INpcEntity npc, PartyMember? actor = null)
+    {
+        var label = ShortLabel(npc, actor);
+        return label.Length == 0 ? label : char.ToUpperInvariant(label[0]) + label[1..];
     }
 
     /// <summary>

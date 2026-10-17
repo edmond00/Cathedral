@@ -23,6 +23,9 @@ namespace Cathedral.Game.Scene.Peak;
 /// </summary>
 public class PeakSceneFactory : SceneFactory
 {
+    /// <summary>Wilderness: its open ground is nobody's (see <see cref="AreaTenure.Wild"/>).</summary>
+    protected override bool IsWilderness => true;
+
     public PeakSceneFactory(string? sessionPath = null) : base(sessionPath) { }
 
     private readonly List<Area> _allAreas = new();

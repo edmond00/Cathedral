@@ -432,7 +432,7 @@ public class DialogueTreeController
     private void AppendNpcLine(string text) => Append(new NarrationBlock(
         Type: NarrationBlockType.Speaking,
         ModusMentis: null!,
-        Text: $"{_npc.DisplayName}: {text}",
+        Text: $"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(_npc)}: {text}",
         Keywords: null,
         Actions: null,
         SpeakerName: _npc.DisplayName));
@@ -732,7 +732,7 @@ public class DialogueTreeController
             catch (Exception ex)
             {
                 Console.Error.WriteLine($"DialogueTreeController: Resolution line failed: {ex.Message}");
-                reaction = succeeded ? $"{_npc.DisplayName} nods." : $"{_npc.DisplayName} doesn't react.";
+                reaction = succeeded ? $"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(_npc)} nods." : $"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(_npc)} doesn't react.";
             }
 
             _state.IsLoadingReaction = false;
