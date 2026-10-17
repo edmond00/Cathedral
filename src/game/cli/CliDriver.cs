@@ -370,7 +370,8 @@ public sealed class CliDriver
                                     moved. `noetic` carries the phase budget and the acting body's
                                     tool proficiency, neither of which `expect` can reach;
                                     `popup` the open choice popup's options, each marked
-                                    (disabled) when greyed
+                                    (disabled) when greyed; `dialogue` the tree id of the last
+                                    conversation queued (a confrontation's id names its crime)
           expect-state <subj> <text>  assert `inspect <subj>` reports a line containing <text>.
                                     What cli/outcome/ asserts with: `expect` reads the SCREEN,
                                     this reads the world

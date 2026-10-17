@@ -29,3 +29,32 @@ public enum CriminalAffinityType
     /// </summary>
     Vandal,
 }
+
+/// <summary>
+/// Which <see cref="CriminalAffinityType"/> a witness accuses somebody of, from the act they caught
+/// or heard. Only reached once the act is already established as a crime, so this names the kind
+/// rather than re-deciding it — see <see cref="Cathedral.Game.Scene.Verbs.Verb.IsIllegal"/>.
+///
+/// <para>The violent verbs all read as <c>Murderer</c>, including a bare <c>attack</c>: what the
+/// witness reacts to is somebody setting about a living thing, and the accusation is worded from
+/// that. Anything unlisted done inside a private area is trespass, which is what makes an otherwise
+/// innocuous verb a crime there in the first place. Gated on the verb's type, never its id: a renamed
+/// id would otherwise fall through to the default without a word.</para>
+/// </summary>
+public static class CrimeKinds
+{
+    public static CriminalAffinityType Of(Cathedral.Game.Scene.Verbs.Verb verb, bool areaIsPrivate) => verb switch
+    {
+        Cathedral.Game.Scene.Verbs.StealVerb or Cathedral.Game.Scene.Verbs.PickpocketVerb
+            => CriminalAffinityType.Thief,
+        Cathedral.Game.Scene.Verbs.GrabVerb
+            => areaIsPrivate ? CriminalAffinityType.Thief : CriminalAffinityType.None,
+        Cathedral.Game.Scene.Verbs.SlayVerb or Cathedral.Game.Scene.Verbs.MurderVerb or Cathedral.Game.Scene.Verbs.AttackVerb
+            => CriminalAffinityType.Murderer,
+        Cathedral.Game.Scene.Verbs.UnlockDoorVerb or Cathedral.Game.Scene.Verbs.SlipIntoVerb or Cathedral.Game.Scene.Verbs.StalkVerb
+            => CriminalAffinityType.Intruder,
+        Cathedral.Game.Scene.Verbs.BreakVerb
+            => CriminalAffinityType.Vandal,
+        _   => areaIsPrivate ? CriminalAffinityType.Intruder : CriminalAffinityType.None,
+    };
+}

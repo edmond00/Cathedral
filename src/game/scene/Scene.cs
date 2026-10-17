@@ -283,6 +283,13 @@ public class Scene
     public Dictionary<System.Guid, Area> DisplacedNpcs { get; } = new();
 
     /// <summary>
+    /// What a witness drawn in by a heard crime heard, by <c>SceneNpc.Id</c> — the crime they accuse
+    /// you of when they confront you. Written by <c>NpcDrawnInOutcome</c>; one visit's business like
+    /// <see cref="DisplacedNpcs"/>.
+    /// </summary>
+    public Dictionary<System.Guid, Dialogue.Affinity.CriminalAffinityType> HeardCrimes { get; } = new();
+
+    /// <summary>
     /// NPCs who have just walked in and have not yet been narrated, in arrival order. Drained by
     /// <c>NarrativeController.GenerateObservationsAsync</c>, which opens the next phase on them —
     /// ahead of a corpse and ahead of the standing-threat opener, because somebody crossing a room to

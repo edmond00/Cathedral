@@ -277,7 +277,10 @@ strategy auto           # no override; LLM/RNG decide
 ```
 
 `strategy custom` degrades to `auto`, since per-node prompting is interactive by nature.
-Set the strategy *before* the action that should be affected.
+Set the strategy *before* the action that should be affected. It reaches the action roll, the conversation
+rolls and the RUNAWAY exit roll (`succeed` lands one six, `fail-dice` none), so a script can test
+both ends of fleeing a witness or an enemy. `inspect dialogue` names the tree of the last
+conversation queued — `caught_red_handed_murderer` says which crime a confrontation accuses you of.
 
 **A forced narration success caps the difficulty at the dice pool.** A verb harder than the chain
 that reached it — `tame` is difficulty 4, and a keyword→think→act chain of three unlevelled modi

@@ -1059,9 +1059,13 @@ public class NarrativeController
     /// thought (traced back through <paramref name="chainOrigin"/>; null for dialogues that did not come
     /// from an observation→thinking→action chain, e.g. a caught-red-handed confrontation).
     /// </summary>
+    /// <summary>The tree id of the last conversation queued — `inspect dialogue`, for scripts.</summary>
+    private string _lastDialogueTreeId = "-";
+
     private void SetPendingDialogue(DialogueTriggerOutcome outcome, ModusMentisChainElement? chainOrigin)
     {
         _pendingDialogueOutcome = outcome;
+        _lastDialogueTreeId     = outcome.Tree?.TreeId ?? outcome.TreeId ?? "-";
         _openingFocus           = SceneNpcOf(outcome.Target);
         _openingFocusMM         = TraceObservationModusMentis(chainOrigin);
     }
@@ -2366,7 +2370,7 @@ public class NarrativeController
         // Seen by a witness: they confront you, and the tree decides what that becomes.
         if (!result.Succeeded && result.CaughtByWitness != null && _pov != null)
         {
-            var crimeType = DetermineCrimeType(result.Action.Verb, _pov.Where.IsPrivate);
+            var crimeType = CrimeKinds.Of(result.Action.Verb, _pov.Where.IsPrivate);
             Console.WriteLine($"NarrativeController: Witness '{result.CaughtByWitness.DisplayName}' caught the failed illegal action (crime: {crimeType})");
             var catchTree = CaughtRedHandedTreeFactory.Create(crimeType);
             SetPendingDialogue(new Cathedral.Game.Scene.DialogueTriggerOutcome(result.CaughtByWitness, tree: catchTree), result.Action);
@@ -3768,6 +3772,11 @@ public class NarrativeController
         if (All("opening"))
             outp.Add(_lastOpeningFocus ?? "opening focus=none");
 
+        // Which conversation was last queued, by tree id — the confrontation's id carries the crime it
+        // accuses you of (caught_red_handed_murderer), which nothing on screen states plainly.
+        if (All("dialogue"))
+            outp.Add($"dialogue last={_lastDialogueTreeId}");
+
         // Learned routines — see Routine.CliLine. Reported here rather than read off the routines panel
         // because recording happens with no UI open at all: the panel is where a player reads them,
         // not where they are made.
@@ -4357,6 +4366,16 @@ public class NarrativeController
 
         var values = new int[diceCount];
         for (int i = 0; i < diceCount; i++) values[i] = _diceRandom.Next(1, 7);
+
+        // --debug's preset strategy reaches this roll as it reaches the action and conversation rolls,
+        // so a script can test both ends of a RUNAWAY rather than whichever one its seed lands on.
+        if (DebugMode.IsActive && !DebugMode.IsAutoStrategy)
+        {
+            if (DebugMode.CurrentStrategy == DebugStrategy.FailDiceRoll)
+                for (int i = 0; i < values.Length; i++) { if (values[i] == 6) values[i] = 5; }
+            else if (DebugMode.CurrentStrategy == DebugStrategy.Succeed && values.Length > 0)
+                values[0] = 6;
+        }
         NarrationDiceComplete(values);
     }
 
@@ -4396,8 +4415,13 @@ public class NarrativeController
         }
         else
         {
-            Console.WriteLine($"NarrativeController: RUNAWAY failed — witness '{target.DisplayName}' confronts trespass");
-            var catchTree = CaughtRedHandedTreeFactory.Create(CriminalAffinityType.Intruder);
+            // They came because they heard a crime: they accuse you of that one. Otherwise they caught you
+            // on private ground, and what they saw is trespass.
+            var heard = _scene?.Npcs.FirstOrDefault(n => ReferenceEquals(n.Entity, target)) is { } targetNpc
+                        && _scene.HeardCrimes.TryGetValue(targetNpc.Id, out var crime)
+                ? crime : CriminalAffinityType.Intruder;
+            Console.WriteLine($"NarrativeController: RUNAWAY failed — witness '{target.DisplayName}' confronts ({heard})");
+            var catchTree = CaughtRedHandedTreeFactory.Create(heard);
             // A runaway confrontation has no observation→thinking→action origin — resample the narrator.
             SetPendingDialogue(new DialogueTriggerOutcome(target, tree: catchTree), null);
         }
@@ -4590,34 +4614,6 @@ public class NarrativeController
     {
         if (action == null) return false;
         return CriticTrees.IsMovementVerb(action.ActionText);
-    }
-
-    /// <summary>
-    /// What the witness will say they saw, for a verb that was just caught. Only reached once the
-    /// action is already established as a crime, so this names the kind rather than re-deciding it —
-    /// see <see cref="Cathedral.Game.Scene.Verbs.Verb.IsIllegal"/> for the deciding.
-    ///
-    /// <para>The violent verbs all read as <c>Murderer</c>, including a bare <c>attack</c>: what the
-    /// witness is reacting to is somebody setting about a person, and the accusation is worded from
-    /// that. Anything unlisted done inside a private area is trespass, which is what makes an
-    /// otherwise innocuous verb a crime there in the first place.</para>
-    /// </summary>
-    private static CriminalAffinityType DetermineCrimeType(Cathedral.Game.Scene.Verbs.Verb verb, bool areaIsPrivate)
-    {
-        return verb.VerbId switch
-        {
-            "steal"       => CriminalAffinityType.Thief,
-            "pickpocket"  => CriminalAffinityType.Thief,
-            "grab"        => areaIsPrivate ? CriminalAffinityType.Thief : CriminalAffinityType.None,
-            "slay"        => CriminalAffinityType.Murderer,
-            "murder"      => CriminalAffinityType.Murderer,
-            "attack"      => CriminalAffinityType.Murderer,
-            "unlock_door" => CriminalAffinityType.Intruder,
-            "slip_into"   => CriminalAffinityType.Intruder,
-            "stalk"       => CriminalAffinityType.Intruder,
-            "break"       => CriminalAffinityType.Vandal,
-            _             => areaIsPrivate ? CriminalAffinityType.Intruder : CriminalAffinityType.None,
-        };
     }
 
     /// <summary>

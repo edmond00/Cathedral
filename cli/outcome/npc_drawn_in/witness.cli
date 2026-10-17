@@ -55,4 +55,12 @@ expect they have seen what I was doing
 expect-not means me harm
 expect RUNAWAY
 
+# Running from them fails (the preset strategy reaches the RUNAWAY roll too), and they confront you
+# with what they heard: violence, not the trespass a witness on private ground would accuse you of.
+click button
+advance 12 180
+click continue
+advance 12 180
+expect-state dialogue caught_red_handed_murderer
+
 quit

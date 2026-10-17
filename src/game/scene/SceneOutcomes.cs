@@ -223,13 +223,15 @@ public sealed class SleeperRousedOutcome : Outcome
 public sealed class NpcDrawnInOutcome : Outcome
 {
     private readonly NpcEntity _npc;
+    private readonly Verbs.Verb _heard;
 
-    public NpcDrawnInOutcome(NpcEntity npc)
+    public NpcDrawnInOutcome(NpcEntity npc, Verbs.Verb heard)
         : base($"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(npc)} heard it and comes to look",
                OutcomeSeverity.Negative,
                $"was heard by {NeutralNarration.NpcPhrase(npc)}, who comes over to see what happened")
     {
-        _npc = npc;
+        _npc   = npc;
+        _heard = heard;
     }
 
     protected override void Apply(OutcomeContext ctx)
@@ -242,6 +244,8 @@ public sealed class NpcDrawnInOutcome : Outcome
             return;
         }
         ctx.Scene.DrawNpcTo(arriving, ctx.PoV.Where);
+        var crime = CrimeKinds.Of(_heard, ctx.PoV.Where.IsPrivate);
+        if (crime != CriminalAffinityType.None) ctx.Scene.HeardCrimes[arriving.Id] = crime;
         Report($"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(_npc, ctx.Actor)} heard it and comes to look");
     }
 }

@@ -222,7 +222,7 @@ public class ActionExecutionController
         if (!succeeded && failureWound != null)
             llmDecidedReports.Add(new WoundInflictionOutcome(failureWound));
         if (!succeeded && consequences.DrawnIn != null)
-            llmDecidedReports.Add(new Cathedral.Game.Scene.NpcDrawnInOutcome(consequences.DrawnIn));
+            llmDecidedReports.Add(new Cathedral.Game.Scene.NpcDrawnInOutcome(consequences.DrawnIn, action.Verb));
 
         // +1 XP for every modusMentis in the action chain (observation → thinking → action), as a
         // report rather than a bare award so each one shows the player a chip. The caller applies it.
@@ -325,7 +325,7 @@ public class ActionExecutionController
             var llmDecidedReports = new List<Outcome>();
             if (woundReport != null) llmDecidedReports.Add(woundReport);
             if (consequences.DrawnIn != null)
-                llmDecidedReports.Add(new Cathedral.Game.Scene.NpcDrawnInOutcome(consequences.DrawnIn));
+                llmDecidedReports.Add(new Cathedral.Game.Scene.NpcDrawnInOutcome(consequences.DrawnIn, action.Verb));
 
             // Full list = the verb's failure reports followed by the sampled wound. The wound is no
             // longer a separate free-text hint: its Verbatim ("suffered …") lands in the consequence
@@ -391,7 +391,7 @@ public class ActionExecutionController
         var llmDecidedReports = new List<Outcome>();
         if (woundReport != null) llmDecidedReports.Add(woundReport);
         if (consequences.DrawnIn != null)
-            llmDecidedReports.Add(new Cathedral.Game.Scene.NpcDrawnInOutcome(consequences.DrawnIn));
+            llmDecidedReports.Add(new Cathedral.Game.Scene.NpcDrawnInOutcome(consequences.DrawnIn, action.Verb));
 
         INarratable successOutcome = action.PreselectedOutcome;
 
