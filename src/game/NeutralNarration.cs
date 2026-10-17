@@ -44,9 +44,29 @@ public static class NeutralNarration
     /// During the childhood reminescence phase (<paramref name="isReminescence"/>) the fragment is
     /// a recollection, so the sentence is put in the past tense ("This was …").
     /// </summary>
-    public static string ObservationDetail(string description, bool isReminescence = false)
-        => isReminescence ? $"This was {NounPhrase(FirstPerson(description))}."
-                          : $"This is {NounPhrase(FirstPerson(description))}.";
+    public static string ObservationDetail(string description, bool isReminescence = false,
+                                           bool descriptionIsClause = false)
+    {
+        // A person's or a beast's appearance is written as a clause with its own verb — "a sunburnt
+        // figure swings a scythe through standing corn" — and wrapping it as "This is …" gave the model
+        // "This is a sunburnt figure swings a scythe", which it then rewrote into nonsense. It stands
+        // as its own sentence instead.
+        if (descriptionIsClause)
+            return Sentence(FirstPerson(description));
+
+        var phrase = NounPhrase(FirstPerson(description));
+        bool plural = IsPluralPhrase(phrase);
+        return isReminescence ? $"{(plural ? "These were" : "This was")} {phrase}."
+                              : $"{(plural ? "These are" : "This is")} {phrase}.";
+    }
+
+    /// <summary>A clause made into a sentence: capitalised, one closing full stop.</summary>
+    private static string Sentence(string clause)
+    {
+        var s = clause.Trim().TrimEnd('.', ',', ';', ':', ' ');
+        if (s.Length == 0) return "";
+        return char.ToUpperInvariant(s[0]) + s.Substring(1) + ".";
+    }
 
     /// <summary>
     /// Builds the full neutral meaning of an observation as one text: the attention line naming the
@@ -54,8 +74,9 @@ public static class NeutralNarration
     /// (<see cref="ObservationDetail"/>). Merged so the persona rewrite can be done in a single
     /// request that yields two or three short styled sentences.
     /// </summary>
-    public static string Observation(bool isFirst, string simpleName, string description, bool isReminescence = false)
-        => $"{ObservationAttention(isFirst, simpleName, isReminescence)} {ObservationDetail(description, isReminescence)}";
+    public static string Observation(bool isFirst, string simpleName, string description, bool isReminescence = false,
+                                     bool descriptionIsClause = false)
+        => $"{ObservationAttention(isFirst, simpleName, isReminescence)} {ObservationDetail(description, isReminescence, descriptionIsClause)}";
 
     /// <summary>
     /// Neutral meaning of the area introduction that opens an observation sequence when the area or
@@ -613,8 +634,7 @@ public static class NeutralNarration
         // Decide whether a leading article is needed.
         var words = s.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         bool hasDeterminer = words.Take(3).Any(w => Determiners.Contains(w.Trim('-')));
-        string last = words[^1].ToLowerInvariant();
-        bool looksPlural = last.Length > 2 && last.EndsWith("s") && !last.EndsWith("ss");
+        bool looksPlural = HeadIsPlural(s);
 
         if (!hasDeterminer && !looksPlural)
         {
@@ -622,6 +642,28 @@ public static class NeutralNarration
             s = $"{article} {s}";
         }
         return s;
+    }
+
+    /// <summary>
+    /// Whether a phrase's head noun is plural. The head is the last word before the first
+    /// preposition or comma — "rows of radishes in crumbled soil" is about rows, not soil. Reading
+    /// the phrase's last word instead put "a" in front of "rows of radishes in crumbled soil".
+    /// </summary>
+    private static bool HeadIsPlural(string phrase)
+    {
+        var head = Regex.Split(phrase, @",|\s(?:of|in|on|with|under|at|by|between|from|among|over|along|against|beside|near|round|around)\s")[0];
+        var words = head.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (words.Length == 0) return false;
+        string last = words[^1].ToLowerInvariant().Trim('\'', '-');
+        return last.Length > 2 && last.EndsWith("s") && !last.EndsWith("ss") && !last.EndsWith("us") && !last.EndsWith("is");
+    }
+
+    /// <summary>A noun phrase that starts with no article and whose head is plural ("rows of radishes").</summary>
+    private static bool IsPluralPhrase(string phrase)
+    {
+        var first = phrase.Split(' ', 2)[0].ToLowerInvariant();
+        if (first is "a" or "an" or "the" or "this" or "that") return false;
+        return HeadIsPlural(phrase);
     }
 
     private static bool IsCapitalizedWord(string w)

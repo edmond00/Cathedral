@@ -400,7 +400,10 @@ public class ObservationPhaseController
                 isFirst: !withTransition,
                 GetNeutralPhrase(outcome, locationId),
                 GetNeutralDescription(outcome, locationId),
-                isReminescence: isReminescence);
+                isReminescence: isReminescence,
+                // A named NPC's appearance is a clause ("a figure hauls a barrel …"); shallow
+                // wildlife's is a noun phrase ("a wiry white goat, chewing a rope").
+                descriptionIsClause: outcome is Cathedral.Game.Scene.SyntheticNpcObservationObject { NpcEntity: Cathedral.Game.Npc.NpcEntity });
             // An optional trailing sentence (e.g. a threat caution) is folded into the same neutral
             // text so the persona rewrite styles it into the block rather than tacking on plain prose.
             if (!string.IsNullOrWhiteSpace(trailingNeutral))

@@ -20,7 +20,7 @@ public class ReaperArchetype : PeasantArchetype
     protected override string[] ObservationHintVariants(string nodeContext) => new[]
     {
         "a stooped figure straightens with a sickle in hand, grain dust on their sleeves",
-        "a sunburnt figure swings a scythe through standing corn",
+        "a sunburnt figure swings a scythe through the standing crop",
         "someone binds a sheaf and stacks it, chaff drifting around them",
     };
 
@@ -42,7 +42,7 @@ public class ReaperArchetype : PeasantArchetype
     // ── Dialogue flavour ──────────────────────────────────────────────────────
 
     public override string SelfIntroduction => "a reaper this season — sower in the spring, whatever's wanted after";
-    public override string Workplace        => "the standing corn";
+    public override string Workplace        => "the standing crop";
     public override string Craft            => "the sickle";
     public override string DailyLabour      => "swinging from dawn to dusk and binding what I've cut behind me";
 

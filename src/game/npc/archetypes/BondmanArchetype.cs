@@ -15,7 +15,7 @@ public class BondmanArchetype : PeasantArchetype
     protected override string[] ObservationHintVariants(string nodeContext) => new[]
     {
         "a thin labourer bends to a vegetable bed, hands black with earth",
-        "a gaunt figure hauls a basket of turnips, back bent from the work",
+        "a gaunt figure hauls a heavy basket up from the rows, back bent from the work",
         "someone hoes a long row under the sun, sweat dark on their shirt",
     };
 
