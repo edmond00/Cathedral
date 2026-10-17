@@ -277,9 +277,12 @@ kill, to appease, to reconcile, to tame — and any act that fails before them b
 enemy striking first. A **confronting witness** is one standing in the area with a reason to stop the
 body: either they came on its account, drawn by a heard crime, or the ground is private and they see
 the trespass every act there is. A person merely standing in a public place confronts nobody. A
-confronting witness permits only striking at them or killing them, and any act that fails before
-them, lawful or not, is caught red-handed: the confrontation, worded after the crime they heard, or
-trespass where they heard none. In both cases a **discreet** modus mentis may still attempt any act,
+confronting witness permits only striking at them, killing them, or going up to them to explain
+oneself, and any act that fails before them, lawful or not, is caught red-handed: the confrontation,
+worded after the crime they heard, or trespass where they heard none. To explain oneself opens that
+same confrontation by one's own choice, and every check within it is then one six easier than when
+one is collared, though never easier than a single six: one who comes forward is half believed.
+Fumbling the approach is itself a slip before the witness, and one is collared after all. In both cases a **discreet** modus mentis may still attempt any act,
 for the permission to act at close quarters is what discretion buys; it does not buy safety, and a
 discreet act that fails in the same room is seen.
 

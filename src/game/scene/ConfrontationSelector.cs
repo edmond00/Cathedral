@@ -24,8 +24,11 @@ namespace Cathedral.Game.Scene;
 public static class ConfrontationSelector
 {
     public static NpcEntity? Confronter(Scene scene, PoV pov, Protagonist? protagonist)
+        => Confronter(scene, pov, protagonist?.AffinityKey);
+
+    /// <summary>As above, for whichever body's affinity key is asking (a companion narrating).</summary>
+    public static NpcEntity? Confronter(Scene scene, PoV pov, string? key)
     {
-        string? key = protagonist?.AffinityKey;
 
         // They came for you.
         foreach (var sceneNpc in scene.GetNpcsAt(pov.Where, pov.When))

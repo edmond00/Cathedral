@@ -406,7 +406,7 @@ public sealed class DialogueTriggerOutcome : Outcome
     protected override void Apply(OutcomeContext ctx)
     {
         if (ctx.Scene == null) return;
-        ctx.Scene.PendingDialogueRequest = new DialogueRequest(Target, TreeId);
+        ctx.Scene.PendingDialogueRequest = new DialogueRequest(Target, TreeId, Tree);
     }
 }
 

@@ -417,7 +417,7 @@ public class Scene
 /// Set by a dialogue verb's Execute(); consumed by NarrativeController on the next frame
 /// to start a dialogue session using the specified tree.
 /// </summary>
-public record DialogueRequest(NpcEntity Npc, string TreeId);
+public record DialogueRequest(NpcEntity Npc, string? TreeId, Dialogue.Tree.DialogueTree? Tree = null);
 
 /// <summary>
 /// Set by AttackVerb.Execute(); consumed by NarrativeController on the next frame

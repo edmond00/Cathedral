@@ -1065,7 +1065,8 @@ public class NarrativeController
     private void SetPendingDialogue(DialogueTriggerOutcome outcome, ModusMentisChainElement? chainOrigin)
     {
         _pendingDialogueOutcome = outcome;
-        _lastDialogueTreeId     = outcome.Tree?.TreeId ?? outcome.TreeId ?? "-";
+        _lastDialogueTreeId     = (outcome.Tree?.TreeId ?? outcome.TreeId ?? "-")
+                                + (CaughtRedHandedTreeFactory.IsCameForward(outcome.Tree) ? " came_forward" : "");
         _openingFocus           = SceneNpcOf(outcome.Target);
         _openingFocusMM         = TraceObservationModusMentis(chainOrigin);
     }
@@ -2406,8 +2407,8 @@ public class NarrativeController
             {
                 var req = _scene.PendingDialogueRequest;
                 _scene.PendingDialogueRequest = null;
-                SetPendingDialogue(new Cathedral.Game.Scene.DialogueTriggerOutcome(req.Npc, req.TreeId), result.Action);
-                Console.WriteLine($"NarrativeController: Dialogue verb triggered tree '{req.TreeId}' with {req.Npc.DisplayName}");
+                SetPendingDialogue(new Cathedral.Game.Scene.DialogueTriggerOutcome(req.Npc, req.TreeId, req.Tree), result.Action);
+                Console.WriteLine($"NarrativeController: Dialogue verb triggered tree '{req.Tree?.TreeId ?? req.TreeId}' with {req.Npc.DisplayName}");
                 return;
             }
 

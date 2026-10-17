@@ -1114,7 +1114,8 @@ confrontation turned into.
 `ConfrontationSelector.Confronter` is the one place it is decided: a non-enemy speaking NPC in your
 area who is displaced (drawn in by a heard crime), or the Visual witness on private ground. A person
 merely standing in a public square confronts nobody. Three things read it and must not disagree:
-`ConfrontedImpossibleRule` (every verb refused but `CanBeUsedWhenConfronted` — attack, slay — unless
+`ConfrontedImpossibleRule` (every verb refused but `CanBeUsedWhenConfronted` — attack, slay,
+`explain_myself` — unless
 the MM `ActsDiscretely`); the failure ladder (`ActionEvaluationResult.Confronter`: **any** failed act,
 lawful or not, is caught red-handed, ahead of the witness rung); and the exit (`RunawayWitness`).
 The crime the confrontation names is `ConfrontationSelector.CrimeFor` — what a drawn-in witness heard
@@ -1122,6 +1123,10 @@ The crime the confrontation names is `ConfrontationSelector.CrimeFor` — what a
 trespass. `OnDialogueCompleted` releases a drawn-in witness back to their schedule unless the
 conversation made them an enemy. Before this, walking to the next area ended a heard crime for the
 price of one move. `cli/system/confronted_witness.cli` and `cli/outcome/npc_drawn_in/witness.cli`.
+`explain_myself` (offered only on the confronter) opens the same tree through
+`CaughtRedHandedTreeFactory.CreateCameForward`: every branch end one six easier than the Hard ladder,
+never below one; failing its roll is a slip in front of the confronter, so the ordinary tree opens.
+`DialogueRequest` carries a prebuilt tree for it, which a verb-opened conversation used to drop.
 
 An arrival opens the next observation phase, **ahead of the corpse opener** (both are one-shot events,
 but an arrival is the newest and has just changed what is safe to do), and only if they are still in

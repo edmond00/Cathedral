@@ -1,0 +1,63 @@
+# explain_myself — fail
+#
+# As the success script, but the roll that opens the conversation fails. That is a slip in front of
+# somebody already watching the actor, so they are caught red-handed all the same: the confrontation
+# opens at its usual difficulty, not as one the accused came forward to.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-item knife --grant-mm brute_force --means-only brute_force --location-type test --location-id 0 --start-area "Test Roof" --period noon --observe-only "goat"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy fail-dice
+goal slay
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+
+click action 0
+choose 1
+regions
+choose 0
+advance 12 180
+
+regions
+click action 1
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+expect-outcome npc_drawn_in
+
+expect-outcome npc_drawn_in
+
+# The brewer opens the next phase. Go up to him, and fumble it.
+click button
+advance 12 180
+goal explain_myself
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+expect FAILURE
+expect-verb explain_myself
+expect-state dialogue caught_red_handed_murderer
+expect-no-state dialogue came_forward
+quit
