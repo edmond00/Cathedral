@@ -414,6 +414,18 @@ public class ObservationPhaseController
                 neutral = $"{leadingNeutral.Trim()} {neutral}";
             var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, preview: sink, ct: ct);
 
+            // A turn-away opens on the refusal ("I am not interested in the reaper …"), and the model,
+            // told to write one to three sentences, tends to drop that half and write only about the new
+            // object — the player then reads about a hedgebank with no word that the reaper was refused.
+            // The refusal comes first in the neutral text, so the rewrite's first sentence should name
+            // the object turned away from; when it does not, the plain refusal is put back in front.
+            if (turnedAwayFrom != null && !string.IsNullOrWhiteSpace(leadingNeutral)
+                && !FirstSentenceNames(text, turnedAwayFrom))
+            {
+                Console.WriteLine($"ObservationPhaseController: the rewrite dropped the refusal of '{turnedAwayFrom.DisplayName}' — restoring it.");
+                text = $"{leadingNeutral.Trim()} {text}";
+            }
+
             // Keywords are chosen by rule from the final (sanitized) text — the word(s) most related
             // to the object. A long observation gets two distinct keywords, both linked to this same
             // object so either click does the same thing; a normal-length one keeps a single keyword.
@@ -453,6 +465,31 @@ public class ObservationPhaseController
             Console.Error.WriteLine($"ObservationPhaseController: Observation of '{outcome.DisplayName}' failed: {ex.Message}");
             return null;
         }
+    }
+
+    /// <summary>
+    /// Whether the first sentence of <paramref name="text"/> names <paramref name="anchor"/> — by its
+    /// reference lemma or the head of its neutral name, singular or plural. Used to tell a
+    /// rewrite that kept a turn-away's refusal from one that dropped it.
+    /// </summary>
+    private bool FirstSentenceNames(string text, NarrativeAnchor anchor)
+    {
+        var first = System.Text.RegularExpressions.Regex.Split(text.Trim(), @"(?<=[.!?])\s+")[0];
+        // The head of the name only: "the reaper of the radish field (a man)" is named by "reaper",
+        // and "field" in the first sentence may well be about something else.
+        var name = GetNeutralName(anchor);
+        int cut = name.IndexOfAny(new[] { '(' });
+        if (cut >= 0) name = name[..cut];
+        int of = name.IndexOf(" of ", StringComparison.OrdinalIgnoreCase);
+        if (of >= 0) name = name[..of];
+        var words = $"{name} {GetReferenceLemma(anchor)}"
+            .Split(new[] { ' ', '-', '(', ')', ',', '–' }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(w => w.ToLowerInvariant())
+            .Where(w => w.Length > 2 && w is not ("the" or "and" or "man" or "woman" or "boy" or "girl"))
+            .Distinct();
+        return words.Any(w => System.Text.RegularExpressions.Regex.IsMatch(
+            first, $@"\b{System.Text.RegularExpressions.Regex.Escape(w)}(s|es)?\b",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase));
     }
 
     /// <summary>
