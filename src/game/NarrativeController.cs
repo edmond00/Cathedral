@@ -324,7 +324,10 @@ public class NarrativeController
         LlmMonitorDebugManager.Show();
         
         // Initialize controllers
-        _observationController = new ObservationPhaseController(llamaServer, slotManager, _worldContext);
+        _observationController = new ObservationPhaseController(llamaServer, slotManager, _worldContext)
+        {
+            MustCommit = () => _scene?.Phase is NarrationPhase.ChildhoodReminescence or NarrationPhase.GetUp,
+        };
         _thinkingExecutor = thinkingExecutor;
         _actionExecutor = actionExecutor;
         

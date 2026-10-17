@@ -58,6 +58,15 @@ public class ObservationPhaseController
     /// </summary>
     private const int KeywordCandidatesForSpeaking = 4;
 
+    /// <summary>
+    /// True while every choice must commit to something — the childhood reminescence and the get-up
+    /// phase. There the scene holds only the fragments or facets that lead onward, so no modus mentis
+    /// is offered to let its focus go, nor asked whether a handed object holds anything for it: a
+    /// "stop" there only left the player hunting for a keyword that reached the rest. Read from the
+    /// narrative controller's scene, which this controller does not hold.
+    /// </summary>
+    public Func<bool> MustCommit { get; set; } = () => false;
+
     public ObservationPhaseController(
         LlamaServerManager llamaServer,
         ModusMentisSlotManager slotManager,
@@ -992,6 +1001,10 @@ public class ObservationPhaseController
     ///
     /// <para><paramref name="offerDecline"/> false withholds it regardless: the observation after an
     /// area introduction is mandatory even when the introduction retired an object.</para>
+    ///
+    /// <para>Never offered while <see cref="MustCommit"/> holds (the reminescence and the get-up
+    /// phase): the judge took "nothing more is surfacing" as the natural answer in a memory, and a
+    /// fragment stayed unreachable while it waited.</para>
     /// </summary>
     private async Task<NarrativeAnchor?> SelectObservationObjectAsync(
         List<NarrativeAnchor> candidates,
@@ -1009,7 +1022,7 @@ public class ObservationPhaseController
         // Each object is offered as the act of attending to it — "focus on the plowman of the field
         // (a woman)" — via GetNeutralPhrase (proper names stay verbatim; common-noun objects gain
         // "a"/"an"). Playground mode never declines (the selector short-circuits to a real option).
-        string? decline = ledger.IsEmpty || !offerDecline
+        string? decline = ledger.IsEmpty || !offerDecline || MustCommit()
             ? null
             : isReminescence ? "let the recollection go, nothing more is surfacing"
                              : "let your focus go, nothing else here is worth attending to";
@@ -1024,9 +1037,9 @@ public class ObservationPhaseController
     /// Asks the <see cref="ChoiceJudge"/> whether the (new) focus Modus Mentis keeps its focus on the
     /// handed object or loses interest — put as whether the object holds anything for it, yes or no,
     /// which the judge answers far more evenly than "keep it or turn elsewhere". "No" is the decline. Playground
-    /// mode never declines (the selector picks the only real option), and the childhood-reminescence
-    /// MM always keeps the handed memory: a fragment the player reached for is the phase's only way
-    /// forward, since REMEMBER is the sole action there.
+    /// mode never declines (the selector picks the only real option), and no modus mentis declines
+    /// while <see cref="MustCommit"/> holds: a fragment or facet the player reached for is the phase's
+    /// only way forward, since REMEMBER or GET UP is the sole action there.
     /// </summary>
     private async Task<bool> AskKeepFocusAsync(
         ModusMentis modusMentis,
@@ -1037,7 +1050,7 @@ public class ObservationPhaseController
         string? overallLocation,
         string? areaLocation)
     {
-        if (isReminescence && modusMentis.ModusMentisId == "childhood_reminescence") return true;
+        if (MustCommit()) return true;
         if (Config.Debug.RefuseFocus) return false;
 
         var kept = await _selector.SelectAsync(

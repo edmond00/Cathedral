@@ -736,6 +736,12 @@ cares nothing for needs a way to say so instead of committing to one. When the l
 completely the ignore branch fires with no question asked at all — the same "nothing here worth
 doing" line in the thinking modus mentis's voice.
 
+**The two opening phases offer no stop at all.** In the childhood reminescence and the get-up phase
+the goal choice has no "do something else entirely", the observation choices no "let your focus go",
+and the keep-focus question is never asked (`ObservationPhaseController.MustCommit`, and
+`ChooseGoalAsync(offerDecline: !autoSuccess)`). Their one verb is the only way onward, so a mind
+that stopped left the player hunting for a keyword that reached the rest.
+
 **A player who spends the pool without succeeding can only leave.** Keyword clicks are gated on
 `ThinkingAttemptsRemaining > 0`, so at zero the footer LEAVE button is the way out. That is the
 intended shape, not an oversight — but it is why LEAVE must stay ungated by anything except a Visual

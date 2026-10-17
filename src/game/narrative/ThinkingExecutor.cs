@@ -99,7 +99,9 @@ public class ThinkingExecutor
             : null;
 
         // ── Decision 1: GOAL ────────────────────────────────────────────────────
-        var resolved = await ChooseGoalAsync(subOutcomes, thinkingModusMentis, actionModiMentis, overallLocation, areaLocation, observedPhrase, choiceCtx, proposed, cancellationToken);
+        // An auto-success phase (reminescence, get-up) offers no "do something else": its one verb is
+        // the only way onward, and a mind that walked away from it left the player where they were.
+        var resolved = await ChooseGoalAsync(subOutcomes, thinkingModusMentis, actionModiMentis, overallLocation, areaLocation, observedPhrase, choiceCtx, proposed, cancellationToken, offerDecline: !autoSuccess);
         bool isIgnore = resolved is VerbAction vIgnore && vIgnore.Verb is IgnoreVerb;
 
         // ── Early exit: IGNORE (reasoning only, no action) ──────────────────────
@@ -363,7 +365,8 @@ public class ThinkingExecutor
         string? observedPhrase,
         Rules.Choice.ChoiceRuleContext? choiceCtx,
         ActionProposalLedger? proposed,
-        CancellationToken ct)
+        CancellationToken ct,
+        bool offerDecline = true)
     {
         // Only real, pursuable goals go in the list; "ignore & move on" rides in as the decline option
         // below. Choosing decline returns IgnoreVerb.MakeOutcome() so the caller's isIgnore exit fires.
@@ -430,7 +433,7 @@ public class ThinkingExecutor
             ChoiceKind.Goal, thinkingModusMentis, realOutcomes,
             o => o.ToNaturalLanguageString(),
             ThinkingPromptConstructor.SituationLine(overallLocation, areaLocation, observedPhrase),
-            declineOption: "do something else entirely", ct: ct);
+            declineOption: offerDecline ? "do something else entirely" : null, ct: ct);
 
         if (chosen == null)
             Console.WriteLine("ThinkingExecutor: the judge chose none of the offered goals — treating as a refusal.");
