@@ -159,9 +159,26 @@ public class PersonaRewriter
         if (kind == NarrationKind.Speaking)
             restored = UnwrapSpoken(restored);
 
+        // An observation is a perception in the first person. A sociable persona handed a person to
+        // look at sometimes starts talking TO them instead — "I do find you to be curious…" — and
+        // invents a conversation the player never had. The neutral text never says "you" (FirstPerson
+        // has already turned every "you" into "me"), so a rewrite that does has left the observation:
+        // the plain neutral text replaces it. Not retried: the box has already streamed the first try,
+        // and the slot's history would carry it into a second.
+        if (kind == NarrationKind.Observation && AddressesSomeone(restored) && !AddressesSomeone(neutralText))
+        {
+            Console.WriteLine($"PersonaRewriter: observation rewrite addressed someone as 'you' — using the neutral text. Rewrite: {restored}");
+            restored = NameFaking.Real(neutralText);
+        }
+
         preview?.OnComplete(restored);
         return restored;
     }
+
+    /// <summary>Whether <paramref name="text"/> speaks to somebody in the second person.</summary>
+    private static bool AddressesSomeone(string text)
+        => System.Text.RegularExpressions.Regex.IsMatch(text ?? "", @"\b(you|your|yours|yourself)\b",
+               System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
     /// <summary>
     /// The kinds that are words one character says to another: generated behind the
