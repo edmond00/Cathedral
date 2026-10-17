@@ -792,7 +792,7 @@ public class DeathsHeadMothArchetype : TinyShallowArchetype
 
 // ── the fields, the groves and the plantations ────────────────────────────────────────────────
 
-public class FieldMouseArchetype : SmallMammalShallowArchetype
+public class FieldMouseArchetype : TinyShallowArchetype
 {
     public override string ArchetypeId     => "field_mouse";
     public override string TypeDisplayName => "Field Mouse";
@@ -801,17 +801,10 @@ public class FieldMouseArchetype : SmallMammalShallowArchetype
         colors: new[] { "russet", "brown" },
         noun:   "field mouse",
         traits: new[] { "climbing a grain stalk", "darting between the furrows", "nibbling a seed" });
-    protected override string CorpseBodyDescription => "the tiny body of a field mouse";
-    protected override List<ItemElement> BuildCorpseDrops() => new()
-    {
-        new ItemElement(new Skin()),
-        new ItemElement(new Tail()),
-        new ItemElement(new Bone()),
-        new ItemElement(new Meat()),
-    };
+    public override List<Item> BuildCatchYield() => new() { new Skin(), new Tail(), new Bone() };
 }
 
-public class VoleArchetype : SmallMammalShallowArchetype
+public class VoleArchetype : TinyShallowArchetype
 {
     public override string ArchetypeId     => "vole";
     public override string TypeDisplayName => "Vole";
@@ -820,14 +813,7 @@ public class VoleArchetype : SmallMammalShallowArchetype
         colors: new[] { "dark brown", "grey" },
         noun:   "vole",
         traits: new[] { "scuttling down a runway in the grass", "gnawing a root", "popping out of a hole" });
-    protected override string CorpseBodyDescription => "the stubby body of a vole";
-    protected override List<ItemElement> BuildCorpseDrops() => new()
-    {
-        new ItemElement(new Skin()),
-        new ItemElement(new Bone()),
-        new ItemElement(new Meat()),
-        new ItemElement(new Tooth()),
-    };
+    public override List<Item> BuildCatchYield() => new() { new Skin(), new Bone(), new Tooth() };
 }
 
 public class QuailArchetype : BirdShallowArchetype

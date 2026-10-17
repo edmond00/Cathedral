@@ -35,7 +35,7 @@ public class FennecArchetype : SmallMammalShallowArchetype
     };
 }
 
-public class JerboaArchetype : SmallMammalShallowArchetype
+public class JerboaArchetype : TinyShallowArchetype
 {
     public override string ArchetypeId     => "jerboa";
     public override string TypeDisplayName => "Jerboa";
@@ -44,14 +44,7 @@ public class JerboaArchetype : SmallMammalShallowArchetype
         colors: new[] { "sandy", "buff", "pale" },
         noun:   "jerboa",
         traits: new[] { "hopping off on its hind legs like a bird", "tail held out behind it for balance", "vanishing into the sand" });
-    protected override string CorpseBodyDescription => "the tiny long-legged body of a jerboa";
-    protected override List<ItemElement> BuildCorpseDrops() => new()
-    {
-        new ItemElement(new Skin()),
-        new ItemElement(new Meat()),
-        new ItemElement(new Tail()),
-        new ItemElement(new Bone()),
-    };
+    public override List<Item> BuildCatchYield() => new() { new Skin(), new Tail(), new Bone() };
 }
 
 public class SandViperArchetype : GenericShallowArchetype
@@ -369,7 +362,7 @@ public class ToucanArchetype : BirdShallowArchetype
     };
 }
 
-public class HummingbirdArchetype : BirdShallowArchetype
+public class HummingbirdArchetype : TinyShallowArchetype
 {
     public override string ArchetypeId     => "hummingbird";
     public override string TypeDisplayName => "Hummingbird";
@@ -378,13 +371,7 @@ public class HummingbirdArchetype : BirdShallowArchetype
         colors: new[] { "emerald", "ruby-throated", "glittering" },
         noun:   "hummingbird",
         traits: new[] { "hanging in the air at a flower", "gone with a hum", "perched on a twig, pulsing" });
-    protected override string CorpseBodyDescription => "the tiny glittering body of a hummingbird";
-    protected override List<ItemElement> BuildCorpseDrops() => new()
-    {
-        new ItemElement(new Feather()),
-        new ItemElement(new Feather()),
-        new ItemElement(new Bone()),
-    };
+    public override List<Item> BuildCatchYield() => new() { new Feather(), new Feather(), new Bone() };
 }
 
 public class PythonArchetype : GenericShallowArchetype
@@ -429,7 +416,7 @@ public class TapirArchetype : GenericShallowArchetype
     };
 }
 
-public class TreeFrogArchetype : GenericShallowArchetype
+public class TreeFrogArchetype : TinyShallowArchetype
 {
     public override string ArchetypeId     => "tree_frog";
     public override string TypeDisplayName => "Tree Frog";
@@ -438,13 +425,7 @@ public class TreeFrogArchetype : GenericShallowArchetype
         colors: new[] { "bright green", "red-eyed", "poison-blue" },
         noun:   "tree frog",
         traits: new[] { "clinging to the underside of a leaf", "throat bubbling as it calls", "leaping from leaf to leaf" });
-    protected override string CorpseBodyDescription => "the small bright body of a tree frog";
-    protected override List<ItemElement> BuildCorpseDrops() => new()
-    {
-        new ItemElement(new Skin()),
-        new ItemElement(new Meat()),
-        new ItemElement(new Bone()),
-    };
+    public override List<Item> BuildCatchYield() => new() { new Skin(), new Bone() };
 }
 
 public class CapybaraArchetype : GenericShallowArchetype
@@ -929,7 +910,7 @@ public class SaigaArchetype : GenericShallowArchetype
     };
 }
 
-public class LemmingArchetype : SmallMammalShallowArchetype
+public class LemmingArchetype : TinyShallowArchetype
 {
     public override string ArchetypeId     => "lemming";
     public override string TypeDisplayName => "Lemming";
@@ -938,13 +919,7 @@ public class LemmingArchetype : SmallMammalShallowArchetype
         colors: new[] { "brown", "chestnut", "mottled" },
         noun:   "lemming",
         traits: new[] { "squeaking furiously from a tussock", "running along a runway in the moss", "vanishing down a hole" });
-    protected override string CorpseBodyDescription => "the fat small body of a lemming";
-    protected override List<ItemElement> BuildCorpseDrops() => new()
-    {
-        new ItemElement(new Skin()),
-        new ItemElement(new Meat()),
-        new ItemElement(new Bone()),
-    };
+    public override List<Item> BuildCatchYield() => new() { new Skin(), new Bone() };
 }
 
 public class SnowBuntingArchetype : BirdShallowArchetype
