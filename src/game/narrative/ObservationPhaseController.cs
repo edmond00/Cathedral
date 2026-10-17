@@ -438,7 +438,7 @@ public class ObservationPhaseController
             List<string> kws;
             if (turnedAwayFrom == null)
                 kws = KeywordExtractor.ExtractKeywords(text, GetReferenceLemma(outcome), wanted,
-                                                       ownName: GetNeutralName(outcome));
+                                                       ownName: GetNeutralName(outcome), isPerson: IsPerson(outcome));
             else
             {
                 // The text also names the object turned away from, and a keyword is wired to this
@@ -448,7 +448,7 @@ public class ObservationPhaseController
                         .Split(new[] { ' ', '-', '(', ')', ',' }, StringSplitOptions.RemoveEmptyEntries),
                     StringComparer.OrdinalIgnoreCase);
                 kws = KeywordExtractor.ExtractKeywords(text, GetReferenceLemma(outcome), wanted + 3,
-                                                       ownName: GetNeutralName(outcome))
+                                                       ownName: GetNeutralName(outcome), isPerson: IsPerson(outcome))
                     .Where(k => !k.Split(' ').Any(w => shunned.Contains(w) || shunned.Contains(w.TrimEnd('s'))))
                     .Take(wanted)
                     .ToList();
@@ -466,6 +466,10 @@ public class ObservationPhaseController
             return null;
         }
     }
+
+    /// <summary>A named NPC — named by name, role or sex rather than by a head noun.</summary>
+    private static bool IsPerson(NarrativeAnchor outcome)
+        => outcome is Cathedral.Game.Scene.SyntheticNpcObservationObject { NpcEntity: Cathedral.Game.Npc.NpcEntity };
 
     /// <summary>
     /// Whether the first sentence of <paramref name="text"/> names <paramref name="anchor"/> — by its

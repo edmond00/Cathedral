@@ -1673,20 +1673,6 @@ public static class Config
         /// </summary>
         public const int ObservationTwoKeywordsThreshold = 400;
 
-        /// <summary>
-        /// How related to the observed object a word must be before it is treated as an equally good
-        /// handle on it. Every candidate at or above this score goes into a pool the keyword is drawn
-        /// uniformly from; below it, the best-scoring word is simply taken. Scored by
-        /// <c>KeywordExtractor</c> as similarity minus centrality, so this is on that scale.
-        ///
-        /// <para>0.25 measured as the point that admits the words genuinely about the object and
-        /// excludes the merely co-occurring: a hearth's pool is <c>hearth, stone</c>, a roof's is
-        /// <c>roof, thatch, slope, sky</c>, an anvil's is <c>anvil, hammer</c>. At 0.15 the marginal
-        /// ones creep in (<c>village</c> for a roof); at 0.35 most objects collapse to one choice and
-        /// the sampling stops doing anything. A pool of one is a correct outcome, not a failure —
-        /// a pallet lying in straw has nothing else in the sentence that is about the pallet.</para>
-        /// </summary>
-        public const double KeywordSamplingThreshold = 0.25;
 
         /// <summary>Length clause used for single-sentence rewrites (the default).</summary>
         private const string OneSentenceClause = "Answer in one short sentence and stop.";

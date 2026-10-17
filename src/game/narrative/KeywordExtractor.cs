@@ -12,16 +12,18 @@ namespace Cathedral.Game.Narrative;
 /// rank them by relatedness to the observation object's reference lemma. Falls back to the longest
 /// candidate (or the longest word) when embeddings or candidates are unavailable.
 ///
-/// <para><b>Everything close enough to the object is an equally good handle on it</b>
-/// (<see cref="Config.Narrative.KeywordSamplingThreshold"/>), so the keyword is drawn uniformly from
-/// that pool rather than always being the single best word — which is what keeps the same object
-/// from being highlighted by the same word every time. Below the threshold the ranking stands, so an
-/// object with nothing else about it in the sentence keeps its best word deterministically.</para>
+/// <para><b>A word that names the object wins.</b> For a person that is a word of what they are
+/// called — their name once known, their role, their sex ("the reaper of the radish field (a man)" is
+/// named by <c>reaper</c> or <c>man</c>), drawn uniformly when the prose carries several. For a thing
+/// it is the head word of its name or its reference lemma, the first such word in the text. Only
+/// when the prose names the object nowhere does the association ranking choose, and then its single
+/// best word, never a draw.</para>
 ///
-/// <para><b>The object's own word is always in the pool</b>, whatever it scored. The score measures
-/// similarity to the anchor, a proxy for "is this word about the object"; the own word needs no
-/// proxy, being the object's name sitting in the prose. Excluding it — which this rule once did on
-/// purpose — left the one unambiguous handle as the one word that could never be chosen.</para>
+/// <para>Measured on 342 labelled real rewrites (<c>tools/keywords/bench_hybrids.py</c>, the H2
+/// rule): the keyword names the object 95% of the time, against 51% for the rule it replaced, which
+/// drew uniformly from every candidate scoring 0.25 above the anchor. That draw is what highlighted <c>case</c> in "just in case" for a
+/// reaper while <c>figure</c> sat in the same sentence: a quarter of the time the pool's other words
+/// were features, or nothing to do with the object at all.</para>
 ///
 /// <para><b>Ranking subtracts each candidate's centrality</b> (<see cref="WordEmbedding.Centrality"/>)
 /// rather than taking raw cosine, because cosine alone ranks partly by word frequency. See that
@@ -59,7 +61,8 @@ public static class KeywordExtractor
     /// sentences about two men both offer "man", each wired to its own man, because the anchor rides
     /// on the sentence rather than on a per-block table keyed by the word.</para>
     /// </summary>
-    public static List<string> ExtractKeywords(string text, string referenceLemma, int count, string? ownName = null)
+    public static List<string> ExtractKeywords(string text, string referenceLemma, int count, string? ownName = null,
+                                               bool isPerson = false)
     {
         if (string.IsNullOrWhiteSpace(text) || count <= 0) return new List<string>();
 
@@ -89,29 +92,29 @@ public static class KeywordExtractor
                 .OrderByDescending(x => x.Score)
                 .ToList();
 
-            // Everything at or above the threshold is an equally good handle on the object, so the
-            // choice between them is a draw rather than a ranking — which is what stops the same
-            // word being highlighted for the same object every single time.
-            var chosen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var pool = new List<string>();
-            foreach (var x in scored)
-                if (x.Score >= Config.Narrative.KeywordSamplingThreshold && chosen.Add(x.Surface))
-                    pool.Add(x.Surface);
+            // The words that name the object lead; the association ranking follows, so a second
+            // keyword (a long observation) and an object the prose never names both fall to the best
+            // remaining word rather than to a draw. A person's anchor is a stand-in ("body"), against
+            // which "brewer" scores 0.01 — the ranking alone would make them clickable as "coat".
+            List<string> naming;
+            if (isPerson)
+            {
+                var names = PersonNameWords(ownName);
+                naming = candidates.Where(c => LemIn(c, names))
+                                   .Select(c => c.Surface)
+                                   .Distinct(StringComparer.OrdinalIgnoreCase)
+                                   .ToList();
+                Shuffle(naming);
+            }
+            else
+            {
+                var heads = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                if (HeadWord(StripParenthesis(ownName)) is { } head) heads.Add(head);
+                if (refLemma.Length > 0) heads.Add(refLemma);
+                naming = candidates.Where(c => LemIn(c, heads)).Select(c => c.Surface).Take(1).ToList();
+            }
 
-            // The object's own word joins the pool whatever it scored. The score measures similarity
-            // to the ANCHOR, which is a proxy for "is this word about the object" — and the own word
-            // needs no proxy, being the object's name sitting in the prose. For scenery this changes
-            // nothing (its lemma IS the reference lemma, so it scores ~0.9 and was already in). It
-            // matters where the anchor is a stand-in: against "body", "woman" scores 0.42 and stays,
-            // but "stranger" 0.15, "reeve" 0.15 and "brewer" 0.01 would all be thrown out, leaving a
-            // person clickable as "coat" or "hands" but never by a word that names them.
-            if (own != null && chosen.Add(own)) pool.Add(own);
-
-            Shuffle(pool);
-
-            // Below the threshold, ranked order stands. An empty pool therefore leaves the
-            // best-scoring word first, which is the fallback when nothing is close enough.
-            ranked = pool.Concat(scored.Select(x => x.Surface).Where(s => !chosen.Contains(s)));
+            ranked = naming.Concat(scored.Select(x => x.Surface));
         }
         else
         {
@@ -183,6 +186,44 @@ public static class KeywordExtractor
         }
         return null;
     }
+
+    /// <summary>
+    /// The words that name a person, from their neutral name: an acquaintance's proper name and role
+    /// ("my acquaintance Hugh, the reeve of the field" → hugh, reeve), else the role and the sex,
+    /// never the "of the field" tail ("the reaper of the radish field (a man)" → reaper, man).
+    /// </summary>
+    private static HashSet<string> PersonNameWords(string? name)
+    {
+        var words = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (string.IsNullOrWhiteSpace(name)) return words;
+
+        var acquaintance = Regex.Match(name, @"my acquaintance (\w+), the (.+?) of the", RegexOptions.IgnoreCase);
+        if (acquaintance.Success)
+        {
+            words.Add(acquaintance.Groups[1].Value);
+            foreach (var w in acquaintance.Groups[2].Value.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+                words.Add(w);
+            return words;
+        }
+
+        var n = Regex.Replace(name, @"\bof the [^(]*", "", RegexOptions.IgnoreCase).Replace("young ", "");
+        foreach (Match m in Regex.Matches(n, @"[A-Za-z]+"))
+            if (m.Value.Length > 1 && !m.Value.Equals("and", StringComparison.OrdinalIgnoreCase)
+                && !m.Value.Equals("the", StringComparison.OrdinalIgnoreCase))
+                words.Add(m.Value);
+        words.Remove("a");
+        return words;
+    }
+
+    /// <summary>A candidate names one of <paramref name="words"/>: its lemma or surface, singular or plural.</summary>
+    private static bool LemIn((string Surface, string Lemma) c, HashSet<string> words)
+    {
+        var s = c.Surface.ToLowerInvariant();
+        return words.Contains(c.Lemma) || words.Contains(s) || words.Contains(s.TrimEnd('s')) || words.Contains(s + "s");
+    }
+
+    private static string? StripParenthesis(string? name)
+        => name == null ? null : Regex.Replace(name, @"\(.*?\)", "");
 
     /// <summary>The last alphabetic word of a display name, lower-cased: "a pig" → "pig".</summary>
     private static string? HeadWord(string? name)
