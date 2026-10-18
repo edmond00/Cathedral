@@ -14,4 +14,4 @@
 # Nothing in the working tree can confirm that and dist/ cannot be used to try - see
 # "Hotfixes" in SKILL.md.
 
-abb67964c6b6c3fbdadec5454fa7dcb8a2450c4e 2026-10-18 Volume 4 - Of Deliberation and Its Judge
+4156b0c7ee3a0d74bc666fb583f87e368401abe2 2026-10-18 Volume 4 - Of Deliberation and Its Judge
