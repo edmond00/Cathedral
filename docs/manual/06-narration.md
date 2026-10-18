@@ -244,8 +244,9 @@ the climate biomes. A store kept there — a woodshed, a net shed, an ore store 
 and remains public. The tenure decides one thing besides trespass: whether a beast belongs to
 anybody. Striking or killing a beast that is not already an enemy is a crime on public and on
 private ground, where the creature is taken to be somebody's; on wild ground it is hunting, and no
-crime at all. A person is never game: every crime against a person is a crime on wild ground as
-anywhere.
+crime at all. A creature small enough to be taken in the hand is caught or crushed rather than
+struck, and neither is a crime against it on any ground; private ground remains a trespass. A
+person is never game: every crime against a person is a crime on wild ground as anywhere.
 
 **Morality has four distinct behaviours**, two on each side of the chain:
 

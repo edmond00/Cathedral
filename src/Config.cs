@@ -542,8 +542,8 @@ public static class Config
             "Proscribed Palimpsest";
 #endif
 
-        public const string Chapter = "Volume 3";
-        public const string ChapterSubtitle = "Chorography of the Lesser Moons";
+        public const string Chapter = "Volume 4";
+        public const string ChapterSubtitle = "Of Deliberation and Its Judge";
     }
 
     /// <summary>
