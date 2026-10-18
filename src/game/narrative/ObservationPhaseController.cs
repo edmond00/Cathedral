@@ -501,11 +501,15 @@ public class ObservationPhaseController
         string? area,
         PreviewPart? part)
     {
+        // --observe-only names the one object a script means to reach; a person added after it would
+        // be the script testing something it did not ask for.
+        if (!string.IsNullOrWhiteSpace(Config.Debug.ObserveOnly)) return;
+
         bool hasPerson = sentences.Any(s => Enumerable.Range(0, s.Keywords.Count)
             .Any(i => Rules.Choice.SpeakingPriority.IsPerson(s.AnchorOf(i))));
         if (hasPerson) return;
 
-        var people = DeduplicateByName(ObserveOnlyFilter(ledger.Remaining(allOutcomes))
+        var people = DeduplicateByName(ledger.Remaining(allOutcomes)
             .Where(Rules.Choice.SpeakingPriority.IsPerson));
         if (people.Count == 0) return;
 
