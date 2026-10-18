@@ -129,6 +129,13 @@ deepening of a relation, the gathering of knowledge, the asking to be led to a t
 and the asking of a third party to vouch for you — the last because asking one who does not know you
 to vouch for you cannot work in that order.
 
+**To be presented, ask one who has standing with the other.** A third party can be asked of a person
+who stands to them in a settled relation — an apprentice to their master, a worker to whoever runs
+the holding they work — and only toward one somewhere in the same place who does not yet know you.
+Success carries you to them already acquainted. Every field, grove, cellar and stock place keeps
+someone who gives work and someone who can present you to them, so that hire there is never closed
+to a stranger who will first talk to the hands.
+
 **It is not the only way to be known.** Any conversation brought to its end — carried, refused, or
 walked out of — leaves the other knowing you: at least a distant acquaintance, unless the
 conversation itself set something worse, as a refusal that costs a step of regard does, or as walking

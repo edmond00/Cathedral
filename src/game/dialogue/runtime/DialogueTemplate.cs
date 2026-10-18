@@ -109,7 +109,7 @@ public static class DialogueTemplate
 
         var speaker = c.Npc.Archetype as NamedNpcArchetype;
         return speaker != null && speaker.CanIntroduceToArchetypes.Contains(c.ThirdParty.Archetype.ArchetypeId)
-            ? speaker.IntroductionRelation
+            ? speaker.IntroductionRelationTo(c.ThirdParty.Archetype.ArchetypeId)
             : "someone I know";
     }
 

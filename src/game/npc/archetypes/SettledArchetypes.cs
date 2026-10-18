@@ -192,7 +192,7 @@ public class PickerArchetype : SettledArchetype
     public override ItemTag? SellTag => ItemTag.Crop;
     public override ItemTag? BuyTag  => ItemTag.Foodstuff;
     public override int ModiMentisCount => 6;
-    public override IReadOnlyList<string> CanIntroduceToArchetypes => new[] { "planter", "orchardist" };
+    public override IReadOnlyList<string> CanIntroduceToArchetypes => new[] { "planter", "orchardist", "vintner", "farmer" };
     public override string IntroductionRelation => "the master here";
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]
@@ -241,6 +241,9 @@ public class GroomArchetype : SettledArchetype
 {
     public override string ArchetypeId => "groom";
     public override string TradeModusMentisId => "horsemanship";
+    /// <summary>A groom on a ranch knows the drover who runs it.</summary>
+    public override IReadOnlyList<string> CanIntroduceToArchetypes => new[] { "drover" };
+    public override string IntroductionRelation => "the master here";
     public override SocialCategory? Social => SocialCategory.Peasant;
     public override string RoleNoun => "groom";
     public override ItemTag? BuyTag  => ItemTag.Crop;

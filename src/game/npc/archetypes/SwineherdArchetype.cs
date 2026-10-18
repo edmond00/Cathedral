@@ -15,6 +15,9 @@ public class SwineherdArchetype : PeasantArchetype
     public override ItemTag? BuyTag  => ItemTag.Crop;
     public override int    ModiMentisCount => 6;
 
+    /// <summary>A swineherd answers to the reeve in a village and to the farmer on a farm.</summary>
+    public override IReadOnlyList<string> CanIntroduceToArchetypes => new[] { "reeve", "farmer" };
+
     public override string RoleNoun => "swineherd";
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]

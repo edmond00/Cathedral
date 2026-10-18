@@ -22,6 +22,11 @@ public class FarmhandArchetype : NamedNpcArchetype
     /// <summary>Hired by the season, owns nothing but his labour.</summary>
     public override SocialCategory? Social  => SocialCategory.Peasant;
 
+    /// <summary>Hired by whoever runs the holding: the farmer, the vintner, the orchardist, the stable's groom.</summary>
+    public override IReadOnlyList<string> CanIntroduceToArchetypes => new[] { "farmer", "vintner", "orchardist", "groom" };
+
+    public override string IntroductionRelation => "the master here";
+
     public override string RoleNoun => "farmhand";
     protected override bool LabelMentionsLocation => false;
 

@@ -34,13 +34,20 @@ public static class BuildingAudit
 {
     private const int SampleSize = 60;
 
+    /// <summary>
+    /// Ids sampled for a city or a town (<see cref="Settled.SettledSceneFactories.Entry.Dense"/>). Each
+    /// holds dozens of buildings, so a dozen of them exercises every rule here hundreds of times over,
+    /// and building sixty per climate was most of this audit's running time.
+    /// </summary>
+    private const int DenseSampleSize = 12;
+
     public static string BuildReport()
     {
         var sb       = new StringBuilder();
         var warnings = new List<string>();
 
         sb.AppendLine("=== BUILDING AUDIT ===");
-        sb.AppendLine($"Sampling {SampleSize} location ids per factory.");
+        sb.AppendLine($"Sampling {SampleSize} location ids per factory ({DenseSampleSize} for a city or town).");
         sb.AppendLine();
 
         AuditFactory(sb, warnings, "VILLAGE", id => new VillageSceneFactory().Build(id));
@@ -70,10 +77,12 @@ public static class BuildingAudit
             var make = e.Create;
             // A field or a stock place is a household like the farm: its hall may stand empty while
             // its master is out, as the farm's does.
-            AuditFactory(sb, warnings, e.AuditLabel, id => make().Build(id), allowedEmptyPeriods: 1);
+            AuditFactory(sb, warnings, e.AuditLabel, id => make().Build(id), allowedEmptyPeriods: 1,
+                         samples: e.Dense ? DenseSampleSize : SampleSize);
         }
 
         AuditVerbDiscovery(warnings);
+        AuditWorkGate(sb, warnings);
         AuditDoorProse(sb, warnings);
 
         sb.AppendLine();
@@ -106,6 +115,54 @@ public static class BuildingAudit
         return System.Text.RegularExpressions.Regex.Replace(body, @"\b\d+\b", "N");
     }
 
+    // ── Work in the farmland ──────────────────────────────────────────────────
+
+    /// <summary>Ids sampled per farmland or livestock type for <see cref="AuditWorkGate"/>.</summary>
+    private const int WorkGateSampleSize = 20;
+
+    /// <summary>
+    /// Every field, grove, cellar and stock place must hold somebody who gives work, and somebody who
+    /// can present the player to them (<c>introduce_me</c>). Work is asked only of a person already
+    /// known, and in the farmland the master is the stranger a visitor least easily meets — the worker
+    /// in the yard is the way to him. A farm once had a farmer to hire and four workers who could each
+    /// introduce the player only to a reeve who lived in no farm at all, and the stable had nobody
+    /// hiring; nothing said so until somebody played it.
+    /// </summary>
+    private static void AuditWorkGate(StringBuilder sb, List<string> warnings)
+    {
+        var keys = new HashSet<string>(Glyph.Microworld.SettlementTable.AllAgriculture
+                                           .Concat(Glyph.Microworld.SettlementTable.AllLivestock));
+        sb.AppendLine();
+        sb.AppendLine($"--- WORK IN THE FARMLAND ({WorkGateSampleSize} ids per type: employer / introducer) ---");
+        foreach (var e in Settled.SettledSceneFactories.All.Where(e => keys.Contains(e.Key)))
+        {
+            int built = 0, employed = 0, introduced = 0;
+            for (int id = 1; id <= WorkGateSampleSize; id++)
+            {
+                Scene scene;
+                try { scene = e.Create().Build(id); } catch { continue; }
+                built++;
+                var people = scene.Npcs.Where(n => n.IsAlive).Select(n => n.Entity).OfType<NpcEntity>().ToList();
+                var employers = people
+                    .Where(p => Narrative.Work.JobRegistry.Instance.HasJobs(p.Archetype.ArchetypeId))
+                    .Select(p => p.Archetype.ArchetypeId)
+                    .ToHashSet();
+                if (employers.Count == 0)
+                {
+                    warnings.Add($"{e.AuditLabel} {id}: nobody here gives work");
+                    continue;
+                }
+                employed++;
+                if (people.Any(p => p.Archetype is NamedNpcArchetype n && n.CanIntroduceToArchetypes.Any(employers.Contains)))
+                    introduced++;
+                else
+                    warnings.Add($"{e.AuditLabel} {id}: nobody here can introduce the player to "
+                                 + $"'{string.Join("/", employers.OrderBy(x => x))}', who gives work");
+            }
+            sb.AppendLine($"  {e.AuditLabel,-22} {employed,3}/{built,-3} {introduced,3}/{built}");
+        }
+    }
+
     // ── Per-factory sweep ─────────────────────────────────────────────────────
 
     /// <param name="inhabited">
@@ -120,7 +177,7 @@ public static class BuildingAudit
     /// </param>
     private static void AuditFactory(
         StringBuilder sb, List<string> warnings, string label, Func<int, Scene> build,
-        bool inhabited = true, int allowedEmptyPeriods = 0)
+        bool inhabited = true, int allowedEmptyPeriods = 0, int samples = SampleSize)
     {
         int minAreas = int.MaxValue, maxAreas = 0;
         int minNpcs  = int.MaxValue, maxNpcs  = 0;
@@ -129,7 +186,7 @@ public static class BuildingAudit
         var kinds = new Dictionary<string, int>();
         int peopled = 0, greeted = 0;
 
-        for (int id = 1; id <= SampleSize; id++)
+        for (int id = 1; id <= samples; id++)
         {
             Scene scene;
             try

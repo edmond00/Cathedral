@@ -43,13 +43,15 @@ public static partial class VerbAudit
     private const int SampleSize = 40;
 
     /// <summary>
-    /// Location ids sampled for a dense city cell, instead of <see cref="SampleSize"/>. A city cell
-    /// holds every trade and every kind of furniture a city can, repeated dozens of times, so a handful
-    /// of cells meets every kind the forty small ones would; and the sweep's cost grows faster than
-    /// the scene (every observable, every period, every verb), which made forty dense cities per
-    /// climate most of the audit's running time.
+    /// Location ids sampled for a dense location — a city, or a town round a citadel, port, palace or
+    /// imperial school (<see cref="Settled.SettledSceneFactories.Entry.Dense"/>) — instead of
+    /// <see cref="SampleSize"/>. One holds every trade and every kind of furniture a town can,
+    /// repeated dozens of times, so a handful meets every kind the forty small ones would; and the
+    /// sweep's cost grows faster than the scene (every observable, every period, every verb), which
+    /// made forty dense towns per factory most of the audit's running time. The towns were sampled
+    /// forty times long after the cities were cut to eight, because only the city's key was tested.
     /// </summary>
-    private const int CitySampleSize = 8;
+    private const int DenseSampleSize = 8;
 
     /// <summary>How many merged sleeping observations the sweep exercised. Reported so a zero here —
     /// which would mean the whole sleeping path went untested — cannot pass unnoticed.</summary>
@@ -73,7 +75,7 @@ public static partial class VerbAudit
         var everOffered = new HashSet<string>();
 
         sb.AppendLine("=== VERB AUDIT ===");
-        sb.AppendLine($"Sampling {SampleSize} location ids per factory ({CitySampleSize} for a city), at every time period.");
+        sb.AppendLine($"Sampling {SampleSize} location ids per factory ({DenseSampleSize} for a city or town), at every time period.");
         sb.AppendLine();
 
         AuditVerbDeclarations(sb, warnings);
@@ -136,7 +138,7 @@ public static partial class VerbAudit
             bool city = e.Key == Cathedral.Glyph.Microworld.SettlementTable.City;
             if (city && e.AuditLabel.Contains('(')) continue;
             var make = e.Create;
-            yield return (e.AuditLabel, id => make().Build(id), city ? CitySampleSize : SampleSize);
+            yield return (e.AuditLabel, id => make().Build(id), e.Dense ? DenseSampleSize : SampleSize);
         }
     }
 

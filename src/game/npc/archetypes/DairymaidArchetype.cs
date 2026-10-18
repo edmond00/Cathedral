@@ -17,6 +17,9 @@ public class DairymaidArchetype : PeasantArchetype
 
     protected override NameGender? GenderBias => NameGender.Female;
 
+    /// <summary>A dairymaid answers to the reeve, or on a pasture to the drover who runs it.</summary>
+    public override IReadOnlyList<string> CanIntroduceToArchetypes => new[] { "reeve", "drover" };
+
     public override string RoleNoun => "dairymaid";
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]

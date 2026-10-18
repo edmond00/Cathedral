@@ -200,6 +200,13 @@ public sealed class JobRegistry
             J("almoner",        "almoner's hand", CoinType.Copper,  9f,  "almsgiving", "tithing", "humility"),
             J("exorcist_acolyte","exorcist's acolyte",CoinType.Copper, 9f,"exorcism", "superstition", "dread"));
 
+        // The stable has no master over its groom: he hires his own help, the way a hayward does.
+        AddArchetype("groom",
+            J("stable_hand",    "stable-hand",    CoinType.Copper, 12f,  "dirty_labor", "husbandry", "hard_labor"),
+            J("horse_walker",   "horse-walker",   CoinType.Copper, 10f,  "horsemanship", "patience", "husbandry"),
+            J("farriers_hand",  "farrier's hand", CoinType.Copper,  9f,  "farriery", "steady_hand", "hard_labor"),
+            J("curry_hand",     "curry-hand",     CoinType.Copper, 12f,  "grooming", "horsemanship", "diligence"));
+
         AddArchetype("drover",
             J("night_drover",   "night drover",   CoinType.Copper,  9f,  "rustling", "droving", "night_ear"),
             J("brand_hand",     "brand-hand",     CoinType.Copper, 10f,  "branding", "roping", "hard_labor"));

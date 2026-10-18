@@ -276,9 +276,12 @@ public sealed class LivestockSceneFactory : SettledSceneFactory
         void Add(Func<NamedNpcArchetype> make, int min, int max) { for (int i = 0, n = rng.Next(min, max + 1); i < n; i++) roles.Add(make()); }
         switch (_kind)
         {
-            case Kind.Stable:    roles.Add(new GroomArchetype());    Add(() => new GroomArchetype(), 1, 2); Add(() => new FarmhandArchetype(), 0, 1); break;
+            // A worker under the master is always there, because work is asked through an introduction
+            // and they are who gives it (the stable's farmhand to its groom, the ranch's groom to its
+            // drover) — --building-audit's farmland work check.
+            case Kind.Stable:    roles.Add(new GroomArchetype());    Add(() => new GroomArchetype(), 1, 2); Add(() => new FarmhandArchetype(), 1, 1); break;
             case Kind.Sheepfold: roles.Add(new ShepherdArchetype()); Add(() => new ShepherdArchetype(), 0, 1); Add(() => new DroverArchetype(), 1, 2); break;
-            case Kind.Ranch:     roles.Add(new DroverArchetype());   Add(() => new DroverArchetype(), 2, 3); Add(() => new GroomArchetype(), 0, 1); break;
+            case Kind.Ranch:     roles.Add(new DroverArchetype());   Add(() => new DroverArchetype(), 2, 3); Add(() => new GroomArchetype(), 1, 1); break;
             default:             roles.Add(new DroverArchetype());   Add(() => new DroverArchetype(), 1, 2); Add(() => new DairymaidArchetype(), 1, 1); break;
         }
         return roles;

@@ -107,6 +107,13 @@ public abstract class NamedNpcArchetype : NpcArchetype
     public virtual string IntroductionRelation => "someone I know";
 
     /// <summary>
+    /// What this person calls the one of <see cref="CanIntroduceToArchetypes"/> they are presenting
+    /// the player to. <see cref="IntroductionRelation"/> unless a speaker who answers to more than
+    /// one kind of master names them differently — a swineherd's reeve is not a swineherd's farmer.
+    /// </summary>
+    public virtual string IntroductionRelationTo(string thirdArchetypeId) => IntroductionRelation;
+
+    /// <summary>
     /// Small things this sort of person keeps loose about them, for <c>PickpocketVerb</c> to find.
     /// Empty by default, in which case a picked pocket yields only coins.
     ///

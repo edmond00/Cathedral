@@ -40,6 +40,10 @@ public sealed class HistoricSceneFactory : SettledSceneFactory
     public HistoricSceneFactory(PlaceKind kind, string? biome = null, string? sessionPath = null) : base(biome, sessionPath)
         => _kind = kind;
 
+    /// <summary>Whether this kind is built as a whole town round its great building.</summary>
+    public static bool IsUrban(PlaceKind kind)
+        => kind is PlaceKind.Citadel or PlaceKind.Port or PlaceKind.Palace or PlaceKind.ImperialSchool;
+
     /// <summary>The kind each historical location key names.</summary>
     public static PlaceKind KindOf(string key) => key switch
     {

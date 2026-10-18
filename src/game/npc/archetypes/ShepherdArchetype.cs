@@ -15,6 +15,9 @@ public class ShepherdArchetype : PeasantArchetype
     public override ItemTag? BuyTag  => ItemTag.Tool;
     public override int    ModiMentisCount => 7;
 
+    /// <summary>A shepherd answers to the reeve, or in a sheepfold to the drover who runs it.</summary>
+    public override IReadOnlyList<string> CanIntroduceToArchetypes => new[] { "reeve", "drover" };
+
     public override string RoleNoun => "shepherd";
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]

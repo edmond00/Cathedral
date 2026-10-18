@@ -17,7 +17,12 @@ namespace Cathedral.Game.Scene.Settled;
 /// </summary>
 public static class SettledSceneFactories
 {
-    public sealed record Entry(string Key, string AuditLabel, Func<SceneFactory> Create);
+    /// <param name="Dense">
+    /// A town or a city: hundreds of areas holding every trade and furniture kind the settled country
+    /// has, many times over. The audits sample these far less, since a few of them meet every kind
+    /// that dozens would, and building them dominated the audits' running time.
+    /// </param>
+    public sealed record Entry(string Key, string AuditLabel, Func<SceneFactory> Create, bool Dense = false);
 
     public static readonly IReadOnlyList<Entry> All = Build().ToList();
 
@@ -31,21 +36,22 @@ public static class SettledSceneFactories
                 : () => new Livestock.LivestockSceneFactory(key));
         foreach (var key in SettlementTable.AllSettlements)
             yield return new(key, key.ToUpperInvariant(), () => new Village.VillageSceneFactory(key));
-        yield return new(SettlementTable.City, "CITY", () => new CitySceneFactory());
+        yield return new(SettlementTable.City, "CITY", () => new CitySceneFactory(), Dense: true);
         foreach (var key in BiomeDatabase.HistoricLocations)
-            yield return new(key, key.ToUpperInvariant(), () => new HistoricSceneFactory(HistoricSceneFactory.KindOf(key)));
+            yield return new(key, key.ToUpperInvariant(), () => new HistoricSceneFactory(HistoricSceneFactory.KindOf(key)),
+                             Dense: HistoricSceneFactory.IsUrban(HistoricSceneFactory.KindOf(key)));
         yield return new(SettlementTable.Ruin, "RUIN", () => new RuinSceneFactory());
     }
 
     /// <summary>The same factories on other ground: one per city biome, and the settlements' other columns.</summary>
     public static readonly IReadOnlyList<Entry> AuditVariants = new Entry[]
     {
-        new(SettlementTable.City, "CITY (MOUNTAIN)",    () => new CitySceneFactory("mountain")),
-        new(SettlementTable.City, "CITY (HOT STEPPE)",  () => new CitySceneFactory(BiomeDatabase.HotSteppe)),
-        new(SettlementTable.City, "CITY (COLD STEPPE)", () => new CitySceneFactory(BiomeDatabase.ColdSteppe)),
+        new(SettlementTable.City, "CITY (MOUNTAIN)",    () => new CitySceneFactory("mountain"), Dense: true),
+        new(SettlementTable.City, "CITY (HOT STEPPE)",  () => new CitySceneFactory(BiomeDatabase.HotSteppe), Dense: true),
+        new(SettlementTable.City, "CITY (COLD STEPPE)", () => new CitySceneFactory(BiomeDatabase.ColdSteppe), Dense: true),
         new("village", "VILLAGE (COLD STEPPE)",         () => new Village.VillageSceneFactory("village", BiomeDatabase.ColdSteppe)),
         new("burg",    "BURG (SNOWFIELD)",              () => new Village.VillageSceneFactory("burg", BiomeDatabase.Snowfield)),
-        new("citadel", "CITADEL (HOT STEPPE)",          () => new HistoricSceneFactory(History.PlaceKind.Citadel, BiomeDatabase.HotSteppe)),
+        new("citadel", "CITADEL (HOT STEPPE)",          () => new HistoricSceneFactory(History.PlaceKind.Citadel, BiomeDatabase.HotSteppe), Dense: true),
         new(SettlementTable.Ruin, "RUIN (JUNGLE)",      () => new RuinSceneFactory(BiomeDatabase.Jungle)),
     };
 

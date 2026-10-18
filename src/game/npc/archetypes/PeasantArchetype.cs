@@ -26,4 +26,8 @@ public abstract class PeasantArchetype : NamedNpcArchetype
     public override IReadOnlyList<string> CanIntroduceToArchetypes => new[] { "reeve" };
 
     public override string IntroductionRelation => "the reeve";
+
+    /// <summary>The reeve in a village; whoever runs the holding anywhere else.</summary>
+    public override string IntroductionRelationTo(string thirdArchetypeId)
+        => thirdArchetypeId == "reeve" ? "the reeve" : "the master here";
 }
