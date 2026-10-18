@@ -1080,6 +1080,16 @@ Both sides are needed because the goal and the means are two separate LLM decisi
 skill can still be picked to carry out a goal some other modus mentis chose. Note `MoralLevel` is read
 **only** off these two — R13 makes a non-Medium value on anything else fatal.
 
+**A Speaking modus mentis puts conversation first** (`SpeakingPriority`, `rules/choice/SpeakingRules.cs`),
+at each stage it holds: observing, it attends only to living humans while any are among the candidates
+and never turns away from one it is handed (`ObservationPhaseController`; `--refuse-focus` still wins);
+thinking, only the `DialogueVerb` goals are offered when any is (`SpeakingMindPrefersDialogueRule`,
+registered **after** `LowMoralityPrefersCrimeRule` so an unscrupulous speaker keeps its crimes); the
+means of a dialogue goal are narrowed to speaking action MMs when any is held (`ThinkingExecutor`); and
+a speaking action MM loses the decline on a dialogue goal, reluctance kept
+(`SpeakingActionNeverRefusesDialogueRule`). All of it runs under `--playground` too, so a script that
+pins a non-dialogue goal on a person, or a non-speaking means for a conversation, can find its pin gone.
+
 **Getting caught is deterministic, and it is two separate questions.** Keeping them apart is what
 makes discreteness mean something:
 

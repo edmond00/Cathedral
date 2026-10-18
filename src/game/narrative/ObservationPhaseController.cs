@@ -1065,6 +1065,20 @@ public class ObservationPhaseController
     {
         if (candidates.Count == 0) return null;
 
+        // A speaking modus mentis attends to a living person before anything else in view
+        // (SpeakingPriority). Only the order changes: the ledger retires whoever it looked at, so the
+        // rest of the scene comes back once the people are seen.
+        if (!isReminescence && Rules.Choice.SpeakingPriority.Speaks(modusMentis))
+        {
+            var people = candidates.Where(Rules.Choice.SpeakingPriority.IsPerson).ToList();
+            if (people.Count > 0 && people.Count < candidates.Count)
+            {
+                Console.WriteLine($"ObservationPhaseController: [{modusMentis.DisplayName}] speaks — "
+                                + $"attending only to the {people.Count} person(s) in view.");
+                candidates = people;
+            }
+        }
+
         // Each object is offered as the act of attending to it — "focus on the plowman of the field
         // (a woman)" — via GetNeutralPhrase (proper names stay verbatim; common-noun objects gain
         // "a"/"an"). Playground mode never declines (the selector short-circuits to a real option).
@@ -1098,6 +1112,13 @@ public class ObservationPhaseController
     {
         if (MustCommit()) return true;
         if (Config.Debug.RefuseFocus) return false;
+        // A speaking modus mentis never turns away from a person (SpeakingPriority).
+        if (!isReminescence && Rules.Choice.SpeakingPriority.Speaks(modusMentis)
+            && Rules.Choice.SpeakingPriority.IsPerson(focusOutcome))
+        {
+            Console.WriteLine($"ObservationPhaseController: [{modusMentis.DisplayName}] speaks — keeps its focus on a person.");
+            return true;
+        }
 
         var kept = await _selector.SelectAsync(
             ChoiceKind.KeepFocus, modusMentis, new[] { focusOutcome },

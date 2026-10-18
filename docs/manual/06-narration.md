@@ -122,13 +122,14 @@ most two, is attended to after them.
 
 **Deliberation.** A thinking modus mentis is asked what to want, among the acts the observed object
 affords and that have not already been offered, nor already chosen by it and refused, nor refused
-once and beyond every acting modus mentis held. Its moral level narrows the list before it is asked.
+once and beyond every acting modus mentis held. Its moral level and its speech narrow the list before
+it is asked (§6).
 Its answer is a goal, and the goal produces the act.
 
 **Execution.** An acting modus mentis is asked whether it is willing, and how willingly. Its degrees
 of assent map to a modifier upon the difficulty, and its refusal cancels the act outright. Its moral
 level may settle the answer before it is asked: a high one refuses a crime, a low one may not refuse
-one (see §7).
+one (see §7); and one that speaks may not refuse a conversation (§6).
 
 **The die pool is the sum of the levels of every modus mentis in the chain** — the one that
 observed, the one that deliberated, the one that acts — together with the whole level of any
@@ -211,6 +212,17 @@ out a crime refuses at once and is not asked, while the act is still being delib
 offered, and no point is spent on an attempt. The refusal is remembered as any other (see §4): the
 same thinking modus mentis is not offered that goal again in the phase, and another that chooses it is
 offered as means only those that would not refuse it.
+
+**Speech turns toward people.** A modus mentis bearing the Speaking function puts conversation
+first, at every step of the chain it takes part in. Observing, it attends to a living person before
+any other thing present, and does not decline a person given to it to attend to closely; the ledger
+of what has been attended to returns the rest of the scene to it once the people are seen. Thinking,
+when the observed object affords any conversation, only the conversations are offered — save that a
+low-moral mind already narrowed to crimes keeps the crimes, its morality being consulted first.
+When the goal is a conversation, the acting modi mentis that speak are the only means offered, if any
+is held; and such a one cannot refuse a conversation, though it may undertake it reluctantly. A rule
+of action that forbids the conversation itself — a listener who is hostile, a tongue with nothing
+left to say — still applies. Where nobody can be spoken to, none of this narrows anything.
 
 The distinction has a practical edge: an act blocked by a rule of action is an act you attempted and
 were stopped from completing, and you pay for the attempt.

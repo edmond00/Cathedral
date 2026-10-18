@@ -25,6 +25,7 @@ public static class ChoiceRulesChecker
     {
         new HighMoralityAvoidsCrimeRule(),
         new LowMoralityPrefersCrimeRule(),
+        new SpeakingMindPrefersDialogueRule(),   // after the crime rule: an unscrupulous mind's crime wins
         new ExamineGoalNeedsObservationRule(),
     };
 
@@ -34,6 +35,7 @@ public static class ChoiceRulesChecker
         new HighMoralityRefusesCrimeRule(),
         new LowMoralityNeverRefusesCrimeRule(),
         new ExamineActionNeedsObservationRule(),
+        new SpeakingActionNeverRefusesDialogueRule(),
     };
 
     /// <summary>Narrows <paramref name="goals"/> to what this thinking modus mentis may be shown.</summary>

@@ -134,6 +134,20 @@ public class ThinkingExecutor
                             + $"offering only the {able.Count} means able to carry it out, with no refusal.");
         }
 
+        // A conversation is carried out by a mind that speaks, when one is held: the means judge is
+        // offered only those (SpeakingPriority). Otherwise the speaking action modi mentis, which never
+        // refuse a conversation, would be reached only when the judge happened to pick one.
+        if (Rules.Choice.SpeakingPriority.IsDialogue(resolved))
+        {
+            var speakers = meansPool.Where(Rules.Choice.SpeakingPriority.Speaks).ToList();
+            if (speakers.Count > 0 && speakers.Count < meansPool.Count)
+            {
+                Console.WriteLine($"ThinkingExecutor: '{goalPhrase}' is a conversation — offering only the "
+                                + $"{speakers.Count} speaking means of {meansPool.Count}.");
+                meansPool = speakers;
+            }
+        }
+
         // ── Decision 2: HOW (which action skill) ────────────────────────────────
         var skill = await ChooseSkillAsync(goalPhrase, meansPool, thinkingModusMentis, overallLocation, areaLocation, observedPhrase, cancellationToken);
         if (skill == null)
