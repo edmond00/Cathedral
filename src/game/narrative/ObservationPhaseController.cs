@@ -96,6 +96,7 @@ public class ObservationPhaseController
         LlmPreviewSession? preview = null,
         Action<List<NarrationBlock>>? commit = null,
         TimePeriod? introPeriod = null,
+        bool ensurePersonKeyword = false,
         CancellationToken ct = default)
     {
         ledger ??= new ObservationLedger();
@@ -192,8 +193,17 @@ public class ObservationPhaseController
             // set; objects already observed are excluded from every follow-up choice.
             await AppendFollowUpObservationsAsync(sentences, allKeywords, slotId, modusMentis,
                 candidates, new List<NarrativeAnchor> { first }, firstText, locationId, ledger, ct, isReminescence, overall, area, part,
-                introText);
+                introText,
+                // A person is about to be added: "nothing else here is worth attending to" followed
+                // by somebody attended to reads as a contradiction, so a decline ends the block quietly.
+                quietDecline: ensurePersonKeyword && !isReminescence
+                              && candidates.Any(Rules.Choice.SpeakingPriority.IsPerson)
+                              && !Rules.Choice.SpeakingPriority.IsPerson(first));
         }
+
+        if (ensurePersonKeyword && !isReminescence)
+            await AppendPersonObservationIfMissingAsync(sentences, allKeywords, slotId, modusMentis,
+                allOutcomes, locationId, ledger, ct, overall, area, part);
 
         if (sentences.Count == 0)
         {
@@ -467,6 +477,50 @@ public class ObservationPhaseController
         }
     }
 
+    /// <summary>
+    /// The arrival guarantee: when the block that opens a visit carries no keyword leading to a living
+    /// person while one stands unobserved in view, one more observation is appended — same modus
+    /// mentis, reached by a transition — whose choice is narrowed to the people and may not decline.
+    /// Which person is still the modus mentis's choice.
+    ///
+    /// <para>A city square offers two dozen doors, walls and ways against three people, and a modus
+    /// mentis with no interest in people never reached them: a whole visit could pass without the
+    /// narration noticing that anybody was there. The persona's first choices are left alone — the
+    /// person is added after them, not put in their place.</para>
+    /// </summary>
+    private async Task AppendPersonObservationIfMissingAsync(
+        List<NarrationSentence> sentences,
+        List<string> allKeywords,
+        int slotId,
+        ModusMentis modusMentis,
+        List<NarrativeAnchor> allOutcomes,
+        int locationId,
+        ObservationLedger ledger,
+        CancellationToken ct,
+        string? overall,
+        string? area,
+        PreviewPart? part)
+    {
+        bool hasPerson = sentences.Any(s => Enumerable.Range(0, s.Keywords.Count)
+            .Any(i => Rules.Choice.SpeakingPriority.IsPerson(s.AnchorOf(i))));
+        if (hasPerson) return;
+
+        var people = DeduplicateByName(ObserveOnlyFilter(ledger.Remaining(allOutcomes))
+            .Where(Rules.Choice.SpeakingPriority.IsPerson));
+        if (people.Count == 0) return;
+
+        Console.WriteLine($"ObservationPhaseController: the arrival block names nobody — "
+                        + $"adding an observation of one of the {people.Count} person(s) in view.");
+        var person = await SelectObservationObjectAsync(people, modusMentis, ledger, locationId, ct,
+            isReminescence: false, overall, area, offerDecline: false);
+        _observationExecutor.ResetSlot(slotId);
+        if (person == null) return;
+
+        bool afterObservation = sentences.Any(s => s.Anchor != null);
+        await AppendObservationAsync(sentences, allKeywords, slotId, modusMentis, person,
+            withTransition: afterObservation, locationId, ledger, ct, part: part);
+    }
+
     /// <summary>A named NPC — named by name, role or sex rather than by a head noun.</summary>
     private static bool IsPerson(NarrativeAnchor outcome)
         => outcome is Cathedral.Game.Scene.SyntheticNpcObservationObject { NpcEntity: Cathedral.Game.Npc.NpcEntity };
@@ -608,6 +662,9 @@ public class ObservationPhaseController
     /// <para>With <paramref name="introText"/> (an area introduction opened the block) the
     /// introduction takes the first slot: the skip rule and the second observation are dropped, and
     /// only the conditional last observation remains, gated on the introduction plus the first.</para>
+    ///
+    /// <para><paramref name="quietDecline"/> drops the in-voice refusal line: the caller is about to
+    /// add an observation of its own (the arrival's person), which the line would contradict.</para>
     /// </summary>
     private async Task AppendFollowUpObservationsAsync(
         List<NarrationSentence> sentences,
@@ -624,7 +681,8 @@ public class ObservationPhaseController
         string? overall,
         string? area,
         PreviewPart? part,
-        string? introText = null)
+        string? introText = null,
+        bool quietDecline = false)
     {
         // An area introduction counts as the first of the three slots: the observation already made
         // is the second, and the only follow-up left is the conditional last one, gated on the
@@ -648,7 +706,7 @@ public class ObservationPhaseController
             if (second == null)
             {
                 // Refused: close the block in voice and stop — nothing more here is worth attending to.
-                if (declineOffered)
+                if (declineOffered && !quietDecline)
                     await AppendNothingObservationAsync(sentences, slotId, modusMentis, isReminescence, ct, part: part, nothingMore: true);
                 return;
             }
@@ -670,7 +728,7 @@ public class ObservationPhaseController
             _observationExecutor.ResetSlot(slotId);
             if (third == null)
             {
-                if (declineOffered)
+                if (declineOffered && !quietDecline)
                     await AppendNothingObservationAsync(sentences, slotId, modusMentis, isReminescence, ct, part: part, nothingMore: true);
                 return;
             }

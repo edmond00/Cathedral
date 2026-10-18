@@ -682,6 +682,12 @@ Things to know:
   keyword is the new object's, filtered so no word naming the dismissed one can be chosen. Only with
   nothing left unobserved does the keyword-less "not interested" block remain. `--refuse-focus`
   forces the branch, since `--playground` never declines; `cli/system/focus_turned_away.cli`.
+- **An arrival's opening block names somebody.** When it reached no living person while one is in
+  view, `AppendPersonObservationIfMissingAsync` adds one more observation by the same modus mentis,
+  narrowed to the people, no decline (and a decline earlier in the block goes unrendered). Armed by
+  `_arrivalObservationPending`, which only an arrival (`arrivalPeriod` passed) sets. Its extra
+  playground draw shifts later seeded picks, which is why `focus_turned_away.cli` turns to the
+  butterfly; `cli/system/arrival_names_somebody.cli`.
 - **The selector used to reset the modus mentis's slot** before every choice. Rewrites that keep
   history (`keepHistory: true`) relied on that to stay bounded, so the observation follow-ups and the
   dialogue replies now reset the slot themselves at the same points.

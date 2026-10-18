@@ -229,6 +229,11 @@ public class NarrativeController
     private Cathedral.Game.Scene.Area? _introducedArea;
     private TimePeriod? _introducedPeriod;
 
+    // True from a visit's arrival until the observation that opens it: that block must name somebody
+    // when anybody is in view (ObservationPhaseController.AppendPersonObservationIfMissingAsync).
+    // Only an arrival sets it — StartNarrativeInteraction is the one caller passing an arrival hour.
+    private bool _arrivalObservationPending;
+
     // What the current narration phase has already put an action button on screen for. The thinking
     // side of the same rule the ledger above applies to observations: every goal list narrows by it,
     // so the points spent in one phase explore the scene instead of circling one action. Cleared in
@@ -476,6 +481,7 @@ public class NarrativeController
         _activePartyMember = _protagonist;
         _memberNoeticPoints.Clear();
         _observationLedger.Clear();
+        _arrivalObservationPending = arrivalPeriod != null;
         // New session — any focus left over from an earlier one is stale.
         _openingFocus   = openingFocus;
         _openingFocusMM = null;
@@ -786,6 +792,8 @@ public class NarrativeController
             // through to the normal phase.
             var focus   = _openingFocus;
             var focusMM = _openingFocusMM;
+            bool arrival = _arrivalObservationPending;
+            _arrivalObservationPending = false;
             _openingFocus   = null;
             _openingFocusMM = null;
 
@@ -846,7 +854,8 @@ public class NarrativeController
                     ledger: _observationLedger,
                     preview: _previewSession,
                     commit: CommitObservation,
-                    introPeriod: introPeriod
+                    introPeriod: introPeriod,
+                    ensurePersonKeyword: arrival
                 );
             }
 

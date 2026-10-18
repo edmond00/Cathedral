@@ -1,0 +1,19 @@
+# arrival — the block that opens a visit names somebody when anybody is in view
+#
+# At seed 42 the playground opens the Test Yard on the rack and the wood, and stops there: nobody.
+# Two people stand in the yard, so one more observation is appended to the same block, its choice
+# narrowed to the people: the farmer. Without the rule the block ends on the wood.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Yard" --period dawn
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+expect stand of old trees
+expect shifts to the farmer
+quit

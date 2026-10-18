@@ -120,6 +120,13 @@ observation attends to at most three things in all, the later ones only while wh
 remains brief; the bearings count as the first of the three, so that at least one object, and at
 most two, is attended to after them.
 
+**An arrival notices the living.** The observation that opens a visit to a location must render a
+living person when one stands in the area unattended. Should its own choices, bearings included,
+have reached nobody, one observation more is added by the same modus mentis: it chooses among the
+people present only, and may not let its focus go. Should it have declined to attend to anything further,
+the declaration is not rendered, the person being attended to in its place. The rule
+holds for the arrival alone; every later phase in the place chooses freely.
+
 **Deliberation.** A thinking modus mentis is asked what to want, among the acts the observed object
 affords and that have not already been offered, nor already chosen by it and refused, nor refused
 once and beyond every acting modus mentis held. Its moral level and its speech narrow the list before
