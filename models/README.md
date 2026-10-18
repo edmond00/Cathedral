@@ -1,6 +1,6 @@
 # models/
 
-Everything the game loads at runtime that is not code. Five things live here, and only
+Everything the game loads at runtime that is not code. Six things live here, and only
 `model.gguf` is meant to be swapped by a player.
 
 | path | what | required |
@@ -8,13 +8,14 @@ Everything the game loads at runtime that is not code. Five things live here, an
 | `model.gguf` | the language model driving all narration | yes — the game exits without it |
 | `llama/` | the llama.cpp runtime that serves it (x64) | yes |
 | `llama-arm64/` | the same runtime built for Windows-on-ARM | yes on ARM64 hosts |
+| `llama-linux/` | the same runtime for Linux x64 (fetched and pruned by `tools/linux/cloud-setup.sh`) | yes on Linux |
 | `embeddings/glove.6B.100d.txt` | GloVe vectors for `WordEmbedding` | yes |
 | `en_scowl_40.txt` | SCOWL common-word list for the narration sanitizer | no — layer-2 guard disables itself |
 
 ## What is tracked by git, and why the binaries are not
 
-Only the documentation is committed: this file, `en_scowl_40.txt` (452 KB), the two
-toolchain `BUILD.txt` files, `llama/backends/README.md`, and one `BUILD.txt` per backend pack
+Only the documentation is committed: this file, `en_scowl_40.txt` (452 KB), the three
+toolchain `BUILD.txt` files (`llama/`, `llama-arm64/`, `llama-linux/`), `llama/backends/README.md`, and one `BUILD.txt` per backend pack
 (its build and its DLL's hash). The ~2.5 GB of binaries beside them are
 deliberately gitignored, **including under Git LFS**, and the reasoning is worth keeping:
 
@@ -22,7 +23,7 @@ deliberately gitignored, **including under Git LFS**, and the reasoning is worth
   binaries, and a Stanford corpus. Diff, blame, merge and history — the whole of what git is
   for — are worth nothing on any of them.
 - **LFS does not delta-compress.** Every llama.cpp bump would add a full fresh copy: ~185 MB
-  across the two toolchains, permanently, removable only by rewriting history.
+  across the two Windows toolchains, ~40 MB more for the Linux one, permanently, removable only by rewriting history.
 - **`model.gguf` is 98% of GitHub's 2 GiB per-file LFS limit** (2,104,932,768 bytes, ~40 MB of
   headroom). A Q5 quant or a 7B model would be refused outright.
 - **Bandwidth, not storage, is the binding cost.** Every fresh clone would pull 2.5 GB against a

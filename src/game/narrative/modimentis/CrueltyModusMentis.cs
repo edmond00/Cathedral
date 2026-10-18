@@ -13,7 +13,7 @@ public class CrueltyModusMentis : ModusMentis
     public override string ModusMentisId  => "cruelty";
     public override string DisplayName    => "Cruelty";
     public override string MenuDescription =>
-        "Reads others for their fear and their weak points, and takes an advantage without the check of mercy. Inclines toward intimidation and domination, pressing where another would ease off.";
+        "Reads others for their fear and their weak points, and takes an advantage without the check of mercy. Inclines toward intimidation, domination and pain, pressing where another would ease off.";
     public override string SkillMeans    => "cruelty and predatory instinct";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
     public override MoralLevel MoralLevel => MoralLevel.Low;

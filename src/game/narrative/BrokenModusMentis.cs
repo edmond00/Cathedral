@@ -61,5 +61,5 @@ public static class BrokenModusMentis
     public static string NeutralFor(
         PartyMember member, ModusMentis modusMentis, NeutralNarration.BrokenFaculty faculty) =>
         NeutralNarration.BrokenModusMentis(
-            modusMentis.DisplayName, faculty, SourcesFor(member, modusMentis));
+            NeutralNarration.ModusMentisPhrase(modusMentis.DisplayName), faculty, SourcesFor(member, modusMentis));
 }

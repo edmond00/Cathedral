@@ -31,7 +31,7 @@ from the game's (very chatty) diagnostic logging on the same stdout.
 | `--observe-only <name>` | Restricts what an observation phase may look at to objects matching `<name>`. **This is what makes a specific object reachable at all.** A phase opens on ONE object the persona chose out of a dozen, so without it a script that wants to act on the pig is waiting on a coin flip it cannot influence — and re-rolling seeds until the right object comes up first is not a test. Whole words match before substrings (`pig` means the pig, not the Courtyard–Pigsty Track), and a phase where nothing matches falls back to the whole scene rather than narrating nothing. |
 | `--no-encounters` | Suppresses random travel encounters. **Pass this in every script that travels.** An encounter puts the game in `EncounterPrompt`, where a script waiting for `LocationInteraction` sits until its timeout and reports a failure that has nothing to do with what it was testing. |
 | `--allow-reentry` | Lets a world-map click on the vertex the avatar already stands on enter that location. **The game refuses it** — arriving somewhere already opens it (`OnProtagonistArrived` starts the interaction itself), so that click is only ever a way back into the place just walked out of, and a visit is meant to cost a journey. `travel here` is exactly that click, and the spawn vertex is the only one a script can name from a cold start, so **`run_tests.sh` passes this on every script** — you do not put it in a `# FLAGS:` header. |
-| `--period <name>` | Pins the arrival time of day (`dawn`…`night`) instead of drawing one at random. Needed for anything period-gated: every building's entry door shuts at `night`, and a random draw reaches that one visit in six. |
+| `--period <name>` | Pins the arrival time of day (`dawn`…`night`) instead of the location's own arrival hour. Every location opens at a fixed daytime period hashed from its id (`SceneFactory.ArrivalPeriodFor`) — never night — so anything period-gated needs this: every building's entry door shuts at `night`, which no arrival reaches otherwise. The dice draw the old random period used is still made and discarded, so seeded rolls did not move. |
 | `--fill-party` | Fills the companion roster to its heart-derived ceiling (`max_companions`) right after the childhood phase, with NPCs generated from random archetypes — the **last** slot a beast, every slot before it a human. Recruiting even one companion in play takes a conversation and a check (or an appease *and* a tame), which is a long approach for anything that just needs a populated party. Note the ceiling is the *heart* score, and a protagonist accepted straight out of creation has a heart of 1 — so a plain script gets one beast and nothing else. For humans too, raise the heart first (`click cell 94 24` on the creation screen bumps it, four presses reaching 5). |
 | `--start-fight <creature>` | Drops straight into a fight on reaching the world map (`wolf`, `bear`, `bandit`, `brigand`, and the climate beasts `lion`, `hyena`, `jaguar`, `tiger`, `puma`, `snow leopard`, `white bear`, `white wolf`). **The only way a script can reach fight mode at all** — the real routes in are a random travel encounter (which every script disables with `--no-encounters`, precisely because it fires unpredictably) and provoking a location NPC through a conversation and a check. |
 | `--encounter-on-arrival <creature>` | Forces a travel encounter on the **final step** of the next journey, once. `--start-fight` reaches a fight with no journey under it and a random roll almost always fires mid-path; this reaches the third case, and it is the one that broke. The last step raises `ProtagonistSteppedToVertex` and `ProtagonistArrivedAtLocation` from **one** `UpdateMovement` call and clears the path between them, so the fight begins with the arrival already announced and nothing left to walk. Honoured **ahead of** `--no-encounters`, so a script can suppress the random rolls and still stage this one. |
@@ -41,6 +41,7 @@ from the game's (very chatty) diagnostic logging on the same stdout.
 | `--spawn-beast <name>` | Puts a beast (`wolf`, `boar`, `bear`, `black bear`, `stray dog`, `fox`, `cat`, and the climate beasts `lion`, `hyena`, `jaguar`, `tiger`, `puma`, `warthog`, `snow leopard`, `white bear`, `white wolf`) in the **opening area** of every scene, at every period, flagged an enemy by the same first-contact pass that flags a rolled one. Everything a script does *to* a beast — appease, tame, track — starts with one being where the script opens, and no factory guarantees that: a wolf is rolled 10–20% of the time, a boar 25–40%, and whichever is rolled then roams between areas with the hour. Follows `--start-area`, since it spawns into whichever area narration opens in. |
 | `--goal-only <verb-id>` | Forces the playground's goal choice onto one verb. `--playground` replaces the persona's "what do you want to do?" with a **uniform draw over every goal the observed object offers**, so a script meaning to `appease` a beast — and then `tame` it — is otherwise picking out of a dozen. The CLI's `goal` command sets the same switch, which is what a script that needs two different goals in one run should use. Inert when no goal in a phase matches, which then draws as usual. |
 | `--means-only <mm-id>` | Forces the playground's choice of **means** — which action modus mentis carries the goal out — onto one modus mentis. The draw is otherwise uniform over every action modus mentis held, and willingness rules now refuse by kind of mind: **examining is refused by any action modus mentis without the Observation function**, so a script that means to examine grants one and pins it (`--grant-mm woodcraft --means-only woodcraft`). The CLI's `means` command sets the same switch. A miss goes through `DebugFlagAudit`. |
+| `--refuse-focus` | Makes every focus observation's modus mentis turn away from the clicked object, as if the choice judge had answered "turn elsewhere". It then picks another unobserved object and one text dismisses the first and observes the second, carrying its keyword. `--playground` never declines a choice, so this is the only way a script reaches that branch. |
 | `--advance-days <n>` | Pushes the world clock forward `n` days on first arrival at the world map. The clock only moves on travel arrival and work stints while a wound needs 100–1000 days to close, so without this nothing about healing is observable. Fires once, before anything has happened — for healing *a wound taken in play*, use the `clock` command instead. |
 | `--location-type test` | Builds the **test location** (`TestSceneFactory`) — a kitchen sink holding one of everything, under names that never change. This is what the whole CLI suite runs in; see "The test location" below. It is attached to no biome, so this flag is the only way in. |
 | `--silent` | Opens no audio device: no music, no sound effects, no loading wash. `run_tests.sh` passes it on every script — a full run launches the game a hundred-odd times, and without it that is an hour of overlapping music from windows nobody is watching. Implemented by not opening the MIDI device, which is a state the engine already handles (a machine with no MIDI runs the same path). |
@@ -276,7 +277,10 @@ strategy auto           # no override; LLM/RNG decide
 ```
 
 `strategy custom` degrades to `auto`, since per-node prompting is interactive by nature.
-Set the strategy *before* the action that should be affected.
+Set the strategy *before* the action that should be affected. It reaches the action roll, the conversation
+rolls and the RUNAWAY exit roll (`succeed` lands one six, `fail-dice` none), so a script can test
+both ends of fleeing a witness or an enemy. `inspect dialogue` names the tree of the last
+conversation queued — `caught_red_handed_murderer` says which crime a confrontation accuses you of.
 
 **A forced narration success caps the difficulty at the dice pool.** A verb harder than the chain
 that reached it — `tame` is difficulty 4, and a keyword→think→act chain of three unlevelled modi
@@ -329,16 +333,34 @@ quit
 ### The test suite
 
 ```bash
-./run_tests.sh              # every audit, then every CLI script
-./run_tests.sh audits       # the headless audits only (seconds) — eight of them
+./run_tests.sh              # every audit, then every CLI script — the release gate
+./run_tests.sh audits       # the headless audits only (seconds)
 ./run_tests.sh cli          # the CLI scripts only
-./run_tests.sh cli gather   # just cli/gather/
+./run_tests.sh cli gather   # just cli/verb/gather/
+./run_tests.sh cli examine cli/system/focus_turned_away.cli   # several folders and/or single scripts
 ```
 
 Exit code is the number of failures. `--playground` makes every animation instant
 (`Config.AnimationsAreInstant`: the 5-second dice tumble, the vital-heat bar, the fight AI's pause,
-movement framing), which takes a script from ~45 s to ~12 s — the difference between a suite you run
-and one you don't.
+movement framing), which takes a script's own run from ~45 s to ~12 s — but with the launch, the
+world build and the shutdown a script still costs about half a minute, and there are nearly two
+hundred of them.
+
+**So the full suite runs before a release, not after every change.** It takes well over an hour; the
+`release` skill runs it as a gate, and otherwise only when the user asks. While working on a task,
+run the audits plus the scripts that reach what you touched:
+
+- **a verb** — its folder (`cli examine`), and the folder of any outcome it produces;
+- **an outcome** — its `cli/outcome/<id>/` folder, and the folders of the verbs that produce it;
+- **a system** — the `cli/system/` scripts about it. Grep `cli/` for the feature's name, the flag
+  that reaches it and the text it prints; a script whose `expect` lines quote that text is affected;
+- **anything every phase passes through** (narration, observation, keywords, the preview box) —
+  also the `cli/system/` scripts that do **not** pass `--observe-only`, since those are the ones that
+  see a whole scene: `grep -L -- --observe-only $(grep -rl '^# FLAGS:' cli/system)`.
+
+Report which scripts ran and that the full suite did not. When a targeted run turns up a failure,
+read the script before changing it: a script that is right about the old behaviour and wrong about
+the new is updated in the same change, and one that caught a real regression is not.
 
 **Layout: three ranges, and each answers a different question.**
 
@@ -539,6 +561,14 @@ neither is a script's to guarantee. (Catalyst loads on a background task, so a s
 early gets the rule-based fallback and a different word.) Clicking by index means "whatever this
 phase opened on". Name-matching stays right for hand-written scripts: it reads as intent and
 survives reordering.
+
+**Except after an area introduction.** A phase that opens on its bearings (a new area or period, no
+`--observe-only` narrowing it to one object) links a keyword to **every** object the introduction
+names, and those keywords come first — under `--playground` the introduction echoes its list of
+sights verbatim, so that is up to five. `keyword 0` is then the first thing the introduction named,
+not the object the phase observed. Each of those objects is also crossed off, so a small area can be
+left with nothing unobserved: `cli/system/focus_turned_away.cli` moved from the four-object Test Room
+to the Test Yard for that reason.
 
 ### Extending the CLI for a new feature
 

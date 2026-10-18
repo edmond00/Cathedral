@@ -8,6 +8,10 @@ namespace Cathedral.Game.Narrative.Rules;
 /// A principled modus mentis refuses to participate in theft, trespass, or violence — even
 /// if the player selects it. The player must switch to a less scrupulous modus mentis.
 ///
+/// <para><b>Now a safety net.</b> <see cref="Choice.HighMoralityRefusesCrimeRule"/> refuses the same
+/// crime while the action is being thought out, so in ordinary play this never fires: the button is
+/// never offered. It still catches the paths that never ask willingness — the auto-success phases.</para>
+///
 /// <para>The action-side half of the morality design; the thinking-side half is
 /// <c>HighMoralityAvoidsCrimeRule</c>, which keeps crimes out of a principled mind's goal list in the
 /// first place. Both are needed: the goal and the means are two separate choices, so a scrupulous

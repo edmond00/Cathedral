@@ -112,7 +112,7 @@ public static class RecordMode
 
         foreach (var dir in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator))
         {
-            var exe = Path.Combine(dir.Trim(), "ffmpeg.exe");
+            var exe = Path.Combine(dir.Trim(), OperatingSystem.IsWindows() ? "ffmpeg.exe" : "ffmpeg");
             if (File.Exists(exe)) return exe;
         }
         return null;

@@ -1,0 +1,54 @@
+# The Linux build and the headless suite, on every push to develop.
+#
+# Builds linux-x64, runs the audits and the --playground CLI suite under Xvfb. No model download:
+# the suite never starts the language model. The 822 MB GloVe file is not downloaded either, so the
+# CLI scripts run with --no-embeddings (keywords ranked by length; see Config.Debug.NoEmbeddings).
+# Both take long on a 4-vCPU runner (~20 min of audits, ~55 min of scripts), hence two jobs that run
+# side by side.
+
+name: linux
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+jobs:
+  suite:
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [audits, cli]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      DOTNET_NOLOGO: 1
+      ALSOFT_DRIVERS: null
+      CLI_TIMEOUT: 400
+      CLI_EXTRA_FLAGS: --no-embeddings
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      # The packages the game needs to open a window and an audio device headless. The SDK step
+      # inside the script finds the one setup-dotnet installed and skips itself.
+      - name: System packages
+        run: bash tools/linux/cloud-setup.sh --no-llama
+
+      - name: Build linux-x64
+        run: dotnet build Cathedral.csproj -r linux-x64 -v q --nologo
+
+      - name: Run ${{ matrix.part }}
+        run: xvfb-run -a -s "-screen 0 1280x1024x24" ./run_tests.sh ${{ matrix.part }}
+
+      - name: Keep the logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-${{ matrix.part }}
+          path: /tmp/cathedral-tests/
+          if-no-files-found: ignore

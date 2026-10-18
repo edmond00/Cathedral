@@ -32,6 +32,6 @@ public class AlmsOutcome : Outcome
     {
         var npc = ctx.Npc!;
         npc.AlmsGiven = _copper;
-        Report($"{npc.DisplayName} gives you {_copper} copper");
+        Report($"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(npc)} gives you {_copper} copper");
     }
 }

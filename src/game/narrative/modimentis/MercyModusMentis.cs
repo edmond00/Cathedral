@@ -12,7 +12,7 @@ public class MercyModusMentis : ModusMentis
     public override string ModusMentisId    => "mercy";
     public override string DisplayName      => "Mercy";
     public override string MenuDescription =>
-        "Stops short of what is permitted: spares the beaten, lets the cornered thing go, declines the last blow that nobody would have blamed. A choice made at the exact moment it is most expensive.";
+        "Stops short of what is permitted: spares the beaten, lets the cornered thing go, declines the last blow that nobody would have blamed, and turns to the hurt with comfort. A choice made at the exact moment it is most expensive.";
     public override string SkillMeans       => "the stopping short of what is allowed";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "heart", "hands" };

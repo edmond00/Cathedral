@@ -27,7 +27,7 @@ public class IllegalActionVisualWitnessRule : IActionRule
         if (ctx.WitnessContext.Type != WitnessType.Visual) return ActionRuleResult.Pass();
         if (ctx.ActionModusMentis?.ActsDiscretely == true) return ActionRuleResult.Pass();
 
-        var witnessName = ctx.WitnessContext.Witness?.DisplayName ?? "someone";
+        var witnessName = ctx.WitnessContext.Witness is { } witness ? Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(witness, ctx.Actor) : "Someone";
         return ActionRuleResult.Fail($"{witnessName} is right here — I would be caught red-handed.");
     }
 }

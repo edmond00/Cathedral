@@ -26,6 +26,9 @@ namespace Cathedral.Game.Scene.Plain;
 /// </summary>
 public class PlainSceneFactory : SceneFactory
 {
+    /// <summary>Wilderness: its open ground is nobody's (see <see cref="AreaTenure.Wild"/>).</summary>
+    protected override bool IsWilderness => true;
+
     public PlainSceneFactory(string? sessionPath = null) : base(sessionPath) { }
 
     private enum Identity { Open, Heath, Wetland }

@@ -10,7 +10,7 @@ public class ExtortionModusMentis : ModusMentis
     public override string ModusMentisId    => "extortion";
     public override string DisplayName      => "Extortion";
     public override string MenuDescription =>
-        "Gets money by the threat of harm: names what could happen, lets the victim imagine the rest, and makes paying seem like the sensible thing. Comes back next month.";
+        "Gets money by the threat of harm: names what could happen, lets the victim imagine the rest, and makes paying seem like the sensible thing, and the next payment too.";
     public override string SkillMeans       => "the getting of money by threat";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "tongue", "spleen" };

@@ -13,12 +13,18 @@ namespace Cathedral.Audio;
 /// passing an unpinned managed array lets the GC move the memory mid-playback, causing
 /// silent failures or corrupted audio.
 /// </summary>
-internal sealed class UiSfxPlayer : IDisposable
+internal sealed class UiSfxPlayer : IUiSfx
 {
     // ── WinMM P/Invoke ────────────────────────────────────────────────────────
     // Use nint so we can pass the pinned pointer directly (no managed marshalling).
-    [DllImport("winmm.dll")]
-    private static extern bool PlaySound(nint pszSound, nint hmod, uint fdwSound);
+    [DllImport("winmm.dll", EntryPoint = "PlaySound")]
+    private static extern bool WinMMPlaySound(nint pszSound, nint hmod, uint fdwSound);
+
+    // WinMM exists only on Windows. Elsewhere the ticks are silent until the cross-platform audio path
+    // replaces this player (see tools/linux/PORT-BRIEF.md, step 5); without the guard the first call
+    // throws DllNotFoundException from the AmbianceEngine constructor and takes the game down.
+    private static bool PlaySound(nint pszSound, nint hmod, uint fdwSound) =>
+        OperatingSystem.IsWindows() && WinMMPlaySound(pszSound, hmod, fdwSound);
 
     private const uint SND_ASYNC     = 0x0001;
     private const uint SND_NODEFAULT = 0x0002;
@@ -97,7 +103,16 @@ internal sealed class UiSfxPlayer : IDisposable
     // ── PCM generation ────────────────────────────────────────────────────────
 
     /// <summary>25 ms high-pass filtered noise burst — hi-hat simulation.</summary>
-    private static byte[] BuildHoverWav(float amplitude = 1f)
+    private static byte[] BuildHoverWav(float amplitude = 1f) => BuildWav(HoverSamples(amplitude), SfxSampleRate);
+
+    /// <summary>80 ms decaying harmonic tone (520 + 1040 + 1560 Hz) — digital click.</summary>
+    private static byte[] BuildClickWav(float amplitude = 1f) => BuildWav(ClickSamples(amplitude), SfxSampleRate);
+
+    /// <summary>The ticks' sample rate. Shared with the OpenAL player, which plays these same samples.</summary>
+    internal const int SfxSampleRate = 22050;
+
+    /// <summary>The hover tick as 16-bit mono PCM at <see cref="SfxSampleRate"/>.</summary>
+    internal static short[] HoverSamples(float amplitude = 1f)
     {
         const int sampleRate = 22050;
         const int durationMs = 25;
@@ -114,11 +129,11 @@ internal sealed class UiSfxPlayer : IDisposable
             prev = noise;
             samples[i]  = (short)Math.Clamp(hp * decay * 14000f * amplitude, short.MinValue, short.MaxValue);
         }
-        return BuildWav(samples, sampleRate);
+        return samples;
     }
 
-    /// <summary>80 ms decaying harmonic tone (520 + 1040 + 1560 Hz) — digital click.</summary>
-    private static byte[] BuildClickWav(float amplitude = 1f)
+    /// <summary>The click tick as 16-bit mono PCM at <see cref="SfxSampleRate"/>.</summary>
+    internal static short[] ClickSamples(float amplitude = 1f)
     {
         const int sampleRate = 22050;
         const int durationMs = 80;
@@ -133,7 +148,7 @@ internal sealed class UiSfxPlayer : IDisposable
                         + 0.3f * MathF.Sin(2f * MathF.PI * 1560f * i / sampleRate);
             samples[i]  = (short)Math.Clamp(tone * decay * 11000f * amplitude, short.MinValue, short.MaxValue);
         }
-        return BuildWav(samples, sampleRate);
+        return samples;
     }
 
     private static byte[] BuildWav(short[] samples, int sampleRate)
@@ -173,7 +188,7 @@ internal sealed class UiSfxPlayer : IDisposable
 /// WAVEHDR field offsets are fixed for x64 (PlatformTarget = x64):
 ///   lpData(8) + dwBufferLength(4) + dwBytesRecorded(4) + dwUser(8) + dwFlags(4) + ...
 /// </summary>
-internal sealed class BrownNoiseStreamer : IDisposable
+internal sealed class BrownNoiseStreamer : INoiseStream
 {
     [DllImport("winmm.dll")] private static extern uint waveOutOpen(out nint hwo, uint devId, nint fmt, nint cb, nint inst, uint flags);
     [DllImport("winmm.dll")] private static extern uint waveOutPrepareHeader(nint hwo, nint hdr, uint sz);
@@ -201,9 +216,8 @@ internal sealed class BrownNoiseStreamer : IDisposable
 
     public BrownNoiseStreamer(float amplitude = 1.0f)
     {
-        const int sampleRate   = 11025;
-        const int blockSeconds = 3;
-        int numSamples = sampleRate * blockSeconds;
+        int numSamples = NoiseSampleRate * NoiseBlockSeconds;
+        const int sampleRate = NoiseSampleRate;
         _blockBytes    = numSamples * 2;
 
         // WAVEFORMATEX
@@ -219,8 +233,8 @@ internal sealed class BrownNoiseStreamer : IDisposable
         // PCM buffers — two blocks for gapless double-buffering
         _pcm0 = Marshal.AllocHGlobal(_blockBytes);
         _pcm1 = Marshal.AllocHGlobal(_blockBytes);
-        FillBrownNoise(_pcm0, numSamples, 0xBB_0001, amplitude);
-        FillBrownNoise(_pcm1, numSamples, 0xBB_0002, amplitude);
+        FillBrownNoise(_pcm0, numSamples, NoiseSeed0, amplitude);
+        FillBrownNoise(_pcm1, numSamples, NoiseSeed1, amplitude);
 
         _hdr0 = AllocWavHdr(_pcm0, _blockBytes);
         _hdr1 = AllocWavHdr(_pcm1, _blockBytes);
@@ -229,6 +243,7 @@ internal sealed class BrownNoiseStreamer : IDisposable
     public void Start()
     {
         if (_hwo != nint.Zero) return;
+        if (!OperatingSystem.IsWindows()) return;   // waveOut is WinMM; silent elsewhere, as with no device
         if (waveOutOpen(out _hwo, WAVE_MAPPER, _fmt, nint.Zero, nint.Zero, CALLBACK_NULL) != 0)
         {
             _hwo = nint.Zero;
@@ -294,8 +309,21 @@ internal sealed class BrownNoiseStreamer : IDisposable
     /// <summary>Leaky integrator: brown[n] = 0.997·brown[n-1] + 0.003·white[n] → 1/f² spectrum.
     /// Samples are generated into a float buffer first, then peak-normalized so amplitude
     /// is consistent regardless of the integrator's steady-state RMS.</summary>
+    // Shared with the OpenAL noise stream, which loops the same two blocks in the same order.
+    internal const int NoiseSampleRate   = 11025;
+    internal const int NoiseBlockSeconds = 3;
+    internal const int NoiseSeed0 = 0xBB_0001, NoiseSeed1 = 0xBB_0002;
+
     private static void FillBrownNoise(nint mem, int numSamples, int seed, float amplitude)
     {
+        var samples = BrownNoiseSamples(numSamples, seed, amplitude);
+        for (int i = 0; i < numSamples; i++) Marshal.WriteInt16(mem, i * 2, samples[i]);
+    }
+
+    /// <summary>One block of the wash as 16-bit mono PCM at <see cref="NoiseSampleRate"/>.</summary>
+    internal static short[] BrownNoiseSamples(int numSamples, int seed, float amplitude)
+    {
+        var result = new short[numSamples];
         var rng  = new Random(seed);
         var buf  = new float[numSamples];
         float brown = 0f, peak = 1e-6f;
@@ -312,10 +340,8 @@ internal sealed class BrownNoiseStreamer : IDisposable
         // Normalise to target peak — 28000 ≈ 85% of short.MaxValue, leaving headroom
         float scale = amplitude * 28000f / peak;
         for (int i = 0; i < numSamples; i++)
-        {
-            short s = (short)Math.Clamp(buf[i] * scale, short.MinValue, short.MaxValue);
-            Marshal.WriteInt16(mem, i * 2, s);
-        }
+            result[i] = (short)Math.Clamp(buf[i] * scale, short.MinValue, short.MaxValue);
+        return result;
     }
 
     private static void ZeroMem(nint ptr, int count)

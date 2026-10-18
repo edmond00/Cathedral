@@ -1,0 +1,43 @@
+# speaking — a Speaking modus mentis puts conversation first
+#
+# Observing: Banter (Observation + Speaking) is handed the crate in the Test Hall. The crate is kept
+# (the playground never turns away), and the follow-up observation is narrowed to the one living
+# person still unobserved, the brewer, out of every object left in the hall. The line turning
+# to him ("shifts to the brewer") is what proves he was the one attended to.
+#
+# Thinking: Diplomacy (Thinking + Speaking), thinking about the brewer, is offered only the
+# conversations among his goals, and a conversation's means are narrowed to the one speaking
+# action modus mentis held, Boasting — so the button reads "[Boasting …]" and offers no attack.
+#
+# Not reachable here: a speaking action modus mentis never refusing a conversation (the playground
+# always answers "willing"), and never turning away from a person (the playground never turns away,
+# and --refuse-focus deliberately wins over the rule).
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Hall" --period dawn --grant-mm banter,diplomacy,boasting,snatch
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+
+# Banter observes the crate, then turns to the brewer rather than to another object.
+click keyword crate
+choose 1
+choose 5
+advance 12 180
+expect shifts to the brewer
+
+# Diplomacy thinks about the brewer: a conversation, carried out by Boasting.
+strategy succeed
+click keyword man
+choose 0
+choose 2
+advance 12 180
+expect [Boasting
+expect-not attack him
+expect-not [Snatch
+quit

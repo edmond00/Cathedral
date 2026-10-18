@@ -23,6 +23,9 @@ namespace Cathedral.Game.Scene.Forest;
 /// </summary>
 public class ForestSceneFactory : SceneFactory
 {
+    /// <summary>Wilderness: its open ground is nobody's (see <see cref="AreaTenure.Wild"/>).</summary>
+    protected override bool IsWilderness => true;
+
     public ForestSceneFactory(string? sessionPath = null) : base(sessionPath) { }
 
     private enum ForestType { Deciduous, Coniferous, Mixed }

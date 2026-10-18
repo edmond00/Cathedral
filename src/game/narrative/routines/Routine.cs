@@ -259,7 +259,7 @@ public sealed class TradeRoutine : NpcRoutine
         if (!TradeGate.CanTrade(npc!, ctx.Protagonist, area)) return $"{NpcName} will not trade with you";
         // BuyCatalog is what the NPC sells — what the player BUYS — as in TradeMenuRenderer.
         if ((Mode == TradeMode.Buy ? npc!.BuyCatalog : npc!.SellCatalog) == null) return $"{NpcName} no longer trades";
-        if (EnemyThere(ctx, area) is { } enemy) return $"{enemy.DisplayName} is there";
+        if (EnemyThere(ctx, area) is { } enemy) return $"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(enemy)} is there";
         return null;
     }
 }
@@ -281,7 +281,7 @@ public sealed class WorkRoutine : NpcRoutine
         if (JobRegistry.Instance.GetById(JobId) == null) return "that work no longer exists";
         // Work needs the introduction only — a job is offered by a person, wherever they are met.
         if (!TradeGate.IsAcquainted(npc!, ctx.Protagonist)) return $"{NpcName} will not take you on";
-        if (EnemyThere(ctx, area) is { } enemy) return $"{enemy.DisplayName} is there";
+        if (EnemyThere(ctx, area) is { } enemy) return $"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(enemy)} is there";
         return null;
     }
 }
@@ -328,7 +328,7 @@ public sealed class GatherRoutine : Routine
         var source = GatherYield.FindSource(this, area);
         if (source == null) return $"{SourceName} is no longer there";
         if (GatherYield.Slots(this, verb, source, ctx.Scene, ctx.Now).Count == 0) return $"nothing of it grows there now";
-        if (EnemyThere(ctx, area) is { } enemy) return $"{enemy.DisplayName} is there";
+        if (EnemyThere(ctx, area) is { } enemy) return $"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(enemy)} is there";
         return null;
     }
 }

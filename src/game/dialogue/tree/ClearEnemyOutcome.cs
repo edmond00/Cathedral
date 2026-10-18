@@ -25,6 +25,6 @@ public class ClearEnemyOutcome : Outcome
         var npc = ctx.Npc!;
         if (!npc.AffinityTable.IsEnemy(ctx.PartyMemberId!)) return;
         npc.AffinityTable.ClearEnemy(ctx.PartyMemberId!);
-        Report($"{npc.DisplayName} no longer counts you an enemy");
+        Report($"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(npc)} no longer counts you an enemy");
     }
 }

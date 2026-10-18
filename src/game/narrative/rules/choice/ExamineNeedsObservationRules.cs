@@ -54,7 +54,8 @@ public class ExamineActionNeedsObservationRule : IWillingnessRule
         if (!ExamineGoals.IsExamine(ctx.Goal)) return offered;
         if (ExamineGoals.Observes(ctx.ModusMentis)) return offered;
 
-        Console.WriteLine($"ChoiceRules: [{ctx.ModusMentis.DisplayName}] does not observe — refusing to examine.");
+        if (!ctx.Probe)
+            Console.WriteLine($"ChoiceRules: [{ctx.ModusMentis.DisplayName}] does not observe — refusing to examine.");
         return offered.Refusing(Reason);
     }
 }

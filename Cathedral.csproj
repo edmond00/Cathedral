@@ -45,9 +45,25 @@
       invocation (the whole test driver, any future CI) would otherwise need quoting.
     -->
     <AssemblyName Condition="'$(Ship)' == 'true'">ProscribedPalimpsest</AssemblyName>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <!--
+      Windows or not decides the target framework. The runtime identifier decides it when one is
+      given (`-r win-x64`, `-r linux-x64`); otherwise the machine doing the build does, so a bare
+      `dotnet build` on Windows is net8.0-windows exactly as it always was, and on Linux is net8.0.
+
+      Only the developer debug windows (src/debug/*Window.cs and their managers) need WinForms and
+      MSAGL's GDI viewer, and they are compiled under `#if WINDOWS`. Off Windows their managers
+      keep the same public methods and print "not available on this platform" instead.
+    -->
+    <CathedralWindows Condition="'$(RuntimeIdentifier)' != ''">$(RuntimeIdentifier.StartsWith('win'))</CathedralWindows>
+    <CathedralWindows Condition="'$(RuntimeIdentifier)' == ''">$([MSBuild]::IsOSPlatform('Windows'))</CathedralWindows>
+    <TargetFramework Condition="'$(CathedralWindows)' == 'true'">net8.0-windows</TargetFramework>
+    <TargetFramework Condition="'$(CathedralWindows)' != 'true'">net8.0</TargetFramework>
+    <!-- The SDK defines WINDOWS for a -windows TFM already; stated here because the code relies on it. -->
+    <DefineConstants Condition="'$(CathedralWindows)' == 'true'">$(DefineConstants);WINDOWS</DefineConstants>
+    <!-- Lets a Linux machine build the Windows target (`dotnet build -r win-x64`). No effect on Windows. -->
+    <EnableWindowsTargeting Condition="'$(CathedralWindows)' == 'true'">true</EnableWindowsTargeting>
     <!-- Allow BinaryFormatter for MSAGL's GViewer which uses it to deserialize its own embedded toolbar resources -->
-    <EnableUnsafeBinaryFormatterSerialization>true</EnableUnsafeBinaryFormatterSerialization>
+    <EnableUnsafeBinaryFormatterSerialization Condition="'$(CathedralWindows)' == 'true'">true</EnableUnsafeBinaryFormatterSerialization>
     <!-- UseWindowsForms is intentionally omitted: it adds implicit global usings that conflict with
          SixLabors.ImageSharp and SixLabors.Fonts. WinForms is referenced explicitly below instead. -->
     <ImplicitUsings>enable</ImplicitUsings>
@@ -63,6 +79,8 @@
     <Compile Remove="DEPRECATED\**" />
     <EmbeddedResource Remove="DEPRECATED\**" />
     <None Remove="DEPRECATED\**" />
+    <!-- tools/ holds scratch tools with their own projects (tools/keywords/kwtag) -->
+    <Compile Remove="tools\**" />
   </ItemGroup>
 
   <!--
@@ -89,6 +107,8 @@
     <PackageReference Include="Catalyst" Version="26.3.60" />
     <PackageReference Include="Catalyst.Models.English" Version="1.0.30952" />
     <PackageReference Include="Melanchall.DryWetMidi" Version="8.0.3" />
+    <!-- SoundFont synthesiser for the OpenAL audio path (Linux, and Windows with the "audio openal" flag). MIT, pure C#. -->
+    <PackageReference Include="MeltySynth" Version="2.4.1" />
     <PackageReference Include="OpenTK" Version="4.9.4" />
     <PackageReference Include="SixLabors.Fonts" Version="2.1.3" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
@@ -97,11 +117,14 @@
     <PackageReference Include="System.Text.Json" Version="9.0.9" />
     <PackageReference Include="Microsoft.Msagl" Version="1.1.6" />
     <PackageReference Include="Microsoft.Msagl.Drawing" Version="1.1.6" />
-    <PackageReference Include="Microsoft.Msagl.GraphViewerGdi" Version="1.1.7" />
   </ItemGroup>
 
-  <!-- WinForms reference without implicit global usings (avoids conflicts with SixLabors / OpenTK) -->
-  <ItemGroup>
+  <!--
+    Windows only: the debug windows' WinForms and MSAGL's GDI viewer.
+    WinForms reference without implicit global usings (avoids conflicts with SixLabors / OpenTK)
+  -->
+  <ItemGroup Condition="'$(CathedralWindows)' == 'true'">
+    <PackageReference Include="Microsoft.Msagl.GraphViewerGdi" Version="1.1.7" />
     <FrameworkReference Include="Microsoft.WindowsDesktop.App.WindowsForms" />
   </ItemGroup>
 

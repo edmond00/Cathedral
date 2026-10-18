@@ -370,7 +370,8 @@ public sealed class CliDriver
                                     moved. `noetic` carries the phase budget and the acting body's
                                     tool proficiency, neither of which `expect` can reach;
                                     `popup` the open choice popup's options, each marked
-                                    (disabled) when greyed
+                                    (disabled) when greyed; `dialogue` the tree id of the last
+                                    conversation queued (a confrontation's id names its crime)
           expect-state <subj> <text>  assert `inspect <subj>` reports a line containing <text>.
                                     What cli/outcome/ asserts with: `expect` reads the SCREEN,
                                     this reads the world
@@ -1568,8 +1569,9 @@ public sealed class CliDriver
         // waits for them first, so the ranking it meets is the same on every run.
         else if (a.Length >= 1 && a[0].Equals("embeddings", StringComparison.OrdinalIgnoreCase))
         {
-            _waitCondition = () => Cathedral.Game.Narrative.WordEmbedding.IsReady;
-            _waitDescription = "embeddings loaded";
+            // Under --no-embeddings they never arrive; the ranking is the fallback on every run anyway.
+            _waitCondition = () => Cathedral.Game.Narrative.WordEmbedding.IsReady || Cathedral.Config.Debug.NoEmbeddings;
+            _waitDescription = Cathedral.Config.Debug.NoEmbeddings ? "embeddings (none: --no-embeddings)" : "embeddings loaded";
             if (a.Length >= 2 && int.TryParse(a[1], out int embSecs))
                 timeout = TimeSpan.FromSeconds(Math.Max(1, embSecs));
         }

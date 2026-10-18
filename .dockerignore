@@ -1,0 +1,13 @@
+# Build context for tools/linux/Dockerfile. models/ is mounted at run time, never copied in.
+bin/
+obj/
+dist*/
+models/
+logs/
+local/
+cache/
+.git/
+.vs/
+DEPRECATED/
+tools/video/.venv/
+**/*.sf2

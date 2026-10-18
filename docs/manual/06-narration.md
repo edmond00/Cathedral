@@ -7,8 +7,8 @@ the machinery of the preceding chapters is actually spent.
 
 A **location** is built as a set of **areas** — rooms, yards, tracks, clearings — joined by paths
 and by **connectors**, the latter being doors, stairs, cliffs, crossings and the like. An area holds
-**points of interest**, and a point of interest may hold **items**. Certain areas are private, which
-has consequences of law (§7).
+**points of interest**, and a point of interest may hold **items**. Every area is of one of three
+tenures — private, public or wild — which has consequences of law (§7).
 
 A **point of view** is a pair: *where* the acting body stands, and *when* — the period of the day.
 Both are scene state, and both decide what may be attempted. Moving between areas changes the first;
@@ -60,7 +60,8 @@ therefore not upon reaching for a thing but upon reaching for the wrong one. And
 act's own resolution** costs nothing beyond the deliberation that produced it.
 
 A body that has spent the pool without succeeding can only leave. That is the intended shape, and it
-is why departure is never gated on anything except an armed presence in the room.
+is why departure is gated on nothing except somebody in the room with a reason to stop it — an enemy,
+or a witness confronting the body (§7).
 
 ## 4. The two ledgers
 
@@ -78,6 +79,17 @@ recorded when it is actually offered. A goal that deliberation settled upon and 
 mentis then *refused* was never offered, and so remains available: the refusal was that mind's, and
 asking again with another mind is precisely the move that ought to work.
 
+It remains available to every thinking modus mentis **but the one that chose it**. That mind is not
+offered the same act again within the phase, for asked about the same object it would settle on the
+same goal and meet the same refusal. A companion's modus mentis of the same name is a different mind,
+and is not bound by it.
+
+**An act once refused is not refused a second time.** Before it is offered again within the phase, it
+is tested against the rules of choice that refuse outright: if no acting modus mentis the body holds
+could carry it out under them — an examination where none of them observes — it is offered to no mind
+for the rest of the phase. If some can, the next mind to choose it is offered only those as the means,
+and the one chosen answers only with a degree of assent; it may not refuse.
+
 A new phase in the same place sees the whole scene, and every act in it, afresh.
 
 ## 5. The three steps of an act
@@ -86,25 +98,38 @@ A new phase in the same place sees the whole scene, and every act in it, afresh.
 present that have not yet been attended to, and renders what it finds. One object is chosen; the
 rest wait.
 
+Attention may also be directed: a thing already rendered may be given to an observing modus mentis
+to attend to closely. That modus mentis may decline it, and if so turns to another thing of its own
+choosing among those not yet attended to — the refusal and the new observation rendered as one
+movement, the new thing available for closer attention like any other. Only when nothing is left
+unattended does the refusal stand alone, and lead nowhere.
+
 The opening observation of a phase may first take its **bearings**: where the body stands and at
 what period of the day, rendered in the observing modus mentis's own voice. This is done only when
 the area or the period has changed since the bearings were last taken, so that a run of phases in
 one place does not open on the same account each time; and it is done only in the waking world,
 never in recollection nor in the rising from exhaustion. The bearings close by naming, briefly and in
-no particular order, up to five of the things present that have not yet been attended to. Where the
-account names one of them outright, that one — a single one at most, chosen by lot among several —
-is rendered available for closer attention, and counts thereafter as attended to, so that no later
-observation of the phase returns to it. The opening
+no particular order, up to five of the things present that have not yet been attended to. Every
+thing present that the account names outright — a thing by its own name, a person by role, name or
+sex — is rendered available for closer attention through the word that names it, and counts
+thereafter as attended to, so that no later observation of the phase returns to it. A word naming
+the area itself names no thing in it, and a word several things share goes to the one whose name
+surrounds it, or to none. One thing present is always left unnamed, for the observation that
+follows. The opening
 observation attends to at most three things in all, the later ones only while what has been rendered
 remains brief; the bearings count as the first of the three, so that at least one object, and at
 most two, is attended to after them.
 
 **Deliberation.** A thinking modus mentis is asked what to want, among the acts the observed object
-affords and that have not already been offered. Its moral level narrows the list before it is asked.
+affords and that have not already been offered, nor already chosen by it and refused, nor refused
+once and beyond every acting modus mentis held. Its moral level and its speech narrow the list before
+it is asked (§6).
 Its answer is a goal, and the goal produces the act.
 
 **Execution.** An acting modus mentis is asked whether it is willing, and how willingly. Its degrees
-of assent map to a modifier upon the difficulty, and its refusal cancels the act outright.
+of assent map to a modifier upon the difficulty, and its refusal cancels the act outright. Its moral
+level may settle the answer before it is asked: a high one refuses a crime, a low one may not refuse
+one (see §7); and one that speaks may not refuse a conversation (§6).
 
 **The die pool is the sum of the levels of every modus mentis in the chain** — the one that
 observed, the one that deliberated, the one that acts — together with the whole level of any
@@ -150,13 +175,14 @@ presentational.
 
 **Rules of action** judge an act already chosen. They **reject** it; the reason is given in the
 acting modus mentis's own voice; and it **costs a point**. Circumstance belongs here — that man is
-watching, that door needs a key, there is nowhere left to put a log. Eight such rules exist: a manner
+watching, that door needs a key, there is nowhere left to put a log. Nine such rules exist: a manner
 of the mind the frame can no longer carry, a tongue too damaged to speak, an affinity too poor to
-address, a crime refused on principle, a crime refused before a witness, an act impossible under
-threat, a missing required implement, and a carrying capacity already met.
+address, a crime refused before a witness, an act impossible under threat, an act impossible under a
+confronting witness's eye, a missing required implement, a blow with nothing left to strike it, and a
+carrying capacity already met.
 
 The first stands ahead of the others because it alone concerns the frame rather than the
-circumstance. One told that a witness is watching will go to another room; one told that the arm is
+circumstance. One told that a witness is watching will try another way; one told that the arm is
 ruined will not, and the refusal names the parts that failed and the wounds behind them.
 
 **The missing implement alone leaves the act standing.** Its refusal says what was wanted, that bare
@@ -181,6 +207,23 @@ mentis it is never offered that goal; as the acting one, chosen to carry it out,
 and is not asked — the refusal states that it would act rather than stand and observe. The other
 senses are under no such rule.
 
+**Principle refuses a crime before it is offered.** A high-moral acting modus mentis chosen to carry
+out a crime refuses at once and is not asked, while the act is still being deliberated — no act is
+offered, and no point is spent on an attempt. The refusal is remembered as any other (see §4): the
+same thinking modus mentis is not offered that goal again in the phase, and another that chooses it is
+offered as means only those that would not refuse it.
+
+**Speech turns toward people.** A modus mentis bearing the Speaking function puts conversation
+first, at every step of the chain it takes part in. Observing, it attends to a living person before
+any other thing present, and does not decline a person given to it to attend to closely; the ledger
+of what has been attended to returns the rest of the scene to it once the people are seen. Thinking,
+when the observed object affords any conversation, only the conversations are offered — save that a
+low-moral mind already narrowed to crimes keeps the crimes, its morality being consulted first.
+When the goal is a conversation, the acting modi mentis that speak are the only means offered, if any
+is held; and such a one cannot refuse a conversation, though it may undertake it reluctantly. A rule
+of action that forbids the conversation itself — a listener who is hostile, a tongue with nothing
+left to say — still applies. Where nobody can be spoken to, none of this narrows anything.
+
 The distinction has a practical edge: an act blocked by a rule of action is an act you attempted and
 were stopped from completing, and you pay for the attempt.
 
@@ -194,11 +237,22 @@ it, each act that can be a crime has its own condition — striking someone who 
 enemy is not a crime, for the quarrel was declared before the blow; forcing the lock of a public
 storehouse is nobody's privacy.
 
+**Ground has three tenures.** *Private* ground is somebody's, and makes every act a trespass.
+*Public* ground is everybody's: the streets, yards and fields of a farm, a village or a city. *Wild*
+ground is nobody's: the open ground of a forest, a plain, a cave, a coast, a mountain, a peak and
+the climate biomes. A store kept there — a woodshed, a net shed, an ore store — is somebody's stock
+and remains public. The tenure decides one thing besides trespass: whether a beast belongs to
+anybody. Striking or killing a beast that is not already an enemy is a crime on public and on
+private ground, where the creature is taken to be somebody's; on wild ground it is hunting, and no
+crime at all. A creature small enough to be taken in the hand is caught or crushed rather than
+struck, and neither is a crime against it on any ground; private ground remains a trespass. A
+person is never game: every crime against a person is a crime on wild ground as anywhere.
+
 **Morality has four distinct behaviours**, two on each side of the chain:
 
 | | A thinking modus mentis | An acting modus mentis |
 |---|---|---|
-| **High** | Crimes are dropped from its list of goals. Filtering everything away is a legitimate result. | Refuses outright. |
+| **High** | Crimes are dropped from its list of goals. Filtering everything away is a legitimate result. | Refuses at once, unasked, before the act is offered. |
 | **Low** | If any goal on offer is a crime, **only** the crimes are offered. | Cannot refuse: the option to decline is withheld. |
 
 Both halves are needed, because the goal and the means are two separate decisions: a scrupulous
@@ -223,10 +277,33 @@ Three rungs, identical for a witness and for an enemy save in what the top rung 
 | **Audio** | **They come to look.** They move into the area. | The same. |
 | **None** | Nothing. | Nothing. |
 
-The middle rung is an approach, not a verdict. Nothing is yet confronted; what it costs is that
-somebody is now standing in the room, which closes the free exit and makes the *next* slip a caught
-one. Earshot is not the same as the walkable graph: a door is a gate, not a wall, and both sides of
-every connector are within earshot of one another.
+The middle rung is an approach, not a verdict. Nothing is yet said; what it costs is that somebody
+now stands in the room, having come on the body's account, and that is a confrontation (below).
+Earshot is not the walkable graph but the whole **section** an area belongs to — a building, or the
+stretch of open ground it lies in, for a door is a gate and not a wall. Being heard is announced as
+a consequence of the failed act, and the one who came opens the next observation: an enemy as the
+one who came looking, a witness as the one who came to see what the noise was.
+
+**Under threat, and confronted.** Two presences in the area stop a body short, and they are kept
+deliberately alike. An **enemy** in the area permits only the acts that answer them — to strike, to
+kill, to appease, to reconcile, to tame — and any act that fails before them begins a fight, the
+enemy striking first. A **confronting witness** is one standing in the area with a reason to stop the
+body: either they came on its account, drawn by a heard crime, or the ground is private and they see
+the trespass every act there is. A person merely standing in a public place confronts nobody. A
+confronting witness permits only striking at them, killing them, or going up to them to explain
+oneself, and any act that fails before them, lawful or not, is caught red-handed: the confrontation,
+worded after the crime they heard, or trespass where they heard none. To explain oneself opens that
+same confrontation by one's own choice, and every check within it is then one six easier than when
+one is collared, though never easier than a single six: one who comes forward is half believed.
+Fumbling the approach is itself a slip before the witness, and one is collared after all. In both cases a **discreet** modus mentis may still attempt any act,
+for the permission to act at close quarters is what discretion buys; it does not buy safety, and a
+discreet act that fails in the same room is seen.
+
+**Flight.** While either presence stands in the area the free departure becomes a **runaway**: one
+roll of as many dice as the feet's runaway score, needing a single six. Success leaves the place.
+Failure begins the fight with an enemy, or the confrontation with a witness. A confrontation ends
+with the conversation it opens: a witness who came on the body's account then returns to the day
+they were drawn from, unless the conversation has made an enemy of them.
 
 **Enmity persists across visits.** Walking away from a fight ends the fight, not the quarrel.
 

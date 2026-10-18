@@ -15,14 +15,24 @@ public abstract class ModusMentis
     /// <summary>
     /// How this skill operates, shown in action lists as "with [SkillMeans]".
     /// A short flavored phrase used inside LLM prompts (e.g. "the breaking and turning of soil").
+    /// It is also the whole of a means option the <see cref="ChoiceJudge"/> reads
+    /// ("Natation: swimming across deep water…"): name the act in the verb a goal would use, and
+    /// beware echoing a goal's wording by accident — the judge matches words before temperaments.
+    /// Rules and the tools that measure them: the <c>choice-judge</c> skill.
     /// </summary>
     public abstract string SkillMeans { get; }
 
     /// <summary>
     /// Player-facing manual entry shown in the memory menu's detail box — a factual,
     /// third-person explanation of what this modusMentis governs and when it helps.
-    /// Unlike <see cref="SkillMeans"/> / <see cref="PersonaTone"/> this is NEVER fed to the LLM,
-    /// so it is written as neutral game documentation rather than in-character flavour.
+    /// Unlike <see cref="SkillMeans"/> / <see cref="PersonaTone"/> it is neutral game documentation
+    /// rather than in-character flavour — which is exactly why <see cref="ChoiceJudge"/> reads it: the
+    /// neutral judge of what this modus mentis would choose is told what it governs in these words.
+    /// So it must say what the modus mentis is drawn to and good at, not merely how it scores:
+    /// name its acts in the plain words options use ("swims", not only "the steady stroke"), say what
+    /// it inclines to do, never soften a violent or criminal nature, and use no word that names a
+    /// different act ("waits" made Spite choose "sit and wait"). The <c>choice-judge</c> skill has the
+    /// rules and <c>tools/judge/</c> the benchmark and audit that check them.
     /// The detail box word-wraps to roughly 34 columns by ~11 lines, so keep it under ~60 words
     /// and use continuous prose (no manual line breaks — the renderer wraps on spaces).
     /// </summary>
@@ -113,7 +123,10 @@ public abstract class ModusMentis
     
     /// <summary>
     /// Short persona description for user prompts (e.g., "write like [PersonaTone]").
-    /// Used as a quick reminder of the modusMentis's personality in individual LLM calls.
+    /// Used as a quick reminder of the modusMentis's personality in individual LLM calls, and read by
+    /// <see cref="ChoiceJudge"/> as "Its manner: …". Lead with the manner — how it goes about
+    /// things; an origin anecdote may trail it but must not be it ("a dreamer who once dreamt a golden
+    /// arch" reads as a dreamer). See the <c>choice-judge</c> skill.
     /// </summary>
     public virtual string? PersonaTone => null;
 

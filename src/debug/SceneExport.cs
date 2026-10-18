@@ -95,6 +95,7 @@ public static class SceneExport
                 ["section"] = sectionOf.TryGetValue(a.Id, out var s) ? s.DisplayName : null,
                 ["interior"] = sectionOf.TryGetValue(a.Id, out var s2) && s2.IsInterior,
                 ["private"] = a.IsPrivate,
+                ["wild"] = a.IsWild,
                 ["pois"] = a.PointsOfInterest.Where(p => p is not ConnectorPointOfInterest).Select(p => p.DisplayName).ToList(),
             }).ToList(),
             ["edges"] = edges.Select(e => new object[] { e.Item1, e.Item2, e.Item3 }).ToList(),

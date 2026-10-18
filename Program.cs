@@ -165,6 +165,9 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("                                     about the verb rather than walk somebody else's tree");
     Console.WriteLine("  --npc-static                       DEBUG: pin every NPC to one area all day instead of following their schedule.");
     Console.WriteLine("  --silent                           DEBUG: open no audio device — no music, no sound effects. Used by the test suite.");
+    Console.WriteLine("  --no-embeddings                    DEBUG: run without models/embeddings/glove.6B.100d.txt (keywords ranked by length). For CI.");
+    Console.WriteLine("  --audio <winmm|openal>             Audio path: WinMM + system MIDI (Windows default) or OpenAL + SoundFont (elsewhere)");
+    Console.WriteLine("  --soundfont <file>                 With the OpenAL path: play music with <file> instead of assets/audio/soundfont.sf2");
     Console.WriteLine("  --hidden                           DEBUG: create the window without showing it — no window on screen, no focus");
     Console.WriteLine("                                     taken. The GL context and every mode still run. Used by the test suite.");
     Console.WriteLine("                                     Where somebody stands at a given hour is drawn from the location seed, so an");
@@ -219,6 +222,9 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --means-only <mm-id>               DEBUG: the playground's choice of means (which action modus mentis carries the");
     Console.WriteLine("                                     goal out) must land on this one. Examining is refused by any action modus mentis");
     Console.WriteLine("                                     without Observation, so an examine script names one. CLI twin: `means`");
+    Console.WriteLine("  --refuse-focus                     DEBUG: every focus observation's modus mentis turns away from the clicked object");
+    Console.WriteLine("                                     and observes another instead. --playground never declines, so this is the only");
+    Console.WriteLine("                                     way a script reaches that branch");
     Console.WriteLine("  --advance-days <n>                 DEBUG: push the world clock forward <n> days on first arrival at the world");
     Console.WriteLine("                                     map. The clock only moves on travel and work, and a wound takes 100-1000");
     Console.WriteLine("                                     days to close, so this is how a script sees healing without simulating years");
@@ -289,6 +295,28 @@ if (args.Any(a => a == "--npc-static")) Cathedral.Config.Debug.NpcStatic = true;
 
 // --silent: open no audio device. The test suite passes this on every script.
 if (args.Any(a => a == "--silent")) Cathedral.Config.Debug.Silent = true;
+
+// --no-embeddings: go on without the GloVe vectors rather than exiting. For CI and containers that do
+// not carry the 822 MB file; keyword ranking falls back to word length. See Config.Debug.NoEmbeddings.
+if (args.Any(a => a == "--no-embeddings")) Cathedral.Config.Debug.NoEmbeddings = true;
+
+// --audio <winmm|openal>: which audio path. Default is the platform's own (WinMM on Windows, OpenAL
+// elsewhere); naming openal on Windows is how the cross-platform path is compared with it.
+{
+    int i = Array.IndexOf(args, "--audio");
+    if (i >= 0 && i + 1 < args.Length)
+    {
+        if (args[i + 1].Equals("openal", StringComparison.OrdinalIgnoreCase)) Cathedral.Config.Debug.AudioBackend = Cathedral.Audio.AudioBackend.OpenAL;
+        else if (args[i + 1].Equals("winmm", StringComparison.OrdinalIgnoreCase)) Cathedral.Config.Debug.AudioBackend = Cathedral.Audio.AudioBackend.WinMM;
+        else Console.Error.WriteLine($"--audio {args[i + 1]}: expected winmm or openal; using the platform default.");
+    }
+}
+
+// --soundfont <file>: the SoundFont the OpenAL path plays music with, instead of assets/audio/soundfont.sf2.
+{
+    int i = Array.IndexOf(args, "--soundfont");
+    if (i >= 0 && i + 1 < args.Length) Cathedral.Config.Debug.SoundFontPath = args[i + 1];
+}
 
 // --hidden: create the window without showing it. What run_tests.sh uses so a suite run does not put
 // a hundred windows on screen and take the keyboard focus a hundred times.
@@ -838,6 +866,9 @@ for (int i = 0; i < args.Length; i++)
 
     if (args[i] == "--means-only" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
         Cathedral.Config.Debug.MeansOnly = args[i + 1];
+
+    if (args[i] == "--refuse-focus")
+        Cathedral.Config.Debug.RefuseFocus = true;
 
     if (args[i] == "--advance-days" && i + 1 < args.Length &&
         double.TryParse(args[i + 1], System.Globalization.NumberStyles.Float,

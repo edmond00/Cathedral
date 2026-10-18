@@ -112,7 +112,7 @@ public class SquirrelArchetype : SmallMammalShallowArchetype
     };
 }
 
-public class WoodMouseArchetype : SmallMammalShallowArchetype
+public class WoodMouseArchetype : TinyShallowArchetype
 {
     public override string ArchetypeId     => "wood_mouse";
     public override string TypeDisplayName => "Wood Mouse";
@@ -121,14 +121,7 @@ public class WoodMouseArchetype : SmallMammalShallowArchetype
         colors: new[] { "brown", "sandy", "grey-brown" },
         noun:   "wood mouse",
         traits: new[] { "darting under a fallen log", "nose twitching in the leaf litter", "gone before the eye can follow" });
-    protected override string CorpseBodyDescription => "the tiny body of a wood mouse";
-    protected override List<ItemElement> BuildCorpseDrops() => new()
-    {
-        new ItemElement(new Skin()),
-        new ItemElement(new Meat()),
-        new ItemElement(new Tail()),
-        new ItemElement(new Bone()),
-    };
+    public override List<Item> BuildCatchYield() => new() { new Skin(), new Tail(), new Bone() };
 }
 
 public class MarmotArchetype : SmallMammalShallowArchetype
@@ -151,7 +144,7 @@ public class MarmotArchetype : SmallMammalShallowArchetype
     };
 }
 
-public class BatArchetype : SmallMammalShallowArchetype
+public class BatArchetype : TinyShallowArchetype
 {
     public override string ArchetypeId     => "bat";
     public override string TypeDisplayName => "Bat";
@@ -160,15 +153,7 @@ public class BatArchetype : SmallMammalShallowArchetype
         colors: new[] { "dark", "brown", "sooty" },
         noun:   "bat",
         traits: new[] { "wheeling overhead", "hanging folded in the dark", "flitting into a deeper pocket of shadow" });
-    protected override string CorpseBodyDescription => "the leathery body of a bat";
-    protected override List<ItemElement> BuildCorpseDrops() => new()
-    {
-        new ItemElement(new Skin()),
-        new ItemElement(new Wing()),
-        new ItemElement(new Wing()),
-        new ItemElement(new Bone()),
-        new ItemElement(new Fang()),
-    };
+    public override List<Item> BuildCatchYield() => new() { new Skin(), new Wing(), new Wing() };
 }
 
 public class RatArchetype : SmallMammalShallowArchetype
@@ -441,7 +426,7 @@ public class SandpiperArchetype : GenericShallowArchetype
 
 // ── Reptiles, amphibians, water-life ─────────────────────────────────────────
 
-public class FrogArchetype : GenericShallowArchetype
+public class FrogArchetype : TinyShallowArchetype
 {
     public override string ArchetypeId     => "frog";
     public override string TypeDisplayName => "Frog";
@@ -450,17 +435,10 @@ public class FrogArchetype : GenericShallowArchetype
         colors: new[] { "green", "olive", "brown" },
         noun:   "frog",
         traits: new[] { "blinking once and slipping into the water", "half-sunk in the shallows", "throat pulsing" });
-    protected override string CorpseBodyDescription => "the small wet body of a frog";
-    protected override List<ItemElement> BuildCorpseDrops() => new()
-    {
-        new ItemElement(new Skin()),
-        new ItemElement(new Meat()),
-        new ItemElement(new Meat()),
-        new ItemElement(new Bone()),
-    };
+    public override List<Item> BuildCatchYield() => new() { new Skin(), new Bone() };
 }
 
-public class ToadArchetype : GenericShallowArchetype
+public class ToadArchetype : TinyShallowArchetype
 {
     public override string ArchetypeId     => "toad";
     public override string TypeDisplayName => "Toad";
@@ -469,14 +447,7 @@ public class ToadArchetype : GenericShallowArchetype
         colors: new[] { "brown", "mud-brown", "grey" },
         noun:   "toad",
         traits: new[] { "half-buried in mud", "watching you with patient eyes", "unmoving among the roots" });
-    protected override string CorpseBodyDescription => "the squat body of a toad";
-    protected override List<ItemElement> BuildCorpseDrops() => new()
-    {
-        new ItemElement(new Skin()),
-        new ItemElement(new Skin()),
-        new ItemElement(new Meat()),
-        new ItemElement(new Bone()),
-    };
+    public override List<Item> BuildCatchYield() => new() { new Skin(), new Skin(), new Bone() };
 }
 
 public class AdderArchetype : GenericShallowArchetype
@@ -518,7 +489,7 @@ public class CrabArchetype : GenericShallowArchetype
     };
 }
 
-public class CaveSpiderArchetype : GenericShallowArchetype
+public class CaveSpiderArchetype : TinyShallowArchetype
 {
     public override string ArchetypeId     => "cave_spider";
     public override string TypeDisplayName => "Cave Spider";
@@ -527,14 +498,7 @@ public class CaveSpiderArchetype : GenericShallowArchetype
         colors: new[] { "grey", "translucent", "dark" },
         noun:   "cave spider",
         traits: new[] { "rearing in the lantern-light", "palps working", "frozen on the rock" });
-    protected override string CorpseBodyDescription => "the curled-leg body of a cave spider";
-    protected override List<ItemElement> BuildCorpseDrops() => new()
-    {
-        new ItemElement(new Silk()),
-        new ItemElement(new Silk()),
-        new ItemElement(new Fang()),
-        new ItemElement(new Fang()),
-    };
+    public override List<Item> BuildCatchYield() => new() { new Silk(), new Silk(), new Fang() };
 }
 
 // ── Larger livestock and beasts ──────────────────────────────────────────────

@@ -26,6 +26,9 @@ namespace Cathedral.Game.Scene.Cave;
 /// </summary>
 public class CaveSceneFactory : SceneFactory
 {
+    /// <summary>Wilderness: its open ground is nobody's (see <see cref="AreaTenure.Wild"/>).</summary>
+    protected override bool IsWilderness => true;
+
     public CaveSceneFactory(string? sessionPath = null) : base(sessionPath) { }
 
     private enum CaveType { IronRich, StoneQuarry, CoalBearing }

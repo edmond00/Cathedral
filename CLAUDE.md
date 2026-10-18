@@ -109,6 +109,19 @@ reproducibility flags, the full command vocabulary, `--debug`'s forced outcomes,
 layout, `--verb-probe`, and what `--cli` cannot check. **Invoke `audits` after touching content**
 — it carries the thirteen headless audits and says which one covers which change.
 
+**The full suite is the release gate, not the check for a change.** `./run_tests.sh` launches the game
+once per script, nearly two hundred times, and takes well over an hour. Run it only when preparing a
+release (the `release` skill's steps already do), or when the user asks. While working on a task, run
+the audits (`./run_tests.sh audits`, seconds) plus the scripts that exercise what you touched — the
+folder of the verb or outcome you changed, and any `cli/system/` script whose subject you changed or
+which reaches the code path (grep `cli/` for the feature, the flag or the expected text):
+
+```bash
+./run_tests.sh cli examine cli/system/focus_turned_away.cli   # folders and single scripts mix
+```
+
+Say which scripts you ran, and that the full suite was not.
+
 When the user wants to *play* the change rather than read `[cli]` output — anything visual, anything
 about feel, "let me try it" — **invoke `playtest`**. It carries the baseline launch command, the flags
 that put them in front of a given feature, and the standing rule that a run is `--cpu` unless the GPU
@@ -134,6 +147,7 @@ every line that left is the same text, moved.
 | `models` skill | on invocation | maintaining the `models/` folder across machines; **upgrading llama.cpp or swapping the model**, including the expected versions in `src/LLM/LlamaInstallCheck.cs` that must move in the same commit |
 | `video` skill | on invocation | narrated videos about the game: `--record` (the CLI with a camera, player commands only), storyboards, manim in the game's identity, Piper voice-over, the game's own music; `tools/video/` |
 | `mm-grants` skill | on invocation | writing the modus mentis grant audit by hand |
+| `choice-judge` skill | on invocation | how a modus mentis's bounded decisions are judged; the rules for writing a modus mentis's description, manner and means, and a judge's prompt; `tools/judge/`, the benchmark and audit that measure them against the shipped model |
 | `anatomy-art` skill | on invocation | generating body ASCII art (`assets/art/body/<name>/`) from labelled shapes with `tools/art/`, sharing proposals as PNGs, and the art direction: anatomical, retro/glitchy, the organ glyph vocabulary |
 
 **When a change alters a rule a player is subject to, invoke the `manual` skill** — that has not moved

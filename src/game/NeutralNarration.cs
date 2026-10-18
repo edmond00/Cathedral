@@ -44,9 +44,29 @@ public static class NeutralNarration
     /// During the childhood reminescence phase (<paramref name="isReminescence"/>) the fragment is
     /// a recollection, so the sentence is put in the past tense ("This was …").
     /// </summary>
-    public static string ObservationDetail(string description, bool isReminescence = false)
-        => isReminescence ? $"This was {NounPhrase(FirstPerson(description))}."
-                          : $"This is {NounPhrase(FirstPerson(description))}.";
+    public static string ObservationDetail(string description, bool isReminescence = false,
+                                           bool descriptionIsClause = false)
+    {
+        // A person's or a beast's appearance is written as a clause with its own verb — "a sunburnt
+        // figure swings a scythe through standing corn" — and wrapping it as "This is …" gave the model
+        // "This is a sunburnt figure swings a scythe", which it then rewrote into nonsense. It stands
+        // as its own sentence instead.
+        if (descriptionIsClause)
+            return Sentence(FirstPerson(description));
+
+        var phrase = NounPhrase(FirstPerson(description));
+        bool plural = IsPluralPhrase(phrase);
+        return isReminescence ? $"{(plural ? "These were" : "This was")} {phrase}."
+                              : $"{(plural ? "These are" : "This is")} {phrase}.";
+    }
+
+    /// <summary>A clause made into a sentence: capitalised, one closing full stop.</summary>
+    private static string Sentence(string clause)
+    {
+        var s = clause.Trim().TrimEnd('.', ',', ';', ':', ' ');
+        if (s.Length == 0) return "";
+        return char.ToUpperInvariant(s[0]) + s.Substring(1) + ".";
+    }
 
     /// <summary>
     /// Builds the full neutral meaning of an observation as one text: the attention line naming the
@@ -54,8 +74,9 @@ public static class NeutralNarration
     /// (<see cref="ObservationDetail"/>). Merged so the persona rewrite can be done in a single
     /// request that yields two or three short styled sentences.
     /// </summary>
-    public static string Observation(bool isFirst, string simpleName, string description, bool isReminescence = false)
-        => $"{ObservationAttention(isFirst, simpleName, isReminescence)} {ObservationDetail(description, isReminescence)}";
+    public static string Observation(bool isFirst, string simpleName, string description, bool isReminescence = false,
+                                     bool descriptionIsClause = false)
+        => $"{ObservationAttention(isFirst, simpleName, isReminescence)} {ObservationDetail(description, isReminescence, descriptionIsClause)}";
 
     /// <summary>
     /// Neutral meaning of the area introduction that opens an observation sequence when the area or
@@ -92,6 +113,21 @@ public static class NeutralNarration
         => "This one means me harm, right here — I must stay wary and ready.";
 
     /// <summary>
+    /// Trailing sentence for an enemy who heard an action go wrong and has just walked in (an
+    /// earshot arrival): the caution of <see cref="ThreatCaution"/>, and why they are here.
+    /// </summary>
+    public static string ArrivalEnemyCaution()
+        => "They heard me and have come looking for me — this one means me harm, and I must stay wary and ready.";
+
+    /// <summary>
+    /// Trailing sentence for a witness who heard a crime go wrong and has just walked in. Not a
+    /// threat: they came to see what the noise was, and what they saw is the trouble — they will not
+    /// simply watch me walk away.
+    /// </summary>
+    public static string ArrivalWitnessNotice()
+        => "They have come to see what the noise was, and they have seen what I was doing; they will not let me simply walk away.";
+
+    /// <summary>
     /// Neutral meaning for a failed observation: the Modus Mentis found nothing here worth its
     /// attention (every candidate object was graded "averse" in the persona evaluation). Re-expressed
     /// in the observation persona's voice as the whole observation block.
@@ -124,6 +160,16 @@ public static class NeutralNarration
             ? $"I am not interested in the memory of {targetPhrase}, and let it fade."
             : $"I am not interested in {targetPhrase}, and turn my attention away.";
 
+    /// <summary>
+    /// The same refusal when the Modus Mentis turns to something else instead: just the dismissal of
+    /// <paramref name="targetPhrase"/>, which opens the neutral text and is followed by the observation
+    /// of what it turned to (<see cref="Observation"/> with a transition), both rewritten together.
+    /// </summary>
+    public static string ObservationTurnedAway(string targetPhrase, bool isReminescence = false)
+        => isReminescence
+            ? $"I am not interested in the memory of {targetPhrase}."
+            : $"I am not interested in {targetPhrase}.";
+
     // ── Thinking ───────────────────────────────────────────────────────────────
 
     /// <summary>
@@ -145,8 +191,8 @@ public static class NeutralNarration
     /// <summary>
     /// Neutral reasoning for the "ignore and move on" path: the thinking Modus Mentis was offered the
     /// goals this object affords and settled on none of them — either because the object affords
-    /// nothing, or because its free reasoning wandered to something that was never on the list, which
-    /// the match critic reports through its catch-all option (see <c>ThinkingExecutor.ChooseGoalAsync</c>).
+    /// nothing, or because the choice judge found none of them worth this mind's while and took the
+    /// decline option (see <c>ThinkingExecutor.ChooseGoalAsync</c>).
     /// Both mean the same thing to the player: nothing here is worth acting on, look elsewhere.
     /// </summary>
     public static string ReasoningIgnore(string targetPhrase, bool isReminescence = false)
@@ -183,8 +229,7 @@ public static class NeutralNarration
 
     /// <summary>
     /// The same refusal when a coded rule made it (<c>WillingnessOptions.ImposedRefusal</c>). The reason
-    /// is part of the sentence: the persona never reasoned its way to it, so there is no inner thought
-    /// to carry it, and a reason left to the rewrite is the first thing a strong style drops.
+    /// is part of the sentence: nothing else in the prompt carries it, and a reason left to the rewrite is the first thing a strong style drops.
     /// </summary>
     public static string ActionRefusal(string verbVerbatim, string reason)
         => $"I don't want to {FirstPerson(verbVerbatim)}: {FirstPerson(reason)}.";
@@ -520,6 +565,33 @@ public static class NeutralNarration
         return words[^1].ToLowerInvariant().Trim('.', ',', '!', '?', '"', '\'', '(', ')');
     }
 
+    // ── Names in a neutral sentence ────────────────────────────────────────────
+    //
+    // A display name is title-cased for the screen ("Wadi", "Trailcraft", "Pig"), and a neutral
+    // sentence that pastes it in reads like a proper name — which the rewrite then copies: "I made my
+    // way to Wadi, learned Trailcraft." Only a real proper name keeps its capital. Which is which is
+    // decided by TYPE, never by capitalisation: NounPhrase's capital test cannot tell "Wadi" from
+    // "Hugh Furrow", and every display name would pass it.
+
+    /// <summary>An area as a sentence names it: "the wadi", "the cooper's workshop", "the tar street".
+    /// Areas are places, not names — the same convention as the move goal ("walk to the tar street")
+    /// and the situation line ("in the salt pan").</summary>
+    public static string AreaPhrase(string displayName) => $"the {displayName.Trim().ToLowerInvariant()}";
+
+    /// <summary>A modus mentis as a sentence names it: "trailcraft", "keen ear" — a craft, not a person.</summary>
+    public static string ModusMentisPhrase(string displayName) => displayName.Trim().ToLowerInvariant();
+
+    /// <summary>
+    /// Somebody as a sentence names them (<see cref="Cathedral.Game.Npc.NpcLabelResolver.ShortLabel"/>):
+    /// a person by their proper name once introduced and by their role before — "the reeve" — a beast
+    /// and shallow wildlife by their kind, "the hyena", "the pig".
+    /// </summary>
+    public static string NpcPhrase(Cathedral.Game.Npc.INpcEntity npc, Cathedral.Game.Narrative.PartyMember? actor = null)
+        => Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc, actor);
+
+    /// <summary>"the hairpin" — an item named on its own, definite, lower-cased as <c>Item.WithArticle</c> is.</summary>
+    public static string ItemPhrase(string displayName) => $"the {displayName.Trim().ToLowerInvariant()}";
+
     // ── Noun-phrase normalisation ──────────────────────────────────────────────
 
     private static readonly HashSet<string> Determiners = new(StringComparer.OrdinalIgnoreCase)
@@ -562,8 +634,7 @@ public static class NeutralNarration
         // Decide whether a leading article is needed.
         var words = s.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         bool hasDeterminer = words.Take(3).Any(w => Determiners.Contains(w.Trim('-')));
-        string last = words[^1].ToLowerInvariant();
-        bool looksPlural = last.Length > 2 && last.EndsWith("s") && !last.EndsWith("ss");
+        bool looksPlural = HeadIsPlural(s);
 
         if (!hasDeterminer && !looksPlural)
         {
@@ -571,6 +642,28 @@ public static class NeutralNarration
             s = $"{article} {s}";
         }
         return s;
+    }
+
+    /// <summary>
+    /// Whether a phrase's head noun is plural. The head is the last word before the first
+    /// preposition or comma — "rows of radishes in crumbled soil" is about rows, not soil. Reading
+    /// the phrase's last word instead put "a" in front of "rows of radishes in crumbled soil".
+    /// </summary>
+    private static bool HeadIsPlural(string phrase)
+    {
+        var head = Regex.Split(phrase, @",|\s(?:of|in|on|with|under|at|by|between|from|among|over|along|against|beside|near|round|around)\s")[0];
+        var words = head.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (words.Length == 0) return false;
+        string last = words[^1].ToLowerInvariant().Trim('\'', '-');
+        return last.Length > 2 && last.EndsWith("s") && !last.EndsWith("ss") && !last.EndsWith("us") && !last.EndsWith("is");
+    }
+
+    /// <summary>A noun phrase that starts with no article and whose head is plural ("rows of radishes").</summary>
+    private static bool IsPluralPhrase(string phrase)
+    {
+        var first = phrase.Split(' ', 2)[0].ToLowerInvariant();
+        if (first is "a" or "an" or "the" or "this" or "that") return false;
+        return HeadIsPlural(phrase);
     }
 
     private static bool IsCapitalizedWord(string w)

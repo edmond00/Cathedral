@@ -5,9 +5,8 @@ namespace Cathedral.Game.Narrative;
 
 /// <summary>
 /// Shared situational context for the thinking pipeline's choice prompts (goal, skill, persona-fit,
-/// observation focus). The choices themselves run through <see cref="PersonaChoiceSelector"/> —
-/// persona reasoning mapped by the neutral <see cref="PersonaMatchCritic"/> — and the persona lives
-/// in the slot's system prompt, so all a prompt needs from here is <see cref="SituationLine"/>.
+/// observation focus). The choices themselves run through <see cref="PersonaChoiceSelector"/> and the
+/// neutral <see cref="ChoiceJudge"/>, so all a prompt needs from here is <see cref="SituationLine"/>.
 /// </summary>
 public class ThinkingPromptConstructor
 {

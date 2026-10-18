@@ -42,7 +42,7 @@ public class NegativeAffinityDialogueRule : IActionRule
         {
             if (ToleratedByEnemies.Contains(verbId)) return ActionRuleResult.Pass();
             return ActionRuleResult.Fail(
-                $"{npc.DisplayName} is hostile and will not listen to you.");
+                $"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(npc, ctx.Actor)} is hostile and will not listen to you.");
         }
 
         // ── AnnoyingAcquaintance: only reconcile is allowed ───────────────────

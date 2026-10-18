@@ -51,7 +51,19 @@ public static class CaughtRedHandedTreeFactory
     /// directly by the game controller when witness confrontation is triggered.
     /// </summary>
     public static DialogueTree Create(CriminalAffinityType criminalType)
-        => new CaughtRedHandedTree(criminalType);
+        => new CaughtRedHandedTree(criminalType, cameForward: false);
+
+    /// <summary>
+    /// The same confrontation, opened by the accused rather than by the witness: they walked up and
+    /// offered an explanation before being collared (<c>explain_myself</c>). Every branch end is one
+    /// step easier than the <see cref="BranchDifficulty.Hard"/> ladder — somebody who comes forward
+    /// is already halfway to being believed. Never easier than a single six.
+    /// </summary>
+    public static DialogueTree CreateCameForward(CriminalAffinityType criminalType)
+        => new CaughtRedHandedTree(criminalType, cameForward: true);
+
+    /// <summary>Whether <paramref name="tree"/> is a confrontation the accused opened themselves.</summary>
+    public static bool IsCameForward(DialogueTree? tree) => tree is CaughtRedHandedTree { CameForward: true };
 
     // ── Private concrete tree ─────────────────────────────────────────────────
 
@@ -88,9 +100,13 @@ public static class CaughtRedHandedTreeFactory
 
         private readonly CriminalAffinityType _criminalType;
 
-        internal CaughtRedHandedTree(CriminalAffinityType criminalType)
+        /// <summary>Opened by the accused (<see cref="CreateCameForward"/>): one step easier throughout.</summary>
+        public bool CameForward { get; }
+
+        internal CaughtRedHandedTree(CriminalAffinityType criminalType, bool cameForward)
         {
             _criminalType = criminalType;
+            CameForward   = cameForward;
 
             // Two shared outcome sets. Apologise, lie and deflect are three routes to the same
             // success; a rejected apology, a caught-out lie, a disbelieved deflection and any
@@ -116,7 +132,7 @@ public static class CaughtRedHandedTreeFactory
                               string failure, string failureIndirect,
                               params System.Type[] lessons) => new(
                 nodeId:                 id,
-                difficulty:             BranchDifficulty.Hard(depth),
+                difficulty:             System.Math.Max(1, BranchDifficulty.Hard(depth) - (cameForward ? 1 : 0)),
                 successReplica:         success,
                 successReplicaIndirect: successIndirect,
                 failureReplica:         failure,

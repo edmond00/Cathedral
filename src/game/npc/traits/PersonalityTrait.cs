@@ -123,9 +123,9 @@ public class PersonalityTrait
         // instead would quietly erase every NPC's backstory after one long work stint.
         //
         // Refused when the body does not own the wound, exactly as NpcSkillGrant refuses a skill the
-        // anatomy cannot learn. Expected, not exceptional: global traits are dealt to every anatomy,
-        // and eight of the sixty carry a human wound, so a quarter of every beast in the game used to
-        // be given one. It is inert in play — a wolf's broken knee penalises nothing — which is why
+        // anatomy cannot learn. Global traits once went to every anatomy, and eight of the sixty carry
+        // a human wound, so a quarter of every beast in the game used to be given one; they are dealt
+        // to people only now (PersonalityTraitRegistry.Deal), and this guard stays for the rest. It is inert in play — a wolf's broken knee penalises nothing — which is why
         // it went unnoticed until it reached a save file, where PartyState.Rebuild resolves against
         // the beast catalogue, finds no such wound and refuses the whole load. An archetype's OWN
         // trait naming the wrong anatomy is the real fault, and --npc-audit reports that one by name.

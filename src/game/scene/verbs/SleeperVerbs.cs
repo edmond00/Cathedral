@@ -136,7 +136,7 @@ public static class SleeperGate
 
     /// <summary>The sleeper's name, for verbatims that must read before the merge is understood.</summary>
     public static string Name(Element target)
-        => target is SleepingNpcPointOfInterest merged ? merged.Sleeper.Entity.DisplayName
-         : target is SceneNpc npc                      ? npc.Entity.DisplayName
+        => target is SleepingNpcPointOfInterest merged ? Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(merged.Sleeper.Entity)
+         : target is SceneNpc npc                      ? Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc.Entity)
          : "them";
 }

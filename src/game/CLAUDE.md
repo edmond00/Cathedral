@@ -21,8 +21,8 @@ character is worse than a refused load when there is only one save.
 
 Six things: the master seed, the **world variant**, the clock, the avatar's vertex,
 `Dictionary<int, LocationInstanceState>` verbatim, and the party. Nothing else feeds a scene build —
-the world is a pure function of the seed and the variant, a scene of its location id, and the time of
-day is drawn fresh on every arrival.
+the world is a pure function of the seed and the variant, a scene of its location id, and so is the hour a
+visit opens at (`SceneFactory.ArrivalPeriodFor`, a daytime period hashed from the id).
 
 A seventh field is a check rather than a fact: **`HistoryHash`**, the fingerprint of the world's
 generated history. The history itself is regenerated with the terrain (see
@@ -495,12 +495,18 @@ no knees. It then goes into the save verbatim, and `PartyState.Rebuild` resolves
 body's **own** catalogue and fails closed: one such wound, taken at generation and never noticed,
 makes the whole save unloadable a dozen sessions later.
 
-That is not hypothetical. Global personality traits are dealt to every anatomy and eight of the
-sixty carry a human wound, so roughly **one beast in four** was given one; taming it and saving cost
-the run. `PersonalityTrait.ApplyGameplay` now refuses the wound and logs it, exactly as
-`NpcSkillGrant` refuses an unlearnable skill — expected for a global trait, a content fault for an
-archetype's own, which `--npc-audit` names. There is deliberately no translation to a beast
-equivalent: nothing sensibly maps a missing finger onto a wolf.
+That is not hypothetical. Global personality traits used to be dealt to every anatomy and eight of
+the sixty carry a human wound, so roughly **one beast in four** was given one; taming it and saving
+cost the run. `PersonalityTrait.ApplyGameplay` refuses the wound and logs it, exactly as
+`NpcSkillGrant` refuses an unlearnable skill — and an archetype's own trait doing it is a content
+fault `--npc-audit` names. There is deliberately no translation to a beast equivalent: nothing
+sensibly maps a missing finger onto a wolf.
+
+**The global trait pool is now dealt to people only** (`PersonalityTraitRegistry.Deal`). Refusing
+the wound was not enough, because a trait is two-sided and its *text* still landed: a hyena was
+described with "hands that look like they have set a great many small broken things" and dressed
+"with more care than the work warrants". Every global trait is written about a person; a beast gets
+its archetype's traits, if any.
 
 ### A wound takes a modus mentis away, not just its growth
 
@@ -608,8 +614,77 @@ hands out a fresh set per access** — `SuccessOutcomes => new[] {…}`, express
 `{ get; } = …`. Trees are singletons in `DialogueTreeRegistry`, so an initialised auto-property would
 share one mutable outcome object across every conversation in the process.
 
+**A `Verbatim` never pastes a raw `DisplayName`.** Display names are title-cased for the screen,
+and a neutral sentence that carries one reads as a proper name the rewrite then copies — "I made my
+way to Wadi, learned Trailcraft." Name things through `NeutralNarration.AreaPhrase` ("the wadi"),
+`ModusMentisPhrase` ("trailcraft"), `NpcPhrase` (see below) and `ItemPhrase` / `Item.WithArticle`.
+Which is a proper name is decided by **type**: `NounPhrase`'s capital test cannot tell "Wadi" from
+"Hugh Furrow". The chip (`Text`) keeps the display name of a place or an item — it is read on screen
+beside the memory panel.
+
+**An NPC's proper name is not known until they give it.** Every sentence the player reads about an
+NPC — a verbatim, a chip, a rule's refusal, a segment caption, a menu title, the dialogue header —
+names them through `NpcLabelResolver.ShortLabel` (or `NpcPhrase`, which is the same thing): a person
+by their role until the acting member has been introduced ("the reeve"), by name after; a beast and
+shallow wildlife always by their kind ("the hyena", "the pig"). The observation prompts use the
+longer `NpcLabelResolver.Resolve`, which follows the same two rules. A raw `npc.DisplayName` in such
+a sentence is a leak — the threat refusal once read "under the threat of Ashgorge right here" about a
+hyena nobody had met. Logs and the companion's own chips ("Joined you: …") keep the name.
+
 `Report(text)` settles that wording and sets `Reported`; an outcome that never reports changed nothing
 observable, and `ShowInUI` follows. That replaced returning `null` from `Apply`.
+
+### How a modus mentis chooses: the choice judge
+
+Six bounded decisions — which object to attend to, whether to keep a handed focus, the goal, the
+means, the willingness, the dialogue reply — go through `PersonaChoiceSelector` to **`ChoiceJudge`**:
+one neutral slot per `ChoiceKind`, each with its own system prompt, reading the modus mentis's
+`DisplayName`, `MenuDescription` and `PersonaTone` (and, for a means, `SkillMeans`). The persona's
+voice is heard only in the rewrite that narrates the choice.
+
+**The decision is read from the scores of every letter, not from a sampled one** (one forward pass,
+`LlamaServerManager.GetFirstTokenLogProbsAsync`, no grammar). Most kinds take the likeliest letter;
+the goal's decline and the willingness scale use log-odds thresholds (`ChoiceJudge`'s constants),
+which took the bench from 92.3% to 94.5% and spread the four willingness degrees evenly where the
+likeliest letter almost never said "eager". Willingness is therefore not a pick from a list at all:
+`JudgeWillingnessAsync` always reads the whole scale and the caller narrows the answer to what the
+rules leave on offer. The model is near-certain on ~90% of answers, wrong ones included, so a
+confident mistake is fixed in the descriptions and the prompts, never by a threshold.
+
+**Invoke the `choice-judge` skill before adding or editing a modus mentis or a judge.** It has the
+writing rules both must follow — the judge matches words before natures, so a description that says
+"waits" picks "sit and wait" — and `tools/judge/`, the labelled benchmark and the description audit
+that measure them against the shipped model.
+
+It replaced a two-stage pass: the modus mentis answered in its own voice first (free text, shown dim
+in the preview box and passed to the rewrite as an "inner thought"), and a neutral matcher mapped the
+answer onto the list. Measured on CPU with the shipped model, that was ~3.2 s a decision against
+~0.9 s, less accurate and much less stable — the free text drifted toward the model's own
+preferences (a cruel mind bribing its way past a guard, a covetous one never stealing), and the
+matcher faithfully carried the drift through. Three things went with it and should not come back
+piecemeal: `PersonaMatchCritic`, the `innerThought` hint on `PersonaRewriter`, and the "free"
+segment kind in the preview box.
+
+Things to know:
+
+- **A willingness scale is listed in order** (eager → unwilling, refusal last) and never shuffled;
+  every other list is shuffled with the decline last.
+- **Every decision logs its log-odds** (`ChoiceJudge:` lines). The willingness splits are bench
+  medians and the game's real mix of acts differs, so these lines are what to re-tune them from.
+- **How a question is put matters more than what it says.** Asked "keep it, or turn elsewhere?", the
+  keep-focus judge turned away from 72% of everything; asked whether the thing "holds anything for
+  this faculty", yes or no, it kept 51% and judged every labelled case right. Asked "how
+  willingly?", the willingness judge called a cutpurse reluctant to pick a pocket. Benchmark a
+  rewording against labelled cases before shipping it; a bias like the first one only shows over many
+  calls.
+- **A refused focus is not a dead end.** The modus mentis picks another unobserved object (no
+  decline), and the dismissal and the new observation are one neutral text, rewritten together; the
+  keyword is the new object's, filtered so no word naming the dismissed one can be chosen. Only with
+  nothing left unobserved does the keyword-less "not interested" block remain. `--refuse-focus`
+  forces the branch, since `--playground` never declines; `cli/system/focus_turned_away.cli`.
+- **The selector used to reset the modus mentis's slot** before every choice. Rewrites that keep
+  history (`keepHistory: true`) relied on that to stay bounded, so the observation follow-ups and the
+  dialogue replies now reset the slot themselves at the same points.
 
 ### The economy of a narration phase: noetic points and the two ledgers
 
@@ -644,14 +719,28 @@ budget reaches, and they were designed together — changing one alone re-breaks
     before each thinking request, so the `VerbAction` recorded and the one filtered are never the
     same object. Recorded when the button reaches the screen, so a goal the *action* modus mentis
     refused stays available — that refusal was one mind's, and asking again with another is the move
-    that should work.
+    that should work. **Not to the thinking modus mentis that chose it**, though: `Refuse` records
+    the goal against that mind (by instance), and `NotRefusedFor` drops it from that mind's later
+    goal lists in the phase, since the same mind would converge on it and be refused again.
+    **A second attempt by another mind is not left to be refused either** (`WasRefused`): the goal
+    is withheld from everyone when no held action modus mentis passes the willingness rules for it
+    (`ThinkingExecutor.CanCarryOut`, a silent `ChoiceRuleContext.Probe`), and otherwise the means
+    pool is narrowed to those that pass and the decline option is dropped.
+    `cli/system/thinking_refused_goal_per_mind.cli` covers the possible branch; the impossible
+    branch has no script, because the `--skip-childhood` kit at seed 42 already holds an observing
+    action modus mentis and no flag removes one.
 
-The compensations for a smaller pool are that last rule plus a **visible decline**: the goal choice
-offers "do something else entirely" to the persona itself, not only to the match critic as a hidden
-catch-all. With the goal list shrinking request by request, a mind left holding two leftovers it
+The compensations for a smaller pool are that last rule plus a **decline**: the goal choice offers
+"do something else entirely" as a real answer. With the goal list shrinking request by request, a mind left holding two leftovers it
 cares nothing for needs a way to say so instead of committing to one. When the list empties
 completely the ignore branch fires with no question asked at all — the same "nothing here worth
 doing" line in the thinking modus mentis's voice.
+
+**The two opening phases offer no stop at all.** In the childhood reminescence and the get-up phase
+the goal choice has no "do something else entirely", the observation choices no "let your focus go",
+and the keep-focus question is never asked (`ObservationPhaseController.MustCommit`, and
+`ChooseGoalAsync(offerDecline: !autoSuccess)`). Their one verb is the only way onward, so a mind
+that stopped left the player hunting for a keyword that reached the rest.
 
 **A player who spends the pool without succeeding can only leave.** Keyword clicks are gated on
 `ThinkingAttemptsRemaining > 0`, so at zero the footer LEAVE button is the way out. That is the
@@ -958,6 +1047,13 @@ it. The verb's own half is `protected IsIllegalFor`. What that buys:
 - `attack` / `slay` against somebody who **already counts you an enemy** is not a crime — the quarrel
   was declared before the blow. `murder` (on a sleeper) stays unconditional: a sleeper has declared
   nothing;
+- `attack` / `slay` against a **beast on wild ground** is hunting, not a crime
+  (`PrivacyModel.IsHunting`). An area's `Tenure` is `Private`, `Public` or `Wild`; factories set the
+  first two (`IsPrivate` is a view onto it), and `SceneFactory.MarkWilderness` stamps `Wild` on every
+  public area of a factory whose `IsWilderness` is true (plain, forest, cave, coast, mountain, peak,
+  every `ClimateSceneFactory`) — except `scene.Stores`, since a woodshed is somebody's stock. On public
+  ground the same beast is somebody's (the farm's pig) and the blow stays a crime. People are never
+  game: crimes against them do not read the tenure;
 - `unlock_door`, `slip_into` and `break` ask `PrivacyModel.ReachesPrivateArea(scene, target)`, **not
   `pov.Where`**. A house door is listed in the street's PoIs *and* the room's, so reading the actor's
   own area would call a burglary from the street lawful. A public storehouse's lock is nobody's
@@ -977,12 +1073,22 @@ Morality now has four distinct behaviours, two per side of the chain:
 
 | | thinking MM | action MM |
 |---|---|---|
-| **High** | crimes are dropped from its goal list (`HighMoralityAvoidsCrimeRule`) — filtering everything away is a legitimate result and reads as ignore | refuses outright (`IllegalActionHighMoralityRule`) |
+| **High** | crimes are dropped from its goal list (`HighMoralityAvoidsCrimeRule`) — filtering everything away is a legitimate result and reads as ignore | refuses while the action is thought out, before any button (`HighMoralityRefusesCrimeRule`); `IllegalActionHighMoralityRule` remains as a backstop for paths that skip willingness |
 | **Low** | if any goal on offer is a crime, **only** the crimes are offered (`LowMoralityPrefersCrimeRule`) | cannot refuse — the decline option is withheld, leaving eager/willing/reluctant (`LowMoralityNeverRefusesCrimeRule`) |
 
 Both sides are needed because the goal and the means are two separate LLM decisions: a scrupulous
 skill can still be picked to carry out a goal some other modus mentis chose. Note `MoralLevel` is read
 **only** off these two — R13 makes a non-Medium value on anything else fatal.
+
+**A Speaking modus mentis puts conversation first** (`SpeakingPriority`, `rules/choice/SpeakingRules.cs`),
+at each stage it holds: observing, it attends only to living humans while any are among the candidates
+and never turns away from one it is handed (`ObservationPhaseController`; `--refuse-focus` still wins);
+thinking, only the `DialogueVerb` goals are offered when any is (`SpeakingMindPrefersDialogueRule`,
+registered **after** `LowMoralityPrefersCrimeRule` so an unscrupulous speaker keeps its crimes); the
+means of a dialogue goal are narrowed to speaking action MMs when any is held (`ThinkingExecutor`); and
+a speaking action MM loses the decline on a dialogue goal, reluctance kept
+(`SpeakingActionNeverRefusesDialogueRule`). All of it runs under `--playground` too, so a script that
+pins a non-dialogue goal on a person, or a non-speaking means for a conversation, can find its pin gone.
 
 **Getting caught is deterministic, and it is two separate questions.** Keeping them apart is what
 makes discreteness mean something:
@@ -1000,7 +1106,7 @@ Three rungs of one ladder, identical for witnesses and enemies except in what th
 | effective | witness | enemy |
 |---|---|---|
 | **Visual** | caught red-handed → the tree | they attack, on their initiative |
-| **Audio** | **they come to look** — `Scene.DrawNpcTo` moves them into your area | same |
+| **Audio** | **they come to look** — `NpcDrawnInOutcome` (chip and narration line) moves them into your area through `Scene.DrawNpcTo` | same |
 | **None** | nothing | nothing |
 
 **The Audio rung is an approach, not a verdict.** Nothing is confronted yet; what it costs is that
@@ -1013,6 +1119,24 @@ beast's stale observation object is. `Scene.DisplacedNpcs` is consulted inside `
 the exit button follow without knowing it exists. A displaced NPC also reads as going nowhere all day,
 so `stalk` correctly declines to follow them. One visit's business — what outlasts it is whatever the
 confrontation turned into.
+
+**A witness who came for you confronts you — the witness-side twin of an enemy in the room.**
+`ConfrontationSelector.Confronter` is the one place it is decided: a non-enemy speaking NPC in your
+area who is displaced (drawn in by a heard crime), or the Visual witness on private ground. A person
+merely standing in a public square confronts nobody. Three things read it and must not disagree:
+`ConfrontedImpossibleRule` (every verb refused but `CanBeUsedWhenConfronted` — attack, slay,
+`explain_myself` — unless
+the MM `ActsDiscretely`); the failure ladder (`ActionEvaluationResult.Confronter`: **any** failed act,
+lawful or not, is caught red-handed, ahead of the witness rung); and the exit (`RunawayWitness`).
+The crime the confrontation names is `ConfrontationSelector.CrimeFor` — what a drawn-in witness heard
+(`Scene.HeardCrimes`, written by `NpcDrawnInOutcome`), else the verb's `CrimeKinds.Of`, else
+trespass. `OnDialogueCompleted` releases a drawn-in witness back to their schedule unless the
+conversation made them an enemy. Before this, walking to the next area ended a heard crime for the
+price of one move. `cli/system/confronted_witness.cli` and `cli/outcome/npc_drawn_in/witness.cli`.
+`explain_myself` (offered only on the confronter) opens the same tree through
+`CaughtRedHandedTreeFactory.CreateCameForward`: every branch end one six easier than the Hard ladder,
+never below one; failing its roll is a slip in front of the confronter, so the ordinary tree opens.
+`DialogueRequest` carries a prebuilt tree for it, which a verb-opened conversation used to drop.
 
 An arrival opens the next observation phase, **ahead of the corpse opener** (both are one-shot events,
 but an arrival is the newest and has just changed what is safe to do), and only if they are still in
@@ -1284,6 +1408,26 @@ A verb that joins this set must also be named in `VerbAudit`'s `unreachable` tab
 `VerbProbe.WhyUnreached`: the sweeps build scenes with no instance state, so their stand-in actor is
 a stranger to everyone and an affinity-gated verb is *correctly* never offered.
 
+### Every visit opens at the place's own hour
+
+**A location's arrival period is fixed** — `SceneFactory.ArrivalPeriodFor(locationId)`, one of the
+five daytime periods, hashed from the id and **not** drawn from the build generator (a draw there would
+move every room, name and person of every location). `Scene.ArrivalPeriod` carries it; only
+`StartNarrativeInteraction` passes it, so the childhood, the get-up and a routine (which opens at its
+own hour) are untouched, and `--period` still wins. `StartObservationPhase` keeps making the old
+random draw and discards it, so every later roll of a seeded run is unchanged.
+
+**Fixing it is what makes a settlement greet you cheaply.** Measured before the change, the area a
+visit opens in held a person by day 40% of the time in a village and 6% at a stable, with a dozen
+people indoors. `EnsureArrivalCompany` (on for `SettledSceneFactory` and the farm, through
+`GuaranteesArrivalCompany`) moves **one period of one schedule** into the arrival area when nobody is
+there, choosing in order: someone out of doors in that section, anyone out of doors, someone in a
+private room / not alone in a public one / a trader whose counter a fellow trader keeps and who keeps
+it at another hour, someone away, and last the lone person in a household hall that is manned every
+other daytime period. Never the sole keeper of a counter or store. Runs after `DropDepartedNpcs`, so a
+departed greeter is replaced, and is skipped under `--npc-static`. `--building-audit` warns when it
+fails with somebody to spare and prints the coverage per factory.
+
 ### Trade happens on premises
 
 `TradeGate.CanTrade` asks two questions: **is the player standing in one of the trader's
@@ -1301,7 +1445,7 @@ hand-off. The destination is `TradeGate.NextOnPremises`: the first period, from 
 at which the trader's schedule puts them on their premises; a later period is reached through
 `ApplyTimePeriod`, as waiting reaches it. Not offered when that search finds nothing — and so never
 under `--npc-static`, which pins everyone to one area. Its scripts run on the farm
-(`--location-type farm --location-id 1`, poultry keeper at the Duck Pond in the afternoon), since in
+(`--location-type farm --location-id 1`, poultry keeper in the Courtyard in the afternoon), since in
 the test location everyone trades wherever they stand and so is never off their premises.
 
 **Empty premises means trades nowhere, not everywhere.** The scene factory fills them at spawn

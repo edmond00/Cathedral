@@ -168,8 +168,8 @@ public class DialogueTreeUI : TerminalPanelUI
     /// <summary>The generating-status message for the current loading state, or null when idle.</summary>
     private string? BuildGeneratingText(DialogueSessionState state)
     {
-        if (state.IsLoadingReaction)   return $"{_npc.DisplayName} reacts…";
-        if (state.IsLoadingNpcReplica) return $"{_npc.DisplayName} is thinking…";
+        if (state.IsLoadingReaction)   return $"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(_npc)} reacts…";
+        if (state.IsLoadingNpcReplica) return $"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(_npc)} is thinking…";
         if (state.IsLoadingOptions)    return state.OptionsTotal > 0
             ? $"Thinking of replies… ({state.OptionsLoaded}/{state.OptionsTotal})"
             : "Thinking of replies…";
@@ -184,7 +184,7 @@ public class DialogueTreeUI : TerminalPanelUI
 
         // Left: NPC name
         _terminal.Text(_layout.CONTENT_START_X, y,
-            $"• {_npc.DisplayName}",
+            $"• {Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(_npc)}",
             Config.NarrativeUI.HeaderColor, Config.NarrativeUI.BackgroundColor);
 
         // Centre: affinity label

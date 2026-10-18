@@ -262,6 +262,34 @@ public static class Config
         public static bool Silent { get; set; } = false;
 
         /// <summary>
+        /// Runs without the GloVe word vectors (<c>models/embeddings/glove.6B.100d.txt</c>) instead of
+        /// exiting for want of them. Set by <c>--no-embeddings</c>.
+        ///
+        /// <para>For a machine that cannot have the file: a CI runner or container that does not fetch
+        /// 822 MB, or a sandbox whose network policy blocks the download. Keyword ranking then takes the
+        /// path it already takes before the vectors finish loading — by word length — so a
+        /// <c>--playground</c> script sees what it would see racing an unfinished load. <c>wait
+        /// embeddings</c> returns at once and says so.</para>
+        ///
+        /// <para>Inert at its default of false: without the flag a missing file still ends the run.</para>
+        /// </summary>
+        public static bool NoEmbeddings { get; set; } = false;
+
+        /// <summary>
+        /// Which audio path to take (<c>--audio winmm|openal</c>). Null means the platform's own:
+        /// WinMM and the system MIDI synth on Windows, OpenAL with an in-process SoundFont synth
+        /// everywhere else. Exists so the OpenAL path can be heard on Windows beside the one players
+        /// have always had. Inert at its default of null. See <see cref="Cathedral.Audio.AudioOutput"/>.
+        /// </summary>
+        public static Cathedral.Audio.AudioBackend? AudioBackend { get; set; } = null;
+
+        /// <summary>
+        /// A SoundFont to use instead of <c>assets/audio/soundfont.sf2</c> (<c>--soundfont &lt;file&gt;</c>),
+        /// for comparing candidates on the OpenAL path. Inert at its default of null.
+        /// </summary>
+        public static string? SoundFontPath { get; set; } = null;
+
+        /// <summary>
         /// Opens the game window but never shows it. Set by <c>--hidden</c>; <c>run_tests.sh</c>
         /// passes it on every script, for the same reason it passes <c>--silent</c>: a full run
         /// launches the game a hundred-odd times, and each launch otherwise puts a window on screen
@@ -481,6 +509,17 @@ public static class Config
         /// is otherwise at the mercy of which of the kit's action modi mentis the draw picks.</para>
         /// </summary>
         public static string? MeansOnly { get; set; } = null;
+
+        /// <summary>
+        /// Every focus observation's modus mentis turns away from the clicked object, as if the choice
+        /// judge had answered "turn elsewhere". Set by <c>--refuse-focus</c>. False (the default) asks
+        /// the judge.
+        ///
+        /// <para><c>--playground</c> never declines a choice, so without this the turned-away branch —
+        /// the dismissal rewritten together with the object it turned to — cannot be reached by a
+        /// script at all.</para>
+        /// </summary>
+        public static bool RefuseFocus { get; set; } = false;
     }
 
     #endregion
@@ -503,8 +542,8 @@ public static class Config
             "Proscribed Palimpsest";
 #endif
 
-        public const string Chapter = "Volume 3";
-        public const string ChapterSubtitle = "Chorography of the Lesser Moons";
+        public const string Chapter = "Volume 4";
+        public const string ChapterSubtitle = "Of Deliberation and Its Judge";
     }
 
     /// <summary>
@@ -1634,20 +1673,6 @@ public static class Config
         /// </summary>
         public const int ObservationTwoKeywordsThreshold = 400;
 
-        /// <summary>
-        /// How related to the observed object a word must be before it is treated as an equally good
-        /// handle on it. Every candidate at or above this score goes into a pool the keyword is drawn
-        /// uniformly from; below it, the best-scoring word is simply taken. Scored by
-        /// <c>KeywordExtractor</c> as similarity minus centrality, so this is on that scale.
-        ///
-        /// <para>0.25 measured as the point that admits the words genuinely about the object and
-        /// excludes the merely co-occurring: a hearth's pool is <c>hearth, stone</c>, a roof's is
-        /// <c>roof, thatch, slope, sky</c>, an anvil's is <c>anvil, hammer</c>. At 0.15 the marginal
-        /// ones creep in (<c>village</c> for a roof); at 0.35 most objects collapse to one choice and
-        /// the sampling stops doing anything. A pool of one is a correct outcome, not a failure —
-        /// a pallet lying in straw has nothing else in the sentence that is about the pallet.</para>
-        /// </summary>
-        public const double KeywordSamplingThreshold = 0.25;
 
         /// <summary>Length clause used for single-sentence rewrites (the default).</summary>
         private const string OneSentenceClause = "Answer in one short sentence and stop.";

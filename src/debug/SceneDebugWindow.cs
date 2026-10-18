@@ -1,3 +1,4 @@
+#if WINDOWS
 using Label       = System.Windows.Forms.Label;
 using Orientation = System.Windows.Forms.Orientation;
 using FontStyle   = System.Drawing.FontStyle;
@@ -702,3 +703,5 @@ public class SceneDebugWindow : Form
         _stateBox.Text = string.Join(Environment.NewLine, lines);
     }
 }
+
+#endif

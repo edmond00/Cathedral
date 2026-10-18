@@ -467,21 +467,17 @@ public abstract class TerminalPanelUI
         int textEndY   = buttonY - 2; // leave (at least) one blank row above the button
         int maxRows    = Math.Max(0, textEndY - textStartY + 1);
 
-        // Wrap each segment to the box width, tagging every wrapped line with its kind so free reasoning
-        // renders dimmer. Free reasoning (the persona's unconstrained inner thought) is parenthesized by
-        // the snapshot already.
-        var lines = new List<(string Text, bool IsFree)>();
+        // Wrap each segment to the box width.
+        var lines = new List<string>();
         foreach (var seg in state.Segments)
-            foreach (var wl in WrapText(seg.Text, innerW))
-                lines.Add((wl, seg.IsFree));
+            lines.AddRange(WrapText(seg.Text, innerW));
 
         // Auto-scroll: drop the oldest lines so the most recently streamed text stays visible; the
         // clip to maxRows keeps the blank row above the button intact even as the text grows.
         int first = Math.Max(0, lines.Count - maxRows);
         for (int i = first; i < lines.Count; i++)
         {
-            Vector4 col = lines[i].IsFree ? Config.Colors.DarkGray35 : Config.NarrativeUI.NarrativeColor;
-            _terminal.Text(innerX, textStartY + (i - first), lines[i].Text, col, black);
+            _terminal.Text(innerX, textStartY + (i - first), lines[i], Config.NarrativeUI.NarrativeColor, black);
         }
 
         if (state.Complete)

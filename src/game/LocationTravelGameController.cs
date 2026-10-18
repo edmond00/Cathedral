@@ -1380,18 +1380,18 @@ public class LocationTravelGameController : IDisposable
             }
         });
 
-        // Persona-match critic: the shared neutral instance that maps each persona's free-text want to
-        // one of the offered options (see PersonaChoiceSelector). Own slot, initialised once.
+        // Choice judge: the neutral slots, one per decision kind, that decide what a modus mentis
+        // chooses (see PersonaChoiceSelector). Initialised once.
         _ = Task.Run(async () =>
         {
             try
             {
-                await Cathedral.Game.Narrative.PersonaMatchCritic.InitializeAsync(llamaServer);
-                Console.WriteLine("LocationTravelGameController: PersonaMatchCritic initialized");
+                await Cathedral.Game.Narrative.ChoiceJudge.InitializeAsync(llamaServer);
+                Console.WriteLine("LocationTravelGameController: ChoiceJudge initialized");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"LocationTravelGameController: Failed to initialize PersonaMatchCritic - {ex.Message}");
+                Console.WriteLine($"LocationTravelGameController: Failed to initialize ChoiceJudge - {ex.Message}");
             }
         });
 
@@ -4556,7 +4556,7 @@ public class LocationTravelGameController : IDisposable
         if (startAreaKey != null && startTime != null)
             _narrativeController!.StartAtArea(startAreaKey, startTime.Value, focusNpcId);
         else
-            _narrativeController!.StartObservationPhase();
+            _narrativeController!.StartObservationPhase(arrivalPeriod: _narrativeController.Scene?.ArrivalPeriod);
 
         Console.WriteLine("LocationTravelGameController: Phase 6 narrative interaction started");
     }
@@ -5904,7 +5904,7 @@ public class LocationTravelGameController : IDisposable
         // OnEnterLocationInteraction's redraw, then open a new segment. The scene is untouched, so
         // the corpses spawned by OnFightCompleted are described by the new observation pass.
         SetMode(GameMode.LocationInteraction);
-        _narrativeController.BeginNarrationSegment($"after the fight with {npc.DisplayName}");
+        _narrativeController.BeginNarrationSegment($"after the fight with {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc)}");
     }
     
     /// <summary>
@@ -5931,7 +5931,7 @@ public class LocationTravelGameController : IDisposable
             _dialogueAdapter = null;
             Console.WriteLine($"LocationTravelGameController: NPC {npc.DisplayName} demanded fight — entering fight mode"
                             + (provoked ? " (personal — no allies)" : ""));
-            var fightOutcome = new FightTriggerOutcome(npc, $"confrontation with {npc.DisplayName}");
+            var fightOutcome = new FightTriggerOutcome(npc, $"confrontation with {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc)}");
             StartFightMode(fightOutcome, soloEnemy: provoked);
             return;
         }
@@ -6002,7 +6002,7 @@ public class LocationTravelGameController : IDisposable
         // footer would otherwise bleed through into the narration frame.
         _core.Terminal?.Clear();
         SetMode(GameMode.LocationInteraction);
-        _narrativeController.BeginNarrationSegment($"after talking with {npc.DisplayName}");
+        _narrativeController.BeginNarrationSegment($"after talking with {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc)}");
     }
 
     /// <summary>
@@ -6080,7 +6080,7 @@ public class LocationTravelGameController : IDisposable
             mode:        mode,
             terminal:    _core.Terminal);
 
-        _narrativeController.CloseNarrationSegment($"trading with {npc.DisplayName}");
+        _narrativeController.CloseNarrationSegment($"trading with {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc)}");
         _tradeAdapter.Start();
         SetMode(GameMode.Trading);
     }
@@ -6110,8 +6110,8 @@ public class LocationTravelGameController : IDisposable
 
         // The trade menu draws no narration text of its own, so leave a one-line trace before the
         // segment closes, then re-observe the scene.
-        _narrativeController?.AppendPhaseNote($"You finished trading with {npc.DisplayName}.");
-        _narrativeController?.BeginNarrationSegment($"after trading with {npc.DisplayName}");
+        _narrativeController?.AppendPhaseNote($"You finished trading with {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc)}.");
+        _narrativeController?.BeginNarrationSegment($"after trading with {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc)}");
     }
 
     /// <summary>
@@ -6128,7 +6128,7 @@ public class LocationTravelGameController : IDisposable
             job:         job,
             terminal:    _core.Terminal);
 
-        _narrativeController.CloseNarrationSegment($"working for {npc.DisplayName}");
+        _narrativeController.CloseNarrationSegment($"working for {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc)}");
         _workAdapter.Start();
         SetMode(GameMode.Working);
     }

@@ -17,7 +17,7 @@ public class PugilitasModusMentis : ModusMentis
     public override string[] Organs => new[] { "hands", "legs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     
-    public override string PersonaTone => "a disciplined fighter who treats combat as an ancient, honorable science";
+    public override string PersonaTone => "a trained boxer who treats a fight as a science of guard, footwork and the hard clean blow";
     public override string PersonaReminder => "disciplined combat scientist";
     public override string PersonaReminder2 => "someone who studies violence as a precise and learnable art";
     public override string StyleInstruction =>

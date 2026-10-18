@@ -1,0 +1,33 @@
+Volume 4 - Of Deliberation and Its Judge
+2026-10-18
+
+Added
+  - Every place now has its own fixed hour of arrival, always in daylight.
+  - At that hour, a village, town, city, farm or field always has somebody in the area you arrive in, when anyone can be spared.
+  - Somebody who hears a failed act now comes to look; a chip names who heard it, and the next phase says whether they came as a witness or as an enemy.
+  - A witness who came for you now confronts you: until you talk to them, only attacking is possible, any failed act gets you caught red-handed, and leaving takes a successful run.
+  - New verb, Explain myself: walk up to a witness confronting you before they collar you. Every check in that conversation is one easier.
+  - Wild ground: attacking or killing a beast in the wilderness is hunting, not a crime. On public or private ground it is still a crime.
+  - Mice, voles, frogs, bats and other tiny creatures are now caught or crushed instead of attacked, and catching one is never a crime.
+
+Changed
+  - Every choice a modus mentis makes (what to look at, what to want, how to act, how willingly, what to reply) is now decided by a neutral judge. About three times faster, and more often in character.
+  - Sixteen modus mentis descriptions rewritten so the judge picks the acts that fit them.
+  - Modi mentis with the Speaking function now favour people: they look at people first, never turn away from one, prefer conversations as goals, and never refuse a conversation (they may still be reluctant).
+  - A modus mentis that turns away from what you clicked now looks at something else instead of ending the thought.
+  - A high-moral modus mentis now refuses a crime while the action is being thought out, before any action is offered and without spending an attempt.
+  - A goal refused by the acting modus mentis is no longer offered again to the mind that chose it. When another mind chooses it, only modi mentis that would accept are offered to carry it out.
+  - The opening observation of a phase now makes every object it names clickable, not just one.
+  - Keywords now name the object: a person by name or role, a thing by its main word.
+  - The childhood memory and the get-up phase no longer let a modus mentis walk away from the only way forward.
+  - A witness who heard a crime now accuses you of that crime, not of trespassing.
+  - Beasts are named by their kind, are no longer described with human traits, and cannot be pickpocketed.
+
+Fixed
+  - Narration no longer pastes screen labels into sentences ("I killed Pig").
+  - Descriptions of people no longer produce broken sentences, and plural objects read correctly.
+  - A modus mentis that turns away from someone now always says so.
+  - An observation no longer turns into an imagined conversation with the person observed.
+  - Field workers' descriptions now match the crop in their field.
+
+  - Internal: test, audit and tooling updates.

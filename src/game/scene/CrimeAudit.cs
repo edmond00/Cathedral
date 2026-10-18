@@ -186,6 +186,65 @@ public static class CrimeAudit
         Case("pickpocket, on public ground",          new PickpocketVerb(), publicPov, someone, true);
         Case("stalk, on public ground",               new StalkVerb(),      publicPov, someone, true);
         sb.AppendLine();
+
+        AuditWildLegality(sb, failures);
+    }
+
+    /// <summary>
+    /// Hunting: a beast on nobody's ground is fair game, the same beast on a farm is somebody's, and a
+    /// person is never game. Checked on a forest (whose open ground must come out wild and whose
+    /// woodshed must not) and on a farm's livestock.
+    /// </summary>
+    private static void AuditWildLegality(StringBuilder sb, List<string> failures)
+    {
+        var actor = new Protagonist();
+
+        void Case(string name, Verb verb, Scene scene, PoV pov, Element target, bool expected)
+        {
+            bool actual = verb.IsIllegal(scene, pov, target, actor);
+            sb.AppendLine($"  {(actual == expected ? "✓" : "✗")} {name,-52} {(actual ? "illegal" : "legal")}");
+            if (actual != expected)
+                failures.Add($"{name}: expected {(expected ? "illegal" : "legal")}, got {(actual ? "illegal" : "legal")}");
+        }
+
+        // Tenure: wilderness factories stamp their open ground wild, and leave stores public.
+        int wild = 0, storesWild = 0, settledWild = 0;
+        for (int id = 0; id < SampleSize; id++)
+        {
+            var forest = new Forest.ForestSceneFactory().Build(id);
+            wild       += forest.AllAreas.Count(a => a.IsWild);
+            storesWild += forest.Stores.Count(a => a.IsWild);
+            foreach (var (_, build) in Factories())
+                settledWild += build(id).AllAreas.Count(a => a.IsWild);
+        }
+        sb.AppendLine($"  {wild} wild forest area(s); {storesWild} wild store(s); {settledWild} wild settled area(s)");
+        if (wild == 0)        failures.Add("no forest area is wild — the wilderness pass did not run");
+        if (storesWild > 0)   failures.Add($"{storesWild} forest store(s) read wild — a woodshed is somebody's stock");
+        if (settledWild > 0)  failures.Add($"{settledWild} village/farm area(s) read wild — settled ground is somebody's");
+
+        // A beast in the wild, and a person beside it. The opening area always takes a spawned beast.
+        var wildScene = new Forest.ForestSceneFactory().Build(1);
+        var glade     = wildScene.AllAreas.First(a => a.IsWild);
+        var boar      = new SceneNpc(new Npc.Archetypes.PigArchetype().Spawn(GameRng.For("crime_audit_beast")));
+        var person    = wildScene.Npcs.FirstOrDefault(n => n.Entity is NpcEntity { Combatant.AnatomyType: AnatomyType.Human });
+        var wildPov   = new PoV(glade, TimePeriod.Noon);
+
+        Case("attack a beast, on wild ground",        new AttackVerb(), wildScene, wildPov, boar, false);
+        Case("slay a beast, on wild ground",          new SlayVerb(),   wildScene, wildPov, boar, false);
+        if (person != null)
+        {
+            Case("attack a person, on wild ground",   new AttackVerb(), wildScene, wildPov, person, true);
+            Case("slay a person, on wild ground",     new SlayVerb(),   wildScene, wildPov, person, true);
+            Case("pickpocket, on wild ground",        new PickpocketVerb(), wildScene, wildPov, person, true);
+        }
+        else sb.AppendLine("  ~ forest#1 has no person — the people-in-the-wild cases are skipped");
+
+        // The same beast on a farm's public ground is somebody's.
+        var farm     = new Farm.FarmSceneFactory().Build(1);
+        var yard     = farm.AllAreas.First(a => a.Tenure == AreaTenure.Public);
+        var farmPov  = new PoV(yard, TimePeriod.Noon);
+        Case("slay a beast, on a farm's public ground", new SlayVerb(), farm, farmPov, boar, true);
+        sb.AppendLine();
     }
 
     // ── 3. Goal filtering by the thinking modus mentis's morality ─────────────

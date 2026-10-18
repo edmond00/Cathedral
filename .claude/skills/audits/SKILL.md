@@ -85,6 +85,12 @@ that are invisible until a player hits them:
 - a `{scope:field}` token that `DialogueTemplate` cannot expand — or that expands to *nothing* for
   some archetype, which it checks by spawning one NPC of every speaking archetype and expanding
   every token used by any tree against it;
+- a line whose expansion opens a sentence in lower case. A token's value is written for one place
+  and spliced into many — an opinion is authored to sit mid-sentence ("of the work I think {…}") and
+  is also set as a sentence of its own — and the seam is where it shows ("thank you for asking. my
+  back."). `DialogueTemplate.Expand` capitalises any token at a sentence start, and fits an opinion
+  to both sides (lower case mid-sentence, a stop before a following sentence); this is the check
+  that it did, for every archetype;
 - a resolution whose authored difficulty matches neither `BranchDifficulty` ladder at the depth it
   is actually reached at (almost always a miscounted depth);
 - duplicate node or option ids, an NPC line with no replies, or a cycle.
@@ -444,6 +450,10 @@ sections that were generated and how often. Then it warns about:
 - an NPC with `[Night] = null`, sleeping in a room with no bed, or a room sleeping more people than
   it has beds. Wilderness factories are exempt — a wolf is allowed to sleep rough;
 - a public hall with nobody in it during a day period: a shop with no one behind the counter;
+- a settled location whose arrival area is empty at its arrival hour while somebody stands out of
+  doors elsewhere with nothing to keep — the guarantee `SceneFactory.EnsureArrivalCompany` makes. Each
+  inhabited factory also prints `arrival … in N/M peopled locations`; what falls short of M is the
+  one- and two-person households where everyone is the sole keeper of a hall or a store;
 - stable keys that are missing, colliding, or **different across two builds of one location id**.
   That last one matters because procedural descriptions are seeded from the key, so a key that moves
   re-rolls how every door in the place looks between visits.

@@ -11,7 +11,7 @@ public class GluttonyModusMentis : ModusMentis
     public override string ModusMentisId    => "gluttony";
     public override string DisplayName      => "Gluttony";
     public override string MenuDescription =>
-        "Keeps appetite forward in the mind, with a nose for where a good meal waits. Inclines reasoning and action toward plenty and indulgence, treating hunger as a thing to be answered generously.";
+        "Keeps appetite forward in the mind, with a nose for where a good meal is to be had. Inclines reasoning and action toward food, drink and indulgence, and finds little worth the trouble that cannot be eaten or drunk.";
     public override string SkillMeans       => "the keen love of food";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "nose", "tongue" };

@@ -181,6 +181,8 @@ public class FarmSceneFactory : SceneFactory
 
     // ── NPC construction ────────────────────────────────────────────────────
 
+    protected override bool GuaranteesArrivalCompany => true;
+
     protected override void BuildNpcs(Random rng, int locationId, Scene scene)
     {
         if (_longhouse is null || _courtyard is null) return;

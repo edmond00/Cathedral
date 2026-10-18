@@ -60,7 +60,7 @@ public sealed class AreaMoveOutcome : Outcome
 
     public AreaMoveOutcome(Area destination)
         : base($"Moved to: {destination.DisplayName}", OutcomeSeverity.Neutral,
-               $"made my way to {destination.DisplayName}")
+               $"made my way to {NeutralNarration.AreaPhrase(destination.DisplayName)}")
     {
         _destination = destination;
     }
@@ -158,7 +158,7 @@ public sealed class PoiReplacementOutcome : Outcome
 
     public PoiReplacementOutcome(PointOfInterest original, PointOfInterest replacement)
         : base($"Broken: {original.DisplayName}", OutcomeSeverity.Neutral,
-               $"broke {original.DisplayName.ToLowerInvariant()} apart")
+               $"broke the {original.DisplayName.ToLowerInvariant()} apart")
     {
         _original    = original;
         _replacement = replacement;
@@ -200,13 +200,54 @@ public sealed class SleeperRousedOutcome : Outcome
     private readonly SceneNpc _npc;
 
     public SleeperRousedOutcome(SceneNpc npc)
-        : base($"Woken: {npc.Entity.DisplayName}", OutcomeSeverity.Neutral,
-               $"woke {npc.Entity.DisplayName}")
+        : base($"Woken: {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc.Entity)}", OutcomeSeverity.Neutral,
+               $"woke {NeutralNarration.NpcPhrase(npc.Entity)}")
     {
         _npc = npc;
     }
 
     protected override void Apply(OutcomeContext ctx) => _npc.Roused = true;
+}
+
+/// <summary>
+/// Somebody within earshot heard an action go wrong and walks over to look: they stand in the actor's
+/// area for the rest of the visit (<see cref="Scene.DrawNpcTo"/>) and open the next observation.
+///
+/// <para>A consequence like any other, so it carries a chip and a line in the outcome narration. It
+/// used to be written straight into the scene by the controller, and the player saw nothing until a
+/// stranger was standing beside them and the exit had become a RUNAWAY roll with no visible cause.</para>
+///
+/// <para>Two kinds of people come: an enemy, who heard their quarry, and a witness, who heard a crime.
+/// What happens next is theirs to decide; this only brings them.</para>
+/// </summary>
+public sealed class NpcDrawnInOutcome : Outcome
+{
+    private readonly NpcEntity _npc;
+    private readonly Verbs.Verb _heard;
+
+    public NpcDrawnInOutcome(NpcEntity npc, Verbs.Verb heard)
+        : base($"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(npc)} heard it and comes to look",
+               OutcomeSeverity.Negative,
+               $"was heard by {NeutralNarration.NpcPhrase(npc)}, who comes over to see what happened")
+    {
+        _npc   = npc;
+        _heard = heard;
+    }
+
+    protected override void Apply(OutcomeContext ctx)
+    {
+        if (ctx.Scene == null || ctx.PoV == null) return;
+        var arriving = ctx.Scene.Npcs.FirstOrDefault(n => ReferenceEquals(n.Entity, _npc));
+        if (arriving == null)
+        {
+            Console.Error.WriteLine($"NpcDrawnInOutcome: '{_npc.DisplayName}' is not a scene NPC — nobody arrives.");
+            return;
+        }
+        ctx.Scene.DrawNpcTo(arriving, ctx.PoV.Where);
+        var crime = CrimeKinds.Of(_heard, ctx.PoV.Where.IsPrivate);
+        if (crime != CriminalAffinityType.None) ctx.Scene.HeardCrimes[arriving.Id] = crime;
+        Report($"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(_npc, ctx.Actor)} heard it and comes to look");
+    }
 }
 
 /// <summary>
@@ -227,7 +268,7 @@ public sealed class RecruitedOutcome : Outcome
 
     public RecruitedOutcome(SceneNpc npc)
         : base($"Joined you: {npc.Entity.DisplayName}", OutcomeSeverity.Positive,
-               $"took {npc.Entity.DisplayName} along with me")
+               $"took {NeutralNarration.NpcPhrase(npc.Entity)} along with me")
     {
         _npc = npc;
     }
@@ -261,7 +302,7 @@ public sealed class DoorUnlockOutcome : Outcome
 
     public DoorUnlockOutcome(DoorPointOfInterest door, Area destination)
         : base($"Door unlocked — entered {destination.DisplayName}", OutcomeSeverity.Neutral,
-               $"unlocked the way into {destination.DisplayName}")
+               $"unlocked the way into {NeutralNarration.AreaPhrase(destination.DisplayName)}")
     {
         _door        = door;
         _destination = destination;
@@ -287,8 +328,8 @@ public sealed class NpcSlaynOutcome : Outcome
     private readonly SceneNpc _sceneNpc;
 
     public NpcSlaynOutcome(SceneNpc sceneNpc)
-        : base($"Slain: {sceneNpc.DisplayName}", OutcomeSeverity.Negative,
-               $"killed {sceneNpc.DisplayName}")
+        : base($"Slain: {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(sceneNpc.Entity)}", OutcomeSeverity.Negative,
+               $"killed {NeutralNarration.NpcPhrase(sceneNpc.Entity)}")
     {
         _sceneNpc = sceneNpc;
     }
@@ -323,11 +364,11 @@ public sealed class FightTriggerOutcome : Outcome
     public string? ContextLabel { get; set; }
 
     public FightTriggerOutcome(NpcEntity npc, string combatContext = "")
-        : base($"Combat begins: {npc.DisplayName}", OutcomeSeverity.Negative,
-               $"provoked {npc.DisplayName} into a fight")
+        : base($"Combat begins: {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc)}", OutcomeSeverity.Negative,
+               $"provoked {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc)} into a fight")
     {
         Target        = npc;
-        CombatContext = string.IsNullOrEmpty(combatContext) ? $"combat with {npc.DisplayName}"
+        CombatContext = string.IsNullOrEmpty(combatContext) ? $"combat with {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc)}"
                                                             : combatContext;
     }
 
@@ -365,7 +406,7 @@ public sealed class DialogueTriggerOutcome : Outcome
     protected override void Apply(OutcomeContext ctx)
     {
         if (ctx.Scene == null) return;
-        ctx.Scene.PendingDialogueRequest = new DialogueRequest(Target, TreeId);
+        ctx.Scene.PendingDialogueRequest = new DialogueRequest(Target, TreeId, Tree);
     }
 }
 

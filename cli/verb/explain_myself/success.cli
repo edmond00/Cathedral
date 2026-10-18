@@ -1,0 +1,64 @@
+# explain_myself — success
+#
+# A crime on the Test Roof fails within earshot of the hall; the brewer comes up and confronts the
+# actor. Going up to him and explaining is one of the few acts a confrontation permits, and it opens
+# the same confrontation he would have, worded after the crime he heard (violence) — but as the
+# accused coming forward, every branch a step easier (`came_forward` in `inspect dialogue`).
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-item knife --grant-mm brute_force --means-only brute_force --location-type test --location-id 0 --start-area "Test Roof" --period noon --observe-only "goat"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy fail-dice
+goal slay
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+
+click action 0
+choose 1
+regions
+choose 0
+advance 12 180
+
+regions
+click action 1
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+expect-outcome npc_drawn_in
+
+expect-outcome npc_drawn_in
+
+# The brewer opens the next phase. Go up to him.
+click button
+advance 12 180
+strategy succeed
+goal explain_myself
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+expect SUCCESS
+expect-verb explain_myself
+expect-state dialogue caught_red_handed_murderer came_forward
+quit

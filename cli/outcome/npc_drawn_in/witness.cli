@@ -1,0 +1,72 @@
+# npc_drawn_in — a witness within earshot hears a crime go wrong and comes to look
+#
+# The goat on the Test Roof is somebody's (the test location is not wilderness), so slaying it is a
+# crime. Nobody stands on the roof; the building below holds no enemy, so a witness from the hall
+# hears it and comes up. The roll is forced to fail and the means pinned to Brute Force, which is
+# not discreet.
+#
+# The arrival is an ordinary outcome: it applies and it shows a chip.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-item knife --grant-mm brute_force --means-only brute_force --location-type test --location-id 0 --start-area "Test Roof" --period noon --observe-only "goat"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy fail-dice
+goal slay
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+
+click action 0
+choose 1
+regions
+choose 0
+advance 12 180
+
+regions
+click action 1
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+expect FAILURE
+expect-verb slay
+expect-outcome npc_drawn_in
+expect heard it and comes to look
+expect-not The wolf heard it
+expect-no-outcome npc_slayn
+
+# The next observation opens on the witness, and says why they are there: not as a threat. They came
+# for you, so the free exit is closed.
+click button
+advance 12 180
+expect they have seen what I was doing
+expect-not means me harm
+expect RUNAWAY
+
+# Running from them fails (the preset strategy reaches the RUNAWAY roll too), and they confront you
+# with what they heard: violence, not the trespass a witness on private ground would accuse you of.
+click button
+advance 12 180
+click continue
+advance 12 180
+expect-state dialogue caught_red_handed_murderer
+
+# The conversation over, the confrontation is too: the brewer goes back to the hall and the exit is
+# free again.
+advance 12 180
+expect LEAVE
+expect-not RUNAWAY
+
+quit

@@ -71,7 +71,7 @@ public static class JsonConstraintGenerator
     /// <summary>
     /// Builds a standalone GBNF (its own <c>root</c> rule) for a single run of free-form persona text
     /// emitted <b>raw</b> — not wrapped in a JSON object — so it can be consumed directly as a string
-    /// (used by the reasoning stage that feeds the <c>PersonaMatchCritic</c>). The body is restricted
+    /// (the persona rewrite). The body is restricted
     /// to the same character set as the JSON persona-rewrite path. When <paramref name="forcedPrefix"/>
     /// is set (e.g. <c>"I "</c>) it becomes a literal the output must start with; otherwise the first
     /// character is forced to a letter to avoid a leading-punctuation artifact. <paramref name="minLen"/>
@@ -88,14 +88,6 @@ public static class JsonConstraintGenerator
     /// The same raw-text grammar, opened by <b>one of several</b> literals rather than a single one:
     /// the output must start with exactly one of <paramref name="forcedPrefixes"/>, and the model
     /// chooses which. An empty list means no forced opening (first character forced to a letter).
-    /// <para>
-    /// This is what turns "begin with I" into "begin with a verb phrase that can actually continue".
-    /// A lone <c>"I "</c> prefix constrains the person but not the syntax, and a small model finishes it
-    /// with whatever completes the option label it was shown — "I reluctant to do it.", "I attack Pig".
-    /// Forcing the choice among <c>"I am "</c>, <c>"I want "</c>, <c>"I could "</c> and the rest leaves
-    /// the model free to pick its stance while making the ungrammatical and the present-tense-narrating
-    /// openings unreachable.
-    /// </para>
     /// </summary>
     public static string GenerateRawTextGrammar(
         IReadOnlyList<string> forcedPrefixes, int minLen, int maxLen, bool allowParentheses = false)

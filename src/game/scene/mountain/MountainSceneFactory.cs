@@ -24,6 +24,9 @@ namespace Cathedral.Game.Scene.Mountain;
 /// </summary>
 public class MountainSceneFactory : SceneFactory
 {
+    /// <summary>Wilderness: its open ground is nobody's (see <see cref="AreaTenure.Wild"/>).</summary>
+    protected override bool IsWilderness => true;
+
     public MountainSceneFactory(string? sessionPath = null) : base(sessionPath) { }
 
     private enum Slope { Sunny, Damp }

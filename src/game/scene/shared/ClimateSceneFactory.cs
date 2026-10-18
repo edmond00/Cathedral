@@ -24,6 +24,9 @@ namespace Cathedral.Game.Scene.Shared;
 /// </summary>
 public abstract class ClimateSceneFactory : SceneFactory
 {
+    /// <summary>Wilderness: its open ground is nobody's (see <see cref="AreaTenure.Wild"/>).</summary>
+    protected override bool IsWilderness => true;
+
     protected ClimateSceneFactory(string? sessionPath) : base(sessionPath) { }
 
     /// <summary>Every walkable area, in the order the sections were built — the beasts' range.</summary>

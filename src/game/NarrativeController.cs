@@ -324,7 +324,10 @@ public class NarrativeController
         LlmMonitorDebugManager.Show();
         
         // Initialize controllers
-        _observationController = new ObservationPhaseController(llamaServer, slotManager, _worldContext);
+        _observationController = new ObservationPhaseController(llamaServer, slotManager, _worldContext)
+        {
+            MustCommit = () => _scene?.Phase is NarrationPhase.ChildhoodReminescence or NarrationPhase.GetUp,
+        };
         _thinkingExecutor = thinkingExecutor;
         _actionExecutor = actionExecutor;
         
@@ -463,7 +466,10 @@ public class NarrativeController
     /// <param name="openingFocus">What the first observation is of — a Meet routine's person — or null
     /// to let the persona choose as usual. Set here rather than after, because the phase is generated
     /// on a task this method starts.</param>
-    public void StartObservationPhase(TimePeriod? forcedPeriod = null, Element? openingFocus = null)
+    /// <param name="arrivalPeriod">The location's own hour (<see cref="Scene.ArrivalPeriod"/>) when this
+    /// is an arrival; <c>--period</c> still overrides it, and without either the hour is drawn.</param>
+    public void StartObservationPhase(TimePeriod? forcedPeriod = null, Element? openingFocus = null,
+                                      TimePeriod? arrivalPeriod = null)
     {
         _narrationState.Clear();
         _scrollBuffer.Clear();
@@ -474,10 +480,13 @@ public class NarrativeController
         _openingFocus   = openingFocus;
         _openingFocusMM = null;
 
-        // Place NPCs into nodes based on the supplied time period, or a random one when none is given.
-        // --period pins it for the whole run: several rules (every entry door shutting at night) only
-        // fire in one period, and a random draw reaches that one visit in six.
-        var period = forcedPeriod ?? Config.Debug.ForcedPeriod ?? TimePeriodExtensions.Random(_diceRandom);
+        // Place NPCs into nodes based on the supplied time period, else --period, else the location's
+        // fixed arrival hour, else a random one. --period pins it for the whole run: several rules
+        // (every entry door shutting at night) only fire in one period. The draw is still made when the
+        // arrival hour wins and its result discarded, so every later roll of a seeded run is the roll
+        // it was before arrival hours existed.
+        var period = forcedPeriod ?? Config.Debug.ForcedPeriod
+                     ?? Discarding(TimePeriodExtensions.Random(_diceRandom), arrivalPeriod);
         ApplyTimePeriod(period);
         Console.WriteLine($"NarrativeController: Time period is {period}");
 
@@ -505,6 +514,8 @@ public class NarrativeController
     /// in the village square the moment the trade menu closed. Set BEFORE <see cref="ApplyTimePeriod"/>,
     /// which places NPCs and re-gates every verb against the point of view.</para>
     /// </summary>
+    private static TimePeriod Discarding(TimePeriod drawn, TimePeriod? instead) => instead ?? drawn;
+
     public void PrepareForRoutineSubPhase(TimePeriod period, string? startAreaKey = null)
     {
         _narrationState.Clear();
@@ -950,9 +961,16 @@ public class NarrativeController
                 continue;
             }
 
+            // An enemy came looking for their quarry; a witness came to see what the noise was. Only
+            // the first is a threat, and saying otherwise told the player a curious reaper meant harm.
+            bool isEnemy = arrival.Entity is Cathedral.Game.Npc.NpcEntity npc
+                           && npc.AffinityTable.IsEnemy(_protagonist.AffinityKey);
+            Console.WriteLine($"NarrativeController: arrival of '{arrival.Entity.DisplayName}' ({(isEnemy ? "enemy" : "witness")}) opens the phase");
             var blocks = await _observationController.GenerateThreatObservationAsync(
                 outcome, _protagonist.CurrentLocationId, _activePartyMember,
-                ledger: _observationLedger, preview: _previewSession, commit: commit);
+                ledger: _observationLedger, preview: _previewSession, commit: commit,
+                trailingNeutral: isEnemy ? NeutralNarration.ArrivalEnemyCaution()
+                                         : NeutralNarration.ArrivalWitnessNotice());
             if (blocks.Count > 0) return true;
         }
 
@@ -1049,9 +1067,14 @@ public class NarrativeController
     /// thought (traced back through <paramref name="chainOrigin"/>; null for dialogues that did not come
     /// from an observation→thinking→action chain, e.g. a caught-red-handed confrontation).
     /// </summary>
+    /// <summary>The tree id of the last conversation queued — `inspect dialogue`, for scripts.</summary>
+    private string _lastDialogueTreeId = "-";
+
     private void SetPendingDialogue(DialogueTriggerOutcome outcome, ModusMentisChainElement? chainOrigin)
     {
         _pendingDialogueOutcome = outcome;
+        _lastDialogueTreeId     = (outcome.Tree?.TreeId ?? outcome.TreeId ?? "-")
+                                + (CaughtRedHandedTreeFactory.IsCameForward(outcome.Tree) ? " came_forward" : "");
         _openingFocus           = SceneNpcOf(outcome.Target);
         _openingFocusMM         = TraceObservationModusMentis(chainOrigin);
     }
@@ -1303,8 +1326,17 @@ public class NarrativeController
                 : ThreatContext.None;
 
             // Run all coded rules; a failure here is absolute — no LLM retry, no noetic cost.
+            // A witness confronting you: a drawn-in witness who came for you, or anyone in sight on
+            // private ground. An enemy in the room outranks them, as everywhere else.
+            var confronter = (_scene != null && _pov != null && threatContext.Level != ThreatLevel.Visual)
+                ? ConfrontationSelector.Confronter(_scene, _pov, _protagonist)
+                : null;
+
             var ruleCtx = new Narrative.Rules.ActionRuleContext(
-                action, _activePartyMember, _scene, _pov, witnessContext, threatContext);
+                action, _activePartyMember, _scene, _pov, witnessContext, threatContext)
+            {
+                Confronter = confronter,
+            };
             var ruleResult = Narrative.Rules.ActionRulesChecker.Check(ruleCtx);
             if (!ruleResult.Passed)
             {
@@ -1399,6 +1431,7 @@ public class NarrativeController
                 threatContext,
                 CancellationToken.None
             );
+            evalResult.Confronter = confronter;
             
             // Handle plausibility failure
             if (!evalResult.IsPlausible)
@@ -2356,25 +2389,17 @@ public class NarrativeController
         // Seen by a witness: they confront you, and the tree decides what that becomes.
         if (!result.Succeeded && result.CaughtByWitness != null && _pov != null)
         {
-            var crimeType = DetermineCrimeType(result.Action.Verb, _pov.Where.IsPrivate);
+            var crimeType = _scene != null
+                ? ConfrontationSelector.CrimeFor(_scene, result.CaughtByWitness, result.Action.Verb, _pov.Where.IsPrivate)
+                : CrimeKinds.Of(result.Action.Verb, _pov.Where.IsPrivate);
             Console.WriteLine($"NarrativeController: Witness '{result.CaughtByWitness.DisplayName}' caught the failed illegal action (crime: {crimeType})");
             var catchTree = CaughtRedHandedTreeFactory.Create(crimeType);
             SetPendingDialogue(new Cathedral.Game.Scene.DialogueTriggerOutcome(result.CaughtByWitness, tree: catchTree), result.Action);
             return;
         }
 
-        // Only heard, from a room away: they come to look. Nothing is confronted yet — the point of
-        // this rung is that it leaves room to leave. What it costs is that they are now standing in
-        // the room with you, which closes the free exit and makes the next slip a caught one.
-        if (!result.Succeeded && result.NpcDrawnIn != null && _scene != null && _pov != null)
-        {
-            var arriving = _scene.Npcs.FirstOrDefault(n => ReferenceEquals(n.Entity, result.NpcDrawnIn));
-            if (arriving != null)
-                _scene.DrawNpcTo(arriving, _pov.Where);
-            else
-                Console.Error.WriteLine(
-                    $"NarrativeController: '{result.NpcDrawnIn.DisplayName}' was drawn in but is not a scene NPC — nobody arrives.");
-        }
+        // Only heard, from a room away: they come to look. That rung is NpcDrawnInOutcome, applied with
+        // the other reports above, so it carries a chip and a line in the narration.
 
         // Handle outcome based on type - show continue button for next step
         // A fight needs no arm here: every route to one goes through scene.PendingFightRequest, which
@@ -2390,8 +2415,8 @@ public class NarrativeController
             {
                 var req = _scene.PendingDialogueRequest;
                 _scene.PendingDialogueRequest = null;
-                SetPendingDialogue(new Cathedral.Game.Scene.DialogueTriggerOutcome(req.Npc, req.TreeId), result.Action);
-                Console.WriteLine($"NarrativeController: Dialogue verb triggered tree '{req.TreeId}' with {req.Npc.DisplayName}");
+                SetPendingDialogue(new Cathedral.Game.Scene.DialogueTriggerOutcome(req.Npc, req.TreeId, req.Tree), result.Action);
+                Console.WriteLine($"NarrativeController: Dialogue verb triggered tree '{req.Tree?.TreeId ?? req.TreeId}' with {req.Npc.DisplayName}");
                 return;
             }
 
@@ -3768,6 +3793,11 @@ public class NarrativeController
         if (All("opening"))
             outp.Add(_lastOpeningFocus ?? "opening focus=none");
 
+        // Which conversation was last queued, by tree id — the confrontation's id carries the crime it
+        // accuses you of (caught_red_handed_murderer), which nothing on screen states plainly.
+        if (All("dialogue"))
+            outp.Add($"dialogue last={_lastDialogueTreeId}");
+
         // Learned routines — see Routine.CliLine. Reported here rather than read off the routines panel
         // because recording happens with no UI open at all: the panel is where a player reads them,
         // not where they are made.
@@ -4207,20 +4237,12 @@ public class NarrativeController
         if (threat.Level == ThreatLevel.Visual && threat.Threat != null)
             return (ExitButtonKind.RunawayEnemy, threat.Threat);
 
-        // A bystander who can see you leave, and a reason for them to stop you: either you are
-        // standing somewhere you have no business being, or they came in here after you.
-        //
-        // The second condition is what makes the approach cost something. Three crimes happen in the
-        // open — pickpocket, stalk, attack — so a witness drawn to a public square by a botched one
-        // would, on the privacy test alone, watch you stroll away.
-        var witness = WitnessSelector.ComputeContext(_scene, _pov);
-        if (witness.Type == WitnessType.Visual && witness.Witness != null)
-        {
-            var sceneNpc = _scene.Npcs.FirstOrDefault(n => ReferenceEquals(n.Entity, witness.Witness));
-            bool cameForYou = sceneNpc != null && _scene.DisplacedNpcs.ContainsKey(sceneNpc.Id);
-            if (_pov.Where.IsPrivate || cameForYou)
-                return (ExitButtonKind.RunawayWitness, witness.Witness);
-        }
+        // A witness confronting you — one who came in here after you, or anyone in sight on ground you
+        // have no business standing on. ConfrontationSelector is the one place that is decided, so the
+        // exit, the rules of action and the failure ladder cannot disagree about who is watching.
+        var confronter = ConfrontationSelector.Confronter(_scene, _pov, _protagonist);
+        if (confronter != null)
+            return (ExitButtonKind.RunawayWitness, confronter);
 
         return (ExitButtonKind.Leave, null);
     }
@@ -4357,6 +4379,16 @@ public class NarrativeController
 
         var values = new int[diceCount];
         for (int i = 0; i < diceCount; i++) values[i] = _diceRandom.Next(1, 7);
+
+        // --debug's preset strategy reaches this roll as it reaches the action and conversation rolls,
+        // so a script can test both ends of a RUNAWAY rather than whichever one its seed lands on.
+        if (DebugMode.IsActive && !DebugMode.IsAutoStrategy)
+        {
+            if (DebugMode.CurrentStrategy == DebugStrategy.FailDiceRoll)
+                for (int i = 0; i < values.Length; i++) { if (values[i] == 6) values[i] = 5; }
+            else if (DebugMode.CurrentStrategy == DebugStrategy.Succeed && values.Length > 0)
+                values[0] = 6;
+        }
         NarrationDiceComplete(values);
     }
 
@@ -4396,8 +4428,13 @@ public class NarrativeController
         }
         else
         {
-            Console.WriteLine($"NarrativeController: RUNAWAY failed — witness '{target.DisplayName}' confronts trespass");
-            var catchTree = CaughtRedHandedTreeFactory.Create(CriminalAffinityType.Intruder);
+            // They came because they heard a crime: they accuse you of that one. Otherwise they caught you
+            // on private ground, and what they saw is trespass.
+            var heard = _scene != null
+                ? ConfrontationSelector.CrimeFor(_scene, target, null, _pov?.Where.IsPrivate ?? true)
+                : CriminalAffinityType.Intruder;
+            Console.WriteLine($"NarrativeController: RUNAWAY failed — witness '{target.DisplayName}' confronts ({heard})");
+            var catchTree = CaughtRedHandedTreeFactory.Create(heard);
             // A runaway confrontation has no observation→thinking→action origin — resample the narrator.
             SetPendingDialogue(new DialogueTriggerOutcome(target, tree: catchTree), null);
         }
@@ -4523,13 +4560,16 @@ public class NarrativeController
     public void OnDialogueCompleted(NpcEntity npc)
     {
         Console.WriteLine($"NarrativeController: Dialogue completed with {npc.DisplayName}");
+
+        // A witness who came for you has had their say: the confrontation is over.
+        if (_scene != null) ConfrontationSelector.Release(_scene, npc, _protagonist);
         
         // No modus mentis: a system note — an MM here would print its skill header (e.g.
         // "[DISCIPLINE ▪]") before the segment separator without any LLM involvement.
         var block = new NarrationBlock(
             Type: NarrationBlockType.Outcome,
             ModusMentis: null!,
-            Text: $"You finished talking with {npc.DisplayName}.",
+            Text: $"You finished talking with {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc)}.",
             Keywords: null,
             Actions: null
         );
@@ -4590,34 +4630,6 @@ public class NarrativeController
     {
         if (action == null) return false;
         return CriticTrees.IsMovementVerb(action.ActionText);
-    }
-
-    /// <summary>
-    /// What the witness will say they saw, for a verb that was just caught. Only reached once the
-    /// action is already established as a crime, so this names the kind rather than re-deciding it —
-    /// see <see cref="Cathedral.Game.Scene.Verbs.Verb.IsIllegal"/> for the deciding.
-    ///
-    /// <para>The violent verbs all read as <c>Murderer</c>, including a bare <c>attack</c>: what the
-    /// witness is reacting to is somebody setting about a person, and the accusation is worded from
-    /// that. Anything unlisted done inside a private area is trespass, which is what makes an
-    /// otherwise innocuous verb a crime there in the first place.</para>
-    /// </summary>
-    private static CriminalAffinityType DetermineCrimeType(Cathedral.Game.Scene.Verbs.Verb verb, bool areaIsPrivate)
-    {
-        return verb.VerbId switch
-        {
-            "steal"       => CriminalAffinityType.Thief,
-            "pickpocket"  => CriminalAffinityType.Thief,
-            "grab"        => areaIsPrivate ? CriminalAffinityType.Thief : CriminalAffinityType.None,
-            "slay"        => CriminalAffinityType.Murderer,
-            "murder"      => CriminalAffinityType.Murderer,
-            "attack"      => CriminalAffinityType.Murderer,
-            "unlock_door" => CriminalAffinityType.Intruder,
-            "slip_into"   => CriminalAffinityType.Intruder,
-            "stalk"       => CriminalAffinityType.Intruder,
-            "break"       => CriminalAffinityType.Vandal,
-            _             => areaIsPrivate ? CriminalAffinityType.Intruder : CriminalAffinityType.None,
-        };
     }
 
     /// <summary>
@@ -4687,7 +4699,9 @@ public class NarrativeController
                 return;
             }
 
-            string itemContext = $"{item.DisplayName} ({item.Description})";
+            // Lower-cased with an article, never the bare display name: the critic repeats whatever it is
+            // shown, and its reason is read into the refusal ("I think Hairpin is too narrow").
+            string itemContext = $"{item.WithArticle()} ({item.Description})";
             Console.WriteLine($"NarrativeController: Item combination — action='{action.DisplayText}', item='{itemContext}'");
 
             var gatedVerb    = action.PreselectedOutcome?.Verb;
@@ -4716,8 +4730,8 @@ public class NarrativeController
                 var appropriatenessTree = gatedVerb is { RequiresTool: true }
                     ? CriticTrees.BuildToolSubstitutionTree(
                           goalDescription, CriticTrees.ToolPhrase(gatedVerb.ReferenceToolIds),
-                          item.DisplayName, criticContext)
-                    : CriticTrees.BuildItemAppropriatenessTree(goalDescription, item.DisplayName, criticContext);
+                          NeutralNarration.ItemPhrase(item.DisplayName), criticContext)
+                    : CriticTrees.BuildItemAppropriatenessTree(goalDescription, NeutralNarration.ItemPhrase(item.DisplayName), criticContext);
                 var appropriatenessResult = await _actionExecutor.ItemUseCritic.EvaluateTreeAsync(appropriatenessTree);
 
                 // The critic judges the implement; the body judges itself. A verdict it returns as

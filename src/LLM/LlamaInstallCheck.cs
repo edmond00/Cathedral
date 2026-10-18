@@ -128,7 +128,7 @@ public static class LlamaInstallCheck
         // will be told the wrong thing.
         var written = LlamaRuntime.BuildId;
         if (written != null && written != $"b{build}")
-            problems.Add($"models/llama/BUILD.txt says {written}, but the llama.cpp beside it is build {build}.");
+            problems.Add($"models/{Path.GetFileName(LlamaRuntime.LlamaDirectory)}/BUILD.txt says {written}, but the llama.cpp beside it is build {build}.");
     }
 
     /// <summary>

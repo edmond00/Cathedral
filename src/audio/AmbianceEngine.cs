@@ -17,7 +17,7 @@ public sealed class AmbianceEngine : IDisposable
 
     // Low-latency PCM player for UI feedback sounds (hover / click).
     // Bypasses the MIDI synth so there is no GS Wavetable voice-activation delay.
-    private readonly UiSfxPlayer _uiSfx = new();
+    private readonly IUiSfx _uiSfx = AudioOutput.CreateUiSfx();
 
     private volatile bool _running = false;
     private int _activeTrackCount = 4; // default: all tracks active
@@ -120,7 +120,7 @@ public sealed class AmbianceEngine : IDisposable
     private CancellationTokenSource? _filterCts = null;
     private readonly object _filterLock = new();
 
-    private OutputDevice? _device;
+    private IMidiOut? _device;
     private readonly List<Task> _trackTasks = new();
     private readonly CancellationTokenSource _cts = new();
     private bool _disposed = false;
@@ -177,12 +177,9 @@ public sealed class AmbianceEngine : IDisposable
 
         // --silent opens nothing. A null device is a state every path here already handles (a
         // machine with no MIDI runs it), so silence costs no special case anywhere else.
-        _device = Config.Debug.Silent ? null : OpenBestDevice();
+        _device = Config.Debug.Silent ? null : AudioOutput.OpenMidi();
         if (_device != null)
-        {
-            _device.PrepareForEventsSending();
             DeviceName = _device.Name;
-        }
 
         _epochMs = Environment.TickCount64;
         _running = true;
@@ -1065,7 +1062,7 @@ public sealed class AmbianceEngine : IDisposable
                 // The one sound that does NOT come through the MIDI device, so silence has to be
                 // asked for again here or a silent run still washes noise over every model call.
                 using var brownNoise = Config.Debug.Silent
-                    ? null : new BrownNoiseStreamer(amplitude: 0.22f * _sfxVolume);
+                    ? null : AudioOutput.CreateNoise(amplitude: 0.22f * _sfxVolume);
                 brownNoise?.Start();
 
                 // Nothing to sequence — hold until SetFilter cancels us, then the `using`
@@ -1083,7 +1080,7 @@ public sealed class AmbianceEngine : IDisposable
                 // the same PCM click used for hovers and preview-text updates. That one sound
                 // serves the whole UI, so the filter deliberately contributes no percussion of its
                 // own — a second, dice-only layer on top of it just muddied the roll.
-                using var brownNoise = new BrownNoiseStreamer(amplitude: 0.22f * _sfxVolume);
+                using var brownNoise = AudioOutput.CreateNoise(amplitude: 0.22f * _sfxVolume);
                 brownNoise.Start();
 
                 await Task.Delay(Timeout.Infinite, ct);
@@ -1098,7 +1095,7 @@ public sealed class AmbianceEngine : IDisposable
                 //
                 // Scaled by the SFX volume (read at filter start), so the noise follows the SFX
                 // slider independently of the music volume.
-                using var brownNoise = new BrownNoiseStreamer(amplitude: 0.22f * _sfxVolume);
+                using var brownNoise = AudioOutput.CreateNoise(amplitude: 0.22f * _sfxVolume);
                 brownNoise.Start();
 
                 // Footstep notes: Acoustic Bass Drum, Low Floor Tom, Low Tom
@@ -1679,26 +1676,6 @@ public sealed class AmbianceEngine : IDisposable
         float v = Math.Clamp(v01, 0f, 1f);
         _sfxVolume = v;
         _uiSfx.SetVolume(v);
-    }
-
-    private static OutputDevice? OpenBestDevice()
-    {
-        try
-        {
-            var all = OutputDevice.GetAll();
-            if (!all.Any()) return null;
-
-            // Prefer the Windows GS Wavetable Synth
-            var gs = all.FirstOrDefault(d =>
-                d.Name.Contains("GS Wavetable", StringComparison.OrdinalIgnoreCase) ||
-                d.Name.Contains("Microsoft", StringComparison.OrdinalIgnoreCase));
-
-            return gs ?? all.First();
-        }
-        catch
-        {
-            return null;
-        }
     }
 
     // ── IDisposable ───────────────────────────────────────────────────────────

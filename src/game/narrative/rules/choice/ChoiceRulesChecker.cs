@@ -25,14 +25,17 @@ public static class ChoiceRulesChecker
     {
         new HighMoralityAvoidsCrimeRule(),
         new LowMoralityPrefersCrimeRule(),
+        new SpeakingMindPrefersDialogueRule(),   // after the crime rule: an unscrupulous mind's crime wins
         new ExamineGoalNeedsObservationRule(),
     };
 
     /// <summary>Rules that narrow how an action modus mentis may answer "do you want to do it?".</summary>
     private static readonly IReadOnlyList<IWillingnessRule> WillingnessRules = new List<IWillingnessRule>
     {
+        new HighMoralityRefusesCrimeRule(),
         new LowMoralityNeverRefusesCrimeRule(),
         new ExamineActionNeedsObservationRule(),
+        new SpeakingActionNeverRefusesDialogueRule(),
     };
 
     /// <summary>Narrows <paramref name="goals"/> to what this thinking modus mentis may be shown.</summary>

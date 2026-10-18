@@ -19,7 +19,7 @@ public class GrudgekeepingModusMentis : ModusMentis
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.Low;
 
-    public override string PersonaTone     => "a patient keeper of old wrongs who remembers every debt of injury to the day";
+    public override string PersonaTone     => "an exact keeper of old wrongs who remembers every debt of injury to the day";
     public override string PersonaReminder  => "keeper of grudges";
     public override string PersonaReminder2 => "someone for whom no slight has ever simply expired";
     public override string StyleInstruction =>

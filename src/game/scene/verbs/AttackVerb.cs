@@ -35,13 +35,17 @@ public class AttackVerb : Verb
 
     /// <summary>
     /// Attacking somebody is a crime — unless they already count you an enemy, in which case the
-    /// quarrel was declared before the blow and striking first is only who moved quicker.
+    /// quarrel was declared before the blow and striking first is only who moved quicker — or they are
+    /// a beast in the wild, which is hunting (<see cref="PrivacyModel.IsHunting"/>).
     /// </summary>
     protected override bool IsIllegalFor(Scene scene, PoV pov, Element? target, PartyMember? actor)
-        => !TargetIsAlreadyHostile(target, actor);
+        => !TargetIsAlreadyHostile(target, actor) && !PrivacyModel.IsHunting(pov, target);
 
     /// <summary>Attack is a combat verb — valid to attempt even under direct threat.</summary>
     public override bool CanBeUsedUnderThreat => true;
+
+    /// <summary>Striking at a witness who confronts you is an answer to them — the worst one.</summary>
+    public override bool CanBeUsedWhenConfronted => true;
 
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
@@ -113,7 +117,7 @@ public class AttackVerb : Verb
     /// </summary>
     public override IReadOnlyList<Outcome> FailureReports(Scene scene, PoV pov, PartyMember actor, Element target)
         => target is SceneNpc { Entity: NpcEntity npc }
-            ? new Outcome[] { new FightTriggerOutcome(npc, $"a swing at {npc.DisplayName} that missed")
+            ? new Outcome[] { new FightTriggerOutcome(npc, $"a swing at {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc, actor)} that missed")
                               { EnemyInitiative = true } }
             : System.Array.Empty<Outcome>();
 }

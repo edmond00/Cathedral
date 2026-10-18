@@ -12,7 +12,7 @@ public class SpiteModusMentis : ModusMentis
     public override string ModusMentisId    => "spite";
     public override string DisplayName      => "Spite";
     public override string MenuDescription =>
-        "Remembers the slight and waits. Prefers the wrong righted to the profit taken, and will spend real advantage to make somebody sorry. Ugly, patient, and occasionally the only thing that answers a bully.";
+        "Remembers the slight and pays it back: the jibe returned, the trick played on the trickster, the boaster taken down in front of everyone. Prefers the wrong righted to the profit taken, and will spend real advantage to make somebody sorry. Ugly, and occasionally the only thing that answers a bully.";
     public override string SkillMeans       => "the settled intent to make somebody sorry";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "spleen", "teeths" };
@@ -20,7 +20,7 @@ public class SpiteModusMentis : ModusMentis
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override MoralLevel MoralLevel => MoralLevel.Low;
 
-    public override string PersonaTone     => "a patient grudge that will spend its own advantage to be paid back";
+    public override string PersonaTone     => "a grudge that will spend its own advantage to see somebody made sorry";
     public override string PersonaReminder  => "grudge-nursing spite";
     public override string PersonaReminder2 => "someone who has been waiting a long time for this";
     public override string StyleInstruction =>

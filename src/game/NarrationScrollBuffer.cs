@@ -400,10 +400,10 @@ public class NarrationScrollBuffer
                     var lineKeywords = new List<string>();
                     var lineOccurrences = new List<int>();
                     var lineAnchors = new List<NarrativeAnchor?>();
-                    foreach (var (sentStart, sentEnd, anchor, kwsWithOffsets) in sentenceRanges)
+                    foreach (var (sentStart, sentEnd, kwsWithOffsets) in sentenceRanges)
                     {
                         if (sentStart >= lineEnd || sentEnd <= lineStart) continue;
-                        foreach (var (kw, absOffset) in kwsWithOffsets)
+                        foreach (var (kw, absOffset, anchor) in kwsWithOffsets)
                         {
                             if (absOffset >= lineStart && absOffset < lineEnd)
                             {
@@ -553,17 +553,18 @@ public class NarrationScrollBuffer
     /// <summary>
     /// Computes the character range [start, end) of each sentence within blockText, and for each
     /// keyword finds its absolute char offset within blockText (first occurrence inside the sentence
-    /// range). Returns (start, end, anchor, [(keyword, absOffset)]) per sentence.
+    /// range). Returns (start, end, [(keyword, absOffset, anchor)]) per sentence.
     ///
     /// <para>The anchor is carried through so each rendered occurrence can be wired to the object
-    /// its own sentence was about. Because the offsets are resolved <i>within the sentence range</i>,
+    /// its own sentence was about — or, in a sentence naming several objects, its own keyword
+    /// (<see cref="NarrationSentence.AnchorOf"/>). Because the offsets are resolved <i>within the sentence range</i>,
     /// two sentences using the same word produce two distinct offsets and therefore two distinct
     /// regions — which is what lets both men in a block be clickable as "man".</para>
     /// </summary>
-    private static List<(int Start, int End, NarrativeAnchor? Anchor, List<(string Keyword, int AbsOffset)> Keywords)>
+    private static List<(int Start, int End, List<(string Keyword, int AbsOffset, NarrativeAnchor? Anchor)> Keywords)>
         ComputeSentenceRanges(string blockText, List<NarrationSentence> sentences)
     {
-        var ranges = new List<(int, int, NarrativeAnchor?, List<(string, int)>)>();
+        var ranges = new List<(int, int, List<(string, int, NarrativeAnchor?)>)>();
         int searchFrom = 0;
         foreach (var sentence in sentences)
         {
@@ -573,18 +574,19 @@ public class NarrationScrollBuffer
             if (idx < 0) continue;
 
             int sentEnd = idx + sentence.Text.Length;
-            var kwsWithOffsets = new List<(string, int)>();
-            foreach (var kw in sentence.Keywords)
+            var kwsWithOffsets = new List<(string, int, NarrativeAnchor?)>();
+            for (int k = 0; k < sentence.Keywords.Count; k++)
             {
+                var kw = sentence.Keywords[k];
                 // Match on a WHOLE WORD, exactly as the renderer's \b…\b highlighting does. A plain
                 // substring search would land on the keyword hidden inside a larger word (e.g. "man"
                 // inside "commanding"), and the occurrence index derived from it then fails to line up
                 // with the renderer's word-boundary matches, so nothing gets highlighted.
                 int kwPos = FirstWholeWord(blockText, kw, idx, sentEnd);
                 if (kwPos >= 0)
-                    kwsWithOffsets.Add((kw, kwPos));
+                    kwsWithOffsets.Add((kw, kwPos, sentence.AnchorOf(k)));
             }
-            ranges.Add((idx, sentEnd, sentence.Anchor, kwsWithOffsets));
+            ranges.Add((idx, sentEnd, kwsWithOffsets));
             searchFrom = sentEnd;
         }
         return ranges;

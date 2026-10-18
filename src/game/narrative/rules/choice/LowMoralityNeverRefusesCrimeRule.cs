@@ -20,8 +20,9 @@ public class LowMoralityNeverRefusesCrimeRule : IWillingnessRule
         if (offered.DeclineOption == null) return offered;
         if (!CrimeGoals.IsCrime(ctx.Goal, ctx)) return offered;
 
-        Console.WriteLine($"ChoiceRules: [{ctx.ModusMentis.DisplayName}] is unscrupulous — "
-                          + "no refusal offered for an illegal action.");
+        if (!ctx.Probe)
+            Console.WriteLine($"ChoiceRules: [{ctx.ModusMentis.DisplayName}] is unscrupulous — "
+                              + "no refusal offered for an illegal action.");
         return offered.WithoutDecline();
     }
 }

@@ -35,14 +35,18 @@ public class SlayVerb : Verb
     public override IReadOnlyList<string> ReferenceToolIds => new[] { "knife" };
 
     /// <summary>
-    /// Killing is a crime — unless the one being killed already counts you an enemy. Finishing
-    /// somebody who has declared for your death is not what a witness would call murder.
+    /// Killing is a crime — unless the one being killed already counts you an enemy, or is a beast in
+    /// the wild. Finishing somebody who has declared for your death is not what a witness would call
+    /// murder, and killing a wild boar on nobody's ground is hunting (<see cref="PrivacyModel.IsHunting"/>).
     /// </summary>
     protected override bool IsIllegalFor(Scene scene, PoV pov, Element? target, PartyMember? actor)
-        => !TargetIsAlreadyHostile(target, actor);
+        => !TargetIsAlreadyHostile(target, actor) && !PrivacyModel.IsHunting(pov, target);
 
     /// <summary>Slaying is an attack — it can be attempted even under direct threat.</summary>
     public override bool CanBeUsedUnderThreat => true;
+
+    /// <summary>As ATTACK: silencing the witness is an answer to them.</summary>
+    public override bool CanBeUsedWhenConfronted => true;
 
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {

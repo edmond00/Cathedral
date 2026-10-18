@@ -111,6 +111,23 @@ public static class SceneViewAdapter
     /// mood pools were written to echo the descriptions, so this is the common case rather than a
     /// rare collision.</para>
     /// </summary>
+    public static string WithMood(string mood, string description)
+        => $"{mood} {LowerSentenceCase(description)}";
+
+    /// <summary>
+    /// "Ground churned to mud" → "ground churned to mud": descriptions are written sentence-case, and
+    /// a mood word in front makes the capital land mid-phrase ("a foul Ground churned…"), which reads
+    /// as a proper name and is copied by the rewrite. Only a sentence-case opening is lowered — a
+    /// first word that is all capitals, or followed by another capitalised word, is left alone.
+    /// </summary>
+    public static string LowerSentenceCase(string s)
+    {
+        if (s.Length < 2 || !char.IsUpper(s[0]) || !char.IsLower(s[1])) return s;
+        var words = s.Split(' ', 3);
+        if (words.Length > 1 && words[1].Length > 0 && char.IsUpper(words[1][0])) return s;
+        return char.ToLowerInvariant(s[0]) + s.Substring(1);
+    }
+
     public static string? PickMood(string[] moods, string description, Random rng)
     {
         if (moods.Length == 0) return null;
@@ -299,7 +316,7 @@ public class SyntheticObservationObject : ObservationObject, IVerbRefreshable, I
         {
             var desc = _poi.Descriptions[rng.Next(_poi.Descriptions.Count)];
             var mood = SceneViewAdapter.PickMood(_poi.Moods, desc, rng);
-            return mood == null ? desc : $"{mood} {desc}";
+            return mood == null ? desc : SceneViewAdapter.WithMood(mood, desc);
         }
 
         var name      = _poi.DisplayName.ToLowerInvariant();

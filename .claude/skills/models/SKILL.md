@@ -1,6 +1,6 @@
 ---
 name: models
-description: Maintain the models/ folder — the LLM, the GloVe vectors and the two llama.cpp toolchains. Use when setting up a new machine, upgrading llama.cpp, swapping the model, reconciling two machines whose models/ folders differ, or diagnosing a "which copy is right?" question. Carries the diagnostic ladder for interpreting differences between copies.
+description: Maintain the models/ folder — the LLM, the GloVe vectors and the llama.cpp toolchains (Windows x64, Windows ARM64, Linux x64). Use when setting up a new machine, upgrading llama.cpp, swapping the model, reconciling two machines whose models/ folders differ, or diagnosing a "which copy is right?" question. Carries the diagnostic ladder for interpreting differences between copies.
 ---
 
 # Maintaining models/
@@ -86,9 +86,10 @@ line endings, GloVe a prefix.
 
 ## Upgrading llama.cpp
 
-Both toolchains are separate downloads, carry complete, independent sets of ggml libraries and are
-never loaded into one process — but **upgrade them together**: the in-game check expects one build,
-so a toolchain left behind warns on every machine that uses it.
+The toolchains (`llama/`, `llama-arm64/`, `llama-linux/`) are separate downloads, carry complete,
+independent sets of ggml libraries and are never loaded into one process — but **upgrade them
+together**: the in-game check expects one build, so a toolchain left behind warns on every machine
+that uses it.
 What must never differ is a GPU backend under `backends/` versus the `ggml-base.dll` beside it in
 the *same* folder; that crashes inside the backend with no usable diagnostic, and the DLLs carry
 no version resource, so nothing can catch it by reading them.
@@ -105,6 +106,11 @@ no version resource, so nothing can catch it by reading them.
    now prints (`version: … (build NNNNN, commit xxxxxxxxx)`).
 6. `./tools/verify_models.ps1`, then `./package.ps1 -NoModel -NoZip` to confirm staging. Launch
    once without `--playground`: the main menu must show no install warning.
+   **The Linux toolchain follows from step 5 rather than steps 1–4**: on a Linux machine (or WSL2),
+   `bash tools/linux/cloud-setup.sh [--vulkan]` reads `ExpectedBuild` from `LlamaInstallCheck.cs`,
+   fetches upstream's Ubuntu build, prunes it to its `ldd` closure and rewrites
+   `models/llama-linux/BUILD.txt` (and the Vulkan pack's) deterministically. So set the expected
+   build first, then run it, then commit what it wrote.
 7. Commit the `BUILD.txt` files (toolchains and backend packs) and `LlamaInstallCheck.cs`
    together. Every other machine then warns until its own `models/` is upgraded — which is the
    point.
@@ -129,6 +135,7 @@ short version is that none of it is authored here, LFS does not delta-compress s
 is a permanent full copy, `model.gguf` sits at 98% of GitHub's 2 GiB per-file limit, and every
 clone would pull 2.5 GB. Checksums give the same reproducibility for no bytes.
 
-Tracked under `models/`: `README.md`, `en_scowl_40.txt`, both toolchain `BUILD.txt` files,
+Tracked under `models/`: `README.md`, `en_scowl_40.txt`, each toolchain's `BUILD.txt` (`llama/`,
+`llama-arm64/`, `llama-linux/`),
 `llama/backends/README.md`, and one `BUILD.txt` per backend pack. `.gitignore` uses negation patterns to keep exactly those — check
 with `git add --dry-run models/`, which must list only text files.

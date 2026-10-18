@@ -41,6 +41,12 @@ public class Scene
     /// </summary>
     public List<Area> Stores { get; } = new();
 
+    /// <summary>
+    /// The hour a visit opens at, always a daytime one — see <see cref="SceneFactory.ArrivalPeriodFor"/>.
+    /// Set by <see cref="SceneFactory.Build(int)"/>; a routine opens at its own hour instead.
+    /// </summary>
+    public Narrative.TimePeriod ArrivalPeriod { get; set; } = Narrative.TimePeriod.Morning;
+
     /// <summary>Verbs applicable in this scene (subset from global VerbRegistry).</summary>
     public List<Verb> Verbs { get; } = new();
 
@@ -283,6 +289,13 @@ public class Scene
     public Dictionary<System.Guid, Area> DisplacedNpcs { get; } = new();
 
     /// <summary>
+    /// What a witness drawn in by a heard crime heard, by <c>SceneNpc.Id</c> — the crime they accuse
+    /// you of when they confront you. Written by <c>NpcDrawnInOutcome</c>; one visit's business like
+    /// <see cref="DisplacedNpcs"/>.
+    /// </summary>
+    public Dictionary<System.Guid, Dialogue.Affinity.CriminalAffinityType> HeardCrimes { get; } = new();
+
+    /// <summary>
     /// NPCs who have just walked in and have not yet been narrated, in arrival order. Drained by
     /// <c>NarrativeController.GenerateObservationsAsync</c>, which opens the next phase on them —
     /// ahead of a corpse and ahead of the standing-threat opener, because somebody crossing a room to
@@ -410,7 +423,7 @@ public class Scene
 /// Set by a dialogue verb's Execute(); consumed by NarrativeController on the next frame
 /// to start a dialogue session using the specified tree.
 /// </summary>
-public record DialogueRequest(NpcEntity Npc, string TreeId);
+public record DialogueRequest(NpcEntity Npc, string? TreeId, Dialogue.Tree.DialogueTree? Tree = null);
 
 /// <summary>
 /// Set by AttackVerb.Execute(); consumed by NarrativeController on the next frame

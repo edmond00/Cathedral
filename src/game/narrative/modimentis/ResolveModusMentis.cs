@@ -10,14 +10,14 @@ public class ResolveModusMentis : ModusMentis
     public override string ModusMentisId    => "resolve";
     public override string DisplayName      => "Resolve";
     public override string MenuDescription =>
-        "Continues after the sensible moment to stop has passed: the second attempt, the third, the finish reached on nothing but refusal. Wins things that no amount of ability wins, and loses some that should have been abandoned.";
-    public override string SkillMeans       => "the going on after the reasonable moment to stop";
+        "Keeps going where others give up: the second attempt, the third, the march carried on through the night, the finish reached on stubbornness alone. Wins things that no amount of ability wins, and loses some that were never worth the cost.";
+    public override string SkillMeans       => "the keeping on after everyone else has given up";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "backbone", "heart" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.High;
 
-    public override string PersonaTone     => "a refusal to stop that has outlasted better bodies and better sense";
+    public override string PersonaTone     => "a stubbornness that keeps going and has outlasted better bodies and better sense";
     public override string PersonaReminder  => "unstopping will";
     public override string PersonaReminder2 => "someone still going after everybody sensible has stopped";
     public override string StyleInstruction =>

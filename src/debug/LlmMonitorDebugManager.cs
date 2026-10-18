@@ -1,3 +1,4 @@
+#if WINDOWS
 using System;
 using System.IO;
 using System.Threading;
@@ -88,3 +89,21 @@ public static class LlmMonitorDebugManager
         catch (InvalidOperationException) { }
     }
 }
+
+#else
+using Cathedral.Game;
+
+namespace Cathedral.Debug;
+
+/// <summary>The LLM monitor off Windows: says once that it is unavailable, otherwise does nothing.</summary>
+public static class LlmMonitorDebugManager
+{
+    public static void Show(string logsBaseDir = "logs")
+    {
+        if (!DebugMode.ShowViewers) return;
+        PlatformNotice.WindowUnavailable("LLM monitor");
+    }
+
+    public static void Close() { }
+}
+#endif

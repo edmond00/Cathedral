@@ -14,4 +14,4 @@
 # Nothing in the working tree can confirm that and dist/ cannot be used to try - see
 # "Hotfixes" in SKILL.md.
 
-be581c064a66bf55a898ce8fc1b853d90e584e54 2026-10-13 Volume 3 - Chorography of the Lesser Moons
+65b1ac032aa8c98f9321e3594230ea8c260e4eb9 2026-10-13 Volume 3 - Chorography of the Lesser Moons

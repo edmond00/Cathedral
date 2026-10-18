@@ -6,9 +6,8 @@ using Cathedral.Game.Narrative.Sanitizer;
 
 namespace Cathedral.Game.Narrative.Preview;
 
-/// <summary>One rendered block in the preview box: its display text and whether it is the dimmer,
-/// parenthesized "free" reasoning (the persona's unconstrained inner thought) vs the normal rewrite.</summary>
-public readonly record struct PreviewSegment(string Text, bool IsFree);
+/// <summary>One rendered block in the preview box: its display text.</summary>
+public readonly record struct PreviewSegment(string Text);
 
 /// <summary>
 /// Immutable view of the preview box for one rendered frame. The renderer reads only this.
@@ -168,16 +167,13 @@ public sealed class PreviewPart
     private Action? _commit;
     private bool _complete;
 
-    // Finalized segments and their kind (free reasoning vs normal rewrite).
-    private readonly List<(string text, bool isFree)> _finalizedSegments = new();
+    private readonly List<string> _finalizedSegments = new();
     private string _liveTail = "";               // gated, whole-word text of the segment being streamed
-    private bool _liveIsFree;                     // kind of the segment currently streaming
 
     // Active-segment incremental accumulation state (the model's raw streamed text).
     private readonly StringBuilder _rawStream = new();
     private string _lastSeenCandidate = "";
     private bool _frozen;                          // a forbidden term appeared → stop updating until finalize
-    private bool _currentIsFree;                   // kind of the segment being fed right now
     private IReadOnlySet<string>? _sourceVocabulary; // words this request supplied → never a detection hit
 
     public PreviewPart(string title, object lockObj, bool accumulate, string linePrefix, Func<string, string>? transform = null)
@@ -202,8 +198,8 @@ public sealed class PreviewPart
     internal Action? CommitAction { get { lock (_lock) return _commit; } }
 
     /// <summary>
-    /// The blocks to render: each finalized segment (free reasoning wrapped in <c>(…)</c>, normal
-    /// segments with the line prefix) plus the segment currently streaming.
+    /// The blocks to render: each finalized segment with the line prefix, plus the segment currently
+    /// streaming.
     /// </summary>
     public IReadOnlyList<PreviewSegment> Segments
     {
@@ -212,10 +208,10 @@ public sealed class PreviewPart
             lock (_lock)
             {
                 var list = new List<PreviewSegment>();
-                foreach (var (text, isFree) in _finalizedSegments)
-                    list.Add(new PreviewSegment(isFree ? $"({text})" : _linePrefix + text, isFree));
+                foreach (var text in _finalizedSegments)
+                    list.Add(new PreviewSegment(_linePrefix + text));
                 if (_liveTail.Length > 0)
-                    list.Add(new PreviewSegment(_liveIsFree ? $"({_liveTail})" : _linePrefix + _liveTail, _liveIsFree));
+                    list.Add(new PreviewSegment(_linePrefix + _liveTail));
                 return list;
             }
         }
@@ -234,18 +230,17 @@ public sealed class PreviewPart
 
     /// <summary>
     /// Start a new streamed segment on an accumulating part, optionally switching the title (e.g. to the
-    /// next reply's modus mentis). <paramref name="isFree"/> marks unconstrained persona reasoning, which
-    /// renders dimmer and parenthesized, and streams as raw text (not the JSON <c>"text"</c> field).
+    /// next reply's modus mentis).
     /// </summary>
-    public ILlmPreviewSink NextSegment(string? title = null, bool isFree = false)
+    public ILlmPreviewSink NextSegment(string? title = null)
     {
         lock (_lock) { if (title != null) _title = title; }
-        StartSegment(isFree);
+        StartSegment();
         return new PreviewSegmentSink(this);
     }
 
     /// <summary>Reset per-segment extraction state (called when a new segment starts streaming).</summary>
-    internal void StartSegment(bool isFree = false)
+    internal void StartSegment()
     {
         lock (_lock)
         {
@@ -253,8 +248,6 @@ public sealed class PreviewPart
             _lastSeenCandidate = "";
             _liveTail = "";
             _frozen = false;
-            _currentIsFree = isFree;
-            _liveIsFree = isFree;
             _sourceVocabulary = null;   // each segment declares its own (see SetSourceVocabulary)
         }
     }
@@ -270,8 +263,8 @@ public sealed class PreviewPart
     }
 
     /// <summary>Feed one raw token delta: accumulate the growing text and gate it on whole words + the
-    /// sanitizer. Both free reasoning and persona rewrites now stream as raw text (no JSON envelope), so
-    /// the stream is the growing sentence directly — <see cref="_currentIsFree"/> only affects rendering.</summary>
+    /// sanitizer. Persona rewrites stream as raw text (no JSON envelope), so the stream is the growing
+    /// sentence directly.</summary>
     internal void FeedToken(string raw)
     {
         lock (_lock)
@@ -295,28 +288,13 @@ public sealed class PreviewPart
         }
     }
 
-    /// <summary>
-    /// Finalize the active segment. A rewrite is finalized with its authoritative post-sanitizer text;
-    /// free reasoning (which has no rewrite) is finalized with the Layer-1'd text if clean, else the last
-    /// clean gated tail. Empty free segments are dropped.
-    /// </summary>
+    /// <summary>Finalize the active segment with its authoritative post-sanitizer text.</summary>
     internal void FinalizeSegment(string finalText)
     {
         lock (_lock)
         {
-            if (_currentIsFree)
-            {
-                string layered = ForbiddenWordsDictionary.Apply(finalText.Trim());
-                var (anach, names) = TextSanitizationPipeline.Detect(layered, _sourceVocabulary);
-                // _liveTail is already transformed; transform the clean full text to match.
-                string shown = (anach.Count == 0 && names.Count == 0) ? Display(layered.TrimEnd()) : _liveTail;
-                if (shown.Length > 0) _finalizedSegments.Add((shown, true));
-            }
-            else
-            {
-                if (!_accumulate) _finalizedSegments.Clear();
-                _finalizedSegments.Add((Display(finalText), false));
-            }
+            if (!_accumulate) _finalizedSegments.Clear();
+            _finalizedSegments.Add(Display(finalText));
             _liveTail = "";
             _frozen = false;
             _rawStream.Clear();

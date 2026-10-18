@@ -1,3 +1,4 @@
+#if WINDOWS
 using System;
 using System.Threading;
 using System.Windows.Forms;
@@ -101,3 +102,26 @@ public static class WorldHistoryViewerManager
         catch (InvalidOperationException) { }
     }
 }
+
+#else
+using Cathedral.Game;
+using Cathedral.Game.History;
+
+namespace Cathedral.Debug;
+
+/// <summary>The world history viewer off Windows: never open, says once that it is unavailable.</summary>
+public static class WorldHistoryViewerManager
+{
+    public static bool IsOpen => false;
+
+    public static void Show()
+    {
+        if (!DebugMode.ShowViewers) return;
+        PlatformNotice.WindowUnavailable("world history viewer");
+    }
+
+    public static void ShowMessage(string message) { }
+
+    public static void ShowHistory(WorldHistory history) { }
+}
+#endif

@@ -22,6 +22,6 @@ public class LedToPremisesOutcome : Outcome
     {
         var npc = ctx.Npc!;
         npc.LeadToPremisesGranted = true;
-        Report($"{npc.DisplayName} will take you to {npc.Archetype.Workplace}");
+        Report($"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(npc)} will take you to {npc.Archetype.Workplace}");
     }
 }

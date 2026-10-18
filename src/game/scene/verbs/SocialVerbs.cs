@@ -45,6 +45,48 @@ public abstract class SocialDialogueVerb : DialogueVerb
 }
 
 /// <summary>
+/// Walks up to the witness who is confronting you and explains yourself before they collar you. It
+/// opens the same caught-red-handed confrontation they would, worded after the crime they heard
+/// (or trespass), but every branch of it is one step easier: coming forward is half of being
+/// believed. Offered only on the confronter (see <see cref="ConfrontationSelector"/>), and one of the
+/// few acts a confrontation permits.
+///
+/// <para>The roll only opens the conversation, as for every dialogue verb. Failing it is a slip in
+/// front of somebody already watching you, so it gets you caught all the same — the confrontation
+/// opens at its usual, harder, difficulty.</para>
+/// </summary>
+public class ExplainMyselfVerb : SocialDialogueVerb
+{
+    public override string VerbId      => "explain_myself";
+    public override string DisplayName => "Explain myself";
+
+    protected override string DialogueTreeId => Cathedral.Game.Dialogue.Tree.Trees.CaughtRedHandedTreeFactory.TreeIdPrefix;
+
+    /// <summary>The witness is a stranger as often as not; you do not need their name to face them.</summary>
+    protected override bool RequiresAcquaintance => false;
+
+    public override bool CanBeUsedWhenConfronted => true;
+
+    protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
+    {
+        var npc = Available(scene, pov, target, actor);
+        return npc != null
+            && ReferenceEquals(ConfrontationSelector.Confronter(scene, pov, actor?.AffinityKey ?? "Protagonist"), npc);
+    }
+
+    public override string Verbatim(Scene scene, PoV pov, Element target)
+        => $"go up to {NpcPronoun(target)} and explain myself";
+
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
+    {
+        var npc = Available(scene, pov, target, actor);
+        if (npc == null) return System.Array.Empty<Outcome>();
+        var crime = ConfrontationSelector.CrimeFor(scene, npc, null, pov.Where.IsPrivate);
+        return new Outcome[] { new DialogueTriggerOutcome(npc, tree: Cathedral.Game.Dialogue.Tree.Trees.CaughtRedHandedTreeFactory.CreateCameForward(crime)) };
+    }
+}
+
+/// <summary>
 /// Asks a stranger for money. The lowest thing a conversation can be, and the only one available to
 /// somebody with nothing.
 /// </summary>
@@ -213,7 +255,6 @@ public class PickpocketVerb : Verb
     /// <summary>Taking from somebody's pockets is a crime wherever they are standing.</summary>
     protected override bool IsIllegalFor(Scene scene, PoV pov, Element? target, PartyMember? actor) => true;
 
-    /// <summary>What a success teaches: taking from a person without them knowing.</summary>
     /// <summary>
     /// What lifting a purse teaches. Not <c>petty_thief</c>, which STEAL keeps: taking from a shelf
     /// and taking from a body that is still wearing it are different trades, and only one of them is
@@ -237,6 +278,10 @@ public class PickpocketVerb : Verb
 
         if (target is not SceneNpc sceneNpc) return false;
         if (sceneNpc.Entity is not NpcEntity npc || !npc.IsAlive) return false;
+        // Only a body that carries things has a purse to lift: a hyena has no pockets. Asked of the
+        // target's capabilities, the same flag the actor needs, so an anatomy added later with hands
+        // and a belt is a mark without anyone listing it.
+        if (!npc.Combatant.Can(AnatomyCapability.Handcraft)) return false;
 
         return scene.GetNpcsAt(pov.Where, pov.When).Any(n => n.Id == sceneNpc.Id);
     }

@@ -286,7 +286,7 @@ public class LlamaServerManager : IDisposable
     /// <para>The distinction that matters: a fallback <i>invents an answer</i>, a retry <i>re-asks the
     /// question</i>. Nothing was processed, so there is no state to be inconsistent with and no
     /// substituted result to mistake for a real one. That is why this is not the kind of silent
-    /// recovery <see cref="Cathedral.Game.Narrative.PersonaMatchCritic"/> had its fallback removed for.</para>
+    /// recovery <see cref="Cathedral.Game.Narrative.ChoiceJudge"/> refuses to make.</para>
     ///
     /// <para><b>`.NET` already does this for us — but only for verbs it may safely replay, and every
     /// request we make is a POST.</b> That asymmetry is the whole shape of the bug and is why it took
@@ -1025,6 +1025,30 @@ public class LlamaServerManager : IDisposable
     {
         if (Cathedral.Game.PlaygroundMode.IsActive)
             return string.Empty;
+        return (await SendOneShotAsync(slotId, userMessage, gbnfGrammar, maxTokens, skipReset, topLogprobs: 0)).Text;
+    }
+
+    /// <summary>
+    /// The log-probabilities of the <paramref name="topN"/> likeliest FIRST tokens of the reply, as
+    /// the server reports them (raw model scores, before any sampler or grammar), most likely first.
+    /// One forward pass and no grammar: a caller that wants one of a few tokens reads their scores
+    /// here rather than sampling one, which is what lets a decision use a threshold instead of
+    /// whatever token happened to come out (<see cref="Cathedral.Game.Narrative.ChoiceJudge"/>).
+    /// Tokens are returned verbatim — "A" and " A" are distinct entries; merging them is the caller's
+    /// business, and averaging them (as <see cref="GetNextTokenProbabilitiesAsync"/> does) would be wrong.
+    /// Resets the instance afterwards, like <see cref="GenerateConstrainedStringAsync"/>.
+    /// </summary>
+    public async Task<IReadOnlyList<(string Token, double LogProb)>> GetFirstTokenLogProbsAsync(
+        int slotId, string userMessage, int topN = 40)
+    {
+        if (Cathedral.Game.PlaygroundMode.IsActive)
+            return Array.Empty<(string, double)>();
+        return (await SendOneShotAsync(slotId, userMessage, null, maxTokens: 1, skipReset: false, topLogprobs: topN)).Top;
+    }
+
+    private async Task<(string Text, List<(string Token, double LogProb)> Top)> SendOneShotAsync(
+        int slotId, string userMessage, string? gbnfGrammar, int maxTokens, bool skipReset, int topLogprobs)
+    {
 
         if (!_instances.TryGetValue(slotId, out var instance))
             throw new ArgumentException($"Instance with slot ID {slotId} not found.");
@@ -1074,8 +1098,13 @@ public class LlamaServerManager : IDisposable
                 ["temperature"] = Config.LLM.Temperature,
                 ["top_p"] = Config.LLM.TopP,
             };
+            if (topLogprobs > 0)
+            {
+                requestData["logprobs"] = true;
+                requestData["top_logprobs"] = topLogprobs;
+            }
 
-            // No grammar → unconstrained free-text generation (persona reasoning). llama.cpp treats
+            // No grammar → unconstrained free-text generation. llama.cpp treats
             // an empty grammar as constraining to the empty string, so omit the key entirely.
             if (!string.IsNullOrEmpty(gbnfGrammar))
                 requestData["grammar"] = gbnfGrammar;
@@ -1123,9 +1152,23 @@ public class LlamaServerManager : IDisposable
 
             generated = generated.Trim();
 
+            var top = new List<(string Token, double LogProb)>();
+            if (topLogprobs > 0 && root.TryGetProperty("choices", out var lpChoices) && lpChoices.GetArrayLength() > 0 &&
+                lpChoices[0].TryGetProperty("logprobs", out var lp) && lp.ValueKind == JsonValueKind.Object &&
+                lp.TryGetProperty("content", out var lpContent) && lpContent.GetArrayLength() > 0 &&
+                lpContent[0].TryGetProperty("top_logprobs", out var topEl))
+            {
+                foreach (var e in topEl.EnumerateArray())
+                    if (e.TryGetProperty("token", out var tk) && e.TryGetProperty("logprob", out var lv) && tk.GetString() is { } tok)
+                        top.Add((tok, lv.GetDouble()));
+            }
+
             if (requestLogDir != null)
             {
                 await File.WriteAllTextAsync(Path.Combine(requestLogDir, "llm_response.txt"), generated);
+                if (top.Count > 0)
+                    await File.WriteAllTextAsync(Path.Combine(requestLogDir, "top_logprobs.txt"),
+                        string.Join("\n", top.Select(t => $"{JsonSerializer.Serialize(t.Token)}\t{t.LogProb.ToString("F4", System.Globalization.CultureInfo.InvariantCulture)}")));
                 var endTime = DateTime.Now;
                 var timingText = $"Duration: {(endTime - startTime).TotalMilliseconds:F0}ms";
                 await File.WriteAllTextAsync(Path.Combine(requestLogDir, "timing.txt"), timingText);
@@ -1144,7 +1187,7 @@ public class LlamaServerManager : IDisposable
             instance.AddAssistantResponse(generated);
             trace.ReplyChars = generated.Length;
             FinishTrace(trace, "ok");
-            return generated;
+            return (generated, top);
         }
         catch (Exception ex)
         {

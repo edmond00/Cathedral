@@ -16,7 +16,7 @@ public class FordingModusMentis : ModusMentis
     public override string[] Organs        => new[] { "legs", "pulmones" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
-    public override string PersonaTone     => "a bodily caution about moving water that has been earned rather than taught";
+    public override string PersonaTone     => "a wader's feel for moving water that has been earned rather than taught";
     public override string PersonaReminder  => "water-crossing walker";
     public override string PersonaReminder2 => "someone who faces upstream and shuffles";
     public override string StyleInstruction =>

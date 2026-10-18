@@ -6,8 +6,9 @@ namespace Cathedral.Game.Npc.Traits;
 
 /// <summary>
 /// The catalogue of every <see cref="PersonalityTrait"/>, in two pools: a <b>global</b> pool any
-/// person can be dealt, and a <b>per-archetype</b> pool reserved for one trade. Every generated NPC
-/// draws <see cref="GlobalDraw"/> global traits and <see cref="ArchetypeDraw"/> archetype ones, so
+/// person can be dealt, and a <b>per-archetype</b> pool reserved for one trade. Every generated person
+/// draws <see cref="GlobalDraw"/> global traits and <see cref="ArchetypeDraw"/> archetype ones (a beast
+/// only the latter — see <see cref="Deal"/>), so
 /// two blacksmiths differ both in ways anyone could differ and in ways only a smith could.
 ///
 /// <para>
@@ -54,16 +55,22 @@ public sealed partial class PersonalityTraitRegistry
     public IEnumerable<string> ArchetypeIds => _byArchetype.Keys;
 
     /// <summary>
-    /// Deals this NPC's traits: <see cref="ArchetypeDraw"/> from its own trade, then
+    /// Deals this NPC's traits: <see cref="ArchetypeDraw"/> from its own trade, then — for a person —
     /// <see cref="GlobalDraw"/> from the global pool. Archetype traits come first so that when two
     /// traits both want to set the same text field, the trade-specific voice wins
     /// (see <see cref="PersonalityTrait.ApplyText"/>).
+    ///
+    /// <para><b>The global pool is for people.</b> Every global trait is written about one — hands
+    /// that have set broken things, clothes kept with care, a reed pipe through the belt, an opinion on
+    /// the harvest — and only its organ and wound halves could be refused for an anatomy without them.
+    /// The words were not: a hyena was described with hands and a working wardrobe, and the keyword
+    /// picked from it was "work". A beast is dealt only its own archetype's traits, if it has any.</para>
     /// </summary>
-    public IReadOnlyList<PersonalityTrait> Deal(string archetypeId, Random rng)
+    public IReadOnlyList<PersonalityTrait> Deal(string archetypeId, bool isHuman, Random rng)
     {
         var dealt = new List<PersonalityTrait>();
         dealt.AddRange(Sample(ForArchetype(archetypeId), ArchetypeDraw, rng));
-        dealt.AddRange(Sample(_global, GlobalDraw, rng));
+        if (isHuman) dealt.AddRange(Sample(_global, GlobalDraw, rng));
         return dealt;
     }
 

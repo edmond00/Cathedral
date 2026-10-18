@@ -468,6 +468,24 @@ models/llama-arm64/backends/*
 models/llama-arm64/backends/*/*
 !models/llama-arm64/backends/*/BUILD.txt
 
+# And for the Linux toolchain (llama-server, llama-bench and their .so files; see
+# tools/linux/cloud-setup.sh), for the same reason.
+!models/llama-linux/
+models/llama-linux/*
+!models/llama-linux/BUILD.txt
+!models/llama-linux/backends/
+models/llama-linux/backends/*
+!models/llama-linux/backends/*/
+models/llama-linux/backends/*/*
+!models/llama-linux/backends/*/BUILD.txt
+
+# Extra CA certificates for building the Docker image behind a TLS-intercepting proxy (local only).
+tools/linux/extra-ca/*
+!tools/linux/extra-ca/.gitkeep
+
+# The SoundFont for the OpenAL audio path: tens of MB, third-party, fetched (see assets/audio/README.md).
+assets/audio/*.sf2
+
 # The pre-cleanup models folder, kept locally as an archive (see models/README.md).
 models_old/
 

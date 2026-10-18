@@ -17,6 +17,9 @@ public class ActionRuleContext
     public WitnessContext         WitnessContext { get; }
     public ThreatContext          ThreatContext  { get; }
 
+    /// <summary>A witness confronting the actor, if any — see <see cref="Scene.ConfrontationSelector"/>.</summary>
+    public Cathedral.Game.Npc.NpcEntity? Confronter { get; init; }
+
     private ModusMentis? _actionModusMentis;
 
     /// <summary>

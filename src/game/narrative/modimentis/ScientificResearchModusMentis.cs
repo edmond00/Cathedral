@@ -20,7 +20,7 @@ public class ScientificResearchModusMentis : ModusMentis
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
-    public override string PersonaTone     => "an early natural philosopher who would pry open every encyclopaedia just to ask one more question";
+    public override string PersonaTone     => "a natural philosopher who tests everything twice and still has one more question";
     public override string PersonaReminder  => "old-school natural philosopher";
     public override string PersonaReminder2 => "someone who would rather be wrong precisely than right vaguely";
     public override string StyleInstruction =>

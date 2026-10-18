@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Cathedral.Game.Narrative;
+using Cathedral.Game.Npc;
 using Cathedral.Game.Scene.Verbs;
 
 namespace Cathedral.Game.Scene;
@@ -31,15 +33,17 @@ public abstract class SceneFactory
     public Scene Build(int locationId)
     {
         var rng   = CreateSeededRandom(locationId);
-        var scene = new Scene();
+        var scene = new Scene { ArrivalPeriod = ArrivalPeriodFor(locationId) };
 
         // Hand the location's persistent stores to the scene before anything is built: the departed
         // list is read a few lines down, and depletion is read as items are placed.
         _locationState?.AttachTo(scene);
 
         BuildSections(rng, locationId, scene);
+        MarkWilderness(scene);
         BuildNpcs(rng, locationId, scene);
         DropDepartedNpcs(scene);
+        if (GuaranteesArrivalCompany) EnsureArrivalCompany(scene);
         PlaceBeastSign(scene);
         AssignVerbs(scene);
         MergeDuplicateNamedPois(scene);
@@ -48,6 +52,111 @@ public abstract class SceneFactory
         WriteSceneToLog(scene, locationId);
 
         return scene;
+    }
+
+    /// <summary>
+    /// Whether this factory builds wilderness — ground that belongs to nobody. False for anything
+    /// settled (farms, villages, cities, ruins) and for the scenes that stand outside the world (the
+    /// test location, the get-up room, a reminiscence).
+    /// </summary>
+    protected virtual bool IsWilderness => false;
+
+    /// <summary>
+    /// The hour every visit to <paramref name="locationId"/> opens at: one of the five daytime periods,
+    /// never night. Fixed per location so a settlement can be made to greet the player
+    /// (<see cref="EnsureArrivalCompany"/>) by changing one period of one schedule rather than staffing
+    /// its square all day. Hashed from the id alone, not drawn from the build generator: a draw there
+    /// would shift every room, name and person of every location.
+    /// </summary>
+    public static TimePeriod ArrivalPeriodFor(int locationId)
+    {
+        uint h = unchecked((uint)locationId * 0x9E3779B1u);
+        h ^= h >> 15;
+        h = unchecked(h * 0x85EBCA77u);
+        h ^= h >> 13;
+        return (TimePeriod)(h % 5);   // Dawn..Evening
+    }
+
+    /// <summary>
+    /// Whether this place must have somebody in its arrival area at its <see cref="Scene.ArrivalPeriod"/>.
+    /// True for the settled country; the wilderness is allowed to be empty.
+    /// </summary>
+    protected virtual bool GuaranteesArrivalCompany => false;
+
+    /// <summary>
+    /// Moves one resident into the arrival area for the arrival period when nobody is there — the
+    /// first impression of a settlement used to be an empty square more often than not, with a dozen
+    /// people indoors. Only that one period of that one schedule changes. Who goes, in order: somebody
+    /// already out of doors in the arrival area's section, then anyone out of doors, then somebody
+    /// in a private room, not alone in a public one, or a trader whose counter a fellow trader keeps
+    /// (and who keeps it at another hour), then somebody who is away, then the only person in a
+    /// household hall that is manned every other daytime hour. Never the only keeper of a counter or a
+    /// store, nor a hall left empty a second period — the faults <c>--building-audit</c> catches. A place
+    /// with nobody to move stays empty.
+    ///
+    /// <para>Skipped under <c>--npc-static</c>, which pins everyone to one area anyway, and where a
+    /// changed slot could move the area a test names.</para>
+    /// </summary>
+    private static readonly TimePeriod[] DayPeriods =
+        { TimePeriod.Dawn, TimePeriod.Morning, TimePeriod.Noon, TimePeriod.Afternoon, TimePeriod.Evening };
+
+    private static void EnsureArrivalCompany(Scene scene)
+    {
+        if (Config.Debug.NpcStatic) return;
+        var entry  = scene.AllAreas.FirstOrDefault();
+        if (entry == null) return;
+        var period = scene.ArrivalPeriod;
+
+        static bool IsPerson(SceneNpc n) => n.Entity is NpcEntity e && e.Archetype.Species is HumanSpecies;
+        if (scene.GetNpcsAt(entry, period).Any(IsPerson)) return;
+
+        var outdoors     = scene.OutdoorAreas.Select(a => a.Id).ToHashSet();
+        var entrySection = scene.Sections.First(s => s.Areas.Contains(entry));
+        SceneNpc? chosen = null;
+        int bestRank = int.MaxValue;
+        foreach (var npc in scene.Npcs)
+        {
+            if (!npc.IsAlive || !IsPerson(npc)) continue;
+            if (!scene.NpcSchedules.TryGetValue(npc.Id, out var schedule)) continue;
+            var where  = schedule.GetArea(period);
+            var entity = (NpcEntity)npc.Entity;
+            int rank;
+            if (where == null) rank = 3;
+            else if (entity.TradesIn(where))
+            {
+                // A trader leaves their counter only to a fellow trader of it, and only when this is
+                // not the one period of the day they keep it.
+                bool covered = scene.GetNpcsAt(where, period)
+                    .Any(o => o != npc && o.Entity is NpcEntity oe && oe.TradesIn(where));
+                bool keepsAnother = DayPeriods.Any(p => p != period && entity.TradesIn(schedule.GetArea(p)));
+                if (!covered || !keepsAnother) continue;
+                rank = 2;
+            }
+            else if (outdoors.Contains(where.Id)) rank = entrySection.Areas.Contains(where) ? 0 : 1;
+            else if (where.Tenure == AreaTenure.Private) rank = 2;
+            else if (scene.GetNpcsAt(where, period).Count(IsPerson) > 1) rank = 2;
+            else if (!scene.Stores.Contains(where)
+                     && DayPeriods.All(p => p == period || scene.GetNpcsAt(where, p).Any(IsPerson)))
+                rank = 4;   // a household hall may stand empty one period, so long as it is only this one
+            else continue;
+            if (rank < bestRank) { bestRank = rank; chosen = npc; }
+        }
+        if (chosen == null) return;
+        scene.NpcSchedules[chosen.Id].Set(period, entry);
+    }
+
+    /// <summary>
+    /// Stamps <see cref="AreaTenure.Wild"/> on the open ground of a wilderness location: every area
+    /// the factory left public, except a store. A woodshed, a net shed or an ore store is somebody's
+    /// stock even in the middle of a forest, and stays public ground like a market stall would.
+    /// Private areas are left alone.
+    /// </summary>
+    private void MarkWilderness(Scene scene)
+    {
+        if (!IsWilderness) return;
+        foreach (var area in scene.AllAreas)
+            if (area.Tenure == AreaTenure.Public && !scene.Stores.Contains(area))
+                area.Tenure = AreaTenure.Wild;
     }
 
     /// <summary>

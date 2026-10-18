@@ -1,10 +1,10 @@
 # led_to_premises — the outcome, not the verb.
 #
 # cli/verb/ask_to_be_led/ proves the conversation opens. This proves where winning it leads: the
-# poultry keeper, met at the Duck Pond in the afternoon, keeps the Storage Shed next at evening — so the
+# poultry keeper, met in the Courtyard in the afternoon (the farm's arrival hour, which puts her there to greet the player), keeps the Storage Shed next at evening — so the
 # player is walked to the Storage Shed and the time passes to evening, the keeper in focus.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --npc-affinity CloseFriend --location-type farm --location-id 1 --start-area "Duck Pond" --period afternoon --observe-only "poultry_keeper"
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --npc-affinity CloseFriend --location-type farm --location-id 1 --start-area "Courtyard" --period afternoon --observe-only "poultry_keeper"
 
 wait
 click menu New
@@ -16,7 +16,7 @@ wait mode LocationInteraction 60
 
 # --- before ---
 inspect where
-expect-state where Duck Pond
+expect-state where Courtyard
 expect-state where period=Afternoon
 
 strategy succeed

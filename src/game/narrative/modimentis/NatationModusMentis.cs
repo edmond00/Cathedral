@@ -11,8 +11,8 @@ public class NatationModusMentis : ModusMentis
     public override string ModusMentisId    => "natation";
     public override string DisplayName      => "Natation";
     public override string MenuDescription =>
-        "Keeps the body at ease in water: the held breath, the steady stroke, the current read and used rather than fought. Treats river, pond, and flood as passable country instead of a boundary.";
-    public override string SkillMeans       => "skilled swimming and staying afloat";
+        "Swims, and keeps the body at ease in water: the held breath, the steady stroke, the current read and used rather than fought. Treats river, pond, and flood as passable country instead of a boundary.";
+    public override string SkillMeans       => "swimming across deep water and staying afloat";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "pulmones", "arms" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
