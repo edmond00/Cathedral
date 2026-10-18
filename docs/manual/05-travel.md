@@ -276,14 +276,24 @@ calendar keeps to one.
 Within a day, six coarse **periods** are distinguished — dawn, morning, noon, afternoon, evening,
 night — and they cycle, night returning to dawn.
 
-The period is not tracked continuously. It is **drawn on arrival**, and thereafter moved only by
-acts that wait: sitting out an interval advances it by one, and an act that waits for something to
-happen walks it forward a period at a time until the thing happens or the day is exhausted.
+The period is not tracked continuously. **Each place has its own hour of arrival**, fixed for it
+once and for all and always one of the five periods of daylight, never night; every visit opens at
+that hour. Thereafter the period is moved only by acts that wait: sitting out an interval advances it
+by one, and an act that waits for something to happen walks it forward a period at a time until the
+thing happens or the day is exhausted. A routine is the exception, opening at the hour it was learned
+at (see [Chapter IX](09-routines.md)).
 
 The period matters because it settles the state of a place. Where each inhabitant of a location
 stands is decided by their schedule against the period; a building's entry is shut at night; and
-what may be attempted at all follows from both. Arriving at a place at two different periods is
-arriving at two different places.
+what may be attempted at all follows from both. A place's other periods are reached only by waiting
+in it, or by a routine.
+
+**A settled place is never found empty at its hour of arrival** while anyone can be spared to stand
+there. At that hour somebody is in the area a visit opens in: one of the inhabitants, drawn from the
+open ground, from a private room, from a shared hall or counter, or from wherever they were away to
+— but never the only keeper of a counter or a store, nor so as to leave a household's hall unmanned
+a second period of the day. A place of one or two inhabitants, each the sole keeper of something, may
+therefore still be found empty. The wild is under no such rule.
 
 ## 9. Companions, and their loss
 

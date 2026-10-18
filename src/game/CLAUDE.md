@@ -21,8 +21,8 @@ character is worse than a refused load when there is only one save.
 
 Six things: the master seed, the **world variant**, the clock, the avatar's vertex,
 `Dictionary<int, LocationInstanceState>` verbatim, and the party. Nothing else feeds a scene build —
-the world is a pure function of the seed and the variant, a scene of its location id, and the time of
-day is drawn fresh on every arrival.
+the world is a pure function of the seed and the variant, a scene of its location id, and so is the hour a
+visit opens at (`SceneFactory.ArrivalPeriodFor`, a daytime period hashed from the id).
 
 A seventh field is a check rather than a fact: **`HistoryHash`**, the fingerprint of the world's
 generated history. The history itself is regenerated with the terrain (see
@@ -1398,6 +1398,26 @@ A verb that joins this set must also be named in `VerbAudit`'s `unreachable` tab
 `VerbProbe.WhyUnreached`: the sweeps build scenes with no instance state, so their stand-in actor is
 a stranger to everyone and an affinity-gated verb is *correctly* never offered.
 
+### Every visit opens at the place's own hour
+
+**A location's arrival period is fixed** — `SceneFactory.ArrivalPeriodFor(locationId)`, one of the
+five daytime periods, hashed from the id and **not** drawn from the build generator (a draw there would
+move every room, name and person of every location). `Scene.ArrivalPeriod` carries it; only
+`StartNarrativeInteraction` passes it, so the childhood, the get-up and a routine (which opens at its
+own hour) are untouched, and `--period` still wins. `StartObservationPhase` keeps making the old
+random draw and discards it, so every later roll of a seeded run is unchanged.
+
+**Fixing it is what makes a settlement greet you cheaply.** Measured before the change, the area a
+visit opens in held a person by day 40% of the time in a village and 6% at a stable, with a dozen
+people indoors. `EnsureArrivalCompany` (on for `SettledSceneFactory` and the farm, through
+`GuaranteesArrivalCompany`) moves **one period of one schedule** into the arrival area when nobody is
+there, choosing in order: someone out of doors in that section, anyone out of doors, someone in a
+private room / not alone in a public one / a trader whose counter a fellow trader keeps and who keeps
+it at another hour, someone away, and last the lone person in a household hall that is manned every
+other daytime period. Never the sole keeper of a counter or store. Runs after `DropDepartedNpcs`, so a
+departed greeter is replaced, and is skipped under `--npc-static`. `--building-audit` warns when it
+fails with somebody to spare and prints the coverage per factory.
+
 ### Trade happens on premises
 
 `TradeGate.CanTrade` asks two questions: **is the player standing in one of the trader's
@@ -1415,7 +1435,7 @@ hand-off. The destination is `TradeGate.NextOnPremises`: the first period, from 
 at which the trader's schedule puts them on their premises; a later period is reached through
 `ApplyTimePeriod`, as waiting reaches it. Not offered when that search finds nothing — and so never
 under `--npc-static`, which pins everyone to one area. Its scripts run on the farm
-(`--location-type farm --location-id 1`, poultry keeper at the Duck Pond in the afternoon), since in
+(`--location-type farm --location-id 1`, poultry keeper in the Courtyard in the afternoon), since in
 the test location everyone trades wherever they stand and so is never off their premises.
 
 **Empty premises means trades nowhere, not everywhere.** The scene factory fills them at spawn

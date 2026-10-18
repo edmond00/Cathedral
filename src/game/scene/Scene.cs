@@ -41,6 +41,12 @@ public class Scene
     /// </summary>
     public List<Area> Stores { get; } = new();
 
+    /// <summary>
+    /// The hour a visit opens at, always a daytime one — see <see cref="SceneFactory.ArrivalPeriodFor"/>.
+    /// Set by <see cref="SceneFactory.Build(int)"/>; a routine opens at its own hour instead.
+    /// </summary>
+    public Narrative.TimePeriod ArrivalPeriod { get; set; } = Narrative.TimePeriod.Morning;
+
     /// <summary>Verbs applicable in this scene (subset from global VerbRegistry).</summary>
     public List<Verb> Verbs { get; } = new();
 

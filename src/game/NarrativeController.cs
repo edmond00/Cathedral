@@ -466,7 +466,10 @@ public class NarrativeController
     /// <param name="openingFocus">What the first observation is of — a Meet routine's person — or null
     /// to let the persona choose as usual. Set here rather than after, because the phase is generated
     /// on a task this method starts.</param>
-    public void StartObservationPhase(TimePeriod? forcedPeriod = null, Element? openingFocus = null)
+    /// <param name="arrivalPeriod">The location's own hour (<see cref="Scene.ArrivalPeriod"/>) when this
+    /// is an arrival; <c>--period</c> still overrides it, and without either the hour is drawn.</param>
+    public void StartObservationPhase(TimePeriod? forcedPeriod = null, Element? openingFocus = null,
+                                      TimePeriod? arrivalPeriod = null)
     {
         _narrationState.Clear();
         _scrollBuffer.Clear();
@@ -477,10 +480,13 @@ public class NarrativeController
         _openingFocus   = openingFocus;
         _openingFocusMM = null;
 
-        // Place NPCs into nodes based on the supplied time period, or a random one when none is given.
-        // --period pins it for the whole run: several rules (every entry door shutting at night) only
-        // fire in one period, and a random draw reaches that one visit in six.
-        var period = forcedPeriod ?? Config.Debug.ForcedPeriod ?? TimePeriodExtensions.Random(_diceRandom);
+        // Place NPCs into nodes based on the supplied time period, else --period, else the location's
+        // fixed arrival hour, else a random one. --period pins it for the whole run: several rules
+        // (every entry door shutting at night) only fire in one period. The draw is still made when the
+        // arrival hour wins and its result discarded, so every later roll of a seeded run is the roll
+        // it was before arrival hours existed.
+        var period = forcedPeriod ?? Config.Debug.ForcedPeriod
+                     ?? Discarding(TimePeriodExtensions.Random(_diceRandom), arrivalPeriod);
         ApplyTimePeriod(period);
         Console.WriteLine($"NarrativeController: Time period is {period}");
 
@@ -508,6 +514,8 @@ public class NarrativeController
     /// in the village square the moment the trade menu closed. Set BEFORE <see cref="ApplyTimePeriod"/>,
     /// which places NPCs and re-gates every verb against the point of view.</para>
     /// </summary>
+    private static TimePeriod Discarding(TimePeriod drawn, TimePeriod? instead) => instead ?? drawn;
+
     public void PrepareForRoutineSubPhase(TimePeriod period, string? startAreaKey = null)
     {
         _narrationState.Clear();

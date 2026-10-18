@@ -34,6 +34,8 @@ public abstract class SettledSceneFactory : SceneFactory
     /// <summary>The biome this place is built for when neither the constructor nor the world says.</summary>
     protected abstract string DefaultBiome { get; }
 
+    protected override bool GuaranteesArrivalCompany => true;
+
     /// <summary>The biome of the cell being built. Valid from the start of <see cref="BuildSections"/>.</summary>
     protected string Biome { get; private set; } = "plain";
 

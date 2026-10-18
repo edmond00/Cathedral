@@ -127,6 +127,7 @@ public static class BuildingAudit
         int minDoors = int.MaxValue, maxDoors = 0;
         int minLocked = int.MaxValue, maxLocked = 0;
         var kinds = new Dictionary<string, int>();
+        int peopled = 0, greeted = 0;
 
         for (int id = 1; id <= SampleSize; id++)
         {
@@ -168,6 +169,11 @@ public static class BuildingAudit
                 CheckHallStaffing(warnings, label, id, scene, allowedEmptyPeriods);
                 CheckMastersLeaveTheirHall(warnings, label, id, scene);
                 CheckStoreStaffing(warnings, label, id, scene);
+                if (CheckArrivalCompany(warnings, label, id, scene) is { } met)
+                {
+                    peopled++;
+                    if (met) greeted++;
+                }
             }
         }
 
@@ -179,6 +185,7 @@ public static class BuildingAudit
         sb.AppendLine($"  areas          {minAreas}-{maxAreas}");
         sb.AppendLine($"  named+shallow  {minNpcs}-{maxNpcs} NPCs");
         sb.AppendLine($"  doors          {minDoors}-{maxDoors}  (locked at noon: {minLocked}-{maxLocked})");
+        if (inhabited) sb.AppendLine($"  arrival        someone there at the arrival hour in {greeted}/{peopled} peopled locations");
         sb.AppendLine($"  sections seen  {string.Join(", ", kinds.OrderByDescending(k => k.Value).Take(12).Select(k => $"{k.Key}×{k.Value}"))}");
         sb.AppendLine();
     }
@@ -191,6 +198,28 @@ public static class BuildingAudit
             .ToList();
 
     // ── Checks ────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// A settlement greets the player: at its fixed arrival hour somebody is in the area a visit opens
+    /// in (<c>SceneFactory.EnsureArrivalCompany</c>). Warns when the area is empty while a person was
+    /// out of doors elsewhere at that hour — somebody the guarantee could have moved and did not.
+    /// Returns null for a location with no people at all, else whether the arrival was greeted.
+    /// </summary>
+    private static bool? CheckArrivalCompany(List<string> w, string label, int id, Scene scene)
+    {
+        static bool IsPerson(SceneNpc n) => n.Entity is NpcEntity e && e.Archetype.Species is HumanSpecies;
+        if (!scene.Npcs.Any(IsPerson)) return null;
+        var entry  = scene.AllAreas.First();
+        var period = scene.ArrivalPeriod;
+        if (period == TimePeriod.Night)
+            w.Add($"{label} {id}: arrival hour is night — arrival hours are daytime only");
+        if (scene.GetNpcsAt(entry, period).Any(IsPerson)) return true;
+        var idle = scene.OutdoorAreas.FirstOrDefault(a => scene.GetNpcsAt(a, period)
+                       .Any(n => IsPerson(n) && !((NpcEntity)n.Entity).TradesIn(a)));
+        if (idle != null)
+            w.Add($"{label} {id}: arrival area '{entry.DisplayName}' is empty at {period} while '{idle.DisplayName}' has a person to spare");
+        return false;
+    }
 
     /// <summary>
     /// Sections must partition areas. An area in none makes <c>StartFight</c> bail out with an error;

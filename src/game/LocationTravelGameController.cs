@@ -4556,7 +4556,7 @@ public class LocationTravelGameController : IDisposable
         if (startAreaKey != null && startTime != null)
             _narrativeController!.StartAtArea(startAreaKey, startTime.Value, focusNpcId);
         else
-            _narrativeController!.StartObservationPhase();
+            _narrativeController!.StartObservationPhase(arrivalPeriod: _narrativeController.Scene?.ArrivalPeriod);
 
         Console.WriteLine("LocationTravelGameController: Phase 6 narrative interaction started");
     }

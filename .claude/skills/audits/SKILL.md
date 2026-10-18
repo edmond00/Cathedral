@@ -450,6 +450,10 @@ sections that were generated and how often. Then it warns about:
 - an NPC with `[Night] = null`, sleeping in a room with no bed, or a room sleeping more people than
   it has beds. Wilderness factories are exempt — a wolf is allowed to sleep rough;
 - a public hall with nobody in it during a day period: a shop with no one behind the counter;
+- a settled location whose arrival area is empty at its arrival hour while somebody stands out of
+  doors elsewhere with nothing to keep — the guarantee `SceneFactory.EnsureArrivalCompany` makes. Each
+  inhabited factory also prints `arrival … in N/M peopled locations`; what falls short of M is the
+  one- and two-person households where everyone is the sole keeper of a hall or a store;
 - stable keys that are missing, colliding, or **different across two builds of one location id**.
   That last one matters because procedural descriptions are seeded from the key, so a key that moves
   re-rolls how every door in the place looks between visits.
