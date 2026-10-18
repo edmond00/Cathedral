@@ -78,6 +78,13 @@ GOAL = [  # thinking, place, area, object, goals, acceptable (DECLINE_GOAL is al
     ("herblore", "a town", "smithy", "an anvil", ["strike the anvil", "provoke the smith", "buy a horseshoe"], [DECLINE_GOAL]),
     ("piety", "a town", "tavern", "a drunkard", ["provoke the drunkard", "steal the drunkard's purse", "challenge the drunkard to a drinking match"], [DECLINE_GOAL]),
     ("gluttony", "a town", "smithy", "the bellows", ["work the bellows", "strike the anvil", "examine the tongs closely"], [DECLINE_GOAL]),
+    # Introducing oneself is the door to every other conversation (they need acquaintance), so a
+    # sociable mind takes it and an unsociable one leaves it. The old phrasing "meet her to introduce
+    # myself" was declined by 30 of the 48 speaking-thinking modi mentis; see MeetStrangerVerb.
+    ("sense_of_humor", "a farm", "courtyard", "the farmhand (a woman)", ["strike up a conversation with her, introducing myself", "ask her for a coin"], ["strike up a conversation with her, introducing myself"]),
+    ("gossip", "a village", "alehouse", "the alehouse keeper (a woman)", ["ask her for a coin", "strike up a conversation with her, introducing myself"], ["strike up a conversation with her, introducing myself"]),
+    ("bargaining", "a town", "market square", "the cloth merchant (a man)", ["strike up a conversation with him, introducing myself", "ask him for a coin"], ["strike up a conversation with him, introducing myself"]),
+    ("spite", "a farm", "courtyard", "the farmhand (a woman)", ["strike up a conversation with her, introducing myself", "ask her for a coin"], [DECLINE_GOAL]),
 ]
 FOCUS = [  # observation, place, area, objects, acceptable
     ("herblore", "a forest", "clearing", ["a herb patch", "a fallen log", "a grey wolf", "a woodpecker"], ["a herb patch"]),

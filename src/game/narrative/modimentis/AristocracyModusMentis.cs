@@ -12,7 +12,7 @@ public class AristocracyModusMentis : ModusMentis
     public override string ModusMentisId    => "aristocracy";
     public override string DisplayName      => "Aristocracy";
     public override string MenuDescription =>
-        "Reads a room by rank and precedence, tracking who outranks whom and what a courtesy conceals. Holds conduct to the forms of the highborn and marks the slight in a forgotten title as sharply as an open insult.";
+        "Reads a room by rank and precedence, tracking who outranks whom and what a courtesy conceals. Holds conduct to the forms of the highborn: greets each person by the address their station is owed and introduces itself with name and house, marking a forgotten title as a slight.";
     public override string SkillMeans       => "the careful manners of the highborn";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "cerebrum", "tongue" };

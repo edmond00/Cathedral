@@ -10,7 +10,7 @@ public class GossipModusMentis : ModusMentis
     public override string ModusMentisId    => "gossip";
     public override string DisplayName      => "Gossip";
     public override string MenuDescription =>
-        "Collects and spends news about people: what is being said, who is quarrelling, what a household would rather nobody knew. The fastest information network there is, and it runs on being willing to spend some of your own.";
+        "Collects and trades news about people: what is being said, who is quarrelling, what a household would rather nobody knew. Strikes up talk with anyone who might know something, and pays for news with news of its own.";
     public override string SkillMeans       => "the trading of news about other people";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "ears", "tongue" };

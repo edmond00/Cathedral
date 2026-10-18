@@ -11,7 +11,7 @@ public class HumilityModusMentis : ModusMentis
     public override string ModusMentisId    => "humility";
     public override string DisplayName      => "Humility";
     public override string MenuDescription =>
-        "Claims less than is due, takes the lower seat, and lets others be right. Costs nothing, disarms almost everybody, and leaves considerable room to be more than expected.";
+        "Claims less than is due, takes the lower seat, and lets others be right. Greets people modestly and puts them at ease; costs nothing, disarms almost everybody, and leaves considerable room to be more than expected.";
     public override string SkillMeans       => "the taking of the low place on purpose";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "heart", "tongue" };

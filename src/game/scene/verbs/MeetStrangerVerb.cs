@@ -40,7 +40,7 @@ public class MeetStrangerVerb : DialogueVerb
     // conversation proper is handled by the dialogue tree this verb triggers. The NPC is named once
     // in the prompt's attention line; the verbatim refers back with the neutral pronoun.
     public override string Verbatim(Scene scene, PoV pov, Element target)
-        => $"meet {NpcPronoun(target)} to introduce myself";
+        => $"strike up a conversation with {NpcPronoun(target)}, introducing myself";
 
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {

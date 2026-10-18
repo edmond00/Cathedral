@@ -10,14 +10,14 @@ public class PetitioningModusMentis : ModusMentis
     public override string ModusMentisId    => "petitioning";
     public override string DisplayName      => "Petitioning";
     public override string MenuDescription =>
-        "Asks the powerful for things: frames the request in their interest, names the precedent, waits through the delays and asks again. Knows that a petition refused today may be granted next season.";
+        "Asks the powerful for things: approaches them, presents itself and its case, frames the request in their interest, names the precedent, and asks again after every delay. Knows that a petition turned down today may be granted next season.";
     public override string SkillMeans       => "the asking of the powerful for favours";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "tongue", "heart" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
 
-    public override string PersonaTone     => "a petitioner who waits through every delay";
+    public override string PersonaTone     => "a petitioner who outlasts every delay";
     public override string PersonaReminder  => "petitioner";
     public override string PersonaReminder2 => "someone who frames a request in the lord's interest";
     public override string StyleInstruction =>
