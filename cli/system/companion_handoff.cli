@@ -38,8 +38,11 @@ advance 12 180
 expect come and look at this
 expect [BRINDLETAIL]
 
-# The companion acts: their own thinking phase, action, dice, outcome.
+# The companion acts: their own thinking phase, action, dice, outcome. The goal is pinned: a beast's
+# action modus mentis refuses to examine, and the playground's draw over the goals moves whenever an
+# earlier draw does.
 strategy succeed
+goal smell
 click keyword 0
 choose 0
 choose 0
