@@ -66,6 +66,12 @@ public class PointOfInterest : Element, IVerbModusMentisSource
     /// <summary>Items that can be collected from this point of interest.</summary>
     public List<ItemElement> Items { get; } = new();
 
+    /// <summary>
+    /// The whole this point of interest is a part of, if any — observed as one before its parts are
+    /// (see <see cref="PoiCluster"/>). Null for nearly everything.
+    /// </summary>
+    public PoiCluster? Cluster { get; set; }
+
     /// <summary>Mood adjectives for procedural neutral descriptions.</summary>
     public string[] Moods { get; }
 

@@ -142,7 +142,7 @@ public class ObservationPhaseController
         // "Birch Tree") to one random representative each. Order matters: deduplicating first would
         // elect one birch to stand for the group, and retiring it would take its twins with it —
         // the ledger works on instances precisely so the second birch stays observable.
-        var candidates = DeduplicateByName(ObserveOnlyFilter(ledger.Remaining(allOutcomes)));
+        var candidates = ChoiceUnits(allOutcomes, ledger, isReminescence);
 
         var slotId = await _observationExecutor.GetOrCreateSlotForModusMentisPublicAsync(modusMentis);
         _observationExecutor.ResetSlot(slotId);
@@ -300,9 +300,10 @@ public class ObservationPhaseController
         // observed, minus the clicked object's name-twins (so the persona cannot shift to an identical
         // one), with duplicates collapsed.
         var focusName = GetNeutralName(focusOutcome);
-        var followUpCandidates = DeduplicateByName(
-            ObserveOnlyFilter(ledger.Remaining(currentNode.GetAllDirectConcreteOutcomes()))
-                .Where(o => !GetNeutralName(o).Equals(focusName, StringComparison.OrdinalIgnoreCase)));
+        var followUpCandidates = ChoiceUnits(currentNode.GetAllDirectConcreteOutcomes(), ledger, isReminescence)
+            .Where(o => !ReferenceEquals(o, focusOutcome)
+                     && !GetNeutralName(o).Equals(focusName, StringComparison.OrdinalIgnoreCase))
+            .ToList();
 
         var allKeywords = new List<string>();
         var sentences = new List<NarrationSentence>();
@@ -311,7 +312,22 @@ public class ObservationPhaseController
 
         // 0. Keep focus or lose interest? The new Modus Mentis may turn away from the clicked object.
         var keeps = await AskKeepFocusAsync(observationModusMentis, focusOutcome, focusPhrase, ct, isReminescence, overall, area);
-        if (keeps)
+        // A group or a container is not described again when attention is directed to it: its parts
+        // are, one per observation of the block, and the block stays among them.
+        var parts = Grouping(isReminescence) ? AvailableParts(focusOutcome, ledger) : new List<NarrativeAnchor>();
+        bool zoomedIn = false;
+        if (keeps && parts.Count > 0)
+        {
+            var firstPart = await SelectObservationObjectAsync(parts, observationModusMentis, ledger, locationId, ct, isReminescence, overall, area, offerDecline: false);
+            _observationExecutor.ResetSlot(slotId);
+            firstPart ??= parts[0];
+            Console.WriteLine($"ObservationPhaseController: attention directed to '{focusOutcome.DisplayName}' — looking at its parts, from '{firstPart.DisplayName}'.");
+            firstText = await AppendObservationAsync(sentences, allKeywords, slotId, observationModusMentis, firstPart, withTransition: false, locationId, ledger, ct, isReminescence: isReminescence, part: part);
+            firstObserved = firstPart;
+            followUpCandidates = parts;
+            zoomedIn = true;
+        }
+        else if (keeps)
         {
             // 1. Observe the clicked object (no transition).
             firstText = await AppendObservationAsync(sentences, allKeywords, slotId, observationModusMentis, focusOutcome, withTransition: false, locationId, ledger, ct, isReminescence: isReminescence, part: part);
@@ -341,7 +357,8 @@ public class ObservationPhaseController
         // 2. A second (and possibly third) object, reached via a transition and gated on the same length
         //    rules as the overall phase (see AppendFollowUpObservationsAsync).
         await AppendFollowUpObservationsAsync(sentences, allKeywords, slotId, observationModusMentis,
-            followUpCandidates, new List<NarrativeAnchor> { firstObserved }, firstText, locationId, ledger, ct, isReminescence, overall, area, part);
+            followUpCandidates, new List<NarrativeAnchor> { firstObserved }, firstText, locationId, ledger, ct, isReminescence, overall, area, part,
+            siblingsFirst: zoomedIn);
 
         if (sentences.Count == 0)
         {
@@ -413,7 +430,7 @@ public class ObservationPhaseController
                 isReminescence: isReminescence,
                 // A named NPC's appearance is a clause ("a figure hauls a barrel …"); shallow
                 // wildlife's is a noun phrase ("a wiry white goat, chewing a rope").
-                descriptionIsClause: outcome is Cathedral.Game.Scene.SyntheticNpcObservationObject { NpcEntity: Cathedral.Game.Npc.NpcEntity });
+                descriptionIsClause: outcome is ObservationObject { DescriptionIsClause: true });
             // An optional trailing sentence (e.g. a threat caution) is folded into the same neutral
             // text so the persona rewrite styles it into the block rather than tacking on plain prose.
             if (!string.IsNullOrWhiteSpace(trailingNeutral))
@@ -686,7 +703,8 @@ public class ObservationPhaseController
         string? area,
         PreviewPart? part,
         string? introText = null,
-        bool quietDecline = false)
+        bool quietDecline = false,
+        bool siblingsFirst = false)
     {
         // An area introduction counts as the first of the three slots: the observation already made
         // is the second, and the only follow-up left is the conditional last one, gated on the
@@ -699,7 +717,7 @@ public class ObservationPhaseController
 
         // Second observation over the still-unobserved objects, reached via a transition.
         string? secondText = introText;
-        var remaining = candidates.Where(c => !observed.Contains(c)).ToList();
+        var (remaining, _) = NextPool(observed, candidates, ledger, isReminescence, siblingsFirst);
         if (!introduced && remaining.Count > 0)
         {
             bool declineOffered = !ledger.IsEmpty;
@@ -721,9 +739,11 @@ public class ObservationPhaseController
 
         // Third observation when the first two stayed short and enough objects remain to be observed.
         int combinedLength = (firstText?.Length ?? 0) + (secondText?.Length ?? 0);
-        var stillRemaining = candidates.Where(c => !observed.Contains(c)).ToList();
+        // A closer look (the parts of what was just seen) needs no spare objects to justify it: it is the
+        // natural next look, where a third unrelated object is only worth it in a full scene.
+        var (stillRemaining, zooming) = NextPool(observed, candidates, ledger, isReminescence, siblingsFirst);
         if (combinedLength < Config.Narrative.ObservationTriggerThirdThreshold
-            && stillRemaining.Count > Config.Narrative.ObservationThirdMinRemaining)
+            && stillRemaining.Count > (zooming ? 0 : Config.Narrative.ObservationThirdMinRemaining))
         {
             bool declineOffered = !ledger.IsEmpty;
             var third = await SelectObservationObjectAsync(stillRemaining, modusMentis, ledger, locationId, ct, isReminescence, overall, area);
@@ -1079,6 +1099,65 @@ public class ObservationPhaseController
     }
 
     /// <summary>
+    /// Whether observation groups are in play: grouping, the zoom, and directing attention to a group's
+    /// parts. Not where every choice must commit (the reminescence, the get-up phase: their fragments
+    /// are the way onward and stay one step away), nor under <c>--observe-only</c>, which names the very
+    /// object a script means to reach and must keep reaching it the way it always did.
+    /// </summary>
+    private bool Grouping(bool isReminescence)
+        => !isReminescence && !MustCommit() && string.IsNullOrWhiteSpace(Config.Debug.ObserveOnly);
+
+    /// <summary>
+    /// What an observation choice is made over: <paramref name="all"/> with groups in place of their
+    /// members (<see cref="Cathedral.Game.Scene.ObservationGrouping"/>), minus whatever this phase has
+    /// already looked at, with name-twins collapsed. Ungrouped where <see cref="Grouping"/> says so.
+    /// </summary>
+    private List<NarrativeAnchor> ChoiceUnits(IEnumerable<NarrativeAnchor> all, ObservationLedger ledger, bool isReminescence)
+    {
+        if (!Grouping(isReminescence))
+            return DeduplicateByName(ObserveOnlyFilter(ledger.Remaining(all)));
+
+        var units = Cathedral.Game.Scene.ObservationGrouping.Build(all.ToList(), ledger);
+        return DeduplicateByName(units.Where(u => IsAvailable(u, ledger)));
+    }
+
+    /// <summary>
+    /// Not yet looked at this phase. A group also needs one member still unseen — a building whose door
+    /// and wall have both been observed has nothing left to offer as a whole.
+    /// </summary>
+    private static bool IsAvailable(NarrativeAnchor unit, ObservationLedger ledger)
+        => !ledger.WasObserved(unit)
+           && (unit is not ObservationGroup g || g.Members.Any(m => IsAvailable(m, ledger)));
+
+    /// <summary>The parts of a group or a container still to be looked at, name-twins collapsed.</summary>
+    private List<NarrativeAnchor> AvailableParts(NarrativeAnchor? unit, ObservationLedger ledger)
+        => unit is IObservationGroup g
+            ? DeduplicateByName(g.Parts.Where(p => IsAvailable(p, ledger)))
+            : new List<NarrativeAnchor>();
+
+    /// <summary>
+    /// The pool the next observation of a block chooses from. The zoom: when something just observed
+    /// has parts still unseen — the buildings around a square, a building, a chest — the next look goes
+    /// to one of them, the most recent such object first; only then to anything else in view. With
+    /// <paramref name="siblingsFirst"/> (attention was directed to a group, and <paramref name="candidates"/>
+    /// are its parts) the other parts come before any part's own parts. Returns whether it zoomed.
+    /// </summary>
+    private (List<NarrativeAnchor> Pool, bool Zoom) NextPool(
+        List<NarrativeAnchor> observed, List<NarrativeAnchor> candidates, ObservationLedger ledger,
+        bool isReminescence, bool siblingsFirst)
+    {
+        var rest = candidates.Where(c => !observed.Contains(c) && IsAvailable(c, ledger)).ToList();
+        if (!Grouping(isReminescence)) return (rest, false);
+        if (siblingsFirst && rest.Count > 0) return (rest, true);
+        for (int i = observed.Count - 1; i >= 0; i--)
+        {
+            var parts = AvailableParts(observed[i], ledger).Where(p => !observed.Contains(p)).ToList();
+            if (parts.Count > 0) return (parts, true);
+        }
+        return (rest, false);
+    }
+
+    /// <summary>
     /// Collapses outcomes that share the same display name (e.g. several identical "Birch Tree"
     /// objects) down to a single, randomly-chosen representative per name. This keeps the
     /// observation-choice list free of duplicates, and — because both the first and second choice
@@ -1357,7 +1436,13 @@ public class ObservationPhaseController
             // generated behind the same `I say to X : "…"` frame a dialogue reply is.
             var part = preview?.BeginAccumulatingPart(PreviewTitles.For(speakingModusMentis));
             var spoken = (await _rewriter.RewriteAsync(
-                slotId, NeutralNarration.SpokenReport(companionName, descr), NarrationKind.Speaking,
+                slotId,
+                // A description written as a sentence (a person's appearance, a gathering's list) is
+                // its own sentence after the thing is named; "I noticed a figure hauls a barrel" is not.
+                linkedOutcome is ObservationObject { DescriptionIsClause: true } clauseObs
+                    ? NeutralNarration.SpokenReport(companionName, clauseObs.NeutralPhrase, descr)
+                    : NeutralNarration.SpokenReport(companionName, descr),
+                NarrationKind.Speaking,
                 r2, companionName, keepHistory: true, styleInstruction: style,
                 preview: part?.NextSegment(), ct: ct)).Trim().Trim('"');
 

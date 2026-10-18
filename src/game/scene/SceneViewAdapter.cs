@@ -211,7 +211,7 @@ public interface IVerbRefreshable
 /// Items inside the PoI are NOT separate observations — their applicable verbs are folded
 /// in as SubOutcomes (e.g. "grab the apple", "grab the leaf").
 /// </summary>
-public class SyntheticObservationObject : ObservationObject, IVerbRefreshable, IPeriodStampable
+public class SyntheticObservationObject : ObservationObject, IVerbRefreshable, IPeriodStampable, IObservationGroup
 {
     private readonly PointOfInterest _poi;
 
@@ -247,6 +247,36 @@ public class SyntheticObservationObject : ObservationObject, IVerbRefreshable, I
     /// apart, so a door can read one way from the street and another from the hall inside.
     /// </summary>
     private readonly Area? _viewingArea;
+
+    /// <summary>The area this observation is made from (see the field). Null only in tooling.</summary>
+    public Area? ViewingArea => _viewingArea;
+
+    /// <summary>One observation per item, made once and kept, so a keyword on an item names the
+    /// same object for as long as the phase lasts.</summary>
+    private readonly Dictionary<ItemElement, SyntheticItemObservationObject> _itemObservations = new();
+
+    /// <summary>
+    /// A container's contents, each observable on its own: one per distinct item name still held, in
+    /// the order they lie. Empty unless at least two different things are held — a peat cut holding
+    /// peat, or a heap of grain, has nothing to zoom into that it did not already say.
+    /// </summary>
+    public IReadOnlyList<NarrativeAnchor> Parts
+    {
+        get
+        {
+            var distinct = _poi.Items
+                .GroupBy(i => i.Item.DisplayName, StringComparer.OrdinalIgnoreCase)
+                .Select(g => g.First())
+                .ToList();
+            if (distinct.Count < 2) return Array.Empty<NarrativeAnchor>();
+            return distinct.Select(i =>
+            {
+                if (!_itemObservations.TryGetValue(i, out var o))
+                    _itemObservations[i] = o = new SyntheticItemObservationObject(i, this);
+                return (NarrativeAnchor)o;
+            }).ToList();
+        }
+    }
 
     /// <summary>Live time of day, stamped by the controller. See <see cref="IPeriodStampable"/>.</summary>
     private TimePeriod? _period;
@@ -334,6 +364,9 @@ public class SyntheticObservationObject : ObservationObject, IVerbRefreshable, I
 public class SyntheticAreaObservationObject : ObservationObject
 {
     private readonly Area _area;
+
+    /// <summary>The area this observation leads to.</summary>
+    public Area Area => _area;
 
     public SyntheticAreaObservationObject(Area area, SceneViewEntry entry)
     {
@@ -492,6 +525,9 @@ public class SyntheticNpcObservationObject : ObservationObject, INpcContextLabel
             ? Cathedral.Game.NeutralNarration.NounPhrase(_npc.DisplayName.ToLowerInvariant())
             : _npc.DisplayName);
 
+    /// <summary>A named person's appearance is a clause with its own verb; wildlife's is a noun phrase.</summary>
+    public override bool DescriptionIsClause => _npc.Entity is NpcEntity;
+
     public override string GenerateNeutralDescription(int locationId = 0)
         // Both named and shallow entities carry an appearance-only ObservationHint (name-free; the
         // shallow one is composed with per-NPC-id variation). This supersedes the old SceneNpc.Descriptions
@@ -499,3 +535,44 @@ public class SyntheticNpcObservationObject : ObservationObject, INpcContextLabel
         => _npc.Entity.ObservationHint;
 }
 
+/// <summary>
+/// One item lying in a container, observed on its own — what a container's closer attention turns to
+/// (<see cref="SyntheticObservationObject.Parts"/>). It owns no verbs: its goals are the container's
+/// goals that act on this item, read live, so they follow whatever the container's last refresh found
+/// (a taken item simply stops being offered).
+/// </summary>
+public class SyntheticItemObservationObject : ObservationObject
+{
+    private readonly ItemElement _item;
+    private readonly SyntheticObservationObject _container;
+
+    /// <summary>The item observed.</summary>
+    public ItemElement Item => _item;
+
+    public SyntheticItemObservationObject(ItemElement item, SyntheticObservationObject container)
+    {
+        _item      = item;
+        _container = container;
+    }
+
+    public override string ObservationId => _item.DisplayName.ToLowerInvariant().Replace(' ', '_');
+    public override string NeutralName => _item.Item.DisplayName;
+    public override string NeutralPhrase => _item.Item.WithArticle();
+    public override string ReferenceLemma => _item.Item.ReferenceLemma;
+
+    public override List<NarrativeAnchor> SubOutcomes
+    {
+        get
+        {
+            var own = _container.SubOutcomes
+                .Where(o => o is VerbAction { Verb: not IgnoreVerb } v && ReferenceEquals(v.Target, _item))
+                .ToList();
+            own.Add(SceneViewAdapter.MakeIgnoreSubOutcome(_item));
+            return own;
+        }
+        protected set { }
+    }
+
+    public override string GenerateNeutralDescription(int locationId = 0)
+        => SceneViewAdapter.LowerSentenceCase(_item.Item.Description);
+}

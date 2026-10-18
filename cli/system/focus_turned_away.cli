@@ -1,9 +1,9 @@
 # focus — a modus mentis that turns away from the clicked object observes another instead
 #
-# Ripelore is asked to focus on the test door and turns away (--refuse-focus stands in for the
+# Ripelore is asked to focus on the test bench and turns away (--refuse-focus stands in for the
 # choice judge answering "turn elsewhere", which --playground never does). It is not a dead end:
-# Ripelore picks another unobserved object, and one text both dismisses the door and observes the
-# new one — so the block carries a keyword, and the keyword names the new object, never the door.
+# Ripelore picks another unobserved object, and one text both dismisses the bench and observes the
+# new one — so the block carries a keyword, and the keyword names the new object, never the bench.
 # The follow-up observations run after it as they do after a kept focus.
 #
 # Which object it turns to is the playground's seeded draw, so it moves whenever an earlier draw is
@@ -11,7 +11,7 @@
 #
 # The Test Yard, not the Test Room: the area introduction crosses off every object it names, and in
 # the four-object Test Room that left nothing unobserved to turn to — the keyword-less "not
-# interested" branch, not this one. The door is clicked by name for the same reason: it is one of
+# interested" branch, not this one. The bench is clicked by name for the same reason: it is one of
 # several keywords the introduction links.
 #
 # FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Yard" --period dawn --refuse-focus
@@ -25,12 +25,12 @@ travel here
 wait mode LocationInteraction 60
 advance 12 180
 
-# Observe the door with Ripelore; it turns to the butterfly instead.
-click keyword door
+# Observe the bench with Ripelore; it turns to the butterfly instead.
+click keyword bench
 choose 1
 choose 0
 advance 12 180
-expect I am not interested in a test door. My attention shifts to a butterfly
+expect I am not interested in a test bench. My attention shifts to a butterfly
 
 # The turn carried the new object's keyword, wired to the butterfly: observing through "butterfly"
 # focuses on it (and, under --refuse-focus, turns away from it in turn).

@@ -40,8 +40,11 @@ advance 12 180
 # The hyena has the narration.
 expect [BRINDLETAIL]
 
-# It takes its turn at the scene — its own observation, deliberation, act and dice.
+# It takes its turn at the scene — its own observation, deliberation, act and dice. The goal is
+# pinned: walking away from the chicken would leave nothing acted, and the playground's draw over the
+# goals moves whenever an earlier draw does.
 strategy succeed
+goal smell
 click keyword 0
 choose 0
 choose 0

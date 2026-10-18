@@ -685,9 +685,26 @@ Things to know:
 - **An arrival's opening block names somebody.** When it reached no living person while one is in
   view, `AppendPersonObservationIfMissingAsync` adds one more observation by the same modus mentis,
   narrowed to the people, no decline (and a decline earlier in the block goes unrendered). Armed by
-  `_arrivalObservationPending`, which only an arrival (`arrivalPeriod` passed) sets. Its extra
+  `_arrivalObservationPending`, which only an arrival (`arrivalPeriod` passed) sets; off under
+  `--observe-only`, whose filter would otherwise fail every pinned script on the people. Its extra
   playground draw shifts later seeded picks, which is why `focus_turned_away.cli` turns to the
   butterfly; `cli/system/arrival_names_somebody.cli`.
+- **Observation groups shorten the choice and give the next look somewhere to go.**
+  `ObservationGrouping.Build` turns a node's objects into choice units, per phase, cached on the
+  `ObservationLedger` (same lifetime, so a group is one instance the ledger retires and a keyword
+  keeps). Three passes: *wholes* (PoIs sharing a `PoiCluster`, set by the factory — today a
+  building's entry door and outside wall), *ways* (a path and the area it reaches), *families*
+  (`FamilyMinimum` = 3 or more units of one kind: PoI type, kind of whole, or way; never people,
+  never an entry door, never members with different reference nouns). A container
+  (`SyntheticObservationObject` holding two or more distinct items) is not a group but has
+  `IObservationGroup.Parts`, one `SyntheticItemObservationObject` per item, whose goals are read live
+  from the container's. Three behaviours follow: the choice offers groups in place of members; the
+  **zoom** — the next look of a block goes to the unseen parts of the most recent thing observed that
+  has any (`NextPool`); and attention **directed** to a group renders its parts, siblings first, rather
+  than the group again. A group's goals are its members' goals, live. All of it is off in the
+  reminescence, the get-up and under `--observe-only` (`Grouping`), so the scripts pinned by that flag
+  are untouched; `cli/system/observation_group_zoom.cli` (orchard: family, zoom, a tree's contents)
+  and `observation_group_parts.cli` (city: houses, thinking on a house reaches its wall).
 - **The selector used to reset the modus mentis's slot** before every choice. Rewrites that keep
   history (`keepHistory: true`) relied on that to stay bounded, so the observation follow-ups and the
   dialogue replies now reset the slot themselves at the same points.

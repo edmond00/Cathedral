@@ -138,9 +138,8 @@ public static class BuildingFactory
             spec.OutsideArea, roof, ScaleKind.Wall, $"{spec.BuildingName} Wall",
             new List<string>
             {
-                $"The {spec.BuildingName.ToLowerInvariant()}'s outside wall of "
-                + $"{BuildingDescriptions.MaterialWord(mat)}, with gaps enough for fingers and "
-                + "boot-toes going up to the eaves",
+                $"The {spec.BuildingName.ToLowerInvariant()}'s {BuildingDescriptions.MaterialWord(mat)} "
+                + "outside wall, with gaps enough for fingers and boot-toes going up to the eaves",
             },
             new[] { "sheer", "weathered", "hand-worn" })
         {
@@ -178,6 +177,11 @@ public static class BuildingFactory
             $"{spec.BuildingName} Door",
             DoorRole.Entry, entryState, doorPhrases[phrase++], buildingDescription,
             spec.BuildingName, phrase);
+
+        // From the street the building is one thing before it is a door and a wall.
+        var exterior = new PoiCluster(spec.BuildingName, "house", buildingDescription);
+        entryDoor.Cluster = exterior;
+        wallClimb.Cluster = exterior;
 
         foreach (var (room, _) in groundInner)
         {

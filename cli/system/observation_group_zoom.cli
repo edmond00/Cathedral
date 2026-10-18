@@ -1,0 +1,34 @@
+# observation groups — a family, the zoom into one member, and a container's contents
+#
+# The farm orchard holds four fruit trees, each holding a fruit and a branch. Four trees are one kind,
+# so the opener is offered "the trees here" rather than each tree, and after looking at them its next
+# look goes to one of them (the zoom) instead of to something unrelated in the orchard. A tree holds
+# two different things, so directing attention to it renders its contents one by one.
+#
+# No --observe-only: that flag switches groups off, so the scripts pinned by it keep reaching exactly
+# the object they name.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type farm --location-id 1 --start-area Orchard --period afternoon
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+
+# The family, then one of its members.
+expect drawn to
+expect the trees here. There are several
+expect shifts to an apple tree
+
+# Attention directed to the tree: its contents, not the tree again.
+click keyword tree
+choose 1
+choose 0
+advance 12 180
+expect My attention is drawn to a branch
+expect shifts to an apple.
+quit

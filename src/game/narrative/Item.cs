@@ -47,6 +47,22 @@ public abstract class Item
     public virtual ItemCategory Category => ItemCategory.Other;
 
     /// <summary>
+    /// The keyword anchor when this item is observed on its own (the contents of a container). The
+    /// keyword picker leads with the words of the item's own name, so this only has to rank the rest
+    /// of the sentence — a category word does that, and an item class with a better noun overrides it.
+    /// </summary>
+    public virtual string ReferenceLemma => Category switch
+    {
+        ItemCategory.Weapon     => "weapon",
+        ItemCategory.Tool       => "tool",
+        ItemCategory.Wearing    => "garment",
+        ItemCategory.Consumable => "food",
+        ItemCategory.Container  => "vessel",
+        ItemCategory.Crafting   => "material",
+        _                       => "object",
+    };
+
+    /// <summary>
     /// The subcategory, flattened to a string for display and audit grouping. Each category names
     /// its own strongly-typed subcategory (<see cref="WearSlot"/>, <see cref="ConsumableType"/>,
     /// <see cref="ContainerKind"/>, or a weapon category id) — this is the common denominator, and

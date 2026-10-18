@@ -63,7 +63,7 @@ public abstract class ObservationObject : NarrativeAnchor, IObservation
     /// All concrete sub-outcomes reachable through this observation (items, node transitions).
     /// Populated in the subclass constructor.
     /// </summary>
-    public List<NarrativeAnchor> SubOutcomes { get; protected set; } = new();
+    public virtual List<NarrativeAnchor> SubOutcomes { get; protected set; } = new();
 
     /// <summary>
     /// Generates a rich noun-phrase description of this observation used both in LLM prompts
@@ -72,6 +72,13 @@ public abstract class ObservationObject : NarrativeAnchor, IObservation
     /// Make this description vivid — the richer it is, the better keyword matching works.
     /// </summary>
     public abstract string GenerateNeutralDescription(int locationId = 0);
+
+    /// <summary>
+    /// True when <see cref="GenerateNeutralDescription"/> is a sentence with its own verb ("a figure
+    /// hauls a barrel …", "There are four of them: …") rather than a noun phrase, so the observation
+    /// stands it on its own instead of wrapping it as "This is …".
+    /// </summary>
+    public virtual bool DescriptionIsClause => false;
 
     // ── NarrativeAnchor overrides ─────────────────────────────────────────────
 

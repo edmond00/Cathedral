@@ -1,0 +1,33 @@
+# observation groups — a whole (a building's door and wall) inside a family, and thinking on a whole
+#
+# The haymarket is ringed by houses, each a door and a wall seen from the square. Each house is
+# offered as the house, and the houses together as "the surrounding buildings". The area introduction
+# names the buildings; directing attention to them renders the houses one by one. Thinking about one
+# house offers what both its parts afford — here the wall's climb, pinned with `goal`.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 2 --no-encounters --location-type city --location-id 13582
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+expect the surrounding buildings
+
+click keyword buildings
+choose 1
+choose 0
+advance 12 180
+expect My attention is drawn to a moss-shouldered cottage
+expect hunched lime-washed log cottage
+
+goal scale_up
+click keyword cottage
+choose 0
+choose 0
+advance 12 180
+expect scale the moss-shouldered cottage wall
+quit

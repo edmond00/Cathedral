@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -32,6 +33,19 @@ public sealed class ObservationLedger
     // Reference identity: two outcomes that describe identically are still two separate things.
     private readonly HashSet<NarrativeAnchor> _observed = new(ReferenceEqualityComparer.Instance);
 
+    // The phase's observation groups, keyed by what they group. Same lifetime as the record above, so
+    // a group is one object for the whole phase: retired by instance, and named by a keyword that
+    // still reaches it a request later.
+    private readonly Dictionary<string, ObservationGroup> _groups = new();
+
+    /// <summary>The group with this key, made by <paramref name="make"/> the first time it is asked for.</summary>
+    public ObservationGroup GroupFor(string key, Func<ObservationGroup> make)
+    {
+        if (!_groups.TryGetValue(key, out var g))
+            _groups[key] = g = make();
+        return g;
+    }
+
     /// <summary>How many distinct objects have been observed so far this phase.</summary>
     public int Count => _observed.Count;
 
@@ -53,5 +67,9 @@ public sealed class ObservationLedger
         => outcomes.Where(o => !_observed.Contains(o)).ToList();
 
     /// <summary>Forgets everything — a new narration phase begins.</summary>
-    public void Clear() => _observed.Clear();
+    public void Clear()
+    {
+        _observed.Clear();
+        _groups.Clear();
+    }
 }

@@ -120,6 +120,18 @@ observation attends to at most three things in all, the later ones only while wh
 remains brief; the bearings count as the first of the three, so that at least one object, and at
 most two, is attended to after them.
 
+**Wholes, kinds and contents.** Things are not offered to observation one by one when they belong
+together. The parts of one whole — the door and the outside wall of a building, seen from the street
+— are offered as that whole; a path and the place it leads to are offered as that place; and three or
+more things of one kind in the same place — buildings, ways onward, doors leading on, the distant
+places seen from a height, or things bearing the same name of kind — are offered as their kind.
+Persons are never so gathered, nor is the door by which a building is left. Observing a gathering
+renders the whole; the next observation of the same account then turns to one of its parts not yet
+attended to, rather than to anything else present, and the same holds of a thing that holds two or
+more different things, whose contents are its parts. Attention directed to a gathering or to such a
+holder renders its parts in turn, each available for closer attention by its own word. Deliberation
+upon a gathering is offered every act its parts afford; upon a part, only that part's.
+
 **An arrival notices the living.** The observation that opens a visit to a location must render a
 living person when one stands in the area unattended. Should its own choices, bearings included,
 have reached nobody, one observation more is added by the same modus mentis: it chooses among the

@@ -537,8 +537,10 @@ public static class NeutralNarration
     /// spoken turn.
     /// </para>
     /// </summary>
-    public static string SpokenReport(string companionName, string subject)
-        => $"{Attention(companionName)} {Description(subject)} {Question()}";
+    public static string SpokenReport(string companionName, string subject, string? clause = null)
+        => clause == null
+            ? $"{Attention(companionName)} {Description(subject)} {Question()}"
+            : $"{Attention(companionName)} {Description(subject)} {Sentence(FirstPerson(clause))} {Question()}";
 
     // Dialogue neutral text now lives on the dialogue tree nodes themselves (direct speech with
     // {scope:field} template tokens) and flows through Cathedral.Game.Dialogue.Runtime.DialogueTemplate
