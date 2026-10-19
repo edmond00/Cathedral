@@ -26,6 +26,9 @@ namespace Cathedral.Game;
 /// </summary>
 public static class LocationTravelModeLauncher
 {
+    /// <summary>Frames per second of a <c>--hidden</c> window. See where it is used.</summary>
+    private const double HiddenFrameRate = 60;
+
     /// <summary>
     /// Whether the window passes <paramref name="key"/> on to the controller in <paramref name="mode"/>,
     /// once Escape, F11 and the D/G dumps have had their turn. R and K (the region and realm overlays)
@@ -68,9 +71,23 @@ public static class LocationTravelModeLauncher
         };
 
         if (Cathedral.Config.Debug.HiddenWindow)
-            Console.WriteLine("Window: hidden (--hidden) — created but never shown; rendering runs as normal.");
+        {
+            // Nobody sees the frames, so nothing is gained by waiting for the monitor's refresh to
+            // present them — and with several hidden instances running at once (the test suite's
+            // pool) the waits serialise on the one display: twelve windows got about five frames a
+            // second each, and the CLI's waits are counted in frames.
+            native.Vsync = VSyncMode.Off;
+            Console.WriteLine("Window: hidden (--hidden) — created but never shown; rendering runs as normal, without vsync.");
+        }
 
-        using var core = new GlyphSphereCore(GameWindowSettings.Default, native, camera);
+        // --hidden: a fixed frame rate instead of as many frames as the machine can draw. A hidden
+        // window's loop otherwise spins flat out, about a core per instance for frames nobody sees,
+        // and the test suite runs a dozen instances at once.
+        var gameSettings = GameWindowSettings.Default;
+        if (Cathedral.Config.Debug.HiddenWindow)
+            gameSettings = new GameWindowSettings { UpdateFrequency = HiddenFrameRate };
+
+        using var core = new GlyphSphereCore(gameSettings, native, camera);
         var microworldInterface = new MicroworldInterface(core);
 
         // Create and start procedural ambient music engine (gracefully disabled if no MIDI device)

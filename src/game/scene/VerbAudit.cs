@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -545,14 +545,17 @@ public static partial class VerbAudit
                     // What each verb is ever offered ON. A lesson names a type; if the verb's own
                     // gate never admits that type, the lesson cannot fire however much of the content
                     // the world contains — see AuditUnreachableLessons.
+                    // Each item's own offer is asked once, not once per verb offered on its holder:
+                    // a stocked shelf made that items x verbs x verbs x periods.
+                    var itemOffers = observable is PointOfInterest stocked
+                        ? stocked.Items.Select(item => OfferedVerbIds(scene, area, item, actor)).ToList()
+                        : new List<HashSet<string>>();
                     foreach (var verbId in offered)
                     {
                         Reachable(verbId).Add(observable.GetType());
                         Reachable(verbId).Add(area.GetType());
-                        if (observable is PointOfInterest holder)
-                            foreach (var item in holder.Items)
-                                if (OfferedVerbIds(scene, area, item, actor).Contains(verbId))
-                                    Reachable(verbId).Add(holder.GetType());
+                        if (itemOffers.Any(o => o.Contains(verbId)))
+                            Reachable(verbId).Add(observable.GetType());
                     }
 
                     counts.Add(offered.Count);
@@ -736,6 +739,10 @@ public static partial class VerbAudit
             foreach (var to in scene.AllAreas)
             foreach (var verb in scene.Verbs)
             {
+                // All this records is WHETHER a verb is offered on an area somewhere, so a verb
+                // already seen needs no further asking — every pair of areas at every period, for
+                // every verb, was a large share of the audit's running time in a town.
+                if (everOffered.Contains(verb.VerbId)) continue;
                 try
                 {
                     if (verb.IsPossible(scene, pov, to, actor)) everOffered.Add(verb.VerbId);

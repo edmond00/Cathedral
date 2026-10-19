@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -116,6 +116,9 @@ public static class WordEmbedding
 
     private static void Load(string path)
     {
+#if !SHIP
+        if (TryLoadCache(path)) return;
+#endif
         var dict = new Dictionary<string, float[]>(StringComparer.OrdinalIgnoreCase);
         double[]? centroid = null;
         int pooled = 0, lineNo = 0;
@@ -158,11 +161,125 @@ public static class WordEmbedding
 
         _vectors = dict;
         _poolCentroid = pooled > 0 && centroid != null ? Finish(centroid, pooled) : null;
+        ReportPool(pooled);
+#if !SHIP
+        WriteCache(path, pooled);
+#endif
+    }
+
+    private static void ReportPool(int pooled)
+    {
         if (_poolCentroid == null)
             Console.Error.WriteLine("WordEmbedding: no centrality pool built — keyword ranking falls back to raw similarity.");
         else
             Console.WriteLine($"WordEmbedding: centrality pool of {pooled} common words.");
     }
+
+#if !SHIP
+    // ── The parsed copy (development builds only) ────────────────────────────
+    //
+    // Parsing the 347 MB text file costs about nine seconds of a core, on every launch — and the test
+    // suite launches the game two hundred times, a dozen at once, so it was the largest single cost of
+    // a script. The parsed result is written once as raw floats and read back in well under a second.
+    // It holds exactly what parsing produced (the same words in the same order, the same floats, the
+    // same centroid), so nothing that ranks a keyword can tell which path filled it. Keyed on the text
+    // file's size and timestamp, so replacing the vectors invalidates it. Not in a shipped build: the
+    // model load hides the parse there, and a player's disk is not the place for 160 MB of cache.
+
+    private const string CacheMagic = "CATHEDRAL-GLOVE-1";
+
+    private static string CachePath(string source) => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        Cathedral.AppData.FolderName, "cache", Path.GetFileNameWithoutExtension(source) + ".bin");
+
+    private static bool TryLoadCache(string source)
+    {
+        try
+        {
+            var cache = CachePath(source);
+            if (!File.Exists(cache)) return false;
+            var info = new FileInfo(source);
+            using var reader = new BinaryReader(new BufferedStream(File.OpenRead(cache), 1 << 20));
+            if (reader.ReadString() != CacheMagic
+                || reader.ReadInt64() != info.Length
+                || reader.ReadInt64() != info.LastWriteTimeUtc.Ticks)
+                return false;
+
+            int pooled = reader.ReadInt32();
+            _poolCentroid = reader.ReadBoolean() ? ReadFloats(reader) : null;
+            int count = reader.ReadInt32();
+            var dict = new Dictionary<string, float[]>(count, StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < count; i++)
+            {
+                var word = reader.ReadString();
+                dict[word] = ReadFloats(reader);
+            }
+            _vectors = dict;
+            ReportPool(pooled);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            // A torn or stale copy is not an error: parse the text as if it were not there.
+            Console.WriteLine($"WordEmbedding: cached vectors unusable ({ex.Message}); parsing the text file.");
+            _vectors = null;
+            _poolCentroid = null;
+            return false;
+        }
+    }
+
+    private static void WriteCache(string source, int pooled)
+    {
+        if (_vectors == null) return;
+        var cache = CachePath(source);
+        // Written beside its final name and moved into place, so a launch reading it never sees half a
+        // file — several test instances may be writing it at the same moment the first time.
+        var temp = $"{cache}.{Environment.ProcessId}.tmp";
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(cache)!);
+            var info = new FileInfo(source);
+            using (var writer = new BinaryWriter(new BufferedStream(File.Create(temp), 1 << 20)))
+            {
+                writer.Write(CacheMagic);
+                writer.Write(info.Length);
+                writer.Write(info.LastWriteTimeUtc.Ticks);
+                writer.Write(pooled);
+                writer.Write(_poolCentroid != null);
+                if (_poolCentroid != null) WriteFloats(writer, _poolCentroid);
+                writer.Write(_vectors.Count);
+                foreach (var (word, vec) in _vectors)
+                {
+                    writer.Write(word);
+                    WriteFloats(writer, vec);
+                }
+            }
+            File.Move(temp, cache, overwrite: true);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"WordEmbedding: could not cache the parsed vectors ({ex.Message}).");
+            try { File.Delete(temp); } catch { }
+        }
+    }
+
+    private static float[] ReadFloats(BinaryReader reader)
+    {
+        var result = new float[reader.ReadInt32()];
+        var bytes = reader.ReadBytes(result.Length * sizeof(float));
+        if (bytes.Length != result.Length * sizeof(float)) throw new EndOfStreamException();
+        Buffer.BlockCopy(bytes, 0, result, 0, bytes.Length);
+        return result;
+    }
+
+    private static void WriteFloats(BinaryWriter writer, float[] values)
+    {
+        writer.Write(values.Length);
+        var bytes = new byte[values.Length * sizeof(float)];
+        Buffer.BlockCopy(values, 0, bytes, 0, bytes.Length);
+        writer.Write(bytes);
+    }
+#endif
 
     private static bool IsPlainWord(string w)
     {

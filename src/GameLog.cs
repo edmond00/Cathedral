@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Text;
 
@@ -53,6 +53,20 @@ public static class GameLog
         try
         {
             var path = System.IO.Path.Combine(Environment.CurrentDirectory, FileName);
+#if !SHIP
+            // --log-file <path>: write somewhere else. The test suite gives every run its own file,
+            // which is what lets several instances run at once (log.txt is opened for exclusive
+            // writing, so all but the first would lose their log) and leaves the developer's own
+            // log.txt alone. Read here, straight off the command line, because this runs before any
+            // flag is parsed. Not in a shipped build, which keeps one log beside the game.
+            var argv = Environment.GetCommandLineArgs();
+            int at = Array.IndexOf(argv, "--log-file");
+            if (at >= 0 && at + 1 < argv.Length)
+            {
+                path = System.IO.Path.GetFullPath(argv[at + 1]);
+                Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
+            }
+#endif
 
             // FileMode.Create truncates: one run, one log.
             // FileShare.Read so the file can be tailed or opened in an editor while the game runs.

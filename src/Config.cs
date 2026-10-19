@@ -302,6 +302,13 @@ public static class Config
         /// window being mapped. Minimising instead would leave frame presentation at the driver's
         /// discretion, which is a difference between test and play for no gain.</para>
         ///
+        /// <para>Two differences from a visible window, both for the suite's parallel pool: the loop
+        /// runs at a fixed 60 frames a second without vsync, and only one frame in six is drawn
+        /// (<c>GlyphSphereCore.HiddenDrawInterval</c>) — the update half of every frame still runs, so
+        /// the CLI's frame-counted waits see the same game. A dozen hidden instances drawing every
+        /// frame contended for the driver until each ran about six times slower than alone. A
+        /// recording (<c>--record</c>) draws every frame regardless.</para>
+        ///
         /// <para>Deliberately not implied by <c>--cli</c>: watching a script drive the game is how
         /// most CLI problems get diagnosed, and taking that away by default would be a poor trade.
         /// Inert at its default of false.</para>

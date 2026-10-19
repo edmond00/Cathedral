@@ -158,7 +158,7 @@ public sealed class CliDriver
                         _drainPressesLeft--;
                         if (_record != null) _record.PressContinue();   // aimed and pressed like any click
                         else CmdClick(new[] { "continue" });
-                        RestartWait($"advance ({_drainPressesLeft} press(es) left)");
+                        RestartWait($"advance ({_drainPressesLeft} press(es) left)", _drainTimeout);
                         return;
                     }
 
@@ -1524,6 +1524,9 @@ public sealed class CliDriver
     /// nothing explains why. This is the "press CONTINUE until the game gives me the actions back"
     /// loop a person does without thinking about it.</para>
     /// </summary>
+    /// <summary>The timeout an in-flight `advance` asked for, applied to each of its presses.</summary>
+    private TimeSpan _drainTimeout = DefaultWaitTimeout;
+
     private void CmdAdvance(string[] a)
     {
         int maxPresses = a.Length >= 1 && int.TryParse(a[0], out int n) ? Math.Max(1, n) : 8;
@@ -1531,7 +1534,11 @@ public sealed class CliDriver
 
         _draining         = true;
         _drainPressesLeft = maxPresses;
-        RestartWait($"advance (≤{maxPresses} press(es))", TimeSpan.FromSeconds(secs));
+        // Every press gets the timeout the script asked for, not just the first: each one re-arms
+        // the wait, and re-arming on the 30-second default failed a fight's first turn under the
+        // suite's parallel load although the script had allowed 180.
+        _drainTimeout     = TimeSpan.FromSeconds(secs);
+        RestartWait($"advance (≤{maxPresses} press(es))", _drainTimeout);
     }
 
     /// <summary>Re-arms the frame-driven wait, keeping whatever drain state is in flight.</summary>
@@ -1661,8 +1668,10 @@ public sealed class CliDriver
         string contents;
         try
         {
-            // Same folder as log.txt, which is where PreserveCopy puts it.
-            var path = System.IO.Path.Combine(Environment.CurrentDirectory, file);
+            // Beside the live log, which is where PreserveCopy puts it — not always the working
+            // directory, since --log-file can move the log elsewhere.
+            var folder = System.IO.Path.GetDirectoryName(GameLog.Path) ?? Environment.CurrentDirectory;
+            var path   = System.IO.Path.Combine(folder, file);
             using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             using var reader = new StreamReader(stream);
             contents = reader.ReadToEnd();
