@@ -802,7 +802,10 @@ public class LocationTravelGameController : IDisposable
         {
             // A preview box asking YES or NO (the doubt of a thinking) waits on the player, like a
             // button does: the thinking behind it is loading, but nothing will happen until answered.
-            if (_narrativeController.CliPreviewAsking()) return true;
+            // That holds while the question is still queued behind parts to be continued past — a
+            // retry after a refusal asks its doubt before the refusal has been read — and `advance`
+            // then presses CONTINUE on the parts in front until the question is shown.
+            if (_narrativeController.CliPreviewAwaitsAnswer()) return true;
             var s = _narrativeController.CliSnapshot();
             if (s.AnyLoading || (s.DiceActive && s.DiceRolling)) return false;
         }

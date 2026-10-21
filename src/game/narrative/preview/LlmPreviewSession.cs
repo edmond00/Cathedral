@@ -120,6 +120,20 @@ public sealed class LlmPreviewSession
     /// CONTINUE handler: if the current part is complete, commit it and advance to the next part
     /// (or end the session). Returns true if it advanced, false if there was nothing to continue yet.
     /// </summary>
+    /// <summary>
+    /// Whether any part, shown or still queued behind the shown one, waits on a YES/NO answer. The
+    /// producer of a thinking blocks on that answer, so while one is pending nothing more will be
+    /// generated until the queue reaches it — the session is waiting on the player, not working.
+    /// </summary>
+    public bool AwaitsAnswer
+    {
+        get
+        {
+            lock (_lock)
+                return (_current?.IsAsking ?? false) || _pending.Any(p => p.IsAsking);
+        }
+    }
+
     public bool TryContinue()
     {
         Action? commit = null;

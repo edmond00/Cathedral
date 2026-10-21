@@ -3737,6 +3737,12 @@ public class NarrativeController
     /// <summary>Whether the preview box is asking YES or NO (the doubt of a thinking) rather than offering CONTINUE.</summary>
     public bool CliPreviewAsking() => _previewSession.Snapshot().Asking;
 
+    /// <summary>
+    /// Whether a doubt waits on an answer anywhere in the preview queue — shown, or behind parts still
+    /// to be continued past. The thinking is blocked on it, so the CLI counts it as idle.
+    /// </summary>
+    public bool CliPreviewAwaitsAnswer() => _previewSession.AwaitsAnswer;
+
     /// <summary>The preview box's [ YES ] or [ NO ] region, when the shown part asks (the doubt of a thinking).</summary>
     public (bool Present, int X, int Y, int Width) CliPreviewAnswer(bool yes)
     {
