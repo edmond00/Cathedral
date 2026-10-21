@@ -473,9 +473,12 @@ namespace Cathedral.Glyph
                 int glyphIndex = currentGlyphSet.IndexOf(glyph);
                 if (glyphIndex == -1) 
                 {
-                    // If glyph not found, add it to the set and rebuild atlas
+                    // If glyph not found, add it to the set; the atlas is rebuilt once, before it is
+                    // next read (UpdateInstanceBuffer). Rebuilding here made world generation redraw
+                    // the whole atlas, fonts reloaded from disk, once per new character — seconds of
+                    // ImageSharp per world for intermediate atlases nothing ever drew.
                     currentGlyphSet += glyph;
-                    RebuildGlyphAtlas(currentGlyphSet);
+                    _glyphAtlasStale = true;
                     glyphIndex = currentGlyphSet.Length - 1;
                 }
                 
@@ -561,8 +564,16 @@ namespace Cathedral.Glyph
         /// </summary>
         public void RebuildGlyphAtlasForWeight() => RebuildGlyphAtlas(currentGlyphSet);
 
+        /// <summary>Glyphs were added to <see cref="currentGlyphSet"/> since the atlas was built.</summary>
+        private bool _glyphAtlasStale;
+
+        /// <summary>A <c>--hidden</c> window draws one frame in this many. See <c>OnRenderFrame</c>.</summary>
+        private const int HiddenDrawInterval = 6;
+        private long _hiddenFrames;
+
         private void RebuildGlyphAtlas(string glyphSet)
         {
+            _glyphAtlasStale = false;
             Cathedral.GameLog.WriteToFileOnly($"Rebuilding atlas with glyphs: \"{glyphSet}\"");
             
             // Dispose old texture
@@ -995,9 +1006,6 @@ namespace Cathedral.Glyph
             // Update debug info
             UpdateDebugInfo();
 
-            // Update instances for dynamic color changes (hover highlighting)
-            UpdateInstanceBuffer();
-
             // Update decorative sky/cloud animation
             _skyCloudRenderer?.Update((float)args.Time);
 
@@ -1015,6 +1023,19 @@ namespace Cathedral.Glyph
                     PointerPosition.X / ClientSize.X,
                     1.0f - PointerPosition.Y / ClientSize.Y);
             }
+
+            // --hidden: everything above is the game's update and runs every frame; what follows only
+            // draws, and nobody sees a hidden window's frames. A dozen hidden instances drawing every
+            // frame (the test suite's pool) contend for the driver so badly that each one ran about
+            // six times slower than alone, and the CLI's waits are counted in frames. So one frame in
+            // HiddenDrawInterval is drawn — the draw path is still exercised, its errors still
+            // surface — and the rest return here. Never while a recording is taking frames.
+            if (Cathedral.Config.Debug.HiddenWindow && FrameSink == null
+                && _hiddenFrames++ % HiddenDrawInterval != 0)
+                return;
+
+            // Update instances for dynamic color changes (hover highlighting)
+            UpdateInstanceBuffer();
 
             // --record: the frame is resolved into the recorder's target instead of the window, so it
             // can be read back whether or not the window is ever shown. 0 (the window) otherwise.
@@ -1698,6 +1719,10 @@ namespace Cathedral.Glyph
 
         private void UpdateInstanceBuffer()
         {
+            // The atlas's UVs depend on how many glyphs it holds, so it is brought up to date before
+            // any instance reads them, and therefore before the frame binds its texture.
+            if (_glyphAtlasStale) RebuildGlyphAtlas(currentGlyphSet);
+
             // Separate world and UI vertices
             var worldVertices = new List<(Vertex v, int index)>();
             var uiVertices = new List<(Vertex v, int index)>();

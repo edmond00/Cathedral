@@ -5,34 +5,45 @@ using System.Linq;
 namespace Cathedral.Game.Scene.Building;
 
 /// <summary>
-/// A named open path connecting two areas (road, track, lane, stream path).
-/// Always passable from either end. Targeted by <see cref="Verbs.FollowPathVerb"/>.
+/// A named way that runs past one or two areas to a farther one (road, track, lane, stream path):
+/// the shortcut of open ground. Always passable from either end. Targeted by
+/// <see cref="Verbs.FollowPathVerb"/>. Laid by <c>OutdoorLayout.LayPaths</c> after a factory has
+/// built its sections, on a random share of the eligible pairs — a location may have none.
 ///
-/// Should be added to both <see cref="AreaA"/>.PointsOfInterest and
-/// <see cref="AreaB"/>.PointsOfInterest so it is interactable from either side.
+/// <para>A path used to join every pair of neighbouring areas, beside the graph edge
+/// <c>MoveToAreaVerb</c> walks, so outdoors every way out was offered twice: once as the path, once
+/// as the area, for the same difficulty-1 walk to the same place. Neighbours are now joined by the
+/// edge alone, and a path is what the edge cannot be: two or three steps in one.</para>
+///
+/// <para>It carries no graph edge (<see cref="ConnectorPointOfInterest.AllowsGraphEdge"/> is false),
+/// so <c>BuildingAudit</c> holds it to the rule every connector keeps: no edge between its two ends,
+/// which is the same as never joining neighbours.</para>
 /// </summary>
 public class PathPointOfInterest : ConnectorPointOfInterest
 {
     protected override string ConnectorKind => "path";
 
     /// <summary>
-    /// A path is the one connector that legitimately doubles an area-graph edge: it is a named walk,
-    /// not a gate, and <c>OutdoorLayout.Link</c> always lays one down beside the edge it creates.
+    /// The areas the path runs past, in order from <see cref="ConnectorPointOfInterest.AreaA"/>. A
+    /// route through public open ground only (<c>OutdoorLayout.LayPaths</c>), so following it is never
+    /// a way past a private yard or a gate.
     /// </summary>
-    public override bool AllowsGraphEdge => true;
+    public IReadOnlyList<Area> Via { get; }
 
     public PathPointOfInterest(
         Area areaA,
         Area areaB,
+        IReadOnlyList<Area> via,
         string displayName,
         List<string> descriptions,
         string[]? moods = null)
         : base(areaA, areaB, displayName, "path", descriptions, moods: moods)
     {
+        Via = via;
     }
 
     /// <summary>
-    /// A display name unique to the pair of areas a path joins: "Courtyard–Pigsty Track".
+    /// A display name unique to the pair of areas a path joins: "Courtyard–Orchard Track".
     ///
     /// <para>Naming every track off a hub "Farmyard Track" made all but one of them invisible —
     /// observation candidates are de-duplicated by display name, so a courtyard with five identically

@@ -36,6 +36,20 @@ public abstract class DerivedStat
     public virtual string? RelatedBodyPartId => null;
 
     /// <summary>
+    /// Where this stat reads its score on a body of <paramref name="anatomy"/>. Defaults to the three
+    /// <c>Related…</c> properties, which therefore describe the stat on any anatomy that does not
+    /// say otherwise; override when an anatomy carries the same faculty in a different organ —
+    /// a beast's natural defence is in its legs, where a person's is the whole lower limbs, which a
+    /// beast does not have. Everything that resolves a source against a member goes through
+    /// <see cref="SourceOf"/>, so an override is the whole of the change.
+    /// </summary>
+    protected virtual StatSource SourceFor(AnatomyType anatomy)
+        => new(RelatedOrganPartId, RelatedOrganId, RelatedBodyPartId);
+
+    /// <summary>The source this stat reads on <paramref name="member"/>'s body.</summary>
+    public StatSource SourceOf(PartyMember member) => SourceFor(member.AnatomyType);
+
+    /// <summary>
     /// Short display name used in stat panels. Defaults to <see cref="DisplayName"/>.
     /// Override to strip a prefix (e.g. secretion stats strip the organ name).
     /// </summary>
@@ -76,21 +90,10 @@ public abstract class DerivedStat
     /// </summary>
     public int GetSourceScore(PartyMember member)
     {
-        if (RelatedOrganPartId != null)
-        {
-            var part = member.GetOrganPartById(RelatedOrganPartId);
-            return part?.Score ?? 0;
-        }
-        if (RelatedOrganId != null)
-        {
-            var organ = member.GetOrganById(RelatedOrganId);
-            return organ?.Score ?? 0;
-        }
-        if (RelatedBodyPartId != null)
-        {
-            var bodyPart = member.GetBodyPartById(RelatedBodyPartId);
-            return bodyPart?.Score ?? 0;
-        }
+        var src = SourceOf(member);
+        if (src.OrganPartId != null) return member.GetOrganPartById(src.OrganPartId)?.Score ?? 0;
+        if (src.OrganId     != null) return member.GetOrganById(src.OrganId)?.Score ?? 0;
+        if (src.BodyPartId  != null) return member.GetBodyPartById(src.BodyPartId)?.Score ?? 0;
         return 0;
     }
 
@@ -101,9 +104,10 @@ public abstract class DerivedStat
     public int GetEffectiveScore(PartyMember member)
     {
         // Determine the organ part / organ / body part this stat relates to
-        string? organPartId = RelatedOrganPartId;
-        string? organId     = RelatedOrganId;
-        string? bodyPartId  = RelatedBodyPartId;
+        var src = SourceOf(member);
+        string? organPartId = src.OrganPartId;
+        string? organId     = src.OrganId;
+        string? bodyPartId  = src.BodyPartId;
 
         // Resolve all three IDs from whichever relation key is set
         if (organPartId != null)
@@ -179,17 +183,18 @@ public abstract class DerivedStat
     public bool IsUsable(PartyMember member)
     {
         // Check presence in anatomy
-        if (RelatedOrganPartId != null)
+        var src = SourceOf(member);
+        if (src.OrganPartId != null)
         {
-            if (member.GetOrganPartById(RelatedOrganPartId) == null) return false;
+            if (member.GetOrganPartById(src.OrganPartId) == null) return false;
         }
-        else if (RelatedOrganId != null)
+        else if (src.OrganId != null)
         {
-            if (member.GetOrganById(RelatedOrganId) == null) return false;
+            if (member.GetOrganById(src.OrganId) == null) return false;
         }
-        else if (RelatedBodyPartId != null)
+        else if (src.BodyPartId != null)
         {
-            if (member.GetBodyPartById(RelatedBodyPartId) == null) return false;
+            if (member.GetBodyPartById(src.BodyPartId) == null) return false;
         }
 
         // Check wound-disabled state
@@ -232,10 +237,11 @@ public abstract class DerivedStat
     /// </summary>
     public int GetValueAtMaxScore(PartyMember member)
     {
+        var src = SourceOf(member);
         int? maxScore =
-              RelatedOrganPartId != null ? member.GetOrganPartById(RelatedOrganPartId)?.MaxScore
-            : RelatedOrganId     != null ? member.GetOrganById(RelatedOrganId)?.MaxScore
-            : RelatedBodyPartId  != null ? member.GetBodyPartById(RelatedBodyPartId)?.MaxScore
+              src.OrganPartId != null ? member.GetOrganPartById(src.OrganPartId)?.MaxScore
+            : src.OrganId     != null ? member.GetOrganById(src.OrganId)?.MaxScore
+            : src.BodyPartId  != null ? member.GetBodyPartById(src.BodyPartId)?.MaxScore
             : null;
 
         return maxScore is { } max ? Clamp(CalculateValue(member, max)) : WorstValue;
@@ -276,3 +282,15 @@ public abstract class DerivedStat
     }
 }
 
+/// <summary>
+/// Where a <see cref="DerivedStat"/> reads its score on one anatomy: exactly one of an organ part, an
+/// organ or a body part (region) id, as in organs.csv. See <see cref="DerivedStat.SourceOf"/>.
+/// </summary>
+public readonly record struct StatSource(string? OrganPartId, string? OrganId, string? BodyPartId)
+{
+    /// <summary>Whether this source is the given organ part, organ or region id.</summary>
+    public bool Is(string? organPartId = null, string? organId = null, string? bodyPartId = null)
+        => (organPartId != null && OrganPartId == organPartId)
+        || (organId     != null && OrganId     == organId)
+        || (bodyPartId  != null && BodyPartId  == bodyPartId);
+}

@@ -80,8 +80,7 @@ SHAPES = [
 ] + [s for shapes, _ in limbs for s in shapes]
 
 STAMPS = [
-    # brain, with the parietal eye in the middle of the skull where the pineal gland is
-    Stamp(22, 6 + Y, "☯", "pineal_gland", E),
+    # brain. No parietal eye: the beast anatomy has no pineal gland for it to stand for
     Stamp(21, 7 + Y, "©", "cerebrum"), Stamp(22, 7 + Y, "⟁", "hippocampus"), Stamp(23, 7 + Y, "©", "cerebrum"),
     Stamp(21, 8 + Y, "♋", "anamnesis"), Stamp(23, 8 + Y, "Ѳ", "cerebellum"),
     # eyes on either side of the head, ear openings behind them
@@ -108,7 +107,7 @@ TEXTURES = {
     "snout": lambda c: "-",
 }
 
-BRIGHT = {"heart": 3, "backbone": 2, "fangs": 4, "left_eye": 4, "right_eye": 4, "pineal_gland": 4,
+BRIGHT = {"heart": 3, "backbone": 2, "fangs": 4, "left_eye": 4, "right_eye": 4,
           "left_foreclaws": 4, "right_foreclaws": 4, "left_hindclaws": 4, "right_hindclaws": 4}
 
 

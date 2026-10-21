@@ -17,7 +17,6 @@ public sealed class BearSpecies : Species
             { "cerebrum",       2 }, // below average reasoning
             { "cerebellum",     3 },
             { "hippocampus",    3 },
-            { "pineal_gland",   2 },
             // Trunk: everything maxed — an unstoppable biological machine
             { "backbone",   5 },
             { "heart",      5 },

@@ -22,8 +22,9 @@ namespace Cathedral.Game.Scene.Farm;
 ///   • Longhouse      — the household's building: public hall, kitchen, dormitories
 ///   • Barracks       — optional second building when the crew outgrows the longhouse
 ///
-/// Connections: <see cref="PathPointOfInterest"/> (Farmyard Tracks, Garden Paths) between
-/// Courtyard and outdoor areas; buildings are entered through their own doors.
+/// Connections: tracks (graph edges, <c>OutdoorLayout.Link</c>) between Courtyard and outdoor areas,
+/// and sometimes a <see cref="PathPointOfInterest"/> running past one or two of them to a farther
+/// one; buildings are entered through their own doors.
 ///
 /// <para><b>The roster decides the buildings, not the reverse.</b> Farm hands used to be dealt into
 /// however many bedrooms the house happened to roll — which capped a whole farm at three people and

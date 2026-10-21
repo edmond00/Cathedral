@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Cathedral.Game.Narrative.Sanitizer;
 
 namespace Cathedral.Game.Narrative.Preview;
@@ -11,8 +12,11 @@ public readonly record struct PreviewSegment(string Text);
 
 /// <summary>
 /// Immutable view of the preview box for one rendered frame. The renderer reads only this.
+/// <paramref name="Asking"/>: the shown part is complete and waits on a YES/NO answer
+/// (<see cref="PreviewPart.AskAsync"/>) rather than on CONTINUE.
 /// </summary>
-public readonly record struct PreviewSnapshot(bool Active, string Title, IReadOnlyList<PreviewSegment> Segments, bool Complete)
+public readonly record struct PreviewSnapshot(bool Active, string Title, IReadOnlyList<PreviewSegment> Segments, bool Complete,
+                                              bool Asking = false)
 {
     /// <summary>Flat text (segments joined by newlines) — used by the CLI `preview` report.</summary>
     public string DisplayText => string.Join("\n", Segments.Select(s => s.Text));
@@ -52,7 +56,8 @@ public sealed class LlmPreviewSession
         {
             if (!_active) return PreviewSnapshot.Inactive;
             if (_current != null)
-                return new PreviewSnapshot(true, _current.Title, _current.Segments, _current.IsComplete);
+                return new PreviewSnapshot(true, _current.Title, _current.Segments, _current.IsComplete,
+                                           _current.IsComplete && _current.IsAsking);
             // Committed the last shown part but the next one hasn't been begun yet → dots, keep last title.
             return new PreviewSnapshot(true, _lastTitle, System.Array.Empty<PreviewSegment>(), false);
         }
@@ -115,12 +120,28 @@ public sealed class LlmPreviewSession
     /// CONTINUE handler: if the current part is complete, commit it and advance to the next part
     /// (or end the session). Returns true if it advanced, false if there was nothing to continue yet.
     /// </summary>
+    /// <summary>
+    /// Whether any part, shown or still queued behind the shown one, waits on a YES/NO answer. The
+    /// producer of a thinking blocks on that answer, so while one is pending nothing more will be
+    /// generated until the queue reaches it — the session is waiting on the player, not working.
+    /// </summary>
+    public bool AwaitsAnswer
+    {
+        get
+        {
+            lock (_lock)
+                return (_current?.IsAsking ?? false) || _pending.Any(p => p.IsAsking);
+        }
+    }
+
     public bool TryContinue()
     {
         Action? commit = null;
         lock (_lock)
         {
             if (_current == null || !_current.IsComplete) return false;
+            // A question is answered, not continued past: CONTINUE would leave the asker waiting.
+            if (_current.IsAsking) return false;
             commit = _current.CommitAction;
             if (_pending.Count > 0)
             {
@@ -137,11 +158,32 @@ public sealed class LlmPreviewSession
         return true;
     }
 
+    /// <summary>
+    /// YES/NO handler for a part that asks (<see cref="PreviewPart.AskAsync"/>): hands the answer to the
+    /// waiting producer, then commits the part and advances exactly as CONTINUE does. Returns false when
+    /// the shown part is not asking.
+    /// </summary>
+    public bool TryAnswer(bool yes)
+    {
+        PreviewPart? asked;
+        lock (_lock)
+        {
+            if (_current == null || !_current.IsComplete || !_current.IsAsking) return false;
+            asked = _current;
+        }
+        asked.Answer(yes);
+        return TryContinue();
+    }
+
     /// <summary>Force-clears the session (e.g. on cancellation / mode exit). Does not run pending commits.</summary>
     public void Reset()
     {
         lock (_lock)
         {
+            // A producer waiting on a question must not wait for ever on a box nobody can see: it is
+            // told yes, the answer that changes nothing.
+            _current?.Answer(true);
+            foreach (var p in _pending) p.Answer(true);
             _current = null;
             _pending.Clear();
             _productionEnded = false;
@@ -222,6 +264,34 @@ public sealed class PreviewPart
 
     /// <summary>Mark this part done so CONTINUE becomes available. Call AFTER AttachCommit.</summary>
     public void MarkComplete() { lock (_lock) _complete = true; }
+
+    private TaskCompletionSource<bool>? _question;
+
+    /// <summary>True while this part waits on a YES/NO answer.</summary>
+    public bool IsAsking { get { lock (_lock) return _question is { Task.IsCompleted: false }; } }
+
+    /// <summary>
+    /// Completes this part and waits for the player's YES or NO in place of CONTINUE
+    /// (<see cref="LlmPreviewSession.TryAnswer"/>). Used by the doubt of a thinking (<see cref="DoubtStat"/>).
+    /// The part shows its question only once it is the one on screen, so asking a queued part simply
+    /// waits for the parts before it.
+    /// </summary>
+    public Task<bool> AskAsync()
+    {
+        lock (_lock)
+        {
+            _question ??= new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            _complete = true;
+            return _question.Task;
+        }
+    }
+
+    internal void Answer(bool yes)
+    {
+        TaskCompletionSource<bool>? q;
+        lock (_lock) q = _question;
+        q?.TrySetResult(yes);
+    }
 
     // ── Streaming sinks ──────────────────────────────────────────────────────────
 

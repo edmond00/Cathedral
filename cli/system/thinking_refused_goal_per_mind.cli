@@ -12,7 +12,9 @@
 # contains. The second think's own button is the proof of the first half: the goal draw is pinned
 # to examine, so examine would have been taken had it still been on offer.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Crown" --period dawn --observe-only "Test Giant Tree" --grant-mm snatch,woodcraft,scientific_research --means-only snatch
+# --organs pineal_gland=0: no iterative thinking, so the refused mind stops and the second mind is the one
+# that retries -- the per-mind rule this script is about. With a retry, the first mind retries itself.
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Crown" --period dawn --observe-only "Test Giant Tree" --grant-mm snatch,woodcraft,scientific_research --means-only snatch --organs pineal_gland=0
 
 wait
 click menu New

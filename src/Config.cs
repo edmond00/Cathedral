@@ -302,6 +302,13 @@ public static class Config
         /// window being mapped. Minimising instead would leave frame presentation at the driver's
         /// discretion, which is a difference between test and play for no gain.</para>
         ///
+        /// <para>Two differences from a visible window, both for the suite's parallel pool: the loop
+        /// runs at a fixed 60 frames a second without vsync, and only one frame in six is drawn
+        /// (<c>GlyphSphereCore.HiddenDrawInterval</c>) — the update half of every frame still runs, so
+        /// the CLI's frame-counted waits see the same game. A dozen hidden instances drawing every
+        /// frame contended for the driver until each ran about six times slower than alone. A
+        /// recording (<c>--record</c>) draws every frame regardless.</para>
+        ///
         /// <para>Deliberately not implied by <c>--cli</c>: watching a script drive the game is how
         /// most CLI problems get diagnosed, and taking that away by default would be a poor trade.
         /// Inert at its default of false.</para>
@@ -520,6 +527,18 @@ public static class Config
         /// script at all.</para>
         /// </summary>
         public static bool RefuseFocus { get; set; } = false;
+
+        /// <summary>
+        /// How many willingness questions still answer "unwilling" under <c>--playground</c>, counted down
+        /// as they are asked (only those that offer a refusal at all). Set by <c>--refuse-means &lt;n&gt;</c>.
+        /// Zero (the default) leaves the playground answering "willing" every time.
+        ///
+        /// <para>The playground never refuses, so without this an action modus mentis's refusal — and the
+        /// retries of iterative thinking that follow one (<c>ThinkingIterationsStat</c>) — cannot be
+        /// reached by a script at all. A count rather than a switch, because a retry of the same goal is
+        /// not asked whether it would rather not, and a test wants to see the chain end.</para>
+        /// </summary>
+        public static int RefuseMeans { get; set; } = 0;
     }
 
     #endregion
@@ -542,8 +561,8 @@ public static class Config
             "Proscribed Palimpsest";
 #endif
 
-        public const string Chapter = "Volume 4";
-        public const string ChapterSubtitle = "Of Deliberation and Its Judge";
+        public const string Chapter = "Volume 5";
+        public const string ChapterSubtitle = "Doubt, Considered as a Faculty";
     }
 
     /// <summary>
@@ -1693,7 +1712,7 @@ public static class Config
         /// (e.g. NPC speaking, which carries an NPC persona rather than a modusMentis). Per-modusMentis
         /// callers pass their own <c>ModusMentis.StyleInstruction</c> instead.
         /// </summary>
-        private const string DefaultStyleInstruction = "Where it fits, a figure of speech (metaphor, comparison, imagery) or an inner feeling that suits your character is welcome.";
+        public const string DefaultStyleInstruction = "Where it fits, a figure of speech (metaphor, comparison, imagery) or an inner feeling that suits your character is welcome.";
 
         /// <summary>
         /// Style clause for dialogue replies: a spoken line carries personality in its wording, not in a

@@ -28,7 +28,7 @@ from the game's (very chatty) diagnostic logging on the same stdout.
 | `--debug` | Lets `strategy` force action outcomes. Under `--cli` it never prompts — see below. |
 | `--start-at <name>` | Spawns the protagonist on the first biome or location matching `<name>` (`village`, `farm`, `wheat field`, `castle`, `cave`…). Without it you get wherever the seed puts you, which is usually plain or forest — testing anything village-specific otherwise means hunting for a lucky seed.  It searches the spawn candidates first and then any land, so a climate biome (`desert`, `glacier`, `sea ice`…) is reachable even in a world whose temperate ground outranks it as a waking place — pair it with `--world-variant arid` or the like so there is one to find. |
 | `--start-area <name>` | Opens narration in the first area of the location whose name matches `<name>` (`pigsty`, `smithy`, `hall`…). `--start-at` picks the location, this picks the room. Without it you arrive in whichever area the factory built first — a farm's courtyard — and reaching any other one costs an observation, a think and an action **per step**, with the persona choosing what is observable at each. Anything that lives in one room (a pigsty's pigs, a smithy's anvil) is otherwise a long walk away. Inert when the location has no such area, so it can be left on across a multi-location run. |
-| `--observe-only <name>` | Restricts what an observation phase may look at to objects matching `<name>`. **This is what makes a specific object reachable at all.** A phase opens on ONE object the persona chose out of a dozen, so without it a script that wants to act on the pig is waiting on a coin flip it cannot influence — and re-rolling seeds until the right object comes up first is not a test. Whole words match before substrings (`pig` means the pig, not the Courtyard–Pigsty Track), and a phase where nothing matches falls back to the whole scene rather than narrating nothing. |
+| `--observe-only <name>` | Restricts what an observation phase may look at to objects matching `<name>`. **This is what makes a specific object reachable at all.** A phase opens on ONE object the persona chose out of a dozen, so without it a script that wants to act on the pig is waiting on a coin flip it cannot influence — and re-rolling seeds until the right object comes up first is not a test. Whole words match before substrings (`pig` means the pig, not the Orchard–Pigsty Track), and a phase where nothing matches falls back to the whole scene rather than narrating nothing. |
 | `--no-encounters` | Suppresses random travel encounters. **Pass this in every script that travels.** An encounter puts the game in `EncounterPrompt`, where a script waiting for `LocationInteraction` sits until its timeout and reports a failure that has nothing to do with what it was testing. |
 | `--allow-reentry` | Lets a world-map click on the vertex the avatar already stands on enter that location. **The game refuses it** — arriving somewhere already opens it (`OnProtagonistArrived` starts the interaction itself), so that click is only ever a way back into the place just walked out of, and a visit is meant to cost a journey. `travel here` is exactly that click, and the spawn vertex is the only one a script can name from a cold start, so **`run_tests.sh` passes this on every script** — you do not put it in a `# FLAGS:` header. |
 | `--period <name>` | Pins the arrival time of day (`dawn`…`night`) instead of the location's own arrival hour. Every location opens at a fixed daytime period hashed from its id (`SceneFactory.ArrivalPeriodFor`) — never night — so anything period-gated needs this: every building's entry door shuts at `night`, which no arrival reaches otherwise. The dice draw the old random period used is still made and discarded, so seeded rolls did not move. |
@@ -42,8 +42,10 @@ from the game's (very chatty) diagnostic logging on the same stdout.
 | `--goal-only <verb-id>` | Forces the playground's goal choice onto one verb. `--playground` replaces the persona's "what do you want to do?" with a **uniform draw over every goal the observed object offers**, so a script meaning to `appease` a beast — and then `tame` it — is otherwise picking out of a dozen. The CLI's `goal` command sets the same switch, which is what a script that needs two different goals in one run should use. Inert when no goal in a phase matches, which then draws as usual. |
 | `--means-only <mm-id>` | Forces the playground's choice of **means** — which action modus mentis carries the goal out — onto one modus mentis. The draw is otherwise uniform over every action modus mentis held, and willingness rules now refuse by kind of mind: **examining is refused by any action modus mentis without the Observation function**, so a script that means to examine grants one and pins it (`--grant-mm woodcraft --means-only woodcraft`). The CLI's `means` command sets the same switch. A miss goes through `DebugFlagAudit`. |
 | `--refuse-focus` | Makes every focus observation's modus mentis turn away from the clicked object, as if the choice judge had answered "turn elsewhere". It then picks another unobserved object and one text dismisses the first and observes the second, carrying its keyword. `--playground` never declines a choice, so this is the only way a script reaches that branch. |
+| `--refuse-means <n>` | Under `--playground`, the first `n` willingness questions answer "unwilling" (only those that offer a refusal at all). The playground otherwise answers "willing" every time, so an action modus mentis's refusal — and the retries of iterative thinking after one — is unreachable from a script. Pair it with `--organs pineal_gland=<0–3>`, which sets how many retries a thinking gets (and, at 2+, the doubt). See `cli/system/thinking_iterates.cli`. |
 | `--advance-days <n>` | Pushes the world clock forward `n` days on first arrival at the world map. The clock only moves on travel arrival and work stints while a wound needs 100–1000 days to close, so without this nothing about healing is observable. Fires once, before anything has happened — for healing *a wound taken in play*, use the `clock` command instead. |
 | `--location-type test` | Builds the **test location** (`TestSceneFactory`) — a kitchen sink holding one of everything, under names that never change. This is what the whole CLI suite runs in; see "The test location" below. It is attached to no biome, so this flag is the only way in. |
+| `--log-file <path>` | Writes the run's log to `<path>` instead of `log.txt`. `run_tests.sh` gives every run its own, which is what lets instances run in parallel (`log.txt` is opened for exclusive writing) and keeps the suite off the developer's `log.txt`. Not honoured by a shipped build. |
 | `--silent` | Opens no audio device: no music, no sound effects, no loading wash. `run_tests.sh` passes it on every script — a full run launches the game a hundred-odd times, and without it that is an hour of overlapping music from windows nobody is watching. Implemented by not opening the MIDI device, which is a state the engine already handles (a machine with no MIDI runs the same path). |
 | `--world-variant <id>` | Forces every world to be generated as that variant (`temperate`, `drowned`, `continental`, `insular`, `montane`, `eroded`, `sylvan`, `arable`, `desolate`, `littoral`, and the climate ten: `torrid`, `arid`, `tropical`, `tabular`, `xeric`, `hiemal`, `glacial`, `boreal`, `polar`, `tundral`) instead of the one its seed names. A variant is otherwise reached only by finding a moon that happens to be it, which is one seed in ten. **A save written under this flag will not continue without it** — the variant is stored beside the seed and a mismatch is refused, because the avatar's vertex means nothing in a world shaped differently. An unknown id falls back to the seed's own variant and records a `DebugFlagAudit` miss, which fails the script. |
 | `--location-type <name>` | Forces which scene factory builds every location (`village`, `forest`, `cave`…), ignoring the biome underfoot. **Prefer this to `--start-at` in a test.** `--start-at` searches the *generated world* and shrugs when it finds nothing — at seed 42 there is no forest in reach, so every forest test silently ran in a plain. This builds one regardless, so a test does not depend on world generation at all. |
@@ -75,6 +77,10 @@ Run `help` for the authoritative list. The essentials:
                             looked at, which are withheld from every later observation choice
                             of the phase and released again when the phase ends
   dump [--color]            the terminal grid as text; --color tags each row dim/mix/lit
+  doubt <yes|no>            queue the answer to the next doubt of a thinking (pineal gland 2+): the
+                            preview box asks YES / NO in place of CONTINUE. `advance` answers each
+                            with the next queued answer, YES when none is queued — a script that never
+                            says `doubt` runs unchanged. Pin `--organs pineal_gland=…` when it matters
   regions                   what is actionable right now — the handles `click` accepts
   world                     avatar vertex, biome, location, the region under the avatar, and which
                             world variant this world was built to
@@ -342,11 +348,28 @@ quit
 
 Exit code is the number of failures. `--playground` makes every animation instant
 (`Config.AnimationsAreInstant`: the 5-second dice tumble, the vital-heat bar, the fight AI's pause,
-movement framing), which takes a script's own run from ~45 s to ~12 s — but with the launch, the
-world build and the shutdown a script still costs about half a minute, and there are nearly two
-hundred of them.
+movement framing), which takes a script's own run from ~45 s to ~10 s, launch and world build
+included.
 
-**So the full suite runs before a release, not after every change.** It takes well over an hour; the
+**Tests run in parallel**, `JOBS` at a time — half the logical cores by default, `JOBS=12
+./run_tests.sh` to choose, `JOBS=1` for one after another. The audits join the same pool first, so
+the ten-minute verb audit runs beside the scripts rather than ahead of them. What makes the instances
+independent, and must stay true of anything a script writes:
+
+- each run logs to its own `--log-file` under `$TMPDIR/cathedral-tests/game/`, never `log.txt` —
+  so the suite also leaves the developer's `log.txt` alone;
+- a script that saves names its own `--save-path` (saving is otherwise off under `--cli`);
+- `--playground` starts no LLM server;
+- the runner launches `bin/Debug/.../Cathedral.exe` directly rather than `dotnet run`, so `timeout`
+  reaches the game itself.
+
+A `--hidden` window runs at a fixed 60 frames a second and draws one frame in six (see
+`Config.Debug.HiddenWindow`): a dozen instances drawing every frame contended for the driver until
+each ran six times slower than alone. A development build also caches the parsed word vectors under
+`%LOCALAPPDATA%\Cathedral\cache\` (the runner warms it first with `tests/warm_cache.cli`).
+
+**So the full suite runs before a release, not after every change.** It takes about a quarter of an
+hour; the
 `release` skill runs it as a gate, and otherwise only when the user asks. While working on a task,
 run the audits plus the scripts that reach what you touched:
 
@@ -412,7 +435,10 @@ exactly once, until the next piece of content.
 
 So **nothing in this factory is rolled.** The `rng` handed to `BuildSections` is deliberately never
 touched: every area, object and description is written out, and a script pinned to `"Test Yard"` stays
-pinned to it forever.
+pinned to it forever. That includes paths, which every other factory gets at random from
+`SceneFactory.Build`: here `LaysPaths` is off and the one path is written out, `Field–Rock Track`
+from the field past the yard to the rock. Neighbours are joined by graph edges only, so walking to
+one is `move`; `follow_path` is a test of skipping the area between.
 
 Two things follow from that, and both matter:
 

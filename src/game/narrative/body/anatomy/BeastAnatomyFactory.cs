@@ -23,7 +23,7 @@ public sealed class BeastAnatomyFactory : IAnatomyFactory
 
     public List<BodyPart> CreateBodyParts() => new()
     {
-        new EncephalonBodyPart(),
+        new BeastEncephalonBodyPart(),
         new MuzzleBodyPart(),
         new BeastTrunkBodyPart(),
         new LimbsBodyPart(),

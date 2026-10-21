@@ -201,11 +201,11 @@ neither has.
 | gut | Georgian letters `ოჩშმნტჹცპჟϑ…` | | genitals | `♂` |
 | cerebrum | `©`, or `∾∿` over a large brain | | cerebellum | `Ѳ` |
 | anamnesis | `♋` | | hippocampus | `⟁` |
-| pineal gland | `☯` — on a lizard, the parietal eye | | eyes | `◉`, `◐◑`, or `◖◗` over two cells |
+| pineal gland | `☯` — human list only; the beast list has none | | eyes | `◉`, `◐◑`, or `◖◗` over two cells |
 | teeth, fangs | `▼▾` above, `▲` below | | claws | arrows pointing the way the digit points `↓↙↘←→↖↗` (`↡` on the beast) |
 | nose | `○` with `●` nostrils (a pig's), `∘` | | tongue | `◡`; a forked one `<` or `⋎` |
 
-Brightness: eyes, teeth, claws and the pineal at layer 4; the heart, nose and brain at 3; organs
+Brightness: eyes, teeth, claws and the pineal (human) at layer 4; the heart, nose and brain at 3; organs
 at 2; skin 1–3 from the grit; far-side limbs one lower.
 
 ### Glyphs

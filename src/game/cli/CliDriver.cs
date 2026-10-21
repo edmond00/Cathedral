@@ -156,9 +156,10 @@ public sealed class CliDriver
                     if (pv is { Active: true, Complete: true } && _drainPressesLeft > 0)
                     {
                         _drainPressesLeft--;
-                        if (_record != null) _record.PressContinue();   // aimed and pressed like any click
+                        if (AnswerDoubtIfAsked()) { }                    // a question takes YES or NO, not CONTINUE
+                        else if (_record != null) _record.PressContinue();   // aimed and pressed like any click
                         else CmdClick(new[] { "continue" });
-                        RestartWait($"advance ({_drainPressesLeft} press(es) left)");
+                        RestartWait($"advance ({_drainPressesLeft} press(es) left)", _drainTimeout);
                         return;
                     }
 
@@ -253,6 +254,7 @@ public sealed class CliDriver
                 case "strategy":    CmdStrategy(rest);                break;
                 case "goal":        CmdGoal(rest);                    break;
                 case "means":       CmdMeans(rest);                   break;
+                case "doubt":       CmdDoubt(rest);                   break;
                 case "observe":     CmdObserve(rest);                 break;
                 case "fight-end":   CmdFightEnd(rest);                break;
                 case "fight-deplete": CmdFightDeplete(rest);          break;
@@ -433,6 +435,10 @@ public sealed class CliDriver
                                     set before the keyword click it should apply to
           means <mm-id|none>        pin the playground's choice of means — the action modus mentis
                                     that carries the goal out — the way `goal` pins the goal
+          doubt <yes|no>            queue the answer to the next doubt of a thinking (the preview box's
+                                    YES / NO, with a pineal gland of 2+). `advance` answers each doubt
+                                    with the next queued answer, YES when none is queued, so a script
+                                    that never says `doubt` runs as if the question were not asked
           fight-end <victory|death|runaway>
                                     force-resolve a fight to test its transition
           fight-deplete [enemies|companions|<fighter>]
@@ -1436,6 +1442,38 @@ public sealed class CliDriver
     /// Pins the playground's choice of means — which action modus mentis carries the goal out — the way
     /// <c>goal</c> pins the goal. Same switch as <c>--means-only</c>; <c>means none</c> hands it back.
     /// </summary>
+    /// <summary>Answers for the doubts still to come, in order; `advance` answers YES when it is empty.</summary>
+    private readonly Queue<bool> _doubtAnswers = new();
+
+    private void CmdDoubt(string[] a)
+    {
+        if (a.Length == 0 || a[0].ToLowerInvariant() is not ("yes" or "no"))
+        {
+            CliMode.Emit("error: usage: doubt <yes|no>");
+            return;
+        }
+        _doubtAnswers.Enqueue(a[0].Equals("yes", StringComparison.OrdinalIgnoreCase));
+        CliMode.Emit($"ok: a doubt will be answered {a[0].ToLowerInvariant()} ({_doubtAnswers.Count} queued)");
+    }
+
+    /// <summary>
+    /// When the narration preview box asks (the doubt of a thinking), answers it with the next queued
+    /// answer, or YES, and returns true. A YES changes nothing a script would see but one more line of
+    /// text, which is what keeps every script written before doubt existed passing unchanged.
+    /// </summary>
+    private bool AnswerDoubtIfAsked()
+    {
+        var n = _game.CliNarration;
+        if (n == null || !n.CliPreviewAsking()) return false;
+        bool yes = _doubtAnswers.Count == 0 || _doubtAnswers.Dequeue();
+        var r = n.CliPreviewAnswer(yes);
+        if (!r.Present) return false;
+        _game.CliHoverCell(r.X, r.Y);
+        _game.CliClickCell(r.X, r.Y);
+        CliMode.Emit($"ok: doubt answered {(yes ? "yes" : "no")}");
+        return true;
+    }
+
     private static void CmdMeans(string[] a)
     {
         if (a.Length == 0) { CliMode.Emit($"means={Config.Debug.MeansOnly ?? "auto"}"); return; }
@@ -1524,6 +1562,9 @@ public sealed class CliDriver
     /// nothing explains why. This is the "press CONTINUE until the game gives me the actions back"
     /// loop a person does without thinking about it.</para>
     /// </summary>
+    /// <summary>The timeout an in-flight `advance` asked for, applied to each of its presses.</summary>
+    private TimeSpan _drainTimeout = DefaultWaitTimeout;
+
     private void CmdAdvance(string[] a)
     {
         int maxPresses = a.Length >= 1 && int.TryParse(a[0], out int n) ? Math.Max(1, n) : 8;
@@ -1531,7 +1572,11 @@ public sealed class CliDriver
 
         _draining         = true;
         _drainPressesLeft = maxPresses;
-        RestartWait($"advance (≤{maxPresses} press(es))", TimeSpan.FromSeconds(secs));
+        // Every press gets the timeout the script asked for, not just the first: each one re-arms
+        // the wait, and re-arming on the 30-second default failed a fight's first turn under the
+        // suite's parallel load although the script had allowed 180.
+        _drainTimeout     = TimeSpan.FromSeconds(secs);
+        RestartWait($"advance (≤{maxPresses} press(es))", _drainTimeout);
     }
 
     /// <summary>Re-arms the frame-driven wait, keeping whatever drain state is in flight.</summary>
@@ -1661,8 +1706,10 @@ public sealed class CliDriver
         string contents;
         try
         {
-            // Same folder as log.txt, which is where PreserveCopy puts it.
-            var path = System.IO.Path.Combine(Environment.CurrentDirectory, file);
+            // Beside the live log, which is where PreserveCopy puts it — not always the working
+            // directory, since --log-file can move the log elsewhere.
+            var folder = System.IO.Path.GetDirectoryName(GameLog.Path) ?? Environment.CurrentDirectory;
+            var path   = System.IO.Path.Combine(folder, file);
             using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             using var reader = new StreamReader(stream);
             contents = reader.ReadToEnd();

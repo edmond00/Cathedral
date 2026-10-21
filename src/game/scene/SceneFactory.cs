@@ -40,6 +40,7 @@ public abstract class SceneFactory
         _locationState?.AttachTo(scene);
 
         BuildSections(rng, locationId, scene);
+        if (LaysPaths) Shared.OutdoorLayout.LayPaths(scene, PathRandom(locationId));
         MarkWilderness(scene);
         BuildNpcs(rng, locationId, scene);
         DropDepartedNpcs(scene);
@@ -298,6 +299,20 @@ public abstract class SceneFactory
 
     /// <summary>Creates a deterministic Random seeded by locationId.</summary>
     protected Random CreateSeededRandom(int locationId) => new(locationId);
+
+    /// <summary>
+    /// Whether <see cref="Build(int)"/> lays paths across this scene's open ground
+    /// (<see cref="Shared.OutdoorLayout.LayPaths"/>). Off only where a scene must not change under a
+    /// test: the test location lays its one path by hand.
+    /// </summary>
+    protected virtual bool LaysPaths => true;
+
+    /// <summary>
+    /// The generator paths are drawn from: the location id alone, and a stream of its own. Drawing them
+    /// from the build generator would shift every person and item built after the sections — and
+    /// whether a location has a path would then change who lives there.
+    /// </summary>
+    private static Random PathRandom(int locationId) => new(unchecked(locationId * 0x2545F491 + 0x7A11));
 
     /// <summary>
     /// Registers an element and all its children (section→areas→PoIs→items) in a scene.

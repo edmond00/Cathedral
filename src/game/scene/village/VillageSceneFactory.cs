@@ -383,20 +383,6 @@ public class VillageSceneFactory : SettledSceneFactory
     private static string Capitalise(string s)
         => s.Length == 0 ? s : char.ToUpperInvariant(s[0]) + s[1..];
 
-    private static void ConnectViaPath(Scene scene, Area a, Area b, string pathName)
-    {
-        if (a == null || b == null) return;
-        scene.ConnectAreasBidirectional(a, b);
-        var path = new PathPointOfInterest(
-            a, b, PathPointOfInterest.NameFor(a, b, pathName),
-            new() { $"A {pathName.ToLowerInvariant()} running between {a.DisplayName.ToLowerInvariant()} and {b.DisplayName.ToLowerInvariant()}" },
-            new[] { "worn", "muddy", "well-trodden" }
-        );
-        a.PointsOfInterest.Add(path);
-        b.PointsOfInterest.Add(path);
-        path.Register(scene);
-    }
-
     // ── Outdoor area builders ───────────────────────────────────────────────
 
     private static Area BuildSquare(Random rng)

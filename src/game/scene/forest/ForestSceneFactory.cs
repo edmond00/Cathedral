@@ -121,24 +121,16 @@ public class ForestSceneFactory : SceneFactory
         _allAreas.AddRange(edgeAreas);
         _allAreas.AddRange(deepAreas);
 
-        // ── Connect with PathPoIs ────────────────────────────────────────────
+        // ── Connect in a line ────────────────────────────────────────────────
 
         for (int i = 0; i < _allAreas.Count - 1; i++)
         {
             var a = _allAreas[i];
             var b = _allAreas[i + 1];
-            scene.ConnectAreasBidirectional(a, b);
             string name = (a.DisplayName == "Streamside" || b.DisplayName == "Streamside")
                 ? "Stream Path"
                 : (a.DisplayName == "Thicket" || b.DisplayName == "Thicket") ? "Narrow Path" : "Forest Track";
-            var path = new PathPointOfInterest(
-                a, b, PathPointOfInterest.NameFor(a, b, name),
-                new() { $"A track winding between {a.DisplayName.ToLowerInvariant()} and {b.DisplayName.ToLowerInvariant()}" },
-                new[] { "narrow", "leaf-strewn", "winding" }
-            );
-            a.PointsOfInterest.Add(path);
-            b.PointsOfInterest.Add(path);
-            path.Register(scene);
+            OutdoorLayout.Link(scene, a, b, name, new[] { "narrow", "leaf-strewn", "winding" });
         }
 
         // The woodshed beside the camp, where the cut wood and the charcoal are kept and sold. Off the

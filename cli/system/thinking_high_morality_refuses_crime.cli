@@ -11,7 +11,9 @@
 # Buttons are asserted as "] <goal>" — the tail of "[Snatch ●] steal …" — which the prose never
 # contains.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Room" --period dawn --observe-only "Test Chest" --grant-mm discipline,snatch,scientific_research --means-only discipline
+# --organs pineal_gland=0: one try, no iterative thinking — a retry would step around the refusal
+# this script is about (see thinking_iterates.cli and thinking_rule_probe.cli for the retries).
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Room" --period dawn --observe-only "Test Chest" --grant-mm discipline,snatch,scientific_research --means-only discipline --organs pineal_gland=0
 
 wait
 click menu New

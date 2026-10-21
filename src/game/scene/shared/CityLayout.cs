@@ -41,8 +41,8 @@ public sealed class CityPlan
 /// <para><b>A graph, not a grid.</b> A square is joined to the streets around it; consecutive
 /// squares are joined through a street, so there is always a way across town that is not only one
 /// square; an alley hangs off a single street, which is what makes it an alley. Every join is a
-/// path with its graph edge, through <see cref="OutdoorLayout.Link"/>, so <c>--building-audit</c>
-/// reads a city exactly as it reads a village.</para>
+/// graph edge through <see cref="OutdoorLayout.Link"/>, and the paths laid across them afterwards are
+/// the same pass as a village's, so <c>--building-audit</c> reads a city exactly as it reads one.</para>
 ///
 /// <para><b>The climate names and dresses it.</b> A plain town has a market square and a high street;
 /// a mountain one climbs on stairs and terraces; a hot-steppe one has a bazaar, a well court and

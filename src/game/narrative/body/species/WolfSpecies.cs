@@ -17,7 +17,6 @@ public sealed class WolfSpecies : Species
             { "cerebrum",       3 },
             { "cerebellum",     4 }, // pack coordination, motor precision
             { "hippocampus",    4 }, // territorial routes, prey tracking
-            { "pineal_gland",   2 },
             // Trunk: built for endurance, lean gut
             { "backbone",   5 }, // powerful spine for pursuit
             { "heart",      5 }, // long-chase stamina

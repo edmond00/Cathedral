@@ -7,8 +7,9 @@ using Cathedral.Game.Narrative.ModiMentis;
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
-/// Follows a <see cref="PathPointOfInterest"/> from the current area to the area on its far side.
-/// Always passable from either end (paths have no lock state).
+/// Follows a <see cref="PathPointOfInterest"/> from the current area to the area at its far end, two
+/// or three steps away, past the areas between. Always passable from either end (paths have no lock
+/// state). Walking to a neighbour is <see cref="MoveToAreaVerb"/>'s.
 /// </summary>
 public class FollowPathVerb : Verb
 {
@@ -21,12 +22,16 @@ public class FollowPathVerb : Verb
     }
     public override string VerbId         => "follow_path";
     public override string DisplayName    => "Follow";
-    public override int    BaseDifficulty => 1;
+    /// <summary>
+    /// One above <see cref="MoveToAreaVerb"/>: the price of skipping the areas between. Flat whatever
+    /// the path's length, since a path is two or three steps and never more. The same as a voyage
+    /// toward a landscape, the other way of arriving somewhere not next door.
+    /// </summary>
+    public override int    BaseDifficulty => 2;
 
     /// <summary>Following a path that is already there. Walking is walking.</summary>
     public override ToolUsage ToolUse => ToolUsage.Excluded;
 
-    /// <summary>What a success teaches: a path read and followed is terrain understood.</summary>
     /// <summary>
     /// What a success teaches: following a way that is worn rather than marked. <c>topographia</c>
     /// used to serve this, examining a landscape and asking about a district all at once, which made

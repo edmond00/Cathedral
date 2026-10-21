@@ -76,9 +76,26 @@ public class OutcomeNarrator
     {
         string neutral = NeutralNarration.Emotion(felt.Verbatims, felt.Humor.FeelsLike);
         int    slotId  = await GetOrCreateNarratorSlotAsync(felt.ModusMentis);
-        return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Emotion,
-            felt.ModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
-            styleInstruction: felt.ModusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
+        // Written on a clean history, which is then put back. The slot is the modus mentis's own and
+        // serves everything it does — a conversation's replies included — so with its history kept an
+        // emotion closing a trade was read as the next turn of the talk, and came out addressing the
+        // trader ("…what gems and spices you have for sale"). The occasion is in the neutral line;
+        // nothing earlier is needed, and the slot's later work must not see the coda either.
+        var instance = _llmManager.GetInstance(slotId);
+        var history  = instance?.SnapshotHistory();
+        // keepHistory only decides whether the slot is reset AFTER the request; the request itself is
+        // sent with whatever history the slot holds, so it is cleared here first.
+        instance?.Reset();
+        try
+        {
+            return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Emotion,
+                felt.ModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
+                styleInstruction: felt.ModusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
+        }
+        finally
+        {
+            if (instance != null && history != null) instance.RestoreHistory(history);
+        }
     }
 
     // ── Dual outcome pre-generation (for humor dice modifiers) ─────────────────

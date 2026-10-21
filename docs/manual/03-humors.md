@@ -118,8 +118,11 @@ A fraction of the places equal to the **youthfulness** measure — the heart's s
 half — is then overwritten with the humor of youth, which carries +2 heat and adds two to a die. A
 warm heart is thus a fuller reserve and a luckier one, for a while.
 
-Other characters are filled otherwise: a queue of blood, secreted upon ten times. They begin nearly
-pure and grow more characteristic of their organs as they are drawn upon.
+Other characters are filled as the grown bodies they are: every place secreted from the score of its
+organ by the ordinary distribution, black bile included. Their share of the humor of youth is the
+youthfulness measure diminished by the part of the lifetime already spent, so that it falls evenly
+from the whole measure at birth to nothing at the term of life, whatever the span of the species. A
+companion joins the party with the queues so made.
 
 ## 7. What moves a queue
 

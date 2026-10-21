@@ -22,15 +22,26 @@ public class CineticPointsStat : DerivedStat
 
 /// <summary>
 /// Natural defense — number of sixes an attacker must exceed to land a hit.
-/// Source: lower_limbs body part (aggregate score).
-/// Formula: score / 2 (range 0–5 typical).
+/// Source: lower_limbs body part (aggregate score) on a person; on a beast, which has no lower limbs,
+/// its legs organ (the four legs).
+/// Formula: score / 3 for a person (lower limbs at most 10 → 3); score / 4 for a beast (four legs of
+/// up to 5 → 5), keeping both inside the 0–5 range the armour and attack budgets assume.
 /// </summary>
 public class NaturalDefenseStat : DerivedStat
 {
     public override string Name         => "natural_defense";
     public override string DisplayName  => "Natural Defence";
     public override string? RelatedBodyPartId => "lower_limbs";
+
+    // Read off the lower limbs alone, a beast had no natural defence at all: its legs live in the
+    // "limbs" region, so the source was absent and the stat fell to its worst value, 0.
+    protected override StatSource SourceFor(AnatomyType anatomy) => anatomy == AnatomyType.Beast
+        ? new StatSource(null, "legs", null)
+        : base.SourceFor(anatomy);
+
     protected override int CalculateValue(int sourceScore) => sourceScore / 3;
+    protected override int CalculateValue(PartyMember member, int sourceScore)
+        => member.AnatomyType == AnatomyType.Beast ? sourceScore / 4 : CalculateValue(sourceScore);
     public override string FormatValue(int value) => $"{value} dice";
 }
 

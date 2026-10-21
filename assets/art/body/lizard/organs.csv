@@ -3,7 +3,6 @@ id,organ_part,organ,body_part
 2,cerebellum,cerebellum,encephalon
 3,cerebrum,cerebrum,encephalon
 4,hippocampus,hippocampus,encephalon
-5,pineal_gland,pineal_gland,encephalon
 6,left_ear,ears,muzzle
 7,right_ear,ears,muzzle
 8,left_eye,eyes,muzzle

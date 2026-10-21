@@ -41,7 +41,7 @@ public class StrengthenRelationshipVerb : DialogueVerb
     // refers back with the neutral pronoun — embedding the affinity display here used to double up
     // with the contextual label ("meet a distant acquaintance (my acquaintance …), to talk").
     public override string Verbatim(Scene scene, PoV pov, Element target)
-        => $"meet {NpcPronoun(target)} to talk";
+        => $"talk with {NpcPronoun(target)} to grow closer";
 
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {

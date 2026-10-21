@@ -162,8 +162,8 @@ public static class NeutralNarration
 
     /// <summary>
     /// The same refusal when the Modus Mentis turns to something else instead: just the dismissal of
-    /// <paramref name="targetPhrase"/>, which opens the neutral text and is followed by the observation
-    /// of what it turned to (<see cref="Observation"/> with a transition), both rewritten together.
+    /// <paramref name="targetPhrase"/>, rewritten alone as the block's first sentence; the observation
+    /// of what it turned to (<see cref="Observation"/> with a transition) is a second rewrite after it.
     /// </summary>
     public static string ObservationTurnedAway(string targetPhrase, bool isReminescence = false)
         => isReminescence
@@ -210,6 +210,55 @@ public static class NeutralNarration
         var opener = isReminescence ? "I remember" : "I notice";
         return $"{opener} {NounPhrase(FirstPerson(targetPhrase))}. I want to {FirstPerson(goalPhrase)}, but I find no way to do it, and let it go.";
     }
+
+    // ── Iterative thinking and doubt (ThinkingIterationsStat, DoubtStat) ──────────
+
+    /// <summary>
+    /// The reasoning of a retry within one thinking: the object was already named by the first
+    /// reasoning, so this one names only the new goal and its means. Rewritten after
+    /// <see cref="IterationRetry"/> or <see cref="DoubtRejected"/>, in the same rewrite.
+    /// </summary>
+    public static string ReasoningRetry(string goalPhrase, string skillMeans)
+    {
+        var parts = new List<string> { $"I could {FirstPerson(goalPhrase)} instead." };
+        if (!string.IsNullOrWhiteSpace(skillMeans)) parts.Add($"I will rely on {FirstPerson(skillMeans)}.");
+        return string.Join(" ", parts);
+    }
+
+    /// <summary>
+    /// The reasoning of a retry that comes back to the same goal with another means: the refusal (or the
+    /// doubt) was the means's, so only the way of doing it changes.
+    /// </summary>
+    public static string ReasoningRetrySameGoal(string goalPhrase, string skillMeans)
+        => string.IsNullOrWhiteSpace(skillMeans)
+            ? $"I could still {FirstPerson(goalPhrase)}, another way."
+            : $"I could still {FirstPerson(goalPhrase)}, another way: I will rely on {FirstPerson(skillMeans)}.";
+
+    /// <summary>What the thinking mind says when what it proposed was refused, before trying again.</summary>
+    public static string IterationRetry(string goalPhrase)
+        => $"So I will not {FirstPerson(goalPhrase)}. That will not do, and I think again.";
+
+    /// <summary>
+    /// The end of a chain of retries: everything the object offered has been tried, or nothing left
+    /// appeals. Takes the place of the plain "nothing here worth doing" once a retry has happened.
+    /// </summary>
+    public static string IterationExhausted(string targetPhrase)
+        => $"I turn {NounPhrase(FirstPerson(targetPhrase))} over once more, but nothing else comes to mind, and I let it go.";
+
+    /// <summary>
+    /// The question a reasoning ends on when the player may doubt it: the box then asks YES or NO.
+    /// A question, so the rewrite leaves the decision open rather than announcing it.
+    /// </summary>
+    public static string DoubtQuestion(string goalPhrase)
+        => $"But is it truly wise to {FirstPerson(goalPhrase)}?";
+
+    /// <summary>The doubt answered YES: the mind weighs its doubt and holds to the idea.</summary>
+    public static string DoubtConfirmed(string goalPhrase)
+        => $"I weigh the doubt, and it does not hold: I am resolved to {FirstPerson(goalPhrase)}.";
+
+    /// <summary>The doubt answered NO: the idea is set aside. A retry's reasoning follows it.</summary>
+    public static string DoubtRejected(string goalPhrase)
+        => $"I weigh the doubt, and it holds: I will not {FirstPerson(goalPhrase)} after all.";
 
     /// <summary>
     /// The intended action as a first-person "I will …" statement (e.g. "I will climb the tree").

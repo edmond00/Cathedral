@@ -1,0 +1,29 @@
+Volume 5 - Doubt, Considered as a Faculty
+2026-10-22
+
+Added
+  - Iterative Thinking: a mind with a pineal gland gets up to three more tries when its proposal comes to nothing, one per point of pineal score.
+  - A try ends when the acting modus mentis refuses, when a rule would refuse the act (checked in advance), or when you doubt it.
+  - Each new try avoids what was already tried in that thinking. The whole thinking still costs one noetic point.
+  - Doubt: with a pineal gland of 2 or more, the reasoning ends on a question and you answer YES or NO before the act is offered. NO makes the mind think of another goal.
+  - Paths: some outdoor areas now have a path leading two or three areas away, skipping the ones between. Following one is a little harder than walking.
+
+Changed
+  - Beasts no longer have a pineal gland: they cannot learn the modi mentis of the pineal gland, do not think again or doubt, and need the full 12 experience per level.
+  - Beasts now have a natural defence, drawn from their legs. Before, every beast had none.
+  - People and beasts you meet now have humor queues that reflect their organs and their age, instead of almost pure blood. Companions join with these.
+  - The humors can now be used on the dice when running away during narration.
+  - Paths no longer duplicate the plain move to a neighbouring area.
+  - Clearer wording for several acts: taming, growing closer, asking what someone knows, asking someone to travel with you, crossing, appeasing, and asking for an introduction (which now names who you ask).
+  - In the trade menu, a row lights up only while the mouse is over its - or + button, and that button is highlighted strongly.
+
+Fixed
+  - Observations no longer show a stand-in name (such as "Robert") in place of a person's real name.
+  - A known person's keyword is now their name, not a random word such as "belt".
+  - When a modus mentis turns away from what you clicked, the refusal now comes first, once, before what it looks at instead.
+  - The line closing an observation no longer brings back the thing just refused.
+  - An emotion felt after a conversation no longer addresses the other person, and now says what caused it.
+  - Missing hover ticks on dialogue replies and on the dice CONTINUE button in conversations and fights.
+
+Internal
+  - The test suite runs in parallel, about 15 minutes instead of 85.

@@ -1,0 +1,8 @@
+# Run once by run_tests.sh before the pool starts, and not a test. Waits for the word vectors to
+# finish loading, so that the parsed copy WordEmbedding writes (development builds) exists before a
+# dozen instances start parsing the 347 MB text file at once. A script quits long before the vectors
+# arrive, so without this the copy would never be written by the suite. Lives outside cli/ so the
+# runner does not pick it up as a script.
+wait
+wait embeddings 180
+quit

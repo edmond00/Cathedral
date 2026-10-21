@@ -146,6 +146,22 @@ public sealed class HumorQueueSet
         }
     }
 
+    /// <summary>
+    /// A grown body's queues: every slot secreted from its organ's score by the ordinary rates, Black
+    /// Bile included, then Juvenescence seeded into <paramref name="juvenescencePercent"/>% of them.
+    /// See <see cref="PartyMember.SettleHumorsForAge"/>.
+    /// </summary>
+    public void InitializeForBody(PartyMember member, Random rng, int juvenescencePercent)
+    {
+        foreach (var queue in All)
+        {
+            var organ = member.GetOrganById(queue.OrganId);
+            int score = organ?.Score ?? 5;
+            queue.FillWithSecretion(score, rng);
+            queue.SeedJuvenescence(juvenescencePercent, rng);
+        }
+    }
+
     // ── Gameplay API (future implementation hooks) ────────────────
 
     /// <summary>

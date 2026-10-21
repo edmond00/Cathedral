@@ -161,7 +161,7 @@ natural attack, plus whatever bonuses stand.
 
 | Contribution | From |
 |---|---|
-| Natural defence | The **lower limbs**, at one die per three points |
+| Natural defence | The **lower limbs**, at one die per three points; a beast, having none, its **legs**, at one die per four |
 | Guards and stances | Whatever defensive skills are in effect |
 | Armour | The defence dice of every worn garment covering the section struck |
 

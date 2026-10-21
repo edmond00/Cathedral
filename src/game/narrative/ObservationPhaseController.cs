@@ -256,8 +256,8 @@ public class ObservationPhaseController
     /// Generates a focus observation for a specific outcome (clicking "observe" on a keyword). The
     /// clicked focus is offered, not imposed: the (newly chosen) Modus Mentis first decides whether
     /// to keep its focus on the object or lose interest. Losing interest turns it to another object
-    /// of its own choosing among those not yet observed: one text dismisses the clicked object and
-    /// observes the new one, and carries the new one's keyword. Only when nothing is left unobserved
+    /// of its own choosing among those not yet observed: a keyword-less sentence dismisses the clicked
+    /// object, then the new one is observed through a transition and carries the keyword. Only when nothing is left unobserved
     /// is the block a single keyword-less "I am not interested" sentence. Either way it may then
     /// choose one other object and bridge to it with a transition before observing it.
     ///
@@ -337,9 +337,13 @@ public class ObservationPhaseController
         {
             // Turning away is not a dead end while something is left to look at: the Modus Mentis
             // picks what it would rather attend to (it may not decline — it has just turned to
-            // something), and the dismissal and the new observation are one neutral text rewritten
-            // in one request, so the turn reads as a single movement and carries the new keyword.
-            // Only with nothing left does the keyword-less "not interested" block remain.
+            // something). The dismissal is rewritten first, alone, as a keyword-less sentence of its
+            // own, and the new object is then observed through an ordinary transition. They used to be
+            // one neutral text rewritten in one request, and the model moved the dismissal to the end
+            // or dropped it in four turns out of six; a word-match check then pasted the plain
+            // sentence back in front, often doubling a dismissal the rewrite had kept. Two requests
+            // make the order a fact rather than a hope. Only with nothing left does the keyword-less
+            // "not interested" block remain.
             if (followUpCandidates.Count == 0)
                 return await BuildNotInterestedBlockAsync(slotId, observationModusMentis, focusPhrase, isReminescence, ct, preview: preview, commit: commit, part: part);
 
@@ -349,8 +353,10 @@ public class ObservationPhaseController
                 return await BuildNotInterestedBlockAsync(slotId, observationModusMentis, focusPhrase, isReminescence, ct, preview: preview, commit: commit, part: part);
 
             Console.WriteLine($"ObservationPhaseController: focus refused — turned from '{focusPhrase}' to '{instead.DisplayName}'.");
+            await AppendKeywordlessAsync(sentences, slotId, observationModusMentis,
+                NeutralNarration.ObservationTurnedAway(focusPhrase, isReminescence), ct, part);
             firstText = await AppendObservationAsync(sentences, allKeywords, slotId, observationModusMentis, instead, withTransition: true, locationId, ledger, ct, isReminescence: isReminescence, part: part,
-                leadingNeutral: NeutralNarration.ObservationTurnedAway(focusPhrase, isReminescence), turnedAwayFrom: focusOutcome);
+                turnedAwayFrom: focusOutcome);
             firstObserved = instead;
         }
 
@@ -413,7 +419,6 @@ public class ObservationPhaseController
         bool isReminescence = false,
         PreviewPart? part = null,
         string? trailingNeutral = null,
-        string? leadingNeutral = null,
         NarrativeAnchor? turnedAwayFrom = null)
     {
         var sink = part?.NextSegment();
@@ -435,23 +440,7 @@ public class ObservationPhaseController
             // text so the persona rewrite styles it into the block rather than tacking on plain prose.
             if (!string.IsNullOrWhiteSpace(trailingNeutral))
                 neutral = $"{neutral} {trailingNeutral.Trim()}";
-            // An optional leading sentence (a focus just turned away from) opens the same text, so the
-            // rewrite can turn from one object to the other in a single movement.
-            if (!string.IsNullOrWhiteSpace(leadingNeutral))
-                neutral = $"{leadingNeutral.Trim()} {neutral}";
             var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, preview: sink, ct: ct);
-
-            // A turn-away opens on the refusal ("I am not interested in the reaper …"), and the model,
-            // told to write one to three sentences, tends to drop that half and write only about the new
-            // object — the player then reads about a hedgebank with no word that the reaper was refused.
-            // The refusal comes first in the neutral text, so the rewrite's first sentence should name
-            // the object turned away from; when it does not, the plain refusal is put back in front.
-            if (turnedAwayFrom != null && !string.IsNullOrWhiteSpace(leadingNeutral)
-                && !FirstSentenceNames(text, turnedAwayFrom))
-            {
-                Console.WriteLine($"ObservationPhaseController: the rewrite dropped the refusal of '{turnedAwayFrom.DisplayName}' — restoring it.");
-                text = $"{leadingNeutral.Trim()} {text}";
-            }
 
             // Keywords are chosen by rule from the final (sanitized) text — the word(s) most related
             // to the object. A long observation gets two distinct keywords, both linked to this same
@@ -465,17 +454,17 @@ public class ObservationPhaseController
             List<string> kws;
             if (turnedAwayFrom == null)
                 kws = KeywordExtractor.ExtractKeywords(text, GetReferenceLemma(outcome), wanted,
-                                                       ownName: GetNeutralName(outcome), isPerson: IsPerson(outcome));
+                                                       ownName: GetShownName(outcome), isPerson: IsPerson(outcome));
             else
             {
                 // The text also names the object turned away from, and a keyword is wired to this
                 // object whatever word it is — so no word naming the other one may become it.
                 var shunned = new HashSet<string>(
-                    $"{GetNeutralName(turnedAwayFrom)} {GetReferenceLemma(turnedAwayFrom)}"
+                    $"{GetShownName(turnedAwayFrom)} {GetReferenceLemma(turnedAwayFrom)}"
                         .Split(new[] { ' ', '-', '(', ')', ',' }, StringSplitOptions.RemoveEmptyEntries),
                     StringComparer.OrdinalIgnoreCase);
                 kws = KeywordExtractor.ExtractKeywords(text, GetReferenceLemma(outcome), wanted + 3,
-                                                       ownName: GetNeutralName(outcome), isPerson: IsPerson(outcome))
+                                                       ownName: GetShownName(outcome), isPerson: IsPerson(outcome))
                     .Where(k => !k.Split(' ').Any(w => shunned.Contains(w) || shunned.Contains(w.TrimEnd('s'))))
                     .Take(wanted)
                     .ToList();
@@ -545,31 +534,6 @@ public class ObservationPhaseController
     /// <summary>A named NPC — named by name, role or sex rather than by a head noun.</summary>
     private static bool IsPerson(NarrativeAnchor outcome)
         => outcome is Cathedral.Game.Scene.SyntheticNpcObservationObject { NpcEntity: Cathedral.Game.Npc.NpcEntity };
-
-    /// <summary>
-    /// Whether the first sentence of <paramref name="text"/> names <paramref name="anchor"/> — by its
-    /// reference lemma or the head of its neutral name, singular or plural. Used to tell a
-    /// rewrite that kept a turn-away's refusal from one that dropped it.
-    /// </summary>
-    private bool FirstSentenceNames(string text, NarrativeAnchor anchor)
-    {
-        var first = System.Text.RegularExpressions.Regex.Split(text.Trim(), @"(?<=[.!?])\s+")[0];
-        // The head of the name only: "the reaper of the radish field (a man)" is named by "reaper",
-        // and "field" in the first sentence may well be about something else.
-        var name = GetNeutralName(anchor);
-        int cut = name.IndexOfAny(new[] { '(' });
-        if (cut >= 0) name = name[..cut];
-        int of = name.IndexOf(" of ", StringComparison.OrdinalIgnoreCase);
-        if (of >= 0) name = name[..of];
-        var words = $"{name} {GetReferenceLemma(anchor)}"
-            .Split(new[] { ' ', '-', '(', ')', ',', '–' }, StringSplitOptions.RemoveEmptyEntries)
-            .Select(w => w.ToLowerInvariant())
-            .Where(w => w.Length > 2 && w is not ("the" or "and" or "man" or "woman" or "boy" or "girl"))
-            .Distinct();
-        return words.Any(w => System.Text.RegularExpressions.Regex.IsMatch(
-            first, $@"\b{System.Text.RegularExpressions.Regex.Escape(w)}(s|es)?\b",
-            System.Text.RegularExpressions.RegexOptions.IgnoreCase));
-    }
 
     /// <summary>
     /// Appends the area introduction that opens a block when the area or the time of day has changed:
@@ -1330,19 +1294,53 @@ public class ObservationPhaseController
         PreviewPart? part = null,
         bool nothingMore = false)
     {
+        var neutral = nothingMore
+            ? NeutralNarration.ObservationNothingMore(isReminescence)
+            : NeutralNarration.ObservationNothing(isReminescence);
+        // The closing line is written with the block's earlier observations still in the slot's
+        // history, and the model reached back to them — "I glance at the mud … and I let my focus go"
+        // closed a block that had refused the mud, reading as a second refusal of it at the end.
+        string? extra = nothingMore ? NothingMoreClause : null;
+        if (await AppendKeywordlessAsync(sentences, slotId, modusMentis, neutral, ct, part, extra))
+            Console.WriteLine("ObservationPhaseController: nothing drew the persona's attention (declined).");
+    }
+
+    /// <summary>
+    /// What the closing "nothing more" line is told on top of the modus mentis's style: it is a letting
+    /// go, not one more look at what the block already described.
+    /// </summary>
+    private const string NothingMoreClause =
+        "Do not name or describe anything already described; say only that your attention lets go.";
+
+    /// <summary>
+    /// Rewrites <paramref name="neutral"/> as one keyword-less sentence of the block — the "nothing
+    /// here" and "nothing more" lines, and the dismissal that opens a turn-away — in a segment of its
+    /// own, so it streams in its place. <paramref name="extraStyle"/> is appended to the modus mentis's
+    /// style instruction (or the default one). Returns whether the rewrite succeeded.
+    /// </summary>
+    private async Task<bool> AppendKeywordlessAsync(
+        List<NarrationSentence> sentences,
+        int slotId,
+        ModusMentis modusMentis,
+        string neutral,
+        CancellationToken ct,
+        PreviewPart? part,
+        string? extraStyle = null)
+    {
         var sink = part?.NextSegment();
         try
         {
-            var neutral = nothingMore
-                ? NeutralNarration.ObservationNothingMore(isReminescence)
-                : NeutralNarration.ObservationNothing(isReminescence);
-            var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, preview: sink, ct: ct);
+            string? style = extraStyle == null
+                ? modusMentis.StyleInstruction
+                : $"{(string.IsNullOrWhiteSpace(modusMentis.StyleInstruction) ? Config.Narrative.DefaultStyleInstruction : modusMentis.StyleInstruction.Trim())} {extraStyle}";
+            var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: style, preview: sink, ct: ct);
             sentences.Add(new NarrationSentence(text, new List<string>()));
-            Console.WriteLine("ObservationPhaseController: nothing drew the persona's attention (declined).");
+            return true;
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"ObservationPhaseController: 'nothing' observation failed: {ex.Message}");
+            Console.Error.WriteLine($"ObservationPhaseController: keyword-less observation line failed: {ex.Message}");
+            return false;
         }
     }
 
@@ -1372,6 +1370,14 @@ public class ObservationPhaseController
     private static string GetNeutralName(NarrativeAnchor outcome)
         => outcome is ObservationObject obs ? obs.NeutralName
          : outcome.DisplayName;
+
+    /// <summary>
+    /// The neutral name as the player reads it. A known person's neutral name carries the scene's
+    /// false name ("my acquaintance Robert"), which is what the LLM is shown — but every rewrite has
+    /// had the real name swapped back by the time it is checked, keyworded or shown, so anything
+    /// compared against that text must use the real one.
+    /// </summary>
+    private static string GetShownName(NarrativeAnchor outcome) => NameFaking.Real(GetNeutralName(outcome));
 
     /// <summary>The outcome's core noun, used as the keyword-similarity anchor.</summary>
     private static string GetReferenceLemma(NarrativeAnchor outcome)

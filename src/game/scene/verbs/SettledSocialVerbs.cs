@@ -133,7 +133,7 @@ public class TalkOfFarPlacesVerb : SocialDialogueVerb
         => Who(scene, pov, target, actor) != null;
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
-        => $"ask {NpcPronoun(target)} about the places they have been";
+        => $"ask {NpcPronoun(target)} about the places {NpcSubjectPronoun(target)} has been";
 
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {

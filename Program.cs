@@ -168,6 +168,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --no-embeddings                    DEBUG: run without models/embeddings/glove.6B.100d.txt (keywords ranked by length). For CI.");
     Console.WriteLine("  --audio <winmm|openal>             Audio path: WinMM + system MIDI (Windows default) or OpenAL + SoundFont (elsewhere)");
     Console.WriteLine("  --soundfont <file>                 With the OpenAL path: play music with <file> instead of assets/audio/soundfont.sf2");
+    Console.WriteLine("  --log-file <path>                  DEBUG: write the run's log to <path> instead of log.txt. Used by the test suite.");
     Console.WriteLine("  --hidden                           DEBUG: create the window without showing it — no window on screen, no focus");
     Console.WriteLine("                                     taken. The GL context and every mode still run. Used by the test suite.");
     Console.WriteLine("                                     Where somebody stands at a given hour is drawn from the location seed, so an");
@@ -223,6 +224,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("                                     goal out) must land on this one. Examining is refused by any action modus mentis");
     Console.WriteLine("                                     without Observation, so an examine script names one. CLI twin: `means`");
     Console.WriteLine("  --refuse-focus                     DEBUG: every focus observation's modus mentis turns away from the clicked object");
+    Console.WriteLine("  --refuse-means <n>                 DEBUG: under --playground, the first n willingness questions answer \"unwilling\"");
     Console.WriteLine("                                     and observes another instead. --playground never declines, so this is the only");
     Console.WriteLine("                                     way a script reaches that branch");
     Console.WriteLine("  --advance-days <n>                 DEBUG: push the world clock forward <n> days on first arrival at the world");
@@ -869,6 +871,9 @@ for (int i = 0; i < args.Length; i++)
 
     if (args[i] == "--refuse-focus")
         Cathedral.Config.Debug.RefuseFocus = true;
+
+    if (args[i] == "--refuse-means" && i + 1 < args.Length && int.TryParse(args[i + 1], out var refuseMeans))
+        Cathedral.Config.Debug.RefuseMeans = Math.Max(0, refuseMeans);
 
     if (args[i] == "--advance-days" && i + 1 < args.Length &&
         double.TryParse(args[i + 1], System.Globalization.NumberStyles.Float,

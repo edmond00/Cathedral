@@ -17,7 +17,7 @@ namespace Cathedral.Game.Dialogue.Tree;
 public class IntroductionGrantedOutcome : Outcome
 {
     public IntroductionGrantedOutcome()
-        : base("the NPC agrees to present the player to a third party", OutcomeSeverity.Positive, "") { }
+        : base("the NPC agrees to present the player to a third party", OutcomeSeverity.Positive, "was promised an introduction to somebody else") { }
 
 
     

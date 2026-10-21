@@ -71,6 +71,11 @@ public static class NpcContentGenerator
 
         EnsureBornAlive(body);
         SettleSkillLevels(body);
+
+        // Last, once the organs, the age and any trait wound are settled, since the queues read all
+        // three. A generator of its own, so the draws above (skills, belongings, traits) are the ones
+        // every seeded run has always made.
+        body.SettleHumorsForAge(GameRng.For($"npc_humors_{stableId}"));
         return traits;
     }
 

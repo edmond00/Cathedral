@@ -200,7 +200,10 @@ public class DialogueTreeController
         if (_state.IsDiceRollActive && !_state.IsDiceRolling)
         {
             var r = _dice.ContinueButtonRegion;
-            _state.IsContinueHovered = my == r.Y && mx >= r.X && mx < r.X + r.Width;
+            bool over = my == r.Y && mx >= r.X && mx < r.X + r.Width;
+            if (over && !_state.IsContinueHovered)
+                _ambianceEngine?.TriggerGameEvent(Cathedral.Audio.GameEventType.SmallInteraction);
+            _state.IsContinueHovered = over;
             _dice.HandleHumorHover(mx, my);
             return;
         }
@@ -224,7 +227,12 @@ public class DialogueTreeController
         }
 
         if (!_state.IsLoadingOptions && !_preview.IsActive && !_state.IsDiceRollActive && !_state.ConversationEnded)
-            _state.HoveredOptionIndex = _ui.GetOptionIndexAt(mx, my);
+        {
+            int hovered = _ui.GetOptionIndexAt(mx, my);
+            if (hovered != _state.HoveredOptionIndex && hovered >= 0)
+                _ambianceEngine?.TriggerGameEvent(Cathedral.Audio.GameEventType.SmallInteraction);
+            _state.HoveredOptionIndex = hovered;
+        }
     }
 
     public void OnMouseClick(int mx, int my)

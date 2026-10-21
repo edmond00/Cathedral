@@ -110,7 +110,7 @@ layout, `--verb-probe`, and what `--cli` cannot check. **Invoke `audits` after t
 — it carries the thirteen headless audits and says which one covers which change.
 
 **The full suite is the release gate, not the check for a change.** `./run_tests.sh` launches the game
-once per script, nearly two hundred times, and takes well over an hour. Run it only when preparing a
+once per script, two hundred times, a dozen at once, and takes about a quarter of an hour. Run it only when preparing a
 release (the `release` skill's steps already do), or when the user asks. While working on a task, run
 the audits (`./run_tests.sh audits`, seconds) plus the scripts that exercise what you touched — the
 folder of the verb or outcome you changed, and any `cli/system/` script whose subject you changed or
