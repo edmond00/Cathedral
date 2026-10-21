@@ -10,7 +10,7 @@ namespace Cathedral.Game.Dialogue.Tree;
 public class ClearEnemyOutcome : Outcome
 {
     public ClearEnemyOutcome()
-        : base("NPC is no longer considered an enemy", OutcomeSeverity.Positive, "") { }
+        : base("NPC is no longer considered an enemy", OutcomeSeverity.Positive, "was no longer counted an enemy") { }
 
 
     

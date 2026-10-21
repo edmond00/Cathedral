@@ -46,4 +46,27 @@ public static class ActionRulesChecker
         }
         return ActionRuleResult.Pass();
     }
+
+    /// <summary>
+    /// The same rules asked ahead of time, while a thinking modus mentis is still choosing — before any
+    /// button exists, and so before any implement can have been combined with it. Used by iterative
+    /// thinking (<c>ThinkingIterationsStat</c>) to try something else rather than offer an act the rules
+    /// would refuse on the click.
+    ///
+    /// <para>The rules that read the combined item are left out, since none has been combined yet and
+    /// combining one is how the player answers them: <see cref="RequiredToolRule"/> (the act stays
+    /// standing for "Use Tool") and <see cref="FirstBlowMediumRule"/> (a weapon in hand changes the
+    /// medium). Nothing here has side effects; the click still runs <see cref="Check"/> in full.</para>
+    /// </summary>
+    public static ActionRuleResult Probe(ActionRuleContext ctx)
+    {
+        foreach (var rule in Rules)
+        {
+            if (rule is RequiredToolRule or FirstBlowMediumRule) continue;
+            var result = rule.Check(ctx);
+            if (!result.Passed)
+                return result;
+        }
+        return ActionRuleResult.Pass();
+    }
 }

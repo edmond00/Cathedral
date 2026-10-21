@@ -109,9 +109,9 @@ public class MountainSceneFactory : SceneFactory
         _allAreas.AddRange(lowerAreas);
         _allAreas.AddRange(midAreas);
 
-        // ── Connect with PathPoIs (linear chain) ─────────────────────────────
+        // ── Connect in a line ────────────────────────────────────────────────
 
-        // The High Crag is left out of the chain: the cliff below is its only way in, and a path to it
+        // The High Crag is left out of the chain: the cliff below is its only way in, and an edge to it
         // would be exactly the free bypass the connector exists to prevent.
         var walkable = _allAreas.Where(a => a != _highCrag).ToList();
 
@@ -119,18 +119,10 @@ public class MountainSceneFactory : SceneFactory
         {
             var a = walkable[i];
             var b = walkable[i + 1];
-            scene.ConnectAreasBidirectional(a, b);
             string name = (a.DisplayName == "Gorge" || b.DisplayName == "Gorge") ? "Gorge Passage"
                         : (a.DisplayName == "Stream Source" || b.DisplayName == "Stream Source") ? "Stream Track"
                         : "Slope Path";
-            var path = new PathPointOfInterest(
-                a, b, PathPointOfInterest.NameFor(a, b, name),
-                new() { $"A worn slope path between {a.DisplayName.ToLowerInvariant()} and {b.DisplayName.ToLowerInvariant()}" },
-                new[] { "rough", "exposed", "windswept" }
-            );
-            a.PointsOfInterest.Add(path);
-            b.PointsOfInterest.Add(path);
-            path.Register(scene);
+            OutdoorLayout.Link(scene, a, b, name, new[] { "rough", "exposed", "windswept" });
         }
 
         // ── Cliff Ascent: Rock Ledge → High Crag ─────────────────────────────

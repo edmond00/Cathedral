@@ -13,19 +13,20 @@ namespace Cathedral.Game.Scene;
 /// Nothing in the scene changes — the members stay in their node; only the choice list is shorter.
 ///
 /// <para>A city square used to offer two dozen choices: a door and a wall per house, a path and the
-/// street it reaches per way out, three people among them. The persona's second look then jumped to
+/// street it reaches per way out, three people among them. (A path no longer doubles a way out — paths
+/// now only join areas two or three steps apart — so the pass that paired the two is gone.) The persona's second look then jumped to
 /// whatever unrelated thing the judge preferred. Grouped, the square offers "the buildings around",
 /// "the ways leading on", the fountain, the people — and a look at the buildings is followed by a look
 /// at one of them (the zoom, in <c>ObservationPhaseController</c>).</para>
 ///
-/// Three passes, in order:
+/// Two passes, in order:
 /// <list type="number">
 /// <item><b>Wholes</b> — points of interest sharing a <see cref="PoiCluster"/> (a building's entry
 ///       door and outside wall), when two or more are in view.</item>
-/// <item><b>Ways</b> — a path and the area it leads to, which are two routes to one place.</item>
 /// <item><b>Families</b> — <see cref="FamilyMinimum"/> or more units of one kind: the same point of
-///       interest type, the same kind of whole, or a way out. Never people, never the door back out
-///       of a building, and never a set whose members name themselves with different nouns.</item>
+///       interest type, the same kind of whole, or a way on (a neighbouring area or a path). Never
+///       people, never the door back out of a building, and never a set whose members name themselves
+///       with different nouns.</item>
 /// </list>
 /// </summary>
 public static class ObservationGrouping
@@ -61,30 +62,10 @@ public static class ObservationGrouping
             units.Add(group);
         }
 
-        // 2. Ways.
-        var areaObs = outcomes.OfType<SyntheticAreaObservationObject>().ToList();
-        foreach (var path in outcomes.OfType<SyntheticObservationObject>())
-        {
-            if (used.Contains(path) || path.PointOfInterest is not PathPointOfInterest p || path.ViewingArea == null)
-                continue;
-            var far  = ReferenceEquals(p.AreaA, path.ViewingArea) ? p.AreaB : p.AreaA;
-            var dest = areaObs.FirstOrDefault(a => ReferenceEquals(a.Area, far) && !used.Contains(a));
-            if (dest == null) continue;
-            var parts = new List<NarrativeAnchor> { dest, path };
-            var group = ledger.GroupFor(Key("way", parts), () => new ObservationGroup(
-                dest.NeutralName, dest.NeutralPhrase, dest.ReferenceLemma,
-                id => $"{dest.GenerateNeutralDescription(id)}, reached by "
-                    + NeutralNarration.NounPhrase(path.GenerateNeutralDescription(id)),
-                parts));
-            used.Add(path);
-            used.Add(dest);
-            units.Add(group);
-        }
-
         foreach (var o in outcomes)
             if (!used.Contains(o)) units.Add(o);
 
-        // 3. Families.
+        // 2. Families.
         var result = new List<NarrativeAnchor>();
         foreach (var kind in units.GroupBy(FamilyKey))
         {
@@ -104,9 +85,9 @@ public static class ObservationGrouping
         SyntheticNpcObservationObject => null,
         // The way back out of a building stays one step away.
         SyntheticObservationObject { PointOfInterest: DoorPointOfInterest { Role: DoorRole.Entry } } => null,
+        SyntheticObservationObject { PointOfInterest: PathPointOfInterest } => "way",
         SyntheticObservationObject o => "poi:" + o.PointOfInterest.GetType().Name,
         SyntheticAreaObservationObject => "way",
-        ObservationGroup g when g.Members.OfType<SyntheticAreaObservationObject>().Any() => "way",
         ObservationGroup g => "whole:" + g.ReferenceLemma,
         _ => null,
     };
@@ -117,7 +98,7 @@ public static class ObservationGrouping
         Func<string, string> clause;
         if (key == "way")
             (name, phrase, lemma, clause) = ("Ways Onward", "the ways leading on", "way",
-                                             l => $"From here one may go on to {l}.");
+                                             l => $"Ways lead on from here: {l}.");
         else if (key == "poi:" + nameof(LandscapePointOfInterest))
             (name, phrase, lemma, clause) = ("View", "the view below", "view",
                                              l => $"From here the eye reaches {l}.");

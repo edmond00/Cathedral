@@ -17,7 +17,6 @@ public sealed class CatSpecies : Species
             { "cerebrum",       3 },
             { "cerebellum",     4 }, // exceptional agility, balance and precision
             { "hippocampus",    3 },
-            { "pineal_gland",   3 }, // mysterious, sharp instincts
             // Trunk: small sprinter, not built for endurance
             { "backbone",   3 }, // flexible spine, not powerful
             { "heart",      4 },

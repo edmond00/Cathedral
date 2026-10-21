@@ -197,10 +197,13 @@ public static class KeywordExtractor
         var words = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         if (string.IsNullOrWhiteSpace(name)) return words;
 
-        var acquaintance = Regex.Match(name, @"my acquaintance (\w+), the (.+?) of the", RegexOptions.IgnoreCase);
+        // The name may be several words: the real one ("Daphnaaelh Eghbert") is what the text carries
+        // by the time keywords are chosen, not the one-word false name the LLM was shown.
+        var acquaintance = Regex.Match(name, @"my acquaintance (.+?), the (.+?) of the", RegexOptions.IgnoreCase);
         if (acquaintance.Success)
         {
-            words.Add(acquaintance.Groups[1].Value);
+            foreach (var w in acquaintance.Groups[1].Value.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+                words.Add(w);
             foreach (var w in acquaintance.Groups[2].Value.Split(' ', StringSplitOptions.RemoveEmptyEntries))
                 words.Add(w);
             return words;

@@ -14,7 +14,7 @@ namespace Cathedral.Game.Dialogue.Tree;
 public class JoinPartyOutcome : Outcome
 {
     public JoinPartyOutcome()
-        : base("the NPC agrees to travel with the player", OutcomeSeverity.Positive, "") { }
+        : base("the NPC agrees to travel with the player", OutcomeSeverity.Positive, "gained a companion for the road") { }
 
 
     

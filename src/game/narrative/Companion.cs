@@ -71,6 +71,7 @@ public class Companion : PartyMember
             c.InitializeMemory();
             c.AssignModiMentisToMemoryRandom();
             c.SetAgeAtCreation(rng.Next(20, 61) * LifetimeStat.DaysPerYear);
+            c.SettleHumorsForAge(GameRng.For($"companion_humors_{name}"));
             companions.Add(c);
         }
         return companions;

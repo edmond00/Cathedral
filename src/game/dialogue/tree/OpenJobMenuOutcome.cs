@@ -12,7 +12,7 @@ namespace Cathedral.Game.Dialogue.Tree;
 public class OpenJobMenuOutcome : Outcome
 {
     public OpenJobMenuOutcome()
-        : base("NPC agrees to take you on for the work", OutcomeSeverity.Positive, "") { }
+        : base("NPC agrees to take you on for the work", OutcomeSeverity.Positive, "was taken on for the work") { }
 
 
     

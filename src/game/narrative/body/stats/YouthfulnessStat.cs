@@ -2,8 +2,9 @@ namespace Cathedral.Game.Narrative;
 
 /// <summary>
 /// Youthfulness — the residual vigour of youth, derived from the heart organ.
-/// Range 0–50 %. Used exactly once, during protagonist creation, to decide what
-/// fraction of the starting humor queues are seeded with <see cref="JuvenescenceHumor"/>.
+/// Range 0–50 %. Decides what fraction of the starting humor queues are seeded with
+/// <see cref="JuvenescenceHumor"/>: in full for the protagonist at creation, and scaled by the part of
+/// the lifetime still ahead for everyone generated in the world (<see cref="PartyMember.JuvenescencePercentForAge"/>).
 /// Source: heart organ score (0–5, see <see cref="HeartOrgan.HeartPart"/>).
 /// Formula: score * 10 → 0 % … 50 %.
 /// </summary>

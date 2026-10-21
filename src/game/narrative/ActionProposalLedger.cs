@@ -108,11 +108,23 @@ public sealed class ActionProposalLedger
     /// The subset of <paramref name="goals"/> that <paramref name="thinking"/> has not already chosen
     /// and seen refused this phase. Every other thinking modus mentis is still offered them.
     /// </summary>
-    public List<NarrativeAnchor> NotRefusedFor(ModusMentis thinking, IEnumerable<NarrativeAnchor> goals)
+    /// <remarks><paramref name="reoffer"/> lets a goal back in despite that: iterative thinking re-offers,
+    /// within one chain of retries, a goal refused by one means while another means has not been tried
+    /// (<c>ThinkingIterationsStat</c>).</remarks>
+    public List<NarrativeAnchor> NotRefusedFor(ModusMentis thinking, IEnumerable<NarrativeAnchor> goals,
+                                               System.Func<VerbAction, bool>? reoffer = null)
     {
         if (!_refusedFor.TryGetValue(thinking, out var refused)) return goals.ToList();
-        return goals.Where(g => g is not VerbAction va || !refused.Contains(KeyOf(va))).ToList();
+        return goals.Where(g => g is not VerbAction va || !refused.Contains(KeyOf(va)) || reoffer?.Invoke(va) == true)
+                    .ToList();
     }
+
+    /// <summary>
+    /// The identity this ledger knows an action by (verb, target, variant), for callers that keep
+    /// their own record of actions across a re-expansion of the verb lists — iterative thinking's
+    /// crossed-off pairs.
+    /// </summary>
+    public static (string VerbId, Element? Target, object? Variant) IdentityOf(VerbAction action) => KeyOf(action);
 
     /// <summary>Forgets everything — a new narration phase begins.</summary>
     public void Clear()

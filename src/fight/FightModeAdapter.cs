@@ -838,7 +838,9 @@ public class FightModeAdapter
         if (_state.Phase == TurnPhase.WaitingForDiceComplete)
         {
             var region = _dice.ContinueButtonRegion;
-            _continueHovered = (y == region.Y && x >= region.X && x < region.X + region.Width);
+            bool over = y == region.Y && x >= region.X && x < region.X + region.Width;
+            if (over && !_continueHovered) _sfx?.Invoke(GameEventType.SmallInteraction);
+            _continueHovered = over;
             _dice.HandleHumorHover(x, y);
         }
 

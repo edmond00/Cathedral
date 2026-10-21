@@ -27,6 +27,15 @@ public class Scene
     /// </summary>
     public Dictionary<Guid, HashSet<Guid>> AreaGraph { get; } = new();
 
+    /// <summary>
+    /// What kind of way an edge of <see cref="AreaGraph"/> is on the ground — "Lane", "Passage",
+    /// "Shore Path" — and how it looks, keyed by the edge's two area ids in either order. Written by
+    /// <c>OutdoorLayout.Link</c>; read by <c>OutdoorLayout.LayPaths</c>, which names a path after the
+    /// ways it runs along. An edge written without it (a factory calling
+    /// <see cref="ConnectAreasBidirectional"/> directly) is simply a way of no particular kind.
+    /// </summary>
+    public Dictionary<(Guid, Guid), Shared.WayStyle> WayStyles { get; } = new();
+
     /// <summary>All NPCs in this scene.</summary>
     public List<SceneNpc> Npcs { get; } = new();
 

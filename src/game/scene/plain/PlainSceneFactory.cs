@@ -21,7 +21,8 @@ namespace Cathedral.Game.Scene.Plain;
 ///   • wetland → Flatlands + Wetlands; willow / elder trees, reed beds
 ///
 /// Areas: 3–5 sampled from { Grassland, Meadow, Heath, Hill, Valley, Hedgerow, Boggy Ground }.
-/// Connections: <see cref="PathPointOfInterest"/> between adjacent areas.
+/// Connections: graph edges between adjacent areas, and sometimes a <see cref="PathPointOfInterest"/>
+/// running past one or two of them (<c>OutdoorLayout.LayPaths</c>).
 /// Plain is uninhabited terrain — only beasts and shallow wildlife spawn.
 /// </summary>
 public class PlainSceneFactory : SceneFactory
@@ -87,24 +88,18 @@ public class PlainSceneFactory : SceneFactory
         _allOutdoorAreas.AddRange(flatAreas);
         _allOutdoorAreas.AddRange(highAreas);
 
-        // ── 5. Connect areas linearly with PathPoIs (register PoI explicitly) ─
+        // ── 5. Connect areas linearly ────────────────────────────────────────
 
         for (int i = 0; i < _allOutdoorAreas.Count - 1; i++)
-        {
-            var a = _allOutdoorAreas[i];
-            var b = _allOutdoorAreas[i + 1];
-            scene.ConnectAreasBidirectional(a, b);
-            var path = BuildPath(a, b, rng);
-            a.PointsOfInterest.Add(path);
-            b.PointsOfInterest.Add(path);
-            path.Register(scene);
-        }
+            OutdoorLayout.Link(scene, _allOutdoorAreas[i], _allOutdoorAreas[i + 1],
+                               WayKind(_allOutdoorAreas[i], _allOutdoorAreas[i + 1]),
+                               new[] { "worn", "narrow", "winding" });
 
         Console.WriteLine($"PlainSceneFactory: Built '{_identity}' plain — {_allOutdoorAreas.Count} areas");
     
         // ── Furnishing: somewhere to sit, somewhere to hide, a hard shortcut, a climb ──
         // Rolled, so two places of the same kind are not the same place. Runs after the sections and
-        // paths exist: shortcuts need to know what is already adjacent, and the climb needs a section
+        // edges exist: shortcuts need to know what is already adjacent, and the climb needs a section
         // to put its top area in.
         {
             var outdoors = scene.OutdoorAreas;
@@ -252,23 +247,13 @@ public class PlainSceneFactory : SceneFactory
         _ => TerrainSubfactory.BuildSloeBush(),
     };
 
-    private static PathPointOfInterest BuildPath(Area a, Area b, Random rng)
+    private static string WayKind(Area a, Area b) => (a.DisplayName, b.DisplayName) switch
     {
-        string name = (a.DisplayName, b.DisplayName) switch
-        {
-            ("Heath", _)        or (_, "Heath")        => "Heath Track",
-            ("Boggy Ground", _) or (_, "Boggy Ground") => "Bog Track",
-            ("Hedgerow", _)     or (_, "Hedgerow")     => "Hedge Gap",
-            _ => "Open Path",
-        };
-        return new PathPointOfInterest(
-            areaA: a,
-            areaB: b,
-            displayName: PathPointOfInterest.NameFor(a, b, name),
-            descriptions: new() { $"A worn track running between {a.DisplayName.ToLowerInvariant()} and {b.DisplayName.ToLowerInvariant()}" },
-            moods: new[] { "worn", "narrow", "winding" }
-        );
-    }
+        ("Heath", _)        or (_, "Heath")        => "Heath Track",
+        ("Boggy Ground", _) or (_, "Boggy Ground") => "Bog Track",
+        ("Hedgerow", _)     or (_, "Hedgerow")     => "Hedge Gap",
+        _ => "Open Path",
+    };
 
     // ── NPC construction ────────────────────────────────────────────────────
 

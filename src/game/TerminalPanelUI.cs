@@ -419,6 +419,12 @@ public abstract class TerminalPanelUI
     // ── LLM generation preview overlay (replaces the centre progress bar) ─────────
 
     /// <summary>
+    /// The YES and NO regions the last <see cref="RenderPreviewBox"/> drew, when the shown part asks
+    /// (<see cref="PreviewSnapshot.Asking"/>); both widths 0 otherwise.
+    /// </summary>
+    public ((int X, int Y, int Width) Yes, (int X, int Y, int Width) No) PreviewAnswerRegions { get; private set; }
+
+    /// <summary>
     /// Draws the "text being generated" preview box: a thin-grey-bordered, black-filled overlay ~half
     /// the menu size, centred over the greyed-out content. Layout top→bottom: the modus-mentis title
     /// centred on the top border; a blank row; the animated progress bar; a blank row; the streamed
@@ -426,8 +432,10 @@ public abstract class TerminalPanelUI
     /// generating) or a <c>[ CONTINUE ]</c> button (done). Returns the CONTINUE hit-region for the
     /// controller to store and click-test — <c>Present=false</c> while generation is still in flight.
     /// </summary>
-    public (bool Present, int X, int Y, int Width) RenderPreviewBox(PreviewSnapshot state, bool continueHovered)
+    public (bool Present, int X, int Y, int Width) RenderPreviewBox(PreviewSnapshot state, bool continueHovered,
+                                                                     bool? answerHovered = null)
     {
+        PreviewAnswerRegions = default;
         if (!state.Active) return (false, 0, 0, 0);
 
         DimContent();
@@ -478,6 +486,25 @@ public abstract class TerminalPanelUI
         for (int i = first; i < lines.Count; i++)
         {
             _terminal.Text(innerX, textStartY + (i - first), lines[i], Config.NarrativeUI.NarrativeColor, black);
+        }
+
+        // A part that asks (the doubt of a thinking) is answered YES or NO in place of CONTINUE.
+        if (state.Complete && state.Asking)
+        {
+            const string yes = "[ YES ]", no = "[ NO ]", gap = "   ";
+            int yesX = centerX - (yes.Length + gap.Length + no.Length) / 2;
+            int noX  = yesX + yes.Length + gap.Length;
+            DrawAnswer(yesX, yes, answerHovered == true);
+            DrawAnswer(noX,  no,  answerHovered == false);
+            PreviewAnswerRegions = ((yesX, buttonY, yes.Length), (noX, buttonY, no.Length));
+            return (false, 0, 0, 0);
+
+            void DrawAnswer(int x, string label, bool hovered)
+            {
+                Vector4 fg = hovered ? Config.NarrativeUI.ContinueButtonHoverColor           : Config.NarrativeUI.ContinueButtonColor;
+                Vector4 bg = hovered ? Config.NarrativeUI.ContinueButtonHoverBackgroundColor : Config.NarrativeUI.ContinueButtonBackgroundColor;
+                _terminal.Text(x, buttonY, label, fg, bg);
+            }
         }
 
         if (state.Complete)

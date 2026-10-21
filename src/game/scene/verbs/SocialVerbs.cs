@@ -192,7 +192,7 @@ public class ProposeToJoinVerb : SocialDialogueVerb
     }
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
-        => $"ask {NpcPronoun(target)} to come away with me";
+        => $"ask {NpcPronoun(target)} to join me on my travels";
 
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
@@ -223,7 +223,7 @@ public class GatherKnowledgeVerb : SocialDialogueVerb
         => Available(scene, pov, target, actor) != null;
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
-        => $"ask {NpcPronoun(target)} what {NpcSubjectPronoun(target)} knows";
+        => $"ask {NpcPronoun(target)} what {NpcSubjectPronoun(target)} knows of {NpcPossessive(target)} work and of this place";
 
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {

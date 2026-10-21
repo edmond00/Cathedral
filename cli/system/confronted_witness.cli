@@ -5,7 +5,9 @@
 # is refused before any roll — the witness-side twin of an enemy in the room. Walking off to the next
 # area used to end it for the price of one move.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-item knife --grant-mm brute_force --means-only brute_force --location-type test --location-id 0 --start-area "Test Roof" --period noon --observe-only "goat"
+# --organs pineal_gland=0: one try, no iterative thinking — a retry would step around the refusal
+# this script is about (see thinking_iterates.cli and thinking_rule_probe.cli for the retries).
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-item knife --grant-mm brute_force --means-only brute_force --location-type test --location-id 0 --start-area "Test Roof" --period noon --observe-only "goat" --organs pineal_gland=0
 
 wait
 click menu New

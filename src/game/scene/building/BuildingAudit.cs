@@ -185,6 +185,7 @@ public static class BuildingAudit
         int minLocked = int.MaxValue, maxLocked = 0;
         var kinds = new Dictionary<string, int>();
         int peopled = 0, greeted = 0;
+        int withPaths = 0, paths = 0;
 
         for (int id = 1; id <= samples; id++)
         {
@@ -216,6 +217,9 @@ public static class BuildingAudit
             CheckNodeIdUniqueness(warnings, label, id, areas);
             CheckObservationNames(warnings, label, id, areas);
             CheckConnectorGraphExclusivity(warnings, label, id, scene);
+            int laid = CheckPaths(warnings, label, id, scene);
+            paths += laid;
+            if (laid > 0) withPaths++;
             CheckLockRules(warnings, label, id, doors);
             CheckStableKeys(warnings, label, id, scene);
             CheckNoStutter(warnings, label, id, scene);
@@ -242,6 +246,7 @@ public static class BuildingAudit
         sb.AppendLine($"  areas          {minAreas}-{maxAreas}");
         sb.AppendLine($"  named+shallow  {minNpcs}-{maxNpcs} NPCs");
         sb.AppendLine($"  doors          {minDoors}-{maxDoors}  (locked at noon: {minLocked}-{maxLocked})");
+        sb.AppendLine($"  paths          {paths} across {withPaths}/{samples} locations");
         if (inhabited) sb.AppendLine($"  arrival        someone there at the arrival hour in {greeted}/{peopled} peopled locations");
         sb.AppendLine($"  sections seen  {string.Join(", ", kinds.OrderByDescending(k => k.Value).Take(12).Select(k => $"{k.Key}×{k.Value}"))}");
         sb.AppendLine();
@@ -331,7 +336,9 @@ public static class BuildingAudit
     ///
     /// <para>Checked against every <see cref="ConnectorPointOfInterest"/> in the scene rather than
     /// against a hard-coded list of types, so a connector written next year is covered the day it is
-    /// written. Paths opt out via <c>AllowsGraphEdge</c>: they are named walks, not gates.</para>
+    /// written. Only landscapes opt out via <c>AllowsGraphEdge</c>. A path is no gate, but holding it to
+    /// the same rule is what keeps it off neighbours: an edge between its ends would mean it skips
+    /// nothing, which is the duplicate of a <c>move</c> that paths were moved away from.</para>
     /// </summary>
     private static void CheckConnectorGraphExclusivity(List<string> w, string label, int id, Scene scene)
     {
@@ -355,6 +362,40 @@ public static class BuildingAudit
             if (connector.AreaA.Id == connector.AreaB.Id)
                 w.Add($"{label} {id}: '{connector.DisplayName}' joins '{connector.AreaA.DisplayName}' to itself — traversing it is a no-op");
         }
+    }
+
+    /// <summary>
+    /// A path is a shortcut across open public ground (<c>OutdoorLayout.LayPaths</c>), and following it
+    /// rolls once for the whole way, so each of its rules is a way past something if broken: its ends
+    /// must be two or three steps apart along the route it names, every area of that route outdoors and
+    /// not private (or it is a way through a private yard without entering it), and every step of the
+    /// route a two-way graph edge (or it runs past a gate, which carries none). That its ends are not
+    /// neighbours is <see cref="CheckConnectorGraphExclusivity"/>'s. Returns how many paths there are.
+    /// </summary>
+    private static int CheckPaths(List<string> w, string label, int id, Scene scene)
+    {
+        var outdoors = scene.OutdoorAreas.Select(a => a.Id).ToHashSet();
+        var all = scene.AllAreas.SelectMany(a => a.PointsOfInterest).OfType<PathPointOfInterest>().Distinct().ToList();
+        foreach (var path in all)
+        {
+            var route = new List<Area> { path.AreaA };
+            route.AddRange(path.Via);
+            route.Add(path.AreaB);
+
+            if (route.Count - 1 is < 2 or > 3)
+                w.Add($"{label} {id}: '{path.DisplayName}' spans {route.Count - 1} step(s) — a path joins areas two or three apart");
+            foreach (var area in route)
+                if (!outdoors.Contains(area.Id) || area.IsPrivate)
+                    w.Add($"{label} {id}: '{path.DisplayName}' runs through '{area.DisplayName}', which is not public open ground");
+            for (int k = 0; k < route.Count - 1; k++)
+            {
+                bool there = scene.AreaGraph.TryGetValue(route[k].Id, out var f) && f.Contains(route[k + 1].Id);
+                bool back  = scene.AreaGraph.TryGetValue(route[k + 1].Id, out var b) && b.Contains(route[k].Id);
+                if (!there || !back)
+                    w.Add($"{label} {id}: '{path.DisplayName}' crosses from '{route[k].DisplayName}' to '{route[k + 1].DisplayName}', which no walk joins");
+            }
+        }
+        return all.Count;
     }
 
     /// <summary>Every entry door is shut at night. That is the one rule with no exceptions yet.</summary>

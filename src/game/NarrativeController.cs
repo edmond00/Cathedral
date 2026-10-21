@@ -139,6 +139,9 @@ public class NarrativeController
     private readonly LlmPreviewSession _previewSession = new();
     private (int X, int Y, int Width) _previewContinueRegion; // last-rendered CONTINUE region (Width 0 ⇒ none)
     private bool _previewContinueHovered;
+    // The doubt's YES / NO, when the preview box asks (Width 0 ⇒ none); which one is hovered, if any.
+    private ((int X, int Y, int Width) Yes, (int X, int Y, int Width) No) _previewAnswerRegions;
+    private bool? _previewAnswerHovered;
     private string _lastPreviewText = ""; // last rendered preview text, to tick on change
 
     // Ambient music engine (optional — null when MIDI is unavailable)
@@ -1101,6 +1104,53 @@ public class NarrativeController
     }
 
     /// <summary>
+    /// The context the coded action rules judge <paramref name="action"/> in: witnesses (when the act is
+    /// illegal), threat, and a confronting witness. Shared by the click (<c>ActionRulesChecker.Check</c>)
+    /// and iterative thinking's probe ahead of it (<see cref="ProbeActionRules"/>), so the two cannot
+    /// judge the same act differently. Reads the scene and draws nothing.
+    /// </summary>
+    private Narrative.Rules.ActionRuleContext BuildActionRuleContext(ParsedNarrativeAction action)
+    {
+        // Determine if the action is illegal so we know whether to compute witness context.
+        // Contextual: the verb, its target and who counts the actor an enemy all speak to it.
+        bool isIllegalAction = _scene != null && _pov != null
+            && action.Verb.IsIllegal(_scene, _pov, action.PreselectedOutcome?.Target, _activePartyMember);
+
+        // Compute witness context (visual = same area, audio = adjacent area).
+        var witnessContext = (isIllegalAction && _scene != null && _pov != null)
+            ? WitnessSelector.ComputeContext(_scene, _pov)
+            : WitnessContext.None;
+
+        // Compute threat context (enemy proximity) — always, not just for illegal actions.
+        var threatContext = (_scene != null && _pov != null && _protagonist != null)
+            ? ThreatSelector.ComputeContext(_scene, _pov, _protagonist)
+            : ThreatContext.None;
+
+        // A witness confronting you: a drawn-in witness who came for you, or anyone in sight on
+        // private ground. An enemy in the room outranks them, as everywhere else.
+        var confronter = (_scene != null && _pov != null && threatContext.Level != ThreatLevel.Visual)
+            ? ConfrontationSelector.Confronter(_scene, _pov, _protagonist)
+            : null;
+
+        return new Narrative.Rules.ActionRuleContext(
+            action, _activePartyMember, _scene, _pov, witnessContext, threatContext)
+        {
+            Confronter = confronter,
+        };
+    }
+
+    /// <summary>
+    /// Iterative thinking's question to the coded rules, asked while the thinking is still choosing:
+    /// the refusal message the click would give, or null when the act would pass. The rules that read
+    /// a combined item are not asked (<c>ActionRulesChecker.Probe</c>).
+    /// </summary>
+    private string? ProbeActionRules(ParsedNarrativeAction action)
+    {
+        var result = Narrative.Rules.ActionRulesChecker.Probe(BuildActionRuleContext(action));
+        return result.Passed ? null : (result.ErrorMessage ?? "");
+    }
+
+    /// <summary>
     /// Execute thinking phase for the clicked keyword occurrence (async). Takes the region rather
     /// than the word: the region is what knows which occurrence was clicked, and therefore which
     /// object it acts on when two sentences of a block use the same word.
@@ -1160,6 +1210,9 @@ public class NarrativeController
                              || _scene?.Phase == NarrationPhase.GetUp,
                 preview: _previewSession,
                 proposed: _proposalLedger,
+                // Iterative thinking asks the coded rules ahead of the click, so a mind with a retry left
+                // tries something else rather than offer an act the click would refuse.
+                ruleProbe: ProbeActionRules,
                 cancellationToken: CancellationToken.None);
 
             if (response == null)
@@ -1172,18 +1225,37 @@ public class NarrativeController
                 ? $"NarrativeController: Generated {response.Actions.Count} actions"
                 : "NarrativeController: Thinking chose to ignore — no action generated");
 
-            // Create thinking block with reasoning + actions (null when ignored)
-            // ChainOrigin points to the observation block that contained the clicked keyword
-            var thinkingBlock = new NarrationBlock(
-                Type: NarrationBlockType.Thinking,
-                ModusMentis: thinkingModusMentis,
-                Text: response.ReasoningText,
-                Keywords: null,
-                Actions: hasActions ? response.Actions : null,
-                ChainOrigin: sourceObservationBlock
-            );
-            
-            // Set ChainOrigin for each action to point to this thinking block
+            // One block per segment, in order: the thinking modus mentis's thoughts as thinking blocks
+            // (ChainOrigin pointing to the observation block that held the clicked keyword), and each
+            // refusal as an outcome block in the voice that refused. Without iterative thinking that is
+            // one thought, or a thought and its refusal. The actions belong to the last thought.
+            var segments = response.Segments.Count > 0
+                ? response.Segments
+                : new List<ThinkingSegment> { new(thinkingModusMentis, response.ReasoningText, IsThought: true) };
+            var lastThought = segments.LastOrDefault(seg => seg.IsThought);
+            var blocks = new List<NarrationBlock>();
+            NarrationBlock? thinkingBlock = null;
+            foreach (var seg in segments)
+            {
+                var block = seg.IsThought
+                    ? new NarrationBlock(
+                        Type: NarrationBlockType.Thinking,
+                        ModusMentis: seg.ModusMentis,
+                        Text: seg.Text,
+                        Keywords: null,
+                        Actions: hasActions && ReferenceEquals(seg, lastThought) ? response.Actions : null,
+                        ChainOrigin: sourceObservationBlock)
+                    : new NarrationBlock(
+                        Type: NarrationBlockType.Outcome,
+                        ModusMentis: seg.ModusMentis,
+                        Text: seg.Text,
+                        Keywords: null,
+                        Actions: null);
+                if (ReferenceEquals(seg, lastThought)) thinkingBlock = block;
+                blocks.Add(block);
+            }
+
+            // Set ChainOrigin for each action to point to the thinking block that carries it
             foreach (var action in response.Actions)
             {
                 action.ChainOrigin = thinkingBlock;
@@ -1193,20 +1265,13 @@ public class NarrativeController
             // (verb base ± eager/willing/unsure modifier), so each action already carries its
             // DifficultyLevel. Auto-success phases (reminescence / get-up) carry difficulty 0 (○ glyph).
 
-            // Persona-fit cancellation: the action skill refused (reluctant/opposed). Show the
-            // first-person refusal as an outcome block; no action button is offered. The noetic
-            // point is still consumed below via the normal thinking-complete decrement.
-            NarrationBlock? refusalBlock = null;
-            if (!hasActions && response.RefusalText != null && response.RefusalModusMentis != null)
-            {
-                refusalBlock = new NarrationBlock(
-                    Type: NarrationBlockType.Outcome,
-                    ModusMentis: response.RefusalModusMentis,
-                    Text: response.RefusalText,
-                    Keywords: null,
-                    Actions: null);
-                Console.WriteLine("NarrativeController: VerbAction refused by persona-fit — refusal narrated, no button.");
-            }
+            // A refusal (persona-fit, or a coded rule asked ahead) is an outcome block and offers no
+            // button. The noetic point is still consumed below via the normal thinking-complete
+            // decrement: one point for the whole chain of retries.
+            if (!hasActions && response.RefusalText != null)
+                Console.WriteLine("NarrativeController: VerbAction refused — refusal narrated, no button.");
+            if (segments.Count > 2)
+                Console.WriteLine($"NarrativeController: iterative thinking produced {segments.Count} blocks.");
 
             // Deferred commit: the thinking block (and refusal, and its action button) become visible
             // only when the player presses CONTINUE on the last preview part. Reveal sound + scroll ride
@@ -1221,14 +1286,12 @@ public class NarrativeController
                     if (proposedAction.PreselectedOutcome is VerbAction proposedVerb)
                         _proposalLedger.Propose(proposedVerb);
 
-                _scrollBuffer.AddBlock(thinkingBlock);
-                _narrationState.AddBlock(thinkingBlock);
-                _ambianceEngine?.PlaySoundEffect(SoundEffectType.NarrativeReveal);
-                if (refusalBlock != null)
+                foreach (var block in blocks)
                 {
-                    _scrollBuffer.AddBlock(refusalBlock);
-                    _narrationState.AddBlock(refusalBlock);
+                    _scrollBuffer.AddBlock(block);
+                    _narrationState.AddBlock(block);
                 }
+                _ambianceEngine?.PlaySoundEffect(SoundEffectType.NarrativeReveal);
                 _scrollBuffer.ScrollToBottom();
                 _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
             }
@@ -1319,33 +1382,8 @@ public class NarrativeController
 
             // === CODED RULES CHECK (before LLM — fast, deterministic, absolute) ===
 
-            // Determine if the action is illegal so we know whether to compute witness context.
-            // Contextual: the verb, its target and who counts the actor an enemy all speak to it.
-            bool isIllegalAction = _scene != null && _pov != null
-                && action.Verb.IsIllegal(_scene, _pov, action.PreselectedOutcome?.Target, _activePartyMember);
-
-            // Compute witness context (visual = same area, audio = adjacent area).
-            var witnessContext = (isIllegalAction && _scene != null && _pov != null)
-                ? WitnessSelector.ComputeContext(_scene, _pov)
-                : WitnessContext.None;
-
-            // Compute threat context (enemy proximity) — always, not just for illegal actions.
-            var threatContext = (_scene != null && _pov != null && _protagonist != null)
-                ? ThreatSelector.ComputeContext(_scene, _pov, _protagonist)
-                : ThreatContext.None;
-
             // Run all coded rules; a failure here is absolute — no LLM retry, no noetic cost.
-            // A witness confronting you: a drawn-in witness who came for you, or anyone in sight on
-            // private ground. An enemy in the room outranks them, as everywhere else.
-            var confronter = (_scene != null && _pov != null && threatContext.Level != ThreatLevel.Visual)
-                ? ConfrontationSelector.Confronter(_scene, _pov, _protagonist)
-                : null;
-
-            var ruleCtx = new Narrative.Rules.ActionRuleContext(
-                action, _activePartyMember, _scene, _pov, witnessContext, threatContext)
-            {
-                Confronter = confronter,
-            };
+            var ruleCtx = BuildActionRuleContext(action);
             var ruleResult = Narrative.Rules.ActionRulesChecker.Check(ruleCtx);
             if (!ruleResult.Passed)
             {
@@ -1436,11 +1474,11 @@ public class NarrativeController
                 action,
                 _currentNode,
                 action.ThinkingModusMentis,
-                witnessContext,
-                threatContext,
+                ruleCtx.WitnessContext,
+                ruleCtx.ThreatContext,
                 CancellationToken.None
             );
-            evalResult.Confronter = confronter;
+            evalResult.Confronter = ruleCtx.Confronter;
             
             // Handle plausibility failure
             if (!evalResult.IsPlausible)
@@ -2735,14 +2773,16 @@ public class NarrativeController
                 PlayHoverSound();
                 _lastPreviewText = snap.DisplayText;
             }
-            var region = _ui.RenderPreviewBox(snap, _previewContinueHovered);
+            var region = _ui.RenderPreviewBox(snap, _previewContinueHovered, _previewAnswerHovered);
             _previewContinueRegion = region.Present ? (region.X, region.Y, region.Width) : default;
+            _previewAnswerRegions  = _ui.PreviewAnswerRegions;
             // No footer button while the box is up — clear its region so a stale one can't be clicked.
             _exitButtonRegion = default;
             _ui.RenderWaitingStatus(_narrationState.LoadingMessage);
             return;
         }
         _previewContinueRegion = default;
+        _previewAnswerRegions  = default;
         _lastPreviewText = "";
 
         // LLM generating (non-action loading, or action evaluation phase before dice roll):
@@ -3060,6 +3100,17 @@ public class NarrativeController
         }
 
         // Preview box CONTINUE hover (shown while the generation-preview session is active).
+        if (_previewAnswerRegions.Yes.Width > 0)
+        {
+            bool? over = Over(_previewAnswerRegions.Yes) ? true : Over(_previewAnswerRegions.No) ? false : null;
+            if (over != _previewAnswerHovered)
+            {
+                _previewAnswerHovered = over;
+                if (over != null) PlayHoverSound();
+            }
+            bool Over((int X, int Y, int Width) r) => mouseY == r.Y && mouseX >= r.X && mouseX < r.X + r.Width;
+        }
+
         if (_previewContinueRegion.Width > 0)
         {
             bool overPreview = mouseY == _previewContinueRegion.Y
@@ -3142,6 +3193,22 @@ public class NarrativeController
             _narrationState.ScrollOffset = newOffset;
             Console.WriteLine($"NarrativeController: Jump scrolled to offset {newOffset}");
             return;
+        }
+
+        // Preview box YES / NO — the doubt of a thinking (DoubtStat): the answer goes to the waiting
+        // thinking, and the part is committed as CONTINUE would.
+        if (_previewAnswerRegions.Yes.Width > 0 && mouseY == _previewAnswerRegions.Yes.Y)
+        {
+            bool? answer = mouseX >= _previewAnswerRegions.Yes.X && mouseX < _previewAnswerRegions.Yes.X + _previewAnswerRegions.Yes.Width ? true
+                         : mouseX >= _previewAnswerRegions.No.X  && mouseX < _previewAnswerRegions.No.X  + _previewAnswerRegions.No.Width  ? false
+                         : null;
+            if (answer is { } yes)
+            {
+                PlayClickSound();
+                _previewAnswerHovered = null;
+                _previewSession.TryAnswer(yes);
+                return;
+            }
         }
 
         // Preview box CONTINUE — commit the current part and advance to the next (or end the session).
@@ -3665,6 +3732,16 @@ public class NarrativeController
     {
         var s = _previewSession.Snapshot();
         return (s.Active, s.Title, s.DisplayText, s.Complete);
+    }
+
+    /// <summary>Whether the preview box is asking YES or NO (the doubt of a thinking) rather than offering CONTINUE.</summary>
+    public bool CliPreviewAsking() => _previewSession.Snapshot().Asking;
+
+    /// <summary>The preview box's [ YES ] or [ NO ] region, when the shown part asks (the doubt of a thinking).</summary>
+    public (bool Present, int X, int Y, int Width) CliPreviewAnswer(bool yes)
+    {
+        var r = yes ? _previewAnswerRegions.Yes : _previewAnswerRegions.No;
+        return (r.Width > 0, r.X, r.Y, r.Width);
     }
 
     /// <summary>The preview box [ CONTINUE ] button region, when generation is done and it is clickable.</summary>
@@ -4380,7 +4457,9 @@ public class NarrativeController
         _exitRunawayIsEnemy  = isEnemy;
 
         int diceCount = ProtagonistRunawayDiceCount();
-        NarrationDiceStart(diceCount, 1, subtitle: "RUNAWAY CHECK — feet", difficultyVerb: "to flee");
+        // The humors reach this roll as they reach every other: the dice are the protagonist's, so are
+        // the queues. Without the member the overlay offered no humor buttons at all.
+        NarrationDiceStart(diceCount, 1, humorMember: _protagonist, subtitle: "RUNAWAY CHECK — feet", difficultyVerb: "to flee");
         _narrationState.LoadingMessage = Config.LoadingMessages.RollingDice;
 
         // Fixed animation window (no async work backs this roll, unlike thinking checks).

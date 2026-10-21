@@ -800,6 +800,9 @@ public class LocationTravelGameController : IDisposable
 
         if (_narrativeController != null)
         {
+            // A preview box asking YES or NO (the doubt of a thinking) waits on the player, like a
+            // button does: the thinking behind it is loading, but nothing will happen until answered.
+            if (_narrativeController.CliPreviewAsking()) return true;
             var s = _narrativeController.CliSnapshot();
             if (s.AnyLoading || (s.DiceActive && s.DiceRolling)) return false;
         }

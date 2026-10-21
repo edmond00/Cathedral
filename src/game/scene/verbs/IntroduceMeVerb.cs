@@ -35,9 +35,20 @@ public class IntroduceMeVerb : DialogueVerb
     {
         foreach (var third in Candidates(scene, pov, target, actor))
             yield return new VerbAction(this,
-                $"ask {NpcPronoun(target)} to present me to the {third.Archetype.RoleNoun}",
+                $"ask {GoBetween(target, actor)} to present me to the {third.Archetype.RoleNoun}",
                 target, variant: third);
     }
+
+    /// <summary>
+    /// The go-between by name (or role), not by pronoun. Every other NPC verb names one person and
+    /// refers back to them by pronoun, which the attention line of the thinking prompt makes clear.
+    /// This one names two, and the action's own rewrite has no attention line: given "ask her to
+    /// present me to the reeve", the model kept the one person it could identify and wrote "I will
+    /// ask the reeve …", the go-between gone. Asking for an introduction needs an acquaintance, so
+    /// this is in practice always the name.
+    /// </summary>
+    private static string GoBetween(Element target, PartyMember? actor)
+        => target is SceneNpc { Entity: NpcEntity npc } ? NpcLabelResolver.ShortLabel(npc, actor) : NpcPronoun(target);
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"ask {NpcPronoun(target)} to present me to someone";

@@ -5,10 +5,20 @@ the machinery of the preceding chapters is actually spent.
 
 ## 1. The scene and the point of view
 
-A **location** is built as a set of **areas** — rooms, yards, tracks, clearings — joined by paths
-and by **connectors**, the latter being doors, stairs, cliffs, crossings and the like. An area holds
-**points of interest**, and a point of interest may hold **items**. Every area is of one of three
-tenures — private, public or wild — which has consequences of law (§7).
+A **location** is built as a set of **areas** — rooms, yards, tracks, clearings — joined by open
+ways and by **connectors**, the latter being doors, stairs, cliffs, crossings, paths and the like.
+An area holds **points of interest**, and a point of interest may hold **items**. Every area is of
+one of three tenures — private, public or wild — which has consequences of law (§7).
+
+**Ways and paths.** Neighbouring areas of open ground are joined by a way that is simply walked: to
+move into a neighbour is an act of difficulty 1. A connector that gates passage — a door, a climb, a
+ford — has no such way beside it, and must itself be passed. A **path** is the shortcut of open
+ground: a named way running past one or two areas to one lying two or three steps off, and following
+it is a single act of difficulty 2, whatever its length, the one point more being the price of the
+areas passed by. A path runs only through public and wild ground, never through a private area and
+never across a gate, so that it is never a way round either. Not every location has one: each pair
+of areas two steps apart is joined by a path with a chance of 30 in 100, each pair three steps apart
+with 15 in 100, and no area has more than two.
 
 A **point of view** is a pair: *where* the acting body stands, and *when* — the period of the day.
 Both are scene state, and both decide what may be attempted. Moving between areas changes the first;
@@ -122,8 +132,8 @@ most two, is attended to after them.
 
 **Wholes, kinds and contents.** Things are not offered to observation one by one when they belong
 together. The parts of one whole — the door and the outside wall of a building, seen from the street
-— are offered as that whole; a path and the place it leads to are offered as that place; and three or
-more things of one kind in the same place — buildings, ways onward, doors leading on, the distant
+— are offered as that whole; and three or more things of one kind in the same place — buildings,
+ways onward (the neighbouring areas and the paths together), doors leading on, the distant
 places seen from a height, or things bearing the same name of kind — are offered as their kind.
 Persons are never so gathered, nor is the door by which a building is left. Observing a gathering
 renders the whole; the next observation of the same account then turns to one of its parts not yet
@@ -149,6 +159,27 @@ Its answer is a goal, and the goal produces the act.
 of assent map to a modifier upon the difficulty, and its refusal cancels the act outright. Its moral
 level may settle the answer before it is asked: a high one refuses a crime, a low one may not refuse
 one (see §7); and one that speaks may not refuse a conversation (§6).
+
+**Second thoughts.** A thinking whose proposal comes to nothing may be taken up again by the same
+thinking modus mentis, as many times as the measure of *Iterative Thinking* allows — the pineal
+gland's score, from nought to three ([Chapter I](01-anatomy.md)). A proposal comes to nothing when the
+acting modus mentis refuses it; when a coded rule would refuse it (§6), the rules being consulted
+while a further deliberation remains, save the two that turn upon an implement, since none can yet
+have been combined; or when it is doubted, as below. Each refusal is rendered, and the mind
+acknowledges it before deliberating anew. Within one thinking, every pairing of goal and acting modus
+mentis already tried is struck off: a goal returns only with an acting modus mentis not yet tried for
+it — for a conversation, a speaking one, where any is held — and one refused before is offered as means only those that would not refuse it, as in §4. When
+nothing remains the thinking ends, saying so. The last deliberation allowed is not consulted against
+the rules in advance; its act is offered as any other, and refused, if at all, when it is attempted.
+The whole chain is one thinking, and costs one noetic point.
+
+**Doubt.** A body whose pineal gland scores two or more may doubt. While a further deliberation
+remains, the reasoning ends upon a question, and is answered — to hold to the proposal or not —
+before the acting modus mentis is asked or any rule consulted. Not to hold to it strikes off the goal
+itself, with every acting modus mentis at once — the doubt is of the end, not of the means — and the
+mind deliberates again upon another. Either answer is voiced by the thinking
+modus mentis. No doubt is offered on the last deliberation, which would otherwise end the thinking
+upon nothing.
 
 **The die pool is the sum of the levels of every modus mentis in the chain** — the one that
 observed, the one that deliberated, the one that acts — together with the whole level of any
@@ -319,7 +350,8 @@ for the permission to act at close quarters is what discretion buys; it does not
 discreet act that fails in the same room is seen.
 
 **Flight.** While either presence stands in the area the free departure becomes a **runaway**: one
-roll of as many dice as the feet's runaway score, needing a single six. Success leaves the place.
+roll of as many dice as the feet's runaway score, needing a single six, which the humors may bend
+as they bend any other roll. Success leaves the place.
 Failure begins the fight with an enemy, or the confrontation with a witness. A confrontation ends
 with the conversation it opens: a witness who came on the body's account then returns to the day
 they were drawn from, unless the conversation has made an enemy of them.

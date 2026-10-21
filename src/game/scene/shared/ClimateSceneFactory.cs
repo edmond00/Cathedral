@@ -45,25 +45,15 @@ public abstract class ClimateSceneFactory : SceneFactory
     }
 
     /// <summary>
-    /// Joins consecutive areas of <paramref name="chain"/> with a path, the way every wilderness
-    /// factory does. <paramref name="name"/> picks the path's name from the two ends.
+    /// Joins consecutive areas of <paramref name="chain"/>, the way every wilderness factory does.
+    /// <paramref name="name"/> picks the kind of way from the two ends, which names any path later
+    /// laid along it.
     /// </summary>
     protected static void ConnectChain(Scene scene, IReadOnlyList<Area> chain, Func<Area, Area, string> name,
                                        string surface, string[] moods)
     {
         for (int i = 0; i < chain.Count - 1; i++)
-        {
-            var a = chain[i];
-            var b = chain[i + 1];
-            scene.ConnectAreasBidirectional(a, b);
-            var path = new PathPointOfInterest(
-                a, b, PathPointOfInterest.NameFor(a, b, name(a, b)),
-                new() { $"A way {surface} between {a.DisplayName.ToLowerInvariant()} and {b.DisplayName.ToLowerInvariant()}" },
-                moods);
-            a.PointsOfInterest.Add(path);
-            b.PointsOfInterest.Add(path);
-            path.Register(scene);
-        }
+            OutdoorLayout.Link(scene, chain[i], chain[i + 1], name(chain[i], chain[i + 1]), moods, surface);
     }
 
     /// <summary>

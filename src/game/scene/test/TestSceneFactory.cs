@@ -47,6 +47,9 @@ public sealed class TestSceneFactory : SceneFactory
 
     public TestSceneFactory(string? sessionPath = null) : base(sessionPath) { }
 
+    /// <summary>Nothing here is rolled, paths included: the one path is laid by hand below.</summary>
+    protected override bool LaysPaths => false;
+
     protected override void BuildSections(Random rng, int locationId, Scene scene)
     {
         // rng is deliberately never touched: see the class summary. Anything drawn from it here
@@ -110,20 +113,15 @@ public sealed class TestSceneFactory : SceneFactory
         scene.Sections.Add(building);
 
         // ── Ways between them ─────────────────────────────────────────────────
-        // Paths carry a graph edge (they are walks, not gates); everything else is a gate and must
-        // not, or MoveToAreaVerb walks around it — BuildingAudit enforces exactly that.
-        foreach (var (a, b, name, desc) in new[]
-        {
-            (yard, field, "Yard–Field Track", "A trodden line between the yard and the field"),
-            (yard, wood,  "Yard–Wood Track",  "A path going in under the trees"),
-            (yard, shore, "Yard–Shore Track", "A path down to the water"),
-            (yard, rock,  "Yard–Rock Track",  "A path across to the rock face"),
-            (wood, den,   "Wood–Den Track",   "A narrow run through the undergrowth, pressed flat by use"),
-        })
-        {
-            new PathPointOfInterest(a, b, name, new List<string> { desc }).AttachTo(scene);
+        // Neighbours are joined by graph edges, the walk MoveToAreaVerb takes. Everything else is a
+        // connector and carries no edge between its ends — a gate, or MoveToAreaVerb would walk around
+        // it, and a path, which joins areas two or more steps apart. BuildingAudit enforces both.
+        foreach (var (a, b) in new[] { (yard, field), (yard, wood), (yard, shore), (yard, rock), (wood, den) })
             scene.ConnectAreasBidirectional(a, b);
-        }
+
+        // The one path, laid by hand (LaysPaths is off): field to rock, by way of the yard.
+        new PathPointOfInterest(field, rock, new[] { yard }, "Field–Rock Track",
+            new List<string> { "A trodden line from the field across the yard to the rock face" }).AttachTo(scene);
 
         // Gates: a door, a cliff, two climbs, a ford, a crossing.
         new DoorPointOfInterest(yard, hall, "Test Door",

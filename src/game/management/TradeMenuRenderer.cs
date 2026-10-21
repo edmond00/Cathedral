@@ -43,6 +43,9 @@ public sealed class TradeMenuRenderer
     private static readonly Vector4 BtnBg     = Config.TravelUI.ClearButtonBackgroundColor;
     private static readonly Vector4 BtnHovFg  = Config.TravelUI.ClearButtonHoverTextColor;
     private static readonly Vector4 BtnHovBg  = Config.TravelUI.ClearButtonHoverBackgroundColor;
+    // A hovered −/+ sits on a lit row, so it takes the strongest pair to stand out from it.
+    private static readonly Vector4 StepHovFg = Config.TravelUI.TravelButtonHoverTextColor;
+    private static readonly Vector4 StepHovBg = Config.TravelUI.TravelButtonHoverBackgroundColor;
     private static readonly Vector4 OkFg      = Config.TravelUI.TravelButtonTextColor;
     private static readonly Vector4 OkBg      = Config.TravelUI.TravelButtonBackgroundColor;
     private static readonly Vector4 OkHovBg   = Config.TravelUI.TravelButtonHoverBackgroundColor;
@@ -396,8 +399,12 @@ public sealed class TradeMenuRenderer
     {
         var offer = Offers[i];
 
-        // Hovering anywhere on the row highlights it.
-        bool rowHov = _hoverMouseY == y && _hoverMouseX > _boxX && _hoverMouseX < _boxX + BoxW - 1;
+        // The row lights only while one of its −/+ buttons is under the cursor — the only clickable
+        // part of it — so the item and price the click will change are easy to read across; the button
+        // itself takes the stronger highlight (DrawStepButton). Lit from anywhere on the row, it
+        // promised a click the name and price columns never answered.
+        bool rowHov = _hoverMouseY == y
+                   && (OverStepButton(_boxX + MinusOff) || OverStepButton(_boxX + PlusOff));
         Vector4 bg = rowHov ? RowHovBg : Bg;
         _terminal.FillRect(_boxX + 1, y, BoxW - 2, 1, ' ', Value, bg);
 
@@ -490,11 +497,14 @@ public sealed class TradeMenuRenderer
         _terminal.Text(_confirmX0, y, confirmLabel, fg, bg);
     }
 
+    /// <summary>Whether the cursor's column is on the three-cell step button starting at <paramref name="x"/>.</summary>
+    private bool OverStepButton(int x) => _hoverMouseX >= x && _hoverMouseX < x + 3;
+
     private void DrawStepButton(int x, int y, string label, bool enabled, Vector4 rowBg)
     {
-        bool hov = enabled && _hoverMouseY == y && _hoverMouseX >= x && _hoverMouseX < x + label.Length;
-        Vector4 fg = enabled ? (hov ? BtnHovFg : Value) : Disabled;
-        Vector4 bg = hov ? BtnHovBg : rowBg;
+        bool hov = enabled && _hoverMouseY == y && OverStepButton(x);
+        Vector4 fg = enabled ? (hov ? StepHovFg : Value) : Disabled;
+        Vector4 bg = hov ? StepHovBg : rowBg;
         _terminal.Text(x, y, label, fg, bg);
     }
 

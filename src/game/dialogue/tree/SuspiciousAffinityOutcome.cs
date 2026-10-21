@@ -27,7 +27,7 @@ public class SuspiciousAffinityOutcome : Outcome
     /// the one that outcome removes.
     /// </param>
     public SuspiciousAffinityOutcome(bool onlyWhenHostile = false)
-        : base("affinity becomes suspicious", OutcomeSeverity.Neutral, "")
+        : base("affinity becomes suspicious", OutcomeSeverity.Neutral, "eased the ill will between us")
     {
         _onlyWhenHostile = onlyWhenHostile;
     }

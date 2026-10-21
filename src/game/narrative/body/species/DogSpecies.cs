@@ -17,7 +17,6 @@ public sealed class DogSpecies : Species
             { "cerebrum",       4 }, // social and adaptive intelligence
             { "cerebellum",     4 }, // trained agility and coordination
             { "hippocampus",    3 },
-            { "pineal_gland",   2 },
             // Trunk: healthy domestic, strong loyal heart
             { "backbone",   4 },
             { "heart",      5 }, // loyal companion, strong heart

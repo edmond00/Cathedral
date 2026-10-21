@@ -1,0 +1,34 @@
+# doubt — the player may say NO to what a thinking proposes, and the thinking tries again
+#
+# A pineal gland of 3 gives three retries and the doubt (DoubtStat, at 2 or more). While a retry
+# remains, the reasoning ends on a question and the preview box asks YES or NO before the action modus
+# mentis is asked. Here the first answer is NO: the mind voices its doubt holding, crosses the pair off
+# and reasons again (at seed 42 the same goal, climbing back down, by another means) — and the second
+# answer is YES (advance answers YES when no `doubt` is queued),
+# which the mind voices too before the action is written. One thinking, one button.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Crown" --period dawn --observe-only "Test Giant Tree" --grant-mm woodcraft --organs pineal_gland=3
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+advance 12 180
+
+doubt no
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+# Expected text is matched line by line on the wrapped screen, hence the short fragments.
+expect But is it truly wise to
+expect and it holds
+expect another way
+expect does not hold
+expect I am resolved to
+quit

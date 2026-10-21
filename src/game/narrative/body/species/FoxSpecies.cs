@@ -17,7 +17,6 @@ public sealed class FoxSpecies : Species
             { "cerebrum",       4 }, // cunning and adaptive reasoning
             { "cerebellum",     3 },
             { "hippocampus",    4 }, // remembers escape routes and hiding spots
-            { "pineal_gland",   3 }, // sharp instinct and premonition
             // Trunk: small and light, good at processing varied diet
             { "backbone",   3 }, // small frame
             { "heart",      4 },

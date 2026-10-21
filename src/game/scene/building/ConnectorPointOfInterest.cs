@@ -20,8 +20,10 @@ namespace Cathedral.Game.Scene.Building;
 /// <para><b>Graph exclusivity.</b> A connector is a <i>gate</i>: crossing it is meant to cost a roll,
 /// a key, or a climb. Adding an <c>AreaGraph</c> edge beside one hands <c>MoveToAreaVerb</c> — base
 /// difficulty 1, never fails — a way around it, which silently makes the connector decorative.
-/// <see cref="AllowsGraphEdge"/> declares which connectors are exempt: a path is a walk with a name
-/// on it and is always paired with an edge, everything else is not. <c>BuildingAudit</c> enforces
+/// <see cref="AllowsGraphEdge"/> declares which connectors are exempt: a landscape gates nothing and
+/// its destination is expected to be walkable by road as well; everything else is not. A path is not
+/// a gate either, but it joins areas two or three steps apart, so between its two ends there is no
+/// edge to allow. <c>BuildingAudit</c> enforces
 /// this for every subclass, which is how the game's existing decorative cliffs were found.</para>
 /// </summary>
 public abstract class ConnectorPointOfInterest : PointOfInterest
@@ -34,8 +36,8 @@ public abstract class ConnectorPointOfInterest : PointOfInterest
 
     /// <summary>
     /// Whether an <c>AreaGraph</c> edge may legitimately exist beside this connector. False for
-    /// everything that gates passage (doors, stairs, cliffs, crossings, water, scale points); true
-    /// only for connectors that are themselves free to traverse.
+    /// everything that gates passage (doors, stairs, cliffs, crossings, water, scale points) and for
+    /// paths, which never join neighbours; true only for landscapes.
     /// </summary>
     public virtual bool AllowsGraphEdge => false;
 

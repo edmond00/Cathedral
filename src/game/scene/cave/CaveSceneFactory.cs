@@ -119,21 +119,13 @@ public class CaveSceneFactory : SceneFactory
         // decorative and the shaft cost nothing to enter.
         ladder.AttachTo(scene);
 
-        // ── Connect deeper rooms to Main Shaft via PathPoIs ──────────────────
+        // ── Connect deeper rooms to Main Shaft ───────────────────────────────
 
         for (int i = 1; i < deepAreas.Count; i++)
         {
             var b = deepAreas[i];
-            scene.ConnectAreasBidirectional(_mainShaft, b);
             string passName = b.DisplayName == "Underground Pool" ? "Flooded Passage" : "Passage";
-            var path = new PathPointOfInterest(
-                _mainShaft, b, PathPointOfInterest.NameFor(_mainShaft, b, passName),
-                new() { $"A rough passage leading to the {b.DisplayName.ToLowerInvariant()}" },
-                new[] { "narrow", "rough-hewn", "echoing" }
-            );
-            _mainShaft.PointsOfInterest.Add(path);
-            b.PointsOfInterest.Add(path);
-            path.Register(scene);
+            OutdoorLayout.Link(scene, _mainShaft, b, passName, new[] { "narrow", "rough-hewn", "echoing" });
         }
 
         // The ore store off the cave mouth, where the miner keeps what they dig and sells it. Not in

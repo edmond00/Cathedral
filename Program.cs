@@ -224,6 +224,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("                                     goal out) must land on this one. Examining is refused by any action modus mentis");
     Console.WriteLine("                                     without Observation, so an examine script names one. CLI twin: `means`");
     Console.WriteLine("  --refuse-focus                     DEBUG: every focus observation's modus mentis turns away from the clicked object");
+    Console.WriteLine("  --refuse-means <n>                 DEBUG: under --playground, the first n willingness questions answer \"unwilling\"");
     Console.WriteLine("                                     and observes another instead. --playground never declines, so this is the only");
     Console.WriteLine("                                     way a script reaches that branch");
     Console.WriteLine("  --advance-days <n>                 DEBUG: push the world clock forward <n> days on first arrival at the world");
@@ -870,6 +871,9 @@ for (int i = 0; i < args.Length; i++)
 
     if (args[i] == "--refuse-focus")
         Cathedral.Config.Debug.RefuseFocus = true;
+
+    if (args[i] == "--refuse-means" && i + 1 < args.Length && int.TryParse(args[i + 1], out var refuseMeans))
+        Cathedral.Config.Debug.RefuseMeans = Math.Max(0, refuseMeans);
 
     if (args[i] == "--advance-days" && i + 1 < args.Length &&
         double.TryParse(args[i + 1], System.Globalization.NumberStyles.Float,

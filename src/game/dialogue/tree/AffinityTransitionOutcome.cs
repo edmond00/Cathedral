@@ -13,8 +13,24 @@ public class AffinityTransitionOutcome : Outcome
     private readonly AffinityLevel _targetLevel;
 
     public AffinityTransitionOutcome(AffinityLevel targetLevel)
-        : base($"affinity becomes {targetLevel.ToShortLabel()}", OutcomeSeverity.Neutral, "")
+        : base($"affinity becomes {targetLevel.ToShortLabel()}", OutcomeSeverity.Neutral, VerbatimFor(targetLevel))
         => _targetLevel = targetLevel;
+
+    /// <summary>
+    /// What the new footing was, read after "I " — the occasion an emotion's neutral line names. Left
+    /// empty, an emotion about an introduction had nothing to be about, and the persona, its slot still
+    /// holding the conversation, carried on addressing the person instead.
+    /// </summary>
+    private static string VerbatimFor(AffinityLevel level) => level switch
+    {
+        AffinityLevel.AnnoyingAcquaintance => "made a poor first impression",
+        AffinityLevel.DistantAcquaintance
+            or AffinityLevel.CloseAcquaintance => "made an acquaintance",
+        AffinityLevel.DistantFriend        => "made a friend",
+        AffinityLevel.CloseFriend          => "made a close friend",
+        AffinityLevel.Suspicious           => "came to be regarded with suspicion",
+        _                                  => "",
+    };
 
 
     

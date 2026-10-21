@@ -55,7 +55,7 @@ public class TameVerb : Verb
     }
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
-        => $"win {NpcPronoun(target)} over and keep {NpcPronoun(target)} with me";
+        => $"tame {NpcPronoun(target)} and keep {NpcPronoun(target)} at my side";
 
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
         => target is SceneNpc sceneNpc && sceneNpc.Entity is NpcEntity

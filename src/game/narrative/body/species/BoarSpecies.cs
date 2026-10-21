@@ -17,7 +17,6 @@ public sealed class BoarSpecies : Species
             { "cerebrum",       2 },
             { "cerebellum",     3 },
             { "hippocampus",    2 },
-            { "pineal_gland",   1 },
             // Trunk: tough charger with iron gut and charging backbone
             { "backbone",   5 }, // built for head-on charges
             { "heart",      4 },

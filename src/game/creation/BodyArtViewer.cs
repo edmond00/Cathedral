@@ -1267,7 +1267,7 @@ public class BodyArtViewer
             {
                 // Part and organ coincide — one combined block owned by the organ.
                 var combined = _protagonist.DerivedStats
-                    .Where(s => s.RelatedOrganPartId == organPartId || s.RelatedOrganId == organId)
+                    .Where(s => s.SourceOf(_protagonist).Is(organPartId: organPartId, organId: organId))
                     .Distinct()
                     .ToList();
                 if (combined.Count > 0 || organCategory != null)
@@ -1287,7 +1287,7 @@ public class BodyArtViewer
             {
                 // ── Part scope: part stats and/or the per-part medium (e.g. hands, feet) ──
                 var organPartStats = _protagonist.DerivedStats
-                    .Where(s => s.RelatedOrganPartId == organPartId)
+                    .Where(s => s.SourceOf(_protagonist).Is(organPartId: organPartId))
                     .ToList();
                 bool partOwnsMedium = perPartMedium && organCategory != null;
                 if (organPartStats.Count > 0 || partOwnsMedium)
@@ -1305,7 +1305,7 @@ public class BodyArtViewer
 
                 // ── Organ scope: organ stats and/or the whole-organ medium (e.g. legs) ──
                 var organStats = _protagonist.DerivedStats
-                    .Where(s => s.RelatedOrganId == organId)
+                    .Where(s => s.SourceOf(_protagonist).Is(organId: organId))
                     .ToList();
                 bool organOwnsMedium = !perPartMedium && organCategory != null;
                 if (organStats.Count > 0 || organOwnsMedium)
@@ -1323,7 +1323,7 @@ public class BodyArtViewer
 
             // ── Body-part (region) stats + region fighting medium (e.g. upper limbs) ──
             var bodyPartStats = _protagonist.DerivedStats
-                .Where(s => s.RelatedBodyPartId == bodyPartId)
+                .Where(s => s.SourceOf(_protagonist).Is(bodyPartId: bodyPartId))
                 .ToList();
             var bodyPartCategory = BodyPartMediumRegistry.GetById(bodyPartId);
             if (bodyPartStats.Count > 0 || bodyPartCategory != null)
@@ -1397,7 +1397,7 @@ public class BodyArtViewer
 
         // ── Region-specific derived stats + region fighting medium (the info section) ──
         var regionStats = _protagonist.DerivedStats
-            .Where(s => s.RelatedBodyPartId == _hoveredBodyPartId)
+            .Where(s => s.SourceOf(_protagonist).Is(bodyPartId: _hoveredBodyPartId))
             .ToList();
         var regionCategory = BodyPartMediumRegistry.GetById(_hoveredBodyPartId);
         if (regionStats.Count == 0 && regionCategory == null) return;

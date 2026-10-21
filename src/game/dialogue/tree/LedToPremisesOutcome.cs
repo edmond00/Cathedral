@@ -13,7 +13,7 @@ namespace Cathedral.Game.Dialogue.Tree;
 public class LedToPremisesOutcome : Outcome
 {
     public LedToPremisesOutcome()
-        : base("the trader agrees to lead the player to their premises", OutcomeSeverity.Positive, "") { }
+        : base("the trader agrees to lead the player to their premises", OutcomeSeverity.Positive, "was promised to be led to the trader's premises") { }
 
     // Worded at apply time, like every conversation outcome: only then is the NPC to hand.
     public override bool ShowInUI => Reported;

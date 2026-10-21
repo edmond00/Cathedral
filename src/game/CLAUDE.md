@@ -678,8 +678,12 @@ Things to know:
   rewording against labelled cases before shipping it; a bias like the first one only shows over many
   calls.
 - **A refused focus is not a dead end.** The modus mentis picks another unobserved object (no
-  decline), and the dismissal and the new observation are one neutral text, rewritten together; the
-  keyword is the new object's, filtered so no word naming the dismissed one can be chosen. Only with
+  decline). The dismissal is rewritten **alone, first**, as a keyword-less sentence, and the new
+  object is then observed through a transition. Rewritten together, the model moved the dismissal to
+  the end or dropped it in four turns out of six, and a word-match check that pasted the plain
+  sentence back in front misfired both ways. The keyword is the new object's, filtered so no word
+  naming the dismissed one can be chosen. The closing "nothing more" line is told not to name what
+  the block already described (`NothingMoreClause`), for the same reason. Only with
   nothing left unobserved does the keyword-less "not interested" block remain. `--refuse-focus`
   forces the branch, since `--playground` never declines; `cli/system/focus_turned_away.cli`.
 - **An arrival's opening block names somebody.** When it reached no living person while one is in
@@ -692,10 +696,11 @@ Things to know:
 - **Observation groups shorten the choice and give the next look somewhere to go.**
   `ObservationGrouping.Build` turns a node's objects into choice units, per phase, cached on the
   `ObservationLedger` (same lifetime, so a group is one instance the ledger retires and a keyword
-  keeps). Three passes: *wholes* (PoIs sharing a `PoiCluster`, set by the factory — today a
-  building's entry door and outside wall), *ways* (a path and the area it reaches), *families*
-  (`FamilyMinimum` = 3 or more units of one kind: PoI type, kind of whole, or way; never people,
-  never an entry door, never members with different reference nouns). A container
+  keeps). Two passes: *wholes* (PoIs sharing a `PoiCluster`, set by the factory — today a
+  building's entry door and outside wall), *families* (`FamilyMinimum` = 3 or more units of one
+  kind: PoI type, kind of whole, or way on — a neighbouring area or a path; never people, never an
+  entry door, never members with different reference nouns). A third pass once paired a path with
+  the area it reached; paths no longer join neighbours (see "Paths: the shortcut of open ground"). A container
   (`SyntheticObservationObject` holding two or more distinct items) is not a group but has
   `IObservationGroup.Parts`, one `SyntheticItemObservationObject` per item, whose goals are read live
   from the container's. Three behaviours follow: the choice offers groups in place of members; the
@@ -752,6 +757,41 @@ budget reaches, and they were designed together — changing one alone re-breaks
     `cli/system/thinking_refused_goal_per_mind.cli` covers the possible branch; the impossible
     branch has no script, because the `--skip-childhood` kit at seed 42 already holds an observing
     action modus mentis and no flag removes one.
+
+**Iterative thinking and doubt: the pineal gland's second thoughts.** `ThinkingIterationsStat` (the
+pineal score, 0–3) is how many times one thinking tries again when its proposal comes to nothing, and
+`DoubtStat` (score ≥ 2) lets the player say NO to a proposal. Both live in
+`ThinkingExecutor.GenerateThinkingAsync`, which is a loop: goal → means → reasoning → [doubt] →
+[rule probe] → willingness → action. Three things end a try:
+- **the acting modus mentis refuses** (willingness, or a choice rule's imposed refusal);
+- **a coded rule would refuse on the click.** `ActionRulesChecker.Probe` runs the action rules ahead,
+  through the controller's `ProbeActionRules` / `BuildActionRuleContext` (the one context the click
+  uses too), skipping `RequiredToolRule` and `FirstBlowMediumRule`, which read the combined item. The
+  probe runs only while a retry remains, so the last try is offered as before and the click keeps the
+  final word;
+- **the player doubts it.** With a retry left, the reasoning ends on `NeutralNarration.DoubtQuestion`
+  and the reasoning's preview part `AskAsync`s: the box shows YES / NO in place of CONTINUE
+  (`PreviewSnapshot.Asking`, `LlmPreviewSession.TryAnswer`), and the thinking task waits on it. Both
+  answers are voiced (`DoubtConfirmed` / `DoubtRejected`) in a part of their own.
+
+A refusal (the modus mentis's or a rule's) crosses off the pair of goal and means in a
+`ThinkingChain` (one thinking's life, so a pineal of 0 is exactly the old behaviour); **a NO drops the
+goal with every means** (`Drop`), since a doubt is of the end — crossing off only the pair brought
+the same goal back with the next means, three NOs running. What is untried is read against
+`MeansPoolFor`, which for a conversation is the speaking means only (or a doubted chat came back
+carried out by Hard Labor). With a retry left, the next try opens led by `IterationRetry`. The chain **relaxes `NotRefusedFor`**: a goal this mind saw refused comes back
+while a means for it is untried (`reoffer`), and as a `WasRefused` second attempt it is then carried
+out by an able means with no decline. A goal tried with every means is dropped; when nothing is left
+the ignore branch says `IterationExhausted`. The response is a list of `ThinkingSegment`s — thoughts
+and refusals in order — and the controller commits one block per segment, the actions on the last
+thought. **One noetic point for the whole chain.**
+
+The playground never refuses, so `--refuse-means <n>` makes its first n willingness answers
+"unwilling". The CLI answers a doubt from the `doubt yes|no` queue, YES when it is empty, which is
+what keeps scripts written before doubt passing — and `CliIsIdle` counts an asking box as idle.
+Scripts whose subject is the single try pin `--organs pineal_gland=0`
+(`thinking_refused_goal_per_mind.cli`); `thinking_iterates.cli`, `thinking_doubt.cli` and
+`thinking_rule_probe.cli` cover the three ends.
 
 The compensations for a smaller pool are that last rule plus a **decline**: the goal choice offers
 "do something else entirely" as a real answer. With the goal list shrinking request by request, a mind left holding two leftovers it
@@ -937,6 +977,11 @@ Four rules the rest of it assumes:
   disposition — so the humor that reached the queue and the feeling the player read would disagree.
   `NarrationKind.Emotion`'s instruction insists the stated feeling *survives* the rewrite for the
   same reason.
+- **The occasion must be in the neutral line, and nothing else may be.** The emotion is written on a
+  cleared slot history, restored afterwards (`NarrateEmotionAsync`): the slot is the modus mentis's
+  own and also writes its dialogue replies, so a coda after a trade read as the next turn of the
+  talk and addressed the trader. For the same reason every conversation outcome carries a verbatim
+  ("was granted a chance to trade"); they were all empty, and a dialogue emotion had no occasion.
 
 **`EmotionOutcome` is an `Outcome`, and the word in this codebase has never meant "something a verb
 did"** — `StateCaptureOutcome` and `GetUpTransitionOutcome` are pure bookkeeping and are Outcomes
@@ -1193,6 +1238,37 @@ That erased the whole Audio tier indoors: of 3618 sampled private-area situation
 was Visual (blocked outright) and **not one** was Audio, so the confrontation could not happen inside
 a building at all. A door is a gate, not a wall. `--crime-audit` prints the tier distribution and
 fails if Audio is ever empty again.
+
+### Paths: the shortcut of open ground
+
+Neighbouring areas are joined by **graph edges alone** (`OutdoorLayout.Link`), and `move` walks them.
+A `PathPointOfInterest` is something else: a named way running **past one or two areas to a farther
+one**, laid by `OutdoorLayout.LayPaths` from `SceneFactory.Build` once a factory's sections exist, so
+every factory gets them and none lays its own. `follow_path` takes it at **difficulty 2**, one above
+`move`, whatever its length: the price of skipping the areas between.
+
+It used to be laid beside every edge, so every way out of an outdoor area was offered twice — the
+path and the area — for the same difficulty-1 walk, with the same `AreaMoveOutcome`. Nothing a
+path did was not also a `move`; observation grouping had to pair the two to keep the list short.
+
+- **Random, per pair.** Two steps apart: `PathChanceTwoSteps` (30%); three: `PathChanceThreeSteps`
+  (15%); at most `MaxPathsPerArea` (2) per area. Drawn from a generator of its own seeded by the
+  location id (`SceneFactory.PathRandom`), never from the build generator, which would reshuffle every
+  person and item built after the sections. The test location lays its one path by hand
+  (`LaysPaths => false`): Field–Rock Track, by way of the yard.
+- **Only through public open ground.** The route is a shortest walk along two-way edges whose every
+  area, ends included, is outdoors and not private: a path past a private yard is trespass without
+  entering, and a route along edges never passes a gate, which carries none. A pair a connector
+  already joins (a rolled crossing) gets no path.
+- **No edge between its ends**, which is the same as never joining neighbours: `AllowsGraphEdge` is
+  false, so `CheckConnectorGraphExclusivity` holds a path to it like any gate, and `CheckPaths`
+  (`--building-audit`) checks the route — two or three steps, public open ground, every step an edge.
+  The audit prints how many locations of each kind got one.
+- **Named after the ways it follows.** `Link` records each edge's kind of way, moods and surface in
+  `Scene.WayStyles`; a path takes the commonest kind along its route, so a village gets lanes, a cave
+  passages and the steppe herd trails. Its description names what it passes (`Via`).
+- **Trailcraft and Marchstone are taught by `follow_path` only**, and stay reachable because most kinds
+  of location get a path in a good share of their builds; `--verb-audit` lists where it is offered.
 
 ### Landscapes: the one way to move without walking
 

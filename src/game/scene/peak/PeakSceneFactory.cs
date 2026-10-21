@@ -93,18 +93,10 @@ public class PeakSceneFactory : SceneFactory
         {
             var a = walkable[i];
             var b = walkable[i + 1];
-            scene.ConnectAreasBidirectional(a, b);
             string name = (a.DisplayName == "Scree Gully" || b.DisplayName == "Scree Gully") ? "Gully"
                         : (a.DisplayName == "Summit Approach" || b.DisplayName == "Summit Approach") ? "Ridge Path"
                         : "Summit Path";
-            var path = new PathPointOfInterest(
-                a, b, PathPointOfInterest.NameFor(a, b, name),
-                new() { $"A narrow path winding from {a.DisplayName.ToLowerInvariant()} to {b.DisplayName.ToLowerInvariant()}" },
-                new[] { "narrow", "exposed", "wind-bitten" }
-            );
-            a.PointsOfInterest.Add(path);
-            b.PointsOfInterest.Add(path);
-            path.Register(scene);
+            OutdoorLayout.Link(scene, a, b, name, new[] { "narrow", "exposed", "wind-bitten" });
         }
 
         // Cliff Descent: Summit Approach → Cirque Basin. The basin is a real place now; the cliff used

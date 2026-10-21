@@ -25,7 +25,6 @@ public sealed class LionSpecies : Species
             { "cerebrum",       3 },
             { "cerebellum",     4 },
             { "hippocampus",    3 },
-            { "pineal_gland",   2 },
             // Trunk: enormous power, short wind
             { "backbone",   5 },
             { "heart",      4 },
@@ -62,7 +61,6 @@ public sealed class TigerSpecies : Species
             { "cerebrum",       3 },
             { "cerebellum",     5 }, // silent placement of every foot
             { "hippocampus",    4 },
-            { "pineal_gland",   3 },
             // Trunk: heavy and powerful, swims willingly
             { "backbone",   5 },
             { "heart",      5 },
@@ -98,7 +96,6 @@ public sealed class JaguarSpecies : Species
             { "cerebrum",       3 },
             { "cerebellum",     5 }, // climber and swimmer both
             { "hippocampus",    3 },
-            { "pineal_gland",   3 },
             { "backbone",   4 },
             { "heart",      4 },
             { "pulmones",   4 },
@@ -133,7 +130,6 @@ public sealed class PumaSpecies : Species
             { "cerebrum",       3 },
             { "cerebellum",     5 }, // leaps a man's height from a standstill
             { "hippocampus",    3 },
-            { "pineal_gland",   3 },
             { "backbone",   4 },
             { "heart",      4 },
             { "pulmones",   3 },
@@ -167,7 +163,6 @@ public sealed class SnowLeopardSpecies : Species
             { "cerebrum",       3 },
             { "cerebellum",     5 }, // balance on ice and ledge
             { "hippocampus",    4 },
-            { "pineal_gland",   3 },
             { "backbone",   4 },
             { "heart",      4 },
             { "pulmones",   5 }, // thin air, all its life
@@ -202,7 +197,6 @@ public sealed class HyenaSpecies : Species
             { "cerebrum",       3 },
             { "cerebellum",     3 },
             { "hippocampus",    4 },
-            { "pineal_gland",   2 },
             // Trunk: tireless, and eats what nothing else will
             { "backbone",   4 },
             { "heart",      5 },
@@ -238,7 +232,6 @@ public sealed class WarthogSpecies : Species
             { "cerebrum",       2 },
             { "cerebellum",     3 },
             { "hippocampus",    3 }, // knows every burrow in its range
-            { "pineal_gland",   1 },
             { "backbone",   4 },
             { "heart",      4 },
             { "pulmones",   4 },

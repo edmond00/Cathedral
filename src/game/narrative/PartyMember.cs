@@ -522,6 +522,30 @@ public abstract class PartyMember
         HumorQueues.InitializeForCreation(this, _sharedRng, youthfulness);
     }
 
+    /// <summary>
+    /// Fills the four queues as a body of this age would hold them: each organ's own secretion rates
+    /// (Black Bile included — this is a grown body, not a newly made protagonist), and Juvenescence in
+    /// <see cref="JuvenescencePercentForAge"/> of the slots. For anyone met in the world — a companion
+    /// joins with the queues they were generated with. The constructor's fill is a placeholder made
+    /// before organs or age exist; left in place, every recruit joined with queues of almost pure
+    /// Blood.
+    /// </summary>
+    public void SettleHumorsForAge(Random rng)
+        => HumorQueues.InitializeForBody(this, rng, JuvenescencePercentForAge());
+
+    /// <summary>
+    /// The share of the queues still Juvenescence at this age: <c>youthfulness</c> scaled by the part of
+    /// the lifetime still ahead, so it fades evenly from birth to death whatever the species' span. A
+    /// heart of 3 (30 %) at a quarter of its life holds about 22 %; at three quarters, about 7 %.
+    /// </summary>
+    public int JuvenescencePercentForAge()
+    {
+        int youthfulness = DerivedStats.FirstOrDefault(s => s.Name == "youthfulness")?.GetValue(this) ?? 0;
+        double lifetime  = GetLifetimeDays();
+        double ahead     = lifetime <= 0 ? 0 : Math.Clamp(1 - GetAgeDays() / lifetime, 0, 1);
+        return (int)Math.Round(youthfulness * ahead);
+    }
+
 
 
     // ── ModusMentis initialisation ─────────────────────────────────────

@@ -14,7 +14,7 @@ public class OpenTradeMenuOutcome : Outcome
     private readonly TradeMode _mode;
 
     public OpenTradeMenuOutcome(TradeMode mode)
-        : base("NPC agrees to trade", OutcomeSeverity.Positive, "") => _mode = mode;
+        : base("NPC agrees to trade", OutcomeSeverity.Positive, "was granted a chance to trade") => _mode = mode;
 
 
     

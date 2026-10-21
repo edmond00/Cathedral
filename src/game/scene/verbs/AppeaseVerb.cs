@@ -49,7 +49,7 @@ public class AppeaseVerb : Verb
     // Not a dialogue trigger (non-verbal, resolved by the dice roll directly), so no "meet" lead;
     // the NPC is named once in the prompt's attention line and referred back to by pronoun.
     public override string Verbatim(Scene scene, PoV pov, Element target)
-        => $"try to appease {NpcPronoun(target)}";
+        => $"appease {NpcPronoun(target)}";
 
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {

@@ -44,7 +44,9 @@ acquisition of dexterity under duress; it sizes procedural memory and the readin
 fighting skill in the midst of a fight. The *cerebrum* is the organ of the understanding, and sizes
 semantic memory. The *hippocampus* registers what the senses convey inward, and sizes sensory
 memory. The *pineal gland* is the organ of inward regard: it sets the price in experience of every
-advance in every modus mentis, and the composure by which a fallen body regains its feet.
+advance in every modus mentis, the composure by which a fallen body regains its feet, and how often a
+deliberation may be taken up again when what it proposed comes to nothing
+([Chapter VI §5](06-narration.md#5-the-three-steps-of-an-act)).
 
 **Of the visage.** The *eyes* mediate perception at a distance, and set the reach of a ranged blow.
 The *ears* govern audition and the promptitude of answer, whence the order of a combat's turns. The
@@ -71,13 +73,16 @@ A second anatomy exists, of four regions, and the beasts are constituted upon it
 
 | Region | Organs |
 |---|---|
-| **Encephalon** | as the human: anamnesis · cerebellum · cerebrum · hippocampus · pineal gland |
+| **Encephalon** | as the human, wanting the pineal gland: anamnesis · cerebellum · cerebrum · hippocampus |
 | **Muzzle** | eyes · ears · snout · tongue · fangs |
 | **Trunk** | backbone · heart · pulmones · viscera · paunch · hepar · spleen |
 | **Limbs** | legs (fore and hind, left and right) · claws (fore and hind, left and right) |
 
-Two consequences are easy to overlook. The bestial trunk has **no genitories**, so every measure
-drawn from that organ is simply absent from a beast. And the identifiers are shared wherever the
+Three consequences are easy to overlook. The bestial trunk has **no genitories**, so every measure
+drawn from that organ is simply absent from a beast. The bestial encephalon has **no pineal gland**,
+the organ of inward regard: no modus mentis that names it can be learned by a beast, a beast never
+deliberates a second time nor doubts, every advance costs it the full twelve points of experience,
+and it rises from the ground on a single die. And the identifiers are shared wherever the
 anatomy is shared: the bestial legs answer to *legs* exactly as the human legs do, and both trunks
 to *trunk*. A doctrine that reasons by the name of the organ is therefore correct across both
 frames; one that reasons by its constitution is not.
@@ -90,7 +95,7 @@ teeth, and as its principal armament.
 A **species** is not an anatomy. It names an anatomy and may then revise the ceilings of individual
 organ parts. Wolf, bear, boar, dog, cat and fox all stand upon the bestial anatomy and differ only
 in these ceilings — a wolf's fangs reach five where another creature's reach less, its forelegs
-five, its paunch three, its pineal gland two. Man is the sole species upon the human anatomy.
+five, its paunch three. Man is the sole species upon the human anatomy.
 
 Whence the rule that governs every formula in this manual: **a measure is scaled against the body's
 own maximum, not against a constant.** A creature whose heart tops out lower than man's still
@@ -139,7 +144,7 @@ value** — which for most is a floor, and for a duration or a price is a ceilin
 | Working Memory | encephalon | score + 2, bounded 1–25 |
 | Countenance | visage | score ÷ 5, in dice — a visage at its ceiling of 22 is worth 4 |
 | Health Points | trunk | ⌊score ÷ 3⌋ + 1 |
-| Natural Defence | lower limbs | score ÷ 3, in dice |
+| Natural Defence | lower limbs; for a beast, its legs | score ÷ 3, in dice; for a beast, score ÷ 4 |
 | Max Travel Distance | lower limbs | from 4.0 units at nought to 14.8 at the region's ceiling, linearly |
 
 ### From the organs
@@ -154,6 +159,8 @@ value** — which for most is a floor, and for a duration or a price is a ceilin
 | Sensory Memory | hippocampus | score × 4, bounded 1–20 |
 | Experience per Level | pineal gland | 12 − (score − 1) × 3, bounded 6–12. **Lower is better** |
 | Knockdown Recovery | pineal gland | score, in dice, never below 1 |
+| Iterative Thinking | pineal gland | score, in further deliberations within one thinking; nought takes none |
+| Doubt | pineal gland | present at a score of 2 or more, absent below |
 | Attack Range | eyes | score, in cells, never below 1 |
 | Initiative | ears | score, added to one die |
 | Encounter Avoidance | nose | score × 10 per cent |

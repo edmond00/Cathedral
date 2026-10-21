@@ -122,21 +122,13 @@ public class CoastSceneFactory : SceneFactory
 
         // ── Connections ──────────────────────────────────────────────────────
 
-        // Linear shore connections via PathPoIs
+        // Linear shore connections
         for (int i = 0; i < shoreAreas.Count - 1; i++)
         {
             var a = shoreAreas[i];
             var b = shoreAreas[i + 1];
-            scene.ConnectAreasBidirectional(a, b);
             string name = (a.DisplayName == "Estuary Flat" || b.DisplayName == "Estuary Flat") ? "Estuary Track" : "Shore Path";
-            var path = new PathPointOfInterest(
-                a, b, PathPointOfInterest.NameFor(a, b, name),
-                new() { $"A wet path running between {a.DisplayName.ToLowerInvariant()} and {b.DisplayName.ToLowerInvariant()}" },
-                new[] { "wet", "salt-stained", "winding" }
-            );
-            a.PointsOfInterest.Add(path);
-            b.PointsOfInterest.Add(path);
-            path.Register(scene);
+            OutdoorLayout.Link(scene, a, b, name, new[] { "wet", "salt-stained", "winding" });
         }
 
         // Cliff Base ↔ Cliff Top via CliffPoI

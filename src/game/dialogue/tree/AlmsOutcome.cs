@@ -18,7 +18,7 @@ public class AlmsOutcome : Outcome
     private readonly int _copper;
 
     public AlmsOutcome(int copper = 2)
-        : base($"the NPC gives {copper} copper", OutcomeSeverity.Positive, "") => _copper = copper;
+        : base($"the NPC gives {copper} copper", OutcomeSeverity.Positive, $"was given {copper} copper in alms") => _copper = copper;
 
 
     
