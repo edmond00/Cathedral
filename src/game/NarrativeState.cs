@@ -207,6 +207,12 @@ public class NarrativeState
     public ParsedNarrativeAction? ActionPendingModeSelection { get; set; } = null;
 
     /// <summary>
+    /// The action the player chose to Reconsider, waiting for the thinking modus mentis that will
+    /// reconsider it to be picked.
+    /// </summary>
+    public ParsedNarrativeAction? ActionPendingReconsider { get; set; } = null;
+
+    /// <summary>
     /// Is the system currently generating a focus observation via LLM?
     /// </summary>
     public bool IsLoadingFocusObservation { get; set; } = false;
@@ -268,6 +274,7 @@ public class NarrativeState
         IsSelectingInteractionMode = false;
         InteractionModeIsForKeyword = false;
         ActionPendingModeSelection = null;
+        ActionPendingReconsider = null;
         PendingTransitionNode = null;
         ShouldExitOnContinue = false;
         ErrorMessage = null;
@@ -303,6 +310,7 @@ public class NarrativeState
         IsSelectingInteractionMode = false;
         InteractionModeIsForKeyword = false;
         ActionPendingModeSelection = null;
+        ActionPendingReconsider = null;
         PendingTransitionNode = null;
         ShouldExitOnContinue = false;
         ErrorMessage = null;
@@ -340,6 +348,7 @@ public class NarrativeState
         IsSelectingInteractionMode = false;
         InteractionModeIsForKeyword = false;
         ActionPendingModeSelection = null;
+        ActionPendingReconsider = null;
         PendingTransitionNode = null;
         ShouldExitOnContinue = false;
         ErrorMessage = null;

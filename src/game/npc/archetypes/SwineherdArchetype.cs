@@ -11,7 +11,7 @@ public class SwineherdArchetype : PeasantArchetype
 
     /// <summary>What asking this person about their work teaches.</summary>
     public override string TradeModusMentisId => "husbandry";
-    public override ItemTag? SellTag => ItemTag.Foodstuff;
+    public override ItemTag? SellTag => ItemTag.Meat;
     public override ItemTag? BuyTag  => ItemTag.Crop;
     public override int    ModiMentisCount => 6;
 

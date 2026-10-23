@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using Cathedral.Fight;
 using Cathedral.Game.Npc;
@@ -575,6 +576,29 @@ public static class ItemAudit
             sb.AppendLine($"    {tag,-13} {n,4}{(n < MinItemsPerTag ? "   ← thin" : "")}");
             if (n < MinItemsPerTag)
                 warnings.Add($"tag '{tag}' has only {n} item(s) — every catalogue using it is identical");
+        }
+        sb.AppendLine();
+
+        // Who trades from each tag, and what the tag holds: a catalogue is a draw of ~5 from the
+        // whole tag, so a tag broader than a trade puts goods on a shelf that have nothing to do with
+        // the one keeping it (a cooper selling reading lenses and relics).
+        var traders = Assembly.GetExecutingAssembly().GetTypes()
+            .Where(t => t.IsSubclassOf(typeof(NamedNpcArchetype)) && !t.IsAbstract && t.GetConstructor(Type.EmptyTypes) != null)
+            .Select(t => (NamedNpcArchetype)Activator.CreateInstance(t)!)
+            .Where(a => a.SellTag != null || a.BuyTag != null)
+            .OrderBy(a => a.ArchetypeId, StringComparer.Ordinal)
+            .ToList();
+        sb.AppendLine("  tag             sold by / bought by, then its items");
+        foreach (ItemTag tag in Enum.GetValues<ItemTag>())
+        {
+            var sellers = traders.Where(a => a.SellTag == tag).Select(a => a.ArchetypeId).ToList();
+            var buyers  = traders.Where(a => a.BuyTag  == tag).Select(a => a.ArchetypeId).ToList();
+            sb.AppendLine($"    {tag,-13} sold by {(sellers.Count == 0 ? "nobody" : string.Join(", ", sellers))}");
+            sb.AppendLine($"    {"",-13} bought by {(buyers.Count == 0 ? "nobody" : string.Join(", ", buyers))}");
+            foreach (var line in Columnise(items.Where(i => i.Tags.Contains(tag)).Select(i => i.ItemId).OrderBy(s => s, StringComparer.Ordinal), perLine: 5, width: 22))
+                sb.AppendLine($"      {line}");
+            if (sellers.Count == 0 && items.Any(i => i.Tags.Contains(tag)))
+                sb.AppendLine($"      (no seller: these are only ever bought)");
         }
         sb.AppendLine();
 

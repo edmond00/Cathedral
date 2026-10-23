@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class TurfcuttingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Cuts and stacks peat and turf: the depth to take, the way to set it so it dries, and the reckoning of how much a winter needs. Slow, wet, methodical work that decides whether a household is warm in February.";
     public override string SkillMeans       => "the cutting and stacking of peat and turf";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<DigVerb>("cut into the turf");
     public override string[] Organs        => new[] { "arms", "legs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -13,7 +14,8 @@ public class MycologyModusMentis : ModusMentis
     public override string MenuDescription =>
         "Holds the knowledge of fungi and decay, reading what rot breaks down and what it feeds. Attends to mushroom and mould, and inclines toward identifying and gathering what grows in decomposition.";
     public override string SkillMeans => "knowledge of fungi and decay";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
+    public override WillTarget? Will => WillTarget.To<GatherVerb>("gather mushrooms").Yielding<Items.Mushroom>();
     public override string[] Organs => new[] { "eyes", "nose" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     

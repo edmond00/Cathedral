@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -5,7 +6,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 /// <summary>
 /// Snatch — the closing hand: the wait, the single fast movement, and the grip that shuts without
 /// crushing. The human counterpart of <see cref="SoftMouthModusMentis"/>, which needs a muzzle.
-/// VerbAction-only.
+/// Will + VerbAction.
 /// </summary>
 public class SnatchModusMentis : ModusMentis
 {
@@ -14,7 +15,8 @@ public class SnatchModusMentis : ModusMentis
     public override string MenuDescription =>
         "Takes something quick and living out of the air or off a surface in one movement, and closes on it hard enough to hold and no harder. Most of it is the waiting: the hand goes once, where the thing is about to be.";
     public override string SkillMeans       => "the single closing movement of a waiting hand";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<CatchVerb>("snatch something living");
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

@@ -1,0 +1,43 @@
+# will_equal_paths — of two things equally near, either is on a will's way
+#
+# Pugilitas is a will to come to blows (attack). The Test Yard holds two people, the farmer and the
+# plowman, and the planner's search commits to whichever it reaches first — the farmer (`inspect will`
+# reports the plan's own target). The plowman is exactly as near, so the will must accept him too:
+# observing him keeps the focus, and thinking on him proposes the attack. This is the case that used to
+# refuse, "not on the way", because only the plan's own target was accepted.
+#
+# That a will names the person in its sentences, rather than the verb's bare pronoun, is asserted in
+# will_refuses.cli.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-mm pugilitas --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+observe plowman
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+expect-state will "will pugilitas steps=1"
+expect-state will "target=farmer"
+
+# Observing the other man: he is on the way too, so the focus is kept and the reason is the goal here.
+click keyword 0
+choose 1
+choose pugilitas
+advance 12 180
+# The sentence is "Here I could attack the plowman, which is what I want."; its tail is asserted, since
+# the head moves with the prose before it and wraps.
+expect which is what I want
+
+# Thinking on him: the attack is proposed, carried out by Pugilitas itself.
+click keyword 0
+choose 0
+choose pugilitas
+advance 12 180
+expect [Pugilitas
+expect-not does nothing for it
+
+quit

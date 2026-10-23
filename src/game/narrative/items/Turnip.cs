@@ -8,7 +8,7 @@ public sealed class Turnip : ConsumableItem
     public override string ItemId      => "turnip";
     public override string DisplayName => "Turnip";
     public override string Description => "A knobbed purple-white root, still clodded with earth";
-    public override List<ItemTag> Tags => new() { ItemTag.Crop };
+    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Fodder };
     public override int PriceReference => 3;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     protected override HumorRichness Richness => HumorRichness.Hearty;

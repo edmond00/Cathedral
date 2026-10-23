@@ -62,6 +62,8 @@ public sealed class BeastAnatomyFactory : IAnatomyFactory
         Add(new BeastContusionWound());
         Add(new BeastCutWound());
         Add(new BeastPunctureWound());
+        Add(new BeastScrapeWound());
+        Add(new BeastStrainWound());
 
         return dict;
     }

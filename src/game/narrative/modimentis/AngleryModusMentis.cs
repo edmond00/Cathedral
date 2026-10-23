@@ -1,10 +1,11 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Anglery — taking fish out of water: reading a pool for where they lie, and the patience of rod and net.
-/// Observation + VerbAction.
+/// Will + VerbAction.
 /// </summary>
 public class AngleryModusMentis : ModusMentis
 {
@@ -13,7 +14,8 @@ public class AngleryModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads moving water for the places fish hold: the slack behind a stone, the shaded cut of a bank, the seam where two currents meet. Works the rod and the net slowly, knowing the water gives up nothing to hurry.";
     public override string SkillMeans       => "the reading of water and the working of rod and net";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<FishVerb>("fish");
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

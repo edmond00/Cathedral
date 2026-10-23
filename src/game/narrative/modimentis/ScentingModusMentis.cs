@@ -1,10 +1,11 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Scenting — reading the world nose-first; a creature that knows who passed and how long ago by smell alone.
-/// Observation-only.
+/// Will.
 /// </summary>
 public class ScentingModusMentis : ModusMentis
 {
@@ -13,7 +14,8 @@ public class ScentingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads a place nose-first, layering what the air carries: who passed, how long ago, what they carried and what they feared. Ties each smell to a remembered one, so that a scent arrives already named.";
     public override string SkillMeans       => "the smelling and identifying of scents on the air";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
+    public override WillTarget? Will => WillTarget.To<SmellVerb>("take a scent from the air");
     public override string[] Organs        => new[] { "snout", "hippocampus" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

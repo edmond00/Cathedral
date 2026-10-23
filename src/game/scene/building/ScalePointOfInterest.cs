@@ -71,21 +71,21 @@ public class ScalePointOfInterest : ConnectorPointOfInterest
     };
 
     /// <summary>
-    /// What a fall costs. Height is the whole of it: falling off a hay stack is a winding, falling
-    /// off a roof is not.
+    /// What a fall costs. Height is the whole of it: falling off a hay stack is a winding and an hour
+    /// spent getting back up it, falling off a roof is not.
     /// </summary>
-    public IReadOnlyList<Wound?> FailurePenalties() => Kind switch
+    public IReadOnlyList<FailurePenalty> FailurePenalties() => Kind switch
     {
-        ScaleKind.Ladder => new Wound?[] { null, null, null, null, new ContusionWound() },
-        ScaleKind.Stack  => new Wound?[] { null, null, null, null, new ContusionWound(), new WristFractureRightWound() },
-        ScaleKind.WellShaft => new Wound?[]
+        ScaleKind.Ladder => new FailurePenalty[] { FailurePenalty.WasteTime, FailurePenalty.WasteTime, FailurePenalty.WasteTime, new ScrapeWound(), new ContusionWound() },
+        ScaleKind.Stack  => new FailurePenalty[] { FailurePenalty.WasteTime, FailurePenalty.WasteTime, FailurePenalty.WasteTime, new ScrapeWound(), new ContusionWound(), new WristFractureRightWound() },
+        ScaleKind.WellShaft => new FailurePenalty[]
         {
-            null, null,
+            FailurePenalty.WasteTime, new ScrapeWound(),
             new ContusionWound(), new BrokenRibsWound(), new AnkleFractureLeftWound(), new ConcussionsWound(),
         },
-        _ => new Wound?[]
+        _ => new FailurePenalty[]
         {
-            null, null, null,
+            FailurePenalty.WasteTime, FailurePenalty.WasteTime, new ScrapeWound(),
             new AnkleFractureRightWound(), new TibiaFractureLeftWound(),
             new BrokenArmLeftWound(), new WristFractureLeftWound(),
         },

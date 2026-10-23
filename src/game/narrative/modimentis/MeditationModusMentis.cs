@@ -1,10 +1,12 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Meditation — stilled mind, monk-like calm, finding the still water beneath agitation.
-/// Thinking-only.
+/// Will + Emotion.
 /// </summary>
 public class MeditationModusMentis : ModusMentis
 {
@@ -13,7 +15,8 @@ public class MeditationModusMentis : ModusMentis
     public override string MenuDescription =>
         "Holds a long, settled calm that quiets thought and steadies feeling. Keeps the mind clear and unhurried, and inclines toward focus and patience where noise would scatter attention.";
     public override string SkillMeans       => "the calming and stilling of the mind";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
+    public override WillTarget? Will => WillTarget.To<SitAndWaitVerb>("sit still and quiet my mind");
     public override string[] Organs        => new[] { "pineal_gland", "heart" };
 
     /// <summary>Stands on letters, number or institutions.</summary>
@@ -26,6 +29,12 @@ public class MeditationModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who finds the still water beneath agitation";
     public override string StyleInstruction =>
         "Reach for calm images of breath, stillness and depth, with the settled serenity beneath all disturbance.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(TimeWastedOutcome), () => new ZenHumor()),
+        new(typeof(FocusLostOutcome), () => new MelancholiaHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of MEDITATION, the slow breath drawn before any answer rushes forward.
 

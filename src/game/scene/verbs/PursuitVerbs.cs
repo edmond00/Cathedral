@@ -60,9 +60,9 @@ public class TrackVerb : Verb
     }
 
     /// <summary>Following an animal through country it chose takes you through the same country.</summary>
-    public override IReadOnlyList<Wound?> FailurePenalties(Element? target) => new Wound?[]
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target) => new FailurePenalty[]
     {
-        null, null, null, null, new ContusionWound(),
+        FailurePenalty.GetLost, FailurePenalty.GetLost, FailurePenalty.WasteTime, FailurePenalty.LoseFocus, new ContusionWound(),
     };
 }
 
@@ -81,6 +81,12 @@ public class StalkVerb : Verb
 
     public override string VerbId         => "stalk";
     public override string DisplayName    => "Stalk";
+
+    /// <summary>Following somebody who does not know it, and losing them, and then yourself.</summary>
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target) => new FailurePenalty[]
+    {
+        FailurePenalty.GetLost, FailurePenalty.GetLost, FailurePenalty.WasteTime, FailurePenalty.LoseFocus,
+    };
     public override int    BaseDifficulty => 4;
 
     /// <summary>Moving unseen behind somebody. Nothing held makes a footfall quieter, and a full hand makes it louder.</summary>

@@ -539,6 +539,17 @@ public static class Config
         /// not asked whether it would rather not, and a test wants to see the chain end.</para>
         /// </summary>
         public static int RefuseMeans { get; set; } = 0;
+
+        /// <summary>
+        /// The kind of failure penalty a failed act must draw: <c>wound</c>, <c>get_lost</c>,
+        /// <c>waste_time</c> or <c>lose_focus</c>. Set by <c>--penalty-only &lt;kind&gt;</c>. Null (the
+        /// default) draws from the verb's whole table.
+        ///
+        /// <para>The draw is uniform over a table of one to seven entries, so a script that means to
+        /// see the way lost — or the hour wasted — is otherwise asserting on a coin flip. A table with
+        /// no entry of that kind is a <c>DebugFlagAudit</c> miss.</para>
+        /// </summary>
+        public static string? PenaltyOnly { get; set; } = null;
     }
 
     #endregion

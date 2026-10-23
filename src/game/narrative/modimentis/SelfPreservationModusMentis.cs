@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -12,7 +13,7 @@ public class SelfPreservationModusMentis : ModusMentis
     public override string MenuDescription =>
         "Weighs every situation first for the way out. Knows when a cause is lost before anyone else does, and is already gone when the line breaks.";
     public override string SkillMeans       => "the first concern for one's own skin";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "heart", "cerebellum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.Low;
@@ -22,6 +23,11 @@ public class SelfPreservationModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who is never at the last stand";
     public override string StyleInstruction =>
         "Weigh everything for your own survival first - the exit, the odds, the moment to leave.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(LostWayOutcome), () => new NervusHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of SELF-PRESERVATION, and you have already worked out how you are leaving this place if it goes wrong.
 

@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -31,6 +32,7 @@ public class IntrospectionModusMentis : ModusMentis
     {
         new(typeof(ModusMentisGrantOutcome), () => new ZenHumor()),
         new(typeof(SkillAcquisitionOutcome), () => new ZenHumor()),
+        new(typeof(FocusLostOutcome), () => new MelancholiaHumor()),
     };
 
     public override string PersonaPrompt => @"You are the inner voice of INTROSPECTION, the watcher who sits one row back from the mind and takes honest notes.

@@ -284,14 +284,21 @@ public sealed class ShortSword : WeaponItem
     public override string WeaponCategory   => "short_blade";
 }
 
-public sealed class WoodenStick : Item
+/// <summary>
+/// An improvised club, like a <see cref="Branch"/>: it opens the blunt fighting skills and lends no
+/// weapon dice (<see cref="Level"/> 0), and as a tool lends one die rather than the blunt category's
+/// four.
+/// </summary>
+public sealed class WoodenStick : WeaponItem
 {
-    public override string ItemId      => "wooden_stick";
-    public override string DisplayName => "Wooden Stick";
-    public override string Description => "A weather-greyed stick still half-imagined as a magic sword";
-    public override ItemCategory Category => ItemCategory.Tool;
-    public override int    UsageLevel  => 1;
-    public override int PriceReference => 1;
+    public override string ItemId         => "wooden_stick";
+    public override string DisplayName    => "Wooden Stick";
+    public override string Description    => "A weather-greyed stick still half-imagined as a magic sword";
+    public override int    Level          => 0;
+    public override string WeaponCategory => "blunt";
+    public override int    UsageLevel     => 1;
+    public override List<ItemTag> Tags    => new();
+    public override int PriceReference    => 1;
 }
 
 /// <summary>

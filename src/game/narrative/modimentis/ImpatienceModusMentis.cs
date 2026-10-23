@@ -33,6 +33,7 @@ public class ImpatienceModusMentis : ModusMentis
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {
         new(typeof(TimeShiftOutcome), () => new NervusHumor()),
+        new(typeof(TimeWastedOutcome), () => new CholerHumor()),
     };
 
     public override string PersonaPrompt => @"You are the inner voice of IMPATIENCE, the fret of an hour that cannot be accounted for.

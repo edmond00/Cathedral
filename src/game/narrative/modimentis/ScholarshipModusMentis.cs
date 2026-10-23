@@ -1,4 +1,6 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -13,11 +15,12 @@ public class ScholarshipModusMentis : ModusMentis
     public override string MenuDescription =>
         "Draws on what is recorded in manuscripts, reading letters and old texts with patient study. Inclines reasoning toward written knowledge, and treats a question as something the record may already answer.";
     public override string SkillMeans       => "the knowledge found in books and old manuscripts";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
+    public override WillTarget? Will => WillTarget.To<AskTeachingVerb>("be taught something");
     public override string[] Organs        => new[] { "encephalon" };
 
     /// <summary>Stands on letters, number or institutions.</summary>
-    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction | AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.High;
 
@@ -31,6 +34,7 @@ public class ScholarshipModusMentis : ModusMentis
     {
         new(typeof(ModusMentisGrantOutcome), () => new LaetitiaHumor()),
         new(typeof(SkillAcquisitionOutcome), () => new LaetitiaHumor()),
+        new(typeof(FocusLostOutcome), () => new CholerHumor()),
     };
 
     public override string PersonaPrompt => @"You are the inner voice of SCHOLARSHIP, the patient consultation of what has already been written down before opinion is offered.

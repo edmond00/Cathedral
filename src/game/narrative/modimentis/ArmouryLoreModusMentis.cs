@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative.Items;
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +14,8 @@ public class ArmouryLoreModusMentis : ModusMentis
     public override string MenuDescription =>
         "Knows arms and armour by their make: where a blade was forged, what a helm will stop, which mail is riveted and which only butted. Can date a sword by its hilt and price it at a glance.";
     public override string SkillMeans       => "the knowledge of arms and armour";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
+    public override WillTarget? Will => WillTarget.ToAny("take up a fine weapon", typeof(GrabVerb), typeof(StealVerb)).Yielding<WeaponItem>();
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;

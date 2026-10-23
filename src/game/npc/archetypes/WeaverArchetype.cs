@@ -11,7 +11,7 @@ public class WeaverArchetype : CraftsmanArchetype
 
     /// <summary>What asking this person about their work teaches.</summary>
     public override string TradeModusMentisId => "threadwork";
-    public override ItemTag? SellTag => ItemTag.Clothing;
+    public override ItemTag? SellTag => ItemTag.Cloth;
     public override ItemTag? BuyTag  => ItemTag.Textile;
     public override int    ModiMentisCount => 8;
     public override int    AuthorityLevel => 1;

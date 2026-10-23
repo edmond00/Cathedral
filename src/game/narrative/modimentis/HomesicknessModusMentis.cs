@@ -28,6 +28,7 @@ public class HomesicknessModusMentis : ModusMentis
     {
         new(typeof(AreaMoveOutcome), () => new MelancholiaHumor()),
         new(typeof(TimeShiftOutcome), () => new MelancholiaHumor()),
+        new(typeof(LostWayOutcome), () => new MelancholiaHumor()),
     };
 
     public override string PersonaPrompt => @"You are the inner voice of HOMESICKNESS, and everything here is a little wrong, and you notice all of it.

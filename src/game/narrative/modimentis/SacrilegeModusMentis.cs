@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class SacrilegeModusMentis : ModusMentis
     public override string MenuDescription =>
         "Lays hands on what has been set apart, and does it anyway. Requires no special skill and a great deal of nerve, and is the one act that turns an ordinary crime into something a whole parish will pursue.";
     public override string SkillMeans       => "the laying of hands on what was set apart";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.ToAny("lay hands on something holy", typeof(StealVerb), typeof(GrabVerb)).YieldingAny("holy things", typeof(World.Items.Icon), typeof(World.Items.Idol), typeof(World.Items.Censer), typeof(World.Items.Aspergillum), typeof(Items.PrayerBeads), typeof(World.Items.HolyWater));
     public override string[] Organs        => new[] { "hands", "spleen" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.Low;

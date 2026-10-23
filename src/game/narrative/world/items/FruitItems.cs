@@ -7,6 +7,7 @@ namespace Cathedral.Game.Narrative.World.Items;
 public sealed class Pear : FruitItem
 {
     public override string ItemId      => "pear";
+    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Fruit };
     public override string DisplayName => "Pear";
     public override string Description => "A speckled green pear, narrow at the stem and heavy at the base";
     protected override HumorRichness Richness => HumorRichness.Hearty;
@@ -17,6 +18,7 @@ public sealed class Pear : FruitItem
 public sealed class Plum : FruitItem
 {
     public override string ItemId      => "plum";
+    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Fruit };
     public override string DisplayName => "Plum";
     public override string Description => "A small purple plum with a dusty bloom on its skin";
     protected override HumorRichness Richness => HumorRichness.Hearty;
@@ -27,6 +29,7 @@ public sealed class Plum : FruitItem
 public sealed class Cherry : FruitItem
 {
     public override string ItemId      => "cherry";
+    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Fruit };
     public override string DisplayName => "Cherry";
     public override string Description => "A small dark cherry, glossy and tart";
     protected override HumorRecipe Recipe => new HumorRecipe()
@@ -90,7 +93,7 @@ public sealed class Acorn : FruitItem
     public override string DisplayName => "Acorn";
     public override string Description => "A smooth oak acorn cupped in a rough scaly hat";
     public override bool IsHard => true;
-    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Forage };
+    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Forage, ItemTag.Fodder };
     protected override HumorRecipe Recipe => new HumorRecipe()
         .Add<FatHumor>(35).Add<FiberHumor>(30).Add<YellowBileHumor>(20).Add<CalxHumor>(15);
 }
@@ -101,7 +104,7 @@ public sealed class Beechnut : FruitItem
     public override string DisplayName => "Beechnut";
     public override string Description => "A small triangular beech-mast, oily and slightly bitter";
     public override bool IsHard => true;
-    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Forage };
+    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Forage, ItemTag.Fodder };
     protected override HumorRecipe Recipe => new HumorRecipe()
         .Add<FatHumor>(45).Add<FiberHumor>(30).Add<YellowBileHumor>(25);
 }

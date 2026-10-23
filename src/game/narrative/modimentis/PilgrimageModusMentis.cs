@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class PilgrimageModusMentis : ModusMentis
     public override string MenuDescription =>
         "Walks toward something holy and treats the walking as the point. Endures hardship deliberately, keeps going past the sensible stopping place, and arrives changed rather than merely arrived.";
     public override string SkillMeans       => "the walking undertaken as an act of devotion";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<VoyageTowardVerb>("walk on as an act of devotion");
     public override string[] Organs        => new[] { "heart", "legs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.High;

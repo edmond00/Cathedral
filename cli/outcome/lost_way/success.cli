@@ -1,0 +1,45 @@
+# lost_way — the outcome, not the verb.
+#
+# A failed walk that loses the way: the chip is shown with the failure, and the CONTINUE that closes
+# the segment ends the visit — back on the world map, not in the next area and not in this one.
+# --penalty-only get_lost pins the draw, which is otherwise uniform over move's table.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Field" --period dawn --observe-only "Test Yard" --penalty-only get_lost
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy fail-dice
+goal move
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+expect FAILURE
+expect-verb move
+expect Lost the way
+expect-no-outcome area_move
+
+# --- the outcome really ran ---
+expect-outcome lost_way
+
+# --- after: still standing in the place until the press that closes the segment ---
+expect-state where Test Field
+click button
+wait mode WorldView 60
+quit

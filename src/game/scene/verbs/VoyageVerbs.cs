@@ -53,8 +53,8 @@ public class VoyageTowardVerb : Verb
             : System.Array.Empty<Outcome>();
 
     /// <summary>Cross-country is rougher going than a path. Rarely, it turns an ankle.</summary>
-    public override IReadOnlyList<Wound?> FailurePenalties(Element? target) => new Wound?[]
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target) => new FailurePenalty[]
     {
-        null, null, null, null, new AnkleFractureRightWound(),
+        FailurePenalty.GetLost, FailurePenalty.GetLost, FailurePenalty.WasteTime, FailurePenalty.WasteTime, new AnkleFractureRightWound(),
     };
 }

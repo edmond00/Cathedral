@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class FordingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Crosses water on foot: picks the line, faces the current, moves one foot at a time and never crosses their legs. Knows the depth at which a person stops being able to stand, which is lower than anybody expects.";
     public override string SkillMeans       => "the crossing of water on foot";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<CrossVerb>("cross on foot");
     public override string[] Organs        => new[] { "legs", "pulmones" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

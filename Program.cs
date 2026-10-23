@@ -227,6 +227,9 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --refuse-means <n>                 DEBUG: under --playground, the first n willingness questions answer \"unwilling\"");
     Console.WriteLine("                                     and observes another instead. --playground never declines, so this is the only");
     Console.WriteLine("                                     way a script reaches that branch");
+    Console.WriteLine("  --penalty-only <kind>              DEBUG: a failed act draws only this kind of penalty from its verb's table:");
+    Console.WriteLine("                                     wound, get_lost, waste_time or lose_focus. The draw is otherwise uniform,");
+    Console.WriteLine("                                     so this is how a script reaches one. A table with none of it is a miss");
     Console.WriteLine("  --advance-days <n>                 DEBUG: push the world clock forward <n> days on first arrival at the world");
     Console.WriteLine("                                     map. The clock only moves on travel and work, and a wound takes 100-1000");
     Console.WriteLine("                                     days to close, so this is how a script sees healing without simulating years");
@@ -871,6 +874,14 @@ for (int i = 0; i < args.Length; i++)
 
     if (args[i] == "--refuse-focus")
         Cathedral.Config.Debug.RefuseFocus = true;
+
+    if (args[i] == "--penalty-only" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
+    {
+        if (Cathedral.Game.Scene.FailurePenalty.ParseKind(args[i + 1]) != null)
+            Cathedral.Config.Debug.PenaltyOnly = args[i + 1];
+        else
+            Console.Error.WriteLine($"--penalty-only: unknown kind '{args[i + 1]}' (wound, get_lost, waste_time, lose_focus)");
+    }
 
     if (args[i] == "--refuse-means" && i + 1 < args.Length && int.TryParse(args[i + 1], out var refuseMeans))
         Cathedral.Config.Debug.RefuseMeans = Math.Max(0, refuseMeans);

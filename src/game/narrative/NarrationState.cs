@@ -324,17 +324,18 @@ public class ParsedNarrativeAction : ModusMentisChainElement
     public int DifficultyLevel { get; set; } = 0;
 
     /// <summary>
-    /// Set to true when this action has been judged IMPOSSIBLE by the critic LLM or a coded rule.
-    /// Causes the action header and text to render greyed-out in the narration UI.
-    /// </summary>
-    public bool IsImpossible { get; set; } = false;
-
-    /// <summary>
     /// Set when a coded rule refused this action for want of an implement (<c>RequiredToolRule</c>).
     /// The action stays lit, since it is still the way forward, and its popup offers only "Use Tool":
     /// executing it bare-handed again would be the same refusal, charged again.
     /// </summary>
     public bool NeedsTool { get; set; } = false;
+
+    /// <summary>
+    /// Set when this action was reconsidered and a new one, carried out by another means, took its
+    /// place. It renders greyed and no longer answers a click — the one action that does: a refused
+    /// one stays lit, since Reconsider may still find it a means.
+    /// </summary>
+    public bool Superseded { get; set; } = false;
 
     /// <summary>
     /// When set (item-combined actions), acts as the chain leaf instead of ActionModusMentis.

@@ -203,6 +203,8 @@ public static class EdificeRooms
                 pois.Add(new LecternPointOfInterest("Reading Desk", new() { "A raised desk from which something is read aloud during meals" },
                     new() { I(new Tome()) }, new[] { "raised", "solemn", "worn" })
                     { Senses = SensoryProfile.Beautiful, VerbModiMentis = L(("examine", "decipher"), ("contemplate", "piety")) });
+                pois.Add(new BenchPointOfInterest("Long Benches", new() { "Backless benches the length of the table, shoved askew by the last sitting" },
+                    moods: new[] { "long", "askew", "worn" }) { Senses = SensoryProfile.Examinable, VerbModiMentis = L(("examine", "whittlecraft")) });
                 break;
             case EdificeRoom.Kitchen:
                 pois.Add(new HearthPointOfInterest("Great Hearth", new() { "A hearth big enough to roast an ox, its spit-dogs blackened" },
@@ -250,6 +252,8 @@ public static class EdificeRooms
                 pois.Add(new AltarPointOfInterest("Altar", new() { "A stone altar under a fair cloth, candles burning down at either end" },
                     new() { I(new Candle()), I(new Incense()) }, new[] { "hushed", "candlelit", "holy" })
                     { Senses = SensoryProfile.FullyAlive, VerbModiMentis = L(("examine", "iconography"), ("listen", "hearkening"), ("smell", "perfumery"), ("contemplate", "piety")) });
+                pois.Add(new BenchPointOfInterest("Pews", new() { "Plain oak pews in two ranks, the book-ledges rubbed pale by folded hands" },
+                    moods: new[] { "ranked", "hushed", "plain" }) { Senses = SensoryProfile.Beautiful, VerbModiMentis = L(("examine", "whittlecraft"), ("contemplate", "piety")) });
                 break;
             case EdificeRoom.Crypt:
                 pois.Add(new TombPointOfInterest("Effigy Tomb", new() { "A stone tomb with a knight lying on its lid, hands folded and nose broken" },
@@ -302,6 +306,8 @@ public static class EdificeRooms
                 pois.Add(new TablePointOfInterest("Dicing Table", new() { "A table ringed with mug-stains, dice and a few coins left on it" },
                     new() { I(new BoneDice()), I(new Mug()) }, new[] { "stained", "rowdy", "idle" })
                     { Senses = SensoryProfile.Audible, VerbModiMentis = L(("examine", "gambling"), ("listen", "banter")) });
+                pois.Add(new BenchPointOfInterest("Guard Bench", new() { "A bench along the wall where the watch off duty sits with its boots out" },
+                    moods: new[] { "hard", "idle", "scuffed" }) { Senses = SensoryProfile.Examinable, VerbModiMentis = L(("examine", "whittlecraft")) });
                 break;
             case EdificeRoom.Dungeon:
                 pois.Add(new ChainPointOfInterest("Wall Chains", new() { "Chains and cuffs bolted into the wall at the height of a sitting man" },

@@ -81,8 +81,7 @@ public class ExplainMyselfVerb : SocialDialogueVerb
     {
         var npc = Available(scene, pov, target, actor);
         if (npc == null) return System.Array.Empty<Outcome>();
-        var crime = ConfrontationSelector.CrimeFor(scene, npc, null, pov.Where.IsPrivate);
-        return new Outcome[] { new DialogueTriggerOutcome(npc, tree: Cathedral.Game.Dialogue.Tree.Trees.CaughtRedHandedTreeFactory.CreateCameForward(crime)) };
+        return new Outcome[] { new DialogueTriggerOutcome(npc, tree: ConfrontationSelector.TreeFor(scene, npc, null, pov.Where.IsPrivate, cameForward: true)) };
     }
 }
 

@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -13,7 +14,8 @@ public class SeductionModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads what a person wants to be told and tells it to them, warming attention into desire. Works charm deliberately and quietly, aiming it at the lonely, the vain, and the unwatched.";
     public override string SkillMeans       => "the reading and stirring of desire";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Speaking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
+    public override WillTarget? Will => WillTarget.To<StrengthenRelationshipVerb>("draw somebody closer");
     public override string[] Organs        => new[] { "genitories", "tongue" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>

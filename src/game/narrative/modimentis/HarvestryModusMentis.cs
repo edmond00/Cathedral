@@ -1,10 +1,11 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Harvestry — reaping and cutting ripe crop; the swing of the sickle and the gathered sheaf.
-/// VerbAction-only.
+/// Will + VerbAction.
 /// </summary>
 public class HarvestryModusMentis : ModusMentis
 {
@@ -13,7 +14,8 @@ public class HarvestryModusMentis : ModusMentis
     public override string MenuDescription =>
         "Judges a crop for ripeness and reaps it at the right moment, cutting and gathering before it spoils. Sets the body to the steady rhythm of bringing in a field.";
     public override string SkillMeans       => "the reaping and gathering of ripe crops";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<GatherVerb>("reap a crop");
     public override string[] Organs        => new[] { "upper_limbs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

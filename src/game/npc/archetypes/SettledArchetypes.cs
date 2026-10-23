@@ -26,7 +26,7 @@ public class OrchardistArchetype : SettledArchetype
     public override string TradeModusMentisId => "pomology";
     public override SocialCategory? Social => SocialCategory.Peasant;
     public override string RoleNoun => "orchardist";
-    public override ItemTag? SellTag => ItemTag.Crop;
+    public override ItemTag? SellTag => ItemTag.Fruit;
     public override ItemTag? BuyTag  => ItemTag.Tool;
     public override int ModiMentisCount => 7;
     public override IReadOnlyList<string> CanIntroduceToArchetypes => new[] { "planter" };
@@ -81,8 +81,8 @@ public class VintnerArchetype : SettledArchetype
     public override string TradeModusMentisId => "viniculture";
     public override SocialCategory? Social => SocialCategory.Bourgeois;
     public override string RoleNoun => "vintner";
-    public override ItemTag? SellTag => ItemTag.Foodstuff;
-    public override ItemTag? BuyTag  => ItemTag.Craftware;
+    public override ItemTag? SellTag => ItemTag.Wine;
+    public override ItemTag? BuyTag  => ItemTag.Cooperage;
     public override int ModiMentisCount => 9;
     public override int AuthorityLevel => 1;
 
@@ -135,7 +135,7 @@ public class PlanterArchetype : SettledArchetype
     public override string TradeModusMentisId => "plantership";
     public override SocialCategory? Social => SocialCategory.Bourgeois;
     public override string RoleNoun => "planter";
-    public override ItemTag? SellTag => ItemTag.Crop;
+    public override ItemTag? SellTag => ItemTag.CashCrop;
     public override ItemTag? BuyTag  => ItemTag.Tool;
     public override int ModiMentisCount => 9;
     public override int AuthorityLevel => 1;
@@ -189,7 +189,7 @@ public class PickerArchetype : SettledArchetype
     public override string TradeModusMentisId => "harvestry";
     public override SocialCategory? Social => SocialCategory.Peasant;
     public override string RoleNoun => "picker";
-    public override ItemTag? SellTag => ItemTag.Crop;
+    public override ItemTag? SellTag => ItemTag.Fruit;
     public override ItemTag? BuyTag  => ItemTag.Foodstuff;
     public override int ModiMentisCount => 6;
     public override IReadOnlyList<string> CanIntroduceToArchetypes => new[] { "planter", "orchardist", "vintner", "farmer" };
@@ -246,7 +246,7 @@ public class GroomArchetype : SettledArchetype
     public override string IntroductionRelation => "the master here";
     public override SocialCategory? Social => SocialCategory.Peasant;
     public override string RoleNoun => "groom";
-    public override ItemTag? BuyTag  => ItemTag.Crop;
+    public override ItemTag? BuyTag  => ItemTag.Fodder;
     public override int ModiMentisCount => 7;
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]
@@ -297,7 +297,7 @@ public class DroverArchetype : SettledArchetype
     public override string TradeModusMentisId => "droving";
     public override SocialCategory? Social => SocialCategory.Peasant;
     public override string RoleNoun => "drover";
-    public override ItemTag? SellTag => ItemTag.Foodstuff;
+    public override ItemTag? SellTag => ItemTag.Meat;
     public override ItemTag? BuyTag  => ItemTag.Tool;
     public override int ModiMentisCount => 7;
 
@@ -661,7 +661,7 @@ public class StewardArchetype : SettledArchetype
     public override string TradeModusMentisId => "stewardry";
     public override SocialCategory? Social => SocialCategory.Bourgeois;
     public override string RoleNoun => "steward";
-    public override ItemTag? SellTag => ItemTag.Craftware;
+    public override ItemTag? SellTag => ItemTag.Writing;
     public override ItemTag? BuyTag  => ItemTag.Foodstuff;
     public override int ModiMentisCount => 9;
     public override int AuthorityLevel => 1;
@@ -767,7 +767,7 @@ public class MerchantArchetype : SettledArchetype
     public override string TradeModusMentisId => "brokerage";
     public override SocialCategory? Social => SocialCategory.Urban;
     public override string RoleNoun => "merchant";
-    public override ItemTag? SellTag => ItemTag.Textile;
+    public override ItemTag? SellTag => ItemTag.Craftware;
     public override ItemTag? BuyTag  => ItemTag.Crop;
     public override int ModiMentisCount => 9;
     public override int AuthorityLevel => 1;

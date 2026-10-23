@@ -1,10 +1,11 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Tillage — ploughing, breaking and turning soil; the straight furrow and the ready ground.
-/// VerbAction-only.
+/// Will + VerbAction.
 /// </summary>
 public class TillageModusMentis : ModusMentis
 {
@@ -13,7 +14,8 @@ public class TillageModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads ground through the resistance it offers, sorting clay from loam by the pull and judging when soil is ready to break. Sets the body to steady, repetitive labour and holds a line straight across long work without flagging.";
     public override string SkillMeans       => "the breaking and turning of soil";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<DigVerb>("break the ground");
     public override string[] Organs        => new[] { "arms", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

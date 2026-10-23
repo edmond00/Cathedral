@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class CanecraftModusMentis : ModusMentis
     public override string MenuDescription =>
         "Cuts sugarcane low and fast with a heavy blade, strips it and stacks it before the sun climbs. Keeps a rhythm that saves the back, and knows how close the blade can come to the feet.";
     public override string SkillMeans       => "the cutting of cane low and fast with a heavy blade";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.ToAny("cut cane", typeof(GatherVerb), typeof(GrabVerb)).Yielding<World.Items.Sugarcane>();
     public override string[] Organs        => new[] { "arms", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;

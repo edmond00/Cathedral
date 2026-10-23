@@ -32,8 +32,8 @@ public class AnvilPointOfInterest : PointOfInterest
         : base(displayName, Lemma, descriptions, items, moods, isNatural) { }
 }
 
-/// <summary>A barrel.</summary>
-public class BarrelPointOfInterest : PointOfInterest
+/// <summary>A barrel. Something to sit on as well as to rummage through, so it is an <see cref="ISeat"/>.</summary>
+public class BarrelPointOfInterest : PointOfInterest, ISeat
 {
     /// <summary>The lemma this kind answers to. Derived from the class name and fixed here.</summary>
     public const string Lemma = "barrel";
@@ -697,8 +697,8 @@ public class BeetrootPointOfInterest : PointOfInterest
         : base(displayName, Lemma, descriptions, items, moods, isNatural) { }
 }
 
-/// <summary>A bench.</summary>
-public class BenchPointOfInterest : PointOfInterest
+/// <summary>A bench. An <see cref="ISeat"/>.</summary>
+public class BenchPointOfInterest : PointOfInterest, ISeat
 {
     /// <summary>The lemma this kind answers to. Derived from the class name and fixed here.</summary>
     public const string Lemma = "bench";
@@ -1086,8 +1086,8 @@ public class SagePointOfInterest : PointOfInterest
         : base(displayName, Lemma, descriptions, items, moods, isNatural) { }
 }
 
-/// <summary>A stool.</summary>
-public class StoolPointOfInterest : PointOfInterest
+/// <summary>A stool. An <see cref="ISeat"/>.</summary>
+public class StoolPointOfInterest : PointOfInterest, ISeat
 {
     /// <summary>The lemma this kind answers to. Derived from the class name and fixed here.</summary>
     public const string Lemma = "stool";

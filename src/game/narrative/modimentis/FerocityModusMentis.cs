@@ -1,10 +1,11 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Ferocity — savage overwhelming attack without reservation; a berserker who attacks at full force before thought can intervene.
-/// VerbAction-only.
+/// Will + VerbAction + Fighting.
 /// </summary>
 public class FerocityModusMentis : ModusMentis
 {
@@ -13,7 +14,8 @@ public class FerocityModusMentis : ModusMentis
     public override string MenuDescription =>
         "Presses an attack so hard the enemy is given no room to answer. Trades defence for momentum and keeps the body driving forward, favouring relentless assault over measured exchange.";
     public override string SkillMeans       => "the savage and overwhelming attack that leaves no room for defense";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Fighting };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action, ModusMentisFunction.Fighting };
+    public override WillTarget? Will => WillTarget.To<AttackVerb>("attack");
     // Fangs are beast, teeths are human: the pair belonged to no anatomy. The spleen is where the game
     // keeps rancour, which is what ferocity runs on.
     public override string[] Organs        => new[] { "fangs", "spleen" };

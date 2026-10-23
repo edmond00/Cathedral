@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class VantageModusMentis : ModusMentis
     public override string MenuDescription =>
         "Uses a high place as an instrument: reads the lie of the land, where the roads must run, where smoke is rising and what is moving below. Turns a climb into information rather than into a view.";
     public override string SkillMeans       => "the reading of a country from a height";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
+    public override WillTarget? Will => WillTarget.To<ClimbUpVerb>("climb to a height and look out");
     public override string[] Organs        => new[] { "eyes", "feet" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

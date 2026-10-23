@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 using Cathedral.Game.Scene;
 
@@ -13,7 +14,8 @@ public class PietyModusMentis : ModusMentis
     public override string MenuDescription =>
         "Keeps the observances because they are owed, not because they are watched. Prays, fasts and abstains on schedule, and orders decisions by something other than advantage, which is legible to strangers and reassuring to most of them.";
     public override string SkillMeans       => "the observance kept when nobody is counting";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
+    public override WillTarget? Will => WillTarget.To<AskBlessingVerb>("ask a blessing");
     public override string[] Organs        => new[] { "heart", "pineal_gland" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

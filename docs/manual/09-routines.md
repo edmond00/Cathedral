@@ -30,8 +30,9 @@ place.
 
 **No routine is learned on private ground.** Standing where one has no business is itself a trespass
 (see [VI §7](06-narration.md)), and a routine learned there would be a standing invitation back,
-walked with none of the risk. The one test serves both rules: ground that makes every act a crime is
-ground that teaches no routine, and a routine whose area has become private cannot be walked.
+walked with none of the risk. Private ground teaches no routine even where its householder has let
+the body stay ([VI §7](06-narration.md)): that leave lasts the visit, and a routine is walked on a
+later one, where nobody has given it. A routine whose area has become private cannot be walked.
 
 Nothing made during a visit is learned from either. A corpse, the wreck of broken furniture and what
 either holds are absent from the scene of the next visit, so a gathering upon them teaches nothing.

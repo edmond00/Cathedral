@@ -12,7 +12,7 @@ public sealed class Grain : ConsumableItem
     public override ItemSize Size      => ItemSize.Medium;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     public override bool IsHard => true;
-    public override List<ItemTag> Tags => new() { ItemTag.Crop };
+    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Grain };
     public override int PriceReference => 5;
     protected override HumorRichness Richness => HumorRichness.Hearty;
     protected override HumorRecipe Recipe => new HumorRecipe()

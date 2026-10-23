@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 using Cathedral.Game.Scene;
 
@@ -13,7 +14,8 @@ public class WanderlustModusMentis : ModusMentis
     public override string MenuDescription =>
         "Feels a road as an invitation and a horizon as a question. Restless in a place that is comfortable, and steadied by movement. Reads distance as an opportunity where others read it as a cost.";
     public override string SkillMeans       => "the pull that a road exerts";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
+    public override WillTarget? Will => WillTarget.To<VoyageTowardVerb>("take to the road");
     public override string[] Organs        => new[] { "legs", "pineal_gland" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
@@ -26,6 +28,7 @@ public class WanderlustModusMentis : ModusMentis
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {
         new(typeof(AreaMoveOutcome), () => new VoluptasHumor()),
+        new(typeof(LostWayOutcome), () => new VoluptasHumor()),
     };
 
     public override string PersonaPrompt => @"You are the inner voice of WANDERLUST, and you are already thinking about the next place.

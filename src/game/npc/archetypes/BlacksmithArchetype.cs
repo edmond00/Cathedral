@@ -12,7 +12,7 @@ public class BlacksmithArchetype : CraftsmanArchetype
     /// <summary>What asking this person about their work teaches.</summary>
     public override string TradeModusMentisId => "metalcraft";
     public override ItemTag? SellTag => ItemTag.Ironwork;
-    public override ItemTag? BuyTag  => ItemTag.Mineral;
+    public override ItemTag? BuyTag  => ItemTag.Ore;
     public override int    ModiMentisCount => 10;
     public override int    AuthorityLevel => 1;
 

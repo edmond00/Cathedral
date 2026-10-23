@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class NavigationModusMentis : ModusMentis
     public override string MenuDescription =>
         "Finds the way over open water: the stars, the sun's height at noon, the speed reckoned from a log line, the coast recognised from its shape. Knows where the ship is when no land is in sight.";
     public override string SkillMeans       => "the finding of the way over open water";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
+    public override WillTarget? Will => WillTarget.To<VoyageTowardVerb>("set a course over open water");
     public override string[] Organs        => new[] { "cerebrum", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;

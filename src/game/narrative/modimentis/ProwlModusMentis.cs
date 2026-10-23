@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -13,7 +14,8 @@ public class ProwlModusMentis : ModusMentis
     public override string MenuDescription =>
         "Moves through ground low, slow, and silent, keeping to shadow and cover while cataloguing everything that stirs. Patrols rather than travels, and prefers to see the whole place before the place sees it.";
     public override string SkillMeans       => "the silent patrolling that spots others before being seen";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<StalkVerb>("stalk unseen");
     public override string[] Organs        => new[] { "limbs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override bool ActsDiscretely => true;

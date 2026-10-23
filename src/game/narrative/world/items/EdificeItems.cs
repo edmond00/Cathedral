@@ -27,7 +27,7 @@ public sealed class Parchment : Item
     public override string ItemId      => "parchment";
     public override string DisplayName => "Parchment";
     public override string Description => "A sheet of scraped and whitened skin, ready for the pen";
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Writing };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Insignificant;
     public override int PriceReference => 6;
@@ -39,7 +39,7 @@ public sealed class Quill : Item
     public override string ItemId      => "quill";
     public override string DisplayName => "Quill";
     public override string Description => "A goose quill cut to a nib, its barbs stripped where the fingers hold it";
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Writing };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Insignificant;
     public override int PriceReference => 2;
@@ -51,7 +51,7 @@ public sealed class InkHorn : Item
     public override string ItemId      => "ink_horn";
     public override string DisplayName => "Ink Horn";
     public override string Description => "A cow's horn plugged with wax, half full of oak-gall ink gone thick at the bottom";
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Writing };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override int PriceReference => 5;
@@ -63,7 +63,7 @@ public sealed class WaxTablet : Item
     public override string ItemId      => "wax_tablet";
     public override string DisplayName => "Wax Tablet";
     public override string Description => "A pair of boards hinged together, their wax faces scratched with sums and smoothed again";
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Writing };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override int PriceReference => 4;
@@ -84,7 +84,7 @@ public sealed class Soap : Item
     public override string ItemId      => "soap";
     public override string DisplayName => "Soap";
     public override string Description => "A grey cake of tallow-and-ash soap that smells strongly of the lye in it";
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Chandlery, ItemTag.Surgery };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override int PriceReference => 3;
@@ -96,7 +96,7 @@ public sealed class Bandage : Item
     public override string ItemId      => "bandage";
     public override string DisplayName => "Bandage";
     public override string Description => "A rolled strip of boiled linen, clean and tightly wound";
-    public override List<ItemTag> Tags => new() { ItemTag.Textile };
+    public override List<ItemTag> Tags => new() { ItemTag.Textile, ItemTag.Surgery };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Insignificant;
     public override int PriceReference => 3;
@@ -123,7 +123,7 @@ public sealed class Wine : ConsumableItem
     public override string ItemId      => "wine";
     public override string DisplayName => "Wine";
     public override string Description => "A stoppered jug of red wine, rough and strong";
-    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Wine };
     public override int PriceReference => 12;
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass Weight => WeightClass.Medium;
@@ -136,6 +136,7 @@ public sealed class Wine : ConsumableItem
 public sealed class Incense : HerbItem
 {
     public override string ItemId      => "incense";
+    public override List<ItemTag> Tags => new() { ItemTag.Herb, ItemTag.Devotional };
     public override string DisplayName => "Incense";
     public override string Description => "A twist of paper holding grains of resin, sweet and smoky even unburnt";
     public override int PriceReference => 8;
@@ -149,7 +150,7 @@ public sealed class Manacles : Item
     public override string ItemId      => "manacles";
     public override string DisplayName => "Manacles";
     public override string Description => "A pair of iron cuffs joined by a short chain, the hinges stiff with rust";
-    public override List<ItemTag> Tags => new() { ItemTag.Ironwork };
+    public override List<ItemTag> Tags => new() { ItemTag.Ironwork, ItemTag.Arms };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Medium;
     public override int PriceReference => 14;

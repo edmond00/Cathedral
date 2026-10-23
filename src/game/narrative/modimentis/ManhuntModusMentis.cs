@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class ManhuntModusMentis : ModusMentis
     public override string MenuDescription =>
         "Tracks a person rather than a beast: reads where a fugitive will run, asks the right questions, notices the broken hedge and the stolen loaf. Thinks like the hunted to find them.";
     public override string SkillMeans       => "the tracking of a fugitive";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<TrackVerb>("track somebody down");
     public override string[] Organs        => new[] { "eyes", "legs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

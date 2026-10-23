@@ -71,7 +71,7 @@ public sealed class WoodenCrutch : Item
     public override WeightClass Weight       => WeightClass.Medium;
     public override ItemCategory Category => ItemCategory.Tool;
     public override int   UsageLevel   => 2;
-    public override List<ItemTag> Tags => new() { ItemTag.Wood };
+    public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Woodwork };
     public override CoinType PriceCoin => CoinType.Copper;
     public override int PriceReference => 3;
 }
@@ -85,7 +85,7 @@ public sealed class WalkingStaff : Item
     public override WeightClass Weight       => WeightClass.Medium;
     public override ItemCategory Category => ItemCategory.Tool;
     public override int   UsageLevel   => 3;
-    public override List<ItemTag> Tags => new() { ItemTag.Wood };
+    public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Woodwork };
     public override CoinType PriceCoin => CoinType.Copper;
     public override int PriceReference => 4;
 }
@@ -98,7 +98,7 @@ public sealed class PrayerBeads : WearableItem
     public override ItemSize Size           => ItemSize.Small;
     public override WeightClass Weight            => WeightClass.Insignificant;
     public override WearSlot Slot           => WearSlot.Neckwear;
-    public override List<ItemTag> Tags      => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags      => new() { ItemTag.Craftware, ItemTag.Devotional };
     public override CoinType PriceCoin      => CoinType.Copper;
     public override int PriceReference      => 3;
 
@@ -160,7 +160,7 @@ public sealed class MendingKit : Item
     public override WeightClass Weight       => WeightClass.Light;
     public override ItemCategory Category => ItemCategory.Tool;
     public override int   UsageLevel   => 3;
-    public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Textile };
+    public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Textile, ItemTag.Cloth };
     public override CoinType PriceCoin => CoinType.Copper;
     public override int PriceReference => 5;
 }

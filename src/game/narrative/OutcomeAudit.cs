@@ -101,10 +101,11 @@ public static class OutcomeAudit
                             foreach (var r in verb.FailureReports(scene, pov, actor, target))
                                 Record(producedBy, r.GetType(), verb.VerbId);
 
-                            // A wound is sampled from FailurePenalties rather than returned as an
-                            // outcome, so nothing in the reports lists shows that a verb can hurt you.
-                            if (verb.FailurePenalties(target).Any(w => w != null))
-                                Record(producedBy, typeof(WoundInflictionOutcome), verb.VerbId);
+                            // A penalty is drawn from FailurePenalties rather than returned as an
+                            // outcome, so nothing in the reports lists shows that a verb can hurt you,
+                            // lose you the way, waste the hour or cost you a thought.
+                            foreach (var penalty in verb.FailurePenalties(target))
+                                Record(producedBy, penalty.OutcomeType, verb.VerbId);
 
                             // ── The lesson ──────────────────────────────────────────
                             // Every successful verb teaches a modus mentis, and the grant is applied

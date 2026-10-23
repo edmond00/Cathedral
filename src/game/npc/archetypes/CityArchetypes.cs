@@ -18,7 +18,7 @@ public class CobblerArchetype : CraftsmanArchetype
 {
     public override string ArchetypeId => "cobbler";
     public override string TradeModusMentisId => "cobbling";
-    public override ItemTag? SellTag => ItemTag.Clothing;
+    public override ItemTag? SellTag => ItemTag.Footwear;
     public override ItemTag? BuyTag  => ItemTag.Pelt;
     public override int ModiMentisCount => 8;
     public override int AuthorityLevel => 1;
@@ -70,7 +70,7 @@ public class TailorArchetype : CraftsmanArchetype
     public override string ArchetypeId => "tailor";
     public override string TradeModusMentisId => "tailoring";
     public override ItemTag? SellTag => ItemTag.Clothing;
-    public override ItemTag? BuyTag  => ItemTag.Textile;
+    public override ItemTag? BuyTag  => ItemTag.Cloth;
     public override int ModiMentisCount => 8;
     public override int AuthorityLevel => 1;
     public override string RoleNoun => "tailor";
@@ -120,7 +120,7 @@ public class ChandlerArchetype : CraftsmanArchetype
 {
     public override string ArchetypeId => "chandler";
     public override string TradeModusMentisId => "chandlery";
-    public override ItemTag? SellTag => ItemTag.Craftware;
+    public override ItemTag? SellTag => ItemTag.Chandlery;
     public override ItemTag? BuyTag  => ItemTag.Foodstuff;
     public override int ModiMentisCount => 8;
     public override int AuthorityLevel => 1;
@@ -171,7 +171,7 @@ public class ButcherArchetype : CraftsmanArchetype
 {
     public override string ArchetypeId => "butcher";
     public override string TradeModusMentisId => "butchery";
-    public override ItemTag? SellTag => ItemTag.Foodstuff;
+    public override ItemTag? SellTag => ItemTag.Meat;
     public override ItemTag? BuyTag  => ItemTag.Pelt;
     public override int ModiMentisCount => 8;
     public override int AuthorityLevel => 1;
@@ -273,7 +273,7 @@ public class PotterArchetype : CraftsmanArchetype
 {
     public override string ArchetypeId => "potter";
     public override string TradeModusMentisId => "potcraft";
-    public override ItemTag? SellTag => ItemTag.Craftware;
+    public override ItemTag? SellTag => ItemTag.Pottery;
     public override ItemTag? BuyTag  => ItemTag.Mineral;
     public override int ModiMentisCount => 8;
     public override int AuthorityLevel => 1;
@@ -375,8 +375,8 @@ public class BarberArchetype : CraftsmanArchetype
 {
     public override string ArchetypeId => "barber";
     public override string TradeModusMentisId => "tooth_drawing";
-    public override ItemTag? SellTag => ItemTag.Tool;
-    public override ItemTag? BuyTag  => ItemTag.Craftware;
+    public override ItemTag? SellTag => ItemTag.Surgery;
+    public override ItemTag? BuyTag  => ItemTag.Herb;
     public override int ModiMentisCount => 8;
     public override int AuthorityLevel => 1;
     public override string RoleNoun => "barber";
@@ -481,8 +481,8 @@ public class LaundressArchetype : SettledArchetype
     public override string TradeModusMentisId => "laundering";
     public override SocialCategory? Social => SocialCategory.Urban;
     public override string RoleNoun => "laundress";
-    public override ItemTag? SellTag => ItemTag.Textile;
-    public override ItemTag? BuyTag  => ItemTag.Craftware;
+    public override ItemTag? SellTag => ItemTag.Cloth;
+    public override ItemTag? BuyTag  => ItemTag.Chandlery;
     public override int ModiMentisCount => 7;
     public override IReadOnlyList<string> CanIntroduceToArchetypes => new[] { "tailor", "innkeeper" };
     public override string IntroductionRelation => "a customer of mine";

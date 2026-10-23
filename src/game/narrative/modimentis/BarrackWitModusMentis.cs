@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class BarrackWitModusMentis : ModusMentis
     public override string MenuDescription =>
         "Talks the language of the guardroom: the grumble, the filthy joke, the nickname for the captain, the story everyone has heard and laughs at anyway. Makes soldiers trust you because you sound like one.";
     public override string SkillMeans       => "the talk of the guardroom";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Observation };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
+    public override WillTarget? Will => WillTarget.To<TalkSoldieringVerb>("talk soldiering");
     public override string[] Organs        => new[] { "tongue", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

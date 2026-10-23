@@ -10,13 +10,16 @@ namespace Cathedral.Game.Scene.Verbs;
 /// Accessible from any observation in the scene regardless of target.
 /// Difficulty is always 1 (overridden in the action executor; no critic malus).
 /// On success: queues a <see cref="GetUpTransitionOutcome"/> that signals world travel.
-/// On failure: no penalty, no damage — the scene loops back for another attempt.
+/// On failure: no penalty, no damage — the scene loops back for another attempt (<see cref="Verb.NoPenalty"/>).
 /// </summary>
 public sealed class GetUpVerb : Verb
 {
 
     public override string VerbId         => "get_up";
     public override string DisplayName    => "GET UP";
+
+    /// <summary>A failed attempt to rise loops the phase, and that is the whole of its cost: the phase has no exit to wander out of and no hour to waste.</summary>
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target) => NoPenalty;
     public override int    BaseDifficulty => 1;
 
     /// <summary>A phase transition. There is no act here yet for an implement to lend dice to.</summary>

@@ -8,12 +8,12 @@
 # means is narrowed to those the willingness rules let through. `means none` hands the draw back to
 # the RNG, so the button can only appear if that narrowing kept Discipline out.
 #
-# Buttons are asserted as "] <goal>" — the tail of "[Snatch ●] steal …" — which the prose never
+# Buttons are asserted as "] <goal>" — the tail of "[Knack ●] steal …" — which the prose never
 # contains.
 #
 # --organs pineal_gland=0: one try, no iterative thinking — a retry would step around the refusal
-# this script is about (see thinking_iterates.cli and thinking_rule_probe.cli for the retries).
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Room" --period dawn --observe-only "Test Chest" --grant-mm discipline,snatch,scientific_research --means-only discipline --organs pineal_gland=0
+# this script is about (see thinking_iterates.cli and thinking_click_rules_not_retried.cli for the retries).
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Room" --period dawn --observe-only "Test Chest" --grant-mm discipline,knack,scientific_research --means-only discipline --organs pineal_gland=0
 
 wait
 click menu New
@@ -39,7 +39,7 @@ expect-not ] steal
 means none
 click keyword 0
 choose 0
-choose 2
+choose scientific_research
 advance 12 180
 expect ] steal
 

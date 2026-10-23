@@ -70,17 +70,17 @@ public class SlipIntoPointOfInterest : ConnectorPointOfInterest
     };
 
     /// <summary>
-    /// What a failure costs — mostly getting stuck and scraped, which is the honest failure mode of
-    /// forcing a body through a gap meant for smoke.
+    /// What a failure costs — mostly getting stuck, scraped and an hour working loose, which is the
+    /// honest failure mode of forcing a body through a gap meant for smoke.
     /// </summary>
-    public IReadOnlyList<Wound?> FailurePenalties() => Kind switch
+    public IReadOnlyList<FailurePenalty> FailurePenalties() => Kind switch
     {
-        SlipKind.Chimney => new Wound?[]
+        SlipKind.Chimney => new FailurePenalty[]
         {
-            null, null,
+            FailurePenalty.WasteTime, new ScrapeWound(),
             new ContusionWound(), new CutWound(), new ShoulderDislocationLeftWound(),
         },
-        _ => new Wound?[] { null, null, null, new CutWound(), new ContusionWound() },
+        _ => new FailurePenalty[] { FailurePenalty.WasteTime, FailurePenalty.WasteTime, new ScrapeWound(), new CutWound(), new ContusionWound() },
     };
 
     private static string LemmaFor(SlipKind kind) => kind switch

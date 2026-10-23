@@ -14,6 +14,7 @@ namespace Cathedral.Game.Narrative.World.Items;
 public sealed class DyedCloth : TextileItem
 {
     public override string ItemId      => "dyed_cloth";
+    public override List<ItemTag> Tags => new() { ItemTag.Textile, ItemTag.Cloth };
     public override string DisplayName => "Dyed Cloth";
     public override string Description => "A folded length of wool dyed a deep madder red";
     public override int PriceReference => 20;
@@ -22,6 +23,7 @@ public sealed class DyedCloth : TextileItem
 public sealed class Sailcloth : TextileItem
 {
     public override string ItemId      => "sailcloth";
+    public override List<ItemTag> Tags => new() { ItemTag.Textile, ItemTag.Cloth };
     public override string DisplayName => "Sailcloth";
     public override string Description => "A heavy roll of tarred canvas, stiff and coarse";
     public override int PriceReference => 16;
@@ -30,6 +32,7 @@ public sealed class Sailcloth : TextileItem
 public sealed class CottonCloth : TextileItem
 {
     public override string ItemId      => "cotton_cloth";
+    public override List<ItemTag> Tags => new() { ItemTag.Textile, ItemTag.Cloth };
     public override string DisplayName => "Cotton Cloth";
     public override string Description => "A bolt of plain white cotton, light and close-woven";
     public override int PriceReference => 14;
@@ -43,7 +46,7 @@ public sealed class Amphora : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Large;
     public override WeightClass Weight => WeightClass.Heavy;
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Pottery };
     public override int PriceReference => 6;
 }
 
@@ -79,7 +82,7 @@ public sealed class Abacus : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass Weight => WeightClass.Light;
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Woodwork, ItemTag.Writing };
     public override int PriceReference => 10;
 }
 
@@ -91,7 +94,7 @@ public sealed class Signet : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Insignificant;
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Writing };
     public override int PriceReference => 35;
 }
 
@@ -103,7 +106,7 @@ public sealed class PromissoryNote : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Insignificant;
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Writing };
     public override int PriceReference => 20;
 }
 
@@ -145,7 +148,7 @@ public sealed class Tar : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Medium;
-    public override List<ItemTag> Tags => new() { ItemTag.Mineral };
+    public override List<ItemTag> Tags => new() { ItemTag.Mineral, ItemTag.Fuel };
     public override int PriceReference => 4;
 }
 
@@ -183,7 +186,7 @@ public sealed class BelayingPin : Item
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override int UsageLevel => 2;
-    public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Wood };
+    public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Wood, ItemTag.Woodwork };
     public override int PriceReference => 3;
 }
 
@@ -233,7 +236,7 @@ public sealed class MeatPie : ConsumableItem
     public override string ItemId      => "meat_pie";
     public override string DisplayName => "Meat Pie";
     public override string Description => "A crusted pie of minced mutton and onion, still warm";
-    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Bakery, ItemTag.Meat };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Food;
@@ -248,7 +251,7 @@ public sealed class Mead : ConsumableItem
     public override string ItemId      => "mead";
     public override string DisplayName => "Mead";
     public override string Description => "A jug of honey mead, golden and heady";
-    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Ale };
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass Weight => WeightClass.Medium;
     public override ConsumableType ConsumableType => ConsumableType.Drink;
@@ -263,7 +266,7 @@ public sealed class Beer : ConsumableItem
     public override string ItemId      => "beer";
     public override string DisplayName => "Hopped Beer";
     public override string Description => "A jug of bitter hopped beer, clearer than ale";
-    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Ale };
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass Weight => WeightClass.Medium;
     public override ConsumableType ConsumableType => ConsumableType.Drink;
@@ -307,7 +310,7 @@ public sealed class SealingWax : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Insignificant;
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Chandlery, ItemTag.Writing };
     public override int PriceReference => 3;
 }
 
@@ -319,7 +322,7 @@ public sealed class Letter : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Insignificant;
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Writing };
     public override int PriceReference => 1;
 }
 
@@ -331,7 +334,7 @@ public sealed class Ledgerbook : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass Weight => WeightClass.Light;
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Writing };
     public override int PriceReference => 22;
 }
 
@@ -343,7 +346,7 @@ public sealed class Scroll : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Insignificant;
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Writing };
     public override int PriceReference => 8;
 }
 
@@ -355,6 +358,6 @@ public sealed class Writ : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Insignificant;
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Writing };
     public override int PriceReference => 12;
 }

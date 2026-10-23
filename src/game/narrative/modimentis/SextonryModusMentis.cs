@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class SextonryModusMentis : ModusMentis
     public override string MenuDescription =>
         "Keeps a burial ground: digs the graves straight and deep, keeps the register of who lies where, mows the grass and minds the gate. Knows every grave and whose it is.";
     public override string SkillMeans       => "the keeping of a burial ground";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<DigVerb>("dig a grave").On<Scene.GravePointOfInterest>();
     public override string[] Organs        => new[] { "arms", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

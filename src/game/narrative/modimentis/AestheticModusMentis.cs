@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -13,7 +14,8 @@ public class AestheticModusMentis : ModusMentis
     public override string MenuDescription =>
         "Resolves a scene into composition before meaning: proportion, colour, balance, the play of light and space. Registers harmony as pleasing and disorder as a mild offence, and attends to craftsmanship whether it is present or absent.";
     public override string SkillMeans => "keen aesthetic sense";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
+    public override WillTarget? Will => WillTarget.To<ContemplateVerb>("contemplate something beautiful");
     public override string[] Organs => new[] { "eyes", "pineal_gland" };
 
     /// <summary>Stands on letters, number or institutions.</summary>

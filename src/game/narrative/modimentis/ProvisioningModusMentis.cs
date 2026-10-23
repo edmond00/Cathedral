@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,10 +13,11 @@ public class ProvisioningModusMentis : ModusMentis
     public override string MenuDescription =>
         "Keeps a garrison fed: so much grain per man per day, so much salt, so much firewood, so many days until the next supply. Knows what spoils first and what can be stretched.";
     public override string SkillMeans       => "the keeping of stores to feed many";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
+    public override WillTarget? Will => WillTarget.To<ProposeToBuyVerb>("lay in stores");
     public override string[] Organs        => new[] { "paunch", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
-    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction | AnatomyCapability.Speech;
 
     public override string PersonaTone     => "a quartermaster who thinks in sacks per day";
     public override string PersonaReminder  => "quartermaster";

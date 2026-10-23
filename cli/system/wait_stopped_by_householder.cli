@@ -1,0 +1,39 @@
+# wait_stopped_by_householder — a wait through the night in somebody's house ends at night
+#
+# Sitting on the storage barrel in a village pantry in the evening, choosing to wait until morning.
+# The player is trespassing and the house has a householder, so the wait cannot run through the
+# night: it stops at night, when they come in and find the player (ConfrontationKind.FoundWaiting).
+# Night is not crossed into dawn, so no day turns.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type village --location-id 1 --start-area pantry --period evening --observe-only Storage
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal sit_and_wait
+advance 12 180
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+
+wait
+click period morning
+wait
+click continue
+advance 12 180
+
+expect-outcome time_shift
+expect-state where "period=Night day=0"
+expect-state where "confronted=FoundWaiting"
+quit

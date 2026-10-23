@@ -247,9 +247,10 @@ would carry the traveller to the end of it.
 
 The world keeps a calendar of **days**, and the day is the unit every span is expressed in.
 
-**The calendar advances at exactly two occasions:** the completion of a journey, by the whole of its
-duration, and the completion of a stint of hired work, by the days worked. Narration, conversation
-and combat are free of it — a day may hold any amount of either.
+**The calendar advances at exactly three occasions:** the completion of a journey, by the whole of
+its duration; the completion of a stint of hired work, by the days worked; and, within a visit, the
+period's passing from night into dawn, by one day each time it does. Every other act of narration,
+conversation and combat is free of it — a day may hold any amount of them.
 
 The advance happens **before** the destination is built, so that anything the destination reckons
 against the calendar reckons against the post-journey date.
@@ -266,6 +267,9 @@ The order is deliberate: healing restores what a wound took, and the term of lif
 shortened by a wound to the heart, so a heart wound that closed upon the journey must not still be
 counted against the term a moment later.
 
+A day turned within a visit settles neither: the sweep for healing and the reckoning of age wait for
+the return to the map like any other.
+
 **This is the whole of what the map settles.** Wounds and spent humors are not waited for here — both
 are reckoned by a standing question, wherever the body happens to be ([Chapter I
 §7](01-anatomy.md#7-wounds)). Age is the one end of a life that keeps to a juncture, because the
@@ -278,10 +282,25 @@ night — and they cycle, night returning to dawn.
 
 The period is not tracked continuously. **Each place has its own hour of arrival**, fixed for it
 once and for all and always one of the five periods of daylight, never night; every visit opens at
-that hour. Thereafter the period is moved only by acts that wait: sitting out an interval advances it
-by one, and an act that waits for something to happen walks it forward a period at a time until the
-thing happens or the day is exhausted. A routine is the exception, opening at the hour it was learned
-at (see [Chapter IX](09-routines.md)).
+that hour. Thereafter the period is moved only by acts that wait, and by failures that waste time
+(see [Chapter VI](06-narration.md)): sitting out an interval lasts until whichever of the five other
+periods the sitter chooses, once the sitting has succeeded, and an act that waits for something to
+happen walks it forward a period at a time until the thing happens or the day is exhausted. A
+failure that wastes time advances it by one. Whichever moves it, a passage from night into dawn turns
+the calendar by a day ([§7](#7-the-calendar)). A routine is the exception, opening at the hour it was
+learned at (see [Chapter IX](09-routines.md)).
+
+Sitting out an interval requires a seat. Nearly every place has one to three in its open ground — a
+stump, a flat rock, a bench against a wall — and indoors any bench, stool, barrel or crate serves,
+so a store, a cellar or a chapel is as good a place to wait in as a square. A room without one, as
+most bedrooms and every passage are, admits no sitting out. Hiding requires a place of concealment
+instead.
+
+**Night in another's house.** Where the body is trespassing in a building that has anybody to come
+home to it, a wait cannot run through the night. Sitting out, or a failure that wastes the hour, that
+brings the period to night brings the householder too: they come into the room and find the body
+there, and a wait chosen to last beyond the night stops at night instead. What follows is given in
+[Chapter VI §7](06-narration.md). Hiding brings nobody, concealment being the whole of its purpose.
 
 The period matters because it settles the state of a place. Where each inhabitant of a location
 stands is decided by their schedule against the period; a building's entry is shut at night; and

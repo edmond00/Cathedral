@@ -59,6 +59,6 @@ public class SlipIntoVerb : Verb
         return new[] { new AreaMoveOutcome(slip.Other(pov.Where)) };
     }
 
-    public override IReadOnlyList<Wound?> FailurePenalties(Element? target)
-        => target is SlipIntoPointOfInterest slip ? slip.FailurePenalties() : NoPenalty;
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target)
+        => target is SlipIntoPointOfInterest slip ? slip.FailurePenalties() : LoseFocusOnly;
 }

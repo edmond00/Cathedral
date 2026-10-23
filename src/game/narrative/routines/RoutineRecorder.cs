@@ -46,10 +46,14 @@ public class RoutineRecorder
     }
 
     /// <summary>
-    /// Whether a routine may be learned — and walked — here: anywhere the player may stand without
-    /// trespassing. The same test the narration header shows the player.
+    /// Whether a routine may be learned — and walked — here: anywhere that is nobody's private room.
+    ///
+    /// <para>Deliberately <see cref="Area.IsPrivate"/> and not <see cref="PrivacyModel.IsTrespassing"/>.
+    /// A householder may let the player stay the night (<c>Scene.ToleratedSections</c>), which makes
+    /// standing there lawful for that visit — but a routine is walked on a later visit, where nobody
+    /// has said any such thing.</para>
     /// </summary>
-    public static bool IsRecordable(Area area) => !PrivacyModel.IsTrespassing(area);
+    public static bool IsRecordable(Area area) => !area.IsPrivate;
 
     // ── The five moments ──────────────────────────────────────────────────────
 

@@ -305,6 +305,33 @@ public class Scene
     public Dictionary<System.Guid, Dialogue.Affinity.CriminalAffinityType> HeardCrimes { get; } = new();
 
     /// <summary>
+    /// The householders who came at nightfall and found the player waiting in their house, by
+    /// <c>SceneNpc.Id</c> — each one also in <see cref="DisplacedNpcs"/>, standing where they found
+    /// them. What makes their confrontation <see cref="ConfrontationKind.FoundWaiting"/> and its
+    /// conversation <c>found_waiting</c>. One visit's business, like the two above.
+    /// </summary>
+    public HashSet<System.Guid> FoundWaitingBy { get; } = new();
+
+    /// <summary>
+    /// The buildings whose householder, having found the player waiting there at night, let them
+    /// stay. Standing in one is no longer trespass (<see cref="PrivacyModel.IsTrespassing"/>), for the
+    /// rest of the visit and for that building only: the rooms are still somebody's, so taking from
+    /// them is still theft and forcing a door in them is still a crime. Not persisted — a scene is
+    /// rebuilt on every visit, and leave to stay the night is not leave to come back.
+    /// </summary>
+    public HashSet<Section> ToleratedSections { get; } = new();
+
+    /// <summary>
+    /// The period a successful sit-and-wait lasts until, chosen by the player in the time box before
+    /// its outcome is narrated; <see cref="Verbs.SitAndWaitVerb"/> reads it for its time shift, and the
+    /// commit clears it. Null means the next period, which is what a wait gets when nothing asked.
+    /// </summary>
+    public TimePeriod? WaitUntil { get; set; }
+
+    /// <summary>The section <paramref name="area"/> belongs to, or null for an area in none.</summary>
+    public Section? SectionOf(Area area) => Sections.FirstOrDefault(s => s.Areas.Contains(area));
+
+    /// <summary>
     /// NPCs who have just walked in and have not yet been narrated, in arrival order. Drained by
     /// <c>NarrativeController.GenerateObservationsAsync</c>, which opens the next phase on them —
     /// ahead of a corpse and ahead of the standing-threat opener, because somebody crossing a room to
@@ -362,44 +389,51 @@ public class Scene
     /// Produces a <see cref="SceneView"/> for the given point of view: the area, its PoIs and their
     /// items, the NPCs present at this hour, and the areas reachable from here.
     /// </summary>
-    public SceneView View(PoV pov, PartyMember? actor = null)
+    public SceneView View(PoV pov, PartyMember? actor = null) => View(pov, actor, Verbs);
+
+    /// <summary>
+    /// The same view with only <paramref name="verbs"/> expanded. <see cref="ActionPathPlanner"/>
+    /// reads a view per state it searches and wants only the verbs that move the body, pass the hour
+    /// or satisfy the will — the full set is several times slower in a city, for nothing.
+    /// </summary>
+    public SceneView View(PoV pov, PartyMember? actor, IReadOnlyList<Verb> verbs)
     {
         var entries = new List<SceneViewEntry>();
 
         // 1. Current area
-        entries.Add(BuildEntry(pov.Where, pov, actor));
+        entries.Add(BuildEntry(pov.Where, pov, actor, verbs));
 
         // 2. Points of interest in current area
         foreach (var poi in pov.Where.PointsOfInterest)
         {
-            entries.Add(BuildEntry(poi, pov, actor));
+            entries.Add(BuildEntry(poi, pov, actor, verbs));
             foreach (var itemElement in poi.Items)
-                entries.Add(BuildEntry(itemElement, pov, actor));
+                entries.Add(BuildEntry(itemElement, pov, actor, verbs));
         }
 
         // 3. NPCs present at current area and time
         foreach (var npc in GetNpcsAt(pov.Where, pov.When))
-            entries.Add(BuildEntry(npc, pov, actor));
+            entries.Add(BuildEntry(npc, pov, actor, verbs));
 
         // 4. Reachable areas (for movement verbs)
         foreach (var reachable in GetReachableAreas(pov.Where))
-            entries.Add(BuildEntry(reachable, pov, actor));
+            entries.Add(BuildEntry(reachable, pov, actor, verbs));
 
         // Always include focused element if not already listed
         if (pov.Focus != null && entries.All(e => e.Source.Id != pov.Focus.Id))
-            entries.Add(BuildEntry(pov.Focus, pov, actor));
+            entries.Add(BuildEntry(pov.Focus, pov, actor, verbs));
 
         return new SceneView(pov.Where, pov.When, entries, pov.Focus);
     }
 
-    private SceneViewEntry BuildEntry(Element element, PoV pov, PartyMember? actor = null)
+    private SceneViewEntry BuildEntry(Element element, PoV pov, PartyMember? actor, IReadOnlyList<Verb> verbs)
     {
-        var verbs    = new List<VerbAction>();
+        var actions = new List<VerbAction>();
 
-        foreach (var verb in Verbs)
-            verbs.AddRange(verb.ExpandViews(this, pov, element, actor));
+        foreach (var verb in verbs)
+            actions.AddRange(verb.ExpandViews(this, pov, element, actor));
 
-        return new SceneViewEntry(element, verbs);
+        return new SceneViewEntry(element, actions);
     }
 
     // ── Pending get-up transition (set by GetUpVerb on success) ─────────────
@@ -426,6 +460,20 @@ public class Scene
     /// on the next frame to start a fight.
     /// </summary>
     public FightRequest? PendingFightRequest { get; set; }
+
+    // ── Pending failure penalties (set by the outcomes a failed act can draw) ──
+
+    /// <summary>
+    /// Set by <see cref="LostWayOutcome"/>; consumed by <see cref="NarrativeController"/> after the
+    /// action's reports apply, which then leaves the location on the CONTINUE that closes the segment.
+    /// </summary>
+    public bool PendingLostWay { get; set; }
+
+    /// <summary>
+    /// Noetic points to take away, added to by <see cref="FocusLostOutcome"/>; consumed by
+    /// <see cref="NarrativeController"/> after the action's reports apply.
+    /// </summary>
+    public int PendingFocusLoss { get; set; }
 }
 
 /// <summary>

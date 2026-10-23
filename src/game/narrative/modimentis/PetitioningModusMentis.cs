@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class PetitioningModusMentis : ModusMentis
     public override string MenuDescription =>
         "Asks the powerful for things: approaches them, presents itself and its case, frames the request in their interest, names the precedent, and asks again after every delay. Knows that a petition turned down today may be granted next season.";
     public override string SkillMeans       => "the asking of the powerful for favours";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
+    public override WillTarget? Will => WillTarget.To<PetitionVerb>("ask a favour of the powerful");
     public override string[] Organs        => new[] { "tongue", "heart" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

@@ -1,10 +1,11 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Clambering — claw-hooked climbing over bark, stone, and anything with purchase; ascent as escape and vantage.
-/// VerbAction-only.
+/// Will + VerbAction.
 /// </summary>
 public class ClamberingModusMentis : ModusMentis
 {
@@ -13,7 +14,8 @@ public class ClamberingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Hooks claw and arm into bark, stone, or timber and goes up, reading every surface for purchase. Treats height as both refuge and vantage, and inclines toward the climb where others see a wall.";
     public override string SkillMeans       => "claw-hooked climbing over bark and stone";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<ClimbUpVerb>("climb up");
     // Was claws + arms — a beast organ and a human one, so no anatomy could learn it. A beast clambers
     // with all four.
     public override string[] Organs        => new[] { "claws", "legs" };

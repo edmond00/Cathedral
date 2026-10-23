@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class WatchkeepingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Stands a watch properly: stays awake, walks the round at uneven intervals, looks where nothing is and listens for what has stopped. Knows the hour before dawn is when they come.";
     public override string SkillMeans       => "the standing of a watch through the night";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<SitAndWaitVerb>("stand a watch");
     public override string[] Organs        => new[] { "eyes", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

@@ -1,0 +1,43 @@
+# wait_until_chosen — a successful wait asks how long, then shows the hours passing
+#
+# Sitting on the Test Bench at dawn: the dice pass, and the time box opens asking which period to
+# wait until, every period but dawn a button. Choosing evening plays the passage there; its Continue
+# lets the outcome be narrated, and the time shift lands on evening, not on the next period. No
+# night is crossed, so the calendar stays on day 0.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Yard" --period dawn --observe-only "Test Bench"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal sit_and_wait
+advance 12 180
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+
+# The dice are past: the box asks, and does not narrate until it is answered.
+wait
+expect-state time "box=choosing"
+regions
+click period evening
+wait
+expect-state time "box=settled destination=Evening"
+click continue
+advance 12 180
+
+expect-outcome time_shift
+expect Time passes: Evening
+expect-state where "period=Evening day=0"
+quit

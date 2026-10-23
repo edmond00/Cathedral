@@ -58,6 +58,9 @@ public sealed class AreaMoveOutcome : Outcome
 {
     private readonly Area _destination;
 
+    /// <summary>Where the body ends up — read by <see cref="ActionPathPlanner"/>, which plans on it without applying it.</summary>
+    public Area Destination => _destination;
+
     public AreaMoveOutcome(Area destination)
         : base($"Moved to: {destination.DisplayName}", OutcomeSeverity.Neutral,
                $"made my way to {NeutralNarration.AreaPhrase(destination.DisplayName)}")
@@ -84,6 +87,9 @@ public sealed class AreaMoveOutcome : Outcome
 public sealed class TimeShiftOutcome : Outcome
 {
     private readonly TimePeriod _destination;
+
+    /// <summary>The hour it ends at — read by <see cref="ActionPathPlanner"/>.</summary>
+    public TimePeriod Destination => _destination;
 
     public TimeShiftOutcome(TimePeriod destination)
         : base($"Time passes: {destination.Label()}", OutcomeSeverity.Neutral,
@@ -299,6 +305,9 @@ public sealed class DoorUnlockOutcome : Outcome
 {
     private readonly DoorPointOfInterest _door;
     private readonly Area                _destination;
+
+    /// <summary>The room the forced door opens on — read by <see cref="ActionPathPlanner"/>.</summary>
+    public Area Destination => _destination;
 
     public DoorUnlockOutcome(DoorPointOfInterest door, Area destination)
         : base($"Door unlocked — entered {destination.DisplayName}", OutcomeSeverity.Neutral,

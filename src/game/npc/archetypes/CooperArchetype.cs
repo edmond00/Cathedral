@@ -11,8 +11,8 @@ public class CooperArchetype : CraftsmanArchetype
 
     /// <summary>What asking this person about their work teaches.</summary>
     public override string TradeModusMentisId => "cellarcraft";
-    public override ItemTag? SellTag => ItemTag.Craftware;
-    public override ItemTag? BuyTag  => ItemTag.Wood;
+    public override ItemTag? SellTag => ItemTag.Cooperage;
+    public override ItemTag? BuyTag  => ItemTag.Timber;
     public override int    ModiMentisCount => 8;
     public override int    AuthorityLevel => 1;
 

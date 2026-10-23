@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class VinicultureModusMentis : ModusMentis
     public override string MenuDescription =>
         "Works the vine through its year: pruning to two buds, tying the canes, thinning the leaves to let the sun at the bunches. Smells when the grapes are ready before the sugar can be tasted.";
     public override string SkillMeans       => "the tending of the vine from pruning to vintage";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.ToAny("pick grapes", typeof(GatherVerb), typeof(GrabVerb)).Yielding<World.Items.Grape>();
     public override string[] Organs        => new[] { "hands", "nose" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;

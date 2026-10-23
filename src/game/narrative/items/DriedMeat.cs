@@ -11,7 +11,7 @@ public sealed class DriedMeat : ConsumableItem
     public override string Description => "A strip of salted dark meat, hard and leathery, smelling of brine";
     public override ConsumableType ConsumableType => ConsumableType.Food;
     public override bool IsHard => true;
-    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Meat };
     public override int PriceReference => 10;
     protected override HumorRichness Richness => HumorRichness.Rich;
     protected override HumorRecipe Recipe => new HumorRecipe()

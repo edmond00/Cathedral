@@ -171,6 +171,14 @@ related MMs fatal, so the coverage table is really about spotting the ones scrap
 report also prints a **per-anatomy** table — what each anatomy can actually learn, source by source,
 which is a much smaller set than the catalogue-wide one and the only one R11 reads.
 
+The **wills** section fails (✗) on two shares, not one: wills in the catalogue (25–33%), and wills
+among **the lessons the offered acts teach** (20–36%) — every act the sampled locations offer counts
+its `ResolveLesson` once, so `grab`, offered everywhere, weighs as it does in play. The second is the
+one a player feels and the first cannot see: it read 56% while the catalogue read a third, because
+nearly every verb's own lesson had been made a will of that verb. Below it the 25 lessons offered
+most, wills marked. Before making a modus mentis a will, look it up there: one near the top moves
+the learned share by points.
+
 Run it after adding or editing a modus mentis, a fighting skill, an organ, or a body region.
 
 ### Checking the item catalogue
@@ -183,7 +191,8 @@ dotnet run -- --item-audit
 ```
 
 It prints the census by `ItemCategory` and subcategory, the wearable table (max armour dice per body
-section, garments per social standing), liquid/vessel reachability, trade-tag coverage, the weight
+section, garments per social standing), liquid/vessel reachability, trade-tag coverage (each tag's sellers, buyers and items — read it
+when a trader's shelf looks wrong for their craft, see "What a trader sells" in `src/game/CLAUDE.md`), the weight
 distribution and what it means at each backbone tier. Then it warns about:
 
 - duplicate `ItemId`s or `DisplayName`s, and any `Info` line that repeats the description (which

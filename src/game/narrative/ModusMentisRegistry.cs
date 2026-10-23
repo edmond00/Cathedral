@@ -110,14 +110,16 @@ public class ModusMentisRegistry
             .ToList();
     }
     
+    /// <summary>Every modus mentis that may observe — the Observation function or a will.</summary>
     public List<ModusMentis> GetObservationModiMentis()
     {
-        return GetModiMentisByFunction(ModusMentisFunction.Observation);
+        return _modiMentisById.Values.Where(s => s.CanObserve).ToList();
     }
-    
+
+    /// <summary>Every modus mentis that may think — the Thinking function or a will.</summary>
     public List<ModusMentis> GetThinkingModiMentis()
     {
-        return GetModiMentisByFunction(ModusMentisFunction.Thinking);
+        return _modiMentisById.Values.Where(s => s.CanThink).ToList();
     }
     
     public List<ModusMentis> GetActionModiMentis()

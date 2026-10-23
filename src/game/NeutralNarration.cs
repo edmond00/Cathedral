@@ -211,6 +211,156 @@ public static class NeutralNarration
         return $"{opener} {NounPhrase(FirstPerson(targetPhrase))}. I want to {FirstPerson(goalPhrase)}, but I find no way to do it, and let it go.";
     }
 
+    // ── Reconsider (an act already offered, thought over again by another mind) ──
+
+    /// <summary>The reconsidering mind keeps the act, and gives it to another means.</summary>
+    public static string ReasoningReconsidered(string goalPhrase, string skillMeans)
+        => $"I think again about how to {FirstPerson(goalPhrase)}. It is worth doing, but another way would serve better: "
+         + $"I will do it relying on {FirstPerson(skillMeans)}.";
+
+    /// <summary>The reconsidering mind wants no part of the act. The act offered before still stands.</summary>
+    public static string ReasoningReconsiderRefused(string goalPhrase)
+        => $"I think again about how to {FirstPerson(goalPhrase)}, and I want no part of it.";
+
+    /// <summary>No other means could carry the act out, before the click or on it. The act offered before still stands.</summary>
+    public static string ReasoningReconsiderNoMeans(string goalPhrase, string? reason)
+        => $"I think again about how to {FirstPerson(goalPhrase)}, but no other way to do it comes to me"
+         + (string.IsNullOrWhiteSpace(reason) ? "." : $": {reason!.Trim().TrimEnd('.')}.");
+
+    // ── Will (ModusMentisFunction.Will, ActionPathPlanner) ─────────────────────────
+
+    /// <summary>
+    /// The way to a will's goal as one clause, from the first step to the goal itself: "go up the
+    /// stair, then unlock and open the treasury door". A path of more than four steps keeps its first
+    /// two and its goal and says the rest in a phrase — the steps between are places to walk through,
+    /// and a list of them is what the rewrite garbles.
+    /// </summary>
+    public static string WillWay(Cathedral.Game.Scene.ActionPath path, Cathedral.Game.Narrative.PartyMember? actor = null)
+    {
+        var steps = path.Steps.Select(s => WillStep(s, actor)).ToList();
+        if (steps.Count <= 4) return string.Join(", then ", steps);
+        return $"{steps[0]}, then {steps[1]}, and from there find my way on until I can {steps[^1]}";
+    }
+
+    /// <summary>
+    /// One step of a will's path as a phrase, with a person it acts on named rather than pronounced.
+    /// A verb's verbatim says "attack him", which is enough on a button beside the man it was offered
+    /// on and nothing in a sentence about the way to a goal: said of somebody else in the room, "I must
+    /// attack him first" names the wrong man, and the rewrite tried to make sense of it. The person's
+    /// label (<see cref="NpcPhrase"/>, the role until introduced) takes the pronoun's place.
+    /// </summary>
+    public static string WillStep(Cathedral.Game.Scene.PathStep step, Cathedral.Game.Narrative.PartyMember? actor = null)
+    {
+        var phrase = FirstPerson(step.Verbatim);
+        if (step.Action.Target is not Cathedral.Game.Scene.SceneNpc { Entity: var npc }) return phrase;
+        // Only the first pronoun is the person; a later one belongs to the rest of the phrase.
+        return PersonPronoun.Replace(phrase, NpcPhrase(npc, actor), 1);
+    }
+
+    private static readonly Regex PersonPronoun = new(@"\b(him|her|it|them|he|she|they)\b");
+
+    /// <summary>
+    /// Why a will attends to the object of its path's first step, appended to the observation of it:
+    /// "Through it I could go up the stair, then unlock and open the treasury door." When the object
+    /// offers the goal itself, the reason is that the goal is here.
+    /// </summary>
+    public static string WillObservationReason(Cathedral.Game.Scene.ActionPath path, Cathedral.Game.Narrative.PartyMember? actor = null)
+        => path.Steps.Count == 1
+            ? $"Here I could {WillStep(path.Goal, actor)}, which is what I want."
+            : $"Through it I could {WillWay(path, actor)}, which is what I want.";
+
+    /// <summary>
+    /// The steps of a will's path before its goal, as one clause: "go up the stair, then walk into the
+    /// solar". Shortened past three steps as <see cref="WillWay"/> is.
+    /// </summary>
+    public static string WillApproach(Cathedral.Game.Scene.ActionPath path, Cathedral.Game.Narrative.PartyMember? actor = null)
+    {
+        var steps = path.Approach.Select(s => WillStep(s, actor)).ToList();
+        if (steps.Count <= 3) return string.Join(", then ", steps);
+        return $"{steps[0]}, then {steps[1]}, and from there find my way on";
+    }
+
+    /// <summary>What a will wants, said first: its purpose, then the act that does it here.</summary>
+    private static string WillWant(string purpose, Cathedral.Game.Scene.ActionPath path, Cathedral.Game.Narrative.PartyMember? actor)
+        => $"I want to {FirstPerson(purpose)}: to {WillStep(path.Goal, actor)}.";
+
+    /// <summary>
+    /// The reasoning of a will proposing its path's first step when that step is not yet the goal:
+    /// what it wants, the way there, and the step it takes now. Said as one chain rather than as the
+    /// ordinary "I want to {step}" with the way appended, which wanted the step twice and named the
+    /// goal as an afterthought. When the step is the goal, the ordinary <see cref="ReasoningChain"/> says it.
+    ///
+    /// <para>The goal is said once, after the will's purpose. "The way to it is to {the whole path}"
+    /// said it twice, and the rewrite merged the two into the tail alone — "Let the time pass, and the
+    /// way to it is to walk down the craft row" — with no want left in it. Measured against three
+    /// alternatives on the shipped model (17 of 18 rewrites kept the goal and the step, against 16).</para>
+    ///
+    /// <para>The goal is named again at the end, after the step: a voice whose temper is the goal's own
+    /// (Sloth, wanting to sit) still swallowed the want into "Who insists? Let the time pass", and the
+    /// closing "and then sit on the bench row" is what survived it. 23 of 24 rewrites kept goal and step
+    /// against 19 without it, and the goal in all 24.</para>
+    /// </summary>
+    public static string WillReasoningChain(string targetPhrase, Cathedral.Game.Scene.ActionPath path, string skillMeans,
+                                            string purpose, Cathedral.Game.Narrative.PartyMember? actor = null)
+    {
+        var parts = new List<string>
+        {
+            $"I notice {NounPhrase(FirstPerson(targetPhrase))}.",
+            WillWant(purpose, path, actor),
+            $"To get there I must first {WillApproach(path, actor)}, so I will {WillStep(path.First, actor)} now"
+                + (string.IsNullOrWhiteSpace(skillMeans) ? "" : $", relying on {FirstPerson(skillMeans)}")
+                + $", and then {WillStep(path.Goal, actor)}.",
+        };
+        return string.Join(" ", parts);
+    }
+
+    /// <summary>A will with nothing to do in this place: what it wants, and that only leaving offers it.</summary>
+    public static string WillNotHere(string purpose)
+        => $"I want to {FirstPerson(purpose)}, and there is no way to do it in this place; I would have to leave it to find one.";
+
+    /// <summary>The focus a will refuses because it has nothing to do in this place at all.</summary>
+    public static string WillObservationNotHere(string targetPhrase, string purpose)
+        => $"I am not interested in {targetPhrase}. {WillNotHere(purpose)}";
+
+    /// <summary>
+    /// The focus a will refuses because the object is not on its way, when nothing it could turn to
+    /// instead offers the first step either: it names the step, so the way on is not a secret.
+    /// </summary>
+    public static string WillObservationNotThisWay(string targetPhrase, Cathedral.Game.Scene.ActionPath path,
+                                                   Cathedral.Game.Narrative.PartyMember? actor = null)
+        => $"I am not interested in {targetPhrase}: what I want is to {WillStep(path.Goal, actor)}, "
+         + $"and the way to it begins elsewhere, for I must {WillStep(path.First, actor)} first.";
+
+    /// <summary>
+    /// The reasoning of a will shown an object that is no step of its path. The want comes first:
+    /// said after a long description and as "it is no way to {goal}", the rewrite read the goal as
+    /// dismissed — "it's no time to sit and watch the day pass", "not now, not here" — in half its
+    /// rewrites, against two in eighteen this way.
+    ///
+    /// <para>The way there is not named. This thinking proposes nothing, and a step said here ("to get
+    /// there I must walk down the craft row first") came back as a resolve — "I will walk down the craft
+    /// row first" — with no act behind it, in 23 of 24 rewrites. Ending on "I leave it be" says that
+    /// nothing follows; the goal was kept in all 24.</para>
+    /// </summary>
+    public static string WillReasoningNotThisWay(string targetPhrase, Cathedral.Game.Scene.ActionPath path, string purpose,
+                                                 Cathedral.Game.Narrative.PartyMember? actor = null)
+        => $"{WillWant(purpose, path, actor)} I notice {NounPhrase(FirstPerson(targetPhrase))}, but that does nothing for it, and I leave it be.";
+
+    /// <summary>The reasoning of a will that has nothing to do in this place.</summary>
+    public static string WillReasoningNotHere(string targetPhrase, string purpose)
+        => $"I notice {NounPhrase(FirstPerson(targetPhrase))}. {WillNotHere(purpose)}";
+
+    /// <summary>
+    /// The whole observation of a will that opened a phase (no other observer was held) and found
+    /// nothing in view on its way.
+    /// </summary>
+    public static string WillNothing(Cathedral.Game.Scene.ActionPath? path, string purpose,
+                                     Cathedral.Game.Narrative.PartyMember? actor = null)
+        => path == null
+            ? $"Nothing here draws my attention. {WillNotHere(purpose)}"
+            : $"Nothing here draws my attention: what I want is to {WillStep(path.Goal, actor)}, "
+            + $"and I must {WillStep(path.First, actor)} first.";
+
     // ── Iterative thinking and doubt (ThinkingIterationsStat, DoubtStat) ──────────
 
     /// <summary>

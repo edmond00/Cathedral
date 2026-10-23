@@ -1,10 +1,11 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Vaulting — the legs' explosive answer to obstacles: the leap, the hurdle, the fence taken in stride.
-/// VerbAction-only.
+/// Will + VerbAction.
 /// </summary>
 public class VaultingModusMentis : ModusMentis
 {
@@ -13,7 +14,8 @@ public class VaultingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Takes fences, ditches, and low walls in stride, planting a hand or a foot and swinging the body over. Judges an obstacle at a glance for the leap it wants, and prefers going over to going around.";
     public override string SkillMeans       => "the leaping over obstacles without breaking stride";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<CrossVerb>("leap across");
     public override string[] Organs        => new[] { "lower_limbs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

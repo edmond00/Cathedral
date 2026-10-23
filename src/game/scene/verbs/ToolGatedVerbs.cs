@@ -23,6 +23,15 @@ namespace Cathedral.Game.Scene.Verbs;
 public abstract class ExtractionVerb : Verb
 {
     /// <summary>
+    /// Work that yields nothing has still been worked: the hour goes into it, and the back with it.
+    /// The heavier trades (mine, cut_wood) name their own injuries.
+    /// </summary>
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target) => new FailurePenalty[]
+    {
+        FailurePenalty.WasteTime, FailurePenalty.WasteTime, FailurePenalty.LoseFocus, new StrainWound(),
+    };
+
+    /// <summary>
     /// Every extraction verb is a tool in a hand — an axe, a pick, a rod, a spade — so the whole
     /// family is declared here. A beast digs with its claws, which is the <c>digging</c> modus mentis,
     /// not this.
@@ -125,9 +134,9 @@ public class MineVerb : ExtractionVerb
         => $"work {DefiniteTarget(target)} for ore";
 
     /// <summary>Rock comes down as well as out. Rarely, it comes down on you.</summary>
-    public override IReadOnlyList<Wound?> FailurePenalties(Element? target) => new Wound?[]
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target) => new FailurePenalty[]
     {
-        null, null, null, null,
+        FailurePenalty.WasteTime, FailurePenalty.WasteTime, FailurePenalty.LoseFocus, new StrainWound(),
         new ContusionWound(), new BrokenHandLeftWound(),
     };
 }
@@ -164,9 +173,9 @@ public class CutWoodVerb : ExtractionVerb
         => $"cut wood from {DefiniteTarget(target)}";
 
     /// <summary>An axe that skips off wet bark goes somewhere. Usually into the ground.</summary>
-    public override IReadOnlyList<Wound?> FailurePenalties(Element? target) => new Wound?[]
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target) => new FailurePenalty[]
     {
-        null, null, null, null,
+        FailurePenalty.WasteTime, FailurePenalty.WasteTime, FailurePenalty.LoseFocus, new StrainWound(),
         new CutWound(), new BrokenFootLeftWound(),
     };
 }
@@ -255,9 +264,9 @@ public class BreakVerb : Verb
             : System.Array.Empty<Outcome>();
 
     /// <summary>Swinging a hammer at furniture sends pieces of it back at you.</summary>
-    public override IReadOnlyList<Wound?> FailurePenalties(Element? target) => new Wound?[]
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target) => new FailurePenalty[]
     {
-        null, null, null,
+        FailurePenalty.WasteTime, FailurePenalty.LoseFocus, new StrainWound(),
         new CutWound(), new ContusionWound(), new BrokenHandRightWound(),
     };
 }

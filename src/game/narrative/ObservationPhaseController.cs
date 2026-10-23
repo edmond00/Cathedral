@@ -67,6 +67,27 @@ public class ObservationPhaseController
     /// </summary>
     public Func<bool> MustCommit { get; set; } = () => false;
 
+    /// <summary>
+    /// The scene and point of view the narration stands at, for a will to plan from
+    /// (<see cref="Rules.Choice.WillPriority"/>). Null outside a scene — tooling — where a will observes
+    /// as any observer does. Read from the narrative controller, which owns both.
+    /// </summary>
+    public Func<(Scene.Scene Scene, Scene.PoV PoV)?> Standing { get; set; } = () => null;
+
+    /// <summary>The first of <paramref name="pool"/> on the will's way, with the shortest path through it.</summary>
+    private static (NarrativeAnchor Anchor, Scene.ActionPath Way)? FirstOnWay(
+        IEnumerable<NarrativeAnchor> pool, ModusMentis mm, (Scene.Scene Scene, Scene.PoV PoV) at, PartyMember actor, Scene.ActionPath path)
+    {
+        foreach (var anchor in pool)
+            if (Rules.Choice.WillPriority.PathOn(anchor, mm, at.Scene, at.PoV, actor, path) is { } way)
+                return (anchor, way);
+        return null;
+    }
+
+    /// <summary>The standing a will plans from, when <paramref name="mm"/> is a will steering this phase.</summary>
+    private (Scene.Scene Scene, Scene.PoV PoV)? WillStanding(ModusMentis mm)
+        => Standing() is { } st && Rules.Choice.WillPriority.Steers(mm, st.Scene) ? st : null;
+
     public ObservationPhaseController(
         LlamaServerManager llamaServer,
         ModusMentisSlotManager slotManager,
@@ -173,6 +194,21 @@ public class ObservationPhaseController
             foreach (var a in introAnchors) candidates.Remove(a);
         }
 
+        // A will opens a phase only when no other observer is held (PickFirstObservationModusMentis),
+        // and then attends to the one object on its way, or to nothing.
+        if (WillStanding(modusMentis) is { } willAt)
+        {
+            var path  = Rules.Choice.WillPriority.PathOf(modusMentis, willAt.Scene, willAt.PoV, actingMember);
+            var onWay = path == null ? null : FirstOnWay(candidates, modusMentis, willAt, actingMember, path);
+            _observationExecutor.ResetSlot(slotId);
+            if (onWay is not { } found)
+                await AppendKeywordlessAsync(sentences, slotId, modusMentis, NeutralNarration.WillNothing(path, modusMentis.Will!.Purpose, actingMember), ct, part);
+            else
+                await AppendObservationAsync(sentences, allKeywords, slotId, modusMentis, found.Anchor, withTransition: false, locationId, ledger, ct,
+                    part: part, trailingNeutral: NeutralNarration.WillObservationReason(found.Way, actingMember));
+            return await CloseOverallAsync();
+        }
+
         // The first real observation is mandatory: an introduction that retired an object has made the
         // ledger non-empty, but the persona still may not decline here.
         var first = await SelectObservationObjectAsync(candidates, modusMentis, ledger, locationId, ct, isReminescence, overall, area, offerDecline: false);
@@ -201,31 +237,37 @@ public class ObservationPhaseController
                               && !Rules.Choice.SpeakingPriority.IsPerson(first));
         }
 
-        if (ensurePersonKeyword && !isReminescence)
-            await AppendPersonObservationIfMissingAsync(sentences, allKeywords, slotId, modusMentis,
-                allOutcomes, locationId, ledger, ct, overall, area, part);
+        return await CloseOverallAsync();
 
-        if (sentences.Count == 0)
+        // The arrival guarantee and the block itself, shared by the will's path and the ordinary one.
+        async Task<List<NarrationBlock>> CloseOverallAsync()
         {
-            preview?.Reset();
-            Console.WriteLine("ObservationPhaseController: All sentences failed.");
-            return new List<NarrationBlock>();
+            if (ensurePersonKeyword && !isReminescence)
+                await AppendPersonObservationIfMissingAsync(sentences, allKeywords, slotId, modusMentis,
+                    allOutcomes, locationId, ledger, ct, overall, area, part);
+
+            if (sentences.Count == 0)
+            {
+                preview?.Reset();
+                Console.WriteLine("ObservationPhaseController: All sentences failed.");
+                return new List<NarrationBlock>();
+            }
+
+            var block = new NarrationBlock(
+                Type: NarrationBlockType.Observation,
+                ModusMentis: modusMentis,
+                Text: string.Join(" ", sentences.Select(s => s.Text)),
+                Keywords: allKeywords,
+                Actions: null,
+                SourceObservationType: ObservationType.Overall,
+                Sentences: sentences
+            );
+
+            Console.WriteLine($"ObservationPhaseController: Overall observation complete ({sentences.Count} sentences, {allKeywords.Count} keywords)");
+            var resultBlocks = new List<NarrationBlock> { block };
+            FinalizePreview(preview, commit, resultBlocks, part);
+            return resultBlocks;
         }
-
-        var block = new NarrationBlock(
-            Type: NarrationBlockType.Observation,
-            ModusMentis: modusMentis,
-            Text: string.Join(" ", sentences.Select(s => s.Text)),
-            Keywords: allKeywords,
-            Actions: null,
-            SourceObservationType: ObservationType.Overall,
-            Sentences: sentences
-        );
-
-        Console.WriteLine($"ObservationPhaseController: Overall observation complete ({sentences.Count} sentences, {allKeywords.Count} keywords)");
-        var resultBlocks = new List<NarrationBlock> { block };
-        FinalizePreview(preview, commit, resultBlocks, part);
-        return resultBlocks;
     }
 
     /// <summary>
@@ -299,8 +341,10 @@ public class ObservationPhaseController
         // The pool a follow-up — or a replacement — may draw from: everything this phase has not yet
         // observed, minus the clicked object's name-twins (so the persona cannot shift to an identical
         // one), with duplicates collapsed.
+        // Built only where it is drawn from: a will that keeps its focus draws from nothing, and under
+        // --observe-only a pool without the pinned object would report the flag as missed.
         var focusName = GetNeutralName(focusOutcome);
-        var followUpCandidates = ChoiceUnits(currentNode.GetAllDirectConcreteOutcomes(), ledger, isReminescence)
+        List<NarrativeAnchor> FollowUpPool() => ChoiceUnits(currentNode.GetAllDirectConcreteOutcomes(), ledger, isReminescence)
             .Where(o => !ReferenceEquals(o, focusOutcome)
                      && !GetNeutralName(o).Equals(focusName, StringComparison.OrdinalIgnoreCase))
             .ToList();
@@ -309,6 +353,38 @@ public class ObservationPhaseController
         var sentences = new List<NarrationSentence>();
         string? firstText;
         NarrativeAnchor firstObserved;
+
+        // A will keeps the focus only on the object of its path's first step, and otherwise turns to
+        // that object — or, with nothing on its way in view, refuses and says what it wants instead.
+        if (!isReminescence && WillStanding(observationModusMentis) is { } willAt)
+        {
+            var path = Rules.Choice.WillPriority.PathOf(observationModusMentis, willAt.Scene, willAt.PoV, actingMember);
+            if (path == null)
+                return await BuildNotInterestedBlockAsync(slotId, observationModusMentis, focusPhrase, isReminescence, ct, preview: preview, commit: commit, part: part,
+                    neutralOverride: NeutralNarration.WillObservationNotHere(focusPhrase, observationModusMentis.Will!.Purpose));
+
+            if (Rules.Choice.WillPriority.PathOn(focusOutcome, observationModusMentis, willAt.Scene, willAt.PoV, actingMember, path) is { } through)
+            {
+                Console.WriteLine($"ObservationPhaseController: [{observationModusMentis.DisplayName}] wills it — '{focusOutcome.DisplayName}' is on its way.");
+                await AppendObservationAsync(sentences, allKeywords, slotId, observationModusMentis, focusOutcome, withTransition: false, locationId, ledger, ct,
+                    part: part, trailingNeutral: NeutralNarration.WillObservationReason(through, actingMember));
+            }
+            else
+            {
+                if (FirstOnWay(FollowUpPool(), observationModusMentis, willAt, actingMember, path) is not { } onWay)
+                    return await BuildNotInterestedBlockAsync(slotId, observationModusMentis, focusPhrase, isReminescence, ct, preview: preview, commit: commit, part: part,
+                        neutralOverride: NeutralNarration.WillObservationNotThisWay(focusPhrase, path, actingMember));
+
+                Console.WriteLine($"ObservationPhaseController: [{observationModusMentis.DisplayName}] wills it — turned from '{focusPhrase}' to '{onWay.Anchor.DisplayName}', which is on its way.");
+                await AppendKeywordlessAsync(sentences, slotId, observationModusMentis,
+                    NeutralNarration.ObservationTurnedAway(focusPhrase), ct, part);
+                await AppendObservationAsync(sentences, allKeywords, slotId, observationModusMentis, onWay.Anchor, withTransition: true, locationId, ledger, ct,
+                    part: part, trailingNeutral: NeutralNarration.WillObservationReason(onWay.Way, actingMember), turnedAwayFrom: focusOutcome);
+            }
+            return CloseFocus();
+        }
+
+        var followUpCandidates = FollowUpPool();
 
         // 0. Keep focus or lose interest? The new Modus Mentis may turn away from the clicked object.
         var keeps = await AskKeepFocusAsync(observationModusMentis, focusOutcome, focusPhrase, ct, isReminescence, overall, area);
@@ -366,27 +442,33 @@ public class ObservationPhaseController
             followUpCandidates, new List<NarrativeAnchor> { firstObserved }, firstText, locationId, ledger, ct, isReminescence, overall, area, part,
             siblingsFirst: zoomedIn);
 
-        if (sentences.Count == 0)
+        return CloseFocus();
+
+        // The block, shared by the will's path and the ordinary one.
+        List<NarrationBlock> CloseFocus()
         {
-            preview?.Reset();
-            Console.WriteLine("ObservationPhaseController: All focus sentences failed.");
-            return new List<NarrationBlock>();
+            if (sentences.Count == 0)
+            {
+                preview?.Reset();
+                Console.WriteLine("ObservationPhaseController: All focus sentences failed.");
+                return new List<NarrationBlock>();
+            }
+
+            var block = new NarrationBlock(
+                Type: NarrationBlockType.Observation,
+                ModusMentis: observationModusMentis,
+                Text: string.Join(" ", sentences.Select(s => s.Text)),
+                Keywords: allKeywords,
+                Actions: null,
+                SourceObservationType: ObservationType.Focus,
+                Sentences: sentences
+            );
+
+            Console.WriteLine($"ObservationPhaseController: Focus observation complete ({sentences.Count} sentences, {allKeywords.Count} keywords)");
+            var resultBlocks = new List<NarrationBlock> { block };
+            FinalizePreview(preview, commit, resultBlocks, part);
+            return resultBlocks;
         }
-
-        var block = new NarrationBlock(
-            Type: NarrationBlockType.Observation,
-            ModusMentis: observationModusMentis,
-            Text: string.Join(" ", sentences.Select(s => s.Text)),
-            Keywords: allKeywords,
-            Actions: null,
-            SourceObservationType: ObservationType.Focus,
-            Sentences: sentences
-        );
-
-        Console.WriteLine($"ObservationPhaseController: Focus observation complete ({sentences.Count} sentences, {allKeywords.Count} keywords)");
-        var resultBlocks = new List<NarrationBlock> { block };
-        FinalizePreview(preview, commit, resultBlocks, part);
-        return resultBlocks;
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────
@@ -751,6 +833,11 @@ public class ObservationPhaseController
 
         var usable = observation.Where(mm => !member.IsModusMentisBroken(mm)).ToList();
         if (usable.Count > 0) observation = usable;
+
+        // A will looks only for its own way, so it never opens a phase while anything else could:
+        // the opening observation is the narration's survey of where it stands.
+        var general = observation.Where(mm => !mm.IsWill).ToList();
+        if (general.Count > 0) observation = general;
 
         var inSensory = member.GetMemoryModule(MemoryModuleType.Sensory)?.FilledModiMentis.ToHashSet()
                         ?? new HashSet<ModusMentis>();
@@ -1247,9 +1334,10 @@ public class ObservationPhaseController
         CancellationToken ct,
         LlmPreviewSession? preview = null,
         Action<List<NarrationBlock>>? commit = null,
-        PreviewPart? part = null)
+        PreviewPart? part = null,
+        string? neutralOverride = null)
     {
-        var neutral = NeutralNarration.ObservationNotInterested(focusPhrase, isReminescence);
+        var neutral = neutralOverride ?? NeutralNarration.ObservationNotInterested(focusPhrase, isReminescence);
         string text;
         try
         {

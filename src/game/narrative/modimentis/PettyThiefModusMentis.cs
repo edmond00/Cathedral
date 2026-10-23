@@ -1,10 +1,11 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Petty Thief — the small lift, the picked purse; weaned on busy fairs and careless travellers.
-/// VerbAction-only.
+/// Will + VerbAction.
 /// </summary>
 public class PettyThiefModusMentis : ModusMentis
 {
@@ -13,7 +14,8 @@ public class PettyThiefModusMentis : ModusMentis
     public override string MenuDescription =>
         "Watches for the quick lift: the loose purse, the unattended trinket, the palmed small thing. Keeps the hands ready to take unseen, and inclines toward the minor theft over the bold one.";
     public override string SkillMeans       => "the picking of pockets and small thefts";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<StealVerb>("steal something");
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 using Cathedral.Game.Dialogue.Tree;
 
@@ -14,7 +15,8 @@ public class EnterpriseModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads goods, routes, and demand for where profit sits, tracking where wares run cheap and where they sell dear. Inclines reasoning toward the venture, the margin, and the chance worth taking.";
     public override string SkillMeans       => "the understanding of trade, markets and foreign goods";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
+    public override WillTarget? Will => WillTarget.ToAny("do business", typeof(ProposeToBuyVerb), typeof(ProposeToSellVerb));
     public override string[] Organs        => new[] { "cerebrum", "tongue" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>

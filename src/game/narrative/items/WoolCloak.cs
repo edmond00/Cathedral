@@ -10,7 +10,7 @@ public sealed class WoolCloak : WearableItem
     public override string Description      => "A heavy earth-brown wool cloak, weather-stained and well-worn";
     public override ItemSize Size           => ItemSize.Large;
     public override WearSlot Slot           => WearSlot.Outerwear;
-    public override List<ItemTag> Tags => new() { ItemTag.Clothing };
+    public override List<ItemTag> Tags => new() { ItemTag.Clothing, ItemTag.Woollens };
     public override int PriceReference => 20;
 
     // Heavy enough to soften a glancing blow — but it is a blanket with a clasp, not armour.

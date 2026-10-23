@@ -1,18 +1,18 @@
 # iterative thinking — a refused proposal is followed, in the same thinking, by another try
 #
 # A pineal gland of 1 gives one retry (ThinkingIterationsStat) and no doubt (DoubtStat needs 2).
-# The goal draw is pinned to examine and the first means to Snatch, which the coded willingness rule
+# The goal draw is pinned to examine and the first means to Knack, which the coded willingness rule
 # refuses ("I want to act, not to stand and observe"). With a retry left the same mind thinks again:
-# examine comes back, since a means for it is untried, and as a second attempt at a refused goal it
-# is carried out by a means able to — Hunt, at seed 42 — and not refused again. One thinking, one
-# button.
+# examine comes back at once, since other means are able to carry it out, and it is carried out by
+# one of those — Butchery, at seed 42 — which is not asked whether it would rather not. One thinking,
+# one button.
 # Without the retry (pineal_gland=0, see thinking_refused_goal_per_mind.cli) the thinking ends on the
 # refusal and it is the next thinking that reaches examine.
 #
-# --means-only snatch cannot hold on the retry, whose pool has Snatch crossed off; that miss is the
+# --means-only knack cannot hold on the retry, whose pool has Knack crossed off; that miss is the
 # point, hence allow-flag-miss.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Crown" --period dawn --observe-only "Test Giant Tree" --grant-mm snatch,woodcraft,scientific_research --means-only snatch --organs pineal_gland=1
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Crown" --period dawn --observe-only "Test Giant Tree" --grant-mm knack,woodcraft,scientific_research --means-only knack --organs pineal_gland=1
 
 wait
 click menu New
@@ -26,7 +26,7 @@ strategy succeed
 goal examine
 advance 12 180
 
-# Think with Ripelore: Snatch refuses, the mind acknowledges it and tries again, and the retry
+# Think with Ripelore: Knack refuses, the mind acknowledges it and tries again, and the retry
 # reaches the button.
 click keyword 0
 choose 0
@@ -35,7 +35,7 @@ advance 12 180
 expect I want to act, not to stand and
 expect That will not do, and I think again
 expect another way
-expect ] discretely examine the test giant tree closely
+expect ] examine the test giant tree closely
 expect-not But is it truly wise
 
 allow-flag-miss --goal-only

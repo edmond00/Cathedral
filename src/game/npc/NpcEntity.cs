@@ -134,6 +134,19 @@ public class NpcEntity : INpcEntity
     public bool LeadToPremisesGranted { get; set; }
 
     /// <summary>
+    /// Set when this householder, having found the player waiting in their house at night, agreed to
+    /// let them stay (<c>found_waiting</c>). The controller turns it into the house's tolerance for
+    /// the rest of the visit (<c>Scene.ToleratedSections</c>) once the conversation closes.
+    /// </summary>
+    public bool ToleratesTrespass { get; set; }
+
+    /// <summary>
+    /// Set when this householder, having found the player waiting in their house at night, would not
+    /// have them stay (<c>found_waiting</c>). The controller ends the visit on it.
+    /// </summary>
+    public bool ShowsTheDoor { get; set; }
+
+    /// <summary>
     /// Set to true by a "caught red-handed" dialogue when the NPC demands combat
     /// instead of accepting an apology or lie. Checked by the game controller
     /// after dialogue ends to transition into fight mode.

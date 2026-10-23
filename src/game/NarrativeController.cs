@@ -100,6 +100,19 @@ public class NarrativeController
     // Unified dice-roll overlay (animation + humor modifiers + hit-testing).
     private readonly DiceRollComponent _dice = new();
 
+    /// <summary>
+    /// The box that shows the hours passing (and, for sitting and waiting, asks how many). Modal over
+    /// the narration like the dice box; <see cref="_afterTimeBox"/> is what its Continue resumes.
+    /// </summary>
+    private readonly TimePassageBox _timeBox = new();
+    private Action? _afterTimeBox;
+
+    /// <summary>
+    /// Set when the passage of the action being committed was already shown — a chosen wait plays it
+    /// before its narration — so the commit does not play it a second time.
+    /// </summary>
+    private bool _passagePlayed;
+
     // In-flight roll (main path): the evaluation to narrate and the current (humor-modified) result.
     // The actual outcome is generated only once the player presses the dice CONTINUE — see
     // OnDiceRollContinue → GenerateOutcomePreviewAsync — so no narration is produced during the roll.
@@ -281,6 +294,7 @@ public class NarrativeController
         _dice.OnButtonHover   = PlayHoverSound;
         _dice.OnButtonClick   = PlayClickSound;
         _dice.OnResultChanged = OnDiceOutcomeFlipped;
+        _timeBox.OnTick       = () => _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
         // Calculate content width dynamically: terminal width - margins - scrollbar
         var layout = new NarrativeLayout(
             terminal.Width, 
@@ -335,6 +349,7 @@ public class NarrativeController
         _observationController = new ObservationPhaseController(llamaServer, slotManager, _worldContext)
         {
             MustCommit = () => _scene?.Phase is NarrationPhase.ChildhoodReminescence or NarrationPhase.GetUp,
+            Standing   = () => _scene != null && _pov != null ? (_scene, _pov) : null,
         };
         _thinkingExecutor = thinkingExecutor;
         _actionExecutor = actionExecutor;
@@ -434,6 +449,7 @@ public class NarrativeController
         _narrationState.ResetForNewNode();
         if (!refillNoetic) _narrationState.ThinkingAttemptsRemaining = kept;
         _observationLedger.Clear();
+        Cathedral.Game.Scene.ActionPathPlanner.Forget();
         _proposalLedger.Clear();
         _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
     }
@@ -484,6 +500,7 @@ public class NarrativeController
         _activePartyMember = _protagonist;
         _memberNoeticPoints.Clear();
         _observationLedger.Clear();
+        Cathedral.Game.Scene.ActionPathPlanner.Forget();
         _arrivalObservationPending = arrivalPeriod != null;
         // New session — any focus left over from an earlier one is stale.
         _openingFocus   = openingFocus;
@@ -532,6 +549,7 @@ public class NarrativeController
         _activePartyMember = _protagonist;
         _memberNoeticPoints.Clear();
         _observationLedger.Clear();
+        Cathedral.Game.Scene.ActionPathPlanner.Forget();
         _proposalLedger.Clear();
         _openingFocus   = null;
         _openingFocusMM = null;
@@ -583,7 +601,7 @@ public class NarrativeController
     /// False outside a real location.
     /// </summary>
     public bool IsTrespassing
-        => _scene?.Phase == NarrationPhase.Exploration && _pov != null && PrivacyModel.IsTrespassing(_pov.Where);
+        => _scene?.Phase == NarrationPhase.Exploration && _pov != null && PrivacyModel.IsTrespassing(_scene, _pov.Where);
 
     /// <summary>
     /// A coded refusal shown without re-voicing — no modus mentis to voice it, or the rewrite came
@@ -1104,10 +1122,9 @@ public class NarrativeController
     }
 
     /// <summary>
-    /// The context the coded action rules judge <paramref name="action"/> in: witnesses (when the act is
-    /// illegal), threat, and a confronting witness. Shared by the click (<c>ActionRulesChecker.Check</c>)
-    /// and iterative thinking's probe ahead of it (<see cref="ProbeActionRules"/>), so the two cannot
-    /// judge the same act differently. Reads the scene and draws nothing.
+    /// The context the coded action rules judge <paramref name="action"/> in on the click
+    /// (<c>ActionRulesChecker.Check</c>): witnesses (when the act is illegal), threat, and a confronting
+    /// witness. Reads the scene and draws nothing.
     /// </summary>
     private Narrative.Rules.ActionRuleContext BuildActionRuleContext(ParsedNarrativeAction action)
     {
@@ -1128,9 +1145,10 @@ public class NarrativeController
 
         // A witness confronting you: a drawn-in witness who came for you, or anyone in sight on
         // private ground. An enemy in the room outranks them, as everywhere else.
-        var confronter = (_scene != null && _pov != null && threatContext.Level != ThreatLevel.Visual)
-            ? ConfrontationSelector.Confronter(_scene, _pov, _protagonist)
+        var confrontation = (_scene != null && _pov != null)
+            ? ConfrontationSelector.Current(_scene, _pov, _protagonist)
             : null;
+        var confronter = confrontation is { IsWitness: true } ? confrontation.Npc : null;
 
         return new Narrative.Rules.ActionRuleContext(
             action, _activePartyMember, _scene, _pov, witnessContext, threatContext)
@@ -1139,15 +1157,101 @@ public class NarrativeController
         };
     }
 
+
     /// <summary>
-    /// Iterative thinking's question to the coded rules, asked while the thinking is still choosing:
-    /// the refusal message the click would give, or null when the act would pass. The rules that read
-    /// a combined item are not asked (<c>ActionRulesChecker.Probe</c>).
+    /// The action rules asked ahead of the click, for Reconsider: the refusal message the click would
+    /// give, or null when the act would pass. The rules that read a combined item are not asked
+    /// (<c>ActionRulesChecker.Probe</c>).
     /// </summary>
     private string? ProbeActionRules(ParsedNarrativeAction action)
     {
         var result = Narrative.Rules.ActionRulesChecker.Probe(BuildActionRuleContext(action));
         return result.Passed ? null : (result.ErrorMessage ?? "");
+    }
+
+    /// <summary>
+    /// Whether an act on screen may be reconsidered: a noetic point to spend, a thinking modus mentis
+    /// to do it, and not in the childhood reminescence or the get-up phase, whose one act has one means.
+    /// </summary>
+    private bool CanReconsider()
+        => _narrationState.ThinkingAttemptsRemaining > 0
+           && _scene?.Phase != NarrationPhase.ChildhoodReminescence
+           && _scene?.Phase != NarrationPhase.GetUp
+           && _activePartyMember.GetThinkingModiMentis().Count > 0;
+
+    /// <summary>
+    /// Reconsider (<see cref="ThinkingExecutor.ReconsiderAsync"/>): <paramref name="thinkingModusMentis"/>
+    /// thinks over an act already offered, and when it keeps it, gives it to another means able to carry it
+    /// out on the click. The new act is a thinking block of its own, and the old button greys out
+    /// (<see cref="ParsedNarrativeAction.Superseded"/>); when the mind wants no part of it, or no other
+    /// means could, only the thought is added and the old button stands. One noetic point either way.
+    /// </summary>
+    private async Task ExecuteReconsiderAsync(ModusMentis thinkingModusMentis, ParsedNarrativeAction previous)
+    {
+        try
+        {
+            Console.WriteLine($"NarrativeController: Reconsidering '{previous.ActionText}' with {thinkingModusMentis.DisplayName}");
+            _previewSession.Reset();
+
+            var response = await _thinkingExecutor.ReconsiderAsync(
+                thinkingModusMentis, previous, _currentNode, _activePartyMember.GetActionModiMentis(),
+                _worldContext, _locationId, _activePartyMember, _scene, _pov, ProbeActionRules,
+                _previewSession, CancellationToken.None);
+
+            var action = response.Actions.FirstOrDefault();
+            var origin = previous.ChainOrigin?.ChainOrigin;
+            var blocks = response.Segments.Select(seg => new NarrationBlock(
+                Type: NarrationBlockType.Thinking,
+                ModusMentis: seg.ModusMentis,
+                Text: seg.Text,
+                Keywords: null,
+                Actions: action != null && ReferenceEquals(seg, response.Segments[^1]) ? response.Actions : null,
+                ChainOrigin: origin)).ToList();
+            if (action != null) action.ChainOrigin = blocks[^1];
+
+            void CommitReconsider()
+            {
+                if (action != null)
+                {
+                    previous.Superseded = true;
+                }
+                foreach (var block in blocks)
+                {
+                    _scrollBuffer.AddBlock(block);
+                    _narrationState.AddBlock(block);
+                }
+                _ambianceEngine?.PlaySoundEffect(SoundEffectType.NarrativeReveal);
+                _scrollBuffer.ScrollToBottom();
+                _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+            }
+            if (response.PreviewLastPart is { } lastPart)
+            {
+                lastPart.AttachCommit(CommitReconsider);
+                lastPart.MarkComplete();
+                _previewSession.EndProduction();
+            }
+            else
+            {
+                CommitReconsider();
+                _previewSession.Reset();
+            }
+
+            _narrationState.IsLoadingThinking = false;
+            _narrationState.ThinkingAttemptsRemaining--;
+            _narrationState.ErrorMessage = null;
+            Console.WriteLine(action != null
+                ? $"NarrativeController: Reconsidered — '{action.ActionText}' by {action.ActionModusMentis?.DisplayName} replaces it ({_narrationState.ThinkingAttemptsRemaining} attempts remaining)"
+                : $"NarrativeController: Reconsidered — the act stands as it was ({_narrationState.ThinkingAttemptsRemaining} attempts remaining)");
+            if (DebugMode.IsActive && action != null)
+                DebugMode.PrintAvailableActions(response.Actions);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"NarrativeController: Error during reconsider: {ex.Message}");
+            _previewSession.Reset();
+            _narrationState.IsLoadingThinking = false;
+            _narrationState.ErrorMessage = ReportPhaseFailure("thinking", ex);
+        }
     }
 
     /// <summary>
@@ -1210,9 +1314,6 @@ public class NarrativeController
                              || _scene?.Phase == NarrationPhase.GetUp,
                 preview: _previewSession,
                 proposed: _proposalLedger,
-                // Iterative thinking asks the coded rules ahead of the click, so a mind with a retry left
-                // tries something else rather than offer an act the click would refuse.
-                ruleProbe: ProbeActionRules,
                 cancellationToken: CancellationToken.None);
 
             if (response == null)
@@ -1388,15 +1489,9 @@ public class NarrativeController
             if (!ruleResult.Passed)
             {
                 Console.WriteLine($"NarrativeController: Coded rule blocked action — {ruleResult.ErrorMessage}");
-                // A missing tool leaves the action standing: "Use Tool" is still the way to do it, so
-                // greying it reads as a dead end that is not one. Only with nothing combinable carried
-                // is it truly that, and then it greys like any other refusal.
-                if (ruleResult.NeededTool != null)
-                {
-                    action.NeedsTool    = true;
-                    action.IsImpossible = GetCombinableItems().Count == 0;
-                }
-                else action.IsImpossible = true;
+                // A refused act stays lit: Reconsider may still give it to a means the rule lets through
+                // (a discreet one past a witness), and a missing tool leaves "Use Tool" as the way on.
+                if (ruleResult.NeededTool != null) action.NeedsTool = true;
 
                 // Re-express the refusal in the acting modus mentis's voice when one is resolvable
                 // (e.g. caught-red-handed, under threat); fall back to the raw rule message otherwise.
@@ -1484,7 +1579,6 @@ public class NarrativeController
             if (!evalResult.IsPlausible)
             {
                 Console.WriteLine($"NarrativeController: VerbAction failed plausibility check");
-                action.IsImpossible = true;
 
                 // Generate plausibility failure narration, streamed into a preview box.
                 _previewSession.Reset();
@@ -1599,6 +1693,13 @@ public class NarrativeController
             // rolled result; humor modifiers may still flip _pendingSucceeded. The actual (single)
             // outcome is generated only when the player presses the dice CONTINUE — see
             // OnDiceRollContinue → GenerateOutcomePreviewAsync — and streams into a preview box.
+            // What a failure penalty will need to take hold: the pool as the thinking left it (losing
+            // focus needs a point to lose), the hour (wasting it needs one after), and an exit to
+            // wander out of — which only exploration has.
+            evalResult.Situation = new FailureSituation(
+                _activePartyMember, _pov, _narrationState.ThinkingAttemptsRemaining,
+                CanLoseTheWay: _scene?.Phase == NarrationPhase.Exploration);
+
             _pendingEval      = evalResult;
             _pendingSucceeded = succeeded;
 
@@ -2101,6 +2202,14 @@ public class NarrativeController
             _pendingEval = null;
             bool succeeded = _pendingSucceeded;
             NarrationDiceClear();
+
+            // A wait that succeeded asks how long first: the hour waited until is in the narration.
+            if (succeeded && eval.Action.Verb is SitAndWaitVerb && _pov != null && _scene != null)
+            {
+                AskWaitUntil(eval, succeeded);
+                return;
+            }
+
             _narrationState.IsLoadingAction = true;
             _ = Task.Run(() => GenerateOutcomePreviewAsync(eval, succeeded));
             return;
@@ -2108,6 +2217,75 @@ public class NarrativeController
 
         Console.WriteLine("NarrativeController: No pending action result for dice roll continue");
         NarrationDiceClear();
+    }
+
+    /// <summary>
+    /// Asks which period a successful wait lasts until, then plays the passage to it; the outcome is
+    /// narrated once the player presses Continue. The choice is <see cref="Scene.WaitUntil"/>, which
+    /// <see cref="SitAndWaitVerb"/> reads for its time shift.
+    /// </summary>
+    private void AskWaitUntil(ActionEvaluationResult eval, bool succeeded)
+    {
+        var from = _pov!.When;
+        _timeBox.OnChosen = chosen =>
+        {
+            var (until, note) = WaitStopsAt(from, chosen);
+            if (_scene != null) _scene.WaitUntil = until;
+            _passagePlayed = true;
+            PlayClickSound();
+            Console.WriteLine($"NarrativeController: waiting until {until}" + (until != chosen ? $" (chose {chosen})" : ""));
+            ShowTimePassage(from, until, note, then: () =>
+            {
+                _narrationState.IsLoadingAction = true;
+                _ = Task.Run(() => GenerateOutcomePreviewAsync(eval, succeeded));
+            });
+        };
+        _timeBox.ShowChoice(from, Enumerable.Range(1, 5).Select(i => from.Advance(i)));
+    }
+
+    /// <summary>
+    /// Where a wait chosen to last until <paramref name="chosen"/> actually ends. A wait through the
+    /// night, somewhere the player is trespassing in a house that has somebody to come home to it,
+    /// ends at night: that is when the householder comes in and finds them.
+    /// </summary>
+    private (TimePeriod Until, string? Note) WaitStopsAt(TimePeriod from, TimePeriod chosen)
+    {
+        int steps   = TimePassageBox.Steps(from, chosen);
+        int toNight = TimePassageBox.Steps(from, TimePeriod.Night);
+        if (chosen != TimePeriod.Night && toNight > 0 && toNight < steps
+            && _scene != null && _pov != null && _scene.Phase == NarrationPhase.Exploration
+            && PrivacyModel.IsTrespassing(_scene, _pov.Where)
+            && ConfrontationSelector.Householder(_scene, _pov.Where, _protagonist?.AffinityKey) != null)
+            return (TimePeriod.Night, "Somebody comes in before the night is out.");
+        return (chosen, null);
+    }
+
+    /// <summary>Plays a passage of the hours; <paramref name="then"/> runs when its Continue is pressed.</summary>
+    private void ShowTimePassage(TimePeriod from, TimePeriod to, string? note = null, Action? then = null)
+    {
+        _timeBox.ShowPassage(from, to, note);
+        _afterTimeBox = then;
+    }
+
+    private void OnTimePassageContinue()
+    {
+        PlayClickSound();
+        _timeBox.Hide();
+        var then = _afterTimeBox;
+        _afterTimeBox = null;
+        then?.Invoke();
+    }
+
+    /// <summary>
+    /// Moves the calendar on when the period has wrapped from night into dawn: a day has turned. The
+    /// visit's periods and the world's days are otherwise separate clocks (<see cref="GameClock"/>),
+    /// and a passage never spans a full day, so one wrap is one day.
+    /// </summary>
+    private static void TurnTheDayIfWrapped(TimePeriod before, TimePeriod after)
+    {
+        if ((int)after >= (int)before) return;
+        GameClock.Advance(1);
+        Console.WriteLine($"NarrativeController: night turned to dawn — day {(int)GameClock.Days}");
     }
 
     /// <summary>
@@ -2350,13 +2528,43 @@ public class NarrativeController
         foreach (var report in allReports)
             report.ApplyTo(OutcomeContext.For(_activePartyMember, _scene, _pov));
 
+        // The two failure penalties the scene cannot carry out itself, because what they change is
+        // the narration's: the noetic pool, and whether the visit goes on. A failed act does not
+        // refill the pool at the CONTINUE that follows, so a point taken here stays taken.
+        bool lostWay = false;
+        if (_scene != null)
+        {
+            if (_scene.PendingFocusLoss > 0)
+            {
+                _narrationState.ThinkingAttemptsRemaining =
+                    Math.Max(0, _narrationState.ThinkingAttemptsRemaining - _scene.PendingFocusLoss);
+                Console.WriteLine($"NarrativeController: focus lost — {_narrationState.ThinkingAttemptsRemaining} noetic point(s) left");
+                _scene.PendingFocusLoss = 0;
+            }
+            lostWay = _scene.PendingLostWay;
+            _scene.PendingLostWay = false;
+            if (lostWay) Console.WriteLine("NarrativeController: the way is lost — the visit ends on CONTINUE");
+        }
+
         // A verb that shifted the period only wrote PoV.When; route it back through the single writer
         // so the graph's period, NPC placement and verb gating all follow it to the new time of day.
         if (_pov != null && periodBefore != null && periodBefore != _pov.When)
         {
             Console.WriteLine($"NarrativeController: time of day advanced {periodBefore} → {_pov.When}");
+            TurnTheDayIfWrapped(periodBefore.Value, _pov.When);
+            if (!_passagePlayed) ShowTimePassage(periodBefore.Value, _pov.When);
             ApplyTimePeriod(_pov.When);
+
+            // Night came round on somebody waiting where they had no business to: the householder
+            // comes to bed and finds them. Sitting out the hours and an hour wasted both bring it on;
+            // hiding does not, since the whole point of hiding is not being found.
+            if (_scene != null && _pov.When == TimePeriod.Night
+                && _scene.Phase == NarrationPhase.Exploration
+                && result.Action?.Verb is not HideAndWaitVerb)
+                ConfrontationSelector.SummonHouseholder(_scene, _pov, _protagonist?.AffinityKey);
         }
+        _passagePlayed = false;
+        if (_scene != null) _scene.WaitUntil = null;
 
         // Every area walked into is a go-to routine, not only the one the location is left from.
         if (_recorder != null && _pov != null && areaBefore != null && areaBefore.Id != _pov.Where.Id)
@@ -2436,11 +2644,8 @@ public class NarrativeController
         // Seen by a witness: they confront you, and the tree decides what that becomes.
         if (!result.Succeeded && result.CaughtByWitness != null && _pov != null)
         {
-            var crimeType = _scene != null
-                ? ConfrontationSelector.CrimeFor(_scene, result.CaughtByWitness, result.Action.Verb, _pov.Where.IsPrivate)
-                : CrimeKinds.Of(result.Action.Verb, _pov.Where.IsPrivate);
-            Console.WriteLine($"NarrativeController: Witness '{result.CaughtByWitness.DisplayName}' caught the failed illegal action (crime: {crimeType})");
-            var catchTree = CaughtRedHandedTreeFactory.Create(crimeType);
+            var catchTree = ConfrontationSelector.TreeFor(_scene, result.CaughtByWitness, result.Action.Verb, _pov.Where.IsPrivate);
+            Console.WriteLine($"NarrativeController: Witness '{result.CaughtByWitness.DisplayName}' caught the failed illegal action ({catchTree.TreeId})");
             SetPendingDialogue(new Cathedral.Game.Scene.DialogueTriggerOutcome(result.CaughtByWitness, tree: catchTree), result.Action);
             return;
         }
@@ -2501,7 +2706,7 @@ public class NarrativeController
             }
 
             _narrationState.PendingTransitionNode = null;
-            _narrationState.ShouldExitOnContinue = IsMovementAction(result.Action);
+            _narrationState.ShouldExitOnContinue = lostWay || IsMovementAction(result.Action);
             _narrationState.ShowContinueButton = true;
             _pendingSegmentLabel = SegmentLabelFor(result);
             _pendingSegmentSucceeded = result.Succeeded;
@@ -2510,7 +2715,7 @@ public class NarrativeController
         {
             Console.WriteLine("NarrativeController: Non-transition outcome, showing continue button");
             _narrationState.PendingTransitionNode = null;
-            _narrationState.ShouldExitOnContinue = IsMovementAction(result.Action);
+            _narrationState.ShouldExitOnContinue = lostWay || IsMovementAction(result.Action);
             _narrationState.ShowContinueButton = true;
             _pendingSegmentLabel = SegmentLabelFor(result);
             _pendingSegmentSucceeded = result.Succeeded;
@@ -2629,6 +2834,7 @@ public class NarrativeController
                 // speaker had already looked at — or been offered a button for — does not constrain
                 // what draws them or what they may be shown.
                 _observationLedger.Clear();
+                Cathedral.Game.Scene.ActionPathPlanner.Forget();
                 _proposalLedger.Clear();
                 _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
 
@@ -2757,6 +2963,17 @@ public class NarrativeController
                 ? Config.LoadingMessages.RollingDice
                 : (_dice.IsCurrentlySuccess ? "Success! Click Continue to see the outcome" : "Failed! Click Continue to see the outcome");
             _ui.RenderStatusBar(diceStatus);
+            return;
+        }
+
+        // The hours passing (or, for a wait, the choice of how many): narration greyed underneath.
+        if (_timeBox.IsVisible)
+        {
+            _timeBox.Advance();
+            RenderNarrationContent();
+            _ui.RenderTimePassage(_timeBox);
+            _ui.RenderStatusBar(_timeBox.IsChoosing ? "Choose the hour to wait until"
+                              : _timeBox.IsAnimating ? "Time passes..." : "Click Continue");
             return;
         }
 
@@ -2956,53 +3173,16 @@ public class NarrativeController
             var selectedModusMentis = _modusMentisPopup.HandleClick(screenPosition.X, screenPosition.Y, _core.ClientSize, cellPixelSize);
             if (selectedModusMentis != null)
             {
-                Console.WriteLine($"NarrativeController: Selected modusMentis: {selectedModusMentis.DisplayName}");
-
-                if (_narrationState.IsSelectingModusMentisForSpeaking)
-                {
-                    // Step 1 of Speak About: speaking modusMentis selected → show companion selection
-                    _narrationState.IsSelectingModusMentisForSpeaking = false;
-                    _narrationState.SpeakingModusMentisPending = selectedModusMentis;
-                    _pendingCompanions = _protagonist.CompanionParty.ToList();
-                    var companionNames = _pendingCompanions.Select(c => c.DisplayName).ToList();
-                    _narrationState.IsSelectingCompanionForSpeaking = true;
-                    Vector2 screenPos2 = _terminalInputHandler.CellToScreen(_lastMouseX, _lastMouseY, _core.ClientSize);
-                    _choicePopup.Show(screenPos2, companionNames, "Who do you address?");
-                }
-                // Get the keyword that was clicked (stored before popup appeared)
-                else if (_narrationState.HoveredKeyword != null)
-                {
-                    var clickedRegion = _narrationState.HoveredKeyword;
-                    string keyword = clickedRegion.Keyword;
-
-                    // Check if we're selecting an observation modusMentis or thinking modusMentis
-                    if (_narrationState.IsSelectingObservationModusMentis)
-                    {
-                        // Focus observation phase
-                        _narrationState.IsLoadingFocusObservation = true;
-                        _narrationState.LoadingMessage = ObservationLoadingMessage();
-                        _narrationState.IsSelectingObservationModusMentis = false;
-
-                        var focusOutcome = clickedRegion.ResolvedAnchor;
-                        if (focusOutcome != null)
-                            _ = ExecuteFocusObservationAsync(selectedModusMentis, focusOutcome);
-                        else
-                            Console.WriteLine($"NarrativeController: Cannot focus - no outcome found for keyword '{keyword}'");
-                    }
-                    else
-                    {
-                        // Thinking phase
-                        _narrationState.IsLoadingThinking = true;
-                        _narrationState.LoadingMessage = Config.LoadingMessages.ThinkingDeeply;
-                        _ = ExecuteThinkingPhaseAsync(selectedModusMentis, clickedRegion);
-                    }
-                }
+                // The same routing as the pointer path through the shell and the --cli choose: the broken
+                // modus mentis guard and Reconsider are there, and a copy of it here had neither.
+                ApplyModusMentisSelection(selectedModusMentis);
             }
             else
             {
                 Console.WriteLine("NarrativeController: Popup closed (clicked outside)");
                 _narrationState.IsSelectingObservationModusMentis = false;
                 _narrationState.IsSelectingModusMentisForSpeaking = false;
+                _narrationState.ActionPendingReconsider = null;
             }
         }
     }
@@ -3032,6 +3212,12 @@ public class NarrativeController
                 if (isOverButton) PlayHoverSound();
             }
             _dice.HandleHumorHover(mouseX, mouseY);
+            return;
+        }
+
+        if (_timeBox.IsVisible)
+        {
+            if (_timeBox.HandleHover(mouseX, mouseY)) PlayHoverSound();
             return;
         }
         
@@ -3174,6 +3360,15 @@ public class NarrativeController
             _dice.HandleHumorClick(mouseX, mouseY);
             return;
         }
+
+        // The time box is modal: its period buttons while it asks, its Continue once the hours have
+        // passed, and nothing underneath it either way.
+        if (_timeBox.IsVisible)
+        {
+            if (_timeBox.IsOnContinue(mouseX, mouseY)) OnTimePassageContinue();
+            else _timeBox.HandlePeriodClick(mouseX, mouseY);
+            return;
+        }
         
         // Check if clicked on scrollbar thumb (start drag) - must be done before continue button check
         if (_ui.IsMouseOverScrollbarThumb(mouseX, mouseY, _narrationState.ScrollbarThumb))
@@ -3296,6 +3491,7 @@ public class NarrativeController
                 Console.WriteLine("NarrativeController: Popup closed (clicked outside)");
                 _narrationState.IsSelectingObservationModusMentis = false;
                 _narrationState.IsSelectingModusMentisForSpeaking = false;
+                _narrationState.ActionPendingReconsider = null;
             }
             return;
         }
@@ -3316,6 +3512,11 @@ public class NarrativeController
             if (clickedAction.ActionIndex < allActions.Count)
             {
                 var action = allActions[clickedAction.ActionIndex];
+                if (action.Superseded)
+                {
+                    Console.WriteLine($"NarrativeController: '{action.ActionText}' was reconsidered — it no longer answers a click.");
+                    return;
+                }
 
                 // Reaching for a tool is part of the action already on screen, not a second thought:
                 // the point was spent when the action was thought of, and only one item may ever be
@@ -3328,13 +3529,16 @@ public class NarrativeController
                 var disabledIndices = hasItems ? new HashSet<int>() : new HashSet<int> { 1 };
                 // Refused for want of a tool: executing it bare-handed again is the same refusal.
                 if (action.NeedsTool) disabledIndices.Add(0);
+                // Reconsidering is a thinking, and costs its point; the two opening phases have one act
+                // and one means, so there is nothing to reconsider in them.
+                if (!CanReconsider()) disabledIndices.Add(2);
 
                 Console.WriteLine($"NarrativeController: Showing action mode choice for '{action.ActionText}' (hasItems={hasItems})");
                 _narrationState.ActionPendingModeSelection = action;
                 _narrationState.IsSelectingInteractionMode = true;
                 _narrationState.InteractionModeIsForKeyword = false;
                 Vector2 screenPos = _terminalInputHandler.CellToScreen(mouseX, mouseY, _core.ClientSize);
-                _choicePopup.Show(screenPos, new List<string> { "Execute", "Use Tool" }, "Action", disabledIndices);
+                _choicePopup.Show(screenPos, new List<string> { "Execute", "Use Tool", "Reconsider" }, "Action", disabledIndices);
             }
             else
             {
@@ -3389,7 +3593,17 @@ public class NarrativeController
 
             _narrationState.IsSelectingModusMentisForSpeaking = false;
             _narrationState.IsSelectingObservationModusMentis = false;
+            _narrationState.ActionPendingReconsider = null;
             _ = RefuseBrokenModusMentisAsync(selectedModusMentis, faculty);
+            return;
+        }
+
+        if (_narrationState.ActionPendingReconsider is { } reconsidered)
+        {
+            _narrationState.ActionPendingReconsider = null;
+            _narrationState.IsLoadingThinking = true;
+            _narrationState.LoadingMessage = Config.LoadingMessages.ThinkingDeeply;
+            _ = ExecuteReconsiderAsync(selectedModusMentis, reconsidered);
             return;
         }
 
@@ -3596,7 +3810,7 @@ public class NarrativeController
         }
         else
         {
-            // VerbAction choice: 0 = Execute, 1 = Use Tool
+            // VerbAction choice: 0 = Execute, 1 = Use Tool, 2 = Reconsider
             var action = _narrationState.ActionPendingModeSelection;
             _narrationState.ActionPendingModeSelection = null;
 
@@ -3620,6 +3834,15 @@ public class NarrativeController
                 {
                     Console.WriteLine("NarrativeController: No combinable items available.");
                 }
+            }
+            else if (choiceIndex == 2 && action != null && CanReconsider())
+            {
+                Console.WriteLine($"NarrativeController: Choice — Reconsider '{action.ActionText}'");
+                _narrationState.ActionPendingReconsider = action;
+                _narrationState.IsSelectingObservationModusMentis = false;
+                _narrationState.IsSelectingModusMentisForSpeaking = false;
+                Vector2 screenPos = _terminalInputHandler.CellToScreen(_lastMouseX, _lastMouseY, _core.ClientSize);
+                _modusMentisPopup.Show(screenPos, _activePartyMember.GetThinkingModiMentis(), "Reconsider with");
             }
             else
             {
@@ -3727,6 +3950,22 @@ public class NarrativeController
         return (_narrationState.IsDiceRollActive && !_narrationState.IsDiceRolling && r.Width > 0, r.X, r.Y, r.Width);
     }
 
+    /// <summary>The time box's state: none, choosing, passing (animating) or settled.</summary>
+    public string CliTimeBoxState()
+        => !_timeBox.IsVisible ? "none"
+         : _timeBox.IsChoosing ? "choosing"
+         : _timeBox.IsAnimating ? "passing" : "settled";
+
+    /// <summary>The periods the time box offers while it asks, with their button regions.</summary>
+    public IReadOnlyList<(TimePeriod Period, int X, int Y, int Width)> CliTimeBoxChoices() => _timeBox.PeriodRegions;
+
+    /// <summary>The time box's [ Continue ] region, once the hours have passed.</summary>
+    public (bool Present, int X, int Y, int Width) CliTimeBoxContinue()
+    {
+        var r = _timeBox.ContinueButtonRegion;
+        return (_timeBox.IsSettled && r.Width > 0, r.X, r.Y, r.Width);
+    }
+
     /// <summary>Whether the generation-preview box is up, its title, text and CONTINUE region (if clickable).</summary>
     public (bool Active, string Title, string Text, bool Complete) CliPreview()
     {
@@ -3770,6 +4009,20 @@ public class NarrativeController
     /// <summary>
     /// Answer the visible popup by index. Returns an error string, or null on success.
     /// </summary>
+    /// <summary>A stable name for what a will's first step acts on: a person by archetype id, anything else by name.</summary>
+    private static string CliTargetId(Element? target) => target switch
+    {
+        SceneNpc { Entity: Cathedral.Game.Npc.NpcEntity npc } => npc.Archetype.ArchetypeId,
+        null => "-",
+        _    => target.DisplayName.Replace(' ', '_'),
+    };
+
+    /// <summary>The index of the modus mentis <paramref name="id"/> in the open modus mentis popup, or -1.</summary>
+    public int CliModusMentisPopupIndex(string id)
+        => _modusMentisPopup.IsVisible
+            ? _modusMentisPopup.Choices.ToList().FindIndex(m => m.ModusMentisId.Equals(id, StringComparison.OrdinalIgnoreCase))
+            : -1;
+
     public string? CliChoosePopup(int index)
     {
         if (_choicePopup.IsVisible)
@@ -3873,10 +4126,33 @@ public class NarrativeController
                          _choicePopup.IsChoiceEnabled(i) ? c : $"{c}(disabled)")) + "]");
 
         // trespass= is what the header's TRESPASSING tag shows, and the condition under which every act
-        // is a crime and no routine is learned — assertable, where the tag is only a colour on screen.
+        // is a crime — assertable, where the tag is only a colour on screen. confronted= is the kind of
+        // confrontation the actor is in (ConfrontationSelector.Current), the one the exit button reads.
+        // The time box: whether it asks, is passing, or waits on Continue, and between which hours.
+        if (All("time"))
+            outp.Add($"time box={CliTimeBoxState()} destination={(_timeBox.IsVisible ? _timeBox.Destination.ToString() : "-")}");
+
+        // Every will the actor holds and its path from here (ActionPathPlanner): how many steps, the
+        // first to take and the goal, or none when it cannot be done in this place. What a will
+        // observes and proposes is derived from exactly this, so it is the seam a script asserts on.
+        if (All("will") && _scene != null && _pov != null)
+            foreach (var mm in actor.LearnedModiMentis.Where(m => m.Will != null).OrderBy(m => m.ModusMentisId))
+            {
+                var path = ActionPathPlanner.Plan(_scene, _pov, actor, mm.Will!);
+                outp.Add(path == null
+                    ? $"will {mm.ModusMentisId} steps=none"
+                    : $"will {mm.ModusMentisId} steps={path.Steps.Count} first=\"{path.First.Verbatim}\" goal=\"{path.Goal.Verbatim}\""
+                      + $" target={CliTargetId(path.First.Action.Target)}"
+                      + (path.ToolStep >= 0 ? $" tool_step={path.ToolStep + 1}" : ""));
+            }
+
         if (All("where"))
+        {
+            var confrontation = _scene != null && _pov != null ? ConfrontationSelector.Current(_scene, _pov, _protagonist) : null;
             outp.Add($"where area=\"{_pov?.Where.DisplayName ?? "-"}\" period={_pov?.When.ToString() ?? "-"} "
-                   + $"day={(int)Cathedral.Game.Narrative.GameClock.Days} trespass={(IsTrespassing ? "yes" : "no")}");
+                   + $"day={(int)Cathedral.Game.Narrative.GameClock.Days} trespass={(IsTrespassing ? "yes" : "no")} "
+                   + $"confronted={(confrontation == null ? "none" : $"{confrontation.Kind}:{confrontation.Npc.Archetype.ArchetypeId}")}");
+        }
 
         if (All("party"))
             foreach (var c in _protagonist.CompanionParty)
@@ -4082,6 +4358,7 @@ public class NarrativeController
         {
             _modusMentisPopup.Hide();
             _narrationState.IsSelectingModusMentisForSpeaking = false;
+            _narrationState.ActionPendingReconsider = null;
             return true;
         }
         return false;
@@ -4284,6 +4561,8 @@ public class NarrativeController
         if (visit.When != _pov.When)
         {
             Console.WriteLine($"NarrativeController: waiting until {visit.When} for {trader.DisplayName}'s premises");
+            TurnTheDayIfWrapped(_pov.When, visit.When);
+            ShowTimePassage(_pov.When, visit.When);
             ApplyTimePeriod(visit.When);
         }
 
@@ -4324,19 +4603,16 @@ public class NarrativeController
         if (_scene == null || _pov == null || _protagonist == null)
             return (ExitButtonKind.Leave, null);
 
-        // Enemy in the current location takes precedence over a witness confrontation.
-        var threat = ThreatSelector.ComputeContext(_scene, _pov, _protagonist);
-        if (threat.Level == ThreatLevel.Visual && threat.Threat != null)
-            return (ExitButtonKind.RunawayEnemy, threat.Threat);
-
-        // A witness confronting you — one who came in here after you, or anyone in sight on ground you
-        // have no business standing on. ConfrontationSelector is the one place that is decided, so the
-        // exit, the rules of action and the failure ladder cannot disagree about who is watching.
-        var confronter = ConfrontationSelector.Confronter(_scene, _pov, _protagonist);
-        if (confronter != null)
-            return (ExitButtonKind.RunawayWitness, confronter);
-
-        return (ExitButtonKind.Leave, null);
+        // An enemy in sight outranks a witness; a witness confronting you is one who came in here
+        // after you, or anyone in sight on ground you have no business standing on.
+        // ConfrontationSelector is the one place that is decided, so the exit, the rules of action
+        // and the failure ladder cannot disagree about who is watching.
+        return ConfrontationSelector.Current(_scene, _pov, _protagonist) switch
+        {
+            { Kind: ConfrontationKind.Enemy } c => (ExitButtonKind.RunawayEnemy, c.Npc),
+            { } c                               => (ExitButtonKind.RunawayWitness, c.Npc),
+            null                                => (ExitButtonKind.Leave, null),
+        };
     }
 
     /// <summary>Number of d6 rolled in an exit-runaway check — the protagonist's feet stat, min 1.</summary>
@@ -4436,7 +4712,7 @@ public class NarrativeController
         // now, but honor an explicit movement-exit action too).
         if (_narrationState.ShouldExitOnContinue)
         {
-            Console.WriteLine("NarrativeController: CONTINUE — movement action, exiting to world view");
+            Console.WriteLine("NarrativeController: CONTINUE — the way lost (or a movement action), exiting to world view");
             _narrationState.RequestedExit = true;
             return;
         }
@@ -4524,11 +4800,8 @@ public class NarrativeController
         {
             // They came because they heard a crime: they accuse you of that one. Otherwise they caught you
             // on private ground, and what they saw is trespass.
-            var heard = _scene != null
-                ? ConfrontationSelector.CrimeFor(_scene, target, null, _pov?.Where.IsPrivate ?? true)
-                : CriminalAffinityType.Intruder;
-            Console.WriteLine($"NarrativeController: RUNAWAY failed — witness '{target.DisplayName}' confronts ({heard})");
-            var catchTree = CaughtRedHandedTreeFactory.Create(heard);
+            var catchTree = ConfrontationSelector.TreeFor(_scene, target, null, _pov?.Where.IsPrivate ?? true);
+            Console.WriteLine($"NarrativeController: RUNAWAY failed — witness '{target.DisplayName}' confronts ({catchTree.TreeId})");
             // A runaway confrontation has no observation→thinking→action origin — resample the narrator.
             SetPendingDialogue(new DialogueTriggerOutcome(target, tree: catchTree), null);
         }
@@ -4654,6 +4927,18 @@ public class NarrativeController
     public void OnDialogueCompleted(NpcEntity npc)
     {
         Console.WriteLine($"NarrativeController: Dialogue completed with {npc.DisplayName}");
+
+        // A householder who found you waiting and let you stay: the house is yours to wait in for the
+        // rest of the visit. Read before the release below forgets who found you.
+        if (_scene != null && _pov != null && npc.ToleratesTrespass)
+        {
+            npc.ToleratesTrespass = false;   // consume the flag
+            if (ConfrontationSelector.IsFoundWaitingBy(_scene, npc) && _scene.SectionOf(_pov.Where) is { } house)
+            {
+                _scene.ToleratedSections.Add(house);
+                Console.WriteLine($"NarrativeController: {npc.DisplayName} lets the player stay — {house.DisplayName} tolerated for the visit");
+            }
+        }
 
         // A witness who came for you has had their say: the confrontation is over.
         if (_scene != null) ConfrontationSelector.Release(_scene, npc, _protagonist);

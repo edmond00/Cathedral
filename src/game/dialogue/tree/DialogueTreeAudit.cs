@@ -56,6 +56,7 @@ public static class DialogueTreeAudit
         // would miss them entirely. One variant is representative — the three differ only in the
         // witness's opening line.
         trees.Add(CaughtRedHandedTreeFactory.Create(CriminalAffinityType.Thief));
+        trees.Add(new FoundWaitingTree());
 
         foreach (var tree in trees)
         {
@@ -373,7 +374,8 @@ public static class DialogueTreeAudit
 
             if (depths.All(d => res.Difficulty != BranchDifficulty.Simple(d)
                              && res.Difficulty != BranchDifficulty.Easy(d)
-                             && res.Difficulty != BranchDifficulty.Hard(d)))
+                             && res.Difficulty != BranchDifficulty.Hard(d)
+                             && res.Difficulty != BranchDifficulty.Grave(d)))
                 m.Warnings.Add(
                     $"resolution '{res.NodeId}' needs {res.Difficulty} six(es) at depth " +
                     $"{string.Join("/", depths)} — no ladder gives that; the authored depth is likely wrong");

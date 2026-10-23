@@ -6,14 +6,16 @@ using Cathedral.Game.Narrative.ModiMentis;
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
-/// Sits down somewhere and lets one period of the day go by.
+/// Sits down somewhere and lets the day go by until a period the player chooses — the next one when
+/// nothing asks (<see cref="Scene.WaitUntil"/>).
 ///
 /// <para>The first verb in the game that moves the clock. <c>TimeShiftOutcome</c> and everything
 /// downstream of it — the controller noticing the period changed, re-placing NPCs for the new time,
 /// re-gating every verb — has been in place and unused; this is what finally produces one.</para>
 ///
-/// <para>Difficulty 1 and no failure penalty: sitting still is not a feat. A failure is having your
-/// mind wander, or being moved along, and it costs only the attempt.</para>
+/// <para>Difficulty 1, and the failure costs a thought rather than a body: sitting still is not a feat.
+/// A failure is having your mind wander, or being moved along, and the default penalty — the thread
+/// of thought lost — is exactly that.</para>
 /// </summary>
 public class SitAndWaitVerb : Verb
 {
@@ -38,11 +40,11 @@ public class SitAndWaitVerb : Verb
     public override string? GrantedModusMentisId(Element? target) => "patience";
 
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
-        => target is SitSpotPointOfInterest && pov.Where.PointsOfInterest.Contains(target);
+        => target is ISeat && pov.Where.PointsOfInterest.Contains(target);
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"sit on {DefiniteTarget(target)} and let the time pass";
 
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
-        => new Outcome[] { new TimeShiftOutcome(pov.When.Next()) };
+        => new Outcome[] { new TimeShiftOutcome(scene.WaitUntil ?? pov.When.Next()) };
 }

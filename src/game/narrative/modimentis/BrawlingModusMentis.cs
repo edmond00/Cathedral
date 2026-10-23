@@ -1,10 +1,11 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Brawling — street fighting, rough-and-tumble, and improvised violence; a tavern brawler who fights dirty and wins.
-/// VerbAction-only.
+/// Will + VerbAction + Fighting.
 /// </summary>
 public class BrawlingModusMentis : ModusMentis
 {
@@ -13,7 +14,8 @@ public class BrawlingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads a close fight as chaos to be won by any means, with no rules worth respecting. Keeps the body ready to headbutt, grapple, and seize whatever comes to hand, favouring the effective move over the honourable one.";
     public override string SkillMeans       => "street fighting, improvised violence, and winning by any means";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Fighting };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action, ModusMentisFunction.Fighting };
+    public override WillTarget? Will => WillTarget.To<AttackVerb>("start a fight");
     public override string[] Organs        => new[] { "arms", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.Low;

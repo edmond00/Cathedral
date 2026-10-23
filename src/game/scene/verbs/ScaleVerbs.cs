@@ -22,8 +22,8 @@ public abstract class ScaleVerbBase : Verb
     public override int DifficultyFor(Element? target)
         => target is ScalePointOfInterest scale ? scale.Difficulty : BaseDifficulty;
 
-    public override IReadOnlyList<Wound?> FailurePenalties(Element? target)
-        => target is ScalePointOfInterest scale ? scale.FailurePenalties() : NoPenalty;
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target)
+        => target is ScalePointOfInterest scale ? scale.FailurePenalties() : LoseFocusOnly;
 }
 
 /// <summary>Climbs a <see cref="ScalePointOfInterest"/> from its foot to the place above.</summary>

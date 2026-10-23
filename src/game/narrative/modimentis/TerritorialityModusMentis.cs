@@ -26,6 +26,7 @@ public class TerritorialityModusMentis : ModusMentis
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {
         new(typeof(AreaMoveOutcome), () => new NervusHumor()),
+        new(typeof(LostWayOutcome), () => new NervusHumor()),
     };
 
     public override string PersonaPrompt => @"You are the inner voice of TERRITORIALITY, the map a creature keeps of what is its own.

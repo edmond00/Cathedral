@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class DelvingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Breaks rock where it should break: reading the grain, setting the wedge, and swinging so the stone does the work rather than the arm. Underground it is also the difference between a face that stands and one that comes down.";
     public override string SkillMeans       => "the swing and wedge that part stone";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<MineVerb>("mine the rock");
     public override string[] Organs        => new[] { "arms", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

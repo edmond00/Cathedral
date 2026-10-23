@@ -1,0 +1,50 @@
+# focus_lost — the outcome, not the verb.
+#
+# A failed look that loses the thread: one noetic point beyond the one the thinking spent, and kept
+# lost, because a failed act does not refill the pool at the CONTINUE that follows. Examine's whole
+# table is this one entry; --penalty-only is passed anyway, so the script still means something the
+# day the table grows.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Crown" --period dawn --observe-only "Test Giant Tree" --grant-mm woodcraft --means-only woodcraft --penalty-only lose_focus
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy fail-dice
+goal examine
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+
+# --- before: a pool of 3, of which the thinking spent one ---
+expect-state noetic points=2/3
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+expect FAILURE
+expect-verb examine
+expect Focus lost:
+
+# --- the outcome really ran ---
+expect-outcome focus_lost
+
+# --- after: the point is gone ---
+expect-state noetic points=1/3
+
+# --- and stays gone across the CONTINUE that closes the segment ---
+click button
+advance 12 180
+expect-state noetic points=1/3
+quit

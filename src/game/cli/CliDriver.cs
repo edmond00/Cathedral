@@ -152,6 +152,22 @@ public sealed class CliDriver
                 // a fresh settle before the next.
                 if (_draining)
                 {
+                    // The time box sits between the dice and the narration (a wait asks how long) and
+                    // after a commit (the hours rolling by): `advance` presses through it like a
+                    // preview, taking the next period when it asks — the wait as it was before it
+                    // asked — so a script that only means to get past it need not know it is there.
+                    if (_drainPressesLeft > 0 && _game.CliNarration is { } tn
+                        && tn.CliTimeBoxState() is "choosing" or "settled")
+                    {
+                        _drainPressesLeft--;
+                        if (tn.CliTimeBoxState() == "choosing")
+                            CmdClick(new[] { "period", tn.CliTimeBoxChoices()[0].Period.ToString() });
+                        else
+                            CmdClick(new[] { "continue" });
+                        RestartWait($"advance ({_drainPressesLeft} press(es) left)", _drainTimeout);
+                        return;
+                    }
+
                     var pv = ActivePreview();
                     if (pv is { Active: true, Complete: true } && _drainPressesLeft > 0)
                     {
@@ -389,6 +405,8 @@ public sealed class CliDriver
                                     which word the prose highlighted
           click action <n>          click a narration action by index
           click option <n>          pick a dialogue reply by index
+          click period <name>       pick the hour a wait lasts until, while the time box asks
+                                    (`advance` picks the next period by itself)
           clock <days>              DEBUG: push the world clock forward, then heal any wound
                                     whose time has come (the clock otherwise only moves on
                                     travel and work, and wounds take 100-1000 days to close)
@@ -410,7 +428,7 @@ public sealed class CliDriver
           click button              press the footer button (LEAVE/INTERRUPT/END/CONTINUE)
           click continue            confirm the dice overlay
           click cell <x> <y>        raw terminal cell click (escape hatch)
-          choose <n>                answer the visible popup by index
+          choose <n|mm-id>          answer the visible popup by index, or a modus mentis popup by id
           travel <vertex|name>      plan a route to a world vertex (bypasses 3D picking)
           travel-go                 commit the planned route and set out (the TRAVEL button)
           travel neighbour          plan a route to any bordering vertex (leaving, unnamed)
@@ -499,6 +517,7 @@ public sealed class CliDriver
             // a script finds nothing clickable. Say so here rather than leaving it to be guessed.
             var pv = n.CliPreview();
             sb.Append($" preview={(pv.Active ? (pv.Complete ? "ready" : "generating") : "none")}");
+            sb.Append($" time={n.CliTimeBoxState()}");
             // A fight decided but held for the CONTINUE that shows its opening blow. On screen it is
             // an ordinary resolved action, so a script waiting on `wait mode Fighting` without
             // pressing CONTINUE would sit out its whole timeout with nothing to say why.
@@ -628,7 +647,25 @@ public sealed class CliDriver
         if (_game.CliNarration is { } n)
         {
             var pv = n.CliPreview();
-            if (pv.Active)
+            var time = n.CliTimeBoxState();
+            if (time == "choosing")
+            {
+                CliMode.Emit("time box: wait until…");
+                foreach (var (p, _, _, _) in n.CliTimeBoxChoices())
+                    CliMode.Emit($"  click period {p}");
+                any = true;
+            }
+            else if (time == "settled")
+            {
+                CliMode.Emit("time box: the hours have passed");
+                CliMode.Emit("  click continue  (time)");
+                any = true;
+            }
+            else if (time == "passing")
+            {
+                CliMode.Emit("time box: (the hours passing…)");
+            }
+            else if (pv.Active)
             {
                 CliMode.Emit($"preview [{pv.Title}]: {pv.Text}");
                 if (pv.Complete) { CliMode.Emit("  click continue  (preview)"); any = true; }
@@ -935,6 +972,14 @@ public sealed class CliDriver
                 }
                 var n = _game.CliNarration;
                 if (n == null) { CliMode.Emit("error: not in narration"); return; }
+                // The time box is modal over everything else in the narration.
+                var timeContinue = n.CliTimeBoxContinue();
+                if (timeContinue.Present)
+                {
+                    _game.CliClickCell(timeContinue.X, timeContinue.Y);
+                    CliMode.Emit("ok: time box continue");
+                    return;
+                }
                 var preview = n.CliPreviewContinue();
                 if (preview.Present)
                 {
@@ -946,6 +991,23 @@ public sealed class CliDriver
                 if (!dice.Present) { CliMode.Emit("error: no dice continue button on screen"); return; }
                 _game.CliClickCell(dice.X, dice.Y);
                 CliMode.Emit("ok: confirmed dice");
+                break;
+            }
+            case "period":
+            {
+                // A button of the time box while it asks how long to wait.
+                if (a.Length < 2) { CliMode.Emit("error: click period <dawn|morning|noon|afternoon|evening|night>"); return; }
+                var n = _game.CliNarration;
+                if (n == null || n.CliTimeBoxState() != "choosing") { CliMode.Emit("error: the time box is not asking"); return; }
+                var match = n.CliTimeBoxChoices().FirstOrDefault(c => c.Period.ToString().Equals(a[1], StringComparison.OrdinalIgnoreCase));
+                if (match.Width == 0)
+                {
+                    CliMode.Emit($"error: '{a[1]}' is not on offer (offered: {string.Join(", ", n.CliTimeBoxChoices().Select(c => c.Period))})");
+                    return;
+                }
+                _game.CliHoverCell(match.X, match.Y);
+                _game.CliClickCell(match.X, match.Y);
+                CliMode.Emit($"ok: wait until {match.Period}");
                 break;
             }
             case "moon":
@@ -1060,10 +1122,17 @@ public sealed class CliDriver
 
     private void CmdChoose(string[] a)
     {
-        if (a.Length < 1 || !int.TryParse(a[0], out int idx)) { CliMode.Emit("error: choose <n>"); return; }
+        if (a.Length < 1) { CliMode.Emit("error: choose <n|modus-mentis-id>"); return; }
         var n = _game.CliNarration;
         if (n == null) { CliMode.Emit("error: not in narration"); return; }
-        Report(n.CliChoosePopup(idx), $"chose {idx}");
+        // A modus mentis popup can be answered by name, which survives the order the popup lists them in.
+        if (!int.TryParse(a[0], out int idx))
+        {
+            int byName = n.CliModusMentisPopupIndex(a[0]);
+            if (byName < 0) { CliMode.Emit($"error: no modus mentis '{a[0]}' in the open popup"); return; }
+            idx = byName;
+        }
+        Report(n.CliChoosePopup(idx), $"chose {a[0]}");
     }
 
     private void CmdTravel(string[] a)

@@ -3,6 +3,7 @@
 public sealed class Thread : TextileItem
 {
     public override string ItemId      => "thread";
+    public override List<ItemTag> Tags => new() { ItemTag.Textile, ItemTag.Cloth };
     public override string DisplayName => "Thread";
     public override string Description => "A small spool of spun thread, ends fraying";
 }
@@ -10,6 +11,7 @@ public sealed class Thread : TextileItem
 public sealed class Cloth : TextileItem
 {
     public override string ItemId      => "cloth";
+    public override List<ItemTag> Tags => new() { ItemTag.Textile, ItemTag.Cloth };
     public override string DisplayName => "Cloth";
     public override string Description => "A folded length of plain woven cloth, undyed";
     public override WeightClass Weight => WeightClass.Light;
@@ -25,6 +27,7 @@ public sealed class Flax : TextileItem
 public sealed class Linen : TextileItem
 {
     public override string ItemId      => "linen";
+    public override List<ItemTag> Tags => new() { ItemTag.Textile, ItemTag.Cloth };
     public override string DisplayName => "Linen";
     public override string Description => "A folded sheet of fine linen, smooth and cool to the touch";
     public override WeightClass Weight => WeightClass.Light;

@@ -56,6 +56,6 @@ public class SwimAcrossVerb : Verb
         return new[] { new AreaMoveOutcome(water.Other(pov.Where)) };
     }
 
-    public override IReadOnlyList<Wound?> FailurePenalties(Element? target)
-        => target is WaterCrossingPointOfInterest water ? water.FailurePenalties() : NoPenalty;
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target)
+        => target is WaterCrossingPointOfInterest water ? water.FailurePenalties() : LoseFocusOnly;
 }

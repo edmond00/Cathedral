@@ -52,6 +52,6 @@ public class CrossVerb : Verb
         return new[] { new AreaMoveOutcome(crossing.Other(pov.Where)) };
     }
 
-    public override IReadOnlyList<Wound?> FailurePenalties(Element? target)
-        => target is CrossingPointOfInterest crossing ? crossing.FailurePenalties() : NoPenalty;
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target)
+        => target is CrossingPointOfInterest crossing ? crossing.FailurePenalties() : LoseFocusOnly;
 }

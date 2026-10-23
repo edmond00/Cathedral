@@ -416,6 +416,18 @@ public abstract class TerminalPanelUI
         return dice.Render(_terminal, centerX, centerY, continueHovered);
     }
 
+    /// <summary>
+    /// Render a <see cref="TimePassageBox"/> centred over the greyed-out content, as the dice box is.
+    /// Hit-test against its <see cref="TimePassageBox.PeriodRegions"/> and continue region.
+    /// </summary>
+    public void RenderTimePassage(TimePassageBox box)
+    {
+        DimContent();
+        int centerX = _layout.TERMINAL_WIDTH / 2;
+        int centerY = _layout.CONTENT_START_Y + _layout.NARRATIVE_HEIGHT / 2;
+        box.Render(_terminal, centerX, centerY);
+    }
+
     // ── LLM generation preview overlay (replaces the centre progress bar) ─────────
 
     /// <summary>

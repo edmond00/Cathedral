@@ -43,6 +43,7 @@ from the game's (very chatty) diagnostic logging on the same stdout.
 | `--means-only <mm-id>` | Forces the playground's choice of **means** — which action modus mentis carries the goal out — onto one modus mentis. The draw is otherwise uniform over every action modus mentis held, and willingness rules now refuse by kind of mind: **examining is refused by any action modus mentis without the Observation function**, so a script that means to examine grants one and pins it (`--grant-mm woodcraft --means-only woodcraft`). The CLI's `means` command sets the same switch. A miss goes through `DebugFlagAudit`. |
 | `--refuse-focus` | Makes every focus observation's modus mentis turn away from the clicked object, as if the choice judge had answered "turn elsewhere". It then picks another unobserved object and one text dismisses the first and observes the second, carrying its keyword. `--playground` never declines a choice, so this is the only way a script reaches that branch. |
 | `--refuse-means <n>` | Under `--playground`, the first `n` willingness questions answer "unwilling" (only those that offer a refusal at all). The playground otherwise answers "willing" every time, so an action modus mentis's refusal — and the retries of iterative thinking after one — is unreachable from a script. Pair it with `--organs pineal_gland=<0–3>`, which sets how many retries a thinking gets (and, at 2+, the doubt). See `cli/system/thinking_iterates.cli`. |
+| `--penalty-only <kind>` | Narrows a failed act's penalty draw to one kind: `wound`, `get_lost`, `waste_time` or `lose_focus`. Every failure costs something now — one entry is drawn uniformly from a table of one to seven — so a script that means to see the way lost, the hour wasted or a noetic point gone is otherwise asserting on a coin flip. **It also changes what your `fail.cli` does next**: a failed `move`, `follow_path`, `track`, `stalk` or `voyage_toward` may lose the way, and the next footer press then leaves the location; a failed climb, swim or crossing may move the hour on. A table with none of the kind is a `DebugFlagAudit` miss. |
 | `--advance-days <n>` | Pushes the world clock forward `n` days on first arrival at the world map. The clock only moves on travel arrival and work stints while a wound needs 100–1000 days to close, so without this nothing about healing is observable. Fires once, before anything has happened — for healing *a wound taken in play*, use the `clock` command instead. |
 | `--location-type test` | Builds the **test location** (`TestSceneFactory`) — a kitchen sink holding one of everything, under names that never change. This is what the whole CLI suite runs in; see "The test location" below. It is attached to no biome, so this flag is the only way in. |
 | `--log-file <path>` | Writes the run's log to `<path>` instead of `log.txt`. `run_tests.sh` gives every run its own, which is what lets instances run in parallel (`log.txt` is opened for exclusive writing) and keeps the suite off the developer's `log.txt`. Not honoured by a shipped build. |
@@ -135,7 +136,13 @@ Run `help` for the authoritative list. The essentials:
                             sky. Reports
                             the yaw and pitch either side of the press, which is the only way a
                             script can observe the camera at all
-  click continue            protagonist-creation Continue, or a settled dice overlay
+  click continue            protagonist-creation Continue, a settled dice overlay, or the time
+                            box once the hours have passed
+  click period <name>       the hour a successful sit_and_wait lasts until, while the time box
+                            asks (dawn…night, the five other than now). `advance` presses through
+                            the box by itself, taking the NEXT period when it asks — so a script
+                            that only needs to get past a wait does nothing new; one that tests the
+                            choice stops after the dice `click continue`, `wait`s, then clicks
   click keyword <name>      a narration keyword
   click action <n>          a narration action
   click option <n>          a dialogue reply
@@ -148,7 +155,8 @@ Run `help` for the authoritative list. The essentials:
                             without this a staged encounter is a dead end and the fight behind
                             it is unreachable
   click button              the footer button (LEAVE / INTERRUPT / END / CONTINUE)
-  choose <n>                answer the visible popup by index
+  choose <n|mm-id>          answer the visible popup by index — or a modus mentis popup by the
+                            modus mentis's id (`choose lockpicking`), which survives the popup's order
   travel here               enter the location the avatar is standing on — what most scripts
                             actually want, and one command instead of four
   travel <vertex|name>      plan a route to a vertex (bypasses 3D picking entirely). Naming
@@ -203,8 +211,8 @@ Run `help` for the authoritative list. The essentials:
                             — `fight-end` settles the whole fight and cannot single anybody out
   wound [protagonist|companions|<name>] [n]
                             wound a party member OUTSIDE a fight, as a failed act's penalty does.
-                            No count means enough to kill. A wound is SAMPLED one slot in five, so
-                            a script cannot ask a failed act to injure anybody on demand
+                            No count means enough to kill. A failed act's penalty is DRAWN from its
+                            verb's table, and `--penalty-only wound` is the only way to make one injure
   click companion-death     the companion-death notice's CONTINUE. Modal over every mode, so a
                             script that does not press it cannot get past a companion dying;
                             `state` reports `companion-death=shown`
@@ -219,7 +227,16 @@ Run `help` for the authoritative list. The essentials:
   inspect [subject]         the game state an outcome can change, by STABLE id — items, coins,
                             where, party, wounds, skills, npcs, pois, routines, or all. What
                             cli/outcome/ reads: `expect` scans the SCREEN, this reads the world.
-                            `where` carries trespass=yes|no (the header's ◆ TRESPASSING ◆);
+                            `where` carries trespass=yes|no (the header's ◆ TRESPASSING ◆),
+                            day=<n> (the calendar) and confronted=<Kind:archetype>|none (the
+                            ConfrontationSelector.Current the exit button reads); `time` the time
+                            box (box=none|choosing|passing|settled destination=…); `will` every
+                            held will's plan (ActionPathPlanner): `will <id> steps=<n> first="…"
+                            goal="…" target=<archetype-id|name> [tool_step=<k>]`, or `steps=none`
+                            where it cannot be done here. target= is the PLAN's own: any equally
+                            short path is accepted too, which is what will_equal_paths.cli asserts.
+                            expect-state takes no escaped quotes: assert `steps=2` and the goal's
+                            words separately;
                             `opening` what the phase's first observation was put on (a Meet
                             routine's person); `routine-slots` each kind's used/usable/grid;
                             `gather` the gathering phase's forecast and yield.
@@ -546,6 +563,8 @@ every `success.cli` also asserts the chip its outcome puts in the outcome block:
 | `DialogueTriggerOutcome` | `Conversation:` | the eleven verbs that open one |
 | `FirstBlowOutcome` | `First blow:` | attack |
 | the modus mentis grant | `Modus mentis` | examine, listen, smell, contemplate — no scene outcome of their own |
+| `LostWayOutcome` / `TimeWastedOutcome` / `FocusLostOutcome` | `Lost the way` / `Time wasted:` / `Focus lost:` | a failure's penalty, drawn from the verb's table — assert them with `--penalty-only` |
+| `TrespassToleratedOutcome` / `ShownTheDoorOutcome` | `… lets you stay` / `… shows you the door` | `found_waiting`, the householder who comes in at night — a village pantry at `--period evening` is the reliable stage (see `cli/outcome/trespass_tolerated`) |
 
 Match the **prefix** only; what follows is a name or a room and moves with the content. `Modus mentis`
 is deliberately cut short of its noun: a first grant reads `acquired`, a repeat reads `learned`

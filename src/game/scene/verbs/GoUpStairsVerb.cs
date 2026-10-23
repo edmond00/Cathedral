@@ -12,6 +12,12 @@ public class GoUpStairsVerb : Verb
 {
     public override string VerbId         => "go_up_stairs";
     public override string DisplayName    => "Go Up";
+
+    /// <summary>A missed stair is a stumble and a moment to collect yourself; rarely a bruise.</summary>
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target) => new FailurePenalty[]
+    {
+        FailurePenalty.LoseFocus, FailurePenalty.LoseFocus, FailurePenalty.LoseFocus, new ContusionWound(),
+    };
     public override int    BaseDifficulty => 1;
 
     /// <summary>A stair is built to be walked up. The climbs, which are not, keep their implements.</summary>

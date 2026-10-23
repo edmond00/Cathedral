@@ -808,6 +808,8 @@ public class LocationTravelGameController : IDisposable
             if (_narrativeController.CliPreviewAwaitsAnswer()) return true;
             var s = _narrativeController.CliSnapshot();
             if (s.AnyLoading || (s.DiceActive && s.DiceRolling)) return false;
+            // The hours rolling by in the time box: an animation, like the dice tumbling.
+            if (_narrativeController.CliTimeBoxState() == "passing") return false;
         }
         return true;
     }
@@ -5939,6 +5941,18 @@ public class LocationTravelGameController : IDisposable
                             + (provoked ? " (personal — no allies)" : ""));
             var fightOutcome = new FightTriggerOutcome(npc, $"confrontation with {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc)}");
             StartFightMode(fightOutcome, soloEnemy: provoked);
+            return;
+        }
+
+        // A householder who found the player waiting in their house at night and would not have them
+        // stay: the visit is over. Straight back to the world — their last word was the door.
+        if (npc.ShowsTheDoor)
+        {
+            npc.ShowsTheDoor = false;   // consume the flag
+            _dialogueAdapter = null;
+            _core.Terminal?.Clear();
+            Console.WriteLine($"LocationTravelGameController: {npc.DisplayName} shows the player the door — leaving the location");
+            ExitNarrativeMode();
             return;
         }
 

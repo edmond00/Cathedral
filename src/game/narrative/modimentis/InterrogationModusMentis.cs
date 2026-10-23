@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class InterrogationModusMentis : ModusMentis
     public override string MenuDescription =>
         "Gets the truth out of someone who would rather not give it: the long silence, the repeated question, the detail that does not fit, the threat that does not need to be made. Is not squeamish about the means.";
     public override string SkillMeans       => "the drawing-out of what someone would rather not tell";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
+    public override WillTarget? Will => WillTarget.To<GatherKnowledgeVerb>("make somebody tell what they would rather not");
     public override string[] Organs        => new[] { "tongue", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

@@ -1,0 +1,53 @@
+# reconsider — an act on screen thought over again, and given to a means the click would let through
+#
+# The wolf in the Test Den is an enemy in the same area, so UnderThreatImpossibleRule refuses any act
+# that is not about facing it unless the means is discreet. Woodcraft (pinned) is not: the thinking
+# offers "examine the wolf" and the click would refuse it. Reconsider asks a thinking modus mentis to
+# keep the act or want no part of it — under --playground it keeps it — and gives it to another means
+# able to carry it out on the click as well as before it: a discreet observer — Hunt (granted) or
+# Stealth (in the seed-42 kit), whichever the playground draws. The
+# old button greys out and no longer answers a click; the new one passes the threat rule. One noetic
+# point for the thinking, one for the reconsider.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Den" --period noon --observe-only wolf --grant-mm woodcraft,hunt --organs pineal_gland=0
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+expect wolf
+
+strategy succeed
+goal examine
+means woodcraft
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+expect [Woodcraft
+regions
+
+# Reconsider the act: any thinking modus mentis, and the means is no longer pinned.
+means none
+click action 0
+choose 2
+choose 0
+advance 12 180
+expect I think again about how to
+expect discretely examine
+regions
+
+# The new act passes the threat rule on the click.
+click action 1
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect-not while under the threat of
+expect SUCCESS
+expect-verb examine
+quit

@@ -6,6 +6,7 @@ namespace Cathedral.Game.Narrative.World.Items;
 public sealed class IronOre : MetalItem
 {
     public override string ItemId      => "iron_ore";
+    public override List<ItemTag> Tags => new() { ItemTag.Mineral, ItemTag.Ore };
     public override string DisplayName => "Iron Ore";
     public override string Description => "A heavy lump of red-brown iron ore, flecked with darker stone";
     public override WeightClass Weight => WeightClass.Medium;
@@ -14,6 +15,7 @@ public sealed class IronOre : MetalItem
 public sealed class IronBar : MetalItem
 {
     public override string ItemId      => "iron_bar";
+    public override List<ItemTag> Tags => new() { ItemTag.Mineral, ItemTag.Ore };
     public override string DisplayName => "Iron Bar";
     public override string Description => "A short rough-cast bar of smelted iron, hammer-marks along its sides";
     public override ItemSize Size => ItemSize.Medium;
@@ -23,6 +25,7 @@ public sealed class IronBar : MetalItem
 public sealed class Coal : MetalItem
 {
     public override string ItemId      => "coal";
+    public override List<ItemTag> Tags => new() { ItemTag.Mineral, ItemTag.Ore, ItemTag.Fuel };
     public override string DisplayName => "Coal";
     public override string Description => "A black knob of coal, glittering where it has fractured";
     public override WeightClass Weight => WeightClass.Light;
@@ -45,6 +48,6 @@ public sealed class IronHoop : MetalItem
     public override string Description => "A flat iron band shaped to bind a barrel";
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass    Weight => WeightClass.Light;
-    public override List<ItemTag> Tags => new() { ItemTag.Ironwork };
+    public override List<ItemTag> Tags => new() { ItemTag.Ironwork, ItemTag.Cooperage };
     public override int PriceReference => 5;
 }

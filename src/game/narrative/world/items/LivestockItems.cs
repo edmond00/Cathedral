@@ -55,7 +55,7 @@ public sealed class HorseBlanket : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Large;
     public override WeightClass Weight => WeightClass.Medium;
-    public override List<ItemTag> Tags => new() { ItemTag.Textile };
+    public override List<ItemTag> Tags => new() { ItemTag.Textile, ItemTag.Cloth };
     public override int PriceReference => 12;
 }
 
@@ -156,6 +156,7 @@ public sealed class Pitchfork : Item
 public sealed class Fleece : TextileItem
 {
     public override string ItemId      => "fleece";
+    public override List<ItemTag> Tags => new() { ItemTag.Textile, ItemTag.Woollens };
     public override string DisplayName => "Fleece";
     public override string Description => "A whole greasy fleece rolled up and tied, lanolin-sticky";
     public override int PriceReference => 14;
@@ -174,7 +175,7 @@ public sealed class GoatMilk : ConsumableItem
     public override string ItemId      => "goat_milk";
     public override string DisplayName => "Goat Milk";
     public override string Description => "A skin of goat milk, rich and a little rank";
-    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Dairy };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Drink;
@@ -189,7 +190,7 @@ public sealed class Ham : ConsumableItem
     public override string ItemId      => "ham";
     public override string DisplayName => "Ham";
     public override string Description => "A smoked ham in a cloth, its rind dark and hard";
-    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Meat };
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass Weight => WeightClass.Medium;
     public override ConsumableType ConsumableType => ConsumableType.Food;
@@ -199,12 +200,27 @@ public sealed class Ham : ConsumableItem
         .Add<FatHumor>(45).Add<BloodHumor>(30).Add<SaltHumor>(25);
 }
 
+public sealed class Fowl : ConsumableItem
+{
+    public override string ItemId      => "fowl";
+    public override string DisplayName => "Plucked Fowl";
+    public override string Description => "A hen killed and plucked, trussed by the feet with a twist of straw";
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Meat, ItemTag.Poultry };
+    public override ItemSize Size => ItemSize.Medium;
+    public override WeightClass Weight => WeightClass.Light;
+    public override ConsumableType ConsumableType => ConsumableType.Food;
+    protected override HumorRichness Richness => HumorRichness.Hearty;
+    public override int PriceReference => 8;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<BloodHumor>(60).Add<FatHumor>(40);
+}
+
 public sealed class Bacon : ConsumableItem
 {
     public override string ItemId      => "bacon";
     public override string DisplayName => "Bacon";
     public override string Description => "A slab of salted, smoked bacon streaked white and red";
-    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Meat };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Food;
@@ -219,7 +235,7 @@ public sealed class GooseEgg : ConsumableItem
     public override string ItemId      => "goose_egg";
     public override string DisplayName => "Goose Egg";
     public override string Description => "A heavy white goose egg, twice the size of a hen's";
-    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Poultry };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Food;
@@ -234,7 +250,7 @@ public sealed class DuckEgg : ConsumableItem
     public override string ItemId      => "duck_egg";
     public override string DisplayName => "Duck Egg";
     public override string Description => "A pale blue-green duck egg, the shell faintly chalky";
-    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Poultry };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Food;
@@ -264,7 +280,7 @@ public sealed class Curds : ConsumableItem
     public override string ItemId      => "curds";
     public override string DisplayName => "Curds";
     public override string Description => "A bowl of fresh white curds dripping whey";
-    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Dairy };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Food;

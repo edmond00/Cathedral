@@ -22,6 +22,12 @@ public class UnlockDoorVerb : Verb
     }
     public override string VerbId         => "unlock_door";
     public override string DisplayName    => "Unlock";
+
+    /// <summary>A lock worked at too long eats the hour, and a slipped pick opens a finger instead.</summary>
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target) => new FailurePenalty[]
+    {
+        FailurePenalty.LoseFocus, FailurePenalty.LoseFocus, FailurePenalty.WasteTime, new CutWound(),
+    };
     public override int    BaseDifficulty => 3;
 
     /// <summary>Picks, wards and a lock to work. No hands, no verb.</summary>

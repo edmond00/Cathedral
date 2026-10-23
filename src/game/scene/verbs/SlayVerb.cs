@@ -16,6 +16,12 @@ public class SlayVerb : Verb
 {
     public override string VerbId         => "slay";
     public override string DisplayName    => "Slay";
+
+    /// <summary>A killing blow that does not land is an overreach, and the mind that aimed it loses its nerve.</summary>
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target) => new FailurePenalty[]
+    {
+        FailurePenalty.LoseFocus, FailurePenalty.LoseFocus, new StrainWound(), new ContusionWound(),
+    };
     public override int    BaseDifficulty => 3;
 
     /// <summary>What a success teaches: killing without giving the other a fight.</summary>

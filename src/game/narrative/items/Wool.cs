@@ -10,6 +10,6 @@ public sealed class Wool : Item
     public override string Article     => "some";
     public override string Description => "A loose fleece of raw sheep's wool, greasy with lanolin";
     public override ItemSize Size      => ItemSize.Medium;
-    public override List<ItemTag> Tags => new() { ItemTag.Textile };
+    public override List<ItemTag> Tags => new() { ItemTag.Textile, ItemTag.Woollens };
     public override int PriceReference => 8;
 }

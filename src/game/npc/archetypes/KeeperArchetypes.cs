@@ -18,7 +18,7 @@ public class QuartermasterArchetype : SettledArchetype
     public override string TradeModusMentisId => "provisioning";
     public override SocialCategory? Social => SocialCategory.Military;
     public override string RoleNoun => "quartermaster";
-    public override ItemTag? SellTag => ItemTag.Ironwork;
+    public override ItemTag? SellTag => ItemTag.Arms;
     public override ItemTag? BuyTag  => ItemTag.Foodstuff;
     public override int AuthorityLevel => 1;
     public override IReadOnlyList<string> CanIntroduceToArchetypes => new[] { "captain" };
@@ -71,7 +71,7 @@ public class SacristanArchetype : SettledArchetype
     public override string TradeModusMentisId => "liturgy";
     public override SocialCategory? Social => SocialCategory.Religious;
     public override string RoleNoun => "sacristan";
-    public override ItemTag? SellTag => ItemTag.Craftware;
+    public override ItemTag? SellTag => ItemTag.Devotional;
     public override ItemTag? BuyTag  => ItemTag.Herb;
     public override IReadOnlyList<string> CanIntroduceToArchetypes => new[] { "priest" };
     public override string IntroductionRelation => "the priest";

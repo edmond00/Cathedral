@@ -12,6 +12,12 @@ public class GoDownStairsVerb : Verb
 {
     public override string VerbId         => "go_down_stairs";
     public override string DisplayName    => "Go Down";
+
+    /// <summary>A missed stair is a stumble and a moment to collect yourself; rarely a bruise.</summary>
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target) => new FailurePenalty[]
+    {
+        FailurePenalty.LoseFocus, FailurePenalty.LoseFocus, FailurePenalty.LoseFocus, new ContusionWound(),
+    };
     public override int    BaseDifficulty => 1;
 
     /// <summary>As going up: a stair asks nothing of the hands.</summary>

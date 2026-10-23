@@ -581,8 +581,9 @@ public class NarrativeUI : TerminalPanelUI
     /// </summary>
     private void RenderActionLine(string text, ParsedNarrativeAction action, int actionIndex, int y, int lineIndex, ActionRegion? hoveredAction, bool dimContent = false)
     {
-        // Actions judged impossible are always rendered greyed-out
-        dimContent = dimContent || action.IsImpossible;
+        // A reconsidered action, replaced by the one below it, is rendered greyed-out. A refused one is
+        // not: it can still be reconsidered, and greying read as a dead end.
+        dimContent = dimContent || action.Superseded;
 
         // Check if this action is hovered
         bool isHovered = hoveredAction != null && hoveredAction.ActionIndex == actionIndex;

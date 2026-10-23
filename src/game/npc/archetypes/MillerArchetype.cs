@@ -11,8 +11,8 @@ public class MillerArchetype : CraftsmanArchetype
 
     /// <summary>What asking this person about their work teaches.</summary>
     public override string TradeModusMentisId => "millcraft";
-    public override ItemTag? SellTag => ItemTag.Crop;
-    public override ItemTag? BuyTag  => ItemTag.Crop;
+    public override ItemTag? SellTag => ItemTag.Grain;
+    public override ItemTag? BuyTag  => ItemTag.Grain;
     public override int    ModiMentisCount => 9;
     public override int    AuthorityLevel => 1;
 

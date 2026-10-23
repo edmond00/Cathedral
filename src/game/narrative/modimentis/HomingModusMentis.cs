@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -12,7 +13,7 @@ public class HomingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Carries the route home entire: the turns taken, the slopes crossed, the sun's angle when the party set out. Never needs a landmark named to find the way back to a place it has been once.";
     public override string SkillMeans       => "the holding of the way back to a known place";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "cerebrum", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
@@ -21,6 +22,11 @@ public class HomingModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone carrying the whole road back in their head";
     public override string StyleInstruction =>
         "Give bearings and distances as felt, not measured. Speak of the way back as a thing already known.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(LostWayOutcome), () => new NervusHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of HOMING, the road back kept folded in the head.
 

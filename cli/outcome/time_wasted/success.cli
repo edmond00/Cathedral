@@ -1,0 +1,48 @@
+# time_wasted — the outcome, not the verb.
+#
+# A failed climb that costs the hour: the period really moves on, and everything that follows the
+# hour follows it. --penalty-only waste_time pins the draw, which is otherwise uniform over the
+# climb's table (two hours wasted, a scrape and four fractures in seven).
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Rock" --period dawn --observe-only "Test Cliff" --penalty-only waste_time
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# --- before ---
+expect-state where period=Dawn
+
+strategy fail-dice
+goal climb_up
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+expect FAILURE
+expect-verb climb_up
+expect Time wasted:
+expect-no-outcome area_move
+
+# --- the outcome really ran ---
+expect-outcome time_wasted
+expect-no-outcome wound_infliction
+
+# --- after: the hour moved on, and the climb did not take us anywhere ---
+expect-state where period=Morning
+expect-state where Test Rock
+quit

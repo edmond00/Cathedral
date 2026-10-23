@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 using Cathedral.Game.Scene;
 using Cathedral.Game.Dialogue.Tree;
@@ -14,7 +15,8 @@ public class SpiteModusMentis : ModusMentis
     public override string MenuDescription =>
         "Remembers the slight and pays it back: the jibe returned, the trick played on the trickster, the boaster taken down in front of everyone. Prefers the wrong righted to the profit taken, and will spend real advantage to make somebody sorry. Ugly, and occasionally the only thing that answers a bully.";
     public override string SkillMeans       => "the settled intent to make somebody sorry";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
+    public override WillTarget? Will => WillTarget.To<ProvokeVerb>("make somebody sorry");
     public override string[] Organs        => new[] { "spleen", "teeths" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

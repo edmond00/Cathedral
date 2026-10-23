@@ -37,7 +37,7 @@ public sealed class WoolUndershirt : WearableItem
     public override string Description => "A close-fitting undershirt of soft-combed wool, worn thin at the shoulders";
     public override WearSlot Slot      => WearSlot.Underwear;
     public override WeightClass Weight => WeightClass.Light;
-    public override List<ItemTag> Tags => new() { ItemTag.Clothing };
+    public override List<ItemTag> Tags => new() { ItemTag.Clothing, ItemTag.Woollens };
     public override CoinType PriceCoin => CoinType.Copper;
     public override int PriceReference => 9;
 
@@ -59,7 +59,7 @@ public sealed class PaddedGambeson : WearableItem
     public override ItemSize Size      => ItemSize.Medium;
     public override WearSlot Slot      => WearSlot.Underwear;
     public override WeightClass Weight => WeightClass.Medium;
-    public override List<ItemTag> Tags => new() { ItemTag.Clothing };
+    public override List<ItemTag> Tags => new() { ItemTag.Clothing, ItemTag.Arms };
     public override int PriceReference => 40;
 
     public override int DefenseDice => 2;
@@ -75,7 +75,7 @@ public sealed class MailMittens : WearableItem
     public override string Description => "A pair of riveted mail mittens backed with leather, heavy and cold to put on";
     public override WearSlot Slot      => WearSlot.Handwear;
     public override WeightClass Weight => WeightClass.Medium;
-    public override List<ItemTag> Tags => new() { ItemTag.Clothing, ItemTag.Ironwork };
+    public override List<ItemTag> Tags => new() { ItemTag.Ironwork, ItemTag.Arms };
     public override int PriceReference => 50;
 
     public override int DefenseDice => 2;
@@ -162,7 +162,7 @@ public sealed class IronKettleHelm : WearableItem
     public override ItemSize Size      => ItemSize.Small;
     public override WearSlot Slot      => WearSlot.Headgear;
     public override WeightClass Weight => WeightClass.Medium;
-    public override List<ItemTag> Tags => new() { ItemTag.Clothing, ItemTag.Ironwork };
+    public override List<ItemTag> Tags => new() { ItemTag.Ironwork, ItemTag.Arms };
     public override int PriceReference => 50;
 
     public override int DefenseDice => 2;
@@ -178,7 +178,7 @@ public sealed class Gorget : WearableItem
     public override string Description => "A collar of overlapping steel plates on a leather backing, buckled at the nape";
     public override WearSlot Slot      => WearSlot.Neckwear;
     public override WeightClass Weight => WeightClass.Medium;
-    public override List<ItemTag> Tags => new() { ItemTag.Clothing, ItemTag.Ironwork };
+    public override List<ItemTag> Tags => new() { ItemTag.Ironwork, ItemTag.Arms };
     public override int PriceReference => 60;
 
     public override int DefenseDice => 2;

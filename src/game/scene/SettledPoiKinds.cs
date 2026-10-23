@@ -389,8 +389,8 @@ public class CoilPointOfInterest : PointOfInterest
         : base(displayName, Lemma, descriptions, items, moods, isNatural) { }
 }
 
-/// <summary>A crate.</summary>
-public class CratePointOfInterest : PointOfInterest
+/// <summary>A crate. Something to sit on as well as to rummage through, so it is an <see cref="ISeat"/>.</summary>
+public class CratePointOfInterest : PointOfInterest, ISeat
 {
     /// <summary>The lemma this kind answers to. Derived from the class name and fixed here.</summary>
     public const string Lemma = "crate";

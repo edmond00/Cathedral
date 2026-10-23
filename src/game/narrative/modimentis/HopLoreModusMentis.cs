@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class HopLoreModusMentis : ModusMentis
     public override string MenuDescription =>
         "Knows the hop bine and the brewer's need of it: when the cones are papery and full of yellow dust, how they dry, how much bitterness they will give a brew and how long they keep it from souring.";
     public override string SkillMeans       => "the knowledge of hops and the bitterness they give";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
+    public override WillTarget? Will => WillTarget.ToAny("pick hops", typeof(GatherVerb), typeof(GrabVerb)).Yielding<World.Items.Hops>();
     public override string[] Organs        => new[] { "nose", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

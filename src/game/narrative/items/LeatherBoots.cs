@@ -10,7 +10,7 @@ public sealed class LeatherBoots : WearableItem
     public override string Description      => "A pair of heavy ankle boots, calf leather worn pale at the toes";
     public override ItemSize Size           => ItemSize.Medium;
     public override WearSlot Slot           => WearSlot.Footwear;
-    public override List<ItemTag> Tags => new() { ItemTag.Clothing };
+    public override List<ItemTag> Tags => new() { ItemTag.Clothing, ItemTag.Footwear };
     public override int PriceReference => 20;
 
     // Thick calf leather over the ankle — the one piece of ordinary dress that genuinely turns a blow.

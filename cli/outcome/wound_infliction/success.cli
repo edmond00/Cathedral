@@ -3,12 +3,11 @@
 # cli/verb/climb_up/ proves the chip is printed. This proves it corresponds to something real.
 # The verb script runs in full and the outcome assertions go on the end.
 #
-# SEED 7, not the suite default of 42. A wound is SAMPLED from FailurePenalties, and climb_up
-# fills 4 of its 7 slots — so most failures injure nobody, and at seed 42 this one does not.
-# Changing the seed is the honest fix: the alternative is a test that asserts a wound and passes
-# because it never checked.
+# --penalty-only wound pins the draw. A penalty is DRAWN from FailurePenalties, and climb_up's table
+# also wastes the hour; this script once ran at seed 7 instead of 42 because that seed happened to
+# wound, which held only until the table changed.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 7 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Rock" --period dawn --observe-only "Test Cliff"
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Rock" --period dawn --observe-only "Test Cliff" --penalty-only wound
 
 wait
 click menu New
@@ -44,8 +43,8 @@ expect FAILURE
 # of every verb alike, so only this can tell them apart.
 expect-verb climb_up
 # The failure assertion that means something: the verb's own consequence did NOT happen.
-# Asserting the wound instead would be flaky — FailurePenalties samples one slot in five,
-# so most failures injure nobody.
+# Asserting the penalty instead would be flaky — FailurePenalties draws one entry of several,
+# and only --penalty-only pins which (see cli/outcome/).
 expect-no-outcome area_move
 
 # --- the outcome really ran ---

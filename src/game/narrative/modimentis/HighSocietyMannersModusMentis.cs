@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 using Cathedral.Game.Dialogue.Tree;
 
@@ -14,7 +15,8 @@ public class HighSocietyMannersModusMentis : ModusMentis
     public override string MenuDescription =>
         "Holds conduct to the polished customs of city society, tracking fine address and refined manner. Reads a genteel room for its unspoken rules, and inclines toward the courteous, well-bred move.";
     public override string SkillMeans       => "refined manners and polite conversation";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
+    public override WillTarget? Will => WillTarget.To<IntroduceMeVerb>("be introduced to somebody of standing");
     public override string[] Organs        => new[] { "tongue", "ears" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>

@@ -30,6 +30,7 @@ public class CautionModusMentis : ModusMentis
         new(typeof(FirstBlowOutcome), () => new NervusHumor()),
         new(typeof(FightTriggerOutcome), () => new NervusHumor()),
         new(typeof(WoundInflictionOutcome), () => new LaetitiaHumor()),
+        new(typeof(LostWayOutcome), () => new NervusHumor()),
     };
 
     public override string PersonaPrompt => @"You are the inner voice of CAUTION, and you are asking for one more minute.

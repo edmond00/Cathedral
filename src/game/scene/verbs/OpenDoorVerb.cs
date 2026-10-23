@@ -19,6 +19,12 @@ public class OpenDoorVerb : Verb
 
     public override string VerbId         => "open_door";
     public override string DisplayName    => "Open";
+
+    /// <summary>A door that will not give is shouldered at, and a shoulder can take it amiss.</summary>
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target) => new FailurePenalty[]
+    {
+        FailurePenalty.LoseFocus, FailurePenalty.LoseFocus, FailurePenalty.LoseFocus, new StrainWound(),
+    };
     public override int    BaseDifficulty => 1;
 
     /// <summary>Pushing an unlocked door open. Forcing a shut one is BREAK and picking a fastened one is UNLOCK DOOR; both take implements, and this is neither.</summary>

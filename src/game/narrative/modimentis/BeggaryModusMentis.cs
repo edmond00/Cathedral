@@ -1,10 +1,11 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Beggary — asking strangers for what you have no claim to, and reading which of them will give it.
-/// Speaking + VerbAction.
+/// Will + Speaking + VerbAction.
 /// </summary>
 public class BeggaryModusMentis : ModusMentis
 {
@@ -13,7 +14,8 @@ public class BeggaryModusMentis : ModusMentis
     public override string MenuDescription =>
         "Picks the one face in a street that will not look away, and asks it. Knows how much to show and when to stop showing it, and takes a refusal without letting it close the next door.";
     public override string SkillMeans       => "the asking of strangers for what they owe you nothing of";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<BegForCoinVerb>("beg for coin");
     public override string[] Organs        => new[] { "tongue", "eyes" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>

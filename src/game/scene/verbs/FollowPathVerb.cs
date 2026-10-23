@@ -22,6 +22,12 @@ public class FollowPathVerb : Verb
     }
     public override string VerbId         => "follow_path";
     public override string DisplayName    => "Follow";
+
+    /// <summary>A path that runs past places is a path that can be lost — and with it the whole place.</summary>
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target) => new FailurePenalty[]
+    {
+        FailurePenalty.GetLost, FailurePenalty.GetLost, FailurePenalty.GetLost, FailurePenalty.WasteTime, FailurePenalty.WasteTime, new ScrapeWound(),
+    };
     /// <summary>
     /// One above <see cref="MoveToAreaVerb"/>: the price of skipping the areas between. Flat whatever
     /// the path's length, since a path is two or three steps and never more. The same as a voyage

@@ -29,7 +29,8 @@ public static class PrivacyModel
     /// crime on its strength; the narration header shows it to the player; and no routine is learned
     /// or walked where it holds.
     /// </summary>
-    public static bool IsTrespassing(Area area) => area.IsPrivate;
+    public static bool IsTrespassing(Scene scene, Area area)
+        => area.IsPrivate && !(scene.SectionOf(area) is { } section && scene.ToleratedSections.Contains(section));
 
     /// <summary>
     /// Whether striking at <paramref name="target"/> from <paramref name="pov"/> is hunting: the

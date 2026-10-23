@@ -15,6 +15,7 @@ namespace Cathedral.Game.Narrative.World.Items;
 public sealed class Date : FruitItem
 {
     public override string ItemId      => "date";
+    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Fruit };
     public override string DisplayName => "Date";
     public override string Description => "A wrinkled amber date, sticky and very sweet, the stone loose inside";
     protected override HumorRichness Richness => HumorRichness.Hearty;
@@ -25,6 +26,7 @@ public sealed class Date : FruitItem
 public sealed class PricklyPear : FruitItem
 {
     public override string ItemId      => "prickly_pear";
+    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Fruit };
     public override string DisplayName => "Prickly Pear";
     public override string Description => "A red cactus fruit furred with fine spines that find the fingers whatever care is taken";
     protected override HumorRecipe Recipe => new HumorRecipe()
@@ -34,6 +36,7 @@ public sealed class PricklyPear : FruitItem
 public sealed class BaobabFruit : FruitItem
 {
     public override string ItemId      => "baobab_fruit";
+    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Fruit };
     public override string DisplayName => "Baobab Fruit";
     public override string Description => "A velvet-skinned gourd of a fruit, its pith dry and chalky and sour";
     protected override HumorRichness Richness => HumorRichness.Hearty;
@@ -44,6 +47,7 @@ public sealed class BaobabFruit : FruitItem
 public sealed class Banana : FruitItem
 {
     public override string ItemId      => "banana";
+    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Fruit, ItemTag.CashCrop };
     public override string DisplayName => "Banana";
     public override string Description => "A short wild banana, thick-skinned and full of hard black seeds";
     protected override HumorRichness Richness => HumorRichness.Hearty;
@@ -54,6 +58,7 @@ public sealed class Banana : FruitItem
 public sealed class JungleFig : FruitItem
 {
     public override string ItemId      => "jungle_fig";
+    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Fruit };
     public override string DisplayName => "Jungle Fig";
     public override string Description => "A soft purple fig from a strangler's crown, wasps already at the split in it";
     protected override HumorRecipe Recipe => new HumorRecipe()
@@ -63,6 +68,7 @@ public sealed class JungleFig : FruitItem
 public sealed class CacaoPod : FruitItem
 {
     public override string ItemId      => "cacao_pod";
+    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.CashCrop };
     public override string DisplayName => "Cacao Pod";
     public override string Description => "A ridged yellow pod off the trunk itself, white pulp and bitter beans inside";
     public override ItemSize Size => ItemSize.Medium;
@@ -126,6 +132,7 @@ public sealed class YuccaRoot : VegetableItem
 public sealed class WildMillet : VegetableItem
 {
     public override string ItemId      => "wild_millet";
+    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Grain };
     public override string DisplayName => "Wild Millet";
     public override string Description => "A drooping head of wild millet, the seed small and hard and easily shaken loose";
     public override WeightClass Weight => WeightClass.Insignificant;
@@ -242,6 +249,7 @@ public sealed class Liana : WoodRawItem
 public sealed class Bamboo : WoodRawItem
 {
     public override string ItemId      => "bamboo";
+    public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Timber };
     public override string DisplayName => "Bamboo";
     public override string Description => "A jointed cane of green bamboo, hollow, light and very hard";
     public override ItemSize Size => ItemSize.Large;
@@ -252,6 +260,7 @@ public sealed class Bamboo : WoodRawItem
 public sealed class Thornwood : WoodRawItem
 {
     public override string ItemId      => "thornwood";
+    public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Timber };
     public override string DisplayName => "Thornwood";
     public override string Description => "A crooked bough of acacia, dense red wood bristling with long white thorns";
     public override int PriceReference => 4;
@@ -308,6 +317,7 @@ public sealed class Sandstone : StoneRawItem
 public sealed class Jasper : StoneRawItem
 {
     public override string ItemId      => "jasper";
+    public override List<ItemTag> Tags => new() { ItemTag.Mineral, ItemTag.Ore };
     public override string DisplayName => "Jasper";
     public override string Description => "A water-polished pebble of blood-red jasper, opaque and cold";
     public override WeightClass Weight => WeightClass.Light;

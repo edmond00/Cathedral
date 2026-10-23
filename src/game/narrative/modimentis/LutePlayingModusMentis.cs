@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,10 +13,11 @@ public class LutePlayingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Plays a stringed instrument: the tuning, the fingering, the song suited to the hall. Hears a string out of true across a room, and changes the music to suit the mood of the listeners.";
     public override string SkillMeans       => "the playing of the lute";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<SingAlongVerb>("play and sing along");
     public override string[] Organs        => new[] { "hands", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
-    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft | AnatomyCapability.Speech;
 
     public override string PersonaTone     => "a lutenist who tunes by ear across a room";
     public override string PersonaReminder  => "lutenist";

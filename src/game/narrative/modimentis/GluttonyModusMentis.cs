@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -13,7 +14,8 @@ public class GluttonyModusMentis : ModusMentis
     public override string MenuDescription =>
         "Keeps appetite forward in the mind, with a nose for where a good meal is to be had. Inclines reasoning and action toward food, drink and indulgence, and finds little worth the trouble that cannot be eaten or drunk.";
     public override string SkillMeans       => "the keen love of food";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
+    public override WillTarget? Will => WillTarget.ToAny("lay hands on something to eat", typeof(GrabVerb), typeof(GatherVerb), typeof(StealVerb)).Yielding<ConsumableItem>();
     public override string[] Organs        => new[] { "nose", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override MoralLevel MoralLevel => MoralLevel.Low;

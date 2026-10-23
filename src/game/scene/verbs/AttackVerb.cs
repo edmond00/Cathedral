@@ -13,6 +13,12 @@ public class AttackVerb : Verb
 {
     public override string VerbId         => "attack";
     public override string DisplayName    => "Attack";
+
+    /// <summary>A swing that meets nothing wrenches the body that threw it. The fight it starts is the rest of the cost.</summary>
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target) => new FailurePenalty[]
+    {
+        new StrainWound(), new StrainWound(), new ScrapeWound(),
+    };
     public override int    BaseDifficulty => 2;
 
     /// <summary>

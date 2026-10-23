@@ -1,3 +1,5 @@
+using Cathedral.Game.Scene;
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -13,7 +15,8 @@ public class TopographiaModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads terrain by elevation, slope, and the lie of the land. Holds attention on ground and high places, and inclines toward understanding a landscape by its form.";
     public override string SkillMeans => "terrain and landscape reading";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
+    public override WillTarget? Will => WillTarget.To<ExamineVerb>("read the lie of the land").On<LandscapePointOfInterest>();
     public override string[] Organs => new[] { "eyes", "feet" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     

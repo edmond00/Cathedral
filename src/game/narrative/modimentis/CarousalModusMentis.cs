@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -13,7 +14,8 @@ public class CarousalModusMentis : ModusMentis
     public override string MenuDescription =>
         "Carries the long drinking night as a craft: pacing the cups, leading the song, keeping the table loud and friendly. Holds drink better than most and uses the loosened room to bind company together, or to listen.";
     public override string SkillMeans       => "the enjoying of drink, feasting and long celebration";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Speaking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<SingAlongVerb>("join in the carousing");
     public override string[] Organs        => new[] { "hepar", "tongue" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>

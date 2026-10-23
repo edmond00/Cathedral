@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 using Cathedral.Game.Scene;
 
@@ -13,7 +14,8 @@ public class RatcatcherModusMentis : ModusMentis
     public override string MenuDescription =>
         "Knows the vermin: their runs, their droppings, what their numbers say about a household, and how they are actually got rid of. Unromantic knowledge about the animals that live closest to people.";
     public override string SkillMeans       => "the knowing of rats, mice and their runs";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
+    public override WillTarget? Will => WillTarget.To<CatchVerb>("catch vermin");
     public override string[] Organs        => new[] { "eyes", "teeths" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.Low;

@@ -201,6 +201,11 @@ A wound names what it afflicts: an organ part, an organ, a whole region, or noth
 the three generic wounds a near-miss leaves depends on the shape of the harm — an edge cuts, a point
 punctures, a blunt weight contends — so a sword's graze and a mace's are not the same graze.
 
+Two further wildcards are **mishaps**: the **scrape**, where the body was dragged along something
+rough, and the **strain**, where it was set against itself in effort. A failed act may leave either
+(see [Chapter VI §8](06-narration.md#8-failure-and-its-wages)); no blow ever does, for nobody is
+strained by a sword. A stumble on dangerous ground in a fight is a mishap, and may.
+
 Three degrees of handicap:
 
 - **Low** — no penalty to any score. It costs one point of health and nothing else.

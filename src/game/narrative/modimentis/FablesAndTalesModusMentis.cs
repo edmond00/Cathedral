@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -13,7 +14,8 @@ public class FablesAndTalesModusMentis : ModusMentis
     public override string MenuDescription =>
         "Matches the trouble at hand to a remembered fable, moral, or old tale. Draws on a store of stories for wisdom or persuasion, reaching for the one that fits the present case.";
     public override string SkillMeans       => "the knowledge of old stories and the lessons they hold";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
+    public override WillTarget? Will => WillTarget.To<HearGossipVerb>("hear a tale told");
     public override string[] Organs        => new[] { "tongue", "anamnesis" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>

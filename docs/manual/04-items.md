@@ -221,6 +221,10 @@ Whence: a weapon is not simply better or worse than another. Two weapons of the 
 different categories offer different things to do, and what a fighter can do with one is decided by
 what they have learned as much as by what they carry.
 
+**An improvised weapon is of level nought.** A length of wood picked up rather than made bears its
+category's skills as any weapon does, but lends no dice to them: the blow it carries is the
+fighter's learning and nothing more. As an implement it lends a single die.
+
 A weapon must be held in a hand to serve as a medium within a fight; one in a pack is a burden and nothing else. For the blow that *begins* a fight the test is different and stricter: the medium is the weapon combined with the act, and a weapon carried but not taken up counts for nothing (see [Chapter VIII §5](08-fighting.md#5-the-opening-blow)).
 
 ## 9. Garments

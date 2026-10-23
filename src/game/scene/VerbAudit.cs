@@ -115,7 +115,7 @@ public static partial class VerbAudit
         return sb.ToString();
     }
 
-    private static IEnumerable<(string Label, Func<int, Scene> Build, int Samples)> Factories()
+    internal static IEnumerable<(string Label, Func<int, Scene> Build, int Samples)> Factories()
     {
         yield return ("PLAIN",    id => new Plain.PlainSceneFactory().Build(id),       SampleSize);
         yield return ("FOREST",   id => new Forest.ForestSceneFactory().Build(id),     SampleSize);
