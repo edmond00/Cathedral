@@ -23,6 +23,7 @@ public class CrossVerb : Verb
         foreach (var m in base.Lessons(ctx)) yield return m;
     }
     public override string VerbId         => "cross";
+    protected override bool MovesAlongWay => true;
     public override string DisplayName    => "Cross";
     public override int    BaseDifficulty => 4;
 

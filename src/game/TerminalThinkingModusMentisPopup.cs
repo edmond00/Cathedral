@@ -152,11 +152,10 @@ public class TerminalThinkingModusMentisPopup
         }
         
         // Convert screen position to popup-local cell coordinates
-        // Note: Cells are positioned by their centers, so we add half a cell size before dividing
         float relativeX = screenX - left;
         float relativeY = screenY - top;
-        int cellX = (int)Math.Floor((relativeX + cellPixelSize * 0.5f) / cellPixelSize);
-        int cellY = (int)Math.Floor((relativeY + cellPixelSize * 0.5f) / cellPixelSize);
+        int cellX = (int)Math.Floor(relativeX / cellPixelSize);
+        int cellY = (int)Math.Floor(relativeY / cellPixelSize);
         
         // Check if we're in the modusMentis list area (one row per visible entry, within popup width)
         if (cellY < 1 || cellY > VisibleCount || cellX < 0 || cellX >= POPUP_WIDTH)

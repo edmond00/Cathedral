@@ -47,7 +47,7 @@ public static class SaveAudit
             "JournalEntries",
             "Party",              // the three coin counts
             "ChildhoodHistory",
-            "RecordedRoutines",
+            "MentalMaps",
             "CompanionParty",
         },
         [typeof(EnemyCombatant)] = new[] { "ArchetypeId", "PersistentId", "DisplayName" },
@@ -92,6 +92,7 @@ public static class SaveAudit
             ["EveryMember"]         = "the protagonist plus the companions",
             ["OverloadedMembers"]   = "computed per member",
             ["TravelWeightBlocker"] = "computed per member",
+            ["RecordedRoutines"]    = "the routines of the mental maps, which are stored",
         },
         [typeof(EnemyCombatant)] = new() { },
         [typeof(Party)] = new() { },

@@ -20,6 +20,22 @@ never across a gate, so that it is never a way round either. Not every location 
 of areas two steps apart is joined by a path with a chance of 30 in 100, each pair three steps apart
 with 15 in 100, and no area has more than two.
 
+**Going back.** A way out already known — a neighbouring area already stood in, or a door, stair,
+path or climb already gone by — is not walked again but **gone back by**, and the narration says
+so when it takes such a way in. Going back is a single act of difficulty 2, whatever the distance,
+and it reaches any area already visited that known ways join to the one stood in: the destination
+is chosen once the act has succeeded, from all of them. It never passes a door locked against the
+comer, and never steps from public ground into private, so the private rooms it may return to are
+only those of the private ground the body already stands in. A will that goes back as a step of its
+course goes to the area its course needs, and nothing is chosen. What going back teaches follows
+from how it was done: with an enemy in sight, by night, or on private ground, each teaches its own;
+otherwise it teaches the retracing of known ways.
+
+What is known of a place — the areas stood in, the ways gone by, what an observation took in — is the
+place's **mental map**, and lasts only as long as the map is remembered (see
+[IX §1](09-routines.md)). A place forgotten is unknown again: none of its ways is known, and none is
+gone back by.
+
 A **point of view** is a pair: *where* the acting body stands, and *when* — the period of the day.
 Both are scene state, and both decide what may be attempted. Moving between areas changes the first;
 waiting changes the second.
@@ -300,7 +316,8 @@ Deliberating, it is offered no goal but that first act, and on an object that do
 proposes nothing, saying only what it wants; it admits no doubt, having no goal to choose between, and
 tries again only with another means for an act on its way. In either office it gives its course as its reason. Where the course does not exist
 within the place, it declines in both and says that only leaving offers what it wants. Bearing the
-Action function, it is its own means for the act it wants; an act on its way is carried out by
+Action function, it is its own means for the act it wants, and is not asked how willingly: it is
+eager for it, and the difficulty falls by one; an act on its way is carried out by
 whichever means is chosen for it, as any goal is. A will cannot refuse an act of its own course — though a rule
 of action, which judges circumstance and not character, still may.
 
@@ -317,7 +334,12 @@ it, each act that can be a crime has its own condition — striking someone who 
 enemy is not a crime, for the quarrel was declared before the blow; forcing the lock of a public
 storehouse is nobody's privacy.
 
-**Ground has three tenures.** *Private* ground is somebody's, and makes every act a trespass.
+**Ground has three tenures.** *Private* ground is somebody's, and makes every act a trespass. It is
+never entered from public ground unawares: the only ways in are a door locked against the comer —
+the door of a house, or of any room that is somebody's, the rooms off a great building's passages
+among them — and ways that are themselves an intrusion, a window slipped through or a wall scaled. No open way,
+stair or unlocked door leads from public ground into private, though within private ground the ways
+between rooms are open.
 *Public* ground is everybody's: the streets, yards and fields of a farm, a village or a city. *Wild*
 ground is nobody's: the open ground of a forest, a plain, a cave, a coast, a mountain, a peak and
 the climate biomes. A store kept there — a woodshed, a net shed, an ore store — is somebody's stock

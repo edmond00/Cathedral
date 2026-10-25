@@ -504,6 +504,9 @@ public class ObservationPhaseController
         NarrativeAnchor? turnedAwayFrom = null)
     {
         var sink = part?.NextSegment();
+        // A way out already known is said to be one: it is gone back by, not explored.
+        if (KnownWayNote(outcome) is { } known)
+            trailingNeutral = trailingNeutral == null ? known : $"{known} {trailingNeutral}";
         try
         {
             // Attention + detail merged into one neutral text and rewritten in a single request
@@ -1466,6 +1469,23 @@ public class ObservationPhaseController
     /// compared against that text must use the real one.
     /// </summary>
     private static string GetShownName(NarrativeAnchor outcome) => NameFaking.Real(GetNeutralName(outcome));
+
+    /// <summary>
+    /// The sentence that marks <paramref name="outcome"/> as a way already known from where the party
+    /// stands (<see cref="Scene.AreaVisits.IsKnownWay"/>), or null. Exploration only.
+    /// </summary>
+    private string? KnownWayNote(NarrativeAnchor outcome)
+    {
+        if (Standing() is not { } st || st.Scene.Phase != NarrationPhase.Exploration) return null;
+        Scene.Element? way = outcome switch
+        {
+            Scene.SyntheticAreaObservationObject a => a.Area,
+            Scene.SyntheticObservationObject { PointOfInterest: Scene.Building.ConnectorPointOfInterest c } => c,
+            _ => null,
+        };
+        if (way == null || !Scene.AreaVisits.IsKnownWay(st.Scene, st.PoV.Where, way)) return null;
+        return NeutralNarration.KnownWay(place: way is Scene.Area);
+    }
 
     /// <summary>The outcome's core noun, used as the keyword-similarity anchor.</summary>
     private static string GetReferenceLemma(NarrativeAnchor outcome)

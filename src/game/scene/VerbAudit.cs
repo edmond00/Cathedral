@@ -824,6 +824,9 @@ public static partial class VerbAudit
             ["sing_along"]              = "needs a non-stranger",
             ["commission_work"]         = "needs a non-stranger",
             ["hear_gossip"]             = "needs a non-stranger",
+
+            // Visit-gated: the sweep builds scenes with no visit behind them, so no way is known yet.
+            ["backtrack"]               = "needs a way already known: an area visited or a connector taken",
         };
         var phaseScoped = unreachable.Keys.ToHashSet();
 

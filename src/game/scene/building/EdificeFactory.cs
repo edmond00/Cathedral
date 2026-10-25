@@ -68,10 +68,13 @@ public sealed record EdificeSpec
     /// <summary>Whether the building has a storey below ground.</summary>
     public bool HasUndercroft { get; init; } = true;
 
-    /// <summary>Rooms an outsider may stand in without trespassing. The entrance always is.</summary>
+    /// <summary>
+    /// Rooms an outsider may stand in without trespassing. The passages of every storey and the
+    /// battlements always are; every other room is private and behind a locked door.
+    /// </summary>
     public IReadOnlySet<EdificeRoom> PublicRooms { get; init; } = new HashSet<EdificeRoom>();
 
-    /// <summary>Rooms whose door is kept locked.</summary>
+    /// <summary>Rooms whose door is kept locked even when the room is public. A private room's always is.</summary>
     public IReadOnlySet<EdificeRoom> LockedRooms { get; init; } = new HashSet<EdificeRoom> { EdificeRoom.Treasury, EdificeRoom.Armoury, EdificeRoom.Dungeon };
 
     /// <summary>
@@ -237,8 +240,12 @@ public static class EdificeFactory
             EdificeRooms.Populate(EdificeRoom.Battlements, battlements, mat, rng);
 
         // ── Privacy ───────────────────────────────────────────────────────────
+        // The passages are the building's own street, open while its great door is; the rooms off them
+        // are somebody's, and each is behind a locked door (below). A public room is never reached
+        // through a private one, and no plain door or stair leads from public ground into private —
+        // the rule every location keeps, which BuildingAudit.CheckPrivateBehindLocks holds.
         foreach (var room in all) room.IsPrivate = true;
-        passages[0].IsPrivate = false;
+        foreach (var passage in passages.Values) passage.IsPrivate = false;
         foreach (var role in spec.PublicRooms)
             if (byRole.TryGetValue(role, out var open)) foreach (var a in open) a.IsPrivate = false;
         battlements.IsPrivate = false;
@@ -258,7 +265,7 @@ public static class EdificeFactory
         foreach (int l in levels)
             foreach (var (room, role) in roomsAt[l])
             {
-                var state = spec.LockedRooms.Contains(role) ? DoorState.Locked : DoorState.Unlocked;
+                var state = room.IsPrivate || spec.LockedRooms.Contains(role) ? DoorState.Locked : DoorState.Unlocked;
                 Door(passages[l], room, $"{room.DisplayName} Door", DoorRole.Interior, state,
                      phrases[Math.Min(phrase++, phrases.Length - 1)], "", key, ++ordinal);
             }

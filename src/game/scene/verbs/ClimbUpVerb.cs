@@ -21,6 +21,7 @@ public class ClimbUpVerb : Verb
         foreach (var m in base.Lessons(ctx)) yield return m;
     }
     public override string VerbId      => "climb_up";
+    protected override bool MovesAlongWay => true;
     public override string DisplayName => "Climb Up";
     public override int    BaseDifficulty => 6;
 

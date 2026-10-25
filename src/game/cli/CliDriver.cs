@@ -168,6 +168,24 @@ public sealed class CliDriver
                         return;
                     }
 
+                    // A backtrack asking where to: the first area on offer, by name.
+                    if (_drainPressesLeft > 0 && _game.CliNarration is { } bn && bn.CliBacktrackState() == "choosing")
+                    {
+                        _drainPressesLeft--;
+                        CmdClick(new[] { "area", bn.CliBacktrackChoices()[0].Name });
+                        RestartWait($"advance ({_drainPressesLeft} press(es) left)", _drainTimeout);
+                        return;
+                    }
+
+                    // The walk on the map after a move, the same way.
+                    if (_drainPressesLeft > 0 && _game.CliNarration is { } wn && wn.CliWalkContinue().Present)
+                    {
+                        _drainPressesLeft--;
+                        CmdClick(new[] { "continue" });
+                        RestartWait($"advance ({_drainPressesLeft} press(es) left)", _drainTimeout);
+                        return;
+                    }
+
                     var pv = ActivePreview();
                     if (pv is { Active: true, Complete: true } && _drainPressesLeft > 0)
                     {
@@ -416,12 +434,18 @@ public sealed class CliDriver
           click engage              the travel encounter prompt's ENGAGE button
           click companion-death     the companion-death notice's CONTINUE — modal over every mode
           click menu <label>        press a main-menu button (New, Continue, …)
+          click menu-button         press the ☰ in the top-right corner: the main menu, in every
+                                    phase Escape pauses (`inspect buttons` says whether it is up)
+          click map-button          press the narration header's ↹: the map and back, as Tab
           click moon <name|n>       pick a world off the world-selection sky, by moon name or
                                     ordinal. Turns the sky towards it first, as the arrows would
           click sky                 press an empty patch of the world-selection sky, which releases
                                     the chosen moon without leaving the screen
           point moon <name|n>       hover a moon without choosing it. Hovering and choosing are
                                     separate states with separate looks; `click moon` drives both
+          point card <area>         hover an area's card on the menu map shown (the Chorography tab, the
+                                    routine box), panned into view; `inspect pointer-label` reads
+                                    the label it puts above the pointer, and on what ground
           click world <confirm|cancel>  the world-selection screen's two buttons
           click arrow <direction>   press an on-screen camera arrow (left|right|up|down), the
                                     mouse's copy of the arrow keys
@@ -433,6 +457,7 @@ public sealed class CliDriver
           travel-go                 commit the planned route and set out (the TRAVEL button)
           travel neighbour          plan a route to any bordering vertex (leaving, unnamed)
           travel back               plan a route to the last location entered that is not this one
+          travel new                plan a route to a bordering vertex with no mental map
           routines                  list the routines the planned destination offers
           routines <n|kind>         pick routine n — or the first walkable of a kind (goto, meet,
                                     gather, buy, sell, work) — and set out; entered on arrival
@@ -442,7 +467,11 @@ public sealed class CliDriver
                                     with `inspect gather`
           manage [tab]              open/close the protagonist screen; with a tab name
                                     (Anatomy, Inventory, Memory, Humors, …) open it there.
-                                    `manage Routines <kind>` shows that kind's slots
+                                    `manage Chorography <kind>` shows the newest map holding a
+                                    routine of that kind, with that routine read out;
+                                    `manage Chorography lock newest|oldest` toggles a map's lock;
+                                    `manage Chorography next|prev` steps through the routines
+                                    of the map shown. `key <letter>` opens a tab by its initial
           select [item name]        show a carried item's info panel; bare `select` lists them
           key <escape|…>            send a key
           scroll up|down [n]        scroll the shared history buffer
@@ -517,7 +546,7 @@ public sealed class CliDriver
             // a script finds nothing clickable. Say so here rather than leaving it to be guessed.
             var pv = n.CliPreview();
             sb.Append($" preview={(pv.Active ? (pv.Complete ? "ready" : "generating") : "none")}");
-            sb.Append($" time={n.CliTimeBoxState()}");
+            sb.Append($" time={n.CliTimeBoxState()} walk={n.CliWalkState()} backtrack={n.CliBacktrackState()}");
             // A fight decided but held for the CONTINUE that shows its opening blow. On screen it is
             // an ordinary resolved action, so a script waiting on `wait mode Fighting` without
             // pressing CONTINUE would sit out its whole timeout with nothing to say why.
@@ -664,6 +693,23 @@ public sealed class CliDriver
             else if (time == "passing")
             {
                 CliMode.Emit("time box: (the hours passing…)");
+            }
+            else if (n.CliBacktrackState() == "choosing")
+            {
+                CliMode.Emit("backtrack: go back to…");
+                foreach (var (name, cell) in n.CliBacktrackChoices())
+                    CliMode.Emit($"  click area {name}" + (cell == null ? "  (off the view)" : ""));
+                any = true;
+            }
+            else if (n.CliWalkState() == "settled")
+            {
+                CliMode.Emit("walk: the party has arrived");
+                CliMode.Emit("  click continue  (walk)");
+                any = true;
+            }
+            else if (n.CliWalkState() == "walking")
+            {
+                CliMode.Emit("walk: (the party walking…)");
             }
             else if (pv.Active)
             {
@@ -859,7 +905,7 @@ public sealed class CliDriver
 
     private void CmdClick(string[] a)
     {
-        if (a.Length == 0) { CliMode.Emit("error: click <keyword|action|option|skill|fighter|end-turn|engage|menu|button|continue|cell> …"); return; }
+        if (a.Length == 0) { CliMode.Emit("error: click <keyword|action|option|skill|fighter|end-turn|engage|menu|menu-button|map-button|button|continue|cell> …"); return; }
 
         switch (a[0].ToLowerInvariant())
         {
@@ -895,6 +941,17 @@ public sealed class CliDriver
                 string name = string.Join(' ', a[1..]).Trim('"');
                 Report(f.CliClickSkill(name), $"used skill \"{name}\"");
                 break;
+            }
+            case "menu-button":
+            {
+                // The ☰: the player's way to the menu without Escape. `pause` is Escape's.
+                Report(_game.CliPressMenuButton(), "pressed the menu button");
+                return;
+            }
+            case "map-button":
+            {
+                Report(_game.CliPressMapButton(), "pressed the map button");
+                return;
             }
             case "end-run":
             {
@@ -980,6 +1037,13 @@ public sealed class CliDriver
                     CliMode.Emit("ok: time box continue");
                     return;
                 }
+                var walkContinue = n.CliWalkContinue();
+                if (walkContinue.Present)
+                {
+                    _game.CliClickCell(walkContinue.X, walkContinue.Y);
+                    CliMode.Emit("ok: walk continue");
+                    return;
+                }
                 var preview = n.CliPreviewContinue();
                 if (preview.Present)
                 {
@@ -991,6 +1055,31 @@ public sealed class CliDriver
                 if (!dice.Present) { CliMode.Emit("error: no dice continue button on screen"); return; }
                 _game.CliClickCell(dice.X, dice.Y);
                 CliMode.Emit("ok: confirmed dice");
+                break;
+            }
+            case "area":
+            {
+                // A card on the location map while a backtrack asks where to go back to. One off the
+                // view is brought into it first, as a player would pan to it.
+                if (a.Length < 2) { CliMode.Emit("error: click area <name>"); return; }
+                var n = _game.CliNarration;
+                if (n == null || n.CliBacktrackState() != "choosing") { CliMode.Emit("error: no backtrack is asking where to"); return; }
+                string name = string.Join(' ', a[1..]).Trim('"');
+                var choice = n.CliBacktrackChoices().FirstOrDefault(c => c.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                if (choice.Name == null)
+                {
+                    CliMode.Emit($"error: '{name}' is not on offer (offered: {string.Join(", ", n.CliBacktrackChoices().Select(c => c.Name))})");
+                    return;
+                }
+                if (choice.Cell == null)
+                {
+                    n.CliShowBacktrackChoice(choice.Name);
+                    choice = n.CliBacktrackChoices().First(c => c.Name == choice.Name);
+                }
+                if (choice.Cell is not { } cell) { CliMode.Emit($"error: '{choice.Name}' cannot be brought into view"); return; }
+                _game.CliHoverCell(cell.X, cell.Y);
+                _game.CliClickCell(cell.X, cell.Y);
+                CliMode.Emit($"ok: go back to {choice.Name}");
                 break;
             }
             case "period":
@@ -1093,8 +1182,14 @@ public sealed class CliDriver
     /// </summary>
     private void CmdPoint(string[] a)
     {
+        if (a.Length >= 2 && a[0].Equals("card", StringComparison.OrdinalIgnoreCase))
+        {
+            string name = string.Join(' ', a[1..]).Trim('"');
+            Report(_game.CliPointAtCard(name), $"pointed at the card {name}");
+            return;
+        }
         if (a.Length < 2 || !a[0].Equals("moon", StringComparison.OrdinalIgnoreCase))
-        { CliMode.Emit("error: point moon <name|ordinal>"); return; }
+        { CliMode.Emit("error: point moon <name|ordinal> | point card <area>"); return; }
 
         int ordinal = ResolveMoon(string.Join(' ', a[1..]).Trim('"'));
         if (ordinal < 0) return;
@@ -1206,6 +1301,19 @@ public sealed class CliDriver
                                       && _game.CliWorld.IsVertexTraversable(v)
                                       && !_game.CliWorld.IsOutOfTravelRange(v), -1);
                 return next < 0 ? (-1, "travel neighbour — no traversable neighbour in range") : (next, null);
+            }
+
+            // `travel new` is a bordering vertex the protagonist has no mental map of: a place not
+            // remembered, so a script can fill the memory one visit at a time without naming places.
+            if (want.Equals("new", StringComparison.OrdinalIgnoreCase))
+            {
+                int here = _game.CliAvatarVertex;
+                int next = (_game.CliWorld.GetTravelGraph()?.GetConnectedNodes(here) ?? Enumerable.Empty<int>())
+                    .FirstOrDefault(v => v != here
+                                      && !_game.CliRemembers(v)
+                                      && _game.CliWorld.IsVertexTraversable(v)
+                                      && !_game.CliWorld.IsOutOfTravelRange(v), -1);
+                return next < 0 ? (-1, "travel new — no bordering place that is not remembered") : (next, null);
             }
 
             if (want.Equals("back", StringComparison.OrdinalIgnoreCase))
@@ -1375,13 +1483,32 @@ public sealed class CliDriver
             return;
         }
 
-        // The Routines tab's kinds are a column of rows whose meaning the script knows and whose
-        // position it should not: `manage Routines buy`.
+        // A map's lock is a checkbox in a column ordered by visit: `manage Chorography lock newest|oldest`.
+        if (a.Length > 2 && a[1].Equals("lock", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!_game.CliToggleMapLock(a[2]))
+            { CliMode.Emit($"error: manage Chorography lock newest|oldest — no map to lock ('{a[2]}')"); return; }
+            CliMode.Emit($"ok: toggled the lock of the {a[2]} mental map");
+            return;
+        }
+
+        // The stepper under the porthole: `manage Chorography next|prev`.
+        if (a.Length > 1 && a[1].ToLowerInvariant() is "next" or "prev")
+        {
+            int step = a[1].Equals("next", StringComparison.OrdinalIgnoreCase) ? 1 : -1;
+            if (!_game.CliStepRoutine(step))
+            { CliMode.Emit("error: manage Chorography next|prev — not on that tab, or the map shown has fewer than two routines"); return; }
+            CliMode.Emit($"ok: stepped to the {a[1].ToLowerInvariant()} routine");
+            return;
+        }
+
+        // A routine on the Chorography tab is an icon on a card, whose cell moves with the layout and the
+        // pan; the script names its kind instead: `manage Chorography buy`.
         if (a.Length > 1)
         {
             if (!_game.CliSelectRoutineCategory(a[1]))
-            { CliMode.Emit($"error: unknown routine kind '{a[1]}' (goto, meet, gather, buy, sell, work)"); return; }
-            CliMode.Emit($"ok: management tab {tab}, routines of kind {a[1]}");
+            { CliMode.Emit($"error: no {a[1]} routine on any map (goto, meet, gather, buy, sell, work)"); return; }
+            CliMode.Emit($"ok: management tab {tab}, a routine of kind {a[1]}");
             return;
         }
         CliMode.Emit($"ok: management tab {tab}");

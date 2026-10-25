@@ -118,7 +118,7 @@ public class TerminalSimpleChoicePopup
             return null;
 
         float relativeY = screenY - top;
-        int cellY = (int)Math.Floor((relativeY + cellPixelSize * 0.5f) / cellPixelSize);
+        int cellY = (int)Math.Floor(relativeY / cellPixelSize);
 
         // Row 0 = title border, rows 1..Count = choices
         if (cellY < 1 || cellY > _choices.Count)

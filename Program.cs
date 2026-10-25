@@ -184,8 +184,9 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --cpu                              Run LLM on CPU only, overriding the setting and the first-run probe");
     Console.WriteLine("  --gpu                              Run LLM on the installed GPU backend (models/llama/backends/), same override");
     Console.WriteLine("  --no-llm-probe                     Skip first-run compute-device detection; use whatever is already saved");
-    Console.WriteLine("  --no-developer-keys                Disable the developer keyboard shortcuts (D/M/F/G/H/J, C/V, W/S zoom),");
-    Console.WriteLine("                                     leaving arrows/Space/Escape — i.e. behave as a shipped build does");
+    Console.WriteLine("  --developer-keys                   Enable the developer keyboard shortcuts (D/M/F/G/H/J, R/K, C/V, W/S zoom,");
+    Console.WriteLine("                                     Tab outside exploration). Off by default, as in a shipped build,");
+    Console.WriteLine("                                     which ignores this flag");
     Console.WriteLine("  --seed <n>                         Fix the master RNG seed for a reproducible run (world, spawn, dice).");
     Console.WriteLine("                                     Names the world outright, so New skips the moon-selection screen");
     Console.WriteLine("  --start-at <name>                  DEBUG: spawn on the first biome/location matching <name> (e.g. village, farm)");
@@ -818,13 +819,15 @@ if (args.Any(a => a == "--no-llm-probe"))
     Cathedral.LLM.LlamaProbe.Enabled = false;
 }
 
-// Check for --no-developer-keys: behave as a shipped build does, in a development build. The only
-// way to exercise the shipped keyboard without building and running a shipped executable, which
-// cannot be driven by --cli.
-if (args.Any(a => a == "--no-developer-keys"))
+// Check for --developer-keys: the developer shortcuts are off by default, so a development run has
+// the shipped keyboard (whose letters the management tabs use) unless it asks for them. A shipped
+// build ignores the flag.
+#if !SHIP
+if (args.Any(a => a == "--developer-keys"))
 {
-    Cathedral.Config.Debug.DeveloperKeys = false;
+    Cathedral.Config.Debug.DeveloperKeys = true;
 }
+#endif
 
 // Reported every run, so a --cli script (and a player's log) can tell which keyboard is live.
 // ASCII only: this goes to a console whose code page mangles an em dash when redirected.

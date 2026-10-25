@@ -68,7 +68,8 @@ And one that reaches past the party, because a field is stored **as-is** rather 
   `SaveFile.Read` catches as corruption, so **one such field makes the entire save unloadable**.
   The old `RoutineStep.Constraints` was exactly this: every saved routine lost its constraint data,
   and the first player to record a routine lost the save. `Routine` itself is now abstract (one
-  subclass per kind) and carries the attributes; a new kind needs its own `[JsonDerivedType]`. Only
+  subclass per kind) and carries the attributes; a new kind needs its own `[JsonDerivedType]`. It is
+  saved inside `MentalMap.Routines`, in `PartyState.MentalMaps`. Only
   the `cli/system/routine_*.cli` scripts reach a routine, so they carry the `save roundtrip` covering
   that branch — `save_roundtrip.cli` stacks breadth of party state by flags, and no flag records a
   routine.
@@ -184,7 +185,8 @@ so, and says why.
 | LocationInteraction, ChildhoodReminescence, GetUp | closes the thinking popup; otherwise pauses **as an overlay**, leaving narration standing |
 | Dialogue, Working, Gathering, Trading, EncounterPrompt, WorldView | pauses. None of them is cancelled by it — walking out is the footer INTERRUPT / LEAVE / ENGAGE button's job |
 | ProtagonistCreation | pauses. Not a running phase, but a screen with no other way off it |
-| ProtagonistManagement, Settings | back to the main menu — the same press as their Back button |
+| ProtagonistManagement | back where it was opened from, the same press as its Back button: the main menu, or — opened by a tab's letter (A, I, J, M, H, C, from any phase the menu opens over but a fight) — that phase |
+| Settings | back to the main menu — the same press as its Back button |
 | MainMenu | resumes `MenuReturnMode`, or nothing at all before a run has started |
 | LLMLoading, Traveling, Death, DialogueDemo | **nothing, on purpose** — see the reasons on each case |
 
@@ -729,7 +731,11 @@ successors from `Scene.View(pov, actor, verbs)` — the live gates — and from 
 `TransitVerbTypes` plus the goal verbs are expanded, except while a missing reference tool is sought,
 when every verb is (a grab that yields it, or `propose_to_buy` on someone whose `BuyCatalog` lists it —
 opaque beyond, replanned next phase). Nothing else is modelled, so a path never passes a conversation,
-a fight or loot. Cached until `Forget()`, which runs wherever the observation ledger is cleared.
+a fight or loot. **A sit is every other hour, and the path is one of them**: `PathStep.Until` keeps the
+hour the search reached by it, `ThinkingExecutor` settles the will's step on it
+(`SitAndWaitVerb.Until`, the period as the action's variant, "…until dawn"), and `AskWaitUntil` then
+asks nothing. A player's own wait still chooses. `sit_and_wait` is the only transit verb whose
+destination was left to a choice after the dice; every other is read off its success reports. Cached until `Forget()`, which runs wherever the observation ledger is cleared.
 Measured: under 1 ms mean, half a second for an exhausted search in the largest city.
 
 **The plan keeps one path; a will accepts any equally short one.** When several things are equally
@@ -860,7 +866,7 @@ goal or finds nothing left. **A NO drops the
 goal with every means** (`Drop`), since a doubt is of the end — crossing off only the pair brought
 the same goal back with the next means, three NOs running. What is untried is read against
 `MeansPoolFor`, which for a conversation is the speaking means only (or a doubted chat came back
-carried out by Hard Labor). With a retry left, the next try opens led by `IterationRetry`. The chain **relaxes `NotRefusedFor`**: a goal this mind saw refused comes back
+carried out by Hard Labor). With a retry left, the next try opens led by `IterationRetry`. **A lead is rewritten alone** (a NO's `DoubtRejected` at once, `IterationRetry` just before the next reasoning): every rewrite starts from a cleared slot, and given the lead and the new goal in one request the model kept the lead and dropped the goal — three NOs running, the reeve the last idea was about never reached the text. The chain **relaxes `NotRefusedFor`**: a goal this mind saw refused comes back
 while a means for it is untried (`reoffer`), and as a `WasRefused` second attempt it is then carried
 out by an able means with no decline. A goal tried with every means is dropped; when nothing is left
 the ignore branch says `IterationExhausted`. The response is a list of `ThinkingSegment`s — thoughts
@@ -1058,7 +1064,11 @@ made every verb and every outcome answer how it bore on a recording (35 verb fil
   the narration header's ◆ TRESPASSING ◆. Nothing about the steps that led there is recorded.
 - **Walking asks one question per kind**, `Routine.Unavailability`, against a scene built **without
   depletion** (a gathering routine counts the empty slots too). Companions and earlier steps are not
-  consulted; "you know the way" — every path, door and climb to the area is skipped.
+  consulted; "you know the way" — every path, door and climb to the area is skipped. **Skipped, and
+  shown**: `NarrativeController.WalkTheApproach` plays the map walk from where the location is
+  entered to the routine's area, by known ways (`AreaVisits.MoveBack`; a jump when none is known at
+  that hour), and opens the menu on its Continue (a Go to / Meet writes its opening observation
+  behind the walk). Nothing is rolled; nothing new is learned but the two ends visited.
 - **The five moments**: a successful gather/extraction verb (recorder, before the reports apply), a
   conversation opened with a registered tree (`StartDialogueMode`), a trade or hire agreed
   (`RecordAgreementRoutines`, called from both the played and the `--auto-dialogue` ending), and
@@ -1074,7 +1084,42 @@ made every verb and every outcome answer how it bore on a recording (35 verb fil
 - **A gathering stay rolls nothing.** Every slot gives its item each time it fills within the stay,
   so the yield is linear in the days (`GatherYield`). Regrowth is `ResourceRegen`: 9 days wild,
   36 cultivated — the same clock hand-picking reads.
-- **Slots are per kind** (`RoutineSlotsStat`, anamnesis × 4), sized to the menu's two-column grid.
+- **A routine lives in its place's mental map, and goes with it.** See below.
+
+### Mental maps: what is remembered of a place
+
+**`MentalMap`** (`src/game/narrative/routines/MentalMap.cs`) is one location as the protagonist
+remembers it: the four `AreaVisits` stores (visited, taken, seen areas, seen links) and the routines
+learned there. They used to live on `LocationInstanceState`, which never forgets; moved here, they
+are forgotten with the map. `Protagonist.MentalMaps` is the queue, oldest first, as many as
+`MentalMapsStat` (anamnesis × 4, 0–20). Routines have no cap of their own.
+
+- **A visit enters its map** (`Protagonist.EnterMentalMap`, from `BuildSceneForLocation(visit: true)`,
+  which every way into a location comes through, routines included): a remembered map moves to the
+  newest; a new one forgets the oldest **unlocked** map to make room. With no room (every map locked,
+  or anamnesis 0) the visit holds an *unheld* map, private to the protagonist and never saved, which
+  `LeaveMentalMap` drops in `TearDownNarrativeSession` — the visit works as any other, and leaving
+  forgets it.
+- **Every build is handed the map by reference** (`MentalMap.AttachTo`, after `SceneFactory.Build`):
+  the visit writes straight into the memory, a routine check and the menus read what is known, and a
+  place forgotten builds with nothing known. Do not put the stores back on the location state.
+- **`viewOnly` builds** (the Chorography tab) skip the debug spawn (it draws from `GameRng`), first-contact
+  enmity and name faking (global — the menu may be open over a visit).
+- **The Chorography tab** (`MentalMapsPanelRenderer`): the selected place's `DebugLocationMap` across the
+  whole top, to the right rule, with an icon per routine on its card (`DebugLocationMap.MapIcon`,
+  black letter on yellow, `RoutineCategories.Icon`); under it, places newest first on the right
+  (☐/☑ the lock), the world porthole, and at the bottom `< n/N >` (steps the routines, centring the map on each; the first is selected by default and its icon blinks) over the selected routine's detail. The tab is Chorography, not Maps: every management tab opens with its first letter, so `ManagementMenuRenderer.CheckShortcuts` refuses two tabs sharing an initial. **The routine
+  box** on the travel plan (`TravelRoutinesBox`) is the destination's map the same way, a walkable
+  icon clickable, an unwalkable one grey with its reason on hover.
+- **The map has no legend, anywhere.** What the pointer is over — a card, a line, an icon, the pad —
+  is named by `DebugLocationMap.LabelAt` and put up by `DebugLocationMap.ShowLabel` in the
+  mouse-following popup (`PopupTerminalHUD`, lifted 1.5 cells off the pointer so it does not hide
+  what it names): black on yellow when a click acts on it, black on grey when it only tells. The popup
+  is shared — the Chorography tab clears only a label it put up (`HideLabel`), the narration only while no
+  modal popup is open (`NarrativeController.UpdateMapLabel`), the world view redraws it every frame.
+- CLI: `inspect mental-maps`, `travel new` (a bordering vertex not remembered), `manage Chorography <kind>`,
+  `manage Chorography lock newest|oldest`, `point card <area>` and `inspect pointer-label`. `cli/system/mental_map_forget.cli` (anamnesis 0),
+  `mental_map_queue.cli` (eviction passes over the locked map).
 
 A Meet routine opens on its person through the **opening focus** (`_openingFocus`), the same field a
 finished conversation and an introduction set — an `Element`, so a point of interest can be focused
@@ -1379,6 +1424,19 @@ grab, `ReachesPrivateArea` (unlock / break / slip into stay crimes; open-door is
 and `RoutineRecorder.IsRecordable` — a routine is walked on a later visit, where nobody gave leave.
 Per visit, never persisted. `--crime-audit` §4d; `cli/outcome/trespass_tolerated`,
 `cli/outcome/shown_the_door`, `cli/system/wait_stopped_by_householder.cli`.
+
+**Private ground is behind a lock, everywhere.** Opening a plain door into a room where every act is
+trespass, with nothing to say so, was the confusion; so from public ground the only ways into private
+are a door locked against the comer and the intrusions (slip-in, scale, climb, crossing) — never an
+open way, a stair or an unlocked door. Between private areas anything goes. Houses, shops and outdoor
+ground already kept it; the great buildings did not (3131 unlocked doors and 1440 stairs into private
+corridors over 4488 sampled scenes, and 1076 public rooms such as a temple's chapel reachable only
+through private ones). `EdificeFactory` now makes every storey's passage public and locks every
+private room's door. **`BuildingAudit.CheckPrivateBehindLocks`** holds the rule for every factory.
+Two things lean on it: `AreaVisits.Route` stops only at locks and so never records a walk into private
+ground from outside, and `stalk` follows its quarry until the first door locked against the follower
+(`StalkVerb.Plan`: an unlocked way first, however long; else the shortest way, cut at its first lock),
+says so (`QuarryBeyondOutcome`) and opens the next phase on that door (`Scene.PendingOpeningFocus`).
 
 An arrival opens the next observation phase, **ahead of the corpse opener** (both are one-shot events,
 but an arrival is the newest and has just changed what is safe to do), and only if they are still in
@@ -1718,6 +1776,45 @@ wrap; a passage never spans a full day). It moves `GameClock` only: healing and 
 on the return to the map. Under `--cli`, `advance` presses through the box (taking the next period when
 it asks, so older scripts are unchanged), `click period <name>` chooses, `inspect time` reads it, and
 `state` carries `time=`. `cli/system/wait_until_chosen.cli`, `wait_turns_the_day.cli`.
+
+**Every move in exploration is then shown on the location map** — the commit's, an introduction's
+walk and a lead to premises. The map (`DebugLocationMap`, a debug view by origin and by its Tab
+toggle, but this use of it is every player's) stands in for the narration while the party's ☻ walks a
+cell a step from the middle of the card left, along the line of each way `AreaVisits.Move` recorded,
+to the middle of the card reached, then waits for CONTINUE. A line is walked by its **net**, not its own
+cell list: a branch's list starts at the junction where it left its trunk. For the same reason a way's
+knowledge is painted along `Link.Path`, its whole run card to card, or the trunk stretch of a way
+taken stayed dim. A move with no walk the map
+draws is a jump, card to card. It plays after the time box when an act moves both (a stalk), by taking
+over what the box's Continue would have resumed. 90 ms a cell, at most 6 s in all; instant under
+`--cli` (still waiting for its CONTINUE), real time under `--record`. **What the move taught the map is
+revealed as the walk reaches it**: `MoveOnMap` diffs the visit stores across `AreaVisits.Move`, and
+until the glyph is on a way or in a card that key is held back from the paint. Once arrived the view
+is the arrows' and the pad's (`DebugLocationMap.WalkPannable`) until CONTINUE.
+
+**Seen is what an observation took in, nothing else.** `ObservationLedger.Observed` reaches
+`AreaVisits.See`: a neighbouring area looked at, or a connector (door, stair, path, climb, view) and
+the area at its far end, from where the party stood; a group sees its members. Walking through an area
+does not make its neighbours seen — that was the first rule and it was wrong. `inspect map` lists
+`map seen <area>`. `cli/system/map_visits.cli`.
+
+**A way already known is gone back by, not walked again: `backtrack`.** `AreaVisits.IsWayBack` — a
+neighbour already stood in, or a connector (not a view) already gone by, not a door locked against the
+comer, and never a step from public into private (private ground is gone back to only from within).
+On such a way every verb with `Verb.MovesAlongWay` (move, open_door, the stairs, climbs, scales,
+crossings, swim, follow_path) is withheld in the sealed `IsPossible`, and `BacktrackVerb` is offered
+instead — on a PoI, and on an area observation, which now refreshes its two verbs
+(`SyntheticAreaObservationObject.RefreshVerbs`; it was built once with `move` and never re-read).
+`AreaVisits.BackReach` is every area known ways reach, fewest steps first. Difficulty 2. A success asks
+where on the map (`AskBacktrackTo`: reachable cards lit, hovered as a keyword is, the pad and arrows
+pan; `Scene.BacktrackTo`), like a wait asks its hour; a will's step is settled instead
+(`PathStep.Settled`, `Verb.Settle` — generalised from the wait's hour to any value, the area here) and
+asks nothing. The commit walks the known route (`AreaVisits.MoveBack`). An observation of a known way
+says so (`NeutralNarration.KnownWay`, as a trailing sentence). Lessons, all its own: `withdrawal`
+(enemy in sight), `nightwalking` (night), `houseways` (private ground), then the default — `backtrail`
+(a beast, by scent) before `retracing` (a person). CLI:
+`click area <name>` (pans a card off the view into it), `state` carries `backtrack=`, `advance` takes the
+first on offer. `cli/verb/backtrack/`, `cli/system/will_backtrack.cli`.
 
 ### Trade happens on premises
 

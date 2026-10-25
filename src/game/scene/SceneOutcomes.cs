@@ -121,6 +121,24 @@ public sealed class NoticeOutcome : Outcome
 }
 
 /// <summary>
+/// A notice of where somebody followed went on to without the follower: through a door, or into a
+/// room where nobody follows unseen. The next phase opens on that way (<see cref="Scene.PendingOpeningFocus"/>),
+/// so the narration looks at what the quarry is behind.
+/// </summary>
+public sealed class QuarryBeyondOutcome : Outcome
+{
+    private readonly Element _way;
+
+    public QuarryBeyondOutcome(Element way, string text, string verbatim)
+        : base(text, OutcomeSeverity.Neutral, verbatim) => _way = way;
+
+    protected override void Apply(OutcomeContext ctx)
+    {
+        if (ctx.Scene != null) ctx.Scene.PendingOpeningFocus = _way;
+    }
+}
+
+/// <summary>
 /// Takes a tiny creature out of the scene — caught in a hand or crushed underfoot.
 ///
 /// <para>Deliberately not <see cref="NpcSlaynOutcome"/>, which spawns a corpse spot in the area. A

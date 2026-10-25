@@ -39,7 +39,7 @@ Each organ is the seat of a family of modi mentis and the source of one or more 
 modi mentis that draw upon that organ.) Taken in order:
 
 **Of the encephalon.** The *anamnesis* governs the persistence of what is learned; it sizes the
-residual memory and the store of routines. The *cerebellum* governs practised movement and the
+residual memory and the number of places remembered. The *cerebellum* governs practised movement and the
 acquisition of dexterity under duress; it sizes procedural memory and the readiness to learn a
 fighting skill in the midst of a fight. The *cerebrum* is the organ of the understanding, and sizes
 semantic memory. The *hippocampus* registers what the senses convey inward, and sizes sensory
@@ -152,7 +152,7 @@ value** — which for most is a floor, and for a duration or a price is a ceilin
 | Measure | Source | Formula |
 |---|---|---|
 | Residual Memory | anamnesis | score × 4, bounded 1–20 |
-| Routine Slots | anamnesis | score × 4 per kind of routine, never below 4 |
+| Mental Maps | anamnesis | score × 4 places remembered, from none at a score of 0 |
 | Procedural Memory | cerebellum | score × 4, bounded 1–20 |
 | Fight Learning | cerebellum | score, in dice, never below 1 |
 | Semantic Memory | cerebrum | score × 4, bounded 1–20 |

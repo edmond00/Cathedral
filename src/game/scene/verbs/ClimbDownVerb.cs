@@ -15,6 +15,7 @@ public class ClimbDownVerb : Verb
 {
 
     public override string VerbId      => "climb_down";
+    protected override bool MovesAlongWay => true;
     public override string DisplayName => "Climb Down";
     public override int    BaseDifficulty => 6;
 

@@ -1,0 +1,55 @@
+# will_backtrack — a will's way back is settled on the area its path needs, and nothing is asked
+#
+# Lockpicking wants the Test Door, off the yard. The visit opens in the yard and walks out to the
+# field; from the field the yard is a place already stood in, so walking to it is not offered and
+# going back is. The will's plan therefore begins with a backtrack, settled on the yard ("go back to
+# the test yard"), and past the dice the location map asks nothing: the party goes straight back.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-mm lockpicking,woodcraft --grant-item hairpin --location-type test --location-id 0 --start-area "Test Yard" --period dawn --observe-only "Test Field"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# Out to the field, by a way not known yet.
+strategy succeed
+goal move
+advance 12 180
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect Moved to: Test Field
+
+# In the field the will plans back through the yard.
+observe "Test Yard"
+click button
+advance 12 180
+expect-state will go back to the test yard, the way I know
+
+means woodcraft
+click keyword yard
+choose 0
+choose lockpicking
+advance 12 180
+regions
+expect go back to the test yard
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect Moved to: Test Yard
+expect-verb backtrack
+expect-state where Test Yard
+quit

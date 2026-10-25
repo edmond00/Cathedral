@@ -7,7 +7,8 @@ namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
 /// Sits down somewhere and lets the day go by until a period the player chooses — the next one when
-/// nothing asks (<see cref="Scene.WaitUntil"/>).
+/// nothing asks (<see cref="Scene.WaitUntil"/>). A will's wait is not chosen: it is a step on a path
+/// that needs one hour, and the action carries it (<see cref="Until"/>, as its variant; <see cref="Settle"/>).
 ///
 /// <para>The first verb in the game that moves the clock. <c>TimeShiftOutcome</c> and everything
 /// downstream of it — the controller noticing the period changed, re-placing NPCs for the new time,
@@ -47,4 +48,22 @@ public class SitAndWaitVerb : Verb
 
     public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
         => new Outcome[] { new TimeShiftOutcome(scene.WaitUntil ?? pov.When.Next()) };
+
+    public override IReadOnlyList<Outcome> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target,
+                                                         VerbAction view, Item? tool = null)
+        => new Outcome[] { new TimeShiftOutcome(scene.WaitUntil ?? (view.Variant as TimePeriod?) ?? pov.When.Next()) };
+
+    /// <inheritdoc/>
+    public override VerbAction? Settle(VerbAction action, object settled)
+        => settled is TimePeriod period ? Until(action, period) : null;
+
+    /// <summary>
+    /// <paramref name="sit"/>, settled on lasting until <paramref name="period"/>: the wait a will's
+    /// path needs, which nobody is asked to choose.
+    /// </summary>
+    public static VerbAction Until(VerbAction sit, TimePeriod period)
+        => new(sit.Verb, $"{sit.Verbatim} until {period.Label().ToLowerInvariant()}", sit.Target, period)
+           {
+               ContextLabel = sit.ContextLabel,
+           };
 }

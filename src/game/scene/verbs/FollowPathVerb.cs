@@ -21,6 +21,7 @@ public class FollowPathVerb : Verb
         foreach (var m in base.Lessons(ctx)) yield return m;
     }
     public override string VerbId         => "follow_path";
+    protected override bool MovesAlongWay => true;
     public override string DisplayName    => "Follow";
 
     /// <summary>A path that runs past places is a path that can be lost — and with it the whole place.</summary>

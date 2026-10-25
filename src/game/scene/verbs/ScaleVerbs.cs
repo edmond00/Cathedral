@@ -38,6 +38,7 @@ public class ScaleUpVerb : ScaleVerbBase
         foreach (var m in base.Lessons(ctx)) yield return m;
     }
     public override string VerbId      => "scale_up";
+    protected override bool MovesAlongWay => true;
     public override string DisplayName => "Scale";
 
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
@@ -62,6 +63,7 @@ public class ScaleDownVerb : ScaleVerbBase
 {
 
     public override string VerbId      => "scale_down";
+    protected override bool MovesAlongWay => true;
     public override string DisplayName => "Climb Back Down";
 
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)

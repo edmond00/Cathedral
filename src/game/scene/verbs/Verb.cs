@@ -105,7 +105,22 @@ public abstract class Verb
     /// passes the capability test.</para>
     /// </summary>
     public bool IsPossible(Scene scene, PoV pov, Element target, PartyMember? actor = null)
-        => (actor?.Can(EffectiveCapabilities) ?? true) && IsPossibleFor(scene, pov, target, actor);
+        => (actor?.Can(EffectiveCapabilities) ?? true)
+           && !(MovesAlongWay && AreaVisits.IsWayBack(scene, pov.Where, target, pov.When))
+           && IsPossibleFor(scene, pov, target, actor);
+
+    /// <summary>
+    /// Whether this verb walks a way out of the area — a neighbour, a door, a stair, a path, a climb, a
+    /// crossing. On a way the party already knows and may go back by, such a verb is not offered:
+    /// <see cref="BacktrackVerb"/> is, in its place.
+    /// </summary>
+    protected virtual bool MovesAlongWay => false;
+
+    /// <summary>
+    /// <paramref name="action"/> settled on what a will's path needs of it (<see cref="PathStep.Settled"/>):
+    /// the hour a wait lasts until, the area a backtrack goes to. Null for a verb that settles nothing.
+    /// </summary>
+    public virtual VerbAction? Settle(VerbAction action, object settled) => null;
 
     /// <summary>The verb's own condition: scene state, target shape, affinity, schedule, tools.</summary>
     protected abstract bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null);

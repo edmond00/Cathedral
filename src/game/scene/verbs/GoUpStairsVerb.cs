@@ -11,6 +11,7 @@ namespace Cathedral.Game.Scene.Verbs;
 public class GoUpStairsVerb : Verb
 {
     public override string VerbId         => "go_up_stairs";
+    protected override bool MovesAlongWay => true;
     public override string DisplayName    => "Go Up";
 
     /// <summary>A missed stair is a stumble and a moment to collect yourself; rarely a bruise.</summary>

@@ -11,9 +11,9 @@ using Cathedral.Game.Scene.Verbs;
 namespace Cathedral.Game.Narrative.Routines;
 
 /// <summary>
-/// The six kinds of routine, in the order the routines menu lists them. The kind is the routine's
-/// <b>type</b> (see the subclasses of <see cref="Routine"/>); this enum only names it for the menu,
-/// the slot count and the CLI.
+/// The six kinds of routine, in the order the menus list them. The kind is the routine's
+/// <b>type</b> (see the subclasses of <see cref="Routine"/>); this enum only names it for the menus,
+/// the map icons and the CLI.
 /// </summary>
 public enum RoutineCategory { GoTo, Meet, Gather, Buy, Sell, Work }
 
@@ -47,7 +47,18 @@ public static class RoutineCategories
         _                      => "work",
     };
 
-    /// <summary>How a routine of this kind is learned — what the menu says while there is none.</summary>
+    /// <summary>The letter its icon carries on a location map, black on yellow.</summary>
+    public static char Icon(this RoutineCategory c) => c switch
+    {
+        RoutineCategory.GoTo   => 'G',
+        RoutineCategory.Meet   => 'M',
+        RoutineCategory.Gather => 'H',
+        RoutineCategory.Buy    => 'B',
+        RoutineCategory.Sell   => 'S',
+        _                      => 'W',
+    };
+
+    /// <summary>How a routine of this kind is learned.</summary>
     public static string HowLearned(this RoutineCategory c) => c switch
     {
         RoutineCategory.GoTo   => "Walk somewhere public and leave from there.",
@@ -72,6 +83,7 @@ public sealed record RoutineCheckContext(Scene.Scene Scene, Protagonist Protagon
 
 /// <summary>
 /// A learned way into a location: an <b>area</b>, a <b>time of day</b>, and what happens there —
+/// held in the <see cref="MentalMap"/> of that location, and forgotten with it —
 /// the phase it opens. Walking one puts the player there and then, past every path, door and climb
 /// between the location's edge and the area: the character knows the way.
 ///
@@ -121,9 +133,6 @@ public abstract class Routine
     /// </summary>
     [JsonIgnore] public virtual string DisplayName => Name;
 
-    /// <summary>When true, protected from eviction when its kind's slots are full.</summary>
-    public bool Locked { get; set; }
-
     /// <summary>The game day it was learned on.</summary>
     public double RecordedOnDay { get; set; }
 
@@ -161,7 +170,7 @@ public abstract class Routine
     /// </summary>
     public string CliLine()
         => $"routine category={Category.CliId()} location={LocationId} area=\"{AreaName}\" time={Time}"
-         + (CliTarget.Length > 0 ? $" {CliTarget}" : "") + $" locked={(Locked ? "yes" : "no")}";
+         + (CliTarget.Length > 0 ? $" {CliTarget}" : "");
 
     [JsonIgnore] protected virtual string CliTarget => "";
 

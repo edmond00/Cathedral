@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -30,6 +30,16 @@ public class NarrativeController
     private readonly NarrativeState _narrationState = new();
     private readonly NarrationScrollBuffer _scrollBuffer;
     private readonly NarrativeUI _ui;
+
+    /// <summary>The Tab map (developer keys). See <see cref="DebugLocationMap"/>.</summary>
+    private readonly DebugLocationMap _debugMap = new();
+
+    /// <summary>
+    /// The mouse-following popup, shared with the modal popups below: the map's pointer label goes up
+    /// in it while none of them is open (<see cref="UpdateMapLabel"/>).
+    /// </summary>
+    private readonly PopupTerminalHUD _popup;
+    private bool _mapLabelShown;
     private readonly TerminalThinkingModusMentisPopup _modusMentisPopup;
     private readonly TerminalItemSelectionPopup _itemSelectionPopup;
     private readonly TerminalSimpleChoicePopup _choicePopup;
@@ -113,6 +123,39 @@ public class NarrativeController
     /// </summary>
     private bool _passagePlayed;
 
+    /// <summary>
+    /// A move shown on the location map: the party's glyph walking, a cell a step, from the card of
+    /// the area left along the way taken to the card of the area reached, then a Continue. Modal like
+    /// the time box, and played after it when an act moves both the hour and the party (a stalk).
+    /// Presentation only: the move itself has already been made.
+    /// </summary>
+    private List<DebugLocationMap.WalkStep>? _walk;
+    private IReadOnlyList<(Area To, string? Link)> _walkHops = Array.Empty<(Area, string?)>();
+    /// <summary>What the move recorded that the map did not know before: revealed as the walk reaches it.</summary>
+    private HashSet<string> _walkFresh = new();
+    private int _walkShown;
+    private DateTime _walkStart;
+    private double _walkStepMs;
+    private Action? _afterWalk;
+    private (int X, int Y, int Width) _walkContinueRegion;
+    private bool _walkContinueHovered;
+    /// <summary>Whether the view has been centred on the party since it arrived; after that it is the arrows'.</summary>
+    private bool _walkArrivalCentred;
+    private string? _lastWalk;
+
+    /// <summary>
+    /// A successful backtrack asking where to: the areas known ways reach, lit on the location map for
+    /// a click. The outcome is narrated once one is chosen (<see cref="Scene.BacktrackTo"/>). Null when
+    /// nothing asks.
+    /// </summary>
+    private HashSet<Area>? _backtrackChoices;
+    private Area? _backtrackHovered;
+    private bool _backtrackCentred;
+    private Action<Area>? _onBacktrackChosen;
+
+    /// <summary>A cell a step, but no walk longer than <see cref="WalkMaxMs"/> however far it goes.</summary>
+    private const double WalkStepMs = 90, WalkMaxMs = 6000;
+
     // In-flight roll (main path): the evaluation to narrate and the current (humor-modified) result.
     // The actual outcome is generated only once the player presses the dice CONTINUE — see
     // OnDiceRollContinue → GenerateOutcomePreviewAsync — so no narration is produced during the roll.
@@ -140,6 +183,10 @@ public class NarrativeController
     // Click region of the footer exit button as last rendered (Width == 0 ⇒ not shown this frame).
     private (int X, int Y, int Width) _exitButtonRegion;
     private bool _exitButtonHovered;
+
+    /// <summary>The header's ↹ (the map and back); default while it is not drawn.</summary>
+    private (int X, int Y, int Width) _mapButtonRegion;
+    private bool _mapButtonHovered;
     // Set while an exit-runaway dice roll is in flight, so the dice Continue click resolves the exit
     // (via FinishExitRunaway) instead of the normal thinking-action OnDiceRollContinue.
     private bool _exitRunawayPending;
@@ -295,6 +342,7 @@ public class NarrativeController
         _dice.OnButtonClick   = PlayClickSound;
         _dice.OnResultChanged = OnDiceOutcomeFlipped;
         _timeBox.OnTick       = () => _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+        _observationLedger.Observed += NoteObserved;
         // Calculate content width dynamically: terminal width - margins - scrollbar
         var layout = new NarrativeLayout(
             terminal.Width, 
@@ -305,6 +353,7 @@ public class NarrativeController
             Config.NarrativeUI.RightPadding);
         int contentWidth = layout.CONTENT_WIDTH - 1; // -1 for scrollbar
         _scrollBuffer = new NarrationScrollBuffer(maxWidth: contentWidth, layout: layout);
+        _popup = popup;
         _modusMentisPopup = new TerminalThinkingModusMentisPopup(popup);
         _itemSelectionPopup = new TerminalItemSelectionPopup(popup);
         _choicePopup = new TerminalSimpleChoicePopup(popup);
@@ -502,6 +551,7 @@ public class NarrativeController
         _observationLedger.Clear();
         Cathedral.Game.Scene.ActionPathPlanner.Forget();
         _arrivalObservationPending = arrivalPeriod != null;
+        NoteWhereWeStand();
         // New session — any focus left over from an earlier one is stale.
         _openingFocus   = openingFocus;
         _openingFocusMM = null;
@@ -554,6 +604,7 @@ public class NarrativeController
         _openingFocus   = null;
         _openingFocusMM = null;
 
+        _approachFrom = _pov?.Where;
         MovePointOfViewToArea(startAreaKey);
         ApplyTimePeriod(period);
         Console.WriteLine($"NarrativeController: routine sub-phase prepared at period {period}"
@@ -645,6 +696,8 @@ public class NarrativeController
             // companion's saved counter) carries straight over.
             _narrationState.ThinkingAttemptsRemaining = _activePartyMember.MaxNoeticPoints;
         }
+        NoteWhereWeStand();
+
         // Re-apply the current time period so this segment's nodes get their NPCs (re)placed and
         // their state-dependent verbs re-expanded (affinity above all: "introduce myself" is for
         // strangers only, and a dialogue may just have changed that).
@@ -811,8 +864,9 @@ public class NarrativeController
             // with, or the one a Meet routine is about — open with a single observation of it (see
             // GenerateFocusedObservationAsync). Consumed once; if it is not observable from here we fall
             // through to the normal phase.
-            var focus   = _openingFocus;
+            var focus   = _openingFocus ?? _scene?.PendingOpeningFocus;
             var focusMM = _openingFocusMM;
+            if (_scene != null) _scene.PendingOpeningFocus = null;
             bool arrival = _arrivalObservationPending;
             _arrivalObservationPending = false;
             _openingFocus   = null;
@@ -1065,6 +1119,7 @@ public class NarrativeController
             {
                 SceneNpc npc        => $"opening focus=npc id=\"{npc.Entity.PersistentId}\"",
                 PointOfInterest poi => $"opening focus=poi name=\"{poi.DisplayName}\"",
+                Area area           => $"opening focus=area name=\"{area.DisplayName}\"",
                 _                   => $"opening focus=other name=\"{focus.DisplayName}\"",
             };
         return blocks.Count > 0;
@@ -1084,6 +1139,7 @@ public class NarrativeController
     {
         SceneNpc npc        => anchor is SyntheticNpcObservationObject o && ReferenceEquals(o.SceneNpc, npc),
         PointOfInterest poi => anchor is SyntheticObservationObject o && ReferenceEquals(o.PointOfInterest, poi),
+        Area area           => anchor is SyntheticAreaObservationObject o && ReferenceEquals(o.Area, area),
         _                   => false,
     };
 
@@ -2210,6 +2266,13 @@ public class NarrativeController
                 return;
             }
 
+            // A backtrack that succeeded asks where to first: the area gone back to is in the narration.
+            if (succeeded && eval.Action.Verb is BacktrackVerb && _pov != null && _scene != null)
+            {
+                AskBacktrackTo(eval, succeeded);
+                return;
+            }
+
             _narrationState.IsLoadingAction = true;
             _ = Task.Run(() => GenerateOutcomePreviewAsync(eval, succeeded));
             return;
@@ -2227,7 +2290,17 @@ public class NarrativeController
     private void AskWaitUntil(ActionEvaluationResult eval, bool succeeded)
     {
         var from = _pov!.When;
-        _timeBox.OnChosen = chosen =>
+        // A will's wait was settled by its path: the hour it needs, with nothing to ask.
+        if (eval.Action.PreselectedOutcome is { Variant: TimePeriod settled })
+        {
+            Console.WriteLine($"NarrativeController: a will's wait — until {settled}, not asked");
+            WaitChosen(settled);
+            return;
+        }
+        _timeBox.OnChosen = WaitChosen;
+        _timeBox.ShowChoice(from, Enumerable.Range(1, 5).Select(i => from.Advance(i)));
+
+        void WaitChosen(TimePeriod chosen)
         {
             var (until, note) = WaitStopsAt(from, chosen);
             if (_scene != null) _scene.WaitUntil = until;
@@ -2239,8 +2312,43 @@ public class NarrativeController
                 _narrationState.IsLoadingAction = true;
                 _ = Task.Run(() => GenerateOutcomePreviewAsync(eval, succeeded));
             });
+        }
+    }
+
+    /// <summary>
+    /// Asks where a successful backtrack goes, on the location map, then narrates the outcome. A will's
+    /// backtrack was settled by its path (the action's variant) and asks nothing.
+    /// </summary>
+    private void AskBacktrackTo(ActionEvaluationResult eval, bool succeeded)
+    {
+        void Go(Area to)
+        {
+            if (_scene != null) _scene.BacktrackTo = to;
+            Console.WriteLine($"NarrativeController: going back to {to.DisplayName}");
+            _narrationState.IsLoadingAction = true;
+            _ = Task.Run(() => GenerateOutcomePreviewAsync(eval, succeeded));
+        }
+
+        if (eval.Action.PreselectedOutcome is { Variant: Area settled })
+        {
+            Console.WriteLine($"NarrativeController: a will's backtrack — to {settled.DisplayName}, not asked");
+            Go(settled);
+            return;
+        }
+
+        var reach = AreaVisits.BackReach(_scene!, _pov!.Where, _pov.When);
+        if (reach.Count == 0) { Go(_pov.Where); return; }
+        _backtrackChoices = reach.Keys.ToHashSet();
+        _backtrackHovered = null;
+        _backtrackCentred = false;
+        _onBacktrackChosen = to =>
+        {
+            PlayClickSound();
+            _backtrackChoices = null;
+            _backtrackHovered = null;
+            DebugLocationMap.WalkPannable = false;
+            Go(to);
         };
-        _timeBox.ShowChoice(from, Enumerable.Range(1, 5).Select(i => from.Advance(i)));
     }
 
     /// <summary>
@@ -2273,6 +2381,116 @@ public class NarrativeController
         _timeBox.Hide();
         var then = _afterTimeBox;
         _afterTimeBox = null;
+        then?.Invoke();
+    }
+
+    /// <summary>
+    /// Records a move on the map (<see cref="AreaVisits.Move"/>) and shows it walked: what the move
+    /// taught the map is revealed as the walk reaches it.
+    /// </summary>
+    private void MoveOnMap(Area from, Area to, Element? by, bool back = false)
+    {
+        if (_scene == null || _pov == null) return;
+        var areasBefore = new HashSet<string>(_scene.VisitedAreas);
+        var linksBefore = new HashSet<string>(_scene.TakenLinks);
+        var hops = back ? AreaVisits.MoveBack(_scene, from, to, _pov.When)
+                        : AreaVisits.Move(_scene, from, to, by, _pov.When);
+        var fresh = _scene.VisitedAreas.Where(k => !areasBefore.Contains(k))
+                    .Concat(_scene.TakenLinks.Where(k => !linksBefore.Contains(k)))
+                    .ToHashSet();
+        ShowWalk(from, hops, fresh);
+    }
+
+    /// <summary>What an observation took in, for the map's seen state (exploration only).</summary>
+    private void NoteObserved(NarrativeAnchor observed)
+    {
+        if (_scene == null || _pov == null || _scene.Phase != NarrationPhase.Exploration) return;
+        AreaVisits.See(_scene, _pov.Where, observed);
+    }
+
+    /// <summary>
+    /// Shows the party walking from <paramref name="from"/> along <paramref name="hops"/> (what
+    /// <see cref="AreaVisits.Move"/> recorded) on the location map. Waits for the time box when one is
+    /// up, and takes over what its Continue would have resumed.
+    /// </summary>
+    private void ShowWalk(Area from, IReadOnlyList<(Area To, string? Link)> hops, HashSet<string> fresh)
+    {
+        if (_scene == null || hops.Count == 0) return;
+        var steps = _debugMap.Walk(_scene, from, hops);
+        if (steps.Count < 2) return;
+        _lastWalk = $"walk from {from.DisplayName} to {hops[^1].To.DisplayName} steps={steps.Count} "
+                  + $"via={string.Join(",", hops.Select(h => h.Link == null ? "jump" : "line"))}";
+        Console.WriteLine($"NarrativeController: {_lastWalk}");
+
+        if (_timeBox.IsVisible)
+        {
+            var then = _afterTimeBox;
+            _afterTimeBox = () => { StartWalk(steps, hops, fresh); _afterWalk = then; };
+            return;
+        }
+        StartWalk(steps, hops, fresh);
+    }
+
+    private void StartWalk(List<DebugLocationMap.WalkStep> steps, IReadOnlyList<(Area To, string? Link)> hops,
+                           HashSet<string> fresh)
+    {
+        _walk = steps;
+        _walkHops = hops;
+        _walkFresh = fresh;
+        DebugLocationMap.WalkPannable = false;
+        _walkShown = 0;
+        _walkStart = DateTime.UtcNow;
+        // A script has nothing to watch: the walk is settled at once, and still waits for Continue.
+        _walkStepMs = Cli.CliMode.IsActive && !Record.RecordMode.IsActive ? 0 : Math.Min(WalkStepMs, WalkMaxMs / steps.Count);
+        _afterWalk = null;
+        _walkContinueRegion = default;
+        _walkContinueHovered = false;
+        _walkArrivalCentred = false;
+    }
+
+    private bool WalkSettled => _walk != null && _walkShown >= _walk.Count - 1;
+
+    /// <summary>
+    /// What the walk has not reached yet at the cell shown: the ways ahead of it and the areas it has
+    /// not entered. A way is reached once the glyph is on it, an area once it is in its card; anything
+    /// else the move recorded (the areas a path runs past) once the walk is over.
+    /// </summary>
+    private HashSet<string> WalkWithheld()
+    {
+        if (_walk == null || WalkSettled) return new();
+        var step = _walk[_walkShown];
+        var held = new HashSet<string>(_walkFresh);
+        for (int k = 0; k <= step.Hop && k < _walkHops.Count; k++)
+        {
+            var (to, link) = _walkHops[k];
+            if (link != null) held.Remove(link);
+            if (k < step.Hop || step.Here == to) held.Remove(to.StableKey);
+        }
+        return held;
+    }
+
+    /// <summary>Moves the glyph on by the time elapsed, ticking at each card it enters.</summary>
+    private void AdvanceWalk()
+    {
+        if (_walk == null || WalkSettled) return;
+        int last = _walk.Count - 1;
+        int at = _walkStepMs <= 0 ? last
+               : Math.Min(last, (int)((DateTime.UtcNow - _walkStart).TotalMilliseconds / _walkStepMs));
+        if (at == _walkShown) return;
+        if (_walk[at].Here != _walk[_walkShown].Here)
+            _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+        _walkShown = at;
+    }
+
+    private void OnWalkContinue()
+    {
+        PlayClickSound();
+        _walk = null;
+        DebugLocationMap.WalkPannable = false;
+        _walkContinueRegion = default;
+        _walkContinueHovered = false;
+        var then = _afterWalk;
+        _afterWalk = null;
         then?.Invoke();
     }
 
@@ -2564,11 +2782,18 @@ public class NarrativeController
                 ConfrontationSelector.SummonHouseholder(_scene, _pov, _protagonist?.AffinityKey);
         }
         _passagePlayed = false;
-        if (_scene != null) _scene.WaitUntil = null;
+        if (_scene != null) { _scene.WaitUntil = null; _scene.BacktrackTo = null; }
 
         // Every area walked into is a go-to routine, not only the one the location is left from.
         if (_recorder != null && _pov != null && areaBefore != null && areaBefore.Id != _pov.Where.Id)
             _recorder.OnAreaEntered(_pov);
+
+        // And it is on the map from now on, with the way it was reached (the whole walk, for a move
+        // that lands some areas away — following somebody, tracking, a path, a voyage).
+        if (_scene != null && _pov != null && areaBefore != null && areaBefore.Id != _pov.Where.Id
+            && _scene.Phase == NarrationPhase.Exploration)
+            MoveOnMap(areaBefore, _pov.Where, result.Action?.PreselectedOutcome?.Target,
+                      back: result.Action?.Verb is BacktrackVerb);
 
         // UI-visible chips for the outcome block.
         var uiReports = allReports.Where(r => r.ShowInUI).ToList();
@@ -2889,6 +3114,38 @@ public class NarrativeController
         }
     }
 
+    /// <summary>
+    /// Records the area the party stands in as visited, at every phase that opens. The moves record
+    /// themselves; this is what catches where a visit begins — the arrival, a routine resumed on its
+    /// area ("you know the way", so nothing on the way to it), a --start-area.
+    /// </summary>
+    private void NoteWhereWeStand()
+    {
+        if (_scene != null && _pov != null && _scene.Phase == NarrationPhase.Exploration)
+            AreaVisits.Arrive(_scene, _pov.Where);
+    }
+
+    /// <summary>Tab or the header's ↹: the map of the location in place of the narration text.</summary>
+    public void ToggleDebugMap() => _debugMap.Toggle();
+
+    /// <summary>
+    /// Whether the player may open the map: in exploration, the one phase played in a real location.
+    /// The childhood and the get-up have a scene of their own and nowhere to go in it, so there it is
+    /// still the developer's Tab only.
+    /// </summary>
+    public bool CanToggleMap => _scene?.Phase == NarrationPhase.Exploration;
+
+    /// <summary>The ↹'s middle cell, for the CLI; null while it is not drawn.</summary>
+    public (int X, int Y)? MapButtonCell =>
+        _mapButtonRegion.Width > 0 ? (_mapButtonRegion.X + 1, _mapButtonRegion.Y) : null;
+
+    private bool OverMapButton(int x, int y) =>
+        _mapButtonRegion.Width > 0 && y == _mapButtonRegion.Y
+        && x >= _mapButtonRegion.X && x < _mapButtonRegion.X + _mapButtonRegion.Width;
+
+    /// <summary>An arrow key with the map up: pans it. False when the map is hidden or the key is another.</summary>
+    public bool PanDebugMap(OpenTK.Windowing.GraphicsLibraryFramework.Keys key) => _debugMap.HandleKey(key);
+
     /// <summary>A modal popup (modus mentis / item / choice) is open over the panel.</summary>
     private bool IsAnyPopupVisible =>
         _modusMentisPopup.IsVisible || _itemSelectionPopup.IsVisible || _choicePopup.IsVisible;
@@ -2906,6 +3163,24 @@ public class NarrativeController
         // Applied after RenderPanel because DimContent only affects what is already drawn.
         if (IsAnyPopupVisible)
             _ui.DimContent();
+
+        UpdateMapLabel();
+    }
+
+    /// <summary>
+    /// The label above the pointer for what it is over on the map, while the map is what the panel
+    /// shows and nothing sits over it (a dice box, the hours passing, a preview). Taken down when the
+    /// map goes; left alone while a modal popup holds the shared popup.
+    /// </summary>
+    private void UpdateMapLabel()
+    {
+        if (IsAnyPopupVisible) { _mapLabelShown = false; return; }
+        bool mapUp = _ui.MapDrawn && !_narrationState.IsDiceRollActive && !_timeBox.IsVisible
+                  && !_previewSession.IsActive;
+        var label = mapUp ? _debugMap.LabelAt(_lastMouseX, _lastMouseY) : null;
+        if (label == null && !_mapLabelShown) return;
+        DebugLocationMap.ShowLabel(_popup, label);
+        _mapLabelShown = label != null;
     }
 
     private void RenderPanel()
@@ -2935,6 +3210,12 @@ public class NarrativeController
         _ui.RenderHeader(_activePartyMember.DisplayName, _narrationState.ThinkingAttemptsRemaining,
             _activePartyMember.MaxNoeticPoints, showNoetic,
             trespassing: _scene?.Phase == NarrationPhase.Exploration && _pov != null ? IsTrespassing : null);
+
+        // The ↹, except while the map is already the panel's for a reason of its own: a walk playing
+        // out, or a backtrack asking where to. Both own every click until they are done.
+        _mapButtonRegion = CanToggleMap && _walk == null && _backtrackChoices == null
+            ? _ui.RenderMapButton(_mapButtonHovered, DebugLocationMap.Visible)
+            : default;
 
         // The footer exit button is only (re)rendered in the interactive states below. Clear its
         // click region each frame so stale zones don't linger during dice/loading/error states.
@@ -2974,6 +3255,35 @@ public class NarrativeController
             _ui.RenderTimePassage(_timeBox);
             _ui.RenderStatusBar(_timeBox.IsChoosing ? "Choose the hour to wait until"
                               : _timeBox.IsAnimating ? "Time passes..." : "Click Continue");
+            return;
+        }
+
+        // A backtrack asking where to: the map, with every area known ways reach lit for a click.
+        if (_backtrackChoices != null && _pov != null && _scene != null)
+        {
+            DebugLocationMap.WalkPannable = true;
+            var at = _debugMap.CardMiddle(_scene, _pov.Where);
+            _ui.RenderDebugMap(_debugMap, _scene, _pov.Where, _graph.CurrentPeriod, at,
+                               follow: !_backtrackCentred, choosable: _backtrackChoices, hovered: _backtrackHovered);
+            _backtrackCentred = true;
+            _ui.RenderStatusBar(_backtrackHovered != null
+                ? $"Go back to {_backtrackHovered.DisplayName}"
+                : "Choose where to go back to");
+            return;
+        }
+
+        // A move on the map: the party walks the way taken, then Continue. The map stands in for the
+        // narration, as it does when opened by hand.
+        if (_walk != null)
+        {
+            AdvanceWalk();
+            var step = _walk[_walkShown];
+            DebugLocationMap.WalkPannable = WalkSettled;
+            _ui.RenderDebugMap(_debugMap, _scene, step.Here, _graph.CurrentPeriod, (step.X, step.Y),
+                               follow: !_walkArrivalCentred, withheld: WalkWithheld());
+            if (WalkSettled) _walkArrivalCentred = true;
+            _walkContinueRegion = WalkSettled ? _ui.RenderExitButton("CONTINUE", _walkContinueHovered) : default;
+            _ui.RenderStatusBar(WalkSettled ? "Click Continue" : "Walking...");
             return;
         }
 
@@ -3045,6 +3355,13 @@ public class NarrativeController
         ActionRegion?  hoveredAction  = null,
         bool           dimContent     = false)
     {
+        // Tab (developer keys): the map of the location in place of the text, and no scrollbar.
+        if (DebugLocationMap.Visible)
+        {
+            _ui.RenderDebugMap(_debugMap, _scene, _pov?.Where, _graph.CurrentPeriod);
+            return;
+        }
+
         _ui.RenderObservationBlocks(
             _scrollBuffer,
             _narrationState.ThinkingAttemptsRemaining,
@@ -3090,6 +3407,15 @@ public class NarrativeController
         if (!showNoetic && !postAction)
         {
             _exitButtonRegion = default;
+            return;
+        }
+
+        // Over the map the one button goes back to the narration, whatever it would otherwise be:
+        // LEAVE pressed from a map would quit the location, and CONTINUE would move the story on
+        // behind it. Both are there again once the map is closed.
+        if (DebugLocationMap.Visible)
+        {
+            _exitButtonRegion = _ui.RenderExitButton("RETURN", _exitButtonHovered);
             return;
         }
 
@@ -3194,7 +3520,16 @@ public class NarrativeController
     {
         _lastMouseX = mouseX;
         _lastMouseY = mouseY;
-        
+
+        if (_debugMap.SetHover(mouseX, mouseY)) PlayHoverSound();
+
+        bool overMap = OverMapButton(mouseX, mouseY);
+        if (overMap != _mapButtonHovered)
+        {
+            _mapButtonHovered = overMap;
+            if (overMap) PlayHoverSound();
+        }
+
         // If any popup is visible, suppress narrative hover sounds entirely.
         if (_modusMentisPopup.IsVisible || _itemSelectionPopup.IsVisible || _choicePopup.IsVisible)
         {
@@ -3218,6 +3553,30 @@ public class NarrativeController
         if (_timeBox.IsVisible)
         {
             if (_timeBox.HandleHover(mouseX, mouseY)) PlayHoverSound();
+            return;
+        }
+
+        if (_walk != null)
+        {
+            var r = _walkContinueRegion;
+            bool over = r.Width > 0 && mouseY == r.Y && mouseX >= r.X && mouseX < r.X + r.Width;
+            if (over != _walkContinueHovered)
+            {
+                _walkContinueHovered = over;
+                if (over) PlayHoverSound();
+            }
+            return;
+        }
+
+        if (_backtrackChoices != null)
+        {
+            var under = _debugMap.AreaAt(mouseX, mouseY);
+            if (under != null && !_backtrackChoices.Contains(under)) under = null;
+            if (under != _backtrackHovered)
+            {
+                _backtrackHovered = under;
+                if (under != null) PlayHoverSound();
+            }
             return;
         }
         
@@ -3340,6 +3699,41 @@ public class NarrativeController
     /// </summary>
     public void OnMouseClick(int mouseX, int mouseY)
     {
+        // Choosing where to go back to is modal: the pad pans, a lit card is the answer.
+        if (_backtrackChoices != null)
+        {
+            if (_debugMap.HandleClick(mouseX, mouseY)) { PlayClickSound(); return; }
+            if (_debugMap.AreaAt(mouseX, mouseY) is { } to && _backtrackChoices.Contains(to))
+                _onBacktrackChosen?.Invoke(to);
+            return;
+        }
+
+        // A walk on the map is modal: a click while it plays finishes it, and its Continue goes on.
+        if (_walk != null)
+        {
+            var r = _walkContinueRegion;
+            if (!WalkSettled) _walkStepMs = 0;
+            else if (_debugMap.HandleClick(mouseX, mouseY)) PlayClickSound();   // the pad, once arrived
+            else if (r.Width > 0 && mouseY == r.Y && mouseX >= r.X && mouseX < r.X + r.Width) OnWalkContinue();
+            return;
+        }
+
+        // The ↹ in the header: the map and back, whatever box is up over the panel — none of them
+        // covers the header, and the map is only what is drawn under them.
+        if (OverMapButton(mouseX, mouseY))
+        {
+            PlayClickSound();
+            ToggleDebugMap();
+            return;
+        }
+
+        // The map's pan pad sits in the panel's top-right corner, clear of every box drawn over it.
+        if (_debugMap.HandleClick(mouseX, mouseY))
+        {
+            PlayClickSound();
+            return;
+        }
+
         // Handle dice roll screen click
         if (_narrationState.IsDiceRollActive && !_narrationState.IsDiceRolling)
         {
@@ -3425,7 +3819,8 @@ public class NarrativeController
             && mouseX <  _exitButtonRegion.X + _exitButtonRegion.Width)
         {
             PlayClickSound();
-            HandleFooterButtonClicked();
+            if (DebugLocationMap.Visible) _debugMap.Toggle();   // RETURN
+            else HandleFooterButtonClicked();
             return;
         }
 
@@ -3956,6 +4351,37 @@ public class NarrativeController
          : _timeBox.IsChoosing ? "choosing"
          : _timeBox.IsAnimating ? "passing" : "settled";
 
+    /// <summary>Whether a backtrack is asking where to go: none or choosing.</summary>
+    public string CliBacktrackState() => _backtrackChoices == null ? "none" : "choosing";
+
+    /// <summary>
+    /// The areas a backtrack offers while it asks, by name, with the screen cell of each card as last
+    /// drawn (null when the card is off the view — pan to it as a player would).
+    /// </summary>
+    public IReadOnlyList<(string Name, (int X, int Y)? Cell)> CliBacktrackChoices()
+        => _backtrackChoices == null ? Array.Empty<(string, (int, int)?)>()
+         : _backtrackChoices.OrderBy(a => a.DisplayName, StringComparer.Ordinal)
+                            .Select(a => (a.DisplayName, _debugMap.ScreenCellOf(a))).ToList();
+
+    /// <summary>Pans the chooser's map so the named area's card is in view; false when it is not on offer.</summary>
+    public bool CliShowBacktrackChoice(string name)
+    {
+        var area = _backtrackChoices?.FirstOrDefault(a => a.DisplayName.Equals(name, StringComparison.OrdinalIgnoreCase));
+        if (area == null) return false;
+        _debugMap.CentreOn(area);
+        return true;
+    }
+
+    /// <summary>The walk on the map: none, walking (animating) or settled.</summary>
+    public string CliWalkState() => _walk == null ? "none" : WalkSettled ? "settled" : "walking";
+
+    /// <summary>The walk's [ CONTINUE ] region, once the party has arrived.</summary>
+    public (bool Present, int X, int Y, int Width) CliWalkContinue()
+    {
+        var r = _walkContinueRegion;
+        return (WalkSettled && r.Width > 0, r.X, r.Y, r.Width);
+    }
+
     /// <summary>The periods the time box offers while it asks, with their button regions.</summary>
     public IReadOnlyList<(TimePeriod Period, int X, int Y, int Width)> CliTimeBoxChoices() => _timeBox.PeriodRegions;
 
@@ -4152,6 +4578,23 @@ public class NarrativeController
             outp.Add($"where area=\"{_pov?.Where.DisplayName ?? "-"}\" period={_pov?.When.ToString() ?? "-"} "
                    + $"day={(int)Cathedral.Game.Narrative.GameClock.Days} trespass={(IsTrespassing ? "yes" : "no")} "
                    + $"confronted={(confrontation == null ? "none" : $"{confrontation.Kind}:{confrontation.Npc.Archetype.ArchetypeId}")}");
+        }
+
+        // What the location map knows: every area stood in, every way gone by (AreaVisits). Read from
+        // the mental map of the place, so after a revisit this is what the last visit left behind —
+        // or nothing, once the place is forgotten.
+        if (All("map") && _scene != null)
+        {
+            foreach (var area in _scene.AllAreas.Where(a => _scene.VisitedAreas.Contains(a.StableKey)))
+                outp.Add($"map visited {area.DisplayName}");
+            foreach (var (a, b, key, connector) in AreaVisits.AllLinks(_scene).Where(l => _scene.TakenLinks.Contains(l.Key)))
+                outp.Add(connector == null
+                    ? $"map taken between {string.Join(" and ", new[] { a.DisplayName, b.DisplayName }.OrderBy(n => n, StringComparer.Ordinal))}"
+                    : $"map taken {connector.DisplayName}");
+            foreach (var area in _scene.AllAreas.Where(a => _scene.SeenAreas.Contains(a.StableKey)
+                                                         && !_scene.VisitedAreas.Contains(a.StableKey)))
+                outp.Add($"map seen {area.DisplayName}");
+            if (_lastWalk != null) outp.Add($"map {_lastWalk}");
         }
 
         if (All("party"))
@@ -4447,11 +4890,37 @@ public class NarrativeController
     {
         // Only the area is set here — StartObservationPhase(time) below routes the period through
         // ApplyTimePeriod, the single writer of PoV.When + graph period.
+        _approachFrom = _pov?.Where;
         MovePointOfViewToArea(areaKey);
         var focus = focusNpcId == null
             ? null
             : _scene?.Npcs.FirstOrDefault(n => n.IsAlive && n.Entity.PersistentId == focusNpcId);
         StartObservationPhase(time, focus);
+        // Shown while the opening observation is written behind it: the walk is drawn ahead of the
+        // preview box, which comes up once its Continue is pressed.
+        WalkTheApproach(then: null);
+    }
+
+    /// <summary>Where the location is entered, kept by a routine's move to its own area for <see cref="WalkTheApproach"/>.</summary>
+    private Area? _approachFrom;
+
+    /// <summary>
+    /// A routine opens in its own area — "you know the way" — and this shows the way: the party
+    /// walking on the map from where the location is entered to the routine's area, by the ways the
+    /// protagonist knows (<see cref="AreaVisits.MoveBack"/>, a backtrack's route; a jump, card to card,
+    /// when the map holds none at that hour). Nothing is rolled and nothing new is learned; the walk is
+    /// the routine's own, shown. <paramref name="then"/> runs on its Continue — at once when the
+    /// routine's area is where the location is entered, and there is nothing to walk.
+    /// </summary>
+    public void WalkTheApproach(Action? then)
+    {
+        var from = _approachFrom;
+        _approachFrom = null;
+        if (from == null || _scene == null || _pov == null || from.Id == _pov.Where.Id) { then?.Invoke(); return; }
+
+        ShowWalk(from, AreaVisits.MoveBack(_scene, from, _pov.Where, _pov.When), fresh: new());
+        if (_walk == null) { then?.Invoke(); return; }
+        _afterWalk = then;
     }
 
     /// <summary>
@@ -4525,6 +4994,7 @@ public class NarrativeController
             return false;
         }
 
+        MoveOnMap(_pov.Where, where, by: null);
         _pov.Where = where;
         _pov.Focus = sceneNpc;
         if (NodeForArea(where) is { } node)
@@ -4566,6 +5036,7 @@ public class NarrativeController
             ApplyTimePeriod(visit.When);
         }
 
+        MoveOnMap(_pov.Where, visit.Area, by: null);
         _pov.Where = visit.Area;
         _pov.Focus = sceneNpc;
         if (NodeForArea(visit.Area) is { } node)

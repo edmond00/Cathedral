@@ -442,6 +442,11 @@ names and the catalogue lacks fails here rather than on a player's arrival.
 Per factory it prints the range of areas, NPCs and doors (and how many are locked at noon), plus the
 sections that were generated and how often. Then it warns about:
 
+- private ground entered from public ground by anything but a locked door or an intrusion (slip-in,
+  scale, climb, crossing): an open way, a stair or an unlocked door into private, a door locked from
+  its private side, or a public area reached only through private ones (`CheckPrivateBehindLocks`).
+  The player must never open a plain door into a room where every act is trespass;
+
 - an area in two sections or in none. Sections must **partition** the areas: every lookup is a
   "first section containing this area", and an area in none crashes the fight path outright;
 - two areas sharing a node-id slug (`display name → lower_snake`). The narration graph keys nodes by

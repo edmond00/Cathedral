@@ -1,0 +1,70 @@
+# location map — Tab (or the header's ↹) swaps the narration text for a map of the location, and
+# again brings it back
+#
+# Every player's in exploration: DebugLocationMap draws every area as a card inside
+# its section's panel, the party's area in yellow. On a first arrival only the yard is visited, its
+# neighbours are seen (named, dimmed) and the rest is unknown: the Test Den, two ways off past the
+# wood, reads ??? and must not be named. The map has no legend; its footer button, RETURN, is only on
+# screen while it is.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type test --location-id 0 --start-area "Test Yard" --period dawn
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+
+expect-not [ RETURN ]
+key Tab
+wait
+expect [ RETURN ]
+expect ???
+expect not visited
+expect-not Test Den
+
+# Over the map the footer button goes back to the narration; LEAVE is not on offer.
+expect-not [ LEAVE ]
+
+# The arrow keys pan it. The section's tab is off the left edge while the view is centred on the
+# yard, and comes into view as the map moves right under it.
+expect-not Test Grounds
+key Left
+key Left
+key Left
+key Left
+key Left
+key Left
+key Left
+key Left
+key Left
+key Left
+wait
+expect Test Grounds
+
+# RETURN closes it, and the footer is the narration's own again.
+click button
+wait
+expect-not [ RETURN ]
+expect [ LEAVE ]
+
+# Tab opens and closes it too.
+key Tab
+wait
+expect [ RETURN ]
+key Tab
+wait
+expect-not [ RETURN ]
+expect-not ???
+
+# The header's ↹ is the mouse's Tab: every player's, not a developer key.
+click map-button
+wait
+expect [ RETURN ]
+click map-button
+wait
+expect-not [ RETURN ]
+quit

@@ -1,0 +1,52 @@
+# backtrack — failure
+#
+# Going back by a known way, failed at the dice: no map asks where to, and the party is still where
+# it stood. The way out to the yard is walked first so that the field is a place already known.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Field" --period dawn --observe-only "Test Yard" --penalty-only lose_focus
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal move
+advance 12 180
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect Moved to: Test Yard
+
+observe "Test Field"
+click button
+advance 12 180
+strategy fail-dice
+goal backtrack
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+expect FAILURE
+expect-verb backtrack
+# Nothing asked, nobody moved: the verb's own consequence did not happen. The penalty is pinned to
+# a lost thread so the visit goes on (a lost way would end it on the next press).
+expect-state where Test Yard
+quit

@@ -27,6 +27,16 @@ wait mode MainMenu 20
 click menu Continue
 wait mode WorldView 20
 
+# ── The ☰ ─────────────────────────────────────────────────────────────────────
+# The same menu by mouse, from the corner, in every phase Escape pauses. No map button off narration.
+wait
+expect-state buttons menu=shown map=hidden
+click menu-button
+wait mode MainMenu 20
+expect-state buttons menu=hidden
+click menu Continue
+wait mode WorldView 20
+
 # ── Narration ─────────────────────────────────────────────────────────────────
 # The menu opens as an OVERLAY: narration is not torn down, and Continue resumes the same scene.
 # Leaving a location is the footer LEAVE button's job, not Escape's.
@@ -41,6 +51,23 @@ wait mode LocationInteraction 30
 # Opened over narration, and Escape closes it back to the menu rather than to the scene.
 manage
 wait mode ProtagonistManagement 20
+pause
+wait mode MainMenu 20
+click menu Continue
+wait mode LocationInteraction 30
+
+# ── The ☰ over narration ──────────────────────────────────────────────────────
+# An overlay like Escape's, and the ↹ beside it in the header. Neither on the management screen,
+# which has its own Back.
+wait
+expect-state buttons menu=shown map=shown
+click menu-button
+wait mode MainMenu 20
+click menu Continue
+wait mode LocationInteraction 30
+manage
+wait mode ProtagonistManagement 20
+expect-state buttons menu=hidden
 pause
 wait mode MainMenu 20
 click menu Continue

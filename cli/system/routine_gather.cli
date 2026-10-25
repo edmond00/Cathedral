@@ -80,15 +80,21 @@ expect-no-state gather gathered=0
 gather continue
 wait mode WorldView 90
 
-# The routines menu: the kind's slots above the map, the routine in full below it.
-inspect routine-slots
-expect-state routine-slots category=gather used=1
-expect-state routine-slots category=buy used=0
-manage Routines gather
+# Both places visited are remembered, each with its map; the routine is in the first's.
+inspect mental-maps
+expect-state mental-maps used=2
+expect-state mental-maps routines=1
+
+# The Chorography tab: the map of the place with the routine's icon on it, the routine in full below.
+manage Chorography gather
 wait 10
-expect G A T H E R
-expect ☐ Gather
+expect M E N T A L
+expect Gather · Test Field · dawn
 expect from Test Ford
 expect needs no implement
-expect × ·····
+
+# The map has no key: the pointer over a card names it in a grey label (it only tells).
+point card Test Field
+wait 10
+expect-state pointer-label ground=grey text=Test Field · public · visited
 quit

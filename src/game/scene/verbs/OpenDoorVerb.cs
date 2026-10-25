@@ -18,6 +18,7 @@ public class OpenDoorVerb : Verb
 {
 
     public override string VerbId         => "open_door";
+    protected override bool MovesAlongWay => true;
     public override string DisplayName    => "Open";
 
     /// <summary>A door that will not give is shouldered at, and a shoulder can take it amiss.</summary>

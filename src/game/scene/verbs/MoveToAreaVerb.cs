@@ -25,6 +25,7 @@ public class MoveToAreaVerb : Verb
         foreach (var m in base.Lessons(ctx)) yield return m;
     }
     public override string VerbId         => "move";
+    protected override bool MovesAlongWay => true;
     public override string DisplayName    => "Move";
 
     /// <summary>Losing the way between two places is what failing to walk there means. The way lost ends the visit.</summary>

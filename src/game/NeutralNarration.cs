@@ -113,6 +113,13 @@ public static class NeutralNarration
         => "This one means me harm, right here — I must stay wary and ready.";
 
     /// <summary>
+    /// Trailing sentence for a way out already known — a neighbouring place already stood in, or a
+    /// door, stair, path or climb already gone by — so the narration says the way is a way back.
+    /// </summary>
+    public static string KnownWay(bool place)
+        => place ? "I have been there before; I know the way back." : "I have gone that way before; I know where it leads.";
+
+    /// <summary>
     /// Trailing sentence for an enemy who heard an action go wrong and has just walked in (an
     /// earshot arrival): the caution of <see cref="ThreatCaution"/>, and why they are here.
     /// </summary>
@@ -365,8 +372,9 @@ public static class NeutralNarration
 
     /// <summary>
     /// The reasoning of a retry within one thinking: the object was already named by the first
-    /// reasoning, so this one names only the new goal and its means. Rewritten after
-    /// <see cref="IterationRetry"/> or <see cref="DoubtRejected"/>, in the same rewrite.
+    /// reasoning, so this one names only the new goal and its means. Follows
+    /// <see cref="IterationRetry"/> or <see cref="DoubtRejected"/> in a rewrite of its own: rewritten
+    /// together, the model kept the lead and dropped the new goal.
     /// </summary>
     public static string ReasoningRetry(string goalPhrase, string skillMeans)
     {

@@ -59,8 +59,11 @@ public sealed class PartyState
     public int Copper { get; set; }
     public ChildhoodDto Childhood { get; set; } = new();
 
-    /// <summary>Recorded routines. Already plain data with public setters, so stored as-is.</summary>
-    public List<Routine> Routines { get; set; } = new();
+    /// <summary>
+    /// The locations remembered, oldest first, each with its map and its routines. Already plain data
+    /// with public setters, so stored as-is.
+    /// </summary>
+    public List<MentalMap> MentalMaps { get; set; } = new();
 
     // ═════════════════════════════════════════════════════════════════════════
     // Capture
@@ -82,7 +85,7 @@ public sealed class PartyState
             Silver            = protagonist.Party.Silver,
             Copper            = protagonist.Party.Copper,
             Childhood         = CaptureChildhood(protagonist.ChildhoodHistory),
-            Routines          = new List<Routine>(protagonist.RecordedRoutines),
+            MentalMaps        = new List<MentalMap>(protagonist.MentalMaps),
         };
     }
 
@@ -210,8 +213,8 @@ public sealed class PartyState
 
         RestoreChildhood(protagonist.ChildhoodHistory, Childhood);
 
-        protagonist.RecordedRoutines.Clear();
-        protagonist.RecordedRoutines.AddRange(Routines);
+        protagonist.MentalMaps.Clear();
+        protagonist.MentalMaps.AddRange(MentalMaps);
 
         protagonist.CompanionParty.Clear();
         foreach (var dto in Companions)

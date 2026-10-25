@@ -312,10 +312,12 @@ namespace Cathedral.Terminal
             int instanceIndex = 0;
             foreach (var (x, y, cell) in _view.EnumerateCells())
             {
-                // Calculate screen position (top-left origin)
+                // The quad is centred on its position (its vertices run -0.5..0.5), so the position
+                // is the cell's centre. Placing it at the corner drew the whole grid half a cell up
+                // and to the left: the top row and the left column were cut by the window's edge.
                 Vector3 position = new Vector3(
-                    offset.X + x * cellSize.X,
-                    offset.Y + y * cellSize.Y, // Direct mapping for screen coordinates
+                    offset.X + (x + 0.5f) * cellSize.X,
+                    offset.Y + (y + 0.5f) * cellSize.Y,
                     0.0f
                 );
                 

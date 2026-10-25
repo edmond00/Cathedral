@@ -361,7 +361,7 @@ public class SyntheticObservationObject : ObservationObject, IVerbRefreshable, I
 /// <see cref="MoveToAreaVerb"/> transition (not registry-expanded — see the graph factory's
 /// area wiring), which a registry re-expansion would silently drop.
 /// </summary>
-public class SyntheticAreaObservationObject : ObservationObject
+public class SyntheticAreaObservationObject : ObservationObject, IVerbRefreshable
 {
     private readonly Area _area;
 
@@ -377,6 +377,20 @@ public class SyntheticAreaObservationObject : ObservationObject
             SubOutcomes.Add(vv);
 
         SubOutcomes.Add(SceneViewAdapter.MakeIgnoreSubOutcome(area));
+    }
+
+    /// <summary>
+    /// Re-reads the ways to this area from where the party stands: walking to it, or — once it has
+    /// been stood in and may be gone back to — going back to it, which takes walking's place
+    /// (<see cref="Verbs.BacktrackVerb"/>). Only those two: an area is a way, not a thing to act on.
+    /// </summary>
+    public void RefreshVerbs(Scene scene, PoV pov, PartyMember? actor = null)
+    {
+        SubOutcomes.Clear();
+        foreach (var verb in scene.Verbs.Where(v => v is Verbs.MoveToAreaVerb or Verbs.BacktrackVerb))
+            foreach (var vv in verb.ExpandViews(scene, pov, _area, actor))
+                SubOutcomes.Add(vv);
+        SubOutcomes.Add(SceneViewAdapter.MakeIgnoreSubOutcome(_area));
     }
 
     public override string ObservationId => _area.DisplayName.ToLowerInvariant().Replace(' ', '_');

@@ -112,7 +112,9 @@ Run `help` for the authoritative list. The essentials:
                             keyboard would not deliver in the current mode FAILS the run instead of
                             reaching the controller anyway, which once let `key K` pass while K did
                             nothing for a player. A new key the game should answer on the map has to
-                            be added there, or it works in scripts only
+                            be added there, or it works in scripts only. The developer keys (R, K,
+                            Tab outside exploration…) are off unless the script's FLAGS carry
+                            `--developer-keys`
   destinations              vertices bordering the avatar
   destinations all [filter] every vertex inside the (stat-derived) travel range, not just the
                             neighbours; filter by biome/location name — `destinations all village`
@@ -131,13 +133,25 @@ Run `help` for the authoritative list. The essentials:
                             states with separate looks and are held at the same time; `click moon`
                             drives both, so this is the only way to assert that a choice survives
                             the cursor moving off it
+  point card <area>         hover an area's card on the menu map shown (the Chorography tab, the routine
+                            box), panned into view. The location map has no legend: what the
+                            pointer is over is named in a label above it, in the mouse-following
+                            popup, which `dump` does not see — read it with `inspect pointer-label`
   click arrow <direction>   press an arm of the compass rose (left|right|up|down) — the mouse's copy
                             of the arrow keys, drawn top-right on the world map and the selection
                             sky. Reports
                             the yaw and pitch either side of the press, which is the only way a
                             script can observe the camera at all
-  click continue            protagonist-creation Continue, a settled dice overlay, or the time
-                            box once the hours have passed
+  click continue            protagonist-creation Continue, a settled dice overlay, the time
+                            box once the hours have passed, or the walk on the map once the party
+                            has arrived (every move in exploration shows one, after the time box
+                            when both apply). Under `--cli` the walk settles at once, `advance`
+                            presses through it, `state` carries `walk=none|walking|settled`, and
+                            `inspect map` ends on `map walk from <A> to <B> steps=<n> via=line|jump`
+  click area <name>         the area a successful backtrack goes back to, while the location map
+                            asks (a card off the view is panned into it first). `advance` takes the
+                            first on offer by name; `state` carries `backtrack=none|choosing`, and
+                            `regions` lists the offer
   click period <name>       the hour a successful sit_and_wait lasts until, while the time box
                             asks (dawn…night, the five other than now). `advance` presses through
                             the box by itself, taking the NEXT period when it asks — so a script
@@ -180,7 +194,11 @@ Run `help` for the authoritative list. The essentials:
                             opens it). `start` rolls at once. Assert with `inspect gather`
   manage [tab]              open/close the protagonist screen; with a tab name
                             (Anatomy / Inventory / Memory / Humors / …) open it there.
-                            `manage Routines <kind>` shows that kind's slots
+                            `manage Chorography <kind>` shows the newest mental map holding a
+                            routine of that kind, and reads that routine out below it;
+                            `manage Chorography next|prev` presses the `< n/N >` arrows
+                            under the porthole (the map's first routine is shown by default).
+                            On this screen `key <letter>` opens the tab with that initial
   select [item name]        show a carried item's info panel; bare `select` lists what
                             is carried (open `manage Inventory` first). The starting kit
                             is random but seed-stable, so discover the names on one run
@@ -213,6 +231,11 @@ Run `help` for the authoritative list. The essentials:
                             wound a party member OUTSIDE a fight, as a failed act's penalty does.
                             No count means enough to kill. A failed act's penalty is DRAWN from its
                             verb's table, and `--penalty-only wound` is the only way to make one injure
+  click menu-button         the ☰ in the top-right corner, through the player's click path: the
+                            main menu, in exactly the phases Escape pauses (one list,
+                            PausedPhaseName). Unlike `pause` it backs out of nothing first.
+                            Fails when it is not drawn — `wait` a frame after entering a phase
+  click map-button          the narration header's ↹: the map and back, as Tab. Exploration only
   click companion-death     the companion-death notice's CONTINUE. Modal over every mode, so a
                             script that does not press it cannot get past a companion dying;
                             `state` reports `companion-death=shown`
@@ -238,9 +261,17 @@ Run `help` for the authoritative list. The essentials:
                             expect-state takes no escaped quotes: assert `steps=2` and the goal's
                             words separately;
                             `opening` what the phase's first observation was put on (a Meet
-                            routine's person); `routine-slots` each kind's used/usable/grid;
+                            routine's person); `mental-maps` each map remembered, oldest first
+                            (`mental-map location= name= locked= routines= visited= seen=`)
+                            and `mental-maps used= usable= grid=`;
+                            `pointer-label` what the mouse-following popup shows (a map's label
+                            above the pointer, the world map's location name), as
+                            `pointer-label ground=yellow|grey text=…` — yellow when a click acts
+                            on what it names, grey when it only tells;
+                            `buttons` whether the two key stand-ins are on screen, as
+                            `buttons menu=shown|hidden map=shown|hidden` (the ☰ and the ↹);
                             `gather` the gathering phase's forecast and yield.
-                            `routines` is answerable with NO narration in progress, because a
+                            `routines` and `mental-maps` are answerable with NO narration in progress, because a
                             session's Go to routine is learned as that session ENDS — reading
                             it from inside the location reads a moment too early.
                             `world-regions` is answerable at the WORLD MAP and carries the region

@@ -32,8 +32,12 @@ public static class LocationTravelModeLauncher
     /// <summary>
     /// Whether the window passes <paramref name="key"/> on to the controller in <paramref name="mode"/>,
     /// once Escape, F11 and the D/G dumps have had their turn. R and K (the region and realm overlays)
-    /// go everywhere, since a fight's own R ("run away") is decided inside the controller; every other
-    /// key reaches only a fight or a dialogue.
+    /// go everywhere, since a fight's own R ("run away") is decided inside the controller, and so does
+    /// Tab (the narration's debug map), which the controller answers only in narration. The arrow
+    /// keys reach it in narration while the map is up, to pan it. A management tab's letter goes
+    /// everywhere, since it opens that tab from any phase that allows it (with developer keys on, D and
+    /// G are taken by the dumps first, which no tab begins with today). Every other key reaches only a
+    /// fight, a dialogue or the management screen.
     ///
     /// <para>The CLI's <c>key</c> command asks the same question, which is the point: a script that
     /// presses a key the player's keyboard would never deliver fails, rather than passing on a path no
@@ -41,7 +45,12 @@ public static class LocationTravelModeLauncher
     /// </summary>
     public static bool DeliversToController(GameMode mode, OpenTK.Windowing.GraphicsLibraryFramework.Keys key)
         => key is OpenTK.Windowing.GraphicsLibraryFramework.Keys.R or OpenTK.Windowing.GraphicsLibraryFramework.Keys.K
-        || mode is GameMode.Fighting or GameMode.Dialogue;
+                or OpenTK.Windowing.GraphicsLibraryFramework.Keys.Tab
+        || mode is GameMode.Fighting or GameMode.Dialogue or GameMode.ProtagonistManagement
+        || Management.ManagementMenuRenderer.TabForKey(key) != null
+        || (key is OpenTK.Windowing.GraphicsLibraryFramework.Keys.Left or OpenTK.Windowing.GraphicsLibraryFramework.Keys.Right or OpenTK.Windowing.GraphicsLibraryFramework.Keys.Up or OpenTK.Windowing.GraphicsLibraryFramework.Keys.Down
+            && (DebugLocationMap.Visible || DebugLocationMap.WalkPannable)
+            && mode is GameMode.LocationInteraction or GameMode.ChildhoodReminescence or GameMode.GetUp);
 
     public static void Launch(int windowWidth = 1200, int windowHeight = 900, bool useLLM = true)
     {

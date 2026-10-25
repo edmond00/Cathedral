@@ -81,12 +81,16 @@ public static class Config
         public static Game.Narrative.TimePeriod? ForcedPeriod { get; set; } = null;
 
         /// <summary>
-        /// Whether the developer keyboard shortcuts respond. <b>False in a shipped build</b>
-        /// (<c>-p:Ship=true</c> defines SHIP); true everywhere else.
+        /// Whether the developer keyboard shortcuts respond. <b>False by default, in every build</b>:
+        /// a development run has the shipped keyboard unless it passes <c>--developer-keys</c>, which a
+        /// shipped build (<c>-p:Ship=true</c> defines SHIP) ignores. Off by default because the
+        /// management screen's tabs answer to their initials (A, I, J, M, H, C), and several of those
+        /// letters are developer keys too, which fire wherever the player is.
         ///
         /// <para>What it gates: the render-debug keys (D shader mode, M markers), the post-process
         /// tuning keys (F dither, G levels, H grain, J pulses), the debug camera (C, V), the
-        /// window's diagnostic dumps (D, G), <b>and camera zoom (W, S)</b>.</para>
+        /// window's diagnostic dumps (D, G), the narration's location map (Tab,
+        /// <see cref="Game.DebugLocationMap"/>), <b>and camera zoom (W, S)</b>.</para>
         ///
         /// <para>Zoom is in that list on purpose even though it is not a debug feature. The game
         /// frames its own camera — narration, travel and fights each set a distance — and a player
@@ -97,16 +101,10 @@ public static class Config
         /// <para><b>Escape is not gated</b> and never should be. It opens the pause menu and closes
         /// narration popups; without it a player has no way out of a scene.</para>
         ///
-        /// <para>Settable so a development build can be tested as though it were shipped
-        /// (<c>--no-developer-keys</c>). Setting it true in a SHIP build does nothing useful — the
-        /// handlers are still compiled in, but nothing turns it on.</para>
+        /// <para>Settable so a development run can turn them on (<c>--developer-keys</c>). In a SHIP
+        /// build the handlers are still compiled in, but nothing turns it on.</para>
         /// </summary>
-        public static bool DeveloperKeys { get; set; } =
-#if SHIP
-            false;
-#else
-            true;
-#endif
+        public static bool DeveloperKeys { get; set; } = false;
 
         /// <summary>
         /// Whether to write the development log tree under <c>logs/</c> — a directory per LLM

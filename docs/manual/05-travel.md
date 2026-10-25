@@ -284,7 +284,8 @@ The period is not tracked continuously. **Each place has its own hour of arrival
 once and for all and always one of the five periods of daylight, never night; every visit opens at
 that hour. Thereafter the period is moved only by acts that wait, and by failures that waste time
 (see [Chapter VI](06-narration.md)): sitting out an interval lasts until whichever of the five other
-periods the sitter chooses, once the sitting has succeeded, and an act that waits for something to
+periods the sitter chooses, once the sitting has succeeded — save when a will proposed it as a step
+of its course, when it lasts until the period that course needs, and nothing is chosen — and an act that waits for something to
 happen walks it forward a period at a time until the thing happens or the day is exhausted. A
 failure that wastes time advances it by one. Whichever moves it, a passage from night into dawn turns
 the calendar by a day ([§7](#7-the-calendar)). A routine is the exception, opening at the hour it was

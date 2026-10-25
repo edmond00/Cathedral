@@ -56,8 +56,15 @@ public sealed class ObservationLedger
     /// </summary>
     public bool IsEmpty => _observed.Count == 0;
 
+    /// <summary>Raised for each object recorded as observed (the location map learns from it).</summary>
+    public event Action<NarrativeAnchor>? Observed;
+
     /// <summary>Records an object as observed. Called once its narration text actually exists.</summary>
-    public void Observe(NarrativeAnchor outcome) => _observed.Add(outcome);
+    public void Observe(NarrativeAnchor outcome)
+    {
+        _observed.Add(outcome);
+        Observed?.Invoke(outcome);
+    }
 
     /// <summary>True when this exact object has already been observed this phase.</summary>
     public bool WasObserved(NarrativeAnchor outcome) => _observed.Contains(outcome);

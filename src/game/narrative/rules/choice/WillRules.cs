@@ -60,6 +60,9 @@ public static class WillPriority
 /// way to it. The refusal is withheld and any imposed one lifted: what the body is asked to do is what
 /// this mind wants. Refusals of circumstance (a locked door, a watching witness) are action rules and
 /// still apply.
+///
+/// <para>The act it wants, as against a step on the way, it is eager for, with no question asked: a mind
+/// whose whole nature is wanting that act cannot be merely willing to do it (−1 difficulty).</para>
 /// </summary>
 public class WillActionNeverRefusesItsPathRule : IWillingnessRule
 {
@@ -75,6 +78,12 @@ public class WillActionNeverRefusesItsPathRule : IWillingnessRule
 
         if (!ctx.Probe)
             Console.WriteLine($"ChoiceRules: [{ctx.ModusMentis.DisplayName}] wills it — no refusal offered for its own path.");
-        return offered.WithoutDecline() with { ImposedRefusal = null };
+        var assent = offered.WithoutDecline() with { ImposedRefusal = null };
+        return WillPriority.ActsItself(ctx.ModusMentis) && ctx.ModusMentis.Will!.Matches(goal)
+               && assent.Stances.Contains(EagerStance)
+            ? assent with { Stances = new[] { EagerStance } }
+            : assent;
     }
+
+    private const string EagerStance = "eager to do it";
 }

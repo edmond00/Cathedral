@@ -27,8 +27,9 @@ namespace Cathedral.Game.Narrative.Routines;
 /// learned where the player has no business standing — a private area — because a routine there
 /// would be a standing invitation to trespass, walked with none of the risk.</para>
 ///
-/// <para>The same routine learned twice is kept once (<see cref="Routine.Signature"/>), and a full
-/// kind evicts its oldest unlocked routine — see <see cref="Protagonist.RecordRoutine"/>.</para>
+/// <para>A routine goes into the <see cref="MentalMap"/> of its location (the visit entered it), and
+/// the same routine learned twice is kept once (<see cref="Routine.Signature"/>). There is no cap on
+/// routines: the maps are what is limited, and a routine is forgotten with its map.</para>
 /// </summary>
 public class RoutineRecorder
 {

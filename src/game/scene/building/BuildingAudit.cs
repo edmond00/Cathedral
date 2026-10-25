@@ -25,7 +25,10 @@ namespace Cathedral.Game.Scene.Building;
 /// <item>a trader with no premises, or whose day never brings them there — trade happens only on
 /// premises, so either is a seller nobody can buy from;</item>
 /// <item>a farm's or a stock place's store with no trader in it during a day period;</item>
-/// <item>stable keys that are missing, colliding, or different across two builds of one location.</item>
+/// <item>stable keys that are missing, colliding, or different across two builds of one location;</item>
+/// <item>a private area reached from public ground by an open way, a stair or a door that is not
+/// locked — so a player opening a plain door finds every act a crime — or a public area that only
+/// private ground leads to.</item>
 /// </list>
 ///
 /// Run after touching <see cref="BuildingFactory"/>, any scene factory, or the schedule system.
@@ -221,6 +224,7 @@ public static class BuildingAudit
             paths += laid;
             if (laid > 0) withPaths++;
             CheckLockRules(warnings, label, id, doors);
+            CheckPrivateBehindLocks(warnings, label, id, scene);
             CheckStableKeys(warnings, label, id, scene);
             CheckNoStutter(warnings, label, id, scene);
             CheckTradersReachTheirPremises(warnings, label, id, scene);
@@ -396,6 +400,50 @@ public static class BuildingAudit
             }
         }
         return all.Count;
+    }
+
+    /// <summary>
+    /// Private ground is entered from public ground only through a locked door, or by a way in that is
+    /// itself an infiltration (slipping in, scaling, a climb or a crossing). Never by an open way, a
+    /// stair or a door left on the latch: the player would walk through it into a room where everything
+    /// is trespass, with nothing to say so. Between two private areas anything goes. And no public area
+    /// is reached only through private ones, which the same rule would make unreachable.
+    /// </summary>
+    private static void CheckPrivateBehindLocks(List<string> w, string label, int id, Scene scene)
+    {
+        var publicWay = new Dictionary<Area, bool>();
+        foreach (var (fromId, tos) in scene.AreaGraph)
+            foreach (var toId in tos)
+            {
+                if (scene.GetArea(fromId) is not { } a || scene.GetArea(toId) is not { } b) continue;
+                if (a.IsPrivate != b.IsPrivate)
+                    w.Add($"{label} {id}: '{a.DisplayName}' and '{b.DisplayName}' join public and private ground by an open way");
+                if (!a.IsPrivate && !b.IsPrivate) { publicWay[a] = true; publicWay[b] = true; }
+            }
+
+        var connectors = scene.AllAreas.SelectMany(a => a.PointsOfInterest).OfType<ConnectorPointOfInterest>()
+                              .Where(c => c is not LandscapePointOfInterest && c.AreaA != c.AreaB).Distinct();
+        foreach (var c in connectors)
+        {
+            if (!c.AreaA.IsPrivate && !c.AreaB.IsPrivate) { publicWay[c.AreaA] = true; publicWay[c.AreaB] = true; }
+            if (c.AreaA.IsPrivate == c.AreaB.IsPrivate) continue;
+            switch (c)
+            {
+                case DoorPointOfInterest door when door.DoorState != DoorState.Locked:
+                    w.Add($"{label} {id}: door '{door.DisplayName}' leads into private ground and is not locked");
+                    break;
+                case DoorPointOfInterest door when door.FrontArea.IsPrivate:
+                    w.Add($"{label} {id}: door '{door.DisplayName}' is locked from the private side, open from the public one");
+                    break;
+                case StairPointOfInterest stair:
+                    w.Add($"{label} {id}: stair '{stair.DisplayName}' leads from public ground into private");
+                    break;
+            }
+        }
+
+        foreach (var area in scene.AllAreas.Where(a => !a.IsPrivate))
+            if (!publicWay.ContainsKey(area) && scene.AllAreas.Count(a => !a.IsPrivate) > 1)
+                w.Add($"{label} {id}: public '{area.DisplayName}' is reached only through private ground");
     }
 
     /// <summary>Every entry door is shut at night. That is the one rule with no exceptions yet.</summary>

@@ -17,7 +17,7 @@
 # calibration in Config.WorldRegions, and pinning it here would turn every tuning pass into a failing
 # test that says nothing about whether the division is right.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --silent --no-save
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --silent --no-save --developer-keys
 
 wait
 click menu New

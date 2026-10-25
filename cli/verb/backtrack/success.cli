@@ -1,0 +1,65 @@
+# backtrack — success
+#
+# Going back by a known way. The field is walked out of into the yard; from the yard the field is a
+# place already stood in, so its observation says so, `move` is no longer offered on it and
+# `backtrack` is in its place. Past the dice the location map asks where to go back to; the field is
+# chosen by name, and the walk back follows the known way.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Field" --period dawn --observe-only "Test Yard"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# Out to the yard: a way the party does not know yet, so it is walked.
+strategy succeed
+goal move
+advance 12 180
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect-verb move
+expect Moved to: Test Yard
+
+# From the yard the field is known: the observation says so, and going back replaces walking.
+observe "Test Field"
+click button
+advance 12 180
+expect I have been there before
+goal backtrack
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+expect go back by the test field
+
+click action 0
+choose 0
+advance 12 180
+click continue
+wait
+expect-state where Test Yard
+regions
+state
+click area Test Field
+advance 12 180
+
+expect SUCCESS
+expect Moved to: Test Field
+expect-verb backtrack
+expect-outcome area_move
+inspect map
+expect-state map walk from Test Yard to Test Field
+expect-state map via=line
+quit

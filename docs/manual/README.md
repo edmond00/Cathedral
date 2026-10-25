@@ -44,8 +44,9 @@ goes, and what it does when it arrives.
 8. [Combat](08-fighting.md) — the turn and its cinetic points; mediums and the skills they bear; the
    blow that opens a fight; the attack and defence pools; wounds, status, terrain and flight; the two
    ways to fall and what decides the field.
-9. [Routines](09-routines.md) — the ways into a place the body already knows: the six kinds, where
-   none is learned, what each requires, the gathering stay, and the slots that hold them.
+9. [Mental Maps and Routines](09-routines.md) — what is remembered of a place and for how long, and
+   the ways into it the body already knows: the six kinds, where none is learned, what each
+   requires, and the gathering stay.
 
 ## A note on numbers
 

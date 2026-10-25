@@ -7,10 +7,17 @@ using Cathedral.Game.Scene.Verbs;
 
 namespace Cathedral.Game.Scene;
 
-/// <summary>One action of a path: the action itself, as the scene offers it from that step's standing.</summary>
-public sealed record PathStep(VerbAction Action)
+/// <summary>
+/// One action of a path: the action itself, as the scene offers it from that step's standing, and
+/// what the path needs of a step whose end the player would otherwise choose — the hour a sit lasts
+/// until, the area a backtrack goes to (<see cref="Verb.Settle"/>). Either may reach any of several;
+/// the path is one of them.
+/// </summary>
+public sealed record PathStep(VerbAction Action, object? Settled = null)
 {
-    public string Verbatim => Action.Verbatim;
+    public string Verbatim => Settled != null && Action.Variant == null && Action.Verb.Settle(Action, Settled) is { } settled
+        ? settled.Verbatim
+        : Action.Verbatim;
 }
 
 /// <summary>
@@ -67,7 +74,7 @@ public static class ActionPathPlanner
         typeof(GoUpStairsVerb), typeof(GoDownStairsVerb), typeof(ClimbUpVerb), typeof(ClimbDownVerb),
         typeof(ScaleUpVerb), typeof(ScaleDownVerb), typeof(CrossVerb), typeof(SwimAcrossVerb),
         typeof(SlipIntoVerb), typeof(FollowPathVerb), typeof(TrackVerb), typeof(StalkVerb),
-        typeof(SitAndWaitVerb), typeof(HideAndWaitVerb),
+        typeof(SitAndWaitVerb), typeof(HideAndWaitVerb), typeof(BacktrackVerb),
     };
 
     private readonly record struct State(Guid Area, TimePeriod When, string? Tool);
@@ -132,7 +139,7 @@ public static class ActionPathPlanner
             foreach (var action in entry.ApplicableVerbs)
             {
                 if (will.Matches(action) && (!action.Verb.RequiresTool || Holds(action.Verb, s.Tool)))
-                    return Unwind(prev, s, action, wanted.Count > 0);
+                    return Unwind(scene, prev, s, action, wanted.Count > 0);
 
                 if (wanted.Count > 0 && s.Tool == null && Obtains(action, wanted) is { } tool)
                     Push(new State(s.Area, s.When, tool), action);
@@ -159,8 +166,19 @@ public static class ActionPathPlanner
     /// </summary>
     private static IEnumerable<(Area Area, TimePeriod When)> Destinations(Scene scene, PoV here, PartyMember actor, VerbAction action)
     {
+        if (action.Verb is BacktrackVerb)
+        {
+            // A backtrack already settled on an area goes there; otherwise anywhere known ways reach.
+            if (action.Variant is Area settledTo) { yield return (settledTo, here.When); yield break; }
+            foreach (var to in AreaVisits.BackReach(scene, here.Where, here.When).Keys)
+                yield return (to, here.When);
+            yield break;
+        }
+
         if (action.Verb is SitAndWaitVerb)
         {
+            // A wait already settled on an hour lasts until that one; otherwise the sitter chooses.
+            if (action.Variant is TimePeriod settled) { yield return (here.Where, settled); yield break; }
             foreach (var period in Enum.GetValues<TimePeriod>().Where(p => p != here.When))
                 yield return (here.Where, period);
             yield break;
@@ -202,7 +220,7 @@ public static class ActionPathPlanner
         var actions = offered.ToList();
 
         if (actions.FirstOrDefault(a => SameAction(a, path.First.Action)) is { } own)
-            return path with { Steps = path.Steps.Skip(1).Prepend(new PathStep(own)).ToList() };
+            return path with { Steps = path.Steps.Skip(1).Prepend(new PathStep(own, path.First.Settled)).ToList() };
 
         var held = actor.GetAllItems().ToList();
         bool Holds(Verb verb)
@@ -224,7 +242,7 @@ public static class ActionPathPlanner
         foreach (var action in actions.Where(a => TransitVerbTypes.Any(t => t.IsInstanceOfType(a.Verb))))
             foreach (var (area, when) in Destinations(scene, pov, actor, action))
                 if (Plan(scene, new PoV(area, when), actor, will) is { } rest && rest.Steps.Count == path.Steps.Count - 1)
-                    return new ActionPath(rest.Steps.Prepend(new PathStep(action)).ToList(),
+                    return new ActionPath(rest.Steps.Prepend(new PathStep(action, SettledOf(action, area, when))).ToList(),
                                           rest.ToolStep < 0 ? -1 : rest.ToolStep + 1);
         return null;
     }
@@ -244,13 +262,21 @@ public static class ActionPathPlanner
         return null;
     }
 
-    private static ActionPath Unwind(Dictionary<State, (State From, VerbAction? Step)> prev, State at, VerbAction goal, bool toolWanted)
+    /// <summary>What a step on the path is settled on: the hour a sit reaches, the area a backtrack does.</summary>
+    private static object? SettledOf(VerbAction step, Area reached, TimePeriod when) => step.Verb switch
+    {
+        SitAndWaitVerb => when,
+        BacktrackVerb  => reached,
+        _              => null,
+    };
+
+    private static ActionPath Unwind(Scene scene, Dictionary<State, (State From, VerbAction? Step)> prev, State at, VerbAction goal, bool toolWanted)
     {
         var steps = new List<PathStep> { new(goal) };
         int toolStep = -1;
         for (var s = at; prev[s].Step is { } step; s = prev[s].From)
         {
-            steps.Add(new PathStep(step));
+            steps.Add(new PathStep(step, SettledOf(step, scene.GetArea(s.Area)!, s.When)));
             if (toolWanted && s.Tool != null && prev[s].From.Tool == null) toolStep = steps.Count - 1;
         }
         steps.Reverse();
