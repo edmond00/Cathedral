@@ -89,7 +89,19 @@ public sealed class AmbianceEngine : IDisposable
     public void SetFilter(MusicFilter filter) { _asked = _asked with { Filter = filter }; _engine.SetFilter(filter); }
 
     /// <summary>Sets the target mood; the music glides toward it over a few seconds.</summary>
-    public void SetMood(MusicMoodState mood) { _asked = _asked with { Mood = mood }; _engine.SetMood(mood); }
+    public void SetMood(MusicMoodState mood) { _asked = _asked with { Mood = mood, Night = false }; _engine.SetMood(mood); }
+
+    /// <summary>
+    /// Whether the place whose mood was last set is being played at night: its
+    /// <see cref="MusicMoodState.AtNight"/> variant. Set by a visit as its period changes; any new
+    /// <see cref="SetMood"/> (leaving for the map, the menu, another place) is day again.
+    /// </summary>
+    public void SetNight(bool night)
+    {
+        if (_asked.Night == night) return;
+        _asked = _asked with { Night = night };
+        if (_asked.Mood is { } m) _engine.SetMood(night ? m.AtNight() : m);
+    }
 
     /// <summary>Sets the number of active tracks (0–4).</summary>
     public void SetActiveTrackCount(int count) { _asked = _asked with { Tracks = count }; _engine.SetActiveTrackCount(count); }
@@ -106,7 +118,7 @@ public sealed class AmbianceEngine : IDisposable
     /// it), the track count and the filter. The pause menu takes it on the way in and hands it back
     /// to <see cref="Restore"/> on the way out, since resuming a phase does not set the music again.
     /// </summary>
-    public readonly record struct MusicRequest(MusicMoodState? Mood, int Tracks, MusicFilter Filter);
+    public readonly record struct MusicRequest(MusicMoodState? Mood, int Tracks, MusicFilter Filter, bool Night = false);
 
     private MusicRequest _asked = new(null, -1, MusicFilter.None);
 
@@ -116,6 +128,7 @@ public sealed class AmbianceEngine : IDisposable
     public void Restore(MusicRequest r)
     {
         if (r.Mood is { } m) SetMood(m);
+        SetNight(r.Night);
         if (r.Tracks >= 0) SetActiveTrackCount(r.Tracks);
         SetFilter(r.Filter);
     }

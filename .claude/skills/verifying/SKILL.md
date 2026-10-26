@@ -279,7 +279,7 @@ Run `help` for the authoritative list. The essentials:
                             `buttons menu=shown|hidden map=shown|hidden` (the ☰ and the ↹);
                             `gather` the gathering phase's forecast and yield;
                             `music` what the game last asked of the music, as `music tracks=<0-4>
-                            filter=<MusicFilter> cold= fear= mystery= intensity= festivity=` (the
+                            filter=<MusicFilter> cold= fear= mystery= intensity= festivity= night=yes|no` (the
                             target mood, not the glide). Answers under --silent: the engine starts
                             there with no sound and no composing (cli/system/pause_music_resumes.cli).
                             `routines` and `mental-maps` are answerable with NO narration in progress, because a

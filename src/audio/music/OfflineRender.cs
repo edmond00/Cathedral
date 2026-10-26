@@ -135,6 +135,13 @@ public static class OfflineRender
     /// <summary>A preset by name, or a location type sampled as the game samples it (<c>tavern:12</c>).</summary>
     private static bool TryMood(string name, out MusicMoodState mood)
     {
+        // "tavern:12@night": the place as a visit plays it at night.
+        if (name.EndsWith("@night", StringComparison.OrdinalIgnoreCase))
+        {
+            bool ok = TryMood(name[..^"@night".Length], out var day);
+            mood = day.AtNight();
+            return ok;
+        }
         foreach (var (n, m) in Presets())
             if (string.Equals(n, name, StringComparison.OrdinalIgnoreCase)) { mood = m; return true; }
         int colon = name.IndexOf(':');

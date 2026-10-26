@@ -3823,11 +3823,12 @@ public class LocationTravelGameController : IDisposable
         {
             if (_ambianceEngine == null) return new List<string> { "music (no engine)" };
             var r = _ambianceEngine.Requested;
-            // Invariant: a script asserts "cold=0.60", and a French or Japanese locale would print "0,60".
-            string mood = r.Mood is { } m
+            // The mood playing: at night, the place's night variant. Invariant: a script asserts
+            // "cold=0.60", and a French or Japanese locale would print "0,60".
+            string mood = (r.Night && r.Mood is { } day ? day.AtNight() : r.Mood) is { } m
                 ? FormattableString.Invariant($"cold={m.Coldness:0.00} fear={m.Fear:0.00} mystery={m.Mystery:0.00} intensity={m.Intensity:0.00} festivity={m.Festivity:0.00}")
                 : "mood=none";
-            return new List<string> { $"music tracks={r.Tracks} filter={r.Filter} {mood}" };
+            return new List<string> { $"music tracks={r.Tracks} filter={r.Filter} {mood} night={(r.Night ? "yes" : "no")}" };
         }
 
         if (_protagonist == null) return null;
@@ -5503,6 +5504,9 @@ public class LocationTravelGameController : IDisposable
         Console.WriteLine("LocationTravelGameController: Entered Fighting mode");
         _ambianceEngine?.TriggerGameEvent(GameEventType.NegativeOutcome);
         _ambianceEngine?.SetFilter(MusicFilter.Fighting);
+        // The whole band: a journey thins the music to one track, and a travel encounter's fight
+        // opens straight from it. Returning to the journey thins it again (OnEnterTraveling).
+        _ambianceEngine?.SetActiveTrackCount(4);
         // Keep narration mode visuals (darkened sphere, terminal visible)
         _core.SetNarrationMode(true);
         _core.SetWorldInteractionsEnabled(false);
