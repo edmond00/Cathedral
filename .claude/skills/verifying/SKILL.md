@@ -188,7 +188,10 @@ Run `help` for the authoritative list. The essentials:
                             each with its kind and, when greyed, why
   routines <n|kind>         pick routine n — or the first walkable of a kind (goto, meet, gather,
                             buy, sell, work) — and set out. Entered on arrival: narration (goto,
-                            meet), the trade or work menu, or the gathering phase
+                            meet), the trade or work menu, or the gathering phase.
+  routines next|prev|confirm  press the box's `< n/N >` arrows or CONFIRM (the first walkable is selected
+                            to begin with; the status line reads the selected one out;
+                            an icon click selects too, and only CONFIRM sets out)
   gather days <n>|start|continue|leave
                             drive the gathering phase (GameMode.Gathering, only a Gather routine
                             opens it). `start` rolls at once. Assert with `inspect gather`

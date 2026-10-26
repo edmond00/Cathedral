@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using OpenTK.Mathematics;
 using Cathedral.Terminal;
@@ -12,16 +13,24 @@ namespace Cathedral.Game;
 
 /// <summary>
 /// Modal world-view overlay over a travel destination: its mental map, as remembered, with an icon on
-/// each card for every routine learned there. A routine that can be walked is a yellow icon, clickable
-/// to set out and enter it on arrival; one that cannot (its kind's own check,
-/// <see cref="Routine.Unavailability"/>) is grey, and hovering it says why. Whatever the pointer is over
-/// on the map is named in a label above it (<see cref="HoverLabel"/>, put up by the host in the
-/// mouse-following popup). The pad pans the map. A RETURN button dismisses the box back to the travel
-/// plan.
+/// each card for every routine learned there. A routine that can be walked is a yellow icon; one that
+/// cannot (its kind's own check, <see cref="Routine.Unavailability"/>) is grey, and hovering it says
+/// why. Whatever the pointer is over on the map is named in a label above it (<see cref="HoverLabel"/>,
+/// put up by the host in the mouse-following popup). The pad and the arrow keys pan the map.
+///
+/// <para>Clicking an icon selects its routine, and so do the arrows of <c>&lt; n/N &gt;</c> under the
+/// map, which step through them and centre the map on each. The selected one (the first walkable, to
+/// begin with) blinks, and the status line reads it out while the pointer is over nothing. CONFIRM sets
+/// out to enter it on arrival — greyed when it cannot be walked — and RETURN dismisses the box back to
+/// the travel plan.</para>
 /// </summary>
 public class TravelRoutinesBox
 {
-    public enum ResultKind { None, Return, Selected }
+    /// <summary>
+    /// What a click did: nothing, RETURN, CONFIRM (<see cref="Selected"/>: set out, with the routine),
+    /// or a new routine selected (<see cref="Picked"/>: by its icon or the stepper).
+    /// </summary>
+    public enum ResultKind { None, Return, Selected, Picked }
 
     /// <summary>One routine on offer plus why it cannot be walked, if it cannot.</summary>
     public sealed class Entry
@@ -39,8 +48,19 @@ public class TravelRoutinesBox
 
     private (int X, int Y) _hover = (-1, -1);
 
+    // The stepper: the routines in icon order, the one stepped to, and its two arrows as last drawn.
+    private readonly List<Entry> _ordered;
+    private Entry? _selected;
+    private int _stepRow = -1, _prevX = -1, _nextX = -1;
+    private const int StepButtonW = 3;
+
+    // The selected icon blinks; the host redraws the box every frame, so the phase is read off a clock.
+    private readonly Stopwatch _blinkClock = Stopwatch.StartNew();
+    private const double BlinkInterval = 0.4;
+    private bool BlinkOn => (long)(_blinkClock.Elapsed.TotalSeconds / BlinkInterval) % 2 == 0;
+
     private int _boxX, _boxY, _boxW, _boxH;
-    private int _returnY, _returnX, _returnW;
+    private int _returnY, _returnX, _returnW, _confirmX, _confirmW;
 
     private const int BoxWidth = 92, BoxHeight = 72;
 
@@ -50,7 +70,27 @@ public class TravelRoutinesBox
         _entries   = entries ?? throw new ArgumentNullException(nameof(entries));
         _mentalMap = mentalMap ?? throw new ArgumentNullException(nameof(mentalMap));
         _scene     = scene;
+        _ordered   = _entries.OrderBy(e => Array.IndexOf(RoutineCategories.All, e.Routine.Category))
+                             .ThenBy(e => e.Routine.Time).ToList();
+        _selected  = _ordered.FirstOrDefault(e => e.Available) ?? _ordered.FirstOrDefault();
     }
+
+    /// <summary>
+    /// Selects the next (<paramref name="step"/> 1) or previous (-1) routine, round the end, and
+    /// centres the map on it. False with fewer than two routines.
+    /// </summary>
+    public bool StepRoutine(int step)
+    {
+        if (_ordered.Count < 2 || _selected == null) return false;
+        int at = _ordered.IndexOf(_selected);
+        _selected = _ordered[((at + step) % _ordered.Count + _ordered.Count) % _ordered.Count];
+        _map.Recentre();
+        _blinkClock.Restart();
+        return true;
+    }
+
+    /// <summary>An arrow key pans the map, as the pad does; false for any other key.</summary>
+    public bool PanMap(OpenTK.Windowing.GraphicsLibraryFramework.Keys key) => _map.HandleKey(key);
 
     /// <summary>
     /// The routines on offer, for <c>--cli</c>, kind by kind. A script picks one by index or by kind,
@@ -87,24 +127,27 @@ public class TravelRoutinesBox
         CenteredInBox(_boxY + 1, Truncate($"— ROUTINES · {_mentalMap.LocationName.ToUpperInvariant()} —", _boxW - 4), TitleColor, BoxBg);
         CenteredInBox(_boxY + 2, Truncate("Go straight to somewhere you know here: click a routine on the map.", _boxW - 4), SubtitleColor, BoxBg);
 
-        int mapTop = _boxY + 3, mapH = _boxH - 8;
+        // Below the map: a blank row, the status, the stepper, a blank row, and the buttons.
+        int mapTop = _boxY + 3, mapH = _boxH - 9;
         var icons = _scene == null ? new List<DebugLocationMap.MapIcon>()
                   : MentalMapsPanelRenderer.Icons(_mentalMap, _scene, r => EntryOf(r.Id)?.Available ?? false)
                         .Where(i => EntryOf(i.Tag) != null).ToList();
         var hovered = EntryOf(_map.IconAt(_hover.X, _hover.Y));
         var focus = _scene == null ? null
-                  : _entries.Where(e => e.Available).Select(e => e.Routine.FindArea(_scene)).FirstOrDefault(a => a != null)
+                  : _selected?.Routine.FindArea(_scene)
                     ?? _scene.AllAreas.FirstOrDefault(a => _mentalMap.VisitedAreas.Contains(a.StableKey));
         if (_scene == null)
             CenteredInBox(mapTop + 4, "(the place cannot be drawn)", DisabledColor, BoxBg);
         else
             _map.Render(_terminal, _scene, here: null, period: hovered?.Routine.Time ?? TimePeriod.Noon,
                         _boxX + 2, mapTop, _boxW - 4, mapH,
-                        icons: icons, hoveredIcon: hovered?.Available == true ? hovered.Routine.Id : null,
-                        focus: focus, footRows: 0);
+                        icons: icons, hoveredIcon: hovered?.Routine.Id,
+                        selectedIcon: _selected?.Routine.Id, focus: focus, footRows: 0, selectedLit: BlinkOn);
 
-        DrawStatus(_boxY + _boxH - 4, hovered);
-        DrawReturn();
+        DrawStatus(_boxY + _boxH - 5, hovered ?? _selected);
+        DrawStepper(_boxY + _boxH - 4);
+        _terminal.FillRect(_boxX + 1, _boxY + _boxH - 3, _boxW - 2, 1, ' ', BodyColor, BoxBg);
+        DrawButtons();
     }
 
     /// <summary>
@@ -114,7 +157,7 @@ public class TravelRoutinesBox
     public DebugLocationMap.HoverLabel? HoverLabel
         => _map.LabelAt(_hover.X, _hover.Y, tag => EntryOf(tag) is not { } e ? null
               : e.Available ? new($"{e.Routine.Category.Label()}: {e.Routine.DisplayName} · {e.Routine.Time.Label().ToLowerInvariant()}", true)
-              : new($"{e.Routine.DisplayName}: {e.Reason}", false));
+              : new($"{e.Routine.DisplayName}: {e.Reason}", true));
 
     /// <summary>What the cursor is on: the routine, its place and hour, and why it cannot be walked.</summary>
     private void DrawStatus(int y, Entry? e)
@@ -135,6 +178,31 @@ public class TravelRoutinesBox
         _terminal.Text(x + tag.Length, y, Truncate(label, w - tag.Length), e.Available ? TitleColor : DisabledColor, BoxBg);
     }
 
+    /// <summary><c>&lt; n/N &gt;</c>, centred: the arrows only with two routines or more.</summary>
+    private void DrawStepper(int y)
+    {
+        _stepRow = _prevX = _nextX = -1;
+        _terminal.FillRect(_boxX + 1, y, _boxW - 2, 1, ' ', BodyColor, BoxBg);
+        if (_selected == null) return;
+        string count = $" {_ordered.IndexOf(_selected) + 1}/{_ordered.Count} ";
+        int x = _boxX + (_boxW - (StepButtonW * 2 + count.Length)) / 2;
+        _terminal.Text(x + StepButtonW, y, count, SubtitleColor, BoxBg);
+        if (_ordered.Count < 2) return;
+
+        _stepRow = y;
+        _prevX = x;
+        _nextX = x + StepButtonW + count.Length;
+        foreach (var (bx, label) in new[] { (_prevX, " < "), (_nextX, " > ") })
+            _terminal.Text(bx, y, label, TitleColor, OverStep(_hover.X, _hover.Y) != 0 && _hover.X >= bx && _hover.X < bx + StepButtonW ? HoverBg : BoxBg);
+    }
+
+    /// <summary>-1 or 1 when (x, y) is on the stepper's previous or next arrow, else 0.</summary>
+    private int OverStep(int x, int y)
+        => _stepRow < 0 || y != _stepRow ? 0
+         : x >= _prevX && x < _prevX + StepButtonW ? -1
+         : x >= _nextX && x < _nextX + StepButtonW ? 1
+         : 0;
+
     private void DrawBorder()
     {
         int x0 = _boxX, y0 = _boxY, x1 = _boxX + _boxW - 1, y1 = _boxY + _boxH - 1;
@@ -154,14 +222,20 @@ public class TravelRoutinesBox
         _terminal.SetCell(x1, y1, '┘', TitleColor, BoxBg);
     }
 
-    private void DrawReturn()
+    /// <summary>CONFIRM (greyed unless the selected routine can be walked) and RETURN, side by side.</summary>
+    private void DrawButtons()
     {
-        const string label = "[ RETURN ]";
-        _returnW = label.Length;
-        _returnX = _boxX + (_boxW - _returnW) / 2;
-        bool hovered = OverReturn(_hover.X, _hover.Y);
+        const string confirm = "[ CONFIRM ]", back = "[ RETURN ]";
+        const int gap = 4;
+        _confirmW = confirm.Length;
+        _returnW = back.Length;
+        _confirmX = _boxX + (_boxW - (_confirmW + gap + _returnW)) / 2;
+        _returnX = _confirmX + _confirmW + gap;
         _terminal.FillRect(_boxX + 1, _returnY, _boxW - 2, 1, ' ', BodyColor, BoxBg);
-        _terminal.Text(_returnX, _returnY, label, TitleColor, hovered ? HoverBg : BoxBg);
+        bool canConfirm = _selected is { Available: true };
+        _terminal.Text(_confirmX, _returnY, confirm, canConfirm ? KindColor : DisabledColor,
+                       canConfirm && OverConfirm(_hover.X, _hover.Y) ? HoverBg : BoxBg);
+        _terminal.Text(_returnX, _returnY, back, TitleColor, OverReturn(_hover.X, _hover.Y) ? HoverBg : BoxBg);
     }
 
     /// <summary>
@@ -189,7 +263,9 @@ public class TravelRoutinesBox
 
     private string? HoverKey()
         => OverReturn(_hover.X, _hover.Y) ? "return"
-         : EntryOf(_map.IconAt(_hover.X, _hover.Y)) is { Available: true } e ? $"icon:{e.Routine.Id}"
+         : OverConfirm(_hover.X, _hover.Y) && _selected is { Available: true } ? "confirm"
+         : OverStep(_hover.X, _hover.Y) is var step and not 0 ? $"step:{step}"
+         : EntryOf(_map.IconAt(_hover.X, _hover.Y)) is { } e ? $"icon:{e.Routine.Id}"
          : _map.PadArrowHovered ? "pad"
          : null;
 
@@ -197,13 +273,26 @@ public class TravelRoutinesBox
     public (ResultKind kind, Routine? routine) OnMouseClick(int x, int y)
     {
         if (OverReturn(x, y)) return (ResultKind.Return, null);
+        if (OverConfirm(x, y))
+            return _selected is { Available: true } s ? (ResultKind.Selected, s.Routine) : (ResultKind.None, null);
+        if (OverStep(x, y) is var step and not 0)
+            return (StepRoutine(step) ? ResultKind.Picked : ResultKind.None, null);
         if (EntryOf(_map.IconAt(x, y)) is { } e)
-            return e.Available ? (ResultKind.Selected, e.Routine) : (ResultKind.None, null);
+        {
+            if (e == _selected) return (ResultKind.None, null);
+            _selected = e;
+            _blinkClock.Restart();
+            return (ResultKind.Picked, null);
+        }
         _map.HandleClick(x, y);
         return (ResultKind.None, null);
     }
 
+    /// <summary>The routine CONFIRM would set out for, when it can be walked — <c>routines confirm</c>.</summary>
+    public Routine? ConfirmableRoutine => _selected is { Available: true } s ? s.Routine : null;
+
     private bool OverReturn(int x, int y) => y == _returnY && x >= _returnX && x < _returnX + _returnW;
+    private bool OverConfirm(int x, int y) => y == _returnY && x >= _confirmX && x < _confirmX + _confirmW;
 
     private void CenteredInBox(int y, string text, Vector4 fg, Vector4 bg)
     {

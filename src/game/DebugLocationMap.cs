@@ -632,7 +632,7 @@ public sealed class DebugLocationMap
                          : picked ? Config.Colors.BrightYellow
                          : i % 2 == 0 ? IconOn : IconOnAlt;
                 if (picked && !hot && !more && !selectedLit)
-                    Put(ix, iy, icon.Glyph, Config.Colors.BrightYellow, DarkText);
+                    Put(ix, iy, icon.Glyph, icon.Enabled ? Config.Colors.BrightYellow : IconOff, DarkText);
                 else
                     Put(ix, iy, more ? '+' : icon.Glyph, DarkText, back);
                 if (!more) _iconCells.Add((ix, iy, icon.Tag));

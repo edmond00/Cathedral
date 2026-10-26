@@ -955,7 +955,7 @@ public class LocationTravelGameController : IDisposable
 
         // The arrow keys turn the camera everywhere but over the location map, where they pan it.
         // Nor on a menu screen: there is no world to turn, and on the Chorography tab they pan its map.
-        _core.Camera.ArrowKeysTaken = () => IsDebugMapShowing
+        _core.Camera.ArrowKeysTaken = () => IsDebugMapShowing || _travelRoutinesBox != null
             || _currentMode is GameMode.MainMenu or GameMode.Settings or GameMode.ProtagonistManagement;
 
         // The sky's own hover and click, raised only while the core is in sky-selection mode.
@@ -1589,7 +1589,7 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
-        // Routine list box is modal: select a replayable routine, or RETURN to the travel plan.
+        // Routine list box is modal: pick a routine, CONFIRM it to set out, or RETURN to the travel plan.
         if (_currentMode == GameMode.WorldView && _travelRoutinesBox != null)
         {
             var (kind, routine) = _travelRoutinesBox.OnMouseClick(x, y);
@@ -1602,6 +1602,10 @@ public class LocationTravelGameController : IDisposable
                 // bare Clear would leave an opaque-black terminal over the whole trip.
                 SetTransparentWorldOverlay(clickPassthrough: true);
                 StartPlannedTravel();
+            }
+            else if (kind == TravelRoutinesBox.ResultKind.Picked)
+            {
+                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
             }
             else if (kind == TravelRoutinesBox.ResultKind.Return)
             {
@@ -3987,6 +3991,24 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     public IReadOnlyList<(string Name, string Category, bool Available, string? Reason)> CliRoutineEntries
         => _travelRoutinesBox?.CliEntries ?? System.Array.Empty<(string, string, bool, string?)>();
+
+    /// <summary>
+    /// Presses the routine box's CONFIRM: sets out for the selected routine, as the click does. False
+    /// when the box is closed or the selected routine cannot be walked.
+    /// </summary>
+    public bool CliConfirmRoutineBox()
+    {
+        if (_currentMode != GameMode.WorldView || _travelRoutinesBox?.ConfirmableRoutine is not { } routine) return false;
+        _pendingReplayRoutine = routine;
+        _travelRoutinesBox    = null;
+        SetTransparentWorldOverlay(clickPassthrough: true);
+        StartPlannedTravel();
+        return true;
+    }
+
+    /// <summary>Presses the routine box's next (1) or previous (-1) arrow.</summary>
+    public bool CliStepRoutineBox(int step) =>
+        _currentMode == GameMode.WorldView && _travelRoutinesBox?.StepRoutine(step) == true;
 
     /// <summary>
     /// Picks row <paramref name="index"/> and sets out — the same commit the row click makes, so the
@@ -6602,6 +6624,12 @@ public class LocationTravelGameController : IDisposable
                  && (_narrativeController.CanToggleMap || Config.Debug.DeveloperKeys))
         {
             _narrativeController.ToggleDebugMap();
+        }
+        // The routine box's map, the same way, on the world map.
+        else if (key is OpenTK.Windowing.GraphicsLibraryFramework.Keys.Left or OpenTK.Windowing.GraphicsLibraryFramework.Keys.Right or OpenTK.Windowing.GraphicsLibraryFramework.Keys.Up or OpenTK.Windowing.GraphicsLibraryFramework.Keys.Down
+                 && _currentMode == GameMode.WorldView && _travelRoutinesBox != null)
+        {
+            _travelRoutinesBox.PanMap(key);
         }
         // Arrows pan the map while it is up (the camera leaves them alone then: see the hook set in
         // the constructor). The launcher delivers them here only in that case.

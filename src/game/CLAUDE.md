@@ -1109,7 +1109,7 @@ are forgotten with the map. `Protagonist.MentalMaps` is the queue, oldest first,
   whole top, to the right rule, with an icon per routine on its card (`DebugLocationMap.MapIcon`,
   black letter on yellow, `RoutineCategories.Icon`); under it, places newest first on the right
   (☐/☑ the lock), the world porthole, and at the bottom `< n/N >` (steps the routines, centring the map on each; the first is selected by default and its icon blinks) over the selected routine's detail. The tab is Chorography, not Maps: every management tab opens with its first letter, so `ManagementMenuRenderer.CheckShortcuts` refuses two tabs sharing an initial. **The routine
-  box** on the travel plan (`TravelRoutinesBox`) is the destination's map the same way, a walkable
+  box** on the travel plan (`TravelRoutinesBox`) is the destination's map the same way (stepper, blink, arrows panning; an icon or the stepper selects, CONFIRM sets out), a walkable
   icon clickable, an unwalkable one grey with its reason on hover.
 - **The map has no legend, anywhere.** What the pointer is over — a card, a line, an icon, the pad —
   is named by `DebugLocationMap.LabelAt` and put up by `DebugLocationMap.ShowLabel` in the

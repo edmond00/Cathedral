@@ -49,8 +49,11 @@ public static class LocationTravelModeLauncher
         || mode is GameMode.Fighting or GameMode.Dialogue or GameMode.ProtagonistManagement
         || Management.ManagementMenuRenderer.TabForKey(key) != null
         || (key is OpenTK.Windowing.GraphicsLibraryFramework.Keys.Left or OpenTK.Windowing.GraphicsLibraryFramework.Keys.Right or OpenTK.Windowing.GraphicsLibraryFramework.Keys.Up or OpenTK.Windowing.GraphicsLibraryFramework.Keys.Down
-            && (DebugLocationMap.Visible || DebugLocationMap.WalkPannable)
-            && mode is GameMode.LocationInteraction or GameMode.ChildhoodReminescence or GameMode.GetUp);
+            && ((DebugLocationMap.Visible || DebugLocationMap.WalkPannable)
+                    && mode is GameMode.LocationInteraction or GameMode.ChildhoodReminescence or GameMode.GetUp
+                // On the world map they pan the routine box's map while it is open (the controller
+                // answers them only then).
+                || mode is GameMode.WorldView));
 
     public static void Launch(int windowWidth = 1200, int windowHeight = 900, bool useLLM = true)
     {

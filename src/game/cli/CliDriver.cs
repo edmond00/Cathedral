@@ -460,7 +460,9 @@ public sealed class CliDriver
           travel new                plan a route to a bordering vertex with no mental map
           routines                  list the routines the planned destination offers
           routines <n|kind>         pick routine n — or the first walkable of a kind (goto, meet,
-                                    gather, buy, sell, work) — and set out; entered on arrival
+                                    gather, buy, sell, work) — and set out; entered on arrival.
+                                    `routines next|prev` steps the box's selection, and
+                                    `routines confirm` presses CONFIRM
           trade leave               close the trade menu without settling anything
           gather days <n>|start|continue|leave
                                     drive the gathering phase a Gather routine opens; assert
@@ -1385,6 +1387,24 @@ public sealed class CliDriver
             for (int i = 0; i < entries.Count; i++)
                 CliMode.Emit($"  routines {i}  {entries[i].Category}  \"{entries[i].Name}\""
                            + (entries[i].Available ? "" : $"  (unavailable: {entries[i].Reason})"));
+            return;
+        }
+
+        // The box's CONFIRM, for the routine selected.
+        if (a[0].Equals("confirm", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!_game.CliConfirmRoutineBox())
+            { CliMode.Emit("error: routines confirm — the selected routine cannot be walked"); return; }
+            CliMode.Emit($"ok: confirmed the selected routine (mode={_game.CurrentMode})");
+            return;
+        }
+
+        // The box's `< n/N >` arrows: `routines next|prev`.
+        if (a[0].ToLowerInvariant() is "next" or "prev")
+        {
+            if (!_game.CliStepRoutineBox(a[0].Equals("next", StringComparison.OrdinalIgnoreCase) ? 1 : -1))
+            { CliMode.Emit("error: routines next|prev — the box holds fewer than two routines"); return; }
+            CliMode.Emit($"ok: stepped to the {a[0].ToLowerInvariant()} routine");
             return;
         }
 

@@ -136,11 +136,25 @@ wait mode WorldView 90
 
 travel back
 routines
+# The box steps through its routines as the Chorography tab does, the one stepped to read out
+# below the map.
+wait 10
+expect 1/3
+routines next
+wait 10
+expect 2/3
+expect MEET
 # The box's map has no key either: the pointer over a card names it in a grey label.
 point card Test Wood
 wait 10
 expect-state pointer-label ground=grey text=Test Wood · public
-routines buy
+# Stepping only selects; CONFIRM sets out for the routine selected.
+routines next
+wait 10
+expect 3/3
+expect BUY
+expect [ CONFIRM ]
+routines confirm
 wait mode LocationInteraction 150
 wait
 # The way in is shown first: the party walks on the map from the yard, where the location is
