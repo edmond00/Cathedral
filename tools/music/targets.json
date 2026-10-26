@@ -1,5 +1,5 @@
 {
- "_doc": "Bands each metric should fall in, with the reason. A band is a statement about the genre (retro dungeon synth: Fief, Erang, Old Tower, early Mortiis), not about taste. Weights say how much a miss costs in the total. Melodic bands marked 'Calibrated' were checked with exemplars.py against public-domain tunes written out in tools/music/exemplars/; run `eval.py calibrate reference/` on real recordings to replace the acoustic ones. Per-mood overrides sit under 'moods'. Per-pole overrides sit under 'poles' and apply to the pole that leads a render for most of its time: a festive render is dance music (dense, chord a bar, a drier room, triplet lilt, heterophony with the whistle above the fiddle), held to the bands the session idiom implies.",
+ "_doc": "Bands each metric should fall in, with the reason. A band is a statement about the genre (retro dungeon synth: Fief, Erang, Old Tower, early Mortiis), not about taste. Weights say how much a miss costs in the total. Melodic bands marked 'Calibrated' were checked with exemplars.py against public-domain tunes written out in tools/music/exemplars/; run `eval.py calibrate reference/` on real recordings to replace the acoustic ones. Per-mood overrides sit under 'moods'. Per-pole overrides sit under 'poles' and apply to the pole that leads a render for most of its time: a festive render is dance music (dense, chord a bar, a drier room, triplet lilt, heterophony with the whistle above the fiddle), held to the bands the session idiom implies. Battle renders a fight (the fight filter over the mood, as the game plays it): dungeon synth leaning into metal, a distorted riff and a drum kit under the lead, so its spectrum falls less steeply, its room is closer, and its chords change at a faster tempo than the slow moods'.",
  "metrics": {
   "mode_fit": {
    "lo": 0.93,
@@ -267,6 +267,18 @@
    "onset_rate": {
     "lo": 0.5,
     "hi": 6
+   },
+   "tilt_db_oct": {
+    "lo": -9.0,
+    "hi": -1.5
+   },
+   "wet_db": {
+    "lo": -16,
+    "hi": 0
+   },
+   "harmonic_rhythm_s": {
+    "lo": 2.0,
+    "hi": 16
    }
   },
   "DarkDungeon": {

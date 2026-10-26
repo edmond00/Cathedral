@@ -1,0 +1,10 @@
+[
+ {"t": 0,   "mood": "Neutral", "tracks": 1},
+ {"t": 60,  "mood": "Childhood", "tracks": 0},
+ {"t": 110, "tracks": 1},
+ {"t": 160, "tracks": 2},
+ {"t": 210, "tracks": 3},
+ {"t": 260, "tracks": 4},
+ {"t": 300, "mood": "GetUp", "tracks": 2, "break": 3.5},
+ {"t": 390, "mood": "WorldView", "tracks": 4, "break": 3}
+]

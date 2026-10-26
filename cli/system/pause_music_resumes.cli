@@ -1,0 +1,31 @@
+# The pause menu plays its own music (neutral, no tracks), and a phase resumed from it is not
+# entered afresh, so nothing set the music again: after one visit to the menu the tune stayed off
+# until the next place. The menu now hands back what it took. Settings opened from the menu in
+# between must not make it forget. (Escape closes the menu through the same ResumeFromMenu as
+# Continue; a script cannot press it there, since `pause` over the menu only reports it open.)
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --silent --no-save --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+expect-state music tracks=4
+
+travel here
+wait mode LocationInteraction 60
+expect-state music tracks=4 filter=None
+
+pause
+wait mode MainMenu 20
+expect-state music tracks=0
+click menu Settings
+wait mode Settings 20
+pause
+wait mode MainMenu 20
+click menu Continue
+wait mode LocationInteraction 30
+expect-state music tracks=4 filter=None
+
+quit

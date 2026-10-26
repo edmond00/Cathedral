@@ -76,6 +76,14 @@ public class LocationTravelGameController : IDisposable
     private SettingsMenuRenderer? _settingsMenuRenderer;
     private bool _hasGameStarted = false;
 
+    /// <summary>
+    /// The music the pause menu was opened over. The menu plays its own (neutral, no tracks); a
+    /// phase resumed from it is not entered afresh and so never sets the music again, which left
+    /// the tune silent until the next place. Taken on the first menu entry, given back by
+    /// <see cref="ResumeFromMenu"/>, dropped by any other way out of the menu.
+    /// </summary>
+    private AmbianceEngine.MusicRequest? _musicUnderMenu;
+
     // World selection — the sky a new run picks its world out of.
     private WorldSelectionRenderer? _worldSelectionRenderer;
     /// <summary>Ordinal of the moon the player has clicked and not yet confirmed, or -1.</summary>
@@ -738,7 +746,7 @@ public class LocationTravelGameController : IDisposable
         {
             _core.SetNarrationMode(true);
             _managementMenuRenderer = null;
-            SetMode(MenuReturnMode);
+            ResumeFromMenu();
             return true;
         }
 
@@ -1251,6 +1259,9 @@ public class LocationTravelGameController : IDisposable
                 _isInNarrativeMode = false;
                 _narrativeController = null;
                 SetMode(GameMode.WorldView);
+                // The first sight of the world: a clean break into the map's music (OnEnterWorldView
+                // has set it), not the bridge an ordinary change of place gets.
+                _ambianceEngine?.Transition(3f);
                 return;
             }
 
@@ -2204,6 +2215,8 @@ public class LocationTravelGameController : IDisposable
         // may be no world yet (nothing is generated until a run starts), and the world-selection
         // screen wants the sky unobstructed even when a previous run has left a world standing.
         _core.WorldRenderEnabled = _interface.IsWorldGenerated && newMode != GameMode.WorldSelection;
+        if (newMode is not (GameMode.MainMenu or GameMode.Settings or GameMode.ProtagonistManagement))
+            _musicUnderMenu = null;
 
         // Handle mode-specific setup
         switch (newMode)
@@ -2828,6 +2841,8 @@ public class LocationTravelGameController : IDisposable
 
     private void OnEnterMainMenu()
     {
+        if (_hasGameStarted && _musicUnderMenu == null && _ambianceEngine != null)
+            _musicUnderMenu = _ambianceEngine.Requested;
         Console.WriteLine("LocationTravelGameController: Entered MainMenu mode");
         _ambianceEngine?.SetFilter(MusicFilter.None);
         _ambianceEngine?.SetMood(MusicMoodState.Neutral);
@@ -2886,7 +2901,7 @@ public class LocationTravelGameController : IDisposable
                     if (_hasGameStarted)
                     {
                         // A live session: resume whatever was paused.
-                        SetMode(MenuReturnMode);
+                        ResumeFromMenu();
                         return;
                     }
 
@@ -3802,6 +3817,18 @@ public class LocationTravelGameController : IDisposable
             return rows.Values.Select(r => $"pointer-label ground={Ground(r.Bg)} text={r.Text.ToString().Trim()}").ToList();
         }
 
+        // What the game last asked of the music. The pause menu takes it over and must hand it back
+        // on resume; nothing on screen says whether it did.
+        if (subject == "music")
+        {
+            if (_ambianceEngine == null) return new List<string> { "music (no engine)" };
+            var r = _ambianceEngine.Requested;
+            string mood = r.Mood is { } m
+                ? $"cold={m.Coldness:0.00} fear={m.Fear:0.00} mystery={m.Mystery:0.00} intensity={m.Intensity:0.00} festivity={m.Festivity:0.00}"
+                : "mood=none";
+            return new List<string> { $"music tracks={r.Tracks} filter={r.Filter} {mood}" };
+        }
+
         if (_protagonist == null) return null;
 
         // The mental maps, oldest first, and the count against the anamnesis: what the menu's right
@@ -4640,6 +4667,14 @@ public class LocationTravelGameController : IDisposable
         // Resuming from the pause menu — see OnEnterChildhoodReminescence.
         if (ResumeLiveNarrativePhase()) return;
 
+        // Waking from the dream is a break, as entering it was: the reminiscence's music stops, the
+        // hall rings out into silence, and the get-up begins on music of its own, sparse (a drone, a
+        // pad, one line), for a body spent and alone under a tree.
+        _ambianceEngine?.SetFilter(MusicFilter.None);
+        _ambianceEngine?.SetMood(MusicMoodState.GetUp);
+        _ambianceEngine?.SetActiveTrackCount(2);
+        _ambianceEngine?.Transition(3.5f);
+
         _core.SetNarrationMode(true);
         _core.SetWorldInteractionsEnabled(false);
         _interface.SetWorldInteractionsEnabled(false);
@@ -5027,7 +5062,7 @@ public class LocationTravelGameController : IDisposable
                 // world.
                 if (!_hasGameStarted) return false;
                 Console.WriteLine($"ESC pressed - closing main menu, resuming {MenuReturnMode}");
-                SetMode(MenuReturnMode);
+                ResumeFromMenu();
                 return true;
 
             // ── Deliberately nothing, and why ─────────────────────────────────────────────
@@ -5094,6 +5129,14 @@ public class LocationTravelGameController : IDisposable
         Console.WriteLine($"LocationTravelGameController: Management menu closed, returning to {to}");
         _managementBackToMenu = true;
         SetMode(to);
+    }
+
+    /// <summary>Back into the phase the menu was opened over, with the music it was playing.</summary>
+    private void ResumeFromMenu()
+    {
+        var music = _musicUnderMenu;
+        SetMode(MenuReturnMode);
+        if (music is { } m) _ambianceEngine?.Restore(m);
     }
 
     /// <summary>Opens the menu over a still-running phase, naming what it was opened over.</summary>

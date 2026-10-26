@@ -76,6 +76,14 @@ internal sealed class SynthMusicEngine : IMusicEngine
             DeviceName = "capture (MIDI)";
             return true;
         }
+        // --silent with nothing to capture: no sound and no composing, but an engine that still
+        // answers what the game asked of it, so a script can read the music back (inspect music).
+        if (Config.Debug.Silent)
+        {
+            _core = null;
+            DeviceName = "silent";
+            return true;
+        }
         return false;
     }
 
@@ -109,6 +117,13 @@ internal sealed class SynthMusicEngine : IMusicEngine
         // The first mood a session is given is where it starts, not somewhere to glide to.
         if (!_moodSet) { _moodSet = true; _core.JumpMood(mood); }
         else _core.SetMood(mood);
+    }
+
+    public void Transition(float silenceSeconds)
+    {
+        // A first mood with no music before it needs no break.
+        if (!_moodSet) return;
+        _core?.Cut(silenceSeconds, 1.2f);
     }
 
     public void SetActiveTrackCount(int count)

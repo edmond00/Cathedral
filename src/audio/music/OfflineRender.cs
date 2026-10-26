@@ -16,7 +16,7 @@ namespace Cathedral.Audio.Music;
 ///
 /// <para>A journey is the game's side of the conversation scripted: a JSON list of
 /// <c>{"t": seconds, "mood": "Tavern" | [cold, fear, mystery, intensity, festivity], "event": "positive" |
-/// "negative" | "neutral", "filter": "fighting" | "traveling" | "none", "tracks": n}</c>, each applied at
+/// "negative" | "neutral", "filter": "fighting" | "traveling" | "none", "tracks": n, "break": seconds of silence}</c>, each applied at
 /// its time. It is how the harness measures transitions, stings and fights, not just still moods.</para>
 /// </summary>
 public static class OfflineRender
@@ -49,6 +49,9 @@ public static class OfflineRender
         log.Meta("sampleRate", Dsp.SampleRate);
         core.JumpMood(mood);
         core.SetTrackCount(tracks);
+        // Battle is the fight's preset, and in the game a fight is the fight filter over a place's
+        // mood: render it the way the game plays it.
+        if (moodName.Equals("Battle", StringComparison.OrdinalIgnoreCase)) core.SetFighting(true);
 
         var clock = Stopwatch.StartNew();
         const int chunk = 4096;
@@ -120,6 +123,8 @@ public static class OfflineRender
             core.SetTraveling(name == "traveling");
         }
         if (e.TryGetProperty("tracks", out var tr)) core.SetTrackCount(tr.GetInt32());
+        // Last, as the game calls it: after the new mood and track count are set.
+        if (e.TryGetProperty("break", out var br)) core.Cut(br.GetDouble(), 1.2f);
     }
 
     private static (string Name, MusicMoodState Mood)[] Presets() =>

@@ -273,7 +273,11 @@ Run `help` for the authoritative list. The essentials:
                             on what it names, grey when it only tells;
                             `buttons` whether the two key stand-ins are on screen, as
                             `buttons menu=shown|hidden map=shown|hidden` (the ☰ and the ↹);
-                            `gather` the gathering phase's forecast and yield.
+                            `gather` the gathering phase's forecast and yield;
+                            `music` what the game last asked of the music, as `music tracks=<0-4>
+                            filter=<MusicFilter> cold= fear= mystery= intensity= festivity=` (the
+                            target mood, not the glide). Answers under --silent: the engine starts
+                            there with no sound and no composing (cli/system/pause_music_resumes.cli).
                             `routines` and `mental-maps` are answerable with NO narration in progress, because a
                             session's Go to routine is learned as that session ENDS — reading
                             it from inside the location reads a moment too early.

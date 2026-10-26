@@ -21,7 +21,7 @@ AmbianceEngine (src/audio/AmbianceEngine.cs)     the game's only door: same API 
  │       │   Theory.cs (modes, keys, chords, progressions) · Melody.cs (motifs, rhythms, periods)
  │       │   Orchestra.cs (mood poles → instruments, tempo, metre, mix levels, hall and tape)
  │       └─ Synth            voices → part buses → chorus + FDN hall → tape → limiter
- │           Voices.cs (17 instruments) · Effects.cs · Dsp.cs
+ │           Voices.cs (26 instruments) · Effects.cs · Dsp.cs
  │   └─ PcmStream            waveOut on Windows, OpenAL elsewhere (adaptive queue, underrun report)
  └─ LegacyAmbianceEngine     --music-engine legacy: the first engine, MIDI to the GS Wavetable
                              Synth (Windows) or MeltySynth + assets/audio/soundfont.sf2
@@ -50,12 +50,30 @@ AmbianceEngine (src/audio/AmbianceEngine.cs)     the game's only door: same API 
   the tune under them); a lilt (`Lilt`). Still Dorian or Aeolian: festive is lively, not bright.
   The comp and drum come in with the melody's tier there, not at Intensity 0.75. The harness
   holds festive renders to the `poles.festive` bands in `targets.json`.
+- **Fights.** The fight filter (`Composer.Fighting`) writes dungeon synth leaning into metal:
+  `Orchestra.ChooseFight` (the lead from horn, choir, strings, square lead, organ; a distorted riff,
+  `Instrument.Distortion` and `PowerChord`, palm-muted below velocity 0.55; a kit, `Kick`, `Snare`,
+  `Cymbal`, a crash at 0.5 and over, a closed hat under), 84-100 bpm felt in sixteenths, never
+  Locrian (a power chord needs its fifth). `PlanFightForm`: `I A A' B C A' B A'`, each section a
+  `RiffStyle` (`EmitRiff`, `EmitKit`): Gallop under the A tune, Tremolo over a double-bass kick
+  under the B, HalfTime for the tune-less breakdown. The band is all there from the first bar; the
+  riff and kit open with the melody's tier, like a dance's. A fight cuts in at the next bar line
+  with no bridge, and plays in a closer room (`ApplyBus(..., fight: true)`). `--mood Battle` renders
+  a fight, as `B` in `--music` mode plays one; `targets.json` holds Battle to its own bands.
 - **Mood.** `SetMood` glides the mood (≈2 s). Structure is decided at piece and section starts; a
   drift above 0.12 (or the fight filter changing) ends the piece through a one- or two-bar bridge,
   in which the tune comes to rest on the nearest tonic and holds it; the next piece then starts on
   its tune, with no intro. A tune-less breakdown (C) lasts four bars at most.
   Track count and Intensity gate layers on the old ladder (1 drone+pad, 2 melody, 3 counter+bass,
   4 ostinato+percussion).
+- **Breaks.** `AmbianceEngine.Transition(seconds)` is a clean cut between parts of the game, not
+  a change of place: everything planned is dropped, every voice fades over 1.2 s, the hall rings
+  out into silence, and a new piece for the mood already set begins from its start (no glide).
+  Called entering the get-up (its own `MusicMoodState.GetUp`, two tracks) and on the first world
+  map after it; the childhood's entry gets its break from dropping to no tracks. Set the mood and
+  tracks first. Journeys script one with `"break": seconds` (`journeys/opening.json`); `Space` in
+  `--music` mode plays one. A change of place keeps the one-bar bridge: a break every time would
+  chop up play.
 - **Events.** Positive: a bell arpeggio on the next beat and a brighter bar. Negative: a timpani
   stroke on the next beat and the tune stepping back for a bar or two. Neutral: the tune a little
   softer. The tune never stops for an event: outcomes come every few seconds in play, and resting
@@ -112,4 +130,10 @@ music worse to read or to look at; re-calibrate the band instead, and say why in
 - **Testing the live path in a cloud box**: `xvfb-run` plus a PulseAudio null sink
   (`pulseaudio -D --exit-idle-time=-1`), record `parec -d auto_null.monitor --format=s16le` (raw:
   a killed parec leaves a broken WAV header) and analyse the capture like any render.
+- **The pause menu borrows the music.** It sets the neutral mood with no tracks; a phase resumed
+  from it is not entered afresh and sets nothing, so `ResumeFromMenu` hands back what
+  `AmbianceEngine.Requested` held when the menu opened. A new place's music is set by its own entry
+  (`StartLocationInteraction`); anything that sets music on a mode's entry must still be right when
+  that mode is resumed rather than started. `inspect music` reads the request back, even under
+  `--silent` (the engine then starts silent: no stream, no composer, but it answers).
 - Music is not a rule the player is subject to: the manual needs nothing.
