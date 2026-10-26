@@ -160,6 +160,8 @@ internal sealed class Synth
         }
     }
 
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
+
     private void RenderBlock(int n)
     {
         foreach (var b in _bus) { Array.Clear(b.L, 0, n); Array.Clear(b.R, 0, n); }

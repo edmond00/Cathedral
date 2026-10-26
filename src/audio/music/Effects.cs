@@ -73,6 +73,8 @@ internal sealed class Reverb
         _preDelay = Math.Clamp(preDelaySec * Dsp.SampleRate, 1f, _pre.Capacity - 2);
     }
 
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
+
     public void Process(float[] inL, float[] inR, float[] outL, float[] outR, int n)
     {
         float modRate = 0.31f * Dsp.TwoPi / Dsp.SampleRate;
@@ -127,6 +129,8 @@ internal sealed class Chorus
 {
     private readonly DelayLine _l = new(Dsp.SampleRate / 20), _r = new(Dsp.SampleRate / 20);
     private float _ph;
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
 
     public void Process(float[] inL, float[] inR, float[] outL, float[] outR, int n, float depth)
     {
@@ -185,6 +189,8 @@ internal sealed class Tape
         _lpR2.Set(hz * 1.4f);
     }
 
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
+
     public void Process(float[] l, float[] r, int n)
     {
         // A delay modulated by d(t) = D sin(wt) shifts pitch by D*w; pick D for the depth in cents.
@@ -230,6 +236,8 @@ internal sealed class Limiter
     private readonly int _look = (int)(0.003f * Dsp.SampleRate);
     private float _gain = 1f, _env;
     public float Ceiling = Dsp.DbToGain(-1f);
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
 
     public void Process(float[] l, float[] r, int n)
     {

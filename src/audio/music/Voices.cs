@@ -144,6 +144,8 @@ internal sealed class OrganVoice : Voice
         _wobble = Rng.Unit() * Dsp.TwoPi;
     }
 
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
+
     public override void Render(float[] buf, int n)
     {
         float chiffDecay = Dsp.Coef(0.035f);
@@ -200,6 +202,8 @@ internal sealed class ChoirVoice : Voice
 
     private static float Lerp(float a, float b, float t) => a + (b - a) * t;
 
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
+
     public override void Render(float[] buf, int n)
     {
         float vibTarget = 16f / 1200f;   // ~16 cents once settled
@@ -252,6 +256,8 @@ internal sealed class StringsVoice : Voice
         _vib = Rng.Unit() * Dsp.TwoPi;
     }
 
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
+
     public override void Render(float[] buf, int n)
     {
         float vr = 5.3f * Dsp.TwoPi / Dsp.SampleRate;
@@ -293,6 +299,8 @@ internal sealed class DarkPadVoice : Voice
         Env = new Envelope(2.4f, 2f, 0.9f, 3.2f);
     }
 
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
+
     public override void Render(float[] buf, int n)
     {
         for (int i = 0; i < n; i++)
@@ -325,6 +333,8 @@ internal sealed class RecorderVoice : Voice
         _breath.Set(Math.Min(hz * 2f, 9000f), 3f);
         Env = new Envelope(0.05f, 0.2f, 0.82f, 0.09f);
     }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
 
     public override void Render(float[] buf, int n)
     {
@@ -421,6 +431,8 @@ internal sealed class PluckVoice : Voice
         _released = true;
     }
 
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
+
     public override void Render(float[] buf, int n)
     {
         float dampTarget = _released ? (_kind == Kind.Harpsichord ? 0.9965f : 0.997f) : 1f;
@@ -478,6 +490,8 @@ internal sealed class BellVoice : Voice
         Env = new Envelope(0.002f, 0.01f, 1f, 2.5f);
     }
 
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
+
     public override void Render(float[] buf, int n)
     {
         float sd = Dsp.Coef(0.01f);
@@ -532,6 +546,8 @@ internal sealed class DrumVoice : Voice
         Env = new Envelope(0.001f, 0.01f, 1f, _hand ? 0.15f : 0.8f);
     }
 
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
+
     public override void Render(float[] buf, int n)
     {
         float gd = Dsp.Coef(0.05f), td = Dsp.Coef(_hand ? 0.03f : 0.06f);
@@ -577,6 +593,8 @@ internal sealed class BourdonVoice : Voice
         Env = new Envelope(3.0f, 2f, 0.9f, 4f);
     }
 
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
+
     public override void Render(float[] buf, int n)
     {
         for (int i = 0; i < n; i++)
@@ -611,6 +629,8 @@ internal sealed class HornVoice : Voice
         _p2 = Rng.Unit();
         Env = new Envelope(0.09f, 0.5f, 0.75f, 0.35f);
     }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
 
     public override void Render(float[] buf, int n)
     {
@@ -653,6 +673,8 @@ internal sealed class SquareVoice : Voice
         Env = new Envelope(0.004f, 0.15f, 0.7f, 0.08f);
     }
 
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
+
     public override void Render(float[] buf, int n)
     {
         for (int i = 0; i < n; i++)
@@ -678,6 +700,8 @@ internal sealed class WindVoice : Voice
         _lfoRate = (0.07f + Rng.Unit() * 0.08f) * Dsp.TwoPi / Dsp.SampleRate;
         Env = new Envelope(3.5f, 2f, 0.9f, 4f);
     }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
 
     public override void Render(float[] buf, int n)
     {

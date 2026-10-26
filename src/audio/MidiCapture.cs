@@ -24,6 +24,9 @@ public static class MidiCapture
 
     public static bool IsActive { get; private set; }
 
+    /// <summary>The capture's clock now: where an event recorded at this instant would land.</summary>
+    public static double Now => _clock();
+
     /// <summary>Starts capturing. <paramref name="clock"/> is read for every event's timestamp.</summary>
     public static void Start(Func<double> clock)
     {
