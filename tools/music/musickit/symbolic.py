@@ -8,7 +8,7 @@ Each is a proxy for one thing the genre is known for (see targets.json for the b
     mel_leap_ratio      melodic intervals of a fourth or more                             few leaps
     mel_range_phrase    the span of a phrase, semitones                                   narrow range
     mel_density         melody notes per second while the melody plays                    slow
-    motif_recurrence    4-note interval+rhythm figures already heard in the last 90 s     motifs, not a walk
+    motif_recurrence    4-note step+rhythm figures already heard in the last 180 s        motifs, not a walk
     bar_repetition      melody bars repeating an earlier bar exactly or transposed        statement and repeat
     long_novelty        figures shared by windows minutes apart (1 - Jaccard)             still endless
     grid_alignment      onsets on a sixteenth grid                                        a pulse, not drift
@@ -18,6 +18,11 @@ Each is a proxy for one thing the genre is known for (see targets.json for the b
     active_parts        parts playing at once                                             layering
     layer_changes_min   how often the set of playing parts changes                        orchestration moves
     silence_ratio       time with nothing sounding at all                                 no dead holes
+    mel_distinct_phrase distinct pitches in a phrase                                       a tune, not a trill
+    counter_repeat      counter notes repeating the one before                             a line, not a pedal
+    counter_above_mel   counter notes sounding above the melody                            voices keep their places
+    melody_prominence   melody stem level over the loudest accompanying stem, dB          the tune is heard
+    drone_vs_melody     drone stem level under the melody's, dB                           a floor, not a wall
 """
 
 from __future__ import annotations
@@ -78,7 +83,8 @@ def mode_fit(score: Score, window: float = 20.0) -> tuple[float, float]:
 
 
 def _phrases(mel: list[Note]) -> list[list[Note]]:
-    """Melody split at rests: a gap longer than both 0.6 s and twice the typical inter-onset interval."""
+    """Melody split into phrases: at a rest, or after a long note (a phrase ends on one in folk and
+    chant even when no rest follows). Long means at least 1.2 s and 2.5 times the typical spacing."""
     if not mel:
         return []
     iois = [b.t - a.t for a, b in zip(mel, mel[1:])]
@@ -86,7 +92,8 @@ def _phrases(mel: list[Note]) -> list[list[Note]]:
     out, cur = [], [mel[0]]
     for a, b in zip(mel, mel[1:]):
         gap = b.t - (a.t + a.d)
-        if gap > max(0.6, typical * 1.0) or (b.t - a.t) > max(1.5, typical * 3):
+        held = (b.t - a.t) >= max(1.2, typical * 2.5)
+        if gap > max(0.35, typical * 0.5) or held:
             out.append(cur)
             cur = []
         cur.append(b)
@@ -110,6 +117,9 @@ def melodic(score: Score) -> dict:
     if ranges:
         out["mel_range_phrase"] = float(np.median(ranges))
     lens = [ph[-1].t + ph[-1].d - ph[0].t for ph in phrases if len(ph) >= 3]
+    distinct = [len({n.p for n in ph}) for ph in phrases if len(ph) >= 3]
+    if distinct:
+        out["mel_distinct_phrase"] = float(np.median(distinct))
     if len(lens) >= 3:
         out["phrase_len_s"] = float(np.median(lens))
         out["phrase_len_cv"] = float(np.std(lens) / max(1e-6, np.mean(lens)))
@@ -120,19 +130,43 @@ def melodic(score: Score) -> dict:
     return out
 
 
-def _tokens(mel: list[Note]) -> list[tuple[int, int]]:
+def _steps(score: Score, mel: list[Note], window: float = 20.0) -> list[int]:
+    """Each melody note as a step number in the collection that best fits its 20 s window.
+
+    A motif moved along the scale (a diatonic sequence) changes its semitone intervals, a whole
+    step becoming a half step, but not its steps; the genre repeats by sequence all the time, so
+    figures are compared in steps. Pitches outside the collection round down to the step below.
+    """
+    notes = _pitched(score)
+    cache: dict[int, list[int]] = {}
+    out = []
+    for n in mel:
+        w = int(n.t // window)
+        if w not in cache:
+            h = _pc_hist(notes, w * window, (w + 1) * window)
+            best = max(COLLECTIONS, key=lambda c: sum(h[i] for i in c[2]))
+            cache[w] = sorted(best[2])
+        coll = cache[w]
+        octave, pc = divmod(n.p, 12)
+        idx = max([i for i, c in enumerate(coll) if c <= pc], default=-1)
+        out.append(octave * len(coll) + idx)
+    return out
+
+
+def _tokens(mel: list[Note], steps: list[int] | None = None) -> list[tuple[int, int]]:
     """(interval, log2 IOI ratio quantised) per note: a figure survives transposition and tempo."""
+    pitch = steps if steps is not None else [n.p for n in mel]
     toks = []
-    for a, b, c in zip(mel, mel[1:], mel[2:]):
+    for i, (a, b, c) in enumerate(zip(mel, mel[1:], mel[2:])):
         r1 = max(0.05, b.t - a.t)
         r2 = max(0.05, c.t - b.t)
-        toks.append((c.p - b.p, int(round(2 * math.log2(r2 / r1)))))
+        toks.append((pitch[i + 2] - pitch[i + 1], int(round(2 * math.log2(r2 / r1)))))
     return toks
 
 
-def repetition(score: Score, n: int = 4, memory: float = 90.0) -> dict:
+def repetition(score: Score, n: int = 4, memory: float = 180.0) -> dict:
     mel = score.melody()
-    toks = _tokens(mel)
+    toks = _tokens(mel, _steps(score, mel))
     times = [m.t for m in mel[2:]]
     if len(toks) < n + 4:
         return {}
@@ -305,11 +339,12 @@ def harmony(score: Score) -> dict:
     return out
 
 
-def layering(score: Score, window: float = 5.0) -> dict:
+def layering(score: Score, window: float = 10.0) -> dict:
     parts_by_win = []
     for a, b in _windows(score, window):
+        # Percussion and bells punctuate; they come and go inside a section by design.
         active = frozenset(n.part for n in score.notes
-                           if n.part not in PITCHED_EXCLUDE and n.t < b and n.t + n.d > a)
+                           if n.part not in PITCHED_EXCLUDE | {"bell"} and n.t < b and n.t + n.d > a)
         parts_by_win.append(active)
     if not parts_by_win:
         return {}
@@ -319,10 +354,37 @@ def layering(score: Score, window: float = 5.0) -> dict:
             "distinct_layer_sets": len(set(parts_by_win))}
 
 
+def voices(score: Score) -> dict:
+    out: dict = {}
+    cnt = sorted(score.part("counter"), key=lambda n: (n.t, -n.p))
+    if len(cnt) >= 8:
+        sky = [n for i, n in enumerate(cnt) if i == 0 or abs(n.t - cnt[i - 1].t) > 0.03]
+        out["counter_repeat"] = float(np.mean([a.p == b.p for a, b in zip(sky, sky[1:])]))
+        mel = score.melody()
+        starts = np.array([m.t for m in mel])
+        above = total = 0
+        for n in sky:
+            i = np.searchsorted(starts, n.t + 0.03) - 1
+            if i >= 0 and mel[i].t + mel[i].d > n.t:
+                total += 1
+                above += n.p > mel[i].p
+        if total:
+            out["counter_above_mel"] = above / total
+    stems = score.meta.get("stems") or {}
+    if "melody" in stems:
+        mel = stems["melody"]["db"]
+        others = [v["db"] for k, v in stems.items() if k in ("pad", "drone", "ostinato", "counter", "bass") and v["seconds"] > 10]
+        if others:
+            out["melody_prominence"] = mel - max(others)
+        if "drone" in stems:
+            out["drone_vs_melody"] = stems["drone"]["db"] - mel
+    return out
+
+
 def analyse(score: Score) -> dict:
     fit, ent = mode_fit(score)
     out = {"mode_fit": fit, "pc_entropy": ent}
-    for f in (melodic, repetition, bar_repetition, grid, harmony, layering):
+    for f in (melodic, repetition, bar_repetition, grid, harmony, layering, voices):
         out.update(f(score))
     out["notes_per_s"] = len(score.notes) / max(1.0, score.seconds)
     return out

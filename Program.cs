@@ -500,6 +500,14 @@ if (args.Length >= 1 && args[0] == "--export-music")
     return;
 }
 
+// --render-music <out.wav> [--seconds n] [--mood m] [--seed n] [--tracks n] [--journey j.json]: the music,
+// rendered faster than real time with its score beside it — what tools/music measures.
+if (args.Length >= 1 && args[0] == "--render-music")
+{
+    Environment.ExitCode = Cathedral.Audio.Music.OfflineRender.Run(args);
+    return;
+}
+
 // --music-audition <dir>: every instrument of the music synthesiser alone, one WAV each.
 if (args.Length >= 1 && args[0] == "--music-audition")
 {

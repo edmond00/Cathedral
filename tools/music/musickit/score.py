@@ -44,6 +44,8 @@ class Score:
     def melody(self) -> list[Note]:
         """The lead line: the part called melody, or failing that the top voice of everything pitched."""
         mel = self.part("melody")
+        if not mel and self.meta.get("engine"):
+            return []   # the engine says which notes are the tune; none means there was none
         pitched = sorted(mel or (n for n in self.notes if n.part not in ("perc", "sfx", "drone")),
                          key=lambda n: (n.t, -n.p))
         sky: list[Note] = []
@@ -64,8 +66,10 @@ def load(path: str | Path) -> Score:
 def from_json(path: Path) -> Score:
     j = json.loads(path.read_text())
     notes = [Note(n["t"], n["d"], n["p"], n["v"], n["part"], n.get("inst", "")) for n in j["notes"]]
-    return Score(notes, j["meta"].get("seconds", max((n.t + n.d for n in notes), default=0.0)),
-                 j.get("sections", []), j.get("chords", []), j.get("pieces", []), j.get("meta", {}))
+    meta = dict(j.get("meta", {}))
+    meta["stems"] = j.get("stems", {})
+    return Score(notes, meta.get("seconds", max((n.t + n.d for n in notes), default=0.0)),
+                 j.get("sections", []), j.get("chords", []), j.get("pieces", []), meta)
 
 
 # The legacy AmbianceEngine's channels (ProceduralMidiComposer.GetChannel, and the filters' 5/6/9).

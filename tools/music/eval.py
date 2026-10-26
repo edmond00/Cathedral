@@ -136,6 +136,38 @@ def cmd_compare(a):
     print(f"{'TOTAL':24s} {A['mean_total']:12.3f} {B['mean_total']:12.3f}")
 
 
+NAMES = "C C# D Eb E F F# G Ab A Bb B".split()
+
+
+def cmd_notes(a):
+    """The score as text: per section, each part's notes bar by bar, with the chord. Reading the notes
+    is the most direct check there is on phrasing, leaps, sequences and repetition."""
+    sc = scoremod.load(a.score)
+    pieces = sc.pieces or [{"t": 0, "bpm": 60, "meter": 4}]
+    secs = sc.sections[a.first:a.first + a.count]
+    for k, sec in enumerate(secs):
+        pc = max((p for p in pieces if p["t"] <= sec["t"] + 1e-6), key=lambda p: p["t"])
+        beat = 60 / pc["bpm"]
+        bar = beat * pc["meter"]
+        nxt = sc.sections[a.first + k + 1]["t"] if a.first + k + 1 < len(sc.sections) else sc.seconds
+        tonic = NAMES[pc.get("tonic", 0) % 12]
+        print(f"[{sec['label']}] t={sec['t']:.1f}s  piece {sec.get('piece')} {tonic} {pc.get('mode','')} {pc['bpm']:.0f}bpm {pc['meter']}/4 "
+              f"layers={','.join(sec.get('layers', []))} counter={sec.get('counter','')}")
+        chords = {int(round((c['t'] - sec['t']) / bar)): NAMES[c['pcs'][0]] + ("m" if (c['pcs'][1] - c['pcs'][0]) % 12 == 3 else "") for c in sc.chords
+                  if sec['t'] - 0.01 <= c['t'] < nxt - 0.01}
+        for part in a.parts:
+            notes = [n for n in sc.notes if n.part == part and sec["t"] - 0.05 <= n.t < nxt - 0.05]
+            if not notes:
+                continue
+            rows = {}
+            for n in notes:
+                b = int((n.t - sec["t"] + 0.05) // bar)
+                rows.setdefault(b, []).append(f"{NAMES[n.p % 12]}{n.p // 12 - 1}:{n.d / beat:.1f}")
+            print(f"  {part}")
+            for b in sorted(rows):
+                print(f"    {b:2d} {chords.get(b, ''):4s} " + " ".join(rows[b]))
+
+
 def cmd_calibrate(a):
     rows = [analyse(w, None, sheet=False) for w in sorted(Path(a.dir).glob("*.wav"))]
     out = targets.calibrate(rows)
@@ -176,6 +208,12 @@ def main():
     c.add_argument("a")
     c.add_argument("b")
     c.set_defaults(f=cmd_compare)
+    nt = sub.add_parser("notes")
+    nt.add_argument("score")
+    nt.add_argument("--first", type=int, default=0)
+    nt.add_argument("--count", type=int, default=4)
+    nt.add_argument("--parts", nargs="+", default=["melody"])
+    nt.set_defaults(f=cmd_notes)
     cal = sub.add_parser("calibrate")
     cal.add_argument("dir")
     cal.add_argument("-o", "--out", default=str(TOOLS / "targets.reference.json"))

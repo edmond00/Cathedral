@@ -40,6 +40,13 @@ public static class MidiCapture
         lock (Lock) Events.Add((t, copy));
     }
 
+    /// <summary>Records one event at a time of the caller's choosing: a note-off known in advance.</summary>
+    public static void RecordAt(double seconds, MidiEvent ev)
+    {
+        if (!IsActive) return;
+        lock (Lock) Events.Add((seconds, ev));
+    }
+
     public static int Count { get { lock (Lock) return Events.Count; } }
 
     /// <summary>Writes everything captured so far to <paramref name="path"/>.</summary>

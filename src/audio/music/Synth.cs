@@ -44,6 +44,9 @@ internal sealed class Synth
     private readonly Tape _tape;
     private readonly Limiter _limiter = new();
     private int _voiceSeed;
+    // Per-part energy, for the harness: how loud each layer is while it plays (its "stem" level).
+    private readonly double[] _stemEnergy = new double[PartCount];
+    private readonly long[] _stemFrames = new long[PartCount];
     private readonly int _seed;
 
     public long Sample { get; private set; }
@@ -54,7 +57,7 @@ internal sealed class Synth
     public Smoothed ChorusDepth = new(0.6f, 2f);
     public float ReverbReturn = 0.9f;
     /// <summary>Everything into the tape at this level: the mix's headroom.</summary>
-    public float PreGain = 0.55f;
+    public float PreGain = 0.3f;
 
     public Synth(int seed)
     {
@@ -134,6 +137,15 @@ internal sealed class Synth
         _voices.Remove(pick);
     }
 
+    /// <summary>Mean level of each part while it was sounding, dBFS before the master chain.</summary>
+    public IEnumerable<(Part part, double db, double seconds)> StemLevels()
+    {
+        for (int p = 0; p < PartCount; p++)
+            if (_stemFrames[p] > 0)
+                yield return ((Part)p, 10 * Math.Log10(_stemEnergy[p] / (2.0 * _stemFrames[p]) + 1e-20) + 20 * Math.Log10(PreGain),
+                              _stemFrames[p] / (double)Dsp.SampleRate);
+    }
+
     /// <summary>Renders <paramref name="n"/> frames (a multiple of <see cref="Block"/> is cheapest).</summary>
     public void Render(float[] outL, float[] outR, int offset, int n)
     {
@@ -177,6 +189,10 @@ internal sealed class Synth
             if (g < 1e-5f) continue;
             float[] dl = p == (int)Part.Sfx ? _sfxL : _dryL, dr = p == (int)Part.Sfx ? _sfxR : _dryR;
             float rv = b.Reverb, ch = b.Chorus;
+            double e = 0;
+            for (int q = 0; q < n; q++) e += b.L[q] * b.L[q] + b.R[q] * b.R[q];
+            e *= g * g;
+            if (e > 1e-9 * n) { _stemEnergy[p] += e; _stemFrames[p] += n; }
             for (int s = 0; s < n; s++)
             {
                 float l = b.L[s] * g, r = b.R[s] * g;
