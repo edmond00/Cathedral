@@ -78,6 +78,10 @@ Run `help` for the authoritative list. The essentials:
                             looked at, which are withheld from every later observation choice
                             of the phase and released again when the phase ends
   dump [--color]            the terminal grid as text; --color tags each row dim/mix/lit
+  snap <file.png>           the next frame drawn, written as a PNG, then Read it. `dump` sees
+                            characters and never colours, so this is how to judge a screen's palette
+                            and layout (works under --hidden; the frame is drawn into a target of
+                            its own). Not with --record, which already owns the frame
   doubt <yes|no>            queue the answer to the next doubt of a thinking (pineal gland 2+): the
                             preview box asks YES / NO in place of CONTINUE. `advance` answers each
                             with the next queued answer, YES when none is queued — a script that never
@@ -699,7 +703,8 @@ bordering the spawn point, while travel range reaches far further.
 
 ### What `--cli` cannot check
 
-- **Anything about pixels**: camera framing, the glyph atlas, sky/cloud rendering, and whether the
+- **Anything about pixels, except through `snap`**: `snap <file.png>` writes the next frame, so a
+  menu's colours and layout can be looked at; it proves nothing by itself — read the image. Camera framing, the glyph atlas, sky/cloud rendering, and whether the
   3D sphere looks right. `dump` sees the terminal cell grid, not the framebuffer. **`--record <dir>`
   can**: the same driver, filmed, hidden and silent — extract a frame from `game.mkv` at a time read
   off `timeline.jsonl` and look at it. It accepts only what a player can do (no `strategy`), and every

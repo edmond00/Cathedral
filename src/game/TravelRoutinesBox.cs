@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using OpenTK.Mathematics;
 using Cathedral.Terminal;
+using Cathedral.Terminal.Utils;
 using Cathedral.Game.Management;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Routines;
@@ -103,13 +104,17 @@ public class TravelRoutinesBox
     public Routine? CliRoutineAt(int index)
         => index >= 0 && index < _entries.Count ? _entries[index].Routine : null;
 
+    // The travel plan's frame, title and buttons (it opens this box), and the Chorography tab's
+    // stepper and detail lines (the same map, seen from the protagonist screen).
     private static Vector4 BoxBg         => Config.Colors.Black;
-    private static Vector4 HoverBg       => Config.Colors.DarkPurple;
-    private static Vector4 TitleColor    => Config.Colors.BrightPurple;
-    private static Vector4 BodyColor     => Config.Colors.LightPurpleGray;
+    private static Vector4 FrameColor    => Config.TravelUI.BorderColor;
+    private static Vector4 TitleColor    => Config.TravelUI.TitleColor;
+    private static Vector4 BodyColor     => Config.Colors.LightGray75;
     private static Vector4 SubtitleColor => Config.Colors.MediumGray60;
-    private static Vector4 DisabledColor => Config.Colors.Purple;
-    private static Vector4 KindColor     => Config.Colors.MediumYellow;
+    private static Vector4 NameColor     => Config.Colors.BrightYellow;
+    private static Vector4 DisabledColor => Config.Colors.MediumGray50;
+    private static Vector4 ReasonColor   => Config.TravelUI.DangerColor;
+    private static readonly Vector4 StepBg = new(0.07f, 0.06f, 0.01f, 1.0f);
 
     private Entry? EntryOf(object? tag) => tag is string id ? _entries.FirstOrDefault(e => e.Routine.Id == id) : null;
 
@@ -124,11 +129,12 @@ public class TravelRoutinesBox
         _terminal.FillRect(_boxX, _boxY, _boxW, _boxH, ' ', BodyColor, BoxBg);
         DrawBorder();
 
-        CenteredInBox(_boxY + 1, Truncate($"— ROUTINES · {_mentalMap.LocationName.ToUpperInvariant()} —", _boxW - 4), TitleColor, BoxBg);
+        CenteredInBox(_boxY + 1, Truncate($"── ROUTINES · {_mentalMap.LocationName.ToUpperInvariant()} ──", _boxW - 4), TitleColor, BoxBg);
         CenteredInBox(_boxY + 2, Truncate("Go straight to somewhere you know here: click a routine on the map.", _boxW - 4), SubtitleColor, BoxBg);
 
-        // Below the map: a blank row, the status, the stepper, a blank row, and the buttons.
-        int mapTop = _boxY + 3, mapH = _boxH - 9;
+        // Below the map: a blank row, the status (two rows), a blank row, the stepper, a blank row,
+        // and the buttons.
+        int mapTop = _boxY + 3, mapH = _boxH - 11;
         var icons = _scene == null ? new List<DebugLocationMap.MapIcon>()
                   : MentalMapsPanelRenderer.Icons(_mentalMap, _scene, r => EntryOf(r.Id)?.Available ?? false)
                         .Where(i => EntryOf(i.Tag) != null).ToList();
@@ -144,7 +150,7 @@ public class TravelRoutinesBox
                         icons: icons, hoveredIcon: hovered?.Routine.Id,
                         selectedIcon: _selected?.Routine.Id, focus: focus, footRows: 0, selectedLit: BlinkOn);
 
-        DrawStatus(_boxY + _boxH - 5, hovered ?? _selected);
+        DrawStatus(_boxY + _boxH - 7, hovered ?? _selected);
         DrawStepper(_boxY + _boxH - 4);
         _terminal.FillRect(_boxX + 1, _boxY + _boxH - 3, _boxW - 2, 1, ' ', BodyColor, BoxBg);
         DrawButtons();
@@ -159,11 +165,14 @@ public class TravelRoutinesBox
               : e.Available ? new($"{e.Routine.Category.Label()}: {e.Routine.DisplayName} · {e.Routine.Time.Label().ToLowerInvariant()}", true)
               : new($"{e.Routine.DisplayName}: {e.Reason}", true));
 
-    /// <summary>What the cursor is on: the routine, its place and hour, and why it cannot be walked.</summary>
+    /// <summary>
+    /// What the cursor is on, as the Chorography tab reads a routine out: its name, then its kind, place
+    /// and hour — and, when it cannot be walked, why.
+    /// </summary>
     private void DrawStatus(int y, Entry? e)
     {
-        int x = _boxX + 2, w = _boxW - 4;
-        _terminal.FillRect(x, y, w, 1, ' ', BodyColor, BoxBg);
+        int w = _boxW - 4;
+        _terminal.FillRect(_boxX + 2, y, w, 2, ' ', BodyColor, BoxBg);
         if (e == null)
         {
             string count = _entries.Count == 0 ? "No routine learned here."
@@ -171,11 +180,16 @@ public class TravelRoutinesBox
             CenteredInBox(y, count, SubtitleColor, BoxBg);
             return;
         }
-        string tag = $"{e.Routine.Category.Label().ToUpperInvariant()} ";
-        string label = $"{e.Routine.DisplayName} · {e.Routine.AreaName} · {e.Routine.Time.Label().ToLowerInvariant()}"
-                     + (e.Available ? "" : $"  ({e.Reason})");
-        _terminal.Text(x, y, tag, e.Available ? KindColor : DisabledColor, BoxBg);
-        _terminal.Text(x + tag.Length, y, Truncate(label, w - tag.Length), e.Available ? TitleColor : DisabledColor, BoxBg);
+        var r = e.Routine;
+        CenteredInBox(y, Truncate(r.DisplayName, w), e.Available ? NameColor : DisabledColor, BoxBg);
+
+        string detail = $"{r.Category.Label()} · {r.AreaName} · {r.Time.Label().ToLowerInvariant()}";
+        string reason = e.Available ? "" : $" — {e.Reason}";
+        if (detail.Length + reason.Length > w)
+            reason = Truncate(reason, Math.Max(0, w - detail.Length));
+        int dx = _boxX + (_boxW - (detail.Length + reason.Length)) / 2;
+        _terminal.Text(dx, y + 1, Truncate(detail, w), BodyColor, BoxBg);
+        if (reason.Length > 0) _terminal.Text(dx + detail.Length, y + 1, reason, ReasonColor, BoxBg);
     }
 
     /// <summary><c>&lt; n/N &gt;</c>, centred: the arrows only with two routines or more.</summary>
@@ -186,14 +200,18 @@ public class TravelRoutinesBox
         if (_selected == null) return;
         string count = $" {_ordered.IndexOf(_selected) + 1}/{_ordered.Count} ";
         int x = _boxX + (_boxW - (StepButtonW * 2 + count.Length)) / 2;
-        _terminal.Text(x + StepButtonW, y, count, SubtitleColor, BoxBg);
+        _terminal.Text(x + StepButtonW, y, count, BodyColor, BoxBg);
         if (_ordered.Count < 2) return;
 
         _stepRow = y;
         _prevX = x;
         _nextX = x + StepButtonW + count.Length;
         foreach (var (bx, label) in new[] { (_prevX, " < "), (_nextX, " > ") })
-            _terminal.Text(bx, y, label, TitleColor, OverStep(_hover.X, _hover.Y) != 0 && _hover.X >= bx && _hover.X < bx + StepButtonW ? HoverBg : BoxBg);
+        {
+            bool hot = OverStep(_hover.X, _hover.Y) != 0 && _hover.X >= bx && _hover.X < bx + StepButtonW;
+            _terminal.Text(bx, y, label, hot ? Config.Colors.Black : Config.Colors.BrightYellow,
+                           hot ? Config.Colors.BrightYellow : StepBg);
+        }
     }
 
     /// <summary>-1 or 1 when (x, y) is on the stepper's previous or next arrow, else 0.</summary>
@@ -203,24 +221,7 @@ public class TravelRoutinesBox
          : x >= _nextX && x < _nextX + StepButtonW ? 1
          : 0;
 
-    private void DrawBorder()
-    {
-        int x0 = _boxX, y0 = _boxY, x1 = _boxX + _boxW - 1, y1 = _boxY + _boxH - 1;
-        for (int x = x0; x <= x1; x++)
-        {
-            _terminal.SetCell(x, y0, '─', TitleColor, BoxBg);
-            _terminal.SetCell(x, y1, '─', TitleColor, BoxBg);
-        }
-        for (int y = y0; y <= y1; y++)
-        {
-            _terminal.SetCell(x0, y, '│', TitleColor, BoxBg);
-            _terminal.SetCell(x1, y, '│', TitleColor, BoxBg);
-        }
-        _terminal.SetCell(x0, y0, '┌', TitleColor, BoxBg);
-        _terminal.SetCell(x1, y0, '┐', TitleColor, BoxBg);
-        _terminal.SetCell(x0, y1, '└', TitleColor, BoxBg);
-        _terminal.SetCell(x1, y1, '┘', TitleColor, BoxBg);
-    }
+    private void DrawBorder() => _terminal.DrawBox(_boxX, _boxY, _boxW, _boxH, BoxStyle.Single, FrameColor, BoxBg);
 
     /// <summary>CONFIRM (greyed unless the selected routine can be walked) and RETURN, side by side.</summary>
     private void DrawButtons()
@@ -233,9 +234,16 @@ public class TravelRoutinesBox
         _returnX = _confirmX + _confirmW + gap;
         _terminal.FillRect(_boxX + 1, _returnY, _boxW - 2, 1, ' ', BodyColor, BoxBg);
         bool canConfirm = _selected is { Available: true };
-        _terminal.Text(_confirmX, _returnY, confirm, canConfirm ? KindColor : DisabledColor,
-                       canConfirm && OverConfirm(_hover.X, _hover.Y) ? HoverBg : BoxBg);
-        _terminal.Text(_returnX, _returnY, back, TitleColor, OverReturn(_hover.X, _hover.Y) ? HoverBg : BoxBg);
+        bool overConfirm = OverConfirm(_hover.X, _hover.Y), overReturn = OverReturn(_hover.X, _hover.Y);
+        if (canConfirm)
+            _terminal.Text(_confirmX, _returnY, confirm,
+                overConfirm ? Config.TravelUI.TravelButtonHoverTextColor       : Config.TravelUI.TravelButtonTextColor,
+                overConfirm ? Config.TravelUI.TravelButtonHoverBackgroundColor : Config.TravelUI.TravelButtonBackgroundColor);
+        else
+            _terminal.Text(_confirmX, _returnY, confirm, Config.Colors.DarkGray, BoxBg);
+        _terminal.Text(_returnX, _returnY, back,
+            overReturn ? Config.TravelUI.ClearButtonHoverTextColor       : Config.TravelUI.ClearButtonTextColor,
+            overReturn ? Config.TravelUI.ClearButtonHoverBackgroundColor : Config.TravelUI.ClearButtonBackgroundColor);
     }
 
     /// <summary>

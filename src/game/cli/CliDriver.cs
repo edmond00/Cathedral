@@ -264,6 +264,7 @@ public sealed class CliDriver
                 case "help":        CmdHelp();                        break;
                 case "state":       CmdState();                       break;
                 case "dump":        CmdDump(rest);                    break;
+                case "snap":        CmdSnap(rest);                    break;
                 case "regions":     CmdRegions();                     break;
                 case "world":       CmdWorld();                       break;
                 case "world-regions": CmdWorldRegions(rest);         break;
@@ -364,6 +365,8 @@ public sealed class CliDriver
         Observation
           state                     current mode + phase flags (loading, dice, noetic, …)
           dump [--color]            the terminal grid as text; --color annotates greyed lines
+          snap <file.png>           the next frame drawn, as a PNG — colours and layout, which
+                                    `dump` cannot see. Waits until it is written
           regions                   what is actionable right now (the handles `click` accepts)
           world                     avatar vertex, biome, location, travel range, region
           world-variant             which kind of world this is, its thresholds, and the whole table
@@ -579,6 +582,18 @@ public sealed class CliDriver
             sb.Append(" companion-death=shown");
 
         CliMode.Emit(sb.ToString());
+    }
+
+    private void CmdSnap(string[] args)
+    {
+        if (args.Length < 1) { CliMode.Emit("error: snap <file.png>"); return; }
+        string path = System.IO.Path.GetFullPath(string.Join(' ', args));
+        var snap = FrameSnapshot.Arm(_game.CliCore, path);
+        if (snap == null) { CliMode.Emit("error: snap: the frame is already being captured (--record?)"); return; }
+
+        _draining = false;
+        RestartWait("snap");
+        _waitCondition = () => snap.Done;
     }
 
     private void CmdDump(string[] args)

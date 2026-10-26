@@ -31,8 +31,9 @@ public class TimePassageBox
     /// <summary>How long the marker rests on each period it passes through.</summary>
     private const int StepMs = 380;
 
-    // A cell wide enough for the widest button, "[Afternoon]", with a space either side: a button
-    // wider than its cell overlaps the next one's, and the click goes to whichever is hit-tested first.
+    // A cell wide enough for the widest label, "Afternoon", padded, plus the one-column gap between
+    // cells: a button wider than its cell overlaps the next one's, and the click goes to whichever is
+    // hit-tested first.
     private const int BoxWidth = 80;
     private const int CellWidth = 12;
 
@@ -165,76 +166,95 @@ public class TimePassageBox
 
     // ── Rendering ─────────────────────────────────────────────────────
 
+    // The travel plan's palette: a dull gold frame, a bright yellow title, grey prose, and solid
+    // buttons — black on yellow for the act, light on dark grey for a choice.
+    private static Vector4 Bg         => Config.Colors.Black;
+    private static Vector4 Frame      => Config.TravelUI.BorderColor;
+    private static Vector4 TitleInk   => Config.TravelUI.TitleColor;
+    private static Vector4 ProseInk   => Config.Colors.LightGray75;
+    private static Vector4 NoteInk    => Config.TravelUI.DangerColor;
+    private static Vector4 TrackInk   => Config.Colors.DarkGray35;
+
+    // The strip of periods: each a shaded cell, so the row reads as one dial rather than six words.
+    private static readonly Vector4 NowFill     = new(0.130f, 0.105f, 0.015f, 1f); // the location map's "here"
+    private static readonly Vector4 PassedFill  = new(0.075f, 0.075f, 0.080f, 1f);
+    private static readonly Vector4 AheadFill   = new(0.040f, 0.040f, 0.045f, 1f);
+
     /// <summary>Draws the box centred at (<paramref name="centerX"/>, <paramref name="centerY"/>).</summary>
     public void Render(TerminalHUD terminal, int centerX, int centerY)
     {
         if (!IsVisible) return;
 
-        Vector4 border  = Config.Colors.LightGray;
-        Vector4 bg      = Config.Colors.Black;
-        Vector4 neutral = Config.Colors.Gray;
-
-        int bgW = BoxWidth, bgH = 13;
+        // Asking has no note and no Continue, so its box ends under the line; a passage keeps its full
+        // height throughout, so the box does not grow when its Continue appears.
+        int bgW = BoxWidth, bgH = IsChoosing ? 8 : 12;
         int bgX = centerX - bgW / 2;
         int bgY = centerY - bgH / 2;
-        terminal.FillRect(bgX, bgY, bgW, bgH, ' ', Config.Colors.White, bg);
-        terminal.DrawBox(bgX, bgY, bgW, bgH, BoxStyle.Single, border, bg);
+        terminal.FillRect(bgX, bgY, bgW, bgH, ' ', ProseInk, Bg);
+        terminal.DrawBox(bgX, bgY, bgW, bgH, BoxStyle.Single, Frame, Bg);
 
-        string title = IsChoosing ? "WAIT UNTIL..." : "TIME PASSES";
-        terminal.Text(centerX - title.Length / 2, bgY + 2, title, IsChoosing ? Config.Colors.White : Config.Colors.Yellow, bg);
+        string title = IsChoosing ? "── WAIT UNTIL ──" : "── TIME PASSES ──";
+        terminal.Text(centerX - title.Length / 2, bgY + 1, title, TitleInk, Bg);
 
         // The marker's position: where the walk has reached.
         var at = _from.Advance(_stepsShown);
 
-        // The six periods. Passed ones grey, the marker yellow, the rest dim; while choosing, every
-        // period on offer is a button.
+        // The six periods, one shaded cell each over a track, the marker's cell lit and a ▲ under it.
+        // While choosing, every period on offer is a button.
         _periodRegions.Clear();
-        int rowY   = bgY + 5;
+        int rowY   = bgY + 3;
         int startX = centerX - Periods.Length * CellWidth / 2;
+        int cellW  = CellWidth - 1;   // a one-column gap between cells
+        for (int x = startX; x < startX + Periods.Length * CellWidth - 1; x++)
+            terminal.SetCell(x, rowY + 1, '─', TrackInk, Bg);
+
         for (int i = 0; i < Periods.Length; i++)
         {
             var p     = Periods[i];
             string lb = p.Label();
             int cx    = startX + i * CellWidth;
-            int lx    = cx + (CellWidth - lb.Length) / 2;
+            string cell = lb.PadLeft((cellW + lb.Length) / 2).PadRight(cellW);
 
+            Vector4 fg, fill;
             if (IsChoosing && _choosable.Contains(p))
             {
                 bool hov = _hoveredPeriod == p;
-                string btn = $"[{lb}]";
-                int bx = cx + (CellWidth - btn.Length) / 2;
-                terminal.Text(bx, rowY, btn, hov ? Config.Colors.Black : Config.Colors.White,
-                              hov ? Config.Colors.White : Config.Colors.DarkGray);
-                _periodRegions.Add((p, bx, rowY, btn.Length));
-                continue;
+                fg   = hov ? Config.TravelUI.TravelButtonTextColor       : Config.TravelUI.ClearButtonTextColor;
+                fill = hov ? Config.TravelUI.TravelButtonBackgroundColor : Config.TravelUI.ClearButtonBackgroundColor;
+                _periodRegions.Add((p, cx, rowY, cellW));
             }
+            else if (p == at)
+            {
+                // Choosing: the hour it is now, which cannot be waited until. Passing: the marker.
+                fg   = IsChoosing ? Config.Colors.BrightYellow : Config.TravelUI.TravelButtonTextColor;
+                fill = IsChoosing ? NowFill                    : Config.TravelUI.TravelButtonBackgroundColor;
+            }
+            else if (IsPassed(p)) { fg = Config.Colors.MediumGray50; fill = PassedFill; }
+            else if (p == _to)    { fg = Config.Colors.White;        fill = Config.TravelUI.ClearButtonBackgroundColor; }
+            else                  { fg = Config.Colors.DarkGray40;   fill = AheadFill; }
 
-            Vector4 fg = p == at                  ? Config.Colors.Yellow
-                       : IsPassed(p)              ? Config.Colors.LightGray
-                       : p == _to && !IsChoosing  ? Config.Colors.White
-                       :                            Config.Colors.DarkGray;
-            terminal.Text(lx, rowY, lb, fg, bg);
+            terminal.Text(cx, rowY, cell, fg, fill);
             if (p == at)
-                terminal.SetCell(cx + CellWidth / 2, rowY + 1, '^', Config.Colors.Yellow, bg);
+                terminal.SetCell(cx + cellW / 2, rowY + 1, '▲', Config.Colors.BrightYellow, Bg);
         }
 
-        // The line under the row: what is being asked, or where the walk is going.
+        // The line under the strip: what is being asked, or where the walk is going.
         string line = IsChoosing
             ? $"It is {_from.Label().ToLowerInvariant()}. Choose the hour to wait until."
             : _stepsTotal == 0 ? $"It is still {_to.Label().ToLowerInvariant()}."
-            : $"{_from.Label()}  ->  {_to.Label()}" + (TurnsADay ? "   (a new day)" : "");
-        terminal.Text(centerX - line.Length / 2, bgY + 8, line, neutral, bg);
+            : $"{_from.Label()}  →  {_to.Label()}" + (TurnsADay ? "   · a new day" : "");
+        terminal.Text(centerX - line.Length / 2, bgY + 6, line, ProseInk, Bg);
         if (_note != null)
-            terminal.Text(centerX - _note.Length / 2, bgY + 9, _note, Config.Colors.Purple, bg);
+            terminal.Text(centerX - _note.Length / 2, bgY + 7, _note, NoteInk, Bg);
 
         if (IsSettled)
         {
             const string btnText = "[ Continue ]";
             int btnX = centerX - btnText.Length / 2;
-            int btnY = bgY + 11;
+            int btnY = bgY + 9;
             terminal.Text(btnX, btnY, btnText,
-                _continueHovered ? Config.Colors.Black : Config.Colors.White,
-                _continueHovered ? Config.Colors.White : Config.Colors.DarkGray);
+                _continueHovered ? Config.TravelUI.TravelButtonHoverTextColor       : Config.TravelUI.TravelButtonTextColor,
+                _continueHovered ? Config.TravelUI.TravelButtonHoverBackgroundColor : Config.TravelUI.TravelButtonBackgroundColor);
             ContinueButtonRegion = (btnX, btnY, btnText.Length);
         }
         else
