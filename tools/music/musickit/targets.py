@@ -44,21 +44,42 @@ def _row_score(v: float, lo: float, hi: float) -> float:
     return math.exp(-3 * dist / width)
 
 
+def _main_pole(res: dict) -> str | None:
+    pieces = (res.get("meta") or {}).get("_pieces") or []
+    if not pieces:
+        return None
+    total: dict[str, float] = {}
+    end = (res.get("meta") or {}).get("seconds", 0)
+    for i, p in enumerate(pieces):
+        nxt = pieces[i + 1]["t"] if i + 1 < len(pieces) else end
+        total[p.get("pole", "")] = total.get(p.get("pole", ""), 0) + max(0.0, nxt - p["t"])
+    return max(total, key=total.get)
+
+
+def band_for(name: str, mood: str | None, pole: str | None):
+    lo, hi = band(name, mood)
+    if pole and pole in _T.get("poles", {}) and name in _T["poles"][pole]:
+        o = _T["poles"][pole][name]
+        lo, hi = o["lo"], o["hi"]
+    return lo, hi
+
+
 def evaluate(res: dict) -> dict:
     mood = (res.get("meta") or {}).get("mood")
+    pole = _main_pole(res)
     values = {**res.get("acoustic", {}), **res.get("symbolic", {})}
     rows, num, den, inb = {}, 0.0, 0.0, 0
     for name, m in _T["metrics"].items():
         if name not in values:
             continue
-        lo, hi = band(name, mood)
+        lo, hi = band_for(name, mood, pole)
         v = values[name]
         s = _row_score(v, lo, hi)
         rows[name] = {"value": v, "lo": lo, "hi": hi, "ok": s == 1.0, "score": s, "w": m["w"]}
         num += s * m["w"]
         den += m["w"]
         inb += s == 1.0
-    return {"total": num / den if den else 0.0, "in_band": inb, "n": len(rows), "rows": rows}
+    return {"total": num / den if den else 0.0, "in_band": inb, "n": len(rows), "rows": rows, "pole": pole}
 
 
 def summarise(results: list[dict]) -> dict:

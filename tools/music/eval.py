@@ -51,7 +51,7 @@ def analyse(wav: Path, score_path: Path | None, sheet: bool = True) -> dict:
     if score_path and score_path.exists():
         sc = scoremod.load(score_path)
         res["symbolic"] = symbolic.analyse(sc)
-        res["meta"] = sc.meta
+        res["meta"] = {**sc.meta, "_pieces": sc.pieces}
     res["scores"] = targets.evaluate(res)
     if sheet:
         from musickit import sheets

@@ -43,6 +43,14 @@ public enum Instrument
     SquareLead,
     /// <summary>Wind: band-passed noise drifting around a pitch. Air in a ruin.</summary>
     Wind,
+    /// <summary>Fiddle: one bowed saw through a wooden body's resonances, bow noise and a late vibrato.</summary>
+    Fiddle,
+    /// <summary>Tin whistle: a breathy near-sine with a chiff at each note, sounding an octave above the line.</summary>
+    Whistle,
+    /// <summary>Pipes: a reedy chanter, nasal and steady, no vibrato; also the festive drone.</summary>
+    Pipes,
+    /// <summary>Bodhrán: the frame drum of the session, a low skin, a felt thump and the tipper's click.</summary>
+    Bodhran,
 }
 
 /// <summary>One sounding note. Renders mono; the synthesiser pans it into its part's bus.</summary>
@@ -97,23 +105,27 @@ internal abstract class Voice
     internal static readonly System.Collections.Generic.Dictionary<Instrument, float> Levels = new()
     {
         // LEVELS-BEGIN
-        [Instrument.Bell] = 2.194f,
-        [Instrument.Bourdon] = 2.784f,
-        [Instrument.Choir] = 2.503f,
-        [Instrument.ChoirOoh] = 1.610f,
-        [Instrument.DarkPad] = 3.110f,
-        [Instrument.HandDrum] = 3.296f,
-        [Instrument.Harp] = 4.376f,
-        [Instrument.Harpsichord] = 2.859f,
-        [Instrument.Horn] = 2.350f,
-        [Instrument.Lute] = 4.510f,
-        [Instrument.Organ] = 1.316f,
-        [Instrument.OrganFlute] = 0.982f,
-        [Instrument.Recorder] = 1.003f,
-        [Instrument.SquareLead] = 3.255f,
-        [Instrument.Strings] = 1.597f,
-        [Instrument.Timpani] = 1.348f,
-        [Instrument.Wind] = 19.977f,        // LEVELS-END
+        [Instrument.Bell] = 2.216f,
+        [Instrument.Bodhran] = 4.210f,
+        [Instrument.Bourdon] = 2.833f,
+        [Instrument.Choir] = 2.529f,
+        [Instrument.ChoirOoh] = 1.616f,
+        [Instrument.DarkPad] = 3.192f,
+        [Instrument.Fiddle] = 3.634f,
+        [Instrument.HandDrum] = 3.880f,
+        [Instrument.Harp] = 4.380f,
+        [Instrument.Harpsichord] = 2.916f,
+        [Instrument.Horn] = 2.373f,
+        [Instrument.Lute] = 4.584f,
+        [Instrument.Organ] = 1.314f,
+        [Instrument.OrganFlute] = 0.970f,
+        [Instrument.Pipes] = 10.511f,
+        [Instrument.Recorder] = 0.994f,
+        [Instrument.SquareLead] = 3.268f,
+        [Instrument.Strings] = 1.604f,
+        [Instrument.Timpani] = 1.347f,
+        [Instrument.Whistle] = 0.987f,
+        [Instrument.Wind] = 19.914f,        // LEVELS-END
     };
 
     private static Voice Make(Instrument inst) => inst switch
@@ -135,6 +147,10 @@ internal abstract class Voice
         Instrument.Horn        => new HornVoice(),
         Instrument.SquareLead  => new SquareVoice(),
         Instrument.Wind        => new WindVoice(),
+        Instrument.Fiddle      => new FiddleVoice(),
+        Instrument.Whistle     => new WhistleVoice(),
+        Instrument.Pipes       => new PipesVoice(),
+        Instrument.Bodhran     => new BodhranVoice(),
         _ => new OrganVoice(OrganVoice.Principal, 0.1f),
     };
 }
@@ -756,5 +772,171 @@ internal sealed class WindVoice : Voice
             float nz = Rng.Next();
             buf[i] += (_bp.BandNorm(nz) + 0.5f * _bp2.BandNorm(nz)) * 1.4f * e * Amp;
         }
+    }
+}
+
+internal sealed class FiddleVoice : Voice
+{
+    private float[] _t = Array.Empty<float>();
+    private float _p1, _p2, _inc, _age, _vib, _scratch;
+    private Svf _b1, _b2, _b3, _lp, _bow, _scr;
+    private Drift _drift;
+
+    protected override void Start(float hz, float velocity)
+    {
+        _t = Wavetable.Saw.For(hz);
+        _inc = hz / Dsp.SampleRate;
+        _p2 = Rng.Unit();
+        // The body: the air resonance, the main wood resonance and the bridge hill.
+        _b1.Set(290f, 3f); _b2.Set(1050f, 2.5f); _b3.Set(2700f, 2f);
+        _lp.Set(7500f, 0.7f);
+        _bow.Set(3500f, 1.5f);
+        _scr.Set(2200f, 2f);
+        _scratch = 0.5f + 0.5f * velocity;
+        _vib = Rng.Unit() * Dsp.TwoPi;
+        Env = new Envelope(0.035f, 0.2f, 0.85f, 0.12f);
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
+    public override void Render(float[] buf, int n)
+    {
+        float dt = 1f / Dsp.SampleRate, vr = 5.8f * Dsp.TwoPi / Dsp.SampleRate, sd = Dsp.Coef(0.04f);
+        for (int i = 0; i < n; i++)
+        {
+            float e = Env.Next();
+            _age += dt;
+            _vib += vr; if (_vib > Dsp.TwoPi) _vib -= Dsp.TwoPi;
+            float depth = 14f * Math.Clamp((_age - 0.18f) * 3f, 0f, 1f);
+            float scoop = -10f * MathF.Max(0f, 1f - _age / 0.03f);
+            float m = 1f + (MathF.Sin(_vib) * depth + scoop + _drift.Next(ref Rng, 3f)) / 1200f * 0.693f;
+            float src = Wavetable.Read(_t, _p1) + 0.3f * Wavetable.Read(_t, _p2);
+            _p1 += _inc * m; if (_p1 >= 1f) _p1 -= 1f;
+            _p2 += _inc * m * 1.0023f; if (_p2 >= 1f) _p2 -= 1f;
+            float nz = Rng.Next();
+            float body = _b1.BandNorm(src) * 0.3f + _b2.BandNorm(src) * 0.9f + _b3.BandNorm(src) * 1.0f + src * 0.35f;
+            body += _bow.Band(nz) * 0.015f + _scr.BandNorm(nz) * _scratch * 0.3f;
+            _scratch *= sd;
+            buf[i] += _lp.Low(body) * 0.5f * e * Amp;
+        }
+    }
+}
+
+internal sealed class WhistleVoice : Voice
+{
+    private static readonly Wavetable Table = new(h => h switch { 1 => 1f, 2 => 0.08f, 3 => 0.05f, _ => 0f }, 4);
+    private float[] _t = Array.Empty<float>();
+    private float _p, _inc, _age, _vib, _chiff;
+    private Svf _breath, _chiffBp;
+
+    protected override void Start(float hz, float velocity)
+    {
+        _t = Table.For(hz);
+        _inc = hz / Dsp.SampleRate;
+        _breath.Set(Math.Min(hz * 2f, 12000f), 2.5f);
+        _chiffBp.Set(Math.Min(hz * 3f, 12000f), 3f);
+        _chiff = 0.5f;
+        Env = new Envelope(0.015f, 0.1f, 0.9f, 0.04f);
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
+    public override void Render(float[] buf, int n)
+    {
+        float dt = 1f / Dsp.SampleRate, vr = 5.1f * Dsp.TwoPi / Dsp.SampleRate, cd = Dsp.Coef(0.025f);
+        for (int i = 0; i < n; i++)
+        {
+            float e = Env.Next();
+            _age += dt;
+            _vib += vr; if (_vib > Dsp.TwoPi) _vib -= Dsp.TwoPi;
+            float m = 1f + MathF.Sin(_vib) * 6f * Math.Clamp((_age - 0.4f) * 2f, 0f, 1f) / 1200f * 0.693f;
+            float s = Wavetable.Read(_t, _p);
+            _p += _inc * m; if (_p >= 1f) _p -= 1f;
+            float nz = Rng.Next();
+            float v = s * 0.8f + _breath.BandNorm(nz) * 0.03f + _chiffBp.BandNorm(nz) * _chiff * 0.6f;
+            _chiff *= cd;
+            buf[i] += v * e * Amp;
+        }
+    }
+}
+
+internal sealed class PipesVoice : Voice
+{
+    private static readonly Wavetable Reed = new(h => MathF.Sin(MathF.PI * h * 0.33f) / h * (h <= 2 ? 0.7f : 1f));
+    private float[] _t = Array.Empty<float>();
+    private float _p, _inc;
+    private Svf _f1, _f2, _lp;
+    private Drift _drift;
+
+    protected override void Start(float hz, float velocity)
+    {
+        _t = Reed.For(hz);
+        _inc = hz / Dsp.SampleRate;
+        _f1.Set(1400f, 2f); _f2.Set(2600f, 3f);
+        _lp.Set(4200f, 0.7f);
+        Env = new Envelope(0.015f, 0.05f, 0.95f, 0.06f);
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
+    public override void Render(float[] buf, int n)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            float e = Env.Next();
+            float m = 1f + _drift.Next(ref Rng, 3f) / 1200f * 0.693f;
+            float s = Wavetable.Read(_t, _p);
+            _p += _inc * m; if (_p >= 1f) _p -= 1f;
+            float v = s * 0.45f + _f1.BandNorm(s) * 0.7f + _f2.BandNorm(s) * 0.4f;
+            buf[i] += _lp.Low(v) * 0.5f * e * Amp;
+        }
+    }
+}
+
+internal sealed class BodhranVoice : Voice
+{
+    private static readonly float[] Ratios = { 1f, 1.59f, 2.14f };
+    private readonly float[] _ph = new float[3], _inc = new float[3], _g = new float[3], _amp = new float[3];
+    private float _thump, _click;
+    private OnePole _thumpLp;
+    private Svf _tip;
+
+    protected override void Start(float hz, float velocity)
+    {
+        float[] amps = { 1f, 0.35f, 0.15f };
+        float[] dec = { 0.28f, 0.16f, 0.1f };
+        for (int k = 0; k < 3; k++)
+        {
+            _inc[k] = hz * Ratios[k] / Dsp.SampleRate;
+            _g[k] = MathF.Pow(10f, -3f / (dec[k] * Dsp.SampleRate));
+            _amp[k] = amps[k];
+        }
+        _thump = 1f;
+        _click = 0.25f + 0.35f * velocity;
+        _thumpLp.Set(190f);
+        _tip.Set(2300f, 1.5f);
+        Env = new Envelope(0.001f, 0.01f, 1f, 0.12f);
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
+    public override void Render(float[] buf, int n)
+    {
+        float td = Dsp.Coef(0.035f), cd = Dsp.Coef(0.006f);
+        float energy = 0;
+        for (int i = 0; i < n; i++)
+        {
+            float e = Env.Next();
+            float s = 0;
+            for (int k = 0; k < 3; k++)
+            {
+                s += MathF.Sin(Dsp.TwoPi * _ph[k]) * _amp[k];
+                _ph[k] += _inc[k]; if (_ph[k] >= 1f) _ph[k] -= 1f;
+                _amp[k] *= _g[k];
+            }
+            float nz = Rng.Next();
+            s += _thumpLp.Low(nz) * 3f * _thump + _tip.BandNorm(nz) * _click;
+            _thump *= td;
+            _click *= cd;
+            energy += s * s;
+            buf[i] += s * 0.6f * e * Amp;
+        }
+        if (energy / Math.Max(1, n) < 1e-10f) Env.Kill(0.001f);
     }
 }

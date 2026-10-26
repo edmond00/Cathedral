@@ -30,12 +30,24 @@ public struct MusicMoodState
     /// </summary>
     public float Intensity;
 
-    public MusicMoodState(float coldness, float fear, float mystery, float intensity = 1.0f)
+    /// <summary>
+    /// 0 = no one is celebrating, 1 = a crowded tavern on a feast night. Pulls the music towards the
+    /// festive palette: Celtic dance tunes (jigs and reels) on fiddle, whistle and pipes over a strummed
+    /// lute and a bodhrán. Set by the place, not the moment: taverns, markets, ports, towns.
+    /// <para>
+    /// It does not lift the ban on a happy key. Dance tunes stay in Dorian and Aeolian, which is where
+    /// a great many of the old session tunes live anyway: festive is a lively room, not a bright one.
+    /// </para>
+    /// </summary>
+    public float Festivity;
+
+    public MusicMoodState(float coldness, float fear, float mystery, float intensity = 1.0f, float festivity = 0f)
     {
         Coldness   = Math.Clamp(coldness,   0f, 1f);
         Fear      = Math.Clamp(fear,      0f, 1f);
         Mystery   = Math.Clamp(mystery,   0f, 1f);
         Intensity = Math.Clamp(intensity, 0f, 1f);
+        Festivity = Math.Clamp(festivity, 0f, 1f);
     }
 
     // Presets sit noticeably higher on Coldness than they used to. The old floor (Tavern at 0.00,
@@ -57,8 +69,11 @@ public struct MusicMoodState
     public static readonly MusicMoodState WorldView = new(0.65f, 0.60f, 0.0f, 0.25f);
 
     // ── Archetype presets (for PoC demonstration) ─────────────────────────────
-    /// <summary>Tavern: the warmest place in the world — Dorian, measured pulse, still not a dance.</summary>
-    public static readonly MusicMoodState Tavern = new(0.32f, 0.28f, 0.05f);
+    /// <summary>Tavern: the warmest place in the world, and the one where they dance — jigs and reels.</summary>
+    public static readonly MusicMoodState Tavern = new(0.32f, 0.28f, 0.05f, 1.0f, 0.85f);
+
+    /// <summary>The same tavern on a quiet night: the old preset, before the dancing came in.</summary>
+    public static readonly MusicMoodState QuietTavern = new(0.32f, 0.28f, 0.05f);
 
     /// <summary>Tense chase/battle: fast BPM, staccato, urgent feel.</summary>
     public static readonly MusicMoodState Battle = new(0.35f, 0.92f, 0.10f);
@@ -71,20 +86,24 @@ public struct MusicMoodState
 
     /// <summary>Returns a copy with Coldness changed by delta, clamped.</summary>
     public MusicMoodState WithColdness(float delta) =>
-        new(Coldness + delta, Fear, Mystery, Intensity);
+        new(Coldness + delta, Fear, Mystery, Intensity, Festivity);
 
     /// <summary>Returns a copy with Fear changed by delta, clamped.</summary>
     public MusicMoodState WithFear(float delta) =>
-        new(Coldness, Fear + delta, Mystery, Intensity);
+        new(Coldness, Fear + delta, Mystery, Intensity, Festivity);
 
     /// <summary>Returns a copy with Mystery changed by delta, clamped.</summary>
     public MusicMoodState WithMystery(float delta) =>
-        new(Coldness, Fear, Mystery + delta, Intensity);
+        new(Coldness, Fear, Mystery + delta, Intensity, Festivity);
+
+    /// <summary>Returns a copy with Festivity changed by delta, clamped.</summary>
+    public MusicMoodState WithFestivity(float delta) =>
+        new(Coldness, Fear, Mystery, Intensity, Festivity + delta);
 
     /// <summary>Returns a copy with Intensity changed by delta, clamped.</summary>
     public MusicMoodState WithIntensity(float delta) =>
-        new(Coldness, Fear, Mystery, Intensity + delta);
+        new(Coldness, Fear, Mystery, Intensity + delta, Festivity);
 
     public override string ToString() =>
-        $"Coldness={Coldness:F2}  Fear={Fear:F2}  Mystery={Mystery:F2}  Intensity={Intensity:F2}";
+        $"Coldness={Coldness:F2}  Fear={Fear:F2}  Mystery={Mystery:F2}  Intensity={Intensity:F2}  Festivity={Festivity:F2}";
 }

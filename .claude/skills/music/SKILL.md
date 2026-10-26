@@ -36,10 +36,20 @@ AmbianceEngine (src/audio/AmbianceEngine.cs)     the game's only door: same API 
   `System.Random`. The world theme is piece −1.
 - **Top down.** A piece picks mode (the `ModalScale` palette: no major-third mode, Dorian is the
   warmest), tonic (moves by fourths and fifths), tempo, metre, an orchestration from four poles
-  (comfy, melancholy, dark, fear), a form (`I A A' B A' O`…) and motifs. Each A is a period: the
+  (comfy, melancholy, dark, fear, festive), a form (`I A A' B A' O`…) and motifs. Each A is a period: the
   motif, its sequence, a second idea, an open cadence; then the same phrase with a closed ending.
   A' is a plain or ornamented restatement, B the inverted motif over contrast chords, C a breakdown
   or chant. Layers enter one at a time across the piece.
+- **Festive pieces.** `MusicMoodState.Festivity` (per place, `LocationMoodProfiles`: taverns,
+  markets, ports, circuses, towns, villages) pulls towards the festive pole. When it leads, the
+  piece is a dance (`Dance.Jig`, 6/8 written as Meter 2 with triplet eighths, or `Dance.Reel`,
+  running eighths) played the session way: `I A A' B B' A' A' B' B'`, each part twice, the tune
+  twice round, then the next tune of the set with no outro. Fiddle, whistle (sounds an octave
+  up), pipes; lute or harp strumming boom-chick (`EmitComp`); bodhrán (`EmitBodhran`); the second
+  instrument in heterophony; cuts and rolls (flagged `Ornament` in the score so the harness reads
+  the tune under them); a lilt (`Lilt`). Still Dorian or Aeolian: festive is lively, not bright.
+  The comp and drum come in with the melody's tier there, not at Intensity 0.75. The harness
+  holds festive renders to the `poles.festive` bands in `targets.json`.
 - **Mood.** `SetMood` glides the mood (≈2 s). Structure is decided at piece and section starts; a
   drift above 0.28 (or the fight filter changing) ends the piece through a one- or two-bar bridge.
   Track count and Intensity gate layers on the old ladder (1 drone+pad, 2 melody, 3 counter+bass,
@@ -88,7 +98,9 @@ music worse to read or to look at; re-calibrate the band instead, and say why in
   only there, as a render slowing from 13x to 4x real time; `render_speed` and `max_voices` are
   in the metrics for that reason.
 - **Levels.** After changing a voice, run `python3 tools/music/levels.py --apply` (twice) so every
-  instrument stays at the common level; balance belongs in `Orchestra.PartLevel` and `Trim`.
+  instrument stays at the common level; balance belongs in `Orchestra.PartLevel` and `Trim`. Its
+  targets are measured after `Synth.PreGain`: change the pre-gain and move `SUSTAINED_DB` with it,
+  or the next run silently re-levels every instrument (it once pushed the whole mix up 2.7 dB).
 - **Band-passes that shape a timbre use `Svf.BandNorm`** (unity peak). Plain `Band` peaks at Q.
 - **The live stream reports itself** on shutdown: `[audio] music stream: …s played in …s, n
   underrun(s) (at …), slowest block …`. Underruns cluster in the first seconds (world build, model

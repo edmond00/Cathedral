@@ -13,9 +13,21 @@ internal enum CounterStyle
     Tenor,
     /// <summary>Answers: the counter plays a fragment of the motif while the melody holds a cadence.</summary>
     Echo,
+    /// <summary>
+    /// The session's way: a second instrument plays the same tune, an octave down or in unison, leaving
+    /// out a note here and holding one there. Only the festive pieces use it.
+    /// </summary>
+    Heterophony,
 }
 
-internal enum OstinatoStyle { Arpeggio, Broken, Pulse }
+/// <summary>The accompaniment's figure. Comp is the strummed boom-chick under a dance tune.</summary>
+internal enum OstinatoStyle { Arpeggio, Broken, Pulse, Comp }
+
+/// <summary>
+/// Which dance a festive piece is. A jig is in 6/8, written here as two dotted-quarter beats a bar
+/// with triplet eighths (Meter 2); a reel is in 4/4 in running eighths (Meter 4).
+/// </summary>
+internal enum Dance { None, Jig, Reel }
 
 /// <summary>Who plays what in one piece. Chosen once per piece from the mood; varied per section.</summary>
 internal sealed class Orchestration
@@ -28,13 +40,15 @@ internal sealed class Orchestration
     public bool OpenVoicing;             // pads in open fifths rather than triads
     public float Liveliness, Chant, Fall;
     public string Pole = "";
+    public Dance Dance;
 }
 
 /// <summary>
 /// The genre's poles as instrument palettes, and the mood's pull towards each. A mood is a blend,
-/// so a piece draws each role from the blend: a tavern is mostly comfy (recorder, harpsichord, hand
-/// drum, strings), a dungeon mostly dark (organ, choir, timpani, a sweeping pad, wind), a lament
-/// melancholic (harp, strings, choir "ooh", bells), a fight the fear palette (horns, low pulse).
+/// so a piece draws each role from the blend: a quiet room is mostly comfy (recorder, harpsichord,
+/// hand drum, strings), a dungeon mostly dark (organ, choir, timpani, a sweeping pad, wind), a lament
+/// melancholic (harp, strings, choir "ooh", bells), a fight the fear palette (horns, low pulse), a
+/// festive tavern, market or port the session (fiddle, whistle, pipes, lute, bodhrán).
 /// </summary>
 internal static class Orchestra
 {
@@ -80,6 +94,18 @@ internal static class Orchestra
         new[] { (Instrument.Strings, 1.0), (Instrument.Bourdon, 1.0) },
         Instrument.Timpani, 0.85, 0.3, 0.4, 0.55f, 0.3f);
 
+    /// <summary>
+    /// The festive pole: a session in a tavern. Fiddle, whistle and pipes on the tune, a strummed lute,
+    /// the bodhrán. No bells, no wind, nothing sacred.
+    /// </summary>
+    private static readonly Pole Festive = new("festive",
+        new[] { (Instrument.Fiddle, 3.0), (Instrument.Whistle, 3.0), (Instrument.Pipes, 1.2), (Instrument.Recorder, 0.5) },
+        new[] { (Instrument.Lute, 4.0), (Instrument.Harp, 0.8) },
+        new[] { (Instrument.Strings, 1.0), (Instrument.OrganFlute, 0.5) },
+        new[] { (Instrument.Fiddle, 2.0), (Instrument.Whistle, 2.0), (Instrument.Pipes, 0.6) },
+        new[] { (Instrument.Strings, 1.0), (Instrument.Bourdon, 0.4) },
+        Instrument.Bodhran, 0.95, 0.0, 0.0, 1.0f, 0.0f);
+
     /// <summary>The mood's weight on each pole.</summary>
     private static (Pole p, double w)[] Weights(MusicMoodState m)
     {
@@ -88,7 +114,18 @@ internal static class Orchestra
         double mel = Math.Max(0, 1 - Math.Abs(c - 0.6) * 2.5) * (1 - f * 0.8) + 0.02;
         double dark = Math.Max(0, c - 0.45) * 1.5 + y * 0.8;
         double fear = Math.Max(0, f - 0.35) * 2.5;
-        return new[] { (Comfy, comfy), (Melancholy, mel), (Dark, dark), (Fear, fear) };
+        // Festivity outweighs the rest once it is past about a half; fear and strangeness damp it, a
+        // haunted market does not dance.
+        double festive = m.Festivity * m.Festivity * 4.0 * (1 - f * 0.7) * (1 - y * 0.6);
+        return new[] { (Comfy, comfy), (Melancholy, mel), (Dark, dark), (Fear, fear), (Festive, festive) };
+    }
+
+    /// <summary>The dance a mood asks for: none unless the festive pole leads, then a jig or a reel.</summary>
+    public static Dance DanceFor(MusicMoodState m, Random rng)
+    {
+        var main = Weights(m).OrderByDescending(p => p.w).First().p;
+        if (main != Festive) return Dance.None;
+        return rng.NextDouble() < 0.55 ? Dance.Jig : Dance.Reel;
     }
 
     private static Instrument Draw(IEnumerable<(Pole p, double w)> poles, Func<Pole, (Instrument i, double w)[]> role, Random rng,
@@ -107,9 +144,11 @@ internal static class Orchestra
     public static Orchestration Choose(MusicMoodState m, int meter, double bpm, Random rng)
     {
         var poles = Weights(m);
+        var main = poles.OrderByDescending(p => p.w).First().p;
+        // A session is a session: when the festive pole leads, nobody else's instruments sit in.
+        if (main == Festive) poles = new[] { (Festive, 1.0) };
         double tot = poles.Sum(p => p.w);
         var o = new Orchestration();
-        var main = poles.OrderByDescending(p => p.w).First().p;
         o.Pole = main.Name;
         o.Melody = Draw(poles, p => p.Melody, rng);
         o.MelodyAlt = Draw(poles, p => p.Melody, rng, o.Melody);
@@ -120,8 +159,15 @@ internal static class Orchestra
         o.Bass = Draw(poles, p => p.Bass, rng);
         o.Drone = Instrument.Bourdon;
         o.Perc = main.Perc;
+        if (main == Festive)
+        {
+            // The session: the tune never alone, the drum nearly always, a pipes drone some of the time.
+            o.Percussion = true;
+            o.Drone = rng.NextDouble() < 0.45 ? Instrument.Pipes : Instrument.Bourdon;
+            if (o.Counter == o.Melody) o.Counter = o.Melody == Instrument.Fiddle ? Instrument.Whistle : Instrument.Fiddle;
+        }
         double Chance(Func<Pole, double> f) => poles.Sum(p => p.w * f(p.p)) / tot;
-        o.Percussion = rng.NextDouble() < Chance(p => p.PercChance);
+        o.Percussion = o.Percussion || rng.NextDouble() < Chance(p => p.PercChance);
         o.Bell = rng.NextDouble() < Chance(p => p.BellChance);
         o.Ambience = m.Mystery > 0.45f && rng.NextDouble() < Chance(p => p.AmbienceChance) + m.Mystery * 0.3;
         o.Liveliness = (float)(poles.Sum(p => p.w * p.p.Liveliness) / tot);
@@ -130,7 +176,13 @@ internal static class Orchestra
         o.OpenVoicing = main == Dark || main == Fear || rng.NextDouble() < m.Coldness * 0.5;
 
         // The ostinato's figure: chord-tone indices (0 root, 1 third, 2 fifth, 3 octave) per step.
-        if (o.Ostinato == Instrument.Timpani || main == Fear && rng.NextDouble() < 0.5)
+        if (main == Festive)
+        {
+            o.OstinatoStyle = OstinatoStyle.Comp;   // the composer strums it by the dance's own pattern
+            o.OstinatoPattern = new[] { 0 };
+            o.OstinatoStep = 1.0;
+        }
+        else if (o.Ostinato == Instrument.Timpani || main == Fear && rng.NextDouble() < 0.5)
         {
             o.OstinatoStyle = OstinatoStyle.Pulse;
             o.OstinatoPattern = meter == 3 ? new[] { 0, 2, 2 } : new[] { 0, 2, 0, 2 };
@@ -148,6 +200,17 @@ internal static class Orchestra
             if (o.OstinatoStep < 0.75 && bpm > 80) { o.OstinatoPattern = o.OstinatoPattern.Where((_, i) => i % 2 == 0).ToArray(); o.OstinatoStep *= 2; }
         }
         return o;
+    }
+
+    /// <summary>
+    /// A dance's tempo: a jig's dotted quarter or a reel's quarter. Slower than a session plays them,
+    /// as background to a room rather than for dancers, and slower again when the place is cold.
+    /// </summary>
+    public static double DanceTempo(Dance d, MusicMoodState m, Random rng)
+    {
+        double slow = 1.0 - Math.Max(0, m.Coldness - 0.3) * 0.25;
+        double bpm = d == Dance.Jig ? 98 + rng.NextDouble() * 16 : 94 + rng.NextDouble() * 16;
+        return bpm * slow;
     }
 
     public static double Tempo(MusicMoodState m, Random rng)
@@ -184,11 +247,14 @@ internal static class Orchestra
     /// <summary>The room and the tape for a mood.</summary>
     public static void ApplyBus(Synth s, MusicMoodState m)
     {
-        float t60 = 2.0f + 5.0f * m.Mystery + 2.0f * m.Coldness;
+        // A festive place is a room full of people: a shorter hall and less of it.
+        float t60 = (2.0f + 5.0f * m.Mystery + 2.0f * m.Coldness) * (1f - 0.45f * m.Festivity);
         float damp = 5200f - 2400f * m.Coldness - 800f * m.Mystery;
         s.SetHall(t60, damp, 0.015f + 0.035f * m.Mystery);
         s.SetTape(9000f - 2600f * m.Coldness - 600f * m.Mystery, 3f + 3.5f * m.Mystery, -60f + 3f * m.Coldness, 1.3f + 0.5f * m.Fear);
         s.ChorusDepth.Target = 0.45f + 0.45f * m.Mystery;
-        s.ReverbReturn = 1.05f + 0.45f * m.Mystery + 0.2f * m.Coldness;
+        s.ReverbReturn = (1.05f + 0.45f * m.Mystery + 0.2f * m.Coldness) * (1f - 0.35f * m.Festivity);
+        // A full band in a small room adds up: the festive mix goes into the tape a little lower.
+        s.PreGain = 0.22f * (1f - 0.15f * m.Festivity);
     }
 }

@@ -119,6 +119,34 @@ public static class LocationMoodProfiles
         [Cathedral.Glyph.Microworld.SettlementTable.Family.Vineyard]   = new(new(0.10f, 0.10f, 0.20f), new(0.30f, 0.25f, 0.40f)),
     };
 
+    /// <summary>
+    /// How festive each kind of place is, as a range sampled like the others. Absent means 0: the
+    /// wilds, the holy places and the dead ones never dance. Above about 0.5 the festive palette
+    /// leads (jigs and reels on fiddle, whistle and pipes); below it, it only colours the others.
+    /// A town or a village rolls anywhere in its range, so some of them are lively and some are not.
+    /// </summary>
+    private static readonly Dictionary<string, (float Min, float Max)> Festivity = new()
+    {
+        ["tavern"]      = (0.80f, 1.00f),
+        ["market"]      = (0.60f, 0.90f),
+        ["port"]        = (0.55f, 0.90f),
+        ["circus"]      = (0.70f, 1.00f),
+        ["stadium"]     = (0.50f, 0.80f),
+        ["amphitheater"] = (0.35f, 0.70f),
+        ["city"]        = (0.35f, 0.75f),
+        ["village"]     = (0.30f, 0.70f),
+        ["townlet"]     = (0.35f, 0.75f),
+        ["hamlet"]      = (0.15f, 0.50f),
+        ["forum"]       = (0.20f, 0.55f),
+        ["burg"]        = (0.15f, 0.45f),
+        ["villa"]       = (0.15f, 0.45f),
+        ["farm"]        = (0.10f, 0.40f),
+        ["ranch"]       = (0.10f, 0.40f),
+        ["stable"]      = (0.05f, 0.30f),
+        ["workshop"]    = (0.05f, 0.30f),
+        ["oasis"]       = (0.10f, 0.40f),
+    };
+
     private static readonly MoodRange Fallback =
         new(new(0.25f, 0.15f, 0.30f), new(0.50f, 0.35f, 0.55f));
 
@@ -157,11 +185,11 @@ public static class LocationMoodProfiles
         float coldness = Lerp(p.Min.Coldness, p.Max.Coldness);
         coldness = ColdnessFloor + coldness * (1f - ColdnessFloor);
 
-        return new MusicMoodState(
-            coldness,
-            Lerp(p.Min.Fear,      p.Max.Fear),
-            Lerp(p.Min.Mystery,   p.Max.Mystery),
-            0.70f + (float)rng.NextDouble() * 0.30f   // intensity 0.70–1.0
-        );
+        float fear = Lerp(p.Min.Fear, p.Max.Fear);
+        float mystery = Lerp(p.Min.Mystery, p.Max.Mystery);
+        float intensity = 0.70f + (float)rng.NextDouble() * 0.30f;   // 0.70–1.0
+        // Drawn last, so every place keeps the coldness, fear and mystery it had before festivity existed.
+        float festivity = Festivity.TryGetValue(key, out var f) ? Lerp(f.Min, f.Max) : 0f;
+        return new MusicMoodState(coldness, fear, mystery, intensity, festivity);
     }
 }

@@ -1,5 +1,5 @@
 {
- "_doc": "Bands each metric should fall in, with the reason. A band is a statement about the genre (retro dungeon synth: Fief, Erang, Old Tower, early Mortiis), not about taste. Weights say how much a miss costs in the total. Melodic bands marked 'Calibrated' were checked with exemplars.py against public-domain tunes written out in tools/music/exemplars/; run `eval.py calibrate reference/` on real recordings to replace the acoustic ones. Per-mood overrides sit under 'moods'.",
+ "_doc": "Bands each metric should fall in, with the reason. A band is a statement about the genre (retro dungeon synth: Fief, Erang, Old Tower, early Mortiis), not about taste. Weights say how much a miss costs in the total. Melodic bands marked 'Calibrated' were checked with exemplars.py against public-domain tunes written out in tools/music/exemplars/; run `eval.py calibrate reference/` on real recordings to replace the acoustic ones. Per-mood overrides sit under 'moods'. Per-pole overrides sit under 'poles' and apply to the pole that leads a render for most of its time: a festive render is dance music (dense, chord a bar, a drier room, triplet lilt, heterophony with the whistle above the fiddle), held to the bands the session idiom implies.",
  "metrics": {
   "mode_fit": {
    "lo": 0.93,
@@ -287,6 +287,66 @@
    "dissonance_time": {
     "lo": 0.0,
     "hi": 0.4
+   }
+  }
+ },
+ "poles": {
+  "festive": {
+   "mel_density": {
+    "lo": 2.0,
+    "hi": 7.0
+   },
+   "harmonic_rhythm_s": {
+    "lo": 0.9,
+    "hi": 8
+   },
+   "phrase_len_cv": {
+    "lo": 0.0,
+    "hi": 1.3
+   },
+   "counter_above_mel": {
+    "lo": 0.0,
+    "hi": 1.0
+   },
+   "wet_db": {
+    "lo": -18,
+    "hi": -4
+   },
+   "envelope_roughness": {
+    "lo": 0.0,
+    "hi": 2.5
+   },
+   "onset_rate": {
+    "lo": 1.0,
+    "hi": 12
+   },
+   "max_voices": {
+    "lo": 0,
+    "hi": 64
+   },
+   "side_ratio": {
+    "lo": 0.02,
+    "hi": 0.6
+   },
+   "silence_ratio": {
+    "lo": 0.0,
+    "hi": 0.12
+   },
+   "mel_range_phrase": {
+    "lo": 4,
+    "hi": 19
+   },
+   "mel_distinct_phrase": {
+    "lo": 4,
+    "hi": 12
+   },
+   "mel_leap_ratio": {
+    "lo": 0.03,
+    "hi": 0.3
+   },
+   "audio_repeat": {
+    "lo": 0.2,
+    "hi": 0.99
    }
   }
  }

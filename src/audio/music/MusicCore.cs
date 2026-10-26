@@ -111,7 +111,8 @@ internal sealed class MusicCore : IScoreObserver
             _active.Coldness + (_target.Coldness - _active.Coldness) * k,
             _active.Fear + (_target.Fear - _active.Fear) * k,
             _active.Mystery + (_target.Mystery - _active.Mystery) * k,
-            _active.Intensity + (_target.Intensity - _active.Intensity) * k);
+            _active.Intensity + (_target.Intensity - _active.Intensity) * k,
+            _active.Festivity + (_target.Festivity - _active.Festivity) * k);
         _composer.Mood = _active;
 
         double now = Seconds;
@@ -152,6 +153,7 @@ internal sealed class MusicCore : IScoreObserver
     private void UpdateGates()
     {
         float I = _active.Intensity;
+        bool dance = _composer.Current is { Dance: not Dance.None };
         static float Window(float x, float a, float b) => Math.Clamp((x - a) / (b - a), 0f, 1f);
         foreach (Part part in Enum.GetValues<Part>())
         {
@@ -162,6 +164,9 @@ internal sealed class MusicCore : IScoreObserver
                 Part.Pad => (1, -1f, 0.10f),
                 Part.Melody or Part.Bell => (2, 0.25f, 0.35f),
                 Part.Counter or Part.Bass => (3, 0.50f, 0.60f),
+                // In a dance the strummed chords and the drum are the floor the tune stands on, not
+                // decoration: they come in with the melody, or a quieter festive place loses them.
+                Part.Ostinato or Part.Perc when dance => (2, 0.25f, 0.35f),
                 Part.Ostinato or Part.Perc => (4, 0.75f, 0.85f),
                 _ => (0, -1f, 0f),
             };
@@ -192,7 +197,8 @@ internal sealed class MusicCore : IScoreObserver
         Instrument.Strings => 49, Instrument.DarkPad => 95, Instrument.Recorder => 74, Instrument.Harpsichord => 6,
         Instrument.Harp => 46, Instrument.Lute => 24, Instrument.Bell => 14, Instrument.Timpani => 47,
         Instrument.HandDrum => 116, Instrument.Bourdon => 19, Instrument.Horn => 60, Instrument.SquareLead => 80,
-        Instrument.Wind => 122, _ => 0,
+        Instrument.Wind => 122, Instrument.Fiddle => 110, Instrument.Whistle => 78, Instrument.Pipes => 109,
+        Instrument.Bodhran => 116, _ => 0,
     };
 
     private void CaptureMidi(ScoreEvent e)
