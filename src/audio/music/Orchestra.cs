@@ -20,8 +20,18 @@ internal enum CounterStyle
     Heterophony,
 }
 
-/// <summary>The accompaniment's figure. Comp is the strummed boom-chick under a dance tune.</summary>
-internal enum OstinatoStyle { Arpeggio, Broken, Pulse, Comp }
+/// <summary>
+/// The accompaniment's figure. Comp is the strummed boom-chick under a dance tune; Riff the
+/// distorted guitar under a fight, played in a section's <see cref="RiffStyle"/>.
+/// </summary>
+internal enum OstinatoStyle { Arpeggio, Broken, Pulse, Comp, Riff }
+
+/// <summary>
+/// How a fight's section drives. Gallop: palm-muted eighth-and-two-sixteenths under power-chord
+/// hits, the drums on the same figure. Tremolo: the riff picked in sixteenths an octave up over a
+/// double-bass kick. HalfTime: power chords left to ring, chugs between, the snare on three.
+/// </summary>
+internal enum RiffStyle { Gallop, Tremolo, HalfTime }
 
 /// <summary>
 /// Which dance a festive piece is. A jig is in 6/8, written here as two dotted-quarter beats a bar
@@ -105,6 +115,46 @@ internal static class Orchestra
         new[] { (Instrument.Fiddle, 2.0), (Instrument.Whistle, 2.0), (Instrument.Pipes, 0.6) },
         new[] { (Instrument.Strings, 1.0), (Instrument.Bourdon, 0.4) },
         Instrument.Bodhran, 0.95, 0.0, 0.0, 1.0f, 0.0f);
+
+    /// <summary>
+    /// A fight: dungeon synth leaning into metal, as the genre does at its most violent. The epic
+    /// lead stays the genre's (horn, choir, strings, the square lead); under it a distorted riff, a
+    /// drum kit, a dark pad. No drone, no bells, no wind: nothing that waits.
+    /// </summary>
+    public static Orchestration ChooseFight(MusicMoodState m, Random rng)
+    {
+        Instrument Pick((Instrument i, double w)[] pool, Instrument? avoid = null)
+        {
+            var p = pool.Where(x => x.i != avoid).ToArray();
+            double r = rng.NextDouble() * p.Sum(x => x.w);
+            foreach (var (i, w) in p) { r -= w; if (r <= 0) return i; }
+            return p[^1].i;
+        }
+        var lead = new[] { (Instrument.Horn, 3.0), (Instrument.Choir, 2.0), (Instrument.Strings, 1.0), (Instrument.SquareLead, 1.0), (Instrument.Organ, 1.0) };
+        var pads = new[] { (Instrument.DarkPad, 3.0), (Instrument.Choir, 2.0), (Instrument.Organ, 1.0) };
+        var o = new Orchestration { Pole = "fight" };
+        o.Melody = Pick(lead);
+        o.MelodyAlt = Pick(lead, o.Melody);
+        o.Counter = Pick(new[] { (Instrument.Choir, 2.0), (Instrument.Strings, 2.0), (Instrument.Horn, 1.0) }, o.Melody);
+        o.Pad = Pick(pads, o.Melody);
+        o.PadAlt = Pick(pads, o.Pad);
+        o.Drone = Instrument.Bourdon;
+        o.Ostinato = Instrument.Distortion;
+        o.Bass = Instrument.Bourdon;
+        o.Perc = Instrument.Kick;
+        o.Percussion = true;
+        o.OstinatoStyle = OstinatoStyle.Riff;
+        o.OstinatoPattern = new[] { 0 };
+        o.OstinatoStep = 0.25;
+        o.Liveliness = 0.6f;
+        o.Chant = 0.2f;
+        o.Fall = m.Coldness;
+        o.OpenVoicing = true;
+        return o;
+    }
+
+    /// <summary>A fight's tempo: a quarter at 84-100, felt in sixteenths by the riff and the kick.</summary>
+    public static double FightTempo(MusicMoodState m, Random rng) => 84 + rng.NextDouble() * 12 + 6 * (1 - m.Coldness);
 
     /// <summary>The mood's weight on each pole.</summary>
     private static (Pole p, double w)[] Weights(MusicMoodState m)
@@ -241,11 +291,14 @@ internal static class Orchestra
     public static float Trim(Instrument i) => i switch
     {
         Instrument.Organ => 0.8f, Instrument.SquareLead => 0.8f, Instrument.Bell => 0.9f, Instrument.Horn => 0.9f,
+        // The riff and the kit drive the fight; the tune still has to sit on them.
+        Instrument.Distortion => 0.75f, Instrument.PowerChord => 0.75f,
+        Instrument.Kick => 0.75f, Instrument.Snare => 0.75f, Instrument.Cymbal => 0.35f,
         _ => 1f,
     };
 
-    /// <summary>The room and the tape for a mood.</summary>
-    public static void ApplyBus(Synth s, MusicMoodState m)
+    /// <summary>The room and the tape for a mood. A fight is played close: a smaller room, less of it.</summary>
+    public static void ApplyBus(Synth s, MusicMoodState m, bool fight = false)
     {
         // A festive place is a room full of people: a shorter hall and less of it.
         float t60 = (2.0f + 5.0f * m.Mystery + 2.0f * m.Coldness) * (1f - 0.45f * m.Festivity);
@@ -256,5 +309,13 @@ internal static class Orchestra
         s.ReverbReturn = (1.05f + 0.45f * m.Mystery + 0.2f * m.Coldness) * (1f - 0.35f * m.Festivity);
         // A full band in a small room adds up: the festive mix goes into the tape a little lower.
         s.PreGain = 0.22f * (1f - 0.15f * m.Festivity);
+        if (fight)
+        {
+            s.SetHall(t60 * 0.7f, damp, 0.012f);
+            s.ReverbReturn *= 0.8f;
+            s.ChorusDepth.Target *= 0.7f;
+            // Drums and a clipped riff are dense: into the tape lower, or the fight is the loudest thing in the game.
+            s.PreGain = 0.16f;
+        }
     }
 }

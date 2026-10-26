@@ -49,6 +49,9 @@ public static class OfflineRender
         log.Meta("sampleRate", Dsp.SampleRate);
         core.JumpMood(mood);
         core.SetTrackCount(tracks);
+        // Battle is the fight's preset, and in the game a fight is the fight filter over a place's
+        // mood: render it the way the game plays it.
+        if (moodName.Equals("Battle", StringComparison.OrdinalIgnoreCase)) core.SetFighting(true);
 
         var clock = Stopwatch.StartNew();
         const int chunk = 4096;

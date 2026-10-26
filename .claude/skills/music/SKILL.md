@@ -21,7 +21,7 @@ AmbianceEngine (src/audio/AmbianceEngine.cs)     the game's only door: same API 
  │       │   Theory.cs (modes, keys, chords, progressions) · Melody.cs (motifs, rhythms, periods)
  │       │   Orchestra.cs (mood poles → instruments, tempo, metre, mix levels, hall and tape)
  │       └─ Synth            voices → part buses → chorus + FDN hall → tape → limiter
- │           Voices.cs (17 instruments) · Effects.cs · Dsp.cs
+ │           Voices.cs (26 instruments) · Effects.cs · Dsp.cs
  │   └─ PcmStream            waveOut on Windows, OpenAL elsewhere (adaptive queue, underrun report)
  └─ LegacyAmbianceEngine     --music-engine legacy: the first engine, MIDI to the GS Wavetable
                              Synth (Windows) or MeltySynth + assets/audio/soundfont.sf2
@@ -50,6 +50,16 @@ AmbianceEngine (src/audio/AmbianceEngine.cs)     the game's only door: same API 
   the tune under them); a lilt (`Lilt`). Still Dorian or Aeolian: festive is lively, not bright.
   The comp and drum come in with the melody's tier there, not at Intensity 0.75. The harness
   holds festive renders to the `poles.festive` bands in `targets.json`.
+- **Fights.** The fight filter (`Composer.Fighting`) writes dungeon synth leaning into metal:
+  `Orchestra.ChooseFight` (the lead from horn, choir, strings, square lead, organ; a distorted riff,
+  `Instrument.Distortion` and `PowerChord`, palm-muted below velocity 0.55; a kit, `Kick`, `Snare`,
+  `Cymbal`, a crash at 0.5 and over, a closed hat under), 84-100 bpm felt in sixteenths, never
+  Locrian (a power chord needs its fifth). `PlanFightForm`: `I A A' B C A' B A'`, each section a
+  `RiffStyle` (`EmitRiff`, `EmitKit`): Gallop under the A tune, Tremolo over a double-bass kick
+  under the B, HalfTime for the tune-less breakdown. The band is all there from the first bar; the
+  riff and kit open with the melody's tier, like a dance's. A fight cuts in at the next bar line
+  with no bridge, and plays in a closer room (`ApplyBus(..., fight: true)`). `--mood Battle` renders
+  a fight, as `B` in `--music` mode plays one; `targets.json` holds Battle to its own bands.
 - **Mood.** `SetMood` glides the mood (≈2 s). Structure is decided at piece and section starts; a
   drift above 0.12 (or the fight filter changing) ends the piece through a one- or two-bar bridge,
   in which the tune comes to rest on the nearest tonic and holds it; the next piece then starts on

@@ -118,16 +118,17 @@ public static class MusicModeLauncher
                     break;
 
                 // Preset moods — archetype demos
+                // B is a fight, as the game starts one: the fight filter over the mood. The others end it.
                 case ConsoleKey.T:
-                    engine.SetMood(MusicMoodState.Tavern); break;
+                    engine.SetFilter(MusicFilter.None); engine.SetMood(MusicMoodState.Tavern); break;
                 case ConsoleKey.L:
-                    engine.SetMood(MusicMoodState.Lament); break;
+                    engine.SetFilter(MusicFilter.None); engine.SetMood(MusicMoodState.Lament); break;
                 case ConsoleKey.X:
-                    engine.SetMood(MusicMoodState.DarkDungeon); break;
+                    engine.SetFilter(MusicFilter.None); engine.SetMood(MusicMoodState.DarkDungeon); break;
                 case ConsoleKey.B:
-                    engine.SetMood(MusicMoodState.Battle); break;
+                    engine.SetMood(MusicMoodState.Battle); engine.SetFilter(MusicFilter.Fighting); break;
                 case ConsoleKey.W:
-                    engine.SetMood(MusicMoodState.WorldView); break;
+                    engine.SetFilter(MusicFilter.None); engine.SetMood(MusicMoodState.WorldView); break;
 
                 // A clean break, as between the childhood, the get-up and the first map
                 case ConsoleKey.Spacebar:

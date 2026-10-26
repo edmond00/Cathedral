@@ -35,6 +35,8 @@ internal sealed class Section
     public List<LineNote> MelodyLine = new();
     public List<(double beat, double dur, int midi, float vel)> CounterLine = new();
     public int OctaveShift;                              // melody up an octave (in degrees) for a variation
+    public RiffStyle Riff;                               // a fight's section: how the riff and the kit drive
+    public int[] RiffTurn = Array.Empty<int>();          // a fight's riff: the last beat's four sixteenths, in steps from the root
 }
 
 internal sealed class Piece
@@ -229,6 +231,8 @@ internal sealed class Composer
         p.Dance = Fighting ? Dance.None : Orchestra.DanceFor(mood, _rng);
         // A dance stays in the two minor modes the old session tunes favour: Dorian above all, then Aeolian.
         var mode = p.Dance != Dance.None ? (_rng.NextDouble() < 0.6 ? Mode.Dorian : Mode.Aeolian) : Mode.ForMood(mood, _rng);
+        // A riff stands on a power chord over its tonic, which Locrian's diminished fifth would not hold.
+        if (Fighting && (mode == Mode.Locrian || mode == Mode.PentatonicMinor)) mode = Mode.Phrygian;
         // The tonic moves by a fourth or a fifth between pieces, or stays: the drone can pivot.
         int[] moves = { 0, 5, -5, 7, -7, 2, -2 };
         double[] mw = { 2, 2, 2, 1.5, 1.5, 0.7, 0.7 };
@@ -238,11 +242,13 @@ internal sealed class Composer
         while (tonic < 50) tonic += 12;
         _lastTonic = tonic;
         p.Key = new Key(tonic, mode);
-        p.Bpm = p.Dance != Dance.None ? Orchestra.DanceTempo(p.Dance, mood, _rng) : Orchestra.Tempo(mood, _rng);
+        p.Bpm = p.Dance != Dance.None ? Orchestra.DanceTempo(p.Dance, mood, _rng)
+              : Fighting ? Orchestra.FightTempo(mood, _rng)
+              : Orchestra.Tempo(mood, _rng);
         p.Meter = p.Dance switch { Dance.Jig => 2, Dance.Reel => 4, _ => Orchestra.Meter(mood, _rng) };
         if (Fighting) p.Meter = 4;
         p.Fight = Fighting;
-        p.Orch = Orchestra.Choose(mood, p.Meter, p.Bpm, _rng);
+        p.Orch = Fighting ? Orchestra.ChooseFight(mood, _rng) : Orchestra.Choose(mood, p.Meter, p.Bpm, _rng);
         p.Orch.Dance = p.Dance;
         p.Center = mode.Size + 1;   // a step above the octave over the tonic: melodies hover round it
 
@@ -323,8 +329,8 @@ internal sealed class Composer
         _cutShort = false;
         if (p.Dance != Dance.None) { PlanDanceForm(p, cutShort); return; }
         var o = p.Orch;
+        if (Fighting) { PlanFightForm(p); return; }
         string form = Forms[_rng.Next(Forms.Length)];
-        if (Fighting) form = "A A' B A' B A'";
         // After a bridge the drone and pad have already been holding for a bar or two: an intro of
         // two to four more bars without the tune is heard as the music dropping out.
         if (cutShort && form.StartsWith("I ")) form = form[2..];
@@ -416,6 +422,71 @@ internal sealed class Composer
     }
 
     /// <summary>
+    /// A fight: two bars of riff and drums alone, then the tune over a galloping riff, a tremolo
+    /// section over the double bass, a half-time breakdown with the tune gone, and the tune back.
+    /// The band is all there from the first bar: a fight does not build up.
+    /// </summary>
+    private void PlanFightForm(Piece p)
+    {
+        var o = p.Orch;
+        p.Form = "I A A' B C A' B A'";
+        int[] progA = Progressions.For(p.Key.Mode, false, _rng);
+        int[] progB = Progressions.For(p.Key.Mode, true, _rng);
+        int[] progC = Progressions.For(p.Key.Mode, _rng.NextDouble() < 0.5, _rng);
+        int[][] turns = { new[] { 0, 1, 2, 1 }, new[] { 0, -1, 0, 1 }, new[] { 2, 1, 0, -1 }, new[] { 0, 0, 1, 0 }, new[] { 4, 3, 2, 1 } };
+        int[] turnA = turns[_rng.Next(turns.Length)], turnB = turns[_rng.Next(turns.Length)];
+        int aCount = 0;
+        foreach (var tok in p.Form.Split(' '))
+        {
+            var s = new Section { Label = tok, Melody = o.Melody, Pad = o.Pad, Counter = (CounterStyle)_rng.Next(3) };
+            switch (tok)
+            {
+                case "I":
+                    s.Kind = SectionKind.Intro;
+                    s.Bars = 2;
+                    s.Chords = new[] { 0, 0 };
+                    s.Layers = new() { Part.Ostinato, Part.Perc, Part.Bass };
+                    s.Riff = RiffStyle.Gallop;
+                    s.RiffTurn = turnA;
+                    break;
+                case "A":
+                case "A'":
+                    s.Kind = tok == "A" && aCount == 0 ? SectionKind.A : SectionKind.AVar;
+                    aCount++;
+                    s.Bars = 8;
+                    s.Chords = Period(progA, close: true);
+                    s.Layers = new() { Part.Ostinato, Part.Perc, Part.Bass, Part.Pad, Part.Melody };
+                    if (aCount > 1) s.Layers.Add(Part.Counter);
+                    s.Riff = RiffStyle.Gallop;
+                    s.RiffTurn = turnA;
+                    if (s.Kind == SectionKind.AVar && _rng.NextDouble() < 0.35) s.Melody = o.MelodyAlt;
+                    break;
+                case "B":
+                    s.Kind = SectionKind.B;
+                    s.Bars = 8;
+                    s.Chords = Period(progB, close: false);
+                    s.Layers = new() { Part.Ostinato, Part.Perc, Part.Bass, Part.Pad, Part.Melody, Part.Counter };
+                    s.Pad = o.PadAlt;
+                    s.Melody = o.MelodyAlt;
+                    s.Riff = RiffStyle.Tremolo;
+                    s.RiffTurn = turnB;
+                    if (s.Counter == CounterStyle.Organum) s.Counter = CounterStyle.Tenor;
+                    break;
+                case "C":
+                    // The breakdown: the tune leaves, the riff slows to ringing chords and chugs.
+                    s.Kind = SectionKind.C;
+                    s.Bars = 4;
+                    s.Chords = Expand(progC, s.Bars);
+                    s.Layers = new() { Part.Ostinato, Part.Perc, Part.Bass, Part.Pad };
+                    s.Riff = RiffStyle.HalfTime;
+                    s.RiffTurn = turnB;
+                    break;
+            }
+            p.Sections.Add(s);
+        }
+    }
+
+    /// <summary>
     /// A dance tune as a session plays it: each part twice (A A B B), the whole tune twice round, then
     /// straight on into the next tune of the set with no outro. Two bars of the strummed chords and the
     /// drum lead in. The band grows as the tune goes round: lute and tune first, the drum on the
@@ -490,6 +561,7 @@ internal sealed class Composer
 
         // A changed mood (a new place, a fight) cuts the piece short through a bridge.
         CheckDrift(p);
+        if (_section >= p.Sections.Count) { NewPiece(); p = _piece!; }
         var s = p.Sections[_section];
         if (_bar == 0) StartSection(p, s, output);
 
@@ -572,6 +644,15 @@ internal sealed class Composer
         if (!large && _bar % 2 != 0) return;
         var cur = p.Sections[_section];
         if (cur.Kind == SectionKind.Bridge) return;
+        if (fightChanged && Fighting)
+        {
+            // A fight does not wait for a bridge: the piece stops at this bar line and the fight's
+            // riff comes in on the next downbeat, with a crash.
+            if (_bar > 0) { cur.Bars = _bar; cur.Chords = cur.Chords[.._bar]; _section++; }
+            p.Sections.RemoveRange(_section, p.Sections.Count - _section);
+            _bar = 0;
+            return;
+        }
         // Finish here: drop the rest, add a bridge of held tonic, and let the next piece begin.
         _cutShort = true;
         if (_bar > 0) { cur.Bars = _bar; cur.Chords = cur.Chords[.._bar]; _section++; }
@@ -1042,6 +1123,7 @@ internal sealed class Composer
         var o = p.Orch;
         var key = p.Key;
         if (o.OstinatoStyle == OstinatoStyle.Comp) { EmitComp(output, p, chord, barStart, arc); return; }
+        if (o.OstinatoStyle == OstinatoStyle.Riff) { EmitRiff(output, p, chord, barStart, arc); return; }
         int n = key.Mode.Size;
         // Chord tones as degrees, the root in the octave of the tonic (low for a pulse).
         int rootDeg = chord.Root;
@@ -1068,6 +1150,7 @@ internal sealed class Composer
         var key = p.Key;
         double beat = p.BeatSeconds;
         if (p.Orch.Perc == Instrument.Bodhran) { EmitBodhran(output, p, barStart, arc); return; }
+        if (p.Orch.Perc == Instrument.Kick) { EmitKit(output, p, s, barStart, arc); return; }
         if (p.Orch.Perc == Instrument.HandDrum)
         {
             // The tavern's frame drum: strong one, lighter offbeats, a little skip before the bar line.
@@ -1230,6 +1313,131 @@ internal sealed class Composer
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     /// <summary>The pitch of a degree's pitch class at or above <paramref name="floor"/>, within an octave.</summary>
+    /// <summary>
+    /// The fight's riff, on a distorted guitar in the low register (the chord's root between about D2
+    /// and C#3). Every style opens a chord's first bar on a power chord; struck below velocity 0.55
+    /// the single notes are palm-muted.
+    /// </summary>
+    private void EmitRiff(List<ScoreEvent> output, Piece p, Chord chord, double barStart, float arc)
+    {
+        var key = p.Key;
+        var s = p.Sections[_section];
+        double b = p.BeatSeconds, x = b / 4;
+        int n = key.Mode.Size;
+        int rootDeg = chord.Root;
+        while (key.Pitch(rootDeg) > key.Tonic - 7) rootDeg -= n;
+        while (key.Pitch(rootDeg) < key.Tonic - 18) rootDeg += n;
+        int root = key.Pitch(rootDeg);
+        bool chordStarts = _bar == 0 || s.Chords[_bar - 1] != chord.Root;
+        float A = arc * Jitter(0.04f);
+        void Note(double at, double dur, Instrument inst, int midi, float v) =>
+            output.Add(new(barStart + at + Humanise() * 0.25, dur, Part.Ostinato, inst, midi, Math.Clamp(v * A, 0.05f, 1f), 0f));
+
+        switch (s.Riff)
+        {
+            case RiffStyle.Gallop:
+                for (int beat = 0; beat < p.Meter; beat++)
+                {
+                    double t = beat * b;
+                    if (beat == 0)
+                    {
+                        // The bar opens on the chord, left to ring under the gallop's first beat.
+                        Note(t, b * 0.95, Instrument.PowerChord, root, chordStarts ? 0.9f : 0.8f);
+                        continue;
+                    }
+                    if (beat == p.Meter - 1 && _bar % 2 == 1)
+                    {
+                        // Every second bar turns at its end: four sixteenths off the root, open.
+                        for (int k = 0; k < 4; k++)
+                            Note(t + k * x, x * 0.9, Instrument.Distortion, key.Pitch(rootDeg + s.RiffTurn[k]), 0.62f);
+                        continue;
+                    }
+                    Note(t, x * 1.8, Instrument.Distortion, root, 0.45f);
+                    Note(t + 2 * x, x * 0.9, Instrument.Distortion, root, 0.4f);
+                    Note(t + 3 * x, x * 0.9, Instrument.Distortion, root, 0.42f);
+                }
+                break;
+
+            case RiffStyle.Tremolo:
+            {
+                // Picked in sixteenths, an octave up: the root for half a bar, then a chord tone or the
+                // turn's own step, so the tremolo is itself a slow line.
+                int[] targets = { rootDeg + n, chord.Tones[2] - chord.Root + rootDeg + (_bar % 2 == 0 ? 0 : n), rootDeg + n + s.RiffTurn[_bar % 4] };
+                int first = key.Pitch(targets[0]);
+                int second = key.Pitch(_bar % 4 == 3 ? targets[2] : targets[1]);
+                int count = p.Meter * 4;
+                for (int k = 0; k < count; k++)
+                {
+                    int midi = k < count / 2 ? first : second;
+                    Note(k * x, x * 0.95, Instrument.Distortion, midi, k % 4 == 0 ? 0.7f : 0.6f);
+                }
+                if (chordStarts) Note(0, b * p.Meter * 0.95, Instrument.PowerChord, root, 0.7f);
+                break;
+            }
+
+            case RiffStyle.HalfTime:
+                Note(0, b * 2 * 0.95, Instrument.PowerChord, root, 0.92f);
+                foreach (double at in new[] { 2.0, 2.5, 3.0, 3.25 })
+                    if (at < p.Meter) Note(at * b, x * 1.6, Instrument.Distortion, root, 0.42f);
+                if (p.Meter >= 4)
+                    Note(3.5 * b, b * 0.45, Instrument.PowerChord, key.Pitch(rootDeg + s.RiffTurn[3]), 0.8f);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// The fight's drum kit. Gallop: the kick on the riff's figure, the snare on two and four, a hi-hat
+    /// on the eighths. Tremolo: the double bass, a kick on every sixteenth, the snare on two and four,
+    /// the crash on every bar. HalfTime: the snare on three, a kick roll before it. A fill of snare
+    /// sixteenths ends each section, and a crash opens it.
+    /// </summary>
+    private void EmitKit(List<ScoreEvent> output, Piece p, Section s, double barStart, float arc)
+    {
+        double b = p.BeatSeconds, x = b / 4;
+        bool last = _bar == s.Bars - 1;
+        void Hit(double at, Instrument inst, int midi, float v, double dur = 0.25) =>
+            output.Add(new(barStart + at + Humanise() * 0.2, dur, Part.Perc, inst, midi, Math.Clamp(v * arc * Jitter(0.06f), 0.05f, 1f), inst == Instrument.Cymbal ? 0.4f : 0f));
+        // General MIDI drum notes, so a capture (--record) plays the right drums: kick, snare, crash, closed hat.
+        const int K = 36, S = 38, C = 49, H = 42;
+        if (_bar == 0 || (s.Riff == RiffStyle.Tremolo) || (s.Riff == RiffStyle.HalfTime))
+            Hit(0, Instrument.Cymbal, C, 0.8f, 2.0);
+        int beats = last ? p.Meter - 1 : p.Meter;
+        switch (s.Riff)
+        {
+            case RiffStyle.Gallop:
+                for (int i = 0; i < beats; i++)
+                {
+                    double t = i * b;
+                    Hit(t, Instrument.Kick, K, 0.85f);
+                    if (i != p.Meter - 1 || _bar % 2 == 0) { Hit(t + 2 * x, Instrument.Kick, K, 0.6f); Hit(t + 3 * x, Instrument.Kick, K, 0.65f); }
+                    if (i % 2 == 1) Hit(t, Instrument.Snare, S, 0.85f);
+                    Hit(t, Instrument.Cymbal, H, 0.3f, 0.05);
+                    Hit(t + 2 * x, Instrument.Cymbal, H, 0.25f, 0.05);
+                }
+                break;
+            case RiffStyle.Tremolo:
+                for (int k = 0; k < beats * 4; k++) Hit(k * x, Instrument.Kick, K, k % 2 == 0 ? 0.7f : 0.55f);
+                for (int i = 1; i < beats; i += 2) Hit(i * b, Instrument.Snare, S, 0.9f);
+                if (p.Meter >= 4) Hit(2 * b, Instrument.Cymbal, C, 0.6f, 1.5);
+                break;
+            case RiffStyle.HalfTime:
+                Hit(0, Instrument.Kick, K, 0.95f);
+                Hit(0.75 * b, Instrument.Kick, K, 0.6f);
+                if (p.Meter >= 3) Hit(2 * b, Instrument.Snare, S, 0.95f);
+                if (!last && p.Meter >= 4)
+                    for (int k = 0; k < 4; k++) Hit(3 * b + k * x, Instrument.Kick, K, 0.55f + 0.08f * k);
+                for (int i = 0; i < beats; i++) Hit(i * b, Instrument.Cymbal, H, 0.28f, 0.05);
+                break;
+        }
+        if (last)
+            for (int k = 0; k < 4; k++)
+            {
+                double t = (p.Meter - 1) * b + k * x;
+                Hit(t, Instrument.Snare, S, 0.55f + 0.12f * k);
+                if (k == 0) Hit(t, Instrument.Kick, K, 0.8f);
+            }
+    }
+
     private static int LowPitch(Key key, int degree, int floor)
     {
         int m = key.Pitch(degree);
