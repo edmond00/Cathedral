@@ -119,6 +119,13 @@ internal sealed class SynthMusicEngine : IMusicEngine
         else _core.SetMood(mood);
     }
 
+    public void Transition(float silenceSeconds)
+    {
+        // A first mood with no music before it needs no break.
+        if (!_moodSet) return;
+        _core?.Cut(silenceSeconds, 1.2f);
+    }
+
     public void SetActiveTrackCount(int count)
     {
         _trackCount = Math.Clamp(count, 0, 4);

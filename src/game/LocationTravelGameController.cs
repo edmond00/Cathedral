@@ -1259,6 +1259,9 @@ public class LocationTravelGameController : IDisposable
                 _isInNarrativeMode = false;
                 _narrativeController = null;
                 SetMode(GameMode.WorldView);
+                // The first sight of the world: a clean break into the map's music (OnEnterWorldView
+                // has set it), not the bridge an ordinary change of place gets.
+                _ambianceEngine?.Transition(3f);
                 return;
             }
 
@@ -4641,6 +4644,14 @@ public class LocationTravelGameController : IDisposable
 
         // Resuming from the pause menu — see OnEnterChildhoodReminescence.
         if (ResumeLiveNarrativePhase()) return;
+
+        // Waking from the dream is a break, as entering it was: the reminiscence's music stops, the
+        // hall rings out into silence, and the get-up begins on music of its own, sparse (a drone, a
+        // pad, one line), for a body spent and alone under a tree.
+        _ambianceEngine?.SetFilter(MusicFilter.None);
+        _ambianceEngine?.SetMood(MusicMoodState.GetUp);
+        _ambianceEngine?.SetActiveTrackCount(2);
+        _ambianceEngine?.Transition(3.5f);
 
         _core.SetNarrationMode(true);
         _core.SetWorldInteractionsEnabled(false);

@@ -16,7 +16,7 @@ namespace Cathedral.Audio.Music;
 ///
 /// <para>A journey is the game's side of the conversation scripted: a JSON list of
 /// <c>{"t": seconds, "mood": "Tavern" | [cold, fear, mystery, intensity, festivity], "event": "positive" |
-/// "negative" | "neutral", "filter": "fighting" | "traveling" | "none", "tracks": n}</c>, each applied at
+/// "negative" | "neutral", "filter": "fighting" | "traveling" | "none", "tracks": n, "break": seconds of silence}</c>, each applied at
 /// its time. It is how the harness measures transitions, stings and fights, not just still moods.</para>
 /// </summary>
 public static class OfflineRender
@@ -120,6 +120,8 @@ public static class OfflineRender
             core.SetTraveling(name == "traveling");
         }
         if (e.TryGetProperty("tracks", out var tr)) core.SetTrackCount(tr.GetInt32());
+        // Last, as the game calls it: after the new mood and track count are set.
+        if (e.TryGetProperty("break", out var br)) core.Cut(br.GetDouble(), 1.2f);
     }
 
     private static (string Name, MusicMoodState Mood)[] Presets() =>

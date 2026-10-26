@@ -146,6 +146,27 @@ internal sealed class Composer
     public void Negative() => _negative = true;
     public void Neutral() => _neutral = true;
 
+    /// <summary>
+    /// Ends the music here, mid-bar if need be: nothing more of this piece, and the next one begins
+    /// at <paramref name="resumeAt"/>, from its own beginning. What was already planned is the
+    /// owner's to drop.
+    /// </summary>
+    public void Cut(double resumeAt)
+    {
+        if (_lastChordRoot != int.MinValue && _piece != null)
+            _observer?.Chord(_lastChordStart, Math.Max(0, resumeAt - _lastChordStart), _lastChordRoot,
+                             Chord.On(_piece.Key, _lastChordRoot).PitchClasses(_piece.Key));
+        _lastChordRoot = int.MinValue;
+        _piece = null;
+        _section = 0;
+        _bar = 0;
+        _cursor = resumeAt;
+        _cutShort = false;
+        _melodyBoost = 1f;
+        _positive = _negative = _neutral = false;
+        _lastSungAt = double.NegativeInfinity;
+    }
+
     /// <summary>Composes until the music is planned up to <paramref name="until"/> seconds.</summary>
     public void Fill(double until, List<ScoreEvent> output)
     {

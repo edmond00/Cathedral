@@ -56,6 +56,14 @@ AmbianceEngine (src/audio/AmbianceEngine.cs)     the game's only door: same API 
   its tune, with no intro. A tune-less breakdown (C) lasts four bars at most.
   Track count and Intensity gate layers on the old ladder (1 drone+pad, 2 melody, 3 counter+bass,
   4 ostinato+percussion).
+- **Breaks.** `AmbianceEngine.Transition(seconds)` is a clean cut between parts of the game, not
+  a change of place: everything planned is dropped, every voice fades over 1.2 s, the hall rings
+  out into silence, and a new piece for the mood already set begins from its start (no glide).
+  Called entering the get-up (its own `MusicMoodState.GetUp`, two tracks) and on the first world
+  map after it; the childhood's entry gets its break from dropping to no tracks. Set the mood and
+  tracks first. Journeys script one with `"break": seconds` (`journeys/opening.json`); `Space` in
+  `--music` mode plays one. A change of place keeps the one-bar bridge: a break every time would
+  chop up play.
 - **Events.** Positive: a bell arpeggio on the next beat and a brighter bar. Negative: a timpani
   stroke on the next beat and the tune stepping back for a bar or two. Neutral: the tune a little
   softer. The tune never stops for an event: outcomes come every few seconds in play, and resting

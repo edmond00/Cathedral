@@ -63,6 +63,33 @@ internal sealed class MusicCore : IScoreObserver
 
     public void SetTrackCount(int n) => Post(() => _trackCount = Math.Clamp(n, 0, 4));
 
+    /// <summary>
+    /// A clean break between two parts of the game: everything planned is dropped, every voice fades
+    /// out over <paramref name="fade"/> seconds and leaves only the hall's tail, and after
+    /// <paramref name="silence"/> seconds a new piece begins from its start, written for the mood
+    /// already asked for (no glide: the break is the change). Stings are kept.
+    /// </summary>
+    public void Cut(double silence, float fade) => Post(() =>
+    {
+        double now = Seconds;
+        var keep = new List<ScoreEvent>();
+        while (_due.TryDequeue(out var e, out _))
+            if (e.Part == Part.Sfx) keep.Add(e);
+        foreach (var e in keep) _due.Enqueue(e, e.T);
+        foreach (Part p in Enum.GetValues<Part>())
+        {
+            if (p is Part.Sfx or Part.Fight) continue;
+            Synth.ReleasePart(p, fade);
+            _level[(int)p] = 0f;
+            Synth.SetPartGain(p, 0f, fade);
+        }
+        _active = _target;
+        _composer.Mood = _active;
+        Orchestra.ApplyBus(Synth, _active);
+        UpdateGates();
+        _composer.Cut(now + silence);
+    });
+
     public void Positive() => Post(_composer.Positive);
     public void Negative() => Post(_composer.Negative);
     public void Neutral() => Post(_composer.Neutral);

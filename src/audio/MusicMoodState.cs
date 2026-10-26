@@ -65,6 +65,9 @@ public struct MusicMoodState
     /// <summary>Childhood reminiscence: mournful, dreamlike, mysterious.</summary>
     public static readonly MusicMoodState Childhood = new(0.72f, 0.05f, 0.62f);
 
+    /// <summary>Getting up after the reminiscence: spent and alone under one tree, waking from the dream.</summary>
+    public static readonly MusicMoodState GetUp = new(0.60f, 0.15f, 0.15f, 0.6f);
+
     /// <summary>World exploration: alert, exposed.</summary>
     public static readonly MusicMoodState WorldView = new(0.65f, 0.60f, 0.0f, 0.25f);
 

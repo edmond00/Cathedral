@@ -280,6 +280,9 @@ internal sealed class LegacyAmbianceEngine : IMusicEngine
     }
 
     /// <summary>Sets number of active tracks (0–4). 0 = Noise only; extra tracks fade out on next note.</summary>
+    /// <summary>The first engine has no notion of a piece to end: its walks just follow the mood.</summary>
+    public void Transition(float silenceSeconds) { }
+
     public void SetActiveTrackCount(int count)
     {
         _activeTrackCount = Math.Clamp(count, 0, 4);

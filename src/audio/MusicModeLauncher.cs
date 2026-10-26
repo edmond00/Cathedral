@@ -129,6 +129,10 @@ public static class MusicModeLauncher
                 case ConsoleKey.W:
                     engine.SetMood(MusicMoodState.WorldView); break;
 
+                // A clean break, as between the childhood, the get-up and the first map
+                case ConsoleKey.Spacebar:
+                    engine.Transition(3f); break;
+
                 // SFX demos
                 case ConsoleKey.C:
                     engine.PlaySoundEffect(SoundEffectType.ButtonClick); break;
@@ -266,7 +270,7 @@ public static class MusicModeLauncher
 
         SetCursor(0, top + 12); ClearLine();
         Console.ForegroundColor = ConsoleColor.DarkGray;
-        Console.Write("  S/s=Coldness  F/f=Fear  M/m=Mystery  I/i=Intensity  Y/y=Festivity  0=Noise solo  1-4=Tracks  T/L/X/B/W=Preset  Z=Random  A/K/G/J/O=Events  P=Loading  V=DiceRoll  H=Help  Q=Quit");
+        Console.Write("  S/s=Coldness  F/f=Fear  M/m=Mystery  I/i=Intensity  Y/y=Festivity  0=Noise solo  1-4=Tracks  T/L/X/B/W=Preset  Z=Random  Space=Break  A/K/G/J/O=Events  P=Loading  V=DiceRoll  H=Help  Q=Quit");
         Console.ResetColor();
     }
 
@@ -343,6 +347,7 @@ public static class MusicModeLauncher
         Console.WriteLine("  Y / Shift+Y      Festivity +0.1 / -0.1  (dance tunes: jigs and reels)");
         Console.WriteLine("  N                Reset to Neutral mood (1 track)");
         Console.WriteLine("  Z                Random mood (all four parameters randomised)");
+        Console.WriteLine("  Space            Clean break: fade out, silence, a new piece from its start");
         Console.WriteLine();
         Console.WriteLine("  T                Preset: Tavern       (the warmest mood there is)");
         Console.WriteLine("  L                Preset: Lament       (sad, slow, calm)");

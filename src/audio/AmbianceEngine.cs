@@ -17,6 +17,7 @@ internal interface IMusicEngine : IDisposable
     void SetFilter(MusicFilter filter);
     void SetMood(MusicMoodState mood);
     void SetActiveTrackCount(int count);
+    void Transition(float silenceSeconds);
     void TriggerGameEvent(GameEventType evt);
     void PlaySoundEffect(SoundEffectType sfx);
     void SetMasterMusicVolume(float v01);
@@ -92,6 +93,13 @@ public sealed class AmbianceEngine : IDisposable
 
     /// <summary>Sets the number of active tracks (0–4).</summary>
     public void SetActiveTrackCount(int count) { _asked = _asked with { Tracks = count }; _engine.SetActiveTrackCount(count); }
+
+    /// <summary>
+    /// A clean break between two parts of the game: the music fades out over about a second, the
+    /// hall rings on into <paramref name="silenceSeconds"/> of silence, and a new piece for the mood
+    /// last set begins from its start. Set the new mood and track count first.
+    /// </summary>
+    public void Transition(float silenceSeconds = 3f) => _engine.Transition(silenceSeconds);
 
     /// <summary>
     /// What the game last asked of the music: the target mood (not the one still gliding towards

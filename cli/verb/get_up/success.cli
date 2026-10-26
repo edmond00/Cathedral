@@ -75,6 +75,8 @@ advance 12 180
 
 # ── The get-up phase ─────────────────────────────────────────────────────────
 wait mode GetUp 60
+# Waking is a break in the music, as entering the childhood was: the get-up's own mood, sparse.
+expect-state music tracks=2 filter=None cold=0.60 fear=0.15 mystery=0.15
 advance 12 180
 regions
 
@@ -108,4 +110,10 @@ expect-verb get_up
 # changes the chain, this fails naming the skill, which is the right way to be told.
 expect-state skills skill vigor level=1 xp=0
 expect-state skills skill rote level=1 xp=1
+
+# And the first sight of the world is a second break, into the map's music. The phase ends on the
+# footer button, as each reminescence did.
+click button
+wait mode WorldView 60
+expect-state music tracks=4 filter=None cold=0.65 fear=0.60
 quit
