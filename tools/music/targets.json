@@ -234,6 +234,12 @@
    "hi": 48,
    "w": 1,
    "why": "No pile-up of voices that never finish."
+  },
+  "wet_db": {
+   "lo": -8,
+   "hi": 0,
+   "w": 2,
+   "why": "Lots of reverb: the hall's return within 8 dB of the dry signal, never above it. The genre's records are washed in it."
   }
  },
  "moods": {

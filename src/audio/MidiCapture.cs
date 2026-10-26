@@ -58,8 +58,11 @@ public static class MidiCapture
         const int ticksPerQuarter = 480;
         const double ticksPerSecond = ticksPerQuarter * 2.0;   // 120 bpm
 
+        // Note-offs are recorded ahead of time (a note's length is known when it starts), so a held
+        // drone can end after the capture does. Those close at the end instead.
+        double end = _clock();
         List<(double Seconds, MidiEvent Event)> events;
-        lock (Lock) events = Events.OrderBy(e => e.Seconds).ToList();
+        lock (Lock) events = Events.Select(e => (Math.Min(e.Seconds, end), e.Event)).OrderBy(e => e.Item1).ToList();
 
         var track = new TrackChunk();
         track.Events.Add(new SetTempoEvent(500_000));

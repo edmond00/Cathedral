@@ -391,6 +391,8 @@ def analyse(score: Score) -> dict:
     # voice that never finishes shows here first, as a render that slows down as it goes.
     if score.meta.get("renderSeconds"):
         out["render_speed"] = score.seconds / max(1e-6, float(score.meta["renderSeconds"]))
+    if score.meta.get("wetDb") is not None:
+        out["wet_db"] = float(score.meta["wetDb"])
     if score.meta.get("maxVoices") is not None:
         out["max_voices"] = float(score.meta["maxVoices"])
     return out

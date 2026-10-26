@@ -189,6 +189,6 @@ internal static class Orchestra
         s.SetHall(t60, damp, 0.015f + 0.035f * m.Mystery);
         s.SetTape(9000f - 2600f * m.Coldness - 600f * m.Mystery, 3f + 3.5f * m.Mystery, -60f + 3f * m.Coldness, 1.3f + 0.5f * m.Fear);
         s.ChorusDepth.Target = 0.45f + 0.45f * m.Mystery;
-        s.ReverbReturn = 0.75f + 0.3f * m.Mystery;
+        s.ReverbReturn = 1.05f + 0.45f * m.Mystery + 0.2f * m.Coldness;
     }
 }

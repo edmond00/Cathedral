@@ -82,6 +82,7 @@ public static class OfflineRender
         string scorePath = Path.ChangeExtension(outPath, ".score.json");
         log.Meta("renderSeconds", clock.Elapsed.TotalSeconds);
         log.Meta("maxVoices", maxVoices);
+        log.Meta("wetDb", core.Synth.WetDb);
         log.Stems(core.Synth.StemLevels());
         log.Write(scorePath);
         Console.WriteLine($"--render-music: {seconds:F0}s of {moodName} (seed {seed}) in {clock.Elapsed.TotalSeconds:F1}s " +

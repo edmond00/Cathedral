@@ -48,6 +48,7 @@ internal sealed class Piece
     public double Start;
     public int Center;                                   // melody's central degree
     public bool Fight;
+    public bool UsesTheme;
     public List<LineNote>? ALine;                       // the first A's melody, for the variations
     public double BarSeconds => Meter * 60.0 / Bpm;
     public double BeatSeconds => 60.0 / Bpm;
@@ -71,6 +72,31 @@ internal sealed class Composer
     private Piece? _piece;
     private Random _rng = new(0);   // replaced per piece from _pieceRng; never drawn from before that
     private int _pieceCount;
+    private Theme? _theme;
+
+    /// <summary>The theme in both metres: one contour, a rhythm for four and one for three with as many notes.</summary>
+    private sealed class Theme
+    {
+        public Motif Four = null!, Three = null!;
+        public Motif For(int meter) => meter == 3 ? Three : Four;
+    }
+
+    private Theme MakeTheme()
+    {
+        var rng = _pieceRng(-1);
+        var four = Melodist.NewMotif(4, 0.45f, 0.35f, 0.4f, rng);
+        // A triple-time rhythm with the same number of notes, or the contour cut to fit one.
+        double[]? three = null;
+        for (int i = 0; i < 24 && three == null; i++)
+        {
+            var r = Rhythms.Pick(3, 0.45f, rng);
+            if (r.Length == four.Count) three = r;
+        }
+        three ??= Rhythms.Pick(3, 0.6f, rng);
+        var contour = four.Contour.Take(three.Length).ToList();
+        while (contour.Count < three.Length) contour.Add(contour[^1] - 1);
+        return new Theme { Four = four, Three = new Motif(three, contour.ToArray()) };
+    }
     private int _section, _bar;
     private double _cursor;          // seconds: start of the next bar to compose
     private int _lastTonic = 50;
@@ -177,6 +203,15 @@ internal sealed class Composer
 
         var o = p.Orch;
         p.M = Melodist.NewMotif(p.Meter, o.Liveliness, o.Chant, o.Fall, _rng);
+        // The world's theme: one motif drawn once per seed, taken up by about a third of the pieces
+        // (and always by the first), in their own key and metre. Endless music still has a tune that
+        // comes back, which is what makes a soundtrack recognisably one game's.
+        _theme ??= MakeTheme();
+        if (!Fighting && (index == 0 || _rng.NextDouble() < 0.33))
+        {
+            p.M = _theme.For(p.Meter);
+            p.UsesTheme = true;
+        }
         var orn = p.M.Ornamented(_rng);
         p.N = _rng.NextDouble() < 0.4 && orn.Count != p.M.Count ? orn.WithEnding(_rng.NextDouble() < 0.5 ? -1 : 1)
                                                                : Melodist.NewMotif(p.Meter, o.Liveliness, o.Chant, o.Fall, _rng);
@@ -762,6 +797,16 @@ internal sealed class Composer
             double dur = x.Dur * p.BeatSeconds * (IsPlucked(s.Melody) ? 1.0 : 0.95);
             bool downbeat = Math.Abs(x.Beat - b0) < 1e-6;
             float v = x.Vel * arc * (downbeat ? 1.05f : 0.95f) * Orchestra.Trim(s.Melody) * Jitter(0.06f);
+            // A mordent now and then on a long note of a recorder, harpsichord or lute in the lighter
+            // palettes: the note, the step above, the note, all inside the first eighth of a beat each.
+            if (x.Dur >= 1.0 && OrnamentsSuit(p, s.Melody) && _rng.NextDouble() < 0.18)
+            {
+                double g = p.BeatSeconds * 0.125;
+                output.Add(new(t, g, Part.Melody, s.Melody, key.Pitch(x.Degree), Math.Clamp(v * 0.9f, 0.05f, 1f), pan));
+                output.Add(new(t + g, g, Part.Melody, s.Melody, key.Pitch(x.Degree + 1), Math.Clamp(v * 0.8f, 0.05f, 1f), pan));
+                t += 2 * g;
+                dur -= 2 * g;
+            }
             output.Add(new(t, dur, Part.Melody, s.Melody, key.Pitch(x.Degree), Math.Clamp(v, 0.05f, 1f), pan));
         }
     }
@@ -893,6 +938,10 @@ internal sealed class Composer
         while (m < floor) m += 12;
         return m;
     }
+
+    private static bool OrnamentsSuit(Piece p, Instrument i) =>
+        (p.Orch.Pole == "comfy" || p.Orch.Pole == "melancholy") &&
+        i is Instrument.Recorder or Instrument.Harpsichord or Instrument.Lute or Instrument.OrganFlute;
 
     private static bool IsPlucked(Instrument i) => i is Instrument.Harp or Instrument.Lute or Instrument.Harpsichord;
 

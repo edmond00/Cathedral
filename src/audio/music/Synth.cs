@@ -48,6 +48,10 @@ internal sealed class Synth
     // Per-part energy, for the harness: how loud each layer is while it plays (its "stem" level).
     private readonly double[] _stemEnergy = new double[PartCount];
     private readonly long[] _stemFrames = new long[PartCount];
+    private double _dryEnergy, _wetEnergy;
+
+    /// <summary>The hall's return against the dry signal over the whole render, dB: how wet the mix is.</summary>
+    public double WetDb => 10 * Math.Log10((_wetEnergy + 1e-12) / (_dryEnergy + 1e-12));
     private readonly int _seed;
 
     public long Sample { get; private set; }
@@ -215,6 +219,9 @@ internal sealed class Synth
         _reverb.Process(_revInL, _revInR, _choInL, _choInR, n);
         for (int s = 0; s < n; s++)
         {
+            _dryEnergy += _dryL[s] * _dryL[s] + _dryR[s] * _dryR[s];
+            float wl = _choInL[s] * ReverbReturn, wr = _choInR[s] * ReverbReturn;
+            _wetEnergy += wl * wl + wr * wr;
             _dryL[s] = (_dryL[s] + _choInL[s] * ReverbReturn + _sfxL[s]) * PreGain;
             _dryR[s] = (_dryR[s] + _choInR[s] * ReverbReturn + _sfxR[s]) * PreGain;
         }
