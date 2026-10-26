@@ -24,6 +24,8 @@ travel-go
 wait mode EncounterPrompt 90
 click engage
 wait mode Fighting 90
+# A journey thins the music to one track; the fight it runs into plays the whole band.
+expect-state music tracks=4 filter=Fighting
 
 fight-end runaway
 wait mode WorldView 90

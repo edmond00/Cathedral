@@ -60,6 +60,12 @@ AmbianceEngine (src/audio/AmbianceEngine.cs)     the game's only door: same API 
   riff and kit open with the melody's tier, like a dance's. A fight cuts in at the next bar line
   with no bridge, and plays in a closer room (`ApplyBus(..., fight: true)`). `--mood Battle` renders
   a fight, as `B` in `--music` mode plays one; `targets.json` holds Battle to its own bands.
+- **Night.** A visit's period reaches the music in `NarrativeController.ApplyTimePeriod` (the one
+  writer of the period): at Night, in exploration, `AmbianceEngine.SetNight(true)` plays the
+  place's `MusicMoodState.AtNight()` (colder, stranger, a little uneasy, festivity 0, Intensity
+  x0.82 so the ostinato and percussion thin first). Each place keeps its own character, shifted.
+  Any new `SetMood` is day again; the pause menu hands the night back. Other periods have no
+  variant. The harness renders one as `tavern:12@night`.
 - **Mood.** `SetMood` glides the mood (≈2 s). Structure is decided at piece and section starts; a
   drift above 0.12 (or the fight filter changing) ends the piece through a one- or two-bar bridge,
   in which the tune comes to rest on the nearest tonic and holds it; the next piece then starts on
@@ -134,6 +140,7 @@ music worse to read or to look at; re-calibrate the band instead, and say why in
   from it is not entered afresh and sets nothing, so `ResumeFromMenu` hands back what
   `AmbianceEngine.Requested` held when the menu opened. A new place's music is set by its own entry
   (`StartLocationInteraction`); anything that sets music on a mode's entry must still be right when
-  that mode is resumed rather than started. `inspect music` reads the request back, even under
+  that mode is resumed rather than started. The same for a fight: `OnEnterFighting` sets four tracks
+  itself, because a travel encounter's fight opens from a journey's one. `inspect music` reads the request back, even under
   `--silent` (the engine then starts silent: no stream, no composer, but it answers).
 - Music is not a rule the player is subject to: the manual needs nothing.

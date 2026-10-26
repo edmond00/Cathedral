@@ -103,6 +103,14 @@ public struct MusicMoodState
     public MusicMoodState WithFestivity(float delta) =>
         new(Coldness, Fear, Mystery, Intensity, Festivity + delta);
 
+    /// <summary>
+    /// The same place at night: colder, a little stranger and more uneasy, nobody dancing, and
+    /// sparser (lower Intensity thins the ostinato and the percussion first). Each place keeps its
+    /// own character, shifted, so every location has its own night music.
+    /// </summary>
+    public MusicMoodState AtNight() =>
+        new(Coldness + 0.18f, Fear + 0.06f, Mystery + 0.14f, Intensity * 0.82f, 0f);
+
     /// <summary>Returns a copy with Intensity changed by delta, clamped.</summary>
     public MusicMoodState WithIntensity(float delta) =>
         new(Coldness, Fear, Mystery, Intensity + delta, Festivity);

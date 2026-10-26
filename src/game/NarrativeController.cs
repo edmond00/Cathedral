@@ -734,6 +734,8 @@ public class NarrativeController
     {
         _graph.SetCurrentPeriod(period);
         if (_pov != null) _pov.When = period;
+        // A place at night plays its night music; the opening phases are not a place.
+        _ambianceEngine?.SetNight(_scene?.Phase == NarrationPhase.Exploration && period == TimePeriod.Night);
         _npcPlacement?.PlaceForPeriod(period);
         RefreshSceneVerbs();
     }
