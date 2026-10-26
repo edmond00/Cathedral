@@ -57,8 +57,9 @@ AmbianceEngine (src/audio/AmbianceEngine.cs)     the game's only door: same API 
   Locrian (a power chord needs its fifth). `PlanFightForm`: `I A A' B C A' B A'`, each section a
   `RiffStyle` (`EmitRiff`, `EmitKit`): Gallop under the A tune, Tremolo over a double-bass kick
   under the B, HalfTime for the tune-less breakdown. The band is all there from the first bar; the
-  riff and kit open with the melody's tier, like a dance's. A fight cuts in at the next bar line
-  with no bridge, and plays in a closer room (`ApplyBus(..., fight: true)`). `--mood Battle` renders
+  riff and kit open with the melody's tier, like a dance's. A fight cuts in at once
+  (`MusicCore.SetFighting`: the planned bars dropped, a 0.2 s fade, the riff 0.08 s later), not at
+  the next bar line, which at a slow tempo was four or five seconds late; its end keeps the bridge, and plays in a closer room (`ApplyBus(..., fight: true)`). `--mood Battle` renders
   a fight, as `B` in `--music` mode plays one; `targets.json` holds Battle to its own bands.
   A fight gates its layers at full Intensity whatever the mood: a travel encounter opens from the
   world map's (0.25, drone and pad only), and was once written as a fight and heard as a pad.

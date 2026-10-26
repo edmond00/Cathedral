@@ -69,7 +69,9 @@ internal sealed class MusicCore : IScoreObserver
     /// <paramref name="silence"/> seconds a new piece begins from its start, written for the mood
     /// already asked for (no glide: the break is the change). Stings are kept.
     /// </summary>
-    public void Cut(double silence, float fade) => Post(() =>
+    public void Cut(double silence, float fade) => Post(() => CutNow(silence, fade));
+
+    private void CutNow(double silence, float fade)
     {
         double now = Seconds;
         var keep = new List<ScoreEvent>();
@@ -88,13 +90,23 @@ internal sealed class MusicCore : IScoreObserver
         Orchestra.ApplyBus(Synth, _active);
         UpdateGates();
         _composer.Cut(now + silence);
-    });
+    }
 
     public void Positive() => Post(_composer.Positive);
     public void Negative() => Post(_composer.Negative);
     public void Neutral() => Post(_composer.Neutral);
 
-    public void SetFighting(bool on) => Post(() => _composer.Fighting = on);
+    /// <summary>
+    /// A fight starts at once: it does not wait for the bar the composer has already written, which at
+    /// a slow tempo is four or five seconds. What is planned is dropped, the music falls away in a fifth
+    /// of a second and the fight's riff comes in. Its end goes through the ordinary bridge.
+    /// </summary>
+    public void SetFighting(bool on) => Post(() =>
+    {
+        bool starts = on && !_composer.Fighting;
+        _composer.Fighting = on;
+        if (starts) CutNow(0.08, 0.2f);
+    });
     public void SetTraveling(bool on) => Post(() => _composer.Traveling = on);
 
     /// <summary>A sound effect: notes on the SFX bus, starting now, outside the composer.</summary>
