@@ -500,6 +500,13 @@ if (args.Length >= 1 && args[0] == "--export-music")
     return;
 }
 
+// --music-audition <dir>: every instrument of the music synthesiser alone, one WAV each.
+if (args.Length >= 1 && args[0] == "--music-audition")
+{
+    Environment.ExitCode = Cathedral.Audio.Music.Audition.Run(args);
+    return;
+}
+
 // --scene-export <key> [--biome b] [--ids a-b] [--out file]: settled scenes as JSON, for charts and
 // diagrams drawn from the generator itself. Headless.
 if (args.Length >= 1 && args[0] == "--scene-export")
