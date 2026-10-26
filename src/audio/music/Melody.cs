@@ -112,6 +112,44 @@ internal static class Rhythms
         return pool[rng.Next(pool.Length)];
     }
 
+    private const double T = 1.0 / 3.0;   // a jig's eighth: a third of its dotted-quarter beat
+
+    // Jig bars: two dotted-quarter beats, each split into three eighths. The lilting "dum-di dum-di"
+    // (quarter-eighth) is the jig's signature; running triplets carry it; a held dotted quarter rests it.
+    private static readonly double[][] JigBars =
+    {
+        new[] { T, T, T, T, T, T }, new[] { 2 * T, T, 2 * T, T }, new[] { T, T, T, 2 * T, T },
+        new[] { 2 * T, T, T, T, T }, new[] { 1.0, T, T, T }, new[] { T, T, T, 1.0 }, new[] { 2 * T, T, 1.0 },
+    };
+    private static readonly double[][] JigCadences =
+    {
+        new[] { T, T, T, 1.0 }, new[] { 2 * T, T, 1.0 }, new[] { 1.0, 1.0 }, new[] { T, T, T, 2 * T, T },
+    };
+    // Reel bars: four quarter beats in running eighths, now and then a held quarter or a triplet roll.
+    private static readonly double[][] ReelBars =
+    {
+        new[] { .5, .5, .5, .5, .5, .5, .5, .5 }, new[] { 1, .5, .5, .5, .5, .5, .5 }, new[] { .5, .5, 1, .5, .5, 1 },
+        new[] { .5, .5, .5, .5, .5, .5, 1 }, new[] { T, T, T, .5, .5, .5, .5, .5, .5 }, new[] { .5, .5, .5, .5, 1, .5, .5 },
+    };
+    private static readonly double[][] ReelCadences =
+    {
+        new[] { .5, .5, .5, .5, 1, 1 }, new[] { .5, .5, .5, .5, 2 }, new[] { 1.0, 1, 2 }, new[] { .5, .5, 1, 2 },
+    };
+
+    /// <summary>One bar of a dance tune.</summary>
+    public static double[] DanceBar(Dance d, Random rng)
+    {
+        var pool = d == Dance.Jig ? JigBars : ReelBars;
+        return pool[rng.Next(pool.Length)];
+    }
+
+    /// <summary>A dance tune's cadence bar: the tune coming to rest for a beat before it goes round again.</summary>
+    public static double[] DanceCadence(Dance d, Random rng)
+    {
+        var pool = d == Dance.Jig ? JigCadences : ReelCadences;
+        return pool[rng.Next(pool.Length)];
+    }
+
     /// <summary>The cadence bar: shorter notes leading to a long one.</summary>
     public static double[] Cadence(int meter, Random rng)
     {
@@ -173,11 +211,12 @@ internal static class Melodist
     /// notes, three different pitches or more, a span of a third to a fifth, few repeated notes, a
     /// leap answered by a step back, an end away from the start, a rhythm with a long note in it.
     /// </summary>
-    public static double Quality(Motif m)
+    public static double Quality(Motif m, bool dance = false)
     {
         var c = m.Contour;
         int n = c.Length;
-        double q = n is >= 3 and <= 5 ? 2 : 0;
+        // A dance figure runs: four to eight notes is its natural length, where a song's is three to five.
+        double q = dance ? (n is >= 4 and <= 8 ? 2 : 0) : (n is >= 3 and <= 5 ? 2 : 0);
         int distinct = c.Distinct().Count();
         q += distinct >= 3 ? 2 : distinct == 2 ? 0 : -2;
         int span = c.Max() - c.Min();
@@ -206,6 +245,24 @@ internal static class Melodist
             if (q > bq) { best = m; bq = q; }
         }
         return best;
+    }
+
+    /// <summary>
+    /// A dance motif: one bar of a jig or a reel. More thirds and runs than a song's walk, no chant,
+    /// and the best of a few by <see cref="Quality"/>.
+    /// </summary>
+    public static Motif DanceMotif(Dance d, float fall, Random rng, int modeSize, int candidates = 6)
+    {
+        Motif? best = null;
+        double bq = double.MinValue;
+        for (int i = 0; i < candidates; i++)
+        {
+            var rhythm = Rhythms.DanceBar(d, rng);
+            var m = new Motif(rhythm, Contour(rhythm.Length, rng, 0f, fall * 0.5f, modeSize));
+            double q = Quality(m, dance: true);
+            if (q > bq) { best = m; bq = q; }
+        }
+        return best!;
     }
 
     public static Motif NewMotif(int meter, float liveliness, float chant, float fall, Random rng, int modeSize = 7)
@@ -263,7 +320,7 @@ internal static class Melodist
         {
             var n = line[i];
             double inBar = n.Beat - barBeat;
-            bool strong = inBar < 1e-6 || (meter == 4 && Math.Abs(inBar - 2) < 1e-6);
+            bool strong = inBar < 1e-6 || (meter == 4 && Math.Abs(inBar - 2) < 1e-6) || (meter == 2 && Math.Abs(inBar - 1) < 1e-6);
             if (chord.Has(key, n.Degree)) continue;
             // A held note that rubs a semitone or a tritone against the chord the pad is sustaining is
             // heard as a wrong note, not a passing one: it moves to the nearest chord tone. Short

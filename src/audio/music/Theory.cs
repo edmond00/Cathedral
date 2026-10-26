@@ -180,6 +180,26 @@ internal static class Progressions
         new[] { 5, 3, 1, 4 }, new[] { 2, 5, 3, 4 }, new[] { 3, 0, 5, 4 },
     };
 
+    // Dance tunes: the shuttles a session player's bouzouki would strum. A part opens on the tonic and
+    // swings to the chord a step below (i-bVII) or to the fourth (Dorian's i-IV); a B part starts away,
+    // on the relative major (III) or the bVII, and comes home.
+    private static readonly int[][] DanceDorianA = { new[] { 0, 6, 0, 6 }, new[] { 0, 0, 6, 6 }, new[] { 0, 3, 0, 6 }, new[] { 0, 6, 3, 0 } };
+    private static readonly int[][] DanceDorianB = { new[] { 6, 6, 0, 0 }, new[] { 3, 3, 0, 6 }, new[] { 2, 6, 0, 0 }, new[] { 6, 3, 6, 0 } };
+    private static readonly int[][] DanceAeolianA = { new[] { 0, 6, 0, 6 }, new[] { 0, 0, 6, 6 }, new[] { 0, 6, 5, 6 }, new[] { 0, 3, 0, 6 } };
+    private static readonly int[][] DanceAeolianB = { new[] { 2, 6, 2, 6 }, new[] { 2, 2, 6, 6 }, new[] { 5, 6, 0, 0 }, new[] { 2, 6, 5, 6 } };
+
+    public static int[] Dance(Mode mode, bool contrast, Random rng)
+    {
+        var pool = (mode.Name == "Dorian", contrast) switch
+        {
+            (true, false) => DanceDorianA,
+            (true, true) => DanceDorianB,
+            (false, false) => DanceAeolianA,
+            _ => DanceAeolianB,
+        };
+        return pool[rng.Next(pool.Length)];
+    }
+
     public static int[] For(Mode mode, bool contrast, Random rng)
     {
         int[][] pool = (mode.Name, contrast) switch

@@ -5,8 +5,11 @@ using System.Linq;
 namespace Cathedral.Audio.Music;
 
 /// <summary>Something the composer has decided will happen at a given moment.</summary>
+/// <para><c>Ornament</c> marks a grace note (a cut, a roll's taps); <c>LogDur</c>, when set, is the length
+/// the score log records for a note sounded in pieces (a rolled note's first segment carries the
+/// whole note), so the harness reads the tune under the ornaments.</para>
 internal readonly record struct ScoreEvent(double T, double Dur, Part Part, Instrument Inst, float Midi, float Vel, float Pan,
-                                           bool IsGain = false, float FadeSeconds = 0f);
+                                           bool IsGain = false, float FadeSeconds = 0f, bool Ornament = false, double LogDur = 0);
 
 /// <summary>What the composer tells whoever is listening about structure: for the score log and the harness.</summary>
 internal interface IScoreObserver
@@ -16,7 +19,7 @@ internal interface IScoreObserver
     void Chord(double t, double dur, int root, int[] pcs);
 }
 
-internal enum SectionKind { Intro, A, AVar, B, C, Outro, Bridge }
+internal enum SectionKind { Intro, A, AVar, B, BVar, C, Outro, Bridge }
 
 internal sealed class Section
 {
@@ -49,7 +52,9 @@ internal sealed class Piece
     public int Center;                                   // melody's central degree
     public bool Fight;
     public bool UsesTheme;
+    public Dance Dance;                                  // a festive piece's dance; None for the rest
     public List<LineNote>? ALine;                       // the first A's melody, for the variations
+    public List<LineNote>? BLine;                       // a dance tune's B part, played twice
     public double BarSeconds => Meter * 60.0 / Bpm;
     public double BeatSeconds => 60.0 / Bpm;
 }
@@ -79,6 +84,17 @@ internal sealed class Composer
     {
         public Motif Four = null!, Three = null!;
         public Motif For(int meter) => meter == 3 ? Three : Four;
+
+        /// <summary>The theme as a dance figure: its contour on a jig or reel bar with as many notes, if there is one.</summary>
+        public Motif? AsDance(Dance d, Random rng)
+        {
+            for (int i = 0; i < 24; i++)
+            {
+                var r = Rhythms.DanceBar(d, rng);
+                if (r.Length == Four.Count) return new Motif(r, Four.Contour);
+            }
+            return null;
+        }
     }
 
     private Theme MakeTheme()
@@ -184,7 +200,9 @@ internal sealed class Composer
         _rng = _pieceRng(index);
         var mood = EffectiveMood();
         var p = new Piece { Index = index, Mood = mood, Start = _cursor };
-        var mode = Mode.ForMood(mood, _rng);
+        p.Dance = Fighting ? Dance.None : Orchestra.DanceFor(mood, _rng);
+        // A dance stays in the two minor modes the old session tunes favour: Dorian above all, then Aeolian.
+        var mode = p.Dance != Dance.None ? (_rng.NextDouble() < 0.6 ? Mode.Dorian : Mode.Aeolian) : Mode.ForMood(mood, _rng);
         // The tonic moves by a fourth or a fifth between pieces, or stays: the drone can pivot.
         int[] moves = { 0, 5, -5, 7, -7, 2, -2 };
         double[] mw = { 2, 2, 2, 1.5, 1.5, 0.7, 0.7 };
@@ -194,14 +212,26 @@ internal sealed class Composer
         while (tonic < 50) tonic += 12;
         _lastTonic = tonic;
         p.Key = new Key(tonic, mode);
-        p.Bpm = Orchestra.Tempo(mood, _rng);
-        p.Meter = Orchestra.Meter(mood, _rng);
+        p.Bpm = p.Dance != Dance.None ? Orchestra.DanceTempo(p.Dance, mood, _rng) : Orchestra.Tempo(mood, _rng);
+        p.Meter = p.Dance switch { Dance.Jig => 2, Dance.Reel => 4, _ => Orchestra.Meter(mood, _rng) };
         if (Fighting) p.Meter = 4;
         p.Fight = Fighting;
         p.Orch = Orchestra.Choose(mood, p.Meter, p.Bpm, _rng);
+        p.Orch.Dance = p.Dance;
         p.Center = mode.Size + 1;   // a step above the octave over the tonic: melodies hover round it
 
         var o = p.Orch;
+        if (p.Dance != Dance.None)
+        {
+            ComposeDanceMotifs(p, index);
+            PlanForm(p);
+            _piece = p;
+            _section = 0;
+            _bar = 0;
+            _lastPadVoicing = null;
+            _observer?.Piece(_cursor, p);
+            return;
+        }
         p.M = Melodist.BestMotif(4, p.Meter, o.Liveliness, o.Chant, o.Fall, _rng, mode.Size);
         // The world's theme: one motif drawn once per seed, taken up by about a third of the pieces
         // (and always by the first), in their own key and metre. Endless music still has a tune that
@@ -229,6 +259,26 @@ internal sealed class Composer
         _observer?.Piece(_cursor, p);
     }
 
+    /// <summary>
+    /// A dance tune's material: the A part's motif and its answer, and a B part with its own, as
+    /// session tunes have (the B part is a new strain, usually higher, not the A turned over). The
+    /// world's theme is taken up as a jig or a reel figure when its note count fits one.
+    /// </summary>
+    private void ComposeDanceMotifs(Piece p, int index)
+    {
+        var o = p.Orch;
+        int size = p.Key.Mode.Size;
+        _theme ??= MakeTheme();
+        p.M = Melodist.DanceMotif(p.Dance, o.Fall, _rng, size);
+        if (index == 0 || _rng.NextDouble() < 0.33)
+        {
+            if (_theme.AsDance(p.Dance, _rng) is { } t) { p.M = t.ForModeSize(size); p.UsesTheme = true; }
+        }
+        p.N = Melodist.DanceMotif(p.Dance, o.Fall, _rng, size);
+        p.MB = Melodist.DanceMotif(p.Dance, o.Fall, _rng, size);
+        p.NB = _rng.NextDouble() < 0.5 ? p.N : Melodist.DanceMotif(p.Dance, o.Fall, _rng, size);
+    }
+
     private int WeightedIndex(double[] w)
     {
         double r = _rng.NextDouble() * w.Sum();
@@ -243,6 +293,7 @@ internal sealed class Composer
 
     private void PlanForm(Piece p)
     {
+        if (p.Dance != Dance.None) { PlanDanceForm(p); return; }
         var o = p.Orch;
         string form = Forms[_rng.Next(Forms.Length)];
         if (Fighting) form = "A A' B A' B A'";
@@ -328,6 +379,50 @@ internal sealed class Composer
             s.Counter = (CounterStyle)_rng.Next(3);
             if (s.Kind == SectionKind.B && s.Counter == CounterStyle.Organum) s.Counter = CounterStyle.Tenor;
             p.Sections.Add(s);
+        }
+    }
+
+    /// <summary>
+    /// A dance tune as a session plays it: each part twice (A A B B), the whole tune twice round, then
+    /// straight on into the next tune of the set with no outro. Two bars of the strummed chords and the
+    /// drum lead in. The band grows as the tune goes round: lute and tune first, the drum on the
+    /// repeat, the second instrument in the B part, everyone the second time through.
+    /// </summary>
+    private void PlanDanceForm(Piece p)
+    {
+        var o = p.Orch;
+        bool leadIn = _rng.NextDouble() < 0.6;
+        p.Form = (leadIn ? "I " : "") + "A A' B B' A' A' B' B'";
+        int[] progA = Progressions.Dance(p.Key.Mode, false, _rng);
+        int[] progB = Progressions.Dance(p.Key.Mode, true, _rng);
+        bool pipesDrone = o.Drone == Instrument.Pipes;
+        int round = 0, part = 0;
+        foreach (var tok in p.Form.Split(' '))
+        {
+            var s = new Section { Label = tok, Melody = o.Melody, Pad = o.Pad, Counter = CounterStyle.Heterophony };
+            if (tok == "I")
+            {
+                s.Kind = SectionKind.Intro;
+                s.Bars = 2;
+                s.Chords = new[] { 0, progA[^1] == 0 ? progA[1] : progA[^1] };
+                s.Layers = new() { Part.Ostinato, Part.Perc };
+                p.Sections.Add(s);
+                continue;
+            }
+            bool isA = tok.StartsWith('A');
+            if (part == 4) { round = 1; }
+            s.Kind = part switch { 0 => SectionKind.A, 2 => SectionKind.B, _ => isA ? SectionKind.AVar : SectionKind.BVar };
+            s.Bars = 8;
+            s.Chords = Period(isA ? progA : progB, close: true);
+            s.Layers = new() { Part.Melody, Part.Ostinato };
+            if (part >= 1 || round == 1) s.Layers.Add(Part.Perc);
+            if (!isA || round == 1) s.Layers.Add(Part.Counter);
+            if (round == 1 && !isA) s.Layers.Add(Part.Bass);
+            if (pipesDrone && isA && TonicFits(p.Key, s)) s.Layers.Add(Part.Drone);
+            // The second time round, the instruments swap the lead now and then.
+            if (round == 1 && _rng.NextDouble() < 0.5) s.Melody = o.MelodyAlt is Instrument.Fiddle or Instrument.Whistle or Instrument.Pipes ? o.MelodyAlt : o.Counter;
+            p.Sections.Add(s);
+            part++;
         }
     }
 
@@ -427,13 +522,14 @@ internal sealed class Composer
 
     /// <summary>The mood a new piece is written for: a fight hardens the place's own mood into battle.</summary>
     private MusicMoodState EffectiveMood() => Fighting
-        ? new MusicMoodState(Math.Max(Mood.Coldness, 0.4f), Math.Max(Mood.Fear, 0.85f), Mood.Mystery * 0.5f, 1f)
+        ? new MusicMoodState(Math.Max(Mood.Coldness, 0.4f), Math.Max(Mood.Fear, 0.85f), Mood.Mystery * 0.5f, 1f, 0f)
         : Mood;
 
     private void CheckDrift(Piece p)
     {
         var m = EffectiveMood();
-        float d = MathF.Sqrt(Sq(m.Coldness - p.Mood.Coldness) + Sq(m.Fear - p.Mood.Fear) + Sq(m.Mystery - p.Mood.Mystery));
+        float d = MathF.Sqrt(Sq(m.Coldness - p.Mood.Coldness) + Sq(m.Fear - p.Mood.Fear) + Sq(m.Mystery - p.Mood.Mystery)
+                             + Sq(m.Festivity - p.Mood.Festivity));
         bool fightChanged = Fighting != p.Fight;
         // A new place is a new mood, and a new mood is a new piece: anything past a small change ends
         // this one, through a short bridge.
@@ -543,10 +639,14 @@ internal sealed class Composer
         var key = p.Key;
         int n = key.Mode.Size;
         int lo = p.Center - n + 2, hi = p.Center + n + 2;   // a little under the octave below to a ninth above
+        // A dance tune's B part is a strain higher: its range moves up a third.
+        int lift = p.Dance != Dance.None ? 2 : 0;
         s.MelodyLine = s.Kind switch
         {
             SectionKind.A => p.ALine = BuildPeriod(p, s, p.M, p.N, lo, hi, close: true),
             SectionKind.AVar => VaryA(p, s, lo, hi),
+            SectionKind.B when p.Dance != Dance.None => p.BLine = BuildPeriod(p, s, p.MB, p.NB, lo + lift, hi + lift, close: true, lift: lift),
+            SectionKind.BVar => p.BLine != null ? new List<LineNote>(p.BLine) : BuildPeriod(p, s, p.MB, p.NB, lo + lift, hi + lift, close: true, lift: lift),
             SectionKind.B => BuildPeriod(p, s, p.MB, p.NB, lo, hi, close: false),
             SectionKind.C => Chant(p, s, lo, hi),
             SectionKind.Outro => Outro(p, s, lo, hi),
@@ -561,8 +661,9 @@ internal sealed class Composer
         s.CounterLine = s.Layers.Contains(Part.Counter) ? BuildCounter(p, s) : new();
     }
 
-    private List<LineNote> BuildPeriod(Piece p, Section s, Motif m, Motif n2, int lo, int hi, bool close)
+    private List<LineNote> BuildPeriod(Piece p, Section s, Motif m, Motif n2, int lo, int hi, bool close, int lift = 0)
     {
+        double[] Cadence() => p.Dance != Dance.None ? Rhythms.DanceCadence(p.Dance, _rng) : Rhythms.Cadence(p.Meter, _rng);
         var key = p.Key;
         var line = new List<LineNote>();
         int meter = p.Meter;
@@ -575,7 +676,7 @@ internal sealed class Composer
         int StepNear() => _rng.NextDouble() < 0.55 ? -1 : 1;
 
         // Phrase one. A B section starts higher: contrast by register as well as by harmony.
-        int a0 = Anchor(0, m, p.Center + (close ? (_rng.NextDouble() < 0.5 ? 0 : -2) : 2), stable: true);
+        int a0 = Anchor(0, m, p.Center + lift + (close ? (_rng.NextDouble() < 0.5 ? 0 : -2) : 2), stable: true);
         Melodist.PlaceBar(line, m, 0, a0, key, C(0), meter, lo, hi, 0.9f);
         // Bar two: the motif again a step away (a sequence) or in place with its ending turned.
         var m2 = _rng.NextDouble() < 0.5 ? m : m.WithEnding(_rng.NextDouble() < 0.6 ? -1 : 1);
@@ -589,8 +690,8 @@ internal sealed class Composer
         int openTarget = Melodist.NearestChordTone(key, C(3), Last() - 1, lo + 1, hi, _rng);
         if (Key.Mod(openTarget, key.Mode.Size) == 0)
             openTarget = Melodist.NearestChordTone(key, C(3), openTarget + 1, openTarget + 1, hi, _rng);
-        Melodist.PlaceCadence(line, Rhythms.Cadence(meter, _rng), 3 * meter, openTarget, lo, hi, _rng, 0.9f);
-        Breathe(line, meter);
+        Melodist.PlaceCadence(line, Cadence(), 3 * meter, openTarget, lo, hi, _rng, 0.9f);
+        if (p.Dance == Dance.None) Breathe(line, meter);   // a dance tune does not stop for breath
 
         // Phrase two. When the harmony allows, the whole phrase again with only the ending changed:
         // the estampie's punctum, open ending then closed, and the commonest form in folk tunes.
@@ -612,10 +713,10 @@ internal sealed class Composer
         }
         // The close comes down to the tonic nearest the middle of the tune; an open end to its chord.
         int closeTarget = close
-            ? NearestTonic(key, Math.Min(Last(), p.Center + 1), lo, hi)
+            ? NearestTonic(key, Math.Min(Last(), p.Center + 1 + lift), lo, hi)
             : Melodist.NearestChordTone(key, C(7), Last() - 1, lo, hi, _rng, preferStable: true);
-        Melodist.PlaceCadence(line, Rhythms.Cadence(meter, _rng), 7 * meter, closeTarget, lo, hi, _rng, 0.85f);
-        Breathe(line, meter);
+        Melodist.PlaceCadence(line, Cadence(), 7 * meter, closeTarget, lo, hi, _rng, 0.85f);
+        if (p.Dance == Dance.None) Breathe(line, meter);
         return line;
     }
 
@@ -727,6 +828,18 @@ internal sealed class Composer
         int meter = p.Meter;
         switch (s.Counter)
         {
+            case CounterStyle.Heterophony when mel.Count > 0:
+                // The same tune on the second instrument: a run's quick notes now and then left out
+                // (the note before is held through them), the rest note for note.
+                for (int i = 0; i < mel.Count; i++)
+                {
+                    var x = mel[i];
+                    double dur = x.Dur;
+                    while (i + 1 < mel.Count && mel[i + 1].Dur < 0.5 && _rng.NextDouble() < 0.18)
+                        dur += mel[++i].Dur;
+                    outLine.Add((x.Beat, dur, key.Pitch(x.Degree), x.Vel * 0.75f));
+                }
+                break;
             case CounterStyle.Organum when mel.Count > 0:
                 foreach (var x in mel)
                 {
@@ -795,10 +908,16 @@ internal sealed class Composer
         double b0 = _bar * p.Meter, b1 = b0 + p.Meter;
         var key = p.Key;
         float pan = -0.25f;
+        int up = Transposition(s.Melody);
         foreach (var x in s.MelodyLine)
         {
             if (x.Beat < b0 - 1e-6 || x.Beat >= b1 - 1e-6) continue;
-            double t = barStart + (x.Beat - b0) * p.BeatSeconds + Humanise();
+            double t = barStart + (x.Beat - b0 + Lilt(p, x.Beat - b0)) * p.BeatSeconds + Humanise();
+            if (p.Dance != Dance.None)
+            {
+                EmitDanceNote(output, p, s.Melody, Part.Melody, t, x, b0, arc, pan, up);
+                continue;
+            }
             // Legato: a note lasts to the next one, a breath shorter on wind and voice.
             double dur = x.Dur * p.BeatSeconds * (IsPlucked(s.Melody) ? 1.0 : 0.95);
             bool downbeat = Math.Abs(x.Beat - b0) < 1e-6;
@@ -822,11 +941,15 @@ internal sealed class Composer
         double b0 = _bar * p.Meter, b1 = b0 + p.Meter;
         var inst = p.Orch.Counter == s.Melody ? p.Orch.MelodyAlt : p.Orch.Counter;
         if (s.Counter == CounterStyle.Organum) inst = s.Melody == Instrument.Choir ? Instrument.Choir : p.Orch.Counter;
+        if (s.Counter == CounterStyle.Heterophony && inst == s.Melody)
+            inst = s.Melody == Instrument.Fiddle ? Instrument.Whistle : Instrument.Fiddle;
+        int up = Transposition(inst);
         foreach (var (beat, dur, midi, vel) in s.CounterLine)
         {
             if (beat < b0 - 1e-6 || beat >= b1 - 1e-6) continue;
-            double t = barStart + (beat - b0) * p.BeatSeconds + Humanise();
-            output.Add(new(t, dur * p.BeatSeconds, Part.Counter, inst, midi, Math.Clamp(vel * arc * Orchestra.Trim(inst) * Jitter(0.05f), 0.05f, 1f), 0.35f));
+            double t = barStart + (beat - b0 + Lilt(p, beat - b0)) * p.BeatSeconds + Humanise();
+            output.Add(new(t, dur * p.BeatSeconds * (p.Dance != Dance.None ? 0.92 : 1.0), Part.Counter, inst, midi + up,
+                           Math.Clamp(vel * arc * Orchestra.Trim(inst) * Jitter(0.05f), 0.05f, 1f), 0.35f));
         }
     }
 
@@ -872,6 +995,7 @@ internal sealed class Composer
     {
         var o = p.Orch;
         var key = p.Key;
+        if (o.OstinatoStyle == OstinatoStyle.Comp) { EmitComp(output, p, chord, barStart, arc); return; }
         int n = key.Mode.Size;
         // Chord tones as degrees, the root in the octave of the tonic (low for a pulse).
         int rootDeg = chord.Root;
@@ -897,6 +1021,7 @@ internal sealed class Composer
     {
         var key = p.Key;
         double beat = p.BeatSeconds;
+        if (p.Orch.Perc == Instrument.Bodhran) { EmitBodhran(output, p, barStart, arc); return; }
         if (p.Orch.Perc == Instrument.HandDrum)
         {
             // The tavern's frame drum: strong one, lighter offbeats, a little skip before the bar line.
@@ -931,6 +1056,128 @@ internal sealed class Composer
         {
             double t = barStart + p.BarSeconds * (i + _rng.NextDouble() * 0.6) / steps;
             output.Add(new(t, 0.2, Part.Perc, Instrument.HandDrum, 33 + _rng.Next(6), 0.25f + (float)_rng.NextDouble() * 0.15f, 0f));
+        }
+    }
+
+    // ── The session ──────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// The lilt, in beats: a reel's off-beat eighths a touch late, a jig's first eighth of each three
+    /// held a touch long. Played straight, either sounds like a machine.
+    /// </summary>
+    private static double Lilt(Piece p, double beatInBar)
+    {
+        if (p.Dance == Dance.None) return 0;
+        double f = beatInBar - Math.Floor(beatInBar + 1e-6);
+        if (p.Dance == Dance.Reel) return Math.Abs(f - 0.5) < 1e-3 ? 0.06 : 0;
+        if (Math.Abs(f - 1.0 / 3) < 1e-3) return 0.04;
+        if (Math.Abs(f - 2.0 / 3) < 1e-3) return 0.02;
+        return 0;
+    }
+
+    /// <summary>The whistle sounds an octave above the line, where a tin whistle lives.</summary>
+    private static int Transposition(Instrument i) => i == Instrument.Whistle ? 12 : 0;
+
+    /// <summary>
+    /// One note of a dance tune, with the session's ornaments: a cut (a grace note above, a flick of a
+    /// finger) on a beat, or a roll (cut, note, tap below, note) on a held note. Accents on the jig's
+    /// two beats and the reel's first and third.
+    /// </summary>
+    private void EmitDanceNote(List<ScoreEvent> output, Piece p, Instrument inst, Part part, double t, LineNote x, double b0,
+                               float arc, float pan, int up)
+    {
+        var key = p.Key;
+        double inBar = x.Beat - b0;
+        bool onBeat = Math.Abs(inBar - Math.Round(inBar)) < 1e-3 && (p.Dance == Dance.Jig || Math.Round(inBar) % 2 == 0);
+        double dur = x.Dur * p.BeatSeconds * (IsPlucked(inst) ? 1.0 : 0.9);
+        float v = Math.Clamp(x.Vel * arc * (onBeat ? 1.08f : 0.9f) * Orchestra.Trim(inst) * Jitter(0.05f), 0.05f, 1f);
+        int midi = key.Pitch(x.Degree) + up;
+        bool ornaments = inst is Instrument.Whistle or Instrument.Fiddle or Instrument.Pipes;
+        const double grace = 0.03;
+        if (ornaments && x.Dur >= 0.99 && _rng.NextDouble() < 0.35 && dur > 0.3)
+        {
+            // A roll: note, cut, note, tap, note.
+            double a = dur * 0.28;
+            output.Add(new(t, a, part, inst, midi, v, pan, LogDur: dur));
+            output.Add(new(t + a, grace, part, inst, key.Pitch(x.Degree + 1) + up, v * 0.7f, pan, Ornament: true));
+            output.Add(new(t + a + grace, a, part, inst, midi, v * 0.9f, pan, Ornament: true));
+            output.Add(new(t + 2 * a + grace, grace, part, inst, key.Pitch(x.Degree - 1) + up, v * 0.7f, pan, Ornament: true));
+            output.Add(new(t + 2 * a + 2 * grace, dur - 2 * a - 2 * grace, part, inst, midi, v * 0.9f, pan, Ornament: true));
+            return;
+        }
+        if (ornaments && onBeat && _rng.NextDouble() < 0.25)
+        {
+            output.Add(new(t, grace, part, inst, key.Pitch(x.Degree + 1) + up, v * 0.7f, pan, Ornament: true));
+            t += grace;
+            dur -= grace;
+        }
+        output.Add(new(t, dur, part, inst, midi, v, pan));
+    }
+
+    /// <summary>
+    /// The strummed accompaniment: the bass note on the beat and the chord off it, boom-chick. A jig
+    /// strums on the third eighth of each beat; a reel on the second and fourth beats, with a light
+    /// stroke before the bar line. The chord's notes are spread a few milliseconds, as a strum is.
+    /// </summary>
+    private void EmitComp(List<ScoreEvent> output, Piece p, Chord chord, double barStart, float arc)
+    {
+        var key = p.Key;
+        var inst = p.Orch.Ostinato;
+        // The bass strings of a bouzouki or a guitar: low enough to be the floor of the room.
+        int bass = LowPitch(key, chord.Root, key.Tonic - 17);
+        int fifth = LowPitch(key, chord.Tones[2], key.Tonic - 17);
+        var tones = chord.Tones.Select(d => LowPitch(key, d, key.Tonic - 3)).OrderBy(m => m).ToArray();
+        (double at, bool isBass, int low, float v)[] pat = p.Dance == Dance.Jig
+            ? new[] { (0.0, true, bass, 0.8f), (2.0 / 3, false, 0, 0.55f), (1.0, true, fifth, 0.7f), (5.0 / 3, false, 0, 0.55f) }
+            : new[] { (0.0, true, bass, 0.8f), (1.0, false, 0, 0.55f), (2.0, true, fifth, 0.7f), (3.0, false, 0, 0.55f), (3.5, false, 0, 0.35f) };
+        foreach (var (at, isBass, low, v) in pat)
+        {
+            double t = barStart + (at + Lilt(p, at)) * p.BeatSeconds + Humanise() * 0.5;
+            float vel = v * arc * Orchestra.Trim(inst) * Jitter(0.08f);
+            if (isBass)
+            {
+                output.Add(new(t, p.BeatSeconds * 0.7, Part.Ostinato, inst, low, vel, -0.3f));
+                continue;
+            }
+            for (int k = 0; k < tones.Length; k++)
+                output.Add(new(t + k * 0.012, p.BeatSeconds * 0.4, Part.Ostinato, inst, tones[k], vel * 0.8f, 0.2f + k * 0.15f));
+        }
+    }
+
+    /// <summary>
+    /// The bodhrán: every eighth, the beats struck low with the hand's weight behind them, the rest
+    /// lighter and higher (the other hand pressing the skin), and a triplet run into the last bar of
+    /// each phrase.
+    /// </summary>
+    private void EmitBodhran(List<ScoreEvent> output, Piece p, double barStart, float arc)
+    {
+        int low = p.Key.Tonic - 14;
+        while (low > 45) low -= 12;
+        while (low < 36) low += 12;
+        bool fill = _bar % 4 == 3;
+        List<(double at, float v, int pitch)> hits = new();
+        if (p.Dance == Dance.Jig)
+        {
+            double t3 = 1.0 / 3;
+            foreach (var (at, v) in new[] { (0.0, 0.9f), (t3, 0.35f), (2 * t3, 0.5f), (1.0, 0.75f), (1 + t3, 0.35f), (1 + 2 * t3, 0.55f) })
+                hits.Add((at, v, v > 0.6f ? low : low + 4));
+        }
+        else
+        {
+            for (int i = 0; i < 8; i++)
+            {
+                float v = i % 4 == 0 ? 0.9f : i % 2 == 0 ? 0.6f : 0.35f;
+                hits.Add((i * 0.5, v, v > 0.6f ? low : low + 4));
+            }
+            if (fill)
+                foreach (double at in new[] { 3.0 + 1.0 / 3, 3.0 + 2.0 / 3 }) hits.Add((at, 0.45f, low + 3));
+        }
+        if (fill && p.Dance == Dance.Jig)
+            hits.Add((1 + 1.0 / 6, 0.3f, low + 5));
+        foreach (var (at, v, pitch) in hits)
+        {
+            double t = barStart + (at + Lilt(p, at)) * p.BeatSeconds + Humanise() * 0.4;
+            output.Add(new(t, 0.25, Part.Perc, Instrument.Bodhran, pitch, v * arc * Jitter(0.1f), 0.1f));
         }
     }
 

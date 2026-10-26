@@ -65,7 +65,8 @@ def load(path: str | Path) -> Score:
 
 def from_json(path: Path) -> Score:
     j = json.loads(path.read_text())
-    notes = [Note(n["t"], n["d"], n["p"], n["v"], n["part"], n.get("inst", "")) for n in j["notes"]]
+    # Grace notes (cuts, the taps of a roll) are flagged by the engine: the tune is what is under them.
+    notes = [Note(n["t"], n["d"], n["p"], n["v"], n["part"], n.get("inst", "")) for n in j["notes"] if not n.get("o")]
     meta = dict(j.get("meta", {}))
     meta["stems"] = j.get("stems", {})
     meta["marks"] = j.get("marks", [])

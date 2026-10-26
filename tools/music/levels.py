@@ -4,8 +4,8 @@
     levels.py [--apply]
 
 Each instrument's audition (the same phrase and chords at velocity 0.6-0.7) is measured as
-loudness while sounding. Sustained voices are brought to -16 dB, plucked and struck ones to -19
-(their attacks carry more than their average says). With --apply the table between LEVELS-BEGIN
+loudness while sounding. Sustained voices are brought to SUSTAINED_DB, plucked and struck ones 3 dB under (their attacks
+carry more than their average says). With --apply the table between LEVELS-BEGIN
 and LEVELS-END in src/audio/music/Voices.cs is rewritten, multiplying into what is there, so it
 can be run again until it converges.
 """
@@ -23,7 +23,12 @@ import soundfile as sf
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from musickit import ROOT  # noqa: E402
 
-STRUCK = {"Harpsichord", "Harp", "Lute", "Bell", "Timpani", "HandDrum"}
+# The targets are measured after Synth.PreGain (0.22): they were -16 and -19 dB when the pre-gain was
+# 0.3, which is the balance the mix's part levels were tuned against. Change PreGain and these move
+# with it (20*log10 of the ratio), or every instrument is quietly re-levelled up or down.
+SUSTAINED_DB = -18.7
+STRUCK_DB = -21.7
+STRUCK = {"Harpsichord", "Harp", "Lute", "Bell", "Timpani", "HandDrum", "Bodhran"}
 VOICES = ROOT / "src" / "audio" / "music" / "Voices.cs"
 
 
@@ -48,7 +53,7 @@ def main():
     current = {k: float(v) for k, v in re.findall(r"\[Instrument\.(\w+)\] = ([\d.]+)f", src)}
     lines = []
     for inst, db in meas.items():
-        target = -19.0 if inst in STRUCK else -16.0
+        target = (STRUCK_DB if inst in STRUCK else SUSTAINED_DB)
         corr = 10 ** ((target - db) / 20)
         new = current.get(inst, 1.0) * corr
         print(f"{inst:12s} {db:6.1f} dB  -> x{corr:5.2f}  (table {new:.3f})")

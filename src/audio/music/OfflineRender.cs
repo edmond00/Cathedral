@@ -15,7 +15,7 @@ namespace Cathedral.Audio.Music;
 /// clock instead of the wall clock: ten minutes of music in well under a minute.
 ///
 /// <para>A journey is the game's side of the conversation scripted: a JSON list of
-/// <c>{"t": seconds, "mood": "Tavern" | [cold, fear, mystery, intensity], "event": "positive" |
+/// <c>{"t": seconds, "mood": "Tavern" | [cold, fear, mystery, intensity, festivity], "event": "positive" |
 /// "negative" | "neutral", "filter": "fighting" | "traveling" | "none", "tracks": n}</c>, each applied at
 /// its time. It is how the harness measures transitions, stings and fights, not just still moods.</para>
 /// </summary>
@@ -103,7 +103,7 @@ public static class OfflineRender
             else if (m.ValueKind == JsonValueKind.Array)
             {
                 var v = m.EnumerateArray().Select(x => (float)x.GetDouble()).ToArray();
-                core.SetMood(new MusicMoodState(v[0], v[1], v[2], v.Length > 3 ? v[3] : 1f));
+                core.SetMood(new MusicMoodState(v[0], v[1], v[2], v.Length > 3 ? v[3] : 1f, v.Length > 4 ? v[4] : 0f));
             }
         }
         if (e.TryGetProperty("event", out var ev))

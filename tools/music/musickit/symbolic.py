@@ -103,9 +103,34 @@ def _phrases(mel: list[Note]) -> list[list[Note]]:
     return out
 
 
+def _dance_phrases(score: Score, phrases: list[list[Note]]) -> list[list[Note]]:
+    """A dance tune never stops for breath, so its phrases are the composer's own: four bars each."""
+    out = []
+    for ph in phrases:
+        cur: list[Note] = []
+        key = None
+        for n in ph:
+            pcs = [p for p in score.pieces if p["t"] <= n.t + 1e-6]
+            pc = pcs[-1] if pcs else None
+            if not pc or pc.get("dance") not in ("Jig", "Reel"):
+                k = None
+            else:
+                k = (pc["t"], int((n.t - pc["t"] + 0.05) // (60.0 / pc["bpm"] * pc["meter"] * 4)))
+            if cur and k != key:
+                out.append(cur)
+                cur = []
+            key = k
+            cur.append(n)
+        if cur:
+            out.append(cur)
+    return out
+
+
 def melodic(score: Score) -> dict:
     mel = score.melody()
     phrases = _phrases(mel)
+    if any(p.get("dance") in ("Jig", "Reel") for p in score.pieces):
+        phrases = _dance_phrases(score, phrases)
     ints = [b.p - a.p for ph in phrases for a, b in zip(ph, ph[1:])]
     out: dict = {}
     if ints:
@@ -283,9 +308,13 @@ def grid(score: Score) -> dict:
             end = score.pieces[i + 1]["t"] if i + 1 < len(score.pieces) else score.seconds
             sel = on[(on >= pc["t"]) & (on < end)]
             if len(sel):
-                g = 60.0 / pc["bpm"] / 4
+                beat = 60.0 / pc["bpm"]
+                # A jig's beat divides in three (sixths for its semiquavers); a reel's off-beats lilt
+                # late by design, so a dance is held to a beat-relative tolerance.
+                g = beat / 6 if pc.get("dance") == "Jig" else beat / 4
+                tol = max(25e-3, 0.075 * beat) if pc.get("dance") in ("Jig", "Reel") else 25e-3
                 ph = ((sel - pc["t"]) / g) % 1.0
-                vals.append((len(sel), float(np.mean((ph < 25e-3 / g) | (ph > 1 - 25e-3 / g)))))
+                vals.append((len(sel), float(np.mean((ph < tol / g) | (ph > 1 - tol / g)))))
         return {"grid_alignment": sum(n * v for n, v in vals) / max(1, sum(n for n, _ in vals))}
     best = max(align(b) for b in np.arange(40, 141, 1.0))
     return {"grid_alignment": best}

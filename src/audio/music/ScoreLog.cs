@@ -22,10 +22,10 @@ internal sealed class ScoreLog
     public void Meta(string key, object value) => _meta[key] = value;
 
     public void Note(double t, ScoreEvent e) => Append(_notes,
-        $"{{\"t\":{e.T.ToString("F4", Inv)},\"d\":{e.Dur.ToString("F4", Inv)},\"p\":{MathF.Round(e.Midi).ToString(Inv)},\"v\":{e.Vel.ToString("F3", Inv)},\"part\":\"{e.Part.ToString().ToLowerInvariant()}\",\"inst\":\"{e.Inst}\"}}");
+        $"{{\"t\":{e.T.ToString("F4", Inv)},\"d\":{(e.LogDur > 0 ? e.LogDur : e.Dur).ToString("F4", Inv)},{(e.Ornament ? "\"o\":1," : "")}\"p\":{MathF.Round(e.Midi).ToString(Inv)},\"v\":{e.Vel.ToString("F3", Inv)},\"part\":\"{e.Part.ToString().ToLowerInvariant()}\",\"inst\":\"{e.Inst}\"}}");
 
     public void Piece(double t, Piece p) => Append(_pieces,
-        $"{{\"t\":{t.ToString("F4", Inv)},\"index\":{p.Index},\"mode\":\"{p.Key.Mode.Name}\",\"tonic\":{p.Key.Tonic},\"bpm\":{p.Bpm.ToString("F2", Inv)},\"meter\":{p.Meter},\"form\":\"{p.Form}\",\"pole\":\"{p.Orch.Pole}\",\"theme\":{(p.UsesTheme ? "true" : "false")}," +
+        $"{{\"t\":{t.ToString("F4", Inv)},\"index\":{p.Index},\"mode\":\"{p.Key.Mode.Name}\",\"tonic\":{p.Key.Tonic},\"bpm\":{p.Bpm.ToString("F2", Inv)},\"meter\":{p.Meter},\"form\":\"{p.Form}\",\"pole\":\"{p.Orch.Pole}\",\"theme\":{(p.UsesTheme ? "true" : "false")},\"dance\":\"{p.Dance}\"," +
         $"\"melody\":\"{p.Orch.Melody}\",\"pad\":\"{p.Orch.Pad}\",\"ostinato\":\"{p.Orch.Ostinato}\",\"mood\":[{p.Mood.Coldness.ToString("F2", Inv)},{p.Mood.Fear.ToString("F2", Inv)},{p.Mood.Mystery.ToString("F2", Inv)}]}}");
 
     public void Section(double t, Section s, Piece p) => Append(_sections,

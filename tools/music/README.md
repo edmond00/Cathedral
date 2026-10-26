@@ -13,7 +13,8 @@ dotnet build
 
 | command | what |
 |---|---|
-| `dotnet bin/Debug/net8.0/Cathedral.dll --render-music out.wav --seconds 300 --mood Tavern --seed 1` | the game's music, rendered offline (about 13x faster than real time), with `out.score.json` beside it. `--mood` takes a preset (`Neutral`, `Tavern`, `Lament`, `DarkDungeon`, `Battle`, `WorldView`, `Creation`, `Childhood`) or a location sampled as the game samples it (`tavern:12`, `catacombs:5`). `--journey j.json` scripts mood changes, events, filters and track counts over time (`journeys/tour.json`). `--verbose` prints voices and time spent every 30 s |
+| `dotnet bin/Debug/net8.0/Cathedral.dll --render-music out.wav --seconds 300 --mood Tavern --seed 1` | the game's music, rendered offline (about 13x faster than real time), with `out.score.json` beside it. `--mood` takes a preset (`Neutral`, `Tavern`, `Lament`, `DarkDungeon`, `Battle`, `WorldView`, `Creation`, `Childhood`) or a location sampled as the game samples it (`tavern:12`, `catacombs:5`, `port:3`); `QuietTavern` is
+the tavern without its festivity. `--journey j.json` scripts mood changes, events, filters and track counts over time (`journeys/tour.json`). `--verbose` prints voices and time spent every 30 s |
 | `… --music-audition <dir>` | every instrument alone, one WAV and score each |
 | `… --export-music out.mid --seconds n --mood m` | real time, MIDI: what `--record` captures |
 | `… --music-engine legacy` | in the game: the first engine, for comparison |
@@ -39,7 +40,8 @@ level, the hall's wetness, render speed and peak voice count.
 ## The metrics
 
 The bands and the reason for each are in `targets.json`; per-mood overrides (a fight may be more
-dissonant and busier) sit under `moods`. Scores: in band is 1, out of band decays with the distance
+dissonant and busier) sit under `moods`, per-pole overrides under `poles` (a festive render is
+dance music: denser, a chord a bar, a drier room, a lilt, held to its own bands). Scores: in band is 1, out of band decays with the distance
 in band widths, the total is the weighted mean.
 
 - **Mode and harmony:** `mode_fit`, `pc_entropy`, `harmonic_rhythm_s`, `dissonance_time`.
