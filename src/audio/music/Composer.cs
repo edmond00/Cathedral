@@ -122,8 +122,12 @@ internal sealed class Composer
 
     // Game-event requests, consumed at the next bar or beat.
     private bool _positive, _negative, _neutral;
-    private int _melodyRestBars;
     private float _melodyBoost = 1f;
+    // The last piece was cut short by a new place: the next one starts on its tune, not an intro.
+    private bool _cutShort;
+    // The tune's last note and when it was sung: a bridge comes to rest on the tonic nearest it.
+    private int _lastSung;
+    private double _lastSungAt = double.NegativeInfinity;
 
     public MusicMoodState Mood;                       // the smoothed mood; set by the owner every block
     public bool Fighting;                             // the fight overlay asks for battle music
@@ -172,7 +176,8 @@ internal sealed class Composer
             double t = NextBeat(now + 0.02);
             int low = key.Tonic - 12;
             output.Add(new(t, 1.5, Part.Perc, Instrument.Timpani, low, 0.95f, 0f));
-            _melodyRestBars = Math.Max(_melodyRestBars, 1);
+            // The tune steps back under the stroke and comes up again; it never stops.
+            _melodyBoost = 0.6f;
         }
         if (_positive)
         {
@@ -188,7 +193,7 @@ internal sealed class Composer
         if (_neutral)
         {
             _neutral = false;
-            _melodyRestBars = Math.Max(_melodyRestBars, 2);
+            _melodyBoost = 0.75f;
         }
     }
 
@@ -293,10 +298,15 @@ internal sealed class Composer
 
     private void PlanForm(Piece p)
     {
-        if (p.Dance != Dance.None) { PlanDanceForm(p); return; }
+        bool cutShort = _cutShort;
+        _cutShort = false;
+        if (p.Dance != Dance.None) { PlanDanceForm(p, cutShort); return; }
         var o = p.Orch;
         string form = Forms[_rng.Next(Forms.Length)];
         if (Fighting) form = "A A' B A' B A'";
+        // After a bridge the drone and pad have already been holding for a bar or two: an intro of
+        // two to four more bars without the tune is heard as the music dropping out.
+        if (cutShort && form.StartsWith("I ")) form = form[2..];
         p.Form = form;
         var tokens = form.Split(' ');
         int[] progA = Progressions.For(p.Key.Mode, false, _rng);
@@ -350,9 +360,11 @@ internal sealed class Composer
                 case "C":
                     // The breakdown: the tune leaves; ostinato, drone and bells, or a lone chant.
                     s.Kind = SectionKind.C;
-                    s.Bars = 4 + 4 * _rng.Next(2);
+                    // Without the tune it lasts four bars: eight is half a minute of no melody.
+                    bool tuneless = _rng.NextDouble() < 0.5;
+                    s.Bars = tuneless ? 4 : 4 + 4 * _rng.Next(2);
                     s.Chords = Expand(progC, s.Bars);
-                    s.Layers = _rng.NextDouble() < 0.5
+                    s.Layers = tuneless
                         ? new() { Part.Drone, Part.Ostinato, Part.Pad }
                         : new() { Part.Drone, Part.Melody };
                     s.Melody = o.MelodyAlt;
@@ -388,10 +400,11 @@ internal sealed class Composer
     /// drum lead in. The band grows as the tune goes round: lute and tune first, the drum on the
     /// repeat, the second instrument in the B part, everyone the second time through.
     /// </summary>
-    private void PlanDanceForm(Piece p)
+    private void PlanDanceForm(Piece p, bool cutShort)
     {
         var o = p.Orch;
-        bool leadIn = _rng.NextDouble() < 0.6;
+        // After a cut the bridge has already led in.
+        bool leadIn = _rng.NextDouble() < 0.6 && !cutShort;
         p.Form = (leadIn ? "I " : "") + "A A' B B' A' A' B' B'";
         int[] progA = Progressions.Dance(p.Key.Mode, false, _rng);
         int[] progB = Progressions.Dance(p.Key.Mode, true, _rng);
@@ -477,14 +490,12 @@ internal sealed class Composer
         bool chordStarts = _bar == 0 || s.Chords[_bar - 1] != root;
 
         float arc = SectionArc(p, s);
-        bool melodyRests = _melodyRestBars > 0;
-        if (melodyRests) _melodyRestBars--;
 
         foreach (var part in s.Layers)
         {
             switch (part)
             {
-                case Part.Melody when !melodyRests:
+                case Part.Melody:
                     EmitLine(output, p, s, barStart, arc * _melodyBoost);
                     break;
                 case Part.Counter:
@@ -541,14 +552,25 @@ internal sealed class Composer
         var cur = p.Sections[_section];
         if (cur.Kind == SectionKind.Bridge) return;
         // Finish here: drop the rest, add a bridge of held tonic, and let the next piece begin.
+        _cutShort = true;
         if (_bar > 0) { cur.Bars = _bar; cur.Chords = cur.Chords[.._bar]; _section++; }
         p.Sections.RemoveRange(_section, p.Sections.Count - _section);
-        int bars = large ? 1 : 2;
-        p.Sections.Add(new Section
+        // Two bars only when bars are short: at a slow tempo two are eight seconds of waiting.
+        int bars = large || p.BarSeconds > 3 ? 1 : 2;
+        var bridge = new Section
         {
             Kind = SectionKind.Bridge, Label = "~", Bars = bars, Chords = Enumerable.Repeat(0, bars).ToArray(),
-            Layers = new() { Part.Drone, Part.Pad }, Pad = p.Orch.Pad,
-        });
+            Layers = new() { Part.Drone, Part.Pad }, Pad = p.Orch.Pad, Melody = cur.Melody,
+        };
+        // If the tune was singing, it does not stop dead: it comes to rest on the nearest tonic and
+        // holds it across the bridge, so the change is heard as an ending, not a dropout.
+        if (_cursor - _lastSungAt < 2 * p.BarSeconds)
+        {
+            bridge.Layers.Add(Part.Melody);
+            int home = NearestTonic(p.Key, _lastSung, _lastSung - 4, _lastSung + 4);
+            bridge.MelodyLine = new() { new LineNote(0, bars * p.Meter - 0.25, home, 0.7f) };
+        }
+        p.Sections.Add(bridge);
         _bar = 0;
     }
 
@@ -650,6 +672,7 @@ internal sealed class Composer
             SectionKind.B => BuildPeriod(p, s, p.MB, p.NB, lo, hi, close: false),
             SectionKind.C => Chant(p, s, lo, hi),
             SectionKind.Outro => Outro(p, s, lo, hi),
+            SectionKind.Bridge => s.MelodyLine,
             _ => new List<LineNote>(),
         };
         if (s.OctaveShift != 0)
@@ -913,7 +936,9 @@ internal sealed class Composer
         {
             if (x.Beat < b0 - 1e-6 || x.Beat >= b1 - 1e-6) continue;
             double t = barStart + (x.Beat - b0 + Lilt(p, x.Beat - b0)) * p.BeatSeconds + Humanise();
-            if (p.Dance != Dance.None)
+            _lastSung = x.Degree;
+            _lastSungAt = t + x.Dur * p.BeatSeconds;
+            if (p.Dance != Dance.None && s.Kind != SectionKind.Bridge)
             {
                 EmitDanceNote(output, p, s.Melody, Part.Melody, t, x, b0, arc, pan, up);
                 continue;
@@ -932,7 +957,7 @@ internal sealed class Composer
                 t += 2 * g;
                 dur -= 2 * g;
             }
-            output.Add(new(t, dur, Part.Melody, s.Melody, key.Pitch(x.Degree), Math.Clamp(v, 0.05f, 1f), pan));
+            output.Add(new(t, dur, Part.Melody, s.Melody, key.Pitch(x.Degree) + up, Math.Clamp(v, 0.05f, 1f), pan));
         }
     }
 
