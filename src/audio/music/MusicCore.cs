@@ -179,7 +179,9 @@ internal sealed class MusicCore : IScoreObserver
     /// </summary>
     private void UpdateGates()
     {
-        float I = _active.Intensity;
+        // A fight is never quiet. It can open from the world map's mood (Intensity 0.25, drone and pad
+        // only), as a travel encounter does, and would then be written as a fight and heard as a pad.
+        float I = _composer.Fighting ? 1f : _active.Intensity;
         // A dance or a fight stands on its rhythm section: the strummed chords and the drum, or the riff
         // and the kit, come in with the melody's tier rather than at Intensity 0.75.
         bool driven = _composer.Current is { Dance: not Dance.None } or { Fight: true };

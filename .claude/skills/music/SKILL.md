@@ -60,6 +60,9 @@ AmbianceEngine (src/audio/AmbianceEngine.cs)     the game's only door: same API 
   riff and kit open with the melody's tier, like a dance's. A fight cuts in at the next bar line
   with no bridge, and plays in a closer room (`ApplyBus(..., fight: true)`). `--mood Battle` renders
   a fight, as `B` in `--music` mode plays one; `targets.json` holds Battle to its own bands.
+  A fight gates its layers at full Intensity whatever the mood: a travel encounter opens from the
+  world map's (0.25, drone and pad only), and was once written as a fight and heard as a pad.
+  Battle's preset is at full Intensity and hid that; `journeys/encounter.json` is the check.
 - **Night.** A visit's period reaches the music in `NarrativeController.ApplyTimePeriod` (the one
   writer of the period): at Night, in exploration, `AmbianceEngine.SetNight(true)` plays the
   place's `MusicMoodState.AtNight()` (colder, stranger, a little uneasy, festivity 0, Intensity
