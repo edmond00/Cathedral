@@ -85,13 +85,32 @@ public sealed class AmbianceEngine : IDisposable
     public void Stop() => _engine.Stop();
 
     /// <summary>Activates or deactivates a postprocess filter. <see cref="MusicFilter.None"/> stops any running one.</summary>
-    public void SetFilter(MusicFilter filter) => _engine.SetFilter(filter);
+    public void SetFilter(MusicFilter filter) { _asked = _asked with { Filter = filter }; _engine.SetFilter(filter); }
 
     /// <summary>Sets the target mood; the music glides toward it over a few seconds.</summary>
-    public void SetMood(MusicMoodState mood) => _engine.SetMood(mood);
+    public void SetMood(MusicMoodState mood) { _asked = _asked with { Mood = mood }; _engine.SetMood(mood); }
 
     /// <summary>Sets the number of active tracks (0–4).</summary>
-    public void SetActiveTrackCount(int count) => _engine.SetActiveTrackCount(count);
+    public void SetActiveTrackCount(int count) { _asked = _asked with { Tracks = count }; _engine.SetActiveTrackCount(count); }
+
+    /// <summary>
+    /// What the game last asked of the music: the target mood (not the one still gliding towards
+    /// it), the track count and the filter. The pause menu takes it on the way in and hands it back
+    /// to <see cref="Restore"/> on the way out, since resuming a phase does not set the music again.
+    /// </summary>
+    public readonly record struct MusicRequest(MusicMoodState? Mood, int Tracks, MusicFilter Filter);
+
+    private MusicRequest _asked = new(null, -1, MusicFilter.None);
+
+    public MusicRequest Requested => _asked;
+
+    /// <summary>Asks again for everything a <see cref="Requested"/> carried.</summary>
+    public void Restore(MusicRequest r)
+    {
+        if (r.Mood is { } m) SetMood(m);
+        if (r.Tracks >= 0) SetActiveTrackCount(r.Tracks);
+        SetFilter(r.Filter);
+    }
 
     /// <summary>
     /// A game event: its sound effect at once, and its effect on the music at the next beat or bar.

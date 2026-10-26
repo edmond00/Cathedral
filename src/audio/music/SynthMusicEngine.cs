@@ -76,6 +76,14 @@ internal sealed class SynthMusicEngine : IMusicEngine
             DeviceName = "capture (MIDI)";
             return true;
         }
+        // --silent with nothing to capture: no sound and no composing, but an engine that still
+        // answers what the game asked of it, so a script can read the music back (inspect music).
+        if (Config.Debug.Silent)
+        {
+            _core = null;
+            DeviceName = "silent";
+            return true;
+        }
         return false;
     }
 
