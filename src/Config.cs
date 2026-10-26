@@ -288,6 +288,13 @@ public static class Config
         public static string? SoundFontPath { get; set; } = null;
 
         /// <summary>
+        /// Which music engine plays (<c>--music-engine synth|legacy</c>): the hierarchical composer and
+        /// the game's own synthesiser, or the first engine and the system MIDI synth. The legacy one is
+        /// kept so the two can be compared in play. See <see cref="Cathedral.Audio.AmbianceEngine"/>.
+        /// </summary>
+        public static Cathedral.Audio.MusicEngineKind MusicEngine { get; set; } = Cathedral.Audio.MusicEngineKind.Synth;
+
+        /// <summary>
         /// Opens the game window but never shows it. Set by <c>--hidden</c>; <c>run_tests.sh</c>
         /// passes it on every script, for the same reason it passes <c>--silent</c>: a full run
         /// launches the game a hundred-odd times, and each launch otherwise puts a window on screen

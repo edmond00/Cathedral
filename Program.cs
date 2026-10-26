@@ -137,6 +137,8 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("    --record-cursor-speed <px/s>     How fast the drawn cursor travels (default 1500)");
     Console.WriteLine("  --export-sfx <dir>                 Write the UI click and hover sounds as WAV files and exit");
     Console.WriteLine("  --export-music <out.mid> [--seconds n] [--mood m] [--tracks n]  Compose with the game's music engine (silently, in real time) and write MIDI");
+    Console.WriteLine("  --render-music <out.wav> [--seconds n] [--mood m] [--seed n] [--tracks n] [--journey j.json]  Render the music faster than real time, with its score (tools/music)");
+    Console.WriteLine("  --music-audition <dir>             Every instrument of the music synthesiser alone, one WAV each");
     Console.WriteLine("  --scene-export <key> [--biome b] [--ids a-b] [--out f]  Write a settled factory's scenes (areas, paths, doors, people) as JSON and exit");
     Console.WriteLine("  --debug                            Enable debug mode (override LLM/RNG decisions via console) + viewers");
     Console.WriteLine("  --view                             Show the LLM, scene and world-history viewers without console decision overriding");
@@ -168,6 +170,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --no-embeddings                    DEBUG: run without models/embeddings/glove.6B.100d.txt (keywords ranked by length). For CI.");
     Console.WriteLine("  --audio <winmm|openal>             Audio path: WinMM + system MIDI (Windows default) or OpenAL + SoundFont (elsewhere)");
     Console.WriteLine("  --soundfont <file>                 With the OpenAL path: play music with <file> instead of assets/audio/soundfont.sf2");
+    Console.WriteLine("  --music-engine <synth|legacy>      Music: the composer and synthesiser (default) or the first engine via MIDI, for comparison");
     Console.WriteLine("  --log-file <path>                  DEBUG: write the run's log to <path> instead of log.txt. Used by the test suite.");
     Console.WriteLine("  --hidden                           DEBUG: create the window without showing it — no window on screen, no focus");
     Console.WriteLine("                                     taken. The GL context and every mode still run. Used by the test suite.");
@@ -322,6 +325,17 @@ if (args.Any(a => a == "--no-embeddings")) Cathedral.Config.Debug.NoEmbeddings =
 {
     int i = Array.IndexOf(args, "--soundfont");
     if (i >= 0 && i + 1 < args.Length) Cathedral.Config.Debug.SoundFontPath = args[i + 1];
+}
+
+// --music-engine <synth|legacy>: which music engine plays. The legacy engine (MIDI to the system
+// synth, or a SoundFont off Windows) is kept for comparison with the new one.
+{
+    int i = Array.IndexOf(args, "--music-engine");
+    if (i >= 0 && i + 1 < args.Length)
+    {
+        if (Enum.TryParse<Cathedral.Audio.MusicEngineKind>(args[i + 1], ignoreCase: true, out var kind)) Cathedral.Config.Debug.MusicEngine = kind;
+        else Console.Error.WriteLine($"--music-engine {args[i + 1]}: expected synth or legacy; using synth.");
+    }
 }
 
 // --hidden: create the window without showing it. What run_tests.sh uses so a suite run does not put
@@ -497,6 +511,21 @@ if (args.Length >= 2 && args[0] == "--export-sfx")
 if (args.Length >= 1 && args[0] == "--export-music")
 {
     Environment.ExitCode = Cathedral.Audio.MusicExport.Run(args);
+    return;
+}
+
+// --render-music <out.wav> [--seconds n] [--mood m] [--seed n] [--tracks n] [--journey j.json]: the music,
+// rendered faster than real time with its score beside it — what tools/music measures.
+if (args.Length >= 1 && args[0] == "--render-music")
+{
+    Environment.ExitCode = Cathedral.Audio.Music.OfflineRender.Run(args);
+    return;
+}
+
+// --music-audition <dir>: every instrument of the music synthesiser alone, one WAV each.
+if (args.Length >= 1 && args[0] == "--music-audition")
+{
+    Environment.ExitCode = Cathedral.Audio.Music.Audition.Run(args);
     return;
 }
 

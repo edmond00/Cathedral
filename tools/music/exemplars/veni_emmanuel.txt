@@ -1,0 +1,9 @@
+# Veni, veni, Emmanuel (15th-c. French processional melody; public domain). From memory, approximate.
+meter 4
+bpm 72
+E4:1 G4:1 B4:1 B4:1 | B4:1 A4:1 C5:1 B4:1 | A4:1 G4:3 |
+A4:1 B4:1 G4:1 E4:1 | G4:1 A4:1 F#4:1 E4:1 | D4:1 E4:3 |
+A4:1 A4:1 E4:1 E4:1 | F#4:1 G4:2 F#4:1 | E4:1 D4:3 |
+G4:1 A4:1 B4:1 B4:1 | B4:1 A4:1 C5:1 B4:1 | A4:1 G4:3 |
+D5:2 B4:2 | B4:1 A4:1 C5:1 B4:1 | A4:1 G4:3 |
+A4:1 B4:1 G4:1 E4:1 | G4:1 A4:1 F#4:1 E4:1 | D4:1 E4:3 |
