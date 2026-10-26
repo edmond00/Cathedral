@@ -156,16 +156,15 @@ internal sealed class Composer
     {
         int index = _pieceCount++;
         _rng = _pieceRng(index);
-        var mood = Mood;
-        if (Fighting) mood = new MusicMoodState(Math.Max(mood.Coldness, 0.4f), Math.Max(mood.Fear, 0.85f), mood.Mystery * 0.5f, 1f);
+        var mood = EffectiveMood();
         var p = new Piece { Index = index, Mood = mood, Start = _cursor };
         var mode = Mode.ForMood(mood, _rng);
         // The tonic moves by a fourth or a fifth between pieces, or stays: the drone can pivot.
         int[] moves = { 0, 5, -5, 7, -7, 2, -2 };
         double[] mw = { 2, 2, 2, 1.5, 1.5, 0.7, 0.7 };
         int tonic = _lastTonic + moves[WeightedIndex(mw)];
-        // D3..A3: the melody, an octave up, then sits in D4..A5, a singing register.
-        while (tonic > 57) tonic -= 12;
+        // D3..C#4: the melody, an octave up, then sits round D4..C#5, a singing register.
+        while (tonic > 61) tonic -= 12;
         while (tonic < 50) tonic += 12;
         _lastTonic = tonic;
         p.Key = new Key(tonic, mode);
@@ -280,6 +279,14 @@ internal sealed class Composer
                     s.Layers = new() { Part.Drone, Part.Pad, Part.Melody };
                     break;
             }
+            // A tonic pedal under a chord holding a tone a semitone from it (the leading tone of a
+            // harmonic-minor V, the bII of Phrygian) grinds for bars on end: such a section takes a
+            // moving bass instead.
+            if (s.Layers.Contains(Part.Drone) && !TonicFits(p.Key, s))
+            {
+                s.Layers.Remove(Part.Drone);
+                s.Layers.Add(Part.Bass);
+            }
             if (o.Bell && (s.Kind is SectionKind.Intro or SectionKind.C or SectionKind.B || _rng.NextDouble() < 0.25))
                 s.Layers.Add(Part.Bell);
             if (o.Ambience) s.Layers.Add(Part.Ambience);
@@ -383,9 +390,14 @@ internal sealed class Composer
         }
     }
 
+    /// <summary>The mood a new piece is written for: a fight hardens the place's own mood into battle.</summary>
+    private MusicMoodState EffectiveMood() => Fighting
+        ? new MusicMoodState(Math.Max(Mood.Coldness, 0.4f), Math.Max(Mood.Fear, 0.85f), Mood.Mystery * 0.5f, 1f)
+        : Mood;
+
     private void CheckDrift(Piece p)
     {
-        var m = Mood;
+        var m = EffectiveMood();
         float d = MathF.Sqrt(Sq(m.Coldness - p.Mood.Coldness) + Sq(m.Fear - p.Mood.Fear) + Sq(m.Mystery - p.Mood.Mystery));
         bool fightChanged = Fighting != p.Fight;
         if (d < 0.28f && !fightChanged) return;
@@ -467,6 +479,18 @@ internal sealed class Composer
             {
                 int d = Key.Mod(pc - fifth, 12);
                 if (d == 1 || d == 11 || d == 6) return false;
+            }
+        return true;
+    }
+
+    private static bool TonicFits(Key key, Section s)
+    {
+        int tonic = Key.Mod(key.Tonic, 12);
+        foreach (int root in s.Chords.Distinct())
+            foreach (int pc in Chord.On(key, root).PitchClasses(key))
+            {
+                int d = Key.Mod(pc - tonic, 12);
+                if (d == 1 || d == 11) return false;
             }
         return true;
     }

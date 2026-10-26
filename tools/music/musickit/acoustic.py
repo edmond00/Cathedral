@@ -20,6 +20,7 @@ stereo image. These do not say a mix is good; they say when it has left the genr
     envelope_roughness  mean |d RMS dB| between 50 ms frames: low = smooth swells
     swell_db            std of 10 s loudness: slow dynamics
     hole_ratio          50 ms frames below -60 dBFS: dead digital silence
+    spike_db            99th percentile of 1 s loudness over its median: sudden loud moments
     flatness            median spectral flatness (noisiness)
 """
 
@@ -102,6 +103,10 @@ def analyse(path) -> dict:
     rms = np.sqrt(np.mean(mono[: nfr * frame].reshape(nfr, frame) ** 2, axis=1) + 1e-12)
     rdb = 20 * np.log10(rms)
     out["hole_ratio"] = float(np.mean(rdb < -60))
+    sec = 20
+    if nfr >= sec * 10:
+        r1 = 10 * np.log10(np.mean((rms[: (nfr // sec) * sec] ** 2).reshape(-1, sec), axis=1) + 1e-12)
+        out["spike_db"] = float(np.percentile(r1, 99) - np.median(r1))
     alive = rdb > -60
     d = np.abs(np.diff(rdb))
     out["envelope_roughness"] = float(np.mean(d[alive[1:] & alive[:-1]])) if alive.sum() > 2 else 0.0

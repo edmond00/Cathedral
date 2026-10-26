@@ -217,7 +217,11 @@ internal static class Melodist
             var n = line[i];
             double inBar = n.Beat - barBeat;
             bool strong = inBar < 1e-6 || (meter == 4 && Math.Abs(inBar - 2) < 1e-6);
-            if (!strong || chord.Has(key, n.Degree)) continue;
+            if (chord.Has(key, n.Degree)) continue;
+            // A held note that rubs a semitone or a tritone against the chord the pad is sustaining is
+            // heard as a wrong note, not a passing one: it moves to the nearest chord tone. Short
+            // notes off the beat may pass through.
+            if (!strong && !(n.Dur >= 1.0 && Clashes(key, chord, n.Degree))) continue;
             bool passing = i > start && i + 1 < line.Count
                 && Math.Abs(line[i - 1].Degree - n.Degree) == 1 && Math.Abs(line[i + 1].Degree - n.Degree) == 1
                 && Math.Sign(line[i + 1].Degree - n.Degree) == Math.Sign(n.Degree - line[i - 1].Degree);
@@ -226,6 +230,18 @@ internal static class Melodist
             n.Degree = chord.Has(key, down) && down >= lo ? down : chord.Has(key, up) && up <= hi ? up : n.Degree;
             line[i] = n;
         }
+    }
+
+    /// <summary>Whether a degree sounds a semitone or a tritone against any tone of the chord.</summary>
+    public static bool Clashes(Key key, Chord chord, int degree)
+    {
+        int p = key.Pitch(degree);
+        foreach (int pc in chord.PitchClasses(key))
+        {
+            int d = Key.Mod(p - pc, 12);
+            if (d is 1 or 11 or 6) return true;
+        }
+        return false;
     }
 
     /// <summary>

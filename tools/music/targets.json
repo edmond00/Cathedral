@@ -211,11 +211,29 @@
    "w": 2,
    "why": "No dead digital silence: tails and room fill the gaps."
   },
+  "spike_db": {
+   "lo": 0,
+   "hi": 8,
+   "w": 1,
+   "why": "No sudden loud moments: the loudest second stays within 8 dB of the typical one."
+  },
   "audio_repeat": {
    "lo": 0.2,
    "hi": 0.95,
    "w": 1,
    "why": "The repetition survives into what is heard, through the reverb."
+  },
+  "render_speed": {
+   "lo": 8,
+   "hi": 1000000000.0,
+   "w": 1,
+   "why": "Cheap enough to play beside the game: the offline render runs at least eight times faster than real time on one core (live play then costs under an eighth of it)."
+  },
+  "max_voices": {
+   "lo": 0,
+   "hi": 48,
+   "w": 1,
+   "why": "No pile-up of voices that never finish."
   }
  },
  "moods": {

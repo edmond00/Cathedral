@@ -30,6 +30,8 @@ internal sealed class MusicCore : IScoreObserver
     private readonly float[] _l = new float[Synth.Block], _r = new float[Synth.Block];
 
     public ScoreLog? Log;
+    /// <summary>Time spent composing and synthesising, in stopwatch ticks: where a render's time goes.</summary>
+    public long ComposeTicks, SynthTicks;
     /// <summary>When set, every note is also written as MIDI (for <c>--record</c>), on that clock.</summary>
     public Func<double>? MidiClock;
 
@@ -87,8 +89,12 @@ internal sealed class MusicCore : IScoreObserver
         while (done < n)
         {
             int m = Math.Min(Synth.Block, n - done);
+            long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
             Step(m);
+            long t1 = System.Diagnostics.Stopwatch.GetTimestamp();
             Synth.Render(_l, _r, 0, m);
+            ComposeTicks += t1 - t0;
+            SynthTicks += System.Diagnostics.Stopwatch.GetTimestamp() - t1;
             Array.Copy(_l, 0, left, offset + done, m);
             Array.Copy(_r, 0, right, offset + done, m);
             done += m;

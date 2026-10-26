@@ -56,6 +56,8 @@ public static class OfflineRender
         var r = new float[chunk];
         long total = (long)(seconds * Dsp.SampleRate);
         int j = 0;
+        int maxVoices = 0;
+        bool verbose = args.Contains("--verbose");
         using (var wav = new WavWriter(outPath, Dsp.SampleRate))
         {
             for (long done = 0; done < total;)
@@ -72,10 +74,14 @@ public static class OfflineRender
                 core.Render(l, r, 0, n);
                 wav.Write(l, r, n);
                 done += n;
+                maxVoices = Math.Max(maxVoices, core.Synth.VoiceCount);
+                if (verbose && done / Dsp.SampleRate / 30 != (done - n) / Dsp.SampleRate / 30)
+                    Console.WriteLine($"  {done / Dsp.SampleRate,5}s  voices {core.Synth.VoiceCount,3}  compose {core.ComposeTicks * 1000 / System.Diagnostics.Stopwatch.Frequency}ms synth {core.SynthTicks * 1000 / System.Diagnostics.Stopwatch.Frequency}ms  {core.Synth.VoiceSummary()}");
             }
         }
         string scorePath = Path.ChangeExtension(outPath, ".score.json");
         log.Meta("renderSeconds", clock.Elapsed.TotalSeconds);
+        log.Meta("maxVoices", maxVoices);
         log.Stems(core.Synth.StemLevels());
         log.Write(scorePath);
         Console.WriteLine($"--render-music: {seconds:F0}s of {moodName} (seed {seed}) in {clock.Elapsed.TotalSeconds:F1}s " +

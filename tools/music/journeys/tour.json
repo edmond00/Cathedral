@@ -1,0 +1,13 @@
+[
+ {"t": 0,   "mood": "Neutral"},
+ {"t": 60,  "mood": "tavern:12"},
+ {"t": 150, "event": "positive"},
+ {"t": 170, "event": "negative"},
+ {"t": 200, "mood": "WorldView", "filter": "traveling"},
+ {"t": 230, "filter": "none", "mood": "forest:7"},
+ {"t": 300, "filter": "fighting"},
+ {"t": 360, "filter": "none", "event": "positive"},
+ {"t": 380, "mood": "cathedral:3"},
+ {"t": 470, "mood": "catacombs:5", "event": "neutral"},
+ {"t": 560, "mood": "village:2"}
+]

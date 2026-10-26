@@ -387,4 +387,10 @@ def analyse(score: Score) -> dict:
     for f in (melodic, repetition, bar_repetition, grid, harmony, layering, voices):
         out.update(f(score))
     out["notes_per_s"] = len(score.notes) / max(1.0, score.seconds)
+    # Cost: how much faster than real time the offline render ran, and the most voices at once. A
+    # voice that never finishes shows here first, as a render that slows down as it goes.
+    if score.meta.get("renderSeconds"):
+        out["render_speed"] = score.seconds / max(1e-6, float(score.meta["renderSeconds"]))
+    if score.meta.get("maxVoices") is not None:
+        out["max_voices"] = float(score.meta["maxVoices"])
     return out

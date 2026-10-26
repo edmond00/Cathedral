@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Cathedral.Audio.Music;
 
@@ -57,7 +58,7 @@ internal sealed class Synth
     public Smoothed ChorusDepth = new(0.6f, 2f);
     public float ReverbReturn = 0.9f;
     /// <summary>Everything into the tape at this level: the mix's headroom.</summary>
-    public float PreGain = 0.3f;
+    public float PreGain = 0.22f;
 
     public Synth(int seed)
     {
@@ -126,6 +127,10 @@ internal sealed class Synth
     }
 
     public int VoiceCount => _voices.Count;
+
+    /// <summary>Sounding voices by instrument, for diagnosing a render.</summary>
+    public string VoiceSummary() => string.Join(" ", _voices.GroupBy(v => v.GetType().Name + (v.Releasing ? "~" : ""))
+        .Select(g => $"{g.Key}:{g.Count()}"));
 
     private void StealOne()
     {

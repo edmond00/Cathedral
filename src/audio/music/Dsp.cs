@@ -146,6 +146,12 @@ internal struct Svf
 
     public float Band(float x) { Process(x, out float b); return b; }
 
+    /// <summary>
+    /// Band-pass with unity gain at the centre. The plain band output peaks at Q, which made a
+    /// choir note jump 14 dB whenever its fundamental landed on a formant.
+    /// </summary>
+    public float BandNorm(float x) { Process(x, out float b); return b * _k; }
+
     public float High(float x)
     {
         float lp = Process(x, out float bp);
@@ -193,7 +199,12 @@ internal struct Envelope
     public void NoteOff() { if (_stage < 2) _stage = 2; }
 
     /// <summary>Releases at a different rate: a damper falling, a voice stolen.</summary>
-    public void Kill(float seconds) { _relCoef = Dsp.Coef(seconds / 4.6f); _stage = 2; }
+    public void Kill(float seconds)
+    {
+        if (_stage == 3) return;   // a finished envelope stays finished: reopening it made zombie voices
+        _relCoef = Dsp.Coef(seconds / 4.6f);
+        _stage = 2;
+    }
 
     public float Next()
     {

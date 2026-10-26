@@ -165,19 +165,20 @@ internal static class Orchestra
     /// <summary>Level of each layer in the mix.</summary>
     public static float PartLevel(Part p) => p switch
     {
-        Part.Drone => 0.42f, Part.Pad => 0.42f, Part.Melody => 0.8f, Part.Counter => 0.5f, Part.Ostinato => 0.55f,
-        Part.Bass => 0.45f, Part.Perc => 0.55f, Part.Bell => 0.4f, Part.Ambience => 0.3f, Part.Fight => 0.6f,
+        Part.Drone => 0.2f, Part.Pad => 0.42f, Part.Melody => 0.8f, Part.Counter => 0.5f, Part.Ostinato => 0.6f,
+        Part.Bass => 0.45f, Part.Perc => 0.55f, Part.Bell => 0.8f, Part.Ambience => 0.15f, Part.Fight => 0.6f,
         _ => 1f,
     };
 
-    /// <summary>Per-instrument trim so that the same velocity sounds about as loud on each.</summary>
+    /// <summary>
+    /// Per-instrument taste. The voices are levelled already (Voice.Levels, from the audition); this
+    /// is only where an instrument should sit above or below its peers: the organ and the square lead
+    /// are dense and cut through, the bells are an accent.
+    /// </summary>
     public static float Trim(Instrument i) => i switch
     {
-        Instrument.Organ => 0.55f, Instrument.OrganFlute => 0.75f, Instrument.Choir => 0.85f, Instrument.ChoirOoh => 1.0f,
-        Instrument.Strings => 0.85f, Instrument.DarkPad => 0.8f, Instrument.Recorder => 0.75f, Instrument.Harpsichord => 0.6f,
-        Instrument.Harp => 0.95f, Instrument.Lute => 0.85f, Instrument.Bell => 0.6f, Instrument.Timpani => 0.9f,
-        Instrument.HandDrum => 0.8f, Instrument.Bourdon => 0.8f, Instrument.Horn => 0.6f, Instrument.SquareLead => 0.5f,
-        Instrument.Wind => 0.6f, _ => 1f,
+        Instrument.Organ => 0.8f, Instrument.SquareLead => 0.8f, Instrument.Bell => 0.9f, Instrument.Horn => 0.9f,
+        _ => 1f,
     };
 
     /// <summary>The room and the tape for a mood.</summary>

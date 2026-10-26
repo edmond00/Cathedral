@@ -197,7 +197,7 @@ def main():
     m.add_argument("--moods", nargs="+", default=MOODS)
     m.add_argument("--seeds", nargs="+", type=int, default=[1, 2])
     m.add_argument("--seconds", type=float, default=300)
-    m.add_argument("--jobs", type=int, default=6)
+    m.add_argument("--jobs", type=int, default=max(1, (__import__("os").cpu_count() or 2) // 2))
     m.add_argument("--no-sheet", action="store_true")
     m.set_defaults(f=cmd_matrix)
     rp = sub.add_parser("report")

@@ -61,11 +61,19 @@ internal abstract class Voice
     public bool Releasing => Env.Releasing;
     public float Level => Env.Level;
 
+    /// <summary>
+    /// Brings each instrument to a common level: a velocity-0.7 phrase on any of them measures about
+    /// the same (sustained voices -16 dB, plucked and struck ones a little under, their attacks carry).
+    /// Measured with --music-audition; see tools/music/levels.py. The mix's balance is then
+    /// <see cref="Orchestra.Trim"/> and the part levels, which are taste, not correction.
+    /// </summary>
+    public float Level0 = 1f;
+
     public void Init(float midi, float velocity, int seed)
     {
         Midi = midi;
         Rng = new Noise(seed);
-        Amp = MathF.Pow(Math.Clamp(velocity, 0f, 1f), 1.5f);
+        Amp = MathF.Pow(Math.Clamp(velocity, 0f, 1f), 1.5f) * Level0;
         Start(Dsp.MidiToHz(midi), velocity);
     }
 
@@ -78,7 +86,37 @@ internal abstract class Voice
     /// <summary>Adds <paramref name="n"/> samples into <paramref name="buf"/>.</summary>
     public abstract void Render(float[] buf, int n);
 
-    public static Voice Create(Instrument inst) => inst switch
+    public static Voice Create(Instrument inst)
+    {
+        var v = Make(inst);
+        v.Level0 = Levels.TryGetValue(inst, out float g) ? g : 1f;
+        return v;
+    }
+
+    /// <summary>Level corrections from the audition, dB converted. Regenerate with tools/music/levels.py.</summary>
+    internal static readonly System.Collections.Generic.Dictionary<Instrument, float> Levels = new()
+    {
+        // LEVELS-BEGIN
+        [Instrument.Bell] = 2.194f,
+        [Instrument.Bourdon] = 2.784f,
+        [Instrument.Choir] = 2.503f,
+        [Instrument.ChoirOoh] = 1.610f,
+        [Instrument.DarkPad] = 3.110f,
+        [Instrument.HandDrum] = 3.296f,
+        [Instrument.Harp] = 4.376f,
+        [Instrument.Harpsichord] = 2.859f,
+        [Instrument.Horn] = 2.350f,
+        [Instrument.Lute] = 4.510f,
+        [Instrument.Organ] = 1.316f,
+        [Instrument.OrganFlute] = 0.982f,
+        [Instrument.Recorder] = 1.003f,
+        [Instrument.SquareLead] = 3.255f,
+        [Instrument.Strings] = 1.597f,
+        [Instrument.Timpani] = 1.348f,
+        [Instrument.Wind] = 19.977f,        // LEVELS-END
+    };
+
+    private static Voice Make(Instrument inst) => inst switch
     {
         Instrument.Organ       => new OrganVoice(OrganVoice.Principal, chiff: 0.10f),
         Instrument.OrganFlute  => new OrganVoice(OrganVoice.Gedackt, chiff: 0.18f),
@@ -224,7 +262,7 @@ internal sealed class ChoirVoice : Voice
                 if (_ph[k] >= 1f) _ph[k] -= 1f;
             }
             src *= 0.33f;
-            float v = _f1.Band(src) * _g1 + _f2.Band(src) * _g2 + _f3.Band(src) * _g3 + _body.Low(src) * 0.35f;
+            float v = _f1.BandNorm(src) * _g1 + _f2.BandNorm(src) * _g2 + _f3.BandNorm(src) * _g3 + _body.Low(src) * 0.35f;
             v += _breath.Band(Rng.Next()) * 0.025f;
             buf[i] += v * 1.6f * e * Amp;
         }
@@ -716,7 +754,7 @@ internal sealed class WindVoice : Voice
             _lfo += _lfoRate;
             float e = Env.Next();
             float nz = Rng.Next();
-            buf[i] += (_bp.Band(nz) + 0.5f * _bp2.Band(nz)) * 1.4f * e * Amp;
+            buf[i] += (_bp.BandNorm(nz) + 0.5f * _bp2.BandNorm(nz)) * 1.4f * e * Amp;
         }
     }
 }
