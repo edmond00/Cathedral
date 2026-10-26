@@ -51,11 +51,15 @@ AmbianceEngine (src/audio/AmbianceEngine.cs)     the game's only door: same API 
   The comp and drum come in with the melody's tier there, not at Intensity 0.75. The harness
   holds festive renders to the `poles.festive` bands in `targets.json`.
 - **Mood.** `SetMood` glides the mood (≈2 s). Structure is decided at piece and section starts; a
-  drift above 0.28 (or the fight filter changing) ends the piece through a one- or two-bar bridge.
+  drift above 0.12 (or the fight filter changing) ends the piece through a one- or two-bar bridge,
+  in which the tune comes to rest on the nearest tonic and holds it; the next piece then starts on
+  its tune, with no intro. A tune-less breakdown (C) lasts four bars at most.
   Track count and Intensity gate layers on the old ladder (1 drone+pad, 2 melody, 3 counter+bass,
   4 ostinato+percussion).
 - **Events.** Positive: a bell arpeggio on the next beat and a brighter bar. Negative: a timpani
-  stroke on the next beat and a bar of melody rest. Neutral: two bars of rest. The stings (the old
+  stroke on the next beat and the tune stepping back for a bar or two. Neutral: the tune a little
+  softer. The tune never stops for an event: outcomes come every few seconds in play, and resting
+  the melody on each one was heard as the music dropping out. The stings (the old
   notes) play at once on the SFX bus. Hover and click remain PCM ticks outside the music.
 
 ## The evaluation loop
