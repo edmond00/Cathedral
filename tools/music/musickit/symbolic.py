@@ -35,7 +35,8 @@ import numpy as np
 
 from .score import Note, Score
 
-PITCHED_EXCLUDE = {"perc", "sfx"}
+# Percussion, stings and the wind (band-passed noise round a pitch, not a note) are not harmony.
+PITCHED_EXCLUDE = {"perc", "sfx", "ambience"}
 
 DIATONIC = [0, 2, 4, 5, 7, 9, 11]
 HARMONIC_MINOR = [0, 2, 3, 5, 7, 8, 11]
@@ -87,7 +88,8 @@ def _phrases(mel: list[Note]) -> list[list[Note]]:
     chant even when no rest follows). Long means at least 1.2 s and 2.5 times the typical spacing."""
     if not mel:
         return []
-    iois = [b.t - a.t for a, b in zip(mel, mel[1:])]
+    # Grace notes and mordents (under 0.15 s) are ornaments, not the tune's pace.
+    iois = [b.t - a.t for a, b in zip(mel, mel[1:]) if b.t - a.t >= 0.15]
     typical = float(np.median(iois)) if iois else 1.0
     out, cur = [], [mel[0]]
     for a, b in zip(mel, mel[1:]):
