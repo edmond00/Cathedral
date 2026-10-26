@@ -1731,6 +1731,17 @@ public static class Config
         public const string DefaultStyleInstruction = "Where it fits, a figure of speech (metaphor, comparison, imagery) or an inner feeling that suits your character is welcome.";
 
         /// <summary>
+        /// Follows a modus mentis's own <c>StyleInstruction</c>. A small model reads the things a style
+        /// names as things that are there: HOSPITALITY's "the imagery of hearth, board and made bed" put a
+        /// hearth and a made bed into four replies in five, in a sheepfold, a temple, a castle, beside
+        /// "I will ask him what he knows". This clause alone did not stop it (replayed against the
+        /// shipped model it changed nothing while the style still listed objects); what stopped it was
+        /// rewriting the style as an attitude, and with that done this clause took the remaining leaks
+        /// from 5 in 16 to none. So a style names a way of seeing, never a list of props.
+        /// </summary>
+        private const string StyleIsNotSceneClause = "It only colours how the given facts are told — what it names is not in the scene unless the given information puts it there.";
+
+        /// <summary>
         /// Style clause for dialogue replies: a spoken line carries personality in its wording, not in a
         /// described tone. The broad <see cref="DefaultStyleInstruction"/> ("an inner feeling that suits
         /// your character is welcome") invites a small model to narrate its own manner ("…, you say with
@@ -1755,7 +1766,9 @@ public static class Config
         /// </summary>
         public static string AnswerInstructionFor(string? personaReminder2, string? styleInstruction = null, bool includeLengthClause = true)
         {
-            string style = string.IsNullOrWhiteSpace(styleInstruction) ? DefaultStyleInstruction : styleInstruction.Trim();
+            string style = string.IsNullOrWhiteSpace(styleInstruction)
+                ? DefaultStyleInstruction
+                : $"Your way of seeing: {styleInstruction.Trim()} {StyleIsNotSceneClause}";
             string character = personaReminder2 != null ? $"Stay in the character of {personaReminder2}." : "Stay in character.";
             var parts = new[]
             {

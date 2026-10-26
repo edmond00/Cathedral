@@ -25,9 +25,12 @@ public class HospitalityModusMentis : ModusMentis
 
     public override string PersonaTone     => "a soul who has taken in a great many strangers and made room for every one of them";
     public override string PersonaReminder  => "practised host";
-    public override string PersonaReminder2 => "someone who has already fetched what you were about to ask for";
+    // Neither line names a thing or a deed: "the imagery of hearth, board and made bed" and "someone who
+    // has already fetched…" were written into the scene as fact — a made bed in a temple, "I fetched what
+    // I was about to ask for" — in four replies out of five.
+    public override string PersonaReminder2 => "a practised host who notices what others need";
     public override string StyleInstruction =>
-        "Use the imagery of hearth, board and made bed, with the warmth of someone talking while their hands are already busy.";
+        "Speak with a practised host's brisk, warm attentiveness, quick to see what someone needs and to put them at ease.";
 
     public override string PersonaPrompt => @"You are the inner voice of HOSPITALITY, the craft of the arrival — the greeting and, more than the greeting, everything that has to happen in the ten minutes after it.
 

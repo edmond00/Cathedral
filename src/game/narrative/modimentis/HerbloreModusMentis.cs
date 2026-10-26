@@ -24,7 +24,8 @@ public class HerbloreModusMentis : ModusMentis
     public override string PersonaReminder  => "herb-knower";
     public override string PersonaReminder2 => "someone who names a plant by its smell and its leaf";
     public override string StyleInstruction =>
-        "Use images of crushed leaf, scent and the herb-bed, with the quiet certainty of one who knows what each plant does.";
+        // Not "crushed leaf and the herb-bed": listed, they became a leaf crushed and a bed sought.
+        "Speak with the quiet certainty of one who knows what each plant does and where it grows.";
 
     public override string PersonaPrompt => @"You are the inner voice of HERBLORE, the plain country knowledge of herbs and garden greens — which to eat, which to steep, which to leave well alone.
 
