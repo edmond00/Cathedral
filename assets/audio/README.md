@@ -1,8 +1,12 @@
 # assets/audio/
 
-`soundfont.sf2` — the General MIDI SoundFont the **OpenAL audio path** plays the music with
-(Linux always; Windows only with `--audio openal`). The Windows default path does not read it: it
-sends MIDI to the system synthesiser (the Microsoft GS Wavetable Synth), as it always has.
+`soundfont.sf2` — the General MIDI SoundFont the **legacy music engine** plays with on the OpenAL
+path (`--music-engine legacy`, on Linux or with `--audio openal`). **The default music no longer
+reads it**: since the `music-overhaul` branch the game synthesises its own instruments
+(`src/audio/music/`) on every platform, so a shipped build needs no SoundFont at all. It is kept
+for comparing the two engines, and `tools/music/timbre.py` uses one as a measuring stick (never
+shipped). With the legacy engine on Windows' default path, MIDI still goes to the Microsoft GS
+Wavetable Synth.
 
 Like `models/model.gguf` the file has no name of its own. The game always loads
 `assets/audio/soundfont.sf2` (`SoundFontLocator`), and choosing a different font means replacing that
