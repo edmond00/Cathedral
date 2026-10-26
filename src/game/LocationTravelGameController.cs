@@ -3823,8 +3823,9 @@ public class LocationTravelGameController : IDisposable
         {
             if (_ambianceEngine == null) return new List<string> { "music (no engine)" };
             var r = _ambianceEngine.Requested;
+            // Invariant: a script asserts "cold=0.60", and a French or Japanese locale would print "0,60".
             string mood = r.Mood is { } m
-                ? $"cold={m.Coldness:0.00} fear={m.Fear:0.00} mystery={m.Mystery:0.00} intensity={m.Intensity:0.00} festivity={m.Festivity:0.00}"
+                ? FormattableString.Invariant($"cold={m.Coldness:0.00} fear={m.Fear:0.00} mystery={m.Mystery:0.00} intensity={m.Intensity:0.00} festivity={m.Festivity:0.00}")
                 : "mood=none";
             return new List<string> { $"music tracks={r.Tracks} filter={r.Filter} {mood}" };
         }
