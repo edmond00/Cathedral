@@ -391,6 +391,14 @@ def analyse(score: Score) -> dict:
     # voice that never finishes shows here first, as a render that slows down as it goes.
     if score.meta.get("renderSeconds"):
         out["render_speed"] = score.seconds / max(1e-6, float(score.meta["renderSeconds"]))
+    # Responsiveness, on a journey: from a change of scene to the first note of the new piece.
+    scenes = [m["t"] for m in score.meta.get("marks", []) if m["what"].startswith("scene") and m["t"] > 1]
+    starts = [p["t"] for p in score.pieces]
+    waits = [min((s - t for s in starts if s >= t), default=None) for t in scenes]
+    waits = [w for w in waits if w is not None]
+    if waits:
+        out["scene_response_s"] = float(np.median(waits))
+        out["scene_response_max_s"] = float(max(waits))
     if score.meta.get("wetDb") is not None:
         out["wet_db"] = float(score.meta["wetDb"])
     if score.meta.get("maxVoices") is not None:

@@ -84,7 +84,7 @@ internal sealed class Composer
     private Theme MakeTheme()
     {
         var rng = _pieceRng(-1);
-        var four = Melodist.NewMotif(4, 0.45f, 0.35f, 0.4f, rng);
+        var four = Melodist.BestMotif(16, 4, 0.45f, 0.35f, 0.4f, rng);
         // A triple-time rhythm with the same number of notes, or the contour cut to fit one.
         double[]? three = null;
         for (int i = 0; i < 24 && three == null; i++)
@@ -202,24 +202,24 @@ internal sealed class Composer
         p.Center = mode.Size + 1;   // a step above the octave over the tonic: melodies hover round it
 
         var o = p.Orch;
-        p.M = Melodist.NewMotif(p.Meter, o.Liveliness, o.Chant, o.Fall, _rng);
+        p.M = Melodist.BestMotif(4, p.Meter, o.Liveliness, o.Chant, o.Fall, _rng, mode.Size);
         // The world's theme: one motif drawn once per seed, taken up by about a third of the pieces
         // (and always by the first), in their own key and metre. Endless music still has a tune that
         // comes back, which is what makes a soundtrack recognisably one game's.
         _theme ??= MakeTheme();
         if (!Fighting && (index == 0 || _rng.NextDouble() < 0.33))
         {
-            p.M = _theme.For(p.Meter);
+            p.M = _theme.For(p.Meter).ForModeSize(mode.Size);
             p.UsesTheme = true;
         }
         var orn = p.M.Ornamented(_rng);
         p.N = _rng.NextDouble() < 0.4 && orn.Count != p.M.Count ? orn.WithEnding(_rng.NextDouble() < 0.5 ? -1 : 1)
-                                                               : Melodist.NewMotif(p.Meter, o.Liveliness, o.Chant, o.Fall, _rng);
+                                                               : Melodist.NewMotif(p.Meter, o.Liveliness, o.Chant, o.Fall, _rng, mode.Size);
         // The B section's motif is the A motif turned over, or a new one with the A motif's rhythm:
         // contrast that still sounds like the same piece.
         p.MB = _rng.NextDouble() < 0.5 ? p.M.Inverted()
-             : new Motif(p.M.Rhythm, Melodist.Contour(p.M.Count, _rng, o.Chant, o.Fall));
-        p.NB = Melodist.NewMotif(p.Meter, o.Liveliness, o.Chant, o.Fall, _rng);
+             : new Motif(p.M.Rhythm, Melodist.Contour(p.M.Count, _rng, o.Chant, o.Fall, mode.Size));
+        p.NB = Melodist.NewMotif(p.Meter, o.Liveliness, o.Chant, o.Fall, _rng, mode.Size);
 
         PlanForm(p);
         _piece = p;
@@ -360,7 +360,7 @@ internal sealed class Composer
         var p = _piece!;
 
         // A changed mood (a new place, a fight) cuts the piece short through a bridge.
-        if (_bar == 0 || _bar % 4 == 0) CheckDrift(p);
+        CheckDrift(p);
         var s = p.Sections[_section];
         if (_bar == 0) StartSection(p, s, output);
 
@@ -435,13 +435,19 @@ internal sealed class Composer
         var m = EffectiveMood();
         float d = MathF.Sqrt(Sq(m.Coldness - p.Mood.Coldness) + Sq(m.Fear - p.Mood.Fear) + Sq(m.Mystery - p.Mood.Mystery));
         bool fightChanged = Fighting != p.Fight;
-        if (d < 0.28f && !fightChanged) return;
+        // A new place is a new mood, and a new mood is a new piece: anything past a small change ends
+        // this one, through a short bridge.
+        if (d < 0.12f && !fightChanged) return;
+        // A small change waits for the half phrase to end; a large one (a fight, the world map, a
+        // dungeon after a tavern) cuts at the bar line.
+        bool large = d > 0.35f || fightChanged;
+        if (!large && _bar % 2 != 0) return;
         var cur = p.Sections[_section];
         if (cur.Kind == SectionKind.Bridge) return;
         // Finish here: drop the rest, add a bridge of held tonic, and let the next piece begin.
         if (_bar > 0) { cur.Bars = _bar; cur.Chords = cur.Chords[.._bar]; _section++; }
         p.Sections.RemoveRange(_section, p.Sections.Count - _section);
-        int bars = d > 0.5f || fightChanged ? 1 : 2;
+        int bars = large ? 1 : 2;
         p.Sections.Add(new Section
         {
             Kind = SectionKind.Bridge, Label = "~", Bars = bars, Chords = Enumerable.Repeat(0, bars).ToArray(),
@@ -590,7 +596,7 @@ internal sealed class Composer
         // the estampie's punctum, open ending then closed, and the commonest form in folk tunes.
         // Otherwise the same opening, so it is heard again, and a new turn.
         bool sameOpening = s.Chords[4] == s.Chords[0] && s.Chords[5] == s.Chords[1];
-        bool sameThree = sameOpening && s.Chords[6] == s.Chords[2] && _rng.NextDouble() < 0.7;
+        bool sameThree = sameOpening && s.Chords[6] == s.Chords[2] && _rng.NextDouble() < 0.85;
         int copyBars = sameThree ? 3 : sameOpening ? 2 : 0;
         foreach (var x in line.Where(x => x.Beat < copyBars * meter - 1e-6).ToList())
             line.Add(new LineNote(x.Beat + 4 * meter, x.Dur, x.Degree, x.Vel));
@@ -636,7 +642,7 @@ internal sealed class Composer
         if (p.ALine == null) return p.ALine = BuildPeriod(p, s, p.M, p.N, lo, hi, close: true);
         var src = p.ALine;
         double r = _rng.NextDouble();
-        if (r < 0.45) return new List<LineNote>(src);   // a plain restatement: the recognisable return
+        if (r < 0.6) return new List<LineNote>(src);    // a plain restatement: the recognisable return
         var key = p.Key;
         var outLine = new List<LineNote>();
         int meter = p.Meter;
@@ -646,7 +652,7 @@ internal sealed class Composer
             int bar = (int)(x.Beat / meter);
             // Ornament: a long note in bars 2, 3, 6 or 7 becomes two, the second a neighbour or passing tone.
             bool canOrnament = (bar % 4 == 1 || bar % 4 == 2) && x.Dur >= 1.0 && i + 1 < src.Count;
-            if (canOrnament && _rng.NextDouble() < 0.3)
+            if (canOrnament && _rng.NextDouble() < 0.25)
             {
                 double half = x.Dur >= 2 ? 1.0 : x.Dur / 2;
                 int next = src[i + 1].Degree;
@@ -658,7 +664,7 @@ internal sealed class Composer
             else outLine.Add(x);
         }
         // Sometimes the second phrase's third bar takes a new turn.
-        if (r > 0.75)
+        if (r > 0.85)
         {
             var c6 = Chord.On(key, s.Chords[6]);
             outLine.RemoveAll(x => x.Beat >= 6 * meter && x.Beat < 7 * meter);

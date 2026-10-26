@@ -240,6 +240,18 @@
    "hi": 0,
    "w": 2,
    "why": "Lots of reverb: the hall's return within 8 dB of the dry signal, never above it. The genre's records are washed in it."
+  },
+  "scene_response_s": {
+   "lo": 0,
+   "hi": 12,
+   "w": 2,
+   "why": "A new place gets new music soon: the next piece starts within a phrase or two of the change (journeys only)."
+  },
+  "scene_response_max_s": {
+   "lo": 0,
+   "hi": 20,
+   "w": 1,
+   "why": "Even the slowest change of scene is answered within twenty seconds."
   }
  },
  "moods": {

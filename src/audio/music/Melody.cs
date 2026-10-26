@@ -31,6 +31,10 @@ internal sealed class Motif
     public int Low => Contour.Min();
     public int High => Contour.Max();
 
+    /// <summary>The contour scaled to a mode of another size: a seven-note motif played in five.</summary>
+    public Motif ForModeSize(int size) => size >= 7 ? this
+        : new(Rhythm, Contour.Select(c => (int)Math.Round(c * size / 7.0)).ToArray());
+
     public Motif Inverted() => new(Rhythm, Contour.Select(c => -c).ToArray());
 
     public Motif Retrograde()
@@ -125,8 +129,11 @@ internal static class Melodist
     /// a leap is followed by a step back the other way (gap fill), and the range is held to a sixth.
     /// <paramref name="chant"/> leans to repeated notes and seconds; <paramref name="fall"/> leans downward.
     /// </summary>
-    public static int[] Contour(int n, Random rng, float chant, float fall)
+    public static int[] Contour(int n, Random rng, float chant, float fall, int modeSize = 7)
     {
+        // A step of a five-note mode is a second or a third already: its leaps are capped at two
+        // steps, or a "fourth" of the walk lands a seventh away.
+        int maxLeap = modeSize < 7 ? 2 : 4;
         var c = new int[n];
         int prevStep = 0;
         for (int i = 1; i < n; i++)
@@ -144,7 +151,7 @@ internal static class Melodist
                 else if (prevStep != 0 && Math.Sign(s) == Math.Sign(prevStep) && Math.Abs(s) == 1)
                     ww *= 1.25;   // a run of steps continues
                 int next = c[i - 1] + s;
-                if (next > 5 || next < -4) ww = 0;
+                if (next > 5 || next < -4 || Math.Abs(s) > maxLeap) ww = 0;
                 w[k] = (s, Math.Max(0, ww));
             }
             prevStep = Pick(w, rng);
@@ -161,20 +168,60 @@ internal static class Melodist
         return items[^1].v;
     }
 
-    public static Motif NewMotif(int meter, float liveliness, float chant, float fall, Random rng)
+    /// <summary>
+    /// How good a motif is as a motif, by rules of thumb from folk tunes and chant: three to five
+    /// notes, three different pitches or more, a span of a third to a fifth, few repeated notes, a
+    /// leap answered by a step back, an end away from the start, a rhythm with a long note in it.
+    /// </summary>
+    public static double Quality(Motif m)
+    {
+        var c = m.Contour;
+        int n = c.Length;
+        double q = n is >= 3 and <= 5 ? 2 : 0;
+        int distinct = c.Distinct().Count();
+        q += distinct >= 3 ? 2 : distinct == 2 ? 0 : -2;
+        int span = c.Max() - c.Min();
+        q += span is >= 2 and <= 4 ? 2 : span == 5 ? 0 : -2;
+        for (int i = 1; i < n; i++)
+        {
+            int step = c[i] - c[i - 1];
+            if (step == 0) q -= 1.5;
+            if (Math.Abs(step) >= 2 && i + 1 < n && Math.Sign(c[i + 1] - c[i]) == -Math.Sign(step) && Math.Abs(c[i + 1] - c[i]) == 1) q += 1;
+        }
+        if (c[^1] != c[0]) q += 0.5;
+        if (m.Rhythm.Distinct().Count() > 1) q += 0.5;
+        if (m.Rhythm.Max() >= 2 * m.Rhythm.Min()) q += 0.5;
+        return q;
+    }
+
+    /// <summary>The best of <paramref name="candidates"/> fresh motifs by <see cref="Quality"/>.</summary>
+    public static Motif BestMotif(int candidates, int meter, float liveliness, float chant, float fall, Random rng, int modeSize = 7)
+    {
+        Motif best = NewMotif(meter, liveliness, chant, fall, rng, modeSize);
+        double bq = Quality(best);
+        for (int i = 1; i < candidates; i++)
+        {
+            var m = NewMotif(meter, liveliness, chant, fall, rng, modeSize);
+            double q = Quality(m);
+            if (q > bq) { best = m; bq = q; }
+        }
+        return best;
+    }
+
+    public static Motif NewMotif(int meter, float liveliness, float chant, float fall, Random rng, int modeSize = 7)
     {
         var rhythm = Rhythms.Pick(meter, liveliness, rng);
         // One-note bars make poor motifs; ask again for something with a shape.
         for (int tries = 0; tries < 4 && rhythm.Length < 3; tries++) rhythm = Rhythms.Pick(meter, liveliness + 0.2f, rng);
         // A motif needs a shape: a span of at least a third, and three notes or more not all one
         // neighbour figure. The walk is cheap; ask it again until the figure has somewhere to go.
-        int[] best = Contour(rhythm.Length, rng, chant, fall);
+        int[] best = Contour(rhythm.Length, rng, chant, fall, modeSize);
         for (int tries = 0; tries < 12; tries++)
         {
             int span = best.Max() - best.Min();
             int distinct = best.Distinct().Count();
             if (span >= Math.Min(3, rhythm.Length - 1) && distinct >= Math.Min(3, rhythm.Length)) break;
-            best = Contour(rhythm.Length, rng, chant, fall);
+            best = Contour(rhythm.Length, rng, chant, fall, modeSize);
         }
         return new Motif(rhythm, best);
     }
@@ -221,11 +268,15 @@ internal static class Melodist
             // A held note that rubs a semitone or a tritone against the chord the pad is sustaining is
             // heard as a wrong note, not a passing one: it moves to the nearest chord tone. Short
             // notes off the beat may pass through.
-            if (!strong && !(n.Dur >= 1.0 && Clashes(key, chord, n.Degree))) continue;
-            bool passing = i > start && i + 1 < line.Count
-                && Math.Abs(line[i - 1].Degree - n.Degree) == 1 && Math.Abs(line[i + 1].Degree - n.Degree) == 1
-                && Math.Sign(line[i + 1].Degree - n.Degree) == Math.Sign(n.Degree - line[i - 1].Degree);
-            if (passing && inBar > 0) continue;
+            // A step either side makes it a passing or neighbour tone: those may rub, if they are not
+            // held too long. Moving one onto the chord tone beside it only turns a figure into a
+            // repeated note.
+            bool stepIn = i > start && Math.Abs(line[i - 1].Degree - n.Degree) == 1;
+            bool stepOut = i + 1 < line.Count && Math.Abs(line[i + 1].Degree - n.Degree) == 1;
+            bool figure = stepIn && stepOut;
+            bool held = n.Dur >= 1.5 || (n.Dur >= 1.0 && !figure);
+            if (!strong && !(held && Clashes(key, chord, n.Degree))) continue;
+            if (figure && inBar > 0 && n.Dur < 1.5) continue;
             int up = n.Degree + 1, down = n.Degree - 1;
             n.Degree = chord.Has(key, down) && down >= lo ? down : chord.Has(key, up) && up <= hi ? up : n.Degree;
             line[i] = n;

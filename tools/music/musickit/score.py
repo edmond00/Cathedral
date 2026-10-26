@@ -68,6 +68,7 @@ def from_json(path: Path) -> Score:
     notes = [Note(n["t"], n["d"], n["p"], n["v"], n["part"], n.get("inst", "")) for n in j["notes"]]
     meta = dict(j.get("meta", {}))
     meta["stems"] = j.get("stems", {})
+    meta["marks"] = j.get("marks", [])
     return Score(notes, meta.get("seconds", max((n.t + n.d for n in notes), default=0.0)),
                  j.get("sections", []), j.get("chords", []), j.get("pieces", []), meta)
 

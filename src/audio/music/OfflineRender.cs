@@ -63,7 +63,12 @@ public static class OfflineRender
             for (long done = 0; done < total;)
             {
                 while (j < journey.Length && journey[j].GetProperty("t").GetDouble() <= core.Seconds)
-                    Apply(core, journey[j++]);
+                {
+                    var e = journey[j++];
+                    log.Mark(core.Seconds, (e.TryGetProperty("mood", out _) || e.TryGetProperty("filter", out _) ? "scene " : "") +
+                                           (e.TryGetProperty("event", out var ev) ? "event:" + ev.GetString() : ""));
+                    Apply(core, e);
+                }
                 int n = (int)Math.Min(chunk, total - done);
                 // Never step past the next journey point by more than a block.
                 if (j < journey.Length)

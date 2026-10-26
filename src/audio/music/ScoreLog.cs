@@ -15,7 +15,7 @@ namespace Cathedral.Audio.Music;
 /// </summary>
 internal sealed class ScoreLog
 {
-    private readonly StringBuilder _notes = new(), _sections = new(), _chords = new(), _pieces = new();
+    private readonly StringBuilder _notes = new(), _sections = new(), _chords = new(), _pieces = new(), _marks = new();
     private readonly Dictionary<string, object> _meta = new();
     private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
 
@@ -30,6 +30,9 @@ internal sealed class ScoreLog
 
     public void Section(double t, Section s, Piece p) => Append(_sections,
         $"{{\"t\":{t.ToString("F4", Inv)},\"label\":\"{s.Label}\",\"piece\":{p.Index},\"bars\":{s.Bars},\"counter\":\"{s.Counter}\",\"layers\":[{string.Join(",", s.Layers.Select(l => $"\"{l.ToString().ToLowerInvariant()}\""))}]}}");
+
+    /// <summary>Something the game did at <paramref name="t"/> (a journey's mood change, event, filter).</summary>
+    public void Mark(double t, string what) => Append(_marks, $"{{\"t\":{t.ToString("F4", Inv)},\"what\":\"{what}\"}}");
 
     public void Chord(double t, double dur, int root, int[] pcs) => Append(_chords,
         $"{{\"t\":{t.ToString("F4", Inv)},\"d\":{dur.ToString("F4", Inv)},\"root\":{root},\"pcs\":[{string.Join(",", pcs)}]}}");
@@ -55,6 +58,6 @@ internal sealed class ScoreLog
             _ => $"\"{kv.Key}\":{Convert.ToString(kv.Value, Inv)}",
         }));
         File.WriteAllText(path,
-            $"{{\"meta\":{{{meta}}},\n\"stems\":{{{_stems}}},\n\"pieces\":[\n{_pieces}],\n\"sections\":[\n{_sections}],\n\"chords\":[\n{_chords}],\n\"notes\":[\n{_notes}]}}\n");
+            $"{{\"meta\":{{{meta}}},\n\"stems\":{{{_stems}}},\n\"marks\":[\n{_marks}],\n\"pieces\":[\n{_pieces}],\n\"sections\":[\n{_sections}],\n\"chords\":[\n{_chords}],\n\"notes\":[\n{_notes}]}}\n");
     }
 }
