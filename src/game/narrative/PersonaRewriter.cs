@@ -48,6 +48,11 @@ public class PersonaRewriter
     /// </summary>
     /// <param name="forcedPrefix">When set (e.g. <c>"I "</c>), the rewritten text is constrained by
     /// GBNF to start with this literal — used to force a first-person opening on the observation opener.</param>
+    /// <param name="observedOther">
+    /// For <see cref="NarrationKind.Observation"/> only: who is being looked at, when that is somebody
+    /// else — a person or a beast, by the label the player reads ("Jeffrey", "the drover", "the hyena").
+    /// See <see cref="OtherPersonNote"/> and <see cref="ClaimsToBe"/>.
+    /// </param>
     /// <param name="speakerName">
     /// For <see cref="NarrationKind.DialogueReplica"/> only: the speaker's (placeholder) name, so the
     /// prompt can name the speaker ("You are Bob, the speaker"). Pass the placeholder, not the
@@ -65,8 +70,10 @@ public class PersonaRewriter
         string? dialogueContext = null,
         string? speakerName = null,
         Preview.ILlmPreviewSink? preview = null,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        string? observedOther = null)
     {
+        string? observedOtherReal = string.IsNullOrWhiteSpace(observedOther) ? null : observedOther.Trim();
         // Single name boundary: everything that goes INTO the prompt is switched to the scene's simple,
         // sanitizer-safe false names; everything RETURNED is switched back to the real in-world names.
         // NameFaking is null-safe and idempotent (already-false text round-trips), so this is safe even
@@ -75,6 +82,7 @@ public class PersonaRewriter
         addressee       = addressee       == null ? null : NameFaking.Fake(addressee);
         dialogueContext = dialogueContext == null ? null : NameFaking.Fake(dialogueContext);
         speakerName     = speakerName     == null ? null : NameFaking.Fake(speakerName);
+        observedOther   = observedOtherReal == null ? null : NameFaking.Fake(observedOtherReal);
 
         if (PlaygroundMode.IsActive)
         {
@@ -93,7 +101,8 @@ public class PersonaRewriter
             NarrationKind.Speaking =>
                 BuildSpeakingPrompt(neutralText, addressee, footer),
             _ =>
-                BuildPrompt(neutralText, InstructionFor(kind), footer),
+                BuildPrompt(neutralText, InstructionFor(kind), footer,
+                            kind == NarrationKind.Observation ? observedOther : null),
         };
         // Every first-person narration kind opens with "I " so a small model cannot drift into a
         // detached, non-first-person opening (e.g. "Data flows through my eyes..."). An explicit
@@ -171,8 +180,47 @@ public class PersonaRewriter
             restored = NameFaking.Real(neutralText);
         }
 
+        // The same failure from the other side: looking at somebody, the rewrite becomes them — "I am
+        // Jeffrey, my hands never still". An NPC's appearance is a run of clauses that do not repeat
+        // their subject ("counts the herd compulsively"), and told that every "I" is its own, a small
+        // model takes them for its own. OtherPersonNote prevents most of it; this catches the rest.
+        if (kind == NarrationKind.Observation && observedOtherReal != null && ClaimsToBe(restored, observedOtherReal))
+        {
+            Console.WriteLine($"PersonaRewriter: observation rewrite took the identity of {observedOtherReal} — using the neutral text. Rewrite: {restored}");
+            restored = NameFaking.Real(neutralText);
+        }
+
         preview?.OnComplete(restored);
         return restored;
+    }
+
+    /// <summary>
+    /// Whether <paramref name="text"/> says the narrator is <paramref name="other"/>: "I am Jeffrey",
+    /// "I'm the drover", "my name is Jeffrey". Matched on the label without its article, so "the
+    /// drover" also catches "I am a drover".
+    /// </summary>
+    internal static bool ClaimsToBe(string text, string other)
+    {
+        string bare = System.Text.RegularExpressions.Regex.Replace(other.Trim(), @"^(the|a|an)\s+", "",
+                          System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        if (bare.Length == 0) return false;
+        string who = System.Text.RegularExpressions.Regex.Escape(bare);
+        return System.Text.RegularExpressions.Regex.IsMatch(text ?? "",
+            $@"\b(I am|I'm|I was|my name is)\s+((the|a|an)\s+)?{who}\b",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+    }
+
+    /// <summary>
+    /// The paragraph that tells the model who is who when it is looking at somebody. The prompt insists
+    /// the sentence's "I" is the model, and a person's description is clauses with no subject of their
+    /// own — so without this, what the drover does reads as what "I" do.
+    /// </summary>
+    private static string OtherPersonNote(string other)
+    {
+        string label = other.Trim();
+        string head  = char.ToUpperInvariant(label[0]) + label[1..];
+        return $"{head} is someone else: the one you are looking at, not you. Everything the sentence says "
+             + $"{label} is, does or carries is theirs — write of them as he, she, it or they, never as \"I\".";
     }
 
     /// <summary>Whether <paramref name="text"/> speaks to somebody in the second person.</summary>
@@ -322,11 +370,12 @@ public class PersonaRewriter
 
     // ── Prompt construction ────────────────────────────────────────────────────
 
-    private static string BuildPrompt(string neutralText, string instruction, string footer)
+    private static string BuildPrompt(string neutralText, string instruction, string footer, string? observedOther = null)
     {
+        string other = string.IsNullOrWhiteSpace(observedOther) ? "" : "\n\n" + OtherPersonNote(observedOther);
         return $@"Re-express the following sentence in your own voice: ""{neutralText}""
 
-This sentence is written in the first person, and that ""I"" is you — it describes your own perception, thought or action, not anyone else's.
+This sentence is written in the first person, and that ""I"" is you — it describes your own perception, thought or action, not anyone else's.{other}
 
 {instruction}
 {footer}";

@@ -525,7 +525,12 @@ public class ObservationPhaseController
             // text so the persona rewrite styles it into the block rather than tacking on plain prose.
             if (!string.IsNullOrWhiteSpace(trailingNeutral))
                 neutral = $"{neutral} {trailingNeutral.Trim()}";
-            var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, preview: sink, ct: ct);
+            // Looking at a person or a beast, the rewrite is told it is somebody else (and checked for
+            // having become them): their label as the player reads it, the name once introduced.
+            string? observedOther = outcome is Cathedral.Game.Scene.SyntheticNpcObservationObject npcObs
+                ? Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npcObs.SceneNpc.Entity)
+                : null;
+            var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, preview: sink, ct: ct, observedOther: observedOther);
 
             // Keywords are chosen by rule from the final (sanitized) text — the word(s) most related
             // to the object. A long observation gets two distinct keywords, both linked to this same
