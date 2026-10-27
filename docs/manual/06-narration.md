@@ -365,7 +365,8 @@ anything.
 
 *May I act at all?* Asked of **raw** proximity by the rules of action. Somebody in the room blocks a
 non-discreet modus mentis outright. A **discreet** modus mentis may always attempt — that permission
-is the whole of what discretion buys at close quarters.
+is the whole of what discretion buys at close quarters. The acts that answer a confronting witness
+(below) are exempt: done to the one already watching, they leave nobody to be caught by.
 
 *What does failing cost?* Asked of **effective** proximity, where discretion applies. Discretion
 silences a body **through a wall**, never **in the same room**: it downgrades a Visual presence not

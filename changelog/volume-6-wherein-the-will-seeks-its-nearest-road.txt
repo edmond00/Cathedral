@@ -1,0 +1,49 @@
+Volume 6 - Wherein the Will Seeks Its Nearest Road
+2026-10-27
+
+The game now plays its own music: a new soundtrack synthesised as you play, with a theme for each
+world, dance tunes in taverns and markets, night music, and a heavier sound for fights. Each place
+you know is remembered as a map you can open, and a way you already know can be gone back by.
+Some modi mentis now want one act and plan the way to it, and Reconsider hands an act to another
+modus mentis.
+
+Added
+  - A new soundtrack, synthesised by the game itself, so it sounds the same on every machine.
+  - Each world has its own theme, which comes back now and then in other pieces.
+  - Taverns, markets, ports and towns play jigs and reels on fiddle, tin whistle, pipes and drum.
+  - Every place has night music: colder, stranger and sparser after dark.
+  - Fights have their own music, a riff, drums and a lead, starting the moment the fight opens.
+  - Wills: some modi mentis want one act (picking a lock, a meal, a night kept) and plan the shortest way to it. They attend to and propose only the next step on that way.
+  - Reconsider, the third row of an action's popup: for one noetic point, another modus mentis takes the act over, for example a discreet one in front of a witness.
+  - Mental maps: every place you know is remembered as a map, up to four places per point of anamnesis. The oldest place not locked is forgotten first, and everything known about it goes with it.
+  - The location map: every move in a place is shown on its map, and Tab or the header button opens it during exploration.
+  - Backtrack: a way you already know is gone back by, choosing on the map where to go.
+  - Waiting now shows the hours passing and lets you choose until when. The day turns at dawn.
+  - Waiting into the night in somebody's house brings the householder. Talk them round and you may stay; fail and you are shown the door.
+  - Every failed act now costs something: a wound, losing your way, an hour wasted, or a noetic point.
+  - A branch or a wooden stick can be used as a club in a fight. It opens the blunt fighting skills but adds no dice.
+  - A menu button at the top right of every phase, and each management tab opens with its first letter from anywhere but a fight.
+  - The fight panel shows each fighter's species.
+  - The memory panel shows the act a will wants.
+
+Changed
+  - Craftsmen sell their own craft's goods: the cooper casks, the baker bread, the barber razors. Four new items: keg, wooden bucket, wash tub and plucked fowl.
+  - A human's senses can only be turned on something by a modus mentis that observes.
+  - A refused idea is taken up again at once by another modus mentis able to do it, or given up.
+  - Private ground is now always behind a locked door; no open way or stair leads into it from outside.
+  - Routines: choose one by its icon or with the stepper, then confirm. Arriving by a routine shows the walk to its area.
+  - The Maps tab is now Chorography, and shows each place's map with its routines.
+  - The waiting and routine boxes have a new look.
+  - The music changes faster when you change place, and no longer stops on every outcome.
+
+Fixed
+  - Narration no longer speaks as the person being observed ("I am Jeffrey...").
+  - Several modi mentis no longer invent hearths, beds or tides that are not there.
+  - Explaining yourself to the person who caught you is no longer refused as "caught red-handed".
+  - Closing the pause menu gives the music back.
+  - Fights started on the road now play their full music instead of a single pad.
+  - Dying during narration shows the death screen over the world instead of a black screen.
+  - Answering NO to a doubt no longer drops the next idea from the narration.
+
+Internal
+  - Tools to measure the music, and a screenshot command for testing.
