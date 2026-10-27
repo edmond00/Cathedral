@@ -95,6 +95,10 @@ into the itch devlog.
 Volume 2 - Of Choler and the Opened Carcass
 2026-08-30
 
+Actions can now provoke an emotion, and a wound can disable a modus mentis outright instead of only
+slowing it. Bodies left by a kill can be butchered for their parts, and tools are judged before the
+model is asked about them.
+
 Added
   - ...
 
@@ -104,6 +108,14 @@ Changed
 Fixed
   - ...
 ```
+
+**The overview comes first**, between the date and the first heading: two to four sentences, one
+paragraph, naming the handful of changes a returning player would most want to hear about, biggest
+first. It is what a reader who stops after the first lines takes away, and the part the itch devlog
+shows before "read more". It sums up the list and never replaces it: everything it mentions appears
+again in the detailed list below, and it adds nothing the list does not say. The rules below apply to
+it as to every line — plain, player-facing, no internal work — and it is not counted in the 15–30
+lines.
 
 Rules, in order of how often they are broken:
 
