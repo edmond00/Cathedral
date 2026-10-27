@@ -4336,9 +4336,9 @@ public class LocationTravelGameController : IDisposable
 
         // Modal overlay over the world, like the encounter prompt and the companion-death notice.
         // Death arrives from a fight or a narration, both of which fill the whole terminal with
-        // opaque cells — drawn over those, the box sat on a black screen.
-        _core.Terminal.TransparentClickPassthrough = false;
-        _core.Terminal.Clear();
+        // opaque cells — drawn over those, the box sat on a black screen. A bare Clear is no cure:
+        // it paints opaque black too, so the sheet must be reset to transparent cells.
+        SetTransparentWorldOverlay(clickPassthrough: false);
         _deathScreenRenderer.Draw(_deathCause);
     }
 
