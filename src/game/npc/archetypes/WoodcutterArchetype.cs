@@ -14,7 +14,7 @@ public class WoodcutterArchetype : WildernessNpcArchetype
 
     /// <summary>What asking this person about their work teaches.</summary>
     public override string TradeModusMentisId => "woodcraft";
-    public override ItemTag? SellTag => ItemTag.Wood;
+    public override ItemTag? SellTag => ItemTag.Timber;
     public override ItemTag? BuyTag  => ItemTag.Tool;
     public override int    ModiMentisCount => 8;
 

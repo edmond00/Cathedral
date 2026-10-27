@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -13,7 +14,8 @@ public class NauticalJargonModusMentis : ModusMentis
     public override string MenuDescription =>
         "Holds the speech of ships and docks ready, the cant of the harbour and the names of rigging. Reads seamen and waterfront dealings by their own idiom, and inclines toward talk that marks one as of the sea.";
     public override string SkillMeans       => "the language and lore of sailors and ships";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
+    public override WillTarget? Will => WillTarget.To<TalkOfFarPlacesVerb>("talk of ships and far coasts");
     public override string[] Organs        => new[] { "tongue", "ears" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>

@@ -62,6 +62,13 @@ public class ActionEvaluationResult
     /// Any act that fails in front of them — lawful or not, discreet or not — gets the actor caught.
     /// </summary>
     public Cathedral.Game.Npc.NpcEntity? Confronter { get; set; }
+
+    /// <summary>
+    /// What a failure penalty needs to know to take hold — the noetic pool, the hour, whether there is
+    /// an exit to wander out of. Set by the controller before the roll; null (any other caller) leaves
+    /// only the injuries able to land.
+    /// </summary>
+    public Cathedral.Game.Scene.FailureSituation? Situation { get; set; }
 }
 
 /// <summary>
@@ -216,17 +223,16 @@ public class ActionExecutionController
         else
         {
             consequences  = ResolveFailureConsequences(evalResult);
-            actualOutcome = consequences.Wound != null
-                ? new WoundInflictionOutcome(consequences.Wound)
-                : (INarratable)new InlineNarratable("No wound", "escaped without injury");
+            actualOutcome = consequences.Penalty
+                ?? (INarratable)new InlineNarratable("No penalty", "came away from it no worse off");
         }
         var failureWound = consequences.Wound;
 
-        // Wound-infliction report (failure only). Verb-specific reports are built later in
+        // Penalty report (failure only). Verb-specific reports are built later in
         // NarrativeController via SuccessReports()/FailureReports().
         var llmDecidedReports = new System.Collections.Generic.List<Outcome>();
-        if (!succeeded && failureWound != null)
-            llmDecidedReports.Add(new WoundInflictionOutcome(failureWound));
+        if (!succeeded && consequences.Penalty != null)
+            llmDecidedReports.Add(consequences.Penalty);
         if (!succeeded && consequences.DrawnIn != null)
             llmDecidedReports.Add(new Cathedral.Game.Scene.NpcDrawnInOutcome(consequences.DrawnIn, action.Verb));
 
@@ -324,18 +330,18 @@ public class ActionExecutionController
             var failureWound = consequences.Wound;
             // One object, both roles: the report IS the narratable. These used to be two classes
             // built side by side from the same wound.
-            var woundReport = failureWound != null ? new WoundInflictionOutcome(failureWound) : null;
-            INarratable failureOutcome = woundReport
-                ?? (INarratable)new InlineNarratable("No wound", "escaped without injury");
+            var penaltyReport = consequences.Penalty;
+            INarratable failureOutcome = penaltyReport
+                ?? (INarratable)new InlineNarratable("No penalty", "came away from it no worse off");
 
             var llmDecidedReports = new List<Outcome>();
-            if (woundReport != null) llmDecidedReports.Add(woundReport);
+            if (penaltyReport != null) llmDecidedReports.Add(penaltyReport);
             if (consequences.DrawnIn != null)
                 llmDecidedReports.Add(new Cathedral.Game.Scene.NpcDrawnInOutcome(consequences.DrawnIn, action.Verb));
 
-            // Full list = the verb's failure reports followed by the sampled wound. The wound is no
-            // longer a separate free-text hint: its Verbatim ("suffered …") lands in the consequence
-            // clause like every other report.
+            // Full list = the verb's failure reports followed by the drawn penalty. The penalty is no
+            // separate free-text hint: its Verbatim ("suffered …", "lost my way …") lands in the
+            // consequence clause like every other report.
             var allReports = new List<Outcome>(verbReports);
             allReports.AddRange(llmDecidedReports);
 
@@ -390,9 +396,9 @@ public class ActionExecutionController
         // ── Failure branch data: sampled wound + deterministic witness/threat consequences ──
         var consequences = ResolveFailureConsequences(evalResult);
         var failureWound = consequences.Wound;
-        var woundReport = failureWound != null ? new WoundInflictionOutcome(failureWound) : null;
+        var woundReport = consequences.Penalty;
         INarratable failureOutcome = woundReport
-            ?? (INarratable)new InlineNarratable("No wound", "escaped without injury");
+            ?? (INarratable)new InlineNarratable("No penalty", "came away from it no worse off");
 
         var llmDecidedReports = new List<Outcome>();
         if (woundReport != null) llmDecidedReports.Add(woundReport);
@@ -482,7 +488,10 @@ public class ActionExecutionController
     /// What a failed action costs, decided deterministically (no LLM). At most one of the three
     /// social consequences can be set: they are three rungs of one ladder, not a set of flags.
     /// </summary>
-    /// <param name="Wound">Sampled from the verb's <see cref="Verb.FailurePenalties"/>; often none.</param>
+    /// <param name="Penalty">
+    /// Drawn from the verb's <see cref="Verb.FailurePenalties"/>: a wound, the way lost, the hour wasted
+    /// or a noetic point gone. Null only when nothing in the table could take hold.
+    /// </param>
     /// <param name="CaughtBy">A witness who <b>saw</b> it: the caught-red-handed confrontation.</param>
     /// <param name="FightWith">An enemy who <b>saw</b> it: the fight, on their initiative.</param>
     /// <param name="DrawnIn">
@@ -491,16 +500,19 @@ public class ActionExecutionController
     /// what leaves room to run.
     /// </param>
     private readonly record struct FailureConsequences(
-        WoundInstance?                  Wound,
+        Outcome?                        Penalty,
         Cathedral.Game.Npc.NpcEntity?   CaughtBy,
         Cathedral.Game.Npc.NpcEntity?   FightWith,
-        Cathedral.Game.Npc.NpcEntity?   DrawnIn);
+        Cathedral.Game.Npc.NpcEntity?   DrawnIn)
+    {
+        /// <summary>The injury, when the penalty drawn was one.</summary>
+        public WoundInstance? Wound => (Penalty as WoundInflictionOutcome)?.Wound;
+    }
 
     /// <summary>
-    /// Resolves what a failed action costs. The physical penalty is a verb-authored roll; the social
-    /// consequence is read off <b>effective</b> proximity
-    /// (<see cref="Cathedral.Game.Scene.ProximityModel"/>), which is where the acting modus mentis's
-    /// discreteness applies:
+    /// Resolves what a failed action costs. The social consequence is read off <b>effective</b>
+    /// proximity (<see cref="Cathedral.Game.Scene.ProximityModel"/>), which is where the acting modus
+    /// mentis's discreteness applies:
     ///
     /// <list type="bullet">
     /// <item>effective <b>Visual</b> — they are in the room and watched it go wrong. A witness
@@ -516,72 +528,71 @@ public class ActionExecutionController
     /// <para>The enemy and witness ladders are deliberately identical in shape and differ only in what
     /// the top rung is — a fight against somebody who already wants one, a conversation against
     /// somebody who has just discovered they might.</para>
+    ///
+    /// <para>The penalty is drawn <b>after</b> the ladder, because the ladder outranks two of its
+    /// kinds: a failure somebody saw or heard cannot end with the way lost, and one that begins a fight
+    /// or a confrontation cannot waste the hour
+    /// (<see cref="Cathedral.Game.Scene.FailurePenalty.Realise"/>), so that entry is set aside and the
+    /// draw made again from the rest of the table.</para>
     /// </summary>
     private FailureConsequences ResolveFailureConsequences(ActionEvaluationResult evalResult)
     {
         var action = evalResult.Action;
         bool discrete = evalResult.ActionModusMentis?.ActsDiscretely ?? false;
 
-        // Verb-authored penalty (wound or none), sampled uniformly. Wrapped as an instance stamped
-        // with today's date: this happened during the run, so it is a wound that can heal — unlike
-        // the historical ones a character was generated with.
-        var target = action.PreselectedOutcome?.Target;
-        var template = action.Verb.SampleFailurePenalty(target, _rng);
-
-        // Verbs author their penalties as HUMAN wounds — a turned ankle, a cut hand, a broken foot —
-        // and the acting member need not be human: a beast narrates and acts for itself after a
-        // Speak-About hand-off. A wound the body does not own penalises nothing (every Affects*
-        // query misses an organ part the anatomy lacks) and is captured into the save verbatim,
-        // where PartyState.Rebuild refuses it and loses the run. So the miss costs no injury rather
-        // than an injury that is not there. Deliberately not translated to a beast equivalent: the
-        // verb named one wound, and inventing a counterpart for it is content, not plumbing.
-        if (template != null && !WoundRegistry.CanBeSufferedBy(template, ActingMember))
-        {
-            Console.WriteLine($"💥 [FAILURE PENALTY] {template.WoundName} is not a wound "
-                + $"{ActingMember.DisplayName} ({ActingMember.AnatomyType}) can suffer — no injury.");
-            template = null;
-        }
-
-        WoundInstance? wound = template != null ? WoundInstance.Inflicted(template) : null;
-        Console.WriteLine(wound != null
-            ? $"💥 [FAILURE PENALTY] {wound.WoundName} ({WoundLocationLabel(wound)}, {wound.Handicap})"
-            : "💥 [FAILURE PENALTY] no injury");
-
         // An enemy in the room outranks a witness in the room: the quarrel is already declared, and
         // being asked to explain yourself by somebody drawing steel is not a conversation.
         var effThreat  = Cathedral.Game.Scene.ProximityModel.Effective(evalResult.ThreatContext.Level, discrete);
         var effWitness = Cathedral.Game.Scene.ProximityModel.Effective(evalResult.WitnessContext.Type, discrete);
 
+        Cathedral.Game.Npc.NpcEntity? fightWith = null, caughtBy = null, heardBy = null;
+
         if (effThreat == Cathedral.Game.Scene.ThreatLevel.Visual)
         {
-            var enemy = evalResult.ThreatContext.Threat;
-            Console.WriteLine($"⚔ [THREAT] failed in front of the enemy — fight with {enemy?.DisplayName ?? "them"}.");
-            return new FailureConsequences(wound, null, enemy, null);
+            fightWith = evalResult.ThreatContext.Threat;
+            Console.WriteLine($"⚔ [THREAT] failed in front of the enemy — fight with {fightWith?.DisplayName ?? "them"}.");
         }
-
         // A witness already confronting you catches any slip at all: they are watching you, not the
         // act, so it need not be a crime, and discretion does not hide it in the same room.
-        if (evalResult.Confronter != null)
+        else if (evalResult.Confronter != null)
         {
-            Console.WriteLine($"👁 [CONFRONTED] failed in front of {evalResult.Confronter.DisplayName} — caught red-handed.");
-            return new FailureConsequences(wound, evalResult.Confronter, null, null);
+            caughtBy = evalResult.Confronter;
+            Console.WriteLine($"👁 [CONFRONTED] failed in front of {caughtBy.DisplayName} — caught red-handed.");
         }
-
-        if (effWitness == Cathedral.Game.Scene.WitnessType.Visual)
+        else if (effWitness == Cathedral.Game.Scene.WitnessType.Visual)
         {
-            var witness = evalResult.WitnessContext.Witness;
-            Console.WriteLine($"👁 [WITNESS] failed in plain sight — caught red-handed by {witness?.DisplayName ?? "someone"}.");
-            return new FailureConsequences(wound, witness, null, null);
+            caughtBy = evalResult.WitnessContext.Witness;
+            Console.WriteLine($"👁 [WITNESS] failed in plain sight — caught red-handed by {caughtBy?.DisplayName ?? "someone"}.");
         }
-
-        // Heard, not seen. Whoever is nearest comes to look; the enemy first, for the same reason.
-        var heardBy = effThreat  == Cathedral.Game.Scene.ThreatLevel.Audio  ? evalResult.ThreatContext.Threat
+        else
+        {
+            // Heard, not seen. Whoever is nearest comes to look; the enemy first, for the same reason.
+            heardBy = effThreat  == Cathedral.Game.Scene.ThreatLevel.Audio  ? evalResult.ThreatContext.Threat
                     : effWitness == Cathedral.Game.Scene.WitnessType.Audio  ? evalResult.WitnessContext.Witness
                     : null;
-        if (heardBy != null)
-            Console.WriteLine($"👂 [EARSHOT] failed within earshot — {heardBy.DisplayName} comes to look.");
+            if (heardBy != null)
+                Console.WriteLine($"👂 [EARSHOT] failed within earshot — {heardBy.DisplayName} comes to look.");
+        }
 
-        return new FailureConsequences(wound, null, null, heardBy);
+        // Verb-authored penalty, drawn uniformly. A wound is an instance stamped with today's date:
+        // this happened during the run, so it is a wound that can heal — unlike the historical ones a
+        // character was generated with. Without a situation (a caller other than the controller) only
+        // an injury can take hold.
+        bool confronted = fightWith != null || caughtBy != null || heardBy != null;
+        var situation = (evalResult.Situation
+                         ?? new Cathedral.Game.Scene.FailureSituation(ActingMember, null, 0, CanLoseTheWay: false))
+                        with { Actor = ActingMember, Confronted = confronted,
+                              Caught = fightWith != null || caughtBy != null };
+        var penalty = action.Verb.DrawFailurePenalty(action.PreselectedOutcome?.Target, situation, _rng);
+
+        Console.WriteLine(penalty switch
+        {
+            WoundInflictionOutcome w => $"💥 [FAILURE PENALTY] {w.Wound.WoundName} ({WoundLocationLabel(w.Wound)}, {w.Wound.Handicap})",
+            null                     => "💥 [FAILURE PENALTY] none could take hold",
+            _                        => $"💥 [FAILURE PENALTY] {penalty.Text}",
+        });
+
+        return new FailureConsequences(penalty, caughtBy, fightWith, heardBy);
     }
 
     /// <summary>Returns a readable location label for a wound, using WildcardZoneHint as fallback.</summary>

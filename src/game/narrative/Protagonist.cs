@@ -90,52 +90,83 @@ public class Protagonist : PartyMember
     public ChildhoodHistory ChildhoodHistory { get; } = new();
 
     /// <summary>
-    /// Learned routines, oldest first, every kind together. Each kind (<see cref="RoutineCategory"/>)
-    /// has its own slots — <see cref="GetRoutineSlots"/> of them — and fills and evicts on its own.
+    /// The locations remembered, oldest first: each one's map and the routines learned there. As many
+    /// as <see cref="GetMentalMapSlots"/>; see <see cref="EnterMentalMap"/> for how one comes and goes.
     /// </summary>
-    public List<Routine> RecordedRoutines { get; set; } = new();
+    public List<MentalMap> MentalMaps { get; set; } = new();
 
-    private DerivedStat RoutineSlotsStat => DerivedStats.First(s => s is RoutineSlotsStat);
+    /// <summary>
+    /// The map of the visit in progress when there was no room for it in <see cref="MentalMaps"/> —
+    /// every map locked, or no anamnesis to hold one. It serves the visit like any other and is
+    /// forgotten when the visit ends (<see cref="LeaveMentalMap"/>). Never saved: a save is written
+    /// on the world map, between visits.
+    /// </summary>
+    private MentalMap? _unheldMap;
 
-    /// <summary>How many routines of each kind can be held, from the anamnesis.</summary>
-    public int GetRoutineSlots() => RoutineSlotsStat.GetValue(this);
+    private DerivedStat MentalMapsStat => DerivedStats.First(s => s is MentalMapsStat);
 
-    /// <summary>The most this body could ever hold of one kind — the anamnesis at its full score.</summary>
-    public int GetRoutineSlotsAtBest() => RoutineSlotsStat.GetValueAtMaxScore(this);
+    /// <summary>How many locations can be remembered at once, from the anamnesis.</summary>
+    public int GetMentalMapSlots() => MentalMapsStat.GetValue(this);
 
-    /// <summary>The routines of one kind, oldest first.</summary>
+    /// <summary>The most this body could ever remember — the anamnesis at its full score.</summary>
+    public int GetMentalMapSlotsAtBest() => MentalMapsStat.GetValueAtMaxScore(this);
+
+    /// <summary>Every routine remembered, map by map, oldest map first.</summary>
+    public IEnumerable<Routine> RecordedRoutines => MentalMaps.SelectMany(m => m.Routines);
+
+    /// <summary>The routines of one kind, across every map remembered.</summary>
     public List<Routine> RoutinesOf(RoutineCategory category)
         => RecordedRoutines.Where(r => r.Category == category).ToList();
 
     /// <summary>
-    /// Learns a routine, unless an identical one is already held (same kind, place, hour and target).
-    /// When its kind is full the oldest UNLOCKED routine of that kind makes room; when every one of
-    /// them is locked, the new routine is not learned. Returns whether it was.
+    /// The map of <paramref name="locationId"/>: a remembered one, or the one the visit in progress
+    /// holds without room for it. Null when the place is not remembered.
+    /// </summary>
+    public MentalMap? MentalMapOf(int locationId)
+        => MentalMaps.FirstOrDefault(m => m.LocationId == locationId)
+           ?? (_unheldMap?.LocationId == locationId ? _unheldMap : null);
+
+    /// <summary>
+    /// A visit to <paramref name="locationId"/> begins: its map becomes the newest. A place not
+    /// remembered gets a fresh map, and when every slot is taken the oldest UNLOCKED map is forgotten
+    /// to make room — its areas unknown again, its routines gone. With no room at all (every map
+    /// locked, or no slot), the visit keeps a map of its own until it ends. Also lets go of maps over
+    /// the count, oldest unlocked first, should the anamnesis have shrunk since.
+    /// </summary>
+    public MentalMap EnterMentalMap(int locationId, string locationName)
+    {
+        _unheldMap = null;
+        var map = MentalMaps.FirstOrDefault(m => m.LocationId == locationId);
+        if (map != null) MentalMaps.Remove(map);
+        else map = new MentalMap { LocationId = locationId, LocationName = locationName };
+        map.LastVisitedDay = GameClock.Days;
+        if (locationName.Length > 0) map.LocationName = locationName;
+
+        int slots = GetMentalMapSlots();
+        while (MentalMaps.Count >= slots && MentalMaps.FirstOrDefault(m => !m.Locked) is { } oldest)
+        {
+            MentalMaps.Remove(oldest);
+            Console.WriteLine($"Protagonist: forgot the map of {oldest.LocationName} ({oldest.Routines.Count} routines)");
+        }
+
+        if (MentalMaps.Count < slots) MentalMaps.Add(map);
+        else
+        {
+            _unheldMap = map;
+            Console.WriteLine($"Protagonist: no room to remember {locationName} — held for this visit only");
+        }
+        return map;
+    }
+
+    /// <summary>The visit has ended: a map held without room for it is forgotten.</summary>
+    public void LeaveMentalMap() => _unheldMap = null;
+
+    /// <summary>
+    /// Learns a routine into the map of its location, if that place is remembered (or being visited).
+    /// Returns whether it was new.
     /// </summary>
     public bool RecordRoutine(Routine routine)
-    {
-        // Learned again: keep the one already held (its lock, its place in the eviction order), but
-        // refresh what it shows — so a name or a catalogue written wrong by an older build mends
-        // itself the next time the player passes that way.
-        if (RecordedRoutines.FirstOrDefault(r => r.Signature == routine.Signature) is { } known)
-        {
-            known.Name = routine.Name;
-            if (known is TradeRoutine knownTrade && routine is TradeRoutine trade)
-                knownTrade.Catalogue = trade.Catalogue;
-            return false;
-        }
-
-        var sameKind = RoutinesOf(routine.Category);
-        if (sameKind.Count >= GetRoutineSlots())
-        {
-            var oldestUnlocked = sameKind.FirstOrDefault(r => !r.Locked);
-            if (oldestUnlocked == null) return false;
-            RecordedRoutines.Remove(oldestUnlocked);
-        }
-
-        RecordedRoutines.Add(routine);
-        return true;
-    }
+        => MentalMapOf(routine.LocationId)?.Learn(routine) ?? false;
 
     // ── PartyMember abstract ─────────────────────────────────────
 

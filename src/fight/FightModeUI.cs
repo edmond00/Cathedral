@@ -96,6 +96,11 @@ public static class FightModeUI
             ? fighter.DisplayName[..innerW] : fighter.DisplayName;
         terminal.Text(x, y++, name, nameColor, Config.Colors.Black);
 
+        // Species, so a name alone never leaves the player guessing whether it is a wolf or a man.
+        string species = fighter.Member.Species.DisplayName;
+        if (species.Length > innerW) species = species[..innerW];
+        terminal.Text(x, y++, species, Config.Colors.LightGray, Config.Colors.Black);
+
         if (isHoverOverride)
             terminal.Text(x, y++, "(hovered)", Config.Colors.DarkYellowGrey, Config.Colors.Black);
         else

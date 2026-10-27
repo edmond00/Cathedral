@@ -1,0 +1,64 @@
+# mental map — a full memory forgets its oldest unlocked map, never a locked one
+#
+# One anamnesis point holds four mental maps. The first place is visited and its map locked; four
+# more are visited. The fifth needs a slot: the oldest map is the locked one, so the second place's
+# map is forgotten in its stead. Four remembered at the end, and the locked map among them.
+#
+# Every place is the test location (--location-type test), visited and left at once: arriving is
+# what makes a map.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --npc-static --organs anamnesis=1
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+click button
+wait mode WorldView 90
+
+expect-state mental-maps mental-maps used=1 usable=4
+manage Chorography lock oldest
+wait 10
+expect ☑
+manage
+wait mode WorldView 30
+expect-state mental-maps locked=yes
+
+# Three more: the memory is full.
+travel new
+travel-go
+wait mode LocationInteraction 120
+advance 12 180
+click button
+wait mode WorldView 90
+
+travel new
+travel-go
+wait mode LocationInteraction 120
+advance 12 180
+click button
+wait mode WorldView 90
+
+travel new
+travel-go
+wait mode LocationInteraction 120
+advance 12 180
+click button
+wait mode WorldView 90
+expect-state mental-maps mental-maps used=4
+
+# A fifth: the second place is forgotten, not the locked first.
+travel new
+travel-go
+wait mode LocationInteraction 120
+advance 12 180
+click button
+wait mode WorldView 90
+expect-state mental-maps mental-maps used=4
+expect-state mental-maps locked=yes
+save roundtrip
+quit

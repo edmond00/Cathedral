@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class ChantModusMentis : ModusMentis
     public override string MenuDescription =>
         "Sings the long unaccompanied lines of worship: the breath held across a phrase, the voice blending into others until there is only one sound. Can fill a stone hall without straining.";
     public override string SkillMeans       => "the singing of worship";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<SingAlongVerb>("sing in worship");
     public override string[] Organs        => new[] { "pulmones", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

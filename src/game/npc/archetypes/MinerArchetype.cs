@@ -14,7 +14,7 @@ public class MinerArchetype : WildernessNpcArchetype
 
     /// <summary>What asking this person about their work teaches.</summary>
     public override string TradeModusMentisId => "stonework";
-    public override ItemTag? SellTag => ItemTag.Mineral;
+    public override ItemTag? SellTag => ItemTag.Ore;
     public override ItemTag? BuyTag  => ItemTag.Tool;
     public override int    ModiMentisCount => 8;
 

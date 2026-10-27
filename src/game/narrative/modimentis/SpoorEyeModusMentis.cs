@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -15,7 +16,8 @@ public class SpoorEyeModusMentis : ModusMentis
     public override string MenuDescription =>
         "Follows what passed by what it disturbed: the print's edge, the bent stem, the stone turned dark side up. Reads age from how far the sign has dried or sprung back, and builds the direction of travel out of the gaps between marks.";
     public override string SkillMeans       => "the reading of print, bent stem and turned stone";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
+    public override WillTarget? Will => WillTarget.To<TrackVerb>("follow a track");
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

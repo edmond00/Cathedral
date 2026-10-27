@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class ApothecaryNoseModusMentis : ModusMentis
     public override string MenuDescription =>
         "Names a herb, a salve or a preparation by its smell, and knows what follows from the naming - what it is for, how strong, and which of them must not be confused with which. The half of herb-lore that works in the dark.";
     public override string SkillMeans       => "the naming of herbs and simples by their smell";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
+    public override WillTarget? Will => WillTarget.To<GatherVerb>("gather a herb I know by its smell").YieldingAny("herbs", typeof(World.Items.HerbItem), typeof(Items.Herb));
     public override string[] Organs        => new[] { "nose", "hippocampus" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

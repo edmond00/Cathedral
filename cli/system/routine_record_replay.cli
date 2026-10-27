@@ -89,17 +89,43 @@ expect-state routines category=goto location=
 # the whole save unloadable; this is the assertion that says so, for the three kinds learned here.
 save roundtrip
 
-# The routines menu shows a Buy routine with the merchant's catalogue and their standing with you,
+# The Chorography tab shows the Buy routine with the merchant's catalogue and their standing with you,
 # read from the location's memory without building the scene.
-manage Routines buy
+manage Chorography buy
 wait 10
-expect B U Y
+expect M E N T A L
+expect Buy · Test Wood · noon
 expect WHAT THEY SELL
 # The line is asserted, not its level: TestSceneFactory spawns its people without the location's
 # affinity store (every real factory passes it), so the test location remembers no standing at all.
 expect relation:
+# Under the porthole, `< n/N >` steps through the place's routines kind by kind (Go to, Meet, Buy),
+# round the end.
+expect 3/3
+manage Chorography next
+wait 10
+expect 1/3
+expect Go to ·
+manage Chorography prev
+wait 10
+expect 3/3
+expect Buy · Test Wood · noon
+# A tab's initial opens it.
+key J
+wait 10
+expect J O U R N A L
+expect-not M E N T A L
+key C
+wait 10
+expect M E N T A L
 manage
 wait mode WorldView 30
+# And from the world map itself, straight to the tab; Escape goes back to the map, not the menu.
+key A
+wait mode ProtagonistManagement 20
+expect A N A T O M Y
+pause
+wait mode WorldView 20
 
 travel neighbour
 travel-go
@@ -110,8 +136,33 @@ wait mode WorldView 90
 
 travel back
 routines
-routines buy
-wait mode Trading 150
+# The box steps through its routines as the Chorography tab does, the one stepped to read out
+# below the map.
+wait 10
+expect 1/3
+routines next
+wait 10
+expect 2/3
+expect MEET
+# The box's map has no key either: the pointer over a card names it in a grey label.
+point card Test Wood
+wait 10
+expect-state pointer-label ground=grey text=Test Wood · public
+# Stepping only selects; CONFIRM sets out for the routine selected.
+routines next
+wait 10
+expect 3/3
+expect BUY
+expect [ CONFIRM ]
+routines confirm
+wait mode LocationInteraction 150
+wait
+# The way in is shown first: the party walks on the map from the yard, where the location is
+# entered, to the wood, by the ways it knows. The menu opens on the walk's Continue.
+inspect map
+expect-state map walk from Test Yard to Test Wood
+click continue
+wait mode Trading 60
 
 # The point of the whole script: the menu opened in the routine's own area, not the one the rebuilt
 # scene opens at.

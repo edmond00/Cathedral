@@ -5,10 +5,10 @@
 # any moment of a visit, by a fight or by the penalty a failed act samples, and nothing looked. A
 # protagonist could take a mortal wound from a failed act and go on playing at zero health.
 #
-# `wound` is the narration counterpart of `fight-wound`. A wound is SAMPLED from a verb's failure
-# penalties, one slot in five, so whether a given failed act injures anybody is not something a
-# script can ask for — let alone three times over on one body. What wants testing is the consequence.
-# cli/outcome/wound_infliction/success.cli covers the sampling itself, at a seed where it lands.
+# `wound` is the narration counterpart of `fight-wound`. A wound is DRAWN from a verb's failure
+# penalties, so one failed act injures somebody only when --penalty-only says so — and three times
+# over on one body is more failed acts than a script wants to stage. What wants testing is the
+# consequence. cli/outcome/wound_infliction/success.cli covers the draw itself, pinned to a wound.
 #
 # The two assertions at the end are the same pair the other three death scripts make (see
 # death_wounds.cli, death_starvation.cli, death_old_age.cli): the screen names the cause, and the

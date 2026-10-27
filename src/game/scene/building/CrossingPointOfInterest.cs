@@ -112,51 +112,52 @@ public class CrossingPointOfInterest : ConnectorPointOfInterest
     };
 
     /// <summary>
-    /// What a failed crossing costs. Weighted with nulls so most failures are simply a failure — you
-    /// got halfway and backed out — and the injuries that do land suit the obstacle.
+    /// What a failed crossing costs. Mostly the hour — you got halfway, backed out and went the long
+    /// way round — and the injuries that do land suit the obstacle: thorns tear, scree turns an ankle,
+    /// ice breaks ribs.
     /// </summary>
-    public IReadOnlyList<Wound?> FailurePenalties() => Kind switch
+    public IReadOnlyList<FailurePenalty> FailurePenalties() => Kind switch
     {
-        CrossingKind.Brambles => new Wound?[]
+        CrossingKind.Brambles => new FailurePenalty[]
         {
-            null, null, null, null,
+            FailurePenalty.WasteTime, FailurePenalty.WasteTime, FailurePenalty.WasteTime, new ScrapeWound(),
             new CutWound(), new CutWound(), new ScarWound(),
         },
-        CrossingKind.Nettles => new Wound?[] { null, null, null, null, null, new ContusionWound() },
-        CrossingKind.MudPuddle => new Wound?[] { null, null, null, null, null, new KneeFractureLeftWound() },
-        CrossingKind.FallenTrunk => new Wound?[]
+        CrossingKind.Nettles => new FailurePenalty[] { FailurePenalty.WasteTime, FailurePenalty.WasteTime, FailurePenalty.WasteTime, FailurePenalty.LoseFocus, new ScrapeWound(), new ContusionWound() },
+        CrossingKind.MudPuddle => new FailurePenalty[] { FailurePenalty.WasteTime, FailurePenalty.WasteTime, FailurePenalty.WasteTime, FailurePenalty.WasteTime, new StrainWound(), new KneeFractureLeftWound() },
+        CrossingKind.FallenTrunk => new FailurePenalty[]
         {
-            null, null, null,
+            FailurePenalty.WasteTime, FailurePenalty.WasteTime, new ScrapeWound(),
             new ContusionWound(), new WristFractureLeftWound(), new AnkleFractureRightWound(),
         },
-        CrossingKind.Scree => new Wound?[]
+        CrossingKind.Scree => new FailurePenalty[]
         {
-            null, null, null,
+            FailurePenalty.WasteTime, FailurePenalty.WasteTime, new ScrapeWound(),
             new AnkleFractureLeftWound(), new TibiaFractureRightWound(), new ContusionWound(),
         },
-        CrossingKind.Hedgerow => new Wound?[]
+        CrossingKind.Hedgerow => new FailurePenalty[]
         {
-            null, null, null, null,
+            FailurePenalty.WasteTime, FailurePenalty.WasteTime, FailurePenalty.WasteTime, new ScrapeWound(),
             new CutWound(), new ShoulderDislocationRightWound(),
         },
-        CrossingKind.Quicksand => new Wound?[] { null, null, null, null, new KneeFractureRightWound(), new ContusionWound() },
-        CrossingKind.Lianas => new Wound?[] { null, null, null, null, new CutWound(), new ContusionWound() },
-        CrossingKind.ThinIce => new Wound?[]
+        CrossingKind.Quicksand => new FailurePenalty[] { FailurePenalty.WasteTime, FailurePenalty.WasteTime, FailurePenalty.WasteTime, new StrainWound(), new KneeFractureRightWound(), new ContusionWound() },
+        CrossingKind.Lianas => new FailurePenalty[] { FailurePenalty.WasteTime, FailurePenalty.WasteTime, FailurePenalty.WasteTime, new ScrapeWound(), new CutWound(), new ContusionWound() },
+        CrossingKind.ThinIce => new FailurePenalty[]
         {
-            null, null, null,
+            FailurePenalty.WasteTime, FailurePenalty.WasteTime, FailurePenalty.WasteTime,
             new ContusionWound(), new BrokenRibsWound(), new ConcussionsWound(),
         },
-        CrossingKind.SnowBridge => new Wound?[]
+        CrossingKind.SnowBridge => new FailurePenalty[]
         {
-            null, null,
+            FailurePenalty.WasteTime, FailurePenalty.WasteTime,
             new ContusionWound(), new TibiaFractureLeftWound(), new BrokenRibsWound(), new ConcussionsWound(),
         },
-        CrossingKind.BoulderChoke => new Wound?[]
+        CrossingKind.BoulderChoke => new FailurePenalty[]
         {
-            null, null, null,
+            FailurePenalty.WasteTime, FailurePenalty.WasteTime, new ScrapeWound(),
             new ContusionWound(), new BrokenHandRightWound(), new AnkleFractureLeftWound(),
         },
-        _ => new Wound?[] { null, null, null, new ContusionWound() },
+        _ => new FailurePenalty[] { FailurePenalty.WasteTime, FailurePenalty.WasteTime, new ScrapeWound(), new ContusionWound() },
     };
 
     /// <summary>

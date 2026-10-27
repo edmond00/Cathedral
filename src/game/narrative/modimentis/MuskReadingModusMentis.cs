@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -14,7 +15,8 @@ public class MuskReadingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Takes an animal's condition from its smell: rut, sickness, fright, and how long it has been standing where it stands. Close work — a beast at arm's length says more than a whole field of them.";
     public override string SkillMeans       => "the reading of an animal's condition from its musk";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
+    public override WillTarget? Will => WillTarget.To<SmellVerb>("read a beast by its musk");
     public override string[] Organs        => new[] { "nose", "hippocampus" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

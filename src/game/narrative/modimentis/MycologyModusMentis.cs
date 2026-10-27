@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -13,15 +14,17 @@ public class MycologyModusMentis : ModusMentis
     public override string MenuDescription =>
         "Holds the knowledge of fungi and decay, reading what rot breaks down and what it feeds. Attends to mushroom and mould, and inclines toward identifying and gathering what grows in decomposition.";
     public override string SkillMeans => "knowledge of fungi and decay";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
+    public override WillTarget? Will => WillTarget.To<GatherVerb>("gather mushrooms").Yielding<Items.Mushroom>();
     public override string[] Organs => new[] { "eyes", "nose" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     
     public override string PersonaTone => "a quiet fungal expert who sees decomposition, symbiosis, and mycological connections everywhere";
     public override string PersonaReminder => "quiet fungal expert";
-    public override string PersonaReminder2 => "someone who reads the world through mushrooms, mold, and the hidden threads of mycelium";
+    // No spores or mycelium named here: listed, they were put into a desert's description as present.
+    public override string PersonaReminder2 => "a patient student of what grows out of decay";
     public override string StyleInstruction =>
-        "Use the imagery of spore, rot and hidden mycelial threads, with a quiet wonder at decay and connection.";
+        "Let a quiet wonder at decay, and at how hidden things connect, colour the line.";
     
     public override string PersonaPrompt => @"You are the inner voice of MYCOLOGY, specialized knowledge of fungi.
 

@@ -11,7 +11,7 @@ public class HaywardArchetype : PeasantArchetype
 
     /// <summary>What asking this person about their work teaches.</summary>
     public override string TradeModusMentisId => "hedgecraft";
-    public override ItemTag? SellTag => ItemTag.Crop;
+    public override ItemTag? SellTag => ItemTag.Fodder;
     public override ItemTag? BuyTag  => ItemTag.Tool;
     public override int    ModiMentisCount => 7;
     public override int    AuthorityLevel => 1;

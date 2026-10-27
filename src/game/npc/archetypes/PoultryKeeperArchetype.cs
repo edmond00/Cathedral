@@ -11,8 +11,8 @@ public class PoultryKeeperArchetype : PeasantArchetype
 
     /// <summary>What asking this person about their work teaches.</summary>
     public override string TradeModusMentisId => "husbandry";
-    public override ItemTag? SellTag => ItemTag.Foodstuff;
-    public override ItemTag? BuyTag  => ItemTag.Crop;
+    public override ItemTag? SellTag => ItemTag.Poultry;
+    public override ItemTag? BuyTag  => ItemTag.Grain;
     public override int    ModiMentisCount => 6;
 
     /// <summary>A poultry keeper answers to the reeve in a village and to the farmer on a farm.</summary>

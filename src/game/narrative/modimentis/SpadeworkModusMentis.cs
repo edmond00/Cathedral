@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -6,7 +7,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 /// Spadework — digging with a tool and a back rather than with paws: the spit, the heap, the shoring,
 /// and the pace that lets a hole be finished. The human counterpart of
 /// <see cref="DiggingModusMentis"/>, which needs a beast's limbs.
-/// VerbAction-only.
+/// Will + VerbAction.
 /// </summary>
 public class SpadeworkModusMentis : ModusMentis
 {
@@ -15,7 +16,8 @@ public class SpadeworkModusMentis : ModusMentis
     public override string MenuDescription =>
         "Moves earth with an edge and a back: cuts a clean spit, throws the spoil where it will not slide in again, and reads the soil for the depth at which digging stops being worth it. Paces the work so the hole is finished rather than begun.";
     public override string SkillMeans       => "the cut spit and thrown spoil of digging by tool";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<DigVerb>("dig with a spade");
     public override string[] Organs        => new[] { "arms", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

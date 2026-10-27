@@ -52,9 +52,9 @@ public class MurderVerb : Verb
     /// A sleeper who wakes at the wrong moment fights back from arm's length, which is the worst
     /// range to be surprised at.
     /// </summary>
-    public override IReadOnlyList<Wound?> FailurePenalties(Element? target) => new Wound?[]
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target) => new FailurePenalty[]
     {
-        null, null, new ContusionWound(), new CutWound(),
+        FailurePenalty.LoseFocus, FailurePenalty.LoseFocus, new ContusionWound(), new CutWound(),
     };
 }
 

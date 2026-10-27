@@ -31,7 +31,7 @@ public sealed class Helm : WearableItem
     public override string Description => "An iron cap with a nasal bar, dented and repaired";
     public override ItemSize Size => ItemSize.Small;
     public override WearSlot Slot => WearSlot.Headgear;
-    public override List<ItemTag> Tags => new() { ItemTag.Clothing };
+    public override List<ItemTag> Tags => new() { ItemTag.Arms };
     public override int DefenseDice => 2;
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Military };
     public override int PriceReference => 30;
@@ -44,7 +44,7 @@ public sealed class ArmingBoots : WearableItem
     public override string Description => "Tall boots of thick leather, the heels shod with iron";
     public override ItemSize Size => ItemSize.Medium;
     public override WearSlot Slot => WearSlot.Footwear;
-    public override List<ItemTag> Tags => new() { ItemTag.Clothing };
+    public override List<ItemTag> Tags => new() { ItemTag.Clothing, ItemTag.Arms, ItemTag.Footwear };
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Military, SocialCategory.Aristocrat };
     public override int PriceReference => 20;
 }
@@ -130,7 +130,7 @@ public sealed class Sandals : WearableItem
     public override string Description => "Plain leather sandals, the soles worn through to the last layer";
     public override ItemSize Size => ItemSize.Small;
     public override WearSlot Slot => WearSlot.Footwear;
-    public override List<ItemTag> Tags => new() { ItemTag.Clothing };
+    public override List<ItemTag> Tags => new() { ItemTag.Clothing, ItemTag.Footwear };
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Religious };
     public override int PriceReference => 4;
 }

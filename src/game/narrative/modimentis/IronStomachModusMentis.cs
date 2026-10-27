@@ -21,7 +21,8 @@ public class IronStomachModusMentis : ModusMentis
     public override string PersonaReminder  => "iron-gutted eater";
     public override string PersonaReminder2 => "someone whose stomach has outlasted everything put into it";
     public override string StyleInstruction =>
-        "Use blunt images of gut, bile and swallowing hard, with a grim pride in what the body can take.";
+        // Not "gut, bile and swallowing hard": listed, they became deeds — "I took him in my gut, swallowed hard".
+        "Let a grim, blunt pride in what your body can take colour the line.";
 
     public override string PersonaPrompt => @"You are the inner voice of IRON STOMACH, the trained gut that long ago stopped asking what was in the bowl.
 

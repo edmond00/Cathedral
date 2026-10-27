@@ -30,7 +30,7 @@ public sealed class ShoeLast : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
-    public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Craftware, ItemTag.Woodwork, ItemTag.Footwear };
     public override int PriceReference => 5;
 }
 
@@ -43,7 +43,7 @@ public sealed class Hobnails : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
-    public override List<ItemTag> Tags => new() { ItemTag.Ironwork };
+    public override List<ItemTag> Tags => new() { ItemTag.Ironwork, ItemTag.Footwear };
     public override int PriceReference => 3;
 }
 
@@ -54,7 +54,7 @@ public sealed class BespokeShoes : WearableItem
     public override string Description => "Square-toed shoes of good black leather, made to one foot and polished to a shine";
     public override ItemSize Size => ItemSize.Medium;
     public override WearSlot Slot => WearSlot.Footwear;
-    public override List<ItemTag> Tags => new() { ItemTag.Clothing };
+    public override List<ItemTag> Tags => new() { ItemTag.Clothing, ItemTag.Footwear };
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Bourgeois, SocialCategory.Aristocrat };
     public override int PriceReference => 30;
 }
@@ -94,7 +94,7 @@ public sealed class TailorsChalk : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
-    public override List<ItemTag> Tags => new() { ItemTag.Mineral };
+    public override List<ItemTag> Tags => new() { ItemTag.Mineral, ItemTag.Cloth };
     public override int PriceReference => 1;
 }
 
@@ -120,7 +120,7 @@ public sealed class Wick : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
-    public override List<ItemTag> Tags => new() { ItemTag.Textile };
+    public override List<ItemTag> Tags => new() { ItemTag.Textile, ItemTag.Chandlery };
     public override int PriceReference => 1;
 }
 
@@ -133,7 +133,7 @@ public sealed class Beeswax : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Chandlery };
     public override int PriceReference => 9;
 }
 
@@ -145,7 +145,7 @@ public sealed class CandleMould : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass Weight => WeightClass.Light;
-    public override List<ItemTag> Tags => new() { ItemTag.Ironwork, ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Ironwork, ItemTag.Craftware, ItemTag.Chandlery };
     public override int PriceReference => 10;
 }
 
@@ -178,7 +178,7 @@ public sealed class Tripe : ConsumableItem
     public override string DisplayName => "Tripe";
     public override string Article     => "some";
     public override string Description => "A pale, honeycombed strip of boiled stomach, cheap and filling";
-    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Meat };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Food;
@@ -193,7 +193,7 @@ public sealed class BloodPudding : ConsumableItem
     public override string ItemId      => "blood_pudding";
     public override string DisplayName => "Blood Pudding";
     public override string Description => "A dark, heavy sausage of blood, oats and suet";
-    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Meat };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Food;
@@ -246,7 +246,7 @@ public sealed class TanBark : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass Weight => WeightClass.Medium;
-    public override List<ItemTag> Tags => new() { ItemTag.Wood };
+    public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Timber };
     public override int PriceReference => 3;
 }
 
@@ -260,7 +260,7 @@ public sealed class EarthenJug : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass Weight => WeightClass.Light;
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Pottery };
     public override int PriceReference => 4;
 }
 
@@ -272,7 +272,7 @@ public sealed class PottersRib : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Pottery };
     public override int PriceReference => 2;
 }
 
@@ -284,7 +284,7 @@ public sealed class GlazedBowl : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Pottery };
     public override int PriceReference => 3;
 }
 
@@ -314,7 +314,7 @@ public sealed class Albarello : Item
     public override ItemCategory Category => ItemCategory.Container;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Pottery };
     public override int PriceReference => 12;
 }
 
@@ -335,6 +335,7 @@ public sealed class Pestle : Item
 public sealed class Razor : ToolItem
 {
     public override string ItemId      => "razor";
+    public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork, ItemTag.Surgery };
     public override string DisplayName => "Razor";
     public override string Description => "A folding steel razor with a horn handle, honed thin as a leaf";
     public override ItemSize Size => ItemSize.Small;
@@ -344,6 +345,7 @@ public sealed class Razor : ToolItem
 public sealed class Lancet : ToolItem
 {
     public override string ItemId      => "lancet";
+    public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork, ItemTag.Surgery };
     public override string DisplayName => "Lancet";
     public override string Description => "A small double-edged blade in a tortoiseshell case, for letting blood";
     public override ItemSize Size => ItemSize.Small;
@@ -358,7 +360,7 @@ public sealed class BleedingBowl : Item
     public override ItemCategory Category => ItemCategory.Container;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Surgery };
     public override int PriceReference => 6;
 }
 
@@ -385,7 +387,7 @@ public sealed class Lye : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
-    public override List<ItemTag> Tags => new() { ItemTag.Mineral };
+    public override List<ItemTag> Tags => new() { ItemTag.Mineral, ItemTag.Fuel };
     public override int PriceReference => 2;
 }
 
@@ -397,7 +399,7 @@ public sealed class WashBeetle : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass Weight => WeightClass.Light;
-    public override List<ItemTag> Tags => new() { ItemTag.Wood };
+    public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Woodwork };
     public override int PriceReference => 2;
 }
 
@@ -409,7 +411,7 @@ public sealed class WaterYoke : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Large;
     public override WeightClass Weight => WeightClass.Medium;
-    public override List<ItemTag> Tags => new() { ItemTag.Wood };
+    public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Woodwork };
     public override int PriceReference => 5;
 }
 
@@ -433,7 +435,7 @@ public sealed class BeggingBowl : Item
     public override ItemCategory Category => ItemCategory.Container;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
-    public override List<ItemTag> Tags => new() { ItemTag.Wood };
+    public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Woodwork };
     public override int PriceReference => 1;
 }
 
@@ -445,7 +447,7 @@ public sealed class Crutch : Item
     public override ItemCategory Category => ItemCategory.Other;
     public override ItemSize Size => ItemSize.Large;
     public override WeightClass Weight => WeightClass.Light;
-    public override List<ItemTag> Tags => new() { ItemTag.Wood };
+    public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Woodwork };
     public override int PriceReference => 1;
 }
 

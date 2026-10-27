@@ -1,0 +1,60 @@
+# trespass_tolerated — success
+#
+# Waiting in a house until night brings its householder, who finds the player there
+# (ConfrontationKind.FoundWaiting). Explaining yourself opens found_waiting; --auto-dialogue settles it
+# as won, and winning makes the whole house tolerated for the rest of the visit: no longer
+# trespassing, nobody confronting.
+#
+# A village pantry (location id 1) because every pantry is private and holds a storage barrel, which
+# is a seat, and nobody works in one in the evening.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type village --location-id 1 --start-area pantry --period evening --observe-only Storage
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# Evening, in somebody's pantry, nobody about: trespassing, but unseen, so sitting is allowed.
+expect-state where "trespass=yes confronted=none"
+
+strategy succeed
+goal sit_and_wait
+advance 12 180
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+# The wait brought night, and night brought the householder to the room.
+expect-outcome time_shift
+expect-state where "period=Night"
+expect-state where "confronted=FoundWaiting"
+
+# The next phase opens on them. Going up to them is one of the few acts a confrontation permits,
+# and it opens found_waiting rather than caught-red-handed.
+click button
+advance 12 180
+goal explain_myself
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+expect-state dialogue "last=found_waiting"
+expect-outcome trespass_tolerated
+expect-state where "trespass=no confronted=none"
+quit

@@ -1,0 +1,52 @@
+# will_refuses — a will proposes nothing off its way, and nothing at all where it cannot be done
+#
+# Two wills held in the Test Field, pinned to the Test Berry Bush:
+#   lockpicking — its lock is the Test Door off the yard. The bush is no step of that way, so thinking
+#     on it proposes nothing: it says what it wants and leaves the bush be, without naming the way,
+#     which the rewrite took for a resolve with no act behind it.
+#   pugilitas — wants to come to blows, and the people are in the yard. Thinking on the bush proposes
+#     nothing, and names the man it would strike by his label, never the verb's bare "him": said of
+#     somebody else, "attack him" names the wrong man.
+#   butchery — wants to cut a carcass, and nothing in the test location has died: no path exists in
+#     this place at all, so observing refuses the focus and thinking proposes nothing, both saying
+#     that only leaving offers it.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-mm lockpicking,butchery,pugilitas --grant-item hairpin --location-type test --location-id 0 --start-area "Test Field" --period dawn
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+observe "Test Berry Bush"
+travel here
+wait mode LocationInteraction 60
+
+advance 12 180
+expect-state will "will lockpicking steps=2"
+expect-state will "will butchery steps=none"
+
+# Not this way: no action, and the way named.
+click keyword bush
+choose 0
+choose lockpicking
+advance 12 180
+expect I want to pick a lock: to unlock
+expect but that does nothing for it, and I leave it be
+expect-not to get there
+
+# Not this way, with a person at the end of it: named, not pronounced.
+click keyword bush
+choose 0
+choose pugilitas
+advance 12 180
+expect : to attack the
+expect-not attack him
+
+# Not in this place: the focus is refused, and why.
+click keyword bush
+choose 1
+choose butchery
+advance 12 180
+expect have to leave it
+quit

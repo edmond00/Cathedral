@@ -193,6 +193,7 @@ public static class VerbProbe
         "ask_to_be_led"             => "needs a non-stranger who trades, met away from their premises",
         "propose_to_join"           => "needs close-acquaintance-or-better, and room in the party",
         "request_job"               => "needs acquaintance-or-better with an employer",
+        "backtrack"                 => "needs a way already known: an area visited or a connector taken",
         "strengthen_relationship"
             or "gather_knowledge"
             or "confess" or "talk_soldiering" or "talk_far_places"

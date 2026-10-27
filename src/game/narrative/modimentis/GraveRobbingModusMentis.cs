@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class GraveRobbingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Opens graves and tombs at night for what was buried with the dead: the ring, the coin in the mouth, the good cloak. Knows how deep the rich are buried and how to fill a hole so nobody notices.";
     public override string SkillMeans       => "the robbing of graves";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<DigVerb>("open a grave").On<Scene.GravePointOfInterest>();
     public override string[] Organs        => new[] { "hands", "arms" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;

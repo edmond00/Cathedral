@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class GraveworkModusMentis : ModusMentis
     public override string MenuDescription =>
         "Digs where the dead are: opens a grave properly, knows what depth is decent and what happens at less, and is untroubled by what comes up. Work that is always needed and never spoken of politely.";
     public override string SkillMeans       => "the opening of ground where the dead are put";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<DigVerb>("open the ground where the dead lie").On<Scene.GravePointOfInterest>();
     public override string[] Organs        => new[] { "hands", "spleen" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.Low;

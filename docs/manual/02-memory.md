@@ -12,7 +12,7 @@ Every modus mentis declares the following, and these declarations are the whole 
 **An identity.** A stable name, and the manner in which it operates — the phrase by which an act
 performed through it is described.
 
-**Its functions**, at least one and at most three, drawn from six:
+**Its functions**, at least one and at most three, drawn from seven:
 
 | Function | Office |
 |---|---|
@@ -22,11 +22,19 @@ performed through it is described.
 | **Speaking** | It speaks. It furnishes the replies of a conversation. |
 | **Fighting** | Declarative only: it unlocks fighting skills. It performs nothing itself. |
 | **Emotion** | It feels. It answers what an act came to, and renders a humor into the spleen. |
+| **Will** | It wants one thing. It observes and deliberates, but only toward a single kind of act. |
 
 **Action and emotion are exclusive**, as thinking and action already are. These are the three
 offices a mind holds toward a single event — to want it, to do it, to be moved by it — and one
 manner of the mind is asked to be exactly one of them at a time. A body that both performs an act
 and is moved by it does so through two modi mentis, not one.
+
+**A will observes and deliberates, and does nothing else of the kind.** It holds both offices, so it
+bears neither the Observation nor the Thinking function beside them; it may bear Action, Speaking,
+Emotion or Fighting as any other may, save that action and emotion remain exclusive. What it wants is
+declared once — one manner of acting, that manner upon one kind of thing, or a family of them — and
+everything it attends to and proposes follows from that declaration (see §7). A will is learnable only
+by a body able to do what it wants. A will is a desire for one act and not a general competence — a craft or a temper that serves many acts is an ordinary modus mentis — and somewhat under a third of the catalogue are wills.
 
 **Its anatomical sources** — the organs or regions it draws upon. The rule here is strict and admits
 no mixture: **exactly one region, or exactly two distinct organs.** No source is the principal one;
@@ -193,6 +201,21 @@ function a modus mentis bears, since that decides where in the machinery it is c
   settles the exchange.
 - A **fighting** modus mentis unlocks a fighting skill and lends its level to that skill's dice. It
   is never consulted directly.
+- A **will** is asked nothing either, in the sense the others are: it is told the shortest course of
+  acts that leads, from where the body stands, to an act of the kind it wants, and it attends to and
+  proposes only the first act of such a course. Where several courses are equally short — two people
+  to strike, two bushes to pick — the first act of any of them will serve. The course is reckoned through the place itself —
+  walking, climbing, crossing, opening doors, waiting for another hour — and, where the act it wants
+  needs an implement the body lacks, through taking one up or proposing to buy one from somebody whose
+  wares include it. It cannot be reckoned through anything whose issue is not known beforehand: a
+  conversation, a fight, a roll. Where no such course exists within the place, the will refuses
+  everything there, and says it would have to leave to find what it wants. A will that bears the
+  Action function carries out the act it wants itself, and never refuses one of its own course. The
+  acts that lead to it are another matter: their means is chosen as for any goal, the will among
+  the candidates, and where the means chosen refuses, the same act may be tried again with another. Speech is not
+  narrowed by the will: one bearing the Speaking function replies in any conversation, whatever it
+  wants, and one without it replies in none. Nearly every will whose wanted act is a conversation
+  bears it.
 - An **emotion** modus mentis is asked nothing. It declares in advance which kinds of consequence
   move it and to what, and is consulted only after an act has resolved and its consequences are
   known. Its level does not enter into it; see [Chapter III §8](03-humors.md#8-the-humors-of-the-passions).

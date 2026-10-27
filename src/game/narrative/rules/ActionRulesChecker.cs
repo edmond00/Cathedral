@@ -48,10 +48,10 @@ public static class ActionRulesChecker
     }
 
     /// <summary>
-    /// The same rules asked ahead of time, while a thinking modus mentis is still choosing — before any
-    /// button exists, and so before any implement can have been combined with it. Used by iterative
-    /// thinking (<c>ThinkingIterationsStat</c>) to try something else rather than offer an act the rules
-    /// would refuse on the click.
+    /// The same rules asked ahead of the click — before the act exists as a button, and so before any
+    /// implement can have been combined with it. Used by Reconsider, which looks for the means that
+    /// would pass on the click (a discreet one where a witness would catch any other), not only the
+    /// ones the rules of choice allow.
     ///
     /// <para>The rules that read the combined item are left out, since none has been combined yet and
     /// combining one is how the player answers them: <see cref="RequiredToolRule"/> (the act stays

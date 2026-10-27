@@ -26,6 +26,10 @@ public class IllegalActionVisualWitnessRule : IActionRule
         // (see ProximityModel). Only a non-discrete skill is stopped from trying.
         if (ctx.WitnessContext.Type != WitnessType.Visual) return ActionRuleResult.Pass();
         if (ctx.ActionModusMentis?.ActsDiscretely == true) return ActionRuleResult.Pass();
+        // Already caught: the acts that answer a confronter (explain myself, a blow) are done to the
+        // one watching, so there is nobody left to catch them. ConfrontedImpossibleRule lets these
+        // through; refusing them here left "explain myself" open to discreet means only.
+        if (ctx.Confronter != null && ctx.Action.Verb.CanBeUsedWhenConfronted) return ActionRuleResult.Pass();
 
         var witnessName = ctx.WitnessContext.Witness is { } witness ? Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(witness, ctx.Actor) : "Someone";
         return ActionRuleResult.Fail($"{witnessName} is right here — I would be caught red-handed.");

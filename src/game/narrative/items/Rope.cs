@@ -10,7 +10,7 @@ public sealed class Rope : Item
     public override string Description => "A coil of twisted hemp rope, thick and rough-fibred";
     public override ItemSize Size      => ItemSize.Medium;
     public override WeightClass Weight       => WeightClass.Medium;
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.FishingGear };
     public override int PriceReference => 6;
     public override int UsageLevel     => 4;
 

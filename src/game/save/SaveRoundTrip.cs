@@ -136,7 +136,8 @@ public static class SaveRoundTrip
             $"save memoryslots={slots}",
             $"save items={items}",
             $"save wounds={p.Protagonist.Wounds.Count}",
-            $"save routines={p.Routines.Count}",
+            $"save mentalmaps={p.MentalMaps.Count}",
+            $"save routines={p.MentalMaps.Sum(m => m.Routines.Count)}",
         };
     }
 }

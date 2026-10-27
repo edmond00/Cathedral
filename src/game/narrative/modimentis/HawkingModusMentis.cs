@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class HawkingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Sells in the street by voice: the cry that carries over a market, the patter that stops a passer-by, the joke that turns a glance into a sale. Reads a crowd for who has money in their purse.";
     public override string SkillMeans       => "the selling of goods by street cry";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Observation };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
+    public override WillTarget? Will => WillTarget.To<ProposeToSellVerb>("sell my goods");
     public override string[] Organs        => new[] { "tongue", "pulmones" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,10 +13,11 @@ public class JurisprudenceModusMentis : ModusMentis
     public override string MenuDescription =>
         "Knows the law: its codes, its customs, its precedents, its loopholes. Can say what a case turns on and what a court will probably decide, and which old ruling the other side has forgotten.";
     public override string SkillMeans       => "the knowledge of law and how it is applied";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
+    public override WillTarget? Will => WillTarget.To<PetitionVerb>("put a case before somebody with the power to grant it");
     public override string[] Organs        => new[] { "cerebrum", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
-    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction | AnatomyCapability.Speech;
 
     public override string PersonaTone     => "a lawyer who knows which precedent wins";
     public override string PersonaReminder  => "lawyer";

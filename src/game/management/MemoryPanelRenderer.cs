@@ -529,7 +529,17 @@ public class MemoryPanelRenderer
             firstFunction = false;
         }
 
-        metaLines.Add(("Discreet",      modusMentis.ActsDiscretely ? "Yes — acts unnoticed" : "No",
+        // A will wants one act; say which, in the words it is voiced with ("pick a lock").
+        if (modusMentis.Will is { } will)
+        {
+            const string TargetLabel = "Target";
+            string purpose = will.Purpose;
+            int room = leftW - 4 - TargetLabel.Length;
+            if (purpose.Length > room && room > 1) purpose = purpose[..(room - 1)] + "…";
+            metaLines.Add((TargetLabel, purpose, Config.Colors.BrightYellow));
+        }
+
+        metaLines.Add(("Discreet",     modusMentis.ActsDiscretely ? "Yes — acts unnoticed" : "No",
              modusMentis.ActsDiscretely ? Config.Colors.BrightYellow : Config.Colors.LightGray75));
         metaLines.Add(("Morality",      modusMentis.MoralLevel.ToString(),                    Config.Colors.LightGray75));
         metaLines.Add((anatomyLabel,    anatomyValue,

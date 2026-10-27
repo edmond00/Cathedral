@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -13,7 +14,8 @@ public class HerbloreModusMentis : ModusMentis
     public override string MenuDescription =>
         "Recognizes plants by leaf and habit and holds their uses in mind, for remedy, seasoning, or harm. Inclines toward gathering and preparing herbs, and reads a hedgerow for what it can yield.";
     public override string SkillMeans       => "the knowing and gathering of herbs";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
+    public override WillTarget? Will => WillTarget.To<GatherVerb>("gather herbs").YieldingAny("herbs", typeof(World.Items.HerbItem), typeof(Items.Herb));
     public override string[] Organs        => new[] { "nose", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.High;
@@ -22,7 +24,8 @@ public class HerbloreModusMentis : ModusMentis
     public override string PersonaReminder  => "herb-knower";
     public override string PersonaReminder2 => "someone who names a plant by its smell and its leaf";
     public override string StyleInstruction =>
-        "Use images of crushed leaf, scent and the herb-bed, with the quiet certainty of one who knows what each plant does.";
+        // Not "crushed leaf and the herb-bed": listed, they became a leaf crushed and a bed sought.
+        "Speak with the quiet certainty of one who knows what each plant does and where it grows.";
 
     public override string PersonaPrompt => @"You are the inner voice of HERBLORE, the plain country knowledge of herbs and garden greens — which to eat, which to steep, which to leave well alone.
 

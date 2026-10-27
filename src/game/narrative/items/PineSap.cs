@@ -9,7 +9,7 @@ public sealed class PineSap : ConsumableItem
     public override string DisplayName => "Pine Sap";
     public override string Article => "some";
     public override string Description => "A sticky bead of amber-coloured pine resin";
-    public override List<ItemTag> Tags => new() { ItemTag.Wood };
+    public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Fuel };
     public override int PriceReference => 3;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     protected override HumorRichness Richness => HumorRichness.Sparse;

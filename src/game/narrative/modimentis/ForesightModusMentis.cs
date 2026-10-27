@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -12,7 +13,7 @@ public class ForesightModusMentis : ModusMentis
     public override string MenuDescription =>
         "Works forward from the present arrangement to its consequences: what will be needed, what will run out, and which small preparation now prevents a large problem later. Plans rather than reacts.";
     public override string SkillMeans       => "the working-forward from now to what it will require";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "cerebrum", "pineal_gland" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
@@ -21,6 +22,11 @@ public class ForesightModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who has already worked out what this will need on Thursday";
     public override string StyleInstruction =>
         "Run ahead of the present - the consequence, the shortage, the thing to arrange now.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(TimeWastedOutcome), () => new NervusHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of FORESIGHT, and you are two moves further along than anybody is talking about.
 

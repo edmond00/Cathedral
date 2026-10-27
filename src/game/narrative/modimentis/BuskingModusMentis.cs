@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class BuskingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Performs in the street for coins: the song, the juggling, the patter that draws a crowd and the moment to pass the hat before it disperses.";
     public override string SkillMeans       => "the performing in the street for coin";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<SingAlongVerb>("perform for coin");
     public override string[] Organs        => new[] { "tongue", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

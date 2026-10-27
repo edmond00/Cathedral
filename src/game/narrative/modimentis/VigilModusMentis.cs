@@ -1,4 +1,6 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -12,7 +14,8 @@ public class VigilModusMentis : ModusMentis
     public override string MenuDescription =>
         "Keeps watch through the night in prayer or beside the dead: notices every sound in the dark hours, the candle guttering, the changes in the quiet. Is most awake when everyone else is asleep.";
     public override string SkillMeans       => "the watching through the night";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
+    public override WillTarget? Will => WillTarget.To<SitAndWaitVerb>("keep a vigil");
     public override string[] Organs        => new[] { "ears", "pineal_gland" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
@@ -21,6 +24,11 @@ public class VigilModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone most awake at the dead hour";
     public override string StyleInstruction =>
         "Notice the night - the candle, the small sounds, the quality of the silence - with heightened attention.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(FocusLostOutcome), () => new PudorHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of VIGIL, and it is the hour when everyone else is asleep and you have never been more awake.
 

@@ -63,6 +63,7 @@ public abstract class OffalItem : ConsumableItem
 public sealed class Meat : OffalItem
 {
     public override string ItemId      => "meat";
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Meat };
     public override string DisplayName => "Meat";
     public override string Article     => "some";
     public override string Description => "A raw cut off the bone, dark and wet and still warm at the middle";
@@ -76,6 +77,7 @@ public sealed class Meat : OffalItem
 public sealed class Liver : OffalItem
 {
     public override string ItemId      => "liver";
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Meat };
     public override string DisplayName => "Liver";
     public override string Description => "A dark lobed liver, heavy in the hand and slippery with its own blood";
     public override int PriceReference => 5;
@@ -88,6 +90,7 @@ public sealed class Liver : OffalItem
 public sealed class Heart : OffalItem
 {
     public override string ItemId      => "heart";
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Meat };
     public override string DisplayName => "Heart";
     public override string Description => "A fist of dense muscle, the great vessels cut short at the top";
     public override int PriceReference => 5;
@@ -101,6 +104,7 @@ public sealed class Heart : OffalItem
 public sealed class Brain : OffalItem
 {
     public override string ItemId      => "brain";
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Meat };
     public override string DisplayName => "Brain";
     public override string Description => "A pale convoluted mass, soft as curd and holding no shape at all";
     public override int PriceReference => 4;
@@ -115,6 +119,7 @@ public sealed class Brain : OffalItem
 public sealed class Suet : OffalItem
 {
     public override string ItemId      => "suet";
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Meat };
     public override string DisplayName => "Suet";
     public override string Article     => "some";
     public override string Description => "A crumbling white slab of kidney fat, cold and greasy to the touch";
@@ -261,6 +266,7 @@ public sealed class Hair : BodyPartItem
 public sealed class Feather : BodyPartItem
 {
     public override string ItemId      => "feather";
+    public override List<ItemTag> Tags => new() { ItemTag.Pelt, ItemTag.Poultry };
     public override string DisplayName => "Feather";
     public override string Description => "A small feather, soft-vaned and light enough to lift on a breath";
     public override int PriceReference => 2;
@@ -310,7 +316,7 @@ public sealed class Silk : BodyPartItem
     public override string DisplayName => "Silk";
     public override string Article     => "some";
     public override string Description => "A wound skein of web, stronger along its length than anything of that thinness has a right to be";
-    public override List<ItemTag> Tags => new() { ItemTag.Textile };
+    public override List<ItemTag> Tags => new() { ItemTag.Textile, ItemTag.Cloth };
     public override int PriceReference => 4;
 }
 
@@ -330,7 +336,7 @@ public sealed class Wax : BodyPartItem
     public override string DisplayName => "Wax";
     public override string Article     => "some";
     public override string Description => "A knuckle of comb wax, warm-smelling and soft enough to take a thumbprint";
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Chandlery };
     public override int PriceReference => 5;
 }
 

@@ -1,0 +1,365 @@
+{
+ "_doc": "Bands each metric should fall in, with the reason. A band is a statement about the genre (retro dungeon synth: Fief, Erang, Old Tower, early Mortiis), not about taste. Weights say how much a miss costs in the total. Melodic bands marked 'Calibrated' were checked with exemplars.py against public-domain tunes written out in tools/music/exemplars/; run `eval.py calibrate reference/` on real recordings to replace the acoustic ones. Per-mood overrides sit under 'moods'. Per-pole overrides sit under 'poles' and apply to the pole that leads a render for most of its time: a festive render is dance music (dense, chord a bar, a drier room, triplet lilt, heterophony with the whistle above the fiddle), held to the bands the session idiom implies. Battle renders a fight (the fight filter over the mood, as the game plays it): dungeon synth leaning into metal, a distorted riff and a drum kit under the lead, so its spectrum falls less steeply, its room is closer, and its chords change at a faster tempo than the slow moods'.",
+ "metrics": {
+  "mode_fit": {
+   "lo": 0.93,
+   "hi": 1.0,
+   "w": 2,
+   "why": "Modal: pitches stay inside one diatonic/modal collection per 20 s window."
+  },
+  "pc_entropy": {
+   "lo": 2.1,
+   "hi": 2.95,
+   "w": 1,
+   "why": "A tonal centre: seven classes used unevenly. Uniform twelve would be 3.58."
+  },
+  "mel_step_ratio": {
+   "lo": 0.4,
+   "hi": 0.85,
+   "w": 2,
+   "why": "Mostly stepwise. Calibrated: real tunes 0.27 (an arpeggiated shanty) to 0.64 (chant, Greensleeves)."
+  },
+  "mel_leap_ratio": {
+   "lo": 0.03,
+   "hi": 0.22,
+   "w": 1,
+   "why": "Some leaps of a fourth or fifth (organum, horn calls), not many."
+  },
+  "mel_large_leap_ratio": {
+   "lo": 0.0,
+   "hi": 0.06,
+   "w": 1,
+   "why": "Leaps beyond a fifth are rare."
+  },
+  "mel_range_phrase": {
+   "lo": 4,
+   "hi": 15,
+   "w": 1,
+   "why": "Narrow-ish range. Calibrated: real tunes span 7 (Scarborough Fair) to 15 (Greensleeves) semitones a phrase."
+  },
+  "mel_distinct_phrase": {
+   "lo": 4,
+   "hi": 10,
+   "w": 2,
+   "why": "A tune, not a trill: real tunes use 5 to 10 pitches a phrase."
+  },
+  "mel_density": {
+   "lo": 0.5,
+   "hi": 3.2,
+   "w": 1,
+   "why": "Slow: half a note to three notes a second while the melody plays."
+  },
+  "motif_recurrence": {
+   "lo": 0.35,
+   "hi": 0.9,
+   "w": 3,
+   "why": "Motifs stated and repeated within a piece (180 s memory); a random walk scores 0.05-0.15."
+  },
+  "bar_repetition": {
+   "lo": 0.25,
+   "hi": 0.8,
+   "w": 2,
+   "why": "Statement and repeat (A A'), ostinato-like melody bars; never 1.0, which is a loop."
+  },
+  "long_novelty": {
+   "lo": 0.5,
+   "hi": 1.0,
+   "w": 2,
+   "why": "Endless: windows minutes apart share few figures, so it never becomes a fixed loop."
+  },
+  "grid_alignment": {
+   "lo": 0.8,
+   "hi": 1.0,
+   "w": 1,
+   "why": "A pulse the layers share, not free drift."
+  },
+  "phrase_len_cv": {
+   "lo": 0.0,
+   "hi": 0.45,
+   "w": 1,
+   "why": "Regular 2+2 / 4+4 phrasing."
+  },
+  "harmonic_rhythm_s": {
+   "lo": 2.5,
+   "hi": 16,
+   "w": 2,
+   "why": "A harmony lasts one to four bars."
+  },
+  "dissonance_time": {
+   "lo": 0.0,
+   "hi": 0.25,
+   "w": 1,
+   "why": "Open fifths and triads; seconds and tritones are colour, not texture."
+  },
+  "active_parts": {
+   "lo": 2.0,
+   "hi": 5.0,
+   "w": 1,
+   "why": "Layered: a drone or pad under a line, usually more."
+  },
+  "layer_changes_min": {
+   "lo": 0.3,
+   "hi": 3.0,
+   "w": 1,
+   "why": "Layers enter and leave: orchestration is the variation engine. Too many is flicker."
+  },
+  "silence_ratio": {
+   "lo": 0.0,
+   "hi": 0.08,
+   "w": 1,
+   "why": "Nothing sounding at all should be rare (a breath between pieces)."
+  },
+  "counter_repeat": {
+   "lo": 0.0,
+   "hi": 0.3,
+   "w": 1,
+   "why": "The counter is a line: it moves, held tones are tied rather than re-struck."
+  },
+  "counter_above_mel": {
+   "lo": 0.0,
+   "hi": 0.15,
+   "w": 1,
+   "why": "The counter stays under the tune."
+  },
+  "melody_prominence": {
+   "lo": 0.0,
+   "hi": 9.0,
+   "w": 3,
+   "why": "The tune sits on top of the mix: at least as loud as the loudest accompanying layer, not a soloist over silence."
+  },
+  "drone_vs_melody": {
+   "lo": -16.0,
+   "hi": -3.0,
+   "w": 1,
+   "why": "The drone is felt, under everything."
+  },
+  "lufs": {
+   "lo": -24,
+   "hi": -14,
+   "w": 1,
+   "why": "Background music at a sane level, leaving room for the UI sounds."
+  },
+  "peak_dbfs": {
+   "lo": -9,
+   "hi": -0.3,
+   "w": 1,
+   "why": "Used headroom, no overs."
+  },
+  "clip_ratio": {
+   "lo": 0.0,
+   "hi": 1e-05,
+   "w": 2,
+   "why": "No clipping."
+  },
+  "tilt_db_oct": {
+   "lo": -9.0,
+   "hi": -3.5,
+   "w": 2,
+   "why": "Dark and warm: the spectrum falls steeply above the low mids."
+  },
+  "hf6_share": {
+   "lo": 0.0,
+   "hi": 0.03,
+   "w": 2,
+   "why": "Little above 6 kHz: low-passed, cassette-like highs."
+  },
+  "hf8_share": {
+   "lo": 0.0,
+   "hi": 0.01,
+   "w": 1,
+   "why": "Almost nothing above 8 kHz."
+  },
+  "presence_share": {
+   "lo": 0.0,
+   "hi": 0.09,
+   "w": 1,
+   "why": "No harsh 2-5 kHz edge."
+  },
+  "low_share": {
+   "lo": 0.06,
+   "hi": 0.5,
+   "w": 1,
+   "why": "A floor of drone and pad; not a bass-heavy mix either."
+  },
+  "side_ratio": {
+   "lo": 0.04,
+   "hi": 0.6,
+   "w": 1,
+   "why": "A stereo image from reverb and chorus, not mono, not phasey."
+  },
+  "envelope_roughness": {
+   "lo": 0.0,
+   "hi": 1.3,
+   "w": 1,
+   "why": "Smooth swells and soft attacks: the RMS envelope changes slowly."
+  },
+  "onset_rate": {
+   "lo": 0.3,
+   "hi": 4.5,
+   "w": 1,
+   "why": "Few sharp attacks per second."
+  },
+  "swell_db": {
+   "lo": 0.8,
+   "hi": 5.0,
+   "w": 1,
+   "why": "Slow volume swells over tens of seconds, not a flat wall."
+  },
+  "hole_ratio": {
+   "lo": 0.0,
+   "hi": 0.02,
+   "w": 2,
+   "why": "No dead digital silence: tails and room fill the gaps."
+  },
+  "spike_db": {
+   "lo": 0,
+   "hi": 8,
+   "w": 1,
+   "why": "No sudden loud moments: the loudest second stays within 8 dB of the typical one."
+  },
+  "audio_repeat": {
+   "lo": 0.2,
+   "hi": 0.95,
+   "w": 1,
+   "why": "The repetition survives into what is heard, through the reverb."
+  },
+  "render_speed": {
+   "lo": 8,
+   "hi": 1000000000.0,
+   "w": 1,
+   "why": "Cheap enough to play beside the game: the offline render runs at least eight times faster than real time on one core (live play then costs under an eighth of it)."
+  },
+  "max_voices": {
+   "lo": 0,
+   "hi": 48,
+   "w": 1,
+   "why": "No pile-up of voices that never finish."
+  },
+  "wet_db": {
+   "lo": -8,
+   "hi": 0,
+   "w": 2,
+   "why": "Lots of reverb: the hall's return within 8 dB of the dry signal, never above it. The genre's records are washed in it."
+  },
+  "scene_response_s": {
+   "lo": 0,
+   "hi": 12,
+   "w": 2,
+   "why": "A new place gets new music soon: the next piece starts within a phrase or two of the change (journeys only)."
+  },
+  "scene_response_max_s": {
+   "lo": 0,
+   "hi": 20,
+   "w": 1,
+   "why": "Even the slowest change of scene is answered within twenty seconds."
+  }
+ },
+ "moods": {
+  "Battle": {
+   "dissonance_time": {
+    "lo": 0.0,
+    "hi": 0.45
+   },
+   "mel_density": {
+    "lo": 0.8,
+    "hi": 4.5
+   },
+   "onset_rate": {
+    "lo": 0.5,
+    "hi": 6
+   },
+   "tilt_db_oct": {
+    "lo": -9.0,
+    "hi": -1.5
+   },
+   "wet_db": {
+    "lo": -16,
+    "hi": 0
+   },
+   "harmonic_rhythm_s": {
+    "lo": 2.0,
+    "hi": 16
+   }
+  },
+  "DarkDungeon": {
+   "dissonance_time": {
+    "lo": 0.0,
+    "hi": 0.4
+   },
+   "mel_density": {
+    "lo": 0.25,
+    "hi": 2.5
+   },
+   "silence_ratio": {
+    "lo": 0.0,
+    "hi": 0.15
+   }
+  },
+  "WorldView": {
+   "dissonance_time": {
+    "lo": 0.0,
+    "hi": 0.4
+   }
+  }
+ },
+ "poles": {
+  "festive": {
+   "mel_density": {
+    "lo": 2.0,
+    "hi": 7.0
+   },
+   "harmonic_rhythm_s": {
+    "lo": 0.9,
+    "hi": 8
+   },
+   "phrase_len_cv": {
+    "lo": 0.0,
+    "hi": 1.3
+   },
+   "counter_above_mel": {
+    "lo": 0.0,
+    "hi": 1.0
+   },
+   "wet_db": {
+    "lo": -18,
+    "hi": -4
+   },
+   "envelope_roughness": {
+    "lo": 0.0,
+    "hi": 2.5
+   },
+   "onset_rate": {
+    "lo": 1.0,
+    "hi": 12
+   },
+   "max_voices": {
+    "lo": 0,
+    "hi": 64
+   },
+   "side_ratio": {
+    "lo": 0.02,
+    "hi": 0.6
+   },
+   "silence_ratio": {
+    "lo": 0.0,
+    "hi": 0.12
+   },
+   "mel_range_phrase": {
+    "lo": 4,
+    "hi": 19
+   },
+   "mel_distinct_phrase": {
+    "lo": 4,
+    "hi": 12
+   },
+   "mel_leap_ratio": {
+    "lo": 0.03,
+    "hi": 0.3
+   },
+   "audio_repeat": {
+    "lo": 0.2,
+    "hi": 0.99
+   }
+  }
+ }
+}

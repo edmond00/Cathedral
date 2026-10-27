@@ -1,10 +1,11 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Low Blow — underhanded combat targeting vulnerable spots below the belt; a pragmatic fighter with no interest in honor.
-/// VerbAction-only.
+/// Will + VerbAction + Fighting.
 /// </summary>
 public class LowBlowModusMentis : ModusMentis
 {
@@ -13,7 +14,8 @@ public class LowBlowModusMentis : ModusMentis
     public override string MenuDescription =>
         "Marks the softest, least-guarded points on a body and aims for them. Inclines toward underhanded strikes that disable through pain, choosing effect over fairness.";
     public override string SkillMeans       => "underhanded strikes aimed at the body's softest and least-guarded points";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Fighting };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action, ModusMentisFunction.Fighting };
+    public override WillTarget? Will => WillTarget.To<SlayVerb>("kill with a low blow");
     public override string[] Organs        => new[] { "legs", "feet" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.Low;

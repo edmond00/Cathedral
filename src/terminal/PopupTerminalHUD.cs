@@ -62,11 +62,22 @@ namespace Cathedral.Terminal
         #region Drawing Operations
 
         /// <summary>
-        /// Clears the popup with transparent cells
+        /// Clears the popup with transparent cells, and centres it on the pointer again
         /// </summary>
         public void Clear()
         {
             _view.Fill(' ', Colors.White, Colors.Transparent);
+            _renderer.LiftCells = 0f;
+        }
+
+        /// <summary>
+        /// How many cells above the pointer the content's centre sits (see
+        /// <see cref="PopupRenderer.LiftCells"/>). Reset by <see cref="Clear"/>.
+        /// </summary>
+        public float LiftCells
+        {
+            get => _renderer.LiftCells;
+            set => _renderer.LiftCells = value;
         }
 
         /// <summary>

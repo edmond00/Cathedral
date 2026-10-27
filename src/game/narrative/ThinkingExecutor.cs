@@ -45,16 +45,18 @@ public class ThinkingExecutor
 
     /// <summary>
     /// GOAL (decision) → optional IGNORE early-exit → HOW (decision) → reasoning rewrite → [doubt] →
-    /// [rule probe] → willingness → action rewrite. Returns null only if no usable action skill is
-    /// available.
+    /// willingness → action rewrite. Returns null only if no usable action skill is available.
     ///
     /// <para><b>Iterative thinking.</b> When what the thinking modus mentis proposed comes to nothing —
-    /// the action modus mentis refuses it, a coded rule would refuse it on the click
-    /// (<paramref name="ruleProbe"/>), or the player doubts it — the thinking tries again, up to
-    /// <see cref="ThinkingIterationsStat"/> times (the pineal gland's score). Each try crosses off the
-    /// pair of goal and means it reached; a goal comes back only while a means for it is untried, and when
-    /// nothing is left the chain stops. The whole chain is one thinking and spends one noetic point. At a
-    /// score of 0 nothing here runs: one try, and the refusal is shown as it always was.</para>
+    /// the action modus mentis refuses it, or the player doubts it — the thinking tries again, up to
+    /// <see cref="ThinkingIterationsStat"/> times (the pineal gland's score). A refused goal is tried
+    /// again only when another means is able to carry it out (no choice rule refuses it to that means),
+    /// and then by one of those, with no refusal left to it: the next try is sure to end on a button.
+    /// When no other means could, the goal is given up and the next try chooses another, or the chain
+    /// stops when nothing is left. Only what is refused before the click is retried: the action rules
+    /// (a witness in sight, an enemy in the room) are the click's, which keeps the final word on them.
+    /// The whole chain is one thinking and spends one noetic point. At a score of 0 nothing here runs:
+    /// one try, and the refusal is shown as it always was.</para>
     ///
     /// <para><b>Doubt.</b> With <see cref="DoubtStat"/> and a retry left, the reasoning ends on a question
     /// and the preview box asks YES or NO before the action modus mentis is asked or any rule probed. NO
@@ -76,7 +78,6 @@ public class ThinkingExecutor
         bool autoSuccess = false,
         LlmPreviewSession? preview = null,
         ActionProposalLedger? proposed = null,
-        Func<ParsedNarrativeAction, string?>? ruleProbe = null,
         CancellationToken cancellationToken = default)
     {
         // The reasoning box holds the thinking MM's reasoning rewrite; the action box (a different MM)
@@ -123,26 +124,81 @@ public class ThinkingExecutor
             Console.WriteLine($"ThinkingExecutor: [{thinkingModusMentis.DisplayName}] may try again {retriesLeft} time(s)"
                             + (mayDoubt ? ", and the player may doubt" : "") + ".");
 
-        // What the thinking mind says ahead of its next reasoning: why it is trying again. Null on the
-        // first try, which opens on the object instead.
+        // What the thinking mind says ahead of its next reasoning: why it is trying again (a refusal),
+        // rewritten alone just before that reasoning. Null when there is nothing left to say — on the
+        // first try, which opens on the object instead, and after a doubt's NO, which is voiced at once.
         string? lead = null;
+
+        // Whether this try is a retry: it names only the new goal, the object already named.
+        bool retrying = false;
+
+        // A refused goal that another means is able to carry out: the next try takes it up again with
+        // one of those (TryAgain).
+        VerbAction? again = null;
+
+        // A will is offered no goal but its path's first step (WillPriority), and on an object that
+        // does not offer it, or in a place with no way to its goal at all, it proposes nothing and says
+        // why. Its goal is not chosen, so there is nothing for a doubt to choose again. Only the act it
+        // wants is its own to carry out: a step on the way to it (a walk, a wait, a tool fetched) is
+        // carried out by whichever mind the means judge finds fittest, and while a retry remains, a
+        // refusal tries the same step with another means.
+        Scene.ActionPath? willPath = null;
+        VerbAction? willStep = null;
+        bool willOnTheWay = false;
+        if (scene != null && pov != null && !autoSuccess && Rules.Choice.WillPriority.Steers(thinkingModusMentis, scene))
+        {
+            var planned = Rules.Choice.WillPriority.PathOf(thinkingModusMentis, scene, pov, actingMember);
+            // The path through what this object offers, which need not be the one the plan kept: of
+            // two people equally near to strike, either is the way.
+            willPath = planned == null ? null
+                     : Scene.ActionPathPlanner.PathThrough(scene, pov, actingMember, thinkingModusMentis.Will!, planned,
+                                                           subOutcomes.OfType<VerbAction>());
+            willStep = willPath == null ? null
+                     : subOutcomes.OfType<VerbAction>().FirstOrDefault(v => Scene.ActionPathPlanner.SameAction(v, willPath.First.Action));
+            if (willStep == null)
+            {
+                string refusal = planned == null
+                    ? NeutralNarration.WillReasoningNotHere(targetDescription, thinkingModusMentis.Will!.Purpose)
+                    : NeutralNarration.WillReasoningNotThisWay(targetDescription, planned, thinkingModusMentis.Will!.Purpose, actingMember);
+                Console.WriteLine($"ThinkingExecutor: [{thinkingModusMentis.DisplayName}] wills '{thinkingModusMentis.Will!.Purpose}' — "
+                                + (willPath == null ? "no way here." : $"'{targetDescription}' is not on the way."));
+                Think(await VoiceAsync(thinkingSlot, thinkingModusMentis, refusal, NarrationKind.Reasoning, thoughtPart, cancellationToken));
+                return Finish(new List<ParsedNarrativeAction>());
+            }
+            // A wait on the way lasts until the hour the path needs, a backtrack goes to the area it
+            // needs: not ones the player picks.
+            if (willPath!.First.Settled is { } settled && willStep.Verb.Settle(willStep, settled) is { } settledStep)
+                willStep = settledStep;
+            willOnTheWay = !thinkingModusMentis.Will!.Matches(willStep);
+            Console.WriteLine($"ThinkingExecutor: [{thinkingModusMentis.DisplayName}] wills it — proposing '{willStep.Verbatim}'"
+                            + (willOnTheWay ? ", a step on the way: the means is judged." : "."));
+            if (!willOnTheWay) retriesLeft = 0;
+            mayDoubt = false;
+        }
 
         while (true)
         {
             // ── Decision 1: GOAL ────────────────────────────────────────────────────
             // An auto-success phase (reminescence, get-up) offers no "do something else": its one verb is
             // the only way onward, and a mind that walked away from it left the player where they were.
-            var resolved = await ChooseGoalAsync(subOutcomes, thinkingModusMentis, actionModiMentis, overallLocation, areaLocation, observedPhrase, choiceCtx, proposed, chain, cancellationToken, offerDecline: !autoSuccess);
-            bool isIgnore = resolved is VerbAction vIgnore && vIgnore.Verb is IgnoreVerb;
+            bool retryingRefused = again != null;
+            var resolved = willStep
+                           ?? (NarrativeAnchor?)again
+                           ?? await ChooseGoalAsync(subOutcomes, thinkingModusMentis, actionModiMentis, overallLocation, areaLocation, observedPhrase, choiceCtx, proposed, chain, cancellationToken, offerDecline: !autoSuccess);
+            // A will's step tried with every means is the end of the chain, as a goal would be crossed off.
+            bool isIgnore = resolved is VerbAction vIgnore && vIgnore.Verb is IgnoreVerb
+                            || willStep != null && chain.Touched(willStep)
+                               && !chain.Untried(willStep, MeansPoolFor(willStep, actionModiMentis)).Any();
 
             // ── Early exit: IGNORE (reasoning only, no action) ──────────────────────
             // After a retry this is the end of the chain: everything left was tried, or nothing appeals.
             if (isIgnore)
             {
-                string ignoreNeutral = lead == null
+                await VoiceLeadAsync();
+                string ignoreNeutral = !retrying
                     ? NeutralNarration.ReasoningIgnore(targetDescription, isReminescence)
-                    : $"{lead} {NeutralNarration.IterationExhausted(targetDescription)}";
-                if (lead != null) Console.WriteLine("ThinkingExecutor: nothing left to try — the chain stops.");
+                    : NeutralNarration.IterationExhausted(targetDescription);
+                if (retrying) Console.WriteLine("ThinkingExecutor: nothing left to try — the chain stops.");
                 Think(await VoiceAsync(thinkingSlot, thinkingModusMentis, ignoreNeutral, NarrationKind.Reasoning, thoughtPart, cancellationToken));
                 return Finish(new List<ParsedNarrativeAction>());
             }
@@ -162,7 +218,10 @@ public class ThinkingExecutor
             // the action modi mentis the coded rules let carry it out are offered as the means, and the one
             // chosen is not asked whether it would rather not. ChooseGoalAsync has already withheld the goal
             // when none could, so the narrowed pool is never empty in play; the fallback is for safety.
-            bool secondAttempt = choiceCtx != null && goalAction != null && proposed?.WasRefused(goalAction) == true;
+            // A goal this chain saw refused is the same second attempt, within the thinking.
+            again = null;
+            bool secondAttempt = choiceCtx != null && goalAction != null
+                                 && (retryingRefused || proposed?.WasRefused(goalAction) == true);
             if (secondAttempt)
             {
                 var able = meansPool.Where(s => CanCarryOut(s, resolved, choiceCtx!)).ToList();
@@ -186,7 +245,11 @@ public class ThinkingExecutor
             }
 
             // ── Decision 2: HOW (which action skill) ────────────────────────────────
-            var skill = await ChooseSkillAsync(goalPhrase, meansPool, thinkingModusMentis, overallLocation, areaLocation, observedPhrase, cancellationToken);
+            // A will that bears the Action function carries out the act it wants: the means is not chosen.
+            // A step on the way is judged like any goal, the will among the candidates.
+            var skill = willStep != null && !willOnTheWay && Rules.Choice.WillPriority.ActsItself(thinkingModusMentis) && actionModiMentis.Contains(thinkingModusMentis)
+                ? thinkingModusMentis
+                : await ChooseSkillAsync(goalPhrase, meansPool, thinkingModusMentis, overallLocation, areaLocation, observedPhrase, cancellationToken);
             if (skill == null)
             {
                 if (actionModiMentis.Count == 0)
@@ -199,7 +262,7 @@ public class ThinkingExecutor
                 // Skills exist but the thinking Modus Mentis declined every means → "no way to do
                 // it": a reasoning-only outcome in the thinking MM's voice, mirroring the ignore branch.
                 string noMeansNeutral = NeutralNarration.ReasoningNoMeans(targetDescription, goalPhrase, isReminescence);
-                if (lead != null) noMeansNeutral = $"{lead} {noMeansNeutral}";
+                await VoiceLeadAsync();
                 Think(await VoiceAsync(thinkingSlot, thinkingModusMentis, noMeansNeutral, NarrationKind.Reasoning, thoughtPart, cancellationToken));
                 return Finish(new List<ParsedNarrativeAction>());
             }
@@ -208,14 +271,16 @@ public class ThinkingExecutor
             // Doubt is offered only while a retry remains: a NO with nothing left to try would end the
             // thinking on nothing, which is a refusal the player made for the mind.
             bool doubting = mayDoubt && retriesLeft > 0 && goalAction != null;
-            string reasoningNeutral = lead == null
+            string reasoningNeutral = !retrying
                 ? NeutralNarration.ReasoningChain(targetDescription, goalPhrase, skill.SkillMeans, isReminescence)
                 : goalAction != null && chain.Touched(goalAction)
-                    ? $"{lead} {NeutralNarration.ReasoningRetrySameGoal(goalPhrase, skill.SkillMeans)}"
-                    : $"{lead} {NeutralNarration.ReasoningRetry(goalPhrase, skill.SkillMeans)}";
+                    ? NeutralNarration.ReasoningRetrySameGoal(goalPhrase, skill.SkillMeans)
+                    : NeutralNarration.ReasoningRetry(goalPhrase, skill.SkillMeans);
+            if (!retrying && willPath is { Steps.Count: > 1 })
+                reasoningNeutral = NeutralNarration.WillReasoningChain(targetDescription, willPath, skill.SkillMeans, thinkingModusMentis.Will!.Purpose, actingMember);
             if (doubting) reasoningNeutral += " " + NeutralNarration.DoubtQuestion(goalPhrase);
+            await VoiceLeadAsync();
             Think(await VoiceAsync(thinkingSlot, thinkingModusMentis, reasoningNeutral, NarrationKind.Reasoning, thoughtPart, cancellationToken));
-            lead = null;
 
             // ── Doubt (player) ──────────────────────────────────────────────────────
             if (doubting && thoughtPart != null)
@@ -229,7 +294,10 @@ public class ThinkingExecutor
                 {
                     chain.Drop(goalAction!);
                     retriesLeft--;
-                    lead = NeutralNarration.DoubtRejected(goalPhrase);
+                    // Voiced now and alone, like a YES: the player sees their answer taken while the next
+                    // goal is chosen, and the next reasoning is rewritten on its own (see VoiceLeadAsync).
+                    Think(await VoiceAsync(thinkingSlot, thinkingModusMentis, NeutralNarration.DoubtRejected(goalPhrase), NarrationKind.Reasoning, thoughtPart, cancellationToken));
+                    retrying = true;
                     continue;
                 }
                 Think(await VoiceAsync(thinkingSlot, thinkingModusMentis, NeutralNarration.DoubtConfirmed(goalPhrase), NarrationKind.Reasoning, thoughtPart, cancellationToken));
@@ -245,29 +313,6 @@ public class ThinkingExecutor
             // The action box (skill MM) holds the action rewrite, or the refusal.
             var actionPart = preview?.BeginAccumulatingPart(PreviewTitles.For(skill));
             lastPart = actionPart ?? lastPart;
-
-            // ── Rule probe: what the click would refuse, asked now while another try remains ──
-            // Without a retry left the act is offered as it always was, and the click refuses it.
-            if (retriesLeft > 0 && ruleProbe != null && goalAction != null)
-            {
-                var probe = new ParsedNarrativeAction
-                {
-                    ActionModusMentisId = skill.ModusMentisId,
-                    ActionModusMentis   = skill,
-                    PreselectedOutcome  = goalAction,
-                    ActionText          = $"try to {goalPhrase}",
-                    DisplayText         = goalPhrase,
-                    NeutralActionText   = goalPhrase,
-                    ThinkingModusMentis = thinkingModusMentis,
-                    Keyword             = keyword,
-                };
-                if (ruleProbe(probe) is { } ruleReason)
-                {
-                    Console.WriteLine($"ThinkingExecutor: a coded rule would refuse '{goalPhrase}' ({skill.DisplayName}) — {ruleReason}; thinking again.");
-                    Refusal(skill, await VoiceAsync(actionSlot, skill, NeutralNarration.ActionImpossible(goalPhrase, ruleReason), NarrationKind.Outcome, actionPart, cancellationToken));
-                    if (TryAgain(goalAction, skill, goalPhrase, actionPart)) continue;
-                }
-            }
 
             // Persona-fit: how strongly is the skill drawn to this action? Decides possibility + difficulty
             // through the choice judge. Skipped for auto-success phases (reminescence / get-up).
@@ -328,20 +373,49 @@ public class ThinkingExecutor
             return Finish(new List<ParsedNarrativeAction> { action });
         }
 
-        // A refusal (or a rule's) crosses the pair off and, while a retry remains, opens the next try:
-        // a fresh thinking part, led by the mind's acknowledgement of the refusal.
+        // A refusal crosses the pair off and, while a retry remains, opens the next try: a fresh thinking
+        // part, led by the mind's acknowledgement of the refusal. The goal is taken up again when an
+        // untried means is able to carry it out; otherwise it is given up with every means, and the
+        // next try chooses another goal or finds nothing left.
         bool TryAgain(VerbAction goal, ModusMentis means, string goalPhrase, PreviewPart? refusalPart)
         {
             chain.CrossOff(goal, means);
             if (retriesLeft <= 0) return false;
             retriesLeft--;
+            var able = chain.Untried(goal, MeansPoolFor(goal, actionModiMentis))
+                            .Where(s => choiceCtx == null || CanCarryOut(s, goal, choiceCtx))
+                            .ToList();
+            if (able.Count > 0)
+            {
+                again = goal;
+                Console.WriteLine($"ThinkingExecutor: {able.Count} other means could '{goalPhrase}' — trying it again with one of them.");
+            }
+            else
+            {
+                chain.Drop(goal);
+                Console.WriteLine($"ThinkingExecutor: no other means could '{goalPhrase}' — it is given up.");
+            }
             // The refusal is shown and continued past like any part; the last part is the caller's to
             // complete, and this one is no longer the last.
             refusalPart?.MarkComplete();
             lead = NeutralNarration.IterationRetry(goalPhrase);
+            retrying = true;
             thoughtPart = preview?.BeginAccumulatingPart(thinkingTitle);
             lastPart = thoughtPart ?? lastPart;
             return true;
+        }
+
+        // The lead is rewritten in a request of its own, ahead of what follows it. Every rewrite starts
+        // from a cleared slot and is asked for one to three sentences, and given the lead and the next
+        // reasoning together the model kept the lead and dropped the new goal — three NOs running, the
+        // last idea (asking to be presented to the reeve) never reached the text. The same lesson as
+        // the refused focus, whose dismissal is rewritten alone for the same reason.
+        async Task VoiceLeadAsync()
+        {
+            if (lead == null) return;
+            var text = lead;
+            lead = null;
+            Think(await VoiceAsync(thinkingSlot, thinkingModusMentis, text, NarrationKind.Reasoning, thoughtPart, cancellationToken));
         }
 
         // A thought joins the thinking block in progress; a refusal closes it and is a block of its own.
@@ -369,6 +443,142 @@ public class ThinkingExecutor
                 PreviewLastPart    = lastPart,
             };
         }
+    }
+
+    /// <summary>
+    /// Reconsider: an act already offered as a button, thought over again by <paramref name="thinkingModusMentis"/>,
+    /// which may keep it or want no part of it but proposes nothing else. Kept, it is given to another
+    /// means than the one that carried it — one able to carry it out both before the click (the rules
+    /// of choice, <see cref="CanCarryOut"/>) and on it (<paramref name="clickProbe"/>, the action rules a
+    /// witness or an enemy in the room answer to), so a crime in sight of a witness goes to a discreet
+    /// means when one is held. The chosen means does not decline. No retry and no doubt: one thought.
+    ///
+    /// <para>The response carries the new act, or none: when the mind refuses, or no other means could
+    /// pass, the reasoning says so and the act offered before still stands.</para>
+    /// </summary>
+    public async Task<ThinkingResponse> ReconsiderAsync(
+        ModusMentis thinkingModusMentis,
+        ParsedNarrativeAction previous,
+        NarrationNode node,
+        List<ModusMentis> actionModiMentis,
+        WorldContext worldContext,
+        int locationId,
+        PartyMember actingMember,
+        Scene.Scene? scene,
+        PoV? pov,
+        Func<ParsedNarrativeAction, string?> clickProbe,
+        LlmPreviewSession? preview = null,
+        CancellationToken cancellationToken = default)
+    {
+        var thoughtPart = preview?.BeginAccumulatingPart(PreviewTitles.For(thinkingModusMentis));
+        PreviewPart? lastPart = thoughtPart;
+        int thinkingSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(thinkingModusMentis);
+        _llmManager.ResetInstance(thinkingSlot);
+
+        var goal = previous.PreselectedOutcome;
+        string goalPhrase = !string.IsNullOrWhiteSpace(previous.NeutralActionText) ? previous.NeutralActionText : goal.ToNaturalLanguageString();
+        string overallLocation = worldContext.GenerateContextDescription(locationId);
+        string areaLocation = node.GenerateNeutralDescription(locationId);
+        var choiceCtx = scene != null && pov != null
+            ? new Rules.Choice.ChoiceRuleContext(scene, pov, actingMember, thinkingModusMentis)
+            : null;
+        var segments = new List<ThinkingSegment>();
+
+        ThinkingResponse Finish(ParsedNarrativeAction? action) => new()
+        {
+            Segments = segments,
+            ReasoningText = segments.LastOrDefault(s => s.IsThought)?.Text ?? "",
+            Actions = action == null ? new List<ParsedNarrativeAction>() : new List<ParsedNarrativeAction> { action },
+            PreviewLastPart = lastPart,
+        };
+        async Task<ThinkingResponse> Thought(string neutral)
+        {
+            segments.Add(new ThinkingSegment(thinkingModusMentis,
+                await VoiceAsync(thinkingSlot, thinkingModusMentis, neutral, NarrationKind.Reasoning, thoughtPart, cancellationToken), IsThought: true));
+            return Finish(null);
+        }
+
+        // ── Keep it, or want no part of it ──────────────────────────────────────
+        // A will keeps an act of its own course and nothing else; any other mind is asked the goal
+        // question with this one goal and the decline, under its rules of choice.
+        bool keeps;
+        if (scene != null && pov != null && Rules.Choice.WillPriority.Steers(thinkingModusMentis, scene))
+        {
+            keeps = thinkingModusMentis.Will!.Matches(goal)
+                    || Rules.Choice.WillPriority.PathOf(thinkingModusMentis, scene, pov, actingMember) is { } path
+                       && Scene.ActionPathPlanner.PathThrough(scene, pov, actingMember, thinkingModusMentis.Will!, path, new[] { goal }) != null;
+        }
+        else
+        {
+            var chosen = await ChooseGoalAsync(new List<NarrativeAnchor> { goal }, thinkingModusMentis, actionModiMentis,
+                                               overallLocation, areaLocation, null, choiceCtx, proposed: null, new ThinkingChain(), cancellationToken);
+            keeps = !(chosen is VerbAction v && v.Verb is IgnoreVerb);
+        }
+        if (!keeps)
+        {
+            Console.WriteLine($"ThinkingExecutor: [{thinkingModusMentis.DisplayName}] reconsiders '{goalPhrase}' and wants no part of it.");
+            return await Thought(NeutralNarration.ReasoningReconsiderRefused(goalPhrase));
+        }
+
+        // ── Another means, able before the click and on it ──────────────────────
+        string? firstReason = null;
+        var able = new List<ModusMentis>();
+        foreach (var m in MeansPoolFor(goal, actionModiMentis).Where(m => m != previous.ActionModusMentis))
+        {
+            if (choiceCtx != null && !CanCarryOut(m, goal, choiceCtx)) continue;
+            var probe = new ParsedNarrativeAction
+            {
+                ActionModusMentisId = m.ModusMentisId,
+                ActionModusMentis   = m,
+                PreselectedOutcome  = goal,
+                ActionText          = $"try to {goalPhrase}",
+                DisplayText         = goalPhrase,
+                NeutralActionText   = goalPhrase,
+                ThinkingModusMentis = thinkingModusMentis,
+                Keyword             = previous.Keyword,
+            };
+            if (clickProbe(probe) is { } reason) { firstReason ??= reason; continue; }
+            able.Add(m);
+        }
+        Console.WriteLine($"ThinkingExecutor: [{thinkingModusMentis.DisplayName}] reconsiders '{goalPhrase}' — "
+                        + $"{able.Count} other means could carry it out" + (able.Count > 0 ? $": {string.Join(", ", able.Select(m => m.DisplayName))}." : "."));
+        if (able.Count == 0)
+            return await Thought(NeutralNarration.ReasoningReconsiderNoMeans(goalPhrase, firstReason));
+
+        var skill = await ChooseSkillAsync(goalPhrase, able, thinkingModusMentis, overallLocation, areaLocation, null, cancellationToken)
+                    ?? able[0];
+        segments.Add(new ThinkingSegment(thinkingModusMentis,
+            await VoiceAsync(thinkingSlot, thinkingModusMentis, NeutralNarration.ReasoningReconsidered(goalPhrase, skill.SkillMeans),
+                             NarrationKind.Reasoning, thoughtPart, cancellationToken), IsThought: true));
+        thoughtPart?.MarkComplete();
+
+        // ── The act, in the new means's voice ───────────────────────────────────
+        int actionSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(skill);
+        _llmManager.ResetInstance(actionSlot);
+        var actionPart = preview?.BeginAccumulatingPart(PreviewTitles.For(skill));
+        lastPart = actionPart ?? lastPart;
+        var fitCtx = choiceCtx == null ? null : choiceCtx with { ModusMentis = skill, Goal = goal };
+        var (fit, _) = await AskPersonaFitAsync(skill, goalPhrase, overallLocation, areaLocation, null, fitCtx, cancellationToken, mayDecline: false);
+
+        string styledAction = await _rewriter.RewriteAsync(
+            actionSlot, NeutralNarration.ActionIntent(goalPhrase, skill.ActsDiscretely), NarrationKind.Action, skill.PersonaReminder2,
+            forcedPrefix: ActionPrefix, styleInstruction: skill.StyleInstruction, preview: actionPart?.NextSegment(), ct: cancellationToken);
+        if (string.IsNullOrWhiteSpace(styledAction))
+            styledAction = ActionPrefix + (skill.ActsDiscretely ? "discretely " : "") + goalPhrase;
+        string bareAction = StripPrefix(styledAction, ActionPrefix);
+
+        return Finish(new ParsedNarrativeAction
+        {
+            ActionModusMentisId = skill.ModusMentisId,
+            ActionModusMentis   = skill,
+            PreselectedOutcome  = goal,
+            ActionText          = $"try to {bareAction}",
+            DisplayText         = bareAction,
+            NeutralActionText   = goalPhrase,
+            ThinkingModusMentis = thinkingModusMentis,
+            Keyword             = previous.Keyword,
+            DifficultyLevel     = Math.Clamp(goal.Verb.DifficultyFor(goal.Target) + fit.DifficultyModifier, 1, 10),
+        });
     }
 
     /// <summary>Rewrites <paramref name="neutral"/> in <paramref name="mm"/>'s voice; the neutral text when the rewrite comes back empty.</summary>
@@ -497,6 +707,14 @@ public class ThinkingExecutor
             Console.WriteLine($"ThinkingExecutor: Persona-fit for '{goalPhrase}' ({skill.DisplayName}): "
                             + $"refused by rule — {options.ImposedRefusal}");
             return (PersonaFit.Refused, options.ImposedRefusal);
+        }
+
+        // Likewise a rule that has left one answer and no refusal: a will eager for its own act.
+        if (options.Stances.Count == 1 && options.DeclineOption == null)
+        {
+            Console.WriteLine($"ThinkingExecutor: Persona-fit for '{goalPhrase}' ({skill.DisplayName}): "
+                            + $"settled by rule — {options.Stances[0]}");
+            return (FitOf(options.Stances[0]), null);
         }
 
         if (PlaygroundMode.IsActive)

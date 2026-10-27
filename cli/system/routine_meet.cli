@@ -67,7 +67,10 @@ routines meet
 wait mode LocationInteraction 150
 advance 12 180
 
-# Narration, in her area and at her hour, without the walk from the yard.
+# Narration, in her area and at her hour. The way from the yard is not played (no roll, no
+# observation on the way); it is only shown on the map, and `advance` presses its Continue.
+inspect map
+expect-state map walk from Test Yard to Test Wood
 expect-state where Test Wood
 expect-state where period=Noon
 # And opened on her: the phase's first observation is of the farmer. Asserted by her persistent id's

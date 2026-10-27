@@ -9,7 +9,7 @@ public sealed class Milk : ConsumableItem
     public override string ItemId      => "milk";
     public override string DisplayName => "Milk";
     public override string Description => "A wooden pail of fresh, faintly warm milk";
-    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Dairy };
     public override int PriceReference => 4;
     public override WeightClass Weight => WeightClass.Medium;
     public override ConsumableType ConsumableType => ConsumableType.Drink;
@@ -26,7 +26,7 @@ public sealed class Butter : ConsumableItem
     public override string Article     => "some";
     public override string Description => "A pale block of fresh butter wrapped in a leaf";
     public override WeightClass Weight => WeightClass.Light;
-    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Dairy };
     public override CoinType PriceCoin => CoinType.Copper;
     public override int PriceReference => 8;
 

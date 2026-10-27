@@ -44,6 +44,12 @@ public class CatchVerb : TinyCreatureVerb
 
     public override string VerbId         => "catch";
     public override string DisplayName    => "Catch";
+
+    /// <summary>A snatch at something quick: the ground is grazed more often than the creature is caught.</summary>
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target) => new FailurePenalty[]
+    {
+        FailurePenalty.LoseFocus, FailurePenalty.LoseFocus, new ScrapeWound(),
+    };
     public override int    BaseDifficulty => 3;
 
     /// <summary>

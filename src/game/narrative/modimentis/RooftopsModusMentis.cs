@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class RooftopsModusMentis : ModusMentis
     public override string MenuDescription =>
         "Travels over the roofs of a town: knows which tiles hold, which gutters bear weight, where the gaps between houses can be jumped. Sees the city from above as a second set of streets.";
     public override string SkillMeans       => "the travelling over roofs";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<ScaleUpVerb>("get up onto the roofs");
     public override string[] Organs        => new[] { "feet", "cerebellum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override bool ActsDiscretely => true;

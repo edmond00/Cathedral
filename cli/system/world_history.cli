@@ -10,7 +10,7 @@
 #   - the K overlay is off until asked for, and it and the R overlay exclude each other;
 #   - the history hash survives the save round trip (the history itself is regenerated, never saved).
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --silent --no-save
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --silent --no-save --developer-keys
 
 wait
 click menu New

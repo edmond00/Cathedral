@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,10 +13,11 @@ public class ReceivingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Buys stolen goods and sells them on: knows what a thing is worth hot and what it will fetch cold, which marks must be taken off, and which buyers ask no questions.";
     public override string SkillMeans       => "the buying and selling of stolen goods";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
+    public override WillTarget? Will => WillTarget.To<ProposeToSellVerb>("get rid of goods quietly");
     public override string[] Organs        => new[] { "cerebrum", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
-    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction | AnatomyCapability.Speech;
     public override MoralLevel MoralLevel => MoralLevel.Low;
     public override bool ActsDiscretely => true;
 

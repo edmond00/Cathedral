@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class SharpPracticeModusMentis : ModusMentis
     public override string MenuDescription =>
         "Gets the better of a bargain without ever telling a lie: what is not mentioned, what is weighed which way, what is technically true. Leaves the other party feeling wronged and unable to name the wrong.";
     public override string SkillMeans       => "the bargain won by what is not said";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
+    public override WillTarget? Will => WillTarget.ToAny("win a bargain by what is left unsaid", typeof(ProposeToBuyVerb), typeof(ProposeToSellVerb));
     public override string[] Organs        => new[] { "tongue", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

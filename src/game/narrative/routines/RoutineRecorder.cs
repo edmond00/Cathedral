@@ -27,8 +27,9 @@ namespace Cathedral.Game.Narrative.Routines;
 /// learned where the player has no business standing — a private area — because a routine there
 /// would be a standing invitation to trespass, walked with none of the risk.</para>
 ///
-/// <para>The same routine learned twice is kept once (<see cref="Routine.Signature"/>), and a full
-/// kind evicts its oldest unlocked routine — see <see cref="Protagonist.RecordRoutine"/>.</para>
+/// <para>A routine goes into the <see cref="MentalMap"/> of its location (the visit entered it), and
+/// the same routine learned twice is kept once (<see cref="Routine.Signature"/>). There is no cap on
+/// routines: the maps are what is limited, and a routine is forgotten with its map.</para>
 /// </summary>
 public class RoutineRecorder
 {
@@ -46,10 +47,14 @@ public class RoutineRecorder
     }
 
     /// <summary>
-    /// Whether a routine may be learned — and walked — here: anywhere the player may stand without
-    /// trespassing. The same test the narration header shows the player.
+    /// Whether a routine may be learned — and walked — here: anywhere that is nobody's private room.
+    ///
+    /// <para>Deliberately <see cref="Area.IsPrivate"/> and not <see cref="PrivacyModel.IsTrespassing"/>.
+    /// A householder may let the player stay the night (<c>Scene.ToleratedSections</c>), which makes
+    /// standing there lawful for that visit — but a routine is walked on a later visit, where nobody
+    /// has said any such thing.</para>
     /// </summary>
-    public static bool IsRecordable(Area area) => !PrivacyModel.IsTrespassing(area);
+    public static bool IsRecordable(Area area) => !area.IsPrivate;
 
     // ── The five moments ──────────────────────────────────────────────────────
 

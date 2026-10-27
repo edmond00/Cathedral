@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class MoonwaterModusMentis : ModusMentis
     public override string MenuDescription =>
         "Swims in the dark, where the far bank cannot be seen and the cold arrives all at once. Keeps a line without a landmark, and knows that the danger is the shock and the cramp rather than the distance.";
     public override string SkillMeans       => "the swimming done in water you cannot see the bottom of";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<SwimAcrossVerb>("swim water I cannot see the bottom of");
     public override string[] Organs        => new[] { "pulmones", "hepar" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.Low;

@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 using Cathedral.Game.Scene;
 using Cathedral.Game.Dialogue.Tree;
@@ -14,7 +15,8 @@ public class GregariousnessModusMentis : ModusMentis
     public override string MenuDescription =>
         "Draws company and keeps it: fills a silence, includes the person on the edge, and makes a group out of a set of strangers. Feeds on it, and is genuinely diminished when alone.";
     public override string SkillMeans       => "the drawing and keeping of company";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Observation, ModusMentisFunction.Emotion };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
+    public override WillTarget? Will => WillTarget.To<ProposeToJoinVerb>("gather company about me");
     public override string[] Organs        => new[] { "tongue", "heart" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

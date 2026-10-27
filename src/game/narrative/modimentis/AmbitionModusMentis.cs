@@ -29,6 +29,7 @@ public class AmbitionModusMentis : ModusMentis
         new(typeof(SkillAcquisitionOutcome), () => new LaetitiaHumor()),
         new(typeof(ModusMentisGrantOutcome), () => new LaetitiaHumor()),
         new(typeof(IntroductionGrantedOutcome), () => new LaetitiaHumor()),
+        new(typeof(TimeWastedOutcome), () => new CholerHumor()),
     };
 
     public override string PersonaPrompt => @"You are the inner voice of AMBITION, and you have learned something, or met someone, and you are a step higher than you were this morning.

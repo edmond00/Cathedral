@@ -11,8 +11,10 @@ namespace Cathedral.Game.Narrative;
 ///
 /// <para>
 /// The clock only ever moves forward, and only when the fiction says a meaningful stretch of time
-/// has passed: arriving at the end of a journey (<c>LocationTravelGameController.OnTravelCompleted</c>)
-/// and finishing a work stint (<c>WorkMenuRenderer</c>). Narration, fights and dialogue are free.
+/// has passed: arriving at the end of a journey (<c>LocationTravelGameController.OnTravelCompleted</c>),
+/// finishing a work stint (<c>WorkMenuRenderer</c>), and a visit's period wrapping from night into
+/// dawn, one day per wrap (<c>NarrativeController.TurnTheDayIfWrapped</c>). Every other act of
+/// narration, fights and dialogue are free.
 /// </para>
 ///
 /// <para>

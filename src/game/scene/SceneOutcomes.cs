@@ -58,6 +58,9 @@ public sealed class AreaMoveOutcome : Outcome
 {
     private readonly Area _destination;
 
+    /// <summary>Where the body ends up — read by <see cref="ActionPathPlanner"/>, which plans on it without applying it.</summary>
+    public Area Destination => _destination;
+
     public AreaMoveOutcome(Area destination)
         : base($"Moved to: {destination.DisplayName}", OutcomeSeverity.Neutral,
                $"made my way to {NeutralNarration.AreaPhrase(destination.DisplayName)}")
@@ -84,6 +87,9 @@ public sealed class AreaMoveOutcome : Outcome
 public sealed class TimeShiftOutcome : Outcome
 {
     private readonly TimePeriod _destination;
+
+    /// <summary>The hour it ends at — read by <see cref="ActionPathPlanner"/>.</summary>
+    public TimePeriod Destination => _destination;
 
     public TimeShiftOutcome(TimePeriod destination)
         : base($"Time passes: {destination.Label()}", OutcomeSeverity.Neutral,
@@ -112,6 +118,24 @@ public sealed class NoticeOutcome : Outcome
 {
     public NoticeOutcome(string text, string verbatim)
         : base(text, OutcomeSeverity.Neutral, verbatim) { }
+}
+
+/// <summary>
+/// A notice of where somebody followed went on to without the follower: through a door, or into a
+/// room where nobody follows unseen. The next phase opens on that way (<see cref="Scene.PendingOpeningFocus"/>),
+/// so the narration looks at what the quarry is behind.
+/// </summary>
+public sealed class QuarryBeyondOutcome : Outcome
+{
+    private readonly Element _way;
+
+    public QuarryBeyondOutcome(Element way, string text, string verbatim)
+        : base(text, OutcomeSeverity.Neutral, verbatim) => _way = way;
+
+    protected override void Apply(OutcomeContext ctx)
+    {
+        if (ctx.Scene != null) ctx.Scene.PendingOpeningFocus = _way;
+    }
 }
 
 /// <summary>
@@ -299,6 +323,9 @@ public sealed class DoorUnlockOutcome : Outcome
 {
     private readonly DoorPointOfInterest _door;
     private readonly Area                _destination;
+
+    /// <summary>The room the forced door opens on — read by <see cref="ActionPathPlanner"/>.</summary>
+    public Area Destination => _destination;
 
     public DoorUnlockOutcome(DoorPointOfInterest door, Area destination)
         : base($"Door unlocked — entered {destination.DisplayName}", OutcomeSeverity.Neutral,

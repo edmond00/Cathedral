@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -13,7 +14,8 @@ public class ArcheologyModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads the present landscape as the worn draft of an older one, flagging cut stone in a rough wall or a hill too flat to be natural. Holds attention on what a place once was and on what its remains imply.";
     public override string SkillMeans       => "the study of ruins, relics and ancient remains";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
+    public override WillTarget? Will => WillTarget.To<DigVerb>("dig for old remains").On<Scene.DiggableGroundPointOfInterest>();
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
 
     /// <summary>Stands on letters, number or institutions.</summary>

@@ -11,8 +11,8 @@ public class DairymaidArchetype : PeasantArchetype
 
     /// <summary>What asking this person about their work teaches.</summary>
     public override string TradeModusMentisId => "dairycraft";
-    public override ItemTag? SellTag => ItemTag.Foodstuff;
-    public override ItemTag? BuyTag  => ItemTag.Craftware;
+    public override ItemTag? SellTag => ItemTag.Dairy;
+    public override ItemTag? BuyTag  => ItemTag.Cooperage;
     public override int    ModiMentisCount => 7;
 
     protected override NameGender? GenderBias => NameGender.Female;

@@ -76,6 +76,14 @@ public class LocationTravelGameController : IDisposable
     private SettingsMenuRenderer? _settingsMenuRenderer;
     private bool _hasGameStarted = false;
 
+    /// <summary>
+    /// The music the pause menu was opened over. The menu plays its own (neutral, no tracks); a
+    /// phase resumed from it is not entered afresh and so never sets the music again, which left
+    /// the tune silent until the next place. Taken on the first menu entry, given back by
+    /// <see cref="ResumeFromMenu"/>, dropped by any other way out of the menu.
+    /// </summary>
+    private AmbianceEngine.MusicRequest? _musicUnderMenu;
+
     // World selection — the sky a new run picks its world out of.
     private WorldSelectionRenderer? _worldSelectionRenderer;
     /// <summary>Ordinal of the moon the player has clicked and not yet confirmed, or -1.</summary>
@@ -86,6 +94,9 @@ public class LocationTravelGameController : IDisposable
     // The four on-screen camera arrows, shared by the world map and the world-selection sky. One
     // instance: only one of those two modes is ever on screen, and the pad has no per-mode state.
     private CameraArrowPad? _cameraArrowPad;
+
+    /// <summary>The ☰ in the top-right corner: the main menu by mouse, wherever Escape pauses.</summary>
+    private MenuButton? _menuButton;
     /// <summary>The arrow being held down with the mouse, turning the camera every frame.</summary>
     private CameraArrow _heldArrow = CameraArrow.None;
     
@@ -563,8 +574,42 @@ public class LocationTravelGameController : IDisposable
     /// <summary>The vertex the protagonist currently occupies.</summary>
     public int CliAvatarVertex => _interface.GetAvatarVertex();
 
+    /// <summary>Whether the protagonist holds a mental map of <paramref name="vertex"/>.</summary>
+    public bool CliRemembers(int vertex) => _protagonist?.MentalMapOf(vertex) != null;
+
+    /// <summary>
+    /// Toggles the lock of the <c>newest</c> or <c>oldest</c> mental map — the checkbox at the top or
+    /// the bottom of the Chorography tab's column. False when there is none.
+    /// </summary>
+    public bool CliToggleMapLock(string which)
+    {
+        var maps = _protagonist?.MentalMaps;
+        if (maps == null || maps.Count == 0) return false;
+        var map = which.ToLowerInvariant() switch { "newest" => maps[^1], "oldest" => maps[0], _ => null };
+        if (map == null) return false;
+        map.Locked = !map.Locked;
+        _managementMenuRenderer?.Render();
+        return true;
+    }
+
     /// <summary>Inject a click at a terminal cell, as if the player had clicked there.</summary>
     public void CliClickCell(int x, int y) => OnTerminalCellClicked(x, y);
+
+    /// <summary>
+    /// Puts the pointer on the middle of a card, by its area's name, on whichever menu map is up — the
+    /// Chorography tab's or the routine box's — panning it into view first. Null on success, else why not.
+    /// </summary>
+    public string? CliPointAtCard(string areaName)
+    {
+        (int X, int Y)? cell =
+              _currentMode == GameMode.ProtagonistManagement ? _managementMenuRenderer?.CliMapCardCell(areaName)
+            : _currentMode == GameMode.WorldView ? _travelRoutinesBox?.CliCardCell(areaName)
+            : null;
+        if (cell is not { } c)
+            return $"no card named \"{areaName}\" on a map shown (the Chorography tab, or the routine box)";
+        CliHoverCell(c.X, c.Y);
+        return null;
+    }
 
     /// <summary>Inject a hover at a terminal cell (some UI only reacts once hovered).</summary>
     public void CliHoverCell(int x, int y) => OnTerminalCellHovered(x, y);
@@ -696,11 +741,12 @@ public class LocationTravelGameController : IDisposable
     {
         if (_protagonist == null) return false;
 
+        _managementBackToMenu = true;
         if (_currentMode == GameMode.ProtagonistManagement)
         {
             _core.SetNarrationMode(true);
             _managementMenuRenderer = null;
-            SetMode(MenuReturnMode);
+            ResumeFromMenu();
             return true;
         }
 
@@ -716,10 +762,15 @@ public class LocationTravelGameController : IDisposable
         _currentMode == GameMode.ProtagonistManagement
         && _managementMenuRenderer?.CliSelectTab(tabName) == true;
 
-    /// <summary>Shows one kind's slots on the Routines tab (goto, meet, gather, buy, sell, work).</summary>
+    /// <summary>Shows a routine of one kind on the Chorography tab (goto, meet, gather, buy, sell, work).</summary>
     public bool CliSelectRoutineCategory(string kind) =>
         _currentMode == GameMode.ProtagonistManagement
         && _managementMenuRenderer?.CliSelectRoutineCategory(kind) == true;
+
+    /// <summary>Steps the Chorography tab's routine stepper: next (1) or previous (-1).</summary>
+    public bool CliStepRoutine(int step) =>
+        _currentMode == GameMode.ProtagonistManagement
+        && _managementMenuRenderer?.CliStepRoutine(step) == true;
 
     /// <summary>Tab labels available on the management screen, or empty when it is closed.</summary>
     public IReadOnlyList<string> CliManagementTabs =>
@@ -808,6 +859,10 @@ public class LocationTravelGameController : IDisposable
             if (_narrativeController.CliPreviewAwaitsAnswer()) return true;
             var s = _narrativeController.CliSnapshot();
             if (s.AnyLoading || (s.DiceActive && s.DiceRolling)) return false;
+            // The hours rolling by in the time box: an animation, like the dice tumbling.
+            if (_narrativeController.CliTimeBoxState() == "passing") return false;
+            // And the party walking on the map after a move.
+            if (_narrativeController.CliWalkState() == "walking") return false;
         }
         return true;
     }
@@ -906,6 +961,11 @@ public class LocationTravelGameController : IDisposable
         // Wire up global mouse click handler for popup interactions
         _core.GlobalMouseClicked += OnGlobalMouseClicked;
 
+        // The arrow keys turn the camera everywhere but over the location map, where they pan it.
+        // Nor on a menu screen: there is no world to turn, and on the Chorography tab they pan its map.
+        _core.Camera.ArrowKeysTaken = () => IsDebugMapShowing || _travelRoutinesBox != null
+            || _currentMode is GameMode.MainMenu or GameMode.Settings or GameMode.ProtagonistManagement;
+
         // The sky's own hover and click, raised only while the core is in sky-selection mode.
         _core.MoonHovered += OnMoonHovered;
         _core.MoonClicked += OnMoonClicked;
@@ -925,8 +985,9 @@ public class LocationTravelGameController : IDisposable
         {
             _travelInfoRenderer = new TravelInfoRenderer(_core.Terminal);
             _cameraArrowPad     = new CameraArrowPad(_core.Terminal);
+            _menuButton         = new MenuButton(_core.Terminal);
         }
-        
+
         // Show main menu on startup
         SetMode(GameMode.MainMenu);
         
@@ -958,6 +1019,29 @@ public class LocationTravelGameController : IDisposable
     }
 
     public void Update(float deltaTime = 0f)
+    {
+        UpdatePhase(deltaTime);
+        UpdateMenuButton();
+    }
+
+    /// <summary>
+    /// The ☰ goes up after the phase has drawn — over it, since the phases do not keep the corner
+    /// free — and only where it can act: in a phase Escape pauses, with no modal notice holding the
+    /// screen. The companion-death notice is modal over the menu too (it is drawn at the top of
+    /// <see cref="Update"/> in every mode), so a pause under it would open a menu nobody could see.
+    /// </summary>
+    private void UpdateMenuButton()
+    {
+        if (_menuButton == null) return;
+        if (MenuButtonShown)
+            _menuButton.Draw(hovered: _menuButton.Contains(_mouseCellX, _mouseCellY));
+        else
+            _menuButton.Hide();
+    }
+
+    private bool MenuButtonShown => PausedPhaseName(_currentMode) != null && _companionDeathBox == null;
+
+    private void UpdatePhase(float deltaTime)
     {
         // If LLM finished loading, transition to main menu (executed on main thread)
         if (_llmBecameReady)
@@ -1175,6 +1259,9 @@ public class LocationTravelGameController : IDisposable
                 _isInNarrativeMode = false;
                 _narrativeController = null;
                 SetMode(GameMode.WorldView);
+                // The first sight of the world: a clean break into the map's music (OnEnterWorldView
+                // has set it), not the bridge an ordinary change of place gets.
+                _ambianceEngine?.Transition(3f);
                 return;
             }
 
@@ -1493,6 +1580,15 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
+        // The ☰ is drawn over everything else, so it is answered before anything else is — including
+        // the world map's modal boxes, which survive the pause and are there again on resuming.
+        if (MenuButtonShown && _menuButton!.Contains(x, y))
+        {
+            _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+            PressMenuButton();
+            return;
+        }
+
         // Companion-removal overlay is modal: it captures every click while shown.
         if (_currentMode == GameMode.WorldView && _companionRemovalRenderer != null)
         {
@@ -1504,7 +1600,7 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
-        // Routine list box is modal: select a replayable routine, or RETURN to the travel plan.
+        // Routine list box is modal: pick a routine, CONFIRM it to set out, or RETURN to the travel plan.
         if (_currentMode == GameMode.WorldView && _travelRoutinesBox != null)
         {
             var (kind, routine) = _travelRoutinesBox.OnMouseClick(x, y);
@@ -1517,6 +1613,10 @@ public class LocationTravelGameController : IDisposable
                 // bare Clear would leave an opaque-black terminal over the whole trip.
                 SetTransparentWorldOverlay(clickPassthrough: true);
                 StartPlannedTravel();
+            }
+            else if (kind == TravelRoutinesBox.ResultKind.Picked)
+            {
+                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
             }
             else if (kind == TravelRoutinesBox.ResultKind.Return)
             {
@@ -1760,8 +1860,10 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     private bool OnGlobalMouseClicked(Vector2 mousePosition, MouseButton button)
     {
-        // Only intercept when in narrative mode with popup visible
-        if (_isInNarrativeMode && _narrativeController != null && _narrativeController.IsPopupVisible)
+        // Only intercept when in narrative mode with popup visible — and not on the ☰, which stays
+        // live over a popup as over everything else (the popup is still open on resuming).
+        if (_isInNarrativeMode && _narrativeController != null && _narrativeController.IsPopupVisible
+            && !(MenuButtonShown && _menuButton!.Contains(_mouseCellX, _mouseCellY)))
         {
             // Only handle left clicks for popup selection
             if (button == MouseButton.Left)
@@ -1820,6 +1922,12 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     private void OnTerminalCellHovered(int x, int y)
     {
+        // Tracked ahead of the modal boxes below, which return early: the ☰ is drawn over them too.
+        if (MenuButtonShown && _menuButton!.Contains(x, y) && !_menuButton.Contains(_mouseCellX, _mouseCellY))
+            _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+        _mouseCellX = x;
+        _mouseCellY = y;
+
         // The companion-death notice is modal over every mode: route hover to it, tick on change.
         if (_companionDeathBox != null)
         {
@@ -1845,8 +1953,6 @@ public class LocationTravelGameController : IDisposable
         }
 
         // Track hover for the travel UI so the TRAVEL button highlights.
-        _mouseCellX = x;
-        _mouseCellY = y;
         _travelInfoRenderer?.SetHover(x, y);
         _worldSelectionRenderer?.SetHover(x, y);
         if (CameraPadActive && _cameraArrowPad!.SetHover(x, y)
@@ -2072,6 +2178,12 @@ public class LocationTravelGameController : IDisposable
         // the whole visit. Cleared here, before the new mode can put a popup of its own up.
         if (oldMode == GameMode.WorldView && newMode != GameMode.WorldView)
             _core.PopupTerminal?.Clear();
+        // The same for the label the Chorography tab puts over its map, whichever way the menu is left.
+        if (oldMode == GameMode.ProtagonistManagement && newMode != GameMode.ProtagonistManagement)
+        {
+            _managementMenuRenderer?.HideMapLabel();
+            _core.PopupTerminal?.Clear();
+        }
 
         // Reset cloud speed back to normal whenever travel ends.
         if (oldMode == GameMode.Traveling && newMode != GameMode.Traveling)
@@ -2103,6 +2215,8 @@ public class LocationTravelGameController : IDisposable
         // may be no world yet (nothing is generated until a run starts), and the world-selection
         // screen wants the sky unobstructed even when a previous run has left a world standing.
         _core.WorldRenderEnabled = _interface.IsWorldGenerated && newMode != GameMode.WorldSelection;
+        if (newMode is not (GameMode.MainMenu or GameMode.Settings or GameMode.ProtagonistManagement))
+            _musicUnderMenu = null;
 
         // Handle mode-specific setup
         switch (newMode)
@@ -2727,6 +2841,8 @@ public class LocationTravelGameController : IDisposable
 
     private void OnEnterMainMenu()
     {
+        if (_hasGameStarted && _musicUnderMenu == null && _ambianceEngine != null)
+            _musicUnderMenu = _ambianceEngine.Requested;
         Console.WriteLine("LocationTravelGameController: Entered MainMenu mode");
         _ambianceEngine?.SetFilter(MusicFilter.None);
         _ambianceEngine?.SetMood(MusicMoodState.Neutral);
@@ -2785,7 +2901,7 @@ public class LocationTravelGameController : IDisposable
                     if (_hasGameStarted)
                     {
                         // A live session: resume whatever was paused.
-                        SetMode(MenuReturnMode);
+                        ResumeFromMenu();
                         return;
                     }
 
@@ -2804,6 +2920,7 @@ public class LocationTravelGameController : IDisposable
                 },
                 onProtagonist: () =>
                 {
+                    _managementBackToMenu = true;
                     SetMode(GameMode.ProtagonistManagement);
                 },
                 onSettings: () =>
@@ -3405,19 +3522,25 @@ public class LocationTravelGameController : IDisposable
             
             _managementMenuRenderer = new ManagementMenuRenderer(
                 _core.Terminal, protagonist, _bodyArtData, _core.PopupTerminal);
-            _managementMenuRenderer.OnBack = () =>
-            {
-                Console.WriteLine("LocationTravelGameController: Management menu closed, returning to main menu");
-                _core.SetNarrationMode(true); // restore management-mode world shading
-                _managementMenuRenderer = null;
-                SetMode(GameMode.MainMenu);
-            };
+            _managementMenuRenderer.OnBack = CloseManagement;
             _managementMenuRenderer.OnItemConsumed = () =>
                 _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
 
-            // Routines tab: focus the world camera on the selected routine's location and switch the
+            // Chorography tab: a remembered location is drawn from a scene built for it — the live one when
+            // the menu was opened over a visit there, else one built only to be drawn, once per menu.
+            var mapScenes = new Dictionary<int, Cathedral.Game.Scene.Scene?>();
+            _managementMenuRenderer.MapSceneFor = locId =>
+            {
+                if (_isInNarrativeMode && locId == _currentLocationVertex && _narrativeController?.Scene is { } live)
+                    return live;
+                if (!mapScenes.TryGetValue(locId, out var scene))
+                    mapScenes[locId] = scene = BuildSceneForLocation(locId, out _, applyDepletion: false, viewOnly: true);
+                return scene;
+            };
+
+            // Chorography tab: focus the world camera on the selected map's location and switch the
             // world to full-colour shading so it shows through the tab's transparent minimap porthole.
-            _managementMenuRenderer.OnRoutineLocationFocused = locId =>
+            _managementMenuRenderer.OnMapLocationFocused = locId =>
             {
                 if (locId < 0) return;
                 _core.SetNarrationMode(false);
@@ -3426,7 +3549,7 @@ public class LocationTravelGameController : IDisposable
                 _core.Camera.SetDistance(Config.GlyphSphere.CameraZoomWorldView);
                 _core.CenterCameraOnGlyph(locId);
             };
-            _managementMenuRenderer.OnRoutinesPortholeClosed = () =>
+            _managementMenuRenderer.OnMapsPortholeClosed = () =>
                 _core.SetNarrationMode(true); // restore dark world shading for the other tabs
 
             // A Meet/Buy/Sell/Work routine's detail shows how its person stands with you today, read
@@ -3664,14 +3787,58 @@ public class LocationTravelGameController : IDisposable
         if (subject == "gather")
             return _gatherAdapter?.CliLines() ?? new List<string> { "gather (not gathering)" };
 
+        // The two buttons that stand in for keys: the ☰ (Escape) and the narration header's ↹ (Tab).
+        // Whether each is on screen, which a press alone cannot say when the answer is no.
+        if (subject == "buttons")
+            return new List<string>
+            {
+                $"buttons menu={(CliMenuButtonShown ? "shown" : "hidden")}"
+                + $" map={(_narrativeController?.MapButtonCell != null && _currentMode == GameMode.LocationInteraction ? "shown" : "hidden")}"
+            };
+
+        // What the mouse-following popup shows — the world map's location name, a map's pointer label —
+        // and on what ground: yellow when a click acts on what it names, grey when it only tells.
+        // `dump` reads the main grid, which the popup is not part of.
+        if (subject == "pointer-label")
+        {
+            var view = _core.PopupTerminal?.View;
+            if (view == null) return new List<string> { "pointer-label (none)" };
+            var rows = new SortedDictionary<int, (System.Text.StringBuilder Text, OpenTK.Mathematics.Vector4 Bg)>();
+            foreach (var (x, y, cell) in view.EnumerateCells())
+            {
+                if (cell.BackgroundColor.W <= 0.01f && (cell.Character == ' ' || cell.TextColor.W <= 0.01f)) continue;
+                if (!rows.TryGetValue(y, out var row)) rows[y] = row = (new System.Text.StringBuilder(), cell.BackgroundColor);
+                row.Text.Append(cell.Character);
+            }
+            if (rows.Count == 0) return new List<string> { "pointer-label (empty)" };
+            static string Ground(OpenTK.Mathematics.Vector4 bg)
+                => bg == Config.ExplorationPopup.LocationNameBackgroundColor ? "yellow"
+                 : bg.X == bg.Y && bg.Y == bg.Z ? "grey" : "other";
+            return rows.Values.Select(r => $"pointer-label ground={Ground(r.Bg)} text={r.Text.ToString().Trim()}").ToList();
+        }
+
+        // What the game last asked of the music. The pause menu takes it over and must hand it back
+        // on resume; nothing on screen says whether it did.
+        if (subject == "music")
+        {
+            if (_ambianceEngine == null) return new List<string> { "music (no engine)" };
+            var r = _ambianceEngine.Requested;
+            // The mood playing: at night, the place's night variant. Invariant: a script asserts
+            // "cold=0.60", and a French or Japanese locale would print "0,60".
+            string mood = (r.Night && r.Mood is { } day ? day.AtNight() : r.Mood) is { } m
+                ? FormattableString.Invariant($"cold={m.Coldness:0.00} fear={m.Fear:0.00} mystery={m.Mystery:0.00} intensity={m.Intensity:0.00} festivity={m.Festivity:0.00}")
+                : "mood=none";
+            return new List<string> { $"music tracks={r.Tracks} filter={r.Filter} {mood} night={(r.Night ? "yes" : "no")}" };
+        }
+
         if (_protagonist == null) return null;
 
-        // The routine slots per kind — the size of each kind's grid and how many of it are usable,
-        // which the menu shows as ● ○ × and is otherwise only pixels.
-        if (subject == "routine-slots")
-            return Cathedral.Game.Narrative.Routines.RoutineCategories.All
-                .Select(c => $"routine-slots category={c.CliId()} used={_protagonist.RoutinesOf(c).Count} "
-                           + $"usable={_protagonist.GetRoutineSlots()} grid={_protagonist.GetRoutineSlotsAtBest()}")
+        // The mental maps, oldest first, and the count against the anamnesis: what the menu's right
+        // column shows, and whether a place has been forgotten, which nothing on screen states.
+        if (subject == "mental-maps")
+            return _protagonist.MentalMaps.Select(m => m.CliLine)
+                .Append($"mental-maps used={_protagonist.MentalMaps.Count} usable={_protagonist.GetMentalMapSlots()} "
+                      + $"grid={_protagonist.GetMentalMapSlotsAtBest()}")
                 .ToList();
 
         if (subject is not ("routines" or "all")) return null;
@@ -3853,6 +4020,24 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     public IReadOnlyList<(string Name, string Category, bool Available, string? Reason)> CliRoutineEntries
         => _travelRoutinesBox?.CliEntries ?? System.Array.Empty<(string, string, bool, string?)>();
+
+    /// <summary>
+    /// Presses the routine box's CONFIRM: sets out for the selected routine, as the click does. False
+    /// when the box is closed or the selected routine cannot be walked.
+    /// </summary>
+    public bool CliConfirmRoutineBox()
+    {
+        if (_currentMode != GameMode.WorldView || _travelRoutinesBox?.ConfirmableRoutine is not { } routine) return false;
+        _pendingReplayRoutine = routine;
+        _travelRoutinesBox    = null;
+        SetTransparentWorldOverlay(clickPassthrough: true);
+        StartPlannedTravel();
+        return true;
+    }
+
+    /// <summary>Presses the routine box's next (1) or previous (-1) arrow.</summary>
+    public bool CliStepRoutineBox(int step) =>
+        _currentMode == GameMode.WorldView && _travelRoutinesBox?.StepRoutine(step) == true;
 
     /// <summary>
     /// Picks row <paramref name="index"/> and sets out — the same commit the row click makes, so the
@@ -4151,9 +4336,9 @@ public class LocationTravelGameController : IDisposable
 
         // Modal overlay over the world, like the encounter prompt and the companion-death notice.
         // Death arrives from a fight or a narration, both of which fill the whole terminal with
-        // opaque cells — drawn over those, the box sat on a black screen.
-        _core.Terminal.TransparentClickPassthrough = false;
-        _core.Terminal.Clear();
+        // opaque cells — drawn over those, the box sat on a black screen. A bare Clear is no cure:
+        // it paints opaque black too, so the sheet must be reset to transparent cells.
+        SetTransparentWorldOverlay(clickPassthrough: false);
         _deathScreenRenderer.Draw(_deathCause);
     }
 
@@ -4306,6 +4491,13 @@ public class LocationTravelGameController : IDisposable
         // Only show popup during WorldView mode (for travel destination selection)
         if (_currentMode != GameMode.WorldView)
             return;
+
+        // The routine box is modal over the world: its map's label, not a location name.
+        if (_travelRoutinesBox != null)
+        {
+            DebugLocationMap.ShowLabel(_core.PopupTerminal, _travelRoutinesBox.HoverLabel);
+            return;
+        }
 
         // Hide popup when mouse is over the travel box to avoid overlapping UI
         if (_travelInfoRenderer != null && _travelInfoRenderer.IsOverBox(_mouseCellX, _mouseCellY))
@@ -4476,6 +4668,14 @@ public class LocationTravelGameController : IDisposable
 
         // Resuming from the pause menu — see OnEnterChildhoodReminescence.
         if (ResumeLiveNarrativePhase()) return;
+
+        // Waking from the dream is a break, as entering it was: the reminiscence's music stops, the
+        // hall rings out into silence, and the get-up begins on music of its own, sparse (a drone, a
+        // pad, one line), for a body spent and alone under a tree.
+        _ambianceEngine?.SetFilter(MusicFilter.None);
+        _ambianceEngine?.SetMood(MusicMoodState.GetUp);
+        _ambianceEngine?.SetActiveTrackCount(2);
+        _ambianceEngine?.Transition(3.5f);
 
         _core.SetNarrationMode(true);
         _core.SetWorldInteractionsEnabled(false);
@@ -4653,7 +4853,7 @@ public class LocationTravelGameController : IDisposable
             {
                 // Scene system path: build via the shared helper (factory selection + per-location
                 // state get-or-create + item-depletion application).
-                var scene = BuildSceneForLocation(vertexIndex, out var locState);
+                var scene = BuildSceneForLocation(vertexIndex, out var locState, visit: true);
                 if (scene == null)
                 {
                     Console.Error.WriteLine("LocationTravelGameController: scene build failed - aborting Phase 6");
@@ -4799,7 +4999,7 @@ public class LocationTravelGameController : IDisposable
                     Console.WriteLine("ESC pressed - cancelled fight selection");
                     return true;
                 }
-                return OpenPauseMenu("fight");
+                return OpenPauseMenu(PausedPhaseName(_currentMode)!);
 
             // The three narrative phases. A popup closes first; otherwise the menu opens as an
             // OVERLAY, without tearing narration down — leaving a scene is the footer LEAVE
@@ -4812,25 +5012,26 @@ public class LocationTravelGameController : IDisposable
                     Console.WriteLine("ESC pressed - closed thinking modusMentis popup");
                     return true;
                 }
-                return OpenPauseMenu("narration");
+                return OpenPauseMenu(PausedPhaseName(_currentMode)!);
 
             // ── Escape pauses, leaving the phase running underneath ───────────────────────
 
             // None of these are cancelled by pausing: walking out of a conversation is the footer
             // INTERRUPT button, closing a work or trade session is that menu's LEAVE button, and
             // the encounter is still waiting to be engaged when the menu is dismissed.
-            case GameMode.Dialogue:        return OpenPauseMenu("dialogue");
-            case GameMode.Working:         return OpenPauseMenu("work menu");
-            case GameMode.Gathering:       return OpenPauseMenu("gathering");
-            case GameMode.Trading:         return OpenPauseMenu("trade menu");
-            case GameMode.EncounterPrompt: return OpenPauseMenu("encounter");
-            case GameMode.WorldView:       return OpenPauseMenu("world");
-
+            //
             // Creation is not a running phase, but it is a screen a player can be stuck on: the
             // menu is the only place with an Exit button, so without this there is no way to quit
             // the game from it. Nothing is lost by pausing — the allocation lives on the
             // protagonist, not in the renderer, so resuming rebuilds the same screen.
-            case GameMode.ProtagonistCreation: return OpenPauseMenu("protagonist creation");
+            case GameMode.Dialogue:
+            case GameMode.Working:
+            case GameMode.Gathering:
+            case GameMode.Trading:
+            case GameMode.EncounterPrompt:
+            case GameMode.WorldView:
+            case GameMode.ProtagonistCreation:
+                return OpenPauseMenu(PausedPhaseName(_currentMode)!);
 
             // ── Escape goes back one screen ───────────────────────────────────────────────
 
@@ -4844,7 +5045,12 @@ public class LocationTravelGameController : IDisposable
             // Both are opened FROM the main menu and both have a Back button; Escape is the same
             // press. Settings had no Escape at all, which on a screen whose only exit is one small
             // button reads as a freeze.
+            // The management screen goes back to where it was opened from: the menu, or — opened
+            // by a tab's letter — the phase itself (CloseManagement).
             case GameMode.ProtagonistManagement:
+                Console.WriteLine($"ESC pressed - closing {_currentMode}");
+                CloseManagement();
+                return true;
             case GameMode.Settings:
                 Console.WriteLine($"ESC pressed - closing {_currentMode}");
                 SetMode(GameMode.MainMenu);
@@ -4858,7 +5064,7 @@ public class LocationTravelGameController : IDisposable
                 // world.
                 if (!_hasGameStarted) return false;
                 Console.WriteLine($"ESC pressed - closing main menu, resuming {MenuReturnMode}");
-                SetMode(MenuReturnMode);
+                ResumeFromMenu();
                 return true;
 
             // ── Deliberately nothing, and why ─────────────────────────────────────────────
@@ -4887,12 +5093,112 @@ public class LocationTravelGameController : IDisposable
         return false;
     }
 
+    /// <summary>
+    /// Where the management screen's Back (and Escape) goes: the main menu when it was opened from
+    /// there, the phase underneath when a tab's letter opened it over the phase directly.
+    /// </summary>
+    private bool _managementBackToMenu = true;
+
+    /// <summary>
+    /// A management tab's letter, pressed outside the screen: opens the screen on that tab, straight
+    /// over the phase, as the menu's Protagonist button would (and only where that button could be
+    /// reached — a run started, and a phase the menu opens over). Not in a fight, whose own keys
+    /// (M to move) win; on the screen itself the screen answers the key.
+    /// </summary>
+    private bool OpenManagementByKey(OpenTK.Windowing.GraphicsLibraryFramework.Keys key)
+    {
+        if (Management.ManagementMenuRenderer.TabForKey(key) is not { } tab) return false;
+        if (!_hasGameStarted || _protagonist == null || _companionDeathBox != null) return false;
+        bool fromMenu = _currentMode == GameMode.MainMenu;
+        if (!fromMenu && (PausedPhaseName(_currentMode) == null
+                          || _currentMode is GameMode.Fighting or GameMode.ProtagonistCreation))
+            return false;
+
+        Console.WriteLine($"Opening the {tab} tab by its key, over {(fromMenu ? "the menu" : PausedPhaseName(_currentMode))}");
+        _managementBackToMenu = fromMenu;
+        SetMode(GameMode.ProtagonistManagement);
+        if (_managementMenuRenderer?.CliSelectTab(tab) != true) return false;
+        _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+        return true;
+    }
+
+    /// <summary>The management screen's Back and Escape: see <see cref="_managementBackToMenu"/>.</summary>
+    private void CloseManagement()
+    {
+        _core.SetNarrationMode(true); // restore management-mode world shading
+        _managementMenuRenderer = null;
+        GameMode to = _managementBackToMenu ? GameMode.MainMenu : MenuReturnMode;
+        Console.WriteLine($"LocationTravelGameController: Management menu closed, returning to {to}");
+        _managementBackToMenu = true;
+        SetMode(to);
+    }
+
+    /// <summary>Back into the phase the menu was opened over, with the music it was playing.</summary>
+    private void ResumeFromMenu()
+    {
+        var music = _musicUnderMenu;
+        SetMode(MenuReturnMode);
+        if (music is { } m) _ambianceEngine?.Restore(m);
+    }
+
     /// <summary>Opens the menu over a still-running phase, naming what it was opened over.</summary>
     private bool OpenPauseMenu(string over)
     {
-        Console.WriteLine($"ESC pressed - opening pause menu over {over}");
+        Console.WriteLine($"Opening pause menu over {over}");
         SetMode(GameMode.MainMenu);
         return _currentMode == GameMode.MainMenu;
+    }
+
+    /// <summary>
+    /// The phases the main menu can be opened over, by the name the log gives each — every mode in
+    /// which <see cref="HandleEscape"/> ends by pausing, and so every mode that shows the ☰. One list
+    /// for both, so the button cannot be missing from a phase Escape pauses, nor offered where Escape
+    /// deliberately does nothing. Null for every other mode.
+    /// </summary>
+    private static string? PausedPhaseName(GameMode mode) => mode switch
+    {
+        GameMode.Fighting                                   => "fight",
+        GameMode.LocationInteraction
+            or GameMode.ChildhoodReminescence
+            or GameMode.GetUp                               => "narration",
+        GameMode.Dialogue                                   => "dialogue",
+        GameMode.Working                                    => "work menu",
+        GameMode.Gathering                                  => "gathering",
+        GameMode.Trading                                    => "trade menu",
+        GameMode.EncounterPrompt                            => "encounter",
+        GameMode.WorldView                                  => "world",
+        GameMode.ProtagonistCreation                        => "protagonist creation",
+        _                                                   => null,
+    };
+
+    /// <summary>
+    /// The ☰: straight to the menu. Unlike Escape it backs out of nothing first — a fight's armed
+    /// skill and a narration popup are still there on resuming, as everything else in the phase is.
+    /// </summary>
+    private bool PressMenuButton() =>
+        PausedPhaseName(_currentMode) is { } over && OpenPauseMenu(over);
+
+    /// <summary>
+    /// Presses the ☰ where it is drawn, through the click handler a player's press goes through.
+    /// Fails when it is not on screen — a phase without it, or a frame not yet drawn since entering one.
+    /// </summary>
+    public string? CliPressMenuButton()
+    {
+        if (_menuButton?.Cell is not { } cell) return "no menu button on screen";
+        OnTerminalCellClicked(cell.X, cell.Y);
+        return _currentMode == GameMode.MainMenu ? null : $"the press did not open the menu (mode={_currentMode})";
+    }
+
+    /// <summary>Whether the ☰ is on screen, for <c>state</c>.</summary>
+    public bool CliMenuButtonShown => _menuButton?.Cell != null;
+
+    /// <summary>Presses the narration header's ↹ where it is drawn, through the player's click path.</summary>
+    public string? CliPressMapButton()
+    {
+        if (_currentMode != GameMode.LocationInteraction || _narrativeController == null) return "not in a location's narration";
+        if (_narrativeController.MapButtonCell is not { } cell) return "no map button on screen";
+        OnTerminalCellClicked(cell.X, cell.Y);
+        return null;
     }
 
     /// <summary>
@@ -5198,6 +5504,9 @@ public class LocationTravelGameController : IDisposable
         Console.WriteLine("LocationTravelGameController: Entered Fighting mode");
         _ambianceEngine?.TriggerGameEvent(GameEventType.NegativeOutcome);
         _ambianceEngine?.SetFilter(MusicFilter.Fighting);
+        // The whole band: a journey thins the music to one track, and a travel encounter's fight
+        // opens straight from it. Returning to the journey thins it again (OnEnterTraveling).
+        _ambianceEngine?.SetActiveTrackCount(4);
         // Keep narration mode visuals (darkened sphere, terminal visible)
         _core.SetNarrationMode(true);
         _core.SetWorldInteractionsEnabled(false);
@@ -5343,7 +5652,8 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
-        open(npc);
+        // The menu opens once the walk in from the location's entry has been shown.
+        _narrativeController.WalkTheApproach(() => open(npc));
     }
 
     /// <summary>Tears down any narrative context and returns to the world-travel view.</summary>
@@ -5358,8 +5668,9 @@ public class LocationTravelGameController : IDisposable
     }
 
     /// <summary>
-    /// Opens the routine list box for the current travel destination. Each routine is checked against
-    /// a freshly built scene by its own kind's rule (<see cref="Cathedral.Game.Narrative.Routines.Routine.Unavailability"/>)
+    /// Opens the routine box for the current travel destination: its mental map, with the routines
+    /// learned there on it. Each routine is checked against a freshly built scene — the one the map is
+    /// drawn from — by its own kind's rule (<see cref="Cathedral.Game.Narrative.Routines.Routine.Unavailability"/>)
     /// and greyed out, with the reason, when it cannot be walked.
     /// </summary>
     private void OpenRoutinesBox()
@@ -5368,12 +5679,13 @@ public class LocationTravelGameController : IDisposable
         if (!_travelPlanner.HasWaypoints) return;
 
         int destVertex = _travelPlanner.FinalDestination;
-        var routines = Cathedral.Game.Narrative.Routines.RoutineCategories.All
-            .SelectMany(c => _protagonist.RoutinesOf(c))
-            .Where(r => r.LocationId == destVertex)
+        var mentalMap = _protagonist.MentalMapOf(destVertex);
+        if (mentalMap == null) return;
+        var routines = mentalMap.Routines
+            .OrderBy(r => System.Array.IndexOf(Cathedral.Game.Narrative.Routines.RoutineCategories.All, r.Category))
             .ToList();
 
-        var ctx = routines.Count > 0 ? RoutineCheckContextFor(destVertex) : null;
+        var ctx = RoutineCheckContextFor(destVertex);
         var entries = routines
             .Select(r => new TravelRoutinesBox.Entry
             {
@@ -5391,7 +5703,7 @@ public class LocationTravelGameController : IDisposable
         // as a black backdrop. Capture clicks (no passthrough) so they can't fall through the box.
         SetTransparentWorldOverlay(clickPassthrough: false);
 
-        _travelRoutinesBox = new TravelRoutinesBox(_core.Terminal, entries);
+        _travelRoutinesBox = new TravelRoutinesBox(_core.Terminal, entries, mentalMap, ctx?.Scene);
         _travelRoutinesBox.Render();
     }
 
@@ -5489,9 +5801,15 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
-        _gatherAdapter = new GatherMenuAdapter(_core.Terminal, _protagonist, routine, verb, source, scene);
-        _narrativeController.CloseNarrationSegment($"gathering at {source.DisplayName}");
-        SetMode(GameMode.Gathering);
+        var terminal = _core.Terminal;
+        var protagonist = _protagonist;
+        var narration = _narrativeController;
+        narration.WalkTheApproach(() =>
+        {
+            _gatherAdapter = new GatherMenuAdapter(terminal, protagonist, routine, verb, source, scene);
+            narration.CloseNarrationSegment($"gathering at {source.DisplayName}");
+            SetMode(GameMode.Gathering);
+        });
     }
 
     /// <summary>
@@ -5515,8 +5833,16 @@ public class LocationTravelGameController : IDisposable
     /// <param name="applyDepletion">False to leave every item slot in place — what a routine check
     /// and the gathering phase want, since they reason about the empty slots too. The depletion store
     /// is still the location's own, shared, so whatever they write to it is real.</param>
+    /// <param name="visit">True for the scene a visit is played in: the location's mental map becomes
+    /// the protagonist's newest (<see cref="Protagonist.EnterMentalMap"/>), which may forget another.
+    /// Every build is handed the map of the place when one is remembered, so a routine check and the
+    /// menus read what the protagonist knows of it.</param>
+    /// <param name="viewOnly">True for a scene only drawn — the mental maps menu, the routine replay
+    /// map: built and handed the map, and nothing else. No debug spawn (it draws from the run's
+    /// generator), no first-contact enmity, no name faking (which is global, and may belong to a
+    /// visit the menu was opened over).</param>
     private Cathedral.Game.Scene.Scene? BuildSceneForLocation(int vertexIndex, out LocationInstanceState? lis,
-        bool applyDepletion = true)
+        bool applyDepletion = true, bool visit = false, bool viewOnly = false)
     {
         lis = null;
         if (_llamaServer == null || _protagonist == null) return null;
@@ -5577,6 +5903,13 @@ public class LocationTravelGameController : IDisposable
         if (Config.Debug.LocationId is int forced)
             Console.WriteLine($"[debug] --location-id: building vertex {vertexIndex} as location {forced}.");
         var scene = sceneFactory.Build(buildId, state);
+
+        // What the protagonist remembers of the place: its map's stores, by reference, so the visit
+        // writes into the memory and a place forgotten builds with nothing known.
+        if (visit)
+            _protagonist.EnterMentalMap(vertexIndex, Narrative.WorldContext.From(biomeInfo.biome, biomeInfo.location).DisplayName);
+        _protagonist.MentalMapOf(vertexIndex)?.AttachTo(scene);
+        if (viewOnly) return scene;
 
         // Debug: --spawn-beast puts one where the script opens. Before the first-contact pass below,
         // so it is flagged an enemy exactly like a beast the factory rolled.
@@ -5942,6 +6275,18 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
+        // A householder who found the player waiting in their house at night and would not have them
+        // stay: the visit is over. Straight back to the world — their last word was the door.
+        if (npc.ShowsTheDoor)
+        {
+            npc.ShowsTheDoor = false;   // consume the flag
+            _dialogueAdapter = null;
+            _core.Terminal?.Clear();
+            Console.WriteLine($"LocationTravelGameController: {npc.DisplayName} shows the player the door — leaving the location");
+            ExitNarrativeMode();
+            return;
+        }
+
         // A successful beg pays out here: an Outcome can reach the NPC and nothing else, so
         // the wallet is out of its reach the same way the trade menu is.
         if (npc.AlmsGiven > 0 && _protagonist != null)
@@ -6183,6 +6528,8 @@ public class LocationTravelGameController : IDisposable
 
         // Save any routine recorded during this narration session before tearing it down.
         _narrativeController?.FinalizeRoutineRecording();
+        // The visit is over: a map held without room for it in the memory is forgotten now.
+        _protagonist?.LeaveMentalMap();
 
         // Re-enable world map and 3D interactions
         _interface.SetWorldInteractionsEnabled(true);
@@ -6271,6 +6618,9 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
+        if (OpenManagementByKey(key))
+            return;
+
         if (_currentMode == GameMode.Fighting && _fightAdapter != null)
         {
             _fightAdapter.OnKeyPress(key);
@@ -6291,6 +6641,12 @@ public class LocationTravelGameController : IDisposable
         {
             // Nothing is keyed: Escape opens the pause menu (the launcher handles it).
         }
+        // A tab's first letter opens it, as a click on its row does (and sounds the same).
+        else if (_currentMode == GameMode.ProtagonistManagement)
+        {
+            if (_managementMenuRenderer?.OnKeyDown(key) == true)
+                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+        }
         // R repaints the sphere by region instead of by biome — a development view of the world
         // division, with no gameplay behind it yet.
         //
@@ -6308,7 +6664,36 @@ public class LocationTravelGameController : IDisposable
         {
             _interface.ToggleRealmOverlay();
         }
+        // Tab swaps the narration text for a map of the location (DebugLocationMap), as the header's
+        // ↹ does. Narration only: a player's key in exploration, where the ↹ is drawn, and the
+        // developer's in the childhood and the get-up, where it is not.
+        else if (key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.Tab
+                 && _isInNarrativeMode && _narrativeController != null
+                 && (_narrativeController.CanToggleMap || Config.Debug.DeveloperKeys))
+        {
+            _narrativeController.ToggleDebugMap();
+        }
+        // The routine box's map, the same way, on the world map.
+        else if (key is OpenTK.Windowing.GraphicsLibraryFramework.Keys.Left or OpenTK.Windowing.GraphicsLibraryFramework.Keys.Right or OpenTK.Windowing.GraphicsLibraryFramework.Keys.Up or OpenTK.Windowing.GraphicsLibraryFramework.Keys.Down
+                 && _currentMode == GameMode.WorldView && _travelRoutinesBox != null)
+        {
+            _travelRoutinesBox.PanMap(key);
+        }
+        // Arrows pan the map while it is up (the camera leaves them alone then: see the hook set in
+        // the constructor). The launcher delivers them here only in that case.
+        else if (key is OpenTK.Windowing.GraphicsLibraryFramework.Keys.Left or OpenTK.Windowing.GraphicsLibraryFramework.Keys.Right or OpenTK.Windowing.GraphicsLibraryFramework.Keys.Up or OpenTK.Windowing.GraphicsLibraryFramework.Keys.Down
+                 && _isInNarrativeMode && _narrativeController != null)
+        {
+            _narrativeController.PanDebugMap(key);
+        }
     }
+
+    /// <summary>
+    /// Whether the narration panel is showing the location map: the toggle is on and a narration
+    /// phase is what is on screen. The toggle alone outlives the visit, so it says nothing on the map.
+    /// </summary>
+    public bool IsDebugMapShowing => (DebugLocationMap.Visible || DebugLocationMap.WalkPannable) && _isInNarrativeMode
+        && _currentMode is GameMode.LocationInteraction or GameMode.ChildhoodReminescence or GameMode.GetUp;
 
     public void Dispose()
     {

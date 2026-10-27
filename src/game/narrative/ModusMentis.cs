@@ -89,6 +89,29 @@ public abstract class ModusMentis
     /// </summary>
     public virtual EmotionTrigger[] EmotionTriggers => System.Array.Empty<EmotionTrigger>();
 
+    /// <summary>
+    /// What this modus mentis wants to do — the declaration behind the <see cref="ModusMentisFunction.Will"/>
+    /// function. Null by default. Rule R17 makes the two imply each other.
+    ///
+    /// <para>A will observes and thinks, but only toward its target: <see cref="ActionPathPlanner"/>
+    /// finds the shortest path of actions from where the body stands to an action the target matches,
+    /// and the will attends only to the object of the path's first step and proposes only that step.
+    /// See <c>WillPriority</c> for every place this narrows a choice.</para>
+    /// </summary>
+    public virtual WillTarget? Will => null;
+
+    /// <summary>Whether this modus mentis bears the <see cref="ModusMentisFunction.Will"/> function.</summary>
+    public bool IsWill => Functions.Contains(ModusMentisFunction.Will);
+
+    /// <summary>
+    /// Whether this modus mentis may be chosen to observe: the Observation function, or a will, which
+    /// includes the observing office (narrowed to its path). Read wherever a body's observers are listed.
+    /// </summary>
+    public bool CanObserve => Functions.Contains(ModusMentisFunction.Observation) || IsWill;
+
+    /// <summary>Whether this modus mentis may be chosen to think: the Thinking function, or a will.</summary>
+    public bool CanThink => Functions.Contains(ModusMentisFunction.Thinking) || IsWill;
+
 
     public int Level { get; set; }                    // current level; capped by GetMaxLevelForModusMentis (random initial)
     public int CurrentXp { get; set; }                // progress toward next level; reset to 0 on level-up
@@ -204,5 +227,6 @@ public enum ModusMentisFunction
     Action,        // Used for modusMentis checks when executing actions
     Speaking,      // Generates player dialogue replicas in conversation
     Fighting,      // Declarative: this modusMentis unlocks fighting skills (main or secondary)
-    Emotion        // Reacts to what an action produced: declares outcome types that move the spleen
+    Emotion,       // Reacts to what an action produced: declares outcome types that move the spleen
+    Will           // Observes and thinks toward one target action only (ModusMentis.Will, ActionPathPlanner)
 }

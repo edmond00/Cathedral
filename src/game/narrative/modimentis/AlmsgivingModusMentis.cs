@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 using Cathedral.Game.Scene;
 using Cathedral.Game.Dialogue.Tree;
@@ -14,8 +15,10 @@ public class AlmsgivingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Gives freely to those who ask, and is gladdened by the giving. Counts what can be spared before what can be kept.";
     public override string SkillMeans       => "the giving of alms and the joy of it";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
+    public override WillTarget? Will => WillTarget.To<GiveAlmsVerb>("give alms");
     public override string[] Organs        => new[] { "heart", "hands" };
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.High;
 

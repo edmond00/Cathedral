@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class AmbuscadeModusMentis : ModusMentis
     public override string MenuDescription =>
         "Lies in wait: chooses the narrow place, hides the men, keeps them still and silent for hours, and springs at the moment the enemy is strung out and looking the wrong way.";
     public override string SkillMeans       => "the lying-in-wait and the sudden attack";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<HideAndWaitVerb>("lie in wait");
     public override string[] Organs        => new[] { "legs", "cerebellum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.Low;

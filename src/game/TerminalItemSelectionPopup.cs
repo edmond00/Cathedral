@@ -154,8 +154,8 @@ public class TerminalItemSelectionPopup
 
         float relativeX = screenX - left;
         float relativeY = screenY - top;
-        int cellX = (int)Math.Floor((relativeX + cellPixelSize * 0.5f) / cellPixelSize);
-        int cellY = (int)Math.Floor((relativeY + cellPixelSize * 0.5f) / cellPixelSize);
+        int cellX = (int)Math.Floor(relativeX / cellPixelSize);
+        int cellY = (int)Math.Floor(relativeY / cellPixelSize);
 
         if (cellY < 1 || cellY > VisibleCount || cellX < 0 || cellX >= POPUP_WIDTH)
             return null;

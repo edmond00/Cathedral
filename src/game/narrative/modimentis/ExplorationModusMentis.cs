@@ -1,4 +1,6 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -13,7 +15,8 @@ public class ExplorationModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads unknown country for a path, for water, and for shelter, keeping a sense of the way ahead. Inclines toward scouting and traversal, and works out unfamiliar ground step by step.";
     public override string SkillMeans       => "the finding of paths, shelter and safe ways through unknown land";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
+    public override WillTarget? Will => WillTarget.To<FollowPathVerb>("follow a path to see where it goes");
     public override string[] Organs        => new[] { "eyes", "feet" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
@@ -22,6 +25,11 @@ public class ExplorationModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who reads land for paths and shelters before anything else";
     public override string StyleInstruction =>
         "Reach for images of horizons, trails and uncharted ground, with a wanderer's restless pull toward the unknown.";
+
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(LostWayOutcome), () => new LaetitiaHumor()),
+    };
 
     public override string PersonaPrompt => @"You are the inner voice of EXPLORATION, the eye that reads any landscape first for the line of its paths and the lay of its shelters.
 

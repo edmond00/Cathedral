@@ -46,7 +46,7 @@ public abstract class Verb
     /// under-reports what is a crime.</para>
     /// </summary>
     public bool IsIllegal(Scene scene, PoV pov, Element? target, PartyMember? actor = null)
-        => PrivacyModel.IsTrespassing(pov.Where) || IsIllegalFor(scene, pov, target, actor);
+        => PrivacyModel.IsTrespassing(scene, pov.Where) || IsIllegalFor(scene, pov, target, actor);
 
     /// <summary>
     /// The verb's own condition for being a crime, asked outside anybody's private space.
@@ -105,7 +105,22 @@ public abstract class Verb
     /// passes the capability test.</para>
     /// </summary>
     public bool IsPossible(Scene scene, PoV pov, Element target, PartyMember? actor = null)
-        => (actor?.Can(EffectiveCapabilities) ?? true) && IsPossibleFor(scene, pov, target, actor);
+        => (actor?.Can(EffectiveCapabilities) ?? true)
+           && !(MovesAlongWay && AreaVisits.IsWayBack(scene, pov.Where, target, pov.When))
+           && IsPossibleFor(scene, pov, target, actor);
+
+    /// <summary>
+    /// Whether this verb walks a way out of the area — a neighbour, a door, a stair, a path, a climb, a
+    /// crossing. On a way the party already knows and may go back by, such a verb is not offered:
+    /// <see cref="BacktrackVerb"/> is, in its place.
+    /// </summary>
+    protected virtual bool MovesAlongWay => false;
+
+    /// <summary>
+    /// <paramref name="action"/> settled on what a will's path needs of it (<see cref="PathStep.Settled"/>):
+    /// the hour a wait lasts until, the area a backtrack goes to. Null for a verb that settles nothing.
+    /// </summary>
+    public virtual VerbAction? Settle(VerbAction action, object settled) => null;
 
     /// <summary>The verb's own condition: scene state, target shape, affinity, schedule, tools.</summary>
     protected abstract bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null);
@@ -417,25 +432,57 @@ public abstract class Verb
     }
     // ── Failure penalties ──────────────────────────────────────────────────────
     // Replaces the former LLM failure-outcome critic tree: instead of asking the critic which body
-    // part is wounded, each verb declares the injuries a failure can cause and one is sampled.
-
-    /// <summary>A single "no injury" penalty list — the default for verbs that never wound on failure.</summary>
-    protected static readonly IReadOnlyList<Wound?> NoPenalty = new Wound?[] { null };
+    // part is wounded, each verb declares what a failure can cost and one entry is drawn.
 
     /// <summary>
-    /// Candidate physical penalties for a failed execution of this verb. Each entry is a
-    /// <see cref="Wound"/> to inflict or <c>null</c> for "no injury". On failure one entry is sampled
-    /// uniformly (see <see cref="SampleFailurePenalty"/>), so repeat an entry to weight it — e.g.
-    /// several <c>null</c>s for a usually-harmless verb. Default: never injures. Return fresh wound
-    /// instances when the wound carries placement state.
+    /// The default table: a failure loses the thread. Every verb that has nothing more fitting to cost
+    /// — the senses, speech, waiting — costs a noetic point beyond the attempt, so no miss is free.
     /// </summary>
-    public virtual IReadOnlyList<Wound?> FailurePenalties(Element? target) => NoPenalty;
+    protected static readonly IReadOnlyList<FailurePenalty> LoseFocusOnly = new[] { FailurePenalty.LoseFocus };
 
-    /// <summary>Samples one failure penalty uniformly (null ⇒ no injury).</summary>
-    public Wound? SampleFailurePenalty(Element? target, System.Random rng)
+    /// <summary>
+    /// The one exemption: a verb whose failure only loops its phase (<c>get_up</c>). The opening phases
+    /// have no exit and nothing to spend the hour on, and their one verb is the only way onward.
+    /// </summary>
+    protected static readonly IReadOnlyList<FailurePenalty> NoPenalty = System.Array.Empty<FailurePenalty>();
+
+    /// <summary>
+    /// What a failed execution of this verb can cost. One entry is drawn uniformly
+    /// (<see cref="DrawFailurePenalty"/>), so repeat an entry to weight it. Default:
+    /// <see cref="LoseFocusOnly"/>. Return fresh wound instances when the wound carries placement state.
+    /// </summary>
+    public virtual IReadOnlyList<FailurePenalty> FailurePenalties(Element? target) => LoseFocusOnly;
+
+    /// <summary>
+    /// Draws what this failure costs. An entry that cannot take hold in <paramref name="situation"/>
+    /// (<see cref="FailurePenalty.Realise"/>) is set aside and the draw made again from the rest, so
+    /// the remaining entries keep their weights. Null only when nothing in the table can take hold.
+    ///
+    /// <para><c>--penalty-only</c> narrows the table to one kind first; a table holding none of that
+    /// kind, or none that can take hold, is a miss the CLI fails on.</para>
+    /// </summary>
+    public Outcome? DrawFailurePenalty(Element? target, FailureSituation situation, System.Random rng)
     {
-        var penalties = FailurePenalties(target);
-        if (penalties == null || penalties.Count == 0) return null;
-        return penalties[rng.Next(penalties.Count)];
+        var table = FailurePenalties(target).ToList();
+
+        if (FailurePenalty.ParseKind(Config.Debug.PenaltyOnly) is { } forced)
+        {
+            var narrowed = table.Where(p => p.Kind == forced).ToList();
+            if (narrowed.Count > 0) table = narrowed;
+            else DebugFlagAudit.Miss("--penalty-only", Config.Debug.PenaltyOnly!, $"{VerbId}'s whole failure table");
+        }
+
+        while (table.Count > 0)
+        {
+            int i = rng.Next(table.Count);
+            var outcome = table[i].Realise(situation);
+            if (outcome != null) return outcome;
+            System.Console.WriteLine($"💥 [FAILURE PENALTY] {table[i]} cannot take hold here — drawing again");
+            table.RemoveAt(i);
+        }
+
+        if (Config.Debug.PenaltyOnly != null)
+            DebugFlagAudit.Miss("--penalty-only", Config.Debug.PenaltyOnly, "no penalty: none of that kind could take hold");
+        return null;
     }
 }

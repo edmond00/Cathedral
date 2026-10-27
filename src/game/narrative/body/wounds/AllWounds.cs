@@ -388,6 +388,19 @@ public abstract class WildcardWound : Wound
     /// the weapon: a blade leaves a Cut, a mace a Contusion. See <c>FightResolver.Wildcards</c>.
     /// </summary>
     public abstract DamageType DamageType { get; }
+
+    /// <summary>
+    /// Whether a landed blow can leave this wound. False for the mishaps — a Scrape, a Strain — which
+    /// are what a failed act does to the body doing it: a fall drags skin along stone, a heave pulls a
+    /// muscle. Nobody is strained by a sword, so the fight's wound pool leaves them out.
+    /// </summary>
+    public virtual bool FromBlows => true;
+}
+
+/// <summary>A wildcard wound that only a failed act inflicts, never a blow. See <see cref="WildcardWound.FromBlows"/>.</summary>
+public abstract class MishapWound : WildcardWound
+{
+    public override bool FromBlows => false;
 }
 
 public sealed class ContusionWound : WildcardWound
@@ -409,4 +422,18 @@ public sealed class PunctureWound : WildcardWound
     public override char WoundId => 'E';
     public override string WoundName => "Puncture";
     public override DamageType DamageType => DamageType.Piercing;
+}
+
+public sealed class ScrapeWound : MishapWound
+{
+    public override char WoundId => 'G';
+    public override string WoundName => "Scrape";
+    public override DamageType DamageType => DamageType.Abrading;
+}
+
+public sealed class StrainWound : MishapWound
+{
+    public override char WoundId => 'H';
+    public override string WoundName => "Strain";
+    public override DamageType DamageType => DamageType.Straining;
 }

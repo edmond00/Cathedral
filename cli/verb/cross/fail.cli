@@ -39,7 +39,7 @@ expect FAILURE
 # of every verb alike, so only this can tell them apart.
 expect-verb cross
 # The failure assertion that means something: the verb's own consequence did NOT happen.
-# Asserting the wound instead would be flaky — FailurePenalties samples one slot in five,
-# so most failures injure nobody.
+# Asserting the penalty instead would be flaky — FailurePenalties draws one entry of several,
+# and only --penalty-only pins which (see cli/outcome/).
 expect-no-outcome area_move
 quit

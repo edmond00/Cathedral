@@ -1,0 +1,46 @@
+# A place at night plays its night music: the same place's mood, colder, stranger, nobody dancing
+# (MusicMoodState.AtNight). The period is the visit's, set in one place (ApplyTimePeriod), so a wait
+# to morning brings the day music back.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --silent --no-save --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period night --observe-only "Test Bench"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+expect-state music night=no
+travel here
+wait mode LocationInteraction 60
+expect-state where "period=Night"
+expect-state music festivity=0.00 night=yes
+
+# The pause menu gives the night back, not the day.
+pause
+wait mode MainMenu 20
+expect-state music night=no
+click menu Continue
+wait mode LocationInteraction 30
+expect-state music night=yes
+
+strategy succeed
+goal sit_and_wait
+advance 12 180
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+
+wait
+click period morning
+wait
+click continue
+advance 12 180
+
+expect-state where "period=Morning"
+expect-state music night=no
+quit

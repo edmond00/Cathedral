@@ -43,6 +43,17 @@ namespace Cathedral.Terminal
 
         // Popup-specific parameters
         private Vector2 _mousePosition;
+
+        /// <summary>
+        /// How many cells above the pointer the content's centre sits; 0 centres it on the pointer.
+        /// A label about the cell under the pointer is lifted off it, or it would hide what it names.
+        /// </summary>
+        public float LiftCells
+        {
+            get => _liftCells;
+            set { if (_liftCells != value) { _liftCells = value; _instanceBufferDirty = true; } }
+        }
+        private float _liftCells;
         private readonly int _cellPixelSize;
         private readonly int _mainTerminalWidth;
         private readonly int _mainTerminalHeight;
@@ -286,8 +297,8 @@ namespace Cathedral.Terminal
             {
                 // Calculate screen position (top-left origin)
                 Vector3 position = new Vector3(
-                    topLeft.X + x * cellSize.X,
-                    topLeft.Y + y * cellSize.Y,
+                    topLeft.X + (x + 0.5f) * cellSize.X,   // the cell's centre: the quad is centred on it
+                    topLeft.Y + (y + 0.5f) * cellSize.Y,
                     0.0f
                 );
                 
@@ -360,7 +371,7 @@ namespace Cathedral.Terminal
                 
                 // Center the visual content at mouse position
                 float visualCenterX = _mousePosition.X - visualWidth / 2.0f;
-                float visualCenterY = _mousePosition.Y - visualHeight / 2.0f;
+                float visualCenterY = _mousePosition.Y - visualHeight / 2.0f - _liftCells * cellSize.Y;
                 
                 // Calculate top-left of the full popup grid
                 // (visual content starts at bounds.minX, bounds.minY within the grid)

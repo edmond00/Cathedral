@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 using Cathedral.Game.Scene;
 using Cathedral.Game.Dialogue.Tree;
@@ -15,7 +16,8 @@ public class FriendshipModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reaches for trust and easy companionship, reading how a bond might be built or deepened. Inclines toward warmth and loyalty, and takes another as a possible ally rather than an obstacle.";
     public override string SkillMeans       => "warm and open friendliness";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
+    public override WillTarget? Will => WillTarget.To<StrengthenRelationshipVerb>("make a friend");
     public override string[] Organs        => new[] { "heart", "tongue" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>

@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class ScentDrawModusMentis : ModusMentis
     public override string MenuDescription =>
         "Draws air on purpose rather than merely breathing it: long pulls through the nose that separate a scent into its parts, its age, and the direction it is coming from.";
     public override string SkillMeans       => "the deliberate drawing of air to take a scent apart";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
+    public override WillTarget? Will => WillTarget.To<SmellVerb>("draw a scent apart");
     public override string[] Organs        => new[] { "pulmones", "snout" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

@@ -1,10 +1,11 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Rage — consuming battle fury that burns through pain and fear; a warrior who loses himself and finds something unstoppable.
-/// VerbAction-only.
+/// Will + VerbAction + Fighting.
 /// </summary>
 public class RageModusMentis : ModusMentis
 {
@@ -13,7 +14,8 @@ public class RageModusMentis : ModusMentis
     public override string MenuDescription =>
         "Rises into an all-consuming anger that burns through pain, fear, and doubt. Drives the body into powerful assault while it lasts, at the cost of caution and control.";
     public override string SkillMeans       => "the battle fury that burns through pain, fear, and doubt";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Fighting };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action, ModusMentisFunction.Fighting };
+    public override WillTarget? Will => WillTarget.To<AttackVerb>("fall on somebody in fury");
     public override string[] Organs        => new[] { "viscera", "hepar" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.Low;

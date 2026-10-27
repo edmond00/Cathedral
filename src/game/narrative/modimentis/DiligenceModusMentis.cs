@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,8 +13,10 @@ public class DiligenceModusMentis : ModusMentis
     public override string MenuDescription =>
         "Works the whole task rather than the interesting part of it, and finishes to the same standard it started. Unremarkable at any single moment and the difference between a thing done and a thing abandoned.";
     public override string SkillMeans       => "the steady finishing of what was begun";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<RequestJobVerb>("find work");
     public override string[] Organs        => new[] { "hands", "backbone" };
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.High;
 

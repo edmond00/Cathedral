@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 using Cathedral.Game.Scene;
 
@@ -14,7 +15,8 @@ public class GreedModusMentis : ModusMentis
     public override string MenuDescription =>
         "Keeps an unshaken want of more running beneath thought, driving toward acquisition past need. Inclines reasoning and action toward seizing wealth and advantage wherever they appear.";
     public override string SkillMeans       => "the relentless desire to have more";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
+    public override WillTarget? Will => WillTarget.ToAny("take more for myself", typeof(StealVerb), typeof(PickpocketVerb));
     public override string[] Organs        => new[] { "heart", "eyes" };
 
     /// <summary>Stands on letters, number or institutions.</summary>

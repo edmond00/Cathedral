@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -13,7 +14,8 @@ public class SpoorReadingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads ground and air together for the story of who passed: the depth of a print, the age of a scent, the bent grass that gives away a direction. Reasons from sign to creature, gait, burden, and intent.";
     public override string SkillMeans       => "the reading of tracks, scents and trail signs";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
+    public override WillTarget? Will => WillTarget.To<TrackVerb>("read a trail and follow it");
     public override string[] Organs        => new[] { "snout", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

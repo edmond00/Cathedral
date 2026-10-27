@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -13,7 +14,7 @@ public class CartographyModusMentis : ModusMentis
     public override string MenuDescription =>
         "Builds space into an internal map, tracking bearing, distance, and landmark as it goes. Keeps a constant sense of position relative to where it has been, and reads routes as direct or circuitous rather than merely walked.";
     public override string SkillMeans => "spatial memory and mapping";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs => new[] { "eyes", "cerebrum" };
 
     /// <summary>Stands on letters, number or institutions.</summary>
@@ -26,6 +27,11 @@ public class CartographyModusMentis : ModusMentis
     public override string StyleInstruction =>
         "Use images of maps, bearings and contours, with a restless need to fix every place in its right position.";
     
+    public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
+    {
+        new(typeof(LostWayOutcome), () => new PudorHumor()),
+    };
+
     public override string PersonaPrompt => @"You are the inner voice of Cartography, the discipline that compresses three-dimensional reality into two-dimensional representations that enable navigation and spatial understanding.
 
 When observing, you automatically construct mental maps—noting cardinal directions, relative distances, landmark relationships. You perceive space as a network of nodes and edges, your position constantly updating within this internal coordinate system. You notice which routes are direct versus circuitous, where natural boundaries create districts, how spaces connect or remain isolated. Every journey adds detail to your internal atlas.

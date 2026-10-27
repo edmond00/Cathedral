@@ -19,7 +19,7 @@ public enum ManagementTab
     Journal,
     Memory,
     Humors,
-    Routines
+    Chorography
 }
 
 /// <summary>
@@ -41,7 +41,7 @@ public class ManagementMenuRenderer
     private readonly MemoryPanelRenderer _memoryPanel;
     private readonly HumorMenuRenderer _humorMenu;
     private readonly InventoryMenuRenderer _inventoryMenu;
-    private readonly RoutinesPanelRenderer _routinesPanel;
+    private readonly MentalMapsPanelRenderer _mapsPanel;
 
     // ── Cached art data per anatomy type ─────────────────────────
     private readonly BodyArtData _humanArtData;
@@ -56,15 +56,30 @@ public class ManagementMenuRenderer
     private int _selectedCharacterIndex = 0; // 0 = protagonist, 1+ = companions
 
     // ── Tab definitions ──────────────────────────────────────────
-    private static readonly TabDefinition[] AllTabs = new[]
+    // Each tab's first letter is its key (drawn inverted in the M E N U list), so no two may share
+    // one: the type initializer refuses the table if they do. That is why the place maps are
+    // "Chorography" and not "Maps", beside "Memory".
+    private static readonly TabDefinition[] AllTabs = CheckShortcuts(new[]
     {
-        new TabDefinition("Anatomy",   ManagementTab.Anatomy,   AllCharacters: true),
-        new TabDefinition("Inventory", ManagementTab.Inventory,  AllCharacters: true),
-        new TabDefinition("Journal",   ManagementTab.Journal,    AllCharacters: false), // protagonist only
-        new TabDefinition("Memory",    ManagementTab.Memory,    AllCharacters: true),
-        new TabDefinition("Humors",    ManagementTab.Humors,    AllCharacters: true),
-        new TabDefinition("Routines",  ManagementTab.Routines,   AllCharacters: false), // protagonist only
-    };
+        new TabDefinition("Anatomy",     ManagementTab.Anatomy,     AllCharacters: true),
+        new TabDefinition("Inventory",   ManagementTab.Inventory,   AllCharacters: true),
+        new TabDefinition("Journal",     ManagementTab.Journal,     AllCharacters: false), // protagonist only
+        new TabDefinition("Memory",      ManagementTab.Memory,      AllCharacters: true),
+        new TabDefinition("Humors",      ManagementTab.Humors,      AllCharacters: true),
+        new TabDefinition("Chorography", ManagementTab.Chorography, AllCharacters: false), // protagonist only
+    });
+
+    private static TabDefinition[] CheckShortcuts(TabDefinition[] tabs)
+    {
+        foreach (var t in tabs)
+            if (!char.IsAsciiLetter(t.Label[0]))
+                throw new InvalidOperationException($"Management tab {t.Label} does not begin with a letter key.");
+        foreach (var clash in tabs.GroupBy(t => char.ToUpperInvariant(t.Label[0])).Where(g => g.Count() > 1))
+            throw new InvalidOperationException(
+                $"Management tabs {string.Join(", ", clash.Select(t => t.Label))} share the shortcut key {clash.Key}: " +
+                "a tab's first letter is its key, so rename one.");
+        return tabs;
+    }
 
     // ── Hover state ──────────────────────────────────────────────
     private int _hoveredTabIndex = -1;
@@ -119,34 +134,80 @@ public class ManagementMenuRenderer
     public Action? OnItemConsumed { get; set; }
 
     /// <summary>
-    /// Fired with a routine's LocationId when the Routines tab focuses one (selection change or tab
+    /// Fired with a location id when the Chorography tab focuses a mental map (selection change or tab
     /// activation). The host centers the world camera so the minimap porthole shows that location.
     /// </summary>
-    public Action<int>? OnRoutineLocationFocused { get; set; }
+    public Action<int>? OnMapLocationFocused { get; set; }
 
-    /// <summary>Fired when the Routines tab is left (tab switch or Back) so the host can restore camera/world state.</summary>
-    public Action? OnRoutinesPortholeClosed { get; set; }
+    /// <summary>Fired when the Chorography tab is left (tab switch or Back) so the host can restore camera/world state.</summary>
+    public Action? OnMapsPortholeClosed { get; set; }
+
+    /// <summary>
+    /// The screen cell of a card on the Chorography tab's map, by its area's name, panned into view first;
+    /// null off the Chorography tab or when no card has that name.
+    /// </summary>
+    public (int X, int Y)? CliMapCardCell(string areaName)
+    {
+        if (_activeTab != ManagementTab.Chorography) return null;
+        var cell = _mapsPanel.CliCardCell(areaName, _protagonist);
+        Render();
+        return cell;
+    }
+
+    /// <summary>Takes the Chorography tab's pointer label down (the menu is being left).</summary>
+    public void HideMapLabel() => _mapsPanel.HideLabel();
+
+    /// <summary>The Chorography tab is left: its pointer label comes down, and the host restores the world.</summary>
+    private void CloseMapsTab()
+    {
+        _mapsPanel.HideLabel();
+        OnMapsPortholeClosed?.Invoke();
+    }
 
     /// <summary>
     /// How a routine's person stands with the protagonist, by location id and persistent NPC id — the
-    /// host owns the location memory this is read from. See <see cref="RoutinesPanelRenderer.RelationLookup"/>.
+    /// host owns the location memory this is read from. See <see cref="MentalMapsPanelRenderer.RelationLookup"/>.
     /// </summary>
     public Func<int, string, (Cathedral.Game.Dialogue.Affinity.AffinityLevel Level, bool Enemy)?>? RoutineRelationLookup
     {
-        get => _routinesPanel.RelationLookup;
-        set => _routinesPanel.RelationLookup = value;
+        get => _mapsPanel.RelationLookup;
+        set => _mapsPanel.RelationLookup = value;
     }
 
-    /// <summary>Shows one kind of routine on the Routines tab, for <c>--cli</c>. False for an unknown kind.</summary>
+    /// <summary>
+    /// Shows the first routine of a kind on the Chorography tab, on the newest map holding one, for
+    /// <c>--cli</c>. False for an unknown kind or when no map holds one.
+    /// </summary>
     public bool CliSelectRoutineCategory(string id)
     {
         var category = Cathedral.Game.Narrative.Routines.RoutineCategories.All
             .Cast<Cathedral.Game.Narrative.Routines.RoutineCategory?>()
-            .FirstOrDefault(c => c!.Value.CliId() == id.Trim().ToLowerInvariant());
-        if (category == null || !CliSelectTab("Routines")) return false;
-        _routinesPanel.SelectCategory(category.Value, _protagonist);
+            .FirstOrDefault(c => c!.Value.CliId() == id.ToLowerInvariant());
+        if (category == null || !CliSelectTab("Chorography")) return false;
+        if (!_mapsPanel.SelectRoutineOfKind(category.Value, _protagonist)) return false;
         Render();
         return true;
+    }
+
+    /// <summary>
+    /// Presses the Chorography tab's next (1) or previous (-1) routine arrow, for <c>--cli</c>. False
+    /// off that tab or when the map shown has fewer than two routines.
+    /// </summary>
+    public bool CliStepRoutine(int step)
+    {
+        if (_activeTab != ManagementTab.Chorography || !_mapsPanel.StepRoutine(step, _protagonist)) return false;
+        Render();
+        return true;
+    }
+
+    /// <summary>
+    /// A scene of a remembered location, handed its mental map, for the Chorography tab to draw. The host
+    /// builds and caches it. See <see cref="MentalMapsPanelRenderer.SceneFor"/>.
+    /// </summary>
+    public Func<int, Cathedral.Game.Scene.Scene?>? MapSceneFor
+    {
+        get => _mapsPanel.SceneFor;
+        set => _mapsPanel.SceneFor = value;
     }
 
     public ManagementMenuRenderer(TerminalHUD terminal, Protagonist protagonist, BodyArtData artData,
@@ -171,8 +232,8 @@ public class ManagementMenuRenderer
         _bodyViewer.ArtOffsetY = 0;
 
         _memoryPanel = new MemoryPanelRenderer(terminal, popup);
-        _routinesPanel = new RoutinesPanelRenderer(terminal);
-        _routinesPanel.OnRoutineFocused = locId => OnRoutineLocationFocused?.Invoke(locId);
+        _mapsPanel = new MentalMapsPanelRenderer(terminal, popup);
+        _mapsPanel.OnMapFocused = locId => OnMapLocationFocused?.Invoke(locId);
 
         _inventoryMenu = new InventoryMenuRenderer(terminal, _bodyViewer, _humanGearData, popup);
         _inventoryMenu.OnItemConsumed = () => { Render(); OnItemConsumed?.Invoke(); };
@@ -257,11 +318,11 @@ public class ManagementMenuRenderer
             _bodyViewer.RenderBodyArt();
         }
         else if (_activeTab != ManagementTab.Memory && _activeTab != ManagementTab.Humors
-                 && _activeTab != ManagementTab.Routines)
+                 && _activeTab != ManagementTab.Chorography)
         {
             _bodyViewer.ShowWounds = false;
             _bodyViewer.ShowAge    = false;
-            // Draw separator on non-anatomy, non-memory, non-humors, non-routines tabs
+            // Draw separator on non-anatomy, non-memory, non-humors, non-maps tabs
             int sepX = BodyArtViewer.PanelX - 1;
             for (int y = 0; y < 100; y++)
                 _terminal.SetCell(sepX, y, '│', Config.Colors.DarkGray35, Config.Colors.Black);
@@ -269,7 +330,7 @@ public class ManagementMenuRenderer
 
         // Right panel
         if (_activeTab != ManagementTab.Memory && _activeTab != ManagementTab.Humors
-            && _activeTab != ManagementTab.Routines)
+            && _activeTab != ManagementTab.Chorography)
             RenderPanelHeader();
 
         switch (_activeTab)
@@ -295,8 +356,8 @@ public class ManagementMenuRenderer
             case ManagementTab.Humors:
                 _humorMenu.Render(GetPartyMember(_selectedCharacterIndex));
                 break;
-            case ManagementTab.Routines:
-                _routinesPanel.Render(_protagonist);
+            case ManagementTab.Chorography:
+                _mapsPanel.Render(_protagonist);
                 break;
         }
 
@@ -304,7 +365,7 @@ public class ManagementMenuRenderer
         RenderLeftPanel();
 
         if (_activeTab != ManagementTab.Memory && _activeTab != ManagementTab.Humors
-            && _activeTab != ManagementTab.Routines)
+            && _activeTab != ManagementTab.Chorography)
             RenderFooter();
 
         // Edge rules against the sphere, drawn last so no tab content overwrites them
@@ -330,6 +391,9 @@ public class ManagementMenuRenderer
         }
 
         if (_activeTab == ManagementTab.Inventory && _inventoryMenu.Update())
+            Render();
+
+        if (_activeTab == ManagementTab.Chorography && _mapsPanel.UpdateBlink())
             Render();
     }
 
@@ -403,12 +467,12 @@ public class ManagementMenuRenderer
                 if (_inventoryMenu.IsHovering) tick = true;
             }
         }
-        else if (_activeTab == ManagementTab.Routines)
+        else if (_activeTab == ManagementTab.Chorography)
         {
-            if (_routinesPanel.ProcessHover(x, y))
+            if (_mapsPanel.ProcessHover(x, y))
             {
                 changed = true;
-                if (_routinesPanel.IsHovering) tick = true;
+                if (_mapsPanel.IsHovering) tick = true;
             }
         }
 
@@ -422,7 +486,7 @@ public class ManagementMenuRenderer
     /// <summary>
     /// Selects a tab by name for <c>--cli</c>, which cannot click the tab strip. Returns false for
     /// an unknown or disabled tab. Mirrors the click path in <see cref="OnMouseClick"/>, including
-    /// the routines porthole handover, so a scripted switch behaves like a real one.
+    /// the maps porthole handover, so a scripted switch behaves like a real one.
     /// </summary>
     public bool CliSelectTab(string tabName)
     {
@@ -432,19 +496,73 @@ public class ManagementMenuRenderer
             t => string.Equals(t.Label, tabName, StringComparison.OrdinalIgnoreCase));
         if (idx < 0) return false;
 
+        return ActivateTab(idx);
+    }
+
+    /// <summary>
+    /// The tab a key opens — its label's first letter (<see cref="CheckShortcuts"/> keeps them
+    /// unique) — or null. Static, because the key opens the screen too, from any phase that allows it.
+    /// </summary>
+    public static string? TabForKey(OpenTK.Windowing.GraphicsLibraryFramework.Keys key)
+    {
+        if (key < OpenTK.Windowing.GraphicsLibraryFramework.Keys.A || key > OpenTK.Windowing.GraphicsLibraryFramework.Keys.Z)
+            return null;
+        char letter = (char)('A' + (key - OpenTK.Windowing.GraphicsLibraryFramework.Keys.A));
+        int idx = Array.FindIndex(AllTabs, t => char.ToUpperInvariant(t.Label[0]) == letter);
+        return idx >= 0 && AllTabs[idx].Enabled ? AllTabs[idx].Label : null;
+    }
+
+    /// <summary>
+    /// A key on this screen: a tab's letter opens it, and the arrows pan the Chorography tab's map
+    /// (the camera leaves them alone while the screen is up). True when the key opened a tab — the
+    /// host's cue for the click sound.
+    /// </summary>
+    public bool OnKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys key)
+    {
+        if (_activeTab == ManagementTab.Chorography && _mapsPanel.PanMap(key))
+        {
+            Render();
+            return false;
+        }
+        int idx = TabForKey(key) is { } label ? Array.FindIndex(AllTabs, t => t.Label == label) : -1;
+        return idx >= 0 && AllTabs[idx].Tab != _activeTab && ActivateTab(idx);
+    }
+
+    /// <summary>
+    /// Opens tab <paramref name="idx"/>: the one path behind a click on its row, its key and
+    /// <c>--cli</c>'s <c>manage</c>, including the maps porthole handover. False for a disabled tab.
+    /// </summary>
+    private bool ActivateTab(int idx)
+    {
         var tabDef = AllTabs[idx];
         if (!tabDef.Enabled) return false;
 
         var previousTab = _activeTab;
         _activeTab = tabDef.Tab;
 
-        if (previousTab == ManagementTab.Routines && _activeTab != ManagementTab.Routines)
-            OnRoutinesPortholeClosed?.Invoke();
-        if (_activeTab == ManagementTab.Routines && previousTab != ManagementTab.Routines)
-            _routinesPanel.OnActivated(_protagonist);
+        // The Chorography tab owns a transparent minimap porthole + a focused world camera.
+        if (previousTab == ManagementTab.Chorography && _activeTab != ManagementTab.Chorography)
+            CloseMapsTab();
+        if (_activeTab == ManagementTab.Chorography && previousTab != ManagementTab.Chorography)
+            _mapsPanel.OnActivated(_protagonist);
 
         if (!IsCharacterVisibleForTab(_selectedCharacterIndex, _activeTab))
             _selectedCharacterIndex = 0;
+
+        // Always re-sync art/gear to whoever is now selected (handles the case where
+        // _selectedCharacterIndex was reset to 0 above, or the tab just became visible).
+        SwapMemberArt(GetPartyMember(_selectedCharacterIndex));
+
+        if (_activeTab != ManagementTab.Anatomy)
+            _bodyViewer.ClearHover();
+        if (_activeTab != ManagementTab.Memory)
+            _memoryPanel.ClearHover();
+        if (_activeTab != ManagementTab.Humors)
+            _humorMenu.ClearHover();
+        if (_activeTab != ManagementTab.Inventory)
+            _inventoryMenu.ClearHover();
+        if (_activeTab != ManagementTab.Chorography)
+            _mapsPanel.ClearHover();
 
         Render();
         return true;
@@ -479,50 +597,16 @@ public class ManagementMenuRenderer
         // Back button
         if (IsOnBackButton(x, y))
         {
-            if (_activeTab == ManagementTab.Routines)
-                OnRoutinesPortholeClosed?.Invoke();
+            if (_activeTab == ManagementTab.Chorography)
+                CloseMapsTab();
             OnBack?.Invoke();
             return true;
         }
 
         // View tab click
         int tabIdx = GetTabAtPosition(x, y);
-        if (tabIdx >= 0 && tabIdx < AllTabs.Length)
-        {
-            var tabDef = AllTabs[tabIdx];
-            if (tabDef.Enabled)
-            {
-                var previousTab = _activeTab;
-                _activeTab = tabDef.Tab;
-
-                // Routines tab owns a transparent minimap porthole + a focused world camera.
-                if (previousTab == ManagementTab.Routines && _activeTab != ManagementTab.Routines)
-                    OnRoutinesPortholeClosed?.Invoke();
-                if (_activeTab == ManagementTab.Routines && previousTab != ManagementTab.Routines)
-                    _routinesPanel.OnActivated(_protagonist);
-
-                if (!IsCharacterVisibleForTab(_selectedCharacterIndex, _activeTab))
-                    _selectedCharacterIndex = 0;
-
-                // Always re-sync art/gear to whoever is now selected (handles the case where
-                // _selectedCharacterIndex was reset to 0 above, or the tab just became visible).
-                SwapMemberArt(GetPartyMember(_selectedCharacterIndex));
-
-                if (_activeTab != ManagementTab.Anatomy)
-                    _bodyViewer.ClearHover();
-                if (_activeTab != ManagementTab.Memory)
-                    _memoryPanel.ClearHover();
-                if (_activeTab != ManagementTab.Humors)
-                    _humorMenu.ClearHover();
-                if (_activeTab != ManagementTab.Inventory)
-                    _inventoryMenu.ClearHover();
-                if (_activeTab != ManagementTab.Routines)
-                    _routinesPanel.ClearHover();
-
-                Render();
-                return true;
-            }
-        }
+        if (tabIdx >= 0 && tabIdx < AllTabs.Length && ActivateTab(tabIdx))
+            return true;
 
         // Character tab click
         int charIdx = GetCharacterAtPosition(x, y);
@@ -553,8 +637,8 @@ public class ManagementMenuRenderer
             return true;
         }
 
-        // Routines tab: toggle a routine's lock state
-        if (_activeTab == ManagementTab.Routines && _routinesPanel.ProcessClick(x, y, _protagonist))
+        // Chorography tab: a lock, a map, an icon or the pad
+        if (_activeTab == ManagementTab.Chorography && _mapsPanel.ProcessClick(x, y, _protagonist))
         {
             OnItemConsumed?.Invoke(); // reuse the click-SFX callback
             Render();
@@ -661,6 +745,8 @@ public class ManagementMenuRenderer
             string marker = isActive ? "▸ " : "  ";
             string label = marker + tab.Label;
             _terminal.Text(ContentX, row, label, textColor, bgColor);
+            // The first letter is the tab's key, drawn inverted.
+            _terminal.SetCell(ContentX + marker.Length, row, tab.Label[0], bgColor, textColor);
 
             _tabHitRows.Add((row, i));
         }

@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class EavesdroppingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Hears what is not meant to be heard: through a door, behind a hanging, at the next table. Picks one conversation out of a crowd and follows it while seeming to listen to another.";
     public override string SkillMeans       => "the overhearing of what is not meant to be heard";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
+    public override WillTarget? Will => WillTarget.To<ListenVerb>("overhear what is not meant for me");
     public override string[] Organs        => new[] { "ears", "cerebellum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

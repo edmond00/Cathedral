@@ -81,12 +81,16 @@ public static class Config
         public static Game.Narrative.TimePeriod? ForcedPeriod { get; set; } = null;
 
         /// <summary>
-        /// Whether the developer keyboard shortcuts respond. <b>False in a shipped build</b>
-        /// (<c>-p:Ship=true</c> defines SHIP); true everywhere else.
+        /// Whether the developer keyboard shortcuts respond. <b>False by default, in every build</b>:
+        /// a development run has the shipped keyboard unless it passes <c>--developer-keys</c>, which a
+        /// shipped build (<c>-p:Ship=true</c> defines SHIP) ignores. Off by default because the
+        /// management screen's tabs answer to their initials (A, I, J, M, H, C), and several of those
+        /// letters are developer keys too, which fire wherever the player is.
         ///
         /// <para>What it gates: the render-debug keys (D shader mode, M markers), the post-process
         /// tuning keys (F dither, G levels, H grain, J pulses), the debug camera (C, V), the
-        /// window's diagnostic dumps (D, G), <b>and camera zoom (W, S)</b>.</para>
+        /// window's diagnostic dumps (D, G), the narration's location map (Tab,
+        /// <see cref="Game.DebugLocationMap"/>), <b>and camera zoom (W, S)</b>.</para>
         ///
         /// <para>Zoom is in that list on purpose even though it is not a debug feature. The game
         /// frames its own camera — narration, travel and fights each set a distance — and a player
@@ -97,16 +101,10 @@ public static class Config
         /// <para><b>Escape is not gated</b> and never should be. It opens the pause menu and closes
         /// narration popups; without it a player has no way out of a scene.</para>
         ///
-        /// <para>Settable so a development build can be tested as though it were shipped
-        /// (<c>--no-developer-keys</c>). Setting it true in a SHIP build does nothing useful — the
-        /// handlers are still compiled in, but nothing turns it on.</para>
+        /// <para>Settable so a development run can turn them on (<c>--developer-keys</c>). In a SHIP
+        /// build the handlers are still compiled in, but nothing turns it on.</para>
         /// </summary>
-        public static bool DeveloperKeys { get; set; } =
-#if SHIP
-            false;
-#else
-            true;
-#endif
+        public static bool DeveloperKeys { get; set; } = false;
 
         /// <summary>
         /// Whether to write the development log tree under <c>logs/</c> — a directory per LLM
@@ -288,6 +286,13 @@ public static class Config
         /// for comparing candidates on the OpenAL path. Inert at its default of null.
         /// </summary>
         public static string? SoundFontPath { get; set; } = null;
+
+        /// <summary>
+        /// Which music engine plays (<c>--music-engine synth|legacy</c>): the hierarchical composer and
+        /// the game's own synthesiser, or the first engine and the system MIDI synth. The legacy one is
+        /// kept so the two can be compared in play. See <see cref="Cathedral.Audio.AmbianceEngine"/>.
+        /// </summary>
+        public static Cathedral.Audio.MusicEngineKind MusicEngine { get; set; } = Cathedral.Audio.MusicEngineKind.Synth;
 
         /// <summary>
         /// Opens the game window but never shows it. Set by <c>--hidden</c>; <c>run_tests.sh</c>
@@ -539,6 +544,17 @@ public static class Config
         /// not asked whether it would rather not, and a test wants to see the chain end.</para>
         /// </summary>
         public static int RefuseMeans { get; set; } = 0;
+
+        /// <summary>
+        /// The kind of failure penalty a failed act must draw: <c>wound</c>, <c>get_lost</c>,
+        /// <c>waste_time</c> or <c>lose_focus</c>. Set by <c>--penalty-only &lt;kind&gt;</c>. Null (the
+        /// default) draws from the verb's whole table.
+        ///
+        /// <para>The draw is uniform over a table of one to seven entries, so a script that means to
+        /// see the way lost — or the hour wasted — is otherwise asserting on a coin flip. A table with
+        /// no entry of that kind is a <c>DebugFlagAudit</c> miss.</para>
+        /// </summary>
+        public static string? PenaltyOnly { get; set; } = null;
     }
 
     #endregion
@@ -561,8 +577,8 @@ public static class Config
             "Proscribed Palimpsest";
 #endif
 
-        public const string Chapter = "Volume 5";
-        public const string ChapterSubtitle = "Doubt, Considered as a Faculty";
+        public const string Chapter = "Volume 6";
+        public const string ChapterSubtitle = "Wherein the Will Seeks Its Nearest Road";
     }
 
     /// <summary>
@@ -1715,6 +1731,17 @@ public static class Config
         public const string DefaultStyleInstruction = "Where it fits, a figure of speech (metaphor, comparison, imagery) or an inner feeling that suits your character is welcome.";
 
         /// <summary>
+        /// Follows a modus mentis's own <c>StyleInstruction</c>. A small model reads the things a style
+        /// names as things that are there: HOSPITALITY's "the imagery of hearth, board and made bed" put a
+        /// hearth and a made bed into four replies in five, in a sheepfold, a temple, a castle, beside
+        /// "I will ask him what he knows". This clause alone did not stop it (replayed against the
+        /// shipped model it changed nothing while the style still listed objects); what stopped it was
+        /// rewriting the style as an attitude, and with that done this clause took the remaining leaks
+        /// from 5 in 16 to none. So a style names a way of seeing, never a list of props.
+        /// </summary>
+        private const string StyleIsNotSceneClause = "It only colours how the given facts are told — what it names is not in the scene unless the given information puts it there.";
+
+        /// <summary>
         /// Style clause for dialogue replies: a spoken line carries personality in its wording, not in a
         /// described tone. The broad <see cref="DefaultStyleInstruction"/> ("an inner feeling that suits
         /// your character is welcome") invites a small model to narrate its own manner ("…, you say with
@@ -1739,7 +1766,9 @@ public static class Config
         /// </summary>
         public static string AnswerInstructionFor(string? personaReminder2, string? styleInstruction = null, bool includeLengthClause = true)
         {
-            string style = string.IsNullOrWhiteSpace(styleInstruction) ? DefaultStyleInstruction : styleInstruction.Trim();
+            string style = string.IsNullOrWhiteSpace(styleInstruction)
+                ? DefaultStyleInstruction
+                : $"Your way of seeing: {styleInstruction.Trim()} {StyleIsNotSceneClause}";
             string character = personaReminder2 != null ? $"Stay in the character of {personaReminder2}." : "Stay in character.";
             var parts = new[]
             {

@@ -24,6 +24,9 @@ public static class MidiCapture
 
     public static bool IsActive { get; private set; }
 
+    /// <summary>The capture's clock now: where an event recorded at this instant would land.</summary>
+    public static double Now => _clock();
+
     /// <summary>Starts capturing. <paramref name="clock"/> is read for every event's timestamp.</summary>
     public static void Start(Func<double> clock)
     {
@@ -40,6 +43,13 @@ public static class MidiCapture
         lock (Lock) Events.Add((t, copy));
     }
 
+    /// <summary>Records one event at a time of the caller's choosing: a note-off known in advance.</summary>
+    public static void RecordAt(double seconds, MidiEvent ev)
+    {
+        if (!IsActive) return;
+        lock (Lock) Events.Add((seconds, ev));
+    }
+
     public static int Count { get { lock (Lock) return Events.Count; } }
 
     /// <summary>Writes everything captured so far to <paramref name="path"/>.</summary>
@@ -48,8 +58,11 @@ public static class MidiCapture
         const int ticksPerQuarter = 480;
         const double ticksPerSecond = ticksPerQuarter * 2.0;   // 120 bpm
 
+        // Note-offs are recorded ahead of time (a note's length is known when it starts), so a held
+        // drone can end after the capture does. Those close at the end instead.
+        double end = _clock();
         List<(double Seconds, MidiEvent Event)> events;
-        lock (Lock) events = Events.OrderBy(e => e.Seconds).ToList();
+        lock (Lock) events = Events.Select(e => (Math.Min(e.Seconds, end), e.Event)).OrderBy(e => e.Item1).ToList();
 
         var track = new TrackChunk();
         track.Events.Add(new SetTempoEvent(500_000));

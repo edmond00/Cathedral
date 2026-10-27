@@ -12,6 +12,7 @@ namespace Cathedral.Game.Narrative.World.Items;
 public sealed class FishingRod : ToolItem
 {
     public override string ItemId      => "fishing_rod";
+    public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork, ItemTag.FishingGear };
     public override string DisplayName => "Fishing Rod";
     public override string Description => "A limber cut pole with line whipped to its tip and a hook set into the cork";
     public override WeightClass Weight => WeightClass.Light;
@@ -69,6 +70,7 @@ public sealed class Perch : SeaFoodItem
 public sealed class CopperOre : StoneRawItem
 {
     public override string ItemId      => "copper_ore";
+    public override List<ItemTag> Tags => new() { ItemTag.Mineral, ItemTag.Ore };
     public override string DisplayName => "Copper Ore";
     public override string Description => "Rock shot through with green and rust-red, heavier than it looks";
     public override int    PriceReference => 9;
@@ -77,6 +79,7 @@ public sealed class CopperOre : StoneRawItem
 public sealed class TinOre : StoneRawItem
 {
     public override string ItemId      => "tin_ore";
+    public override List<ItemTag> Tags => new() { ItemTag.Mineral, ItemTag.Ore };
     public override string DisplayName => "Tin Ore";
     public override string Description => "Dull dark stone with a dead weight to it, broken out of a narrow seam";
     public override int    PriceReference => 11;
@@ -85,6 +88,7 @@ public sealed class TinOre : StoneRawItem
 public sealed class LeadOre : StoneRawItem
 {
     public override string ItemId      => "lead_ore";
+    public override List<ItemTag> Tags => new() { ItemTag.Mineral, ItemTag.Ore };
     public override string DisplayName => "Lead Ore";
     public override string Description => "Grey crystalline rock that breaks in cubes and marks the hand";
     public override WeightClass Weight => WeightClass.Heavy;
@@ -109,7 +113,7 @@ public sealed class Peat : Item
     public override string DisplayName => "Peat";
     public override string Description => "A cut block of black peat, wet through and smelling of the ground it came out of";
     public override WeightClass Weight => WeightClass.Medium;
-    public override List<ItemTag> Tags => new() { ItemTag.Mineral };
+    public override List<ItemTag> Tags => new() { ItemTag.Mineral, ItemTag.Fuel };
     public override int    PriceReference => 3;
 }
 
@@ -130,6 +134,7 @@ public sealed class Loam : Item
 public sealed class Cordwood : WoodRawItem
 {
     public override string ItemId      => "cordwood";
+    public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Fuel, ItemTag.Timber };
     public override string DisplayName => "Cordwood";
     public override string Description => "Split lengths cut to a arm's span, stacked and half-seasoned";
     public override int    PriceReference => 4;
@@ -138,6 +143,7 @@ public sealed class Cordwood : WoodRawItem
 public sealed class Beam : WoodRawItem
 {
     public override string ItemId      => "beam";
+    public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Timber };
     public override string DisplayName => "Beam";
     public override string Description => "A squared baulk of timber, adzed flat on all four faces and heavy as a man";
     public override WeightClass Weight => WeightClass.Heavy;

@@ -60,19 +60,18 @@ public class TrackVerb : Verb
     }
 
     /// <summary>Following an animal through country it chose takes you through the same country.</summary>
-    public override IReadOnlyList<Wound?> FailurePenalties(Element? target) => new Wound?[]
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target) => new FailurePenalty[]
     {
-        null, null, null, null, new ContusionWound(),
+        FailurePenalty.GetLost, FailurePenalty.GetLost, FailurePenalty.WasteTime, FailurePenalty.LoseFocus, new ContusionWound(),
     };
 }
 
 /// <summary>
 /// Follows a person, at a distance, until they go somewhere else — and arrives there when they do.
 ///
-/// <para>Costs both time and position: waiting out the hours until they move, then coming up on the
-/// nearest public ground to wherever they went. It stops at public ground deliberately. Following
-/// someone through their own front door is a different crime, and the point of stalking is to learn
-/// where a person goes without being in the room when they get there.</para>
+/// <para>Costs both time and position: waiting out the hours until they move, then following them
+/// there — all the way, or up to the first door they lock behind them. Going through that door is a
+/// different crime, and its own act; the stalk says where they went and stops in front of it.</para>
 ///
 /// <para>Illegal. Nobody follows a stranger around a village for a day innocently.</para>
 /// </summary>
@@ -81,6 +80,12 @@ public class StalkVerb : Verb
 
     public override string VerbId         => "stalk";
     public override string DisplayName    => "Stalk";
+
+    /// <summary>Following somebody who does not know it, and losing them, and then yourself.</summary>
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target) => new FailurePenalty[]
+    {
+        FailurePenalty.GetLost, FailurePenalty.GetLost, FailurePenalty.WasteTime, FailurePenalty.LoseFocus,
+    };
     public override int    BaseDifficulty => 4;
 
     /// <summary>Moving unseen behind somebody. Nothing held makes a footfall quieter, and a full hand makes it louder.</summary>
@@ -103,23 +108,39 @@ public class StalkVerb : Verb
         var plan = Plan(scene, pov, target);
         if (plan == null) return System.Array.Empty<Outcome>();
 
-        var (period, arrival, npc) = plan.Value;
+        var (period, arrival, npc, destination, door) = plan.Value;
+        var label = Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc.Entity, actor);
+        var Label = Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(npc.Entity, actor);
+
+        if (door == null)
+            return new Outcome[]
+            {
+                new TimeShiftOutcome(period),
+                new AreaMoveOutcome(arrival),
+                new NoticeOutcome($"{Label} went to {destination.DisplayName}",
+                                  $"followed {label} and saw where they went"),
+            };
+
+        // A locked door was in the way: say so, and the next phase looks at it.
         return new Outcome[]
         {
             new TimeShiftOutcome(period),
             new AreaMoveOutcome(arrival),
-            new NoticeOutcome(
-                $"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(npc.Entity, actor)} went to {scene.GetAreaOf(npc, period)?.DisplayName ?? "somewhere else"}",
-                $"followed {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc.Entity, actor)} and saw where they went"),
+            new QuarryBeyondOutcome(door,
+                $"{Label} went behind {door.DisplayName} (locked)",
+                $"followed {label} until {NpcSubjectPronoun(target)} went behind {NeutralNarration.ItemPhrase(door.DisplayName)} "
+                + $"and locked it, and I could follow no further"),
         };
     }
 
     /// <summary>
-    /// When the quarry next moves, and the nearest place you can stand and watch from. Null when
-    /// there is nothing to follow — they are not here, they never move, or where they go has no
-    /// public ground anywhere near it.
+    /// When the quarry next moves, where they go, and how far the follower gets: all the way, or to
+    /// the near side of the first door locked against them on the way there, when there is one.
+    /// Null when there is nothing to follow — they are not here, they never move, or nothing joins
+    /// the two places at all.
     /// </summary>
-    private static (TimePeriod Period, Area Arrival, SceneNpc Npc)? Plan(Scene scene, PoV pov, Element target)
+    private static (TimePeriod Period, Area Arrival, SceneNpc Npc, Area Destination, DoorPointOfInterest? Door)?
+        Plan(Scene scene, PoV pov, Element target)
     {
         if (target is not SceneNpc sceneNpc) return null;
         if (sceneNpc.Entity is not NpcEntity npc || !npc.IsAlive || !npc.CanSpeak) return null;
@@ -131,47 +152,71 @@ public class StalkVerb : Verb
         var destination = scene.GetAreaOf(sceneNpc, period.Value);
         if (destination == null) return null;
 
-        var arrival = NearestPublic(scene, destination);
-        return arrival == null ? null : (period.Value, arrival, sceneNpc);
+        // A way with no lock on it, however long, is followed to the end.
+        if (Way(scene, pov.Where, destination, lockedAt: period.Value) != null)
+            return (period.Value, destination, sceneNpc, destination, null);
+
+        var way = Way(scene, pov.Where, destination, lockedAt: null);
+        if (way == null) return null;
+
+        // Walked as far as the first door shut against the follower — locked from the side they come
+        // to it by. Private ground behind it is somebody's, and getting in is what unlock_door and
+        // slip_into are for: each its own decision, with its own witnesses. Every private area is
+        // behind such a door (BuildingAudit.CheckPrivateBehindLocks), so a follower who starts on
+        // public ground ends on it; one who starts inside a house may follow through its rooms.
+        var at = pov.Where;
+        foreach (var (next, by) in way)
+        {
+            if (LockedAgainst(by, at, period.Value))
+                return (period.Value, at, sceneNpc, destination, (DoorPointOfInterest)by);
+            at = next;
+        }
+        return (period.Value, destination, sceneNpc, destination, null);
     }
 
     /// <summary>
-    /// The closest area to <paramref name="from"/> that is not private, walking outward over the area
-    /// graph and any connector that is not a locked door.
-    ///
-    /// <para>Locked doors are excluded on purpose. Following somebody home should leave you outside
-    /// the house, not inside it — getting in is what <c>unlock_door</c> and <c>slip_into</c> are
-    /// for, and each of those is its own decision with its own witnesses.</para>
+    /// The shortest way from <paramref name="from"/> to <paramref name="to"/> over every way there is
+    /// (open ground and every connector), as the area reached at each step and what it was reached by.
+    /// With <paramref name="lockedAt"/>, no door locked from the side it is come to at that hour. Empty
+    /// when the two are one; null when nothing joins them.
     /// </summary>
-    private static Area? NearestPublic(Scene scene, Area from)
+    private static List<(Area Next, Element By)>? Way(Scene scene, Area from, Area to, TimePeriod? lockedAt)
     {
-        var seen  = new HashSet<System.Guid> { from.Id };
-        var queue = new Queue<Area>();
+        var cameBy = new Dictionary<System.Guid, (Area From, Element By)> { [from.Id] = (from, from) };
+        var queue  = new Queue<Area>();
         queue.Enqueue(from);
-
         while (queue.Count > 0)
         {
             var area = queue.Dequeue();
-            if (!area.IsPrivate) return area;
-
-            foreach (var next in Neighbours(scene, area))
-                if (seen.Add(next.Id)) queue.Enqueue(next);
+            if (area.Id == to.Id)
+            {
+                var steps = new List<(Area, Element)>();
+                for (var a = area; a.Id != from.Id; a = cameBy[a.Id].From)
+                    steps.Add((a, cameBy[a.Id].By));
+                steps.Reverse();
+                return steps;
+            }
+            foreach (var (next, by) in AllWays(scene, area))
+            {
+                if (lockedAt is { } when && LockedAgainst(by, area, when)) continue;
+                if (cameBy.TryAdd(next.Id, (area, by))) queue.Enqueue(next);
+            }
         }
-
         return null;
     }
 
-    private static IEnumerable<Area> Neighbours(Scene scene, Area area)
+    /// <summary>A door locked at <paramref name="when"/> from the side <paramref name="from"/> comes to it by.</summary>
+    private static bool LockedAgainst(Element by, Area from, TimePeriod when)
+        => by is DoorPointOfInterest door && from.Id != door.BackArea.Id
+           && door.EffectiveState(when) == DoorState.Locked;
+
+    private static IEnumerable<(Area Next, Element By)> AllWays(Scene scene, Area area)
     {
         if (scene.AreaGraph.TryGetValue(area.Id, out var reachable))
             foreach (var id in reachable)
-                if (scene.GetArea(id) is { } neighbour) yield return neighbour;
-
+                if (scene.GetArea(id) is { } neighbour) yield return (neighbour, neighbour);
         foreach (var connector in area.PointsOfInterest.OfType<ConnectorPointOfInterest>())
-        {
-            // A shut door is not a way through for somebody keeping out of sight.
-            if (connector is DoorPointOfInterest door && door.DoorState == DoorState.Locked) continue;
-            yield return connector.Other(area);
-        }
+            if (connector is not LandscapePointOfInterest && connector.Touches(area))
+                yield return (connector.Other(area), connector);
     }
 }

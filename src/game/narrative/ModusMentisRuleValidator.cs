@@ -13,9 +13,9 @@ namespace Cathedral.Game.Narrative;
 ///
 /// Hard rules (violations throw at startup, see <see cref="ValidateOrThrow"/>):
 ///   R1  no MM has both Thinking and Action (except exempt special first skills, see below)
-///   R2  every MM has at least one of Observation / Thinking / VerbAction
+///   R2  every MM has at least one of Observation / Thinking / VerbAction / Will
 ///   R3  every MM has at most 3 functions, without duplicates
-///   R4  Semantic memory requires Thinking; Sensory requires Observation; Procedural requires VerbAction
+///   R4  Semantic memory requires Thinking or Will; Sensory requires Observation or Will; Procedural requires VerbAction
 ///   R5  Organs is exactly 1 body-region id XOR exactly 2 distinct organ ids, all ids canonical
 ///   R6  every organ and every body region is related to at least 5 MMs
 ///   R7  the organ mediums of all skills whose MAIN MM this is are a subset of the MM's Organs
@@ -28,12 +28,15 @@ namespace Cathedral.Game.Narrative;
 ///   R14 no MM has both Action and Emotion
 ///   R15 MM has Emotion ⇔ it declares >= 1 emotion trigger, and every trigger's humor can be felt
 ///   R16 MM has Speaking ⇒ it requires AnatomyCapability.Speech
+///   R17 MM has Will ⇔ it declares a will target; a Will MM has neither Observation nor Thinking
+///   R18 every anatomy that can learn a Will MM can perform at least one of its target verbs
 ///
 /// Soft targets (reported by the audit, never fatal):
 ///   ~80% two-organ MMs vs ~20% one-region MMs
 ///   ~20% Low / 60% Medium / 20% High morality
 ///   ~10% discrete MMs
 ///   ~33% / 33% / 33% memory-type split
+///   ~33% Will MMs (30–36% is held by the audit, which fails outside it)
 /// </summary>
 public static class ModusMentisRuleValidator
 {
@@ -119,20 +122,22 @@ public static class ModusMentisRuleValidator
                 && fns.Contains(ModusMentisFunction.Thinking) && fns.Contains(ModusMentisFunction.Action))
                 violations.Add($"[R1] {mm.ModusMentisId}: has both Thinking and Action");
 
-            // R2 — at least one of Observation / Thinking / VerbAction
+            // R2 — at least one of Observation / Thinking / VerbAction / Will
             if (!fns.Contains(ModusMentisFunction.Observation)
                 && !fns.Contains(ModusMentisFunction.Thinking)
-                && !fns.Contains(ModusMentisFunction.Action))
-                violations.Add($"[R2] {mm.ModusMentisId}: needs at least one of Observation/Thinking/Action");
+                && !fns.Contains(ModusMentisFunction.Action)
+                && !fns.Contains(ModusMentisFunction.Will))
+                violations.Add($"[R2] {mm.ModusMentisId}: needs at least one of Observation/Thinking/Action/Will");
 
-            // R4 — memory type must match a function
+            // R4 — memory type must match a function. A will observes and thinks, so it satisfies
+            // both the Semantic and the Sensory requirement.
             switch (mm.MemoryType)
             {
-                case Memory.ModusMentisMemoryType.Semantic when !fns.Contains(ModusMentisFunction.Thinking):
-                    violations.Add($"[R4] {mm.ModusMentisId}: Semantic memory requires the Thinking function");
+                case Memory.ModusMentisMemoryType.Semantic when !mm.CanThink:
+                    violations.Add($"[R4] {mm.ModusMentisId}: Semantic memory requires the Thinking or the Will function");
                     break;
-                case Memory.ModusMentisMemoryType.Sensory when !fns.Contains(ModusMentisFunction.Observation):
-                    violations.Add($"[R4] {mm.ModusMentisId}: Sensory memory requires the Observation function");
+                case Memory.ModusMentisMemoryType.Sensory when !mm.CanObserve:
+                    violations.Add($"[R4] {mm.ModusMentisId}: Sensory memory requires the Observation or the Will function");
                     break;
                 case Memory.ModusMentisMemoryType.Procedural when !fns.Contains(ModusMentisFunction.Action):
                     violations.Add($"[R4] {mm.ModusMentisId}: Procedural memory requires the VerbAction function");
@@ -144,7 +149,7 @@ public static class ModusMentisRuleValidator
             // actor. A MM that does neither has nowhere for a MoralLevel to be consulted, so a
             // non-Medium one is a claim the engine cannot honour — it reads as character in the
             // memory panel, skews the audit's 20/60/20 distribution, and changes nothing in play.
-            if (!fns.Contains(ModusMentisFunction.Thinking)
+            if (!mm.CanThink
                 && !fns.Contains(ModusMentisFunction.Action)
                 && mm.MoralLevel != MoralLevel.Medium)
                 violations.Add($"[R13] {mm.ModusMentisId}: is {mm.MoralLevel} morality but has neither "
@@ -201,6 +206,38 @@ public static class ModusMentisRuleValidator
                 && !mm.RequiredCapabilities.HasFlag(AnatomyCapability.Speech))
                 violations.Add($"[R16] {mm.ModusMentisId}: has the Speaking function but does not require "
                                + "AnatomyCapability.Speech — a beast could learn it and Speak About would open for it");
+
+            // R17 — the Will function and the will target imply each other, as R15 makes the Emotion
+            // function and its triggers do; either half alone is silent. A will carries its own
+            // observing and thinking office (narrowed to its path), so the general Observation and
+            // Thinking functions would be the same persona asked twice in two manners. Speaking is a
+            // different office and stays open to it: a will that speaks replies in any conversation,
+            // whatever its target.
+            if (mm.IsWill != (mm.Will != null))
+                violations.Add(mm.IsWill
+                    ? $"[R17] {mm.ModusMentisId}: has the Will function but declares no will target"
+                    : $"[R17] {mm.ModusMentisId}: declares a will target ({mm.Will}) but lacks the Will function");
+            if (mm.IsWill)
+                foreach (var excluded in new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking })
+                    if (fns.Contains(excluded))
+                        violations.Add($"[R17] {mm.ModusMentisId}: has the Will function and {excluded} — a will observes "
+                                     + "and thinks only toward its target");
+
+            // R18 — a will must be one its holder can satisfy. A target verb the body cannot perform
+            // (a beast willing to pick a lock it has no hands for) would refuse everywhere, and say so
+            // as though the place were at fault.
+            if (mm.Will is { } will)
+            {
+                var verbs = Scene.Verbs.VerbRegistry.Instance.GetAll().Where(will.Wants).ToList();
+                if (verbs.Count == 0)
+                    violations.Add($"[R18] {mm.ModusMentisId}: no registered verb matches its will target ({will})");
+                foreach (var anatomy in ModusMentisAnatomy.AllAnatomies.Where(a => ModusMentisAnatomy.IsLearnableBy(mm, a)))
+                {
+                    var caps = AnatomyFactoryRegistry.GetFactory(anatomy).Capabilities;
+                    if (verbs.Count > 0 && !verbs.Any(v => (caps & v.EffectiveCapabilities) == v.EffectiveCapabilities))
+                        violations.Add($"[R18] {mm.ModusMentisId}: a {anatomy} can learn it but perform none of its target verbs ({will})");
+                }
+            }
 
             // R5 — exactly 1 region XOR exactly 2 distinct organs, canonical ids only
             var organs = mm.Organs;
@@ -499,6 +536,8 @@ public static class ModusMentisRuleValidator
                       + $"Semantic {Pct(all.Count(m => m.MemoryType == Memory.ModusMentisMemoryType.Semantic), n)}   (target ~33/33/33)");
         sb.AppendLine();
         sb.Append(EmotionCoverage(all));
+        sb.AppendLine();
+        sb.Append(WillAudit.Section(all));
 
         return sb.ToString();
     }

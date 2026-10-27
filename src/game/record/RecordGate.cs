@@ -488,6 +488,23 @@ public sealed class RecordGate
                 return dice.CliDieCell(di) is { } dc2 ? At(dc2, $"die {di}") : Fail($"no die {di} on screen");
             }
 
+            case "area":
+            {
+                // A card on the location map while a backtrack asks where to; one off the view is
+                // panned into it first, as a player would.
+                var n = _game.CliNarration;
+                if (n == null || n.CliBacktrackState() != "choosing") return Fail("no backtrack is asking where to");
+                string name = string.Join(' ', a[1..]).Trim('"');
+                var choice = n.CliBacktrackChoices().FirstOrDefault(c => c.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                if (choice.Name == null) return Fail($"'{name}' is not on offer");
+                if (choice.Cell == null)
+                {
+                    n.CliShowBacktrackChoice(choice.Name);
+                    choice = n.CliBacktrackChoices().First(c => c.Name == choice.Name);
+                }
+                return choice.Cell is { } ac ? At(ac, $"area {choice.Name}") : Fail($"'{choice.Name}' cannot be brought into view");
+            }
+
             case "cell":
                 if (a.Length < 3 || !int.TryParse(a[1], out int x) || !int.TryParse(a[2], out int y)) return Fail("click cell <x> <y>");
                 return At((x, y), $"cell {x},{y}");
@@ -496,15 +513,14 @@ public sealed class RecordGate
     }
 
     /// <summary>
-    /// The pixel at the visual centre of cell (x, y). The terminal draws a cell centred on
-    /// <c>offset + x * cellSize</c> (see <c>TerminalInputHandler.ScreenToCell</c>), so that is where it is
-    /// both seen and hit.
+    /// The pixel at the visual centre of cell (x, y): <c>offset + (x + 0.5) * cellSize</c>, where the
+    /// terminal draws it and <c>TerminalInputHandler.ScreenToCell</c> hits it.
     /// </summary>
     private Vector2 CellPixel(int x, int y)
     {
         var term = _game.CliTerminal!;
         var layout = term.GetLayoutInfo(Core.ClientSize);
-        return new Vector2(layout.Offset.X + x * layout.CellSize.X, layout.Offset.Y + y * layout.CellSize.Y);
+        return new Vector2(layout.Offset.X + (x + 0.5f) * layout.CellSize.X, layout.Offset.Y + (y + 0.5f) * layout.CellSize.Y);
     }
 
     /// <summary>

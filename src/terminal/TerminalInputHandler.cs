@@ -170,10 +170,9 @@ namespace Cathedral.Terminal
                 return null;
             }
             
-            // Convert to cell coordinates
-            // Note: Renderer positions cells by their centers, so we need to adjust
-            float cellXFloat = (localPos.X + cellSize.X * 0.5f) / cellSize.X;
-            float cellYFloat = (localPos.Y + cellSize.Y * 0.5f) / cellSize.Y;
+            // Convert to cell coordinates: cell x spans [x, x + 1) cells from the offset
+            float cellXFloat = localPos.X / cellSize.X;
+            float cellYFloat = localPos.Y / cellSize.Y;
             
             // Use floor for proper cell boundary detection
             int cellX = (int)Math.Floor(cellXFloat);

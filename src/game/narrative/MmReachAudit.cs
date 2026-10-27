@@ -235,6 +235,7 @@ public static class MmReachAudit
             try { tree = Dialogue.Tree.Trees.CaughtRedHandedTreeFactory.Create(crime); } catch { }
             if (tree != null) yield return tree;
         }
+        yield return new Dialogue.Tree.Trees.FoundWaitingTree();
     }
 
     /// <summary>Two speakers: one who holds authority and one who does not, since trees key on it.</summary>

@@ -27,6 +27,13 @@ expect-state menu Continue enabled
 click menu Continue
 wait mode ProtagonistCreation 20
 
+# The ☰ is the same pause by mouse.
+wait
+click menu-button
+wait mode MainMenu 20
+click menu Continue
+wait mode ProtagonistCreation 20
+
 # ── Childhood reminescence ────────────────────────────────────────────────────
 # The reported bug: Escape did nothing here at all.
 click continue
@@ -38,6 +45,14 @@ wait mode MainMenu 20
 # RESUME it rather than rebuild it. MenuReturnMode read a flat LocationInteraction for all three
 # narrative phases, and OnEnterChildhoodReminescence built a second scene on every entry, which
 # together would have restarted childhood from its first reminescence.
+click menu Continue
+wait mode ChildhoodReminescence 30
+
+# The ☰ here too; the ↹ is not offered, childhood having no location to map.
+wait
+expect-state buttons menu=shown map=hidden
+click menu-button
+wait mode MainMenu 20
 click menu Continue
 wait mode ChildhoodReminescence 30
 

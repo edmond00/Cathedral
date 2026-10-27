@@ -46,7 +46,11 @@ public class NarrativeUI : TerminalPanelUI
     {
         base.Clear();
         _keywordRegions.Clear();
+        MapDrawn = false;
     }
+
+    /// <summary>Whether the location map was drawn since the last <see cref="Clear"/>: this frame shows it.</summary>
+    public bool MapDrawn { get; private set; }
     
     /// <summary>
     /// Render the header: active agent name (left), whose ground the party stands on (centre) and
@@ -109,7 +113,46 @@ public class NarrativeUI : TerminalPanelUI
         // Separator line
         DrawHorizontalLine(_layout.TOP_PADDING + 1);
     }
+
+    /// <summary>
+    /// The ↹ at the header's right end, past the noetic counter: the map in place of the narration
+    /// and back, as Tab does. Styled as the footer button is; lit while the map is up.
+    /// </summary>
+    public (int X, int Y, int Width) RenderMapButton(bool hovered, bool mapShown)
+    {
+        const string face = " ↹ ";
+        int x = _layout.CONTENT_END_X + 1;
+        int y = _layout.TOP_PADDING;
+        bool lit = hovered || mapShown;
+        _terminal.Text(x, y, face,
+            lit ? Config.NarrativeUI.ContinueButtonHoverColor : Config.NarrativeUI.ContinueButtonColor,
+            lit ? Config.NarrativeUI.ContinueButtonHoverBackgroundColor : Config.NarrativeUI.ContinueButtonBackgroundColor);
+        return (x, y, face.Length);
+    }
     
+    /// <summary>
+    /// Draws the debug location map where the narration text would be. Clears the keyword and action
+    /// regions as the text renderer does, so nothing hidden under the map stays clickable.
+    /// </summary>
+    public void RenderDebugMap(DebugLocationMap map, Cathedral.Game.Scene.Scene? scene, Area? here, TimePeriod period,
+                               (int X, int Y)? party = null, bool follow = true,
+                               IReadOnlySet<string>? withheld = null,
+                               IReadOnlySet<Area>? choosable = null, Area? hovered = null)
+    {
+        _keywordRegions.Clear();
+        _actionRegions.Clear();
+
+        for (int y = _layout.CONTENT_START_Y; y < _layout.SEPARATOR_Y + 1; y++)
+            for (int x = _layout.LEFT_PADDING; x < _layout.TERMINAL_WIDTH - _layout.RIGHT_PADDING; x++)
+                _terminal.SetCell(x, y, ' ', Config.NarrativeUI.NarrativeColor, Config.NarrativeUI.BackgroundColor);
+
+        int left = _layout.LEFT_PADDING + 1;
+        int width = _layout.TERMINAL_WIDTH - _layout.RIGHT_PADDING - 1 - left;
+        MapDrawn = true;
+        map.Render(_terminal, scene, here, period, left, _layout.CONTENT_START_Y, width, _layout.NARRATIVE_HEIGHT, party, follow, withheld,
+                   choosable, hovered);
+    }
+
     /// <summary>
     /// Render observation blocks with keywords highlighted.
     /// History lines (from previous narration nodes) are rendered in dark gray.
@@ -581,8 +624,9 @@ public class NarrativeUI : TerminalPanelUI
     /// </summary>
     private void RenderActionLine(string text, ParsedNarrativeAction action, int actionIndex, int y, int lineIndex, ActionRegion? hoveredAction, bool dimContent = false)
     {
-        // Actions judged impossible are always rendered greyed-out
-        dimContent = dimContent || action.IsImpossible;
+        // A reconsidered action, replaced by the one below it, is rendered greyed-out. A refused one is
+        // not: it can still be reconsidered, and greying read as a dead end.
+        dimContent = dimContent || action.Superseded;
 
         // Check if this action is hovered
         bool isHovered = hoveredAction != null && hoveredAction.ActionIndex == actionIndex;

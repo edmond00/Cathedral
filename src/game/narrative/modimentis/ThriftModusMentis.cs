@@ -28,6 +28,7 @@ public class ThriftModusMentis : ModusMentis
     {
         new(typeof(CoinGrantOutcome), () => new LaetitiaHumor()),
         new(typeof(PoiReplacementOutcome), () => new MelancholiaHumor()),
+        new(typeof(TimeWastedOutcome), () => new MelancholiaHumor()),
     };
 
     public override string PersonaPrompt => @"You are the inner voice of THRIFT, and you have never once thrown away something that might serve.

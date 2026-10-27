@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -13,7 +14,8 @@ public class StalkingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Closes distance on the unaware in slow, frozen-footed steps, timed to their attention rather than to haste. Reads a quarry's rhythm of looking and not-looking, and moves only inside the gaps.";
     public override string SkillMeans       => "the slow, silent approach toward a target";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<StalkVerb>("close on a quarry in silence");
     public override string[] Organs        => new[] { "lower_limbs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override MoralLevel MoralLevel => MoralLevel.Low;

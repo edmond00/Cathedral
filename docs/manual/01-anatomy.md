@@ -39,7 +39,7 @@ Each organ is the seat of a family of modi mentis and the source of one or more 
 modi mentis that draw upon that organ.) Taken in order:
 
 **Of the encephalon.** The *anamnesis* governs the persistence of what is learned; it sizes the
-residual memory and the store of routines. The *cerebellum* governs practised movement and the
+residual memory and the number of places remembered. The *cerebellum* governs practised movement and the
 acquisition of dexterity under duress; it sizes procedural memory and the readiness to learn a
 fighting skill in the midst of a fight. The *cerebrum* is the organ of the understanding, and sizes
 semantic memory. The *hippocampus* registers what the senses convey inward, and sizes sensory
@@ -152,7 +152,7 @@ value** — which for most is a floor, and for a duration or a price is a ceilin
 | Measure | Source | Formula |
 |---|---|---|
 | Residual Memory | anamnesis | score × 4, bounded 1–20 |
-| Routine Slots | anamnesis | score × 4 per kind of routine, never below 4 |
+| Mental Maps | anamnesis | score × 4 places remembered, from none at a score of 0 |
 | Procedural Memory | cerebellum | score × 4, bounded 1–20 |
 | Fight Learning | cerebellum | score, in dice, never below 1 |
 | Semantic Memory | cerebrum | score × 4, bounded 1–20 |
@@ -200,6 +200,11 @@ A wound names what it afflicts: an organ part, an organ, a whole region, or noth
 **wildcard**, being the generic contusion, cut and puncture that a glancing blow leaves). Which of
 the three generic wounds a near-miss leaves depends on the shape of the harm — an edge cuts, a point
 punctures, a blunt weight contends — so a sword's graze and a mace's are not the same graze.
+
+Two further wildcards are **mishaps**: the **scrape**, where the body was dragged along something
+rough, and the **strain**, where it was set against itself in effort. A failed act may leave either
+(see [Chapter VI §8](06-narration.md#8-failure-and-its-wages)); no blow ever does, for nobody is
+strained by a sword. A stumble on dangerous ground in a fight is a mishap, and may.
 
 Three degrees of handicap:
 

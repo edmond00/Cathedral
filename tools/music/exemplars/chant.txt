@@ -1,0 +1,10 @@
+# A Dies irae-like chant line, each verse sung twice as the sequence does. The first two lines from
+# memory of the sequence (public domain); the third written here in its manner.
+meter 4
+bpm 76
+F4:1 E4:1 F4:1 D4:1 | E4:1 C4:1 D4:2 |
+F4:1 E4:1 F4:1 D4:1 | E4:1 C4:1 D4:2 |
+F4:1 F4:1 G4:1 F4:1 | E4:1 D4:1 C4:1 E4:1 | F4:1 E4:1 D4:2 |
+F4:1 F4:1 G4:1 F4:1 | E4:1 D4:1 C4:1 E4:1 | F4:1 E4:1 D4:2 |
+A4:1 G4:1 A4:1 F4:1 | G4:1 E4:1 F4:1 D4:1 | E4:1 C4:1 D4:2 |
+A4:1 G4:1 A4:1 F4:1 | G4:1 E4:1 F4:1 D4:1 | E4:1 C4:1 D4:2 |

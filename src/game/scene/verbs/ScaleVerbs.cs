@@ -22,8 +22,8 @@ public abstract class ScaleVerbBase : Verb
     public override int DifficultyFor(Element? target)
         => target is ScalePointOfInterest scale ? scale.Difficulty : BaseDifficulty;
 
-    public override IReadOnlyList<Wound?> FailurePenalties(Element? target)
-        => target is ScalePointOfInterest scale ? scale.FailurePenalties() : NoPenalty;
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target)
+        => target is ScalePointOfInterest scale ? scale.FailurePenalties() : LoseFocusOnly;
 }
 
 /// <summary>Climbs a <see cref="ScalePointOfInterest"/> from its foot to the place above.</summary>
@@ -38,6 +38,7 @@ public class ScaleUpVerb : ScaleVerbBase
         foreach (var m in base.Lessons(ctx)) yield return m;
     }
     public override string VerbId      => "scale_up";
+    protected override bool MovesAlongWay => true;
     public override string DisplayName => "Scale";
 
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
@@ -62,6 +63,7 @@ public class ScaleDownVerb : ScaleVerbBase
 {
 
     public override string VerbId      => "scale_down";
+    protected override bool MovesAlongWay => true;
     public override string DisplayName => "Climb Back Down";
 
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)

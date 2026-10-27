@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class BerryingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Picks fruit and nuts: judges ripeness by touch rather than colour, works a bush efficiently, and gets the crop home without crushing it. Sounds like idleness and produces a great deal of food.";
     public override string SkillMeans       => "the picking of fruit and nuts at their moment";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<GatherVerb>("pick fruit and nuts").Yielding<World.Items.FruitItem>();
     public override string[] Organs        => new[] { "hands", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

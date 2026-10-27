@@ -824,10 +824,12 @@ public abstract class PartyMember
         MemoryModules.FirstOrDefault(m => m.Type == type);
 
     // ── ModusMentis queries ────────────────────────────────────────────
+    // A will observes and thinks (narrowed to its path), so it is listed with both — after every
+    // general mind, which ranges over what a place offers where a will seeks one thing in it.
     public List<ModusMentis> GetObservationModiMentis() =>
-        LearnedModiMentis.Where(s => s.Functions.Contains(ModusMentisFunction.Observation)).ToList();
+        LearnedModiMentis.Where(s => s.CanObserve).OrderBy(s => s.IsWill).ToList();
     public List<ModusMentis> GetThinkingModiMentis() =>
-        LearnedModiMentis.Where(s => s.Functions.Contains(ModusMentisFunction.Thinking)).ToList();
+        LearnedModiMentis.Where(s => s.CanThink).OrderBy(s => s.IsWill).ToList();
     public List<ModusMentis> GetActionModiMentis() =>
         LearnedModiMentis.Where(s => s.Functions.Contains(ModusMentisFunction.Action)).ToList();
     public List<ModusMentis> GetSpeakingModiMentis() =>

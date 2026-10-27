@@ -48,6 +48,8 @@ public static class CrimeAudit
         AuditGoalRules(sb, failures);
         AuditWillingnessRules(sb, failures);
         AuditExamineRules(sb, failures);
+        AuditFailurePenalties(sb, failures);
+        AuditFoundWaiting(sb, failures);
         AuditWitnessReach(sb, failures);
         AuditDiscreteness(sb, failures);
         AuditApproach(sb, failures);
@@ -311,40 +313,45 @@ public static class CrimeAudit
         sb.AppendLine();
     }
 
-    // ── 4b. Examining belongs to the observing modi mentis ───────────────────
+    // ── 4b. The senses belong to the observing modi mentis ──────────────────
 
     /// <summary>
-    /// The two halves of the examine rules (<see cref="ExamineGoalNeedsObservationRule"/>,
-    /// <see cref="ExamineActionNeedsObservationRule"/>): a thinking modus mentis without
-    /// the Observation function is not offered examining, and an action modus mentis without it is
-    /// made to refuse — with the refusal imposed (no question asked) rather than merely allowed. The
-    /// other goal in the fixture is a crime, so Medium morality is used throughout to keep the
-    /// morality rules out of the count.
+    /// The two halves of the observation rules (<see cref="SensoryGoalNeedsObservationRule"/>,
+    /// <see cref="ExamineActionNeedsObservationRule"/>): a human's thinking modus mentis without
+    /// the Observation function is not offered any sense, a beast's is offered them all, and an action
+    /// modus mentis without it is made to refuse examining — with the refusal imposed (no question
+    /// asked) rather than merely allowed — and nothing else. The other goal in the fixture is a crime,
+    /// so Medium morality is used throughout to keep the morality rules out of the count.
     /// </summary>
     private static void AuditExamineRules(StringBuilder sb, List<string> failures)
     {
-        sb.AppendLine("--- CHOICE RULES: examining, by whether the modus mentis observes ---");
+        sb.AppendLine("--- CHOICE RULES: the senses, by whether the modus mentis observes ---");
 
         var (scene, _, examine, other) = BuildGoalFixture(failures);
         if (scene == null) { sb.AppendLine("  (fixture unavailable — skipped)"); sb.AppendLine(); return; }
 
         var pov   = new PoV(scene.AllAreas.First(), TimePeriod.Noon);
-        var actor = new Protagonist();
-        ChoiceRuleContext Ctx(bool observes)
-            => new(scene, pov, actor, new MoralityProbe(MoralLevel.Medium, observes));
+        var human = new Protagonist();
+        var beast = new EnemyCombatant("beast", new WolfSpecies());
+        ChoiceRuleContext Ctx(bool observes, PartyMember? actor = null)
+            => new(scene, pov, actor ?? human, new MoralityProbe(MoralLevel.Medium, observes));
 
-        var both = new List<NarrativeAnchor> { examine!, other! };
-        void GoalCase(string name, bool observes, int expected, bool expectExamine)
+        // The rules read the verb's type and nothing else, so the sense needs no target it could reach.
+        var listen = new VerbAction(new ListenVerb(), "listen", ((VerbAction)examine!).Target);
+
+        var offered = new List<NarrativeAnchor> { examine!, listen, other! };
+        void GoalCase(string name, bool observes, PartyMember actor, int expected)
         {
-            var got = ChoiceRulesChecker.FilterGoals(both, Ctx(observes));
-            bool hasExamine = got.Any(o => o == examine);
-            bool ok = got.Count == expected && hasExamine == expectExamine;
-            sb.AppendLine($"  {(ok ? "✓" : "✗")} {name,-52} {got.Count} goal(s){(hasExamine ? ", incl. examining" : "")}");
-            if (!ok) failures.Add($"{name}: expected {expected} goal(s) {(expectExamine ? "with" : "without")} "
-                                  + $"examining, got {got.Count} {(hasExamine ? "with" : "without")} it");
+            var got = ChoiceRulesChecker.FilterGoals(offered, Ctx(observes, actor));
+            int senses = got.Count(ObservationGoals.IsSensory);
+            bool ok = got.Count == expected && got.Contains(other!);
+            sb.AppendLine($"  {(ok ? "✓" : "✗")} {name,-52} {got.Count} goal(s), {senses} of them senses");
+            if (!ok) failures.Add($"{name}: expected {expected} goal(s) incl. the non-sensory one, "
+                                  + $"got {got.Count} ({senses} senses)");
         }
-        GoalCase("thinking, observes: examine + another goal",     true,  2, true);
-        GoalCase("thinking, does not observe: examine + another",   false, 1, false);
+        GoalCase("human thinking, observes: 2 senses + another",       true,  human, 3);
+        GoalCase("human thinking, does not observe: 2 senses + another", false, human, 1);
+        GoalCase("beast thinking, does not observe: 2 senses + another", false, beast, 3);
 
         var full = new WillingnessOptions(
             new[] { "eager to do it", "willing to do it", "reluctant to do it" }, "unwilling to do it");
@@ -359,7 +366,109 @@ public static class CrimeAudit
         }
         WillCase("action, observes, asked to examine",          true,  examine!, false);
         WillCase("action, does not observe, asked to examine",  false, examine!, true);
+        WillCase("action, does not observe, asked to listen",   false, listen,   false);
         WillCase("action, does not observe, asked to do else",  false, other!,   false);
+        sb.AppendLine();
+    }
+
+    // ── 4c. What a failure costs, and what outranks it ───────────────────────
+
+    /// <summary>
+    /// The failure penalties (<see cref="FailurePenalty"/>) read the same ladder this audit is about:
+    /// a failure somebody saw or heard cannot end with the way lost, because the confrontation
+    /// outranks it. Checked here rather than by a script because staging a wayfinding failure in
+    /// front of a witness is a long way round to one boolean. The other cases are the rest of
+    /// <see cref="FailurePenalty.Realise"/> — a penalty with nothing to take — and the claim the whole
+    /// change rests on: no verb a player can fail is free.
+    /// </summary>
+    private static void AuditFailurePenalties(StringBuilder sb, List<string> failures)
+    {
+        sb.AppendLine("--- FAILURE PENALTIES: what can take hold, and what outranks it ---");
+
+        var human = new Protagonist();
+        var beast = new EnemyCombatant("beast", new WolfSpecies());
+        var area  = new Village.VillageSceneFactory().Build(1).AllAreas.First();
+        var pov   = new PoV(area, TimePeriod.Dawn);
+        FailureSituation At(PartyMember who, int noetic = 2, bool exit = true, bool confronted = false, bool caught = false)
+            => new(who, pov, noetic, exit, confronted || caught, caught);
+
+        void Case(string name, FailurePenalty penalty, FailureSituation s, Type? expected)
+        {
+            var got = penalty.Realise(s);
+            bool ok = expected == null ? got == null : got != null && got.GetType() == expected;
+            string what = got switch
+            {
+                null                     => "cannot take hold",
+                WoundInflictionOutcome w => $"{got.GetType().Name} ({w.Wound.Template.GetType().Name})",
+                _                        => got.GetType().Name,
+            };
+            sb.AppendLine($"  {(ok ? "✓" : "✗")} {name,-52} {what}");
+            if (!ok) failures.Add($"{name}: expected {expected?.Name ?? "nothing"}, got {what}");
+        }
+
+        Case("lose the way, nobody saw",                 FailurePenalty.GetLost,   At(human),                   typeof(LostWayOutcome));
+        Case("lose the way, seen or heard",              FailurePenalty.GetLost,   At(human, confronted: true), null);
+        Case("lose the way, in a phase with no exit",    FailurePenalty.GetLost,   At(human, exit: false),      null);
+        Case("waste the hour",                           FailurePenalty.WasteTime, At(human),                   typeof(TimeWastedOutcome));
+        Case("waste the hour, heard only",               FailurePenalty.WasteTime, At(human, confronted: true), typeof(TimeWastedOutcome));
+        Case("waste the hour, seen (a fight or caught)", FailurePenalty.WasteTime, At(human, caught: true),     null);
+        Case("lose focus, a point left",                 FailurePenalty.LoseFocus, At(human, noetic: 1),        typeof(FocusLostOutcome));
+        Case("lose focus, none left",                    FailurePenalty.LoseFocus, At(human, noetic: 0),        null);
+        Case("a graze on a human",                       new ScrapeWound(),        At(human),                   typeof(WoundInflictionOutcome));
+        Case("a graze on a beast (its own graze lands)", new ContusionWound(),     At(beast),                   typeof(WoundInflictionOutcome));
+        Case("a knee fracture on a beast",               new KneeFractureLeftWound(), At(beast),                null);
+
+        // The beast's graze must be the beast's own type, or the save refuses it (PartyState.Rebuild).
+        if (FailurePenalty.Of(new ContusionWound()).Realise(At(beast)) is WoundInflictionOutcome bw
+            && !WoundRegistry.CanBeSufferedBy(bw.Wound.Template, beast))
+            failures.Add($"a graze translated for a beast is {bw.Wound.Template.GetType().Name}, which a beast cannot carry");
+
+        // The draw itself: a table holding the way lost, drawn many times with a witness watching,
+        // never loses it — the entry is set aside and the rest of the table drawn instead.
+        var move = new MoveToAreaVerb();
+        var rng  = GameRng.For("crime-audit-failure-penalties");
+        int lost = 0, nothing = 0;
+        for (int i = 0; i < 200; i++)
+        {
+            var drawn = move.DrawFailurePenalty(area, At(human, confronted: true), rng);
+            if (drawn is LostWayOutcome) lost++;
+            if (drawn == null) nothing++;
+        }
+        bool drawOk = lost == 0 && nothing == 0;
+        sb.AppendLine($"  {(drawOk ? "✓" : "✗")} {"move failed in front of a witness, 200 draws",-52} lost {lost}, nothing {nothing}");
+        if (!drawOk) failures.Add($"move drawn with a witness: the way was lost {lost} time(s), nothing drawn {nothing} time(s)");
+
+        // Seen, the same draw never wastes the hour either: the fight or the confrontation begins on
+        // the press that closes the act, and an hour passing would be played out over it.
+        int wasted = 0; lost = 0; nothing = 0;
+        for (int i = 0; i < 200; i++)
+        {
+            var drawn = move.DrawFailurePenalty(area, At(human, caught: true), rng);
+            if (drawn is TimeWastedOutcome) wasted++;
+            if (drawn is LostWayOutcome) lost++;
+            if (drawn == null) nothing++;
+        }
+        drawOk = wasted == 0 && lost == 0 && nothing == 0;
+        sb.AppendLine($"  {(drawOk ? "✓" : "✗")} {"move failed in plain sight, 200 draws",-52} wasted {wasted}, lost {lost}, nothing {nothing}");
+        if (!drawOk) failures.Add($"move drawn in plain sight: the hour wasted {wasted}, the way lost {lost}, nothing drawn {nothing} time(s)");
+
+        // And no table is left with nothing that can take hold when its failure is seen.
+        foreach (var verb in VerbRegistry.Instance.GetAll().OrderBy(v => v.VerbId, StringComparer.Ordinal))
+        {
+            var table = verb.FailurePenalties(null);
+            if (table.Count > 0 && !table.Any(p => p.Realise(At(human, caught: true)) != null))
+                failures.Add($"{verb.VerbId}: a failure seen costs nothing — every entry is the way lost or the hour wasted");
+        }
+
+        // No verb a player can fail is free: every table is non-empty, save the phase-only verbs.
+        var exempt = new HashSet<string> { "get_up", "remember" };
+        foreach (var verb in VerbRegistry.Instance.GetAll().OrderBy(v => v.VerbId, StringComparer.Ordinal))
+        {
+            bool empty = verb.FailurePenalties(null).Count == 0;
+            if (empty && !exempt.Contains(verb.VerbId))
+                failures.Add($"{verb.VerbId}: a failure costs nothing — its FailurePenalties table is empty");
+        }
+        sb.AppendLine($"  ✓ every registered verb but {string.Join(" and ", exempt)} names a cost");
         sb.AppendLine();
     }
 
@@ -381,6 +490,76 @@ public static class CrimeAudit
     /// two rooms joined by a door were not neighbours and nothing indoors could ever be overheard.
     /// <see cref="SceneAdjacency"/> reads the section instead.</para>
     /// </summary>
+    /// <summary>
+    /// 4d. Found waiting: night brings the householder to a trespasser, the confrontation it makes
+    /// opens found_waiting (and only for the waiting), and the leave it can win is leave to stand in
+    /// the house — not to take from it, force its doors or learn a routine in it.
+    /// </summary>
+    private static void AuditFoundWaiting(StringBuilder sb, List<string> failures)
+    {
+        sb.AppendLine("--- FOUND WAITING: the householder at nightfall, and what their leave covers ---");
+
+        void Check(string name, bool ok, string detail = "")
+        {
+            sb.AppendLine($"  {(ok ? "✓" : "✗")} {name}{(detail.Length > 0 ? $" — {detail}" : "")}");
+            if (!ok) failures.Add($"found waiting: {name}{(detail.Length > 0 ? $" ({detail})" : "")}");
+        }
+
+        var protagonist = new Protagonist();
+        var key   = protagonist.AffinityKey;
+        var scene = new Village.VillageSceneFactory().Build(1);
+
+        var here = scene.AllAreas.FirstOrDefault(a => a.IsPrivate && ConfrontationSelector.Householder(scene, a, key) != null);
+        if (here == null || scene.SectionOf(here) is not { } house)
+        {
+            Check("a village has a private room with a householder", false);
+            return;
+        }
+        var pov = new PoV(here, TimePeriod.Night);
+
+        Check("waiting in a private room is trespass", PrivacyModel.IsTrespassing(scene, here));
+
+        var came = ConfrontationSelector.SummonHouseholder(scene, pov, key);
+        Check("night brings the householder", came != null, came?.Entity.DisplayName ?? "nobody came");
+        if (came == null) return;
+        var npc = (NpcEntity)came.Entity;
+
+        Check("the householder stands in the room", scene.GetAreaOf(came, TimePeriod.Night)?.Id == here.Id);
+        Check("the householder is awake, not put to bed by the room", !came.IsSleeping(scene, pov));
+        Check("their confrontation is FoundWaiting",
+              ConfrontationSelector.Witness(scene, pov, key)?.Kind == ConfrontationKind.FoundWaiting);
+        Check("explaining yourself opens found_waiting",
+              ConfrontationSelector.TreeFor(scene, npc, null, true, cameForward: true) is Dialogue.Tree.Trees.FoundWaitingTree);
+        Check("a lawful act failing in front of them opens found_waiting",
+              ConfrontationSelector.TreeFor(scene, npc, new SitAndWaitVerb(), true) is Dialogue.Tree.Trees.FoundWaitingTree);
+        Check("a theft failing in front of them opens caught-red-handed",
+              ConfrontationSelector.TreeFor(scene, npc, new StealVerb(), true) is not Dialogue.Tree.Trees.FoundWaitingTree);
+
+        // Won: what OnDialogueCompleted does with ToleratesTrespass.
+        ConfrontationSelector.Release(scene, npc, protagonist);
+        scene.ToleratedSections.Add(house);
+
+        Check("tolerated: standing in the house is no longer trespass", !PrivacyModel.IsTrespassing(scene, here));
+        Check("tolerated: nobody confronts", ConfrontationSelector.Witness(scene, pov, key) == null);
+        Check("tolerated: sitting is lawful", !new SitAndWaitVerb().IsIllegal(scene, pov, null, protagonist));
+        Check("tolerated: stealing is still a crime", new StealVerb().IsIllegal(scene, pov, null, protagonist));
+        Check("tolerated: no routine is learned here", !Cathedral.Game.Narrative.Routines.RoutineRecorder.IsRecordable(here));
+
+        var innerDoor = house.Areas.SelectMany(a => a.PointsOfInterest).OfType<DoorPointOfInterest>()
+                             .FirstOrDefault(d => d.AreaA.IsPrivate || d.AreaB.IsPrivate);
+        if (innerDoor != null)
+        {
+            Check("tolerated: unlocking an inner door is still a crime", new UnlockDoorVerb().IsIllegal(scene, pov, innerDoor, protagonist));
+            Check("tolerated: opening an unlocked inner door is lawful", !new OpenDoorVerb().IsIllegal(scene, pov, innerDoor, protagonist));
+        }
+
+        var elsewhere = scene.AllAreas.FirstOrDefault(a => a.IsPrivate && scene.SectionOf(a) != house);
+        if (elsewhere != null)
+            Check("another building is still trespass", PrivacyModel.IsTrespassing(scene, elsewhere), elsewhere.DisplayName);
+
+        sb.AppendLine();
+    }
+
     private static void AuditWitnessReach(StringBuilder sb, List<string> failures)
     {
         sb.AppendLine("--- WITNESS REACH: which tier can occur in a private area ---");
@@ -607,8 +786,8 @@ public static class CrimeAudit
     /// read nothing else.
     ///
     /// <para>It observes by default, and must for the morality cases: their lawful goal is examining,
-    /// which a mind without the Observation function is never offered
-    /// (<see cref="ExamineGoalNeedsObservationRule"/>) — so a non-observing probe would lose that goal
+    /// which a human's mind without the Observation function is never offered
+    /// (<see cref="SensoryGoalNeedsObservationRule"/>) — so a non-observing probe would lose that goal
     /// to a rule the morality cases are not about, and count it as a morality failure.</para>
     /// </summary>
     private sealed class MoralityProbe : ModusMentis

@@ -6,11 +6,11 @@
 # reason in the sentence itself — "I want to act, not to stand and observe" — because a reason left
 # to the rewrite is the first thing a strong style drops.
 #
-# Snatch is an Action-only modus mentis; --means-only pins the playground's choice of means to it.
+# Knack is an Action-only modus mentis; --means-only pins the playground's choice of means to it.
 #
 # --organs pineal_gland=0: one try, no iterative thinking — a retry would step around the refusal
-# this script is about (see thinking_iterates.cli and thinking_rule_probe.cli for the retries).
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Crown" --period dawn --observe-only "Test Giant Tree" --grant-mm snatch --means-only snatch --organs pineal_gland=0
+# this script is about (see thinking_iterates.cli and thinking_click_rules_not_retried.cli for the retries).
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Crown" --period dawn --observe-only "Test Giant Tree" --grant-mm knack --means-only knack --organs pineal_gland=0
 
 wait
 click menu New

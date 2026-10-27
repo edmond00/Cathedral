@@ -25,6 +25,7 @@ public class SwimAcrossVerb : Verb
         foreach (var m in base.Lessons(ctx)) yield return m;
     }
     public override string VerbId         => "swim_across";
+    protected override bool MovesAlongWay => true;
     public override string DisplayName    => "Swim Across";
     public override int    BaseDifficulty => 5;
 
@@ -56,6 +57,6 @@ public class SwimAcrossVerb : Verb
         return new[] { new AreaMoveOutcome(water.Other(pov.Where)) };
     }
 
-    public override IReadOnlyList<Wound?> FailurePenalties(Element? target)
-        => target is WaterCrossingPointOfInterest water ? water.FailurePenalties() : NoPenalty;
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target)
+        => target is WaterCrossingPointOfInterest water ? water.FailurePenalties() : LoseFocusOnly;
 }

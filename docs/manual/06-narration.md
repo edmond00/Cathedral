@@ -20,6 +20,22 @@ never across a gate, so that it is never a way round either. Not every location 
 of areas two steps apart is joined by a path with a chance of 30 in 100, each pair three steps apart
 with 15 in 100, and no area has more than two.
 
+**Going back.** A way out already known — a neighbouring area already stood in, or a door, stair,
+path or climb already gone by — is not walked again but **gone back by**, and the narration says
+so when it takes such a way in. Going back is a single act of difficulty 2, whatever the distance,
+and it reaches any area already visited that known ways join to the one stood in: the destination
+is chosen once the act has succeeded, from all of them. It never passes a door locked against the
+comer, and never steps from public ground into private, so the private rooms it may return to are
+only those of the private ground the body already stands in. A will that goes back as a step of its
+course goes to the area its course needs, and nothing is chosen. What going back teaches follows
+from how it was done: with an enemy in sight, by night, or on private ground, each teaches its own;
+otherwise it teaches the retracing of known ways.
+
+What is known of a place — the areas stood in, the ways gone by, what an observation took in — is the
+place's **mental map**, and lasts only as long as the map is remembered (see
+[IX §1](09-routines.md)). A place forgotten is unknown again: none of its ways is known, and none is
+gone back by.
+
 A **point of view** is a pair: *where* the acting body stands, and *when* — the period of the day.
 Both are scene state, and both decide what may be attempted. Moving between areas changes the first;
 waiting changes the second.
@@ -163,23 +179,34 @@ one (see §7); and one that speaks may not refuse a conversation (§6).
 **Second thoughts.** A thinking whose proposal comes to nothing may be taken up again by the same
 thinking modus mentis, as many times as the measure of *Iterative Thinking* allows — the pineal
 gland's score, from nought to three ([Chapter I](01-anatomy.md)). A proposal comes to nothing when the
-acting modus mentis refuses it; when a coded rule would refuse it (§6), the rules being consulted
-while a further deliberation remains, save the two that turn upon an implement, since none can yet
-have been combined; or when it is doubted, as below. Each refusal is rendered, and the mind
-acknowledges it before deliberating anew. Within one thinking, every pairing of goal and acting modus
-mentis already tried is struck off: a goal returns only with an acting modus mentis not yet tried for
-it — for a conversation, a speaking one, where any is held — and one refused before is offered as means only those that would not refuse it, as in §4. When
-nothing remains the thinking ends, saying so. The last deliberation allowed is not consulted against
-the rules in advance; its act is offered as any other, and refused, if at all, when it is attempted.
-The whole chain is one thinking, and costs one noetic point.
+acting modus mentis refuses it, or when it is doubted, as below. Each refusal is rendered, and the
+mind acknowledges it before deliberating anew. A refused goal is taken up again at once if another
+acting modus mentis not yet tried for it — for a conversation, a speaking one, where any is held — is
+one that no rule of choice forbids it to; the act is then carried out by one of those, which is not
+asked whether it would rather not, as in §4, and the thinking ends upon an act. If none is, the goal
+is struck off, and the mind deliberates upon another. When nothing remains the thinking ends, saying
+so. Only a refusal given before an act is offered is deliberated anew: the coded rules (§6) judge the
+act when it is attempted, and a witness in sight or an enemy in the room is not a reason to think
+again but a reason the attempt fails. The whole chain is one thinking, and costs one noetic point.
 
 **Doubt.** A body whose pineal gland scores two or more may doubt. While a further deliberation
 remains, the reasoning ends upon a question, and is answered — to hold to the proposal or not —
-before the acting modus mentis is asked or any rule consulted. Not to hold to it strikes off the goal
+before the acting modus mentis is asked. Not to hold to it strikes off the goal
 itself, with every acting modus mentis at once — the doubt is of the end, not of the means — and the
 mind deliberates again upon another. Either answer is voiced by the thinking
 modus mentis. No doubt is offered on the last deliberation, which would otherwise end the thinking
 upon nothing.
+
+**Reconsideration.** An act already offered may be thought over again by a thinking modus mentis of
+the player's choosing, at the cost of one noetic point. The mind so asked may hold to the act or
+want no part of it, but proposes no other; a will holds to an act of its own course and to no
+other. Holding to it, it gives the act to an acting modus mentis other than the one that offered
+it, and only to one that no rule of choice forbids and no coded rule (§6) would refuse when the act
+is attempted — so that an act which a witness in sight or an enemy in the room would forbid passes
+to a discreet modus mentis, where one is held. That modus mentis does not decline it. The new act
+takes the place of the old, which may no longer be attempted. When the mind wants no part of it, or
+no other acting modus mentis could carry it out, the act offered before stands as it was. It is not
+offered in recollection nor in the rising from exhaustion, whose one act has one means.
 
 **The die pool is the sum of the levels of every modus mentis in the chain** — the one that
 observed, the one that deliberated, the one that acts — together with the whole level of any
@@ -251,11 +278,14 @@ there is a voice and whether there is any manner of the mind left able to use it
 **Rules of choice** narrow what is *offered*. They **withhold**, silently, and **cost nothing**,
 because nothing was refused. Character belongs here — that never occurred to me.
 
-**Examining belongs to the observing modi mentis.** One that does not bear the Observation function
-takes no part in examining an object closely, on either side of the chain. As the thinking modus
-mentis it is never offered that goal; as the acting one, chosen to carry it out, it refuses at once
-and is not asked — the refusal states that it would act rather than stand and observe. The other
-senses are under no such rule.
+**The senses belong to the observing modi mentis.** In a body of the human anatomy, a thinking modus
+mentis that does not bear the Observation function is never offered any of the four senses as a goal
+— to examine, to contemplate, to listen or to smell. A beast is under no such rule: its every
+thinking modus mentis is offered the senses, which are the greater part of what a beast may do. On
+the acting side the rule is narrower and holds for every anatomy: an acting modus mentis without the
+Observation function, chosen to carry out an examination, refuses at once and is not asked — the
+refusal states that it would act rather than stand and observe. The other three senses are carried
+out by whichever acting modus mentis is chosen.
 
 **Principle refuses a crime before it is offered.** A high-moral acting modus mentis chosen to carry
 out a crime refuses at once and is not asked, while the act is still being deliberated — no act is
@@ -274,6 +304,23 @@ is held; and such a one cannot refuse a conversation, though it may undertake it
 of action that forbids the conversation itself — a listener who is hostile, a tongue with nothing
 left to say — still applies. Where nobody can be spoken to, none of this narrows anything.
 
+**A will goes only its own way.** A will (see [Chapter II §7](02-memory.md#7-what-the-modi-mentis-are-for))
+is reckoned the shortest course of acts from where the body stands to an act of the kind it wants,
+and at every step of the chain it attends only to the first act of such a course — of several
+equally short, any. In what it says, a person on its course is named as the narration names them
+elsewhere. It never opens a
+phase while any other observing modus mentis is held. Given an object to attend to closely, it keeps
+it if the object affords that first act, turns from it to the object that does if one remains
+unattended this phase, and otherwise declines it, naming the act that would begin the course.
+Deliberating, it is offered no goal but that first act, and on an object that does not afford it it
+proposes nothing, saying only what it wants; it admits no doubt, having no goal to choose between, and
+tries again only with another means for an act on its way. In either office it gives its course as its reason. Where the course does not exist
+within the place, it declines in both and says that only leaving offers what it wants. Bearing the
+Action function, it is its own means for the act it wants, and is not asked how willingly: it is
+eager for it, and the difficulty falls by one; an act on its way is carried out by
+whichever means is chosen for it, as any goal is. A will cannot refuse an act of its own course — though a rule
+of action, which judges circumstance and not character, still may.
+
 The distinction has a practical edge: an act blocked by a rule of action is an act you attempted and
 were stopped from completing, and you pay for the attempt.
 
@@ -287,7 +334,12 @@ it, each act that can be a crime has its own condition — striking someone who 
 enemy is not a crime, for the quarrel was declared before the blow; forcing the lock of a public
 storehouse is nobody's privacy.
 
-**Ground has three tenures.** *Private* ground is somebody's, and makes every act a trespass.
+**Ground has three tenures.** *Private* ground is somebody's, and makes every act a trespass. It is
+never entered from public ground unawares: the only ways in are a door locked against the comer —
+the door of a house, or of any room that is somebody's, the rooms off a great building's passages
+among them — and ways that are themselves an intrusion, a window slipped through or a wall scaled. No open way,
+stair or unlocked door leads from public ground into private, though within private ground the ways
+between rooms are open.
 *Public* ground is everybody's: the streets, yards and fields of a farm, a village or a city. *Wild*
 ground is nobody's: the open ground of a forest, a plain, a cave, a coast, a mountain, a peak and
 the climate biomes. A store kept there — a woodshed, a net shed, an ore store — is somebody's stock
@@ -313,7 +365,8 @@ anything.
 
 *May I act at all?* Asked of **raw** proximity by the rules of action. Somebody in the room blocks a
 non-discreet modus mentis outright. A **discreet** modus mentis may always attempt — that permission
-is the whole of what discretion buys at close quarters.
+is the whole of what discretion buys at close quarters. The acts that answer a confronting witness
+(below) are exempt: done to the one already watching, they leave nobody to be caught by.
 
 *What does failing cost?* Asked of **effective** proximity, where discretion applies. Discretion
 silences a body **through a wall**, never **in the same room**: it downgrades a Visual presence not
@@ -356,6 +409,19 @@ Failure begins the fight with an enemy, or the confrontation with a witness. A c
 with the conversation it opens: a witness who came on the body's account then returns to the day
 they were drawn from, unless the conversation has made an enemy of them.
 
+**Found waiting.** The householder who comes in at nightfall to find the body waiting in their house
+(see [Chapter V §8](05-travel.md#8-the-periods-of-the-day)) confronts it as any witness does, and
+the same three ways open the conversation — a failed act before them, a failed runaway, or going up
+to explain oneself. The conversation is not the one a crime opens. It asks why the body is still
+there and whether it is to be kept the night, and every resolution in it that rolls stands on the gravest of the
+ladders ([Chapter VII §2](07-social.md#2-the-conversation)). To win it is to be allowed to stay:
+for the rest of the visit, standing anywhere in that building is no trespass, and nobody in it
+confronts the body for being there. To lose it is to be shown the door, which ends the visit. The
+leave covers presence and nothing else. The rooms remain somebody's, so to take from them is still
+theft and to force a locked door in them is still a crime, though an unlocked one may be opened; no
+routine is learned there; and another building is another house. An act that is a crime of its own,
+failing before the householder, opens the confrontation that crime opens, and not this one.
+
 **Enmity persists across visits.** Walking away from a fight ends the fight, not the quarrel.
 
 What a crime costs is what it costs at the time, and what the person who saw it thinks of you
@@ -366,10 +432,31 @@ afterwards. Nothing is written down, and no authority pursues you beyond the roo
 A failed act costs, in order:
 
 1. **The budget**, which is not refilled at the phase boundary that follows.
-2. **A wound**, where the attempt is one that can hurt its maker — drawn from what that manner of
-   acting risks, and often none. Such a wound is stamped with the day and can therefore heal.
-3. **A social consequence**, read off effective proximity as §7 describes: at most one of caught,
+2. **A social consequence**, read off effective proximity as §7 describes: at most one of caught,
    attacked, or approached. These are three rungs of one ladder, not a set of independent flags.
+3. **A penalty**, drawn at hazard from what that manner of acting risks. No failure goes without one.
+
+A penalty is of four kinds:
+
+- **A wound**, where the attempt is one that can hurt its maker. It is stamped with the day and can
+  therefore heal.
+- **The way lost**, for the manners of acting that find a way — walking, following a path or a
+  quarry, setting out for a distant prospect. The visit ends with the act, and the party stands again
+  in the open country, outside the place.
+- **The hour wasted**, for the hard and the slow — a climb, a swim, a crossing, a labour. The period
+  of the day advances by one, and all that follows the hour follows it.
+- **The thread lost**: one noetic point beyond the point the act already spent. Since the budget is
+  not refilled after a failure, the point stays lost into the phase that follows. It is what the
+  manners of acting that hazard nothing else — the senses, speech, waiting — cost when they fail.
+
+**A penalty that cannot take hold is drawn again** from the rest of the manner's risks. The way
+cannot be lost where somebody saw or heard the failure, for a confrontation outranks it: the one who
+caught you does not let you wander off, and the one who heard you comes to a room you are still in.
+The hour cannot be wasted where the failure was seen, and so begins a fight or a confrontation, for
+that quarrel is had there and then and not an hour later; a failure merely heard may still waste it.
+The thread cannot be lost with no point left to lose. A wound must be one the body can bear; a
+generic graze is borne as the acting body's own graze of the same kind, and a named injury the body
+has no part for is drawn again.
 
 A blow aimed at somebody is the exception to the whole of the above, and the exception is worth
 stating: **a swing that misses begins the fight regardless**, and the ladder does not run, a quarrel

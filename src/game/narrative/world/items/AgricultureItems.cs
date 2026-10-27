@@ -17,7 +17,7 @@ public sealed class Barley : ConsumableItem
     public override string ItemId      => "barley";
     public override string DisplayName => "Barley";
     public override string Description => "A bundle of bearded barley ears, the awns long and scratchy";
-    public override List<ItemTag> Tags => new() { ItemTag.Crop };
+    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Grain };
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Food;
@@ -34,7 +34,7 @@ public sealed class Oats : ConsumableItem
     public override string ItemId      => "oats";
     public override string DisplayName => "Oats";
     public override string Description => "A loose fistful of pale oats in their papery husks";
-    public override List<ItemTag> Tags => new() { ItemTag.Crop };
+    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Grain, ItemTag.Fodder };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Food;
@@ -51,7 +51,7 @@ public sealed class Rye : ConsumableItem
     public override string ItemId      => "rye";
     public override string DisplayName => "Rye";
     public override string Description => "A bundle of tall rye, the ears long, thin and grey-green";
-    public override List<ItemTag> Tags => new() { ItemTag.Crop };
+    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Grain };
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Food;
@@ -68,7 +68,7 @@ public sealed class Rice : ConsumableItem
     public override string ItemId      => "rice";
     public override string DisplayName => "Rice";
     public override string Description => "A twist of cloth holding husked rice, the grains small and translucent";
-    public override List<ItemTag> Tags => new() { ItemTag.Crop };
+    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Grain };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Food;
@@ -85,7 +85,7 @@ public sealed class Maize : ConsumableItem
     public override string ItemId      => "maize";
     public override string DisplayName => "Maize Ear";
     public override string Description => "A fat ear of maize in its sheath of dry leaves, silk gone brown at the tip";
-    public override List<ItemTag> Tags => new() { ItemTag.Crop };
+    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Grain };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Food;
@@ -156,6 +156,7 @@ public sealed class Tomato : VegetableItem
 public sealed class Olive : FruitItem
 {
     public override string ItemId      => "olive";
+    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Fruit };
     public override string DisplayName => "Olives";
     public override string Description => "A handful of black olives, bitter until they have been cured";
     protected override HumorRichness Richness => HumorRichness.Hearty;
@@ -167,6 +168,7 @@ public sealed class Olive : FruitItem
 public sealed class Lemon : FruitItem
 {
     public override string ItemId      => "lemon";
+    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Fruit };
     public override string DisplayName => "Lemon";
     public override string Description => "A thick-skinned yellow lemon, the oil sharp on the fingers";
     protected override HumorRichness Richness => HumorRichness.Hearty;
@@ -178,6 +180,7 @@ public sealed class Lemon : FruitItem
 public sealed class Orange : FruitItem
 {
     public override string ItemId      => "orange";
+    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Fruit };
     public override string DisplayName => "Orange";
     public override string Description => "A round orange, its skin pitted and fragrant";
     protected override HumorRichness Richness => HumorRichness.Hearty;
@@ -189,6 +192,7 @@ public sealed class Orange : FruitItem
 public sealed class Mango : FruitItem
 {
     public override string ItemId      => "mango";
+    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Fruit };
     public override string DisplayName => "Mango";
     public override string Description => "A heavy mango blushed red at the shoulder, soft under the thumb";
     protected override HumorRichness Richness => HumorRichness.Hearty;
@@ -200,6 +204,7 @@ public sealed class Mango : FruitItem
 public sealed class Almond : FruitItem
 {
     public override string ItemId      => "almond";
+    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Fruit };
     public override string DisplayName => "Almonds";
     public override string Description => "A handful of almonds in their pitted shells";
     protected override HumorRichness Richness => HumorRichness.Hearty;
@@ -211,6 +216,7 @@ public sealed class Almond : FruitItem
 public sealed class Coconut : FruitItem
 {
     public override string ItemId      => "coconut";
+    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.CashCrop };
     public override string DisplayName => "Coconut";
     public override string Description => "A brown hairy coconut, its water sloshing when shaken";
     protected override HumorRichness Richness => HumorRichness.Hearty;
@@ -222,6 +228,7 @@ public sealed class Coconut : FruitItem
 public sealed class Grape : FruitItem
 {
     public override string ItemId      => "grape";
+    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Wine, ItemTag.Fruit };
     public override string DisplayName => "Grapes";
     public override string Description => "A bunch of dusty dark grapes, some split and sweet with wasps";
     protected override HumorRichness Richness => HumorRichness.Hearty;
@@ -235,6 +242,7 @@ public sealed class Grape : FruitItem
 public sealed class CottonBoll : TextileItem
 {
     public override string ItemId      => "cotton_boll";
+    public override List<ItemTag> Tags => new() { ItemTag.Textile, ItemTag.CashCrop };
     public override string DisplayName => "Cotton Boll";
     public override string Description => "A burst cotton boll, the white fibre packed round its seeds";
     public override int PriceReference => 5;
@@ -245,7 +253,7 @@ public sealed class Sugarcane : ConsumableItem
     public override string ItemId      => "sugarcane";
     public override string DisplayName => "Sugarcane";
     public override string Description => "A length of jointed sugarcane, sweet sap at the cut end";
-    public override List<ItemTag> Tags => new() { ItemTag.Crop };
+    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.CashCrop };
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass Weight => WeightClass.Medium;
     public override ConsumableType ConsumableType => ConsumableType.Food;
@@ -258,6 +266,7 @@ public sealed class Sugarcane : ConsumableItem
 public sealed class TeaLeaf : HerbItem
 {
     public override string ItemId      => "tea_leaf";
+    public override List<ItemTag> Tags => new() { ItemTag.Herb, ItemTag.CashCrop };
     public override string DisplayName => "Tea Leaves";
     public override string Description => "A pinch of dried tea leaves rolled tight and dark";
     public override int PriceReference => 8;
@@ -307,7 +316,7 @@ public sealed class SugarLoaf : ConsumableItem
     public override string ItemId      => "sugar_loaf";
     public override string DisplayName => "Sugar Loaf";
     public override string Description => "A small cone of brown sugar wrapped in blue paper";
-    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Bakery, ItemTag.CashCrop };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Food;
@@ -322,7 +331,7 @@ public sealed class Cider : ConsumableItem
     public override string ItemId      => "cider";
     public override string DisplayName => "Cider";
     public override string Description => "A jug of cloudy cider, sharp with apple and a little sour";
-    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Ale };
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass Weight => WeightClass.Medium;
     public override ConsumableType ConsumableType => ConsumableType.Drink;
@@ -337,7 +346,7 @@ public sealed class Raisins : ConsumableItem
     public override string ItemId      => "raisins";
     public override string DisplayName => "Raisins";
     public override string Description => "A pouch of dried grapes, sticky and dark";
-    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Wine };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Food;
@@ -353,7 +362,7 @@ public sealed class Copra : ConsumableItem
     public override string ItemId      => "copra";
     public override string DisplayName => "Copra";
     public override string Description => "Strips of dried coconut flesh, white and oily";
-    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.CashCrop };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Food;
@@ -385,7 +394,7 @@ public sealed class Cornmeal : ConsumableItem
     public override string ItemId      => "cornmeal";
     public override string DisplayName => "Cornmeal";
     public override string Description => "A cloth bag of coarse yellow meal ground from maize";
-    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Bakery, ItemTag.Grain };
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass Weight => WeightClass.Medium;
     public override ConsumableType ConsumableType => ConsumableType.Food;
@@ -401,7 +410,7 @@ public sealed class Oatcake : ConsumableItem
     public override string ItemId      => "oatcake";
     public override string DisplayName => "Oatcake";
     public override string Description => "A flat round oatcake baked hard on a griddle";
-    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Bakery };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Food;
@@ -417,7 +426,7 @@ public sealed class RiceWine : ConsumableItem
     public override string ItemId      => "rice_wine";
     public override string DisplayName => "Rice Wine";
     public override string Description => "A small stoneware jar of clear, faintly sweet rice wine";
-    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Wine };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Drink;
@@ -432,7 +441,7 @@ public sealed class SpicedWine : ConsumableItem
     public override string ItemId      => "spiced_wine";
     public override string DisplayName => "Spiced Wine";
     public override string Description => "A flask of red wine steeped with cinnamon and cloves";
-    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Wine };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Drink;
@@ -447,7 +456,7 @@ public sealed class Perry : ConsumableItem
     public override string ItemId      => "perry";
     public override string DisplayName => "Perry";
     public override string Description => "A jug of pale perry pressed from hard pears";
-    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Ale };
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass Weight => WeightClass.Medium;
     public override ConsumableType ConsumableType => ConsumableType.Drink;
@@ -563,7 +572,7 @@ public sealed class WinnowingFan : Item
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass Weight => WeightClass.Light;
     public override int UsageLevel => 3;
-    public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Craftware, ItemTag.Woodwork };
     public override int PriceReference => 4;
 }
 

@@ -16,9 +16,9 @@ namespace Cathedral.Game.Scene.Verbs;
 /// else. What makes them unusual is that they produce <b>no state change at all</b>. The narration is
 /// the entire outcome, and the modus mentis granted for succeeding is the entire reward.</para>
 ///
-/// <para>Difficulty 1 and no failure penalty, deliberately. Turning a sense on something is not a
-/// feat and cannot hurt you; a failure means you looked and saw nothing worth the looking, which is
-/// a real enough outcome to be worth narrating and not worth breaking a bone over.</para>
+/// <para>Difficulty 1, and a failure costs the mind and never the body, deliberately. Turning a sense on
+/// something is not a feat and cannot hurt you; a failure means you looked and saw nothing worth the
+/// looking, and lost the thread for it — the default penalty, a noetic point, and not a broken bone.</para>
 ///
 /// <para>Whether an object rewards a given sense is the object's business
 /// (<see cref="PointOfInterest.Senses"/>), and so is what it teaches

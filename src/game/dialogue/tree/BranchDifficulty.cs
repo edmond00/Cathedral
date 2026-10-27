@@ -12,10 +12,11 @@ namespace Cathedral.Game.Dialogue.Tree;
 /// </para>
 ///
 /// <para>
-/// Three ladders. <see cref="Simple"/> for the conversations that are a formality — an introduction,
-/// asking to buy or sell. <see cref="Easy"/> for asks the player should usually manage, and
+/// Four ladders. <see cref="Simple"/> for the conversations that are a formality — an introduction,
+/// asking to buy or sell. <see cref="Easy"/> for asks the player should usually manage,
 /// <see cref="Hard"/> for the ones with real stakes (reconciling with an enemy, asking for work,
-/// talking your way out of a crime).
+/// talking your way out of a crime), and <see cref="Grave"/> for asking somebody to give up
+/// something of their own on the spot — a householder's leave to stay the night in their house.
 /// </para>
 ///
 /// <para>
@@ -38,4 +39,7 @@ public static class BranchDifficulty
 
     /// <summary>Stakes on the table: 2 replies → 4 sixes, 3 → 4, 4 → 5.</summary>
     public static int Hard(int depth) => (depth >= 4 ? 3 : 2) + Raise;
+
+    /// <summary>One six over Hard: 2 replies → 5 sixes, 3 → 5, 4 → 6.</summary>
+    public static int Grave(int depth) => Hard(depth) + 1;
 }

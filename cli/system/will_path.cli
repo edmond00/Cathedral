@@ -1,0 +1,80 @@
+# will_path — a will plans its way to its target, attends to the way, and proposes only the next step
+#
+# Lockpicking is a will: it wants unlock_door and nothing else. Standing in the Test Field with a
+# hairpin, the only lock in reach is the Test Door, off the yard — two steps: walk to the yard, then
+# unlock it (`inspect will` reads the plan ActionPathPlanner made).
+#
+# Field: the phase is pinned to the yard (`observe`), the one object here offering the path's first
+# step. Observing it WITH lockpicking keeps the focus and gives the path as the reason.
+# Thinking with lockpicking on the yard proposes the walk. The walk is a step on the way, not what the
+# will wants, so its means is judged like any goal's: pinned here to Woodcraft (`means`). Yard: the
+# door opens the phase; thinking with lockpicking proposes the unlock, which a will with the Action
+# function carries out itself, whatever the means pin says; the hairpin is combined and the door opens.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-mm lockpicking,woodcraft --grant-item hairpin --location-type test --location-id 0 --start-area "Test Field" --period dawn
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+observe "Test Yard"
+travel here
+wait mode LocationInteraction 60
+
+advance 12 180
+expect-state will "will lockpicking steps=2 first="
+expect-state will "unlock and open the test door"
+
+# Observing with the will: the yard is on its way, so it keeps it, and the reason is the path.
+click keyword yard
+choose 1
+choose lockpicking
+advance 12 180
+expect Through it I could
+
+# Thinking with the will on the yard: the first step, voiced as the way to the goal, by the judged means.
+means woodcraft
+click keyword yard
+choose 0
+choose lockpicking
+advance 12 180
+expect To get there I must first
+expect so I will
+expect [Woodcraft
+
+strategy succeed
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect-state where Test Yard
+expect-state will "will lockpicking steps=1"
+
+# The next phase is clicked into: settle the word-vector load first (see `wait embeddings`).
+wait embeddings 60
+observe "Test Door"
+click button
+wait 60
+advance 12 180
+
+# In the yard the door is the goal itself.
+click keyword 0
+choose 0
+choose lockpicking
+advance 12 180
+expect [Lockpicking
+click action 0
+choose 1
+choose 0
+advance 12 180
+click action 1
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+expect Door unlocked
+expect-verb unlock_door
+quit

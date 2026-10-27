@@ -436,7 +436,11 @@ public static class FightResolver
 
         // The defender's OWN catalogue, not the human one — a wolf's harm is broken forelegs and
         // torn-off fangs, none of which exist in the human list.
-        var catalogue = WoundRegistry.ForAnatomy(defender.Member).ToList();
+        // A blow never leaves a mishap (a Scrape, a Strain): those are what a failed act does to the
+        // body doing it. A stumble on dangerous ground still may — that draw is not from this pool.
+        var catalogue = WoundRegistry.ForAnatomy(defender.Member)
+            .Where(w => w is not WildcardWound { FromBlows: false })
+            .ToList();
 
         var anatomyWounds = catalogue
             .Where(w => w.TargetKind == WoundTargetKind.Wildcard

@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class FellingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Drops a standing tree deliberately: reads the lean, cuts the face, judges the hinge, and gets clear. Every part of it is about where the tree goes and where the body is when it goes there.";
     public override string SkillMeans       => "the bringing down of a standing tree";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<CutWoodVerb>("fell a tree").On<Scene.TreePointOfInterest>();
     public override string[] Organs        => new[] { "arms", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

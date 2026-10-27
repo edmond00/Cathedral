@@ -115,7 +115,7 @@ public static partial class VerbAudit
         return sb.ToString();
     }
 
-    private static IEnumerable<(string Label, Func<int, Scene> Build, int Samples)> Factories()
+    internal static IEnumerable<(string Label, Func<int, Scene> Build, int Samples)> Factories()
     {
         yield return ("PLAIN",    id => new Plain.PlainSceneFactory().Build(id),       SampleSize);
         yield return ("FOREST",   id => new Forest.ForestSceneFactory().Build(id),     SampleSize);
@@ -824,6 +824,9 @@ public static partial class VerbAudit
             ["sing_along"]              = "needs a non-stranger",
             ["commission_work"]         = "needs a non-stranger",
             ["hear_gossip"]             = "needs a non-stranger",
+
+            // Visit-gated: the sweep builds scenes with no visit behind them, so no way is known yet.
+            ["backtrack"]               = "needs a way already known: an area visited or a connector taken",
         };
         var phaseScoped = unreachable.Keys.ToHashSet();
 

@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class ShantyModusMentis : ModusMentis
     public override string MenuDescription =>
         "Leads the work-songs that keep a crew hauling together: the call and the answer, the beat that falls on the pull. Makes hard labour go in time.";
     public override string SkillMeans       => "the leading of work-songs";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<SingAlongVerb>("lead a work-song");
     public override string[] Organs        => new[] { "pulmones", "arms" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

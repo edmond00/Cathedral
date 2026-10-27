@@ -63,9 +63,9 @@ public class TameVerb : Verb
             : System.Array.Empty<Outcome>();
 
     /// <summary>A half-tamed animal that changes its mind is at your throat, not across the clearing.</summary>
-    public override IReadOnlyList<Wound?> FailurePenalties(Element? target) => new Wound?[]
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target) => new FailurePenalty[]
     {
-        null, null, null, new CutWound(), new ContusionWound(),
+        FailurePenalty.LoseFocus, FailurePenalty.LoseFocus, FailurePenalty.WasteTime, new CutWound(), new ContusionWound(),
     };
 
     /// <summary>How many companions this character can keep — the heart-derived <c>max_companions</c>.</summary>

@@ -95,6 +95,10 @@ into the itch devlog.
 Volume 2 - Of Choler and the Opened Carcass
 2026-08-30
 
+Actions can now provoke an emotion, and a wound can disable a modus mentis outright instead of only
+slowing it. Bodies left by a kill can be butchered for their parts, and tools are judged before the
+model is asked about them.
+
 Added
   - ...
 
@@ -104,6 +108,14 @@ Changed
 Fixed
   - ...
 ```
+
+**The overview comes first**, between the date and the first heading: two to four sentences, one
+paragraph, naming the handful of changes a returning player would most want to hear about, biggest
+first. It is what a reader who stops after the first lines takes away, and the part the itch devlog
+shows before "read more". It sums up the list and never replaces it: everything it mentions appears
+again in the detailed list below, and it adds nothing the list does not say. The rules below apply to
+it as to every line — plain, player-facing, no internal work — and it is not counted in the 15–30
+lines.
 
 Rules, in order of how often they are broken:
 
@@ -465,8 +477,9 @@ The five that survive all exist to get a player out of trouble rather than to ch
 than printing nothing: every line is an instruction that silently does nothing, with no way for the
 reader to tell which.
 
-**`Ship` also compiles out the developer keyboard.** It defines a `SHIP` constant, which flips
-`Config.Debug.DeveloperKeys` to false. That gates the render-debug keys (D, M), the post-process
+**`Ship` also locks out the developer keyboard.** `Config.Debug.DeveloperKeys` is false by default
+in every build; a development run turns it on with `--developer-keys`, and the `SHIP` constant
+`Ship` defines compiles that flag's check out, so nothing can turn it on. That gates the render-debug keys (D, M), the post-process
 tuning keys (F, G, H, J), the debug camera (C, V), the window's diagnostic dumps (D, G) — **and
 camera zoom (W, S)**. Zoom is in the list although it is not a debug feature: the game sets the
 camera distance itself per phase, and a player who zooms out of that framing has no control that
@@ -482,9 +495,10 @@ Two things to keep in mind when touching that keyboard:
   branches test `DeveloperKeys` as part of their own condition. Short-circuiting the whole
   `else if` chain instead would swallow every non-Escape key before it reached the final `else`,
   which is what forwards keys to fight and dialogue modes — taking the keyboard away from gameplay.
-- **`--no-developer-keys` makes a development build behave like a shipped one.** Keys cannot be
-  driven by `--cli` at all, so this flag plus the `Developer keys: …` line printed at startup is
-  the only way to check the shipped keyboard without building and hand-testing a shipped exe.
+- **A development run without `--developer-keys` has the shipped keyboard.** They are off by
+  default because the management screen's tabs answer to their initials (A, I, J, M, H, C), several
+  of which are developer keys that fire on any screen. The `Developer keys: …` line printed at
+  startup says which keyboard is live.
 
 **The payload is an allow-list.** Only paths named in `$Payload` are copied, and a missing required
 one fails the build before anything is archived. The tempting alternative — copy the repo, delete

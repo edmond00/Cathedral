@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -13,7 +14,8 @@ public class ButcheryModusMentis : ModusMentis
     public override string MenuDescription =>
         "Sees a body as an assembly of parts joined along natural seams, knowing where joints part and vessels run. Approaches flesh as a disassembly problem with efficient and wasteful routes, and works it without squeamishness.";
     public override string SkillMeans => "the cutting of carcasses into joints";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<CutVerb>("cut a carcass into joints");
     public override string[] Organs => new[] { "hands", "viscera" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     

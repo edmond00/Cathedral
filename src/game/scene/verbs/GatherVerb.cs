@@ -24,6 +24,12 @@ public class GatherVerb : Verb
     }
     public override string VerbId         => "gather";
     public override string DisplayName    => "Gather";
+
+    /// <summary>Picking over a patch that gives nothing up: the time goes, and the hands come away grazed.</summary>
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target) => new FailurePenalty[]
+    {
+        FailurePenalty.LoseFocus, FailurePenalty.LoseFocus, FailurePenalty.WasteTime, new ScrapeWound(),
+    };
     public override int    BaseDifficulty => 1;
 
     /// <summary>Picking and carrying off what grows. No hands, no verb.</summary>

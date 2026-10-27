@@ -80,22 +80,22 @@ public class WaterCrossingPointOfInterest : ConnectorPointOfInterest
 
     /// <summary>
     /// What a failed swim costs. Skewed away from fractures — you do not break a leg in open water —
-    /// and towards being battered, half-drowned and turned back.
+    /// and towards being battered, half-drowned and turned back, with the hour gone in the turning.
     /// </summary>
-    public IReadOnlyList<Wound?> FailurePenalties() => Kind switch
+    public IReadOnlyList<FailurePenalty> FailurePenalties() => Kind switch
     {
-        WaterKind.Creek => new Wound?[] { null, null, null, null, null, new ContusionWound() },
-        WaterKind.Cove  => new Wound?[]
+        WaterKind.Creek => new FailurePenalty[] { FailurePenalty.WasteTime, FailurePenalty.WasteTime, FailurePenalty.WasteTime, FailurePenalty.WasteTime, new StrainWound(), new ContusionWound() },
+        WaterKind.Cove  => new FailurePenalty[]
         {
-            null, null,
+            FailurePenalty.WasteTime, FailurePenalty.WasteTime,
             new ContusionWound(), new ContusionWound(), new ConcussionsWound(), new BrokenRibsWound(),
         },
-        WaterKind.Lead or WaterKind.Meltwater => new Wound?[]
+        WaterKind.Lead or WaterKind.Meltwater => new FailurePenalty[]
         {
-            null, null,
+            FailurePenalty.WasteTime, FailurePenalty.WasteTime,
             new ContusionWound(), new ConcussionsWound(), new BrokenRibsWound(), new ContusionWound(),
         },
-        _ => new Wound?[] { null, null, null, new ContusionWound(), new ConcussionsWound() },
+        _ => new FailurePenalty[] { FailurePenalty.WasteTime, FailurePenalty.WasteTime, new StrainWound(), new ContusionWound(), new ConcussionsWound() },
     };
 
     private static string LemmaFor(WaterKind kind) => kind switch

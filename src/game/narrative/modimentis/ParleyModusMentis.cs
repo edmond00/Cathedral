@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 using Cathedral.Game.Scene;
 using Cathedral.Game.Dialogue.Tree;
@@ -14,7 +15,8 @@ public class ParleyModusMentis : ModusMentis
     public override string MenuDescription =>
         "Negotiates with the hostile: keeps the voice level, gives ground that costs nothing, and finds the thing the other party actually wants underneath what they are shouting about. Ends more fights than any weapon.";
     public override string SkillMeans       => "the level talk that takes a fight off the table";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
+    public override WillTarget? Will => WillTarget.To<ReconcileVerb>("talk a quarrel off the table");
     public override string[] Organs        => new[] { "tongue", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

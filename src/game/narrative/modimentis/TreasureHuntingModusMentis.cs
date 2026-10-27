@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 using Cathedral.Game.Scene;
 
@@ -14,7 +15,8 @@ public class TreasureHuntingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Follows old tales, rumours, and signs toward hidden riches. Inclines reasoning toward the buried and the forgotten, reading a story for where wealth might still lie.";
     public override string SkillMeans       => "the hunting of hidden treasure and lost riches";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Observation, ModusMentisFunction.Emotion };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
+    public override WillTarget? Will => WillTarget.To<DigVerb>("dig for what is hidden");
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
 
     /// <summary>Stands on letters, number or institutions.</summary>

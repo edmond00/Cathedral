@@ -19,6 +19,12 @@ public class AppeaseVerb : Verb
 
     public override string VerbId         => "appease";
     public override string DisplayName    => "Appease";
+
+    /// <summary>A hand held out to a beast that will not have it comes back marked, or the moment is simply lost.</summary>
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target) => new FailurePenalty[]
+    {
+        FailurePenalty.LoseFocus, FailurePenalty.LoseFocus, new CutWound(),
+    };
     public override int    BaseDifficulty => 3;
 
     /// <summary>As TAME, and for the same reason: an implement brandished at something already hostile is not what settles it.</summary>

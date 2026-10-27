@@ -33,6 +33,10 @@ public enum DamageType
     Piercing   = 1 << 1,
     /// <summary>Blunt. Leaves a Contusion.</summary>
     Contending = 1 << 2,
+    /// <summary>Dragged along a rough surface. Leaves a Scrape. Never a weapon's: see <see cref="WildcardWound.FromBlows"/>.</summary>
+    Abrading   = 1 << 3,
+    /// <summary>Overexertion — the body's own effort against itself. Leaves a Strain. Never a weapon's.</summary>
+    Straining  = 1 << 4,
 }
 
 /// <summary>

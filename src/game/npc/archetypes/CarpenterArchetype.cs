@@ -11,8 +11,8 @@ public class CarpenterArchetype : CraftsmanArchetype
 
     /// <summary>What asking this person about their work teaches.</summary>
     public override string TradeModusMentisId => "whittlecraft";
-    public override ItemTag? SellTag => ItemTag.Craftware;
-    public override ItemTag? BuyTag  => ItemTag.Wood;
+    public override ItemTag? SellTag => ItemTag.Woodwork;
+    public override ItemTag? BuyTag  => ItemTag.Timber;
     public override int    ModiMentisCount => 9;
     public override int    AuthorityLevel => 1;
 

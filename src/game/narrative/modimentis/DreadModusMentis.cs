@@ -26,6 +26,7 @@ public class DreadModusMentis : ModusMentis
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {
         new(typeof(FightTriggerOutcome), () => new NervusHumor()),
+        new(typeof(LostWayOutcome), () => new NervusHumor()),
     };
 
     public override string PersonaPrompt => @"You are the inner voice of DREAD, and you want to leave, and you cannot say why yet.

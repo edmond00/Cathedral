@@ -1,0 +1,37 @@
+# iterative thinking — what the click would refuse is not retried: the button is offered, the click refuses
+#
+# The wolf in the Test Den is an enemy in the same area, so UnderThreatImpossibleRule refuses any act
+# that is not about facing it (unless the means is discreet). That is an action rule, the click's: a
+# thinking retries only what is refused before the click (the willingness and choice rules), so even
+# with a retry left (pineal_gland=1) "examine the wolf" is offered as a button, and clicking it gives
+# the threat's refusal.
+#
+# Woodcraft is pinned as the means (it observes, and is not discreet).
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Den" --period noon --observe-only wolf --grant-mm woodcraft --means-only woodcraft --organs pineal_gland=1
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+expect wolf
+
+strategy succeed
+goal examine
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+expect-not That will not do, and I think again
+expect [Woodcraft
+regions
+
+click action 0
+choose 0
+advance 12 180
+expect while under the threat of
+quit

@@ -19,11 +19,12 @@ public abstract class WeaponItem : Item, IWeaponItem
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.RightHold;
     public abstract int Level { get; }
 
-    // Weapons are sold as part of the blacksmith's Ironwork. Goods are priced in copper across the
+    // Weapons are sold as part of the blacksmith's Ironwork, and as the quartermaster's Arms (a bow,
+    // which is no ironwork, overrides this with Arms alone). Goods are priced in copper across the
     // board — the other denominations are reserved for wages and larger transactions — so a
     // weapon's level maps onto ten copper a step: a level-3 warblade costs thirty, against a
     // barrel's twenty-five and a lantern's thirty.
-    public override List<ItemTag> Tags    => new() { ItemTag.Ironwork };
+    public override List<ItemTag> Tags    => new() { ItemTag.Ironwork, ItemTag.Arms };
     public override int           PriceReference => (Level < 1 ? 1 : Level) * 10;
 
     /// <summary>
@@ -259,6 +260,7 @@ public sealed class WarSpear : WeaponItem
 public sealed class HuntingBow : WeaponItem
 {
     public override string ItemId      => "hunting_bow";
+    public override List<ItemTag> Tags => new() { ItemTag.Arms };
     public override string DisplayName => "Hunting Bow";
     public override string Description => "A short self-bow of yew, unstrung and bound with waxed linen";
     public override ItemSize Size      => ItemSize.Large;
@@ -271,6 +273,7 @@ public sealed class HuntingBow : WeaponItem
 public sealed class Longbow : WeaponItem
 {
     public override string ItemId      => "longbow";
+    public override List<ItemTag> Tags => new() { ItemTag.Arms };
     public override string DisplayName => "Longbow";
     public override string Description => "A tall war longbow of laminated horn and sinew, the draw weight substantial";
     public override ItemSize Size      => ItemSize.Large;

@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class SimplingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Gathers herbs properly: the right plant, at the right season, the part that carries the virtue, cut so the plant survives. Half of it is knowing what not to take, and where not to take it from.";
     public override string SkillMeans       => "the gathering of herbs at their season";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<GatherVerb>("gather simples in their season").YieldingAny("herbs", typeof(World.Items.HerbItem), typeof(Items.Herb));
     public override string[] Organs        => new[] { "hands", "nose" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

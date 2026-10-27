@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,7 +13,8 @@ public class CutpurseModusMentis : ModusMentis
     public override string MenuDescription =>
         "Takes from a body that has not noticed: reads where a purse hangs, works in the press of a crowd, and cuts or lifts without the touch registering. Distinct from ordinary thieving in that the owner is holding it.";
     public override string SkillMeans       => "the unfelt hand at another body's belt";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTarget? Will => WillTarget.To<PickpocketVerb>("lift a purse unfelt");
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.Low;

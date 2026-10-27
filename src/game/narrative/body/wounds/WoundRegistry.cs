@@ -89,6 +89,8 @@ public static class WoundRegistry
         Add(new ContusionWound());
         Add(new CutWound());
         Add(new PunctureWound());
+        Add(new ScrapeWound());
+        Add(new StrainWound());
         Add(new ScarWound());
         return dict;
     }

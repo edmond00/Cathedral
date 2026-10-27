@@ -1,0 +1,67 @@
+# mental map — with no room to remember a place, the visit keeps its map, and leaving forgets it
+#
+# A place is remembered as a mental map: the areas stood in, the ways gone by, what was seen, and the
+# routines learned there. The anamnesis holds four maps a point, so a body with none holds none. The
+# visit in progress still keeps a map of its own (the walk, backtrack and the map view all work), but
+# when it ends the map is forgotten — the routine learned with it too — and the next visit finds the
+# place unknown again.
+#
+# One move to the yard, as routine_movement_only.cli: in the visit the yard is on the map; after it,
+# nothing is remembered; coming back, the yard is unknown.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --npc-static --start-area "Test Field" --period dawn --observe-only "Test Yard" --organs anamnesis=0
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal move
+advance 12 180
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect-verb move
+
+# The visit holds its map although no slot does.
+expect-state map map visited Test Yard
+expect-state mental-maps mental-maps used=0 usable=0
+
+observe none
+click button
+wait 60
+advance 12 180
+click button
+wait mode WorldView 90
+
+# Left, and forgotten: no map, so no routine either.
+expect-state mental-maps mental-maps used=0
+expect-no-state mental-maps mental-map location=
+expect-no-state routines category=goto
+
+travel neighbour
+travel-go
+wait mode LocationInteraction 120
+advance 12 180
+click button
+wait mode WorldView 90
+
+travel back
+travel-go
+wait mode LocationInteraction 120
+advance 12 180
+
+# Back again: the field it opens in is stood in once more, the yard is unknown.
+expect-state map map visited Test Field
+expect-no-state map map visited Test Yard
+quit

@@ -16,6 +16,9 @@ public class RememberVerb : Verb
 {
     public override string VerbId         => "remember";
     public override string DisplayName    => "Remember";
+
+    /// <summary>Remembering never fails, and its phase has nothing a penalty could take.</summary>
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target) => NoPenalty;
     public override int    BaseDifficulty => 0;
 
     /// <summary>A phase transition inward. Nothing in the hands reaches what is being reached for.</summary>

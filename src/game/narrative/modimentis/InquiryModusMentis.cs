@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -13,7 +14,8 @@ public class InquiryModusMentis : ModusMentis
     public override string MenuDescription =>
         "Finds the question a person wants to be asked and asks that one first. Keeps a running account of what has been said, what has been avoided, and which of the two is worth more.";
     public override string SkillMeans       => "the drawing out of what someone knows";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
+    public override WillTarget? Will => WillTarget.To<GatherKnowledgeVerb>("draw out what somebody knows");
     public override string[] Organs        => new[] { "tongue", "cerebrum" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>

@@ -43,6 +43,7 @@ from the game's (very chatty) diagnostic logging on the same stdout.
 | `--means-only <mm-id>` | Forces the playground's choice of **means** — which action modus mentis carries the goal out — onto one modus mentis. The draw is otherwise uniform over every action modus mentis held, and willingness rules now refuse by kind of mind: **examining is refused by any action modus mentis without the Observation function**, so a script that means to examine grants one and pins it (`--grant-mm woodcraft --means-only woodcraft`). The CLI's `means` command sets the same switch. A miss goes through `DebugFlagAudit`. |
 | `--refuse-focus` | Makes every focus observation's modus mentis turn away from the clicked object, as if the choice judge had answered "turn elsewhere". It then picks another unobserved object and one text dismisses the first and observes the second, carrying its keyword. `--playground` never declines a choice, so this is the only way a script reaches that branch. |
 | `--refuse-means <n>` | Under `--playground`, the first `n` willingness questions answer "unwilling" (only those that offer a refusal at all). The playground otherwise answers "willing" every time, so an action modus mentis's refusal — and the retries of iterative thinking after one — is unreachable from a script. Pair it with `--organs pineal_gland=<0–3>`, which sets how many retries a thinking gets (and, at 2+, the doubt). See `cli/system/thinking_iterates.cli`. |
+| `--penalty-only <kind>` | Narrows a failed act's penalty draw to one kind: `wound`, `get_lost`, `waste_time` or `lose_focus`. Every failure costs something now — one entry is drawn uniformly from a table of one to seven — so a script that means to see the way lost, the hour wasted or a noetic point gone is otherwise asserting on a coin flip. **It also changes what your `fail.cli` does next**: a failed `move`, `follow_path`, `track`, `stalk` or `voyage_toward` may lose the way, and the next footer press then leaves the location; a failed climb, swim or crossing may move the hour on. A table with none of the kind is a `DebugFlagAudit` miss. |
 | `--advance-days <n>` | Pushes the world clock forward `n` days on first arrival at the world map. The clock only moves on travel arrival and work stints while a wound needs 100–1000 days to close, so without this nothing about healing is observable. Fires once, before anything has happened — for healing *a wound taken in play*, use the `clock` command instead. |
 | `--location-type test` | Builds the **test location** (`TestSceneFactory`) — a kitchen sink holding one of everything, under names that never change. This is what the whole CLI suite runs in; see "The test location" below. It is attached to no biome, so this flag is the only way in. |
 | `--log-file <path>` | Writes the run's log to `<path>` instead of `log.txt`. `run_tests.sh` gives every run its own, which is what lets instances run in parallel (`log.txt` is opened for exclusive writing) and keeps the suite off the developer's `log.txt`. Not honoured by a shipped build. |
@@ -77,6 +78,10 @@ Run `help` for the authoritative list. The essentials:
                             looked at, which are withheld from every later observation choice
                             of the phase and released again when the phase ends
   dump [--color]            the terminal grid as text; --color tags each row dim/mix/lit
+  snap <file.png>           the next frame drawn, written as a PNG, then Read it. `dump` sees
+                            characters and never colours, so this is how to judge a screen's palette
+                            and layout (works under --hidden; the frame is drawn into a target of
+                            its own). Not with --record, which already owns the frame
   doubt <yes|no>            queue the answer to the next doubt of a thinking (pineal gland 2+): the
                             preview box asks YES / NO in place of CONTINUE. `advance` answers each
                             with the next queued answer, YES when none is queued — a script that never
@@ -111,7 +116,9 @@ Run `help` for the authoritative list. The essentials:
                             keyboard would not deliver in the current mode FAILS the run instead of
                             reaching the controller anyway, which once let `key K` pass while K did
                             nothing for a player. A new key the game should answer on the map has to
-                            be added there, or it works in scripts only
+                            be added there, or it works in scripts only. The developer keys (R, K,
+                            Tab outside exploration…) are off unless the script's FLAGS carry
+                            `--developer-keys`
   destinations              vertices bordering the avatar
   destinations all [filter] every vertex inside the (stat-derived) travel range, not just the
                             neighbours; filter by biome/location name — `destinations all village`
@@ -130,12 +137,30 @@ Run `help` for the authoritative list. The essentials:
                             states with separate looks and are held at the same time; `click moon`
                             drives both, so this is the only way to assert that a choice survives
                             the cursor moving off it
+  point card <area>         hover an area's card on the menu map shown (the Chorography tab, the routine
+                            box), panned into view. The location map has no legend: what the
+                            pointer is over is named in a label above it, in the mouse-following
+                            popup, which `dump` does not see — read it with `inspect pointer-label`
   click arrow <direction>   press an arm of the compass rose (left|right|up|down) — the mouse's copy
                             of the arrow keys, drawn top-right on the world map and the selection
                             sky. Reports
                             the yaw and pitch either side of the press, which is the only way a
                             script can observe the camera at all
-  click continue            protagonist-creation Continue, or a settled dice overlay
+  click continue            protagonist-creation Continue, a settled dice overlay, the time
+                            box once the hours have passed, or the walk on the map once the party
+                            has arrived (every move in exploration shows one, after the time box
+                            when both apply). Under `--cli` the walk settles at once, `advance`
+                            presses through it, `state` carries `walk=none|walking|settled`, and
+                            `inspect map` ends on `map walk from <A> to <B> steps=<n> via=line|jump`
+  click area <name>         the area a successful backtrack goes back to, while the location map
+                            asks (a card off the view is panned into it first). `advance` takes the
+                            first on offer by name; `state` carries `backtrack=none|choosing`, and
+                            `regions` lists the offer
+  click period <name>       the hour a successful sit_and_wait lasts until, while the time box
+                            asks (dawn…night, the five other than now). `advance` presses through
+                            the box by itself, taking the NEXT period when it asks — so a script
+                            that only needs to get past a wait does nothing new; one that tests the
+                            choice stops after the dice `click continue`, `wait`s, then clicks
   click keyword <name>      a narration keyword
   click action <n>          a narration action
   click option <n>          a dialogue reply
@@ -148,7 +173,8 @@ Run `help` for the authoritative list. The essentials:
                             without this a staged encounter is a dead end and the fight behind
                             it is unreachable
   click button              the footer button (LEAVE / INTERRUPT / END / CONTINUE)
-  choose <n>                answer the visible popup by index
+  choose <n|mm-id>          answer the visible popup by index — or a modus mentis popup by the
+                            modus mentis's id (`choose lockpicking`), which survives the popup's order
   travel here               enter the location the avatar is standing on — what most scripts
                             actually want, and one command instead of four
   travel <vertex|name>      plan a route to a vertex (bypasses 3D picking entirely). Naming
@@ -166,13 +192,20 @@ Run `help` for the authoritative list. The essentials:
                             each with its kind and, when greyed, why
   routines <n|kind>         pick routine n — or the first walkable of a kind (goto, meet, gather,
                             buy, sell, work) — and set out. Entered on arrival: narration (goto,
-                            meet), the trade or work menu, or the gathering phase
+                            meet), the trade or work menu, or the gathering phase.
+  routines next|prev|confirm  press the box's `< n/N >` arrows or CONFIRM (the first walkable is selected
+                            to begin with; the status line reads the selected one out;
+                            an icon click selects too, and only CONFIRM sets out)
   gather days <n>|start|continue|leave
                             drive the gathering phase (GameMode.Gathering, only a Gather routine
                             opens it). `start` rolls at once. Assert with `inspect gather`
   manage [tab]              open/close the protagonist screen; with a tab name
                             (Anatomy / Inventory / Memory / Humors / …) open it there.
-                            `manage Routines <kind>` shows that kind's slots
+                            `manage Chorography <kind>` shows the newest mental map holding a
+                            routine of that kind, and reads that routine out below it;
+                            `manage Chorography next|prev` presses the `< n/N >` arrows
+                            under the porthole (the map's first routine is shown by default).
+                            On this screen `key <letter>` opens the tab with that initial
   select [item name]        show a carried item's info panel; bare `select` lists what
                             is carried (open `manage Inventory` first). The starting kit
                             is random but seed-stable, so discover the names on one run
@@ -203,8 +236,13 @@ Run `help` for the authoritative list. The essentials:
                             — `fight-end` settles the whole fight and cannot single anybody out
   wound [protagonist|companions|<name>] [n]
                             wound a party member OUTSIDE a fight, as a failed act's penalty does.
-                            No count means enough to kill. A wound is SAMPLED one slot in five, so
-                            a script cannot ask a failed act to injure anybody on demand
+                            No count means enough to kill. A failed act's penalty is DRAWN from its
+                            verb's table, and `--penalty-only wound` is the only way to make one injure
+  click menu-button         the ☰ in the top-right corner, through the player's click path: the
+                            main menu, in exactly the phases Escape pauses (one list,
+                            PausedPhaseName). Unlike `pause` it backs out of nothing first.
+                            Fails when it is not drawn — `wait` a frame after entering a phase
+  click map-button          the narration header's ↹: the map and back, as Tab. Exploration only
   click companion-death     the companion-death notice's CONTINUE. Modal over every mode, so a
                             script that does not press it cannot get past a companion dying;
                             `state` reports `companion-death=shown`
@@ -219,11 +257,32 @@ Run `help` for the authoritative list. The essentials:
   inspect [subject]         the game state an outcome can change, by STABLE id — items, coins,
                             where, party, wounds, skills, npcs, pois, routines, or all. What
                             cli/outcome/ reads: `expect` scans the SCREEN, this reads the world.
-                            `where` carries trespass=yes|no (the header's ◆ TRESPASSING ◆);
+                            `where` carries trespass=yes|no (the header's ◆ TRESPASSING ◆),
+                            day=<n> (the calendar) and confronted=<Kind:archetype>|none (the
+                            ConfrontationSelector.Current the exit button reads); `time` the time
+                            box (box=none|choosing|passing|settled destination=…); `will` every
+                            held will's plan (ActionPathPlanner): `will <id> steps=<n> first="…"
+                            goal="…" target=<archetype-id|name> [tool_step=<k>]`, or `steps=none`
+                            where it cannot be done here. target= is the PLAN's own: any equally
+                            short path is accepted too, which is what will_equal_paths.cli asserts.
+                            expect-state takes no escaped quotes: assert `steps=2` and the goal's
+                            words separately;
                             `opening` what the phase's first observation was put on (a Meet
-                            routine's person); `routine-slots` each kind's used/usable/grid;
-                            `gather` the gathering phase's forecast and yield.
-                            `routines` is answerable with NO narration in progress, because a
+                            routine's person); `mental-maps` each map remembered, oldest first
+                            (`mental-map location= name= locked= routines= visited= seen=`)
+                            and `mental-maps used= usable= grid=`;
+                            `pointer-label` what the mouse-following popup shows (a map's label
+                            above the pointer, the world map's location name), as
+                            `pointer-label ground=yellow|grey text=…` — yellow when a click acts
+                            on what it names, grey when it only tells;
+                            `buttons` whether the two key stand-ins are on screen, as
+                            `buttons menu=shown|hidden map=shown|hidden` (the ☰ and the ↹);
+                            `gather` the gathering phase's forecast and yield;
+                            `music` what the game last asked of the music, as `music tracks=<0-4>
+                            filter=<MusicFilter> cold= fear= mystery= intensity= festivity= night=yes|no` (the
+                            target mood, not the glide). Answers under --silent: the engine starts
+                            there with no sound and no composing (cli/system/pause_music_resumes.cli).
+                            `routines` and `mental-maps` are answerable with NO narration in progress, because a
                             session's Go to routine is learned as that session ENDS — reading
                             it from inside the location reads a moment too early.
                             `world-regions` is answerable at the WORLD MAP and carries the region
@@ -546,6 +605,8 @@ every `success.cli` also asserts the chip its outcome puts in the outcome block:
 | `DialogueTriggerOutcome` | `Conversation:` | the eleven verbs that open one |
 | `FirstBlowOutcome` | `First blow:` | attack |
 | the modus mentis grant | `Modus mentis` | examine, listen, smell, contemplate — no scene outcome of their own |
+| `LostWayOutcome` / `TimeWastedOutcome` / `FocusLostOutcome` | `Lost the way` / `Time wasted:` / `Focus lost:` | a failure's penalty, drawn from the verb's table — assert them with `--penalty-only` |
+| `TrespassToleratedOutcome` / `ShownTheDoorOutcome` | `… lets you stay` / `… shows you the door` | `found_waiting`, the householder who comes in at night — a village pantry at `--period evening` is the reliable stage (see `cli/outcome/trespass_tolerated`) |
 
 Match the **prefix** only; what follows is a name or a room and moves with the content. `Modus mentis`
 is deliberately cut short of its noun: a first grant reads `acquired`, a repeat reads `learned`
@@ -642,7 +703,8 @@ bordering the spawn point, while travel range reaches far further.
 
 ### What `--cli` cannot check
 
-- **Anything about pixels**: camera framing, the glyph atlas, sky/cloud rendering, and whether the
+- **Anything about pixels, except through `snap`**: `snap <file.png>` writes the next frame, so a
+  menu's colours and layout can be looked at; it proves nothing by itself — read the image. Camera framing, the glyph atlas, sky/cloud rendering, and whether the
   3D sphere looks right. `dump` sees the terminal cell grid, not the framebuffer. **`--record <dir>`
   can**: the same driver, filmed, hidden and silent — extract a frame from `game.mkv` at a time read
   off `timeline.jsonl` and look at it. It accepts only what a player can do (no `strategy`), and every

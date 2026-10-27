@@ -36,9 +36,9 @@ public static class FurnitureSubfactory
     // ── Sitting ───────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Scatters somewhere to sit through the given areas. A sit spot is the only way in the game to
-    /// move the clock on deliberately, so a location with none is a location where the time of day
-    /// is whatever it was when you arrived, for as long as you stay.
+    /// Scatters somewhere to sit through the given areas. Sitting is how the clock is moved on
+    /// deliberately; indoors the furniture serves (any <see cref="ISeat"/>), but out of doors these
+    /// are the only seats, so an open area without one is somewhere the hour cannot be let pass.
     /// </summary>
     public static void AddSitSpots(Random rng, IReadOnlyList<Area> areas, Setting setting, int min = 1, int max = 3)
     {

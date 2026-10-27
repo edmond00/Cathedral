@@ -11,8 +11,8 @@ public class BakerArchetype : CraftsmanArchetype
 
     /// <summary>What asking this person about their work teaches.</summary>
     public override string TradeModusMentisId => "doughcraft";
-    public override ItemTag? SellTag => ItemTag.Foodstuff;
-    public override ItemTag? BuyTag  => ItemTag.Crop;
+    public override ItemTag? SellTag => ItemTag.Bakery;
+    public override ItemTag? BuyTag  => ItemTag.Grain;
     public override int    ModiMentisCount => 8;
     public override int    AuthorityLevel => 1;
 

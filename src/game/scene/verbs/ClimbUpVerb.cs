@@ -21,6 +21,7 @@ public class ClimbUpVerb : Verb
         foreach (var m in base.Lessons(ctx)) yield return m;
     }
     public override string VerbId      => "climb_up";
+    protected override bool MovesAlongWay => true;
     public override string DisplayName => "Climb Up";
     public override int    BaseDifficulty => 6;
 
@@ -43,10 +44,10 @@ public class ClimbUpVerb : Verb
         return new[] { new AreaMoveOutcome(cliff.TopArea) };
     }
 
-    // A failed climb is a fall: usually a scare, sometimes a fracture. Extra nulls keep injury the minority.
-    public override IReadOnlyList<Wound?> FailurePenalties(Element? target) => new Wound?[]
+    // A failed climb is a fall: usually a scare and an hour spent getting back to it, sometimes a fracture.
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target) => new FailurePenalty[]
     {
-        null, null, null,
+        FailurePenalty.WasteTime, FailurePenalty.WasteTime, new ScrapeWound(),
         new AnkleFractureLeftWound(),
         new KneeFractureRightWound(),
         new TibiaFractureLeftWound(),

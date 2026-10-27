@@ -1,0 +1,70 @@
+# shown_the_door — success
+#
+# Waiting in a house until night brings its householder, who finds the player there. Explaining
+# yourself opens found_waiting; walked by hand with every roll failed, the householder shows the
+# player the door, and the visit ends: straight back to the world map.
+#
+# A village pantry (location id 1) because every pantry is private and holds a storage barrel, which
+# is a seat, and nobody works in one in the evening. Options are clicked by index because which ones
+# a dialogue offers depends on the modi mentis the protagonist holds.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type village --location-id 1 --start-area pantry --period evening --observe-only Storage
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# Evening, in somebody's pantry, nobody about: trespassing, but unseen, so sitting is allowed.
+expect-state where "trespass=yes confronted=none"
+
+strategy succeed
+goal sit_and_wait
+advance 12 180
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+# The wait brought night, and night brought the householder to the room.
+expect-outcome time_shift
+expect-state where "period=Night"
+expect-state where "confronted=FoundWaiting"
+
+# The next phase opens on them. Going up to them is one of the few acts a confrontation permits,
+# and it opens found_waiting rather than caught-red-handed.
+click button
+advance 12 180
+goal explain_myself
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+wait mode Dialogue 60
+expect-state dialogue "last=found_waiting"
+strategy fail-dice
+advance 20 180
+click option 0
+advance 20 180
+click option 0
+advance 20 180
+click continue
+advance 20 180
+expect-outcome shown_the_door
+click button
+wait mode WorldView 60
+quit

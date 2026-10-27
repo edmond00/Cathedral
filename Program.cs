@@ -137,6 +137,8 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("    --record-cursor-speed <px/s>     How fast the drawn cursor travels (default 1500)");
     Console.WriteLine("  --export-sfx <dir>                 Write the UI click and hover sounds as WAV files and exit");
     Console.WriteLine("  --export-music <out.mid> [--seconds n] [--mood m] [--tracks n]  Compose with the game's music engine (silently, in real time) and write MIDI");
+    Console.WriteLine("  --render-music <out.wav> [--seconds n] [--mood m] [--seed n] [--tracks n] [--journey j.json]  Render the music faster than real time, with its score (tools/music)");
+    Console.WriteLine("  --music-audition <dir>             Every instrument of the music synthesiser alone, one WAV each");
     Console.WriteLine("  --scene-export <key> [--biome b] [--ids a-b] [--out f]  Write a settled factory's scenes (areas, paths, doors, people) as JSON and exit");
     Console.WriteLine("  --debug                            Enable debug mode (override LLM/RNG decisions via console) + viewers");
     Console.WriteLine("  --view                             Show the LLM, scene and world-history viewers without console decision overriding");
@@ -168,6 +170,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --no-embeddings                    DEBUG: run without models/embeddings/glove.6B.100d.txt (keywords ranked by length). For CI.");
     Console.WriteLine("  --audio <winmm|openal>             Audio path: WinMM + system MIDI (Windows default) or OpenAL + SoundFont (elsewhere)");
     Console.WriteLine("  --soundfont <file>                 With the OpenAL path: play music with <file> instead of assets/audio/soundfont.sf2");
+    Console.WriteLine("  --music-engine <synth|legacy>      Music: the composer and synthesiser (default) or the first engine via MIDI, for comparison");
     Console.WriteLine("  --log-file <path>                  DEBUG: write the run's log to <path> instead of log.txt. Used by the test suite.");
     Console.WriteLine("  --hidden                           DEBUG: create the window without showing it — no window on screen, no focus");
     Console.WriteLine("                                     taken. The GL context and every mode still run. Used by the test suite.");
@@ -184,8 +187,9 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --cpu                              Run LLM on CPU only, overriding the setting and the first-run probe");
     Console.WriteLine("  --gpu                              Run LLM on the installed GPU backend (models/llama/backends/), same override");
     Console.WriteLine("  --no-llm-probe                     Skip first-run compute-device detection; use whatever is already saved");
-    Console.WriteLine("  --no-developer-keys                Disable the developer keyboard shortcuts (D/M/F/G/H/J, C/V, W/S zoom),");
-    Console.WriteLine("                                     leaving arrows/Space/Escape — i.e. behave as a shipped build does");
+    Console.WriteLine("  --developer-keys                   Enable the developer keyboard shortcuts (D/M/F/G/H/J, R/K, C/V, W/S zoom,");
+    Console.WriteLine("                                     Tab outside exploration). Off by default, as in a shipped build,");
+    Console.WriteLine("                                     which ignores this flag");
     Console.WriteLine("  --seed <n>                         Fix the master RNG seed for a reproducible run (world, spawn, dice).");
     Console.WriteLine("                                     Names the world outright, so New skips the moon-selection screen");
     Console.WriteLine("  --start-at <name>                  DEBUG: spawn on the first biome/location matching <name> (e.g. village, farm)");
@@ -227,6 +231,9 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --refuse-means <n>                 DEBUG: under --playground, the first n willingness questions answer \"unwilling\"");
     Console.WriteLine("                                     and observes another instead. --playground never declines, so this is the only");
     Console.WriteLine("                                     way a script reaches that branch");
+    Console.WriteLine("  --penalty-only <kind>              DEBUG: a failed act draws only this kind of penalty from its verb's table:");
+    Console.WriteLine("                                     wound, get_lost, waste_time or lose_focus. The draw is otherwise uniform,");
+    Console.WriteLine("                                     so this is how a script reaches one. A table with none of it is a miss");
     Console.WriteLine("  --advance-days <n>                 DEBUG: push the world clock forward <n> days on first arrival at the world");
     Console.WriteLine("                                     map. The clock only moves on travel and work, and a wound takes 100-1000");
     Console.WriteLine("                                     days to close, so this is how a script sees healing without simulating years");
@@ -318,6 +325,17 @@ if (args.Any(a => a == "--no-embeddings")) Cathedral.Config.Debug.NoEmbeddings =
 {
     int i = Array.IndexOf(args, "--soundfont");
     if (i >= 0 && i + 1 < args.Length) Cathedral.Config.Debug.SoundFontPath = args[i + 1];
+}
+
+// --music-engine <synth|legacy>: which music engine plays. The legacy engine (MIDI to the system
+// synth, or a SoundFont off Windows) is kept for comparison with the new one.
+{
+    int i = Array.IndexOf(args, "--music-engine");
+    if (i >= 0 && i + 1 < args.Length)
+    {
+        if (Enum.TryParse<Cathedral.Audio.MusicEngineKind>(args[i + 1], ignoreCase: true, out var kind)) Cathedral.Config.Debug.MusicEngine = kind;
+        else Console.Error.WriteLine($"--music-engine {args[i + 1]}: expected synth or legacy; using synth.");
+    }
 }
 
 // --hidden: create the window without showing it. What run_tests.sh uses so a suite run does not put
@@ -493,6 +511,21 @@ if (args.Length >= 2 && args[0] == "--export-sfx")
 if (args.Length >= 1 && args[0] == "--export-music")
 {
     Environment.ExitCode = Cathedral.Audio.MusicExport.Run(args);
+    return;
+}
+
+// --render-music <out.wav> [--seconds n] [--mood m] [--seed n] [--tracks n] [--journey j.json]: the music,
+// rendered faster than real time with its score beside it — what tools/music measures.
+if (args.Length >= 1 && args[0] == "--render-music")
+{
+    Environment.ExitCode = Cathedral.Audio.Music.OfflineRender.Run(args);
+    return;
+}
+
+// --music-audition <dir>: every instrument of the music synthesiser alone, one WAV each.
+if (args.Length >= 1 && args[0] == "--music-audition")
+{
+    Environment.ExitCode = Cathedral.Audio.Music.Audition.Run(args);
     return;
 }
 
@@ -815,13 +848,15 @@ if (args.Any(a => a == "--no-llm-probe"))
     Cathedral.LLM.LlamaProbe.Enabled = false;
 }
 
-// Check for --no-developer-keys: behave as a shipped build does, in a development build. The only
-// way to exercise the shipped keyboard without building and running a shipped executable, which
-// cannot be driven by --cli.
-if (args.Any(a => a == "--no-developer-keys"))
+// Check for --developer-keys: the developer shortcuts are off by default, so a development run has
+// the shipped keyboard (whose letters the management tabs use) unless it asks for them. A shipped
+// build ignores the flag.
+#if !SHIP
+if (args.Any(a => a == "--developer-keys"))
 {
-    Cathedral.Config.Debug.DeveloperKeys = false;
+    Cathedral.Config.Debug.DeveloperKeys = true;
 }
+#endif
 
 // Reported every run, so a --cli script (and a player's log) can tell which keyboard is live.
 // ASCII only: this goes to a console whose code page mangles an em dash when redirected.
@@ -871,6 +906,14 @@ for (int i = 0; i < args.Length; i++)
 
     if (args[i] == "--refuse-focus")
         Cathedral.Config.Debug.RefuseFocus = true;
+
+    if (args[i] == "--penalty-only" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
+    {
+        if (Cathedral.Game.Scene.FailurePenalty.ParseKind(args[i + 1]) != null)
+            Cathedral.Config.Debug.PenaltyOnly = args[i + 1];
+        else
+            Console.Error.WriteLine($"--penalty-only: unknown kind '{args[i + 1]}' (wound, get_lost, waste_time, lose_focus)");
+    }
 
     if (args[i] == "--refuse-means" && i + 1 < args.Length && int.TryParse(args[i + 1], out var refuseMeans))
         Cathedral.Config.Debug.RefuseMeans = Math.Max(0, refuseMeans);

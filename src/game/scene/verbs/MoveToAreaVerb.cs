@@ -25,7 +25,14 @@ public class MoveToAreaVerb : Verb
         foreach (var m in base.Lessons(ctx)) yield return m;
     }
     public override string VerbId         => "move";
+    protected override bool MovesAlongWay => true;
     public override string DisplayName    => "Move";
+
+    /// <summary>Losing the way between two places is what failing to walk there means. The way lost ends the visit.</summary>
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target) => new FailurePenalty[]
+    {
+        FailurePenalty.GetLost, FailurePenalty.GetLost, FailurePenalty.WasteTime, FailurePenalty.WasteTime, FailurePenalty.LoseFocus,
+    };
     public override int    BaseDifficulty => 1;
 
     /// <summary>Walking from one room to the next. Nothing carried makes a body better at it, and at difficulty 1 the dice an implement would lend are spent on a roll already won.</summary>

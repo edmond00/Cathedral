@@ -13,8 +13,8 @@ public class CharcoalBurnerArchetype : WildernessNpcArchetype
 
     /// <summary>What asking this person about their work teaches.</summary>
     public override string TradeModusMentisId => "firecraft";
-    public override ItemTag? SellTag => ItemTag.Mineral;
-    public override ItemTag? BuyTag  => ItemTag.Wood;
+    public override ItemTag? SellTag => ItemTag.Fuel;
+    public override ItemTag? BuyTag  => ItemTag.Timber;
     public override int    ModiMentisCount => 7;
 
     public override string RoleNoun => "charcoal burner";

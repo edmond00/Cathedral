@@ -20,6 +20,12 @@ public class CutVerb : Verb
 {
     public override string VerbId         => "cut";
     public override string DisplayName    => "Cut";
+
+    /// <summary>A knife in a carcass that will not part slips, sooner or later, into the hand that holds it.</summary>
+    public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target) => new FailurePenalty[]
+    {
+        FailurePenalty.LoseFocus, FailurePenalty.LoseFocus, FailurePenalty.WasteTime, new CutWound(),
+    };
     public override int    BaseDifficulty => 2;
 
     /// <summary>Butchering a carcass is knife work. No hands, no verb.</summary>

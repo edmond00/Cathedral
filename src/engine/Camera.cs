@@ -164,6 +164,12 @@ namespace Cathedral.Engine
         }
         
         /// <summary>
+        /// When it answers true, the arrow keys belong to something drawn over the sphere (the
+        /// narration's location map pans with them) and do not turn the camera. Null: always ours.
+        /// </summary>
+        public Func<bool>? ArrowKeysTaken { get; set; }
+
+        /// <summary>
         /// Handles camera input. Returns true if any camera controls were processed.
         /// </summary>
         public bool ProcessInput(KeyboardState keyboardState, FrameEventArgs args)
@@ -171,29 +177,32 @@ namespace Cathedral.Engine
             bool inputProcessed = false;
             
             // Rotation controls (arrow keys)
-            if (keyboardState.IsKeyDown(Keys.Left))
+            if (ArrowKeysTaken?.Invoke() != true)
             {
-                _yaw -= ROTATION_SPEED * (float)args.Time;
-                inputProcessed = true;
-            }
-            if (keyboardState.IsKeyDown(Keys.Right))
-            {
-                _yaw += ROTATION_SPEED * (float)args.Time;
-                inputProcessed = true;
-            }
-            if (keyboardState.IsKeyDown(Keys.Up))
-            {
-                _pitch = Math.Clamp(_pitch + ROTATION_SPEED * (float)args.Time, MIN_PITCH, MAX_PITCH);
-                inputProcessed = true;
-            }
-            if (keyboardState.IsKeyDown(Keys.Down))
-            {
-                _pitch = Math.Clamp(_pitch - ROTATION_SPEED * (float)args.Time, MIN_PITCH, MAX_PITCH);
-                inputProcessed = true;
+                if (keyboardState.IsKeyDown(Keys.Left))
+                {
+                    _yaw -= ROTATION_SPEED * (float)args.Time;
+                    inputProcessed = true;
+                }
+                if (keyboardState.IsKeyDown(Keys.Right))
+                {
+                    _yaw += ROTATION_SPEED * (float)args.Time;
+                    inputProcessed = true;
+                }
+                if (keyboardState.IsKeyDown(Keys.Up))
+                {
+                    _pitch = Math.Clamp(_pitch + ROTATION_SPEED * (float)args.Time, MIN_PITCH, MAX_PITCH);
+                    inputProcessed = true;
+                }
+                if (keyboardState.IsKeyDown(Keys.Down))
+                {
+                    _pitch = Math.Clamp(_pitch - ROTATION_SPEED * (float)args.Time, MIN_PITCH, MAX_PITCH);
+                    inputProcessed = true;
+                }
             }
             
             // Zoom (W/S) and the debug camera (C/V) are development controls — see
-            // Config.Debug.DeveloperKeys, which is false in a shipped build.
+            // Config.Debug.DeveloperKeys, which is off unless --developer-keys is passed (never in a shipped build).
             //
             // Zoom is included even though it is not a debugging feature. The game sets the
             // camera distance itself for each phase (world view, narration, fights), and a player

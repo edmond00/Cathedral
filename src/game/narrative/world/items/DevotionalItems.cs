@@ -19,7 +19,7 @@ public sealed class Censer : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass Weight => WeightClass.Medium;
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Devotional };
     public override int PriceReference => 30;
 }
 
@@ -28,7 +28,7 @@ public sealed class HolyWater : ConsumableItem
     public override string ItemId      => "holy_water";
     public override string DisplayName => "Blessed Water";
     public override string Description => "A small stoppered vial of water drawn and blessed at a font";
-    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
+    public override List<ItemTag> Tags => new() { ItemTag.Devotional };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Drink;
@@ -46,7 +46,7 @@ public sealed class Relic : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Insignificant;
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Devotional };
     public override int PriceReference => 80;
 }
 
@@ -58,7 +58,7 @@ public sealed class Icon : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Devotional };
     public override int PriceReference => 40;
 }
 
@@ -70,7 +70,7 @@ public sealed class PrayerBook : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Devotional };
     public override int PriceReference => 50;
 }
 
@@ -82,7 +82,7 @@ public sealed class VotiveCandle : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Chandlery, ItemTag.Devotional };
     public override int PriceReference => 3;
 }
 
@@ -94,7 +94,7 @@ public sealed class Aspergillum : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Devotional };
     public override int PriceReference => 25;
 }
 
@@ -106,7 +106,7 @@ public sealed class Offering : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Devotional };
     public override int PriceReference => 2;
 }
 
@@ -118,7 +118,7 @@ public sealed class Ampulla : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Insignificant;
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Devotional };
     public override int PriceReference => 4;
 }
 
@@ -132,7 +132,7 @@ public sealed class Primer : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Writing };
     public override int PriceReference => 12;
 }
 
@@ -156,7 +156,7 @@ public sealed class Pen : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Insignificant;
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Writing };
     public override int PriceReference => 1;
 }
 
@@ -168,7 +168,7 @@ public sealed class Rod : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
-    public override List<ItemTag> Tags => new() { ItemTag.Wood };
+    public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Timber };
     public override int PriceReference => 1;
 }
 
@@ -192,7 +192,7 @@ public sealed class Seal : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Writing };
     public override int PriceReference => 60;
 }
 
@@ -282,7 +282,7 @@ public sealed class BurialUrn : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass Weight => WeightClass.Medium;
-    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Pottery };
     public override int PriceReference => 10;
 }
 
@@ -294,7 +294,7 @@ public sealed class Shroud : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
-    public override List<ItemTag> Tags => new() { ItemTag.Textile };
+    public override List<ItemTag> Tags => new() { ItemTag.Textile, ItemTag.Cloth };
     public override int PriceReference => 6;
 }
 

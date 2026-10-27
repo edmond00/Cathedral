@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,8 +13,11 @@ public class GoldFeverModusMentis : ModusMentis
     public override string MenuDescription =>
         "Finds precious metal and cannot then leave it alone. Reads colour in the pan and in the seam better than anyone, and works past food, daylight and sense to follow it. A gift and an affliction in the same faculty.";
     public override string SkillMeans       => "the hunger that follows a colour in the rock";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
+    public override WillTarget? Will => WillTarget.To<MineVerb>("dig metal out of the rock");
     public override string[] Organs        => new[] { "eyes", "spleen" };
+    /// <summary>A hunger that ends at a pick in a seam: a body with no hands for one has no gold fever.</summary>
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.Low;
 

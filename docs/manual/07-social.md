@@ -81,13 +81,13 @@ would make a long branch nearly free; the difficulty therefore rises with depth,
 slowly than the pool does, so that committing to a longer exchange remains modestly the better play
 rather than being a pure tax.
 
-Three ladders exist:
+Four ladders exist:
 
-| Depth in replies | Formalities | Ordinary matters | Matters of consequence |
-|---|---|---|---|
-| 2 | 1 six | 3 sixes | 4 sixes |
-| 3 | 2 sixes | 4 sixes | 4 sixes |
-| 4 | 2 sixes | 4 sixes | 5 sixes |
+| Depth in replies | Formalities | Ordinary matters | Matters of consequence | Grave matters |
+|---|---|---|---|---|
+| 2 | 1 six | 3 sixes | 4 sixes | 5 sixes |
+| 3 | 2 sixes | 4 sixes | 4 sixes | 5 sixes |
+| 4 | 2 sixes | 4 sixes | 5 sixes | 6 sixes |
 
 The **formalities** are the introduction and the proposing of a trade, either way. **Ordinary
 matters** are small talk and the lesser asks: the deepening of a relation, begging, the gathering
@@ -96,7 +96,9 @@ commission, a remedy, alms, a blessing, talk of soldiering or of far places, a s
 to be led to a trader's premises. **Matters of consequence** are reconciliation with an enemy, the
 asking of work, an invitation to travel together, the asking of an introduction to another,
 provocation, the waking of a sleeper, talking one's way out of a crime, and the graver of the
-conversations a calling opens — confession, petition, a bribe, and the asking to be taught.
+conversations a calling opens — confession, petition, a bribe, and the asking to be taught. The
+one **grave matter** is asking a householder who has found one waiting in their house at night to
+let one stay, which is asking them to give up something of their own on the spot.
 
 The two higher ladders stand two sixes above where the replies alone would put them, because the
 replies are not the only dice: regard, garments and beauty all swell the pool. A difficulty exceeding
@@ -106,7 +108,8 @@ a six.
 The humors may be spent upon this roll as upon any other, to the **viscera's** limit.
 
 Certain resolutions are **forced** and roll nothing: the branch of a confrontation in which one
-provokes the confronter always ends in a fight.
+provokes the confronter always ends in a fight, and the branch in which a householder is told one
+will go always ends at the door.
 
 **A conversation that carries teaches three things, not one.** The first is the general skill of
 walking up to somebody and opening one's mouth, which is the same whatever follows and is what the

@@ -325,3 +325,17 @@ public sealed class BeastPunctureWound : WildcardWound
     public override string WoundName => "Puncture";
     public override DamageType DamageType => DamageType.Piercing;
 }
+
+public sealed class BeastScrapeWound : MishapWound
+{
+    public override char WoundId => 'G';
+    public override string WoundName => "Scrape";
+    public override DamageType DamageType => DamageType.Abrading;
+}
+
+public sealed class BeastStrainWound : MishapWound
+{
+    public override char WoundId => 'H';
+    public override string WoundName => "Strain";
+    public override DamageType DamageType => DamageType.Straining;
+}

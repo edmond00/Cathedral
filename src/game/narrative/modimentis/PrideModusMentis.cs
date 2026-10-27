@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Scene;
 using Cathedral.Game.Dialogue.Tree;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -32,6 +33,8 @@ public class PrideModusMentis : ModusMentis
         new(typeof(AffinityIncrementOutcome), () => new CholerHumor(), OutcomeSeverity.Negative),
         new(typeof(NoDialogueConsequenceOutcome), () => new CholerHumor()),
         new(typeof(ModusMentisGrantOutcome), () => new LaetitiaHumor()),
+        new(typeof(LostWayOutcome), () => new PudorHumor()),
+        new(typeof(FocusLostOutcome), () => new PudorHumor()),
     };
 
     public override string PersonaPrompt => @"You are the inner voice of PRIDE, and it is not about the bread, it is about how it was handed over.

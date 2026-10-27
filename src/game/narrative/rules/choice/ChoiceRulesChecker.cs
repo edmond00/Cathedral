@@ -26,7 +26,7 @@ public static class ChoiceRulesChecker
         new HighMoralityAvoidsCrimeRule(),
         new LowMoralityPrefersCrimeRule(),
         new SpeakingMindPrefersDialogueRule(),   // after the crime rule: an unscrupulous mind's crime wins
-        new ExamineGoalNeedsObservationRule(),
+        new SensoryGoalNeedsObservationRule(),   // a human's senses only; a beast's are unrestricted
     };
 
     /// <summary>Rules that narrow how an action modus mentis may answer "do you want to do it?".</summary>
@@ -36,6 +36,7 @@ public static class ChoiceRulesChecker
         new LowMoralityNeverRefusesCrimeRule(),
         new ExamineActionNeedsObservationRule(),
         new SpeakingActionNeverRefusesDialogueRule(),
+        new WillActionNeverRefusesItsPathRule(),   // last: lifts even an imposed refusal for its own path
     };
 
     /// <summary>Narrows <paramref name="goals"/> to what this thinking modus mentis may be shown.</summary>

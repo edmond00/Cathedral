@@ -26,6 +26,7 @@ public class HearthlongingModusMentis : ModusMentis
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {
         new(typeof(AreaMoveOutcome), () => new MelancholiaHumor()),
+        new(typeof(LostWayOutcome), () => new MelancholiaHumor()),
     };
 
     public override string PersonaPrompt => @"You are the inner voice of HEARTH-LONGING, and a lit window at dusk goes through you every single time.

@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 using Cathedral.Game.Scene;
 using Cathedral.Game.Dialogue.Tree;
@@ -14,10 +15,11 @@ public class LargesseModusMentis : ModusMentis
     public override string MenuDescription =>
         "Gives as the great give: openly, publicly, to be seen giving. Delights in the act of bestowing, and in what it says about the giver.";
     public override string SkillMeans       => "the open-handed giving of the great";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
+    public override WillTarget? Will => WillTarget.To<GiveAlmsVerb>("give open-handedly");
     public override string[] Organs        => new[] { "heart", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
-    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction | AnatomyCapability.Speech;
 
     public override string PersonaTone     => "a noble who loves to be seen giving";
     public override string PersonaReminder  => "bestower of gifts";

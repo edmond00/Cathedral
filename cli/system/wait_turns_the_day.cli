@@ -1,0 +1,38 @@
+# wait_turns_the_day — a wait through the night turns the calendar
+#
+# Sitting on the Test Bench in the evening and choosing to wait until morning: the passage runs
+# through night into dawn, which is the turn of a day, so the world's calendar moves on by one.
+# The yard is public ground, so nobody comes in at night to stop the wait.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Yard" --period evening --observe-only "Test Bench"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+expect-state where "period=Evening day=0"
+
+strategy succeed
+goal sit_and_wait
+advance 12 180
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+
+wait
+click period morning
+wait
+click continue
+advance 12 180
+
+expect-outcome time_shift
+expect-state where "period=Morning day=1"
+quit

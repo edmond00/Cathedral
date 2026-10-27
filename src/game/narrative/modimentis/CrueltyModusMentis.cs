@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 using Cathedral.Game.Scene;
 
@@ -15,7 +16,8 @@ public class CrueltyModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads others for their fear and their weak points, and takes an advantage without the check of mercy. Inclines toward intimidation, domination and pain, pressing where another would ease off.";
     public override string SkillMeans    => "cruelty and predatory instinct";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
+    public override WillTarget? Will => WillTarget.To<CrushVerb>("crush something small");
     public override MoralLevel MoralLevel => MoralLevel.Low;
     public override string[] Organs => new[] { "spleen", "heart" };
 

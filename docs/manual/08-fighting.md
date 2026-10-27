@@ -250,4 +250,4 @@ country may find it cannot cross the next stretch of it.
 
 ---
 
-Previous: [VII. Of Social Intercourse](07-social.md) · Next: [IX. Of Routines](09-routines.md)
+Previous: [VII. Of Social Intercourse](07-social.md) · Next: [IX. Of Mental Maps and Routines](09-routines.md)

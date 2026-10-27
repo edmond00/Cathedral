@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,10 +13,11 @@ public class SoldieryModusMentis : ModusMentis
     public override string MenuDescription =>
         "Thinks like a man under orders: the chain of command, the duty roster, the kit that must be kept, the trouble that comes of being noticed. Knows how an army lives when it is not fighting, which is nearly always.";
     public override string SkillMeans       => "the ordinary knowledge of the soldier's life";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
+    public override WillTarget? Will => WillTarget.To<TalkSoldieringVerb>("talk of the soldier's life");
     public override string[] Organs        => new[] { "cerebrum", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
-    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction | AnatomyCapability.Speech;
 
     public override string PersonaTone     => "an old soldier who has learned that most of war is waiting and kit";
     public override string PersonaReminder  => "old soldier";

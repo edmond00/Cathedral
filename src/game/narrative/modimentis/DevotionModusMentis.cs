@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 using Cathedral.Game.Scene;
 using Cathedral.Game.Dialogue.Tree;
@@ -14,8 +15,10 @@ public class DevotionModusMentis : ModusMentis
     public override string MenuDescription =>
         "Finds the sacred in the ordinary passing of time: every hour has its prayer, every lesson is a gift. Is quietly steadied by the turning of the day.";
     public override string SkillMeans       => "the finding of the sacred in the hours";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Emotion };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
+    public override WillTarget? Will => WillTarget.To<AskBlessingVerb>("seek a blessing");
     public override string[] Organs        => new[] { "heart", "pineal_gland" };
+    public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
     public override string PersonaTone     => "a devout heart steadied by the hours of prayer";

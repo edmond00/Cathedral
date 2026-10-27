@@ -1,0 +1,71 @@
+# map visits — the areas stood in and the ways gone by are recorded, and outlive the visit
+#
+# AreaVisits writes them to the location's saved state, and the location map draws from them. The
+# Field–Rock Track runs past the Test Yard, so following it from the field to the rock records the
+# yard as visited too, and the two neighbour ways the track follows as taken — a path is a walk past
+# the areas between its ends, not a jump. Then the location is left and entered again: the scene is
+# rebuilt from its factory on arrival, and the record must come back with it.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Field" --period dawn --observe-only "Field–Rock Track"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# Where the visit opens is visited before anything is done; nothing else is.
+expect-state map visited Test Field
+expect-no-state map visited Test Rock
+expect-no-state map taken
+
+strategy succeed
+goal follow_path
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect-verb follow_path
+expect Moved to: Test Rock
+
+inspect map
+expect-state map visited Test Rock
+expect-state map visited Test Yard
+expect-state map taken Field–Rock Track
+expect-state map taken between Test Field and Test Yard
+expect-state map taken between Test Rock and Test Yard
+# The move was shown on the map: the party walked the track's own line, from card to card.
+expect-state map walk from Test Field to Test Rock
+expect-state map via=line
+# The wood is off the path: neither visited nor any way to it taken.
+expect-no-state map Test Wood
+save roundtrip
+
+# Leave, come back: a rebuilt scene, the same record.
+observe none
+click button
+wait 60
+advance 12 180
+click button
+wait mode WorldView 90
+travel here
+wait mode LocationInteraction 60
+inspect map
+expect-state map visited Test Yard
+expect-state map visited Test Rock
+expect-state map taken Field–Rock Track
+expect-state map taken between Test Field and Test Yard
+# What the observations took in is seen, and only that: the field's introduction named the Test Mud,
+# the crossing to the wood, so the wood is seen without ever being stood in.
+expect-state map seen Test Wood
+quit

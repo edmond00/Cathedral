@@ -11,7 +11,7 @@ public class ShepherdArchetype : PeasantArchetype
 
     /// <summary>What asking this person about their work teaches.</summary>
     public override string TradeModusMentisId => "husbandry";
-    public override ItemTag? SellTag => ItemTag.Textile;
+    public override ItemTag? SellTag => ItemTag.Woollens;
     public override ItemTag? BuyTag  => ItemTag.Tool;
     public override int    ModiMentisCount => 7;
 
