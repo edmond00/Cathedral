@@ -202,9 +202,11 @@ function a modus mentis bears, since that decides where in the machinery it is c
 - A **fighting** modus mentis unlocks a fighting skill and lends its level to that skill's dice. It
   is never consulted directly.
 - A **will** is asked nothing either, in the sense the others are: it is told the shortest course of
-  acts that leads, from where the body stands, to an act of the kind it wants, and it attends to and
-  proposes only the first act of such a course. Where several courses are equally short — two people
-  to strike, two bushes to pick — the first act of any of them will serve. The course is reckoned through the place itself —
+  acts that leads, from where the body stands, to an act of the kind it wants, and it attends only to
+  the first act of such a course. Where several courses are equally short — two people to strike, two
+  bushes to pick — the first act of any of them will serve. In deliberation it is less strict: it
+  proposes the first act of any course of at most three acts, the wanted act included, or of one as
+  short as the shortest the place offers (see [VI §6](06-narration.md#6-the-two-families-of-rule)). The course is reckoned through the place itself —
   walking, climbing, crossing, opening doors, waiting for another hour — and, where the act it wants
   needs an implement the body lacks, through taking one up or proposing to buy one from somebody whose
   wares include it. It cannot be reckoned through anything whose issue is not known beforehand: a

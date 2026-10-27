@@ -1682,6 +1682,13 @@ public static class Config
         /// </summary>
         public const int MaxNarrativeTextLength = 800;
 
+        /// <summary>
+        /// The longest path of actions, the goal included, a will accepts from an object it is asked to
+        /// think about, when the path is not the shortest this place offers (see
+        /// <c>ActionPathPlanner.WaysThrough</c>). The shortest path is accepted however long it is.
+        /// </summary>
+        public const int WillMaxPathSteps = 3;
+
         // ── Observation phase length thresholds (see ObservationPhaseController) ──────────────
         // All in characters of the final (sanitized) observation text. Kept here so the pacing of a
         // multi-object observation phase can be tuned without touching the controller.

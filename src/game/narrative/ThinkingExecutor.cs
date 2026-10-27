@@ -136,9 +136,10 @@ public class ThinkingExecutor
         // one of those (TryAgain).
         VerbAction? again = null;
 
-        // A will is offered no goal but its path's first step (WillPriority), and on an object that
-        // does not offer it, or in a place with no way to its goal at all, it proposes nothing and says
-        // why. Its goal is not chosen, so there is nothing for a doubt to choose again. Only the act it
+        // A will is offered no goal but the first step of a way to its goal through this object — within
+        // Config.Narrative.WillMaxPathSteps, or as short as the place's shortest (WillPriority.WaysOn) —
+        // and on an object offering none, or in a place with no way to its goal at all, it proposes
+        // nothing and says why. Its goal is not chosen, so there is nothing for a doubt to choose again. Only the act it
         // wants is its own to carry out: a step on the way to it (a walk, a wait, a tool fetched) is
         // carried out by whichever mind the means judge finds fittest, and while a retry remains, a
         // refusal tries the same step with another means.
@@ -148,11 +149,16 @@ public class ThinkingExecutor
         if (scene != null && pov != null && !autoSuccess && Rules.Choice.WillPriority.Steers(thinkingModusMentis, scene))
         {
             var planned = Rules.Choice.WillPriority.PathOf(thinkingModusMentis, scene, pov, actingMember);
-            // The path through what this object offers, which need not be the one the plan kept: of
-            // two people equally near to strike, either is the way.
-            willPath = planned == null ? null
-                     : Scene.ActionPathPlanner.PathThrough(scene, pov, actingMember, thinkingModusMentis.Will!, planned,
-                                                           subOutcomes.OfType<VerbAction>());
+            // The way through what this object offers, which need not be the one the plan kept nor as
+            // short: any within a few steps of the goal, the shortest of them, and between equally short
+            // ones, the will's own pick.
+            var ways = Rules.Choice.WillPriority.WaysOn(thinkingModusMentis, scene, pov, actingMember, subOutcomes.OfType<VerbAction>());
+            willPath = ways.Count switch
+            {
+                0 => null,
+                1 => ways[0],
+                _ => await ChooseWillWayAsync(ways, thinkingModusMentis, overallLocation, areaLocation, observedPhrase, cancellationToken),
+            };
             willStep = willPath == null ? null
                      : subOutcomes.OfType<VerbAction>().FirstOrDefault(v => Scene.ActionPathPlanner.SameAction(v, willPath.First.Action));
             if (willStep == null)
@@ -504,9 +510,7 @@ public class ThinkingExecutor
         bool keeps;
         if (scene != null && pov != null && Rules.Choice.WillPriority.Steers(thinkingModusMentis, scene))
         {
-            keeps = thinkingModusMentis.Will!.Matches(goal)
-                    || Rules.Choice.WillPriority.PathOf(thinkingModusMentis, scene, pov, actingMember) is { } path
-                       && Scene.ActionPathPlanner.PathThrough(scene, pov, actingMember, thinkingModusMentis.Will!, path, new[] { goal }) != null;
+            keeps = Rules.Choice.WillPriority.OnItsWay(thinkingModusMentis, scene, pov, actingMember, goal);
         }
         else
         {
@@ -874,6 +878,35 @@ public class ThinkingExecutor
         if (chosen == null)
             Console.WriteLine("ThinkingExecutor: the judge chose none of the offered goals — treating as a refusal.");
         return chosen ?? IgnoreVerb.MakeOutcome();
+    }
+
+    /// <summary>
+    /// A will's pick between equally short ways to its goal through one object — two people to strike,
+    /// a door and a stair that both lead on. The goal judge is asked over their first steps with no
+    /// decline: every one is the will's own way, so declining is not an answer. Under the playground a
+    /// draw, narrowed by <c>--goal-only</c>.
+    /// </summary>
+    private async Task<Scene.ActionPath> ChooseWillWayAsync(IReadOnlyList<Scene.ActionPath> ways, ModusMentis will,
+        string? overallLocation, string? areaLocation, string? observedPhrase, CancellationToken ct)
+    {
+        var steps = ways.Select(w => (NarrativeAnchor)w.First.Action).ToList();
+        NarrativeAnchor? chosen;
+        if (PlaygroundMode.IsActive)
+        {
+            var pool = GoalOnlyFilter(steps);
+            chosen = pool[_rng.Next(pool.Count)];
+        }
+        else
+            chosen = await _selector.SelectAsync(
+                ChoiceKind.Goal, will, steps,
+                o => o.ToNaturalLanguageString(),
+                ThinkingPromptConstructor.SituationLine(overallLocation, areaLocation, observedPhrase),
+                declineOption: null, ct: ct);
+
+        var way = ways.FirstOrDefault(w => ReferenceEquals(w.First.Action, chosen)) ?? ways[0];
+        Console.WriteLine($"ThinkingExecutor: [{will.DisplayName}] has {ways.Count} ways of {way.Steps.Count} step(s) here — "
+                        + $"chooses '{way.First.Verbatim}'.");
+        return way;
     }
 
     /// <summary>

@@ -312,13 +312,17 @@ elsewhere. It never opens a
 phase while any other observing modus mentis is held. Given an object to attend to closely, it keeps
 it if the object affords that first act, turns from it to the object that does if one remains
 unattended this phase, and otherwise declines it, naming the act that would begin the course.
-Deliberating, it is offered no goal but that first act, and on an object that does not afford it it
-proposes nothing, saying only what it wants; it admits no doubt, having no goal to choose between, and
+Deliberating, it is less strict than in attending. Of the acts the object affords, those that begin a
+course to what it wants of at most three acts, the wanted act included — or of one no longer than the
+shortest course the place offers, however long that is — are its candidates; it is offered only the
+candidate whose course is shortest, and where several courses are equally short it chooses among
+their first acts itself. On an object that affords no candidate it proposes nothing, saying only
+what it wants; it admits no doubt, its goal being set by its course, and
 tries again only with another means for an act on its way. In either office it gives its course as its reason. Where the course does not exist
 within the place, it declines in both and says that only leaving offers what it wants. Bearing the
 Action function, it is its own means for the act it wants, and is not asked how willingly: it is
 eager for it, and the difficulty falls by one; an act on its way is carried out by
-whichever means is chosen for it, as any goal is. A will cannot refuse an act of its own course — though a rule
+whichever means is chosen for it, as any goal is. A will cannot refuse an act that would be its candidate — though a rule
 of action, which judges circumstance and not character, still may.
 
 The distinction has a practical edge: an act blocked by a rule of action is an act you attempted and
