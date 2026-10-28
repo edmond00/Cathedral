@@ -262,6 +262,16 @@ public sealed class CliDriver
             switch (cmd)
             {
                 case "help":        CmdHelp();                        break;
+                // `when <GameMode> <command…>`: run the command only in that mode. For scripts driving a
+                // real model, whose path a script cannot know in advance (an act may open a conversation).
+                case "when":
+                    if (rest.Length >= 2 && Enum.TryParse<GameMode>(rest[0], ignoreCase: true, out var whenMode))
+                    {
+                        if (_game.CurrentMode == whenMode) Execute(string.Join(' ', rest.Skip(1)));
+                        else CliMode.Emit($"skipped: not in {whenMode}");
+                    }
+                    else CliMode.Emit("error: when <GameMode> <command…>");
+                    break;
                 case "state":       CmdState();                       break;
                 case "dump":        CmdDump(rest);                    break;
                 case "snap":        CmdSnap(rest);                    break;
@@ -312,6 +322,9 @@ public sealed class CliDriver
                 case "allow-flag-miss": CmdAllowFlagMiss(rest);       break;
                 case "save":        CmdSave(rest);                    break;
                 case "crash-report": CmdCrashReport(rest);            break;
+                case "journal":     Report(rest.Length == 2 && rest[0] == "dump" && _game.CliDumpJournal(rest[1])
+                                               ? null : "journal dump <file.json> — needs a run and a writable path",
+                                           $"journal written to {(rest.Length > 1 ? rest[1] : "")}"); break;
                 case "pause":       Report(_game.CliOpenPauseMenu() ? null : "could not open the pause menu",
                                            "opened the pause menu"); break;
                 case "quit":        CmdQuit();                        break;
@@ -522,6 +535,10 @@ public sealed class CliDriver
                                     a timeout is reported as FAIL
           wait embeddings [secs]    block until the word vectors have loaded, so a later phase's
                                     keyword ranking is the same on every --playground run
+          when <GameMode> <command> run the command only in that mode (scripts on a real model)
+          journal dump <file.json>  write the run's journal as JSON — material for tools/journal/
+          wait for <secs>           settle, then hold that long — a player reading, which is the quiet
+                                    the background chronicler waits for
           expect <text>             assert text is on screen; failure sets a non-zero exit code
           expect-not <text>         assert text is absent
           quit                      close the game (exit 1 if any expect failed)
@@ -1883,6 +1900,18 @@ public sealed class CliDriver
             _waitDescription = Cathedral.Config.Debug.NoEmbeddings ? "embeddings (none: --no-embeddings)" : "embeddings loaded";
             if (a.Length >= 2 && int.TryParse(a[1], out int embSecs))
                 timeout = TimeSpan.FromSeconds(Math.Max(1, embSecs));
+        }
+        // `wait for <secs>`: settle, then hold for that long — a player reading. What lets a script give
+        // the background chronicler the quiet it waits for, which a bare `wait` (done the moment the
+        // game is idle) never does.
+        else if (a.Length >= 2 && a[0].Equals("for", StringComparison.OrdinalIgnoreCase)
+                 && double.TryParse(a[1], System.Globalization.NumberStyles.Float,
+                                    System.Globalization.CultureInfo.InvariantCulture, out double hold))
+        {
+            var until = DateTime.UtcNow + TimeSpan.FromSeconds(hold);
+            _waitCondition = () => DateTime.UtcNow >= until;
+            _waitDescription = $"held {hold:F0}s";
+            timeout = TimeSpan.FromSeconds(hold + 120);
         }
         else if (a.Length >= 1 && int.TryParse(a[0], out int secs))
         {

@@ -160,6 +160,34 @@ so the whole CLI suite runs without ever exercising it. Verifying a change here 
 with a real server, and the check is that every streaming request in the crash report's table reads
 `eof=y`.
 
+### Foreground and background: the priority gate
+
+Every request is **foreground** — the player is waiting on it — unless it came through
+`LlamaServerManager.GenerateBackgroundAsync`, which only the journal's chronicler uses. The rule is
+kept in the manager, not in a list of game modes that would go stale the first time a new phase made a
+request:
+
+- a foreground request **cancels** a background one in flight, at once (`EnterForeground`, called in
+  every request path — add it to any new one);
+- a background request **starts** only after `Config.LLM.BackgroundQuietMs` with nothing in flight and
+  nothing finished;
+- a cancelled background request returns **null** and keeps nothing; the caller starts the whole job
+  again later. Never hand back half a paragraph.
+
+Cancelling closes the stream, and llama-server notices between batches — so a preempted job can still
+hold the server for the rest of the batch it was computing. That residue is the one cost the gate
+cannot remove, and it is counted: the "LLM priority gate" crash-report section (requests delayed, ms in
+all, ms at most) and a `bg_delay=` on the request's `[llm-timing]` line. **Every request writes an
+`[llm-timing]` line to `log.txt`** (file only): client time to first token and total, and the server's
+own `prompt_n`/`cache_n`/`prompt_ms`/`predicted_n`/`predicted_ms`. `tools/journal/latency.py` compares
+two runs' lines. `--llm-threads <n>` and `--llm-seed <n>` make such a measurement reproducible at a
+player's thread count; `--no-chronicler` is the run without.
+
+What the server actually runs with on this build is not what an older note may say: llama.cpp's
+`--parallel` defaults to **auto (4 slots) with a unified KV cache** over `-c` (`Config.LLM.ContextSize`,
+2048), and `--cache-ram` keeps idle slots' prompts in host memory. Read the startup lines
+(`n_parallel is set to auto`, `n_slots`, `kv_unified`) before reasoning about eviction.
+
 ### Failure is a downgrade, not an exit
 
 `StartWithFallbackAsync` walks a ladder — the configured GPU backend, then CPU — and persists the

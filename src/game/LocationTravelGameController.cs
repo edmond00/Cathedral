@@ -237,6 +237,9 @@ public class LocationTravelGameController : IDisposable
     
     // Local LLM server; when set, narrative generation is enabled. Null = no LLM (fallback narration).
     private LlamaServerManager? _llamaServer;
+
+    /// <summary>Writes the journal up in the background; pumped every frame from <see cref="Update"/>.</summary>
+    private readonly Chronicler _chronicler;
     private ItemUseCritic? _criticEvaluator;
 
     /// <summary>Where the Catalyst English models are stored — beside the executable.</summary>
@@ -777,6 +780,19 @@ public class LocationTravelGameController : IDisposable
         _currentMode == GameMode.ProtagonistManagement
         && _managementMenuRenderer?.CliSelectBellicSkill(skillName) == true;
 
+    /// <summary>Writes the protagonist's journal to <paramref name="path"/> as JSON, for tools/journal/.</summary>
+    public bool CliDumpJournal(string path)
+    {
+        if (_protagonist == null) return false;
+        try
+        {
+            System.IO.File.WriteAllText(path, System.Text.Json.JsonSerializer.Serialize(_protagonist.Journal,
+                new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+            return true;
+        }
+        catch (Exception ex) { Console.Error.WriteLine($"journal dump: {ex.Message}"); return false; }
+    }
+
     /// <summary>Scrolls the Journal tab: a line count (positive reads back), pageup, pagedown or newest.</summary>
     public bool CliScrollJournal(string how) =>
         _currentMode == GameMode.ProtagonistManagement
@@ -895,6 +911,7 @@ public class LocationTravelGameController : IDisposable
         // The journal's two questions, answered live: whose journal, and where the party stands.
         // Outside a visit (the world map, a roadside fight) there is no place to name.
         JournalRecorder.Source = () => _protagonist;
+        _chronicler = new Chronicler(() => _llamaServer, () => _protagonist);
         JournalRecorder.Where = () => _isInNarrativeMode && _narrativeController is { } nc
             ? (nc.LocationId, nc.WorldContext?.DisplayName ?? "", nc.CurrentPoV?.Where?.DisplayName ?? "")
             : (-1, "", "");
@@ -1044,6 +1061,7 @@ public class LocationTravelGameController : IDisposable
     {
         UpdatePhase(deltaTime);
         UpdateMenuButton();
+        _chronicler.Pump();
     }
 
     /// <summary>
@@ -3787,6 +3805,7 @@ public class LocationTravelGameController : IDisposable
             var lines = new List<string>
             {
                 $"journal entries={j.Entries.Count} next-group={j.NextGroup} pending-groups={j.PendingGroupCount} "
+                + $"chronicler={(Config.Debug.ChroniclerDisabled ? "off" : _chronicler.Busy ? "busy" : "idle")} "
                 + $"written-groups={j.Entries.Where(e => e.Written.Length > 0).Count()} "
                 + $"source-chars={j.Entries.Sum(e => e.Source.Length)} written-chars={j.Entries.Sum(e => e.Written.Length)}",
             };

@@ -4,9 +4,10 @@
 # narration (the opening observation, the thinking, the outcome), dialogue (the brewer's lines and the
 # one reply picked, never the options left), a fact (the outcome's chip) and milestones (the first visit,
 # a modus mentis learned). Leaving for the world map then closes the visit's group: it is queued for the
-# chronicler, and until it is written the journal shows it raw.
+# chronicler, and until it is written the journal shows it raw. --no-chronicler holds it there, so the
+# queue can be read and carried through the save; journal_chronicler.cli is the writing up.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Hall" --period noon --observe-only "brewer"
+# FLAGS: --no-chronicler --playground --skip-childhood --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Hall" --period noon --observe-only "brewer"
 
 wait
 click menu New

@@ -82,9 +82,6 @@ public sealed class Journal
     /// <summary>The longest a single source may be — a narration block is a few hundred characters.</summary>
     public const int MaxSourceChars = 2_000;
 
-    /// <summary>Raised whenever a group closes, so the chronicler can wake.</summary>
-    public event Action? GroupClosed;
-
     private int CurrentGroup => NextGroup;
 
     public JournalEntry Add(JournalEntryKind kind, string source, string actor, bool byCompanion,
@@ -124,7 +121,6 @@ public sealed class Journal
         foreach (var e in open)
             if (e.Kind != JournalEntryKind.Milestone) e.State = JournalEntryState.Pending;
         TrimPendingSource();
-        GroupClosed?.Invoke();
     }
 
     /// <summary>The oldest group waiting for the chronicler, or null.</summary>
