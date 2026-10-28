@@ -37,8 +37,8 @@ public static class Audition
     private static List<(double t, float midi, double dur, float vel)> Play(Synth synth, WavWriter wav, Instrument inst)
     {
         // D dorian: a phrase, then a held open fifth and triad.
-        int root = inst is Instrument.Bourdon or Instrument.Timpani or Instrument.HandDrum or Instrument.Bodhran or Instrument.Kick ? 38
-                 : inst is Instrument.Distortion or Instrument.PowerChord ? 45
+        int root = inst is Instrument.Bourdon or Instrument.Timpani or Instrument.HandDrum or Instrument.Bodhran or Instrument.Kick or Instrument.WarDrum ? 38
+                 : inst is Instrument.Distortion or Instrument.PowerChord or Instrument.Staccato ? 45
                  : inst is Instrument.Bell or Instrument.Whistle ? 74 : 62;
         int[] phrase = { 0, 2, 3, 5, 7, 5, 3, 2, 0 };
         double beat = 0.55;

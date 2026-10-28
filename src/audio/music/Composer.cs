@@ -700,7 +700,7 @@ internal sealed class Composer
         foreach (Part part in new[] { Part.Drone, Part.Pad, Part.Melody, Part.Counter, Part.Ostinato, Part.Bass, Part.Perc, Part.Bell, Part.Ambience })
         {
             bool on = s.Layers.Contains(part);
-            output.Add(new(t, 0, part, default, 0, on ? Orchestra.PartLevel(part) : 0f, 0, IsGain: true,
+            output.Add(new(t, 0, part, default, 0, on ? Orchestra.PartLevel(part, p.Fight) : 0f, 0, IsGain: true,
                            FadeSeconds: (float)(on ? p.BarSeconds * 0.5 : p.BarSeconds * 1.5)));
         }
 
@@ -1150,7 +1150,7 @@ internal sealed class Composer
         var key = p.Key;
         double beat = p.BeatSeconds;
         if (p.Orch.Perc == Instrument.Bodhran) { EmitBodhran(output, p, barStart, arc); return; }
-        if (p.Orch.Perc == Instrument.Kick) { EmitKit(output, p, s, barStart, arc); return; }
+        if (p.Orch.Perc == Instrument.WarDrum) { EmitKit(output, p, s, barStart, arc); return; }
         if (p.Orch.Perc == Instrument.HandDrum)
         {
             // The tavern's frame drum: strong one, lighter offbeats, a little skip before the bar line.
@@ -1314,9 +1314,9 @@ internal sealed class Composer
 
     /// <summary>The pitch of a degree's pitch class at or above <paramref name="floor"/>, within an octave.</summary>
     /// <summary>
-    /// The fight's riff, on a distorted guitar in the low register (the chord's root between about D2
-    /// and C#3). Every style opens a chord's first bar on a power chord; struck below velocity 0.55
-    /// the single notes are palm-muted.
+    /// The fight's martial ostinato, in the low register (the chord's root between about D2 and C#3):
+    /// staccato strings, and brass stabs where a chord should ring. When the piece has a guitar, a
+    /// palm-muted distorted guitar doubles the gallop under the strings.
     /// </summary>
     private void EmitRiff(List<ScoreEvent> output, Piece p, Chord chord, double barStart, float arc)
     {
@@ -1328,10 +1328,23 @@ internal sealed class Composer
         while (key.Pitch(rootDeg) > key.Tonic - 7) rootDeg -= n;
         while (key.Pitch(rootDeg) < key.Tonic - 18) rootDeg += n;
         int root = key.Pitch(rootDeg);
+        int fifth = key.Pitch(chord.Tones[2] - chord.Root + rootDeg);
         bool chordStarts = _bar == 0 || s.Chords[_bar - 1] != chord.Root;
+        bool guitar = p.Orch.Guitar;
         float A = arc * Jitter(0.04f);
         void Note(double at, double dur, Instrument inst, int midi, float v) =>
-            output.Add(new(barStart + at + Humanise() * 0.25, dur, Part.Ostinato, inst, midi, Math.Clamp(v * A, 0.05f, 1f), 0f));
+            output.Add(new(barStart + at + Humanise() * 0.25, dur, Part.Ostinato, inst, midi, Math.Clamp(v * A * Orchestra.Trim(inst), 0.05f, 1f), 0f));
+        void Strings(double at, double dur, int midi, float v)
+        {
+            Note(at, dur, Instrument.Staccato, midi, v);
+            if (guitar) Note(at, dur, Instrument.Distortion, midi, 0.45f);
+        }
+        // A brass stab: root, fifth and octave together, short and accented, as a chord a march hits.
+        void Stab(double at, double dur, float v)
+        {
+            foreach (int m in new[] { root + 12, fifth + 12, root + 24 })
+                Note(at, dur, Instrument.Horn, m, v);
+        }
 
         switch (s.Riff)
         {
@@ -1339,68 +1352,74 @@ internal sealed class Composer
                 for (int beat = 0; beat < p.Meter; beat++)
                 {
                     double t = beat * b;
-                    if (beat == 0)
-                    {
-                        // The bar opens on the chord, left to ring under the gallop's first beat.
-                        Note(t, b * 0.95, Instrument.PowerChord, root, chordStarts ? 0.9f : 0.8f);
-                        continue;
-                    }
+                    if (beat == 0 && chordStarts) Stab(t, b * 0.9, 0.7f);
                     if (beat == p.Meter - 1 && _bar % 2 == 1)
                     {
-                        // Every second bar turns at its end: four sixteenths off the root, open.
+                        // Every second bar turns at its end: four sixteenths off the root.
                         for (int k = 0; k < 4; k++)
-                            Note(t + k * x, x * 0.9, Instrument.Distortion, key.Pitch(rootDeg + s.RiffTurn[k]), 0.62f);
+                            Note(t + k * x, x * 0.9, Instrument.Staccato, key.Pitch(rootDeg + s.RiffTurn[k]), 0.68f);
                         continue;
                     }
-                    Note(t, x * 1.8, Instrument.Distortion, root, 0.45f);
-                    Note(t + 2 * x, x * 0.9, Instrument.Distortion, root, 0.4f);
-                    Note(t + 3 * x, x * 0.9, Instrument.Distortion, root, 0.42f);
+                    Strings(t, x * 1.8, root, beat == 0 ? 0.8f : 0.62f);
+                    Strings(t + 2 * x, x * 0.9, root, 0.5f);
+                    Strings(t + 3 * x, x * 0.9, root, 0.55f);
                 }
                 break;
 
             case RiffStyle.Tremolo:
             {
-                // Picked in sixteenths, an octave up: the root for half a bar, then a chord tone or the
-                // turn's own step, so the tremolo is itself a slow line.
-                int[] targets = { rootDeg + n, chord.Tones[2] - chord.Root + rootDeg + (_bar % 2 == 0 ? 0 : n), rootDeg + n + s.RiffTurn[_bar % 4] };
-                int first = key.Pitch(targets[0]);
-                int second = key.Pitch(_bar % 4 == 3 ? targets[2] : targets[1]);
+                // Running sixteenths: root and octave rocking, the fifth taking over for the second
+                // half of the bar, the turn's step at the end of every fourth.
+                int high = root + 12, second = _bar % 4 == 3 ? key.Pitch(rootDeg + n + s.RiffTurn[_bar % 4]) : fifth + 12;
                 int count = p.Meter * 4;
                 for (int k = 0; k < count; k++)
                 {
-                    int midi = k < count / 2 ? first : second;
-                    Note(k * x, x * 0.95, Instrument.Distortion, midi, k % 4 == 0 ? 0.7f : 0.6f);
+                    int midi = k < count / 2 ? (k % 2 == 0 ? root : high) : (k % 2 == 0 ? fifth : second);
+                    Note(k * x, x * 0.9, Instrument.Staccato, midi, k % 4 == 0 ? 0.72f : 0.55f);
                 }
-                if (chordStarts) Note(0, b * p.Meter * 0.95, Instrument.PowerChord, root, 0.7f);
+                if (chordStarts) Stab(0, b * 1.5, 0.65f);
                 break;
             }
 
             case RiffStyle.HalfTime:
-                Note(0, b * 2 * 0.95, Instrument.PowerChord, root, 0.92f);
+                Stab(0, b * 2, 0.8f);
+                Strings(0, b * 0.5, root, 0.8f);
                 foreach (double at in new[] { 2.0, 2.5, 3.0, 3.25 })
-                    if (at < p.Meter) Note(at * b, x * 1.6, Instrument.Distortion, root, 0.42f);
+                    if (at < p.Meter) Strings(at * b, x * 1.6, root, 0.55f);
                 if (p.Meter >= 4)
-                    Note(3.5 * b, b * 0.45, Instrument.PowerChord, key.Pitch(rootDeg + s.RiffTurn[3]), 0.8f);
+                    Note(3.5 * b, b * 0.45, Instrument.Staccato, key.Pitch(rootDeg + s.RiffTurn[3]), 0.7f);
                 break;
         }
     }
 
     /// <summary>
-    /// The fight's drum kit. Gallop: the kick on the riff's figure, the snare on two and four, a hi-hat
-    /// on the eighths. Tremolo: the double bass, a kick on every sixteenth, the snare on two and four,
-    /// the crash on every bar. HalfTime: the snare on three, a kick roll before it. A fill of snare
-    /// sixteenths ends each section, and a crash opens it.
+    /// The fight's drums: war drums and timpani, a military snare, a crash only to mark a section.
+    /// Gallop (a march): the war drum on one and three with the timpani on the root, a snare ruff on
+    /// two and four, the high drum galloping after them. Tremolo: war drums pounding eighths, low and
+    /// high, a snare roll swelling through every second bar. HalfTime: the war drum and the timpani
+    /// tolling on one, the snare on three, a run on the high drum into the next bar. Every section
+    /// ends on a fill and opens on a crash.
     /// </summary>
     private void EmitKit(List<ScoreEvent> output, Piece p, Section s, double barStart, float arc)
     {
         double b = p.BeatSeconds, x = b / 4;
         bool last = _bar == s.Bars - 1;
-        void Hit(double at, Instrument inst, int midi, float v, double dur = 0.25) =>
-            output.Add(new(barStart + at + Humanise() * 0.2, dur, Part.Perc, inst, midi, Math.Clamp(v * arc * Jitter(0.06f), 0.05f, 1f), inst == Instrument.Cymbal ? 0.4f : 0f));
-        // General MIDI drum notes, so a capture (--record) plays the right drums: kick, snare, crash, closed hat.
-        const int K = 36, S = 38, C = 49, H = 42;
-        if (_bar == 0 || (s.Riff == RiffStyle.Tremolo) || (s.Riff == RiffStyle.HalfTime))
-            Hit(0, Instrument.Cymbal, C, 0.8f, 2.0);
+        var key = p.Key;
+        int timp = LowPitch(key, s.Chords[_bar], key.Tonic - 14);
+        void Hit(double at, Instrument inst, int midi, float v, double dur = 0.3) =>
+            output.Add(new(barStart + at + Humanise() * 0.2, dur, Part.Perc, inst, midi, Math.Clamp(v * arc * Orchestra.Trim(inst) * Jitter(0.06f), 0.05f, 1f),
+                           inst == Instrument.Cymbal ? 0.4f : inst == Instrument.Snare ? 0.15f : 0f));
+        // General MIDI drum notes, so a capture (--record) plays something close: low and high floor
+        // toms for the war drums, snare, crash.
+        const int Lo = 41, Hi = 45, S = 38, C = 49;
+        // A ruff: two grace strokes just before the accent.
+        void Ruff(double at, float v)
+        {
+            Hit(at - 0.07, Instrument.Snare, S, v * 0.35f, 0.1);
+            Hit(at - 0.035, Instrument.Snare, S, v * 0.45f, 0.1);
+            Hit(at, Instrument.Snare, S, v);
+        }
+        if (_bar == 0) Hit(0, Instrument.Cymbal, C, 0.75f, 2.5);
         int beats = last ? p.Meter - 1 : p.Meter;
         switch (s.Riff)
         {
@@ -1408,33 +1427,43 @@ internal sealed class Composer
                 for (int i = 0; i < beats; i++)
                 {
                     double t = i * b;
-                    Hit(t, Instrument.Kick, K, 0.85f);
-                    if (i != p.Meter - 1 || _bar % 2 == 0) { Hit(t + 2 * x, Instrument.Kick, K, 0.6f); Hit(t + 3 * x, Instrument.Kick, K, 0.65f); }
-                    if (i % 2 == 1) Hit(t, Instrument.Snare, S, 0.85f);
-                    Hit(t, Instrument.Cymbal, H, 0.3f, 0.05);
-                    Hit(t + 2 * x, Instrument.Cymbal, H, 0.25f, 0.05);
+                    if (i % 2 == 0)
+                    {
+                        Hit(t, Instrument.WarDrum, Lo, i == 0 ? 0.95f : 0.8f, 1.0);
+                        if (i == 0) Hit(t, Instrument.Timpani, timp, 0.6f, 1.2);
+                    }
+                    else
+                    {
+                        Ruff(t, 0.8f);
+                        Hit(t + 2 * x, Instrument.WarDrum, Hi, 0.45f);
+                        Hit(t + 3 * x, Instrument.WarDrum, Hi, 0.5f);
+                    }
                 }
                 break;
             case RiffStyle.Tremolo:
-                for (int k = 0; k < beats * 4; k++) Hit(k * x, Instrument.Kick, K, k % 2 == 0 ? 0.7f : 0.55f);
-                for (int i = 1; i < beats; i += 2) Hit(i * b, Instrument.Snare, S, 0.9f);
-                if (p.Meter >= 4) Hit(2 * b, Instrument.Cymbal, C, 0.6f, 1.5);
+                for (int k = 0; k < beats * 2; k++)
+                    Hit(k * b / 2, Instrument.WarDrum, k % 2 == 0 ? Lo : Hi, k % 4 == 0 ? 0.85f : 0.55f, 0.8);
+                if (_bar % 2 == 1)
+                    for (int k = 0; k < beats * 4; k++)
+                        Hit(k * x, Instrument.Snare, S, 0.18f + 0.5f * k / (beats * 4f), 0.1);
+                if (_bar % 2 == 0 && _bar > 0) Hit(0, Instrument.Cymbal, C, 0.5f, 1.5);
+                if (s.Chords[_bar] != (_bar > 0 ? s.Chords[_bar - 1] : int.MinValue))
+                    Hit(0, Instrument.Timpani, timp, 0.65f, 1.2);
                 break;
             case RiffStyle.HalfTime:
-                Hit(0, Instrument.Kick, K, 0.95f);
-                Hit(0.75 * b, Instrument.Kick, K, 0.6f);
-                if (p.Meter >= 3) Hit(2 * b, Instrument.Snare, S, 0.95f);
+                Hit(0, Instrument.WarDrum, Lo, 1.0f, 1.5);
+                Hit(0, Instrument.Timpani, timp, 0.75f, 2.0);
+                if (p.Meter >= 3) Ruff(2 * b, 0.9f);
                 if (!last && p.Meter >= 4)
-                    for (int k = 0; k < 4; k++) Hit(3 * b + k * x, Instrument.Kick, K, 0.55f + 0.08f * k);
-                for (int i = 0; i < beats; i++) Hit(i * b, Instrument.Cymbal, H, 0.28f, 0.05);
+                    for (int k = 0; k < 4; k++) Hit(3 * b + k * x, Instrument.WarDrum, Hi, 0.4f + 0.1f * k);
                 break;
         }
         if (last)
             for (int k = 0; k < 4; k++)
             {
                 double t = (p.Meter - 1) * b + k * x;
-                Hit(t, Instrument.Snare, S, 0.55f + 0.12f * k);
-                if (k == 0) Hit(t, Instrument.Kick, K, 0.8f);
+                Hit(t, Instrument.WarDrum, k % 2 == 0 ? Hi : Lo, 0.55f + 0.12f * k);
+                Hit(t, Instrument.Snare, S, 0.4f + 0.12f * k, 0.1);
             }
     }
 

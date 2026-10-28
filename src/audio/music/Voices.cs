@@ -68,6 +68,13 @@ public enum Instrument
     /// velocity 0.5 and over it is a crash ringing for seconds; under it a closed hi-hat's tick.
     /// </summary>
     Cymbal,
+    /// <summary>
+    /// Staccato strings: the keyboard preset, a bowed section bitten short. Detuned saws and a sub an
+    /// octave down, a filter that opens on the attack and closes at once. The fight's ostinato.
+    /// </summary>
+    Staccato,
+    /// <summary>War drum: a deep, wide membrane struck hard, its pitch settling as it rings, and the slap of the beater.</summary>
+    WarDrum,
 }
 
 /// <summary>One sounding note. Renders mono; the synthesiser pans it into its part's bus.</summary>
@@ -127,11 +134,11 @@ internal abstract class Voice
         [Instrument.Bourdon] = 2.830f,
         [Instrument.Choir] = 2.528f,
         [Instrument.ChoirOoh] = 1.616f,
-        [Instrument.Cymbal] = 13.188f,
+        [Instrument.Cymbal] = 13.148f,
         [Instrument.DarkPad] = 3.185f,
         [Instrument.Distortion] = 2.338f,
         [Instrument.Fiddle] = 3.632f,
-        [Instrument.HandDrum] = 3.746f,
+        [Instrument.HandDrum] = 3.745f,
         [Instrument.Harp] = 4.379f,
         [Instrument.Harpsichord] = 2.913f,
         [Instrument.Horn] = 2.373f,
@@ -144,8 +151,10 @@ internal abstract class Voice
         [Instrument.Recorder] = 0.994f,
         [Instrument.Snare] = 3.265f,
         [Instrument.SquareLead] = 3.268f,
+        [Instrument.Staccato] = 5.723f,
         [Instrument.Strings] = 1.604f,
         [Instrument.Timpani] = 1.346f,
+        [Instrument.WarDrum] = 2.086f,
         [Instrument.Whistle] = 0.987f,
         [Instrument.Wind] = 19.846f,        // LEVELS-END
     };
@@ -178,6 +187,8 @@ internal abstract class Voice
         Instrument.Kick        => new KickVoice(),
         Instrument.Snare       => new SnareVoice(),
         Instrument.Cymbal      => new CymbalVoice(),
+        Instrument.Staccato    => new StaccatoVoice(),
+        Instrument.WarDrum     => new WarDrumVoice(),
         _ => new OrganVoice(OrganVoice.Principal, 0.1f),
     };
 }
@@ -1151,6 +1162,96 @@ internal sealed class CymbalVoice : Voice
             _amp *= _coef;
             energy += s * s;
             buf[i] += s * 0.4f * e * Amp;
+        }
+        if (energy / Math.Max(1, n) < 1e-10f) Env.Kill(0.001f);
+    }
+}
+
+internal sealed class StaccatoVoice : Voice
+{
+    private readonly float[] _p = new float[4], _inc = new float[4];
+    private float[] _t = Array.Empty<float>(), _sub = Array.Empty<float>();
+    private float _cut, _bite;
+    private Svf _lp, _body;
+
+    protected override void Start(float hz, float velocity)
+    {
+        _t = Wavetable.Saw.For(hz);
+        _sub = Wavetable.SoftSaw.For(hz * 0.5f);
+        float[] cents = { -9f, -2f, 7f };
+        for (int k = 0; k < 3; k++) { _inc[k] = hz * MathF.Pow(2f, cents[k] / 1200f) / Dsp.SampleRate; _p[k] = Rng.Unit(); }
+        _inc[3] = hz * 0.5f / Dsp.SampleRate;
+        _bite = 2600f + 1800f * velocity;
+        _cut = _bite;
+        _body.Set(420f, 1.2f);
+        Env = new Envelope(0.008f, 0.16f, 0.3f, 0.12f);
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
+    public override void Render(float[] buf, int n)
+    {
+        float cd = Dsp.Coef(0.09f);
+        for (int i = 0; i < n; i++)
+        {
+            float e = Env.Next();
+            if ((i & 15) == 0) { _cut = 750f + (_cut - 750f) * MathF.Pow(cd, 16); _lp.Set(_cut, 0.8f); }
+            float src = 0;
+            for (int k = 0; k < 3; k++) { src += Wavetable.Read(_t, _p[k]); _p[k] += _inc[k]; if (_p[k] >= 1f) _p[k] -= 1f; }
+            src = src / 3f + 0.35f * Wavetable.Read(_sub, _p[3]);
+            _p[3] += _inc[3]; if (_p[3] >= 1f) _p[3] -= 1f;
+            float y = _lp.Low(src) + 0.25f * _body.BandNorm(src);
+            buf[i] += y * 0.45f * e * Amp;
+        }
+    }
+}
+
+internal sealed class WarDrumVoice : Voice
+{
+    private static readonly float[] Ratios = { 1f, 1.52f, 1.98f, 2.44f };
+    private readonly float[] _ph = new float[4], _amp = new float[4], _g = new float[4];
+    private float _hz, _bend, _bendCoef, _slap, _thump;
+    private OnePole _slapLp, _thumpLp;
+
+    protected override void Start(float hz, float velocity)
+    {
+        _hz = Math.Clamp(hz, 45f, 140f);
+        // Struck hard, a big skin starts sharp and settles: a third of an octave in forty milliseconds.
+        _bend = 0.26f + 0.12f * velocity;
+        _bendCoef = Dsp.Coef(0.04f);
+        float[] amps = { 1f, 0.45f, 0.25f, 0.12f };
+        float[] dec = { 1.1f, 0.55f, 0.35f, 0.22f };
+        float length = 0.7f + 0.6f * velocity;
+        for (int k = 0; k < 4; k++) { _amp[k] = amps[k]; _g[k] = MathF.Pow(10f, -3f / (length * dec[k] * Dsp.SampleRate)); _ph[k] = 0f; }
+        _slap = 0.5f + 0.5f * velocity;
+        _thump = 1f;
+        _slapLp.Set(1100f);
+        _thumpLp.Set(140f);
+        Env = new Envelope(0.0008f, 0.01f, 1f, 0.15f);
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
+    public override void Render(float[] buf, int n)
+    {
+        float sd = Dsp.Coef(0.014f), td = Dsp.Coef(0.05f), energy = 0;
+        for (int i = 0; i < n; i++)
+        {
+            float e = Env.Next();
+            float f = _hz * (1f + _bend);
+            _bend *= _bendCoef;
+            float s = 0;
+            for (int k = 0; k < 4; k++)
+            {
+                s += MathF.Sin(Dsp.TwoPi * _ph[k]) * _amp[k];
+                _ph[k] += f * Ratios[k] / Dsp.SampleRate; if (_ph[k] >= 1f) _ph[k] -= 1f;
+                _amp[k] *= _g[k];
+            }
+            float nz = Rng.Next();
+            s += _slapLp.Low(nz) * 1.6f * _slap + _thumpLp.Low(nz) * 4f * _thump;
+            _slap *= sd;
+            _thump *= td;
+            s = MathF.Tanh(s * 1.2f);
+            energy += s * s;
+            buf[i] += s * 0.6f * e * Amp;
         }
         if (energy / Math.Max(1, n) < 1e-10f) Env.Kill(0.001f);
     }

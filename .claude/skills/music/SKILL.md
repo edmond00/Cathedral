@@ -21,7 +21,7 @@ AmbianceEngine (src/audio/AmbianceEngine.cs)     the game's only door: same API 
  │       │   Theory.cs (modes, keys, chords, progressions) · Melody.cs (motifs, rhythms, periods)
  │       │   Orchestra.cs (mood poles → instruments, tempo, metre, mix levels, hall and tape)
  │       └─ Synth            voices → part buses → chorus + FDN hall → tape → limiter
- │           Voices.cs (26 instruments) · Effects.cs · Dsp.cs
+ │           Voices.cs (28 instruments) · Effects.cs · Dsp.cs
  │   └─ PcmStream            waveOut on Windows, OpenAL elsewhere (adaptive queue, underrun report)
  └─ LegacyAmbianceEngine     --music-engine legacy: the first engine, MIDI to the GS Wavetable
                              Synth (Windows) or MeltySynth + assets/audio/soundfont.sf2
@@ -50,20 +50,24 @@ AmbianceEngine (src/audio/AmbianceEngine.cs)     the game's only door: same API 
   the tune under them); a lilt (`Lilt`). Still Dorian or Aeolian: festive is lively, not bright.
   The comp and drum come in with the melody's tier there, not at Intensity 0.75. The harness
   holds festive renders to the `poles.festive` bands in `targets.json`.
-- **Fights.** The fight filter (`Composer.Fighting`) writes dungeon synth leaning into metal:
-  `Orchestra.ChooseFight` (the lead from horn, choir, strings, square lead, organ; a distorted riff,
-  `Instrument.Distortion` and `PowerChord`, palm-muted below velocity 0.55; a kit, `Kick`, `Snare`,
-  `Cymbal`, a crash at 0.5 and over, a closed hat under), 84-100 bpm felt in sixteenths, never
-  Locrian (a power chord needs its fifth). `PlanFightForm`: `I A A' B C A' B A'`, each section a
-  `RiffStyle` (`EmitRiff`, `EmitKit`): Gallop under the A tune, Tremolo over a double-bass kick
-  under the B, HalfTime for the tune-less breakdown. The band is all there from the first bar; the
-  riff and kit open with the melody's tier, like a dance's. A fight cuts in at once
-  (`MusicCore.SetFighting`: the planned bars dropped, a 0.2 s fade, the riff 0.08 s later), not at
-  the next bar line, which at a slow tempo was four or five seconds late; its end keeps the bridge, and plays in a closer room (`ApplyBus(..., fight: true)`). `--mood Battle` renders
-  a fight, as `B` in `--music` mode plays one; `targets.json` holds Battle to its own bands.
+- **Fights.** The fight filter (`Composer.Fighting`) writes the genre's martial battle music, led
+  by its drums: `Orchestra.ChooseFight` (the lead from horn, choir, strings, square lead, organ; a
+  dark pad; `Instrument.Staccato` strings and horn stabs for the ostinato; `WarDrum`, `Timpani`,
+  `Snare` with ruffs and rolls, a `Cymbal` crash only to mark a section). A quarter of fights
+  (`Orchestration.Guitar`) add a palm-muted `Distortion` doubling the strings' gallop, low in the
+  mix: the metal is a colour, not the sound. 84-100 bpm, never Locrian. `PlanFightForm`:
+  `I A A' B C A' B A'`, each section a `RiffStyle` (`EmitRiff`, `EmitKit`): Gallop (a march) under
+  the A tune, Tremolo (strings in sixteenths, pounding war drums, a snare roll) under the B,
+  HalfTime (a tolling war drum and timpani) for the tune-less breakdown. In a fight the drums'
+  part comes up and the ostinato's goes down (`PartLevel(part, fight)`). The band plays from the
+  first bar; the ostinato and drums open with the melody's tier, like a dance's. A fight cuts in at once
+  (`MusicCore.SetFighting`: the planned bars dropped, a 0.2 s fade, the drums 0.08 s later); its end
+  keeps the bridge, and it plays in a closer room (`ApplyBus(..., fight: true)`). `--mood Battle`
+  renders a fight, as `B` in `--music` mode plays one; `targets.json` holds Battle to its own bands.
   A fight gates its layers at full Intensity whatever the mood: a travel encounter opens from the
   world map's (0.25, drone and pad only), and was once written as a fight and heard as a pad.
   Battle's preset is at full Intensity and hid that; `journeys/encounter.json` is the check.
+  `Kick` and `PowerChord` are left from the first, metal version: levelled, unused.
 - **Night.** A visit's period reaches the music in `NarrativeController.ApplyTimePeriod` (the one
   writer of the period): at Night, in exploration, `AmbianceEngine.SetNight(true)` plays the
   place's `MusicMoodState.AtNight()` (colder, stranger, a little uneasy, festivity 0, Intensity

@@ -239,7 +239,7 @@ internal sealed class MusicCore : IScoreObserver
         Instrument.Harp => 46, Instrument.Lute => 24, Instrument.Bell => 14, Instrument.Timpani => 47,
         Instrument.HandDrum => 116, Instrument.Bourdon => 19, Instrument.Horn => 60, Instrument.SquareLead => 80,
         Instrument.Wind => 122, Instrument.Fiddle => 110, Instrument.Whistle => 78, Instrument.Pipes => 109,
-        Instrument.Bodhran => 116, Instrument.Distortion => 30, Instrument.PowerChord => 30, _ => 0,
+        Instrument.Bodhran => 116, Instrument.Distortion => 30, Instrument.PowerChord => 30, Instrument.Staccato => 48, _ => 0,
     };
 
     private void CaptureMidi(ScoreEvent e)

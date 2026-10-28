@@ -21,15 +21,16 @@ internal enum CounterStyle
 }
 
 /// <summary>
-/// The accompaniment's figure. Comp is the strummed boom-chick under a dance tune; Riff the
-/// distorted guitar under a fight, played in a section's <see cref="RiffStyle"/>.
+/// The accompaniment's figure. Comp is the strummed boom-chick under a dance tune; Riff the fight's
+/// martial ostinato (staccato strings, brass stabs), played in a section's <see cref="RiffStyle"/>.
 /// </summary>
 internal enum OstinatoStyle { Arpeggio, Broken, Pulse, Comp, Riff }
 
 /// <summary>
-/// How a fight's section drives. Gallop: palm-muted eighth-and-two-sixteenths under power-chord
-/// hits, the drums on the same figure. Tremolo: the riff picked in sixteenths an octave up over a
-/// double-bass kick. HalfTime: power chords left to ring, chugs between, the snare on three.
+/// How a fight's section drives. Gallop: a march, the staccato strings on an eighth and two
+/// sixteenths, war drums on one and three, snare ruffs on two and four. Tremolo: the strings in
+/// running sixteenths over war drums pounding eighths and a snare roll. HalfTime: a brass stab left
+/// to ring, the war drum and the timpani tolling on one, the snare on three.
 /// </summary>
 internal enum RiffStyle { Gallop, Tremolo, HalfTime }
 
@@ -44,6 +45,7 @@ internal sealed class Orchestration
 {
     public Instrument Melody, MelodyAlt, Counter, Pad, PadAlt, Drone, Ostinato, Bass, Perc;
     public bool Bell, Ambience, Percussion;
+    public bool Guitar;                  // a fight's: the distorted guitar doubles the strings' gallop, palm-muted and low
     public OstinatoStyle OstinatoStyle;
     public int[] OstinatoPattern = Array.Empty<int>();
     public double OstinatoStep;          // beats per ostinato note
@@ -117,9 +119,10 @@ internal static class Orchestra
         Instrument.Bodhran, 0.95, 0.0, 0.0, 1.0f, 0.0f);
 
     /// <summary>
-    /// A fight: dungeon synth leaning into metal, as the genre does at its most violent. The epic
-    /// lead stays the genre's (horn, choir, strings, the square lead); under it a distorted riff, a
-    /// drum kit, a dark pad. No drone, no bells, no wind: nothing that waits.
+    /// A fight: the genre's battle music, martial and percussive. War drums, timpani and snare under
+    /// the epic lead (horn, choir, strings, the square lead, the organ); a staccato string ostinato and
+    /// brass stabs drive it; a dark pad behind. A distorted guitar sometimes doubles the strings, low
+    /// in the mix. No drone, no bells, no wind: nothing that waits.
     /// </summary>
     public static Orchestration ChooseFight(MusicMoodState m, Random rng)
     {
@@ -139,9 +142,10 @@ internal static class Orchestra
         o.Pad = Pick(pads, o.Melody);
         o.PadAlt = Pick(pads, o.Pad);
         o.Drone = Instrument.Bourdon;
-        o.Ostinato = Instrument.Distortion;
+        o.Ostinato = Instrument.Staccato;
         o.Bass = Instrument.Bourdon;
-        o.Perc = Instrument.Kick;
+        o.Perc = Instrument.WarDrum;
+        o.Guitar = rng.NextDouble() < 0.25;
         o.Percussion = true;
         o.OstinatoStyle = OstinatoStyle.Riff;
         o.OstinatoPattern = new[] { 0 };
@@ -275,9 +279,14 @@ internal static class Orchestra
         return rng.NextDouble() < three ? 3 : 4;
     }
 
-    /// <summary>Level of each layer in the mix.</summary>
-    public static float PartLevel(Part p) => p switch
+    /// <summary>
+    /// Level of each layer in the mix. A fight is led by its drums: they come up, and the ostinato
+    /// under them goes down.
+    /// </summary>
+    public static float PartLevel(Part p, bool fight = false) => p switch
     {
+        Part.Perc when fight => 0.95f,
+        Part.Ostinato when fight => 0.5f,
         Part.Drone => 0.2f, Part.Pad => 0.42f, Part.Melody => 0.8f, Part.Counter => 0.5f, Part.Ostinato => 0.6f,
         Part.Bass => 0.45f, Part.Perc => 0.55f, Part.Bell => 0.8f, Part.Ambience => 0.15f, Part.Fight => 0.6f,
         _ => 1f,
@@ -291,9 +300,11 @@ internal static class Orchestra
     public static float Trim(Instrument i) => i switch
     {
         Instrument.Organ => 0.8f, Instrument.SquareLead => 0.8f, Instrument.Bell => 0.9f, Instrument.Horn => 0.9f,
-        // The riff and the kit drive the fight; the tune still has to sit on them.
-        Instrument.Distortion => 0.75f, Instrument.PowerChord => 0.75f,
-        Instrument.Kick => 0.75f, Instrument.Snare => 0.75f, Instrument.Cymbal => 0.35f,
+        // The drums drive the fight; the tune still has to sit on them. The guitar, when there is one,
+        // is a colour under the strings, not the lead.
+        Instrument.Distortion => 0.5f, Instrument.PowerChord => 0.5f,
+        Instrument.Kick => 0.75f, Instrument.Snare => 0.85f, Instrument.Cymbal => 0.3f,
+        Instrument.WarDrum => 1.0f, Instrument.Staccato => 1.0f,
         _ => 1f,
     };
 
