@@ -211,6 +211,21 @@ def lesson_named(T):
     return dict(T, neutral_fix=T.get("neutral_fix", []) + [lesson_craft])
 
 
+def no_style(T):
+    """The persona's style left out of the request (its persona prompt is still the system prompt).
+    The style is the text the answers copy most (14% of base narration samples carried a run of its
+    words — "strings in hand", "the offer declined, the tone noted")."""
+    return dict(T, footer_for=lambda T2, k, r2, st, pl: P.footer_for({x: y for x, y in T2.items() if x != "footer_for"},
+                                                                     k, r2, None, pl)
+                if k not in ("DialogueReplica", "Speaking")
+                else P.footer_for({x: y for x, y in T2.items() if x != "footer_for"}, k, r2, st, pl),
+                DefaultStyleInstruction="")
+
+
+def person_only(T):
+    return dict(T, neutral_fix=T.get("neutral_fix", []) + [_person_named])
+
+
 def managed_only(T):
     return dict(T, neutral_fix=T.get("neutral_fix", []) + [_managed])
 
@@ -278,5 +293,15 @@ def spoken_compact(T):
 VARIANTS = {f.__name__: f for f in [base, reminder_is_voice, voice_and_style_one_clause, no_reminder]}
 for _c in [chain(sentence_last), chain(closed_world), chain(sentence_last, closed_world), chain(with_hour),
            chain(short_setting), chain(neutral_fixes), chain(spoken_compact), chain(no_notscene), chain(minimal),
-           chain(managed_only), chain(lesson_new), chain(lesson_named), chain(managed_only, lesson_new)]:
+           chain(managed_only), chain(person_only), chain(no_style), chain(lesson_new), chain(lesson_named), chain(managed_only, lesson_new)]:
     VARIANTS[_c.__name__] = _c
+
+
+def final():
+    """The wording the game now sends: the working tree's templates (StyleIsNotSceneClause gone) and
+    the neutral-line changes the game makes upstream of the rewrite (a person named by their label,
+    "managed to", "discreetly", the lesson in its own sentence), applied to the recorded inputs."""
+    return dict(P.T_NOW, neutral_fix=[_person_named, _managed, _discreetly, lesson_sentence])
+
+
+VARIANTS["final"] = final
