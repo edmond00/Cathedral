@@ -15,13 +15,13 @@ namespace Cathedral.Game.Scene.Canyon;
 /// Builds a canyon — the broken ground <c>ClimateRule</c> puts wherever temperate plain or field
 /// meets hot steppe, as the coast lies between land and sea.
 ///
-/// Sections: Rim Country (the rim, and the mesa above it) and Canyon Floor (talus, wash, and when
-/// rolled a slot canyon, a seep spring and an alcove in the wall).
-/// Climbs: the mesa wall, whose top sees the whole place; and sometimes a toe-hold trail to an alcove
-/// where somebody once built.
+/// Laid out as a spine: the canyon floor (wash, talus, slot, seep, a pothole pool swum across) runs
+/// through, and off it hang the rim country with its mesa, a side canyon ending in a box with an
+/// alcove up a toe-hold trail, and badlands of clay and hoodoos.
+/// Climbs: the mesa wall, whose top sees the whole place; the toe-hold trail to the alcove.
 /// Uninhabited: no settlement stands in hot country yet.
 /// </summary>
-public class CanyonSceneFactory : ClimateSceneFactory
+public class CanyonSceneFactory : WildSceneFactory
 {
     public CanyonSceneFactory(string? sessionPath = null) : base(sessionPath) { }
 
@@ -30,59 +30,143 @@ public class CanyonSceneFactory : ClimateSceneFactory
 
     protected override void BuildSections(Random rng, int locationId, Scene scene)
     {
-        bool hasSlot   = rng.NextDouble() < 0.60;
-        bool hasSeep   = rng.NextDouble() < 0.50;
-        bool hasAlcove = rng.NextDouble() < 0.50;
+        // A spine: the canyon floor runs through, and everything else is reached from it.
+        Profile = LayoutProfile.Spine;
 
-        _rim  = BuildRim();
-        _mesa = BuildMesa();
+        // ── The floor ────────────────────────────────────────────────────────
         _wash = BuildWash();
+        var floor = new List<Area> { _wash };
+        floor.AddRange(Draw(rng, new Option[]
+        {
+            new(BuildTalus, 1.5),
+            new(BuildSlot, 1.4),
+            new(BuildSeep, 1.0),
+            new(BuildPlungePool, 0.9),
+            new(BuildBoulderChoke, 0.8),
+        }, Between(rng, 2, 3)));
+        Shuffle(rng, floor);
+        _walls.AddRange(floor.Where(a => a is SlotArea or SeepArea));
 
-        var floor = new List<Area> { BuildTalus(), _wash };
-        if (hasSlot) floor.Add(BuildSlot());
-        if (hasSeep) floor.Add(BuildSeep());
-        if (hasAlcove) _alcove = BuildAlcove();
+        // ── What hangs off it ────────────────────────────────────────────────
+        bool hasRim  = rng.NextDouble() < 0.6;
+        bool hasSide = rng.NextDouble() < 0.55;
+        bool hasBad  = rng.NextDouble() < 0.45;
+        // Two of the three at least, so the floor is never alone with one branch.
+        if ((hasRim ? 1 : 0) + (hasSide ? 1 : 0) + (hasBad ? 1 : 0) < 2)
+        {
+            var missing = new List<int>();
+            if (!hasRim) missing.Add(0);
+            if (!hasSide) missing.Add(1);
+            if (!hasBad) missing.Add(2);
+            switch (missing[rng.Next(missing.Count)]) { case 0: hasRim = true; break; case 1: hasSide = true; break; default: hasBad = true; break; }
+        }
 
-        _walls.AddRange(floor.Where(a => a is SlotArea or SeepArea).Append(_rim));
+        var rim = new List<Area>();
+        if (hasRim)
+        {
+            rim.Add(_rim = BuildRim());
+            if (rng.NextDouble() < 0.45) rim.Add(BuildSlickrock());
+            if (rng.NextDouble() < 0.6) rim.Add(_mesa = BuildMesa());
+            _walls.Add(_rim);
+        }
+        var side = new List<Area>();
+        if (hasSide)
+        {
+            side.AddRange(Draw(rng, new Option[]
+            {
+                new(BuildSideCanyon, 2.0),
+                new(BuildCottonwoods, 1.2),
+                new(BuildAmphitheatre, 1.2),
+            }, Between(rng, 1, 2)));
+            if (rng.NextDouble() < 0.55) _alcove = BuildAlcove();
+        }
+        var bad = new List<Area>();
+        if (hasBad)
+        {
+            bad.Add(BuildBadlands());
+            if (rng.NextDouble() < 0.5) bad.Add(BuildHoodooGarden());
+        }
 
-        var everything = new List<Area> { _rim, _mesa };
-        everything.AddRange(floor);
-        if (_alcove != null) everything.Add(_alcove);
-        foreach (var area in everything) Populate(area, rng);
+        foreach (var area in floor.Concat(rim).Concat(side).Concat(bad)) Populate(area, rng);
+        if (_alcove != null) Populate(_alcove, rng);
 
-        AddSection(scene, "Rim Country", "Juniper and slickrock along the edge of the drop, the far wall glowing across the gulf",
-            seed => new WaveGenerator { Seed = seed }, new[] { _rim, _mesa });
-        var floorAreas = _alcove != null ? floor.Append(_alcove) : floor;
         AddSection(scene, "Canyon Floor", "Banded walls going up out of sight, the strip of sky between them very blue",
-            seed => new CorridorGenerator { Seed = seed }, floorAreas);
+            seed => new CorridorGenerator { Seed = seed }, floor, tier: 0);
+        Section? rimSection = rim.Count == 0 ? null : AddSection(scene, "Rim Country",
+            "Juniper and slickrock along the edge of the drop, the far wall glowing across the gulf",
+            seed => new WaveGenerator { Seed = seed }, rim.Where(a => a != _mesa).ToList(), tier: 1);
+        Section? sideSection = side.Count == 0 ? null : AddSection(scene, "Side Canyon",
+            "A branch of the canyon going back into the rock, narrower and quieter, ending in a wall",
+            seed => new CorridorGenerator { Seed = seed }, side, tier: 1);
+        if (bad.Count > 0)
+            AddSection(scene, "Badlands", "Bare clay hills gullied into ribs and spires, nothing growing, colours banded like cloth",
+                seed => new WaveGenerator { Seed = seed }, bad, tier: 1);
 
-        ConnectChain(scene, new List<Area> { _rim }.Concat(floor).ToList(),
-            (a, b) => a is RimArea || b is RimArea ? "Switchback Trail"
-                    : a is SlotArea || b is SlotArea ? "Narrows"
-                    : "Wash Path",
-            "along the canyon", new[] { "sandy", "winding", "walled" });
+        string[] moods = { "sandy", "winding", "walled" };
+        static string Way(Area a, Area b) =>
+            a is RimArea || b is RimArea ? "Switchback Trail"
+            : a is SlotArea || b is SlotArea ? "Narrows"
+            : "Wash Path";
 
-        AddViewpoint(scene, _rim, _mesa, "Mesa Wall",
-            "A wall of banded red rock going up to the mesa, ledged and cracked, the cracks just wide enough for a hand",
-            new[] { "banded", "sheer", "ledged", "sun-hot" });
+        // The floor is a line, except that a plunge pool in it is swum, not walked round.
+        var pool = floor.OfType<PoolArea>().FirstOrDefault();
+        for (int i = 0; i < floor.Count - 1; i++)
+        {
+            var (a, b) = (floor[i], floor[i + 1]);
+            if (a == pool || b == pool)
+                Swim(scene, a, b, WaterKind.Pond, "Pothole Pool",
+                    "A deep green pool scoured out of the canyon floor between sheer walls, no way past but through it",
+                    new[] { "green", "walled", "cold" }, lesson: "plunge");
+            else
+                OutdoorLayout.Link(scene, a, b, Way(a, b), moods, "along the canyon");
+        }
 
+        if (rim.Count > 0)
+        {
+            WeaveSection(rng, scene, rim.Where(x => x != _mesa).ToList(), Weave.Line, (_, _) => "Rim Path", "along the rim", moods);
+            OutdoorLayout.Link(scene, floor[rng.Next(floor.Count)], _rim!, "Switchback Trail", moods, "up the canyon wall");
+        }
+        if (side.Count > 0)
+        {
+            WeaveSection(rng, scene, side, Weave.Line, Way, "into the side canyon", moods);
+            OutdoorLayout.Link(scene, floor[rng.Next(floor.Count)], side[0], "Wash Path", moods, "into the side canyon");
+        }
+        if (bad.Count > 0)
+        {
+            WeaveSection(rng, scene, bad, Weave.Line, (_, _) => "Gully Path", "through the badlands", moods);
+            OutdoorLayout.Link(scene, floor[rng.Next(floor.Count)], bad[0], "Gully Path", moods, "out of the canyon");
+        }
+
+        if (_mesa != null)
+        {
+            AddToSection(scene, rimSection!, _mesa);
+            AddViewpoint(scene, _rim!, _mesa, "Mesa Wall",
+                "A wall of banded red rock going up to the mesa, ledged and cracked, the cracks just wide enough for a hand",
+                new[] { "banded", "sheer", "ledged", "sun-hot" }, lesson: "summit_fever");
+        }
         if (_alcove != null)
         {
             // A climb with no view: the alcove looks only at the opposite wall, and that is its point.
-            new CliffPointOfInterest(_wash, _alcove, "Toe-Hold Trail",
-                new() { "Shallow cups pecked into the rock a stride apart, going up to a dark alcove in the wall" },
-                moods: new[] { "pecked", "worn", "dizzying", "old" }).AttachTo(scene);
+            AddToSection(scene, sideSection!, _alcove);
+            if (rng.NextDouble() < 0.5)
+                Climb(scene, side[^1], _alcove, "Toe-Hold Trail",
+                    "Shallow cups pecked into the rock a stride apart, going up to a dark alcove in the wall",
+                    new[] { "pecked", "worn", "dizzying", "old" });
+            else
+                SlipInto(scene, side[^1], _alcove, SlipKind.Crevice, "Fallen Block",
+                    "A block the size of a house leaning against the wall, a dark slot behind it going up into the rock",
+                    new[] { "leaning", "dark", "tight" }, lesson: "potholing");
         }
 
         Furnish(rng, scene, FurnitureSubfactory.Setting.Arid, _mesa, _alcove);
 
-        Console.WriteLine($"CanyonSceneFactory: slot={hasSlot}, seep={hasSeep}, alcove={hasAlcove}, {_allAreas.Count} areas");
+        Console.WriteLine($"CanyonSceneFactory: floor {floor.Count}, rim {rim.Count}, side {side.Count}, badlands {bad.Count}");
     }
 
     // ── Area builders ────────────────────────────────────────────────────────
 
     private static Area BuildRim() => new RimArea(
-        displayName: "Canyon Rim",
+        displayName: "Rimrock",
         contextDescription: "on the canyon rim",
         transitionDescription: "walk out to the rim",
         descriptions: new() { "The edge of the world: slickrock and juniper, then nothing, then the far wall a long way off" },
@@ -110,7 +194,7 @@ public class CanyonSceneFactory : ClimateSceneFactory
         moods: new[] { "sandy", "walled", "echoing", "flood-marked" });
 
     private static Area BuildSlot() => new SlotArea(
-        displayName: "Slot Canyon",
+        displayName: "Slot",
         contextDescription: "in the slot canyon",
         transitionDescription: "turn sideways into the slot",
         descriptions: new() { "A crack in the earth a shoulder wide and a hundred feet deep, its walls carved by water into ribbons" },
@@ -123,12 +207,68 @@ public class CanyonSceneFactory : ClimateSceneFactory
         descriptions: new() { "Water weeping out of the rock under an overhang, a hanging garden of fern and moss below it" },
         moods: new[] { "dripping", "green", "cool", "secret" });
 
+    private static Area BuildPlungePool() => new PoolArea(
+        displayName: "Pothole Pool",
+        contextDescription: "by the pothole pool",
+        transitionDescription: "come down to the pothole pool",
+        descriptions: new() { "A round green pool scoured into the canyon floor by flood-spun boulders, walls going up sheer on both sides" },
+        moods: new[] { "round", "green", "walled", "cold" });
+
     private static Area BuildAlcove() => new AlcoveArea(
         displayName: "Cliff Alcove",
         contextDescription: "in the cliff alcove",
         transitionDescription: "climb into the alcove",
         descriptions: new() { "A great scoop in the canyon wall, smoke-blackened at the back, with the stubs of masonry walls across it" },
         moods: new[] { "hollow", "smoke-blackened", "deserted", "sheltered" });
+
+    private static Area BuildSideCanyon() => new WashArea(
+        displayName: "Side Fork",
+        contextDescription: "in the side canyon",
+        transitionDescription: "turn off into the side canyon",
+        descriptions: new() { "A narrower canyon branching off the main one, cottonwoods along its floor, the walls closing in as it goes back" },
+        moods: new[] { "narrowing", "shaded", "quiet", "green-floored" });
+
+    private static Area BuildAmphitheatre() => new AmphitheatreArea(
+        displayName: "Box Head",
+        contextDescription: "in the box canyon",
+        transitionDescription: "walk into the head of the box canyon",
+        descriptions: new() { "The head of the side canyon, a great bowl of wall all round, a dry pour-off high up where the water comes over in flood" },
+        moods: new[] { "enclosed", "echoing", "bowl-like", "sun-trapped" });
+
+    private static Area BuildCottonwoods() => new GroveArea(
+        displayName: "Cottonwood Bottom",
+        contextDescription: "in the cottonwood bottom",
+        transitionDescription: "walk in under the cottonwoods",
+        descriptions: new() { "A flat of green grass and great cottonwoods where the side canyon widens, water close under the sand, shade at last" },
+        moods: new[] { "green", "shaded", "rustling", "cool" });
+
+    private static Area BuildSlickrock() => new LedgeArea(
+        displayName: "Slickrock Bench",
+        contextDescription: "on the slickrock bench",
+        transitionDescription: "walk out onto the slickrock",
+        descriptions: new() { "A broad shelf of bare pink sandstone below the rim, swirled like frozen dunes, potholes of rainwater in it" },
+        moods: new[] { "bare", "swirled", "pink", "grippy" });
+
+    private static Area BuildBoulderChoke() => new BoulderArea(
+        displayName: "Boulder Choke",
+        contextDescription: "in the boulder choke",
+        transitionDescription: "scramble into the boulder choke",
+        descriptions: new() { "The canyon floor jammed with fallen blocks the size of carts, the way on going under, over and between them" },
+        moods: new[] { "jammed", "shadowed", "awkward", "cool" });
+
+    private static Area BuildBadlands() => new BadlandsArea(
+        displayName: "Badlands",
+        contextDescription: "in the badlands",
+        transitionDescription: "climb out into the badlands",
+        descriptions: new() { "Bare clay hills above the canyon, gullied into ribs by rain, banded grey and purple and rust, nothing growing" },
+        moods: new[] { "bare", "ribbed", "banded", "barren" });
+
+    private static Area BuildHoodooGarden() => new BadlandsArea(
+        displayName: "Hoodoo Garden",
+        contextDescription: "among the hoodoos",
+        transitionDescription: "walk in among the hoodoos",
+        descriptions: new() { "Spires of soft rock standing in crowds, each with a cap of harder stone, the ground between them white and crunching" },
+        moods: new[] { "spired", "crowded", "uncanny", "white" });
 
     // ── Spot population ──────────────────────────────────────────────────────
 
@@ -140,7 +280,6 @@ public class CanyonSceneFactory : ClimateSceneFactory
                 area.PointsOfInterest.Add(ClimateTerrainSubfactory.BuildJuniper());
                 area.PointsOfInterest.Add(BuildYucca());
                 if (rng.NextDouble() < 0.5) area.PointsOfInterest.Add(ClimateTerrainSubfactory.BuildPinyon());
-                if (rng.NextDouble() < 0.5) area.PointsOfInterest.Add(BuildHoodoos());
                 break;
             case MesaArea:
                 area.PointsOfInterest.Add(BuildArch());
@@ -164,12 +303,67 @@ public class CanyonSceneFactory : ClimateSceneFactory
                 area.PointsOfInterest.Add(BuildSeepPoi());
                 area.PointsOfInterest.Add(BuildSwallowNests());
                 break;
+            case PoolArea:
+                area.PointsOfInterest.Add(BuildPotholeWater());
+                break;
             case AlcoveArea:
                 area.PointsOfInterest.Add(BuildMasonry());
                 area.PointsOfInterest.Add(BuildGrindingStones());
                 break;
+            case GroveArea:
+                area.PointsOfInterest.Add(BuildCottonwoodTrees());
+                area.PointsOfInterest.Add(BuildSeepPoi());
+                break;
+            case LedgeArea:
+                area.PointsOfInterest.Add(BuildPotholeWater());
+                area.PointsOfInterest.Add(TerrainSubfactory.BuildLichenCrust());
+                break;
+            case BoulderArea:
+                area.PointsOfInterest.Add(TerrainSubfactory.BuildBoulder());
+                area.PointsOfInterest.Add(BuildJammedLog());
+                break;
+            case AmphitheatreArea:
+                area.PointsOfInterest.Add(BuildPourOff());
+                area.PointsOfInterest.Add(BuildSwallowNests());
+                break;
+            case BadlandsArea:
+                area.PointsOfInterest.Add(rng.NextDouble() < 0.5 ? BuildHoodoos() : BuildAgateNodules());
+                if (rng.NextDouble() < 0.5) area.PointsOfInterest.Add(ClimateTerrainSubfactory.BuildBleachedBones());
+                break;
         }
     }
+
+    private static PointOfInterest BuildPotholeWater() => new PoolPointOfInterest(
+        displayName: "Pothole Water",
+        descriptions: new() { "Still green water in a stone bowl, cold even at noon, the scour-stones that cut it lying on the bottom" },
+        items: new() { new ItemElement(new Rock()) },
+        moods: new[] { "still", "green", "cold", "bowl-shaped" },
+        isNatural: true
+    ) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "floodwatch", ["contemplate"] = "meditation" } };
+
+    private static PointOfInterest BuildCottonwoodTrees() => new TreePointOfInterest(
+        displayName: "Cottonwoods",
+        descriptions: new() { "Great pale-trunked cottonwoods, their leaves clattering in the least wind, cotton drifting off them like snow" },
+        items: new() { new ItemElement(new Branch()), new ItemElement(new Bark()) },
+        moods: new[] { "pale-trunked", "clattering", "drifting", "great" },
+        isNatural: true
+    ) { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "dowsing", ["listen"] = "wind_reading" } };
+
+    private static PointOfInterest BuildPourOff() => new RockPointOfInterest(
+        displayName: "Dry Pour-Off",
+        descriptions: new() { "A black-streaked lip high in the head wall where the floods come over, a scoured hollow under it in the floor" },
+        items: new() { new ItemElement(new Sandstone()), new ItemElement(new Driftwood()) },
+        moods: new[] { "black-streaked", "high", "scoured", "dry" },
+        isNatural: true
+    ) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "floodwatch", ["contemplate"] = "dread" } };
+
+    private static PointOfInterest BuildAgateNodules() => new RockPointOfInterest(
+        displayName: "Agate Nodules",
+        descriptions: new() { "Rough grey lumps weathering out of the clay, one split by frost to show rings of white and rust inside" },
+        items: new() { new ItemElement(new Agate()), new ItemElement(new Flint()) },
+        moods: new[] { "lumpy", "weathered", "banded", "hidden" },
+        isNatural: true
+    ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "veinsight" } };
 
     private static PointOfInterest BuildYucca() => new YuccaPointOfInterest(
         displayName: "Yucca",
@@ -207,7 +401,7 @@ public class CanyonSceneFactory : ClimateSceneFactory
         items: new() { new ItemElement(new Branch()), new ItemElement(new Twig()), new ItemElement(new Driftwood()) },
         moods: new[] { "jammed", "bleached", "high-flung", "dry" },
         isNatural: true
-    ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "drainage" } };
+    ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "floodwatch" } };
 
     private static PointOfInterest BuildRibbonWalls() => new RockPointOfInterest(
         displayName: "Ribboned Walls",

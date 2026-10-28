@@ -112,6 +112,13 @@ public class VillageSceneFactory : SettledSceneFactory
             outdoorAreas.Add(lane);
         }
 
+        // What makes this village not the last one: one or two of the commons a settlement may or may
+        // not have — kitchen gardens, a well yard, a threshing floor, a cattle pen, an orchard, a
+        // wayside shrine. A settlement used to be its square, its lanes and its workshops, so two
+        // hamlets were the same hamlet once their few workshops were drawn.
+        foreach (var idx in SampleUniqueIndices(rng, Commons.Length, IsFort ? rng.Next(2, 4) : rng.Next(1, 3)))
+            outdoorAreas.Add(Commons[idx]());
+
         var outdoors = new Section(
             Capitalise(_key),
             new() { SettlementBlurb() },
@@ -139,9 +146,11 @@ public class VillageSceneFactory : SettledSceneFactory
         {
             ("Forge", WorkshopSubfactory.BuildForge, new BlacksmithArchetype(), "forge", BuildingMaterial.Stone),
         };
-        if (!IsHamlet && !IsFort)
+        if (!IsHamlet && !IsFort && rng.NextDouble() < 0.65)
             chosen.Add(("Mill", WorkshopSubfactory.BuildMill, new MillerArchetype(), "mill", BuildingMaterial.Stone));
-        int optional = IsHamlet ? rng.Next(1, 3) : IsFort ? rng.Next(1, 3) : IsTownlet ? rng.Next(3, 5) : rng.Next(2, 5);
+        // Sized to sit between the wilderness and the town: a village was sixty-odd areas, as big as a
+        // castle and its grounds twice over.
+        int optional = IsHamlet ? rng.Next(0, 2) : IsFort ? rng.Next(0, 2) : IsTownlet ? rng.Next(1, 4) : rng.Next(1, 3);
         foreach (var idx in SampleUniqueIndices(rng, trades.Count, optional))
             chosen.Add(trades[idx]);
 
@@ -184,7 +193,7 @@ public class VillageSceneFactory : SettledSceneFactory
 
         foreach (var (workshop, master) in _workshops.ToList())
         {
-            int apprentices = rng.NextDouble() < 0.35 ? 2 : 1;
+            int apprentices = rng.NextDouble() < 0.15 ? 2 : 1;
             for (int i = 0; i < apprentices; i++)
             {
                 string trait = wear[nextWear++ % wear.Count];
@@ -201,6 +210,7 @@ public class VillageSceneFactory : SettledSceneFactory
                     FunctionNoun = "house",
                     ExteriorWear = trait,
                     Material     = local ? RollMaterial(rng) : null,
+                    Style        = TownQuarters.VillageDwelling(rng),
                 }, rng);
 
                 RegisterBuilding(scene, house);
@@ -280,6 +290,42 @@ public class VillageSceneFactory : SettledSceneFactory
     /// townlet's inn and merchant house, the fort's barracks and garrison. Each is a public hall with
     /// its own crew, built off the square.
     /// </summary>
+    /// <summary>The commons a settlement may have, each one area with its own furniture.</summary>
+    private static readonly Func<Area>[] Commons =
+    {
+        () => Common((n, c, t, d, m) => new GardenArea(n, c, t, d, m), "Kitchen Gardens", "in the kitchen gardens",
+            "Strips of vegetable garden behind the houses, beans on poles and a scarecrow leaning over them", new[] { "tended", "green", "fenced" },
+            new CabbagePointOfInterest("Cabbage Rows", new() { "Rows of fat cabbages, slug-bitten at the edges" }, Items(() => new Cabbage()), new[] { "fat", "rowed" })
+            { Senses = SensoryProfile.Examinable, VerbModiMentis = Teach(("examine", "tillage")) }),
+        () => Common((n, c, t, d, m) => new CourtyardArea(n, c, t, d, m), "Well Yard", "at the well yard",
+            "A paved yard round the common well, buckets and gossip, the stones worn hollow by the women's feet", new[] { "paved", "talkative", "wet" },
+            new WellPointOfInterest("Common Well", new() { "A deep well under a little roof, its rope worn smooth" }, Items(() => new WaterDraught()), new[] { "deep", "roofed" })
+            { Senses = SensoryProfile.Audible, VerbModiMentis = Teach(("examine", "water_bearing"), ("listen", "gossip")) }),
+        () => Common((n, c, t, d, m) => new ThreshingArea(n, c, t, d, m), "Threshing Floor", "on the threshing floor",
+            "A round floor of beaten earth at the edge of the houses, chaff blowing off it in every wind", new[] { "round", "chaffy", "beaten" },
+            new SheafPointOfInterest("Sheaves", new() { "Sheaves stacked at the floor's edge, waiting for the flail" }, Items(() => new Straw()), new[] { "stacked", "golden" })
+            { Senses = SensoryProfile.Examinable, VerbModiMentis = Teach(("examine", "threshery")) }),
+        () => Common((n, c, t, d, m) => new PenArea(n, c, t, d, m), "Cattle Pen", "by the cattle pen",
+            "A pen of hurdles at the village edge where the beasts are brought in at night, trodden to mud", new[] { "trodden", "rank", "noisy" },
+            new TroughPointOfInterest("Water Trough", new() { "A long stone trough, the water green" }, Items(() => new Straw()), new[] { "long", "green" })
+            { Senses = SensoryProfile.Odorous, VerbModiMentis = Teach(("examine", "husbandry"), ("smell", "byre_sense")) }),
+        () => Common((n, c, t, d, m) => new OrchardArea(n, c, t, d, m), "Village Orchard", "in the village orchard",
+            "A few old fruit trees shared by the village, the grass under them grazed short by a tethered goat", new[] { "old", "shared", "grazed" },
+            TerrainSubfactory.BuildAppleTree()),
+        () => Common((n, c, t, d, m) => new WalkArea(n, c, t, d, m), "Shrine Path", "on the shrine path",
+            "A path out of the village to a wayside shrine, ribbons and little offerings on the bushes along it", new[] { "quiet", "ribboned", "worn" },
+            new ShrinePointOfInterest("Wayside Shrine", new() { "A little roofed shrine with a saint in it, candle-ends at its foot" }, Items(() => new VotiveCandle()), new[] { "little", "candled" })
+            { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "piety"), ("contemplate", "devotion")) }),
+    };
+
+    private static Area Common(Func<string, string, string, List<string>, string[], Area> ctor, string name, string ctx,
+                               string text, string[] moods, PointOfInterest poi)
+    {
+        var a = ctor(name, ctx, $"go to the {name.ToLowerInvariant()}", new() { text }, moods);
+        a.PointsOfInterest.Add(poi);
+        return a;
+    }
+
     private void BuildGreatHalls(Scene scene, Random rng, List<Area> outdoorAreas)
     {
         void Hall(string name, string noun, BuildingOccupancy occupancy, List<NamedNpcArchetype> roster)

@@ -1,6 +1,6 @@
 ---
 name: audits
-description: The thirteen headless audits that check content rather than code: --outcome-audit, --crime-audit, --dialogue-audit, --npc-audit, --mm-audit, --item-audit, --verb-audit, --world-variant-audit, --history-audit, --mm-grant-csv, --mm-reach-csv, --llm-probe-audit and --building-audit. Use after adding or editing a verb, an outcome, a modus mentis, an item, an NPC archetype, a dialogue tree, a scene factory, a world variant, the world history generator or the lore catalogue, or a batch of scene content, and to find out which audit covers a change.
+description: The fourteen headless audits that check content rather than code: --outcome-audit, --crime-audit, --dialogue-audit, --npc-audit, --mm-audit, --item-audit, --verb-audit, --world-variant-audit, --history-audit, --mm-grant-csv, --mm-reach-csv, --llm-probe-audit, --building-audit and --biome-audit. Use after adding or editing a verb, an outcome, a modus mentis, an item, an NPC archetype, a dialogue tree, a scene factory, a world variant, the world history generator or the lore catalogue, or a batch of scene content, and to find out which audit covers a change.
 ---
 
 # The audits
@@ -423,6 +423,40 @@ standing, faiths, places, wars, milliseconds, hash) and a sample of Belune's lor
 
 Run it after touching anything under `src/game/history/`, the lore catalogue, `LoreMoons`, the region
 division, or a world variant a lore moon is forced to.
+
+### Checking the wilderness: diversity, layout and exploration
+
+```bash
+dotnet run -- --biome-audit [biome]        # e.g. --biome-audit mountain, --biome-audit hotsteppe
+```
+
+`--building-audit` checks that a place is *built* right; this one checks that a wild place is *worth
+arriving at more than once*. It builds 40 locations of every wilderness biome (`BiomeAudit.Biomes`:
+the six temperate factories and every `ClimateSceneFactories` entry) and scores three things:
+
+- **diversity** — the share of every triple of samples whose members all differ from one another, in
+  content (area kinds and section names, Jaccard distance ≥ 0.34) *and* in layout signature (section
+  sizes, edges, loops, branch points, climbs). Three forests should be three forests. `jac` is the mean
+  pairwise distance, `lay` the number of distinct layouts in 40;
+- **coherence** — every area reachable, every section one connected piece, and the factory held to
+  the shape it states. `WildSceneFactory` subclasses set `Profile` and give each section a `Tier`:
+  **Pyramid** (bands that narrow as they rise, meeting only their neighbours, a summit of at most
+  two), **Descent** (levels meeting only their neighbours, one mouth), **Radial** (every section
+  touches the hub), **Spine** (every section touches the line it hangs off), **Mosaic** (three or more
+  sections meeting on at least as many borders). `chain%` is the share of builds that are a bare
+  corridor;
+- **exploration** — the movement kinds besides a walk that a visit offers: climb, scale, cross, swim,
+  slip in, follow a path, voyage toward a landscape. `move` per visit, `3+%` of visits with at least
+  three, `seen` how many a biome ever offers.
+
+It fails (✗) a biome under 40% diversity or outside 5–10 areas, and lists every layout fault as a
+warning. **Read the per-biome block, not just the row**: it gives each area kind's and section's
+frequency, and a kind at 100% is usually what holds diversity down — the cure is another kind of
+place, not reweighting, because larger places drawn from the same pool overlap more.
+
+Before the overhaul the wilderness averaged 5% diversity (ten biomes at 0%) with two sections each;
+after, 70%, every profile honoured. Run it after touching a wilderness factory, `WildSceneFactory`, a
+wild area kind, or `OutdoorLayout`.
 
 ### Checking buildings, scenes and NPC schedules
 

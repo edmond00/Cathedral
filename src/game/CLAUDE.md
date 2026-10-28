@@ -1527,9 +1527,13 @@ disagree with.
 
 **Placement is manual, per factory** — there is no automatic pass. A view over a location is a claim
 about that location, and the one thing automatic placement reliably produced was a cave entrance
-reporting that "the country opens out below". Today: a mountain's and a peak's topmost area, a
-forest's giant-tree crowns, and **every building's roof** (reached by scaling its outside wall, seeing
-every other outside area — roofs do not see other roofs). Caves have none by design. Climbable areas
+reporting that "the country opens out below". Today: the top of every wilderness climb that stands
+over its place — a mountain's crag, a peak's summit, a forest's giant-tree crown, the jungle's
+emergent crown, a canyon's mesa, a desert's dune crest and inselberg, a kopje, a plain's tor, a
+coastal headland, an iceberg, a nunatak, a snowfield's cornice, a pingo (`WildSceneFactory.AddViewpoint`)
+— and **every building's roof** (reached by scaling its outside wall, seeing every other outside
+area — roofs do not see other roofs). Caves have none by design; a climb into an alcove, an eyrie or a
+chasm is `WildSceneFactory.Climb`, with no view. Climbable areas
 that had nothing to offer once climbed were deleted rather than given a view.
 
 Examining a landscape teaches `topographia`; contemplating one teaches `aesthetic`; the voyage itself

@@ -206,23 +206,24 @@ public static class CityLayout
     {
         string style = StyleOf(biome);
         int squares = size >= 3 ? 2 : 1;
-        int streets = Math.Clamp(2 + size + rng.Next(0, 2), 2, ClassicStreetCap(style));
+        int streets = Math.Clamp(1 + size + rng.Next(0, 2), 2, ClassicStreetCap(style));
         int alleys  = Math.Clamp(size - 1 + rng.Next(0, 2), 1, ClassicAlleyCap);
         return Lay(scene, rng, biome, style, squares, streets, alleys, sectionName);
     }
 
     /// <summary>
-    /// A city cell proper, of the given size (1 .. 3): two or three squares, seven to twelve streets,
-    /// two to five alleys and the gate - about thirteen, seventeen or twenty ways. Otherwise as
-    /// <see cref="Build"/>.
+    /// A city cell proper, of the given size (1 .. 3): one or two squares, four to seven streets, one to
+    /// three alleys and the gate - about eight, ten or twelve ways. It was twice that, which made a city
+    /// cell four hundred areas and every city the same city; a third of it keeps it the largest place in
+    /// the country and leaves room for two cities to differ. Otherwise as <see cref="Build"/>.
     /// </summary>
     public static CityPlan BuildDense(Scene scene, Random rng, string biome, int size, string sectionName)
     {
         string style = StyleOf(biome);
         var pools = Styles[style];
-        int squares = Math.Min(size >= 2 ? 3 : 2, pools.Squares.Length);
-        int streets = Math.Min(5 + 2 * size + rng.Next(0, 2), pools.Streets.Length);
-        int alleys  = Math.Min(1 + size + rng.Next(0, 2), pools.Alleys.Length);
+        int squares = Math.Min(size >= 3 ? 2 : 1 + rng.Next(0, 2), pools.Squares.Length);
+        int streets = Math.Min(3 + size + rng.Next(0, 2), pools.Streets.Length);
+        int alleys  = Math.Min(size + rng.Next(0, 1), pools.Alleys.Length);
         return Lay(scene, rng, biome, style, squares, streets, alleys, sectionName);
     }
 

@@ -446,6 +446,16 @@ if (args.Length >= 1 && args[0] == "--building-audit")
     return;
 }
 
+// Biome audit: build a sample of every wilderness location and score it for diversity (three of a kind
+// should be three different places), layout coherence (the map reads as the land) and exploration (the
+// ways of moving besides a walk). Headless. An optional second argument narrows it to one biome.
+if (args.Length >= 1 && args[0] == "--biome-audit")
+{
+    var report = Cathedral.Game.Scene.BiomeAudit.BuildReport(args.Length >= 2 ? args[1] : null);
+    Console.WriteLine(report);
+    return;
+}
+
 // World variant audit: build the terrain of every world variant across the first moons a player
 // could pick it on, and check the things that make a world playable rather than merely generatable -
 // land to walk on, fields to hang farms off, somewhere to spawn that is not a bare island. Headless:

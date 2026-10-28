@@ -87,6 +87,14 @@ public sealed class LivestockSceneFactory : SettledSceneFactory
                 break;
         }
 
+        // A yard extra or two, and an edge of the holding, drawn as the crop holdings draw theirs.
+        foreach (var i in SampleUniqueIndices(rng, Agriculture.AgricultureSceneFactory.YardPool.Length, rng.Next(0, 3)))
+            _sheds.Add(Agriculture.AgricultureSceneFactory.YardPool[i]());
+        var edge = new List<Area>();
+        if (rng.NextDouble() < 0.7)
+            foreach (var i in SampleUniqueIndices(rng, Agriculture.AgricultureSceneFactory.EdgePool.Length, rng.Next(1, 3)))
+                edge.Add(Agriculture.AgricultureSceneFactory.EdgePool[i]());
+
         var yardSection = new Section(SectionName(), new() { "The yard and the sheds where the stock is worked" },
             seed => new GeometricGenerator { Seed = seed });
         yardSection.Areas.Add(_yard);
@@ -100,8 +108,29 @@ public sealed class LivestockSceneFactory : SettledSceneFactory
         scene.Sections.Add(range);
         RegisterAll(scene, range);
 
-        _all.Add(_yard); _all.AddRange(_ground); _all.AddRange(_sheds);
-        OutdoorLayout.Connect(scene, _all, OutdoorLayout.RollShape(rng), "Track", rng);
+        if (edge.Count > 0)
+        {
+            var edgeSection = new Section(Agriculture.AgricultureSceneFactory.EdgeNames[rng.Next(Agriculture.AgricultureSceneFactory.EdgeNames.Length)],
+                new() { "The ground round the edge of the holding, worked less or not at all" },
+                seed => new NoisyGenerator { Seed = seed, Density = 0.8f });
+            foreach (var a in edge) edgeSection.Areas.Add(a);
+            scene.Sections.Add(edgeSection);
+            RegisterAll(scene, edgeSection);
+        }
+
+        _all.Add(_yard); _all.AddRange(_ground); _all.AddRange(_sheds); _all.AddRange(edge);
+        // Each part is one piece of ground: the yard and its sheds joined round the yard, the range
+        // among itself, the edge in a line, then each to the yard. One shape rolled over all of them
+        // used to leave a section in pieces.
+        OutdoorLayout.Connect(scene, new List<Area> { _yard }.Concat(_sheds).ToList(),
+                              rng.NextDouble() < 0.6 ? LayoutShape.Hub : LayoutShape.Spur, "Track", rng);
+        OutdoorLayout.Connect(scene, _ground, OutdoorLayout.RollShape(rng), "Track", rng);
+        OutdoorLayout.Link(scene, _yard, _ground[rng.Next(_ground.Count)], "Track");
+        if (edge.Count > 0)
+        {
+            OutdoorLayout.Connect(scene, edge, LayoutShape.Chain, "Track", rng);
+            OutdoorLayout.Link(scene, edge[0], rng.NextDouble() < 0.5 ? _yard : _ground[rng.Next(_ground.Count)], "Track");
+        }
 
         _roster = BuildRoster(rng);
         (_hall, _bunk, _beds) = HouseCrew(rng, scene, _roster, _yard, _all, HallName(), "longhouse");

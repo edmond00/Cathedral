@@ -63,6 +63,14 @@ public abstract class SceneFactory
     protected virtual bool IsWilderness => false;
 
     /// <summary>
+    /// The shape this factory means its map to have, which <c>--biome-audit</c> checks every build
+    /// against through <see cref="Section.Tier"/>. A statement of intent, not a generator: the factory
+    /// still lays its own areas, and sets this while it does, since one identity of a place may be
+    /// tiered and another radial.
+    /// </summary>
+    public LayoutProfile Profile { get; protected set; } = LayoutProfile.Unstated;
+
+    /// <summary>
     /// The hour every visit to <paramref name="locationId"/> opens at: one of the five daytime periods,
     /// never night. Fixed per location so a settlement can be made to greet the player
     /// (<see cref="EnsureArrivalCompany"/>) by changing one period of one schedule rather than staffing
@@ -313,6 +321,14 @@ public abstract class SceneFactory
     /// whether a location has a path would then change who lives there.
     /// </summary>
     private static Random PathRandom(int locationId) => new(unchecked(locationId * 0x2545F491 + 0x7A11));
+
+    /// <summary>
+    /// The generator a factory draws optional extras from — a farm's dovecote, its woodlot — when they
+    /// were added to a factory whose build generator already decides who lives there. Drawn from the
+    /// build generator they would shift every person, room and item after them, so a location id that
+    /// tests and players know would become a different place for the sake of a pond.
+    /// </summary>
+    protected static Random ExtrasRandom(int locationId) => new(unchecked(locationId * 0x5BD1E995 + 0x3C1));
 
     /// <summary>
     /// Registers an element and all its children (section→areas→PoIs→items) in a scene.
@@ -815,3 +831,21 @@ public abstract class SceneFactory
         }
     }
 }
+
+/// <summary>The shape a location's map is meant to have (<see cref="SceneFactory.Profile"/>).</summary>
+public enum LayoutProfile
+{
+    /// <summary>No promise made, and none checked.</summary>
+    Unstated,
+    /// <summary>Bands that rise and narrow: many areas at the foot, fewer above, a summit; each band meets only its neighbours.</summary>
+    Pyramid,
+    /// <summary>Levels that go down from one mouth; each level meets only the ones above and below it.</summary>
+    Descent,
+    /// <summary>Everything hangs off a hub section (tier 0): a waterhole, an oasis, a clearing.</summary>
+    Radial,
+    /// <summary>A line of country (tier 0) — a shore, a river, a canyon floor — with the rest hanging off it.</summary>
+    Spine,
+    /// <summary>Patches of country that meet one another on several sides, closing loops.</summary>
+    Mosaic,
+}
+

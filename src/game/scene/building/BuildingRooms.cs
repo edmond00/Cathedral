@@ -50,6 +50,12 @@ public static class BuildingRooms
         RoomRole.Kitchen    => "Kitchen",
         RoomRole.Pantry     => "Pantry",
         RoomRole.Store      => "Store",
+        RoomRole.Workroom   => "Workroom",
+        RoomRole.Byre       => "Byre",
+        RoomRole.Loft       => "Loft",
+        RoomRole.Parlour    => "Parlour",
+        RoomRole.Cellar     => "Cellar",
+        RoomRole.Yard       => "Back Yard",
         _                   => "Landing",
     };
 
@@ -68,6 +74,12 @@ public static class BuildingRooms
         RoomRole.Kitchen    => new KitchenArea(displayName, contextDescription, transitionDescription, descriptions, moods, isPrivate),
         RoomRole.Pantry     => new PantryArea(displayName, contextDescription, transitionDescription, descriptions, moods, isPrivate),
         RoomRole.Store      => new StoreArea(displayName, contextDescription, transitionDescription, descriptions, moods, isPrivate),
+        RoomRole.Workroom   => new WorkshopArea(displayName, contextDescription, transitionDescription, descriptions, moods, isPrivate),
+        RoomRole.Byre       => new ByreArea(displayName, contextDescription, transitionDescription, descriptions, moods, isPrivate),
+        RoomRole.Loft       => new LoftArea(displayName, contextDescription, transitionDescription, descriptions, moods, isPrivate),
+        RoomRole.Parlour    => new SolarArea(displayName, contextDescription, transitionDescription, descriptions, moods, isPrivate),
+        RoomRole.Cellar     => new CellarArea(displayName, contextDescription, transitionDescription, descriptions, moods, isPrivate),
+        RoomRole.Yard       => new YardArea(displayName, contextDescription, transitionDescription, descriptions, moods, isPrivate),
         _                   => new LandingArea(displayName, contextDescription, transitionDescription, descriptions, moods, isPrivate),
     };
 
@@ -87,6 +99,18 @@ public static class BuildingRooms
             => "A cool storage room with shelves and barrels, smelling of grain, salt, and dried meat",
         RoomRole.Store
             => "A cluttered store room of stacked crates, tools and spare stock",
+        RoomRole.Workroom
+            => "A ground-floor room given over to a trade, the bench under the window and the work of years in its floorboards",
+        RoomRole.Byre
+            => $"The beasts' end of the {mat} house, a step down from the hearth, stalls along the wall and the warmth of the animals coming through",
+        RoomRole.Loft
+            => "A low loft under the rafters, reached by a ladder, smelling of hay and stored apples",
+        RoomRole.Parlour
+            => "The best room of the house, kept for company: a carved chair, a painted cloth on the wall, a window of real glass",
+        RoomRole.Cellar
+            => "A cellar under the house, cool and close, a few casks on their sides and a shelf of crocks",
+        RoomRole.Yard
+            => "A walled yard behind the house, a woodpile against one wall and washing on a line",
         _
             => "A narrow landing at the top of the stairs, planked floor creaking with every step",
     };
@@ -99,6 +123,12 @@ public static class BuildingRooms
         RoomRole.Kitchen    => new[] { "warm", "cramped", "smoky", "fragrant", "cluttered", "low", "close" },
         RoomRole.Pantry     => new[] { "cool", "quiet", "dim", "dry", "musty", "orderly", "provisioned" },
         RoomRole.Store      => new[] { "cluttered", "dim", "dusty", "crowded", "cold" },
+        RoomRole.Workroom   => new[] { "worked", "cluttered", "bright-windowed", "busy", "dusty" },
+        RoomRole.Byre       => new[] { "warm", "rank", "stalled", "breathing", "dim" },
+        RoomRole.Loft       => new[] { "low", "hay-scented", "dusty", "rafted", "still" },
+        RoomRole.Parlour    => new[] { "best-kept", "quiet", "polished", "stiff", "bright" },
+        RoomRole.Cellar     => new[] { "cool", "close", "damp", "dark", "still" },
+        RoomRole.Yard       => new[] { "walled", "cluttered", "open", "washing-hung", "small" },
         _                   => new[] { "narrow", "creaking", "dim", "low", "quiet", "close", "dusky" },
     };
 
@@ -126,6 +156,38 @@ public static class BuildingRooms
             case RoomRole.Bedroom:    PopulateSleeping(room, rng, 1);          break;
             case RoomRole.Dormitory:  PopulateSleeping(room, rng, bedCount);   break;
             case RoomRole.Landing:    /* corridor — deliberately bare */       break;
+            case RoomRole.Workroom:
+                room.PointsOfInterest.Add(new WorkbenchPointOfInterest("Workbench", new() { "A heavy bench under the window, scored and stained by its trade" },
+                    new() { new ItemElement(new Narrative.World.Items.Plank()) }, new[] { "heavy", "scored" })
+                    { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "journeyman_eye" } });
+                room.PointsOfInterest.Add(BuildToolCorner(rng));
+                break;
+            case RoomRole.Byre:
+                room.PointsOfInterest.Add(new MangerPointOfInterest("Manger", new() { "A wooden manger along the stall wall, hay pulled through its bars" },
+                    new() { new ItemElement(new Narrative.Items.Hay()) }, new[] { "worn", "hay-stuffed" })
+                    { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "husbandry", ["smell"] = "byre_sense" } });
+                break;
+            case RoomRole.Loft:
+                room.PointsOfInterest.Add(new HayPointOfInterest("Hay Pile", new() { "Hay heaped under the rafters, and a row of apples laid out on it to keep" },
+                    new() { new ItemElement(new Narrative.Items.Hay()), new ItemElement(new Narrative.Items.Apple()) }, new[] { "heaped", "sweet" })
+                    { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "thrift", ["smell"] = "harvest_joy" } });
+                break;
+            case RoomRole.Parlour:
+                room.PointsOfInterest.Add(BuildCandleStand());
+                room.PointsOfInterest.Add(new TapestryPointOfInterest("Painted Cloth", new() { "A painted cloth on the wall, a hunting scene, faded where the sun reaches it" },
+                    null, new[] { "painted", "faded" })
+                    { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "aesthetic", ["contemplate"] = "vanitas" } });
+                break;
+            case RoomRole.Cellar:
+                room.PointsOfInterest.Add(BuildStorageBarrel(PickFromPool(rng, BarrelPool(), 1, 2)));
+                room.PointsOfInterest.Add(BuildStorageShelf(PickFromPool(rng, ShelfPool(), 1, 2)));
+                break;
+            case RoomRole.Yard:
+                room.PointsOfInterest.Add(BuildFirewoodStack(rng));
+                room.PointsOfInterest.Add(new RackPointOfInterest("Washing Line", new() { "A line strung across the yard, shirts and sheets drying on it" },
+                    new() { new ItemElement(new Narrative.World.Items.Linen()) }, new[] { "flapping", "damp" })
+                    { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "laundering" } });
+                break;
         }
     }
 

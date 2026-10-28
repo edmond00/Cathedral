@@ -43,6 +43,8 @@ public class FarmSceneFactory : SceneFactory
     public FarmSceneFactory(string? sessionPath = null) : base(sessionPath) { }
 
     private BuildingResult? _longhouse, _barracks;
+    private List<Area> _extras = new();
+    private Random? _extraRng;
     private LayoutShape _layout;
     private List<NamedNpcArchetype> _roster = new();
     private Area? _courtyard, _chickenCoop, _pigsty, _warren, _pond, _shed;
@@ -78,6 +80,13 @@ public class FarmSceneFactory : SceneFactory
         farmyard.Areas.Add(_shed);
         farmyard.Areas.Add(_warren);
         if (_pond != null) farmyard.Areas.Add(_pond);
+        // The extras come from a generator of their own, and nobody's day is rolled over them: a farm id
+        // keeps its people, rooms and furniture whatever extras it draws.
+        var extraRng = ExtrasRandom(locationId);
+        var extras = new List<Area>();
+        foreach (var i in SampleUniqueIndices(extraRng, Agriculture.AgricultureSceneFactory.YardPool.Length, extraRng.Next(0, 3)))
+            extras.Add(Agriculture.AgricultureSceneFactory.YardPool[i]());
+        farmyard.Areas.AddRange(extras);
         scene.Sections.Add(farmyard);
         RegisterAll(scene, farmyard);
 
@@ -88,6 +97,11 @@ public class FarmSceneFactory : SceneFactory
         );
         grounds.Areas.Add(_vegetableGarden);
         grounds.Areas.Add(_orchard);
+        foreach (var i in SampleUniqueIndices(extraRng, Agriculture.AgricultureSceneFactory.EdgePool.Length, extraRng.Next(0, 3)))
+        {
+            var extra = Agriculture.AgricultureSceneFactory.EdgePool[i]();
+            if (extra is not PondArea || _pond == null) { grounds.Areas.Add(extra); extras.Add(extra); }
+        }
         scene.Sections.Add(grounds);
         RegisterAll(scene, grounds);
 
@@ -96,12 +110,25 @@ public class FarmSceneFactory : SceneFactory
         // pens out along one track, a ring lets you come back round the far side. The courtyard leads
         // the list either way, so it stays the arrival point and the buildings' front yard.
 
-        var outdoorAreas = new List<Area> { _courtyard, _chickenCoop, _pigsty, _shed, _vegetableGarden, _orchard };
-        outdoorAreas.Add(_warren);
-        if (_pond != null) outdoorAreas.Add(_pond);
+        var yardAreas = farmyard.Areas.ToList();
+        var groundAreas = grounds.Areas.ToList();
+        // What the farm was before its extras: where a door may open and what is furnished from the build
+        // generator, so a farm id builds the same farm it always did.
+        var outdoorAreas = yardAreas.Concat(groundAreas).Where(a => !extras.Contains(a)).ToList();
 
+        // Each part is one piece of ground: the farmyard round its courtyard, the grounds among
+        // themselves, then the two joined. The courtyard leads, so it stays the arrival point and the
+        // buildings' front yard.
         _layout = OutdoorLayout.RollShape(rng);
-        OutdoorLayout.Connect(scene, outdoorAreas, _layout, "Track", rng);
+        // A spur used to draw its cross-links from the build generator; the draws are kept so what is
+        // built after them is unchanged, though the farmyard is now a hub of its own.
+        if (_layout == LayoutShape.Spur)
+            for (int n = 0, want = rng.Next(1, 3); n < want && outdoorAreas.Count > 3; n++) { rng.Next(1, outdoorAreas.Count); rng.Next(1, outdoorAreas.Count); }
+        OutdoorLayout.Connect(scene, yardAreas, _layout == LayoutShape.Chain ? LayoutShape.Chain : LayoutShape.Hub, "Track", extraRng);
+        OutdoorLayout.Connect(scene, groundAreas, LayoutShape.Chain, "Track", extraRng);
+        OutdoorLayout.Link(scene, yardAreas[extraRng.Next(yardAreas.Count)], groundAreas[0], "Track");
+        _extras = extras;
+        _extraRng = extraRng;
 
         // ── 5. Draw up the crew, then build to fit it ────────────────────────
 
@@ -148,11 +175,12 @@ public class FarmSceneFactory : SceneFactory
         // paths exist: shortcuts need to know what is already adjacent, and the climb needs a section
         // to put its top area in.
         {
-            var outdoors = scene.OutdoorAreas;
+            var outdoors = scene.OutdoorAreas.Where(a => !_extras.Contains(a)).ToList();
             FurnitureSubfactory.AddSitSpots(rng, outdoors, FurnitureSubfactory.Setting.Farmland);
             FurnitureSubfactory.AddHidingPlaces(rng, outdoors, FurnitureSubfactory.Setting.Farmland);
             FurnitureSubfactory.AddShortcuts(rng, scene, outdoors, FurnitureSubfactory.Setting.Farmland);
             FurnitureSubfactory.AddExtractionPoints(rng, outdoors, FurnitureSubfactory.Setting.Farmland);
+            FurnitureSubfactory.AddSitSpots(_extraRng!, _extras, FurnitureSubfactory.Setting.Farmland, min: 0, max: 1);
 
         }
 
@@ -259,7 +287,7 @@ public class FarmSceneFactory : SceneFactory
     
         // Small life. Every location has some; which and how many is rolled, so two
         // places of the same kind are not the same place.
-        SprinkleSmallLife(rng, scene, scene.AllAreas, SmallLife.Cultivated, 2, 5);
+        SprinkleSmallLife(rng, scene, scene.AllAreas.Where(a => !_extras.Contains(a)).ToList(), SmallLife.Cultivated, 2, 5);
 }
 
     private NpcEntity SpawnNamed(Random rng, NamedNpcArchetype archetype, string nodeContext)
