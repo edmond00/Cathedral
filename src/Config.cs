@@ -2155,7 +2155,9 @@ public static class Config
 
         // Maximum context window size in tokens passed to the llama.cpp server (-c flag)
         public const int ContextSize = 2048;
-        public const double Temperature = 0.7;
+        // Settable by --llm-temperature (debug): the tutorial run's replays are made at several, so
+        // that the prose the script has to survive genuinely differs between them.
+        public static double Temperature { get; set; } = 0.7;
         public const int TopK = 12;
         public const double TopP = 0.95;
 

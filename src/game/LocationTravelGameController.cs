@@ -359,7 +359,9 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     public string? CliElementIdAt(int x, int y) => _currentMode == GameMode.ProtagonistManagement
         ? _managementMenuRenderer?.CliControlIdAt(x, y)
-        : GetHoverElementId(x, y);
+        : _currentMode == GameMode.WorldView && _travelRoutinesBox != null
+            ? _travelRoutinesBox.CliControlIdAt(x, y)
+            : GetHoverElementId(x, y);
 
     /// <summary>Every distinct control id on screen now, top to bottom — what `elements` lists.</summary>
     public IReadOnlyList<string> CliElementIds()

@@ -277,6 +277,15 @@ public class TravelRoutinesBox
          : _map.PadArrowHovered ? "pad"
          : null;
 
+    /// <summary>
+    /// What a press at (x, y) would act on, named for <c>click element</c>: <c>routines-return</c>,
+    /// <c>routines-confirm</c>, <c>routines-prev</c> / <c>routines-next</c> (the stepper).
+    /// </summary>
+    public string? CliControlIdAt(int x, int y)
+        => OverReturn(x, y) ? "routines-return"
+         : OverConfirm(x, y) ? "routines-confirm"
+         : OverStep(x, y) switch { -1 => "routines-prev", 1 => "routines-next", _ => null };
+
     /// <summary>Returns the click outcome; for <see cref="ResultKind.Selected"/> the routine is set.</summary>
     public (ResultKind kind, Routine? routine) OnMouseClick(int x, int y)
     {

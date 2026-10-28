@@ -200,6 +200,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("                                     (e.g. pigsty, smithy). --start-at picks the location, this picks the room:");
     Console.WriteLine("                                     without it a script lands in whichever area was built first and has to walk");
     Console.WriteLine("  --observe-only <name>              DEBUG: an observation phase may only look at objects matching <name> (e.g. pig).");
+    Console.WriteLine("  --llm-temperature <t>              DEBUG: the narration's sampling temperature (default 0.7)");
     Console.WriteLine("  --job-only <job-id>                DEBUG: an employer offering that job offers it alone (e.g. fruit_picker)");
     Console.WriteLine("  --childhood-path <name>[,<name>…]  DEBUG: each childhood reminescence observes only the fragment one of these names matches");
     Console.WriteLine("                                     (e.g. sobs,waves,sharp,golden arch); a reminescence none matches chooses freely.");
@@ -899,6 +900,10 @@ for (int i = 0; i < args.Length; i++)
 
     if (args[i] == "--observe-only" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
         Cathedral.Config.Debug.ObserveOnly = args[i + 1];
+
+    if (args[i] == "--llm-temperature" && i + 1 < args.Length
+        && double.TryParse(args[i + 1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var llmTemp))
+        Cathedral.Config.LLM.Temperature = llmTemp;
 
     if (args[i] == "--job-only" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
         Cathedral.Config.Debug.JobOnly = args[i + 1];
