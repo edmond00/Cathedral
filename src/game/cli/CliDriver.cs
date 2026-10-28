@@ -476,7 +476,9 @@ public sealed class CliDriver
                                     routine of that kind, with that routine read out;
                                     `manage Chorography lock newest|oldest` toggles a map's lock;
                                     `manage Chorography next|prev` steps through the routines
-                                    of the map shown. `key <letter>` opens a tab by its initial
+                                    of the map shown. `manage Bellic <skill>` expands a skill;
+                                    `manage member <name|slot>` picks a party member (0 = you).
+                                    `key <letter>` opens a tab by its initial
           select [item name]        show a carried item's info panel; bare `select` lists them
           key <escape|…>            send a key
           scroll up|down [n]        scroll the shared history buffer
@@ -1492,6 +1494,17 @@ public sealed class CliDriver
     {
         string? tab = a.Length > 0 ? a[0] : null;
 
+        // `manage member <name|slot>` — the P A R T Y list on the left, which every tab but the
+        // protagonist-only ones follows. The screen must already be open on the tab wanted.
+        if (tab != null && tab.Equals("member", StringComparison.OrdinalIgnoreCase))
+        {
+            string who = string.Join(' ', a.Skip(1));
+            if (!_game.CliSelectManagementMember(who))
+            { CliMode.Emit($"error: manage member — nobody called '{who}' on this tab (open the screen first)"); return; }
+            CliMode.Emit($"ok: management member {who}");
+            return;
+        }
+
         if (tab != null && _game.CliManagementTabs.Count == 0)
         {
             // Not open yet — open it first so the tab switch has something to act on.
@@ -1524,6 +1537,16 @@ public sealed class CliDriver
             if (!_game.CliToggleMapLock(a[2]))
             { CliMode.Emit($"error: manage Chorography lock newest|oldest — no map to lock ('{a[2]}')"); return; }
             CliMode.Emit($"ok: toggled the lock of the {a[2]} mental map");
+            return;
+        }
+
+        // A skill on the Bellic tab, expanded below the list: `manage Bellic Punch`.
+        if (a.Length > 1 && tab!.Equals("Bellic", StringComparison.OrdinalIgnoreCase))
+        {
+            string skill = string.Join(' ', a.Skip(1));
+            if (!_game.CliSelectBellicSkill(skill))
+            { CliMode.Emit($"error: manage Bellic — no skill '{skill}' on the tab for this member"); return; }
+            CliMode.Emit($"ok: management tab Bellic, skill {skill}");
             return;
         }
 

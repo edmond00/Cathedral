@@ -19,7 +19,8 @@ public enum ManagementTab
     Journal,
     Memory,
     Humors,
-    Chorography
+    Chorography,
+    Bellic
 }
 
 /// <summary>
@@ -42,6 +43,7 @@ public class ManagementMenuRenderer
     private readonly HumorMenuRenderer _humorMenu;
     private readonly InventoryMenuRenderer _inventoryMenu;
     private readonly MentalMapsPanelRenderer _mapsPanel;
+    private readonly BellicMenuRenderer _bellicMenu;
 
     // ── Cached art data per anatomy type ─────────────────────────
     private readonly BodyArtData _humanArtData;
@@ -67,6 +69,7 @@ public class ManagementMenuRenderer
         new TabDefinition("Memory",      ManagementTab.Memory,      AllCharacters: true),
         new TabDefinition("Humors",      ManagementTab.Humors,      AllCharacters: true),
         new TabDefinition("Chorography", ManagementTab.Chorography, AllCharacters: false), // protagonist only
+        new TabDefinition("Bellic",      ManagementTab.Bellic,      AllCharacters: true),
     });
 
     private static TabDefinition[] CheckShortcuts(TabDefinition[] tabs)
@@ -245,7 +248,15 @@ public class ManagementMenuRenderer
         var pulmonesMap  = HumorQueuePositionMap.Load("assets/art/humors/pulmones.txt", "pulmones");
         var spleenMap    = HumorQueuePositionMap.Load("assets/art/humors/spleen.txt",   "spleen");
         _humorMenu = new HumorMenuRenderer(terminal, humorArtData, heparMap, paunchMap, pulmonesMap, spleenMap);
+        _bellicMenu = new BellicMenuRenderer(terminal);
     }
+
+    /// <summary>
+    /// Tabs that draw their own full-width title over the body-art area, so the shared right-panel
+    /// header, its separator and its footer stay off.
+    /// </summary>
+    private static bool OwnsWholeScreen(ManagementTab tab) =>
+        tab is ManagementTab.Memory or ManagementTab.Humors or ManagementTab.Chorography or ManagementTab.Bellic;
 
     // ── Art/gear data helpers ─────────────────────────────────────
 
@@ -317,8 +328,7 @@ public class ManagementMenuRenderer
             _bodyViewer.ShowAge    = true;
             _bodyViewer.RenderBodyArt();
         }
-        else if (_activeTab != ManagementTab.Memory && _activeTab != ManagementTab.Humors
-                 && _activeTab != ManagementTab.Chorography)
+        else if (!OwnsWholeScreen(_activeTab))
         {
             _bodyViewer.ShowWounds = false;
             _bodyViewer.ShowAge    = false;
@@ -329,8 +339,7 @@ public class ManagementMenuRenderer
         }
 
         // Right panel
-        if (_activeTab != ManagementTab.Memory && _activeTab != ManagementTab.Humors
-            && _activeTab != ManagementTab.Chorography)
+        if (!OwnsWholeScreen(_activeTab))
             RenderPanelHeader();
 
         switch (_activeTab)
@@ -359,13 +368,15 @@ public class ManagementMenuRenderer
             case ManagementTab.Chorography:
                 _mapsPanel.Render(_protagonist);
                 break;
+            case ManagementTab.Bellic:
+                _bellicMenu.Render(GetPartyMember(_selectedCharacterIndex));
+                break;
         }
 
         // Left panel (rendered AFTER all tab content so it overlays cleanly)
         RenderLeftPanel();
 
-        if (_activeTab != ManagementTab.Memory && _activeTab != ManagementTab.Humors
-            && _activeTab != ManagementTab.Chorography)
+        if (!OwnsWholeScreen(_activeTab))
             RenderFooter();
 
         // Edge rules against the sphere, drawn last so no tab content overwrites them
@@ -467,6 +478,14 @@ public class ManagementMenuRenderer
                 if (_inventoryMenu.IsHovering) tick = true;
             }
         }
+        else if (_activeTab == ManagementTab.Bellic)
+        {
+            if (_bellicMenu.ProcessHover(x, y))
+            {
+                changed = true;
+                if (_bellicMenu.IsHovering) tick = true;
+            }
+        }
         else if (_activeTab == ManagementTab.Chorography)
         {
             if (_mapsPanel.ProcessHover(x, y))
@@ -563,6 +582,8 @@ public class ManagementMenuRenderer
             _inventoryMenu.ClearHover();
         if (_activeTab != ManagementTab.Chorography)
             _mapsPanel.ClearHover();
+        if (_activeTab != ManagementTab.Bellic)
+            _bellicMenu.ClearHover();
 
         Render();
         return true;
@@ -577,6 +598,31 @@ public class ManagementMenuRenderer
     {
         if (!CliSelectTab("Inventory")) return false;
         if (!_inventoryMenu.CliSelectItem(itemName)) return false;
+        Render();
+        return true;
+    }
+
+    /// <summary>Expands a skill on the Bellic tab by name, for <c>--cli</c>.</summary>
+    public bool CliSelectBellicSkill(string skillName)
+    {
+        if (!CliSelectTab("Bellic")) return false;
+        if (!_bellicMenu.CliSelectSkill(GetPartyMember(_selectedCharacterIndex), skillName)) return false;
+        Render();
+        return true;
+    }
+
+    /// <summary>
+    /// Selects a party member by name (or by slot, 0 being the protagonist) for <c>--cli</c> — the
+    /// same as clicking their row in P A R T Y. False when nobody matches or the tab hides them.
+    /// </summary>
+    public bool CliSelectMember(string who)
+    {
+        int idx = int.TryParse(who, out int n) ? n
+                : Enumerable.Range(0, PartyCount).FirstOrDefault(i =>
+                      GetCharacterName(i).Contains(who, StringComparison.OrdinalIgnoreCase), -1);
+        if (idx < 0 || idx >= PartyCount || !IsCharacterVisibleForTab(idx, _activeTab)) return false;
+        _selectedCharacterIndex = idx;
+        SwapMemberArt(GetPartyMember(idx));
         Render();
         return true;
     }
@@ -632,6 +678,13 @@ public class ManagementMenuRenderer
         }
 
         if (_activeTab == ManagementTab.Inventory && _inventoryMenu.ProcessClick(x, y))
+        {
+            Render();
+            return true;
+        }
+
+        // Bellic: a skill row expands into the panel below
+        if (_activeTab == ManagementTab.Bellic && _bellicMenu.ProcessClick(x, y))
         {
             Render();
             return true;

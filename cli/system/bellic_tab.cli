@@ -1,0 +1,55 @@
+# The Bellic tab: a party member's fighting profile, for the protagonist and for a companion.
+#
+# Information only, so the assertions are on text: the four stat sections, a source organ beside a
+# number, a skill expanded into the terms behind its dice, and the same screen for a beast — whose
+# body has no hands to hold a weapon and whose skills are fangs and claws rather than fists.
+#
+# --fill-party at a heart of 1 gives one companion, a beast. --grant-mm brawling makes the hands'
+# first skill known, so a row reads as ready and its breakdown names a modus mentis.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --fill-party --grant-mm brawling:2 --location-type test --location-id 0 --npc-static --period noon
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 45
+
+# --- the protagonist -----------------------------------------------------------------
+manage Bellic
+wait 1
+expect B E L L I C
+expect TURN
+expect ESCAPE AND RECOVERY
+expect STRIKING
+expect DEFENCE
+expect Cinetic points
+expect backbone
+expect Natural defence
+expect lower limbs
+expect SKILLS
+expect Right hand
+expect Punch
+dump
+
+manage Bellic Punch
+wait 1
+expect PUNCH
+expect Where the dice come from
+expect brawling
+expect natural attack
+expect against the target's defence
+dump
+
+# --- the companion: a beast ----------------------------------------------------------
+manage member 1
+wait 1
+expect beast anatomy
+expect Natural defence
+expect legs
+expect Fangs
+expect-not Right hand
+expect no hand to hold one with
+dump
+
+quit

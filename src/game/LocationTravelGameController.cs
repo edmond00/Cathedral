@@ -772,6 +772,16 @@ public class LocationTravelGameController : IDisposable
         _currentMode == GameMode.ProtagonistManagement
         && _managementMenuRenderer?.CliStepRoutine(step) == true;
 
+    /// <summary>Expands a skill on the Bellic tab by name.</summary>
+    public bool CliSelectBellicSkill(string skillName) =>
+        _currentMode == GameMode.ProtagonistManagement
+        && _managementMenuRenderer?.CliSelectBellicSkill(skillName) == true;
+
+    /// <summary>Selects a party member on the management screen, by name or slot (0 = protagonist).</summary>
+    public bool CliSelectManagementMember(string who) =>
+        _currentMode == GameMode.ProtagonistManagement
+        && _managementMenuRenderer?.CliSelectMember(who) == true;
+
     /// <summary>Tab labels available on the management screen, or empty when it is closed.</summary>
     public IReadOnlyList<string> CliManagementTabs =>
         _managementMenuRenderer?.CliTabNames ?? Array.Empty<string>();

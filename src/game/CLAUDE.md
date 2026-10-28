@@ -185,7 +185,7 @@ so, and says why.
 | LocationInteraction, ChildhoodReminescence, GetUp | closes the thinking popup; otherwise pauses **as an overlay**, leaving narration standing |
 | Dialogue, Working, Gathering, Trading, EncounterPrompt, WorldView | pauses. None of them is cancelled by it — walking out is the footer INTERRUPT / LEAVE / ENGAGE button's job |
 | ProtagonistCreation | pauses. Not a running phase, but a screen with no other way off it |
-| ProtagonistManagement | back where it was opened from, the same press as its Back button: the main menu, or — opened by a tab's letter (A, I, J, M, H, C, from any phase the menu opens over but a fight) — that phase |
+| ProtagonistManagement | back where it was opened from, the same press as its Back button: the main menu, or — opened by a tab's letter (A, I, J, M, H, C, B, from any phase the menu opens over but a fight) — that phase |
 | Settings | back to the main menu — the same press as its Back button |
 | MainMenu | resumes `MenuReturnMode`, or nothing at all before a run has started |
 | LLMLoading, Traveling, Death, DialogueDemo | **nothing, on purpose** — see the reasons on each case |
