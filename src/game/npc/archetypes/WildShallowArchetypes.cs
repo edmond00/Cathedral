@@ -113,3 +113,43 @@ public class OystercatcherArchetype : BirdShallowArchetype
         new ItemElement(new Wing()),
     };
 }
+
+// ── Forest ──────────────────────────────────────────────────────────────────
+
+public class BeaverArchetype : SmallMammalShallowArchetype
+{
+    public override string ArchetypeId     => "beaver";
+    public override string TypeDisplayName => "Beaver";
+    protected override string ComposeObservationHint(Random rng, string nodeContext) => Compose(rng,
+        sizes:  new[] { "heavy", "broad-tailed" },
+        colors: new[] { "wet brown", "dark chestnut", "glossy" },
+        noun:   "beaver",
+        traits: new[] { "towing a branch across the pond", "gnawing a sapling with long orange teeth", "slapping the water with its flat tail and vanishing" });
+    protected override string CorpseBodyDescription => "the heavy wet body of a beaver, its broad scaled tail lying flat";
+    protected override List<ItemElement> BuildCorpseDrops() => new()
+    {
+        new ItemElement(new Pelt()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Tail()),
+        new ItemElement(new Tooth()),
+    };
+}
+
+public class KingfisherArchetype : BirdShallowArchetype
+{
+    public override string ArchetypeId     => "kingfisher";
+    public override string TypeDisplayName => "Kingfisher";
+    protected override string ComposeObservationHint(Random rng, string nodeContext) => Compose(rng,
+        sizes:  new[] { "small", "dagger-billed" },
+        colors: new[] { "electric blue", "orange-breasted", "jewel-bright" },
+        noun:   "kingfisher",
+        traits: new[] { "perched over the water, quite still", "a streak of blue low along the bank", "dropping into the water and coming up with a fish" });
+    protected override string CorpseBodyDescription => "the tiny jewel-coloured body of a kingfisher, its blue as bright in death";
+    protected override List<ItemElement> BuildCorpseDrops() => new()
+    {
+        new ItemElement(new Plume()),
+        new ItemElement(new Feather()),
+        new ItemElement(new Bone()),
+    };
+}
