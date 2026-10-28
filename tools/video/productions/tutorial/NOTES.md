@@ -217,8 +217,8 @@ What can still break on another machine, most likely first.
 5. **Rolls depend on the humors.** Every roll a script cannot foresee is turned with voluptas
    (five per roll at viscera 5). A roll needing more sixes than five voluptas can make — a pool of more
    than five dice failing with no six, against difficulty 5 — would fail. The conversations' Hard
-   ladder asks 4 or 5 sixes; no roll in any run here needed more than 3 voluptas (each run spent
-   humors on five rolls: once on three of them, twice on one, three times on another). A failed conversation does not open the job or trade menu, and the script would
+   ladder asks 4 or 5 sixes; no roll in any run here needed more than 3 voluptas (in each real run nine
+   rolls needed humors: five took one voluptas, two took two, two took three). A failed conversation does not open the job or trade menu, and the script would
    then fail at `wait mode Working` / `wait mode Trading`.
 6. **Waits are long, not unbounded.** Every model wait has 900 s; the slowest single passage seen on
    the cloud CPU was well under that. A much slower machine (or a llama.cpp build without the CPU's
