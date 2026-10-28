@@ -78,6 +78,16 @@ public enum Instrument
     Staccato,
     /// <summary>War drum: a deep, wide membrane struck hard, its pitch settling as it rings, and the slap of the beater.</summary>
     WarDrum,
+    /// <summary>Metallophone: struck metal bars, inharmonic partials, each note two bars a few hertz apart so they beat.</summary>
+    Metallophone,
+    /// <summary>Buzzing string: a plucked string whose bridge rattles against it, a nasal sustained buzz; it can bend.</summary>
+    BuzzString,
+    /// <summary>Reed: a warm double reed, breathy, a slow late vibrato, sliding into its notes.</summary>
+    Reed,
+    /// <summary>Glass: bowed glass or metal, near-sine partials slowly beating, no attack to speak of.</summary>
+    Glass,
+    /// <summary>Bent drum: a hand drum whose skin is pressed as it rings, so its pitch rises after the stroke.</summary>
+    BentDrum,
 }
 
 /// <summary>One sounding note. Renders mono; the synthesiser pans it into its part's bus.</summary>
@@ -103,6 +113,9 @@ internal abstract class Voice
     /// <see cref="Orchestra.Trim"/> and the part levels, which are taste, not correction.
     /// </summary>
     public float Level0 = 1f;
+
+    /// <summary>Semitones the note starts away from its pitch and slides onto it; read by the voices that can bend.</summary>
+    public float Glide;
 
     public void Init(float midi, float velocity, int seed)
     {
@@ -133,25 +146,30 @@ internal abstract class Voice
     {
         // LEVELS-BEGIN
         [Instrument.Bell] = 2.214f,
+        [Instrument.BentDrum] = 2.791f,
         [Instrument.Bodhran] = 4.035f,
         [Instrument.Bourdon] = 2.830f,
+        [Instrument.BuzzString] = 6.216f,
         [Instrument.Choir] = 5.179f,
         [Instrument.ChoirOoh] = 2.465f,
         [Instrument.Cymbal] = 13.148f,
         [Instrument.DarkPad] = 3.185f,
         [Instrument.Distortion] = 2.338f,
         [Instrument.Fiddle] = 3.632f,
+        [Instrument.Glass] = 2.537f,
         [Instrument.HandDrum] = 3.745f,
         [Instrument.Harp] = 4.379f,
         [Instrument.Harpsichord] = 2.913f,
         [Instrument.Horn] = 2.373f,
         [Instrument.Kick] = 1.191f,
         [Instrument.Lute] = 4.582f,
+        [Instrument.Metallophone] = 1.850f,
         [Instrument.Organ] = 1.314f,
         [Instrument.OrganFlute] = 0.970f,
         [Instrument.Pipes] = 10.502f,
         [Instrument.PowerChord] = 3.180f,
         [Instrument.Recorder] = 0.994f,
+        [Instrument.Reed] = 10.924f,
         [Instrument.Snare] = 3.265f,
         [Instrument.SquareLead] = 3.268f,
         [Instrument.Staccato] = 5.722f,
@@ -192,6 +210,11 @@ internal abstract class Voice
         Instrument.Cymbal      => new CymbalVoice(),
         Instrument.Staccato    => new StaccatoVoice(),
         Instrument.WarDrum     => new WarDrumVoice(),
+        Instrument.Metallophone => new MetallophoneVoice(),
+        Instrument.BuzzString  => new BuzzStringVoice(),
+        Instrument.Reed        => new ReedVoice(),
+        Instrument.Glass       => new GlassVoice(),
+        Instrument.BentDrum    => new BentDrumVoice(),
         _ => new OrganVoice(OrganVoice.Principal, 0.1f),
     };
 }
@@ -1326,6 +1349,238 @@ internal sealed class WarDrumVoice : Voice
             _slap *= sd;
             _thump *= td;
             s = MathF.Tanh(s * 1.2f);
+            energy += s * s;
+            buf[i] += s * 0.6f * e * Amp;
+        }
+        if (energy / Math.Max(1, n) < 1e-10f) Env.Kill(0.001f);
+    }
+}
+
+internal sealed class MetallophoneVoice : Voice
+{
+    // A free metal bar's modes, not a string's harmonics.
+    private static readonly float[] Ratios = { 1f, 2.76f, 5.40f, 8.93f };
+    private readonly float[] _ph = new float[8], _inc = new float[8], _amp = new float[8], _g = new float[8];
+    private float _click;
+    private OnePole _clickLp;
+
+    protected override void Start(float hz, float velocity)
+    {
+        float[] amps = { 1f, 0.42f, 0.18f, 0.07f };
+        float[] dec = { 1f, 0.42f, 0.22f, 0.12f };
+        float ring = (2.6f + velocity) * MathF.Pow(2f, -(Midi - 60f) / 12f * 0.4f);
+        // Two bars a few hertz apart: the pair beats, a shimmer that never settles.
+        float beat = 3.5f + Rng.Unit() * 2f;
+        for (int k = 0; k < 8; k++)
+        {
+            int m = k % 4;
+            float f = hz * Ratios[m] + (k >= 4 ? beat : 0f);
+            _inc[k] = f / Dsp.SampleRate;
+            _amp[k] = amps[m] * (k >= 4 ? 0.85f : 1f) * (f < Dsp.Nyquist * 0.9f ? 1f : 0f);
+            _g[k] = MathF.Pow(10f, -3f / (ring * dec[m] * Dsp.SampleRate));
+            _ph[k] = 0f;
+        }
+        _click = 0.3f + 0.4f * velocity;
+        _clickLp.Set(3500f);
+        Env = new Envelope(0.0008f, 0.01f, 1f, 0.6f);
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
+    public override void Render(float[] buf, int n)
+    {
+        float cd = Dsp.Coef(0.003f), energy = 0;
+        for (int i = 0; i < n; i++)
+        {
+            float e = Env.Next();
+            float s = 0;
+            for (int k = 0; k < 8; k++)
+            {
+                s += MathF.Sin(Dsp.TwoPi * _ph[k]) * _amp[k];
+                _ph[k] += _inc[k]; if (_ph[k] >= 1f) _ph[k] -= 1f;
+                _amp[k] *= _g[k];
+            }
+            s += _clickLp.Low(Rng.Next()) * _click;
+            _click *= cd;
+            energy += s * s;
+            buf[i] += s * 0.4f * e * Amp;
+        }
+        if (energy / Math.Max(1, n) < 1e-10f) Env.Kill(0.001f);
+    }
+}
+
+internal sealed class BuzzStringVoice : Voice
+{
+    private DelayLine _line = null!;
+    private float _len, _g, _prev, _bend, _bendCoef, _buzz;
+    private OnePole _tone;
+    private Svf _nasal;
+
+    protected override void Start(float hz, float velocity)
+    {
+        float t60 = 4.5f * MathF.Pow(2f, -(Midi - 48f) / 12f * 0.5f);
+        _len = Math.Max(2f, Dsp.SampleRate / hz - 0.5f);
+        _line = new DelayLine((int)(_len * 1.3f) + 8);
+        _g = MathF.Pow(10f, -3f / (t60 * hz));
+        _bend = Glide;
+        _bendCoef = Dsp.Coef(0.09f);
+        _buzz = 0.35f;
+        int n = (int)_len;
+        OnePole lp = default;
+        lp.Set(3000f * (0.6f + 0.6f * velocity));
+        float mean = 0;
+        var exc = new float[n];
+        for (int i = 0; i < n; i++) { exc[i] = lp.Low(Rng.Next()); mean += exc[i]; }
+        mean /= n;
+        for (int i = 0; i < n; i++) _line.Write(exc[i] - mean);
+        _tone.Set(4200f);
+        _nasal.Set(1600f, 2.5f);
+        Env = new Envelope(0.001f, 0.01f, 1f, 0.12f);
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
+    public override void Render(float[] buf, int n)
+    {
+        float energy = 0;
+        for (int i = 0; i < n; i++)
+        {
+            float e = Env.Next();
+            // A bend shortens or lengthens the string as it rings.
+            float len = _len * (1f - _bend * 0.0578f);
+            _bend *= _bendCoef;
+            float y = _line.Read(len);
+            // The bridge: the string's swing is cut short on one side, which is the buzz.
+            float th = 0.02f;
+            if (y > th) y = th + (y - th) * (1f - _buzz);
+            float f = (y + _prev) * 0.5f;
+            _prev = y;
+            _line.Write(f * _g);
+            float o = _tone.Low(y) + 0.6f * _nasal.BandNorm(y);
+            energy += o * o;
+            buf[i] += o * 1.2f * e * Amp;
+        }
+        if (energy / Math.Max(1, n) < 1e-9f) Env.Kill(0.001f);
+    }
+}
+
+internal sealed class ReedVoice : Voice
+{
+    private float[] _t = Array.Empty<float>();
+    private float _p, _inc, _vib, _age, _bend, _bendCoef;
+    private Svf _f1, _f2, _f3, _breathBand;
+    private Drift _drift;
+
+    protected override void Start(float hz, float velocity)
+    {
+        _t = Wavetable.Pulse25.For(hz);
+        _inc = hz / Dsp.SampleRate;
+        _p = Rng.Unit();
+        _vib = Rng.Unit() * Dsp.TwoPi;
+        _bend = Glide;
+        _bendCoef = Dsp.Coef(0.1f);
+        _f1.Set(650f, 2.2f); _f2.Set(1350f, 3f); _f3.Set(2700f, 4f);
+        _breathBand.Set(1800f, 1.2f);
+        Env = new Envelope(0.06f, 0.3f, 0.82f, 0.18f);
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
+    public override void Render(float[] buf, int n)
+    {
+        float dt = 1f / Dsp.SampleRate, vr = 5.2f * Dsp.TwoPi / Dsp.SampleRate;
+        for (int i = 0; i < n; i++)
+        {
+            float e = Env.Next();
+            _age += dt;
+            _vib += vr; if (_vib > Dsp.TwoPi) _vib -= Dsp.TwoPi;
+            float depth = 18f * Math.Clamp((_age - 0.35f) * 2f, 0f, 1f);
+            float cents = MathF.Sin(_vib) * depth + _drift.Next(ref Rng, 8f) + _bend * 100f;
+            _bend *= _bendCoef;
+            float src = Wavetable.Read(_t, _p);
+            _p += _inc * (1f + cents / 1200f * 0.693f); if (_p >= 1f) _p -= 1f;
+            float v = _f1.BandNorm(src) + 0.7f * _f2.BandNorm(src) + 0.3f * _f3.BandNorm(src) + 0.25f * src;
+            v += _breathBand.BandNorm(Rng.Next()) * 0.06f;
+            buf[i] += v * 0.4f * e * Amp;
+        }
+    }
+}
+
+internal sealed class GlassVoice : Voice
+{
+    private static readonly float[] Ratios = { 1f, 1.0035f, 2.002f, 3.007f };
+    private static readonly float[] Amps = { 1f, 0.8f, 0.3f, 0.12f };
+    private readonly float[] _ph = new float[4], _inc = new float[4];
+    private float _bend, _bendCoef;
+    private Svf _bow;
+
+    protected override void Start(float hz, float velocity)
+    {
+        for (int k = 0; k < 4; k++) { _inc[k] = hz * Ratios[k] / Dsp.SampleRate; _ph[k] = Rng.Unit(); }
+        _bend = Glide;
+        _bendCoef = Dsp.Coef(0.25f);
+        _bow.Set(Math.Min(hz * 4f, 6000f), 3f);
+        Env = new Envelope(0.7f, 1.0f, 0.85f, 1.5f);
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
+    public override void Render(float[] buf, int n)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            float e = Env.Next();
+            float m = 1f + _bend * 0.0578f;
+            _bend *= _bendCoef;
+            float s = 0;
+            for (int k = 0; k < 4; k++)
+            {
+                s += MathF.Sin(Dsp.TwoPi * _ph[k]) * Amps[k];
+                _ph[k] += _inc[k] * m; if (_ph[k] >= 1f) _ph[k] -= 1f;
+            }
+            s += _bow.BandNorm(Rng.Next()) * 0.03f;
+            buf[i] += s * 0.3f * e * Amp;
+        }
+    }
+}
+
+internal sealed class BentDrumVoice : Voice
+{
+    private static readonly float[] Ratios = { 1f, 1.5f, 1.99f };
+    private readonly float[] _ph = new float[3], _amp = new float[3], _g = new float[3];
+    private float _hz, _bend, _bendCoef, _slap;
+    private OnePole _slapLp;
+
+    protected override void Start(float hz, float velocity)
+    {
+        _hz = Math.Clamp(hz, 70f, 300f);
+        // A hand pressing the skin as it rings: the pitch rises from below unless told otherwise.
+        _bend = Glide != 0f ? Glide : -3f;
+        _bendCoef = Dsp.Coef(0.12f);
+        float[] amps = { 1f, 0.4f, 0.2f };
+        float[] dec = { 0.45f, 0.25f, 0.15f };
+        for (int k = 0; k < 3; k++) { _amp[k] = amps[k]; _g[k] = MathF.Pow(10f, -3f / (dec[k] * (0.7f + 0.5f * velocity) * Dsp.SampleRate)); }
+        _slap = 0.4f + 0.4f * velocity;
+        _slapLp.Set(2200f);
+        Env = new Envelope(0.0008f, 0.01f, 1f, 0.1f);
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
+    public override void Render(float[] buf, int n)
+    {
+        float sd = Dsp.Coef(0.006f), energy = 0;
+        for (int i = 0; i < n; i++)
+        {
+            float e = Env.Next();
+            // The bend runs the other way to a glide: from the offset back to the drum's own pitch,
+            // and on past it a little as the skin is pressed.
+            float f = _hz * (1f + (_bend + 1.5f * (1f - MathF.Min(1f, MathF.Abs(_bend) / 3f))) * 0.0578f);
+            _bend *= _bendCoef;
+            float s = 0;
+            for (int k = 0; k < 3; k++)
+            {
+                s += MathF.Sin(Dsp.TwoPi * _ph[k]) * _amp[k];
+                _ph[k] += f * Ratios[k] / Dsp.SampleRate; if (_ph[k] >= 1f) _ph[k] -= 1f;
+                _amp[k] *= _g[k];
+            }
+            s += _slapLp.Low(Rng.Next()) * _slap;
+            _slap *= sd;
             energy += s * s;
             buf[i] += s * 0.6f * e * Amp;
         }

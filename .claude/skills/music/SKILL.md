@@ -21,7 +21,7 @@ AmbianceEngine (src/audio/AmbianceEngine.cs)     the game's only door: same API 
  │       │   Theory.cs (modes, keys, chords, progressions) · Melody.cs (motifs, rhythms, periods)
  │       │   Orchestra.cs (mood poles → instruments, tempo, metre, mix levels, hall and tape)
  │       └─ Synth            voices → part buses → chorus + FDN hall → tape → limiter
- │           Voices.cs (28 instruments) · Effects.cs · Dsp.cs
+ │           Voices.cs (33 instruments) · Effects.cs · Dsp.cs
  │   └─ PcmStream            waveOut on Windows, OpenAL elsewhere (adaptive queue, underrun report)
  └─ LegacyAmbianceEngine     --music-engine legacy: the first engine, MIDI to the GS Wavetable
                              Synth (Windows) or MeltySynth + assets/audio/soundfont.sf2
@@ -36,7 +36,7 @@ AmbianceEngine (src/audio/AmbianceEngine.cs)     the game's only door: same API 
   `System.Random`. The world theme is piece −1.
 - **Top down.** A piece picks mode (the `ModalScale` palette: no major-third mode, Dorian is the
   warmest), tonic (moves by fourths and fifths), tempo, metre, an orchestration from four poles
-  (comfy, melancholy, dark, fear, festive, sacred), a form (`I A A' B A' O`…) and motifs. Each A is a period: the
+  (comfy, melancholy, dark, fear, festive, sacred, far), a form (`I A A' B A' O`…) and motifs. Each A is a period: the
   motif, its sequence, a second idea, an open cadence; then the same phrase with a closed ending.
   A' is a plain or ornamented restatement, B the inverted motif over contrast chords, C a breakdown
   or chant. Layers enter one at a time across the piece.
@@ -82,6 +82,23 @@ AmbianceEngine (src/audio/AmbianceEngine.cs)     the game's only door: same API 
   `targets.json` holds chant to `poles.sacred`. `--music-census [n]` samples every kind of place
   and prints which pole leads how often and where the distant choir may come in: run it after
   changing a profile.
+- **Far places.** `MusicMoodState.Far` (per place, `LocationMoodProfiles.Far`, drawn last) is how
+  far a place is from the empire's ear. Strange, not borrowed: nothing imitates a real people's
+  music (no "snake-charmer" scale, no "tribal" drums). When it leads (jungle, desert, oasis, the
+  hot steppe; a pyramid mostly, a sunken city sometimes) the piece is far throughout: the far modes
+  (`Mode.DorianSharp4`, `Mode.DorianFlat2`, a minor third and a true fifth, their own
+  progressions keeping off the diminished chords; or Phrygian and Aeolian), a third a little under
+  halfway to major (`Piece.NeutralThird`, carried as `ScoreEvent.Inflect` so the score names the
+  scale note and the harness reads it as one), long notes sliding into place (`ScoreEvent.Glide`,
+  read by `Reed`, `BuzzString`, `Glass` and `BentDrum`), `Metallophone` and `BuzzString` on an
+  eighth-note figure grouped 3+3+2 (`OstinatoStyle.Additive`), the `BentDrum` on the same accents, a
+  drier room. Lower (ports, markets, the forum, swamps, canyons, old ruins) the place keeps its own
+  music and a stranger (`Orchestration.Stranger`, `FarVoice`: a reed, metal or the buzzing string)
+  takes the line for a section or two, bending it; in a festive piece, a B part the second time
+  round. A far holy place chants in a stranger mode now and then. Fear damps it, a fight ignores it,
+  night keeps it. `8`/`Shift+8` in `--music` mode; `poles.far` bands; the census has columns for it.
+  The first draft's Locrian with a natural second was dropped: its diminished home chord ground
+  against the drone (dissonance 0.8).
 - **Night.** A visit's period reaches the music in `NarrativeController.ApplyTimePeriod` (the one
   writer of the period): at Night, in exploration, `AmbianceEngine.SetNight(true)` plays the
   place's `MusicMoodState.AtNight()` (colder, stranger, a little uneasy, festivity 0, Intensity

@@ -8,8 +8,15 @@ namespace Cathedral.Audio.Music;
 /// <para><c>Ornament</c> marks a grace note (a cut, a roll's taps); <c>LogDur</c>, when set, is the length
 /// the score log records for a note sounded in pieces (a rolled note's first segment carries the
 /// whole note), so the harness reads the tune under the ornaments.</para>
+/// <summary>
+/// One thing the composer asks for. <c>Inflect</c> is a part of a semitone added when the note sounds
+/// (a far piece's neutral third) and kept out of <c>Midi</c>, so the score names the scale note;
+/// <c>Glide</c> is how far, in semitones, the note starts from its pitch and slides onto it (on the
+/// instruments that can bend).
+/// </summary>
 internal readonly record struct ScoreEvent(double T, double Dur, Part Part, Instrument Inst, float Midi, float Vel, float Pan,
-                                           bool IsGain = false, float FadeSeconds = 0f, bool Ornament = false, double LogDur = 0);
+                                           bool IsGain = false, float FadeSeconds = 0f, bool Ornament = false, double LogDur = 0,
+                                           float Inflect = 0f, float Glide = 0f);
 
 /// <summary>What the composer tells whoever is listening about structure: for the score log and the harness.</summary>
 internal interface IScoreObserver
@@ -35,6 +42,7 @@ internal sealed class Section
     public List<LineNote> MelodyLine = new();
     public List<(double beat, double dur, int midi, float vel)> CounterLine = new();
     public int OctaveShift;                              // melody up an octave (in degrees) for a variation
+    public bool Strange;                                 // a stranger plays this section's line, bending it
     public RiffStyle Riff;                               // a fight's section: how the riff and the kit drive
     public int[] RiffTurn = Array.Empty<int>();          // a fight's riff: the last beat's four sixteenths, in steps from the root
 }
@@ -53,6 +61,8 @@ internal sealed class Piece
     public double Start;
     public int Center;                                   // melody's central degree
     public bool Fight;
+    public bool FarLeads;                               // the far pole leads: strange throughout
+    public bool NeutralThird;                           // ...and its third sits between minor and major
     public bool UsesTheme;
     public Dance Dance;                                  // a festive piece's dance; None for the rest
     public List<LineNote>? ALine;                       // the first A's melody, for the variations
@@ -173,7 +183,20 @@ internal sealed class Composer
     public void Fill(double until, List<ScoreEvent> output)
     {
         while (_cursor < until)
+        {
+            int from = output.Count;
             EmitBar(output);
+            // A far piece's third, wherever it sounds, sits a little under halfway to major: strange,
+            // and still not the happy third the soundtrack never plays.
+            if (_piece is { NeutralThird: true } np)
+                for (int i = from; i < output.Count; i++)
+                {
+                    var e = output[i];
+                    if (e.IsGain || e.Part is Part.Perc or Part.Sfx or Part.Ambience) continue;
+                    int pc = (((int)MathF.Round(e.Midi) - np.Key.Tonic) % 12 + 12) % 12;
+                    if (pc == 3) output[i] = e with { Inflect = 0.45f };
+                }
+        }
     }
 
     /// <summary>The time of the next beat at or after <paramref name="t"/>, on the current piece's grid.</summary>
@@ -239,6 +262,17 @@ internal sealed class Composer
         {
             double r = _rng.NextDouble();
             mode = r < 0.45 ? Mode.Dorian : r < 0.8 ? Mode.Phrygian : Mode.Aeolian;
+            // A holy place far away chants in a stranger mode now and then.
+            if (mood.Far >= 0.35f && _rng.NextDouble() < 0.5) mode = _rng.NextDouble() < 0.6 ? Mode.DorianSharp4 : Mode.Phrygian;
+        }
+        else if (!Fighting && p.Dance == Dance.None && Orchestra.FarLeads(mood))
+        {
+            // The far modes: a raised fourth, a flattened second; or the familiar dark ones made
+            // strange by the third and the bends.
+            double r = _rng.NextDouble();
+            mode = r < 0.35 ? Mode.DorianSharp4 : r < 0.6 ? Mode.DorianFlat2 : r < 0.85 ? Mode.Phrygian : Mode.Aeolian;
+            p.FarLeads = true;
+            p.NeutralThird = _rng.NextDouble() < 0.6;
         }
         // The tonic moves by a fourth or a fifth between pieces, or stays: the drone can pivot.
         int[] moves = { 0, 5, -5, 7, -7, 2, -2 };
@@ -431,6 +465,12 @@ internal sealed class Composer
             if (s.Kind == SectionKind.B && s.Counter == CounterStyle.Organum) s.Counter = CounterStyle.Tenor;
             if (o.Cantus && s.Kind is SectionKind.Intro or SectionKind.B or SectionKind.C or SectionKind.AVar && _rng.NextDouble() < 0.6)
                 s.Layers.Add(Part.Cantus);
+            // The stranger takes the line in a B, a C or a restatement, half the time each.
+            if (o.Stranger && s.Kind is SectionKind.B or SectionKind.C or SectionKind.AVar && s.Layers.Contains(Part.Melody) && _rng.NextDouble() < 0.5)
+            {
+                s.Melody = o.FarVoice;
+                s.Strange = true;
+            }
             p.Sections.Add(s);
         }
     }
@@ -540,6 +580,8 @@ internal sealed class Composer
             if (pipesDrone && isA && TonicFits(p.Key, s)) s.Layers.Add(Part.Drone);
             // The second time round, the instruments swap the lead now and then.
             if (round == 1 && _rng.NextDouble() < 0.5) s.Melody = o.MelodyAlt is Instrument.Fiddle or Instrument.Whistle or Instrument.Pipes ? o.MelodyAlt : o.Counter;
+            // A stranger at the table takes a B part the second time round.
+            if (o.Stranger && round == 1 && !isA && _rng.NextDouble() < 0.6) { s.Melody = o.FarVoice; s.Strange = true; }
             p.Sections.Add(s);
             part++;
         }
@@ -640,14 +682,14 @@ internal sealed class Composer
 
     /// <summary>The mood a new piece is written for: a fight hardens the place's own mood into battle.</summary>
     private MusicMoodState EffectiveMood() => Fighting
-        ? new MusicMoodState(Math.Max(Mood.Coldness, 0.4f), Math.Max(Mood.Fear, 0.85f), Mood.Mystery * 0.5f, 1f, 0f, 0f)
+        ? new MusicMoodState(Math.Max(Mood.Coldness, 0.4f), Math.Max(Mood.Fear, 0.85f), Mood.Mystery * 0.5f, 1f, 0f, 0f, 0f)
         : Mood;
 
     private void CheckDrift(Piece p)
     {
         var m = EffectiveMood();
         float d = MathF.Sqrt(Sq(m.Coldness - p.Mood.Coldness) + Sq(m.Fear - p.Mood.Fear) + Sq(m.Mystery - p.Mood.Mystery)
-                             + Sq(m.Festivity - p.Mood.Festivity) + Sq(m.Sacred - p.Mood.Sacred));
+                             + Sq(m.Festivity - p.Mood.Festivity) + Sq(m.Sacred - p.Mood.Sacred) + Sq(m.Far - p.Mood.Far));
         bool fightChanged = Fighting != p.Fight;
         // A new place is a new mood, and a new mood is a new piece: anything past a small change ends
         // this one, through a short bridge.
@@ -1129,7 +1171,10 @@ internal sealed class Composer
                 t += 2 * g;
                 dur -= 2 * g;
             }
-            output.Add(new(t, dur, Part.Melody, s.Melody, key.Pitch(x.Degree) + up, Math.Clamp(v, 0.05f, 1f), pan));
+            // Far, or a stranger's: a long note slides into place, mostly from below.
+            float glide = (p.FarLeads || s.Strange) && x.Dur >= 1.0 && _rng.NextDouble() < 0.35
+                ? (_rng.NextDouble() < 0.7 ? -1f : 1f) * (_rng.NextDouble() < 0.7 ? 1f : 2f) : 0f;
+            output.Add(new(t, dur, Part.Melody, s.Melody, key.Pitch(x.Degree) + up, Math.Clamp(v, 0.05f, 1f), pan, Glide: glide));
         }
     }
 
@@ -1194,6 +1239,7 @@ internal sealed class Composer
         var key = p.Key;
         if (o.OstinatoStyle == OstinatoStyle.Comp) { EmitComp(output, p, chord, barStart, arc); return; }
         if (o.OstinatoStyle == OstinatoStyle.Riff) { EmitRiff(output, p, chord, barStart, arc); return; }
+        if (o.OstinatoStyle == OstinatoStyle.Additive) { EmitAdditive(output, p, chord, barStart, arc); return; }
         int n = key.Mode.Size;
         // Chord tones as degrees, the root in the octave of the tonic (low for a pulse).
         int rootDeg = chord.Root;
@@ -1221,6 +1267,7 @@ internal sealed class Composer
         double beat = p.BeatSeconds;
         if (p.Orch.Perc == Instrument.Bodhran) { EmitBodhran(output, p, barStart, arc); return; }
         if (p.Orch.Perc == Instrument.WarDrum) { EmitKit(output, p, s, barStart, arc); return; }
+        if (p.Orch.Perc == Instrument.BentDrum) { EmitBentDrums(output, p, barStart, arc); return; }
         if (p.Orch.Perc == Instrument.HandDrum)
         {
             // The tavern's frame drum: strong one, lighter offbeats, a little skip before the bar line.
@@ -1554,6 +1601,54 @@ internal sealed class Composer
             int bars = Math.Min(2, s.Bars - bar);
             output.Add(new(t + bar * p.BarSeconds + p.BeatSeconds * 0.5, bars * p.BarSeconds * 0.95, Part.Cantus, Instrument.ChoirOoh,
                            key.Pitch(deg), 0.5f * Jitter(0.1f), (bar / 2) % 2 == 0 ? -0.7f : 0.7f));
+        }
+    }
+
+    /// <summary>
+    /// Accents of an uneven pulse inside an even bar, in eighths: 3+3+2 in four, 3+3 in three, 2+3
+    /// in two... always a group of three somewhere, which is what makes it limp.
+    /// </summary>
+    private static int[] AdditiveAccents(int meter) => meter switch { 4 => new[] { 0, 3, 6 }, 3 => new[] { 0, 3 }, 2 => new[] { 0, 2 }, _ => new[] { 0 } };
+
+    /// <summary>
+    /// The far ostinato: eighths on chord tones, the accents of a 3+3+2 grouping strong and the rest
+    /// light, some of the light ones left out so the figure breathes.
+    /// </summary>
+    private void EmitAdditive(List<ScoreEvent> output, Piece p, Chord chord, double barStart, float arc)
+    {
+        var key = p.Key;
+        var o = p.Orch;
+        int n = key.Mode.Size;
+        int rootDeg = chord.Root;
+        while (key.Pitch(rootDeg) > key.Tonic + 4) rootDeg -= n;
+        while (key.Pitch(rootDeg) < key.Tonic - 8) rootDeg += n;
+        int[] tones = { rootDeg, chord.Tones[1] - chord.Root + rootDeg, chord.Tones[2] - chord.Root + rootDeg, rootDeg + n };
+        var accents = AdditiveAccents(p.Meter);
+        double step = p.BeatSeconds / 2;
+        for (int i = 0; i < p.Meter * 2; i++)
+        {
+            bool accent = Array.IndexOf(accents, i) >= 0;
+            if (!accent && _rng.NextDouble() < 0.3) continue;
+            int idx = accent ? (i == 0 ? 0 : 2) : o.OstinatoPattern[i % o.OstinatoPattern.Length];
+            float v = (accent ? 0.75f : 0.4f) * arc * Orchestra.Trim(o.Ostinato) * Jitter(0.08f);
+            output.Add(new(barStart + i * step + Humanise() * 0.5, step * (accent ? 2.5 : 1.5), Part.Ostinato, o.Ostinato,
+                           key.Pitch(tones[idx]), v, i % 2 == 0 ? -0.5f : 0.5f));
+        }
+    }
+
+    /// <summary>The far drums: the bent drum low on the 3+3+2 accents, high and light between, rising after each stroke.</summary>
+    private void EmitBentDrums(List<ScoreEvent> output, Piece p, double barStart, float arc)
+    {
+        var accents = AdditiveAccents(p.Meter);
+        double step = p.BeatSeconds / 2;
+        int low = p.Key.Tonic - 12, high = p.Key.Tonic - 5;
+        for (int i = 0; i < p.Meter * 2; i++)
+        {
+            bool accent = Array.IndexOf(accents, i) >= 0;
+            if (!accent && _rng.NextDouble() < 0.45) continue;
+            float v = (accent ? (i == 0 ? 0.85f : 0.7f) : 0.3f) * arc * Jitter(0.1f);
+            output.Add(new(barStart + i * step + Humanise() * 0.4, 0.4, Part.Perc, Instrument.BentDrum, accent ? low : high, v, accent ? 0f : 0.3f,
+                           Glide: accent ? -3f : -1.5f));
         }
     }
 

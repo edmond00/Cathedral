@@ -152,7 +152,8 @@ internal sealed class MusicCore : IScoreObserver
             _active.Mystery + (_target.Mystery - _active.Mystery) * k,
             _active.Intensity + (_target.Intensity - _active.Intensity) * k,
             _active.Festivity + (_target.Festivity - _active.Festivity) * k,
-            _active.Sacred + (_target.Sacred - _active.Sacred) * k);
+            _active.Sacred + (_target.Sacred - _active.Sacred) * k,
+            _active.Far + (_target.Far - _active.Far) * k);
         _composer.Mood = _active;
 
         double now = Seconds;
@@ -179,7 +180,7 @@ internal sealed class MusicCore : IScoreObserver
                 continue;
             }
             if (_gate[p] <= 0.01f) continue;   // a layer the track count has silenced: not even composed into sound
-            Synth.NoteOn(e.Part, e.Inst, e.Midi, e.Vel, e.Dur, e.Pan);
+            Synth.NoteOn(e.Part, e.Inst, e.Midi + e.Inflect, e.Vel, e.Dur, e.Pan, e.Glide);
             Log?.Note(now, e);
             if (MidiClock != null) CaptureMidi(e);
         }
@@ -241,7 +242,9 @@ internal sealed class MusicCore : IScoreObserver
         Instrument.Harp => 46, Instrument.Lute => 24, Instrument.Bell => 14, Instrument.Timpani => 47,
         Instrument.HandDrum => 116, Instrument.Bourdon => 19, Instrument.Horn => 60, Instrument.SquareLead => 80,
         Instrument.Wind => 122, Instrument.Fiddle => 110, Instrument.Whistle => 78, Instrument.Pipes => 109,
-        Instrument.Bodhran => 116, Instrument.Distortion => 30, Instrument.PowerChord => 30, Instrument.Staccato => 48, _ => 0,
+        Instrument.Bodhran => 116, Instrument.Distortion => 30, Instrument.PowerChord => 30, Instrument.Staccato => 48,
+        Instrument.Metallophone => 11, Instrument.BuzzString => 104, Instrument.Reed => 69, Instrument.Glass => 92,
+        Instrument.BentDrum => 117, _ => 0,
     };
 
     private void CaptureMidi(ScoreEvent e)

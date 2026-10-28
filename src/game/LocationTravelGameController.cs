@@ -3823,7 +3823,7 @@ public class LocationTravelGameController : IDisposable
             string mood = (r.Night && r.Mood is { } day ? day.AtNight() : r.Mood) is { } m
                 ? $"cold={m.Coldness:0.00} fear={m.Fear:0.00} mystery={m.Mystery:0.00} intensity={m.Intensity:0.00} festivity={m.Festivity:0.00}"
                 : "mood=none";
-            return new List<string> { $"music tracks={r.Tracks} filter={r.Filter} {mood} night={(r.Night ? "yes" : "no")} sacred={(r.Mood is { } sm ? sm.Sacred : 0f):0.00}" };
+            return new List<string> { $"music tracks={r.Tracks} filter={r.Filter} {mood} night={(r.Night ? "yes" : "no")} sacred={(r.Mood is { } sm ? sm.Sacred : 0f):0.00} far={(r.Mood is { } fm ? fm.Far : 0f):0.00}" };
         }
 
         if (_protagonist == null) return null;

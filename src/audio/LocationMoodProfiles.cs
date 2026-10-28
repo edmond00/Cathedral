@@ -179,6 +179,28 @@ public static class LocationMoodProfiles
         ["ice_cave"]    = (0.10f, 0.30f),
     };
 
+    /// <summary>
+    /// How far each kind of place is from the empire's ear. Absent means 0. From about 0.5 the far
+    /// palette leads (jungles, deserts, oases, the hot steppe, the oldest ruins of other peoples);
+    /// below it a strange voice sits in now and then (ports and markets, where strangers pass).
+    /// </summary>
+    private static readonly Dictionary<string, (float Min, float Max)> Far = new()
+    {
+        ["jungle"]      = (0.75f, 1.00f),
+        ["desert"]      = (0.70f, 0.95f),
+        ["oasis"]       = (0.60f, 0.90f),
+        ["hot steppe"]  = (0.55f, 0.85f),
+        ["pyramid"]     = (0.55f, 0.85f),
+        ["sunken_city"] = (0.45f, 0.75f),
+        ["reef"]        = (0.30f, 0.55f),
+        ["swamp"]       = (0.25f, 0.45f),
+        ["canyon"]      = (0.25f, 0.45f),
+        ["ancient_city"] = (0.20f, 0.40f),
+        ["port"]        = (0.20f, 0.45f),
+        ["market"]      = (0.15f, 0.40f),
+        ["forum"]       = (0.10f, 0.30f),
+    };
+
     private static readonly MoodRange Fallback =
         new(new(0.25f, 0.15f, 0.30f), new(0.50f, 0.35f, 0.55f));
 
@@ -227,6 +249,7 @@ public static class LocationMoodProfiles
         float festivity = Festivity.TryGetValue(key, out var f) ? Lerp(f.Min, f.Max) : 0f;
         // Last again, for the same reason.
         float sacred = Sacred.TryGetValue(key, out var h) ? Lerp(h.Min, h.Max) : 0f;
-        return new MusicMoodState(coldness, fear, mystery, intensity, festivity, sacred);
+        float far = Far.TryGetValue(key, out var r) ? Lerp(r.Min, r.Max) : 0f;
+        return new MusicMoodState(coldness, fear, mystery, intensity, festivity, sacred, far);
     }
 }

@@ -25,6 +25,14 @@ internal sealed class Mode
     public static readonly Mode HarmonicMinor = new("HarmonicMinor", 0, 2, 3, 5, 7, 8, 11);
     public static readonly Mode Locrian = new("Locrian", 0, 1, 3, 5, 6, 8, 10);
     public static readonly Mode PentatonicMinor = new("PentatonicMinor", 0, 3, 5, 7, 10);
+    /// <summary>
+    /// The far modes: still a minor third and a true fifth (a drone and a chord can stand on them), but
+    /// a fourth raised (Dorian with a sharp fourth) or a second flattened (Dorian with a flat second).
+    /// Strange to the empire's ear without naming anyone's. Their home chord is minor; the strangeness
+    /// is in the chords beside it, the major II of the first, the major IV of the second.
+    /// </summary>
+    public static readonly Mode DorianSharp4 = new("DorianSharp4", 0, 2, 3, 6, 7, 9, 10);
+    public static readonly Mode DorianFlat2 = new("DorianFlat2", 0, 1, 3, 5, 7, 9, 10);
 
     /// <summary>The name <see cref="AmbianceEngine.CurrentScaleName"/> has always shown.</summary>
     public string DisplayName => Name switch
@@ -152,6 +160,14 @@ internal static class Progressions
     {
         new[] { 0, 5, 4, 0 }, new[] { 0, 3, 4, 0 }, new[] { 0, 5, 3, 4 }, new[] { 0, 0, 5, 4 },
     };
+    // The far modes keep off their diminished chords (the sharp fourth's IV and vi, the flat
+    // second's ii and v): i, the major II and the major bIII and bVII with the sharp fourth; i, the
+    // major IV and bIII, the minor bVII with the flat second.
+    private static readonly int[][] FarSharpA = { new[] { 0, 1, 0, 6 }, new[] { 0, 2, 1, 0 }, new[] { 0, 6, 1, 0 }, new[] { 0, 1, 6, 0 } };
+    private static readonly int[][] FarSharpB = { new[] { 6, 2, 1, 4 }, new[] { 2, 1, 6, 0 }, new[] { 4, 1, 2, 6 } };
+    private static readonly int[][] FarFlatA = { new[] { 0, 3, 0, 2 }, new[] { 0, 2, 3, 0 }, new[] { 0, 6, 3, 0 }, new[] { 0, 3, 6, 0 } };
+    private static readonly int[][] FarFlatB = { new[] { 3, 2, 6, 0 }, new[] { 2, 3, 0, 6 }, new[] { 6, 3, 2, 0 } };
+
     private static readonly int[][] LocrianA =
     {
         new[] { 0, 1, 0, 1 }, new[] { 0, 4, 0, 1 }, new[] { 0, 0, 1, 0 },
@@ -211,6 +227,10 @@ internal static class Progressions
             ("HarmonicMinor", false) => HarmonicA,
             ("HarmonicMinor", true) => HarmonicB,
             ("Locrian", _) => LocrianA,
+            ("DorianSharp4", false) => FarSharpA,
+            ("DorianSharp4", true) => FarSharpB,
+            ("DorianFlat2", false) => FarFlatA,
+            ("DorianFlat2", true) => FarFlatB,
             ("PentatonicMinor", _) => PentaA,
             (_, false) => AeolianA,
             (_, true) => AeolianB,

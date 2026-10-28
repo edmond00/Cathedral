@@ -112,7 +112,7 @@ internal sealed class Synth
     }
 
     /// <summary>Starts a note now. <paramref name="pan"/> is -1..1 inside the part's spread.</summary>
-    public void NoteOn(Part part, Instrument inst, float midi, float velocity, double seconds, float pan = 0f)
+    public void NoteOn(Part part, Instrument inst, float midi, float velocity, double seconds, float pan = 0f, float glide = 0f)
     {
         if (velocity <= 0f) return;
         if (_voices.Count >= MaxVoices) StealOne();
@@ -121,6 +121,7 @@ internal sealed class Synth
         v.Pan = Math.Clamp(pan, -1f, 1f) * _bus[(int)part].PanSpread;
         v.StartSample = Sample;
         v.GateEnd = Sample + Math.Max(1, (long)(seconds * Dsp.SampleRate));
+        v.Glide = glide;
         v.Init(midi, velocity, unchecked(_seed * 31 + ++_voiceSeed * 7919));
         _voices.Add(v);
     }

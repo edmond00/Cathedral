@@ -1,5 +1,5 @@
 {
- "_doc": "Bands each metric should fall in, with the reason. A band is a statement about the genre (retro dungeon synth: Fief, Erang, Old Tower, early Mortiis), not about taste. Weights say how much a miss costs in the total. Melodic bands marked 'Calibrated' were checked with exemplars.py against public-domain tunes written out in tools/music/exemplars/; run `eval.py calibrate reference/` on real recordings to replace the acoustic ones. Per-mood overrides sit under 'moods'. Per-pole overrides sit under 'poles' and apply to the pole that leads a render for most of its time: a festive render is dance music (dense, chord a bar, a drier room, triplet lilt, heterophony with the whistle above the fiddle), held to the bands the session idiom implies. Battle renders a fight (the fight filter over the mood, as the game plays it): the genre's martial battle music, war drums, timpani and a snare leading a staccato string ostinato under the lead, so its envelope is made of strokes, its low end is deeper, its room closer, and its chords change at a faster tempo than the slow moods'. A sacred render is chant: it moves by step with hardly a leap (plainchant's own rule), it is sung and played on the organ so its attacks are few and soft, its long stone hall darkens it, and its phrases are as long as the words would be rather than a regular 2+2.",
+ "_doc": "Bands each metric should fall in, with the reason. A band is a statement about the genre (retro dungeon synth: Fief, Erang, Old Tower, early Mortiis), not about taste. Weights say how much a miss costs in the total. Melodic bands marked 'Calibrated' were checked with exemplars.py against public-domain tunes written out in tools/music/exemplars/; run `eval.py calibrate reference/` on real recordings to replace the acoustic ones. Per-mood overrides sit under 'moods'. Per-pole overrides sit under 'poles' and apply to the pole that leads a render for most of its time: a festive render is dance music (dense, chord a bar, a drier room, triplet lilt, heterophony with the whistle above the fiddle), held to the bands the session idiom implies. Battle renders a fight (the fight filter over the mood, as the game plays it): the genre's martial battle music, war drums, timpani and a snare leading a staccato string ostinato under the lead, so its envelope is made of strokes, its low end is deeper, its room closer, and its chords change at a faster tempo than the slow moods'. A sacred render is chant: it moves by step with hardly a leap (plainchant's own rule), it is sung and played on the organ so its attacks are few and soft, its long stone hall darkens it, and its phrases are as long as the words would be rather than a regular 2+2. A far render is strange on purpose: a raised fourth or a lowered fifth, a third between minor and major, beating metal, so more of its time sounds a tritone or a second; it is played in open country, a drier room than the halls; and its drum strokes make a rougher envelope.",
  "metrics": {
   "mode_fit": {
    "lo": 0.93,
@@ -385,6 +385,20 @@
    "phrase_len_cv": {
     "lo": 0.0,
     "hi": 0.7
+   }
+  },
+  "far": {
+   "dissonance_time": {
+    "lo": 0.0,
+    "hi": 0.45
+   },
+   "wet_db": {
+    "lo": -11,
+    "hi": 0
+   },
+   "envelope_roughness": {
+    "lo": 0.0,
+    "hi": 1.8
    }
   }
  }
