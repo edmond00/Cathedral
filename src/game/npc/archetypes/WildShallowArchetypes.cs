@@ -51,3 +51,22 @@ public class ChoughArchetype : BirdShallowArchetype
         new ItemElement(new Bone()),
     };
 }
+
+public class SnowFinchArchetype : BirdShallowArchetype
+{
+    public override string ArchetypeId     => "snow_finch";
+    public override string TypeDisplayName => "Snow Finch";
+    protected override string ComposeObservationHint(Random rng, string nodeContext) => Compose(rng,
+        sizes:  new[] { "small", "plump" },
+        colors: new[] { "grey-brown", "white-winged", "pale" },
+        noun:   "snow finch",
+        traits: new[] { "picking seed from the edge of the snow", "flashing white wings as it flies", "sheltering in a crack out of the wind" });
+    protected override string CorpseBodyDescription => "the small cold body of a snow finch, its white wing-panels spread";
+    protected override List<ItemElement> BuildCorpseDrops() => new()
+    {
+        new ItemElement(new Feather()),
+        new ItemElement(new Feather()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Bone()),
+    };
+}
