@@ -60,7 +60,10 @@ def load_templates(rev=None):
     t = {}
     for name in ["OneSentenceClause", "ShortTextClause", "GroundingClause", "DefaultStyleInstruction",
                  "StyleIsNotSceneClause", "DialogueStyleInstruction"]:
-        t[name] = _cs_string(cfg, name)
+        try:
+            t[name] = _cs_string(cfg, name)
+        except KeyError:            # a clause the overhaul removed
+            t[name] = ""
     t["Rule"] = _cs_string(ss, "Rule")
     t["ReminderSetting"] = re.search(r'const string setting = "((?:[^"\\]|\\.)*)";', ss).group(1)
     for kind in ["Observation", "Reasoning", "Action", "Outcome", "Emotion"]:
@@ -119,7 +122,7 @@ def reminder(T, place, extra=None):
 
 def answer_instruction(T, reminder2, style, include_length=True, place=""):
     style_s = T["DefaultStyleInstruction"] if not (style and style.strip()) else \
-        f"Your way of seeing: {style.strip()} {T['StyleIsNotSceneClause']}"
+        " ".join(x for x in [f"Your way of seeing: {style.strip()}", T["StyleIsNotSceneClause"]] if x)
     character = f"Stay in the character of {reminder2}." if reminder2 is not None else "Stay in character."
     parts = [T["OneSentenceClause"] if include_length else None, T["GroundingClause"], style_s,
              None if include_length else T["ShortTextClause"], character, reminder(T, place)]

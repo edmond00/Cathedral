@@ -1737,16 +1737,17 @@ public static class Config
         /// </summary>
         public const string DefaultStyleInstruction = "Where it fits, a figure of speech (metaphor, comparison, imagery) or an inner feeling that suits your character is welcome.";
 
-        /// <summary>
-        /// Follows a modus mentis's own <c>StyleInstruction</c>. A small model reads the things a style
-        /// names as things that are there: HOSPITALITY's "the imagery of hearth, board and made bed" put a
-        /// hearth and a made bed into four replies in five, in a sheepfold, a temple, a castle, beside
-        /// "I will ask him what he knows". This clause alone did not stop it (replayed against the
-        /// shipped model it changed nothing while the style still listed objects); what stopped it was
-        /// rewriting the style as an attitude, and with that done this clause took the remaining leaks
-        /// from 5 in 16 to none. So a style names a way of seeing, never a list of props.
-        /// </summary>
-        private const string StyleIsNotSceneClause = "It only colours how the given facts are told — what it names is not in the scene unless the given information puts it there.";
+        // There was a StyleIsNotSceneClause here, after a modus mentis's own style: "It only colours how the
+        // given facts are told — what it names is not in the scene unless the given information puts it
+        // there." It was written when HOSPITALITY's style listed "hearth, board and made bed" and a
+        // small model furnished every scene with them; once that style was rewritten as an attitude, the
+        // clause took the remaining leaks from 5 in 16 to none. Measured again over the whole corpus
+        // (tools/prompts, 80 samples a side over 40 styled cases, and a blind round of 38 a side), it no
+        // longer earned its 25 tokens: style words were copied into the answer as often without it (9%
+        // against 11%), blind fidelity was no lower (0.60 against 0.53, and level in the other round),
+        // and the clause itself was being copied — "it only colours how the given facts are told" came
+        // back word for word from Pride, Dread and Arithmetic. A style is still to name a way of seeing,
+        // never a list of props: the clause is gone, the rule for writing a style is not.
 
         /// <summary>
         /// Style clause for dialogue replies: a spoken line carries personality in its wording, not in a
@@ -1775,7 +1776,7 @@ public static class Config
         {
             string style = string.IsNullOrWhiteSpace(styleInstruction)
                 ? DefaultStyleInstruction
-                : $"Your way of seeing: {styleInstruction.Trim()} {StyleIsNotSceneClause}";
+                : $"Your way of seeing: {styleInstruction.Trim()}";
             string character = personaReminder2 != null ? $"Stay in the character of {personaReminder2}." : "Stay in character.";
             var parts = new[]
             {
