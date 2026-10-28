@@ -109,14 +109,14 @@ public class ForestSceneFactory : WildSceneFactory
                 Patch.Ravine => ("Ravine", Draw(rng, new Option[]
                 {
                     new(BuildRavine, 3.0),
-                    new(BuildWellspring, 1.0),
-                    new(BuildStreamside, 1.0),
+                    new(BuildDrippingSpring, 1.0),
+                    new(BuildGill, 1.0),
                 }, sizes[patch]), patch),
                 _ => ("Coppice", Draw(rng, new Option[]
                 {
                     new(BuildCoppice, 3.0),
-                    new(BuildSlope, 0.6),
-                    new(BuildBramble, 0.6),
+                    new(BuildRide, 0.6),
+                    new(BuildSawpit, 0.6),
                 }, sizes[patch]), patch),
             });
 
@@ -232,7 +232,7 @@ public class ForestSceneFactory : WildSceneFactory
         moods: new[] { "open", "sunlit", "quiet", "wide" });
 
     private static Area BuildThicket() => new ThicketArea(
-        displayName: "Thicket",
+        displayName: "Tangle",
         contextDescription: "pushing through the thicket",
         transitionDescription: "force into the thicket",
         descriptions: new() { "A dense tangle of saplings, brambles, and low growth" },
@@ -281,6 +281,34 @@ public class ForestSceneFactory : WildSceneFactory
         transitionDescription: "step down into the holloway",
         descriptions: new() { "A lane worn down by centuries of feet until its banks stand head-high, roots hanging out of them and the trees meeting overhead" },
         moods: new[] { "sunken", "green-roofed", "rooty", "old" });
+
+    private static Area BuildDrippingSpring() => new WellspringArea(
+        displayName: "Dripping Spring",
+        contextDescription: "at the dripping spring",
+        transitionDescription: "climb down to the dripping spring",
+        descriptions: new() { "Water oozing out of the ravine wall over cushions of moss and dripping into a stone basin it has worn for itself" },
+        moods: new[] { "oozing", "mossy", "dripping", "hushed" });
+
+    private static Area BuildGill() => new StreamArea(
+        displayName: "Gill",
+        contextDescription: "down by the gill",
+        transitionDescription: "slither down to the gill",
+        descriptions: new() { "A white rush of water down the ravine floor in steps and pools, too loud to talk over" },
+        moods: new[] { "rushing", "stepped", "loud", "cold" });
+
+    private static Area BuildRide() => new SlopeArea(
+        displayName: "Woodland Ride",
+        contextDescription: "in the woodland ride",
+        transitionDescription: "walk down the woodland ride",
+        descriptions: new() { "A broad grassy way cut through the coppice for the carts, sunny and full of butterflies" },
+        moods: new[] { "grassy", "sunny", "rutted", "broad" });
+
+    private static Area BuildSawpit() => new ClearingArea(
+        displayName: "Sawpit",
+        contextDescription: "at the sawpit",
+        transitionDescription: "come out at the sawpit",
+        descriptions: new() { "A trodden space in the coppice round a pit for sawing logs, stacks of cord-wood and bundles of rods beside it" },
+        moods: new[] { "trodden", "stacked", "sawdusty", "worked" });
 
     private static Area BuildCarr() => new CarrArea(
         displayName: "Alder Carr",

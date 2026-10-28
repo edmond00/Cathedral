@@ -114,14 +114,14 @@ public class SeaIceSceneFactory : WildSceneFactory
     // ── Area builders ────────────────────────────────────────────────────────
 
     private static Area BuildSnowFloe() => new SnowpackArea(
-        displayName: "Snow-Covered Floe",
+        displayName: "Snow Plain",
         contextDescription: "on the snow-covered floe",
         transitionDescription: "wade out onto the snow-covered floe",
         descriptions: new() { "A floe buried in wind-packed snow, carved into ridges and furrows all lying the same way" },
         moods: new[] { "furrowed", "wind-packed", "white", "featureless" });
 
     private static Area BuildBlueIce() => new IceArea(
-        displayName: "Old Ice",
+        displayName: "Blue Sheet",
         contextDescription: "on the old ice",
         transitionDescription: "step out onto the old ice",
         descriptions: new() { "Ice that has lasted through summers, scoured bare of snow, blue and hard as glass, pooled with frozen melt" },
@@ -135,35 +135,35 @@ public class SeaIceSceneFactory : WildSceneFactory
         moods: new[] { "black", "bird-streaked", "lonely", "loud" });
 
     private static Area BuildBrash() => new BrashArea(
-        displayName: "Brash Ice",
+        displayName: "Brash",
         contextDescription: "at the edge of the brash",
         transitionDescription: "pick your way out toward the brash",
         descriptions: new() { "A field of broken ice lumps the size of barrels churning on the swell, the floe edge rotten where it meets them" },
         moods: new[] { "churning", "rotten-edged", "grinding", "grey" });
 
     private static Area BuildIcefoot() => new IcefootArea(
-        displayName: "Ice Foot",
+        displayName: "Icefoot",
         contextDescription: "on the ice foot",
         transitionDescription: "step onto the ice foot",
         descriptions: new() { "A shelf of ice frozen to the shore, rough and humped where the tide has broken and refrozen it a hundred times" },
         moods: new[] { "humped", "rough", "shore-bound", "groaning" });
 
     private static Area BuildHaulout() => new HauloutArea(
-        displayName: "Seal Ice",
+        displayName: "Seal Grounds",
         contextDescription: "on the seal ice",
         transitionDescription: "creep out onto the seal ice",
         descriptions: new() { "Flat ice pocked with breathing holes, each with a dark slick round it where the seals haul out to lie" },
         moods: new[] { "pocked", "stained", "musky", "watchful" });
 
     private static Area BuildFarFloe() => new FloeArea(
-        displayName: "Far Floe",
+        displayName: "Drifting Plate",
         contextDescription: "on the far floe",
         transitionDescription: "haul yourself out onto the far floe",
         descriptions: new() { "A floe across the lead, cut off from the rest of the ice, nothing on it but snow and a seal's slick by a hole" },
         moods: new[] { "cut off", "white", "silent", "drifting" });
 
     private static Area BuildIceCave() => new GrottoArea(
-        displayName: "Ridge Cave",
+        displayName: "Ice Hollow",
         contextDescription: "inside the pressure ridge",
         transitionDescription: "squeeze into the hollow in the ridge",
         descriptions: new() { "A hollow inside the pressure ridge where the slabs fell leaning on each other, walls of blue ice glowing all round" },

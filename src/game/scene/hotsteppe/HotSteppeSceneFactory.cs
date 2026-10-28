@@ -343,7 +343,7 @@ public class HotSteppeSceneFactory : WildSceneFactory
         items: new() { new ItemElement(new WildHoney()), new ItemElement(new Beeswax()) },
         moods: new[] { "pouring", "humming", "dark-combed", "dangerous" },
         isNatural: true
-    ) { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "honey_hunting", ["listen"] = "swarm_sense" } };
+    ) { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["gather"] = "honey_hunting", ["grab"] = "honey_hunting" } };
 
     private static PointOfInterest Tussock() => ClimateTerrainSubfactory.BuildTussockGrass(
         () => new WildMillet(), () => new Straw(),

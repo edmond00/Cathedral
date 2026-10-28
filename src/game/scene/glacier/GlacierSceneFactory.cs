@@ -107,7 +107,8 @@ public class GlacierSceneFactory : WildSceneFactory
         }
         var lake = margin.OfType<LakeArea>().FirstOrDefault();
         var shoreAcross = margin.FirstOrDefault(a => a != lake && a is not SnoutArea);
-        if (lake != null && shoreAcross != null && rng.NextDouble() < 0.6)
+        if (lake != null && shoreAcross != null && rng.NextDouble() < 0.6
+            && !(scene.AreaGraph.TryGetValue(lake.Id, out var near) && near.Contains(shoreAcross.Id)))
             Swim(scene, lake, shoreAcross, WaterKind.Pond, "Meltwater Lake",
                 "The milky lake under the ice, bergs adrift on it, the far shore a swim no one sane would try",
                 new[] { "milky", "freezing", "berg-strewn" }, lesson: "plunge");
@@ -120,7 +121,7 @@ public class GlacierSceneFactory : WildSceneFactory
     // ── Area builders ────────────────────────────────────────────────────────
 
     private static Area BuildIceCol() => new ColArea(
-        displayName: "Ice Col",
+        displayName: "Snow Saddle",
         contextDescription: "on the ice col",
         transitionDescription: "climb up onto the ice col",
         descriptions: new() { "A saddle of snow between two black peaks at the head of the glacier, the wind pouring through from the far side" },
@@ -141,7 +142,7 @@ public class GlacierSceneFactory : WildSceneFactory
         moods: new[] { "green", "sheltered", "surprising", "flowered" });
 
     private static Area BuildMoraineCrest() => new RidgeArea(
-        displayName: "Moraine Crest",
+        displayName: "Lateral Crest",
         contextDescription: "on the moraine crest",
         transitionDescription: "scramble up onto the moraine crest",
         descriptions: new() { "The knife-edge top of the lateral moraine, loose grey rubble falling away to the ice on one side and the valley on the other" },

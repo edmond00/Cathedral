@@ -70,7 +70,7 @@ public class ColdSteppeSceneFactory : WildSceneFactory
                 1 => ("River Terrace", "A grey river winding over the flats, its banks cut sheer where it swings, an esker running beside it",
                     Draw(rng, new Option[] { new(BuildTundraRiver, 3.0), new(BuildEsker, 1.5), new(BuildCutBank, 1.2) }, Between(rng, 1, 2))),
                 2 => ("Pingo Field", "Green mounds standing out of the flat, each with a core of ice, frost-split on their crowns",
-                    new List<Area> { BuildFrostfield() }),
+                    new List<Area> { BuildFrostRings() }),
                 _ => ("Lake Country", "A wide grey lake under a wide grey sky, the far shore a line, an islet of rock out in it",
                     new List<Area> { (_lake = BuildTundraLake()) }),
             });
@@ -118,7 +118,7 @@ public class ColdSteppeSceneFactory : WildSceneFactory
         if (_farBank != null)
         {
             AddToSection(scene, registered.First(s => s.Areas.Contains(river!)), _farBank);
-            Swim(scene, river!, _farBank, WaterKind.River, "Tundra River",
+            Swim(scene, river!, _farBank, WaterKind.River, "Grey Current",
                 "The river, grey with silt and fast, cold enough to stop the heart, the far bank a cut of black frozen earth",
                 new[] { "grey", "fast", "heart-stopping" }, lesson: "plunge");
         }
@@ -133,7 +133,7 @@ public class ColdSteppeSceneFactory : WildSceneFactory
         if (_islet != null)
         {
             AddToSection(scene, registered.First(s => s.Areas.Contains(_lake!)), _islet);
-            Swim(scene, _lake!, _islet, WaterKind.Pond, "Tundra Lake",
+            Swim(scene, _lake!, _islet, WaterKind.Pond, "Open Lake",
                 "Grey lake water, shallow and then suddenly deep, so cold the breath stops at the first stroke",
                 new[] { "grey", "shelving", "breath-stopping" }, lesson: "plunge");
         }
@@ -160,14 +160,14 @@ public class ColdSteppeSceneFactory : WildSceneFactory
         moods: new[] { "scattered", "huge", "lichened", "lonely" });
 
     private static Area BuildTundraLake() => new LakeArea(
-        displayName: "Tundra Lake",
+        displayName: "Loon Water",
         contextDescription: "on the shore of the tundra lake",
         transitionDescription: "come down to the lake shore",
         descriptions: new() { "A wide shallow lake reaching to the horizon, its shore of stones and sedge, loons calling somewhere out on it" },
         moods: new[] { "wide", "grey", "calling", "still" });
 
     private static Area BuildLakeIslet() => new IsletArea(
-        displayName: "Lake Islet",
+        displayName: "Moss Islet",
         contextDescription: "on the lake islet",
         transitionDescription: "wade out onto the islet",
         descriptions: new() { "A hump of rock and moss out in the lake, nests of down among the stones, the shore a long cold swim back" },
@@ -187,6 +187,13 @@ public class ColdSteppeSceneFactory : WildSceneFactory
         descriptions: new() { "Flat ground the frost has sorted into rings and stripes of stone, mile on mile, as if laid out by a mason" },
         moods: new[] { "sorted", "ringed", "orderly", "uncanny" });
 
+    private static Area BuildFrostRings() => new FrostfieldArea(
+        displayName: "Frost Rings",
+        contextDescription: "among the frost rings",
+        transitionDescription: "walk in among the frost rings",
+        descriptions: new() { "Ground between the pingos sorted by the frost into rings of stone, each with a green hub of moss" },
+        moods: new[] { "ringed", "mossy", "orderly", "strange" });
+
     private static Area BuildMuskeg() => new MuskegArea(
         displayName: "Muskeg",
         contextDescription: "on the muskeg",
@@ -195,7 +202,7 @@ public class ColdSteppeSceneFactory : WildSceneFactory
         moods: new[] { "quaking", "mossy", "leaning", "sodden" });
 
     private static Area BuildTundraRiver() => new RiverArea(
-        displayName: "Tundra River",
+        displayName: "Braided River",
         contextDescription: "by the tundra river",
         transitionDescription: "come down to the river",
         descriptions: new() { "A wide grey river braiding over gravel bars, cold enough to ache the hand dipped in it" },
@@ -209,7 +216,7 @@ public class ColdSteppeSceneFactory : WildSceneFactory
         moods: new[] { "black", "slumping", "thawing", "bone-studded" });
 
     private static Area BuildFarBank() => new TundraArea(
-        displayName: "Far Bank",
+        displayName: "Far Shore",
         contextDescription: "on the far bank",
         transitionDescription: "drag yourself out on the far bank",
         descriptions: new() { "The tundra on the other side of the river, unwalked, the herds' trails going away into it" },

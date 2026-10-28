@@ -18,6 +18,11 @@ KEEP_YES = "yes - it touches what this faculty knows, does or cares about"
 KEEP_NO = "no - it is nothing to this faculty"
 
 WILLINGNESS = [  # place, area, object, act, made for it, foreign to it, criminal or violent
+    ("a mountain", "foot of the waterfall", "a deep pool under the fall", "swim across the plunge pool", "plunge", "calligraphy", 0),
+    ("a cave", "gallery", "a low wet crawlway", "slip in through the crawlway", "potholing", "pageantry", 0),
+    ("a coast", "rookery ledges", "a ledge of seabird nests", "take the eggs from the seabird nests", "fowling", "calligraphy", 0),
+    ("a plain", "fen", "a stretch of quaking fen", "cross the quaking fen", "fencraft", "pageantry", 0),
+    ("a mountain", "under the summit", "the last pitch of rock", "climb up the summit pitch", "summit_fever", "calligraphy", 0),
     ("a forest", "clearing", "a grey wolf", "attack the grey wolf", "ferocity", "dance", 1),
     ("a town", "merchant's street", "a merchant's house", "slip into the merchant's house unseen", "sneak_art", "boasting", 1),
     ("a village", "churchyard", "an open grave plot", "dig the grave plot", "gravework", "dance", 0),
@@ -57,6 +62,9 @@ MEANS = [  # thinking, place, area, goal, action options, acceptable
     ("anatomy_lore", "a village", "cottage", "treat the wounded leg", ["simpling", "bonesetting", "butchery", "forcing"], ["bonesetting"]),
 ]
 GOAL = [  # thinking, place, area, object, goals, acceptable (DECLINE_GOAL is always appended)
+    ("speleology", "a cave", "galleries", "a crack breathing cold air", ["examine the crack closely", "attack the bat", "sit and wait"], ["examine the crack closely"]),
+    ("dowsing", "a forest", "wet wood", "a spring welling out of the ground", ["examine the spring closely", "climb up the oak", "attack the boar"], ["examine the spring closely"]),
+    ("snowcraft", "a snowfield", "snowfield", "a loaded avalanche chute", ["examine the avalanche chute closely", "attack the snow hare", "sit and wait"], ["examine the avalanche chute closely"]),
     ("herblore", "a forest", "clearing", "a herb patch", ["gather the herb", "attack the rabbit", "sit and wait", "climb up the oak"], ["gather the herb"]),
     ("covetousness", "a town", "market square", "a merchant", ["pickpocket the merchant", "greet the merchant", "sit and wait", "listen to the merchant"], ["pickpocket the merchant"]),
     ("piety", "a village", "chapel", "a shrine", ["contemplate the shrine", "steal the offering bowl", "provoke the priest", "sit and wait"], ["contemplate the shrine"]),

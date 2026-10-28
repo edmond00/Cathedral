@@ -166,7 +166,7 @@ public class CanyonSceneFactory : WildSceneFactory
     // ── Area builders ────────────────────────────────────────────────────────
 
     private static Area BuildRim() => new RimArea(
-        displayName: "Canyon Rim",
+        displayName: "Rimrock",
         contextDescription: "on the canyon rim",
         transitionDescription: "walk out to the rim",
         descriptions: new() { "The edge of the world: slickrock and juniper, then nothing, then the far wall a long way off" },
@@ -194,7 +194,7 @@ public class CanyonSceneFactory : WildSceneFactory
         moods: new[] { "sandy", "walled", "echoing", "flood-marked" });
 
     private static Area BuildSlot() => new SlotArea(
-        displayName: "Slot Canyon",
+        displayName: "Slot",
         contextDescription: "in the slot canyon",
         transitionDescription: "turn sideways into the slot",
         descriptions: new() { "A crack in the earth a shoulder wide and a hundred feet deep, its walls carved by water into ribbons" },
@@ -222,14 +222,14 @@ public class CanyonSceneFactory : WildSceneFactory
         moods: new[] { "hollow", "smoke-blackened", "deserted", "sheltered" });
 
     private static Area BuildSideCanyon() => new WashArea(
-        displayName: "Side Canyon",
+        displayName: "Side Fork",
         contextDescription: "in the side canyon",
         transitionDescription: "turn off into the side canyon",
         descriptions: new() { "A narrower canyon branching off the main one, cottonwoods along its floor, the walls closing in as it goes back" },
         moods: new[] { "narrowing", "shaded", "quiet", "green-floored" });
 
     private static Area BuildAmphitheatre() => new AmphitheatreArea(
-        displayName: "Box Canyon",
+        displayName: "Box Head",
         contextDescription: "in the box canyon",
         transitionDescription: "walk into the head of the box canyon",
         descriptions: new() { "The head of the side canyon, a great bowl of wall all round, a dry pour-off high up where the water comes over in flood" },

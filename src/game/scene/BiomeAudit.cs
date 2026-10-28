@@ -25,6 +25,9 @@ namespace Cathedral.Game.Scene;
 /// slip in, follow a path, voyage toward a seen landscape — and how many of them one visit offers.</item>
 /// </list>
 ///
+/// It fails (✗) a biome under <see cref="DiversityFloor"/> or outside <see cref="MinAreas"/>–<see cref="MaxAreas"/>
+/// areas, and lists every layout fault as a warning.
+///
 /// Run after touching a wilderness factory, its areas, or <c>OutdoorLayout</c>.
 /// </summary>
 public static class BiomeAudit
@@ -33,6 +36,15 @@ public static class BiomeAudit
 
     /// <summary>Two samples are different in content when at least this share of their kinds differs.</summary>
     private const double DistinctContent = 0.34;
+
+    /// <summary>
+    /// The floors a biome is failed (✗) below. Diversity was 5% across the wilderness before the
+    /// overhaul and 70% after, the lowest biome at 50%; a change that drops one under 40% has undone
+    /// most of it. The area range is the agreed size of a wild place: larger than a corridor, smaller
+    /// than a village.
+    /// </summary>
+    private const double DiversityFloor = 40;
+    private const int MinAreas = 5, MaxAreas = 10;
 
     /// <summary>The ways of moving between areas besides a walk along an edge, by the connector that offers each.</summary>
     private static readonly (string Verb, Type Connector)[] MovementKinds =
@@ -95,6 +107,13 @@ public static class BiomeAudit
         {
             report.AppendLine($"{"MEAN",-12} {"",-9} {"",-5} {rows.Average(r => r.AreaKindCount),-6:0.0} {rows.Average(r => r.Diversity),5:0} {rows.Average(r => r.MeanJaccard),5:0.00} {"",4} {rows.Average(r => r.Coherence),5:0} {rows.Average(r => r.ChainShare),6:0} {rows.Average(r => r.MeanMoves),5:0.0} {rows.Average(r => r.ThreePlus),5:0} {rows.Average(r => r.KindsSeenCount),4:0.0}");
         }
+        foreach (var r in rows)
+        {
+            if (r.Diversity < DiversityFloor)
+                report.AppendLine($"  ✗ {r.Label}: diversity {r.Diversity:0}% is under the {DiversityFloor:0}% floor");
+            if (r.MinAreaCount < MinAreas || r.MaxAreaCount > MaxAreas)
+                report.AppendLine($"  ✗ {r.Label}: {r.Areas} areas, outside {MinAreas}-{MaxAreas}");
+        }
         report.AppendLine();
         report.Append(sb);
 
@@ -104,7 +123,7 @@ public static class BiomeAudit
             report.AppendLine("No layout faults.");
             return report.ToString();
         }
-        report.AppendLine($"--- {warnings.Count} LAYOUT FAULT(S), BY KIND ---");
+        report.AppendLine($"--- {warnings.Count} WARNING(S): LAYOUT FAULTS, BY KIND ---");
         foreach (var group in warnings.GroupBy(Kind).OrderByDescending(g => g.Count()))
         {
             report.AppendLine($"  [{group.Count(),4}] {group.Key}");
@@ -292,7 +311,7 @@ public static class BiomeAudit
 
     // ── One biome ─────────────────────────────────────────────────────────────
 
-    private sealed record Row(string Label, string Areas, string Sections, string AreaKinds, int AreaKindCount,
+    private sealed record Row(string Label, string Areas, int MinAreaCount, int MaxAreaCount, string Sections, string AreaKinds, int AreaKindCount,
                               double Diversity, double MeanJaccard, int Layouts, double Coherence, double ChainShare,
                               double MeanMoves, double ThreePlus, string KindsSeen, int KindsSeenCount, LayoutProfile Profile);
 
@@ -337,6 +356,7 @@ public static class BiomeAudit
         return new Row(
             label,
             $"{samples.Min(s => s.Areas)}-{samples.Max(s => s.Areas)}",
+            samples.Min(s => s.Areas), samples.Max(s => s.Areas),
             $"{samples.Min(s => s.Sections)}-{samples.Max(s => s.Sections)}",
             areaKinds.ToString(), areaKinds,
             100.0 * distinct / Math.Max(1, triples),
