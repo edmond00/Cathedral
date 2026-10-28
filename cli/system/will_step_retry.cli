@@ -2,16 +2,16 @@
 #
 # Lockpicking is a will to unlock a door; from the Test Field its first step is the walk to the yard
 # (see will_path.cli). That walk is not what the will wants, so its means is judged like any goal's,
-# and the means may refuse it: pinned to Woodcraft, the first willingness answer is "unwilling"
+# and the means may refuse it: pinned to Bushcraft, the first willingness answer is "unwilling"
 # (--refuse-means 1). A pineal gland of 1 gives the thinking one retry, so the same step comes back
 # with a means not yet tried, is carried out — by Hunt, at seed 42 — and reaches the button. The
 # will's own goal is never retried this way: a will with Action carries it out itself and cannot
 # refuse it.
 #
-# --means-only woodcraft cannot hold on the retry, whose pool has Woodcraft crossed off; that miss is
+# --means-only bushcraft cannot hold on the retry, whose pool has Bushcraft crossed off; that miss is
 # the point, hence allow-flag-miss.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-mm lockpicking,woodcraft --grant-item hairpin --location-type test --location-id 0 --start-area "Test Field" --period dawn --means-only woodcraft --refuse-means 1 --organs pineal_gland=1
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-mm lockpicking,bushcraft --grant-item hairpin --location-type test --location-id 0 --start-area "Test Field" --period dawn --means-only bushcraft --refuse-means 1 --organs pineal_gland=1
 
 wait
 click menu New
@@ -30,7 +30,7 @@ choose 0
 choose lockpicking
 advance 12 180
 expect To get there I must first
-expect [Woodcraft
+expect [Bushcraft
 expect That will not do, and I think again
 expect another way
 expect ] discretely walk back out into the yard

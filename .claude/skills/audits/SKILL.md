@@ -1,6 +1,6 @@
 ---
 name: audits
-description: The fourteen headless audits that check content rather than code: --outcome-audit, --crime-audit, --dialogue-audit, --npc-audit, --mm-audit, --item-audit, --verb-audit, --world-variant-audit, --history-audit, --mm-grant-csv, --mm-reach-csv, --llm-probe-audit, --building-audit and --biome-audit. Use after adding or editing a verb, an outcome, a modus mentis, an item, an NPC archetype, a dialogue tree, a scene factory, a world variant, the world history generator or the lore catalogue, or a batch of scene content, and to find out which audit covers a change.
+description: The fifteen headless audits that check content rather than code: --outcome-audit, --crime-audit, --dialogue-audit, --npc-audit, --mm-audit, --will-audit, --item-audit, --verb-audit, --world-variant-audit, --history-audit, --mm-grant-csv, --mm-reach-csv, --llm-probe-audit, --building-audit and --biome-audit. Use after adding or editing a verb, an outcome, a modus mentis, a will's targets or places, an item, an NPC archetype, a dialogue tree, a scene factory, a world variant, the world history generator or the lore catalogue, or a batch of scene content, and to find out which audit covers a change.
 ---
 
 # The audits
@@ -171,15 +171,46 @@ related MMs fatal, so the coverage table is really about spotting the ones scrap
 report also prints a **per-anatomy** table — what each anatomy can actually learn, source by source,
 which is a much smaller set than the catalogue-wide one and the only one R11 reads.
 
-The **wills** section fails (✗) on two shares, not one: wills in the catalogue (25–33%), and wills
-among **the lessons the offered acts teach** (20–36%) — every act the sampled locations offer counts
+The **wills** section fails (✗) on two shares, not one: wills in the catalogue (36–44%), and wills
+among **the lessons the offered acts teach** (28–42%) — every act the sampled locations offer counts
 its `ResolveLesson` once, so `grab`, offered everywhere, weighs as it does in play. The second is the
 one a player feels and the first cannot see: it read 56% while the catalogue read a third, because
 nearly every verb's own lesson had been made a will of that verb. Below it the 25 lessons offered
 most, wills marked. Before making a modus mentis a will, look it up there: one near the top moves
 the learned share by points.
 
+It lists every target of every will and fails (✗) one that no location offers.
+
 Run it after adding or editing a modus mentis, a fighting skill, an organ, or a body region.
+
+### Checking where wills have something to do
+
+```bash
+dotnet run -- --will-audit [out.json]          # the report; the JSON feeds reports/multi-target-wills.html
+dotnet run -- --will-trace <will-id> [LOCATION] # why one will has, or lacks, something to do there
+```
+
+`--mm-audit` asks whether a will's targets are offered *anywhere*; this asks the question a player
+meets, with the planner itself (`ActionPathPlanner.Plan`): standing here, is there a way to anything the
+will wants? Every location factory the audits sweep is built for three ids (one for a town or city), and
+every will planned from the entry area and from the first area of a kind it declares it belongs in
+(`ModusMentis.WillPlaces`, rule R19), at morning and at night. About three minutes. Three numbers:
+
+- **coverage** — the share of (will, start) with a plan, overall and per location kind;
+- **related coverage** — the same from the will's own places: the headline, since a will idling where a
+  player expects it to work is the playtest complaint. **✗ under 60% overall** (64.5% over 114 one-target
+  wills before they had several; 64% over 159 after, and 69% for the original 114); a will under 60%
+  in its own places is marked `!`;
+- **breadth** — the share of location kinds where the will has something to do. **✗ above 75% for a
+  will with several targets**: added targets are how a desire grows into a general mind (`cross`,
+  `scale_up`, `provoke`, fuel or wood as a second target did exactly that). A single target whose act
+  is everywhere (to sit, to smell) is marked `~`, not failed.
+
+Wills whose every target needs a state play brings about (a conversation that needs an acquaintance,
+a beast to calm, a corpse) and that no fresh scene shows are listed `·` and left out of the shares. The
+actor carries nothing, so a will whose act needs an implement counts only where one can be taken up or
+bought on the way. Run it after changing a will's targets or places, a location factory, or the planner.
+The last section prints the area kinds each location kind builds — what to read when declaring places.
 
 ### Checking the item catalogue
 

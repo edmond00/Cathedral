@@ -1,0 +1,21 @@
+# will_mycology_forest — mycology finds something to do in an ordinary forest
+#
+# Mushrooms grow in a forest's woods and wet ground (the factory's clusters, and the wild growth of
+# SceneFactory.PlaceWildGrowth), and mycology takes them by gathering — or by grabbing, which is what a
+# cellar's man-made bed needs. Forest id 2, from the Clearing: a mushroom is right there.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-mm mycology --location-type forest --location-id 2 --start-area Clearing --period morning
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+
+expect-state will "will mycology steps=1"
+expect-state will "gather a mushroom"
+expect-state will "aim=1/2"
+quit

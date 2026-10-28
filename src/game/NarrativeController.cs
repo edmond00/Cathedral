@@ -4574,8 +4574,12 @@ public class NarrativeController
                       + $" target={CliTargetId(path.First.Action.Target)}"
                       + (path.ToolStep >= 0 ? $" tool_step={path.ToolStep + 1}" : "")
                       // Which of the will's targets the path reaches, by declaration order (1 = first), and its purpose.
-                      + (path.Target is { } aim ? $" aim={mm.Will!.ToList().IndexOf(aim) + 1}/{mm.Will!.Count} purpose=\"{aim.Purpose}\"" : ""));
+                      + (path.Target is { } aim ? $" aim={AimOf(mm.Will!, aim)}/{mm.Will!.Count} purpose=\"{aim.Purpose}\"" : ""));
             }
+
+        // A will's targets are built afresh on every read, so the one a path reaches is found by what it is.
+        static int AimOf(WillTargets will, WillTarget aim)
+            => will.ToList().FindIndex(t => t.Purpose == aim.Purpose && t.Describe() == aim.Describe()) + 1;
 
         if (All("where"))
         {

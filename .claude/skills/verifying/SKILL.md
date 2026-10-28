@@ -207,7 +207,9 @@ Run `help` for the authoritative list. The essentials:
                             under the porthole (the map's first routine is shown by default).
                             On this screen `key <letter>` opens the tab with that initial
   select [item name]        show a carried item's info panel; bare `select` lists what
-                            is carried (open `manage Inventory` first). The starting kit
+                            is carried (open `manage Inventory` first). `select mm <id>`
+                            shows a held modus mentis's detail box on the Memory tab
+                            (a will's targets under "Wants"). The starting kit
                             is random but seed-stable, so discover the names on one run
                             and they hold for every later run at that seed
   scroll up|down [n]        scroll the shared history buffer
@@ -262,7 +264,8 @@ Run `help` for the authoritative list. The essentials:
                             ConfrontationSelector.Current the exit button reads); `time` the time
                             box (box=none|choosing|passing|settled destination=…); `will` every
                             held will's plan (ActionPathPlanner): `will <id> steps=<n> first="…"
-                            goal="…" target=<archetype-id|name> [tool_step=<k>]`, or `steps=none`
+                            goal="…" target=<archetype-id|name> [tool_step=<k>] aim=<k>/<n> purpose="…"` — aim is which
+                            of the will's targets the plan reaches, by declaration order — or `steps=none`
                             where it cannot be done here. target= is the PLAN's own: any equally
                             short path is accepted too, which is what will_equal_paths.cli asserts.
                             expect-state takes no escaped quotes: assert `steps=2` and the goal's

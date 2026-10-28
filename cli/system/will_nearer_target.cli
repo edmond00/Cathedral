@@ -1,0 +1,23 @@
+# will_nearer_target — a will with several targets goes for the nearest, whichever it is in the list
+#
+# Metalcraft wants three things, in this order: ore to take up, iron to work, iron to buy. In the Test
+# Yard the iron bar on the crate is one step away and the ore seam at the Test Rock further: the plan
+# reaches the second target, and says so (aim=2/3, with that target's purpose). The first-declared
+# target wins only between equally near ones (ActionPathPlanner.Search finishes the depth).
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-mm metalcraft --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+
+expect-state will "will metalcraft steps=1"
+expect-state will "grab an iron bar"
+expect-state will "aim=2/3"
+expect-state will "take up iron to work"
+quit

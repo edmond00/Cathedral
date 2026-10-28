@@ -15,6 +15,9 @@ namespace Cathedral.Game.Narrative.Reminescence;
 ///   2. every fragment of the entry reminescence grants at least one Semantic MM   → [C1]
 ///   3. every terminal fragment grants at least one Procedural MM                  → [C2]
 ///
+/// And one more, on the offices rather than the memory types: every path grants a general thinker,
+/// a Thinking modus mentis that is not a will → [C3].
+///
 /// Since every playthrough remembers exactly one entry fragment and exactly one terminal
 /// fragment, C1 + C2 hold for every possible path through the catalog, whatever the player picks.
 ///
@@ -62,7 +65,31 @@ public static class ReminescenceRuleValidator
                     + $"modusMentis — has [{Describe(fragment)}]");
         }
 
+        // C3 — every path leaves a general thinker: a modus mentis with the Thinking function that is not
+        // a will. A will thinks only toward its own targets, so a childhood that granted nothing else
+        // would leave a body that could think about nothing it did not already want.
+        var bare = Paths(ReminescenceRegistry.EntryReminescenceId, new List<FragmentData>())
+            .Where(path => !path.Any(f => f.Outcome.SkillTypes.Select(t => ModusMentisRegistry.Instance.GetModusMentis(t))
+                                         .Any(mm => mm != null && mm.Functions.Contains(ModusMentisFunction.Thinking) && !mm.IsWill)))
+            .ToList();
+        foreach (var path in bare.Take(3))
+            violations.Add($"[C3] the childhood path {string.Join(" → ", path.Select(f => $"'{f.Name}'"))} grants no "
+                         + $"general thinker (Thinking, not a will) — has [{string.Join("; ", path.Select(Describe))}]"
+                         + (bare.Count > 3 ? $" (and {bare.Count - 3} more paths)" : ""));
+
         return violations;
+    }
+
+    /// <summary>Every path of fragments from <paramref name="id"/> to a terminal one. The catalogue is a DAG.</summary>
+    private static IEnumerable<List<FragmentData>> Paths(string id, List<FragmentData> so)
+    {
+        if (ReminescenceRegistry.IsEnd(id) || ReminescenceRegistry.Get(id) is not { } data) { yield return so; yield break; }
+        foreach (var fragment in data.Fragments)
+        {
+            var next = new List<FragmentData>(so) { fragment };
+            if (fragment.Outcome.IsTerminal) { yield return next; continue; }
+            foreach (var path in Paths(fragment.Outcome.NextReminescenceId, next)) yield return path;
+        }
     }
 
     /// <summary>True when the fragment grants at least one modusMentis of the given memory type.</summary>

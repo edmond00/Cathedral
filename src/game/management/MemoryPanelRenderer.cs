@@ -104,6 +104,23 @@ public class MemoryPanelRenderer
     // Public API
     // ═══════════════════════════════════════════════════════════════
 
+    /// <summary>
+    /// Selects the slot holding <paramref name="modusMentisId"/>, as a click on it would, so a <c>--cli</c>
+    /// script can read its detail box (a will's targets among it). False when no filled slot holds it.
+    /// </summary>
+    public bool CliSelectModusMentis(string modusMentisId)
+    {
+        if (_member == null) return false;
+        foreach (var module in _member.MemoryModules)
+            for (int i = 0; i < module.Slots.Count; i++)
+                if (module.Slots[i].IsFilled && module.Slots[i].ModusMentis?.ModusMentisId == modusMentisId)
+                {
+                    _selectedSlot = (module.Type, i);
+                    return true;
+                }
+        return false;
+    }
+
     /// <summary>Full render of the memory panel for a party member.</summary>
     public void Render(PartyMember member)
     {
