@@ -148,7 +148,7 @@ every line that left is the same text, moved.
 | `video` skill | on invocation | narrated videos about the game: `--record` (the CLI with a camera, player commands only), storyboards, manim in the game's identity, Piper voice-over, the game's own music; `tools/video/` |
 | `mm-grants` skill | on invocation | writing the modus mentis grant audit by hand |
 | `choice-judge` skill | on invocation | how a modus mentis's bounded decisions are judged; the rules for writing a modus mentis's description, manner and means, and a judge's prompt; `tools/judge/`, the benchmark and audit that measure them against the shipped model |
-| `music` skill | on invocation | the procedural soundtrack: the composer, the synthesiser, the live streams and the legacy engine (`--music-engine legacy`); the evaluation harness in `tools/music/` (`--render-music`, metrics, sheets, reading the score) and the rules for changing the music |
+| `music` skill | on invocation | the procedural soundtrack: the composer, the synthesiser, the seven mood gauges and the idioms they lead to (dances, chant, far music, fights, night), the live streams and the legacy engine (`--music-engine legacy`); recipes for each kind of change and how to verify it; the evaluation harness in `tools/music/` (`--render-music`, `--music-census`, metrics, sheets, reading the score) and the rules for changing the music |
 | `anatomy-art` skill | on invocation | generating body ASCII art (`assets/art/body/<name>/`) from labelled shapes with `tools/art/`, sharing proposals as PNGs, and the art direction: anatomical, retro/glitchy, the organ glyph vocabulary |
 
 **When a change alters a rule a player is subject to, invoke the `manual` skill** — that has not moved

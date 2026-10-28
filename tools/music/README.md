@@ -2,7 +2,9 @@
 
 The game's music is generated, and nobody working on it by machine can hear it. Everything here
 exists to turn "is it better?" into things that can be looked at and counted. The `music` skill
-(`.claude/skills/music/SKILL.md`) says how the engine works and when to use what.
+(`.claude/skills/music/SKILL.md`) says how the engine works, has a recipe for each kind of change
+(a place's sound, a gauge, an instrument, a mode, an idiom, a game hook, the mix) and how to verify
+it; `.claude/skills/music/idioms.md` describes each idiom (dances, fights, chant, far music, night).
 
 ```bash
 pip install numpy scipy soundfile pyloudnorm mido matplotlib librosa   # librosa only for timbre.py
