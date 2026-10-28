@@ -15,7 +15,7 @@ public class ArcheologyModusMentis : ModusMentis
         "Reads the present landscape as the worn draft of an older one, flagging cut stone in a rough wall or a hill too flat to be natural. Holds attention on what a place once was and on what its remains imply.";
     public override string SkillMeans       => "the study of ruins, relics and ancient remains";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTarget? Will => WillTarget.To<DigVerb>("dig for old remains").On<Scene.DiggableGroundPointOfInterest>();
+    public override WillTargets? Will => WillTarget.To<DigVerb>("dig for old remains").On<Scene.DiggableGroundPointOfInterest>();
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Ruins, Places.Desert);
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
 

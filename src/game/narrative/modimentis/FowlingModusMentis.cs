@@ -15,7 +15,7 @@ public class FowlingModusMentis : ModusMentis
         "Wants eggs from the nests: goes out along the ledges and up the cliff where the birds pack wing to wing, and takes the eggs from under them, deaf to the screaming. A full basket of warm eggs is the whole of what it is after.";
     public override string SkillMeans       => "taking eggs from the nests on a cliff ledge";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTarget? Will => WillTarget.ToAny("take eggs from the nests", typeof(GatherVerb), typeof(GrabVerb))
+    public override WillTargets? Will => WillTarget.ToAny("take eggs from the nests", typeof(GatherVerb), typeof(GrabVerb))
         .Yielding<Items.Egg>();
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Shore, Places.Heights, Places.Woodland, new[] { typeof(Cathedral.Game.Scene.CoopArea) });
     public override string[] Organs        => new[] { "hands", "legs" };

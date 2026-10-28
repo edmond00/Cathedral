@@ -1,3 +1,4 @@
+using Cathedral.Game.Narrative;
 using System.Collections.Generic;
 using Cathedral.Fight;
 
@@ -63,6 +64,7 @@ public abstract class WeaponItem : Item, IWeaponItem
 /// <summary>A plain arming sword — straight cross-hilted blade of serviceable iron.</summary>
 public sealed class ArmingSword : WeaponItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Blade });
     public override string ItemId      => "arming_sword";
     public override string DisplayName => "Arming Sword";
     public override string Description => "A straight double-edged arming sword with a plain iron cross-guard";
@@ -75,6 +77,7 @@ public sealed class ArmingSword : WeaponItem
 /// <summary>A long two-handed sword of tempered steel — a warrior's weapon.</summary>
 public sealed class Longsword : WeaponItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Blade });
     public override string ItemId      => "longsword";
     public override string DisplayName => "Longsword";
     public override string Description => "A long straight blade of tempered steel with a leather-wrapped grip and heavy pommel";
@@ -91,6 +94,7 @@ public sealed class Longsword : WeaponItem
 /// <summary>A sturdy hunting knife — broad blade, bone handle, all-purpose edge.</summary>
 public sealed class HuntingKnife : WeaponItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Blade, ItemKind.Tool });
     public override string ItemId      => "hunting_knife";
     public override string DisplayName => "Hunting Knife";
     public override string Description => "A thick-bladed hunting knife with a bone handle and a single-edged blade for gutting game";
@@ -103,6 +107,7 @@ public sealed class HuntingKnife : WeaponItem
 /// <summary>A double-edged iron dagger — compact and lethal at close quarters.</summary>
 public sealed class IronDagger : WeaponItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Blade });
     public override string ItemId      => "iron_dagger_weapon";
     public override string DisplayName => "Iron Dagger";
     public override string Description => "A plain double-edged iron dagger with a tapered blade and a riveted pommel";
@@ -119,6 +124,7 @@ public sealed class IronDagger : WeaponItem
 /// <summary>A curved cavalry saber — single-edged blade with a hand guard.</summary>
 public sealed class CavalrySaber : WeaponItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Blade });
     public override string ItemId      => "cavalry_saber";
     public override string DisplayName => "Cavalry Saber";
     public override string Description => "A curved single-edged saber with a brass hand guard and a sharkskin grip";
@@ -131,6 +137,7 @@ public sealed class CavalrySaber : WeaponItem
 /// <summary>A broad-bladed cutlass — heavy curved sword used by soldiers and sailors.</summary>
 public sealed class Cutlass : WeaponItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Blade });
     public override string ItemId      => "cutlass";
     public override string DisplayName => "Cutlass";
     public override string Description => "A heavy-bladed cutlass with a broad curve and a basket hilt of iron rings";
@@ -147,6 +154,7 @@ public sealed class Cutlass : WeaponItem
 /// <summary>A thick wooden cudgel — simple, brutal, and always to hand.</summary>
 public sealed class Cudgel : WeaponItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Bludgeon });
     public override string ItemId      => "cudgel";
     public override string DisplayName => "Cudgel";
     public override string Description => "A thick knotted branch trimmed into a fighting club, heavy at the head";
@@ -159,6 +167,7 @@ public sealed class Cudgel : WeaponItem
 /// <summary>A flanged iron warhammer — head shaped to shatter bone through armour.</summary>
 public sealed class Warhammer : WeaponItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Bludgeon });
     public override string ItemId      => "warhammer";
     public override string DisplayName => "Warhammer";
     public override string Description => "A flanged iron warhammer with a cross-peen head and a leather-wrapped haft";
@@ -175,6 +184,7 @@ public sealed class Warhammer : WeaponItem
 /// <summary>A single-bit battle axe — heavy bearded head on a long haft.</summary>
 public sealed class BattleAxe : WeaponItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Axe });
     public override string ItemId      => "battle_axe";
     public override string DisplayName => "Battle Axe";
     public override string Description => "A single-bit iron axe with a bearded head and an ash haft bound in leather";
@@ -187,6 +197,7 @@ public sealed class BattleAxe : WeaponItem
 /// <summary>A double-bitted war axe — brutal cleaving weapon favoured by northern fighters.</summary>
 public sealed class WarAxe : WeaponItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Axe });
     public override string ItemId      => "war_axe";
     public override string DisplayName => "War Axe";
     public override string Description => "A double-bitted war axe of dark iron, the hafts grooved for grip";
@@ -203,6 +214,7 @@ public sealed class WarAxe : WeaponItem
 /// <summary>An iron war pick — the point bores through plate and bone alike.</summary>
 public sealed class WarPick : WeaponItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Bludgeon });
     public override string ItemId      => "war_pick";
     public override string DisplayName => "War Pick";
     public override string Description => "A single-pointed iron war pick with a hammerhead back and an oak haft";
@@ -215,6 +227,7 @@ public sealed class WarPick : WeaponItem
 /// <summary>A heavy iron pickaxe repurposed for fighting — slow but devastating.</summary>
 public sealed class HeavyPick : WeaponItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Bludgeon, ItemKind.Tool });
     public override string ItemId      => "heavy_pick";
     public override string DisplayName => "Heavy Pick";
     public override string Description => "A miner's heavy iron pick, its point ground to a weapon edge";
@@ -231,6 +244,7 @@ public sealed class HeavyPick : WeaponItem
 /// <summary>A hunting spear — light iron point on a long ash shaft.</summary>
 public sealed class HuntingSpear : WeaponItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Spear });
     public override string ItemId      => "hunting_spear";
     public override string DisplayName => "Hunting Spear";
     public override string Description => "A hunting spear with a leaf-shaped iron point and a smooth ash shaft";
@@ -243,6 +257,7 @@ public sealed class HuntingSpear : WeaponItem
 /// <summary>A war spear — heavy socketed head designed to punch through shields.</summary>
 public sealed class WarSpear : WeaponItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Spear });
     public override string ItemId      => "war_spear";
     public override string DisplayName => "War Spear";
     public override string Description => "A heavy-socketed war spear with a broad iron head and a steel-shod butt";
@@ -259,6 +274,7 @@ public sealed class WarSpear : WeaponItem
 /// <summary>A short hunting bow — light self-bow of yew, quick to nock and loose.</summary>
 public sealed class HuntingBow : WeaponItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Bow });
     public override string ItemId      => "hunting_bow";
     public override List<ItemTag> Tags => new() { ItemTag.Arms };
     public override string DisplayName => "Hunting Bow";
@@ -272,6 +288,7 @@ public sealed class HuntingBow : WeaponItem
 /// <summary>A powerful longbow — drawn to the ear, it strikes hard at distance.</summary>
 public sealed class Longbow : WeaponItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Bow });
     public override string ItemId      => "longbow";
     public override List<ItemTag> Tags => new() { ItemTag.Arms };
     public override string DisplayName => "Longbow";
@@ -289,6 +306,7 @@ public sealed class Longbow : WeaponItem
 /// <summary>A light crossbow — simple prod and nut mechanism, easy to reload.</summary>
 public sealed class LightCrossbow : WeaponItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Bow });
     public override string ItemId      => "light_crossbow";
     public override string DisplayName => "Light Crossbow";
     public override string Description => "A light crossbow with a simple nut-and-prod mechanism and a short wooden tiller";
@@ -301,6 +319,7 @@ public sealed class LightCrossbow : WeaponItem
 /// <summary>A heavy steel crossbow — slow to span but punches through armour.</summary>
 public sealed class HeavyCrossbow : WeaponItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Bow });
     public override string ItemId      => "heavy_crossbow";
     public override string DisplayName => "Heavy Crossbow";
     public override string Description => "A heavy steel-prod crossbow with a windlass crank and a carved cheek-piece";
@@ -317,6 +336,7 @@ public sealed class HeavyCrossbow : WeaponItem
 /// <summary>A round shield of iron-bossed wood — light and versatile.</summary>
 public sealed class RoundShield : WeaponItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Shield });
     public override string ItemId        => "round_shield";
     public override string DisplayName   => "Round Shield";
     public override string Description   => "A round iron-bossed shield of limewood, the rim bound in leather";
@@ -330,6 +350,7 @@ public sealed class RoundShield : WeaponItem
 /// <summary>A full-body tower shield — heavy but offers near-total cover.</summary>
 public sealed class TowerShield : WeaponItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Shield });
     public override string ItemId        => "tower_shield";
     public override string DisplayName   => "Tower Shield";
     public override string Description   => "A tall kite-shaped shield of planked wood faced in iron plate";

@@ -6,6 +6,7 @@ namespace Cathedral.Game.Narrative.World.Items;
 
 public sealed class Flour : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Grain });
     public override string ItemId      => "flour";
     public override string DisplayName => "Flour";
     public override string Description => "A cloth sack of stone-ground flour, dust pale on its outside";
@@ -21,6 +22,7 @@ public sealed class Flour : ConsumableItem
 
 public sealed class Ale : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Liquor });
     public override string ItemId      => "ale";
     public override string DisplayName => "Ale";
     public override string Description => "A clay jug of dark, yeasty ale";
@@ -106,6 +108,7 @@ public sealed class WashTub : ContainerItem
 
 public sealed class Lantern : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Light });
     public override string ItemId      => "lantern";
     public override string DisplayName => "Lantern";
     public override string Description => "A pierced-iron lantern with a stub of tallow candle inside";
@@ -134,6 +137,7 @@ public sealed class Sack : ContainerItem
 
 public sealed class Net : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool });
     public override string ItemId      => "net";
     public override string DisplayName => "Net";
     public override string Description => "A folded fishing net, weights still tied along its leading edge";
@@ -148,6 +152,7 @@ public sealed class Net : Item
 
 public sealed class Hook : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool });
     public override string ItemId      => "hook";
     public override string DisplayName => "Hook";
     public override string Description => "A small barbed iron fish-hook";
@@ -162,6 +167,7 @@ public sealed class Hook : Item
 
 public sealed class FishingLine : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool });
     public override string ItemId      => "fishing_line";
     public override string DisplayName => "Fishing Line";
     public override string Description => "A coil of waxed linen fishing line";

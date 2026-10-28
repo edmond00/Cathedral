@@ -12,6 +12,7 @@ public sealed class Saw : ToolItem
 
 public sealed class Axe : ToolItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Axe });
     public override string ItemId      => "axe";
     public override string DisplayName => "Axe";
     public override string Description => "A heavy felling axe with a broad iron head and ash haft";
@@ -89,6 +90,7 @@ public sealed class Rake : ToolItem
 
 public sealed class Scythe : ToolItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Blade });
     public override string ItemId      => "scythe";
     public override string DisplayName => "Scythe";
     public override string Description => "A long curving scythe blade fitted to a tall snath";

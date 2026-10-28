@@ -16,7 +16,7 @@ public class TreasureHuntingModusMentis : ModusMentis
         "Follows old tales, rumours, and signs toward hidden riches. Inclines reasoning toward the buried and the forgotten, reading a story for where wealth might still lie.";
     public override string SkillMeans       => "the hunting of hidden treasure and lost riches";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
-    public override WillTarget? Will => WillTarget.To<DigVerb>("dig for what is hidden");
+    public override WillTargets? Will => WillTarget.To<DigVerb>("dig for what is hidden");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Ruins, Places.Desert, Places.Shore);
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
 

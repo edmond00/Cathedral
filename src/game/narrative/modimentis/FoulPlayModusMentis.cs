@@ -15,7 +15,7 @@ public class FoulPlayModusMentis : ModusMentis
         "Looks for the unfair edge in any contest: the cheat, the distraction, the rule that can be broken unseen. Inclines toward deception and sabotage, and treats scruple as a handicap.";
     public override string SkillMeans => "dirty tricks and deception";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<MurderVerb>("kill by foul means");
+    public override WillTargets? Will => WillTarget.To<MurderVerb>("kill by foul means");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Dwellings, Places.Streets);
     public override MoralLevel MoralLevel => MoralLevel.Low;
     public override string[] Organs => new[] { "cerebrum", "heart" };

@@ -15,7 +15,7 @@ public class TuskHuntingModusMentis : ModusMentis
         "Wants old ivory: walks the river banks in the thaw where the frozen earth slumps, and takes out the yellow tusks of beasts dead before anyone's counting began. One good tusk is worth a season's furs, and every slumping bank may hold one.";
     public override string SkillMeans       => "working old ivory out of a thawing bank";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTarget? Will => WillTarget.ToAny("take old ivory out of the frozen ground", typeof(GatherVerb), typeof(GrabVerb))
+    public override WillTargets? Will => WillTarget.ToAny("take old ivory out of the frozen ground", typeof(GatherVerb), typeof(GrabVerb))
         .Yielding<World.Items.FossilIvory>();
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Ice);
     public override string[] Organs        => new[] { "hands", "backbone" };

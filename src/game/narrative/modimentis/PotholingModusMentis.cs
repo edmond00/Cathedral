@@ -16,7 +16,7 @@ public class PotholingModusMentis : ModusMentis
         "Wants to squeeze into the rock: a cleft a body's width, a crawlway on the belly, a hollow behind a root or a fall of stone. Slips in where the dark goes on, to find out where it opens, and is calm wedged tight with a mountain overhead.";
     public override string SkillMeans       => "squeezing through a narrow gap in the rock";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTarget? Will => WillTarget.To<SlipIntoVerb>("squeeze into the dark")
+    public override WillTargets? Will => WillTarget.To<SlipIntoVerb>("squeeze into the dark")
         .Where(e => e is SlipIntoPointOfInterest { IsNaturalGap: true }, "a gap the land made");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Underground, Places.Heights);
     public override string[] Organs        => new[] { "backbone", "hands" };

@@ -15,7 +15,7 @@ public class AngleryModusMentis : ModusMentis
         "Reads moving water for the places fish hold: the slack behind a stone, the shaded cut of a bank, the seam where two currents meet. Works the rod and the net slowly, knowing the water gives up nothing to hurry.";
     public override string SkillMeans       => "the reading of water and the working of rod and net";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<FishVerb>("fish");
+    public override WillTargets? Will => WillTarget.To<FishVerb>("fish");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.FreshWater, Places.Shore);
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

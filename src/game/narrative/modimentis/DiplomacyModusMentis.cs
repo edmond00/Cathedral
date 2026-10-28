@@ -14,7 +14,7 @@ public class DiplomacyModusMentis : ModusMentis
         "Brings enemies to terms: finds what each side truly needs beneath what it demands, offers face-saving forms of words, and knows when to let silence do the work.";
     public override string SkillMeans       => "the bringing of enemies to terms";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
-    public override WillTarget? Will => WillTarget.To<ReconcileVerb>("bring an enemy to terms");
+    public override WillTargets? Will => WillTarget.To<ReconcileVerb>("bring an enemy to terms");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Settled, Places.Stronghold);
     public override string[] Organs        => new[] { "tongue", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

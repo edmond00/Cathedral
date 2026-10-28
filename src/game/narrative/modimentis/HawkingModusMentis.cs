@@ -14,7 +14,7 @@ public class HawkingModusMentis : ModusMentis
         "Sells in the street by voice: the cry that carries over a market, the patter that stops a passer-by, the joke that turns a glance into a sale. Reads a crowd for who has money in their purse.";
     public override string SkillMeans       => "the selling of goods by street cry";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
-    public override WillTarget? Will => WillTarget.To<ProposeToSellVerb>("sell my goods");
+    public override WillTargets? Will => WillTarget.To<ProposeToSellVerb>("sell my goods");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Streets);
     public override string[] Organs        => new[] { "tongue", "pulmones" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

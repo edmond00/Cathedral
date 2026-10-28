@@ -15,7 +15,7 @@ public class ArmouryLoreModusMentis : ModusMentis
         "Knows arms and armour by their make: where a blade was forged, what a helm will stop, which mail is riveted and which only butted. Can date a sword by its hilt and price it at a glance.";
     public override string SkillMeans       => "the knowledge of arms and armour";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTarget? Will => WillTarget.ToAny("take up a fine weapon", typeof(GrabVerb), typeof(StealVerb)).Yielding<WeaponItem>();
+    public override WillTargets? Will => WillTarget.ToAny("take up a fine weapon", typeof(GrabVerb), typeof(StealVerb)).Yielding<WeaponItem>();
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Stronghold, Places.Shops);
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

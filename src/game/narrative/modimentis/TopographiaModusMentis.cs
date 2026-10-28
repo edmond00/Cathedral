@@ -16,7 +16,7 @@ public class TopographiaModusMentis : ModusMentis
         "Reads terrain by elevation, slope, and the lie of the land. Holds attention on ground and high places, and inclines toward understanding a landscape by its form.";
     public override string SkillMeans => "terrain and landscape reading";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTarget? Will => WillTarget.To<ExamineVerb>("read the lie of the land").On<LandscapePointOfInterest>();
+    public override WillTargets? Will => WillTarget.To<ExamineVerb>("read the lie of the land").On<LandscapePointOfInterest>();
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Heights, Places.Wild);
     public override string[] Organs => new[] { "eyes", "feet" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

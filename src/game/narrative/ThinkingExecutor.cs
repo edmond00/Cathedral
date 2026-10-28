@@ -165,7 +165,7 @@ public class ThinkingExecutor
             {
                 string refusal = planned == null
                     ? NeutralNarration.WillReasoningNotHere(targetDescription, thinkingModusMentis.Will!.Purpose)
-                    : NeutralNarration.WillReasoningNotThisWay(targetDescription, planned, thinkingModusMentis.Will!.Purpose, actingMember);
+                    : NeutralNarration.WillReasoningNotThisWay(targetDescription, planned, thinkingModusMentis.Will!.PurposeOf(planned), actingMember);
                 Console.WriteLine($"ThinkingExecutor: [{thinkingModusMentis.DisplayName}] wills '{thinkingModusMentis.Will!.Purpose}' — "
                                 + (willPath == null ? "no way here." : $"'{targetDescription}' is not on the way."));
                 Think(await VoiceAsync(thinkingSlot, thinkingModusMentis, refusal, NarrationKind.Reasoning, thoughtPart, cancellationToken));
@@ -283,7 +283,7 @@ public class ThinkingExecutor
                     ? NeutralNarration.ReasoningRetrySameGoal(goalPhrase, skill.SkillMeans)
                     : NeutralNarration.ReasoningRetry(goalPhrase, skill.SkillMeans);
             if (!retrying && willPath is { Steps.Count: > 1 })
-                reasoningNeutral = NeutralNarration.WillReasoningChain(targetDescription, willPath, skill.SkillMeans, thinkingModusMentis.Will!.Purpose, actingMember);
+                reasoningNeutral = NeutralNarration.WillReasoningChain(targetDescription, willPath, skill.SkillMeans, thinkingModusMentis.Will!.PurposeOf(willPath), actingMember);
             if (doubting) reasoningNeutral += " " + NeutralNarration.DoubtQuestion(goalPhrase);
             await VoiceLeadAsync();
             Think(await VoiceAsync(thinkingSlot, thinkingModusMentis, reasoningNeutral, NarrationKind.Reasoning, thoughtPart, cancellationToken));

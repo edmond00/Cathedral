@@ -4561,7 +4561,8 @@ public class NarrativeController
             outp.Add($"time box={CliTimeBoxState()} destination={(_timeBox.IsVisible ? _timeBox.Destination.ToString() : "-")}");
 
         // Every will the actor holds and its path from here (ActionPathPlanner): how many steps, the
-        // first to take and the goal, or none when it cannot be done in this place. What a will
+        // first to take and the goal, which of its targets it reaches, or none when no target can be
+        // reached in this place. What a will
         // observes and proposes is derived from exactly this, so it is the seam a script asserts on.
         if (All("will") && _scene != null && _pov != null)
             foreach (var mm in actor.LearnedModiMentis.Where(m => m.Will != null).OrderBy(m => m.ModusMentisId))
@@ -4571,7 +4572,9 @@ public class NarrativeController
                     ? $"will {mm.ModusMentisId} steps=none"
                     : $"will {mm.ModusMentisId} steps={path.Steps.Count} first=\"{path.First.Verbatim}\" goal=\"{path.Goal.Verbatim}\""
                       + $" target={CliTargetId(path.First.Action.Target)}"
-                      + (path.ToolStep >= 0 ? $" tool_step={path.ToolStep + 1}" : ""));
+                      + (path.ToolStep >= 0 ? $" tool_step={path.ToolStep + 1}" : "")
+                      // Which of the will's targets the path reaches, by declaration order (1 = first), and its purpose.
+                      + (path.Target is { } aim ? $" aim={mm.Will!.ToList().IndexOf(aim) + 1}/{mm.Will!.Count} purpose=\"{aim.Purpose}\"" : ""));
             }
 
         if (All("where"))

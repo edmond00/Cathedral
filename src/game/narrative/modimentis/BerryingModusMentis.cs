@@ -14,7 +14,7 @@ public class BerryingModusMentis : ModusMentis
         "Picks fruit and nuts: judges ripeness by touch rather than colour, works a bush efficiently, and gets the crop home without crushing it. Sounds like idleness and produces a great deal of food.";
     public override string SkillMeans       => "the picking of fruit and nuts at their moment";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<GatherVerb>("pick fruit and nuts").Yielding<World.Items.FruitItem>();
+    public override WillTargets? Will => WillTarget.To<GatherVerb>("pick fruit and nuts").Yielding<World.Items.FruitItem>();
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Woodland, Places.Grassland, Places.Fields);
     public override string[] Organs        => new[] { "hands", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

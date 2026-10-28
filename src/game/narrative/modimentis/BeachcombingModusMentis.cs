@@ -15,7 +15,7 @@ public class BeachcombingModusMentis : ModusMentis
         "Wants to pick over the tideline: to walk the wrack and the shingle, turn every heap of weed and stone, and take what the sea brought in — amber, driftwood, a good shell. Every tide lays the beach out fresh, and it means to be first along it.";
     public override string SkillMeans       => "picking over the tideline for what the sea brought in";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTarget? Will => WillTarget.ToAny("pick up what the tide brought in", typeof(GatherVerb), typeof(GrabVerb))
+    public override WillTargets? Will => WillTarget.ToAny("pick up what the tide brought in", typeof(GatherVerb), typeof(GrabVerb))
         .YieldingAny("what the tide leaves", typeof(World.Items.Amber), typeof(World.Items.Driftwood), typeof(World.Items.Shell));
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Shore);
     public override string[] Organs        => new[] { "eyes", "hands" };

@@ -1,9 +1,11 @@
+using Cathedral.Game.Narrative;
 ﻿using System.Collections.Generic;
 
 namespace Cathedral.Game.Narrative.Items;
 
 public sealed class Rock : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Stone });
     public override ItemCategory Category => ItemCategory.Crafting;
     public override string ItemId => "rock";
     public override string DisplayName => "Rock";

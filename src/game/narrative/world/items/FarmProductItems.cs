@@ -6,6 +6,7 @@ namespace Cathedral.Game.Narrative.World.Items;
 
 public sealed class Milk : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Dairy });
     public override string ItemId      => "milk";
     public override string DisplayName => "Milk";
     public override string Description => "A wooden pail of fresh, faintly warm milk";
@@ -21,6 +22,7 @@ public sealed class Milk : ConsumableItem
 /// <summary>Food, and now edible: as a plain item it could be bought and sold but never eaten.</summary>
 public sealed class Butter : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Dairy });
     public override string ItemId      => "butter";
     public override string DisplayName => "Butter";
     public override string Article     => "some";

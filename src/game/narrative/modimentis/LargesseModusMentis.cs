@@ -16,7 +16,7 @@ public class LargesseModusMentis : ModusMentis
         "Gives as the great give: openly, publicly, to be seen giving. Delights in the act of bestowing, and in what it says about the giver.";
     public override string SkillMeans       => "the open-handed giving of the great";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
-    public override WillTarget? Will => WillTarget.To<GiveAlmsVerb>("give open-handedly");
+    public override WillTargets? Will => WillTarget.To<GiveAlmsVerb>("give open-handedly");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Streets, Places.Sacred);
     public override string[] Organs        => new[] { "heart", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

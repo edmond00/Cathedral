@@ -14,7 +14,7 @@ public class GraveRobbingModusMentis : ModusMentis
         "Opens graves and tombs at night for what was buried with the dead: the ring, the coin in the mouth, the good cloak. Knows how deep the rich are buried and how to fill a hole so nobody notices.";
     public override string SkillMeans       => "the robbing of graves";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<DigVerb>("open a grave").On<Scene.GravePointOfInterest>();
+    public override WillTargets? Will => WillTarget.To<DigVerb>("open a grave").On<Scene.GravePointOfInterest>();
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Graves);
     public override string[] Organs        => new[] { "hands", "arms" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

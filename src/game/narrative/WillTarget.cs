@@ -90,6 +90,28 @@ public sealed class WillTarget
     }
 
     /// <summary>
+    /// Narrows the target to what holds or is an item of <paramref name="kind"/> — a family that cuts
+    /// across classes (<see cref="ItemKind"/>): every mushroom, every blade, every holy thing.
+    /// </summary>
+    public WillTarget YieldingKind(ItemKind kind)
+        => With(e => e switch
+            {
+                ItemElement ie      => ie.Item.Kinds.Contains(kind),
+                PointOfInterest poi => poi.Items.Any(i => i.Item.Kinds.Contains(kind)),
+                _                   => false,
+            }, $"yielding {kind}");
+
+    /// <summary>
+    /// Narrows the target to somebody whose wares include an item of <paramref name="kind"/> — a will
+    /// to buy a blade is a proposal to buy made to a trader who sells one. Read off the trader's
+    /// <c>BuyCatalog</c>, which is what the purchase would offer.
+    /// </summary>
+    public WillTarget Selling(ItemKind kind)
+        => With(e => e is SceneNpc { Entity: Cathedral.Game.Npc.NpcEntity npc }
+                     && npc.BuyCatalog?.Offers.Any(o => o.Prototype.Kinds.Contains(kind)) == true,
+                $"selling {kind}");
+
+    /// <summary>
     /// Narrows the target by a test of its own, for a condition no type expresses (a person of a given
     /// species). The test must still gate on types, never on a name.
     /// </summary>
@@ -118,6 +140,80 @@ public sealed class WillTarget
         var verbs = string.Join("|", VerbTypes.Select(t => t.Name));
         return _conditions.Count == 0 ? verbs : $"{verbs} {string.Join(" ", _conditions.Select(c => c.Label))}";
     }
+
+    public override string ToString() => Describe();
+}
+
+/// <summary>
+/// Everything a will wants: one to <see cref="Max"/> <see cref="WillTarget"/>s, each its own goal with
+/// its own purpose, in the order the modus mentis declares them. The will wants <i>any</i> of them and
+/// goes for the nearest (<see cref="ActionPathPlanner"/>); between two equally near, the one declared
+/// first. A single target converts implicitly, so a one-target will still reads
+/// <c>Will => WillTarget.To&lt;…&gt;(…)</c>.
+/// </summary>
+public sealed class WillTargets : IReadOnlyList<WillTarget>
+{
+    /// <summary>The most targets a will may declare (rule R17). Past five it stops being a desire.</summary>
+    public const int Max = 5;
+
+    private readonly IReadOnlyList<WillTarget> _targets;
+
+    private WillTargets(IReadOnlyList<WillTarget> targets)
+    {
+        _targets = targets;
+        Key      = string.Join(" ; ", targets.Select(t => $"{t.Purpose}: {t.Describe()}"));
+    }
+
+    /// <summary>The targets in order of preference — the first is the will's chief want.</summary>
+    public static WillTargets Of(params WillTarget[] targets) => new(targets);
+
+    public static implicit operator WillTargets(WillTarget target) => new(new[] { target });
+
+    /// <summary>
+    /// What identifies this will's wants, for the planner's cache: a modus mentis builds its targets
+    /// afresh on every read, so the instance is never the same twice.
+    /// </summary>
+    public string Key { get; }
+
+    public int Count => _targets.Count;
+    public WillTarget this[int index] => _targets[index];
+    public IEnumerator<WillTarget> GetEnumerator() => _targets.GetEnumerator();
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+
+    /// <summary>Whether <paramref name="verb"/> is one of any target's verbs.</summary>
+    public bool Wants(Verb verb) => _targets.Any(t => t.Wants(verb));
+
+    /// <summary>Whether this concrete action is something the will wants — any of its targets.</summary>
+    public bool Matches(VerbAction action) => _targets.Any(t => t.Matches(action));
+
+    /// <summary>The first declared target the action satisfies, or null.</summary>
+    public WillTarget? TargetOf(VerbAction action) => _targets.FirstOrDefault(t => t.Matches(action));
+
+    /// <summary>The declaration index of the first target the action satisfies, or -1.</summary>
+    public int IndexOf(VerbAction action)
+    {
+        for (int i = 0; i < _targets.Count; i++) if (_targets[i].Matches(action)) return i;
+        return -1;
+    }
+
+    /// <summary>Whether any target is a conversation.</summary>
+    public bool Converses => _targets.Any(t => t.Converses);
+
+    /// <summary>
+    /// Every purpose as one phrase — "fight somebody or buy a weapon" — for the sentence a will says when
+    /// nothing it wants can be done here. A path names its own target's purpose instead.
+    /// </summary>
+    public string Purpose => _targets.Count switch
+    {
+        1 => _targets[0].Purpose,
+        _ => string.Join(", ", _targets.Take(_targets.Count - 1).Select(t => t.Purpose)) + " or " + _targets[^1].Purpose,
+    };
+
+    /// <summary>The purpose a path is narrated with: its own target's, or every purpose when there is no path.</summary>
+    public string PurposeOf(ActionPath? path) => path?.Target?.Purpose ?? Purpose;
+
+    /// <summary>For the audit and the startup rules: every target, " ; " between them.</summary>
+    public string Describe() => string.Join(" ; ", _targets.Select(t => t.Describe()));
 
     public override string ToString() => Describe();
 }

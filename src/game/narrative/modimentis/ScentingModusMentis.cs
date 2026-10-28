@@ -15,7 +15,7 @@ public class ScentingModusMentis : ModusMentis
         "Reads a place nose-first, layering what the air carries: who passed, how long ago, what they carried and what they feared. Ties each smell to a remembered one, so that a scent arrives already named.";
     public override string SkillMeans       => "the smelling and identifying of scents on the air";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTarget? Will => WillTarget.To<SmellVerb>("take a scent from the air");
+    public override WillTargets? Will => WillTarget.To<SmellVerb>("take a scent from the air");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Woodland, Places.Grassland);
     public override string[] Organs        => new[] { "snout", "hippocampus" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

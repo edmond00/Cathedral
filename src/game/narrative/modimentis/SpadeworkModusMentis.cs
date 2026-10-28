@@ -17,7 +17,7 @@ public class SpadeworkModusMentis : ModusMentis
         "Moves earth with an edge and a back: cuts a clean spit, throws the spoil where it will not slide in again, and reads the soil for the depth at which digging stops being worth it. Paces the work so the hole is finished rather than begun.";
     public override string SkillMeans       => "the cut spit and thrown spoil of digging by tool";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<DigVerb>("dig with a spade");
+    public override WillTargets? Will => WillTarget.To<DigVerb>("dig with a spade");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Fields, Places.Graves);
     public override string[] Organs        => new[] { "arms", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

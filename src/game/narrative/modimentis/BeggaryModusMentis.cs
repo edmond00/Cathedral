@@ -15,7 +15,7 @@ public class BeggaryModusMentis : ModusMentis
         "Picks the one face in a street that will not look away, and asks it. Knows how much to show and when to stop showing it, and takes a refusal without letting it close the next door.";
     public override string SkillMeans       => "the asking of strangers for what they owe you nothing of";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<BegForCoinVerb>("beg for coin");
+    public override WillTargets? Will => WillTarget.To<BegForCoinVerb>("beg for coin");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Streets, Places.Taverns);
     public override string[] Organs        => new[] { "tongue", "eyes" };
 

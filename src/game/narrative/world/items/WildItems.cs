@@ -15,6 +15,7 @@ namespace Cathedral.Game.Narrative.World.Items;
 /// <summary>Bat dung dug from a colony floor — the best manure there is, and sold as such.</summary>
 public sealed class Guano : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Fuel });
     public override string ItemId      => "guano";
     public override string DisplayName => "Guano";
     public override string Description => "A double handful of dry black bat dung, rank and crumbling, worth its weight to any gardener";
@@ -26,6 +27,7 @@ public sealed class Guano : Item
 
 public sealed class CavePearl : StoneRawItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Gem, ItemKind.Valuable });
     public override string ItemId      => "cave_pearl";
     public override string DisplayName => "Cave Pearl";
     public override string Description => "A smooth white ball of stone grown layer on layer in a dripping pool, like a pearl without an oyster";
@@ -36,6 +38,7 @@ public sealed class CavePearl : StoneRawItem
 
 public sealed class RockCrystal : StoneRawItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Gem, ItemKind.Valuable });
     public override string ItemId      => "rock_crystal";
     public override string DisplayName => "Rock Crystal";
     public override string Description => "A six-sided spar of clear crystal, cold as ice and as clear, broken from a cluster";
@@ -48,6 +51,7 @@ public sealed class RockCrystal : StoneRawItem
 
 public sealed class Samphire : VegetableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Plant, ItemKind.Flotsam });
     public override string ItemId      => "samphire";
     public override string DisplayName => "Samphire";
     public override string Description => "A bunch of glassy green samphire from the saltmarsh, crisp and salt as the sea";
@@ -57,6 +61,7 @@ public sealed class Samphire : VegetableItem
 
 public sealed class Cockle : SeaFoodItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Shellfish });
     public override string ItemId      => "cockle";
     public override string DisplayName => "Cockle";
     public override string Description => "A handful of ribbed cockles raked out of the wet sand, shut tight";
@@ -67,6 +72,7 @@ public sealed class Cockle : SeaFoodItem
 
 public sealed class Amber : StoneRawItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Gem, ItemKind.Valuable, ItemKind.Flotsam });
     public override string ItemId      => "amber";
     public override string DisplayName => "Amber";
     public override string Description => "A lump of honey-coloured amber thrown up on the shingle, warm to the hand, a gnat caught in it";
@@ -79,6 +85,7 @@ public sealed class Amber : StoneRawItem
 
 public sealed class Hazelnut : FruitItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Nut });
     public override string ItemId      => "hazelnut";
     public override string DisplayName => "Hazelnut";
     public override string Description => "A handful of hazelnuts in their ragged green husks, sweet once cracked";
@@ -89,6 +96,7 @@ public sealed class Hazelnut : FruitItem
 
 public sealed class Meadowsweet : HerbItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Flower });
     public override string ItemId      => "meadowsweet";
     public override string DisplayName => "Meadowsweet";
     public override string Description => "A frothy cream head of meadowsweet from a wet meadow, smelling of almonds and honey";
@@ -110,6 +118,7 @@ public sealed class BogMyrtle : HerbItem
 /// <summary>A flint arrowhead of the old people, turned up where barrows stand. Country folk call it elf-shot.</summary>
 public sealed class ElfShot : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Relic, ItemKind.Stone });
     public override string ItemId      => "elf_shot";
     public override string DisplayName => "Elf-Shot";
     public override string Description => "A leaf-shaped arrowhead of knapped flint, finer than any smith could make, turned up from old ground";
@@ -124,6 +133,7 @@ public sealed class ElfShot : Item
 
 public sealed class DesertTruffle : VegetableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Mushroom });
     public override string ItemId      => "desert_truffle";
     public override string DisplayName => "Desert Truffle";
     public override string Description => "A pale knobbly truffle dug from under a cracked mound of sand, nutty and earthy";
@@ -133,6 +143,7 @@ public sealed class DesertTruffle : VegetableItem
 
 public sealed class Agate : StoneRawItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Gem, ItemKind.Valuable });
     public override string ItemId      => "agate";
     public override string DisplayName => "Agate";
     public override string Description => "A rough nodule of agate split open on banded rings of grey, white and rust";
@@ -146,6 +157,7 @@ public sealed class Agate : StoneRawItem
 /// <summary>Old tusk ivory the frozen ground gives back where a river cuts a bank.</summary>
 public sealed class FossilIvory : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Ivory, ItemKind.Bone, ItemKind.Relic });
     public override string ItemId      => "fossil_ivory";
     public override string DisplayName => "Fossil Ivory";
     public override string Description => "A curved length of yellowed ivory from a beast far bigger than any living, thawed out of a riverbank";
@@ -157,6 +169,7 @@ public sealed class FossilIvory : Item
 
 public sealed class Lingonberry : FruitItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Berry });
     public override string ItemId      => "lingonberry";
     public override string DisplayName => "Lingonberry";
     public override string Description => "A handful of hard red lingonberries off the low evergreen mat, tart enough to make the eyes water";
@@ -170,6 +183,7 @@ public sealed class Lingonberry : FruitItem
 /// <summary>Comb cut from a wild hive in a tree or a rock — robbed, not kept.</summary>
 public sealed class WildHoney : FruitItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Honey });
     public override string ItemId      => "wild_honey";
     public override string DisplayName => "Wild Honeycomb";
     public override string Description => "A dripping slab of dark wild honeycomb, grubs in some of the cells, sweet enough to hurt";

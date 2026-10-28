@@ -14,7 +14,7 @@ public class JailcraftModusMentis : ModusMentis
         "Keeps people locked up: checks the bars, counts the keys, listens at the doors, knows the tricks of prisoners and the bribes they offer. Never opens two doors at once.";
     public override string SkillMeans       => "the keeping of prisoners and their keys";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<UnlockDoorVerb>("open a locked door");
+    public override WillTargets? Will => WillTarget.To<UnlockDoorVerb>("open a locked door");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Stronghold, Places.Dwellings);
     public override string[] Organs        => new[] { "hands", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

@@ -16,7 +16,7 @@ public class DevotionModusMentis : ModusMentis
         "Finds the sacred in the ordinary passing of time: every hour has its prayer, every lesson is a gift. Is quietly steadied by the turning of the day.";
     public override string SkillMeans       => "the finding of the sacred in the hours";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
-    public override WillTarget? Will => WillTarget.To<AskBlessingVerb>("seek a blessing");
+    public override WillTargets? Will => WillTarget.To<AskBlessingVerb>("seek a blessing");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Sacred);
     public override string[] Organs        => new[] { "heart", "pineal_gland" };
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

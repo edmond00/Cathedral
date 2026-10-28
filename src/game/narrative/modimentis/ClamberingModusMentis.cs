@@ -15,7 +15,7 @@ public class ClamberingModusMentis : ModusMentis
         "Hooks claw and arm into bark, stone, or timber and goes up, reading every surface for purchase. Treats height as both refuge and vantage, and inclines toward the climb where others see a wall.";
     public override string SkillMeans       => "claw-hooked climbing over bark and stone";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<ClimbUpVerb>("climb up");
+    public override WillTargets? Will => WillTarget.To<ClimbUpVerb>("climb up");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Heights, Places.Woodland);
     // Was claws + arms — a beast organ and a human one, so no anatomy could learn it. A beast clambers
     // with all four.

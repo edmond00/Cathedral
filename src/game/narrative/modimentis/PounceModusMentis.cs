@@ -15,7 +15,7 @@ public class PounceModusMentis : ModusMentis
         "Gathers the whole body into stillness and releases it in one committed spring at the chosen instant. Watches for the single right moment, and treats hesitation after launch as the only true mistake.";
     public override string SkillMeans       => "the still crouch and the sudden leap onto a target";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<CatchVerb>("pounce on something small");
+    public override WillTargets? Will => WillTarget.To<CatchVerb>("pounce on something small");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Grassland, Places.Woodland);
     public override string[] Organs        => new[] { "limbs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

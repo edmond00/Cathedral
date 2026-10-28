@@ -69,6 +69,7 @@ public sealed class Perch : SeaFoodItem
 
 public sealed class CopperOre : StoneRawItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Ore });
     public override string ItemId      => "copper_ore";
     public override List<ItemTag> Tags => new() { ItemTag.Mineral, ItemTag.Ore };
     public override string DisplayName => "Copper Ore";
@@ -78,6 +79,7 @@ public sealed class CopperOre : StoneRawItem
 
 public sealed class TinOre : StoneRawItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Ore });
     public override string ItemId      => "tin_ore";
     public override List<ItemTag> Tags => new() { ItemTag.Mineral, ItemTag.Ore };
     public override string DisplayName => "Tin Ore";
@@ -87,6 +89,7 @@ public sealed class TinOre : StoneRawItem
 
 public sealed class LeadOre : StoneRawItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Ore });
     public override string ItemId      => "lead_ore";
     public override List<ItemTag> Tags => new() { ItemTag.Mineral, ItemTag.Ore };
     public override string DisplayName => "Lead Ore";
@@ -99,6 +102,7 @@ public sealed class LeadOre : StoneRawItem
 
 public sealed class Sand : StoneRawItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Stone });
     public override string ItemId      => "sand";
     public override string DisplayName => "Sand";
     public override string Description => "Coarse pale sand, dry enough to run through the fingers";
@@ -108,6 +112,7 @@ public sealed class Sand : StoneRawItem
 
 public sealed class Peat : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Fuel });
     public override ItemCategory Category => ItemCategory.Crafting;
     public override string ItemId      => "peat";
     public override string DisplayName => "Peat";
@@ -119,6 +124,7 @@ public sealed class Peat : Item
 
 public sealed class Loam : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Stone });
     public override ItemCategory Category => ItemCategory.Crafting;
     public override string ItemId      => "loam";
     public override string DisplayName => "Loam";
@@ -133,6 +139,7 @@ public sealed class Loam : Item
 
 public sealed class Cordwood : WoodRawItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Fuel });
     public override string ItemId      => "cordwood";
     public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Fuel, ItemTag.Timber };
     public override string DisplayName => "Cordwood";
@@ -142,6 +149,7 @@ public sealed class Cordwood : WoodRawItem
 
 public sealed class Beam : WoodRawItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Wood });
     public override string ItemId      => "beam";
     public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Timber };
     public override string DisplayName => "Beam";
@@ -155,6 +163,7 @@ public sealed class Beam : WoodRawItem
 /// <summary>What is left when furniture is broken up on purpose.</summary>
 public sealed class SplinteredTimber : WoodRawItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Flotsam });
     public override string ItemId      => "splintered_timber";
     public override string DisplayName => "Splintered Timber";
     public override string Description => "Broken boards with the nails still in them, sprung apart along the grain";

@@ -15,7 +15,7 @@ public class RageModusMentis : ModusMentis
         "Rises into an all-consuming anger that burns through pain, fear, and doubt. Drives the body into powerful assault while it lasts, at the cost of caution and control.";
     public override string SkillMeans       => "the battle fury that burns through pain, fear, and doubt";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action, ModusMentisFunction.Fighting };
-    public override WillTarget? Will => WillTarget.To<AttackVerb>("fall on somebody in fury");
+    public override WillTargets? Will => WillTarget.To<AttackVerb>("fall on somebody in fury");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Taverns);
     public override string[] Organs        => new[] { "viscera", "hepar" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

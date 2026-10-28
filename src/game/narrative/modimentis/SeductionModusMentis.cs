@@ -15,7 +15,7 @@ public class SeductionModusMentis : ModusMentis
         "Reads what a person wants to be told and tells it to them, warming attention into desire. Works charm deliberately and quietly, aiming it at the lonely, the vain, and the unwatched.";
     public override string SkillMeans       => "the reading and stirring of desire";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
-    public override WillTarget? Will => WillTarget.To<StrengthenRelationshipVerb>("draw somebody closer");
+    public override WillTargets? Will => WillTarget.To<StrengthenRelationshipVerb>("draw somebody closer");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Taverns, Places.Streets);
     public override string[] Organs        => new[] { "genitories", "tongue" };
 

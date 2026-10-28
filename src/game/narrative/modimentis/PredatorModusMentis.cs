@@ -15,7 +15,7 @@ public class PredatorModusMentis : ModusMentis
         "Reads a larger quarry for its line of escape and works to close it, stalking and cornering until space runs out. Keeps a patient pressure on the pursuit rather than a hasty rush.";
     public override string SkillMeans       => "the patient hunting and cornering of prey";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action, ModusMentisFunction.Fighting };
-    public override WillTarget? Will => WillTarget.To<StalkVerb>("stalk prey");
+    public override WillTargets? Will => WillTarget.To<StalkVerb>("stalk prey");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Woodland, Places.Grassland);
     public override string[] Organs        => new[] { "fangs", "claws" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

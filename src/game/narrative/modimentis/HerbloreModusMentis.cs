@@ -15,7 +15,7 @@ public class HerbloreModusMentis : ModusMentis
         "Recognizes plants by leaf and habit and holds their uses in mind, for remedy, seasoning, or harm. Inclines toward gathering and preparing herbs, and reads a hedgerow for what it can yield.";
     public override string SkillMeans       => "the knowing and gathering of herbs";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTarget? Will => WillTarget.To<GatherVerb>("gather herbs").YieldingAny("herbs", typeof(World.Items.HerbItem), typeof(Items.Herb));
+    public override WillTargets? Will => WillTarget.To<GatherVerb>("gather herbs").YieldingAny("herbs", typeof(World.Items.HerbItem), typeof(Items.Herb));
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Woodland, Places.Grassland);
     public override string[] Organs        => new[] { "nose", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

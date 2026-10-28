@@ -14,7 +14,7 @@ public class TeaLoreModusMentis : ModusMentis
         "Knows tea from the bush to the cup: the two leaves and a bud, the withering, the rolling, the firing. Can name the garden and the season of a leaf by its smell and the colour of its liquor.";
     public override string SkillMeans       => "the knowledge of tea from leaf to cup";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTarget? Will => WillTarget.ToAny("pick tea", typeof(GatherVerb), typeof(GrabVerb)).Yielding<World.Items.TeaLeaf>();
+    public override WillTargets? Will => WillTarget.ToAny("pick tea", typeof(GatherVerb), typeof(GrabVerb)).Yielding<World.Items.TeaLeaf>();
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Fields);
     public override string[] Organs        => new[] { "nose", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

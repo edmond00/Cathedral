@@ -99,13 +99,13 @@ public abstract class ModusMentis
     /// and the will attends only to the object of the path's first step and proposes only that step.
     /// See <c>WillPriority</c> for every place this narrows a choice.</para>
     /// </summary>
-    public virtual WillTarget? Will => null;
+    public virtual WillTargets? Will => null;
 
     /// <summary>
     /// The kinds of area a will belongs in — where a player would expect it to find something to do
     /// (herblore: a forest, a meadow). Area types, never names. Read by <c>--will-audit</c>, which plans
     /// the will from each and reports the share that has a way to a target: the related coverage.
-    /// Empty for a modus mentis that is not a will. <see cref="Places"/> holds the usual groups.
+    /// Empty for a modus mentis that is not a will. <see cref="WillPlaces"/> holds the usual groups.
     /// </summary>
     public virtual IReadOnlyList<Type> WillPlaces => Array.Empty<Type>();
 

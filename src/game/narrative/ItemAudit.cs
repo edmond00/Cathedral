@@ -70,6 +70,7 @@ public static class ItemAudit
         warnings.AddRange(CheckHitLocationDistribution(sb));
         warnings.AddRange(CheckSkillLocalizations(sb));
         warnings.AddRange(CheckSpecialUses(items, sb));
+        warnings.AddRange(CheckKinds(items, sb));
 
         sb.AppendLine();
         if (warnings.Count == 0)
@@ -81,6 +82,30 @@ public static class ItemAudit
         }
 
         return sb.ToString();
+    }
+
+    // ── Kinds ─────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// The families items belong to (<see cref="ItemKind"/>), which is what a will narrowed by kind is
+    /// answered by. A kind no item carries is a will target that could never be met: a warning. An item
+    /// with no kind at all is listed, since a will wanting its family would pass it over.
+    /// </summary>
+    private static List<string> CheckKinds(IReadOnlyList<Item> items, StringBuilder sb)
+    {
+        var warnings = new List<string>();
+        sb.AppendLine("── Kinds (what a will can want) ──────────────────────────────────────");
+        foreach (var kind in Enum.GetValues<ItemKind>())
+        {
+            var of = items.Where(i => i.Kinds.Contains(kind)).Select(i => i.ItemId).ToList();
+            sb.AppendLine($"  {kind,-10} {of.Count,3}  {string.Join(" ", of.Take(8))}{(of.Count > 8 ? " …" : "")}");
+            if (of.Count == 0) warnings.Add($"kind {kind}: no item carries it — a will wanting it could never be met");
+        }
+        var none = items.Where(i => i.Kinds.Count == 0).Select(i => i.ItemId).ToList();
+        sb.AppendLine($"  {items.Count - none.Count} of {items.Count} items carry a kind; {none.Count} carry none"
+                    + (none.Count == 0 ? "" : $": {string.Join(" ", none)}"));
+        sb.AppendLine();
+        return warnings;
     }
 
     // ── Hit locations ─────────────────────────────────────────────────────

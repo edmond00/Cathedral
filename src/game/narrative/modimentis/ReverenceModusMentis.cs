@@ -15,7 +15,7 @@ public class ReverenceModusMentis : ModusMentis
         "Recognises what has been set apart - a shrine, a grave, an oath, a threshold - and observes it. Lowers the voice, uncovers the head, does not take what is there. Costs nothing and is noticed by everybody.";
     public override string SkillMeans       => "the observing of what has been set apart";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
-    public override WillTarget? Will => WillTarget.To<ContemplateVerb>("contemplate what has been set apart");
+    public override WillTargets? Will => WillTarget.To<ContemplateVerb>("contemplate what has been set apart");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Sacred);
     public override string[] Organs        => new[] { "heart", "hippocampus" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

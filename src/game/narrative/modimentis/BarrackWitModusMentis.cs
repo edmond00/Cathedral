@@ -14,7 +14,7 @@ public class BarrackWitModusMentis : ModusMentis
         "Talks the language of the guardroom: the grumble, the filthy joke, the nickname for the captain, the story everyone has heard and laughs at anyway. Makes soldiers trust you because you sound like one.";
     public override string SkillMeans       => "the talk of the guardroom";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
-    public override WillTarget? Will => WillTarget.To<TalkSoldieringVerb>("talk soldiering");
+    public override WillTargets? Will => WillTarget.To<TalkSoldieringVerb>("talk soldiering");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Stronghold, Places.Taverns);
     public override string[] Organs        => new[] { "tongue", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

@@ -14,7 +14,7 @@ public class GoldFeverModusMentis : ModusMentis
         "Finds precious metal and cannot then leave it alone. Reads colour in the pan and in the seam better than anyone, and works past food, daylight and sense to follow it. A gift and an affliction in the same faculty.";
     public override string SkillMeans       => "the hunger that follows a colour in the rock";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTarget? Will => WillTarget.To<MineVerb>("dig metal out of the rock");
+    public override WillTargets? Will => WillTarget.To<MineVerb>("dig metal out of the rock");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Underground, Places.Heights);
     public override string[] Organs        => new[] { "eyes", "spleen" };
     /// <summary>A hunger that ends at a pick in a seam: a body with no hands for one has no gold fever.</summary>

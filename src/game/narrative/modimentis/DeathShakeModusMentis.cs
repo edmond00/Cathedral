@@ -15,7 +15,7 @@ public class DeathShakeModusMentis : ModusMentis
         "Drives the finishing motion: seize, then whip the whole spine to end resistance in one violent instant. Prefers the decisive conclusion over the drawn-out struggle, in violence and in any task that wants a hard, final stroke.";
     public override string SkillMeans       => "the violent shake that kills caught prey at once";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<CrushVerb>("kill what is caught");
+    public override WillTargets? Will => WillTarget.To<CrushVerb>("kill what is caught");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Woodland);
     public override string[] Organs        => new[] { "fangs", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

@@ -14,7 +14,7 @@ public class BeastCallModusMentis : ModusMentis
         "Makes the sounds animals answer to, and reads the answer: calling a bird in, quieting a nervous beast, imitating well enough to be replied to. Half listening, half throat, and useless without both.";
     public override string SkillMeans       => "the making of sounds that an animal will answer";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<AppeaseVerb>("call a beast to me");
+    public override WillTargets? Will => WillTarget.To<AppeaseVerb>("call a beast to me");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Stock);
     public override string[] Organs        => new[] { "ears", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

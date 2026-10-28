@@ -16,7 +16,7 @@ public class AlmsgivingModusMentis : ModusMentis
         "Gives freely to those who ask, and is gladdened by the giving. Counts what can be spared before what can be kept.";
     public override string SkillMeans       => "the giving of alms and the joy of it";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
-    public override WillTarget? Will => WillTarget.To<GiveAlmsVerb>("give alms");
+    public override WillTargets? Will => WillTarget.To<GiveAlmsVerb>("give alms");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Streets, Places.Sacred);
     public override string[] Organs        => new[] { "heart", "hands" };
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

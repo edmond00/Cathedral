@@ -14,7 +14,7 @@ public class PidginModusMentis : ModusMentis
         "Makes itself understood where there is no shared language: the trade jargon of ports, the gesture, the word borrowed from three tongues, the price shown on the fingers.";
     public override string SkillMeans       => "the making-oneself-understood without a common tongue";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
-    public override WillTarget? Will => WillTarget.To<TalkOfFarPlacesVerb>("talk with somebody of far places");
+    public override WillTargets? Will => WillTarget.To<TalkOfFarPlacesVerb>("talk with somebody of far places");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Streets, Places.Taverns, Places.Shore);
     public override string[] Organs        => new[] { "tongue", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

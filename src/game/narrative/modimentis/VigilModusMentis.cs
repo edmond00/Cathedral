@@ -15,7 +15,7 @@ public class VigilModusMentis : ModusMentis
         "Keeps watch through the night in prayer or beside the dead: notices every sound in the dark hours, the candle guttering, the changes in the quiet. Is most awake when everyone else is asleep.";
     public override string SkillMeans       => "the watching through the night";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
-    public override WillTarget? Will => WillTarget.To<SitAndWaitVerb>("keep a vigil");
+    public override WillTargets? Will => WillTarget.To<SitAndWaitVerb>("keep a vigil");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Sacred, Places.Stronghold);
     public override string[] Organs        => new[] { "ears", "pineal_gland" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

@@ -14,7 +14,7 @@ public class VagabondageModusMentis : ModusMentis
         "Travels with nowhere particular to be, and lives off the margins of that: which barns are unlocked, which houses feed a stranger, how to be moved on without being detained. Free and one bad week from disaster.";
     public override string SkillMeans       => "the living made from a road with no destination";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<VoyageTowardVerb>("wander on");
+    public override WillTargets? Will => WillTarget.To<VoyageTowardVerb>("wander on");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wild, Places.Streets);
     public override string[] Organs        => new[] { "legs", "paunch" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

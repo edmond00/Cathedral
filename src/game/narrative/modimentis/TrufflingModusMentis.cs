@@ -15,7 +15,7 @@ public class TrufflingModusMentis : ModusMentis
         "Wants truffles: walks the sand after rain looking for the little cracked mounds, kneels, and works the pale knobs out of the ground with the fingers. A season of truffles feeds a family, and it means to have every one before the jackals do.";
     public override string SkillMeans       => "working truffles out of the sand by hand";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTarget? Will => WillTarget.ToAny("take truffles from the sand", typeof(GatherVerb), typeof(GrabVerb))
+    public override WillTargets? Will => WillTarget.ToAny("take truffles from the sand", typeof(GatherVerb), typeof(GrabVerb))
         .Yielding<World.Items.DesertTruffle>();
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Desert);
     public override string[] Organs        => new[] { "hands", "nose" };

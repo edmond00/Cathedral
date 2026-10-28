@@ -15,7 +15,7 @@ public class ButcheryModusMentis : ModusMentis
         "Sees a body as an assembly of parts joined along natural seams, knowing where joints part and vessels run. Approaches flesh as a disassembly problem with efficient and wasteful routes, and works it without squeamishness.";
     public override string SkillMeans => "the cutting of carcasses into joints";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<CutVerb>("cut a carcass into joints");
+    public override WillTargets? Will => WillTarget.To<CutVerb>("cut a carcass into joints");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Stock, Places.Wilds);
     public override string[] Organs => new[] { "hands", "viscera" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

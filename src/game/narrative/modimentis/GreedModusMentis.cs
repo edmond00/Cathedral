@@ -16,7 +16,7 @@ public class GreedModusMentis : ModusMentis
         "Keeps an unshaken want of more running beneath thought, driving toward acquisition past need. Inclines reasoning and action toward seizing wealth and advantage wherever they appear.";
     public override string SkillMeans       => "the relentless desire to have more";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
-    public override WillTarget? Will => WillTarget.ToAny("take more for myself", typeof(StealVerb), typeof(PickpocketVerb));
+    public override WillTargets? Will => WillTarget.ToAny("take more for myself", typeof(StealVerb), typeof(PickpocketVerb));
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Treasure, Places.Streets, Places.Dwellings);
     public override string[] Organs        => new[] { "heart", "eyes" };
 

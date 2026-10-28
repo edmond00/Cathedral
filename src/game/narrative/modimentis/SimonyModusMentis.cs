@@ -14,7 +14,7 @@ public class SimonyModusMentis : ModusMentis
         "Sells what should be given: blessings, offices, indulgences, a better grave. Knows the price of holy things to the coin and wraps the bargain in the language of piety.";
     public override string SkillMeans       => "the selling of holy things";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
-    public override WillTarget? Will => WillTarget.To<OfferBribeVerb>("buy a favour with coin");
+    public override WillTargets? Will => WillTarget.To<OfferBribeVerb>("buy a favour with coin");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Sacred);
     public override string[] Organs        => new[] { "tongue", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

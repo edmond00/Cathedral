@@ -14,7 +14,7 @@ public class ReceivingModusMentis : ModusMentis
         "Buys stolen goods and sells them on: knows what a thing is worth hot and what it will fetch cold, which marks must be taken off, and which buyers ask no questions.";
     public override string SkillMeans       => "the buying and selling of stolen goods";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
-    public override WillTarget? Will => WillTarget.To<ProposeToSellVerb>("get rid of goods quietly");
+    public override WillTargets? Will => WillTarget.To<ProposeToSellVerb>("get rid of goods quietly");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Streets, Places.Taverns);
     public override string[] Organs        => new[] { "cerebrum", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

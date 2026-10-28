@@ -14,7 +14,7 @@ public class ScentDrawModusMentis : ModusMentis
         "Draws air on purpose rather than merely breathing it: long pulls through the nose that separate a scent into its parts, its age, and the direction it is coming from.";
     public override string SkillMeans       => "the deliberate drawing of air to take a scent apart";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTarget? Will => WillTarget.To<SmellVerb>("draw a scent apart");
+    public override WillTargets? Will => WillTarget.To<SmellVerb>("draw a scent apart");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Woodland, Places.Grassland);
     public override string[] Organs        => new[] { "pulmones", "snout" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

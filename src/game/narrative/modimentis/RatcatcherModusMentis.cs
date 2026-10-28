@@ -15,7 +15,7 @@ public class RatcatcherModusMentis : ModusMentis
         "Knows the vermin: their runs, their droppings, what their numbers say about a household, and how they are actually got rid of. Unromantic knowledge about the animals that live closest to people.";
     public override string SkillMeans       => "the knowing of rats, mice and their runs";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
-    public override WillTarget? Will => WillTarget.To<CatchVerb>("catch vermin");
+    public override WillTargets? Will => WillTarget.To<CatchVerb>("catch vermin");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Dwellings, Places.Fields, Places.Stock, Places.Shops);
     public override string[] Organs        => new[] { "eyes", "teeths" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

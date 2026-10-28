@@ -17,7 +17,7 @@ public class SpoorEyeModusMentis : ModusMentis
         "Follows what passed by what it disturbed: the print's edge, the bent stem, the stone turned dark side up. Reads age from how far the sign has dried or sprung back, and builds the direction of travel out of the gaps between marks.";
     public override string SkillMeans       => "the reading of print, bent stem and turned stone";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTarget? Will => WillTarget.To<TrackVerb>("follow a track");
+    public override WillTargets? Will => WillTarget.To<TrackVerb>("follow a track");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wild);
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

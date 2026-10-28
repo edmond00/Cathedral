@@ -14,7 +14,7 @@ public class CoppicingModusMentis : ModusMentis
         "Cuts a wood so it keeps producing: the angle that sheds water, the height that regrows, which stools to take this year and which to leave. Farming timber rather than harvesting it, on a cycle of years.";
     public override string SkillMeans       => "the cutting of a wood so that it grows again";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<CutWoodVerb>("cut wood");
+    public override WillTargets? Will => WillTarget.To<CutWoodVerb>("cut wood");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Woodland);
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

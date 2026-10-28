@@ -15,7 +15,7 @@ public class BruteForceModusMentis : ModusMentis
         "Approaches obstacles as things to be lifted, broken, or forced by sheer strength. Sets the body to raw exertion and reaches for overwhelming force where a subtler hand would look for leverage.";
     public override string SkillMeans => "overwhelming physical force";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action, ModusMentisFunction.Fighting };
-    public override WillTarget? Will => WillTarget.To<BreakVerb>("break something open");
+    public override WillTargets? Will => WillTarget.To<BreakVerb>("break something open");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Dwellings, Places.Stronghold, Places.Ruins);
     public override MoralLevel MoralLevel => MoralLevel.Low;
     public override string[] Organs => new[] { "arms", "legs" };

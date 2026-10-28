@@ -15,7 +15,7 @@ public class WanderlustModusMentis : ModusMentis
         "Feels a road as an invitation and a horizon as a question. Restless in a place that is comfortable, and steadied by movement. Reads distance as an opportunity where others read it as a cost.";
     public override string SkillMeans       => "the pull that a road exerts";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
-    public override WillTarget? Will => WillTarget.To<VoyageTowardVerb>("take to the road");
+    public override WillTargets? Will => WillTarget.To<VoyageTowardVerb>("take to the road");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wild, Places.Streets);
     public override string[] Organs        => new[] { "legs", "pineal_gland" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

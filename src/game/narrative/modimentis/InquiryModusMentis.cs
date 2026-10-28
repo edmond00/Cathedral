@@ -15,7 +15,7 @@ public class InquiryModusMentis : ModusMentis
         "Finds the question a person wants to be asked and asks that one first. Keeps a running account of what has been said, what has been avoided, and which of the two is worth more.";
     public override string SkillMeans       => "the drawing out of what someone knows";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
-    public override WillTarget? Will => WillTarget.To<GatherKnowledgeVerb>("draw out what somebody knows");
+    public override WillTargets? Will => WillTarget.To<GatherKnowledgeVerb>("draw out what somebody knows");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Settled, Places.Learning);
     public override string[] Organs        => new[] { "tongue", "cerebrum" };
 

@@ -14,7 +14,7 @@ public class RooftopsModusMentis : ModusMentis
         "Travels over the roofs of a town: knows which tiles hold, which gutters bear weight, where the gaps between houses can be jumped. Sees the city from above as a second set of streets.";
     public override string SkillMeans       => "the travelling over roofs";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<ScaleUpVerb>("get up onto the roofs");
+    public override WillTargets? Will => WillTarget.To<ScaleUpVerb>("get up onto the roofs");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Streets, Places.Roofs);
     public override string[] Organs        => new[] { "feet", "cerebellum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

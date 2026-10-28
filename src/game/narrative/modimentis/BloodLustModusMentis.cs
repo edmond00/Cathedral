@@ -15,7 +15,7 @@ public class BloodLustModusMentis : ModusMentis
         "Feeds on bloodshed already begun, each wound given or taken sharpening the next blow rather than the caution that should follow. Drives the body harder as violence continues, at the cost of restraint and clear judgement.";
     public override string SkillMeans       => "the surge of strength and fury that comes from drawing blood";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action, ModusMentisFunction.Fighting };
-    public override WillTarget? Will => WillTarget.To<AttackVerb>("draw blood");
+    public override WillTargets? Will => WillTarget.To<AttackVerb>("draw blood");
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Woodland);
     public override string[] Organs        => new[] { "viscera", "spleen" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
