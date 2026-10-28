@@ -58,7 +58,15 @@ public static class BiomeAudit
         ("voyage",      typeof(LandscapePointOfInterest)),
     };
 
-    public sealed record Biome(string Label, Func<SceneFactory> Create);
+    public sealed record Biome(string Label, Func<SceneFactory> Create, int Samples = SampleSize);
+
+    /// <summary>
+    /// The settled locations, for comparison (<c>--biome-audit settled</c>): every factory the sprawl and
+    /// the history put on the map. A city or an urban historic place is dozens of buildings, so it is
+    /// sampled twelve times rather than forty. They state no profile, so coherence is connectivity alone.
+    /// </summary>
+    public static IEnumerable<Biome> SettledBiomes()
+        => Settled.SettledSceneFactories.All.Select(e => new Biome(e.AuditLabel, e.Create, e.Dense ? 12 : 20));
 
     public static IEnumerable<Biome> Biomes()
     {
@@ -78,13 +86,14 @@ public static class BiomeAudit
         var warnings = new List<string>();
         var rows     = new List<Row>();
 
-        foreach (var biome in Biomes())
+        bool settled = string.Equals(only, "settled", StringComparison.OrdinalIgnoreCase);
+        foreach (var biome in settled ? SettledBiomes() : Biomes())
         {
-            if (only != null && !biome.Label.Replace(" ", "").Equals(only.Replace(" ", "").Replace("_", ""), StringComparison.OrdinalIgnoreCase))
+            if (only != null && !settled && !biome.Label.Replace(" ", "").Equals(only.Replace(" ", "").Replace("_", ""), StringComparison.OrdinalIgnoreCase))
                 continue;
             var samples = new List<Sample>();
             LayoutProfile profile = LayoutProfile.Unstated;
-            for (int id = 1; id <= SampleSize; id++)
+            for (int id = 1; id <= biome.Samples; id++)
             {
                 var factory = biome.Create();
                 var scene   = factory.Build(id);
@@ -96,18 +105,18 @@ public static class BiomeAudit
 
         var report = new StringBuilder();
         report.AppendLine("=== BIOME AUDIT ===");
-        report.AppendLine($"{SampleSize} locations per biome. Diversity = share of sample triples all different in content");
+        report.AppendLine($"{(settled ? "20 (12 for a city)" : SampleSize.ToString())} locations per kind. Diversity = share of sample triples all different in content");
         report.AppendLine($"(Jaccard >= {DistinctContent:0.00}) and in layout. Coherence = share of samples passing every layout check.");
         report.AppendLine("Exploration = movement kinds besides walking per visit (of 7), and how many a biome ever offers.");
         report.AppendLine();
-        report.AppendLine($"{"biome",-12} {"areas",-9} {"sect",-5} {"kinds",-6} {"div%",5} {"jac",5} {"lay",4} {"coh%",5} {"chain%",6} {"move",5} {"3+%",5} {"seen",4}  profile");
+        report.AppendLine($"{"biome",-12} {"areas",-9} {"mean",-5} {"out",-4} {"sect",-6} {"kinds",-6} {"div%",5} {"jac",5} {"lay",4} {"coh%",5} {"chain%",6} {"move",5} {"3+%",5} {"seen",4}  profile");
         foreach (var r in rows)
-            report.AppendLine($"{r.Label,-12} {r.Areas,-9} {r.Sections,-5} {r.AreaKinds,-6} {r.Diversity,5:0} {r.MeanJaccard,5:0.00} {r.Layouts,4} {r.Coherence,5:0} {r.ChainShare,6:0} {r.MeanMoves,5:0.0} {r.ThreePlus,5:0} {r.KindsSeen,4}  {r.Profile}");
+            report.AppendLine($"{r.Label,-12} {r.Areas,-9} {r.MeanAreas,-5:0} {r.MeanOutdoor,-4:0} {r.Sections,-6} {r.AreaKinds,-6} {r.Diversity,5:0} {r.MeanJaccard,5:0.00} {r.Layouts,4} {r.Coherence,5:0} {r.ChainShare,6:0} {r.MeanMoves,5:0.0} {r.ThreePlus,5:0} {r.KindsSeen,4}  {r.Profile}");
         if (rows.Count > 1)
         {
-            report.AppendLine($"{"MEAN",-12} {"",-9} {"",-5} {rows.Average(r => r.AreaKindCount),-6:0.0} {rows.Average(r => r.Diversity),5:0} {rows.Average(r => r.MeanJaccard),5:0.00} {"",4} {rows.Average(r => r.Coherence),5:0} {rows.Average(r => r.ChainShare),6:0} {rows.Average(r => r.MeanMoves),5:0.0} {rows.Average(r => r.ThreePlus),5:0} {rows.Average(r => r.KindsSeenCount),4:0.0}");
+            report.AppendLine($"{"MEAN",-12} {"",-9} {rows.Average(r => r.MeanAreas),-5:0} {rows.Average(r => r.MeanOutdoor),-4:0} {"",-6} {rows.Average(r => r.AreaKindCount),-6:0.0} {rows.Average(r => r.Diversity),5:0} {rows.Average(r => r.MeanJaccard),5:0.00} {"",4} {rows.Average(r => r.Coherence),5:0} {rows.Average(r => r.ChainShare),6:0} {rows.Average(r => r.MeanMoves),5:0.0} {rows.Average(r => r.ThreePlus),5:0} {rows.Average(r => r.KindsSeenCount),4:0.0}");
         }
-        foreach (var r in rows)
+        foreach (var r in settled ? new List<Row>() : rows)
         {
             if (r.Diversity < DiversityFloor)
                 report.AppendLine($"  ✗ {r.Label}: diversity {r.Diversity:0}% is under the {DiversityFloor:0}% floor");
@@ -147,6 +156,7 @@ public static class BiomeAudit
         HashSet<string> Content,
         string Layout,
         int Areas,
+        int Outdoor,
         int Sections,
         bool IsChain,
         bool Coherent,
@@ -206,7 +216,7 @@ public static class BiomeAudit
                            .ToHashSet();
         string layout = $"{string.Join("/", scene.Sections.Select(s => s.Areas.Count))}|e{edges}|c{cycles}|b{degree3}|k{climbs}";
 
-        return new Sample(id, content, layout, areas.Count, scene.Sections.Count, chain, coherent, moves, kinds);
+        return new Sample(id, content, layout, areas.Count, scene.OutdoorAreas.Count, scene.Sections.Count, chain, coherent, moves, kinds);
     }
 
     /// <summary>The structural promise of a stated profile, checked against the built graph.</summary>
@@ -311,7 +321,7 @@ public static class BiomeAudit
 
     // ── One biome ─────────────────────────────────────────────────────────────
 
-    private sealed record Row(string Label, string Areas, int MinAreaCount, int MaxAreaCount, string Sections, string AreaKinds, int AreaKindCount,
+    private sealed record Row(string Label, string Areas, int MinAreaCount, int MaxAreaCount, double MeanAreas, double MeanOutdoor, string Sections, string AreaKinds, int AreaKindCount,
                               double Diversity, double MeanJaccard, int Layouts, double Coherence, double ChainShare,
                               double MeanMoves, double ThreePlus, string KindsSeen, int KindsSeenCount, LayoutProfile Profile);
 
@@ -357,6 +367,7 @@ public static class BiomeAudit
             label,
             $"{samples.Min(s => s.Areas)}-{samples.Max(s => s.Areas)}",
             samples.Min(s => s.Areas), samples.Max(s => s.Areas),
+            samples.Average(s => s.Areas), samples.Average(s => s.Outdoor),
             $"{samples.Min(s => s.Sections)}-{samples.Max(s => s.Sections)}",
             areaKinds.ToString(), areaKinds,
             100.0 * distinct / Math.Max(1, triples),
