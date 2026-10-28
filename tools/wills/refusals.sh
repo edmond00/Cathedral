@@ -9,7 +9,9 @@
 #   "wills '…' — no way here."          nothing it wants can be done in this place
 #   "wills '…' — '…' is not on the way." something can, but not through what it was asked about
 #   "wills it — proposing '…'"          a step toward something it wants
-# The first two are refusals. --playground and --seed make the route repeatable.
+# The first two are refusals. On arrival `inspect will` also reports every held will that has nothing
+# to do anywhere in the place (steps=none), which is what refuses everything there.
+# --playground and --seed make the route repeatable.
 set -u
 BIN="$1"; OUT="$2"; mkdir -p "$OUT"
 WILLS=(herblore mycology brawling felling berrying lockpicking sextonry anglery)
@@ -21,6 +23,7 @@ for place in "${PLACES[@]}"; do
       {
         echo wait; echo "click menu New"; echo "wait mode ProtagonistCreation 20"; echo "click continue"
         echo "wait mode WorldView 60"; echo "travel here"; echo "wait mode LocationInteraction 60"; echo "advance 12 180"
+        echo "inspect will"
         for k in 0 1 2; do
           w=${WILLS[$(( (start + k) % ${#WILLS[@]} ))]}
           echo "click keyword 0"; echo "choose 0"; echo "choose $w"; echo "advance 12 180"
@@ -37,4 +40,6 @@ done
 no_way=$(cat "$OUT"/*.out | grep -c "— no way here\.")
 not_on=$(cat "$OUT"/*.out | grep -c "is not on the way\.")
 prop=$(cat "$OUT"/*.out | grep -c "wills it — proposing")
-echo "no_way=$no_way not_on_the_way=$not_on proposing=$prop"
+idle=$(cat "$OUT"/*.out | grep -c "^\[cli\] will .* steps=none")
+held=$(cat "$OUT"/*.out | grep -c "^\[cli\] will ")
+echo "no_way=$no_way not_on_the_way=$not_on proposing=$prop idle_on_arrival=$idle of $held"

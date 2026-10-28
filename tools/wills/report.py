@@ -89,6 +89,7 @@ kept_ordinary = extras.get("kept_ordinary", [])
 
 page = f"""<title>Multi-target Wills</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
 /* Layout: one readable column of findings; wide tables and the chart scroll in their own boxes. */
 :root {{
@@ -141,7 +142,7 @@ code {{ font-family: var(--mono); font-size: .9em; }}
 <div class="scroll"><table class="head"><thead><tr><th></th><th>before</th><th>after</th><th>change</th></tr></thead><tbody>
 {row("Related coverage, all measured wills", hb["related"], ha["related"])}
 {row(f"Related coverage, the {ho['n']} wills that existed before", hb["related"], ho["related"])}
-{row(f"Related coverage, the {hn['n']} new wills", 0, hn["related"])}
+<tr><th>Related coverage, the {hn['n']} new wills</th><td>—</td><td>{pct(hn["related"])}</td><td></td></tr>
 {row("Coverage from a location's entry, all wills", hb["cover"], ha["cover"])}
 {row("Location kinds with something to do (mean breadth)", hb["kinds"], ha["kinds"])}
 {row("Targets per will", hb["targets"], ha["targets"], fmt=lambda x: f"{x:.2f}")}
