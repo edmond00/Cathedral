@@ -15,7 +15,9 @@ public class TillageModusMentis : ModusMentis
         "Reads ground through the resistance it offers, sorting clay from loam by the pull and judging when soil is ready to break. Sets the body to steady, repetitive labour and holds a line straight across long work without flagging.";
     public override string SkillMeans       => "the breaking and turning of soil";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTargets? Will => WillTarget.To<DigVerb>("break the ground");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<DigVerb>("break the ground"),
+        WillTarget.ToAny("lay hands on a spade", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).YieldingAny("a spade", typeof(Cathedral.Game.Narrative.World.Items.Shovel), typeof(Cathedral.Game.Narrative.World.Items.GraveSpade)));
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Fields);
     public override string[] Organs        => new[] { "arms", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

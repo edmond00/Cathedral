@@ -12,7 +12,11 @@ public class SaddleryModusMentis : ModusMentis
     public override string MenuDescription =>
         "Cuts and stitches harness, saddles and bridles from heavy leather: the double saddle-stitch, the stuffed panel, the tree fitted to the horse's back so it bears on muscle and not on bone.";
     public override string SkillMeans       => "the making and mending of saddles and harness";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<Cathedral.Game.Scene.Verbs.GrabVerb>("take up a hide").YieldingKind(ItemKind.Hide),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy leather").Selling(ItemKind.Hide));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.TackroomArea) }, new[] { typeof(Cathedral.Game.Scene.TanneryArea) }, new[] { typeof(Cathedral.Game.Scene.PaddockArea) });
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;

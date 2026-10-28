@@ -14,7 +14,9 @@ public class GraveworkModusMentis : ModusMentis
         "Digs where the dead are: opens a grave properly, knows what depth is decent and what happens at less, and is untroubled by what comes up. Work that is always needed and never spoken of politely.";
     public override string SkillMeans       => "the opening of ground where the dead are put";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTargets? Will => WillTarget.To<DigVerb>("open the ground where the dead lie").On<Scene.GravePointOfInterest>();
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<DigVerb>("open the ground where the dead lie").On<Scene.GravePointOfInterest>(),
+        WillTarget.ToAny("lay hands on a spade", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).YieldingAny("a spade", typeof(Cathedral.Game.Narrative.World.Items.Shovel), typeof(Cathedral.Game.Narrative.World.Items.GraveSpade)));
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Graves);
     public override string[] Organs        => new[] { "hands", "spleen" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

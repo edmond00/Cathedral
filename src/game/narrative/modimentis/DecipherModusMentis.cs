@@ -13,7 +13,11 @@ public class DecipherModusMentis : ModusMentis
     public override string MenuDescription =>
         "Takes an unclear text one uncertain syllable at a time, weighing likely letters and comparing hands. Trusts the laboured reading over the confident one, and holds a sign in doubt until later in the line settles it.";
     public override string SkillMeans       => "the deciphering of damaged, coded or obscure writing";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("make out an old writing").YieldingKind(ItemKind.Writing),
+        WillTarget.ToAny("take a writing away to read", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).YieldingKind(ItemKind.Writing));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.LibraryArea) }, new[] { typeof(Cathedral.Game.Scene.ArchiveArea) }, new[] { typeof(Cathedral.Game.Scene.ScriptoriumArea) }, new[] { typeof(Cathedral.Game.Scene.RuinArea) });
     public override string[] Organs        => new[] { "eyes", "cerebrum" };
 
     /// <summary>Stands on letters, number or institutions.</summary>

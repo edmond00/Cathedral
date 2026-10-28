@@ -13,7 +13,11 @@ public class TanningModusMentis : ModusMentis
     public override string MenuDescription =>
         "Turns a raw hide into leather: scrapes it clean of flesh and hair, limes it, and steeps it for months in pits of oak bark, judging by touch when it is done.";
     public override string SkillMeans       => "the making of leather from hides";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.ToAny("take a hide for the pit", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Hide),
+        WillTarget.ToAny("strip tan bark", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).Yielding<Cathedral.Game.Narrative.World.Items.TanBark>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.TanneryArea) }, new[] { typeof(Cathedral.Game.Scene.ButcheryArea) }, new[] { typeof(Cathedral.Game.Scene.ShedArea) });
     public override string[] Organs        => new[] { "arms", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

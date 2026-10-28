@@ -252,6 +252,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("                                     with these humors, e.g. voluptas or hepar=juvenescence,spleen=laetitia");
     Console.WriteLine("  --mm-audit                         Print the modus-mentis content audit (hard-rule violations, coverage, soft stats) and exit");
     Console.WriteLine("  --will-audit [out.json]            Plan every will across the location kinds and its own places: coverage, related coverage, breadth");
+    Console.WriteLine("  --will-trace <will-id> [location]  Why a will has or lacks something to do: its plans and every action its verbs are offered on");
     Console.WriteLine("  --verb-audit                       Print the verb-coverage audit (verbs per observable vs targets, dead verbs,");
     Console.WriteLine("                                     unresolvable modus-mentis and tool ids, landmark counts) and exit");
     Console.WriteLine("  --outcome-audit                    Print the outcome catalogue (every consequence, who produces it, what produces nothing) and exit");
@@ -590,6 +591,12 @@ if (args.Length >= 1 && args[0] == "--crime-audit")
 if (args.Length >= 1 && args[0] == "--will-audit")
 {
     Console.WriteLine(Cathedral.Game.Narrative.WillCoverageAudit.BuildReport(args.Length >= 2 && !args[1].StartsWith('-') ? args[1] : null));
+    return;
+}
+
+if (args.Length >= 2 && args[0] == "--will-trace")
+{
+    Console.WriteLine(Cathedral.Game.Narrative.WillCoverageAudit.Trace(args[1], args.Length >= 3 && !args[2].StartsWith('-') ? args[2] : null));
     return;
 }
 

@@ -13,7 +13,12 @@ public class HuntModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads sign and cover for small game, setting snares and closing the distance on a quarry. Keeps the senses tuned to track and trap, favouring patience over noise.";
     public override string SkillMeans       => "the trapping and stalking of small game";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<Cathedral.Game.Scene.Verbs.TrackVerb>("follow game sign"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.AttackVerb>("bring down game").OnBeast(),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy a hunting bow").Selling(ItemKind.Bow));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Woodland, Places.Grassland);
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override bool ActsDiscretely => true;

@@ -13,7 +13,11 @@ public class DairycraftModusMentis : ModusMentis
     public override string MenuDescription =>
         "Attends to the turning of milk into butter and cheese, tracking warmth, souring, and the press. Sets the hands to milking and churning, and reads curd and cream for the moment each is ready.";
     public override string SkillMeans       => "the milking, churning and pressing of dairy";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.ToAny("take milk from the dairy", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Dairy),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy milk to turn").Selling(ItemKind.Dairy));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.DairyArea) }, new[] { typeof(Cathedral.Game.Scene.ByreArea) }, new[] { typeof(Cathedral.Game.Scene.PantryArea) });
     public override string[] Organs        => new[] { "hands", "arms" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

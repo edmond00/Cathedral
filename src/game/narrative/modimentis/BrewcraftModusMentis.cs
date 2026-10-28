@@ -13,7 +13,12 @@ public class BrewcraftModusMentis : ModusMentis
     public override string MenuDescription =>
         "Follows the making of ale through malt, mash, and fermentation, tracking warmth and time. Reads smell and taste to judge a brew's progress and to catch the moment it turns.";
     public override string SkillMeans       => "the brewing and fermenting of ale";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.ToAny("pick hops for the brew", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).Yielding<Cathedral.Game.Narrative.World.Items.Hops>(),
+        WillTarget.ToAny("take up grain for malt", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Grain),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy malt grain").Selling(ItemKind.Grain));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Fields, Places.Taverns, new[] { typeof(Cathedral.Game.Scene.BrewhouseArea) });
     public override string[] Organs        => new[] { "nose", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

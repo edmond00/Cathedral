@@ -14,7 +14,11 @@ public class IconographyModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads carved and painted holy images: who is depicted, what the attributes in their hands mean, and what a posture or gesture was meant to promise or threaten. Notices when an image has been defaced, recut or quietly rededicated to something else.";
     public override string SkillMeans       => "the understanding of sacred images and symbols";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("read a holy image").YieldingKind(ItemKind.Holy),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ContemplateVerb>("dwell on a holy image").YieldingKind(ItemKind.Holy));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.ChapelArea) }, new[] { typeof(Cathedral.Game.Scene.SanctumArea) }, new[] { typeof(Cathedral.Game.Scene.CloisterArea) });
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
 
     /// <summary>Stands on letters, number or institutions.</summary>

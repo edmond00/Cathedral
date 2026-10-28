@@ -12,7 +12,9 @@ public class PaddycraftModusMentis : ModusMentis
     public override string MenuDescription =>
         "Plants and tends rice standing in water: the transplanting in rows, the opening and closing of bunds, the right depth for each month. Feels the mud through the feet and the water's warmth through the shins.";
     public override string SkillMeans       => "the growing of rice in standing water";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTarget.ToAny("cut ripe rice", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).Yielding<Cathedral.Game.Narrative.World.Items.Rice>();
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.PaddyArea) }, new[] { typeof(Cathedral.Game.Scene.SeedbedArea) }, new[] { typeof(Cathedral.Game.Scene.CanalArea) });
     public override string[] Organs        => new[] { "feet", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;

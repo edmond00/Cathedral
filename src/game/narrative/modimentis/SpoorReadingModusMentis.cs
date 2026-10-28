@@ -15,7 +15,9 @@ public class SpoorReadingModusMentis : ModusMentis
         "Reads ground and air together for the story of who passed: the depth of a print, the age of a scent, the bent grass that gives away a direction. Reasons from sign to creature, gait, burden, and intent.";
     public override string SkillMeans       => "the reading of tracks, scents and trail signs";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTargets? Will => WillTarget.To<TrackVerb>("read a trail and follow it");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<TrackVerb>("read a trail and follow it"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("read a print in the ground").On<Cathedral.Game.Scene.FootprintPointOfInterest>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wild);
     public override string[] Organs        => new[] { "snout", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

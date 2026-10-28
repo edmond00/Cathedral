@@ -12,7 +12,11 @@ public class WeaveReadingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads cloth by thread and weave: what fibre, how fine, whether it was made at home or bought, and how much it cost whoever is wearing it. Tells a person's circumstances off their sleeve without asking a question.";
     public override string SkillMeans       => "the reading of cloth by thread and weave";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("feel the weave of a cloth").YieldingKind(ItemKind.Cloth),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy good cloth").Selling(ItemKind.Cloth));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.TailoryArea) }, new[] { typeof(Cathedral.Game.Scene.LaundryArea) }, new[] { typeof(Cathedral.Game.Scene.MarketArea) });
     public override string[] Organs        => new[] { "eyes", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

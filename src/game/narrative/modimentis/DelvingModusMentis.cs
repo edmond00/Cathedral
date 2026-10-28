@@ -14,7 +14,10 @@ public class DelvingModusMentis : ModusMentis
         "Breaks rock where it should break: reading the grain, setting the wedge, and swinging so the stone does the work rather than the arm. Underground it is also the difference between a face that stands and one that comes down.";
     public override string SkillMeans       => "the swing and wedge that part stone";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTargets? Will => WillTarget.To<MineVerb>("mine the rock");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<MineVerb>("mine the rock"),
+        WillTarget.ToAny("pick up ore", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Ore),
+        WillTarget.ToAny("lay hands on a pick", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).Yielding<Cathedral.Game.Narrative.World.Items.Pick>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Underground, Places.Heights);
     public override string[] Organs        => new[] { "arms", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

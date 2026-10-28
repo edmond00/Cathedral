@@ -82,8 +82,53 @@ public static class ActionPathPlanner
 
     private static readonly Dictionary<(Scene, Guid, TimePeriod, string, string), ActionPath?> _cache = new();
 
+    /// <summary>
+    /// Each verb's actions at a standing, element by element in the view's order, kept as long as the
+    /// plans are. Most of a search is the same transit verbs expanded at the same standings for every
+    /// will and every replan through an object; scene state changes only where <see cref="Forget"/>
+    /// runs, so an expansion is as good as the plan it served.
+    /// </summary>
+    private static readonly Dictionary<(Scene, Guid, TimePeriod, PartyMember, Verb), IReadOnlyList<VerbAction>[]> _expanded = new();
+    private static readonly Dictionary<(Scene, Guid, TimePeriod), IReadOnlyList<Element>> _elements = new();
+
+    /// <summary>Where each kept transit action leaves the body — the same action object, so read once.</summary>
+    private static readonly Dictionary<VerbAction, List<(Area Area, TimePeriod When)>> _destinations = new(ReferenceEqualityComparer.Instance);
+
     /// <summary>Drops every remembered path. Called when a narration phase begins, and whenever the scene changes under a plan.</summary>
-    public static void Forget() => _cache.Clear();
+    public static void Forget()
+    {
+        _cache.Clear();
+        _expanded.Clear();
+        _elements.Clear();
+        _destinations.Clear();
+    }
+
+    /// <summary>
+    /// The actions <paramref name="verbs"/> offer from <paramref name="here"/>, in exactly the order
+    /// <see cref="Scene.View(PoV, PartyMember?, IReadOnlyList{Verb})"/> would list them — element by
+    /// element, and within one element verb by verb — so the first goal met is the one it always was.
+    /// </summary>
+    private static IEnumerable<VerbAction> Offered(Scene scene, PoV here, PartyMember actor, IReadOnlyList<Verb> verbs)
+    {
+        var at = (scene, here.Where.Id, here.When);
+        if (!_elements.TryGetValue(at, out var elements)) _elements[at] = elements = scene.ViewElements(here);
+        var perVerb = new IReadOnlyList<VerbAction>[verbs.Count][];
+        for (int v = 0; v < verbs.Count; v++)
+        {
+            var key = (scene, here.Where.Id, here.When, actor, verbs[v]);
+            if (!_expanded.TryGetValue(key, out var lists))
+            {
+                lists = new IReadOnlyList<VerbAction>[elements.Count];
+                for (int e = 0; e < elements.Count; e++)
+                    lists[e] = verbs[v].ExpandViews(scene, here, elements[e], actor).ToList();
+                _expanded[key] = lists;
+            }
+            perVerb[v] = lists;
+        }
+        for (int e = 0; e < elements.Count; e++)
+            for (int v = 0; v < verbs.Count; v++)
+                foreach (var action in perVerb[v][e]) yield return action;
+    }
 
     /// <summary>
     /// The shortest path from <paramref name="pov"/> to an action <paramref name="will"/> matches, or
@@ -116,7 +161,7 @@ public static class ActionPathPlanner
 
         // The implements some goal verb needs and the body does not hold. Empty: no detour for one.
         var wanted = goalVerbs.Where(v => v.RequiresTool && !Holds(v, obtained))
-                              .SelectMany(v => v.ReferenceToolIds).ToHashSet();
+                              .SelectMany(ToolIdsFor).ToHashSet();
 
         // A transit verb that itself needs an implement is walked only with one already in hand.
         var transit = scene.Verbs.Where(v => TransitVerbTypes.Any(t => t.IsInstanceOfType(v))
@@ -145,8 +190,7 @@ public static class ActionPathPlanner
             // in which a grab or a purchase is a step on the way.
             var verbs = wanted.Count > 0 && s.Tool == null ? scene.Verbs : narrow;
 
-            foreach (var entry in scene.View(here, actor, verbs).Entries)
-            foreach (var action in entry.ApplicableVerbs)
+            foreach (var action in Offered(scene, here, actor, verbs))
             {
                 if (will.Matches(action) && (!action.Verb.RequiresTool || Holds(action.Verb, s.Tool)))
                 {
@@ -160,7 +204,9 @@ public static class ActionPathPlanner
 
                 if (!TransitVerbTypes.Any(t => t.IsInstanceOfType(action.Verb))) continue;
 
-                foreach (var (area, when) in Destinations(scene, here, actor, action))
+                if (!_destinations.TryGetValue(action, out var ends))
+                    _destinations[action] = ends = Destinations(scene, here, actor, action).ToList();
+                foreach (var (area, when) in ends)
                     Push(s with { Area = area.Id, When = when }, action);
             }
 
@@ -251,7 +297,7 @@ public static class ActionPathPlanner
         if (path.ToolStep == 0)
         {
             var wanted = scene.Verbs.Where(v => will.Wants(v) && v.RequiresTool && !Holds(v))
-                                    .SelectMany(v => v.ReferenceToolIds).ToHashSet();
+                                    .SelectMany(ToolIdsFor).ToHashSet();
             if (actions.FirstOrDefault(a => Obtains(a, wanted) != null) is { } obtain)
                 return path with { Steps = path.Steps.Skip(1).Prepend(new PathStep(obtain)).ToList() };
         }
@@ -308,7 +354,7 @@ public static class ActionPathPlanner
         if (will.Matches(action)) return new ActionPath(new[] { new PathStep(action) }, -1, will.TargetOf(action));
 
         var wanted = scene.Verbs.Where(v => will.Wants(v) && v.RequiresTool && !Holds(v))
-                                .SelectMany(v => v.ReferenceToolIds).ToHashSet();
+                                .SelectMany(ToolIdsFor).ToHashSet();
         if (wanted.Count > 0 && Obtains(action, wanted) is { } tool)
             return Plan(scene, pov, actor, will, tool) is { } armed
                 ? new ActionPath(armed.Steps.Prepend(new PathStep(action)).ToList(), 0, armed.Target)
@@ -324,6 +370,22 @@ public static class ActionPathPlanner
                                       rest.ToolStep < 0 ? -1 : rest.ToolStep + 1, rest.Target);
         return best;
     }
+
+    /// <summary>
+    /// Every implement that would let <paramref name="verb"/> be done: its reference tools, and every
+    /// item made for it (<see cref="Item.MadeForVerbIds"/>) — a ring of keys opens a lock as surely as a
+    /// pick does, and a will to unlock should go for the keys hanging by the door.
+    /// </summary>
+    private static IEnumerable<string> ToolIdsFor(Verb verb)
+    {
+        if (!_toolIds.TryGetValue(verb.VerbId, out var ids))
+            _toolIds[verb.VerbId] = ids = verb.ReferenceToolIds
+                .Concat(ItemRegistry.Instance.All.Where(i => i.MadeForVerbIds.Contains(verb.VerbId)).Select(i => i.ItemId))
+                .Distinct().ToList();
+        return ids;
+    }
+
+    private static readonly Dictionary<string, List<string>> _toolIds = new();
 
     /// <summary>
     /// The implement <paramref name="action"/> would put in the pack, when it is one of

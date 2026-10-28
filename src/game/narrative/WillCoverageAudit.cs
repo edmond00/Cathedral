@@ -40,10 +40,14 @@ public static class WillCoverageAudit
     private static readonly TimePeriod[] Hours = { TimePeriod.Morning, TimePeriod.Night };
 
     /// <summary>
-    /// The share of related places a will must find something to do in, and the share of all
-    /// location kinds above which it is no longer a will. See the audits skill for why these two.
+    /// <see cref="MinRelated"/>: the share of its own places a will is expected to find something to do
+    /// in — below it the will is marked (!), the idle will of the playtests. <see cref="MinRelatedOverall"/>:
+    /// the same over every measured will, below which the audit fails (✗). It read 64.5% over 114 wills of
+    /// one target, and 64% over 159 once 45 crafts joined them with several targets (the 114 alone: 69%). <see cref="MaxBreadth"/>: the share of location kinds above which a will with several
+    /// targets fails, since added targets are exactly how a desire grows into a general mind. A will of one
+    /// target whose act exists everywhere (to sit, to smell) was the design before; it is noted, not failed.
     /// </summary>
-    public const double MinRelated = 0.60, MaxBreadth = 0.75;
+    public const double MinRelated = 0.60, MinRelatedOverall = 0.60, MaxBreadth = 0.75;
 
     /// <summary>One will's numbers.</summary>
     public sealed class Row
@@ -142,7 +146,8 @@ public static class WillCoverageAudit
         sb.AppendLine($"  targets per will               {Mean(rows.Values.Select(r => (double)r.TargetCount)):0.00}");
         sb.AppendLine($"  coverage (will, start)         {Pct(planned, starts)}   ({planned} of {starts})");
         sb.AppendLine($"  coverage (will, location kind) {Pct(pairsPlanned, pairs)}   ({pairsPlanned} of {pairs})");
-        sb.AppendLine($"  related coverage               {Pct(rPlanned, rStarts)}   ({rPlanned} of {rStarts})");
+        bool relatedOk = rStarts > 0 && (double)rPlanned / rStarts >= MinRelatedOverall;
+        sb.AppendLine($"{(relatedOk ? "✓" : "✗")} related coverage               {Pct(rPlanned, rStarts)}   ({rPlanned} of {rStarts}, held to ≥{100 * MinRelatedOverall:0}%)");
         var withPlaces = measured.Where(r => r.RelatedStarts > 0).ToList();
         sb.AppendLine($"  wills ≥{100 * MinRelated:0}% in their places      {withPlaces.Count(r => r.Related >= MinRelated)} of {withPlaces.Count}");
         sb.AppendLine($"  mean plan length               {Mean(measured.Where(r => r.Planned > 0).Select(r => r.MeanSteps)):0.00} steps");
@@ -160,13 +165,15 @@ public static class WillCoverageAudit
             bool noPlaces = row.Places.Length == 0;
             bool narrow   = row.RelatedStarts > 0 && row.Related < MinRelated;
             bool broad    = row.Breadth > MaxBreadth;
-            string mark   = noPlaces || broad ? "✗" : narrow ? "!" : "✓";
+            bool grown    = broad && row.TargetCount > 1;
+            string mark   = noPlaces || grown ? "✗" : narrow ? "!" : broad ? "~" : "✓";
             sb.AppendLine($"  {mark} {row.Id,-22} {row.TargetCount,4} {100 * row.Coverage,5:0}% {row.MeanSteps,5:0.0} "
                         + $"{(row.RelatedStarts == 0 ? "  none" : $"{100 * row.Related,6:0}%")} {100 * row.Breadth,6:0}%  "
                         + (noPlaces ? "declares no places it belongs in" : string.Join(",", row.Places.Select(p => p.Replace("Area", ""))))
-                        + (broad ? $"  — something to do in more than {100 * MaxBreadth:0}% of location kinds: no longer a will" : ""));
+                        + (grown ? $"  — its targets reach more than {100 * MaxBreadth:0}% of location kinds: no longer a will" : ""));
         }
-        sb.AppendLine("  (! below the related target: a will that idles where it ought not)");
+        sb.AppendLine($"  (! under {100 * MinRelated:0}% in its own places: a will that idles where it ought not;");
+        sb.AppendLine($"   ~ one target whose act is offered nearly everywhere — broad by nature, not by its targets)");
         sb.AppendLine();
 
         sb.AppendLine("--- PER LOCATION KIND (share of wills with something to do) ---");
@@ -198,6 +205,44 @@ public static class WillCoverageAudit
             sb.AppendLine();
             sb.AppendLine($"wrote {jsonPath}");
         }
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// <c>--will-trace &lt;will-id&gt; [location label]</c>: why a will has, or has not, something to do —
+    /// per sampled scene, every element whose actions any target's verb is offered on, whether it matches,
+    /// and the plan from the entry and from the will's first place. The diagnosis behind a low line in
+    /// <see cref="BuildReport"/>.
+    /// </summary>
+    public static string Trace(string willId, string? label)
+    {
+        var will = ModusMentisRegistry.Instance.GetAllModiMentis().FirstOrDefault(m => m.ModusMentisId == willId && m.IsWill);
+        if (will == null) return $"no will '{willId}'";
+        var actor = new Protagonist();
+        var sb = new StringBuilder();
+        sb.AppendLine($"{willId} wants {will.Will!.Describe()}");
+        foreach (var (l, build, samples) in VerbAudit.Factories())
+        {
+            if (label != null && !l.Equals(label, StringComparison.OrdinalIgnoreCase)) continue;
+            for (int id = 1; id <= Math.Min(samples, Samples); id++)
+            {
+                Cathedral.Game.Scene.Scene scene;
+                try { scene = build(id); } catch { continue; }
+                ActionPathPlanner.Forget();
+                var entry = SceneSyntheticGraphFactory.ResolveEntryArea(scene) ?? scene.AllAreas.First();
+                var related = scene.AllAreas.FirstOrDefault(a => will.WillPlaces.Any(t => t.IsInstanceOfType(a)));
+                var p1 = PlanFor(scene, new PoV(entry, TimePeriod.Morning), actor, will);
+                var p2 = related == null ? null : PlanFor(scene, new PoV(related, TimePeriod.Morning), actor, will);
+                sb.AppendLine($"── {l} #{id}: from {entry.DisplayName}: {(p1 == null ? "none" : string.Join(" | ", p1.Steps.Select(x => x.Verbatim)))}");
+                sb.AppendLine($"   from {related?.DisplayName ?? "(no place of its)"}: {(p2 == null ? "none" : string.Join(" | ", p2.Steps.Select(x => x.Verbatim)))}");
+                var goalVerbs = scene.Verbs.Where(will.Will.Wants).ToList();
+                foreach (var area in scene.AllAreas)
+                foreach (var e in scene.View(new PoV(area, TimePeriod.Morning), actor, goalVerbs).Entries)
+                foreach (var a in e.ApplicableVerbs)
+                    sb.AppendLine($"   {area.DisplayName}: {a.Verb.VerbId} {a.Target?.DisplayName} — {(will.Will.Matches(a) ? "MATCHES" : "no")}");
+            }
+        }
+        ActionPathPlanner.Forget();
         return sb.ToString();
     }
 

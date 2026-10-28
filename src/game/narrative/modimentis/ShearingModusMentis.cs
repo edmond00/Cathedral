@@ -12,7 +12,11 @@ public class ShearingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Takes a fleece off a sheep in one piece with hand shears: sets the sheep on its rump, opens the belly, and works round in long blows without nicking the skin.";
     public override string SkillMeans       => "the taking of a fleece in one piece";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.ToAny("take a fleece", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).Yielding<Cathedral.Game.Narrative.World.Items.Fleece>(),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.GrabVerb>("take up the shears").Yielding<Cathedral.Game.Narrative.Items.WoolShears>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.ShearingArea) }, new[] { typeof(Cathedral.Game.Scene.FoldArea) }, new[] { typeof(Cathedral.Game.Scene.LambingArea) });
     public override string[] Organs        => new[] { "hands", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;

@@ -70,7 +70,9 @@ public sealed class KeyRing : Item
     public override string ItemId      => "key_ring";
     public override string DisplayName => "Ring of Keys";
     public override string Description => "A heavy iron ring of a dozen keys, each one different";
-    public override ItemCategory Category => ItemCategory.Crafting;
+    // Keys open locks: the one act they are made for, so the tool gate passes them without asking.
+    public override ItemCategory Category => ItemCategory.Tool;
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "unlock_door" };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Ironwork };

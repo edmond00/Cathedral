@@ -12,7 +12,11 @@ public class FletchingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Makes arrows: straightens shafts over heat, sets three feathers at an even twist, binds and glues them, fits the head true. Knows a badly fletched arrow will wander off any good bow.";
     public override string SkillMeans       => "the making of arrows";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.ToAny("pick up feathers for the flights", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Feather),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy a bow to fletch for").Selling(ItemKind.Bow));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Woodland, new[] { typeof(Cathedral.Game.Scene.WorkshopArea) }, new[] { typeof(Cathedral.Game.Scene.CoopArea) });
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;

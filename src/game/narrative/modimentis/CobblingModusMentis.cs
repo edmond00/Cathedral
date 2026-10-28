@@ -13,7 +13,11 @@ public class CobblingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Makes and mends shoes: cuts the upper from the hide, draws it over the last, stitches welt to sole with awl and waxed thread. Reads a worn heel for how its owner walks.";
     public override string SkillMeans       => "the making and mending of shoes";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<Cathedral.Game.Scene.Verbs.GrabVerb>("take up a hide for leather").YieldingKind(ItemKind.Hide),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy leather").Selling(ItemKind.Hide));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.CobbleryArea) }, new[] { typeof(Cathedral.Game.Scene.TanneryArea) }, new[] { typeof(Cathedral.Game.Scene.MarketArea) });
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

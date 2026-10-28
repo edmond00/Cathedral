@@ -107,6 +107,15 @@ public class VillageSceneFactory : SettledSceneFactory
                     moods: new[] { "humped", "quiet", "green", "settled" }
                 ) { Senses = SensoryProfile.Beautiful,
                     VerbModiMentis = new Dictionary<string, string> { ["contemplate"] = "elegy" } });
+                // The sexton's spade is left by the wall: without one a grave could only be dug by
+                // somebody who arrived carrying a shovel, and every will to dig one idled here.
+                lane.PointsOfInterest.Add(new RackPointOfInterest(
+                    displayName: "Sexton's Shovel",
+                    descriptions: new() { "A shovel leant against the churchyard wall, the turf still on its blade" },
+                    items: new() { new ItemElement(new Narrative.World.Items.Shovel()) },
+                    moods: new[] { "leaning", "earthy", "plain" }
+                ) { Senses = SensoryProfile.Examinable,
+                    VerbModiMentis = new Dictionary<string, string> { ["examine"] = "sextonry" } });
             }
 
             outdoorAreas.Add(lane);

@@ -12,7 +12,11 @@ public class TapsteringModusMentis : ModusMentis
     public override string MenuDescription =>
         "Serves drink across a counter: draws the ale clean, keeps the tally of who owes, hears every conversation, and knows the moment to stop serving a man before the trouble starts.";
     public override string SkillMeans       => "the serving of drink";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("draw a drink across the counter").Selling(ItemKind.Liquor),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.HearGossipVerb>("hear what is said over the counter"));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.AlehouseArea) }, new[] { typeof(Cathedral.Game.Scene.TeahouseArea) });
     public override string[] Organs        => new[] { "hands", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

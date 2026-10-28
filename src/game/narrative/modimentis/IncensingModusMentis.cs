@@ -12,7 +12,11 @@ public class IncensingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Swings the censer through the rite: the coal kept alight, the grains dropped on at the right moment, the smoke sent to the altar, the book, the people. Knows each resin by its smoke.";
     public override string SkillMeans       => "the swinging of the censer and the knowledge of resins";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<Cathedral.Game.Scene.Verbs.GrabVerb>("take up incense and censer").YieldingKind(ItemKind.Holy),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.SingAlongVerb>("sing through the rite"));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.ChapelArea) }, new[] { typeof(Cathedral.Game.Scene.SanctumArea) });
     public override string[] Organs        => new[] { "nose", "arms" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

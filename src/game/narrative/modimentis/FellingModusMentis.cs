@@ -14,7 +14,10 @@ public class FellingModusMentis : ModusMentis
         "Drops a standing tree deliberately: reads the lean, cuts the face, judges the hinge, and gets clear. Every part of it is about where the tree goes and where the body is when it goes there.";
     public override string SkillMeans       => "the bringing down of a standing tree";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTargets? Will => WillTarget.To<CutWoodVerb>("fell a tree").On<Scene.TreePointOfInterest>();
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<CutWoodVerb>("fell a tree").On<Scene.TreePointOfInterest>(),
+        WillTarget.ToAny("take up an axe", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).YieldingKind(ItemKind.Axe),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy an axe").Selling(ItemKind.Axe));
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Woodland);
     public override string[] Organs        => new[] { "arms", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

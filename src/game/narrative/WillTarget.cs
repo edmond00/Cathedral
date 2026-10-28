@@ -90,6 +90,28 @@ public sealed class WillTarget
     }
 
     /// <summary>
+    /// Narrows the target to somebody hostile: a kind that is an enemy on sight (a wolf, a bear), or a
+    /// person who already counts somebody an enemy. A fighting will wants a fight, not a crime: struck
+    /// at in a city street, a peaceful passer-by was a refusal waiting at the click (a witness, the
+    /// watch), and the will idled in every town for want of anybody else.
+    /// </summary>
+    public WillTarget OnHostile()
+        => With(e => e is SceneNpc { Entity: Cathedral.Game.Npc.NpcEntity npc }
+                     && (npc.Archetype.DefaultEnemy || npc.AffinityTable.HasEnemies), "on somebody hostile");
+
+    /// <summary>
+    /// Narrows the target to a beast: an animal of some size, wild or kept — never a person, and never
+    /// the small life that is caught rather than hunted. What a hunter stalks.
+    /// </summary>
+    public WillTarget OnBeast()
+        => With(e => e is SceneNpc { Entity: var entity } && entity switch
+            {
+                Cathedral.Game.Npc.NpcEntity npc                  => !npc.CanSpeak,
+                Cathedral.Game.Npc.ShallowNpcEntity { Archetype: Cathedral.Game.Npc.ShallowNpcArchetype { IsTiny: false } } => true,
+                _                                                 => false,
+            }, "on a beast");
+
+    /// <summary>
     /// Narrows the target to what holds or is an item of <paramref name="kind"/> — a family that cuts
     /// across classes (<see cref="ItemKind"/>): every mushroom, every blade, every holy thing.
     /// </summary>

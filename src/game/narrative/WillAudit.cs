@@ -34,8 +34,8 @@ namespace Cathedral.Game.Narrative;
 /// </summary>
 public static class WillAudit
 {
-    public const double MinShare = 0.25, MaxShare = 0.33;
-    public const double MinLearned = 0.20, MaxLearned = 0.36;
+    public const double MinShare = 0.36, MaxShare = 0.44;
+    public const double MinLearned = 0.28, MaxLearned = 0.42;
 
     /// <summary>
     /// Up to twelve rounds of samples, at a day hour and at night: what a will needs is that its action
@@ -88,7 +88,9 @@ public static class WillAudit
         // What the locations offer, sampled in rounds — the first build of every factory, then the
         // second of every factory, and so on — until every will has found its target or the samples
         // run out. A rare target (water to fish) costs rounds only while it is still missing.
-        var hits     = wills.SelectMany(m => m.Will!).ToDictionary(t => t, _ => 0);
+        // A modus mentis builds its targets afresh on every read, so they are read once here and kept.
+        var targetsOf = wills.ToDictionary(m => m, m => m.Will!);
+        var hits     = targetsOf.Values.SelectMany(t => t).ToDictionary(t => t, _ => 0);
         var taught   = new Dictionary<string, int>();
         var movers   = new HashSet<Type>();
         var checkedT = new HashSet<Type>();
@@ -139,9 +141,10 @@ public static class WillAudit
         foreach (var will in wills)
         {
             var fns = string.Join("+", will.Functions);
-            for (int i = 0; i < will.Will!.Count; i++)
+            var targets = targetsOf[will];
+            for (int i = 0; i < targets.Count; i++)
             {
-                var target = will.Will[i];
+                var target = targets[i];
                 int n      = hits[target];
                 var mark   = n > 0 ? "✓" : PlayGated(target) ? "·" : "✗";
                 sb.AppendLine((i == 0 ? $"  {mark} {will.ModusMentisId,-24} {fns,-22} wants " : $"  {mark} {"",-24} {"",-22}    or ")

@@ -14,7 +14,9 @@ public class SimplingModusMentis : ModusMentis
         "Gathers herbs properly: the right plant, at the right season, the part that carries the virtue, cut so the plant survives. Half of it is knowing what not to take, and where not to take it from.";
     public override string SkillMeans       => "the gathering of herbs at their season";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTargets? Will => WillTarget.To<GatherVerb>("gather simples in their season").YieldingAny("herbs", typeof(World.Items.HerbItem), typeof(Items.Herb));
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<Cathedral.Game.Scene.Verbs.GatherVerb>("gather simples in their season").YieldingKind(ItemKind.Herb),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.GatherVerb>("pick a flower for its virtue").YieldingKind(ItemKind.Flower));
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Woodland, Places.Grassland, Places.Fields);
     public override string[] Organs        => new[] { "hands", "nose" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
