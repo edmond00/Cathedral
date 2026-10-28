@@ -108,6 +108,18 @@ public sealed class HumorMenuRenderer
         return true;
     }
 
+    /// <summary>
+    /// The humor symbol at (x, y), named for <c>point element</c>: <c>humor:&lt;queue&gt;:&lt;index&gt;</c>,
+    /// index 0 being the newest (where food and drink enter). Null off every symbol.
+    /// </summary>
+    public string? CliControlIdAt(int screenX, int screenY)
+    {
+        int artX = screenX - ArtOffsetX, artY = screenY - ArtOffsetY;
+        if (artX < 0 || artX >= _artData.Width || artY < 0 || artY >= _artData.Height) return null;
+        var (organ, idx) = HitTestQueue(artX, artY);
+        return organ == null || idx < 0 ? null : $"humor:{organ}:{idx}";
+    }
+
     /// <summary>Clear hover state.</summary>
     public void ClearHover()
     {

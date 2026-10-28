@@ -932,6 +932,7 @@ public class ManagementMenuRenderer
         {
             ManagementTab.Inventory => _inventoryMenu.CliControlIdAt(x, y),
             ManagementTab.Chorography => _mapsPanel.CliControlIdAt(x, y),
+            ManagementTab.Humors => _humorMenu.CliControlIdAt(x, y),
             _ => null,
         };
     }

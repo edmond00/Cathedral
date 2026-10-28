@@ -370,13 +370,20 @@ wait 5
 hold 3
 clip end inventory
 
-# The humors: the bread's humors have entered the paunch at the spiral's mouth.
+# The humors: the bread's humors have entered the paunch at the spiral's mouth (index 0 is the
+# newest). Pointing at it shows what it is and what it does to a die.
 mark humors
 clip humors
 click tab humors
 wait 10
 cursor rest
-hold 8
+hold 5
+point element humor:paunch:0
+hold 6
+point element humor:paunch:1
+hold 4
+cursor rest
+hold 3
 clip end humors
 
 click back
