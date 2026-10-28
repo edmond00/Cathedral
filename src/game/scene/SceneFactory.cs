@@ -323,6 +323,14 @@ public abstract class SceneFactory
     private static Random PathRandom(int locationId) => new(unchecked(locationId * 0x2545F491 + 0x7A11));
 
     /// <summary>
+    /// The generator a factory draws optional extras from — a farm's dovecote, its woodlot — when they
+    /// were added to a factory whose build generator already decides who lives there. Drawn from the
+    /// build generator they would shift every person, room and item after them, so a location id that
+    /// tests and players know would become a different place for the sake of a pond.
+    /// </summary>
+    protected static Random ExtrasRandom(int locationId) => new(unchecked(locationId * 0x5BD1E995 + 0x3C1));
+
+    /// <summary>
     /// Registers an element and all its children (section→areas→PoIs→items) in a scene.
     /// </summary>
     protected void RegisterAll(Scene scene, Section section)
