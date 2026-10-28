@@ -13,7 +13,10 @@ public enum Instrument
     Organ,
     /// <summary>Stopped flute pipes, 8' alone: the small positive organ, soft and hollow.</summary>
     OrganFlute,
-    /// <summary>Choir "aah": detuned saws through vowel formants, each voice its own vibrato.</summary>
+    /// <summary>
+    /// Choir "aah": six singers in two sections, each with a breathy glottal source, their own tuning,
+    /// vibrato and entry, through the sections' own vocal tracts. See <see cref="ChoirVoice"/>.
+    /// </summary>
     Choir,
     /// <summary>Choir "ooh": the same choir, darker vowel, softer.</summary>
     ChoirOoh,
@@ -132,8 +135,8 @@ internal abstract class Voice
         [Instrument.Bell] = 2.214f,
         [Instrument.Bodhran] = 4.035f,
         [Instrument.Bourdon] = 2.830f,
-        [Instrument.Choir] = 2.528f,
-        [Instrument.ChoirOoh] = 1.616f,
+        [Instrument.Choir] = 5.179f,
+        [Instrument.ChoirOoh] = 2.465f,
         [Instrument.Cymbal] = 13.148f,
         [Instrument.DarkPad] = 3.185f,
         [Instrument.Distortion] = 2.338f,
@@ -151,7 +154,7 @@ internal abstract class Voice
         [Instrument.Recorder] = 0.994f,
         [Instrument.Snare] = 3.265f,
         [Instrument.SquareLead] = 3.268f,
-        [Instrument.Staccato] = 5.723f,
+        [Instrument.Staccato] = 5.722f,
         [Instrument.Strings] = 1.604f,
         [Instrument.Timpani] = 1.346f,
         [Instrument.WarDrum] = 2.086f,
@@ -254,71 +257,144 @@ internal sealed class OrganVoice : Voice
     }
 }
 
+/// <summary>
+/// A choir: six singers in two sections, not one voice with a chorus. Each singer has a glottal
+/// source (falling faster than a saw), its own tuning, wander, vibrato and loudness, a scoop up
+/// into the note and a staggered entry; each section has its own vocal tract (four formants, the
+/// second a little shorter), and the vowel drifts as a held vowel does. Breath, pulsing with the
+/// voice's own cycle and strongest at the onset, goes through the same tract, so it is the
+/// vowel's breath. "Ooh" is the closed vowel, darker and softer.
+/// </summary>
 internal sealed class ChoirVoice : Voice
 {
+    private const int Singers = 6;
+    private static readonly Wavetable Glottal = new(h => MathF.Pow(h, -1.3f));
     private readonly bool _ooh;
     private float[] _t = Array.Empty<float>();
-    private readonly float[] _ph = new float[3];
-    private readonly float[] _inc = new float[3];
-    private readonly float[] _vibPh = new float[3];
-    private readonly float[] _vibRate = new float[3];
-    private Svf _f1, _f2, _f3, _body, _breath;
-    private float _g1, _g2, _g3, _vibDepth, _age;
-    private Drift _drift;
+    private readonly float[] _ph = new float[Singers], _inc = new float[Singers], _vibPh = new float[Singers],
+        _vibRate = new float[Singers], _vibDepth = new float[Singers], _vibOnset = new float[Singers],
+        _entry = new float[Singers], _scoop = new float[Singers], _amp = new float[Singers], _ampTarget = new float[Singers];
+    private readonly Drift[] _drift = new Drift[Singers];
+    private readonly Svf[] _ta = new Svf[4], _tb = new Svf[4];
+    private Svf _chest, _air;
+    private float _chestGain;
+    private readonly float[] _fHz = new float[4], _q = new float[4], _g = new float[4];
+    private readonly float[] _step = new float[Singers], _gain = new float[Singers];
+    private float _age, _vowelPh, _vowelRate, _breath;
+    private int _count;
 
     public ChoirVoice(bool ooh) => _ooh = ooh;
 
-    protected override void Start(float hz, float velocity)
-    {
-        _t = Wavetable.SoftSaw.For(hz);
-        float[] det = { -9f, 0f, 8f };
-        for (int k = 0; k < 3; k++)
-        {
-            _inc[k] = hz * MathF.Pow(2f, det[k] / 1200f) / Dsp.SampleRate;
-            _ph[k] = Rng.Unit();
-            _vibPh[k] = Rng.Unit() * Dsp.TwoPi;
-            _vibRate[k] = (4.6f + Rng.Unit() * 1.0f) * Dsp.TwoPi / Dsp.SampleRate;
-        }
-        // Formants blend from male to female across the range; "ooh" is a closed, darker vowel.
-        float hi = Math.Clamp((Midi - 52f) / 24f, 0f, 1f);
-        (float a, float b, float c) = _ooh
-            ? (Lerp(330, 370, hi), Lerp(800, 900, hi), Lerp(2300, 2600, hi))
-            : (Lerp(650, 800, hi), Lerp(1080, 1180, hi), Lerp(2600, 2900, hi));
-        _f1.Set(a, 5f); _f2.Set(b, 6f); _f3.Set(c, 8f);
-        (_g1, _g2, _g3) = _ooh ? (1.0f, 0.35f, 0.08f) : (1.0f, 0.55f, 0.18f);
-        _body.Set(_ooh ? 700f : 1100f, 0.7f);
-        _breath.Set(b, 2f);
-        Env = new Envelope(0.45f, 0.4f, 0.85f, 1.1f);
-        _vibDepth = 0;
-    }
-
     private static float Lerp(float a, float b, float t) => a + (b - a) * t;
 
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
+    protected override void Start(float hz, float velocity)
+    {
+        _t = Glottal.For(hz);
+        for (int k = 0; k < Singers; k++)
+        {
+            float cents = (Rng.Next() + Rng.Next()) * 7f;              // a singer's own tuning, about +-10 cents
+            _inc[k] = hz * MathF.Pow(2f, cents / 1200f) / Dsp.SampleRate;
+            _ph[k] = Rng.Unit();
+            _vibPh[k] = Rng.Unit() * Dsp.TwoPi;
+            _vibRate[k] = (4.6f + Rng.Unit() * 1.2f) * Dsp.TwoPi / Dsp.SampleRate;
+            _vibDepth[k] = 22f + Rng.Unit() * 18f;
+            _vibOnset[k] = 0.25f + Rng.Unit() * 0.3f;
+            _entry[k] = k == 0 ? 0f : Rng.Unit() * 0.07f;
+            _scoop[k] = -(18f + Rng.Unit() * 22f);
+            _amp[k] = _ampTarget[k] = 0.8f + 0.2f * Rng.Unit();
+        }
+        // Formants blend from men's to women's voices across the range.
+        float hi = Math.Clamp((Midi - 52f) / 24f, 0f, 1f);
+        if (_ooh)
+        {
+            // Sung "ooh" sits nearer "oh" than the spoken vowel: a choir opens it to carry.
+            _fHz[0] = Lerp(360, 420, hi); _fHz[1] = Lerp(880, 1050, hi); _fHz[2] = Lerp(2400, 2700, hi); _fHz[3] = Lerp(3100, 3400, hi);
+            _q[0] = 3.5f; _q[1] = 4.5f; _q[2] = 8f; _q[3] = 9f;
+            _g[0] = 0.9f; _g[1] = 0.55f; _g[2] = 0.3f; _g[3] = 0.15f;
+            _chestGain = 0.45f;
+        }
+        else
+        {
+            _fHz[0] = Lerp(650, 820, hi); _fHz[1] = Lerp(1080, 1200, hi); _fHz[2] = Lerp(2600, 2900, hi); _fHz[3] = Lerp(3200, 3500, hi);
+            _q[0] = 4.5f; _q[1] = 6.5f; _q[2] = 10f; _q[3] = 9f;
+            _g[0] = 1.0f; _g[1] = 0.6f; _g[2] = 0.45f; _g[3] = 0.4f;
+            _chestGain = 0.25f;
+        }
+        // The chest under the vowel, and the air above it.
+        _chest.Set(Math.Max(hz * 1.2f, 160f), 0.8f);
+        _air.Set(5000f, 0.7f);
+        _vowelPh = Rng.Unit() * Dsp.TwoPi;
+        _vowelRate = (0.15f + 0.15f * Rng.Unit()) * Dsp.TwoPi / Dsp.SampleRate * 32f;
+        SetTracts();
+        _breath = 1f;
+        Env = _ooh ? new Envelope(0.3f, 0.4f, 0.88f, 1.0f) : new Envelope(0.22f, 0.4f, 0.88f, 0.9f);
+    }
 
+    private void SetTracts()
+    {
+        // The vowel drifts a few percent, the two sections in opposite directions; the second
+        // section's tract is a little shorter.
+        float w = 0.035f * MathF.Sin(_vowelPh);
+        for (int f = 0; f < 4; f++)
+        {
+            _ta[f].Set(_fHz[f] * (1f + w), _q[f]);
+            _tb[f].Set(_fHz[f] * 1.07f * (1f - w), _q[f]);
+        }
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
     public override void Render(float[] buf, int n)
     {
-        float vibTarget = 16f / 1200f;   // ~16 cents once settled
+        // Pitch, loudness and vowel move at a control rate (every 16 samples, half a millisecond):
+        // far finer than any vibrato, and it keeps six singers affordable.
+        const int Ctl = 16;
+        float cdt = (float)Ctl / Dsp.SampleRate;
+        float sd = MathF.Pow(Dsp.Coef(0.07f), Ctl), bd = Dsp.Coef(0.12f), ad = 1f - MathF.Pow(Dsp.Coef(0.2f), Ctl);
         for (int i = 0; i < n; i++)
         {
-            float e = Env.Next();
-            _age += 1f / Dsp.SampleRate;
-            _vibDepth += (vibTarget * Math.Clamp(_age * 1.5f - 0.2f, 0f, 1f) - _vibDepth) * 0.0005f;
-            float drift = _drift.Next(ref Rng, 6f) / 1200f;
-            float src = 0;
-            for (int k = 0; k < 3; k++)
+            if (_count % Ctl == 0)
             {
-                _vibPh[k] += _vibRate[k];
-                if (_vibPh[k] > Dsp.TwoPi) _vibPh[k] -= Dsp.TwoPi;
-                float m = 1f + (MathF.Sin(_vibPh[k]) * _vibDepth + drift) * 0.693f;
-                src += Wavetable.Read(_t, _ph[k]);
-                _ph[k] += _inc[k] * m;
-                if (_ph[k] >= 1f) _ph[k] -= 1f;
+                _age += cdt;
+                for (int k = 0; k < Singers; k++)
+                {
+                    float sung = _age - _entry[k];
+                    if (sung < 0) { _step[k] = 0; continue; }
+                    float vib = MathF.Sin(_vibPh[k]) * _vibDepth[k] * Math.Clamp((sung - _vibOnset[k]) * 2.5f, 0f, 1f);
+                    _vibPh[k] += _vibRate[k] * Ctl; if (_vibPh[k] > Dsp.TwoPi) _vibPh[k] -= Dsp.TwoPi;
+                    float cents = vib + _scoop[k] + _drift[k].Next(ref Rng, 9f);
+                    _scoop[k] *= sd;
+                    _amp[k] += (_ampTarget[k] - _amp[k]) * ad;
+                    _step[k] = _inc[k] * (1f + cents / 1200f * 0.693f);
+                    _gain[k] = _amp[k] * Math.Clamp(sung * 30f, 0f, 1f);
+                }
+                if (_count % (Ctl * 8) == 0)
+                {
+                    _vowelPh += _vowelRate * 4f; if (_vowelPh > Dsp.TwoPi) _vowelPh -= Dsp.TwoPi;
+                    SetTracts();
+                    // Each singer's loudness wanders: nobody holds a note perfectly even.
+                    int k0 = (int)(Rng.Unit() * Singers) % Singers;
+                    if (Rng.Unit() < 0.06f) _ampTarget[k0] = 0.72f + 0.28f * Rng.Unit();
+                }
             }
-            src *= 0.33f;
-            float v = _f1.BandNorm(src) * _g1 + _f2.BandNorm(src) * _g2 + _f3.BandNorm(src) * _g3 + _body.Low(src) * 0.35f;
-            v += _breath.Band(Rng.Next()) * 0.025f;
-            buf[i] += v * 1.6f * e * Amp;
+            _count++;
+            float e = Env.Next();
+            float a = 0, b = 0;
+            for (int k = 0; k < Singers; k++)
+            {
+                float g = Wavetable.Read(_t, _ph[k]) * _gain[k];
+                _ph[k] += _step[k]; if (_ph[k] >= 1f) _ph[k] -= 1f;
+                if (k < Singers / 2) a += g; else b += g;
+            }
+            // Breath, opening and closing with the first singer's glottis, strongest as the note begins.
+            float puff = 1f - MathF.Abs(2f * _ph[0] - 1f);
+            float breath = Rng.Next() * puff * (0.06f + 0.3f * _breath);
+            _breath *= bd;
+            a = a * (2f / Singers) + breath;
+            b = b * (2f / Singers) + breath * 0.8f;
+            float v = 0;
+            for (int f = 0; f < 4; f++) v += (_ta[f].BandNorm(a) + _tb[f].BandNorm(b)) * _g[f];
+            v += _chest.Low(a + b) * _chestGain + _air.High(breath) * 0.5f;
+            buf[i] += v * 0.9f * e * Amp;
         }
     }
 }
