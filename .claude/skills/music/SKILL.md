@@ -1,185 +1,216 @@
 ---
 name: music
-description: The game's procedural soundtrack — the hierarchical composer, the self-built synthesiser, the live streams and the legacy engine — and the evaluation harness in tools/music/ that measures what they produce. Use whenever touching src/audio/ (music, sound effects, stings, filters, volumes), changing how a mood sounds, adding an instrument, a progression, a form or a palette, tuning the mix, diagnosing an underrun or a CPU spike in the music, or asked how the music works or how good it is. Carries the architecture, the evaluation loop and its metrics, and the rules that keep the music endless, modal and in the genre.
+description: The game's procedural soundtrack — the hierarchical composer, the self-built synthesiser, its seven mood gauges (coldness, fear, mystery, intensity, festivity, sacred, far), the idioms they lead to (dances, chant, far music, fights, night), the live streams and the legacy engine — and the evaluation harness in tools/music/ that measures what they produce. Use whenever touching src/audio/ (music, sound effects, stings, filters, volumes), changing how a place or a mood sounds, adding a gauge, an instrument, a mode, a progression, a form, a palette or an idiom, tuning the mix, hooking the music to a new game moment, diagnosing an underrun or a CPU spike in the music, or asked how the music works or how good it is. Carries the architecture, step-by-step recipes for each kind of change, the evaluation loop, the rules and the pitfalls already met.
 ---
 
 # The music
 
 The music is **generated**: it never loops and never plays a file. It is retro dungeon synth
 (Fief, Erang, Old Tower, early Mortiis): modal, slow, layered, repetitive in the way folk tunes
-are, drenched in reverb, through a cassette. Nobody working on it by machine can hear it, so every
+are, drenched in reverb, through a cassette. Every instrument is synthesised in `src/audio/music/`:
+no samples, no SoundFont, nothing to licence. Nobody working on it by machine can hear it, so every
 judgement goes through **tools/music/**, and a change to the music is not done until the harness
-has measured it.
+has measured it. The developer listens on the published page and in `--music` mode.
+
+**`idioms.md`** (beside this file) describes each idiom in detail: festive dances, fights, chant
+and the distant choir, far music and the stranger, night, breaks, events, and how they combine.
+Read the section for whatever you are changing. `tools/music/README.md` lists the tools and metrics.
 
 ## Architecture
 
 ```
-AmbianceEngine (src/audio/AmbianceEngine.cs)     the game's only door: same API as ever
+AmbianceEngine (src/audio/AmbianceEngine.cs)     the game's only door: SetMood, SetNight, SetFilter,
+ │                                               SetActiveTrackCount, Transition, TriggerGameEvent;
+ │                                               Requested/Restore (what the game last asked)
  ├─ Music.SynthMusicEngine   default             --music-engine synth
- │   └─ MusicCore            composer + synth on one sample clock
- │       ├─ Composer         form → sections → chords → motifs/periods → notes, bar by bar
+ │   └─ MusicCore            composer + synth on one sample clock; mood glide; layer gates; Cut
+ │       ├─ Composer         piece → form → sections → chords → lines → notes, bar by bar
  │       │   Theory.cs (modes, keys, chords, progressions) · Melody.cs (motifs, rhythms, periods)
- │       │   Orchestra.cs (mood poles → instruments, tempo, metre, mix levels, hall and tape)
+ │       │   Orchestra.cs (poles → instruments, tempo, metre, part levels, trims, hall and tape)
  │       └─ Synth            voices → part buses → chorus + FDN hall → tape → limiter
- │           Voices.cs (33 instruments) · Effects.cs · Dsp.cs
+ │           Voices.cs (33 instruments, levelled) · Effects.cs · Dsp.cs
  │   └─ PcmStream            waveOut on Windows, OpenAL elsewhere (adaptive queue, underrun report)
- └─ LegacyAmbianceEngine     --music-engine legacy: the first engine, MIDI to the GS Wavetable
-                             Synth (Windows) or MeltySynth + assets/audio/soundfont.sf2
+ └─ LegacyAmbianceEngine     --music-engine legacy: the first engine, kept for comparison
+LocationMoodProfiles.cs      a mood per kind of place, sampled per location id (+ the gauge tables)
+MusicMoodState.cs            the gauges, the presets, AtNight()
 ```
 
-- **Everything is pulled.** `MusicCore.Render` applies queued commands (mood, events, filters,
-  volumes), asks the composer to plan 0.3 s ahead, starts due notes, synthesises. The live engine
-  calls it from the audio thread; `--render-music` calls it in a loop. Same code, same samples, so
-  what the harness measures is what the game plays.
+- **Everything is pulled.** `MusicCore.Render` applies queued commands, asks the composer to plan
+  0.3 s ahead, starts due notes, synthesises. The live engine calls it from the audio thread;
+  `--render-music` calls it in a loop. Same code, same samples: what the harness measures is
+  what the game plays.
 - **Determinism.** Piece *n* draws from `GameRng.For("music.piece.n")` (offline:
-  `GameRng.ForWorld(seed, …)`); the synth's own noise is a seeded xorshift (`Noise`), never
-  `System.Random`. The world theme is piece −1.
-- **Top down.** A piece picks mode (the `ModalScale` palette: no major-third mode, Dorian is the
-  warmest), tonic (moves by fourths and fifths), tempo, metre, an orchestration from four poles
-  (comfy, melancholy, dark, fear, festive, sacred, far), a form (`I A A' B A' O`…) and motifs. Each A is a period: the
-  motif, its sequence, a second idea, an open cadence; then the same phrase with a closed ending.
-  A' is a plain or ornamented restatement, B the inverted motif over contrast chords, C a breakdown
-  or chant. Layers enter one at a time across the piece.
-- **Festive pieces.** `MusicMoodState.Festivity` (per place, `LocationMoodProfiles`: taverns,
-  markets, ports, circuses, towns, villages) pulls towards the festive pole. When it leads, the
-  piece is a dance (`Dance.Jig`, 6/8 written as Meter 2 with triplet eighths, or `Dance.Reel`,
-  running eighths) played the session way: `I A A' B B' A' A' B' B'`, each part twice, the tune
-  twice round, then the next tune of the set with no outro. Fiddle, whistle (sounds an octave
-  up), pipes; lute or harp strumming boom-chick (`EmitComp`); bodhrán (`EmitBodhran`); the second
-  instrument in heterophony; cuts and rolls (flagged `Ornament` in the score so the harness reads
-  the tune under them); a lilt (`Lilt`). Still Dorian or Aeolian: festive is lively, not bright.
-  The comp and drum come in with the melody's tier there, not at Intensity 0.75. The harness
-  holds festive renders to the `poles.festive` bands in `targets.json`.
-- **Fights.** The fight filter (`Composer.Fighting`) writes the genre's martial battle music, led
-  by its drums: `Orchestra.ChooseFight` (the lead from horn, choir, strings, square lead, organ; a
-  dark pad; `Instrument.Staccato` strings and horn stabs for the ostinato; `WarDrum`, `Timpani`,
-  `Snare` with ruffs and rolls, a `Cymbal` crash only to mark a section). A quarter of fights
-  (`Orchestration.Guitar`) add a palm-muted `Distortion` doubling the strings' gallop, low in the
-  mix: the metal is a colour, not the sound. 84-100 bpm, never Locrian. `PlanFightForm`:
-  `I A A' B C A' B A'`, each section a `RiffStyle` (`EmitRiff`, `EmitKit`): Gallop (a march) under
-  the A tune, Tremolo (strings in sixteenths, pounding war drums, a snare roll) under the B,
-  HalfTime (a tolling war drum and timpani) for the tune-less breakdown. In a fight the drums'
-  part comes up and the ostinato's goes down (`PartLevel(part, fight)`). The band plays from the
-  first bar; the ostinato and drums open with the melody's tier, like a dance's. A fight cuts in at once
-  (`MusicCore.SetFighting`: the planned bars dropped, a 0.2 s fade, the drums 0.08 s later); its end
-  keeps the bridge, and it plays in a closer room (`ApplyBus(..., fight: true)`). `--mood Battle`
-  renders a fight, as `B` in `--music` mode plays one; `targets.json` holds Battle to its own bands.
-  A fight gates its layers at full Intensity whatever the mood: a travel encounter opens from the
-  world map's (0.25, drone and pad only), and was once written as a fight and heard as a pad.
-  Battle's preset is at full Intensity and hid that; `journeys/encounter.json` is the check.
-  `Kick` and `PowerChord` are left from the first, metal version: levelled, unused.
-- **Sacred places.** `MusicMoodState.Sacred` (per place, `LocationMoodProfiles.Sacred`, drawn
-  after festivity so every other place keeps its mood) pulls towards the sacred pole. When it
-  leads (temples, cathedrals, churches, monasteries, shrines, sanctuaries; a castle's or a
-  palace's chapel about one time in nine or five) the piece is chant: a choir lead (the organ now
-  and then), the church modes only (Dorian, Phrygian, Aeolian), `Plainchant` writing the line
-  (an intonation rising by step to a reciting tone, the recitation, a stepwise cadence to the final,
-  almost no leaps), the second voice in organum, a drone, bells, almost no ostinato, the longest
-  hall. Lower (peaks, snowfields, glaciers, groves, ruins, burial places) it leaves the place's own
-  music and adds `Part.Cantus`: a distant wordless choir, one held chord tone every two bars,
-  nearly all hall, in some B, C and varied-A sections (`Orchestration.Cantus`, `EmitCantus`). Fear
-  damps it, mystery does not; a fight ignores it, night keeps it. `9`/`Shift+9` in `--music` mode;
-  `targets.json` holds chant to `poles.sacred`. `--music-census [n]` samples every kind of place
-  and prints which pole leads how often and where the distant choir may come in: run it after
-  changing a profile.
-- **Far places.** `MusicMoodState.Far` (per place, `LocationMoodProfiles.Far`, drawn last) is how
-  far a place is from the empire's ear. Strange, not borrowed: nothing imitates a real people's
-  music (no "snake-charmer" scale, no "tribal" drums). When it leads (jungle, desert, oasis, the
-  hot steppe; a pyramid mostly, a sunken city sometimes) the piece is far throughout: the far modes
-  (`Mode.DorianSharp4`, `Mode.DorianFlat2`, a minor third and a true fifth, their own
-  progressions keeping off the diminished chords; or Phrygian and Aeolian), a third a little under
-  halfway to major (`Piece.NeutralThird`, carried as `ScoreEvent.Inflect` so the score names the
-  scale note and the harness reads it as one), long notes sliding into place (`ScoreEvent.Glide`,
-  read by `Reed`, `BuzzString`, `Glass` and `BentDrum`), `Metallophone` and `BuzzString` on an
-  eighth-note figure grouped 3+3+2 (`OstinatoStyle.Additive`), the `BentDrum` on the same accents, a
-  drier room. Lower (ports, markets, the forum, swamps, canyons, old ruins) the place keeps its own
-  music and a stranger (`Orchestration.Stranger`, `FarVoice`: a reed, metal or the buzzing string)
-  takes the line for a section or two, bending it; in a festive piece, a B part the second time
-  round. A far holy place chants in a stranger mode now and then. Fear damps it, a fight ignores it,
-  night keeps it. `8`/`Shift+8` in `--music` mode; `poles.far` bands; the census has columns for it.
-  The first draft's Locrian with a natural second was dropped: its diminished home chord ground
-  against the drone (dissonance 0.8).
-- **Night.** A visit's period reaches the music in `NarrativeController.ApplyTimePeriod` (the one
-  writer of the period): at Night, in exploration, `AmbianceEngine.SetNight(true)` plays the
-  place's `MusicMoodState.AtNight()` (colder, stranger, a little uneasy, festivity 0, Intensity
-  x0.82 so the ostinato and percussion thin first). Each place keeps its own character, shifted.
-  Any new `SetMood` is day again; the pause menu hands the night back. Other periods have no
-  variant. The harness renders one as `tavern:12@night`.
-- **Mood.** `SetMood` glides the mood (≈2 s). Structure is decided at piece and section starts; a
-  drift above 0.12 (or the fight filter changing) ends the piece through a one- or two-bar bridge,
-  in which the tune comes to rest on the nearest tonic and holds it; the next piece then starts on
-  its tune, with no intro. A tune-less breakdown (C) lasts four bars at most.
-  Track count and Intensity gate layers on the old ladder (1 drone+pad, 2 melody, 3 counter+bass,
-  4 ostinato+percussion).
-- **Breaks.** `AmbianceEngine.Transition(seconds)` is a clean cut between parts of the game, not
-  a change of place: everything planned is dropped, every voice fades over 1.2 s, the hall rings
-  out into silence, and a new piece for the mood already set begins from its start (no glide).
-  Called entering the get-up (its own `MusicMoodState.GetUp`, two tracks) and on the first world
-  map after it; the childhood's entry gets its break from dropping to no tracks. Set the mood and
-  tracks first. Journeys script one with `"break": seconds` (`journeys/opening.json`); `Space` in
-  `--music` mode plays one. A change of place keeps the one-bar bridge: a break every time would
-  chop up play.
-- **Events.** Positive: a bell arpeggio on the next beat and a brighter bar. Negative: a timpani
-  stroke on the next beat and the tune stepping back for a bar or two. Neutral: the tune a little
-  softer. The tune never stops for an event: outcomes come every few seconds in play, and resting
-  the melody on each one was heard as the music dropping out. The stings (the old
-  notes) play at once on the SFX bus. Hover and click remain PCM ticks outside the music.
+  `GameRng.ForWorld(seed, …)`); the synth's noise is a seeded xorshift (`Noise`). The same seed
+  and piece number give the same choices wherever they play; in the game the piece counter moves.
+- **A piece** picks its mode, tonic (moving by fourths and fifths), tempo, metre and orchestration
+  from the leading pole, then a form (`I A A' B A' O`…). Each A is a period (motif, sequence,
+  second idea, open cadence, closed repeat); A' a restatement; B the motif turned over on contrast
+  chords; C a breakdown or a lone chant. Layers enter one at a time.
 
-## The evaluation loop
+## The gauges
+
+`MusicMoodState`, all 0..1. The first four are the old engine's and shape every piece; the last
+three are each a whole idiom, set per kind of place, and lead only where they are strong.
+
+| gauge | set by | what it does |
+|---|---|---|
+| Coldness | place profile, presets | warm (Dorian, brisk) to cold (Phrygian, harmonic minor, slow); hall and tape darker |
+| Fear | place, fight (≥ 0.85) | tension: faster, Locrian at the top, the fear palette; damps the three idioms |
+| Mystery | place | the dark palette, pentatonic now and then, wind, a longer hall, more chorus |
+| Intensity | place (0.7–1), map 0.25 | gates the layers: melody from 0.25–0.35, counter and bass 0.5–0.6, ostinato and drums 0.75–0.85 (with the melody in a dance or a fight) |
+| Festivity | `LocationMoodProfiles.Festivity` | leads from ~0.5: a jig or a reel on fiddle, whistle, pipes; zero at night |
+| Sacred | `LocationMoodProfiles.Sacred` | leads from ~0.5: plainchant; lower, a distant choir drifts in |
+| Far | `LocationMoodProfiles.Far` | leads from ~0.5: strange modes, an in-between third, bends, new voices; lower, a stranger sits in |
+
+Track count (`SetActiveTrackCount`, 0–4) gates the same layers from the game's side. The fight
+filter, night (`SetNight`, the place's `AtNight()`) and breaks (`Transition`) act on top.
+
+## Recipes
+
+Each recipe ends with **Verify**, below. Never skip it: the faults found in this music were
+found by measuring, never by reading the diff.
+
+**Change how a kind of place sounds.** Edit its row in `LocationMoodProfiles.Profiles`
+(coldness, fear, mystery ranges) or in the `Festivity`, `Sacred` or `Far` tables. Run
+`dotnet bin/Debug/net8.0/Cathedral.dll --music-census 300` and read the place's row: which pole
+leads how often, how often a distant choir or a stranger may come in. Render a few ids
+(`--mood forest:3`, `forest:7`…) on two seeds and read their notes. A new kind of place needs a
+row, or it falls back to `Fallback`.
+
+**Add a gauge** (as festivity, sacred and far were added; follow `Far` through the code):
+1. `MusicMoodState`: the field with a doc comment saying what it means and what never uses it; a
+   constructor parameter **last**, with default 0; every `With*` and `AtNight()` passing it on;
+   a `WithX` method; `ToString`.
+2. `LocationMoodProfiles`: a table of ranges, drawn **after** the others in `SampleMood`, so every
+   place keeps the coldness, fear and mystery (and the other gauges) it had.
+3. `MusicCore.Step`: the glide. `Composer.EffectiveMood`: what a fight does with it (usually 0).
+   `Composer.CheckDrift`: add it to the distance.
+4. `Orchestra`: a `Pole` (instruments per role, percussion, chances, liveliness, chant), its weight
+   in `Weights` (squared, scaled near 4–4.5 so it leads from about a half; damped by fear if that
+   is right), exclusive in `Choose` if it is an idiom rather than a blend, its room in `ApplyBus`,
+   a `XLeads` helper, columns in `Census`.
+5. `Composer`: what the idiom changes (mode in `NewPiece`, form in `PlanForm`, a line writer in
+   `PlanLines`, emitters), and a colour for low values that do not lead (as `Cantus`, `Stranger`).
+6. Tools: `OfflineRender` (journey arrays and `--mood` lists take one more number),
+   `MusicModeLauncher` (a key pair, a bar, the random mood), `inspect music` in
+   `LocationTravelGameController` (append the value **at the end** of the line: scripts assert
+   on contiguous text), `targets.json` `poles.<name>` with a why, the census, this skill,
+   `idioms.md`, the README.
+7. Check every other mood is untouched (see **Verify**).
+
+**Add an instrument.**
+1. `Instrument` enum with a doc comment (what keyboard preset it imitates); `Voice.Make`.
+2. A `Voice` subclass: `Start` (set `Env`; read `Glide` if the voice can bend), `Render` adding into
+   `buf` with `* e * Amp`, killing the envelope when a struck voice has died away (`energy`
+   check, as `BodhranVoice`), and per-sample work kept small: move vibrato, wander and filter
+   changes to a control rate as `ChoirVoice` does, or a choir of them will not render in time.
+   Shaping band-passes use `Svf.BandNorm`.
+3. `Audition.cs`: a root note if the default (D4) is wrong for it. `tools/music/levels.py`: add
+   it to `STRUCK` if it is plucked or struck. Run `python3 tools/music/levels.py --apply` and
+   rebuild, **twice** (it converges; a third time if a voice is still over 0.5 dB off).
+4. `MusicCore.GmProgram` and `tools/music/timbre.py`'s `GM` (the General MIDI stand-in, for the
+   MIDI capture and the timbre comparison). `Orchestra.Trim` only if it should sit above or below
+   its peers.
+5. Use it in a pole, or an emitter. Check `timbre.py` against its GM namesake and look at the sheet.
+
+**Add a mode or a progression.** `Mode` in `Theory.cs`: never a major third over the tonic (the
+soundtrack's rule: Dorian is the warmest), and a true fifth if a drone, a pad or organum stands on
+the tonic. A diminished home chord grinds against the drone (a first far mode, Locrian with a
+natural second, measured dissonance 0.8 and was dropped). Map it in `Progressions.For`, with
+progressions of its own that keep off its diminished chords. If it is not a mode of the diatonic,
+harmonic or melodic minor, add its collection to `COLLECTIONS` in `musickit/symbolic.py`, or
+`mode_fit` will call it chromatic. Microtones go in `ScoreEvent.Inflect`, never in `Midi`, so the
+score names the scale note.
+
+**Change an idiom** (fights, dances, chant, far): read its section in `idioms.md`, change the
+pole, the form planner and its emitters, render that idiom's places or preset (`--mood Battle`,
+`tavern:12`, `temple:3`, `jungle:3`), and the journeys that cross it.
+
+**Hook the music to a game moment.** Through `AmbianceEngine` only. Set it in the mode's `OnEnter…`
+and ask: is this mode ever *resumed* rather than entered (the pause menu, a fight from a
+journey)? `ResumeFromMenu` restores `Requested`; anything else must set its own tracks and filter
+(`OnEnterFighting` sets four tracks because a travel encounter opens from a journey's one). A new
+request goes into `MusicRequest` so the menu gives it back. Add an `inspect music` assertion to a
+`cli/` script for it; `--silent` engines answer it.
+
+**Tune the mix.** Balance belongs in `Orchestra.PartLevel` (per part, a fight's own column) and
+`Orchestra.Trim` (per instrument); every emitter multiplies by `Trim` (the first fight emitters did
+not, and their trims did nothing). Read the stems in the score (`"stems"`: dB per part) and
+`melody_prominence`. Never re-level the voices to fix a balance.
+
+## Verify
 
 ```bash
 dotnet build
-python3 tools/music/eval.py matrix --label <round> --seconds 300 --seeds 1 2   # every preset mood
+python3 tools/music/eval.py matrix --label <round> --seconds 300 --seeds 1 2          # the preset moods
+python3 tools/music/eval.py matrix --label <round> --seconds 240 --seeds 1 2 --moods temple:3 jungle:3 port:3
 python3 tools/music/eval.py compare tools/music/runs/<before> tools/music/runs/<round>
 python3 tools/music/eval.py notes tools/music/runs/<round>/Tavern_s1.score.json --parts melody counter
-python3 tools/music/eval.py analyse <wav>          # one render: metrics + <wav>.png sheet (look at it)
+python3 tools/music/eval.py analyse <wav>        # metrics + <wav>.png sheet: look at it
+dotnet bin/Debug/net8.0/Cathedral.dll --render-music out.wav --journey tools/music/journeys/tour.json
 ```
 
-`tools/music/README.md` lists every metric, its band and why. Use all three kinds of evidence;
-each catches what the others miss:
+1. **Metrics** (`targets.json`; bands per mood under `moods`, per pole under `poles`).
+2. **Read the score**: the melody as note names, bar by bar, with the chords. Leaping sequences, a
+   B tune stuck on two notes, a counter re-striking one note, a chant that leapt: all passed
+   every metric and were obvious here.
+3. **Look** at the sheet (spectrogram, piano roll, self-similarity, loudness and layers) and at
+   `timbre.py` for a voice.
+4. **Untouched means the same notes.** When a change should not reach a mood, compare its notes
+   with the previous round's **as a multiset** of (time, pitch, part, instrument): a new event in
+   the queue reorders notes that start together without changing a sound. Tavern, Neutral,
+   Lament and the others stayed note for note identical through the festive, sacred and far work
+   because every new random draw sits behind a condition that is false for them (`if (chant &&
+   _rng.NextDouble() < …)`, never a bare draw).
+5. **Journeys** (`journeys/tour.json`, `opening.json`, `encounter.json`) catch transitions, fights
+   and events that still moods cannot. `render_speed` must stay over 8x (a temple full of
+   choirs once fell to 8.1x).
+6. **Game scripts**: `./run_tests.sh audits` plus `cli/system/pause_music_resumes.cli`,
+   `night_music.cli`, `fight_runaway_travel_arrival.cli`, `fight_victory_narration.cli` and
+   `cli/verb/get_up/` when the hooks are touched. Say which ran; the full suite is the release gate.
 
-1. **Metrics** (`targets.json`): symbolic (mode fit, steps, motif recurrence in scale steps, bar
-   repetition, phrase regularity, harmonic rhythm, dissonance, layering, voice ranges), mix (stem
-   levels per part, melody prominence, wetness) and acoustic (loudness, spectral tilt, highs,
-   stereo, swells, holes, spikes), plus cost (render speed, voices).
-2. **Reading the score** (`eval.py notes`): the melody as note names, bar by bar, with the chords.
-   Several real faults (sequences leaping a sixth, a B tune stuck on two notes, a counter that
-   re-struck one note every half bar) passed every metric and were obvious here.
-3. **Looking** at the sheet PNG (spectrogram, piano roll, chroma self-similarity, loudness and
-   layers) and at `timbre.py`'s comparison of each instrument with its GM namesake.
+**Bands are a regression signal, not a verdict.** When a change makes the music better to read and
+to look at and a band disagrees, widen that pole's or mood's band and write why. Every idiom has.
 
-Calibration: `exemplars.py` measures public-domain tunes written out in `exemplars/` with the same
-code. Where a real tune falls outside a melodic band, the band is wrong. `eval.py calibrate
-reference/` turns reference recordings (gitignored; e.g. the developer's earlier soundtrack) into
-acoustic bands in `targets.reference.json`, which then override the hand-set ones.
+## Hearing it
 
-**Bands are a regression signal, not a verdict.** Do not chase a band with a change that makes the
-music worse to read or to look at; re-calibrate the band instead, and say why in its `why`.
+`dotnet bin/Debug/net8.0/Cathedral.dll --music` is the live engine on its own: S/F/M/I/Y/9/8 raise
+coldness, fear, mystery, intensity, festivity, sacred, far (Shift lowers), 1–4 tracks, T/L/X/B/W
+presets (B is a fight), Space a break, Z a random mood, A/K/G/J/O events, H help. Clips for the
+developer: render, normalise to −18 LUFS (`pyloudnorm`), encode with `ffmpeg -q:a 4`, and publish
+them on a page with seek buttons at the moments that matter.
 
-## Rules
+## A fresh cloud session
 
-- **Never `new Random()`** — `GameRng` per piece, `Noise` in the synth. The legacy engine's two
-  unseeded generators were converted when it moved.
-- **Journeys catch what still moods cannot.** `--journey tools/music/journeys/tour.json` (moods,
-  events, travel, a fight). The zombie-voice bug (an envelope re-opened after it finished) showed
-  only there, as a render slowing from 13x to 4x real time; `render_speed` and `max_voices` are
-  in the metrics for that reason.
-- **Levels.** After changing a voice, run `python3 tools/music/levels.py --apply` (twice) so every
-  instrument stays at the common level; balance belongs in `Orchestra.PartLevel` and `Trim`. Its
-  targets are measured after `Synth.PreGain`: change the pre-gain and move `SUSTAINED_DB` with it,
-  or the next run silently re-levels every instrument (it once pushed the whole mix up 2.7 dB).
-- **Band-passes that shape a timbre use `Svf.BandNorm`** (unity peak). Plain `Band` peaks at Q.
-- **The live stream reports itself** on shutdown: `[audio] music stream: …s played in …s, n
-  underrun(s) (at …), slowest block …`. Underruns cluster in the first seconds (world build, model
-  load, collections); the queue is 256 ms for 20 s, then 128 ms.
-- **Testing the live path in a cloud box**: `xvfb-run` plus a PulseAudio null sink
-  (`pulseaudio -D --exit-idle-time=-1`), record `parec -d auto_null.monitor --format=s16le` (raw:
-  a killed parec leaves a broken WAV header) and analyse the capture like any render.
-- **The pause menu borrows the music.** It sets the neutral mood with no tracks; a phase resumed
-  from it is not entered afresh and sets nothing, so `ResumeFromMenu` hands back what
-  `AmbianceEngine.Requested` held when the menu opened. A new place's music is set by its own entry
-  (`StartLocationInteraction`); anything that sets music on a mode's entry must still be right when
-  that mode is resumed rather than started. The same for a fight: `OnEnterFighting` sets four tracks
-  itself, because a travel encounter's fight opens from a journey's one. `inspect music` reads the request back, even under
-  `--silent` (the engine then starts silent: no stream, no composer, but it answers).
+```bash
+pip install numpy scipy soundfile pyloudnorm mido matplotlib librosa
+dotnet build
+# the CLI scripts need GloVe vectors (models/embeddings/, gitignored); Stanford is blocked, gensim's
+# GitHub mirror is not: download glove-wiki-gigaword-100.gz, gunzip, drop its first (header) line
+# into models/embeddings/glove.6B.100d.txt
+# timbre.py's reference SoundFont: GeneralUser GS (assets/audio/README.md says where); never shipped
+# live-path tests: xvfb-run, pulseaudio -D --exit-idle-time=-1, parec -d auto_null.monitor --format=s16le
+```
+
+## Rules and pitfalls
+
+- **Never `new Random()`**: `GameRng` per piece, `Noise` in the synth.
+- **Never borrow a real people's music** for an idiom: far is strange, not "exotic" (no
+  snake-charmer scale, no tribal drums). Festive is the session idiom; chant is plainchant.
+- **No major third over the tonic, anywhere.** A far piece's third is inflected a little under
+  halfway (+0.45), never to major.
+- **`--silent` composes nothing.** Under `--silent` (every `run_tests.sh` script) the engine starts
+  with no composer and only answers `inspect music`. A CLI script proves what the game *asked*;
+  what the composer does with it needs a render or a live run without `--silent` (a fight that
+  wrote fight music and gated it to a pad passed every script).
+- **A preset can hide a gate.** Battle is at full Intensity; real fights open from places and
+  from the world map (Intensity 0.25). Test the path the game takes (`journeys/encounter.json`).
+- **Levels**: `levels.py --apply` twice after changing a voice; its targets are measured after
+  `Synth.PreGain` (change one, move `SUSTAINED_DB`/`STRUCK_DB` with it, or every voice is
+  silently re-levelled: it once pushed the mix up 2.7 dB).
+- **The pause menu borrows the music** and `ResumeFromMenu` gives it back; a mode resumed rather
+  than entered sets nothing itself.
+- **The live stream reports itself** on shutdown (`[audio] music stream: … n underrun(s)`).
+- **Don't rebuild under a running matrix** (it mixes binaries), and don't `pkill -f` a pattern
+  that also matches your own shell's command line.
 - Music is not a rule the player is subject to: the manual needs nothing.
