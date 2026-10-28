@@ -211,14 +211,14 @@ What can still break on another machine, most likely first.
    Those choices are all narrowed to one option by the flags (one fragment, one person, one way for
    each will, one job), with two exceptions: which reply each mind voices in the two conversations
    (handled: `click option 0 needed` answers until the roll), and the get-up's keyword (any of the
-   three weariness points leads to the same verb). Across five runs here the conversations took the
-   same branches (`days_worse_end`, `specific_work_end`); a different branch has a different depth,
+   three weariness points leads to the same verb). Every real-model run here took the same branches
+   (`days_worse_end`, `specific_work_end`; the playground's random stand-ins took others); a different branch has a different depth,
    which the script tolerates, and a different dice pool, which the humors cover.
 5. **Rolls depend on the humors.** Every roll a script cannot foresee is turned with voluptas
    (five per roll at viscera 5). A roll needing more sixes than five voluptas can make — a pool of more
    than five dice failing with no six, against difficulty 5 — would fail. The conversations' Hard
-   ladder asks 4 or 5 sixes; the worst seen was 3 voluptas spent (the job conversation in the
-   playground run). A failed conversation does not open the job or trade menu, and the script would
+   ladder asks 4 or 5 sixes; no roll in any run here needed more than 3 voluptas (each run spent
+   humors on five rolls: once on three of them, twice on one, three times on another). A failed conversation does not open the job or trade menu, and the script would
    then fail at `wait mode Working` / `wait mode Trading`.
 6. **Waits are long, not unbounded.** Every model wait has 900 s; the slowest single passage seen on
    the cloud CPU was well under that. A much slower machine (or a llama.cpp build without the CPU's
