@@ -14,7 +14,8 @@ tools/video/.venv/Scripts/python tools/video/make_video.py record \
 
 No `--seed` (it would skip the world-selection screen: the world is chosen by clicking its moon,
 which reseeds the run), no `--skip-childhood`, no `--playground`, no `--organs` (see below).
-`--timeout` must be long: on a CPU the run takes TODO.
+`--timeout` must be long: on the cloud machine's 4-core CPU the run takes 70–80 minutes of real time
+(it is filmed in real time; the cut fast-forwards the model's waits).
 
 | flag | why |
 |---|---|
@@ -184,8 +185,71 @@ untouched, so no screen sounds different.
 
 ## Fragilities
 
-TODO
+What can still break on another machine, most likely first.
+
+1. **The fights assume they replay exactly.** They are seeded end to end and never read the model's
+   text — five replays here, at three temperatures, fought both wolves identically, die for die — so
+   the turn sequence is written out: two `end-turn`s then five Snap Thrusts for the first wolf, five
+   for the second. If anything feeding the fight changed (the protagonist's organs or modi mentis,
+   the arena generator, the wolf archetype, the fight AI, a new draw from `GameRng.For("travel")` or
+   the `fight-mode` stream before the fight), the wolf might die a turn earlier or later, or close on
+   us differently, and a command would land on the wrong phase (`not the player's turn`, or an
+   `end-turn` after the fight is over). A different .NET runtime cannot change `System.Random`'s
+   seeded sequence, but code changes can. Re-derive the turns with a live `--record` session when
+   anything upstream changes.
+2. **Fenumoth must be in the opening view.** The sky is a constant, but the recorder clicks the moon
+   at its projected pixel; a change to the camera's starting orientation, the sky renderer or the
+   window aspect would hide it (the recorder then refuses, it never clicks blind). Moon 5 sits near the
+   left edge (x ≈ 30 of 720 at 4:3).
+3. **The world must keep its farm and city.** Vertex 7011 (farm) and 27788 (city) are ids in
+   Fenumoth's generated world; any change to world generation, the sprawl, or the variant table moves
+   them. So do the farmer's and the cobbler's archetypes, `--npc-static` placement (the farmer in the
+   Longhouse Hall, the cobbler in the Cobbler's Shop), and the cobbler's shelf (Leather Boots first at
+   20 copper — seeded from his id; a change to `NpcTradeCatalog` or the footwear items moves the row
+   or the price). `trade:plus:0` and the seventeen ► presses (200 days) are tied to those numbers.
+4. **The choice judge must still pick from what the script expects where it has a choice to make.**
+   Those choices are all narrowed to one option by the flags (one fragment, one person, one way for
+   each will, one job), with two exceptions: which reply each mind voices in the two conversations
+   (handled: `click option 0 needed` answers until the roll), and the get-up's keyword (any of the
+   three weariness points leads to the same verb). Across five runs here the conversations took the
+   same branches (`days_worse_end`, `specific_work_end`); a different branch has a different depth,
+   which the script tolerates, and a different dice pool, which the humors cover.
+5. **Rolls depend on the humors.** Every roll a script cannot foresee is turned with voluptas
+   (five per roll at viscera 5). A roll needing more sixes than five voluptas can make — a pool of more
+   than five dice failing with no six, against difficulty 5 — would fail. The conversations' Hard
+   ladder asks 4 or 5 sixes; the worst seen was 3 voluptas spent (the job conversation in the
+   playground run). A failed conversation does not open the job or trade menu, and the script would
+   then fail at `wait mode Working` / `wait mode Trading`.
+6. **Waits are long, not unbounded.** Every model wait has 900 s; the slowest single passage seen on
+   the cloud CPU was well under that. A much slower machine (or a llama.cpp build without the CPU's
+   SIMD) could exceed it. The run still continues after a timed-out `wait`, but the step after it may
+   act on a half-built screen. Two such waits bit the first real run (a 60 s wait after a fight's last
+   blow, while the arrival passage was being written; and `advance` stopping while a conversation's
+   closing lines were still streaming, so the next press hit INTERRUPT). Both are fixed (the fight
+   waits are 900 s; `advance` now waits out a preview still being written).
+7. **Only one game at a time.** The model server listens on a fixed port (8080), so two runs on one
+   machine share — and then kill — one server.
+8. **Paths are pointer gestures.** Everything is clicked at the pixel the game's own hit-test names,
+   but a much smaller recording size would put several controls in one cell. The runs here were made
+   at 720×540; the final pass at the default 1440×1080.
 
 ## Replays
 
-TODO
+All from scratch (main menu, a new world, a new character), under `--record` with the real model,
+the shipped `model.gguf` (SHA-256 checked), on the cloud machine (4 cores, llvmpipe):
+
+| run | temperature | result | real time |
+|---|---|---|---|
+| r1 | 0.7 | failed at the trade (the two driver/script waits above); fixed | — |
+| r2 | 0.7 | **passed** to the closure | 72 min |
+| r3 | 1.0 | **passed** | 77 min |
+| r4 | 0.4 | **passed** | 69 min |
+| r5 | 0.7 | TODO | |
+| final | 0.7, 1440×1080 @ 30, `make_video.py record` | TODO | |
+
+The prose differed in every run (llama-server samples with a fresh seed per request, and the
+temperature was varied with `--llm-temperature`): the first childhood action read "remember sobbing
+from my childhood, half-remembered images surging…" in r2, "remember sobs that whispered through the
+cold stone of forgotten halls" in r3, "remember the sobs that whispered through my childhood…" in r4.
+The keywords the script clicks by object landed in different places each time (`@sobs` at x = 211,
+303, 368; `@farmer` at 388, 453, 248; `@cobbler` at 464, 507, 275) and were found every time.
