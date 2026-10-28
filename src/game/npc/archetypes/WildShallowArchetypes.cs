@@ -91,3 +91,25 @@ public class OlmArchetype : GenericShallowArchetype
         new ItemElement(new Tail()),
     };
 }
+
+// ── Coast ───────────────────────────────────────────────────────────────────
+
+
+public class OystercatcherArchetype : BirdShallowArchetype
+{
+    public override string ArchetypeId     => "oystercatcher";
+    public override string TypeDisplayName => "Oystercatcher";
+    protected override string ComposeObservationHint(Random rng, string nodeContext) => Compose(rng,
+        sizes:  new[] { "stout", "long-billed" },
+        colors: new[] { "pied", "black and white", "red-billed" },
+        noun:   "oystercatcher",
+        traits: new[] { "piping shrilly as it runs along the tideline", "hammering a shell open with its bill", "flying low over the flats in a noisy flock" });
+    protected override string CorpseBodyDescription => "the pied body of an oystercatcher, its long red bill still bright";
+    protected override List<ItemElement> BuildCorpseDrops() => new()
+    {
+        new ItemElement(new Feather()),
+        new ItemElement(new Feather()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Wing()),
+    };
+}
