@@ -28,76 +28,207 @@ public class JungleSceneFactory : WildSceneFactory
     private enum Identity { Lowland, Swamp, Ruined }
 
     private Identity _identity;
-    private Area? _crown;
+    private Area? _crown, _sandbar, _temple, _falls, _behindFalls;
     private readonly List<Area> _wet = new();
 
     protected override void BuildSections(Random rng, int locationId, Scene scene)
     {
+        // A spine: the river runs through, and the jungle hangs off its banks.
+        Profile = LayoutProfile.Spine;
         _identity = rng.NextDouble() switch
         {
             < 0.45 => Identity.Lowland,
             < 0.75 => Identity.Swamp,
             _      => Identity.Ruined,
         };
+        double W(double low, double swamp, double ruined)
+            => _identity switch { Identity.Lowland => low, Identity.Swamp => swamp, _ => ruined };
 
-        var edge = new List<Area> { BuildLightGap() };
-        var deep = new List<Area> { BuildUnderstorey() };
-
-        switch (_identity)
+        // ── The river ────────────────────────────────────────────────────────
+        var spine = Draw(rng, new Option[]
         {
-            case Identity.Lowland:
-                edge.Add(BuildRiverbank());
-                deep.Add(BuildBambooBrake());
-                break;
-            case Identity.Swamp:
-                edge.Add(BuildMangrove());
-                deep.Add(BuildSwamp());
-                break;
-            default:
-                deep.Add(BuildRuin());
-                edge.Add(rng.NextDouble() < 0.5 ? BuildRiverbank() : BuildBambooBrake());
-                break;
+            new(BuildRiverbank, 2.0),
+            new(BuildMangrove, W(0.4, 3.0, 0.4)),
+            new(BuildOxbow,    W(1.5, 1.5, 0.8)),
+            new(BuildFarRiverbank, 1.2),
+        }, Between(rng, 2, 3));
+        _sandbar = rng.NextDouble() < 0.5 ? BuildSandbar() : null;
+
+        // ── What hangs off it: the deep jungle, and one or two more ──────────
+        bool hasFalls = rng.NextDouble() < 0.3;
+        bool hasEdge = rng.NextDouble() < 0.55;
+        bool hasRuins = rng.NextDouble() < W(0.3, 0.2, 1.0);
+        bool hasLick = rng.NextDouble() < 0.35;
+        if (!hasRuins && !hasLick && !hasFalls) hasEdge = true;
+        int others = (hasEdge ? 1 : 0) + (hasRuins ? 1 : 0) + (hasLick ? 1 : 0) + (hasFalls ? 1 : 0);
+        var reaches = new List<(string Name, string Description, List<Area> Areas)>
+        {
+            ("Deep Jungle", "Green dusk at noon, the trunks like pillars, the air too wet to breathe",
+                Draw(rng, new Option[]
+                {
+                    new(BuildUnderstorey, 1.6),
+                    new(BuildSwamp, W(0.6, 2.5, 0.6)),
+                    new(BuildFigStand, 1.3),
+                }, others <= 1 ? 2 : Between(rng, 1, 2))),
+        };
+        if (hasEdge)
+            reaches.Add(("Jungle Edge", "Light breaking through in shafts, everything that can climb climbing toward it",
+                Draw(rng, new Option[]
+                {
+                    new(BuildLightGap, 2.0),
+                    new(BuildBambooBrake, W(1.5, 0.6, 1.0)),
+                }, others == 3 ? 1 : Between(rng, 1, 2))));
+        if (hasRuins)
+            reaches.Add(("The Ruins", "Cut stone in the grip of the roots: stairs, walls and a well of the old people",
+                Draw(rng, new Option[] { new(BuildRuin, 3.0), new(BuildCenote, 1.2) }, others == 3 ? 1 : Between(rng, 1, 2))));
+        if (hasFalls)
+            reaches.Add(("The Falls", "White water dropping out of the green into a pool, the air full of spray and noise",
+                new List<Area> { (_falls = BuildJungleFalls()) }));
+        if (hasLick)
+            reaches.Add(("Clay Lick", "A raw red bank where the birds come down to eat the earth",
+                new List<Area> { BuildClayLick() }));
+
+        var understorey = reaches.SelectMany(r => r.Areas).OfType<UnderstoreyArea>().FirstOrDefault();
+        var ruin = reaches.SelectMany(r => r.Areas).OfType<RuinArea>().FirstOrDefault();
+        _temple = ruin != null && rng.NextDouble() < 0.55 ? BuildTempleChamber() : null;
+        _behindFalls = _falls != null && rng.NextDouble() < 0.6 ? BuildBehindFalls() : null;
+
+        _wet.AddRange(spine.Concat(reaches.SelectMany(r => r.Areas)).Where(a => a is RiverbankArea or MangroveArea or SwampArea or OxbowArea));
+
+        foreach (var area in spine.Concat(reaches.SelectMany(r => r.Areas))) Populate(area, rng);
+        foreach (var area in new[] { _sandbar, _temple, _behindFalls }) if (area != null) Populate(area, rng);
+
+        var spineSection = AddSection(scene, "The River", "A brown river moving slow and wide, the banks a wall of green",
+            seed => new NoisyGenerator { Seed = seed, Density = 0.55f }, spine, tier: 0);
+        var sections = reaches.Select(r => (r.Areas, Section: AddSection(scene, r.Name, r.Description,
+            seed => new NoisyGenerator { Seed = seed, Density = 0.55f }, r.Areas, tier: 1))).ToList();
+
+        string[] moods = { "dripping", "root-crossed", "dim" };
+        static string Way(Area a, Area b) =>
+            a is RiverbankArea || b is RiverbankArea ? "Bank Path"
+            : a is SwampArea or MangroveArea || b is SwampArea or MangroveArea ? "Root Walk"
+            : a is RuinArea || b is RuinArea ? "Paved Way"
+            : "Game Path";
+
+        WeaveSection(rng, scene, spine, Weave.Line, Way, "along the river", moods);
+        foreach (var (areas, _) in sections)
+        {
+            var walk = areas.Where(a => a is not CenoteArea || areas.Count == 1).ToList();
+            WeaveSection(rng, scene, walk, RollWeave(rng), Way, "through the green", moods);
+            OutdoorLayout.Link(scene, spine[rng.Next(spine.Count)], walk[0], Way(spine[0], walk[0]), moods, "through the green");
+            foreach (var cenote in areas.OfType<CenoteArea>().Where(c => !walk.Contains(c)))
+                Climb(scene, cenote, walk[rng.Next(walk.Count)], "Cenote Lip",
+                    "The edge of a round well in the rock, roots hanging down its sides into the light far below, clear water at the bottom",
+                    new[] { "round", "root-hung", "sheer" });
         }
-        if (_identity != Identity.Ruined && rng.NextDouble() < 0.2) deep.Add(BuildRuin());
-        if (rng.NextDouble() < 0.4) deep.Add(_identity == Identity.Swamp ? BuildBambooBrake() : BuildSwamp());
 
-        _wet.AddRange(edge.Concat(deep).Where(a => a is RiverbankArea or MangroveArea or SwampArea));
-
-        foreach (var area in edge.Concat(deep))
-            Populate(area, rng);
-
-        AddSection(scene, "Jungle Edge", "Light breaking through in shafts, everything that can climb climbing toward it",
-            seed => new NoisyGenerator { Seed = seed, Density = 0.62f }, edge);
-        var deepSection = AddSection(scene, "Deep Jungle", "Green dusk at noon, the trunks like pillars, the air too wet to breathe",
-            seed => new NoisyGenerator { Seed = seed, Density = 0.50f }, deep);
-
-        ConnectChain(scene, edge.Concat(deep).ToList(),
-            (a, b) => a is RiverbankArea || b is RiverbankArea ? "Bank Path"
-                    : a is SwampArea or MangroveArea || b is SwampArea or MangroveArea ? "Root Walk"
-                    : a is RuinArea || b is RuinArea ? "Paved Way"
-                    : "Game Path",
-            "through the green", new[] { "dripping", "root-crossed", "dim" });
-
-        // The emergent tree stands in the understorey and its crown belongs to the same section, as
-        // sections must partition the areas.
-        _crown = BuildCrown();
-        Populate(_crown, rng);
-        deepSection.Areas.Add(_crown);
-        RegisterAll(scene, _crown);
-        new ScalePointOfInterest(
-            deep[0], _crown, ScaleKind.Tree, "Emergent Tree",
-            new() { "A tree standing head and shoulders above the canopy, its trunk hung with lianas thick enough to climb" },
-            new[] { "vast", "liana-hung", "ancient" })
+        if (_sandbar != null)
         {
-            Senses = SensoryProfile.Examinable,
-            VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft" },
-        }.AttachTo(scene);
-        AddLandscapes(scene, _crown, scene.AllAreas);
+            AddToSection(scene, spineSection, _sandbar);
+            Swim(scene, spine[0], _sandbar, WaterKind.River, "Brown River",
+                "The river itself, wide and slow and the colour of milky tea, a bar of pale sand showing in the middle of it",
+                new[] { "brown", "wide", "lazy" }, lesson: "plunge");
+        }
 
-        Furnish(rng, scene, FurnitureSubfactory.Setting.Jungle, _crown);
+        // The emergent tree: scaled from the understorey, and its crown sees the whole place.
+        if (understorey != null)
+        {
+            _crown = BuildCrown();
+            Populate(_crown, rng);
+            AddToSection(scene, sections.First(s => s.Areas.Contains(understorey)).Section, _crown);
+            new ScalePointOfInterest(
+                understorey, _crown, ScaleKind.Tree, "Emergent Tree",
+                new() { "A tree standing head and shoulders above the canopy, its trunk hung with lianas thick enough to climb" },
+                new[] { "vast", "liana-hung", "ancient" })
+            {
+                Senses = SensoryProfile.Examinable,
+                VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft" },
+            }.AttachTo(scene);
+            AddLandscapes(scene, _crown, scene.AllAreas);
+        }
+        if (_temple != null)
+        {
+            AddToSection(scene, sections.First(s => s.Areas.Contains(ruin!)).Section, _temple);
+            SlipInto(scene, ruin!, _temple, SlipKind.Crevice, "Root-Split Doorway",
+                "A doorway half closed by a fig root as thick as a man, a black gap left at one side where the stone has cracked",
+                new[] { "root-split", "black", "carved" }, lesson: "potholing");
+        }
 
-        Console.WriteLine($"JungleSceneFactory: {_identity}, {_allAreas.Count + 1} areas");
+        if (_behindFalls != null)
+        {
+            AddToSection(scene, sections.First(s => s.Areas.Contains(_falls!)).Section, _behindFalls);
+            Swim(scene, _falls!, _behindFalls, WaterKind.Pond, "Plunge Pool",
+                "The churning pool under the fall, green and deep, a dark gap showing behind the curtain of water",
+                new[] { "churning", "green", "deep" }, lesson: "plunge");
+        }
+
+        Furnish(rng, scene, FurnitureSubfactory.Setting.Jungle, _crown, _sandbar, _temple, _behindFalls);
+
+        Console.WriteLine($"JungleSceneFactory: {_identity}, river {spine.Count}, {string.Join("/", reaches.Select(r => r.Name))}");
     }
+
+    private static Area BuildFarRiverbank() => new RiverbankArea(
+        displayName: "Bend of the River",
+        contextDescription: "at the bend of the river",
+        transitionDescription: "follow the bank round the bend",
+        descriptions: new() { "Where the river swings wide, the outside bank cut sheer and red, the inside a beach of grey silt" },
+        moods: new[] { "swinging", "red-cut", "silty", "wide" });
+
+    private static Area BuildOxbow() => new OxbowArea(
+        displayName: "Oxbow Lake",
+        contextDescription: "by the oxbow lake",
+        transitionDescription: "push through to the oxbow lake",
+        descriptions: new() { "A crescent of still black water left by the river, lilies on it, dead trees standing in it white" },
+        moods: new[] { "still", "black", "lilied", "eerie" });
+
+    private static Area BuildSandbar() => new SandbarArea(
+        displayName: "Sandbar",
+        contextDescription: "on the sandbar",
+        transitionDescription: "wade up onto the sandbar",
+        descriptions: new() { "A long bar of pale sand in the middle of the river, ridged by the current, tracks of birds and something heavier across it" },
+        moods: new[] { "pale", "ridged", "exposed", "midstream" });
+
+    private static Area BuildFigStand() => new GroveArea(
+        displayName: "Strangler Figs",
+        contextDescription: "among the strangler figs",
+        transitionDescription: "step in among the strangler figs",
+        descriptions: new() { "Figs that grew down round other trees and killed them, standing now as hollow lattices of root, the dead tree long gone from inside" },
+        moods: new[] { "latticed", "hollow", "strangling", "cathedral-like" });
+
+    private static Area BuildCenote() => new CenoteArea(
+        displayName: "Cenote",
+        contextDescription: "at the bottom of the cenote",
+        transitionDescription: "climb down into the cenote",
+        descriptions: new() { "A round shaft in the rock open to the sky, its floor a pool of water so clear it looks like air, roots hanging all the way down" },
+        moods: new[] { "clear", "round", "sacred", "echoing" });
+
+    private static Area BuildJungleFalls() => new WaterfallArea(
+        displayName: "Jungle Falls",
+        contextDescription: "at the foot of the falls",
+        transitionDescription: "follow the roar to the falls",
+        descriptions: new() { "A river dropping off a lip of black rock into a pool, the spray drifting through the trees and every leaf dripping" },
+        moods: new[] { "roaring", "spray-soaked", "green", "loud" });
+
+    private static Area BuildBehindFalls() => new GrottoArea(
+        displayName: "Behind the Falls",
+        contextDescription: "behind the falls",
+        transitionDescription: "haul yourself out behind the falling water",
+        descriptions: new() { "A dripping hollow behind the curtain of water, swifts nesting in its roof, the world outside a roaring green blur" },
+        moods: new[] { "hidden", "roaring", "dripping", "dim" });
+
+    private static Area BuildClayLick() => new LickArea(
+        displayName: "Clay Lick",
+        contextDescription: "at the clay lick",
+        transitionDescription: "come out at the clay lick",
+        descriptions: new() { "A raw cliff of red clay over the water, pocked with beak-holes, the trees round it full of screaming colour" },
+        moods: new[] { "red", "screaming", "pocked", "crowded" });
+
+    private static Area BuildTempleChamber() => new ChamberArea(
+        displayName: "Temple Chamber",
+        contextDescription: "inside the temple",
+        transitionDescription: "squeeze into the temple",
+        descriptions: new() { "A dark room of cut stone inside the ruin, the walls carved with figures, roots coming through the roof" },
+        moods: new[] { "carved", "dark", "root-pierced", "watchful" });
 
     // ── Area builders ────────────────────────────────────────────────────────
 
@@ -199,12 +330,77 @@ public class JungleSceneFactory : WildSceneFactory
                 area.PointsOfInterest.Add(ClimateTerrainSubfactory.BuildStranglerFig());
                 if (rng.NextDouble() < 0.5) area.PointsOfInterest.Add(BuildCopalTree());
                 break;
+            case OxbowArea:
+                area.PointsOfInterest.Add(BuildBlackwater());
+                area.PointsOfInterest.Add(TerrainSubfactory.BuildReedBed());
+                break;
+            case SandbarArea:
+                area.PointsOfInterest.Add(BuildSandbarTracks());
+                break;
+            case GroveArea:
+                area.PointsOfInterest.Add(ClimateTerrainSubfactory.BuildStranglerFig());
+                area.PointsOfInterest.Add(ClimateTerrainSubfactory.BuildStranglerFig());
+                area.PointsOfInterest.Add(BuildLianas());
+                break;
+            case WaterfallArea:
+                area.PointsOfInterest.Add(BuildJungleFallsPoi());
+                area.PointsOfInterest.Add(BuildOrchids());
+                break;
+            case GrottoArea:
+                area.PointsOfInterest.Add(TerrainSubfactory.BuildMossBank());
+                break;
+            case CenoteArea:
+                area.PointsOfInterest.Add(BuildCenotePool());
+                break;
+            case LickArea:
+                area.PointsOfInterest.Add(BuildClayBank());
+                break;
+            case ChamberArea:
+                area.PointsOfInterest.Add(BuildCarvedWalls());
+                area.PointsOfInterest.Add(BuildToppledIdol());
+                break;
             case CrownArea:
                 area.PointsOfInterest.Add(BuildBromeliad());
                 area.PointsOfInterest.Add(BuildOrchids());
                 break;
         }
     }
+
+    private static PointOfInterest BuildSandbarTracks() => new MudPointOfInterest(
+        displayName: "Sandbar Tracks",
+        descriptions: new() { "Bird tracks all over the bar, and down its middle the long drag-mark of something heavy with a tail" },
+        items: new() { new ItemElement(new Clay()), new ItemElement(new Shell()) },
+        moods: new[] { "tracked", "dragged", "pale", "warning" }
+    ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "spoor_reading" } };
+
+    private static PointOfInterest BuildJungleFallsPoi() => new FallsPointOfInterest(
+        displayName: "Falling Water",
+        descriptions: new() { "The fall itself, a brown-white column of water thundering into the pool, a rainbow standing in the spray" },
+        moods: new[] { "thundering", "brown-white", "rainbowed", "endless" }
+    ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string>
+        { ["examine"] = "plunge", ["listen"] = "water_voice", ["smell"] = "petrichor", ["contemplate"] = "awe" } };
+
+    private static PointOfInterest BuildCenotePool() => new PoolPointOfInterest(
+        displayName: "Cenote Pool",
+        descriptions: new() { "Water so clear the bottom seems an arm's length down and is ten times that, pale things lying on the floor of it" },
+        items: new() { new ItemElement(new Rock()), new ItemElement(new Bone()) },
+        moods: new[] { "clear", "deep", "sacred", "still" },
+        isNatural: true
+    ) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "plunge", ["contemplate"] = "mysticism" } };
+
+    private static PointOfInterest BuildClayBank() => new CrustPointOfInterest(
+        displayName: "Clay Bank",
+        descriptions: new() { "The red clay face itself, bitten into hollows by a thousand beaks, a salt bitterness in the air near it" },
+        items: new() { new ItemElement(new Clay()), new ItemElement(new Salt()) },
+        moods: new[] { "bitten", "red", "salty", "noisy" }
+    ) { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "creature_lore", ["listen"] = "birdsong" } };
+
+    private static PointOfInterest BuildCarvedWalls() => new PetroglyphPointOfInterest(
+        displayName: "Carved Walls",
+        descriptions: new() { "Figures in feathered headdresses carved on every wall, rows of glyphs between them that no one living can read" },
+        items: new() { new ItemElement(new Rock()) },
+        moods: new[] { "carved", "feathered", "glyphed", "unread" }
+    ) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "decipher", ["contemplate"] = "ruin_sense" } };
 
     private static PointOfInterest PickGiant(Random rng) => rng.Next(3) switch
     {
@@ -334,6 +530,9 @@ public class JungleSceneFactory : WildSceneFactory
         TrySpawnCreature(rng, scene, new TapirArchetype(),       0.35);
         TrySpawnCreature(rng, scene, new TreeFrogArchetype(),    0.50);
         if (_wet.Count > 0) TrySpawnCreature(rng, scene, new CapybaraArchetype(), 0.45, _wet);
+        TrySpawnCreatureIn<LickArea>(rng, scene, new MacawArchetype(), 0.90);
+        TrySpawnCreatureIn<RiverbankArea>(rng, scene, new CaimanArchetype(), 0.35);
+        TrySpawnCreatureIn<OxbowArea>(rng, scene, new CaimanArchetype(), 0.45);
 
         SprinkleSmallLife(rng, scene, scene.AllAreas, SmallLife.Tropical, 3, 6);
     }

@@ -236,3 +236,44 @@ public class HoneyguideArchetype : BirdShallowArchetype
     };
 }
 
+// ── Jungle ──────────────────────────────────────────────────────────────────
+
+public class MacawArchetype : BirdShallowArchetype
+{
+    public override string ArchetypeId     => "macaw";
+    public override string TypeDisplayName => "Macaw";
+    protected override string ComposeObservationHint(Random rng, string nodeContext) => Compose(rng,
+        sizes:  new[] { "great", "long-tailed" },
+        colors: new[] { "scarlet", "blue-and-gold", "green-winged" },
+        noun:   "macaw",
+        traits: new[] { "clinging to the clay face and biting at it", "screaming as it flies over in a pair", "cracking a nut with a bill like a hook" });
+    protected override string CorpseBodyDescription => "the long brilliant body of a macaw, its tail feathers longer than the rest of it";
+    protected override List<ItemElement> BuildCorpseDrops() => new()
+    {
+        new ItemElement(new Plume()),
+        new ItemElement(new Plume()),
+        new ItemElement(new Feather()),
+        new ItemElement(new Meat()),
+    };
+}
+
+public class CaimanArchetype : GenericShallowArchetype
+{
+    public override string ArchetypeId     => "caiman";
+    public override string TypeDisplayName => "Caiman";
+    protected override string ComposeObservationHint(Random rng, string nodeContext) => Compose(rng,
+        sizes:  new[] { "long", "armoured" },
+        colors: new[] { "mud-brown", "olive", "black-banded" },
+        noun:   "caiman",
+        traits: new[] { "lying in the shallows with only its eyes showing", "basking open-jawed on the bank", "sliding into the water without a ripple" });
+    protected override string CorpseBodyDescription => "the long armoured body of a caiman, its jaws a little open";
+    protected override List<ItemElement> BuildCorpseDrops() => new()
+    {
+        new ItemElement(new Hide()),
+        new ItemElement(new Hide()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Tooth()),
+        new ItemElement(new Tail()),
+    };
+}
+
