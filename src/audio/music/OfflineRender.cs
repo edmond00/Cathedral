@@ -144,6 +144,15 @@ public static class OfflineRender
         }
         foreach (var (n, m) in Presets())
             if (string.Equals(n, name, StringComparison.OrdinalIgnoreCase)) { mood = m; return true; }
+        // "0.5,0.2,0.3,1,0.6,0.4,0.2": the gauges themselves (cold, fear, mystery, intensity,
+        // festivity, sacred, far), for testing combinations no place has.
+        var parts = name.Split(',');
+        if (parts.Length >= 3 && parts.All(x => float.TryParse(x, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out _)))
+        {
+            var v = parts.Select(x => float.Parse(x, System.Globalization.CultureInfo.InvariantCulture)).ToArray();
+            mood = new MusicMoodState(v[0], v[1], v[2], v.Length > 3 ? v[3] : 1f, v.Length > 4 ? v[4] : 0f, v.Length > 5 ? v[5] : 0f, v.Length > 6 ? v[6] : 0f);
+            return true;
+        }
         int colon = name.IndexOf(':');
         if (colon > 0 && int.TryParse(name[(colon + 1)..], out int id))
         {
