@@ -15,6 +15,7 @@ public class SacrilegeModusMentis : ModusMentis
     public override string SkillMeans       => "the laying of hands on what was set apart";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTarget? Will => WillTarget.ToAny("lay hands on something holy", typeof(StealVerb), typeof(GrabVerb)).YieldingAny("holy things", typeof(World.Items.Icon), typeof(World.Items.Idol), typeof(World.Items.Censer), typeof(World.Items.Aspergillum), typeof(Items.PrayerBeads), typeof(World.Items.HolyWater));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Sacred);
     public override string[] Organs        => new[] { "hands", "spleen" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.Low;

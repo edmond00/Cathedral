@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative;
@@ -99,6 +100,14 @@ public abstract class ModusMentis
     /// See <c>WillPriority</c> for every place this narrows a choice.</para>
     /// </summary>
     public virtual WillTarget? Will => null;
+
+    /// <summary>
+    /// The kinds of area a will belongs in — where a player would expect it to find something to do
+    /// (herblore: a forest, a meadow). Area types, never names. Read by <c>--will-audit</c>, which plans
+    /// the will from each and reports the share that has a way to a target: the related coverage.
+    /// Empty for a modus mentis that is not a will. <see cref="Places"/> holds the usual groups.
+    /// </summary>
+    public virtual IReadOnlyList<Type> WillPlaces => Array.Empty<Type>();
 
     /// <summary>Whether this modus mentis bears the <see cref="ModusMentisFunction.Will"/> function.</summary>
     public bool IsWill => Functions.Contains(ModusMentisFunction.Will);

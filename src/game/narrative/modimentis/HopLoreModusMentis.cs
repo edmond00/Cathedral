@@ -15,6 +15,7 @@ public class HopLoreModusMentis : ModusMentis
     public override string SkillMeans       => "the knowledge of hops and the bitterness they give";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTarget? Will => WillTarget.ToAny("pick hops", typeof(GatherVerb), typeof(GrabVerb)).Yielding<World.Items.Hops>();
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Fields);
     public override string[] Organs        => new[] { "nose", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

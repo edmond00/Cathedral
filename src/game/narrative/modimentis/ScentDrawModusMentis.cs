@@ -15,6 +15,7 @@ public class ScentDrawModusMentis : ModusMentis
     public override string SkillMeans       => "the deliberate drawing of air to take a scent apart";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTarget? Will => WillTarget.To<SmellVerb>("draw a scent apart");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Woodland, Places.Grassland);
     public override string[] Organs        => new[] { "pulmones", "snout" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

@@ -16,6 +16,7 @@ public class ScentingModusMentis : ModusMentis
     public override string SkillMeans       => "the smelling and identifying of scents on the air";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTarget? Will => WillTarget.To<SmellVerb>("take a scent from the air");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Woodland, Places.Grassland);
     public override string[] Organs        => new[] { "snout", "hippocampus" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

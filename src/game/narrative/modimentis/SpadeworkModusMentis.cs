@@ -18,6 +18,7 @@ public class SpadeworkModusMentis : ModusMentis
     public override string SkillMeans       => "the cut spit and thrown spoil of digging by tool";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTarget? Will => WillTarget.To<DigVerb>("dig with a spade");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Fields, Places.Graves);
     public override string[] Organs        => new[] { "arms", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

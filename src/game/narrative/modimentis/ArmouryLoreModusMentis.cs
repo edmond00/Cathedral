@@ -16,6 +16,7 @@ public class ArmouryLoreModusMentis : ModusMentis
     public override string SkillMeans       => "the knowledge of arms and armour";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTarget? Will => WillTarget.ToAny("take up a fine weapon", typeof(GrabVerb), typeof(StealVerb)).Yielding<WeaponItem>();
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Stronghold, Places.Shops);
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;

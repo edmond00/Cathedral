@@ -16,6 +16,7 @@ public class ArcheologyModusMentis : ModusMentis
     public override string SkillMeans       => "the study of ruins, relics and ancient remains";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTarget? Will => WillTarget.To<DigVerb>("dig for old remains").On<Scene.DiggableGroundPointOfInterest>();
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Ruins, Places.Desert);
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
 
     /// <summary>Stands on letters, number or institutions.</summary>

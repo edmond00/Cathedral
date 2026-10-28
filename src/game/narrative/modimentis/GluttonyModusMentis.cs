@@ -16,6 +16,7 @@ public class GluttonyModusMentis : ModusMentis
     public override string SkillMeans       => "the keen love of food";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTarget? Will => WillTarget.ToAny("lay hands on something to eat", typeof(GrabVerb), typeof(GatherVerb), typeof(StealVerb)).Yielding<ConsumableItem>();
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Dwellings, Places.Taverns, Places.Shops);
     public override string[] Organs        => new[] { "nose", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override MoralLevel MoralLevel => MoralLevel.Low;

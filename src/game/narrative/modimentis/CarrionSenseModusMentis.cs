@@ -16,6 +16,7 @@ public class CarrionSenseModusMentis : ModusMentis
     public override string SkillMeans       => "the smelling of death from afar and the judging of what remains";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTarget? Will => WillTarget.To<SmellVerb>("find the dead by their smell").On<Npc.Corpse.CorpsePointOfInterest>();
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Graves);
     public override string[] Organs        => new[] { "snout", "paunch" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

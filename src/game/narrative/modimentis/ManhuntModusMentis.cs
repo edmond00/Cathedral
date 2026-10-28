@@ -15,6 +15,7 @@ public class ManhuntModusMentis : ModusMentis
     public override string SkillMeans       => "the tracking of a fugitive";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTarget? Will => WillTarget.To<TrackVerb>("track somebody down");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wild);
     public override string[] Organs        => new[] { "eyes", "legs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

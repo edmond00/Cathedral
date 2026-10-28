@@ -16,6 +16,7 @@ public class NatationModusMentis : ModusMentis
     public override string SkillMeans       => "swimming across deep water and staying afloat";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTarget? Will => WillTarget.To<SwimAcrossVerb>("swim across deep water");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.FreshWater, Places.Shore);
     public override string[] Organs        => new[] { "pulmones", "arms" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

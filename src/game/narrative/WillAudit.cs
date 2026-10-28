@@ -52,6 +52,15 @@ public static class WillAudit
     private static readonly Type[] RelationGated = { typeof(DialogueVerb), typeof(TameVerb), typeof(AppeaseVerb), typeof(CutVerb) };
 
     /// <summary>Whether no built scene could show this target: every verb relation-gated, or aimed at a body.</summary>
+    /// <summary>Whether no built scene could show this will's target — read by <see cref="WillCoverageAudit"/> too.</summary>
+    public static bool PlayGated(ModusMentis mm) => mm.Will is { } will && PlayGated(will);
+
+    /// <summary>How many targets the will declares.</summary>
+    public static int TargetCount(ModusMentis mm) => mm.Will == null ? 0 : 1;
+
+    /// <summary>The will's targets, for an audit line.</summary>
+    public static string Describe(ModusMentis mm) => mm.Will?.Describe() ?? "";
+
     private static bool PlayGated(WillTarget will)
         => will.VerbTypes.All(v => RelationGated.Any(g => g.IsAssignableFrom(v)))
            || will.OnTypes.Any(t => typeof(Cathedral.Game.Npc.Corpse.CorpsePointOfInterest).IsAssignableFrom(t));

@@ -15,6 +15,7 @@ public class SextonryModusMentis : ModusMentis
     public override string SkillMeans       => "the keeping of a burial ground";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTarget? Will => WillTarget.To<DigVerb>("dig a grave").On<Scene.GravePointOfInterest>();
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Graves, Places.Sacred);
     public override string[] Organs        => new[] { "arms", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

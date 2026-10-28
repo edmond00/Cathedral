@@ -15,6 +15,7 @@ public class PilgrimageModusMentis : ModusMentis
     public override string SkillMeans       => "the walking undertaken as an act of devotion";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTarget? Will => WillTarget.To<VoyageTowardVerb>("walk on as an act of devotion");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Sacred, Places.Wild);
     public override string[] Organs        => new[] { "heart", "legs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.High;

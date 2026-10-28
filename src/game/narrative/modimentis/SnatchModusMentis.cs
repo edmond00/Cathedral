@@ -17,6 +17,7 @@ public class SnatchModusMentis : ModusMentis
     public override string SkillMeans       => "the single closing movement of a waiting hand";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTarget? Will => WillTarget.To<CatchVerb>("snatch something living");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Grassland, Places.Woodland);
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

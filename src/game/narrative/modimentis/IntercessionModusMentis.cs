@@ -15,6 +15,7 @@ public class IntercessionModusMentis : ModusMentis
     public override string SkillMeans       => "the word put in on somebody else's behalf";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
     public override WillTarget? Will => WillTarget.To<PetitionVerb>("put in a word with the powerful");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Streets, Places.Stronghold);
     public override string[] Organs        => new[] { "tongue", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

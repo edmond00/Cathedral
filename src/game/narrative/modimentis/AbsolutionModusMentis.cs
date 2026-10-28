@@ -15,6 +15,7 @@ public class AbsolutionModusMentis : ModusMentis
     public override string SkillMeans       => "the giving of forgiveness that is believed";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
     public override WillTarget? Will => WillTarget.To<ConfessVerb>("hear a confession out and forgive it");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Sacred, Places.Settled);
     public override string[] Organs        => new[] { "tongue", "heart" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

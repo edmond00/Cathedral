@@ -16,6 +16,7 @@ public class BruteForceModusMentis : ModusMentis
     public override string SkillMeans => "overwhelming physical force";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action, ModusMentisFunction.Fighting };
     public override WillTarget? Will => WillTarget.To<BreakVerb>("break something open");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Dwellings, Places.Stronghold, Places.Ruins);
     public override MoralLevel MoralLevel => MoralLevel.Low;
     public override string[] Organs => new[] { "arms", "legs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

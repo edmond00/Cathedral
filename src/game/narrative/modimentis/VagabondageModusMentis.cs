@@ -15,6 +15,7 @@ public class VagabondageModusMentis : ModusMentis
     public override string SkillMeans       => "the living made from a road with no destination";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTarget? Will => WillTarget.To<VoyageTowardVerb>("wander on");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wild, Places.Streets);
     public override string[] Organs        => new[] { "legs", "paunch" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.Low;

@@ -17,6 +17,7 @@ public class FowlingModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTarget? Will => WillTarget.ToAny("take eggs from the nests", typeof(GatherVerb), typeof(GrabVerb))
         .Yielding<Items.Egg>();
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Shore, Places.Heights, Places.Woodland, new[] { typeof(Cathedral.Game.Scene.CoopArea) });
     public override string[] Organs        => new[] { "hands", "legs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

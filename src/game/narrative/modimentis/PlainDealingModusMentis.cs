@@ -15,6 +15,7 @@ public class PlainDealingModusMentis : ModusMentis
     public override string SkillMeans       => "the one honest price, named and held";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
     public override WillTarget? Will => WillTarget.ToAny("trade at an honest price", typeof(ProposeToBuyVerb), typeof(ProposeToSellVerb));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Settled);
     public override string[] Organs        => new[] { "tongue", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

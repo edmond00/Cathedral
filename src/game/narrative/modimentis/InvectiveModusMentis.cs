@@ -16,6 +16,7 @@ public class InvectiveModusMentis : ModusMentis
     public override string SkillMeans       => "sharp insults and cutting words";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
     public override WillTarget? Will => WillTarget.To<ProvokeVerb>("provoke somebody");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Taverns, Places.Streets);
     public override string[] Organs        => new[] { "hepar", "spleen" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>

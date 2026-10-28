@@ -15,6 +15,7 @@ public class ProvisioningModusMentis : ModusMentis
     public override string SkillMeans       => "the keeping of stores to feed many";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
     public override WillTarget? Will => WillTarget.To<ProposeToBuyVerb>("lay in stores");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Settled);
     public override string[] Organs        => new[] { "paunch", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction | AnatomyCapability.Speech;

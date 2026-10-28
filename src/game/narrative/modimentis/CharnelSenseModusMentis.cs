@@ -16,6 +16,7 @@ public class CharnelSenseModusMentis : ModusMentis
     public override string SkillMeans       => "the nose for blood and for the recently dead";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
     public override WillTarget? Will => WillTarget.To<SmellVerb>("smell out blood and the recently dead");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Graves);
     public override string[] Organs        => new[] { "nose", "spleen" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override MoralLevel MoralLevel => MoralLevel.Low;

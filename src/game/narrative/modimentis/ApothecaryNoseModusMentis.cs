@@ -15,6 +15,7 @@ public class ApothecaryNoseModusMentis : ModusMentis
     public override string SkillMeans       => "the naming of herbs and simples by their smell";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTarget? Will => WillTarget.To<GatherVerb>("gather a herb I know by its smell").YieldingAny("herbs", typeof(World.Items.HerbItem), typeof(Items.Herb));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Woodland, Places.Grassland, Places.Fields);
     public override string[] Organs        => new[] { "nose", "hippocampus" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

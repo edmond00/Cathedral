@@ -15,6 +15,7 @@ public class GoldFeverModusMentis : ModusMentis
     public override string SkillMeans       => "the hunger that follows a colour in the rock";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTarget? Will => WillTarget.To<MineVerb>("dig metal out of the rock");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Underground, Places.Heights);
     public override string[] Organs        => new[] { "eyes", "spleen" };
     /// <summary>A hunger that ends at a pick in a seam: a body with no hands for one has no gold fever.</summary>
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;

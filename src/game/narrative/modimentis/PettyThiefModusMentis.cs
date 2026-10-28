@@ -16,6 +16,7 @@ public class PettyThiefModusMentis : ModusMentis
     public override string SkillMeans       => "the picking of pockets and small thefts";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTarget? Will => WillTarget.To<StealVerb>("steal something");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Shops, Places.Dwellings, Places.Streets);
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

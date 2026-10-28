@@ -18,6 +18,7 @@ public class SpoorEyeModusMentis : ModusMentis
     public override string SkillMeans       => "the reading of print, bent stem and turned stone";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTarget? Will => WillTarget.To<TrackVerb>("follow a track");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wild);
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

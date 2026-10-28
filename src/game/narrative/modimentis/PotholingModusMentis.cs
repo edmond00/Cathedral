@@ -18,6 +18,7 @@ public class PotholingModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTarget? Will => WillTarget.To<SlipIntoVerb>("squeeze into the dark")
         .Where(e => e is SlipIntoPointOfInterest { IsNaturalGap: true }, "a gap the land made");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Underground, Places.Heights);
     public override string[] Organs        => new[] { "backbone", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

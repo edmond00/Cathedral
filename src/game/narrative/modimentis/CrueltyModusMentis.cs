@@ -18,6 +18,7 @@ public class CrueltyModusMentis : ModusMentis
     public override string SkillMeans    => "cruelty and predatory instinct";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
     public override WillTarget? Will => WillTarget.To<CrushVerb>("crush something small");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Stock, Places.Dwellings);
     public override MoralLevel MoralLevel => MoralLevel.Low;
     public override string[] Organs => new[] { "spleen", "heart" };
 

@@ -16,6 +16,7 @@ public class BeggaryModusMentis : ModusMentis
     public override string SkillMeans       => "the asking of strangers for what they owe you nothing of";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Action };
     public override WillTarget? Will => WillTarget.To<BegForCoinVerb>("beg for coin");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Streets, Places.Taverns);
     public override string[] Organs        => new[] { "tongue", "eyes" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>

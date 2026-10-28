@@ -15,6 +15,7 @@ public class RooftopsModusMentis : ModusMentis
     public override string SkillMeans       => "the travelling over roofs";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTarget? Will => WillTarget.To<ScaleUpVerb>("get up onto the roofs");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Streets, Places.Roofs);
     public override string[] Organs        => new[] { "feet", "cerebellum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override bool ActsDiscretely => true;

@@ -16,6 +16,7 @@ public class LowBlowModusMentis : ModusMentis
     public override string SkillMeans       => "underhanded strikes aimed at the body's softest and least-guarded points";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action, ModusMentisFunction.Fighting };
     public override WillTarget? Will => WillTarget.To<SlayVerb>("kill with a low blow");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Streets, Places.Dwellings, Places.Wilds);
     public override string[] Organs        => new[] { "legs", "feet" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.Low;

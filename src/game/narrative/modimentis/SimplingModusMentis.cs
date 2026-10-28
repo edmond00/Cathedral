@@ -15,6 +15,7 @@ public class SimplingModusMentis : ModusMentis
     public override string SkillMeans       => "the gathering of herbs at their season";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTarget? Will => WillTarget.To<GatherVerb>("gather simples in their season").YieldingAny("herbs", typeof(World.Items.HerbItem), typeof(Items.Herb));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Woodland, Places.Grassland, Places.Fields);
     public override string[] Organs        => new[] { "hands", "nose" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

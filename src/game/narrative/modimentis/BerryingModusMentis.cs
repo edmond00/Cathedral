@@ -15,6 +15,7 @@ public class BerryingModusMentis : ModusMentis
     public override string SkillMeans       => "the picking of fruit and nuts at their moment";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTarget? Will => WillTarget.To<GatherVerb>("pick fruit and nuts").Yielding<World.Items.FruitItem>();
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Woodland, Places.Grassland, Places.Fields);
     public override string[] Organs        => new[] { "hands", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

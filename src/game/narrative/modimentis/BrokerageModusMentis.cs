@@ -15,6 +15,7 @@ public class BrokerageModusMentis : ModusMentis
     public override string SkillMeans       => "the bringing-together of buyer and seller";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
     public override WillTarget? Will => WillTarget.ToAny("broker a trade", typeof(ProposeToBuyVerb), typeof(ProposeToSellVerb));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Settled);
     public override string[] Organs        => new[] { "tongue", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

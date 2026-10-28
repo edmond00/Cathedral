@@ -17,6 +17,7 @@ public class ScholarshipModusMentis : ModusMentis
     public override string SkillMeans       => "the knowledge found in books and old manuscripts";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
     public override WillTarget? Will => WillTarget.To<AskTeachingVerb>("be taught something");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Learning, Places.Sacred);
     public override string[] Organs        => new[] { "encephalon" };
 
     /// <summary>Stands on letters, number or institutions.</summary>

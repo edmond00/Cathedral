@@ -17,6 +17,7 @@ public class BargainingModusMentis : ModusMentis
     public override string SkillMeans       => "skilled haggling and the striking of good bargains";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
     public override WillTarget? Will => WillTarget.ToAny("strike a bargain", typeof(ProposeToBuyVerb), typeof(ProposeToSellVerb));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Settled);
     public override string[] Organs        => new[] { "tongue", "cerebrum" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>

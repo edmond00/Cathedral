@@ -16,6 +16,7 @@ public class DeathShakeModusMentis : ModusMentis
     public override string SkillMeans       => "the violent shake that kills caught prey at once";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTarget? Will => WillTarget.To<CrushVerb>("kill what is caught");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Woodland);
     public override string[] Organs        => new[] { "fangs", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.Low;

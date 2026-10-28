@@ -18,6 +18,7 @@ public class SlothModusMentis : ModusMentis
     public override string SkillMeans       => "the clever avoidance of unnecessary effort";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
     public override WillTarget? Will => WillTarget.To<SitAndWaitVerb>("sit down and do nothing");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Dwellings, Places.Taverns, Places.Grassland);
     public override string[] Organs        => new[] { "trunk" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override MoralLevel MoralLevel => MoralLevel.Low;

@@ -17,6 +17,7 @@ public class HighSocietyMannersModusMentis : ModusMentis
     public override string SkillMeans       => "refined manners and polite conversation";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
     public override WillTarget? Will => WillTarget.To<IntroduceMeVerb>("be introduced to somebody of standing");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Streets, Places.Taverns);
     public override string[] Organs        => new[] { "tongue", "ears" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>

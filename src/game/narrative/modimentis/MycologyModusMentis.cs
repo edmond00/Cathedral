@@ -16,6 +16,7 @@ public class MycologyModusMentis : ModusMentis
     public override string SkillMeans => "knowledge of fungi and decay";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTarget? Will => WillTarget.To<GatherVerb>("gather mushrooms").Yielding<Items.Mushroom>();
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.MushroomCellar, Places.Woodland, Places.Damp);
     public override string[] Organs => new[] { "eyes", "nose" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     

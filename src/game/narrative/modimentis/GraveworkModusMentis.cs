@@ -15,6 +15,7 @@ public class GraveworkModusMentis : ModusMentis
     public override string SkillMeans       => "the opening of ground where the dead are put";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTarget? Will => WillTarget.To<DigVerb>("open the ground where the dead lie").On<Scene.GravePointOfInterest>();
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Graves);
     public override string[] Organs        => new[] { "hands", "spleen" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.Low;

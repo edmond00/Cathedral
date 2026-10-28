@@ -17,6 +17,7 @@ public class MeditationModusMentis : ModusMentis
     public override string SkillMeans       => "the calming and stilling of the mind";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
     public override WillTarget? Will => WillTarget.To<SitAndWaitVerb>("sit still and quiet my mind");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Sacred, Places.Heights);
     public override string[] Organs        => new[] { "pineal_gland", "heart" };
 
     /// <summary>Stands on letters, number or institutions.</summary>

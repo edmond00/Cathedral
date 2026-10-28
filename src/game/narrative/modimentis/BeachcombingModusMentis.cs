@@ -17,6 +17,7 @@ public class BeachcombingModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTarget? Will => WillTarget.ToAny("pick up what the tide brought in", typeof(GatherVerb), typeof(GrabVerb))
         .YieldingAny("what the tide leaves", typeof(World.Items.Amber), typeof(World.Items.Driftwood), typeof(World.Items.Shell));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Shore);
     public override string[] Organs        => new[] { "eyes", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

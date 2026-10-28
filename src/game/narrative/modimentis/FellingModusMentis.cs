@@ -15,6 +15,7 @@ public class FellingModusMentis : ModusMentis
     public override string SkillMeans       => "the bringing down of a standing tree";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTarget? Will => WillTarget.To<CutWoodVerb>("fell a tree").On<Scene.TreePointOfInterest>();
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Woodland);
     public override string[] Organs        => new[] { "arms", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

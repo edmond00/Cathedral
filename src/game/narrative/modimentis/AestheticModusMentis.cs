@@ -16,6 +16,7 @@ public class AestheticModusMentis : ModusMentis
     public override string SkillMeans => "keen aesthetic sense";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTarget? Will => WillTarget.To<ContemplateVerb>("contemplate something beautiful");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Sacred, Places.Woodland, Places.Heights, Places.Shore);
     public override string[] Organs => new[] { "eyes", "pineal_gland" };
 
     /// <summary>Stands on letters, number or institutions.</summary>

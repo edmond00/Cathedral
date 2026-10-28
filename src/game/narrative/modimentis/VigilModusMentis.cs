@@ -16,6 +16,7 @@ public class VigilModusMentis : ModusMentis
     public override string SkillMeans       => "the watching through the night";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
     public override WillTarget? Will => WillTarget.To<SitAndWaitVerb>("keep a vigil");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Sacred, Places.Stronghold);
     public override string[] Organs        => new[] { "ears", "pineal_gland" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

@@ -17,6 +17,7 @@ public class SneakArtModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTarget? Will => WillTarget.To<SlipIntoVerb>("slip in unseen")
         .Where(e => e is not Cathedral.Game.Scene.Building.SlipIntoPointOfInterest { IsNaturalGap: true }, "a way into a building");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Streets, Places.Dwellings);
     public override MoralLevel MoralLevel => MoralLevel.Low;
     public override bool ActsDiscretely => true;
     public override string[] Organs => new[] { "feet", "ears" };

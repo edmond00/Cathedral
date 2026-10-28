@@ -17,6 +17,7 @@ public class ExplorationModusMentis : ModusMentis
     public override string SkillMeans       => "the finding of paths, shelter and safe ways through unknown land";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
     public override WillTarget? Will => WillTarget.To<FollowPathVerb>("follow a path to see where it goes");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wild);
     public override string[] Organs        => new[] { "eyes", "feet" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

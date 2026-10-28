@@ -15,6 +15,7 @@ public class VantageModusMentis : ModusMentis
     public override string SkillMeans       => "the reading of a country from a height";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTarget? Will => WillTarget.To<ClimbUpVerb>("climb to a height and look out");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Heights, Places.Woodland);
     public override string[] Organs        => new[] { "eyes", "feet" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

@@ -15,6 +15,7 @@ public class TurfcuttingModusMentis : ModusMentis
     public override string SkillMeans       => "the cutting and stacking of peat and turf";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTarget? Will => WillTarget.To<DigVerb>("cut into the turf");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Grassland, Places.Damp);
     public override string[] Organs        => new[] { "arms", "legs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

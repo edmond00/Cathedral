@@ -17,6 +17,7 @@ public class MuskReadingModusMentis : ModusMentis
     public override string SkillMeans       => "the reading of an animal's condition from its musk";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTarget? Will => WillTarget.To<SmellVerb>("read a beast by its musk");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds);
     public override string[] Organs        => new[] { "nose", "hippocampus" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

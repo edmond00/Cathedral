@@ -17,6 +17,7 @@ public class TrufflingModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTarget? Will => WillTarget.ToAny("take truffles from the sand", typeof(GatherVerb), typeof(GrabVerb))
         .Yielding<World.Items.DesertTruffle>();
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Desert);
     public override string[] Organs        => new[] { "hands", "nose" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

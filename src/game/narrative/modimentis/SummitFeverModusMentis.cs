@@ -16,6 +16,7 @@ public class SummitFeverModusMentis : ModusMentis
     public override string SkillMeans       => "climbing the last pitch to stand on top";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTarget? Will => WillTarget.To<ClimbUpVerb>("climb to the top");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Heights);
     public override string[] Organs        => new[] { "hands", "heart" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

@@ -15,6 +15,7 @@ public class FordingModusMentis : ModusMentis
     public override string SkillMeans       => "the crossing of water on foot";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTarget? Will => WillTarget.To<CrossVerb>("cross on foot");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.FreshWater);
     public override string[] Organs        => new[] { "legs", "pulmones" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

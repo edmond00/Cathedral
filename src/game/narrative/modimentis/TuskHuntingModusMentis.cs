@@ -17,6 +17,7 @@ public class TuskHuntingModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTarget? Will => WillTarget.ToAny("take old ivory out of the frozen ground", typeof(GatherVerb), typeof(GrabVerb))
         .Yielding<World.Items.FossilIvory>();
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Ice);
     public override string[] Organs        => new[] { "hands", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

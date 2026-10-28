@@ -16,6 +16,7 @@ public class InquiryModusMentis : ModusMentis
     public override string SkillMeans       => "the drawing out of what someone knows";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
     public override WillTarget? Will => WillTarget.To<GatherKnowledgeVerb>("draw out what somebody knows");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Settled, Places.Learning);
     public override string[] Organs        => new[] { "tongue", "cerebrum" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>

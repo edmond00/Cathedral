@@ -15,6 +15,7 @@ public class SoldieryModusMentis : ModusMentis
     public override string SkillMeans       => "the ordinary knowledge of the soldier's life";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
     public override WillTarget? Will => WillTarget.To<TalkSoldieringVerb>("talk of the soldier's life");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Stronghold, Places.Taverns);
     public override string[] Organs        => new[] { "cerebrum", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction | AnatomyCapability.Speech;

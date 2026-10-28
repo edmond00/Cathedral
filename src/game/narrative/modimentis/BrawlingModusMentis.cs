@@ -16,6 +16,7 @@ public class BrawlingModusMentis : ModusMentis
     public override string SkillMeans       => "street fighting, improvised violence, and winning by any means";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action, ModusMentisFunction.Fighting };
     public override WillTarget? Will => WillTarget.To<AttackVerb>("start a fight");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Taverns, Places.Streets);
     public override string[] Organs        => new[] { "arms", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.Low;

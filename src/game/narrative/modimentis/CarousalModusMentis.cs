@@ -16,6 +16,7 @@ public class CarousalModusMentis : ModusMentis
     public override string SkillMeans       => "the enjoying of drink, feasting and long celebration";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Action };
     public override WillTarget? Will => WillTarget.To<SingAlongVerb>("join in the carousing");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Taverns);
     public override string[] Organs        => new[] { "hepar", "tongue" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>

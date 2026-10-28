@@ -15,6 +15,7 @@ public class HawkingModusMentis : ModusMentis
     public override string SkillMeans       => "the selling of goods by street cry";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
     public override WillTarget? Will => WillTarget.To<ProposeToSellVerb>("sell my goods");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Streets);
     public override string[] Organs        => new[] { "tongue", "pulmones" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

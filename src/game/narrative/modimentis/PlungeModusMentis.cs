@@ -16,6 +16,7 @@ public class PlungeModusMentis : ModusMentis
     public override string SkillMeans       => "swimming into cold water for the shock of it";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTarget? Will => WillTarget.To<SwimAcrossVerb>("get into the cold water and swim it");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.FreshWater, Places.Ice);
     public override string[] Organs        => new[] { "pulmones", "heart" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

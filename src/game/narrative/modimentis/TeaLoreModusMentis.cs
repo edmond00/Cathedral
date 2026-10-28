@@ -15,6 +15,7 @@ public class TeaLoreModusMentis : ModusMentis
     public override string SkillMeans       => "the knowledge of tea from leaf to cup";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTarget? Will => WillTarget.ToAny("pick tea", typeof(GatherVerb), typeof(GrabVerb)).Yielding<World.Items.TeaLeaf>();
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Fields);
     public override string[] Organs        => new[] { "nose", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

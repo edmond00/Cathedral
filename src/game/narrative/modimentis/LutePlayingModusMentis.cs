@@ -15,6 +15,7 @@ public class LutePlayingModusMentis : ModusMentis
     public override string SkillMeans       => "the playing of the lute";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Action };
     public override WillTarget? Will => WillTarget.To<SingAlongVerb>("play and sing along");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Taverns, Places.Streets);
     public override string[] Organs        => new[] { "hands", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft | AnatomyCapability.Speech;

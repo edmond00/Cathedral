@@ -17,6 +17,7 @@ public class LargesseModusMentis : ModusMentis
     public override string SkillMeans       => "the open-handed giving of the great";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
     public override WillTarget? Will => WillTarget.To<GiveAlmsVerb>("give open-handedly");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Streets, Places.Sacred);
     public override string[] Organs        => new[] { "heart", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction | AnatomyCapability.Speech;

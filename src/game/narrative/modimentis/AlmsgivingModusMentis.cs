@@ -17,6 +17,7 @@ public class AlmsgivingModusMentis : ModusMentis
     public override string SkillMeans       => "the giving of alms and the joy of it";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
     public override WillTarget? Will => WillTarget.To<GiveAlmsVerb>("give alms");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Streets, Places.Sacred);
     public override string[] Organs        => new[] { "heart", "hands" };
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

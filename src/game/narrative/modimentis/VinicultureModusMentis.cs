@@ -15,6 +15,7 @@ public class VinicultureModusMentis : ModusMentis
     public override string SkillMeans       => "the tending of the vine from pruning to vintage";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTarget? Will => WillTarget.ToAny("pick grapes", typeof(GatherVerb), typeof(GrabVerb)).Yielding<World.Items.Grape>();
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.VineyardArea) });
     public override string[] Organs        => new[] { "hands", "nose" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;

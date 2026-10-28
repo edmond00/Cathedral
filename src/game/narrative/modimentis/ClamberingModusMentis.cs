@@ -16,6 +16,7 @@ public class ClamberingModusMentis : ModusMentis
     public override string SkillMeans       => "claw-hooked climbing over bark and stone";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTarget? Will => WillTarget.To<ClimbUpVerb>("climb up");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Heights, Places.Woodland);
     // Was claws + arms — a beast organ and a human one, so no anatomy could learn it. A beast clambers
     // with all four.
     public override string[] Organs        => new[] { "claws", "legs" };

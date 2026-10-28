@@ -251,6 +251,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --humors <humor>[,…] | <queue>=<humor>[,…]  DEBUG: fill humor queues (paunch, hepar, spleen, pulmones, or all)");
     Console.WriteLine("                                     with these humors, e.g. voluptas or hepar=juvenescence,spleen=laetitia");
     Console.WriteLine("  --mm-audit                         Print the modus-mentis content audit (hard-rule violations, coverage, soft stats) and exit");
+    Console.WriteLine("  --will-audit [out.json]            Plan every will across the location kinds and its own places: coverage, related coverage, breadth");
     Console.WriteLine("  --verb-audit                       Print the verb-coverage audit (verbs per observable vs targets, dead verbs,");
     Console.WriteLine("                                     unresolvable modus-mentis and tool ids, landmark counts) and exit");
     Console.WriteLine("  --outcome-audit                    Print the outcome catalogue (every consequence, who produces it, what produces nothing) and exit");
@@ -580,6 +581,15 @@ if (args.Length >= 1 && args[0] == "--mm-reach-csv")
 if (args.Length >= 1 && args[0] == "--crime-audit")
 {
     Console.WriteLine(Cathedral.Game.Scene.CrimeAudit.BuildReport());
+    return;
+}
+
+// Will coverage audit: plan every will from every sampled location kind and from the places it
+// belongs in, and report where it has something to do. Headless. An optional argument writes the
+// numbers as JSON (reports/multi-target-wills.html is built from two such files).
+if (args.Length >= 1 && args[0] == "--will-audit")
+{
+    Console.WriteLine(Cathedral.Game.Narrative.WillCoverageAudit.BuildReport(args.Length >= 2 && !args[1].StartsWith('-') ? args[1] : null));
     return;
 }
 

@@ -18,6 +18,7 @@ public class FriendshipModusMentis : ModusMentis
     public override string SkillMeans       => "warm and open friendliness";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
     public override WillTarget? Will => WillTarget.To<StrengthenRelationshipVerb>("make a friend");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Settled);
     public override string[] Organs        => new[] { "heart", "tongue" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>

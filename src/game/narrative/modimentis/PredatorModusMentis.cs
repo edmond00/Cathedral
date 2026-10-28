@@ -16,6 +16,7 @@ public class PredatorModusMentis : ModusMentis
     public override string SkillMeans       => "the patient hunting and cornering of prey";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action, ModusMentisFunction.Fighting };
     public override WillTarget? Will => WillTarget.To<StalkVerb>("stalk prey");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Woodland, Places.Grassland);
     public override string[] Organs        => new[] { "fangs", "claws" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.Low;

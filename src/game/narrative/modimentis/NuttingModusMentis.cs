@@ -17,6 +17,7 @@ public class NuttingModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTarget? Will => WillTarget.ToAny("gather nuts", typeof(GatherVerb), typeof(GrabVerb))
         .YieldingAny("nuts", typeof(World.Items.Hazelnut), typeof(World.Items.Acorn));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Woodland);
     public override string[] Organs        => new[] { "hands", "paunch" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

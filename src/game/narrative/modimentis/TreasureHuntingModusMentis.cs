@@ -17,6 +17,7 @@ public class TreasureHuntingModusMentis : ModusMentis
     public override string SkillMeans       => "the hunting of hidden treasure and lost riches";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
     public override WillTarget? Will => WillTarget.To<DigVerb>("dig for what is hidden");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Ruins, Places.Desert, Places.Shore);
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
 
     /// <summary>Stands on letters, number or institutions.</summary>

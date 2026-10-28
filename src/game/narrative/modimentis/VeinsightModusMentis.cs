@@ -15,6 +15,7 @@ public class VeinsightModusMentis : ModusMentis
     public override string SkillMeans       => "the reading of a seam and the metal in it";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTarget? Will => WillTarget.To<MineVerb>("mine a seam of ore");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Underground, Places.Heights);
     public override string[] Organs        => new[] { "eyes", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

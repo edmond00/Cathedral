@@ -16,6 +16,7 @@ public class NauticalJargonModusMentis : ModusMentis
     public override string SkillMeans       => "the language and lore of sailors and ships";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
     public override WillTarget? Will => WillTarget.To<TalkOfFarPlacesVerb>("talk of ships and far coasts");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Shore, Places.Taverns);
     public override string[] Organs        => new[] { "tongue", "ears" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>

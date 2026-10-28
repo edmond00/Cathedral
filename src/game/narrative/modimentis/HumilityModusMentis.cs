@@ -16,6 +16,7 @@ public class HumilityModusMentis : ModusMentis
     public override string SkillMeans       => "the taking of the low place on purpose";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
     public override WillTarget? Will => WillTarget.To<BegForCoinVerb>("ask for alms");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Streets, Places.Sacred);
     public override string[] Organs        => new[] { "heart", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

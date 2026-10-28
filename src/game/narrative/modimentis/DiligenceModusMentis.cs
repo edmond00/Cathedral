@@ -15,6 +15,7 @@ public class DiligenceModusMentis : ModusMentis
     public override string SkillMeans       => "the steady finishing of what was begun";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Action };
     public override WillTarget? Will => WillTarget.To<RequestJobVerb>("find work");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Shops, Places.Fields, Places.Stock);
     public override string[] Organs        => new[] { "hands", "backbone" };
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

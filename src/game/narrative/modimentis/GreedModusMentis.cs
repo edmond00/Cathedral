@@ -17,6 +17,7 @@ public class GreedModusMentis : ModusMentis
     public override string SkillMeans       => "the relentless desire to have more";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
     public override WillTarget? Will => WillTarget.ToAny("take more for myself", typeof(StealVerb), typeof(PickpocketVerb));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Treasure, Places.Streets, Places.Dwellings);
     public override string[] Organs        => new[] { "heart", "eyes" };
 
     /// <summary>Stands on letters, number or institutions.</summary>
