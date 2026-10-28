@@ -516,6 +516,12 @@ if (args.Length >= 1 && args[0] == "--export-music")
 
 // --render-music <out.wav> [--seconds n] [--mood m] [--seed n] [--tracks n] [--journey j.json]: the music,
 // rendered faster than real time with its score beside it — what tools/music measures.
+if (args.Length >= 1 && args[0] == "--music-census")
+{
+    Environment.ExitCode = Cathedral.Audio.Music.Orchestra.Census(args);
+    return;
+}
+
 if (args.Length >= 1 && args[0] == "--render-music")
 {
     Environment.ExitCode = Cathedral.Audio.Music.OfflineRender.Run(args);

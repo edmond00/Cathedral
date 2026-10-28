@@ -42,7 +42,8 @@ from musickit import acoustic  # noqa: E402
 GM = {"Organ": 19, "OrganFlute": 19, "Choir": 52, "ChoirOoh": 53, "Strings": 49, "DarkPad": 95,
       "Recorder": 74, "Harpsichord": 6, "Harp": 46, "Lute": 24, "Bell": 14, "Timpani": 47,
       "HandDrum": 116, "Bourdon": 19, "Horn": 60, "SquareLead": 80, "Wind": 122,
-      "Fiddle": 110, "Whistle": 78, "Pipes": 109, "Bodhran": 116}
+      "Fiddle": 110, "Whistle": 78, "Pipes": 109, "Bodhran": 116,
+      "Metallophone": 11, "BuzzString": 104, "Reed": 69, "Glass": 92, "BentDrum": 117}
 
 
 def to_midi(score: dict, program: int, path: Path):

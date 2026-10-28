@@ -21,15 +21,16 @@ internal enum CounterStyle
 }
 
 /// <summary>
-/// The accompaniment's figure. Comp is the strummed boom-chick under a dance tune; Riff the
-/// distorted guitar under a fight, played in a section's <see cref="RiffStyle"/>.
+/// The accompaniment's figure. Comp is the strummed boom-chick under a dance tune; Riff the fight's
+/// martial ostinato (staccato strings, brass stabs), played in a section's <see cref="RiffStyle"/>.
 /// </summary>
-internal enum OstinatoStyle { Arpeggio, Broken, Pulse, Comp, Riff }
+internal enum OstinatoStyle { Arpeggio, Broken, Pulse, Comp, Riff, Additive }
 
 /// <summary>
-/// How a fight's section drives. Gallop: palm-muted eighth-and-two-sixteenths under power-chord
-/// hits, the drums on the same figure. Tremolo: the riff picked in sixteenths an octave up over a
-/// double-bass kick. HalfTime: power chords left to ring, chugs between, the snare on three.
+/// How a fight's section drives. Gallop: a march, the staccato strings on an eighth and two
+/// sixteenths, war drums on one and three, snare ruffs on two and four. Tremolo: the strings in
+/// running sixteenths over war drums pounding eighths and a snare roll. HalfTime: a brass stab left
+/// to ring, the war drum and the timpani tolling on one, the snare on three.
 /// </summary>
 internal enum RiffStyle { Gallop, Tremolo, HalfTime }
 
@@ -44,6 +45,10 @@ internal sealed class Orchestration
 {
     public Instrument Melody, MelodyAlt, Counter, Pad, PadAlt, Drone, Ostinato, Bass, Perc;
     public bool Bell, Ambience, Percussion;
+    public bool Guitar;
+    public bool Cantus;                  // a distant wordless choir drifting through some sections (a little sacred, not leading)
+    public bool Stranger;                // a strange voice sits in for a section or two (a little far, not leading)
+    public Instrument FarVoice;          // ...and which                  // a fight's: the distorted guitar doubles the strings' gallop, palm-muted and low
     public OstinatoStyle OstinatoStyle;
     public int[] OstinatoPattern = Array.Empty<int>();
     public double OstinatoStep;          // beats per ostinato note
@@ -117,9 +122,10 @@ internal static class Orchestra
         Instrument.Bodhran, 0.95, 0.0, 0.0, 1.0f, 0.0f);
 
     /// <summary>
-    /// A fight: dungeon synth leaning into metal, as the genre does at its most violent. The epic
-    /// lead stays the genre's (horn, choir, strings, the square lead); under it a distorted riff, a
-    /// drum kit, a dark pad. No drone, no bells, no wind: nothing that waits.
+    /// A fight: the genre's battle music, martial and percussive. War drums, timpani and snare under
+    /// the epic lead (horn, choir, strings, the square lead, the organ); a staccato string ostinato and
+    /// brass stabs drive it; a dark pad behind. A distorted guitar sometimes doubles the strings, low
+    /// in the mix. No drone, no bells, no wind: nothing that waits.
     /// </summary>
     public static Orchestration ChooseFight(MusicMoodState m, Random rng)
     {
@@ -139,9 +145,10 @@ internal static class Orchestra
         o.Pad = Pick(pads, o.Melody);
         o.PadAlt = Pick(pads, o.Pad);
         o.Drone = Instrument.Bourdon;
-        o.Ostinato = Instrument.Distortion;
+        o.Ostinato = Instrument.Staccato;
         o.Bass = Instrument.Bourdon;
-        o.Perc = Instrument.Kick;
+        o.Perc = Instrument.WarDrum;
+        o.Guitar = rng.NextDouble() < 0.25;
         o.Percussion = true;
         o.OstinatoStyle = OstinatoStyle.Riff;
         o.OstinatoPattern = new[] { 0 };
@@ -156,6 +163,63 @@ internal static class Orchestra
     /// <summary>A fight's tempo: a quarter at 84-100, felt in sixteenths by the riff and the kick.</summary>
     public static double FightTempo(MusicMoodState m, Random rng) => 84 + rng.NextDouble() * 12 + 6 * (1 - m.Coldness);
 
+    /// <summary>
+    /// The sacred pole: chant. The choir or the organ on the line, the second voice in organum, a
+    /// held drone, bells, nothing struck and almost nothing arpeggiated.
+    /// </summary>
+    private static readonly Pole Sacred = new("sacred",
+        new[] { (Instrument.Choir, 6.0), (Instrument.Organ, 2.0), (Instrument.ChoirOoh, 1.0), (Instrument.OrganFlute, 0.5) },
+        new[] { (Instrument.Organ, 2.0), (Instrument.Harp, 1.0) },
+        new[] { (Instrument.Organ, 3.0), (Instrument.ChoirOoh, 3.0), (Instrument.Strings, 1.0) },
+        new[] { (Instrument.Choir, 3.0), (Instrument.Organ, 2.0), (Instrument.ChoirOoh, 1.0) },
+        new[] { (Instrument.Bourdon, 2.0), (Instrument.Organ, 1.0) },
+        Instrument.Timpani, 0.05, 0.7, 0.2, 0.1f, 0.95f);
+
+    /// <summary>
+    /// <c>--music-census [n]</c>: for every kind of place, sampled n times (200) as the game samples
+    /// it, which pole leads how often, and how often a distant choir may come in. What a profile
+    /// change does to the whole world, without rendering a note.
+    /// </summary>
+    public static int Census(string[] args)
+    {
+        int n = args.Length > 1 && int.TryParse(args[1], out var k) ? k : 200;
+        Console.WriteLine($"{"place",-14} {"comfy",6} {"melan",6} {"dark",6} {"fear",6} {"fest",6} {"sacred",6} {"far",6} {"choir",6} {"strngr",6}");
+        foreach (var kind in LocationMoodProfiles.Kinds.OrderBy(x => x))
+        {
+            var lead = new Dictionary<string, int>();
+            int choir = 0, stranger = 0;
+            for (int id = 0; id < n; id++)
+            {
+                var m = LocationMoodProfiles.SampleMood(kind, id);
+                var main = Weights(m).OrderByDescending(p => p.w).First().p.Name;
+                lead[main] = lead.GetValueOrDefault(main) + 1;
+                if (main != "sacred" && m.Sacred >= 0.12f) choir++;
+                if (main != "far" && m.Far >= 0.12f) stranger++;
+            }
+            string P(string pole) => $"{100.0 * lead.GetValueOrDefault(pole) / n,5:0}%";
+            Console.WriteLine($"{kind,-14} {P("comfy")} {P("melancholy")} {P("dark")} {P("fear")} {P("festive")} {P("sacred")} {P("far")} {100.0 * choir / n,5:0}% {100.0 * stranger / n,5:0}%");
+        }
+        return 0;
+    }
+
+    /// <summary>
+    /// The far pole: strange to the empire's ear. A reed, a buzzing string, beating metal, bowed glass
+    /// on the line; the metal or the string on an uneven figure; a drum that bends.
+    /// </summary>
+    private static readonly Pole Far = new("far",
+        new[] { (Instrument.Reed, 3.0), (Instrument.BuzzString, 2.0), (Instrument.Metallophone, 1.5), (Instrument.Glass, 1.0) },
+        new[] { (Instrument.Metallophone, 3.0), (Instrument.BuzzString, 2.0), (Instrument.Harp, 0.5) },
+        new[] { (Instrument.Glass, 2.0), (Instrument.DarkPad, 2.0), (Instrument.Strings, 1.0) },
+        new[] { (Instrument.Reed, 2.0), (Instrument.Glass, 1.5), (Instrument.Metallophone, 1.0) },
+        new[] { (Instrument.Bourdon, 2.0), (Instrument.Strings, 1.0) },
+        Instrument.BentDrum, 0.8, 0.0, 0.35, 0.55f, 0.3f);
+
+    /// <summary>Whether the far pole leads this mood: the piece is strange throughout.</summary>
+    public static bool FarLeads(MusicMoodState m) => Weights(m).OrderByDescending(p => p.w).First().p == Far;
+
+    /// <summary>Whether the sacred pole leads this mood: the piece is chant.</summary>
+    public static bool SacredLeads(MusicMoodState m) => Weights(m).OrderByDescending(p => p.w).First().p == Sacred;
+
     /// <summary>The mood's weight on each pole.</summary>
     private static (Pole p, double w)[] Weights(MusicMoodState m)
     {
@@ -167,7 +231,12 @@ internal static class Orchestra
         // Festivity outweighs the rest once it is past about a half; fear and strangeness damp it, a
         // haunted market does not dance.
         double festive = m.Festivity * m.Festivity * 4.0 * (1 - f * 0.7) * (1 - y * 0.6);
-        return new[] { (Comfy, comfy), (Melancholy, mel), (Dark, dark), (Fear, fear), (Festive, festive) };
+        // Holiness leads from about a half, as festivity does; fear damps it (a desecrated temple is
+        // the dark pole's), strangeness does not (the holy is strange).
+        double sacred = m.Sacred * m.Sacred * 4.5 * (1 - f * 0.6);
+        // Distance leads from about a half too; fear damps it a little (a jungle at night is dark first).
+        double far = m.Far * m.Far * 4.2 * (1 - f * 0.5);
+        return new[] { (Comfy, comfy), (Melancholy, mel), (Dark, dark), (Fear, fear), (Festive, festive), (Sacred, sacred), (Far, far) };
     }
 
     /// <summary>The dance a mood asks for: none unless the festive pole leads, then a jig or a reel.</summary>
@@ -195,8 +264,11 @@ internal static class Orchestra
     {
         var poles = Weights(m);
         var main = poles.OrderByDescending(p => p.w).First().p;
-        // A session is a session: when the festive pole leads, nobody else's instruments sit in.
+        // A session is a session: when the festive pole leads, nobody else's instruments sit in. Nor
+        // in a chant: a temple's music is all choir and organ.
         if (main == Festive) poles = new[] { (Festive, 1.0) };
+        if (main == Sacred) poles = new[] { (Sacred, 1.0) };
+        if (main == Far) poles = new[] { (Far, 1.0) };
         double tot = poles.Sum(p => p.w);
         var o = new Orchestration();
         o.Pole = main.Name;
@@ -216,6 +288,21 @@ internal static class Orchestra
             o.Drone = rng.NextDouble() < 0.45 ? Instrument.Pipes : Instrument.Bourdon;
             if (o.Counter == o.Melody) o.Counter = o.Melody == Instrument.Fiddle ? Instrument.Whistle : Instrument.Fiddle;
         }
+        if (main == Sacred)
+        {
+            o.Drone = Instrument.Bourdon;
+            if (o.Counter == o.Melody) o.Counter = o.Melody == Instrument.Choir ? Instrument.Organ : Instrument.Choir;
+        }
+        // A little holiness, not leading: a distant choir in some sections of the place's own music.
+        o.Cantus = main != Sacred && m.Sacred >= 0.12f && rng.NextDouble() < Math.Min(1.0, 0.5 + m.Sacred * 1.5);
+        // A little distance, not leading: a stranger sits in for a section or two of the place's own
+        // music, festive and sacred pieces included (a jig with a stranger at the table).
+        o.Stranger = main != Far && m.Far >= 0.12f && rng.NextDouble() < Math.Min(1.0, 0.4 + m.Far * 1.5);
+        if (o.Stranger)
+        {
+            double r = rng.NextDouble() * 7;
+            o.FarVoice = r < 3 ? Instrument.Reed : r < 5 ? Instrument.Metallophone : Instrument.BuzzString;
+        }
         double Chance(Func<Pole, double> f) => poles.Sum(p => p.w * f(p.p)) / tot;
         o.Percussion = o.Percussion || rng.NextDouble() < Chance(p => p.PercChance);
         o.Bell = rng.NextDouble() < Chance(p => p.BellChance);
@@ -223,10 +310,17 @@ internal static class Orchestra
         o.Liveliness = (float)(poles.Sum(p => p.w * p.p.Liveliness) / tot);
         o.Chant = (float)(poles.Sum(p => p.w * p.p.Chant) / tot);
         o.Fall = m.Coldness;
-        o.OpenVoicing = main == Dark || main == Fear || rng.NextDouble() < m.Coldness * 0.5;
+        o.OpenVoicing = main == Dark || main == Fear || main == Sacred || rng.NextDouble() < m.Coldness * 0.5;
 
         // The ostinato's figure: chord-tone indices (0 root, 1 third, 2 fifth, 3 octave) per step.
-        if (main == Festive)
+        if (main == Far)
+        {
+            // Eighths grouped 3+3+2: an uneven pulse inside an even bar (EmitOstinato).
+            o.OstinatoStyle = OstinatoStyle.Additive;
+            o.OstinatoPattern = new[] { 0, 2, 1, 3, 2, 1, 0, 2 };
+            o.OstinatoStep = 0.5;
+        }
+        else if (main == Festive)
         {
             o.OstinatoStyle = OstinatoStyle.Comp;   // the composer strums it by the dance's own pattern
             o.OstinatoPattern = new[] { 0 };
@@ -265,21 +359,27 @@ internal static class Orchestra
 
     public static double Tempo(MusicMoodState m, Random rng)
     {
-        double bpm = 74 - 18 * m.Coldness + 26 * m.Fear - 8 * m.Mystery + (rng.NextDouble() - 0.5) * 8;
+        double bpm = 74 - 18 * m.Coldness + 26 * m.Fear - 8 * m.Mystery - 6 * m.Sacred + (rng.NextDouble() - 0.5) * 8;
         return Math.Clamp(bpm, 50, 100);
     }
 
     public static int Meter(MusicMoodState m, Random rng)
     {
-        double three = 0.25 + Math.Max(0, 0.45 - m.Coldness) * 0.8 - m.Fear * 0.2;
+        double three = 0.25 + Math.Max(0, 0.45 - m.Coldness) * 0.8 - m.Fear * 0.2 - m.Sacred * 0.2;
         return rng.NextDouble() < three ? 3 : 4;
     }
 
-    /// <summary>Level of each layer in the mix.</summary>
-    public static float PartLevel(Part p) => p switch
+    /// <summary>
+    /// Level of each layer in the mix. A fight is led by its drums: they come up, and the ostinato
+    /// under them goes down.
+    /// </summary>
+    public static float PartLevel(Part p, bool fight = false) => p switch
     {
+        Part.Perc when fight => 0.95f,
+        Part.Ostinato when fight => 0.5f,
         Part.Drone => 0.2f, Part.Pad => 0.42f, Part.Melody => 0.8f, Part.Counter => 0.5f, Part.Ostinato => 0.6f,
         Part.Bass => 0.45f, Part.Perc => 0.55f, Part.Bell => 0.8f, Part.Ambience => 0.15f, Part.Fight => 0.6f,
+        Part.Cantus => 0.25f,
         _ => 1f,
     };
 
@@ -291,9 +391,11 @@ internal static class Orchestra
     public static float Trim(Instrument i) => i switch
     {
         Instrument.Organ => 0.8f, Instrument.SquareLead => 0.8f, Instrument.Bell => 0.9f, Instrument.Horn => 0.9f,
-        // The riff and the kit drive the fight; the tune still has to sit on them.
-        Instrument.Distortion => 0.75f, Instrument.PowerChord => 0.75f,
-        Instrument.Kick => 0.75f, Instrument.Snare => 0.75f, Instrument.Cymbal => 0.35f,
+        // The drums drive the fight; the tune still has to sit on them. The guitar, when there is one,
+        // is a colour under the strings, not the lead.
+        Instrument.Distortion => 0.5f, Instrument.PowerChord => 0.5f,
+        Instrument.Kick => 0.75f, Instrument.Snare => 0.85f, Instrument.Cymbal => 0.3f,
+        Instrument.WarDrum => 1.0f, Instrument.Staccato => 1.0f,
         _ => 1f,
     };
 
@@ -301,14 +403,17 @@ internal static class Orchestra
     public static void ApplyBus(Synth s, MusicMoodState m, bool fight = false)
     {
         // A festive place is a room full of people: a shorter hall and less of it.
-        float t60 = (2.0f + 5.0f * m.Mystery + 2.0f * m.Coldness) * (1f - 0.45f * m.Festivity);
+        // A holy place is stone and height: the longest hall of all.
+        // Far places are open country: a shorter room than the cathedral's.
+        float t60 = (2.0f + 5.0f * m.Mystery + 2.0f * m.Coldness + 3.0f * m.Sacred) * (1f - 0.45f * m.Festivity) * (1f - 0.3f * m.Far);
         float damp = 5200f - 2400f * m.Coldness - 800f * m.Mystery;
         s.SetHall(t60, damp, 0.015f + 0.035f * m.Mystery);
         s.SetTape(9000f - 2600f * m.Coldness - 600f * m.Mystery, 3f + 3.5f * m.Mystery, -60f + 3f * m.Coldness, 1.3f + 0.5f * m.Fear);
         s.ChorusDepth.Target = 0.45f + 0.45f * m.Mystery;
-        s.ReverbReturn = (1.05f + 0.45f * m.Mystery + 0.2f * m.Coldness) * (1f - 0.35f * m.Festivity);
+        s.ReverbReturn = (1.05f + 0.45f * m.Mystery + 0.2f * m.Coldness + 0.2f * m.Sacred) * (1f - 0.35f * m.Festivity) * (1f - 0.4f * m.Far);
         // A full band in a small room adds up: the festive mix goes into the tape a little lower.
-        s.PreGain = 0.22f * (1f - 0.15f * m.Festivity);
+        // So does a long, wet hall: a holy place goes in a little lower too.
+        s.PreGain = 0.22f * (1f - 0.15f * m.Festivity) * (1f - 0.15f * m.Sacred);
         if (fight)
         {
             s.SetHall(t60 * 0.7f, damp, 0.012f);

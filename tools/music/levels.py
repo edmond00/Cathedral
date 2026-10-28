@@ -28,7 +28,7 @@ from musickit import ROOT  # noqa: E402
 # with it (20*log10 of the ratio), or every instrument is quietly re-levelled up or down.
 SUSTAINED_DB = -18.7
 STRUCK_DB = -21.7
-STRUCK = {"Harpsichord", "Harp", "Lute", "Bell", "Timpani", "HandDrum", "Bodhran", "Kick", "Snare", "Cymbal"}
+STRUCK = {"Harpsichord", "Harp", "Lute", "Bell", "Timpani", "HandDrum", "Bodhran", "Kick", "Snare", "Cymbal", "WarDrum", "Staccato", "Metallophone", "BuzzString", "BentDrum"}
 VOICES = ROOT / "src" / "audio" / "music" / "Voices.cs"
 
 

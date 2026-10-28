@@ -21,7 +21,7 @@ AmbianceEngine (src/audio/AmbianceEngine.cs)     the game's only door: same API 
  │       │   Theory.cs (modes, keys, chords, progressions) · Melody.cs (motifs, rhythms, periods)
  │       │   Orchestra.cs (mood poles → instruments, tempo, metre, mix levels, hall and tape)
  │       └─ Synth            voices → part buses → chorus + FDN hall → tape → limiter
- │           Voices.cs (26 instruments) · Effects.cs · Dsp.cs
+ │           Voices.cs (33 instruments) · Effects.cs · Dsp.cs
  │   └─ PcmStream            waveOut on Windows, OpenAL elsewhere (adaptive queue, underrun report)
  └─ LegacyAmbianceEngine     --music-engine legacy: the first engine, MIDI to the GS Wavetable
                              Synth (Windows) or MeltySynth + assets/audio/soundfont.sf2
@@ -36,7 +36,7 @@ AmbianceEngine (src/audio/AmbianceEngine.cs)     the game's only door: same API 
   `System.Random`. The world theme is piece −1.
 - **Top down.** A piece picks mode (the `ModalScale` palette: no major-third mode, Dorian is the
   warmest), tonic (moves by fourths and fifths), tempo, metre, an orchestration from four poles
-  (comfy, melancholy, dark, fear, festive), a form (`I A A' B A' O`…) and motifs. Each A is a period: the
+  (comfy, melancholy, dark, fear, festive, sacred, far), a form (`I A A' B A' O`…) and motifs. Each A is a period: the
   motif, its sequence, a second idea, an open cadence; then the same phrase with a closed ending.
   A' is a plain or ornamented restatement, B the inverted motif over contrast chords, C a breakdown
   or chant. Layers enter one at a time across the piece.
@@ -50,20 +50,55 @@ AmbianceEngine (src/audio/AmbianceEngine.cs)     the game's only door: same API 
   the tune under them); a lilt (`Lilt`). Still Dorian or Aeolian: festive is lively, not bright.
   The comp and drum come in with the melody's tier there, not at Intensity 0.75. The harness
   holds festive renders to the `poles.festive` bands in `targets.json`.
-- **Fights.** The fight filter (`Composer.Fighting`) writes dungeon synth leaning into metal:
-  `Orchestra.ChooseFight` (the lead from horn, choir, strings, square lead, organ; a distorted riff,
-  `Instrument.Distortion` and `PowerChord`, palm-muted below velocity 0.55; a kit, `Kick`, `Snare`,
-  `Cymbal`, a crash at 0.5 and over, a closed hat under), 84-100 bpm felt in sixteenths, never
-  Locrian (a power chord needs its fifth). `PlanFightForm`: `I A A' B C A' B A'`, each section a
-  `RiffStyle` (`EmitRiff`, `EmitKit`): Gallop under the A tune, Tremolo over a double-bass kick
-  under the B, HalfTime for the tune-less breakdown. The band is all there from the first bar; the
-  riff and kit open with the melody's tier, like a dance's. A fight cuts in at once
-  (`MusicCore.SetFighting`: the planned bars dropped, a 0.2 s fade, the riff 0.08 s later), not at
-  the next bar line, which at a slow tempo was four or five seconds late; its end keeps the bridge, and plays in a closer room (`ApplyBus(..., fight: true)`). `--mood Battle` renders
-  a fight, as `B` in `--music` mode plays one; `targets.json` holds Battle to its own bands.
+- **Fights.** The fight filter (`Composer.Fighting`) writes the genre's martial battle music, led
+  by its drums: `Orchestra.ChooseFight` (the lead from horn, choir, strings, square lead, organ; a
+  dark pad; `Instrument.Staccato` strings and horn stabs for the ostinato; `WarDrum`, `Timpani`,
+  `Snare` with ruffs and rolls, a `Cymbal` crash only to mark a section). A quarter of fights
+  (`Orchestration.Guitar`) add a palm-muted `Distortion` doubling the strings' gallop, low in the
+  mix: the metal is a colour, not the sound. 84-100 bpm, never Locrian. `PlanFightForm`:
+  `I A A' B C A' B A'`, each section a `RiffStyle` (`EmitRiff`, `EmitKit`): Gallop (a march) under
+  the A tune, Tremolo (strings in sixteenths, pounding war drums, a snare roll) under the B,
+  HalfTime (a tolling war drum and timpani) for the tune-less breakdown. In a fight the drums'
+  part comes up and the ostinato's goes down (`PartLevel(part, fight)`). The band plays from the
+  first bar; the ostinato and drums open with the melody's tier, like a dance's. A fight cuts in at once
+  (`MusicCore.SetFighting`: the planned bars dropped, a 0.2 s fade, the drums 0.08 s later); its end
+  keeps the bridge, and it plays in a closer room (`ApplyBus(..., fight: true)`). `--mood Battle`
+  renders a fight, as `B` in `--music` mode plays one; `targets.json` holds Battle to its own bands.
   A fight gates its layers at full Intensity whatever the mood: a travel encounter opens from the
   world map's (0.25, drone and pad only), and was once written as a fight and heard as a pad.
   Battle's preset is at full Intensity and hid that; `journeys/encounter.json` is the check.
+  `Kick` and `PowerChord` are left from the first, metal version: levelled, unused.
+- **Sacred places.** `MusicMoodState.Sacred` (per place, `LocationMoodProfiles.Sacred`, drawn
+  after festivity so every other place keeps its mood) pulls towards the sacred pole. When it
+  leads (temples, cathedrals, churches, monasteries, shrines, sanctuaries; a castle's or a
+  palace's chapel about one time in nine or five) the piece is chant: a choir lead (the organ now
+  and then), the church modes only (Dorian, Phrygian, Aeolian), `Plainchant` writing the line
+  (an intonation rising by step to a reciting tone, the recitation, a stepwise cadence to the final,
+  almost no leaps), the second voice in organum, a drone, bells, almost no ostinato, the longest
+  hall. Lower (peaks, snowfields, glaciers, groves, ruins, burial places) it leaves the place's own
+  music and adds `Part.Cantus`: a distant wordless choir, one held chord tone every two bars,
+  nearly all hall, in some B, C and varied-A sections (`Orchestration.Cantus`, `EmitCantus`). Fear
+  damps it, mystery does not; a fight ignores it, night keeps it. `9`/`Shift+9` in `--music` mode;
+  `targets.json` holds chant to `poles.sacred`. `--music-census [n]` samples every kind of place
+  and prints which pole leads how often and where the distant choir may come in: run it after
+  changing a profile.
+- **Far places.** `MusicMoodState.Far` (per place, `LocationMoodProfiles.Far`, drawn last) is how
+  far a place is from the empire's ear. Strange, not borrowed: nothing imitates a real people's
+  music (no "snake-charmer" scale, no "tribal" drums). When it leads (jungle, desert, oasis, the
+  hot steppe; a pyramid mostly, a sunken city sometimes) the piece is far throughout: the far modes
+  (`Mode.DorianSharp4`, `Mode.DorianFlat2`, a minor third and a true fifth, their own
+  progressions keeping off the diminished chords; or Phrygian and Aeolian), a third a little under
+  halfway to major (`Piece.NeutralThird`, carried as `ScoreEvent.Inflect` so the score names the
+  scale note and the harness reads it as one), long notes sliding into place (`ScoreEvent.Glide`,
+  read by `Reed`, `BuzzString`, `Glass` and `BentDrum`), `Metallophone` and `BuzzString` on an
+  eighth-note figure grouped 3+3+2 (`OstinatoStyle.Additive`), the `BentDrum` on the same accents, a
+  drier room. Lower (ports, markets, the forum, swamps, canyons, old ruins) the place keeps its own
+  music and a stranger (`Orchestration.Stranger`, `FarVoice`: a reed, metal or the buzzing string)
+  takes the line for a section or two, bending it; in a festive piece, a B part the second time
+  round. A far holy place chants in a stranger mode now and then. Fear damps it, a fight ignores it,
+  night keeps it. `8`/`Shift+8` in `--music` mode; `poles.far` bands; the census has columns for it.
+  The first draft's Locrian with a natural second was dropped: its diminished home chord ground
+  against the drone (dissonance 0.8).
 - **Night.** A visit's period reaches the music in `NarrativeController.ApplyTimePeriod` (the one
   writer of the period): at Night, in exploration, `AmbianceEngine.SetNight(true)` plays the
   place's `MusicMoodState.AtNight()` (colder, stranger, a little uneasy, festivity 0, Intensity

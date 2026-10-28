@@ -16,6 +16,7 @@ dotnet build
 | `dotnet bin/Debug/net8.0/Cathedral.dll --render-music out.wav --seconds 300 --mood Tavern --seed 1` | the game's music, rendered offline (about 13x faster than real time), with `out.score.json` beside it. `--mood` takes a preset (`Neutral`, `Tavern`, `Lament`, `DarkDungeon`, `Battle`, `WorldView`, `Creation`, `Childhood`) or a location sampled as the game samples it (`tavern:12`, `catacombs:5`, `port:3`); `QuietTavern` is
 the tavern without its festivity, and `Battle` is rendered as a fight (the fight filter over the mood, as the game plays one). `--journey j.json` scripts mood changes, events, filters and track counts over time (`journeys/tour.json`). `--verbose` prints voices and time spent every 30 s |
 | `… --music-audition <dir>` | every instrument alone, one WAV and score each |
+| `… --music-census [n]` | every kind of place sampled n times (200): which pole leads how often (comfy, melancholy, dark, fear, festive, sacred, far), where a distant choir may come in and where a stranger may sit in. No audio |
 | `… --export-music out.mid --seconds n --mood m` | real time, MIDI: what `--record` captures |
 | `… --music-engine legacy` | in the game: the first engine, for comparison |
 
@@ -41,7 +42,7 @@ level, the hall's wetness, render speed and peak voice count.
 
 The bands and the reason for each are in `targets.json`; per-mood overrides (a fight may be more
 dissonant and busier) sit under `moods`, per-pole overrides under `poles` (a festive render is
-dance music: denser, a chord a bar, a drier room, a lilt, held to its own bands). Scores: in band is 1, out of band decays with the distance
+dance music: denser, a chord a bar, a drier room, a lilt; a sacred one is chant: stepwise, soft-edged, dark, long-phrased; a far one strange: more tritones and seconds, a drier room, drum strokes; each held to its own bands). A far piece's in-between third is logged as `"i"` beside the scale note `"p"`. Scores: in band is 1, out of band decays with the distance
 in band widths, the total is the weighted mean.
 
 - **Mode and harmony:** `mode_fit`, `pc_entropy`, `harmonic_rhythm_s`, `dissonance_time`.

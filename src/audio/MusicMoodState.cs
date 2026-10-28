@@ -41,8 +41,29 @@ public struct MusicMoodState
     /// </summary>
     public float Festivity;
 
-    public MusicMoodState(float coldness, float fear, float mystery, float intensity = 1.0f, float festivity = 0f)
+    /// <summary>
+    /// How holy a place is: 0 (most) to 1 (a cathedral). Where it leads (temples, churches,
+    /// monasteries, shrines, now and then a castle's chapel) the piece is chant: a choir or an organ
+    /// on a slow stepwise line, a second voice in fourths and fifths, a drone, bells, a long hall.
+    /// Lower (a peak, a snowfield, a grove, old ruins) it only lets a distant wordless choir drift
+    /// through some sections. Set by the place, not the moment; a fight ignores it, night keeps it.
+    /// </summary>
+    public float Sacred;
+
+    /// <summary>
+    /// How far a place is from the empire's ear: 0 (home) to 1 (a jungle, a deep desert). Where it
+    /// leads, the piece is strange: modes with a raised fourth or a lowered fifth, a third between
+    /// minor and major, notes that slide into place, beating metal, a buzzing string, a reed, bowed
+    /// glass, a drum that bends, an uneven 3+3+2 pulse. Lower (a port, a market) one strange voice
+    /// sits in for a section, bending its notes. Strange, not borrowed: nothing here imitates a
+    /// real people's music. Set by the place; a fight ignores it, night keeps it.
+    /// </summary>
+    public float Far;
+
+    public MusicMoodState(float coldness, float fear, float mystery, float intensity = 1.0f, float festivity = 0f, float sacred = 0f, float far = 0f)
     {
+        Far       = Math.Clamp(far,       0f, 1f);
+        Sacred    = Math.Clamp(sacred,    0f, 1f);
         Coldness   = Math.Clamp(coldness,   0f, 1f);
         Fear      = Math.Clamp(fear,      0f, 1f);
         Mystery   = Math.Clamp(mystery,   0f, 1f);
@@ -89,19 +110,27 @@ public struct MusicMoodState
 
     /// <summary>Returns a copy with Coldness changed by delta, clamped.</summary>
     public MusicMoodState WithColdness(float delta) =>
-        new(Coldness + delta, Fear, Mystery, Intensity, Festivity);
+        new(Coldness + delta, Fear, Mystery, Intensity, Festivity, Sacred, Far);
 
     /// <summary>Returns a copy with Fear changed by delta, clamped.</summary>
     public MusicMoodState WithFear(float delta) =>
-        new(Coldness, Fear + delta, Mystery, Intensity, Festivity);
+        new(Coldness, Fear + delta, Mystery, Intensity, Festivity, Sacred, Far);
 
     /// <summary>Returns a copy with Mystery changed by delta, clamped.</summary>
     public MusicMoodState WithMystery(float delta) =>
-        new(Coldness, Fear, Mystery + delta, Intensity, Festivity);
+        new(Coldness, Fear, Mystery + delta, Intensity, Festivity, Sacred, Far);
 
     /// <summary>Returns a copy with Festivity changed by delta, clamped.</summary>
     public MusicMoodState WithFestivity(float delta) =>
-        new(Coldness, Fear, Mystery, Intensity, Festivity + delta);
+        new(Coldness, Fear, Mystery, Intensity, Festivity + delta, Sacred, Far);
+
+    /// <summary>Returns a copy with Sacred changed by delta, clamped.</summary>
+    public MusicMoodState WithSacred(float delta) =>
+        new(Coldness, Fear, Mystery, Intensity, Festivity, Sacred + delta, Far);
+
+    /// <summary>Returns a copy with Far changed by delta, clamped.</summary>
+    public MusicMoodState WithFar(float delta) =>
+        new(Coldness, Fear, Mystery, Intensity, Festivity, Sacred, Far + delta);
 
     /// <summary>
     /// The same place at night: colder, a little stranger and more uneasy, nobody dancing, and
@@ -109,12 +138,12 @@ public struct MusicMoodState
     /// own character, shifted, so every location has its own night music.
     /// </summary>
     public MusicMoodState AtNight() =>
-        new(Coldness + 0.18f, Fear + 0.06f, Mystery + 0.14f, Intensity * 0.82f, 0f);
+        new(Coldness + 0.18f, Fear + 0.06f, Mystery + 0.14f, Intensity * 0.82f, 0f, Sacred, Far);
 
     /// <summary>Returns a copy with Intensity changed by delta, clamped.</summary>
     public MusicMoodState WithIntensity(float delta) =>
-        new(Coldness, Fear, Mystery, Intensity + delta, Festivity);
+        new(Coldness, Fear, Mystery, Intensity + delta, Festivity, Sacred, Far);
 
     public override string ToString() =>
-        $"Coldness={Coldness:F2}  Fear={Fear:F2}  Mystery={Mystery:F2}  Intensity={Intensity:F2}  Festivity={Festivity:F2}";
+        $"Coldness={Coldness:F2}  Fear={Fear:F2}  Mystery={Mystery:F2}  Intensity={Intensity:F2}  Festivity={Festivity:F2}  Sacred={Sacred:F2}  Far={Far:F2}";
 }
