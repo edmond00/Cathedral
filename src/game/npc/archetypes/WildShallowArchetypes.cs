@@ -70,3 +70,24 @@ public class SnowFinchArchetype : BirdShallowArchetype
         new ItemElement(new Bone()),
     };
 }
+
+// ── Caves ───────────────────────────────────────────────────────────────────
+
+public class OlmArchetype : GenericShallowArchetype
+{
+    public override string ArchetypeId     => "olm";
+    public override string TypeDisplayName => "Olm";
+    protected override string ComposeObservationHint(Random rng, string nodeContext) => Compose(rng,
+        sizes:  new[] { "slender", "eel-like" },
+        colors: new[] { "pale pink", "fleshy white", "translucent" },
+        noun:   "olm",
+        traits: new[] { "lying on the bottom of the black water", "eyeless, its feathery red gills stirring", "turning slowly in the current" });
+    protected override string CorpseBodyDescription => "the limp pink body of an olm, eyeless, small legs folded";
+    protected override List<ItemElement> BuildCorpseDrops() => new()
+    {
+        new ItemElement(new Skin()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Bone()),
+        new ItemElement(new Tail()),
+    };
+}
