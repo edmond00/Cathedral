@@ -269,12 +269,17 @@ public class ItemUseCritic : IDisposable
         }
     }
 
+    // There was a "Be strict but fair; value plausibility over generosity." line here. On 28 labelled
+    // cases (tools/prompts/critic_bench.py, 5 samples each, shipped model) the critic read it as an
+    // instruction to refuse: a sword offered to cut meat, a spear to fish, a sledgehammer at an ore
+    // seam all came back cannot_serve, every time. Without it the plain tree went 96.0% -> 98.7%; the
+    // substitution tree needed its question changed as well (see BuildToolSubstitutionTree). Nothing
+    // that should be refused started passing: the feather, the loaf, the prayer book are still refused.
     private static string GetCriticSystemPrompt() => @"You are the ITEM-USE CRITIC. You judge only one thing:
 - whether a tool or object meaningfully helps the character accomplish an action, and how well.
 
 Guidelines:
 - Reason concretely about the item's physical properties and how it would actually be used.
-- Be strict but fair; value plausibility over generosity.
 - Judge only the specific item question asked — not the wider wisdom of the action.
 - Respond with EXACTLY one of the provided option ids — nothing else.";
 
