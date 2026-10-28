@@ -1,11 +1,11 @@
 # observation groups — a whole (a building's door and wall) inside a family, and thinking on a whole
 #
-# The haymarket is ringed by houses, each a door and a wall seen from the square. Each house is
-# offered as the house, and the houses together as "the surrounding buildings". The area introduction
-# names the buildings; directing attention to them renders the houses one by one. Thinking about one
-# house offers what both its parts afford — here the wall's climb, pinned with `goal`.
+# The market square is ringed by buildings, each a door and a wall seen from the square. Each is
+# offered as the building, and together as "the surrounding buildings". The area introduction names
+# the buildings; directing attention to them renders them one by one. Thinking about one building
+# offers what both its parts afford — here the wall's climb, pinned with `goal`.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 2 --no-encounters --location-type city --location-id 13582
+# FLAGS: --playground --skip-childhood --debug --seed 2 --no-encounters --location-type city --location-id 13453
 
 wait
 click menu New
@@ -21,13 +21,13 @@ click keyword buildings
 choose 1
 choose 0
 advance 12 180
-expect My attention is drawn to a moss-shouldered cottage
-expect hunched lime-washed log cottage
+expect My attention is drawn to a merchant house
+expect My attention shifts to a counting house
 
 goal scale_up
-click keyword cottage
+click keyword house
 choose 0
 choose 0
 advance 12 180
-expect scale the moss-shouldered cottage wall
+expect scale the merchant house wall
 quit

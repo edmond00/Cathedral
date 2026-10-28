@@ -5,10 +5,10 @@
 # as won, and winning makes the whole house tolerated for the rest of the visit: no longer
 # trespassing, nobody confronting.
 #
-# A village pantry (location id 1) because every pantry is private and holds a storage barrel, which
+# A village pantry (location id 11) because every pantry is private and holds a storage barrel, which
 # is a seat, and nobody works in one in the evening.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type village --location-id 1 --start-area pantry --period evening --observe-only Storage
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type village --location-id 11 --start-area pantry --period evening --observe-only Storage
 
 wait
 click menu New
