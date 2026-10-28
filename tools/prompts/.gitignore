@@ -1,8 +1,13 @@
 # A corpus run keeps its whole session for reading, but only the two corpus files are worth keeping.
 runs/*/stdout.txt
+finalplay/*/stdout.txt
 runs/*/game.log
+finalplay/*/game.log
 runs/*/session/*
+finalplay/*/session/*
 !runs/*/session/rewrite_inputs.jsonl
 !runs/*/session/judge_inputs.jsonl
+!finalplay/*/session/rewrite_inputs.jsonl
+!finalplay/*/session/judge_inputs.jsonl
 runs_corpus.log
 __pycache__/
