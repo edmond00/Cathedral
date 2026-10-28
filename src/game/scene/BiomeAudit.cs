@@ -20,6 +20,7 @@ namespace Cathedral.Game.Scene;
 /// area kinds, which saturates in a large place: every town of fifty rooms has a kitchen, a bedroom and
 /// a street, so two towns with different trades, rooms and furniture still read as the same. This one
 /// compares <i>counts</i> — how many of each area kind and of each point-of-interest kind, names ignored
+/// and a building's shell (doors, stairs, wall, window, roof, landing) left out
 /// — by weighted Jaccard (shared counts over all counts), and passes a triple when every pair differs by
 /// at least <see cref="DistinctContent"/>. It sees three forges against one, and a pottery's wheel
 /// against a tannery's vats.</item>
@@ -236,10 +237,17 @@ public static class BiomeAudit
                            .ToHashSet();
         string layout = $"{string.Join("/", scene.Sections.Select(s => s.Areas.Count))}|e{edges}|c{cycles}|b{degree3}|k{climbs}";
 
-        // Counted content: every area and every point of interest by kind, how many of each. Connectors
-        // are counted too — a moat and a ford are content — but a path laid along edges is not.
-        var counted = kinds.Select(k => "A:" + k)
-            .Concat(pois.Where(p => p is not PathPointOfInterest and not LandscapePointOfInterest)
+        // Counted content: every area and every point of interest by kind, how many of each. A building's
+        // shell is left out — its doors, stairs, wall, window or chimney, roof and landing — because it
+        // grows with the number of buildings whatever they are, and in a city it was most of the count:
+        // seventy-odd doors swamped everything a quarter changes. The layout signature measures structure.
+        // A moat, a ford or a cleft in the rock is a place, not a shell, and is counted; a path laid along
+        // edges and a landscape seen from a height are not.
+        var counted = kinds.Where(k => k is not "Roof" and not "Landing" and not "Corridor").Select(k => "A:" + k)
+            .Concat(pois.Where(p => p is not PathPointOfInterest and not LandscapePointOfInterest
+                                    and not DoorPointOfInterest and not StairPointOfInterest
+                                    and not SlipIntoPointOfInterest { IsNaturalGap: false }
+                                    and not ScalePointOfInterest { Kind: ScaleKind.Wall or ScaleKind.Ladder })
                         .Select(p => "P:" + p.GetType().Name.Replace("PointOfInterest", "")))
             .GroupBy(k => k).ToDictionary(g => g.Key, g => g.Count());
 

@@ -268,6 +268,10 @@ public abstract class SettledSceneFactory : SceneFactory
         var streets = plan.All;
         var front   = plan.Frontages;
 
+        // The town round a great building is one quarter: its streets, houses and trades all of a kind.
+        var quarter = Shared.TownQuarters.Draw(rng, 1)[0];
+        Shared.TownQuarters.Furnish(streets.ToDictionary(s => s, _ => quarter), rng);
+
         BuildingResult Put(string label, string noun, BuildingAccess access, BuildingOccupancy occ, int beds, Area at,
                            Func<Area>? hall = null, string? wear = null)
         {
@@ -319,14 +323,28 @@ public abstract class SettledSceneFactory : SceneFactory
         // Workshops, each with an apprentice in a house of their own.
         var wear = BuildingDescriptions.BuildingWear.OrderBy(_ => rng.Next()).ToList();
         int w = 0;
-        foreach (var idx in SampleUniqueIndices(rng, Trades.Length, Math.Min(Trades.Length, size)))
+        var tradeOrder = Enumerable.Range(0, Trades.Length)
+            .OrderByDescending(i => rng.NextDouble() * (quarter.Trades.Contains(Trades[i].Name) ? 3 : 1)).Take(Math.Min(Trades.Length, size));
+        foreach (var idx in tradeOrder)
         {
             var (label, hall, master, noun) = Trades[idx];
             var shop = Put(label, noun, BuildingAccess.Public, BuildingOccupancy.Individual, 1,
                            entrances[e++ % entrances.Count], hall);
             string trait = wear[w++ % wear.Count];
-            var home = Put(BuildingDescriptions.AnonymousLabel(trait, BuildingKind.House), "house", BuildingAccess.Private,
-                           BuildingOccupancy.Individual, 1, Shared.OutdoorLayout.DistributeEntrances(streets, 1, rng)[0], wear: trait);
+            var home = BuildingFactory.Build(new BuildingSpec
+            {
+                BuildingName = BuildingDescriptions.AnonymousLabel(trait, BuildingKind.House),
+                RoomPrefix   = BuildingDescriptions.AnonymousLabel(trait, BuildingKind.House),
+                Access       = BuildingAccess.Private,
+                Occupancy    = BuildingOccupancy.Individual,
+                OutsideArea  = Shared.OutdoorLayout.DistributeEntrances(streets, 1, rng)[0],
+                BedCount     = 1,
+                Material     = RollMaterial(rng),
+                FunctionNoun = "house",
+                ExteriorWear = trait,
+                Style        = Shared.TownQuarters.Dwelling(quarter, rng),
+            }, rng);
+            RegisterBuilding(scene, home);
             var m = master();
             var roster = new List<NamedNpcArchetype> { m, new ApprenticeArchetype { Master = m } };
             Crews.Add(new Crew(roster, new[] { shop.BedAreas[0], home.BedAreas[0] }, shop.PublicHall.ContextDescription,

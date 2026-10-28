@@ -210,6 +210,7 @@ public class VillageSceneFactory : SettledSceneFactory
                     FunctionNoun = "house",
                     ExteriorWear = trait,
                     Material     = local ? RollMaterial(rng) : null,
+                    Style        = TownQuarters.VillageDwelling(rng),
                 }, rng);
 
                 RegisterBuilding(scene, house);

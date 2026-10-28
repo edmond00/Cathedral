@@ -142,16 +142,27 @@ public sealed class CitySceneFactory : SettledSceneFactory
         var gate     = plan.Gateway!;
         var slots    = new Slots(ways, rng);
 
+        // ── The quarters: two or three, spread over the ways ────────────────────
+        var quarters  = Shared.TownQuarters.Draw(rng, size >= 2 ? 3 : 2);
+        var quarterOf = new Dictionary<Area, Shared.TownQuarters.Quarter>();
+        foreach (var sq in squares) quarterOf[sq] = quarters[0];
+        quarterOf[gate] = quarters.FirstOrDefault(q => q.Name == "Wall Quarter") ?? quarters[^1];
+        var rest = plan.Streets.Concat(plan.Alleys).OrderBy(_ => rng.Next()).ToList();
+        for (int i = 0; i < rest.Count; i++) quarterOf[rest[i]] = quarters[i % quarters.Count];
+        Shared.TownQuarters.Furnish(quarterOf, rng);
+        var favoured = quarters.SelectMany(q => q.Trades).ToHashSet();
+
         var dwellingNames = BuildingDescriptions.BuildingWear
             .SelectMany(w => DwellingNouns.Select(n => (Wear: w, Noun: n)))
             .OrderBy(_ => rng.Next()).ToList();
         int dwelling = 0;
 
         BuildingResult Put(string label, string noun, BuildingAccess access, BuildingOccupancy occ, int beds, Area at,
-                           Func<Area>? hall = null, string? wear = null)
+                           Func<Area>? hall = null, string? wear = null, DwellingStyle? style = null)
         {
             var b = BuildingFactory.Build(new BuildingSpec
             {
+                Style             = style,
                 BuildingName      = label,
                 RoomPrefix        = label,
                 Access            = access,
@@ -171,7 +182,8 @@ public sealed class CitySceneFactory : SettledSceneFactory
         {
             var (wear, noun) = dwellingNames[dwelling++ % dwellingNames.Count];
             string label = $"{Capitalise(wear)} {noun}";
-            return Put(label, noun.ToLowerInvariant(), BuildingAccess.Private, BuildingOccupancy.Individual, beds, at, wear: wear);
+            return Put(label, noun.ToLowerInvariant(), BuildingAccess.Private, BuildingOccupancy.Individual, beds, at, wear: wear,
+                       style: Shared.TownQuarters.Dwelling(quarterOf[at], rng));
         }
 
         Func<int, NamedNpcArchetype, Area, Random, NpcSchedule> AtWork(Area hall, int away)
@@ -209,7 +221,10 @@ public sealed class CitySceneFactory : SettledSceneFactory
 
         // The trades, each with an apprentice in a house of their own.
         int trades = Math.Min(CityTrades.Length, 4 + size);
-        foreach (var idx in SampleUniqueIndices(rng, CityTrades.Length, trades))
+        // The quarters draw their trades: a trade a quarter favours is three times as likely to be here.
+        var tradeOrder = Enumerable.Range(0, CityTrades.Length)
+            .OrderByDescending(i => rng.NextDouble() * (favoured.Contains(CityTrades[i].Name) ? 3 : 1)).Take(trades);
+        foreach (var idx in tradeOrder)
         {
             var (label, hall, master, noun) = CityTrades[idx];
             var shop = Put(label, noun, BuildingAccess.Public, BuildingOccupancy.Individual, 1, slots.Take(streets), hall);
