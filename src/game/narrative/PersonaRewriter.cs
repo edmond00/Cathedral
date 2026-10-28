@@ -138,11 +138,21 @@ public class PersonaRewriter
         // A spoken kind arrives behind the "I say to X : " frame, which is scaffolding for the model and
         // must not be seen: the token stream is filtered so the preview box never shows it either.
         Action<string, int>? onToken = preview == null ? null : MakeTokenForwarder(preview, kind, addressee);
+        var history = _llm.GetInstance(slotId)?.GetMessages();
+        var started = DateTime.Now;
         string text = preview != null
             ? await _llm.GenerateConstrainedStringStreamingAsync(
                   slotId, prompt, gbnf, RewriteMaxTokens, skipReset: keepHistory,
                   onTokenStreamed: onToken)
             : await _llm.GenerateConstrainedStringAsync(slotId, prompt, gbnf, RewriteMaxTokens, skipReset: keepHistory);
+
+        RecordRewrite(new
+        {
+            kind = kind.ToString(), slotId, neutralText, personaReminder2, styleInstruction, addressee,
+            dialogueContext, speakerName, observedOther, forcedPrefix, keepHistory,
+            place = SceneSetting.Place, history, prompt, gbnf, output = text,
+            ms = (DateTime.Now - started).TotalMilliseconds,
+        });
 
         if (IsSpokenKind(kind))
             text = StripReplyFrame(text, addressee);
@@ -193,6 +203,29 @@ public class PersonaRewriter
         preview?.OnComplete(restored);
         return restored;
     }
+
+    /// <summary>
+    /// Appends one rewrite's inputs, the slot's history and the raw answer to
+    /// <c>rewrite_inputs.jsonl</c> in the session's log directory — the corpus
+    /// <c>tools/prompts/</c> rebuilds every rewrite prompt from. Development logging only: a null
+    /// session directory (a shipped build) writes nothing, and a failed write costs only the record.
+    /// </summary>
+    private void RecordRewrite(object record)
+    {
+        string? dir = _llm.SessionLogDir;
+        if (dir == null) return;
+        try
+        {
+            string line = JsonSerializer.Serialize(record) + "\n";
+            lock (RecordLock) System.IO.File.AppendAllText(System.IO.Path.Combine(dir, "rewrite_inputs.jsonl"), line);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"PersonaRewriter: could not record a rewrite: {ex.Message}");
+        }
+    }
+
+    private static readonly object RecordLock = new();
 
     /// <summary>
     /// Whether <paramref name="text"/> says the narrator is <paramref name="other"/>: "I am Jeffrey",
