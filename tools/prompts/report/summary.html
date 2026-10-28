@@ -4,5 +4,6 @@
 <li><b>Targeted faults fixed.</b> A person named in a reasoning: fidelity 0.60 → 0.92, gender errors 5 → 0. A lesson lost: 45% → 34% (124 a side). The style clause the model copied word for word is removed.</li>
 <li><b>Cheaper.</b> The user message is 239 → 221 tokens and wall time per request 9.2 s → 8.6 s (−6%), measured with a warm prefix and alternating order.</li>
 <li><b>Item-use critic: 83.6% → 92.1% on dev, 78.0% → 85.0% held out.</b> The ChoiceJudge was not changed (95.9%): its errors are in persona descriptions, which were out of scope.</li>
+<li><b>Checked in the game.</b> A last real-model playthrough of two scripts ran clean, and its 24 recorded prompts are byte-identical to the harness's, so the numbers here are what the game sends. What is still wrong there comes from persona fields and the model's ceiling, listed in the notes.</li>
 </ul>
 <p class="small">In the cases below, the old wording is the commit the branch started from (ac61b8e). "New is worse" marks cases whose mean fidelity, or persona at equal fidelity, fell; there are many because a single prompt scores 0 to 2 across seeds.</p>

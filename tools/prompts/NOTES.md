@@ -170,7 +170,20 @@ changed text (`reconsider`, `will_step_retry`, `preview_regression`, the `propos
 `pickpocket`, `slay`, `listen`, `beg_for_coin`, `examine`, `gather` folders, `dialogue_success`,
 `emotion` success and dialogue, `speaking_puts_conversation_first`, `confronted_witness`,
 `thinking_iterates`, `thinking_doubt`, `will_equal_paths`) all passed. The full suite was not run.
-PLAYTHROUGH
+**The last playthrough** (`finalplay/`, the new build against the real model, the corpus scripts
+`village_noon_party` and `talk_blacksmith` at their corpus seeds): both ran to the end with no failed
+expectation, and all 24 recorded prompts are byte-identical to what the harness builds from the
+working tree (`check_mirror(records, T_NOW)`), so everything measured above is what the game sends.
+Read end to end, the changes are visible where they apply — "It is done! I managed to strike up a
+conversation with her … And I learned social interaction." came back with the lesson kept; a
+reasoning about "the blacksmith of the village (a woman)" kept her a woman — and what is wrong is what
+"Beyond the global instructions" describes: Childhood Memory invents a memory in every observation
+("just as I did when I tried to light a fire in the rain"), Bushcraft's reminder turns "strike up a
+conversation" into "strike up a fire … by the warm hearth", Pride's persona inverts a glad emotion
+("heavier than before") and invents an offer turned down, a long-sentence persona lengthens a
+reasoning with runes and a troubadour, and an NPC's curt "You stopped to bother me on your way" comes
+back as a compliment. Requests took 12–60 s each on this machine (the first of a persona pays for its
+system prompt).
 
 ## Beyond the global instructions
 
