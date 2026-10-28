@@ -233,6 +233,7 @@ public sealed class InventoryMenuRenderer
         _member = member;
         _itemHits.Clear();
         _contentHits.Clear();
+        _cliBoxes.Clear();
 
         _bodyViewer.ClearHover();
         _bodyViewer.RenderBodyArt(brightness: 0.5f);
@@ -1169,6 +1170,7 @@ public sealed class InventoryMenuRenderer
 
             DrawItemBox(item.DisplayName, termX, itemY, boxH, border, bg, textCol);
             _itemHits.Add(new ItemHit(anchor, i, termX, itemY, termX + ItemBoxW - 1, itemY + boxH - 1));
+            _cliBoxes.Add((termX, itemY, termX + ItemBoxW - 1, itemY + boxH - 1, "item:" + CliSlug(item.DisplayName)));
             itemY += boxH;
         }
 
@@ -1701,6 +1703,7 @@ public sealed class InventoryMenuRenderer
 
                 DrawContentItemBox(ci.DisplayName, RightContentX, y, boxH, border, bg, fg);
                 _contentHits.Add(new ContentHit(i, y, y + boxH - 1));
+                _cliBoxes.Add((RightContentX, y, RightContentX + ContentBoxW - 1, y + boxH - 1, "content:" + CliSlug(ci.DisplayName)));
                 y += boxH;
             }
         }
@@ -1802,6 +1805,34 @@ public sealed class InventoryMenuRenderer
     // ═══════════════════════════════════════════════════════════════
     // Hit testing
     // ═══════════════════════════════════════════════════════════════
+
+    // ── --record: named controls ─────────────────────────────────────
+
+    private readonly List<(int X0, int Y0, int X1, int Y1, string Id)> _cliBoxes = new();
+
+    private static string CliSlug(string name) => name.ToLowerInvariant().Replace(' ', '_');
+
+    /// <summary>
+    /// What a press at (x, y) would act on, named for <c>click element</c>: <c>item:&lt;name&gt;</c> (a
+    /// box on the body), <c>content:&lt;name&gt;</c> (inside the open container), <c>consume</c>,
+    /// <c>throw-away</c>, <c>move-to</c>, <c>move:&lt;destination&gt;</c>, <c>content-back</c>. Names
+    /// are lower case with underscores for spaces, so a script can name them in one word.
+    /// </summary>
+    public string? CliControlIdAt(int x, int y)
+    {
+        if (x >= RightContentX)
+        {
+            if (_consumeButtonRow >= 0 && y == _consumeButtonRow) return "consume";
+            if (_throwButtonRow >= 0 && y == _throwButtonRow) return "throw-away";
+            if (_moveButtonRow >= 0 && _moveButtonEnabled && y == _moveButtonRow) return "move-to";
+            foreach (var (row, dest) in _moveDestHits)
+                if (row == y) return "move:" + CliSlug(dest.Label);
+            if (_selectedContentPath.Count > 0 && y == InfoStartRow) return "content-back";
+        }
+        foreach (var b in _cliBoxes)
+            if (x >= b.X0 && x <= b.X1 && y >= b.Y0 && y <= b.Y1) return b.Id;
+        return null;
+    }
 
     private ItemHit? HitTestItem(int x, int y)
     {

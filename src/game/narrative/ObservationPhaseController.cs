@@ -1131,10 +1131,22 @@ public class ObservationPhaseController
     /// </summary>
     private static IEnumerable<NarrativeAnchor> ObserveOnlyFilter(IEnumerable<NarrativeAnchor> outcomes)
     {
-        var wanted = Config.Debug.ObserveOnly;
-        if (string.IsNullOrWhiteSpace(wanted)) return outcomes;
+        var flag = Config.Debug.ObserveOnly;
+        if (string.IsNullOrWhiteSpace(flag)) return outcomes;
 
+        // A comma-separated list names one object per kind of place a run visits ("orchardist,
+        // tailor"): the first name anything here matches is the one this phase is narrowed to.
         var pool = outcomes.ToList();
+        var names = flag.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        foreach (var wanted in names)
+            if (ObserveOnlyMatch(pool, wanted) is { } narrowed) return narrowed;
+
+        Cathedral.Game.DebugFlagAudit.Miss("--observe-only", flag, "the whole scene");
+        return pool;
+    }
+
+    private static List<NarrativeAnchor>? ObserveOnlyMatch(List<NarrativeAnchor> pool, string wanted)
+    {
 
         // Exact name first. Objects and the paths between them share words — a Boulder Field holds a
         // Boulder and is joined by a "Boulder Field–Scree Track" — so a whole-word match on "Boulder"
@@ -1152,9 +1164,7 @@ public class ObservationPhaseController
             .Where(o => TargetableNames(o).Any(n => n.Contains(wanted, StringComparison.OrdinalIgnoreCase)))
             .ToList();
         if (bySubstring.Count > 0) return bySubstring;
-
-        Cathedral.Game.DebugFlagAudit.Miss("--observe-only", wanted, "the whole scene");
-        return pool;
+        return null;
     }
 
     /// <summary>

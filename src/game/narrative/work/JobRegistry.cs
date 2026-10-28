@@ -47,6 +47,12 @@ public sealed class JobRegistry
         if (!_jobsByArchetype.TryGetValue(archetypeId, out var pool) || pool.Count == 0)
             return Array.Empty<Job>();
 
+        // --job-only: an employer whose pool holds that job offers it alone. Which of three jobs a
+        // conversation lands on is the model's pick, and the wage it pays is what a scripted run
+        // has to count its coins by.
+        if (Config.Debug.JobOnly is { } only && pool.Contains(only))
+            return new[] { _jobsById[only] };
+
         var rng = new Random(StableSeed(npcId));
         return pool.OrderBy(_ => rng.Next())
                    .Take(Math.Min(count, pool.Count))

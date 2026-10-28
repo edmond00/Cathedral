@@ -114,6 +114,31 @@ public class DiceRollComponent
         => index >= 0 && index < _primaryDiceCells.Length ? _primaryDiceCells[index] : null;
 
     /// <summary>
+    /// Whether a humor would still change anything: humors are on, the budget is not spent, and the
+    /// roll is failing. What <c>click humor &lt;queue&gt; needed</c> and <c>click die needed</c> ask before
+    /// they press, so a script can spend "as much as it takes" without knowing the faces in advance.
+    /// </summary>
+    public bool CliHumorNeeded => _humorEnabled && !IsRolling && _finalPrimary != null
+                                  && _humorApplied < _humorLimit && !IsCurrentlySuccess;
+
+    /// <summary>The selected queue's index (button order), or -1.</summary>
+    public int CliSelectedQueue => _selectedQueue;
+
+    /// <summary>
+    /// The die a player would spend the selected humor on: the first that is not already a six and
+    /// that the humor can change, else any it can change. Null with nothing selected or nothing to change.
+    /// </summary>
+    public int? CliNeededDie()
+    {
+        if (_selectedQueue < 0 || _finalPrimary == null) return null;
+        for (int i = 0; i < _finalPrimary.Length; i++)
+            if (_finalPrimary[i] != 6 && IsDieClickable(i)) return i;
+        for (int i = 0; i < _finalPrimary.Length; i++)
+            if (IsDieClickable(i)) return i;
+        return null;
+    }
+
+    /// <summary>
     /// The roll as a player reads it: the dice, whether it currently succeeds, the humor budget, and
     /// each queue's spendable humor with what it does. What <c>dice</c> prints under --record.
     /// </summary>

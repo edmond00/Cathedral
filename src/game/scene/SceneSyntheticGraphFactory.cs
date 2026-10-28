@@ -49,11 +49,17 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
             // match on "Alehouse" lands in whichever the factory happened to build first. A test
             // aimed at the taproom quietly opened in the storeroom, found none of the people it
             // named, and went on to exercise something else entirely.
-            var match = scene.AllAreas.FirstOrDefault(
-                            a => a.DisplayName.Equals(wanted, StringComparison.OrdinalIgnoreCase))
-                     ?? scene.AllAreas.FirstOrDefault(
-                            a => a.DisplayName.Contains(wanted, StringComparison.OrdinalIgnoreCase));
-            if (match != null) return match;
+            //
+            // A comma-separated list names one room per kind of place a run visits ("Packing
+            // Shed,Tailor's Shop"): the first name this location has wins.
+            foreach (var name in wanted.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                var match = scene.AllAreas.FirstOrDefault(
+                                a => a.DisplayName.Equals(name, StringComparison.OrdinalIgnoreCase))
+                         ?? scene.AllAreas.FirstOrDefault(
+                                a => a.DisplayName.Contains(name, StringComparison.OrdinalIgnoreCase));
+                if (match != null) return match;
+            }
 
             Cathedral.Game.DebugFlagAudit.Miss("--start-area", wanted, "wherever the factory opened");
             Console.Error.WriteLine($"[debug]   areas here: {string.Join(", ", scene.AllAreas.Select(a => a.DisplayName))}");

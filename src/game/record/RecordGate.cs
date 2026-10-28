@@ -221,6 +221,41 @@ public sealed class RecordGate
                 double hold = 0;
                 if (a[0].Equals("arrow", StringComparison.OrdinalIgnoreCase) && a.Length > 2)
                     double.TryParse(a[2], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out hold);
+                // `click humor <queue> needed` / `click die needed`: spend only while the roll is still
+                // failing. A player sees the faces before choosing; a script written ahead cannot, so
+                // these presses do nothing once the roll stands — the script spends what it takes.
+                // `click option <n> needed`: reply while the conversation still offers replies. Which
+                // reply each mind voices is the model's choice and the branches end at different
+                // depths, so a script answers "as long as it is asked" and stops at the roll.
+                if (a.Length >= 3 && a[0].Equals("option", StringComparison.OrdinalIgnoreCase)
+                    && a[^1].Equals("needed", StringComparison.OrdinalIgnoreCase))
+                {
+                    var dlg = _game.CliDialogue?.Controller;
+                    if (dlg == null || dlg.CliOptions().Count == 0)
+                    {
+                        CliMode.Emit("ok: nothing needed (no reply on offer)");
+                        RecordMode.Log("skipped", new() { ["line"] = line });
+                        return null;
+                    }
+                    a = new[] { "option", a[1] };
+                }
+                if (a.Length >= 2 && a[^1].Equals("needed", StringComparison.OrdinalIgnoreCase)
+                    && (a[0].Equals("humor", StringComparison.OrdinalIgnoreCase) || a[0].Equals("die", StringComparison.OrdinalIgnoreCase)))
+                {
+                    var nd = _game.CliActiveDice;
+                    if (nd == null) return "no dice roll on screen";
+                    bool isHumor = a[0].Equals("humor", StringComparison.OrdinalIgnoreCase);
+                    int wantQ = isHumor ? Array.FindIndex(DiceRollComponent.CliQueueNames, n => n.Equals(a[1], StringComparison.OrdinalIgnoreCase)) : -1;
+                    int? die = isHumor ? null : nd.CliNeededDie();
+                    if (!nd.CliHumorNeeded || (isHumor && nd.CliSelectedQueue == wantQ) || (!isHumor && die == null))
+                    {
+                        CliMode.Emit($"ok: nothing needed ({(nd.IsCurrentlySuccess ? "the roll stands" : "nothing left to spend")})");
+                        RecordMode.Log("skipped", new() { ["line"] = line });
+                        return null;
+                    }
+                    if (!isHumor) a = new[] { "die", die!.Value.ToString() };
+                    else a = new[] { "humor", a[1] };
+                }
                 var (pixel, label, err) = LocateClick(a);
                 if (err != null) return err;
                 Press(pixel, label, line, hold > 0 ? hold : (a[0].Equals("arrow", StringComparison.OrdinalIgnoreCase) ? 0.6 : 0));
@@ -228,7 +263,14 @@ public sealed class RecordGate
             }
             case "choose":
             {
-                if (a.Length < 1 || !int.TryParse(a[0], out int idx)) return "choose <n>";
+                if (a.Length < 1) return "choose <n|modus-mentis-id>";
+                // A modus mentis popup answered by id, as under --cli: the row is found by what it
+                // is, then clicked where it stands, so the script survives the popup's order.
+                if (!int.TryParse(a[0], out int idx))
+                {
+                    idx = _game.CliNarration?.CliModusMentisPopupIndex(a[0]) ?? -1;
+                    if (idx < 0) return $"no modus mentis '{a[0]}' in the open popup";
+                }
                 var labels0 = _game.CliNarration?.CliPopup()?.Labels;
                 if (labels0 == null) return "no popup on screen";
                 if (idx < 0 || idx >= labels0.Count) return $"no popup choice {idx} (0..{labels0.Count - 1})";
@@ -396,6 +438,14 @@ public sealed class RecordGate
 
             case "end-turn":
                 return fight != null ? At(fight.CliEndTurnCell(), "END TURN") : Fail("not in a fight");
+
+            case "move":
+                return fight != null ? At(fight.CliMoveButtonCell(), "MOVE") : Fail("not in a fight");
+
+            case "approach":
+                // Walk at someone: the reachable cell nearest them, which the player would pick on
+                // the highlighted map. Press `click move` first if a skill is armed.
+                return fight?.CliApproachCell(arg) is { } apc ? At(apc, $"towards {arg}") : Fail($"nowhere nearer \"{arg}\" to move to");
 
             case "engage":
                 return _game.CliFindElementCell("encounter-engage") is { } ec ? At(ec, "ENGAGE") : Fail("no ENGAGE button on screen");

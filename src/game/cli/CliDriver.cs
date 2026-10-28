@@ -1005,6 +1005,14 @@ public sealed class CliDriver
                 Report(_game.CliEngageEncounter(), "engaged the encounter");
                 break;
             }
+            case "approach":
+            {
+                var f = _game.CurrentMode == GameMode.Fighting ? _game.CliFight : null;
+                if (f == null) { CliMode.Emit("error: not in a fight"); return; }
+                string who = a.Length > 1 ? string.Join(' ', a[1..]).Trim('"') : "enemy";
+                Report(f.CliApproach(who), $"moved towards \"{who}\"");
+                break;
+            }
             case "fighter":
             {
                 if (a.Length < 2) { CliMode.Emit("error: click fighter <name>"); return; }

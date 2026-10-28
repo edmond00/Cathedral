@@ -396,6 +396,14 @@ public static class Config
         public static string[]? ChildhoodPath { get; set; } = null;
 
         /// <summary>
+        /// Narrows what an employer offers to one job, by id (<c>--job-only fruit_picker</c>), wherever
+        /// that employer's pool holds it; an employer without it offers the usual three. Null at its
+        /// default. The job is otherwise one of three the model chooses between, each at its own
+        /// wage, and a scripted run that works for exactly the coins a purchase costs needs the wage.
+        /// </summary>
+        public static string? JobOnly { get; set; } = null;
+
+        /// <summary>
         /// Suppresses random travel encounters. Set by <c>--no-encounters</c>. Inert at its default
         /// of false: a run without the flag rolls for encounters exactly as it always did.
         ///

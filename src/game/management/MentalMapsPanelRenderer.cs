@@ -599,6 +599,18 @@ public class MentalMapsPanelRenderer
         return _map.HandleClick(x, y);
     }
 
+    /// <summary>
+    /// What a press at (x, y) would act on, named for <c>click element</c>: <c>place:&lt;name&gt;</c>
+    /// (a remembered place in the list), <c>lock:&lt;name&gt;</c> (its checkbox), <c>routine-prev</c> /
+    /// <c>routine-next</c> (the stepper). Names are lower case with underscores for spaces.
+    /// </summary>
+    public string? CliControlIdAt(int x, int y)
+    {
+        if (MapRowAt(x, y) is { } row)
+            return (x < ListX + CheckboxCols ? "lock:" : "place:") + row.Map.LocationName.ToLowerInvariant().Replace(' ', '_');
+        return StepAt(x, y) switch { -1 => "routine-prev", 1 => "routine-next", _ => null };
+    }
+
     private (int Row, MentalMap Map)? MapRowAt(int x, int y)
     {
         if (x < ListX || x >= ListX + ListWidth) return null;

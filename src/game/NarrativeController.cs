@@ -4682,7 +4682,12 @@ public class NarrativeController
                                       + $" trade={ent.TradeRequest}"
                                       + $" job={(ent.JobRequest != null)}"
                                       + $" goaded={ent.FightRequestedByDialogue}"
-                                      + $" introduced={(ent.IntroductionGranted != null)}" : "")
+                                      + $" introduced={(ent.IntroductionGranted != null)}"
+                                      // What they sell, as the trade menu would list it — which
+                                      // shelf holds what is otherwise only seen by trading.
+                                      + (ent.BuyCatalog is { } shelf
+                                          ? " sells=" + string.Join(",", shelf.Offers.Select(o => $"{o.Prototype.ItemId}:{o.UnitPrice}{o.Coin.ToString()[0]}"))
+                                          : "") : "")
                        + $" area=\"{where}\"");
             }
 

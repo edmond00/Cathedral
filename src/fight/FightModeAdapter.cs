@@ -2108,9 +2108,63 @@ public class FightModeAdapter
     /// <summary>The map cell of the fighter <see cref="CliClickFighter"/> would click.</summary>
     public (int X, int Y)? CliFighterCell(string name)
     {
-        var target = _state.Fighters.FirstOrDefault(
-            f => f.DisplayName.StartsWith(name, StringComparison.OrdinalIgnoreCase));
+        var target = CliFindFighter(name);
         return target == null ? null : (FightModeUI.CenterX + target.X, FightModeUI.CenterY + target.Y);
+    }
+
+    /// <summary>
+    /// A fighter by name prefix — or <c>enemy</c>: the living enemy nearest the active fighter. An
+    /// encounter's beast or brigand is named by the name generator, which a script written ahead of
+    /// the run cannot know; what it can say is "the one I am fighting".
+    /// </summary>
+    private Fighter? CliFindFighter(string name)
+    {
+        if (name.Equals("enemy", StringComparison.OrdinalIgnoreCase))
+        {
+            var me = _state.ActiveFighter;
+            return _state.Fighters
+                .Where(f => f.Faction == FighterFaction.Enemy && f.IsAlive)
+                .OrderBy(f => me == null ? 0 : Math.Max(Math.Abs(f.X - me.X), Math.Abs(f.Y - me.Y)))
+                .FirstOrDefault();
+        }
+        return _state.Fighters.FirstOrDefault(
+            f => f.DisplayName.StartsWith(name, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// The map cell a player would click to close on <paramref name="who"/> this turn: among the cells
+    /// the MOVE flood reaches, the one nearest the target (Chebyshev, so a diagonal neighbour counts
+    /// as adjacent), the cheapest walk breaking ties. Null when it is not the player's turn, the
+    /// fighter is already adjacent, or nothing is reachable. What <c>click approach</c> aims at.
+    /// </summary>
+    public (int X, int Y)? CliApproachCell(string who)
+    {
+        var active = _state.ActiveFighter;
+        var target = CliFindFighter(who);
+        if (active == null || target == null || !active.IsPlayerControlled) return null;
+        static int Cheb(int ax, int ay, int bx, int by) => Math.Max(Math.Abs(ax - bx), Math.Abs(ay - by));
+        if (Cheb(active.X, active.Y, target.X, target.Y) <= 1) return null;
+        var best = ComputeReachableCells(active)
+            .OrderBy(c => Cheb(c.X, c.Y, target.X, target.Y))
+            .ThenBy(c => Cheb(c.X, c.Y, active.X, active.Y))
+            .ThenBy(c => c.Y).ThenBy(c => c.X)
+            .Select(c => ((int X, int Y)?)c)
+            .FirstOrDefault();
+        if (best is not { } b || Cheb(b.X, b.Y, target.X, target.Y) >= Cheb(active.X, active.Y, target.X, target.Y)) return null;
+        return (FightModeUI.CenterX + b.X, FightModeUI.CenterY + b.Y);
+    }
+
+    /// <summary>The MOVE row of the action menu.</summary>
+    public (int X, int Y) CliMoveButtonCell() => (3, FightModeUI.MoveButtonRow);
+
+    /// <summary>Walk towards <paramref name="who"/> as <see cref="CliApproachCell"/> aims: MOVE, then the cell.</summary>
+    public string? CliApproach(string who)
+    {
+        if (CliApproachCell(who) is not { } c) return $"nowhere nearer \"{who}\" to move to (adjacent already, or no move left)";
+        if (!_isMoveMode) SetMoveMode();
+        OnCellHovered(c.X, c.Y);
+        OnCellClicked(c.X, c.Y);
+        return null;
     }
 
     /// <summary>The END TURN row of the action menu.</summary>
@@ -2223,8 +2277,7 @@ public class FightModeAdapter
     /// <summary>Click the named fighter's map cell — the target step for a non-self skill.</summary>
     public string? CliClickFighter(string name)
     {
-        var target = _state.Fighters.FirstOrDefault(
-            f => f.DisplayName.StartsWith(name, StringComparison.OrdinalIgnoreCase));
+        var target = CliFindFighter(name);
         if (target == null) return $"no fighter matching \"{name}\"";
         OnCellClicked(FightModeUI.CenterX + target.X, FightModeUI.CenterY + target.Y);
         return null;

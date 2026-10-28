@@ -927,7 +927,13 @@ public class ManagementMenuRenderer
     {
         if (IsOnBackButton(x, y)) return "back";
         int tab = GetTabAtPosition(x, y);
-        return tab >= 0 && tab < AllTabs.Length && AllTabs[tab].Enabled ? $"tab:{AllTabs[tab].Label.ToLowerInvariant()}" : null;
+        if (tab >= 0 && tab < AllTabs.Length && AllTabs[tab].Enabled) return $"tab:{AllTabs[tab].Label.ToLowerInvariant()}";
+        return _activeTab switch
+        {
+            ManagementTab.Inventory => _inventoryMenu.CliControlIdAt(x, y),
+            ManagementTab.Chorography => _mapsPanel.CliControlIdAt(x, y),
+            _ => null,
+        };
     }
 
     private int GetTabAtPosition(int x, int y)
