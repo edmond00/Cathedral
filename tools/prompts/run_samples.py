@@ -18,10 +18,8 @@ import prompt_lib as P
 def load_variant(spec):
     if not spec:
         return P.T0
-    mod, name = spec.split(":")
-    import importlib
-    m = importlib.import_module(mod.replace(".py", ""))
-    return getattr(m, name)()
+    import variants
+    return variants.VARIANTS[spec]()
 
 
 def request_for(T, case):

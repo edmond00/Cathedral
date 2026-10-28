@@ -1,0 +1,187 @@
+[cli] script loaded: /home/user/repo/tools/prompts/scripts/corpus_village_dawn.cli
+[cli] ready — type `help` for commands
+[cli] > wait
+[cli] wait done (idle)
+[cli] > wait mode MainMenu 900
+[cli] wait done (mode=MainMenu)
+[cli] > click menu New
+[cli] ok: pressed menu "New"
+[cli] > wait mode ProtagonistCreation 60
+[cli] wait done (mode=ProtagonistCreation)
+[cli] > click continue
+[cli] ok: accepted protagonist
+[cli] > wait mode WorldView 300
+[cli] wait done (mode=WorldView)
+[cli] > travel here
+[cli] ok: entering the location at vertex 334 (own vertex)
+[cli] > wait mode LocationInteraction 900
+[cli] wait done (mode=LocationInteraction)
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > click keyword 0
+[cli] ok: clicked keyword "0"
+[cli] > choose 0
+[cli] ok: chose 0
+[cli] > choose poetry
+[cli] ok: chose poetry
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > click action 0
+[cli] ok: clicked action 0
+[cli] > choose 0
+[cli] action-strategy Custom action="try to hear the song of the well..." outcome="VerbAction → listen to the well"
+[cli] dice-roll auto=success (3 dice, need 1 six) (use `strategy fail-dice` to force failure)
+[cli] ok: chose 0
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > click continue
+[cli] ok: confirmed dice
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > wait 30
+[cli] wait done (idle (≤30s))
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 0
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 1
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 0
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click continue
+[cli] error: no dice continue button on screen
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click button
+[cli] ok: pressed narration footer button
+[cli] > wait 1500
+[cli] wait done (idle (≤1500s))
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > click keyword 1
+[cli] ok: clicked keyword "1"
+[cli] > choose 1
+[cli] ok: chose 1
+[cli] > choose keen_ear
+[cli] ok: chose keen_ear
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > click keyword 0
+[cli] ok: clicked keyword "0"
+[cli] > choose 0
+[cli] ok: chose 0
+[cli] > choose rhetoric
+[cli] ok: chose rhetoric
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > click action 0
+[cli] error: no action 0 on screen
+[cli] > choose 0
+[cli] error: no popup is visible
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > click continue
+[cli] error: no dice continue button on screen
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > wait 30
+[cli] wait done (idle (≤30s))
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 0
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 1
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 0
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click continue
+[cli] error: no dice continue button on screen
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click button
+[cli] ok: pressed narration footer button
+[cli] > wait 1500
+[cli] wait done (idle (≤1500s))
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > click keyword 0
+[cli] error: not in narration
+[cli] > choose 0
+[cli] error: not in narration
+[cli] > choose avarice
+[cli] error: not in narration
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > click action 0
+[cli] error: not in narration
+[cli] > choose 0
+[cli] error: not in narration
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > click continue
+[cli] error: not in narration
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > wait 30
+[cli] wait done (idle (≤30s))
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 0
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 1
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 0
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click continue
+[cli] error: not in narration
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > state
+[cli] mode=WorldView idle=True carry[10/50]
+[cli] > quit
+[cli] quitting (all assertions passed)
+[cli] > farm_night	--skip-childhood --debug --seed 22 --start-at farm --period night --grant-mm arithmetic_logic,courtesy,butchery,dread,husbandry
+[cli] error: unknown command 'farm_night' (try `help`)
+[cli] > forest_evening	--skip-childhood --debug --seed 23 --start-at forest --period evening --grant-mm woodcraft,caution,temerity,hunt,mycology,superstition
+[cli] error: unknown command 'forest_evening' (try `help`)
+[cli] > village_noon_party	--skip-childhood --debug --seed 24 --start-at village --period noon --fill-party --grant-mm mercy,flattery,prosaic_grammar,physiognomy,brute_force
+[cli] error: unknown command 'village_noon_party' (try `help`)
+[cli] > farm_dusk	--skip-childhood --debug --seed 25 --start-at farm --period dusk --grant-mm misanthropy,pride,plain_dealing,introspection,stoneface
+[cli] error: unknown command 'farm_dusk' (try `help`)
+[cli] > cave_morning	--skip-childhood --debug --seed 26 --start-at cave --period morning --grant-mm tactics,sense_of_humor,ruination,nightwalking,clambering
+[cli] error: unknown command 'cave_morning' (try `help`)
+[cli] > village_evening	--skip-childhood --debug --seed 27 --start-at village --period evening --grant-mm mythomania,philosophy,streetwise,petty_thief,sloth,zeal
+[cli] error: unknown command 'village_evening' (try `help`)
+[cli] > plain_afternoon_party	--skip-childhood --debug --seed 28 --start-at plain --period afternoon --fill-party --grant-mm sangfroid,impatience,courtesy,architecture,dance
+[cli] error: unknown command 'plain_afternoon_party' (try `help`)

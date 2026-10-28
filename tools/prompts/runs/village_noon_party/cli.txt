@@ -1,0 +1,149 @@
+[cli] script loaded: /home/user/repo/tools/prompts/scripts/corpus_village_noon_party.cli
+[cli] ready — type `help` for commands
+[cli] > wait
+[cli] wait done (idle)
+[cli] > wait mode MainMenu 900
+[cli] wait done (mode=MainMenu)
+[cli] > click menu New
+[cli] ok: pressed menu "New"
+[cli] > wait mode ProtagonistCreation 60
+[cli] wait done (mode=ProtagonistCreation)
+[cli] > click continue
+[cli] ok: accepted protagonist
+[cli] > wait mode WorldView 300
+[cli] wait done (mode=WorldView)
+[cli] > travel here
+[cli] ok: entering the location at vertex 185 (own vertex)
+[cli] > wait mode LocationInteraction 900
+[cli] wait done (mode=LocationInteraction)
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > click keyword 0
+[cli] ok: clicked keyword "0"
+[cli] > choose 0
+[cli] ok: chose 0
+[cli] > choose prosaic_grammar
+[cli] ok: chose prosaic_grammar
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > click action 0
+[cli] error: no action 0 on screen
+[cli] > choose 0
+[cli] error: no popup is visible
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > click continue
+[cli] error: no dice continue button on screen
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > wait 30
+[cli] wait done (idle (≤30s))
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 0
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 1
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 0
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click continue
+[cli] error: no dice continue button on screen
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click button
+[cli] ok: pressed narration footer button
+[cli] > wait 1500
+[cli] wait done (idle (≤1500s))
+[cli] > travel here
+[cli] ok: entering the location at vertex 185 (own vertex)
+[cli] > wait mode LocationInteraction 1500
+[cli] wait done (mode=LocationInteraction)
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > click keyword 0
+[cli] ok: clicked keyword "0"
+[cli] > choose 0
+[cli] ok: chose 0
+[cli] > choose mercy
+[cli] ok: chose mercy
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > click action 0
+[cli] error: no action 0 on screen
+[cli] > choose 0
+[cli] error: no popup is visible
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > click continue
+[cli] error: no dice continue button on screen
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > wait 30
+[cli] wait done (idle (≤30s))
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 0
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 1
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 0
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click continue
+[cli] error: no dice continue button on screen
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click button
+[cli] ok: pressed narration footer button
+[cli] > wait 1500
+[cli] wait done (idle (≤1500s))
+[cli] > travel here
+[cli] ok: entering the location at vertex 185 (own vertex)
+[cli] > wait mode LocationInteraction 1500
+[cli] wait done (mode=LocationInteraction)
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > click keyword 1
+[cli] ok: clicked keyword "1"
+[cli] > choose 1
+[cli] ok: chose 1
+[cli] > choose physiognomy
+[cli] ok: chose physiognomy
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > click keyword 0
+[cli] ok: clicked keyword "0"
+[cli] > choose 2
+[cli] ok: chose 2
+[cli] > choose 0
+[cli] ok: chose 0
+[cli] > choose 0
+[cli] ok: chose 0
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > state
+[cli] mode=LocationInteraction idle=True carry[10/50] narration[loading=False dice=none continue=False noetic=4/4 observed=0/17 preview=none time=none walk=none backtrack=none history=22 total=28 scroll=0]
+[cli] > quit
+[cli] quitting (all assertions passed)

@@ -9,11 +9,6 @@ travel here
 wait mode LocationInteraction 900
 advance 12 1500
 click keyword 0
-choose 2
-choose 0
-choose 0
-advance 12 1500
-click keyword 0
 choose 0
 choose prosaic_grammar
 advance 12 1500
@@ -35,6 +30,8 @@ click continue
 advance 20 1500
 click button
 wait 1500
+travel here
+wait mode LocationInteraction 1500
 advance 12 1500
 click keyword 0
 choose 0
@@ -58,10 +55,17 @@ click continue
 advance 20 1500
 click button
 wait 1500
+travel here
+wait mode LocationInteraction 1500
 advance 12 1500
 click keyword 1
 choose 1
 choose physiognomy
+advance 12 1500
+click keyword 0
+choose 2
+choose 0
+choose 0
 advance 12 1500
 state
 quit

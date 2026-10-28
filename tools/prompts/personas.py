@@ -60,4 +60,7 @@ def identify(system_prompt, mms):
         if system_prompt.startswith(m["prompt"].strip()[:120]):
             return mid
     first = system_prompt.strip().split("\n")[0]
+    m = re.match(r"You are the inner voice of (?:the )?([A-Z][A-Z' -]+)", first)
+    if m:   # a modus mentis whose persona this loader could not read out of its source
+        return "mm:" + m.group(1).strip().lower().replace(" ", "_")
     return "npc:" + re.sub(r"\W+", "_", first[:40]).strip("_").lower()

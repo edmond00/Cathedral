@@ -98,7 +98,9 @@ def article(noun):
 
 
 def reminder(T, place, extra=None):
-    """SceneSetting.Reminder(). `extra` lets a variant add context (the hour)."""
+    """SceneSetting.Reminder()."""
+    if "reminder" in T:
+        return T["reminder"](T, place)
     if not place:
         return T["ReminderSetting"]
     return T["ReminderSetting"] + " " + _fill(T["ReminderPlace"], Article=article(place), Place=place)
@@ -121,6 +123,8 @@ def dialogue_answer_instruction(T, reminder2, style, place=""):
 
 
 def footer_for(T, kind, reminder2, style, place):
+    if "footer_for" in T:                 # a variant may replace the footer
+        return T["footer_for"](T, kind, reminder2, style, place)
     if kind in ("DialogueReplica", "Speaking"):
         return dialogue_answer_instruction(T, reminder2, style, place)
     if kind in ("Observation", "Reasoning", "Outcome"):

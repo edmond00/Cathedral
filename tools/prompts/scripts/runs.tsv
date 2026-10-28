@@ -1,3 +1,6 @@
+talk_blacksmith	--skip-childhood --debug --seed 31 --start-at village --start-area Forge --npc-static --observe-only blacksmith --period morning --grant-mm rhetoric,pride,flattery,cruelty
+talk_miller	--skip-childhood --debug --seed 32 --start-at village --start-area Mill --npc-static --observe-only miller --period evening --grant-mm courtesy,mythomania,plain_dealing,insolence
+talk_farm	--skip-childhood --debug --seed 33 --start-at farm --npc-static --period noon --grant-mm homily,disputation,humility,gossip
 village_dawn	--skip-childhood --debug --seed 21 --start-at village --period dawn --grant-mm poetry,rhetoric,cutpurse,avarice,keen_ear
 farm_night	--skip-childhood --debug --seed 22 --start-at farm --period night --grant-mm arithmetic_logic,courtesy,butchery,dread,husbandry
 forest_evening	--skip-childhood --debug --seed 23 --start-at forest --period evening --grant-mm woodcraft,caution,temerity,hunt,mycology,superstition

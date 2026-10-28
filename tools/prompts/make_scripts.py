@@ -74,13 +74,25 @@ advance 12 {W}
 
 
 def next_phase():
+    """Closes the segment. When the thinking proposed nothing the footer is LEAVE and the party walks
+    out — then it walks straight back in (`travel here`, a fresh arrival), and in narration that
+    command is a harmless error."""
     return f"""click button
 wait {W}
+travel here
+wait mode LocationInteraction {W}
 advance 12 {W}
 """
 
 
 RUNS = [
+    # conversations: opened in the room where a tradesman stands, attention narrowed to them
+    ("talk_blacksmith", "--seed 31 --start-at village --start-area Forge --npc-static --observe-only blacksmith --period morning --grant-mm rhetoric,pride,flattery,cruelty",
+     [think("rhetoric"), next_phase(), think("pride")]),
+    ("talk_miller", "--seed 32 --start-at village --start-area Mill --npc-static --observe-only miller --period evening --grant-mm courtesy,mythomania,plain_dealing,insolence",
+     [think("courtesy"), next_phase(), think("mythomania")]),
+    ("talk_farm", "--seed 33 --start-at farm --npc-static --period noon --grant-mm homily,disputation,humility,gossip",
+     [think("homily"), next_phase(), think("disputation")]),
     # name, flags, phases
     ("village_dawn", "--seed 21 --start-at village --period dawn --grant-mm poetry,rhetoric,cutpurse,avarice,keen_ear",
      [think("poetry"), next_phase(), observe("keen_ear"), think("rhetoric"), next_phase(), think("avarice")]),
@@ -89,7 +101,7 @@ RUNS = [
     ("forest_evening", "--seed 23 --start-at forest --period evening --grant-mm woodcraft,caution,temerity,hunt,mycology,superstition",
      [think("caution"), next_phase(), observe("woodcraft"), think("superstition"), next_phase(), think("temerity")]),
     ("village_noon_party", "--seed 24 --start-at village --period noon --fill-party --grant-mm mercy,flattery,prosaic_grammar,physiognomy,brute_force",
-     [speak_about(), think("prosaic_grammar"), next_phase(), think("mercy"), next_phase(), observe("physiognomy")]),
+     [think("prosaic_grammar"), next_phase(), think("mercy"), next_phase(), observe("physiognomy"), speak_about()]),
     ("farm_dusk", "--seed 25 --start-at farm --period dusk --grant-mm misanthropy,pride,plain_dealing,introspection,stoneface",
      [think("pride"), next_phase(), observe("introspection"), think("misanthropy"), next_phase(), think("pride")]),
     ("cave_morning", "--seed 26 --start-at cave --period morning --grant-mm tactics,sense_of_humor,ruination,nightwalking,clambering",
@@ -97,7 +109,7 @@ RUNS = [
     ("village_evening", "--seed 27 --start-at village --period evening --grant-mm mythomania,philosophy,streetwise,petty_thief,sloth,zeal",
      [think("mythomania"), next_phase(), observe("streetwise"), think("philosophy"), next_phase(), think("zeal")]),
     ("plain_afternoon_party", "--seed 28 --start-at plain --period afternoon --fill-party --grant-mm sangfroid,impatience,courtesy,architecture,dance",
-     [speak_about(), think("impatience"), next_phase(), think("courtesy"), next_phase(), observe("architecture")]),
+     [think("impatience"), next_phase(), think("courtesy"), next_phase(), observe("architecture"), speak_about()]),
 ]
 
 
