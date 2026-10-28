@@ -32,6 +32,8 @@ under until up upon very was we were what when where which while who whom why wi
 yourself yourselves one ones thing things way something nothing anything everything still again yet thus though
 although much many must might shall here there now then""".split())
 COMMON_SHARE = 0.4   # a stem this share of personas add to a probe is the model's habit, not the persona's
+SPECIFIC_DF = 0.03   # a field stem found in more than this share of all personas' fields is not this persona's
+FIELDS = ("prompt", "reminder2", "style")
 
 
 def stem(w):
@@ -63,7 +65,13 @@ def given(sample, mm):
     return stems(p)
 
 
+def field_stems(mm):
+    return {k: stems(mm.get(k) or "") for k in FIELDS}
+
+
 def measure(samples, mms):
+    df = collections.Counter(w for mm in mms.values() for w in set().union(*field_stems(mm).values()))
+    generic = {w for w, n in df.items() if n > SPECIFIC_DF * len(mms)}
     by_probe = collections.defaultdict(list)
     rows = []
     for s in samples:
@@ -71,9 +79,9 @@ def measure(samples, mms):
         if not mm:
             continue
         g = given(s, mm)
-        fields = stems(" ".join(x for x in (mm["prompt"], mm.get("reminder2"), mm.get("style")) if x))
+        fs = field_stems(mm)
         out = stems(s["text"])
-        r = dict(s, _given=g, _fields=fields, _out=out)
+        r = dict(s, _given=g, _fields=set().union(*fs.values()) - generic, _fs=fs, _out=out)
         rows.append(r)
         by_probe[s["probe"]].append(r)
     common = {}
@@ -83,7 +91,11 @@ def measure(samples, mms):
     for r in rows:
         new = r["_out"] - r["_given"] - common[r["probe"]]
         r["leak"] = sorted(new & r["_fields"])
-        r["novel"] = sorted(new - r["_fields"])
+        r["novel"] = sorted(new - r["_fields"] - set().union(*r["_fs"].values()))
+        # which field a leaked stem came from: the style or reminder when they hold it, else the prompt
+        r["leak_from"] = {k: sorted(w for w in r["leak"] if w in r["_fs"][k] and
+                                    (k != "prompt" or not (w in r["_fs"]["style"] or w in r["_fs"]["reminder2"])))
+                          for k in FIELDS}
         mm = mms[r["mm"]]
         r["copy"] = any(copied(r["text"], mm.get(k)) for k in ("prompt", "reminder2", "style"))
         r["echo"] = len(r["_out"] & r["_given"]) / max(1, len(r["_out"]))
@@ -98,6 +110,7 @@ def per_mm(rows):
     for mid, rs in agg.items():
         n = len(rs)
         out[mid] = dict(n=n, leak=sum(len(r["leak"]) for r in rs) / n, leak_rate=sum(bool(r["leak"]) for r in rs) / n,
+                        **{"from_" + k: sum(len(r["leak_from"][k]) for r in rs) / n for k in FIELDS},
                         novel=sum(len(r["novel"]) for r in rs) / n, copy=sum(r["copy"] for r in rs) / n,
                         echo=sum(r["echo"] for r in rs) / n,
                         leaked=collections.Counter(w for r in rs for w in r["leak"]).most_common(6))
@@ -117,11 +130,12 @@ def main():
     if a.show:
         for r in rows:
             if r["mm"] in a.show.split(","):
-                print(f"[{r['kind']}] leak={r['leak']} novel={r['novel']} copy={r['copy']}\n  {r['text']}\n")
+                print(f"[{r['kind']}] leak={r['leak_from']} novel={r['novel']} copy={r['copy']}\n  {r['text']}\n")
         return
     pm = per_mm(rows)
-    head = "mm\tn\tleak\tleak_rate\tnovel\tcopy\techo\tleaked"
-    lines = [head] + [f"{m}\t{v['n']}\t{v['leak']:.2f}\t{v['leak_rate']:.2f}\t{v['novel']:.2f}\t{v['copy']:.2f}\t"
+    head = "mm\tn\tleak\tleak_rate\tprompt\treminder\tstyle\tnovel\tcopy\techo\tleaked"
+    lines = [head] + [f"{m}\t{v['n']}\t{v['leak']:.2f}\t{v['leak_rate']:.2f}\t{v['from_prompt']:.2f}\t"
+                      f"{v['from_reminder2']:.2f}\t{v['from_style']:.2f}\t{v['novel']:.2f}\t{v['copy']:.2f}\t"
                       f"{v['echo']:.2f}\t{' '.join(f'{w}:{c}' for w, c in v['leaked'])}"
                       for m, v in sorted(pm.items(), key=lambda kv: -kv[1]["leak"])]
     if a.out:
