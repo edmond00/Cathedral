@@ -151,7 +151,8 @@ internal sealed class MusicCore : IScoreObserver
             _active.Fear + (_target.Fear - _active.Fear) * k,
             _active.Mystery + (_target.Mystery - _active.Mystery) * k,
             _active.Intensity + (_target.Intensity - _active.Intensity) * k,
-            _active.Festivity + (_target.Festivity - _active.Festivity) * k);
+            _active.Festivity + (_target.Festivity - _active.Festivity) * k,
+            _active.Sacred + (_target.Sacred - _active.Sacred) * k);
         _composer.Mood = _active;
 
         double now = Seconds;
@@ -203,6 +204,7 @@ internal sealed class MusicCore : IScoreObserver
             (int tracks, float a, float b) = part switch
             {
                 Part.Ambience => (0, -1f, 0f),
+                Part.Cantus => (1, -1f, 0.10f),
                 Part.Drone => (0, -1f, 0.10f),
                 Part.Pad => (1, -1f, 0.10f),
                 Part.Melody or Part.Bell => (2, 0.25f, 0.35f),
@@ -228,7 +230,7 @@ internal sealed class MusicCore : IScoreObserver
     private static int Channel(Part p) => p switch
     {
         Part.Drone => 0, Part.Melody => 1, Part.Counter => 2, Part.Ostinato => 3, Part.Pad => 4,
-        Part.Bass => 5, Part.Bell => 6, Part.Ambience => 7, Part.Perc => 9, Part.Fight => 8, _ => 14,
+        Part.Bass => 5, Part.Bell => 6, Part.Ambience => 7, Part.Perc => 9, Part.Fight => 8, Part.Cantus => 10, _ => 14,
     };
 
     /// <summary>A General MIDI program that stands in for each instrument, for tools that read the MIDI.</summary>

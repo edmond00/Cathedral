@@ -147,6 +147,38 @@ public static class LocationMoodProfiles
         ["oasis"]       = (0.10f, 0.40f),
     };
 
+    /// <summary>
+    /// How holy each kind of place is. Absent means 0. From about 0.5 the sacred palette leads and the
+    /// piece is chant; a castle, a palace or a citadel reaches it only now and then (its chapel), and
+    /// the wild high or ancient places stay under it, where it only lets a distant choir drift in.
+    /// </summary>
+    private static readonly Dictionary<string, (float Min, float Max)> Sacred = new()
+    {
+        ["cathedral"]   = (0.80f, 1.00f),
+        ["temple"]      = (0.75f, 1.00f),
+        ["imperial temple"] = (0.75f, 1.00f),
+        ["monastery"]   = (0.70f, 0.95f),
+        ["church"]      = (0.65f, 0.95f),
+        ["sanctuary"]   = (0.60f, 0.90f),
+        ["shrine"]      = (0.55f, 0.85f),
+        ["commandery"]  = (0.25f, 0.55f),
+        ["palace"]      = (0.15f, 0.50f),
+        ["castle"]      = (0.15f, 0.48f),
+        ["citadel"]     = (0.15f, 0.45f),
+        ["pyramid"]     = (0.25f, 0.45f),
+        ["catacombs"]   = (0.25f, 0.45f),
+        ["burial field"] = (0.25f, 0.45f),
+        ["peak"]        = (0.25f, 0.45f),
+        ["grove"]       = (0.20f, 0.40f),
+        ["snowfield"]   = (0.15f, 0.35f),
+        ["glacier"]     = (0.15f, 0.35f),
+        ["ruins"]       = (0.15f, 0.35f),
+        ["ruin"]        = (0.15f, 0.35f),
+        ["ancient_city"] = (0.15f, 0.35f),
+        ["sunken_city"] = (0.10f, 0.30f),
+        ["ice_cave"]    = (0.10f, 0.30f),
+    };
+
     private static readonly MoodRange Fallback =
         new(new(0.25f, 0.15f, 0.30f), new(0.50f, 0.35f, 0.55f));
 
@@ -171,6 +203,9 @@ public static class LocationMoodProfiles
     /// Intensity is always sampled in the upper half (0.70–1.0) so all locations play
     /// with reasonably full layering.
     /// </summary>
+    /// <summary>Every kind of place that has a profile, for the census.</summary>
+    public static IEnumerable<string> Kinds => Profiles.Keys;
+
     public static MusicMoodState SampleMood(string locationType, int locationId)
     {
         var rng = new Random(locationId ^ 0x3F7A2C1);   // XOR salt to avoid seed 0 collapse
@@ -190,6 +225,8 @@ public static class LocationMoodProfiles
         float intensity = 0.70f + (float)rng.NextDouble() * 0.30f;   // 0.70–1.0
         // Drawn last, so every place keeps the coldness, fear and mystery it had before festivity existed.
         float festivity = Festivity.TryGetValue(key, out var f) ? Lerp(f.Min, f.Max) : 0f;
-        return new MusicMoodState(coldness, fear, mystery, intensity, festivity);
+        // Last again, for the same reason.
+        float sacred = Sacred.TryGetValue(key, out var h) ? Lerp(h.Min, h.Max) : 0f;
+        return new MusicMoodState(coldness, fear, mystery, intensity, festivity, sacred);
     }
 }

@@ -10,6 +10,7 @@
 ///   F / f      Fear     +0.1 / -0.1
 ///   M / m      Mystery  +0.1 / -0.1
 ///   Y / y      Festivity +0.1 / -0.1 (the dance tunes)
+///   9 / (      Sacred +0.1 / -0.1 (chant, or a distant choir)
 ///   N          Reset mood to Neutral
 ///   C          SFX: ButtonClick
 ///   R          SFX: NarrativeReveal
@@ -112,6 +113,11 @@ public static class MusicModeLauncher
                 case ConsoleKey.Y when key.Modifiers == ConsoleModifiers.Shift:
                     engine.SetMood(engine.CurrentMood.WithFestivity(-0.1f)); break;
 
+                case ConsoleKey.D9 when key.Modifiers == ConsoleModifiers.None:
+                    engine.SetMood(engine.CurrentMood.WithSacred(+0.1f)); break;
+                case ConsoleKey.D9 when key.Modifiers == ConsoleModifiers.Shift:
+                    engine.SetMood(engine.CurrentMood.WithSacred(-0.1f)); break;
+
                 case ConsoleKey.N:
                     engine.SetMood(MusicMoodState.Neutral);
                     engine.SetActiveTrackCount(1);
@@ -185,6 +191,7 @@ public static class MusicModeLauncher
                         (float)r.NextDouble(),
                         (float)r.NextDouble(),
                         (float)r.NextDouble(),
+                        (float)r.NextDouble(),
                         (float)r.NextDouble()));
                     break;
                 }
@@ -252,6 +259,9 @@ public static class MusicModeLauncher
         WriteBar("  Festivity", mood.Festivity, ConsoleColor.Yellow);
 
         SetCursor(0, top + 9); ClearLine();
+        WriteBar("  Sacred   ", mood.Sacred, ConsoleColor.White);
+
+        SetCursor(0, top + 10); ClearLine();
         string filterLabel = engine.ActiveFilter switch
         {
             MusicFilter.Loading  => "Loading  (P to stop)",
@@ -262,16 +272,16 @@ public static class MusicModeLauncher
             ? ConsoleColor.DarkGray : ConsoleColor.Yellow;
         WriteField("  Filter", filterLabel, filterColor);
 
-        SetCursor(0, top + 10); ClearLine();
+        SetCursor(0, top + 11); ClearLine();
         Console.ForegroundColor = ConsoleColor.Cyan;
         Console.Write("└");
         Console.Write(new string('─', 57));
         Console.WriteLine('┘');
         Console.ResetColor();
 
-        SetCursor(0, top + 12); ClearLine();
+        SetCursor(0, top + 13); ClearLine();
         Console.ForegroundColor = ConsoleColor.DarkGray;
-        Console.Write("  S/s=Coldness  F/f=Fear  M/m=Mystery  I/i=Intensity  Y/y=Festivity  0=Noise solo  1-4=Tracks  T/L/X/B/W=Preset  Z=Random  Space=Break  A/K/G/J/O=Events  P=Loading  V=DiceRoll  H=Help  Q=Quit");
+        Console.Write("  S/s=Coldness  F/f=Fear  M/m=Mystery  I/i=Intensity  Y/y=Festivity  9/(=Sacred  0=Noise solo  1-4=Tracks  T/L/X/B/W=Preset  Z=Random  Space=Break  A/K/G/J/O=Events  P=Loading  V=DiceRoll  H=Help  Q=Quit");
         Console.ResetColor();
     }
 
@@ -346,6 +356,7 @@ public static class MusicModeLauncher
         Console.WriteLine("  I                Intensity +0.1  (Drone►0.10, Melody►0.35, Counter►0.60, Texture►0.85)");
         Console.WriteLine("  Shift+I          Intensity -0.1");
         Console.WriteLine("  Y / Shift+Y      Festivity +0.1 / -0.1  (dance tunes: jigs and reels)");
+        Console.WriteLine("  9 / Shift+9      Sacred +0.1 / -0.1     (chant; low, a distant choir)");
         Console.WriteLine("  N                Reset to Neutral mood (1 track)");
         Console.WriteLine("  Z                Random mood (all four parameters randomised)");
         Console.WriteLine("  Space            Clean break: fade out, silence, a new piece from its start");

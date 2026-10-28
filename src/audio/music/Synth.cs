@@ -10,7 +10,7 @@ namespace Cathedral.Audio.Music;
 /// </summary>
 public enum Part
 {
-    Drone, Pad, Melody, Counter, Ostinato, Bass, Perc, Bell, Ambience, Fight, Sfx,
+    Drone, Pad, Melody, Counter, Ostinato, Bass, Perc, Bell, Ambience, Cantus, Fight, Sfx,
 }
 
 /// <summary>
@@ -80,6 +80,8 @@ internal sealed class Synth
         Configure(Part.Perc, reverb: 0.4f, chorus: 0f, spread: 0.3f);
         Configure(Part.Bell, reverb: 0.7f, chorus: 0f, spread: 0.6f);
         Configure(Part.Ambience, reverb: 0.6f, chorus: 0.3f, spread: 0.8f);
+        // The distant choir: almost all hall, wide, as if from the far end of a nave or across a valley.
+        Configure(Part.Cantus, reverb: 0.9f, chorus: 0.35f, spread: 0.85f);
         Configure(Part.Fight, reverb: 0.4f, chorus: 0.1f, spread: 0.5f);
         Configure(Part.Sfx, reverb: 0.25f, chorus: 0f, spread: 0.2f);
     }

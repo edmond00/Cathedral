@@ -36,7 +36,7 @@ AmbianceEngine (src/audio/AmbianceEngine.cs)     the game's only door: same API 
   `System.Random`. The world theme is piece −1.
 - **Top down.** A piece picks mode (the `ModalScale` palette: no major-third mode, Dorian is the
   warmest), tonic (moves by fourths and fifths), tempo, metre, an orchestration from four poles
-  (comfy, melancholy, dark, fear, festive), a form (`I A A' B A' O`…) and motifs. Each A is a period: the
+  (comfy, melancholy, dark, fear, festive, sacred), a form (`I A A' B A' O`…) and motifs. Each A is a period: the
   motif, its sequence, a second idea, an open cadence; then the same phrase with a closed ending.
   A' is a plain or ornamented restatement, B the inverted motif over contrast chords, C a breakdown
   or chant. Layers enter one at a time across the piece.
@@ -68,6 +68,20 @@ AmbianceEngine (src/audio/AmbianceEngine.cs)     the game's only door: same API 
   world map's (0.25, drone and pad only), and was once written as a fight and heard as a pad.
   Battle's preset is at full Intensity and hid that; `journeys/encounter.json` is the check.
   `Kick` and `PowerChord` are left from the first, metal version: levelled, unused.
+- **Sacred places.** `MusicMoodState.Sacred` (per place, `LocationMoodProfiles.Sacred`, drawn
+  after festivity so every other place keeps its mood) pulls towards the sacred pole. When it
+  leads (temples, cathedrals, churches, monasteries, shrines, sanctuaries; a castle's or a
+  palace's chapel about one time in nine or five) the piece is chant: a choir lead (the organ now
+  and then), the church modes only (Dorian, Phrygian, Aeolian), `Plainchant` writing the line
+  (an intonation rising by step to a reciting tone, the recitation, a stepwise cadence to the final,
+  almost no leaps), the second voice in organum, a drone, bells, almost no ostinato, the longest
+  hall. Lower (peaks, snowfields, glaciers, groves, ruins, burial places) it leaves the place's own
+  music and adds `Part.Cantus`: a distant wordless choir, one held chord tone every two bars,
+  nearly all hall, in some B, C and varied-A sections (`Orchestration.Cantus`, `EmitCantus`). Fear
+  damps it, mystery does not; a fight ignores it, night keeps it. `9`/`Shift+9` in `--music` mode;
+  `targets.json` holds chant to `poles.sacred`. `--music-census [n]` samples every kind of place
+  and prints which pole leads how often and where the distant choir may come in: run it after
+  changing a profile.
 - **Night.** A visit's period reaches the music in `NarrativeController.ApplyTimePeriod` (the one
   writer of the period): at Night, in exploration, `AmbianceEngine.SetNight(true)` plays the
   place's `MusicMoodState.AtNight()` (colder, stranger, a little uneasy, festivity 0, Intensity

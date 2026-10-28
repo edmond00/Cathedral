@@ -233,6 +233,13 @@ internal sealed class Composer
         var mode = p.Dance != Dance.None ? (_rng.NextDouble() < 0.6 ? Mode.Dorian : Mode.Aeolian) : Mode.ForMood(mood, _rng);
         // A riff stands on a power chord over its tonic, which Locrian's diminished fifth would not hold.
         if (Fighting && (mode == Mode.Locrian || mode == Mode.PentatonicMinor)) mode = Mode.Phrygian;
+        // Chant keeps to the church modes: Dorian above all, Phrygian, Aeolian. No harmonic minor (its
+        // augmented second is not a chant's), no pentatonic, no Locrian.
+        else if (!Fighting && p.Dance == Dance.None && Orchestra.SacredLeads(mood))
+        {
+            double r = _rng.NextDouble();
+            mode = r < 0.45 ? Mode.Dorian : r < 0.8 ? Mode.Phrygian : Mode.Aeolian;
+        }
         // The tonic moves by a fourth or a fifth between pieces, or stays: the drone can pivot.
         int[] moves = { 0, 5, -5, 7, -7, 2, -2 };
         double[] mw = { 2, 2, 2, 1.5, 1.5, 0.7, 0.7 };
@@ -341,7 +348,10 @@ internal sealed class Composer
         int[] progC = Progressions.For(p.Key.Mode, _rng.NextDouble() < 0.5, _rng);
 
         // Layers enter one at a time across the piece: the extra layers in a shuffled order.
-        var extras = new List<Part> { Part.Ostinato, Part.Counter };
+        // Chant has little that moves underneath it: the second voice, perhaps a bass, rarely a figure.
+        bool chant = o.Pole == "sacred";
+        var extras = chant ? new List<Part> { Part.Counter } : new List<Part> { Part.Ostinato, Part.Counter };
+        if (chant && _rng.NextDouble() < 0.25) extras.Add(Part.Ostinato);
         if (o.Percussion) extras.Add(Part.Perc);
         if (_rng.NextDouble() < 0.5) extras.Add(Part.Bass);
         Shuffle(extras);
@@ -388,7 +398,7 @@ internal sealed class Composer
                     // The breakdown: the tune leaves; ostinato, drone and bells, or a lone chant.
                     s.Kind = SectionKind.C;
                     // Without the tune it lasts four bars: eight is half a minute of no melody.
-                    bool tuneless = _rng.NextDouble() < 0.5;
+                    bool tuneless = _rng.NextDouble() < (chant ? 0.2 : 0.5);
                     s.Bars = tuneless ? 4 : 4 + 4 * _rng.Next(2);
                     s.Chords = Expand(progC, s.Bars);
                     s.Layers = tuneless
@@ -416,7 +426,11 @@ internal sealed class Composer
                 s.Layers.Add(Part.Bell);
             if (o.Ambience) s.Layers.Add(Part.Ambience);
             s.Counter = (CounterStyle)_rng.Next(3);
+            // Chant's second voice is organum, the line doubled a fourth or a fifth below.
+            if (chant && _rng.NextDouble() < 0.7) s.Counter = CounterStyle.Organum;
             if (s.Kind == SectionKind.B && s.Counter == CounterStyle.Organum) s.Counter = CounterStyle.Tenor;
+            if (o.Cantus && s.Kind is SectionKind.Intro or SectionKind.B or SectionKind.C or SectionKind.AVar && _rng.NextDouble() < 0.6)
+                s.Layers.Add(Part.Cantus);
             p.Sections.Add(s);
         }
     }
@@ -626,14 +640,14 @@ internal sealed class Composer
 
     /// <summary>The mood a new piece is written for: a fight hardens the place's own mood into battle.</summary>
     private MusicMoodState EffectiveMood() => Fighting
-        ? new MusicMoodState(Math.Max(Mood.Coldness, 0.4f), Math.Max(Mood.Fear, 0.85f), Mood.Mystery * 0.5f, 1f, 0f)
+        ? new MusicMoodState(Math.Max(Mood.Coldness, 0.4f), Math.Max(Mood.Fear, 0.85f), Mood.Mystery * 0.5f, 1f, 0f, 0f)
         : Mood;
 
     private void CheckDrift(Piece p)
     {
         var m = EffectiveMood();
         float d = MathF.Sqrt(Sq(m.Coldness - p.Mood.Coldness) + Sq(m.Fear - p.Mood.Fear) + Sq(m.Mystery - p.Mood.Mystery)
-                             + Sq(m.Festivity - p.Mood.Festivity));
+                             + Sq(m.Festivity - p.Mood.Festivity) + Sq(m.Sacred - p.Mood.Sacred));
         bool fightChanged = Fighting != p.Fight;
         // A new place is a new mood, and a new mood is a new piece: anything past a small change ends
         // this one, through a short bridge.
@@ -697,7 +711,7 @@ internal sealed class Composer
         var key = p.Key;
 
         // Layers in and out as swells, never cuts.
-        foreach (Part part in new[] { Part.Drone, Part.Pad, Part.Melody, Part.Counter, Part.Ostinato, Part.Bass, Part.Perc, Part.Bell, Part.Ambience })
+        foreach (Part part in new[] { Part.Drone, Part.Pad, Part.Melody, Part.Counter, Part.Ostinato, Part.Bass, Part.Perc, Part.Bell, Part.Ambience, Part.Cantus })
         {
             bool on = s.Layers.Contains(part);
             output.Add(new(t, 0, part, default, 0, on ? Orchestra.PartLevel(part, p.Fight) : 0f, 0, IsGain: true,
@@ -719,6 +733,7 @@ internal sealed class Composer
             if (_rng.NextDouble() < 0.5)
                 output.Add(new(t + p.BarSeconds * 2, 4, Part.Bell, Instrument.Bell, key.Pitch(4 + key.Mode.Size), 0.4f, -0.5f));
         }
+        if (s.Layers.Contains(Part.Cantus)) EmitCantus(output, p, s, t);
         if (s.Layers.Contains(Part.Ambience))
         {
             output.Add(new(t, len, Part.Ambience, Instrument.Wind, key.Tonic + 24, 0.6f, -0.7f));
@@ -765,8 +780,15 @@ internal sealed class Composer
         int lo = p.Center - n + 2, hi = p.Center + n + 2;   // a little under the octave below to a ninth above
         // A dance tune's B part is a strain higher: its range moves up a third.
         int lift = p.Dance != Dance.None ? 2 : 0;
+        bool chant = p.Orch.Pole == "sacred";
         s.MelodyLine = s.Kind switch
         {
+            // Chant is written as chant, not as a period of motifs: see Plainchant.
+            SectionKind.A when chant => p.ALine = Plainchant(p, s, lo, hi, close: true, lift: 0),
+            SectionKind.AVar when chant => p.ALine != null && _rng.NextDouble() < 0.7 ? new List<LineNote>(p.ALine)
+                                                                                     : Plainchant(p, s, lo, hi, close: true, lift: 0),
+            SectionKind.B when chant => Plainchant(p, s, lo, hi, close: false, lift: 2),
+            SectionKind.C when chant && s.Layers.Contains(Part.Melody) => Plainchant(p, s, lo, hi, close: true, lift: 1),
             SectionKind.A => p.ALine = BuildPeriod(p, s, p.M, p.N, lo, hi, close: true),
             SectionKind.AVar => VaryA(p, s, lo, hi),
             SectionKind.B when p.Dance != Dance.None => p.BLine = BuildPeriod(p, s, p.MB, p.NB, lo + lift, hi + lift, close: true, lift: lift),
@@ -904,6 +926,54 @@ internal sealed class Composer
     }
 
     /// <summary>C: the motif at half speed, chant-like, over the drone.</summary>
+    /// <summary>
+    /// A line of plainchant, phrase by phrase (four bars each): an intonation rising by step from the
+    /// final to the reciting tone, the recitation on it with a neighbour now and then, a cadence
+    /// falling by step (to a step above the final for an open phrase, to the final for a closed one,
+    /// the last note held). Notes of a beat, now and then a two-note melisma, a long note at each
+    /// phrase end. Almost all steps: a third at most, never a leap. B recites higher (<paramref name="lift"/>).
+    /// </summary>
+    private List<LineNote> Plainchant(Piece p, Section s, int lo, int hi, bool close, int lift)
+    {
+        var line = new List<LineNote>();
+        if (!s.Layers.Contains(Part.Melody)) return line;
+        int n = p.Key.Mode.Size;
+        int final = NearestTonic(p.Key, p.Center - 1, lo, hi);
+        // The reciting tone: a fifth above the final, a sixth in Phrygian (its fifth is weak).
+        int tenor = Math.Min(hi - 1, final + (p.Key.Mode == Mode.Phrygian ? 5 : 4) + lift);
+        double phraseBeats = 4 * p.Meter, total = s.Bars * p.Meter;
+        float vel = 0.8f;
+        void Add(double beat, double dur, int deg) => line.Add(new LineNote(beat, dur, Math.Clamp(deg, lo, hi), vel * Jitter(0.05f)));
+        int phrases = (int)Math.Round(total / phraseBeats);
+        int[] intonation = _rng.NextDouble() < 0.5 ? new[] { 0, 1, 2 } : new[] { -1, 0, 2 };
+        for (int ph = 0; ph < phrases; ph++)
+        {
+            double beat = ph * phraseBeats, end = beat + phraseBeats;
+            bool lastPhrase = ph == phrases - 1;
+            int goal = lastPhrase && close ? final : ph % 2 == 0 ? final + 1 : final + (close ? 0 : 1);
+            // Intonation: up by step to the tenor (the same every phrase: the chant's own figure).
+            int cur = final + intonation[0];
+            Add(beat, 1, cur); beat += 1;
+            for (int i = 1; i < intonation.Length; i++) { cur = final + intonation[i]; Add(beat, 1, cur); beat += 1; }
+            while (cur < tenor) { cur++; Add(beat, 1, cur); beat += 1; }
+            // Recitation: the tenor, a neighbour above now and then, a melisma.
+            double reciteUntil = end - (cur - goal + 2);
+            while (beat < reciteUntil - 1e-6)
+            {
+                double r = _rng.NextDouble();
+                if (r < 0.2 && beat + 1 <= reciteUntil) { Add(beat, 0.5, tenor + 1); Add(beat + 0.5, 0.5, tenor); beat += 1; }
+                else if (r < 0.32 && beat + 2 <= reciteUntil) { Add(beat, 1, tenor + 1); Add(beat + 1, 1, tenor); beat += 2; }
+                else { double d = Math.Min(_rng.NextDouble() < 0.3 ? 2 : 1, reciteUntil - beat); Add(beat, d, tenor); beat += d; }
+            }
+            cur = tenor;
+            // Cadence: down by step to the goal, held to the phrase's end.
+            while (cur > goal + 1 && beat < end - 2) { cur--; Add(beat, 1, cur); beat += 1; }
+            if (cur != goal && beat < end - 1) { Add(beat, 1, goal + (cur > goal ? 1 : -1)); beat += 1; }
+            Add(beat, Math.Max(1, end - beat), goal);
+        }
+        return line;
+    }
+
     private List<LineNote> Chant(Piece p, Section s, int lo, int hi)
     {
         if (!s.Layers.Contains(Part.Melody)) return new();
@@ -1465,6 +1535,26 @@ internal sealed class Composer
                 Hit(t, Instrument.WarDrum, k % 2 == 0 ? Hi : Lo, 0.55f + 0.12f * k);
                 Hit(t, Instrument.Snare, S, 0.4f + 0.12f * k, 0.1);
             }
+    }
+
+    /// <summary>
+    /// The distant choir: a wordless "ooh" holding one chord tone every two bars, high in the middle
+    /// register, moving to the nearest tone of the next chord, panned wide. Mostly hall.
+    /// </summary>
+    private void EmitCantus(List<ScoreEvent> output, Piece p, Section s, double t)
+    {
+        var key = p.Key;
+        int n = key.Mode.Size;
+        int prev = n + 2;   // a third above the tonic's octave
+        for (int bar = 0; bar < s.Bars; bar += 2)
+        {
+            var chord = Chord.On(key, s.Chords[bar]);
+            int deg = Melodist.NearestChordTone(key, chord, prev, n - 1, 2 * n, _rng, preferStable: true);
+            prev = deg;
+            int bars = Math.Min(2, s.Bars - bar);
+            output.Add(new(t + bar * p.BarSeconds + p.BeatSeconds * 0.5, bars * p.BarSeconds * 0.95, Part.Cantus, Instrument.ChoirOoh,
+                           key.Pitch(deg), 0.5f * Jitter(0.1f), (bar / 2) % 2 == 0 ? -0.7f : 0.7f));
+        }
     }
 
     private static int LowPitch(Key key, int degree, int floor)
