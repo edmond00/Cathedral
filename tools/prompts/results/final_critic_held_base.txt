@@ -17,3 +17,8 @@ held15 fish in the stream / the basket help
 held16 fish in the stream / the hammer no
 held17 cut the meat from the boar / the axe help
 held18 cut the meat from the boar / the cup no
+held19 unlock the door / the key ring help
+
+base: right side 78/100 = 78.0%   right side and degree 78/100
+  ItemAppropriateness  40/45 = 88.9%
+  ToolSubstitution     38/55 = 69.1%
