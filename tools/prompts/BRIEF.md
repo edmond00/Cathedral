@@ -119,9 +119,10 @@ new wording.
 
 ## Ground rules
 
-- Work on the branch `prompt-overhaul`. Commit in small single-purpose commits and push after each,
-  so progress survives the session. Never push to `main` or `develop`, never run the `release`
-  skill, never touch itch.io.
+- Before the first commit, create a branch `prompt-overhaul` from where the session starts you
+  (or keep the branch the session gave you, if it is not `main` or `develop`). Commit in small
+  single-purpose commits and push after each, so progress survives the session. Never push to
+  `main` or `develop`, never run the `release` skill, never touch itch.io.
 - Never `new Random()` — `GameRng`, and `--seed` on every run.
 - If a change helps one request kind and hurts another, the shared clause splits; do not trade one
   kind's quality for another's silently.
