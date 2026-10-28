@@ -1,6 +1,7 @@
 """Screens every modus mentis's persona on a fixed set of probe lines, for the persona-field work.
 
     python tools/prompts/screen.py --out samples/screen.jsonl [--seed 1] [--only avarice,pride]
+           [--override rules/style_manner.json --version style_manner]
 
 Each modus mentis is asked the probe lines of the kinds it actually narrates (an Observation modus
 mentis observes, a Thinking one reasons, an Action one acts and hears the outcome, and so on) in the
@@ -9,7 +10,10 @@ prior turns. The probes are recorded lines from the dev split, two per kind and 
 places; the held-out playthroughs stay out of it. screen_metrics.py turns the samples into a leak
 ranking.
 
-Resumable: samples already in --out (same modus mentis, probe, seed) are skipped. Ordered by modus
+--override replaces persona fields ({mm: {"style": ...}}) to test a rewrite; its samples carry
+--version, and the persona as the game has it is version "current".
+
+Resumable: samples already in --out (same modus mentis, probe, seed, version) are skipped. Ordered by modus
 mentis so the server's cache keeps each persona's system prompt across its probes.
 """
 import argparse, json, os, sys
@@ -44,6 +48,8 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--only")
+    ap.add_argument("--override")
+    ap.add_argument("--version", default="current")
     a = ap.parse_args()
     T = variants.final()
     cases_path = os.path.join(os.path.dirname(__file__), "cases.jsonl")
@@ -51,16 +57,19 @@ def main():
     mms = personas.load_modi_mentis()
     if a.only:
         mms = {k: v for k, v in mms.items() if k in a.only.split(",")}
+    if a.override:
+        over = json.load(open(a.override, encoding="utf-8"))
+        mms = {k: dict(v, **over[k]) for k, v in mms.items() if k in over}
     done = set()
     if os.path.exists(a.out):
         for l in open(a.out, encoding="utf-8"):
             s = json.loads(l)
-            done.add((s["mm"], s["probe"], s["seed"]))
+            done.add((s["mm"], s["probe"], s["seed"], s.get("version", "current")))
     out = open(a.out, "a", encoding="utf-8")
     for i, (mid, mm) in enumerate(sorted(mms.items())):
         for kind in kinds_for(mm):
             for pid in PROBES[kind]:
-                if (mid, pid, a.seed) in done:
+                if (mid, pid, a.seed, a.version) in done:
                     continue
                 c = dict(cases[pid], prior=[], persona=dict(id=mid, prompt=mm["prompt"], reminder2=mm["reminder2"],
                                                             style=mm["style"]))
@@ -69,7 +78,7 @@ def main():
                 text = g.pop("text")
                 if r["kind"] in ("DialogueReplica", "Speaking"):
                     text = P.strip_frame(text, r.get("addressee"))
-                out.write(json.dumps(dict(mm=mid, probe=pid, kind=kind, seed=a.seed, text=text,
+                out.write(json.dumps(dict(mm=mid, version=a.version, probe=pid, kind=kind, seed=a.seed, text=text,
                                           prompt=msgs[-1]["content"], **g)) + "\n")
                 out.flush()
         print(f"{i + 1}/{len(mms)} {mid}", flush=True)

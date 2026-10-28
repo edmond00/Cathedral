@@ -69,15 +69,26 @@ def field_stems(mm):
     return {k: stems(mm.get(k) or "") for k in FIELDS}
 
 
-def measure(samples, mms):
+def persona_of(s, mms, overrides):
+    """The fields a sample was asked with: the game's, or a tested rewrite's (--override, by version)."""
+    return dict(mms[s["mm"]], **overrides.get(s.get("version", "current"), {}).get(s["mm"], {}))
+
+
+def key(s):
+    v = s.get("version", "current")
+    return s["mm"] if v == "current" else f"{s['mm']}@{v}"
+
+
+def measure(samples, mms, overrides=None):
+    overrides = overrides or {}
     df = collections.Counter(w for mm in mms.values() for w in set().union(*field_stems(mm).values()))
     generic = {w for w, n in df.items() if n > SPECIFIC_DF * len(mms)}
     by_probe = collections.defaultdict(list)
     rows = []
     for s in samples:
-        mm = mms.get(s["mm"])
-        if not mm:
+        if s["mm"] not in mms:
             continue
+        mm = persona_of(s, mms, overrides)
         g = given(s, mm)
         fs = field_stems(mm)
         out = stems(s["text"])
@@ -86,8 +97,9 @@ def measure(samples, mms):
         by_probe[s["probe"]].append(r)
     common = {}
     for pid, rs in by_probe.items():
-        c = collections.Counter(w for r in rs for w in r["_out"] - r["_given"])
-        common[pid] = {w for w, n in c.items() if n >= COMMON_SHARE * len(rs)}
+        cur = [r for r in rs if r.get("version", "current") == "current"] or rs
+        c = collections.Counter(w for r in cur for w in r["_out"] - r["_given"])
+        common[pid] = {w for w, n in c.items() if n >= COMMON_SHARE * len(cur)}
     for r in rows:
         new = r["_out"] - r["_given"] - common[r["probe"]]
         r["leak"] = sorted(new & r["_fields"])
@@ -96,7 +108,7 @@ def measure(samples, mms):
         r["leak_from"] = {k: sorted(w for w in r["leak"] if w in r["_fs"][k] and
                                     (k != "prompt" or not (w in r["_fs"]["style"] or w in r["_fs"]["reminder2"])))
                           for k in FIELDS}
-        mm = mms[r["mm"]]
+        mm = persona_of(r, mms, overrides)
         r["copy"] = any(copied(r["text"], mm.get(k)) for k in ("prompt", "reminder2", "style"))
         r["echo"] = len(r["_out"] & r["_given"]) / max(1, len(r["_out"]))
     return rows
@@ -105,7 +117,7 @@ def measure(samples, mms):
 def per_mm(rows):
     agg = collections.defaultdict(list)
     for r in rows:
-        agg[r["mm"]].append(r)
+        agg[key(r)].append(r)
     out = {}
     for mid, rs in agg.items():
         n = len(rs)
@@ -123,13 +135,18 @@ def main():
     ap.add_argument("--out")
     ap.add_argument("--show")
     ap.add_argument("--top", type=int, default=25)
+    ap.add_argument("--override", nargs="*", default=[], help="VERSION=rules/file.json, the rewrites a version was asked with")
+    ap.add_argument("--seeds", help="only these seeds")
     a = ap.parse_args()
     mms = personas.load_modi_mentis()
     samples = [json.loads(l) for p in a.samples for l in open(p, encoding="utf-8") if l.strip()]
-    rows = measure(samples, mms)
+    if a.seeds:
+        samples = [s for s in samples if str(s["seed"]) in a.seeds.split(",")]
+    overrides = {o.split("=")[0]: json.load(open(o.split("=")[1], encoding="utf-8")) for o in a.override}
+    rows = measure(samples, mms, overrides)
     if a.show:
         for r in rows:
-            if r["mm"] in a.show.split(","):
+            if key(r) in a.show.split(","):
                 print(f"[{r['kind']}] leak={r['leak_from']} novel={r['novel']} copy={r['copy']}\n  {r['text']}\n")
         return
     pm = per_mm(rows)
