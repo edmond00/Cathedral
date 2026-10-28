@@ -16,6 +16,13 @@ namespace Cathedral.Game.Scene;
 /// different sections, a different shape on the map. Measured as the share of every triple of
 /// samples whose members all differ from one another in content (area kinds and section names,
 /// Jaccard distance at least <see cref="DistinctContent"/>) and all three in layout signature.</item>
+/// <item><b>Counted diversity</b> (<c>div2%</c>, <c>wjac</c>). The first measure compares the <i>set</i> of
+/// area kinds, which saturates in a large place: every town of fifty rooms has a kitchen, a bedroom and
+/// a street, so two towns with different trades, rooms and furniture still read as the same. This one
+/// compares <i>counts</i> — how many of each area kind and of each point-of-interest kind, names ignored
+/// — by weighted Jaccard (shared counts over all counts), and passes a triple when every pair differs by
+/// at least <see cref="DistinctContent"/>. It sees three forges against one, and a pottery's wheel
+/// against a tannery's vats.</item>
 /// <item><b>Layout coherence.</b> The map should read as the land it is. Every section must be one
 /// connected piece, the place must not be a bare corridor, and a factory that states its profile
 /// (<see cref="SceneFactory.Profile"/> and <see cref="Section.Tier"/>) is held to it: a pyramid narrows
@@ -107,14 +114,15 @@ public static class BiomeAudit
         report.AppendLine("=== BIOME AUDIT ===");
         report.AppendLine($"{(settled ? "20 (12 for a city)" : SampleSize.ToString())} locations per kind. Diversity = share of sample triples all different in content");
         report.AppendLine($"(Jaccard >= {DistinctContent:0.00}) and in layout. Coherence = share of samples passing every layout check.");
+        report.AppendLine("div2% / wjac = the same test on counted content (areas and points of interest by kind, how many of each).");
         report.AppendLine("Exploration = movement kinds besides walking per visit (of 7), and how many a biome ever offers.");
         report.AppendLine();
-        report.AppendLine($"{"biome",-12} {"areas",-9} {"mean",-5} {"out",-4} {"sect",-6} {"kinds",-6} {"div%",5} {"jac",5} {"lay",4} {"coh%",5} {"chain%",6} {"move",5} {"3+%",5} {"seen",4}  profile");
+        report.AppendLine($"{"biome",-12} {"areas",-9} {"mean",-5} {"out",-4} {"sect",-6} {"kinds",-6} {"div%",5} {"jac",5} {"div2%",5} {"wjac",5} {"lay",4} {"coh%",5} {"chain%",6} {"move",5} {"3+%",5} {"seen",4}  profile");
         foreach (var r in rows)
-            report.AppendLine($"{r.Label,-12} {r.Areas,-9} {r.MeanAreas,-5:0} {r.MeanOutdoor,-4:0} {r.Sections,-6} {r.AreaKinds,-6} {r.Diversity,5:0} {r.MeanJaccard,5:0.00} {r.Layouts,4} {r.Coherence,5:0} {r.ChainShare,6:0} {r.MeanMoves,5:0.0} {r.ThreePlus,5:0} {r.KindsSeen,4}  {r.Profile}");
+            report.AppendLine($"{r.Label,-12} {r.Areas,-9} {r.MeanAreas,-5:0} {r.MeanOutdoor,-4:0} {r.Sections,-6} {r.AreaKinds,-6} {r.Diversity,5:0} {r.MeanJaccard,5:0.00} {r.Counted,5:0} {r.MeanWeighted,5:0.00} {r.Layouts,4} {r.Coherence,5:0} {r.ChainShare,6:0} {r.MeanMoves,5:0.0} {r.ThreePlus,5:0} {r.KindsSeen,4}  {r.Profile}");
         if (rows.Count > 1)
         {
-            report.AppendLine($"{"MEAN",-12} {"",-9} {rows.Average(r => r.MeanAreas),-5:0} {rows.Average(r => r.MeanOutdoor),-4:0} {"",-6} {rows.Average(r => r.AreaKindCount),-6:0.0} {rows.Average(r => r.Diversity),5:0} {rows.Average(r => r.MeanJaccard),5:0.00} {"",4} {rows.Average(r => r.Coherence),5:0} {rows.Average(r => r.ChainShare),6:0} {rows.Average(r => r.MeanMoves),5:0.0} {rows.Average(r => r.ThreePlus),5:0} {rows.Average(r => r.KindsSeenCount),4:0.0}");
+            report.AppendLine($"{"MEAN",-12} {"",-9} {rows.Average(r => r.MeanAreas),-5:0} {rows.Average(r => r.MeanOutdoor),-4:0} {"",-6} {rows.Average(r => r.AreaKindCount),-6:0.0} {rows.Average(r => r.Diversity),5:0} {rows.Average(r => r.MeanJaccard),5:0.00} {rows.Average(r => r.Counted),5:0} {rows.Average(r => r.MeanWeighted),5:0.00} {"",4} {rows.Average(r => r.Coherence),5:0} {rows.Average(r => r.ChainShare),6:0} {rows.Average(r => r.MeanMoves),5:0.0} {rows.Average(r => r.ThreePlus),5:0} {rows.Average(r => r.KindsSeenCount),4:0.0}");
         }
         foreach (var r in settled ? new List<Row>() : rows)
         {
@@ -161,7 +169,8 @@ public static class BiomeAudit
         bool IsChain,
         bool Coherent,
         HashSet<string> Moves,
-        List<string> AreaKinds);
+        List<string> AreaKinds,
+        Dictionary<string, int> Counted);
 
     private static Sample Measure(string label, int id, Scene scene, LayoutProfile profile, List<string> warnings)
     {
@@ -227,7 +236,14 @@ public static class BiomeAudit
                            .ToHashSet();
         string layout = $"{string.Join("/", scene.Sections.Select(s => s.Areas.Count))}|e{edges}|c{cycles}|b{degree3}|k{climbs}";
 
-        return new Sample(id, content, layout, areas.Count, scene.OutdoorAreas.Count, scene.Sections.Count, chain, coherent, moves, kinds);
+        // Counted content: every area and every point of interest by kind, how many of each. Connectors
+        // are counted too — a moat and a ford are content — but a path laid along edges is not.
+        var counted = kinds.Select(k => "A:" + k)
+            .Concat(pois.Where(p => p is not PathPointOfInterest and not LandscapePointOfInterest)
+                        .Select(p => "P:" + p.GetType().Name.Replace("PointOfInterest", "")))
+            .GroupBy(k => k).ToDictionary(g => g.Key, g => g.Count());
+
+        return new Sample(id, content, layout, areas.Count, scene.OutdoorAreas.Count, scene.Sections.Count, chain, coherent, moves, kinds, counted);
     }
 
     /// <summary>The structural promise of a stated profile, checked against the built graph.</summary>
@@ -333,7 +349,7 @@ public static class BiomeAudit
     // ── One biome ─────────────────────────────────────────────────────────────
 
     private sealed record Row(string Label, string Areas, int MinAreaCount, int MaxAreaCount, double MeanAreas, double MeanOutdoor, string Sections, string AreaKinds, int AreaKindCount,
-                              double Diversity, double MeanJaccard, int Layouts, double Coherence, double ChainShare,
+                              double Diversity, double MeanJaccard, double Counted, double MeanWeighted, int Layouts, double Coherence, double ChainShare,
                               double MeanMoves, double ThreePlus, string KindsSeen, int KindsSeenCount, LayoutProfile Profile);
 
     private static Row Summarise(string label, LayoutProfile profile, List<Sample> samples, StringBuilder detail)
@@ -341,6 +357,29 @@ public static class BiomeAudit
         int n = samples.Count;
         double Jac(Sample a, Sample b)
             => 1.0 - (double)a.Content.Intersect(b.Content).Count() / a.Content.Union(b.Content).Count();
+
+        double WJac(Sample a, Sample b)
+        {
+            double shared = 0, total = 0;
+            foreach (var key in a.Counted.Keys.Union(b.Counted.Keys))
+            {
+                int x = a.Counted.GetValueOrDefault(key), y = b.Counted.GetValueOrDefault(key);
+                shared += Math.Min(x, y);
+                total  += Math.Max(x, y);
+            }
+            return total == 0 ? 0 : 1.0 - shared / total;
+        }
+
+        var wdist = new double[n, n];
+        double wsum = 0;
+        for (int i = 0; i < n; i++)
+            for (int j = i + 1; j < n; j++) { wdist[i, j] = wdist[j, i] = WJac(samples[i], samples[j]); wsum += wdist[i, j]; }
+        int counted = 0;
+        for (int i = 0; i < n; i++)
+            for (int j = i + 1; j < n; j++)
+                for (int k = j + 1; k < n; k++)
+                    if (wdist[i, j] >= DistinctContent && wdist[i, k] >= DistinctContent && wdist[j, k] >= DistinctContent)
+                        counted++;
 
         var dist = new double[n, n];
         double sum = 0; int pairs = 0;
@@ -383,6 +422,8 @@ public static class BiomeAudit
             areaKinds.ToString(), areaKinds,
             100.0 * distinct / Math.Max(1, triples),
             sum / Math.Max(1, pairs),
+            100.0 * counted / Math.Max(1, n * (n - 1) * (n - 2) / 6),
+            wsum / Math.Max(1, n * (n - 1) / 2),
             samples.Select(s => s.Layout).Distinct().Count(),
             100.0 * samples.Count(s => s.Coherent) / n,
             100.0 * samples.Count(s => s.IsChain) / n,
