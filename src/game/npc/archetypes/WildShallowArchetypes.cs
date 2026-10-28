@@ -299,3 +299,25 @@ public class NarwhalArchetype : GenericShallowArchetype
     };
 }
 
+// ── Snowfield ───────────────────────────────────────────────────────────────
+
+public class WolverineArchetype : SmallMammalShallowArchetype
+{
+    public override string ArchetypeId     => "wolverine";
+    public override string TypeDisplayName => "Wolverine";
+    protected override string ComposeObservationHint(Random rng, string nodeContext) => Compose(rng,
+        sizes:  new[] { "squat", "heavy-shouldered" },
+        colors: new[] { "dark brown", "pale-banded", "shaggy" },
+        noun:   "wolverine",
+        traits: new[] { "loping over the snow with its head low", "digging furiously at the avalanche debris", "stopping to stare at you, quite unafraid" });
+    protected override string CorpseBodyDescription => "the squat shaggy body of a wolverine, its pale side-stripe bright against the snow";
+    protected override List<ItemElement> BuildCorpseDrops() => new()
+    {
+        new ItemElement(new Pelt()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Claw()),
+        new ItemElement(new Claw()),
+        new ItemElement(new Fang()),
+    };
+}
+
