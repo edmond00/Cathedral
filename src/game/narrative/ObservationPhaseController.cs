@@ -1158,6 +1158,31 @@ public class ObservationPhaseController
     }
 
     /// <summary>
+    /// Narrows a reminescence's fragments to the one <c>--childhood-path</c> names for it: the first
+    /// name that matches any fragment on offer (whole word, then substring) keeps only the fragments it
+    /// matches. A reminescence none of the names matches is left alone, and so is a pool already
+    /// emptied of the pinned fragment (it has been observed, and the phase has nothing more to show).
+    /// </summary>
+    private static IEnumerable<NarrativeAnchor> ChildhoodPathFilter(IEnumerable<NarrativeAnchor> outcomes)
+    {
+        var path = Config.Debug.ChildhoodPath;
+        if (path == null || path.Length == 0) return outcomes;
+
+        var pool = outcomes.ToList();
+        foreach (var wanted in path)
+        {
+            var byWord = pool.Where(o => TargetableNames(o).Any(n => Regex.IsMatch(
+                n, $@"\b{Regex.Escape(wanted)}\b", RegexOptions.IgnoreCase))).ToList();
+            if (byWord.Count > 0) return byWord;
+            var bySubstring = pool
+                .Where(o => TargetableNames(o).Any(n => n.Contains(wanted, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+            if (bySubstring.Count > 0) return bySubstring;
+        }
+        return pool;
+    }
+
+    /// <summary>
     /// Whether observation groups are in play: grouping, the zoom, and directing attention to a group's
     /// parts. Not where every choice must commit (the reminescence, the get-up phase: their fragments
     /// are the way onward and stay one step away), nor under <c>--observe-only</c>, which names the very
@@ -1174,7 +1199,9 @@ public class ObservationPhaseController
     private List<NarrativeAnchor> ChoiceUnits(IEnumerable<NarrativeAnchor> all, ObservationLedger ledger, bool isReminescence)
     {
         if (!Grouping(isReminescence))
-            return DeduplicateByName(ObserveOnlyFilter(ledger.Remaining(all)));
+            return DeduplicateByName(isReminescence
+                ? ChildhoodPathFilter(ObserveOnlyFilter(ledger.Remaining(all)))
+                : ObserveOnlyFilter(ledger.Remaining(all)));
 
         var units = Cathedral.Game.Scene.ObservationGrouping.Build(all.ToList(), ledger);
         return DeduplicateByName(units.Where(u => IsAvailable(u, ledger)));

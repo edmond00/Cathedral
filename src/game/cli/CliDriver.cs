@@ -276,6 +276,12 @@ public sealed class CliDriver
                 case "destinations":CmdDestinations(rest);            break;
                 case "click":       CmdClick(rest);                   break;
                 case "point":       CmdPoint(rest);                   break;
+                case "elements":
+                {
+                    var ids = _game.CliElementIds();
+                    CliMode.Emit(ids.Count == 0 ? "no named controls on screen" : "elements: " + string.Join(", ", ids));
+                    break;
+                }
                 case "choose":      CmdChoose(rest);                  break;
                 case "travel":      CmdTravel(rest);                  break;
                 case "travel-go":   CmdTravelGo();                    break;
@@ -1175,6 +1181,19 @@ public sealed class CliDriver
                 CliMode.Emit($"ok: pressed menu \"{match.Label}\"");
                 break;
             }
+            case "element":
+            {
+                // A named control (`elements` lists them), pressed where its own hit-test puts it —
+                // the --cli twin of what --record does with the same command.
+                if (a.Length < 2) { CliMode.Emit("error: click element <id>"); return; }
+                string? id = _game.CliResolveElement(a[1]);
+                if (id == null || _game.CliFindElementCell(id) is not { } ec)
+                { CliMode.Emit($"error: no control \"{a[1]}\" on screen"); return; }
+                _game.CliHoverCell(ec.X, ec.Y);
+                _game.CliClickCell(ec.X, ec.Y);
+                CliMode.Emit($"ok: clicked {id}");
+                break;
+            }
             case "cell":
             {
                 if (a.Length < 3 || !int.TryParse(a[1], out int x) || !int.TryParse(a[2], out int y))
@@ -1205,8 +1224,17 @@ public sealed class CliDriver
             Report(_game.CliPointAtCard(name), $"pointed at the card {name}");
             return;
         }
+        if (a.Length >= 2 && a[0].Equals("element", StringComparison.OrdinalIgnoreCase))
+        {
+            string? id = _game.CliResolveElement(a[1]);
+            if (id == null || _game.CliFindElementCell(id) is not { } pc)
+            { CliMode.Emit($"error: no control \"{a[1]}\" on screen"); return; }
+            _game.CliHoverCell(pc.X, pc.Y);
+            CliMode.Emit($"ok: pointed at {id}");
+            return;
+        }
         if (a.Length < 2 || !a[0].Equals("moon", StringComparison.OrdinalIgnoreCase))
-        { CliMode.Emit("error: point moon <name|ordinal> | point card <area>"); return; }
+        { CliMode.Emit("error: point moon <name|ordinal> | point card <area> | point element <id>"); return; }
 
         int ordinal = ResolveMoon(string.Join(' ', a[1..]).Trim('"'));
         if (ordinal < 0) return;

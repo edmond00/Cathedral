@@ -264,7 +264,17 @@ public sealed class RecordGate
             }
             case "point":
             {
-                if (a.Length < 2 || !a[0].Equals("moon", StringComparison.OrdinalIgnoreCase)) return "point moon <name|ordinal>";
+                if (a.Length >= 2 && a[0].Equals("element", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Hover a named control without pressing it: an organ on the creation screen,
+                    // whose description shows on hover and whose click would spend a point.
+                    string? id = _game.CliResolveElement(a[1]);
+                    if (id == null) return $"no control \"{a[1]}\" on screen";
+                    if (_game.CliFindElementCell(id) is not { } pc) return $"control \"{id}\" has no cell";
+                    Move(CellPixel(pc.X, pc.Y), id, line);
+                    return null;
+                }
+                if (a.Length < 2 || !a[0].Equals("moon", StringComparison.OrdinalIgnoreCase)) return "point moon <name|ordinal> | point element <id>";
                 int ordinal = ResolveMoon(string.Join(' ', a[1..]).Trim('"'));
                 if (ordinal < 0) return $"no moon named \"{string.Join(' ', a[1..])}\"";
                 if (!Core.TryGetMoonScreenPosition(ordinal, out var px))
@@ -462,10 +472,8 @@ public sealed class RecordGate
                 // A control named by its screen's own rule: menus, settings, the protagonist screen's
                 // tabs, trade and work. `elements` lists them.
                 string want = what == "tab" ? $"tab:{arg.ToLowerInvariant()}" : what == "back" ? "back" : arg;
-                var ids = _game.CliElementIds();
-                string? id = ids.FirstOrDefault(i => i.Equals(want, StringComparison.OrdinalIgnoreCase))
-                          ?? ids.FirstOrDefault(i => i.Contains(want, StringComparison.OrdinalIgnoreCase));
-                if (id == null) return Fail($"no control \"{want}\" on screen (elements: {string.Join(", ", ids)})");
+                string? id = _game.CliResolveElement(want);
+                if (id == null) return Fail($"no control \"{want}\" on screen (elements: {string.Join(", ", _game.CliElementIds())})");
                 return _game.CliFindElementCell(id) is { } ec2 ? At(ec2, id) : Fail($"control \"{id}\" has no cell");
             }
 

@@ -4709,13 +4709,39 @@ public class NarrativeController
         }
         else
         {
-            region = regions.FirstOrDefault(r => r.Keyword.Equals(keyword, StringComparison.OrdinalIgnoreCase));
+            region = CliFindKeyword(regions, keyword);
             if (region == null) return $"no clickable keyword '{keyword}' on screen";
         }
 
         OnMouseMove(region.StartX, region.Y);
         OnMouseClick(region.StartX, region.Y);
         return null;
+    }
+
+    /// <summary>
+    /// A keyword by its word — or, written <c>@name</c>, by the object it is linked to: the first
+    /// keyword whose anchor's name contains <c>name</c>. The word is whatever the model wrote and the
+    /// index is whatever order it wrote things in; the object is the scene's, so a script that must
+    /// reach one thing whatever the prose says names it this way.
+    /// </summary>
+    private static KeywordRegion? CliFindKeyword(IReadOnlyList<KeywordRegion> regions, string keyword)
+    {
+        if (!keyword.StartsWith('@'))
+            return regions.FirstOrDefault(r => r.Keyword.Equals(keyword, StringComparison.OrdinalIgnoreCase));
+        string want = keyword[1..].Replace('_', ' ');
+        return regions.FirstOrDefault(r => r.ResolvedAnchor is { } a && CliAnchorNames(a)
+            .Any(n => n.Replace('_', ' ').Contains(want, StringComparison.OrdinalIgnoreCase)));
+    }
+
+    private static IEnumerable<string> CliAnchorNames(NarrativeAnchor anchor)
+    {
+        yield return anchor.DisplayName;
+        if (anchor is ObservationObject obs)
+        {
+            yield return obs.NeutralName;
+            yield return obs.ObservationId;
+            foreach (var alias in obs.TargetingAliases) yield return alias;
+        }
     }
 
     /// <summary>Click the action with the given global action index.</summary>
@@ -4742,7 +4768,7 @@ public class NarrativeController
         var regions = _ui.KeywordRegions;
         KeywordRegion? region = int.TryParse(keyword, out int index)
             ? (index >= 0 && index < regions.Count ? regions[index] : null)
-            : regions.FirstOrDefault(r => r.Keyword.Equals(keyword, StringComparison.OrdinalIgnoreCase));
+            : CliFindKeyword(regions, keyword);
         return region == null ? null : (region.StartX, region.Y, Math.Max(1, region.EndX - region.StartX));
     }
 

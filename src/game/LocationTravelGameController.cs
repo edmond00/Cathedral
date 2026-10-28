@@ -325,6 +325,18 @@ public class LocationTravelGameController : IDisposable
     /// <c>menu:2</c>…), or null. What <c>--record</c> aims at for a button it has no region for: the
     /// same rule that lights the button decides where it is.
     /// </summary>
+    /// <summary>
+    /// The id of the named control on screen that <paramref name="want"/> names: an exact id first,
+    /// else the first id containing it. Shared by <c>click element</c> and <c>point element</c>, under
+    /// <c>--cli</c> and <c>--record</c> alike, so the two resolve a name the same way.
+    /// </summary>
+    public string? CliResolveElement(string want)
+    {
+        var ids = CliElementIds();
+        return ids.FirstOrDefault(i => i.Equals(want, StringComparison.OrdinalIgnoreCase))
+            ?? ids.FirstOrDefault(i => i.Contains(want, StringComparison.OrdinalIgnoreCase));
+    }
+
     public (int X, int Y)? CliFindElementCell(string elementId)
     {
         (int X, int Y)? first = null, last = null;
@@ -1654,7 +1666,9 @@ public class LocationTravelGameController : IDisposable
                 // Pick the arena generator for the current biome (travel encounters are
                 // wall-clock-random — fresh seed per fight).
                 var biome = Cathedral.Glyph.Microworld.BiomeDatabase.Biomes[_consumptionBiome];
-                var arena = biome.ArenaGeneratorFactory(Environment.TickCount);
+                var arena = biome.ArenaGeneratorFactory(Config.Debug.ForcedEncounters != null
+                    ? GameRng.Stream("forced-encounter-arena").Next()
+                    : Environment.TickCount);
                 _fightAdapter = new FightModeAdapter(
                     _core.Terminal,
                     _core.PopupTerminal,
@@ -2528,6 +2542,7 @@ public class LocationTravelGameController : IDisposable
         _tripVhDebt        = 0f;
         _tripTotalCells    = pathVertices.Count - 1;
         _tripCellsTraveled = 0;
+        _forcedEncounterThisTrip = false;
         _avatarVertexBeforeStep = pathVertices[0];
         _stepOriginVertex       = pathVertices[0];
         _tripOriginVertex       = pathVertices[0];
@@ -2556,6 +2571,9 @@ public class LocationTravelGameController : IDisposable
     /// Consumes vital heat from the humor queues based on the biome's travel cost.
     /// Triggers death by starvation if all humor queues become critical.
     /// </summary>
+    /// <summary>Whether this journey has had its <c>--force-encounter</c> fight.</summary>
+    private bool _forcedEncounterThisTrip;
+
     public void OnProtagonistSteppedToVertex(int vertexIndex)
     {
         if (_currentMode != GameMode.Traveling) return;
@@ -2593,6 +2611,18 @@ public class LocationTravelGameController : IDisposable
             Config.Debug.EncounterOnArrival = null;
             if (!StartTravelEncounter(staged))
                 DebugFlagAudit.Miss("--encounter-on-arrival", staged, "no encounter — the journey ended normally");
+            return;
+        }
+
+        // --force-encounter: the next creature in line, once per journey, at its middle step (a
+        // one-cell journey has only its last). _forcedEncounterThisTrip is cleared at each set-out.
+        if (Config.Debug.ForcedEncounters is { Count: > 0 } forced && !_forcedEncounterThisTrip
+            && _tripCellsTraveled >= Math.Max(1, (_tripTotalCells + 1) / 2))
+        {
+            _forcedEncounterThisTrip = true;
+            string creature = forced.Dequeue();
+            if (!StartTravelEncounter(creature))
+                DebugFlagAudit.Miss("--force-encounter", creature, "no encounter — the journey went on");
             return;
         }
 

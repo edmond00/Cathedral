@@ -381,6 +381,21 @@ public static class Config
         public static string? ObserveOnly { get; set; } = null;
 
         /// <summary>
+        /// Pins which fragment each childhood reminescence attends to. Set by
+        /// <c>--childhood-path &lt;name&gt;[,&lt;name&gt;…]</c>: each name is matched (as
+        /// <c>--observe-only</c> matches) against the fragments of whichever reminescence is on screen,
+        /// and the one it names becomes the only fragment that reminescence may observe. A reminescence
+        /// none of the names matches chooses freely, so a path may stop pinning after the step that
+        /// matters. Null (the default) leaves every reminescence to the persona.
+        ///
+        /// <para>Which fragment a reminescence observes is a choice the model makes, and the fragment
+        /// remembered decides the whole starting kit (a weapon, food, footwear or none). A scripted
+        /// childhood that must end with a given kit cannot leave that to the model's letter scores,
+        /// which differ from one machine to the next.</para>
+        /// </summary>
+        public static string[]? ChildhoodPath { get; set; } = null;
+
+        /// <summary>
         /// Suppresses random travel encounters. Set by <c>--no-encounters</c>. Inert at its default
         /// of false: a run without the flag rolls for encounters exactly as it always did.
         ///
@@ -485,6 +500,19 @@ public static class Config
         /// suppress the random rolls and still stage this one.</para>
         /// </summary>
         public static string? EncounterOnArrival { get; set; } = null;
+
+        /// <summary>
+        /// Stages one travel encounter per journey, at the journey's middle step, taking the creatures
+        /// in order (<c>--force-encounter wolf,bandit</c>: a wolf on the first journey, a bandit on the
+        /// second). Honoured ahead of <see cref="NoEncounters"/>, like <see cref="EncounterOnArrival"/>,
+        /// so a script suppresses the random rolls and still gets exactly these. Null at its default.
+        ///
+        /// <para>A random roll gives a journey no fight, one, or (rarely) two, and a scripted video
+        /// that must show exactly one on each of two journeys cannot wait on it. While it is set the
+        /// encounter's arena is also drawn from <c>GameRng</c> rather than the wall clock, so the same
+        /// seed lays out the same fight.</para>
+        /// </summary>
+        public static System.Collections.Generic.Queue<string>? ForcedEncounters { get; set; } = null;
 
         /// <summary>
         /// Beast archetype to add to every scene as it is built, e.g. "wolf". Set by

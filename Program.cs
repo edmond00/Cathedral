@@ -200,6 +200,8 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("                                     (e.g. pigsty, smithy). --start-at picks the location, this picks the room:");
     Console.WriteLine("                                     without it a script lands in whichever area was built first and has to walk");
     Console.WriteLine("  --observe-only <name>              DEBUG: an observation phase may only look at objects matching <name> (e.g. pig).");
+    Console.WriteLine("  --childhood-path <name>[,<name>…]  DEBUG: each childhood reminescence observes only the fragment one of these names matches");
+    Console.WriteLine("                                     (e.g. sobs,waves,sharp,golden arch); a reminescence none matches chooses freely.");
     Console.WriteLine("                                     Which object a phase opens on is otherwise a persona choice out of a dozen,");
     Console.WriteLine("                                     so a script that wants to act on one thing cannot count on reaching it");
     Console.WriteLine("  --period <name>                    DEBUG: arrive at every location at this time of day (dawn…night) instead of a random one");
@@ -216,6 +218,8 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("                                     The only way a script can reach fight mode: the real routes in are a random");
     Console.WriteLine("                                     travel encounter (which scripts disable) or provoking an NPC through dialogue");
     Console.WriteLine("  --encounter-on-arrival <creature>  DEBUG: force a travel encounter on the FINAL step of the next journey, once.");
+    Console.WriteLine("  --force-encounter <c>[,<c>…]       DEBUG: one travel encounter per journey, at its middle step, creatures taken in order");
+    Console.WriteLine("                                     (e.g. wolf,bandit); its arena is seeded from the run, not the clock.");
     Console.WriteLine("                                     That step raises the step and arrival events from one call, so the fight begins");
     Console.WriteLine("                                     with no path left to walk — the case that stranded the run in Traveling");
     Console.WriteLine("  --spawn-beast <name>               DEBUG: put a beast (wolf, boar, bear, black bear, stray dog, fox) in the opening");
@@ -895,6 +899,10 @@ for (int i = 0; i < args.Length; i++)
     if (args[i] == "--observe-only" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
         Cathedral.Config.Debug.ObserveOnly = args[i + 1];
 
+    if (args[i] == "--childhood-path" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
+        Cathedral.Config.Debug.ChildhoodPath = args[i + 1]
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
     if (args[i] == "--period" && i + 1 < args.Length &&
         Enum.TryParse<Cathedral.Game.Narrative.TimePeriod>(args[i + 1], ignoreCase: true, out var forced))
         Cathedral.Config.Debug.ForcedPeriod = forced;
@@ -910,6 +918,10 @@ for (int i = 0; i < args.Length; i++)
 
     if (args[i] == "--encounter-on-arrival" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
         Cathedral.Config.Debug.EncounterOnArrival = args[i + 1];
+
+    if (args[i] == "--force-encounter" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
+        Cathedral.Config.Debug.ForcedEncounters = new System.Collections.Generic.Queue<string>(
+            args[i + 1].Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
 
     if (args[i] == "--spawn-beast" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
         Cathedral.Config.Debug.SpawnBeast = args[i + 1];
