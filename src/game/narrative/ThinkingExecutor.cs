@@ -346,14 +346,14 @@ public class ThinkingExecutor
                 return Finish(new List<ParsedNarrativeAction>());
             }
 
-            // The neutral sentence opens with "I will …" (plus "discretely" for a discrete skill), and the
+            // The neutral sentence opens with "I will …" (plus "discreetly" for a discrete skill), and the
             // GBNF prefix constraint forces the styled rewrite to open with the same literal. This
             // guarantees the prefix can be stripped cleanly to form the button label (DisplayText);
             // ActionText keeps the canonical "try to …" form the item critic expects.
             string styledAction = await _rewriter.RewriteAsync(
                 actionSlot, NeutralNarration.ActionIntent(goalPhrase, skill.ActsDiscretely), NarrationKind.Action, skill.PersonaReminder2, forcedPrefix: ActionPrefix, styleInstruction: skill.StyleInstruction, preview: actionPart?.NextSegment(), ct: cancellationToken);
             if (string.IsNullOrWhiteSpace(styledAction))
-                styledAction = ActionPrefix + (skill.ActsDiscretely ? "discretely " : "") + goalPhrase;
+                styledAction = ActionPrefix + (skill.ActsDiscretely ? "discreetly " : "") + goalPhrase;
             string bareAction = StripPrefix(styledAction, ActionPrefix);
 
             // Difficulty: verb base ± the persona-fit modifier (eager −1 / willing 0 / reluctant +1),
@@ -568,7 +568,7 @@ public class ThinkingExecutor
             actionSlot, NeutralNarration.ActionIntent(goalPhrase, skill.ActsDiscretely), NarrationKind.Action, skill.PersonaReminder2,
             forcedPrefix: ActionPrefix, styleInstruction: skill.StyleInstruction, preview: actionPart?.NextSegment(), ct: cancellationToken);
         if (string.IsNullOrWhiteSpace(styledAction))
-            styledAction = ActionPrefix + (skill.ActsDiscretely ? "discretely " : "") + goalPhrase;
+            styledAction = ActionPrefix + (skill.ActsDiscretely ? "discreetly " : "") + goalPhrase;
         string bareAction = StripPrefix(styledAction, ActionPrefix);
 
         return Finish(new ParsedNarrativeAction

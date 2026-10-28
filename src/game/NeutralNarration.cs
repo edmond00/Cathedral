@@ -420,12 +420,14 @@ public static class NeutralNarration
 
     /// <summary>
     /// The intended action as a first-person "I will …" statement (e.g. "I will climb the tree").
-    /// When <paramref name="discrete"/> is true the adverb "discretely" is inserted ("I will
-    /// discretely climb the tree") to reflect a stealthy modus mentis. The styled rewrite is
+    /// When <paramref name="discrete"/> is true the adverb "discreetly" is inserted ("I will
+    /// discreetly climb the tree") to reflect a stealthy modus mentis. The styled rewrite is
     /// GBNF-forced to open with the "I will " prefix, which is then stripped to form the button label.
+    /// It was spelt "discretely" — separately, one at a time — which is not what a stealthy mind does,
+    /// and the rewrite is handed the word it is given.
     /// </summary>
     public static string ActionIntent(string verbVerbatim, bool discrete = false)
-        => discrete ? $"I will discretely {FirstPerson(verbVerbatim)}"
+        => discrete ? $"I will discreetly {FirstPerson(verbVerbatim)}"
                     : $"I will {FirstPerson(verbVerbatim)}";
 
     /// <summary>
@@ -444,9 +446,15 @@ public static class NeutralNarration
     // ── VerbAction outcomes ────────────────────────────────────────────────────────
     // actionDisplay is already a clean verb phrase (e.g. "climb the tree"), so it is used verbatim.
 
+    /// <summary>
+    /// "It is done! I managed to …". It said "I succeeded to …", which is not English; a model handed a
+    /// broken sentence copies it ("Succeeded to listen, learned to see earth's way") or repairs it in
+    /// its own direction. Measured as a change on its own (tools/prompts, 62 samples a side) it moved
+    /// nothing else: the lesson was lost as often, the copies out of the prompt as rare.
+    /// </summary>
     public static string OutcomeSuccess(string actionDisplay, IReadOnlyList<string>? outcomeVerbatims = null)
     {
-        var head = $"It is done! I succeeded to {FirstPerson(actionDisplay)}.";
+        var head = $"It is done! I managed to {FirstPerson(actionDisplay)}.";
         var tail = OutcomeConsequences(outcomeVerbatims);
         return tail.Length == 0 ? head : $"{head} Thanks to this success I {tail}.";
     }

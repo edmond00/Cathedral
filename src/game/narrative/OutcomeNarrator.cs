@@ -50,7 +50,7 @@ public class OutcomeNarrator
         string neutral = neutralOverride ?? BuildNeutralOutcome(action, succeeded, outcomeVerbatims);
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
         // forcedPrefix "I " constrains the styled result to a first-person opening (every neutral
-        // outcome is first-person — "I succeeded to …", "Alas, I failed to …", "I tried to remember
+        // outcome is first-person — "I managed to …", "Alas, I failed to …", "I tried to remember
         // …"), the same GBNF trick the action rewrite uses. When a preview
         // sink is supplied, the outcome streams into the preview box like every other narration.
         return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
