@@ -44,6 +44,7 @@ public class ManagementMenuRenderer
     private readonly InventoryMenuRenderer _inventoryMenu;
     private readonly MentalMapsPanelRenderer _mapsPanel;
     private readonly BellicMenuRenderer _bellicMenu;
+    private readonly JournalMenuRenderer _journalMenu;
 
     // ── Cached art data per anatomy type ─────────────────────────
     private readonly BodyArtData _humanArtData;
@@ -249,6 +250,7 @@ public class ManagementMenuRenderer
         var spleenMap    = HumorQueuePositionMap.Load("assets/art/humors/spleen.txt",   "spleen");
         _humorMenu = new HumorMenuRenderer(terminal, humorArtData, heparMap, paunchMap, pulmonesMap, spleenMap);
         _bellicMenu = new BellicMenuRenderer(terminal);
+        _journalMenu = new JournalMenuRenderer(terminal);
     }
 
     /// <summary>
@@ -256,7 +258,8 @@ public class ManagementMenuRenderer
     /// header, its separator and its footer stay off.
     /// </summary>
     private static bool OwnsWholeScreen(ManagementTab tab) =>
-        tab is ManagementTab.Memory or ManagementTab.Humors or ManagementTab.Chorography or ManagementTab.Bellic;
+        tab is ManagementTab.Memory or ManagementTab.Humors or ManagementTab.Chorography or ManagementTab.Bellic
+            or ManagementTab.Journal;
 
     // ── Art/gear data helpers ─────────────────────────────────────
 
@@ -357,7 +360,7 @@ public class ManagementMenuRenderer
                 _inventoryMenu.Render(invMember);
                 break;
             case ManagementTab.Journal:
-                RenderJournalPlaceholder();
+                _journalMenu.Render(_protagonist);
                 break;
             case ManagementTab.Memory:
                 _memoryPanel.Render(GetPartyMember(_selectedCharacterIndex));
@@ -543,6 +546,13 @@ public class ManagementMenuRenderer
             Render();
             return false;
         }
+        if (_activeTab == ManagementTab.Journal
+            && key is OpenTK.Windowing.GraphicsLibraryFramework.Keys.PageUp or OpenTK.Windowing.GraphicsLibraryFramework.Keys.PageDown)
+        {
+            if (key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.PageUp ? _journalMenu.PageUp() : _journalMenu.PageDown())
+                Render();
+            return false;
+        }
         int idx = TabForKey(key) is { } label ? Array.FindIndex(AllTabs, t => t.Label == label) : -1;
         return idx >= 0 && AllTabs[idx].Tab != _activeTab && ActivateTab(idx);
     }
@@ -564,6 +574,9 @@ public class ManagementMenuRenderer
             CloseMapsTab();
         if (_activeTab == ManagementTab.Chorography && previousTab != ManagementTab.Chorography)
             _mapsPanel.OnActivated(_protagonist);
+        // The journal opens at its newest entry, every time.
+        if (_activeTab == ManagementTab.Journal && previousTab != ManagementTab.Journal)
+            _journalMenu.ScrollToNewest();
 
         if (!IsCharacterVisibleForTab(_selectedCharacterIndex, _activeTab))
             _selectedCharacterIndex = 0;
@@ -699,6 +712,30 @@ public class ManagementMenuRenderer
         }
 
         return false;
+    }
+
+    /// <summary>The mouse wheel: the Journal tab scrolls (wheel up reads back). Other tabs ignore it.</summary>
+    public void OnMouseWheel(float delta)
+    {
+        if (_activeTab != ManagementTab.Journal) return;
+        if (_journalMenu.Scroll((int)Math.Round(delta * 3))) Render();
+    }
+
+    /// <summary>Scrolls the Journal tab for <c>--cli</c>: lines (positive reads back), or a page.</summary>
+    public bool CliScrollJournal(string how)
+    {
+        if (_activeTab != ManagementTab.Journal) return false;
+        bool moved = how switch
+        {
+            "pageup"   => _journalMenu.PageUp(),
+            "pagedown" => _journalMenu.PageDown(),
+            "newest"   => Reset(),
+            _          => int.TryParse(how, out int n) && _journalMenu.Scroll(n),
+        };
+        Render();
+        return true;
+
+        bool Reset() { _journalMenu.ScrollToNewest(); return true; }
     }
 
     /// <summary>Handle right click (no special behavior in management mode).</summary>
@@ -938,18 +975,6 @@ public class ManagementMenuRenderer
         _terminal.Text(BodyArtViewer.PanelContentX, row, "Items collected during your", Config.Colors.DarkGray35, Config.Colors.Black);
         row++;
         _terminal.Text(BodyArtViewer.PanelContentX, row, "journey will appear here.", Config.Colors.DarkGray35, Config.Colors.Black);
-    }
-
-    private void RenderJournalPlaceholder()
-    {
-        int row = ContentStartRow;
-        _terminal.Text(BodyArtViewer.PanelContentX, row, "No journal entries yet.", Config.Colors.DarkGray35, Config.Colors.Black);
-        row += 2;
-        _terminal.Text(BodyArtViewer.PanelContentX, row, "Your experiences and", Config.Colors.DarkGray35, Config.Colors.Black);
-        row++;
-        _terminal.Text(BodyArtViewer.PanelContentX, row, "discoveries will be recorded", Config.Colors.DarkGray35, Config.Colors.Black);
-        row++;
-        _terminal.Text(BodyArtViewer.PanelContentX, row, "here.", Config.Colors.DarkGray35, Config.Colors.Black);
     }
 
     // ═══════════════════════════════════════════════════════════════

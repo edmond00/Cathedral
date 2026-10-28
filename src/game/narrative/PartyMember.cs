@@ -631,6 +631,18 @@ public abstract class PartyMember
     /// removed from <see cref="ModiMentis"/>, and returned so the caller can decide its fate
     /// (e.g. discard, log, or push to Residual).
     /// </summary>
+    /// <summary>
+    /// A lesson worth a journal line — for a member of the party only (NPC generation comes through
+    /// the same doors), and once per member and modus mentis, however often memory drops and relearns it.
+    /// </summary>
+    private void NoteLearned(ModusMentis mm)
+    {
+        // The childhood memory is the reminescence phase's own record, swapped in, not a lesson.
+        if (!JournalRecorder.IsInParty(this) || mm is ModiMentis.ChildhoodMemoryModusMentis) return;
+        JournalRecorder.Milestone($"Learned {Cathedral.Game.NeutralNarration.ModusMentisPhrase(mm.DisplayName)}", this,
+                                  $"mm:{AffinityKey}:{mm.ModusMentisId}");
+    }
+
     public ModusMentis? LearnModusMentis(ModusMentis modusMentis)
     {
         if (MemoryModules.Count == 0) InitializeMemory();
@@ -641,7 +653,10 @@ public abstract class PartyMember
         var dropped = working.Prepend(modusMentis);
 
         if (!ModiMentis.Contains(modusMentis))
+        {
             ModiMentis.Add(modusMentis);
+            NoteLearned(modusMentis);
+        }
         if (dropped != null)
             ModiMentis.Remove(dropped);
 
@@ -664,7 +679,10 @@ public abstract class PartyMember
         if (MemoryModules.Count == 0) InitializeMemory();
 
         if (!ModiMentis.Contains(modusMentis))
+        {
             ModiMentis.Add(modusMentis);
+            NoteLearned(modusMentis);
+        }
         if (modusMentis.Level <= 0) modusMentis.Level = 1;
 
         // Step 1: try the typed long-term module.

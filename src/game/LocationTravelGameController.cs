@@ -777,6 +777,11 @@ public class LocationTravelGameController : IDisposable
         _currentMode == GameMode.ProtagonistManagement
         && _managementMenuRenderer?.CliSelectBellicSkill(skillName) == true;
 
+    /// <summary>Scrolls the Journal tab: a line count (positive reads back), pageup, pagedown or newest.</summary>
+    public bool CliScrollJournal(string how) =>
+        _currentMode == GameMode.ProtagonistManagement
+        && _managementMenuRenderer?.CliScrollJournal(how) == true;
+
     /// <summary>Selects a party member on the management screen, by name or slot (0 = protagonist).</summary>
     public bool CliSelectManagementMember(string who) =>
         _currentMode == GameMode.ProtagonistManagement
@@ -886,6 +891,13 @@ public class LocationTravelGameController : IDisposable
         _ambianceEngine?.SetMasterMusicVolume(UserSettings.MusicVolume01);
         _ambianceEngine?.SetMasterSfxVolume(UserSettings.SfxVolume01);
         _core = core ?? throw new ArgumentNullException(nameof(core));
+
+        // The journal's two questions, answered live: whose journal, and where the party stands.
+        // Outside a visit (the world map, a roadside fight) there is no place to name.
+        JournalRecorder.Source = () => _protagonist;
+        JournalRecorder.Where = () => _isInNarrativeMode && _narrativeController is { } nc
+            ? (nc.LocationId, nc.WorldContext?.DisplayName ?? "", nc.CurrentPoV?.Where?.DisplayName ?? "")
+            : (-1, "", "");
 
         // Dither, unless --dither spoke for the layer on this run. Setting Enabled restores
         // whichever mode was last in use rather than a fixed one, so this turns the layer on or
@@ -2104,6 +2116,13 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     public void OnMouseWheel(float delta)
     {
+        // The management screen can be up over narration, so it is asked first.
+        if (_currentMode == GameMode.ProtagonistManagement)
+        {
+            _managementMenuRenderer?.OnMouseWheel(delta);
+            return;
+        }
+
         // Travel encounter fight scroll
         if (_inTravelEncounter && _currentMode == GameMode.Fighting && _fightAdapter != null)
         {
@@ -3589,6 +3608,9 @@ public class LocationTravelGameController : IDisposable
         // Disable narration mode (world is interactive and in focus)
         _core.SetNarrationMode(false);
 
+        // A visit (or a roadside fight) has ended: what it recorded goes to the chronicler.
+        JournalRecorder.CloseGroup();
+
         // --advance-days: a debug-only shove of the world clock, applied once on first arrival at
         // the world map and then cleared. Inert at its default of 0.
         if (Config.Debug.AdvanceDays > 0)
@@ -3709,6 +3731,7 @@ public class LocationTravelGameController : IDisposable
         foreach (var closed in _protagonist.HealWounds())
         {
             Console.WriteLine($"🩹 [HEALED] {_protagonist.DisplayName}: {closed.WoundName} has closed.");
+            JournalRecorder.Milestone($"Healed: {closed.WoundName.ToLowerInvariant()}", _protagonist);
             closedCount++;
         }
 
@@ -3716,6 +3739,7 @@ public class LocationTravelGameController : IDisposable
             foreach (var closed in companion.HealWounds())
             {
                 Console.WriteLine($"🩹 [HEALED] {companion.DisplayName}: {closed.WoundName} has closed.");
+                JournalRecorder.Milestone($"Healed: {companion.DisplayName}'s {closed.WoundName.ToLowerInvariant()}", companion);
                 closedCount++;
             }
 
@@ -3754,6 +3778,24 @@ public class LocationTravelGameController : IDisposable
         //   inspect savefile — what is actually ON DISK
         // They differ exactly when the autosave has not fired since the last change.
         if (subject == "save")     return CliSaveDump();
+
+        // The journal by numbers, and one line per entry: what `expect` cannot see once a group is
+        // written over, and the queue the chronicler works through.
+        if (subject == "journal" && _protagonist != null)
+        {
+            var j = _protagonist.Journal;
+            var lines = new List<string>
+            {
+                $"journal entries={j.Entries.Count} next-group={j.NextGroup} pending-groups={j.PendingGroupCount} "
+                + $"written-groups={j.Entries.Where(e => e.Written.Length > 0).Count()} "
+                + $"source-chars={j.Entries.Sum(e => e.Source.Length)} written-chars={j.Entries.Sum(e => e.Written.Length)}",
+            };
+            foreach (var e in j.Entries)
+                lines.Add($"journal-entry seq={e.Seq} group={e.Group} kind={e.Kind} state={e.State} day={e.Day} "
+                        + $"place={e.Place} actor={e.Actor} companion={(e.ByCompanion ? "yes" : "no")} "
+                        + $"text={(e.Written.Length > 0 ? e.Written : e.Source).Replace('\n', ' ')}");
+            return lines;
+        }
         if (subject == "savefile") return CliSaveRead();
 
         // Whether a menu button is enabled is state, not pixels: disabled buttons differ only by
@@ -4196,6 +4238,7 @@ public class LocationTravelGameController : IDisposable
                 _                     => $"{companion.DisplayName} — died of their wounds",
             });
             Console.WriteLine($"LocationTravelGameController: Companion '{companion.DisplayName}' died — {cause}");
+            JournalRecorder.Milestone($"Lost: {lines[^1]}", companion);
 
             // The same door an enemy's body comes through, so the corpse is observable, cuttable and
             // queued to open the next narration phase without any of that knowing whose it is.
@@ -4251,7 +4294,10 @@ public class LocationTravelGameController : IDisposable
         if (_companionRemovalRenderer == null || _protagonist == null) return;
 
         foreach (var companion in _companionRemovalRenderer.SelectedForRemoval)
+        {
             _protagonist.CompanionParty.Remove(companion);
+            JournalRecorder.Milestone($"Parted with {companion.DisplayName}", companion);
+        }
 
         _companionRemovalRenderer = null;
         EnterWorldViewInteractive();
@@ -4864,6 +4910,9 @@ public class LocationTravelGameController : IDisposable
                 // Scene system path: build via the shared helper (factory selection + per-location
                 // state get-or-create + item-depletion application).
                 var scene = BuildSceneForLocation(vertexIndex, out var locState, visit: true);
+                // A place is first visited once, whatever the mental maps later forget.
+                JournalRecorder.Milestone($"First came to the {worldContext.DisplayName.ToLowerInvariant()}", null,
+                    $"visit:{vertexIndex}", (vertexIndex, worldContext.DisplayName, ""));
                 if (scene == null)
                 {
                     Console.Error.WriteLine("LocationTravelGameController: scene build failed - aborting Phase 6");
@@ -6149,6 +6198,10 @@ public class LocationTravelGameController : IDisposable
         _ambianceEngine?.SetFilter(MusicFilter.None);
 
         var result       = _fightAdapter.Result;
+        if (result != FightAdapterResult.Death)   // a death erases the run, journal and all
+            JournalRecorder.Milestone(result == FightAdapterResult.Victory
+                ? $"Won a fight against {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(_fightAdapter.TargetNpc, _protagonist)}"
+                : $"Fled a fight with {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(_fightAdapter.TargetNpc, _protagonist)}");
         var npc          = _fightAdapter.TargetNpc;
         var allEnemyNpcs = _fightAdapter.AllEnemyNpcs;
 
@@ -6404,6 +6457,7 @@ public class LocationTravelGameController : IDisposable
         }
 
         _protagonist.CompanionParty.Add(npc.Combatant);
+        JournalRecorder.Milestone($"Joined the party: {npc.DisplayName}", npc.Combatant);
 
         // Same door as taming and killing: not alive, out of the scene, and recorded as departed so
         // the next build of this location does not leave them standing where they were.

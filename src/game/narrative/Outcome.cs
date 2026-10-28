@@ -415,7 +415,10 @@ public sealed class WoundInflictionOutcome : Outcome
         => $"suffered {NeutralNarration.NounPhrase(w.WoundName.ToLowerInvariant())} to my {WoundLocation(w)}";
 
     protected override void Apply(OutcomeContext ctx)
-        => ctx.Actor!.Wounds.Add(Wound);
+    {
+        ctx.Actor!.Wounds.Add(Wound);
+        JournalRecorder.Milestone($"Wounded: {ctx.Actor.DisplayName}, {Wound.WoundName.ToLowerInvariant()}", ctx.Actor);
+    }
 }
 
 

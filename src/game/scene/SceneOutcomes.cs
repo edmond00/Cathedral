@@ -309,6 +309,7 @@ public sealed class RecruitedOutcome : Outcome
         if (proto.CompanionParty.Count >= max) return;
 
         proto.CompanionParty.Add(npc.Combatant);
+        JournalRecorder.Milestone($"Joined the party: {npc.DisplayName}", npc.Combatant);
 
         // One door for every way out of the world: gone from GetNpcsAt (and so from every verb gate),
         // out of the ctx.Scene's NPC list and schedules, and recorded as departed so the next build of

@@ -478,6 +478,7 @@ public sealed class CliDriver
                                     `manage Chorography next|prev` steps through the routines
                                     of the map shown. `manage Bellic <skill>` expands a skill;
                                     `manage member <name|slot>` picks a party member (0 = you).
+                                    `manage Journal pageup|pagedown|newest|<n>` scrolls the journal.
                                     `key <letter>` opens a tab by its initial
           select [item name]        show a carried item's info panel; bare `select` lists them
           key <escape|…>            send a key
@@ -1537,6 +1538,15 @@ public sealed class CliDriver
             if (!_game.CliToggleMapLock(a[2]))
             { CliMode.Emit($"error: manage Chorography lock newest|oldest — no map to lock ('{a[2]}')"); return; }
             CliMode.Emit($"ok: toggled the lock of the {a[2]} mental map");
+            return;
+        }
+
+        // The Journal tab reads back: `manage Journal pageup|pagedown|newest|<lines>`.
+        if (a.Length > 1 && tab!.Equals("Journal", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!_game.CliScrollJournal(a[1].ToLowerInvariant()))
+            { CliMode.Emit("error: manage Journal pageup|pagedown|newest|<lines>"); return; }
+            CliMode.Emit($"ok: management tab Journal, scrolled {a[1]}");
             return;
         }
 

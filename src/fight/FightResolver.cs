@@ -713,8 +713,12 @@ public static class FightResolver
     /// which is both what makes it heal later and what keeps <see cref="WoundRegistry"/>'s shared
     /// template objects from being handed out to two different bodies at once.
     /// </summary>
-    public static void ApplyWound(Fighter target, Wound wound) =>
+    public static void ApplyWound(Fighter target, Wound wound)
+    {
         target.Member.Wounds.Add(WoundInstance.Inflicted(wound));
+        if (target.Faction == FighterFaction.Party)
+            JournalRecorder.Milestone($"Wounded: {target.DisplayName}, {wound.WoundName.ToLowerInvariant()}", target.Member);
+    }
 
     // -- Skill learning --
 
