@@ -19,7 +19,16 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 PORT = int(os.environ.get("PROMPT_PORT", "8092"))
 
 
-def _read(rel):
+# The wording before this overhaul: the commit the branch started from. "base" is always measured on
+# it, so porting a change into the C# cannot quietly turn the baseline into the new wording.
+BASE_REV = "ac61b8e"
+
+
+def _read(rel, rev=None):
+    if rev:
+        import subprocess
+        return subprocess.run(["git", "-C", ROOT, "show", f"{rev}:{rel}"], capture_output=True, text=True,
+                              check=True).stdout
     return open(os.path.join(ROOT, rel), encoding="utf-8").read()
 
 
@@ -42,12 +51,12 @@ def _switch_arm(src, method, key):
     return "".join(_unescape(p) for p in re.findall(r'"((?:[^"\\]|\\.)*)"', m.group(1)))
 
 
-def load_templates():
-    """Every piece of wording the rewrite prompts are made of, as the C# source has it now."""
-    cfg = _read("src/Config.cs")
+def load_templates(rev=None):
+    """Every piece of wording the rewrite prompts are made of, as the C# source has it now (or at `rev`)."""
+    cfg = _read("src/Config.cs", rev)
     cfg = cfg[cfg.index("public static class Narrative"):]
-    pr = _read("src/game/narrative/PersonaRewriter.cs")
-    ss = _read("src/game/narrative/SceneSetting.cs")
+    pr = _read("src/game/narrative/PersonaRewriter.cs", rev)
+    ss = _read("src/game/narrative/SceneSetting.cs", rev)
     t = {}
     for name in ["OneSentenceClause", "ShortTextClause", "GroundingClause", "DefaultStyleInstruction",
                  "StyleIsNotSceneClause", "DialogueStyleInstruction"]:
@@ -80,7 +89,9 @@ def _interp_concat(src, method):
     return "".join(_unescape(p) for p in re.findall(r'\$"((?:[^"\\]|\\.)*)"', body))
 
 
-T0 = load_templates()
+T0 = load_templates(BASE_REV)   # the old wording, frozen
+T_NOW = load_templates()        # the wording in the working tree
+_CURRENT = {}   # the record being built, for variants whose wording depends on it
 
 
 def _fill(template, **kw):
@@ -99,8 +110,8 @@ def article(noun):
 
 def reminder(T, place, extra=None):
     """SceneSetting.Reminder()."""
-    if "reminder" in T:
-        return T["reminder"](T, place)
+    if "reminder_r" in T:                 # a variant's reminder, which may read the record (its hour)
+        return T["reminder_r"](T, place, _CURRENT.get("r"))
     if not place:
         return T["ReminderSetting"]
     return T["ReminderSetting"] + " " + _fill(T["ReminderPlace"], Article=article(place), Place=place)
@@ -153,6 +164,9 @@ def build_spoken(T, neutral, addressee, situation, footer):
 
 def build_prompt(T, r):
     """The user message the game sends for one recorded rewrite `r` (corpus record)."""
+    for fix in T.get("neutral_fix", []):  # a variant may rewrite the neutral line itself
+        r = fix(r)
+    _CURRENT["r"] = r
     if "build" in T:                      # a variant may replace the whole assembly
         return T["build"](T, r)
     kind = r["kind"]

@@ -23,7 +23,7 @@ def load_variant(spec):
 
 
 def request_for(T, case):
-    r = dict(case["record"])
+    r = dict(case["record"], _run=case["run"])
     persona = case["persona"]
     r["personaReminder2"] = persona.get("reminder2")
     r["styleInstruction"] = persona.get("style")

@@ -14,21 +14,21 @@ import argparse, json, os, re, sys
 sys.path.insert(0, os.path.dirname(__file__))
 import prompt_lib as P
 
-_crit = P._read("src/game/ItemUseCritic.cs")
-_trees = P._read("src/game/CriticTrees.cs")
+def _source(rev):
+    crit, trees = P._read("src/game/ItemUseCritic.cs", rev), P._read("src/game/CriticTrees.cs", rev)
+    system = re.search(r'GetCriticSystemPrompt\(\) => @"((?:[^"]|"")*)"', crit).group(1).replace('""', '"')
+    setting = re.search(r'"(Setting: [^"]*)"', trees).group(1)
+    return system, setting, {n: _tree(trees, n) for n in ("ItemAppropriateness", "ToolSubstitution")}
 
-SYSTEM = re.search(r'GetCriticSystemPrompt\(\) => @"((?:[^"]|"")*)"', _crit).group(1).replace('""', '"')
-SETTING_LINE = re.search(r'"(Setting: [^"]*)"', _trees).group(1)
 
-
-def _tree(name):
+def _tree(_trees, name):
     body = _trees[_trees.index(f'name: "{name}"'):]
     q = re.search(r'question: \$"((?:[^"\\]|\\.)*)"', body).group(1)
     choices = re.findall(r'new\("(\w+)",\s*"([^"]*)"(,\s*\n?\s*isFailure: true)?', body[:body.index("});")])
     return P._unescape(q), [(cid, desc, bool(fail)) for cid, desc, fail in choices]
 
 
-TREES = {"ItemAppropriateness": _tree("ItemAppropriateness"), "ToolSubstitution": _tree("ToolSubstitution")}
+SYSTEM, SETTING_LINE, TREES = _source(P.BASE_REV)   # the old wording, frozen (see prompt_lib.BASE_REV)
 
 
 def preamble(T, c):
@@ -89,12 +89,37 @@ CASES = [
 ]
 
 
-def cases():
-    for i, (world, node, goal, item, ctx, tool, label, degree) in enumerate(CASES):
+# Held out: written once, never iterated on, scored only for the final before/after.
+HELDOUT = [
+    ("village", "at the well", "draw water from the well", "the bucket", "Bucket (a wooden bucket)", None, "help", None),
+    ("village", "at the well", "draw water from the well", "the dagger", "Dagger (a short blade)", None, "no", None),
+    ("forest", "under a beehive in a hollow oak", "take honey from the hive", "the torch", "Torch (a pitch torch)", None, "help", None),
+    ("forest", "under a beehive in a hollow oak", "take honey from the hive", "the lute", "Lute (a pear-shaped lute)", None, "no", None),
+    ("farm", "in the pigsty", "calm the angry boar", "the turnip", "Turnip (a fat white turnip)", None, "help", None),
+    ("farm", "in the pigsty", "calm the angry boar", "the quill", "Quill (a goose quill)", None, "no", None),
+    ("mountain", "at the foot of a crag", "climb the crag", "the grappling hook", "Grappling Hook (an iron hook on a line)", None, "help", None),
+    ("mountain", "at the foot of a crag", "climb the crag", "the bowl", "Bowl (a clay bowl)", None, "no", None),
+    ("forest", "beside a fallen birch", "cut wood from the fallen birch", "the saw", "Saw (a bow saw)", "an axe", "help", None),
+    ("forest", "beside a fallen birch", "cut wood from the fallen birch", "the bread knife", "Bread Knife (a thin kitchen knife)", "an axe", "help", None),
+    ("forest", "beside a fallen birch", "cut wood from the fallen birch", "the blanket", "Blanket (a wool blanket)", "an axe", "no", None),
+    ("farm", "in the turnip field", "dig the turnip field", "the pitchfork", "Pitchfork (a three-tined fork)", "a shovel", "help", None),
+    ("farm", "in the turnip field", "dig the turnip field", "the candle", "Candle (a tallow candle)", "a shovel", "no", None),
+    ("mountain", "at an ore seam", "mine the ore seam", "the iron bar", "Iron Bar (a heavy iron crowbar)", "a pickaxe", "help", None),
+    ("mountain", "at an ore seam", "mine the ore seam", "the rope", "Rope (a coil of hemp rope)", "a pickaxe", "no", None),
+    ("coast", "at the edge of a stream", "fish in the stream", "the basket", "Basket (a wicker basket)", "a fishing rod or a net", "help", None),
+    ("coast", "at the edge of a stream", "fish in the stream", "the hammer", "Hammer (a smith's hammer)", "a fishing rod or a net", "no", None),
+    ("forest", "beside a slain boar", "cut the meat from the boar", "the axe", "Axe (a woodcutter's axe)", "a knife", "help", None),
+    ("forest", "beside a slain boar", "cut the meat from the boar", "the cup", "Cup (a pewter cup)", "a knife", "no", None),
+    ("village", "in a cottage", "unlock the door", "the key ring", "Key Ring (a ring of assorted iron keys)", None, "help", None),
+]
+
+
+def cases(heldout=False):
+    for i, (world, node, goal, item, ctx, tool, label, degree) in enumerate(HELDOUT if heldout else CASES):
         # NarrativeController: $"{item.WithArticle()} ({item.Description})" — "a spade (an iron-shod spade)".
         noun = item[len("the "):]
         ctx = f"{P.article(noun)} {noun} ({ctx[ctx.index('(') + 1:-1]})"
-        yield dict(id=f"critic{i:02d}", world=world, node=node, goal=goal, item=item, item_context=ctx,
+        yield dict(id=f"{'held' if heldout else 'critic'}{i:02d}", world=world, node=node, goal=goal, item=item, item_context=ctx,
                    tool=tool, label=label, degree=degree)
 
 
@@ -109,7 +134,52 @@ def ask(T, c, seed):
                 user_tokens=P.tokens(msgs[-1]["content"]), **{k: g[k] for k in ("wall", "prompt_n", "prompt_ms")})
 
 
-VARIANTS = {"base": base}
+def no_strict():
+    """The system prompt without "Be strict but fair; value plausibility over generosity", which reads
+    as an instruction to refuse: every real substitute that was not near enough the tool itself
+    (a sword for a knife, a spear for a net, a sledgehammer for a pick) came back cannot_serve."""
+    T = base()
+    T["system"] = T["system"].replace("- Be strict but fair; value plausibility over generosity.\n", "")
+    return T
+
+
+def craftsman():
+    """Strictness replaced by a practical yardstick, said the same way for both trees."""
+    T = base()
+    T["system"] = T["system"].replace(
+        "- Be strict but fair; value plausibility over generosity.",
+        "- Judge as a practised worker would: a thing that does the job, even clumsily, helps; a thing that cannot do it at all does not.")
+    return T
+
+
+def how_well():
+    """The substitution question asked as a degree ("how well"), not as a yes/no that the first
+    failing option then answers."""
+    T = no_strict()
+    q, ch = T["trees"]["ToolSubstitution"]
+    T["trees"] = dict(T["trees"], ToolSubstitution=(q.replace("Can {itemName} do the work of {referenceToolPhrase} here?",
+                                                              "How well could {itemName} do the work of {referenceToolPhrase} here?"), ch))
+    return T
+
+
+def in_its_place():
+    """The substitution asked as standing in for the tool, "even if less well": the model refused a
+    sword for a knife and a spear for a net as if only the tool itself would do."""
+    T = no_strict()
+    q, ch = T["trees"]["ToolSubstitution"]
+    T["trees"] = dict(T["trees"], ToolSubstitution=(q.replace(
+        "Can {itemName} do the work of {referenceToolPhrase} here?",
+        "Could {itemName} be used in place of {referenceToolPhrase} for this, even if less well?"), ch))
+    return T
+
+
+def current():
+    """Whatever the working tree's C# says now."""
+    system, setting, trees = _source(None)
+    return dict(system=system, setting_line=setting, trees=trees, preamble=preamble, prompt=choice_prompt)
+
+
+VARIANTS = {"current": current, "in_its_place": in_its_place, "base": base, "no_strict": no_strict, "craftsman": craftsman, "how_well": how_well}
 
 
 def main():
@@ -117,13 +187,14 @@ def main():
     ap.add_argument("--variant", default="base")
     ap.add_argument("--seeds", default="1,2,3,4,5")
     ap.add_argument("--out")
+    ap.add_argument("--heldout", action="store_true")
     a = ap.parse_args()
     T = VARIANTS[a.variant]()
     seeds = [int(s) for s in a.seeds.split(",")]
     out = open(a.out, "a") if a.out else None
     side = deg = n = 0
     per = {}
-    for c in cases():
+    for c in cases(a.heldout):
         for s in seeds:
             r = ask(T, c, s)
             ok = r["help"] == (c["label"] == "help")

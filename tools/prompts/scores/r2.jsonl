@@ -1,0 +1,150 @@
+{"case": "farm_night:014:swap:cutpurse", "version": "sentence_last+closed_world", "seed": 2, "sid": "S8411", "F": 1, "P": 0, "C": null, "Q": 2, "facts": "track \"to\" both"}
+{"case": "farm_night:014:swap:cutpurse", "version": "sentence_last", "seed": 1, "sid": "S8629", "F": 1, "P": 0, "C": null, "Q": 2, "facts": "track \"to\" both"}
+{"case": "farm_night:014:swap:cutpurse", "version": "sentence_last+closed_world", "seed": 1, "sid": "S8402", "F": 1, "P": 0, "C": null, "Q": 2, "facts": "track \"to\" both"}
+{"case": "farm_night:014:swap:cutpurse", "version": "closed_world", "seed": 1, "sid": "S9320", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_night:014:swap:cutpurse", "version": "closed_world", "seed": 2, "sid": "S4111", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_night:014:swap:cutpurse", "version": "sentence_last", "seed": 2, "sid": "S4025", "F": 1, "P": 0, "C": null, "Q": 2, "facts": "track \"to\" both"}
+{"case": "talk_blacksmith:004:swap:stoneface", "version": "closed_world", "seed": 2, "sid": "S9387", "F": 1, "P": 0, "C": null, "Q": 2, "facts": "-learned"}
+{"case": "talk_blacksmith:004:swap:stoneface", "version": "closed_world", "seed": 1, "sid": "S8794", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:004:swap:stoneface", "version": "sentence_last", "seed": 2, "sid": "S4050", "F": 1, "P": 1, "C": null, "Q": 2, "facts": "-learned; +her eyes met mine"}
+{"case": "talk_blacksmith:004:swap:stoneface", "version": "sentence_last+closed_world", "seed": 2, "sid": "S2542", "F": 2, "P": 0, "C": null, "Q": 2, "facts": ""}
+{"case": "talk_blacksmith:004:swap:stoneface", "version": "sentence_last", "seed": 1, "sid": "S8316", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:004:swap:stoneface", "version": "sentence_last+closed_world", "seed": 1, "sid": "S5970", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-learned; +\"Rachel listened\""}
+{"case": "talk_miller:006:loose:greed_bare", "version": "sentence_last", "seed": 2, "sid": "S3323", "F": 1, "P": 0, "C": null, "Q": 0, "facts": ""}
+{"case": "talk_miller:006:loose:greed_bare", "version": "sentence_last+closed_world", "seed": 1, "sid": "S2485", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "+\"a name well known here\""}
+{"case": "talk_miller:006:loose:greed_bare", "version": "closed_world", "seed": 2, "sid": "S9825", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "made a question"}
+{"case": "talk_miller:006:loose:greed_bare", "version": "sentence_last", "seed": 1, "sid": "S1686", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_miller:006:loose:greed_bare", "version": "closed_world", "seed": 1, "sid": "S7490", "F": 0, "P": 0, "C": null, "Q": 0, "facts": "says the addressee is Dennis"}
+{"case": "talk_miller:006:loose:greed_bare", "version": "sentence_last+closed_world", "seed": 2, "sid": "S8421", "F": 1, "P": 0, "C": null, "Q": 0, "facts": ""}
+{"case": "talk_blacksmith:008:own", "version": "sentence_last+closed_world", "seed": 2, "sid": "S3580", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"or just staying\" muddled"}
+{"case": "talk_blacksmith:008:own", "version": "sentence_last+closed_world", "seed": 1, "sid": "S1245", "F": 2, "P": 1, "C": null, "Q": 2, "facts": ""}
+{"case": "talk_blacksmith:008:own", "version": "sentence_last", "seed": 2, "sid": "S9656", "F": 2, "P": 1, "C": null, "Q": 2, "facts": ""}
+{"case": "talk_blacksmith:008:own", "version": "closed_world", "seed": 1, "sid": "S2034", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "stopping made loitering"}
+{"case": "talk_blacksmith:008:own", "version": "sentence_last", "seed": 1, "sid": "S1975", "F": 2, "P": 1, "C": null, "Q": 0, "facts": "\"or a stay\""}
+{"case": "talk_blacksmith:008:own", "version": "closed_world", "seed": 2, "sid": "S1584", "F": 2, "P": 1, "C": null, "Q": 2, "facts": ""}
+{"case": "talk_blacksmith:006:own", "version": "sentence_last+closed_world", "seed": 1, "sid": "S4116", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "-\"we have not met\"; +the steel you wield"}
+{"case": "talk_blacksmith:006:own", "version": "sentence_last", "seed": 2, "sid": "S4963", "F": 2, "P": 1, "C": 1, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:006:own", "version": "closed_world", "seed": 1, "sid": "S1492", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "meaning changed"}
+{"case": "talk_blacksmith:006:own", "version": "closed_world", "seed": 2, "sid": "S8601", "F": 0, "P": 2, "C": null, "Q": 2, "facts": "+the addressee is an ironworker"}
+{"case": "talk_blacksmith:006:own", "version": "sentence_last+closed_world", "seed": 2, "sid": "S6345", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "statement made a question"}
+{"case": "talk_blacksmith:006:own", "version": "sentence_last", "seed": 1, "sid": "S8217", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "meaning changed"}
+{"case": "talk_blacksmith:005:swap:dread", "version": "sentence_last+closed_world", "seed": 1, "sid": "S4200", "F": 1, "P": 1, "C": null, "Q": 0, "facts": "style copied"}
+{"case": "talk_blacksmith:005:swap:dread", "version": "closed_world", "seed": 1, "sid": "S9505", "F": 1, "P": 1, "C": null, "Q": 0, "facts": "style copied"}
+{"case": "talk_blacksmith:005:swap:dread", "version": "closed_world", "seed": 2, "sid": "S4828", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "instruction clause copied; -the feeling"}
+{"case": "talk_blacksmith:005:swap:dread", "version": "sentence_last", "seed": 2, "sid": "S5819", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "feeling replaced: \"heavier, not lighter\""}
+{"case": "talk_blacksmith:005:swap:dread", "version": "sentence_last", "seed": 1, "sid": "S9188", "F": 1, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:005:swap:dread", "version": "sentence_last+closed_world", "seed": 2, "sid": "S1075", "F": 1, "P": 1, "C": null, "Q": 0, "facts": "\"I cold along the arms\""}
+{"case": "talk_blacksmith:005:own", "version": "closed_world", "seed": 1, "sid": "S2392", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+turned them down; instruction clause copied; -the feeling"}
+{"case": "talk_blacksmith:005:own", "version": "sentence_last+closed_world", "seed": 1, "sid": "S8492", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+offer declined; instruction clause copied"}
+{"case": "talk_blacksmith:005:own", "version": "sentence_last", "seed": 2, "sid": "S5557", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "instruction clause and setting copied"}
+{"case": "talk_blacksmith:005:own", "version": "sentence_last+closed_world", "seed": 2, "sid": "S7664", "F": 0, "P": 0, "C": null, "Q": 0, "facts": "instruction clause and setting reminder copied"}
+{"case": "talk_blacksmith:005:own", "version": "closed_world", "seed": 2, "sid": "S2363", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+offer declined; -the feeling"}
+{"case": "talk_blacksmith:005:own", "version": "sentence_last", "seed": 1, "sid": "S5161", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "instruction clause copied; +\"the imposing sort's approach\""}
+{"case": "village_noon_party:009:own", "version": "sentence_last+closed_world", "seed": 2, "sid": "S6165", "F": 2, "P": 0, "C": null, "Q": 2, "facts": ""}
+{"case": "village_noon_party:009:own", "version": "sentence_last", "seed": 2, "sid": "S4762", "F": 2, "P": 0, "C": null, "Q": 2, "facts": ""}
+{"case": "village_noon_party:009:own", "version": "closed_world", "seed": 1, "sid": "S9403", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+hands, shoulders, skin of people not given; +workshop lights"}
+{"case": "village_noon_party:009:own", "version": "sentence_last", "seed": 1, "sid": "S5735", "F": 2, "P": 0, "C": null, "Q": 2, "facts": ""}
+{"case": "village_noon_party:009:own", "version": "sentence_last+closed_world", "seed": 1, "sid": "S1487", "F": 2, "P": 0, "C": null, "Q": 2, "facts": ""}
+{"case": "village_noon_party:009:own", "version": "closed_world", "seed": 2, "sid": "S2150", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:002:own", "version": "sentence_last", "seed": 2, "sid": "S2768", "F": 0, "P": 2, "C": 1, "Q": 1, "facts": "+she turns to me; +\"blend into fire-making\""}
+{"case": "talk_blacksmith:002:own", "version": "sentence_last+closed_world", "seed": 2, "sid": "S7560", "F": 0, "P": 1, "C": 0, "Q": 1, "facts": "the smith made a man; +the hearth"}
+{"case": "talk_blacksmith:002:own", "version": "closed_world", "seed": 1, "sid": "S2766", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "the smith's long stance made mine"}
+{"case": "talk_blacksmith:002:own", "version": "sentence_last", "seed": 1, "sid": "S5766", "F": 0, "P": 1, "C": 0, "Q": 1, "facts": "the smith made a man; +logs, +hearth"}
+{"case": "talk_blacksmith:002:own", "version": "sentence_last+closed_world", "seed": 1, "sid": "S7332", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:002:own", "version": "closed_world", "seed": 2, "sid": "S2094", "F": 1, "P": 1, "C": 0, "Q": 1, "facts": "his and her mixed"}
+{"case": "village_noon_party:011:swap:courtesy", "version": "closed_world", "seed": 2, "sid": "S1276", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "+ancient wall; \"by many hands\""}
+{"case": "village_noon_party:011:swap:courtesy", "version": "closed_world", "seed": 1, "sid": "S1008", "F": 1, "P": 1, "C": null, "Q": 2, "facts": "-wall, -cold"}
+{"case": "village_noon_party:011:swap:courtesy", "version": "sentence_last", "seed": 2, "sid": "S4498", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "+grimy; question changed"}
+{"case": "village_noon_party:011:swap:courtesy", "version": "sentence_last+closed_world", "seed": 1, "sid": "S4436", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "-the question; +\"in the corner\""}
+{"case": "village_noon_party:011:swap:courtesy", "version": "sentence_last+closed_world", "seed": 2, "sid": "S1857", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "-the question; +weary traveler"}
+{"case": "village_noon_party:011:swap:courtesy", "version": "sentence_last", "seed": 1, "sid": "S8700", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_night:007:swap:keen_nose", "version": "sentence_last", "seed": 1, "sid": "S7151", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "the wallow read as a storage shed"}
+{"case": "farm_night:007:swap:keen_nose", "version": "sentence_last", "seed": 2, "sid": "S7511", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+the year rabbits were plentiful"}
+{"case": "farm_night:007:swap:keen_nose", "version": "sentence_last+closed_world", "seed": 1, "sid": "S7877", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+the barn's roof caved in"}
+{"case": "farm_night:007:swap:keen_nose", "version": "closed_world", "seed": 2, "sid": "S2196", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+I enter the barn, +hay, +memory of spring"}
+{"case": "farm_night:007:swap:keen_nose", "version": "closed_world", "seed": 1, "sid": "S4252", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "-the wallow; +old hay, +a winter day"}
+{"case": "farm_night:007:swap:keen_nose", "version": "sentence_last+closed_world", "seed": 2, "sid": "S5420", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+the year the barn roof caved in"}
+{"case": "forest_evening:007:own", "version": "sentence_last", "seed": 2, "sid": "S6519", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+each joint fitting, each shaving smooth (as acts)"}
+{"case": "forest_evening:007:own", "version": "sentence_last+closed_world", "seed": 1, "sid": "S2427", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-creature lore"}
+{"case": "forest_evening:007:own", "version": "closed_world", "seed": 1, "sid": "S6098", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "forest_evening:007:own", "version": "sentence_last", "seed": 1, "sid": "S6449", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+carved the snail's shell"}
+{"case": "forest_evening:007:own", "version": "sentence_last+closed_world", "seed": 2, "sid": "S1248", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+strokes of my knife, +cut"}
+{"case": "forest_evening:007:own", "version": "closed_world", "seed": 2, "sid": "S7718", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+finished the joint; -examined the snail"}
+{"case": "talk_blacksmith:012:loose:pedant_reminder", "version": "sentence_last+closed_world", "seed": 2, "sid": "S2933", "F": 0, "P": 0, "C": null, "Q": 1, "facts": "the worry made mine"}
+{"case": "talk_blacksmith:012:loose:pedant_reminder", "version": "closed_world", "seed": 2, "sid": "S3205", "F": 0, "P": 0, "C": 0, "Q": 1, "facts": "the smith made a man; the worry made mine"}
+{"case": "talk_blacksmith:012:loose:pedant_reminder", "version": "sentence_last", "seed": 2, "sid": "S5036", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"a pedant's care\" copied"}
+{"case": "talk_blacksmith:012:loose:pedant_reminder", "version": "sentence_last", "seed": 1, "sid": "S2655", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "the worry made mine"}
+{"case": "talk_blacksmith:012:loose:pedant_reminder", "version": "sentence_last+closed_world", "seed": 1, "sid": "S1179", "F": 1, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:012:loose:pedant_reminder", "version": "closed_world", "seed": 1, "sid": "S1981", "F": 0, "P": 0, "C": 0, "Q": 1, "facts": "the smith made a man; \"a burden lies within\""}
+{"case": "farm_night:009:own", "version": "sentence_last+closed_world", "seed": 1, "sid": "S8617", "F": 2, "P": 0, "C": null, "Q": 2, "facts": ""}
+{"case": "farm_night:009:own", "version": "sentence_last+closed_world", "seed": 2, "sid": "S8976", "F": 2, "P": 0, "C": null, "Q": 2, "facts": ""}
+{"case": "farm_night:009:own", "version": "closed_world", "seed": 1, "sid": "S3911", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "stack made \"fold\""}
+{"case": "farm_night:009:own", "version": "closed_world", "seed": 2, "sid": "S4086", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "stack made \"fold\""}
+{"case": "farm_night:009:own", "version": "sentence_last", "seed": 1, "sid": "S8330", "F": 2, "P": 2, "C": null, "Q": 2, "facts": ""}
+{"case": "farm_night:009:own", "version": "sentence_last", "seed": 2, "sid": "S9337", "F": 0, "P": 1, "C": null, "Q": 2, "facts": "+as I enter the barn"}
+{"case": "farm_dusk:005:own", "version": "closed_world", "seed": 2, "sid": "S4124", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"trailworn\"; -trailcraft"}
+{"case": "farm_dusk:005:own", "version": "sentence_last+closed_world", "seed": 1, "sid": "S3145", "F": 1, "P": 0, "C": null, "Q": 2, "facts": "-trailcraft"}
+{"case": "farm_dusk:005:own", "version": "sentence_last", "seed": 2, "sid": "S7868", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "system rule copied (\"a world of iron and myth\"); +\"a hurried farmer\""}
+{"case": "farm_dusk:005:own", "version": "sentence_last+closed_world", "seed": 2, "sid": "S7287", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "-trailcraft; \"read my farm's weather\""}
+{"case": "farm_dusk:005:own", "version": "sentence_last", "seed": 1, "sid": "S2908", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+the wilds; setting copied (\"this medieval farm\")"}
+{"case": "farm_dusk:005:own", "version": "closed_world", "seed": 1, "sid": "S7469", "F": 1, "P": 0, "C": null, "Q": 2, "facts": "-trailcraft"}
+{"case": "farm_dusk:003:loose:greed_bare", "version": "closed_world", "seed": 2, "sid": "S7893", "F": 2, "P": 0, "C": null, "Q": 2, "facts": ""}
+{"case": "farm_dusk:003:loose:greed_bare", "version": "sentence_last", "seed": 1, "sid": "S4487", "F": 1, "P": 0, "C": null, "Q": 0, "facts": "storage shed made \"hut\""}
+{"case": "farm_dusk:003:loose:greed_bare", "version": "closed_world", "seed": 1, "sid": "S1007", "F": 1, "P": 0, "C": null, "Q": 0, "facts": "misspelt"}
+{"case": "farm_dusk:003:loose:greed_bare", "version": "sentence_last", "seed": 2, "sid": "S5983", "F": 0, "P": 0, "C": null, "Q": 0, "facts": "storage shed made \"barn side\""}
+{"case": "farm_dusk:003:loose:greed_bare", "version": "sentence_last+closed_world", "seed": 1, "sid": "S1321", "F": 0, "P": 0, "C": null, "Q": 1, "facts": "storage shed made \"larder\""}
+{"case": "farm_dusk:003:loose:greed_bare", "version": "sentence_last+closed_world", "seed": 2, "sid": "S4452", "F": 0, "P": 0, "C": null, "Q": 0, "facts": "\"storage cotter\""}
+{"case": "village_noon_party:011:own", "version": "sentence_last+closed_world", "seed": 2, "sid": "S4068", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "-the question; the bench whispers"}
+{"case": "village_noon_party:011:own", "version": "sentence_last", "seed": 2, "sid": "S7459", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "question changed"}
+{"case": "village_noon_party:011:own", "version": "sentence_last", "seed": 1, "sid": "S2643", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "noticed made heard the stone whisper"}
+{"case": "village_noon_party:011:own", "version": "sentence_last+closed_world", "seed": 1, "sid": "S1689", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+ancient wall"}
+{"case": "village_noon_party:011:own", "version": "closed_world", "seed": 2, "sid": "S3397", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "village_noon_party:011:own", "version": "closed_world", "seed": 1, "sid": "S4493", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-cold, -wall"}
+{"case": "farm_night:015:loose:greed_bare", "version": "sentence_last", "seed": 1, "sid": "S8234", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "+the maze of our farm"}
+{"case": "farm_night:015:loose:greed_bare", "version": "sentence_last+closed_world", "seed": 2, "sid": "S5231", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "-trailcraft"}
+{"case": "farm_night:015:loose:greed_bare", "version": "sentence_last+closed_world", "seed": 1, "sid": "S1156", "F": 0, "P": 0, "C": null, "Q": 1, "facts": "+the coop door swung open; -trailcraft"}
+{"case": "farm_night:015:loose:greed_bare", "version": "sentence_last", "seed": 2, "sid": "S6389", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_night:015:loose:greed_bare", "version": "closed_world", "seed": 1, "sid": "S5854", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "-trailcraft; \"through the coop to the shed\""}
+{"case": "farm_night:015:loose:greed_bare", "version": "closed_world", "seed": 2, "sid": "S7327", "F": 1, "P": 0, "C": null, "Q": 0, "facts": ""}
+{"case": "forest_evening:011:own", "version": "closed_world", "seed": 1, "sid": "S2202", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+fitting pieces"}
+{"case": "forest_evening:011:own", "version": "sentence_last+closed_world", "seed": 1, "sid": "S2217", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "cut wood made \"shave the oak's joint\""}
+{"case": "forest_evening:011:own", "version": "sentence_last", "seed": 1, "sid": "S2476", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+mark, carve"}
+{"case": "forest_evening:011:own", "version": "closed_world", "seed": 2, "sid": "S4419", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "forest_evening:011:own", "version": "sentence_last+closed_world", "seed": 2, "sid": "S4981", "F": 1, "P": 2, "C": null, "Q": 0, "facts": "cut made carve"}
+{"case": "forest_evening:011:own", "version": "sentence_last", "seed": 2, "sid": "S1254", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "cut made carve, trim limbs"}
+{"case": "farm_night:003:own", "version": "sentence_last", "seed": 1, "sid": "S7040", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "ways made \"fields\""}
+{"case": "farm_night:003:own", "version": "closed_world", "seed": 1, "sid": "S7089", "F": 1, "P": 1, "C": null, "Q": 0, "facts": ""}
+{"case": "farm_night:003:own", "version": "closed_world", "seed": 2, "sid": "S8425", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+\"a column of items\", \"one short\""}
+{"case": "farm_night:003:own", "version": "sentence_last+closed_world", "seed": 1, "sid": "S3084", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "style and instruction clause copied"}
+{"case": "farm_night:003:own", "version": "sentence_last+closed_world", "seed": 2, "sid": "S8925", "F": 1, "P": 2, "C": null, "Q": 2, "facts": "-the ways"}
+{"case": "farm_night:003:own", "version": "sentence_last", "seed": 2, "sid": "S3223", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+\"the column is right\""}
+{"case": "village_noon_party:009:loose:greed_bare", "version": "sentence_last", "seed": 2, "sid": "S7325", "F": 1, "P": 0, "C": null, "Q": 2, "facts": "doors made workbenches"}
+{"case": "village_noon_party:009:loose:greed_bare", "version": "closed_world", "seed": 2, "sid": "S3995", "F": 1, "P": 0, "C": null, "Q": 0, "facts": "\"doors of hammers and saws\""}
+{"case": "village_noon_party:009:loose:greed_bare", "version": "sentence_last+closed_world", "seed": 1, "sid": "S3525", "F": 0, "P": 0, "C": null, "Q": 1, "facts": "+weaving path, +axe strokes"}
+{"case": "village_noon_party:009:loose:greed_bare", "version": "closed_world", "seed": 1, "sid": "S6092", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "village_noon_party:009:loose:greed_bare", "version": "sentence_last+closed_world", "seed": 2, "sid": "S4741", "F": 0, "P": 0, "C": null, "Q": 0, "facts": "+weaving row"}
+{"case": "village_noon_party:009:loose:greed_bare", "version": "sentence_last", "seed": 1, "sid": "S5087", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "village_dawn:004:own", "version": "sentence_last+closed_world", "seed": 1, "sid": "S4109", "F": 1, "P": 0, "C": null, "Q": 0, "facts": "-water voice"}
+{"case": "village_dawn:004:own", "version": "sentence_last", "seed": 2, "sid": "S3596", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "village_dawn:004:own", "version": "sentence_last", "seed": 1, "sid": "S4220", "F": 1, "P": 1, "C": null, "Q": 0, "facts": ""}
+{"case": "village_dawn:004:own", "version": "closed_world", "seed": 1, "sid": "S7360", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "lesson replaced: \"earth's tune\""}
+{"case": "village_dawn:004:own", "version": "sentence_last+closed_world", "seed": 2, "sid": "S8905", "F": 1, "P": 0, "C": null, "Q": 0, "facts": ""}
+{"case": "village_dawn:004:own", "version": "closed_world", "seed": 2, "sid": "S2286", "F": 1, "P": 1, "C": null, "Q": 0, "facts": ""}
+{"case": "village_noon_party:003:own", "version": "sentence_last", "seed": 1, "sid": "S7905", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+memory of the storm"}
+{"case": "village_noon_party:003:own", "version": "sentence_last", "seed": 2, "sid": "S1776", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+castle walls, +storms"}
+{"case": "village_noon_party:003:own", "version": "closed_world", "seed": 1, "sid": "S2701", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+childhood lessons from my preceptor"}
+{"case": "village_noon_party:003:own", "version": "sentence_last+closed_world", "seed": 2, "sid": "S2786", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+the castle, +my preceptor"}
+{"case": "village_noon_party:003:own", "version": "sentence_last+closed_world", "seed": 1, "sid": "S1634", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+the storm"}
+{"case": "village_noon_party:003:own", "version": "closed_world", "seed": 2, "sid": "S9394", "F": 2, "P": 0, "C": null, "Q": 2, "facts": ""}
+{"case": "talk_farm:005:swap:courtesy", "version": "closed_world", "seed": 1, "sid": "S5180", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "style acted out: greets a house"}
+{"case": "talk_farm:005:swap:courtesy", "version": "sentence_last", "seed": 1, "sid": "S4906", "F": 2, "P": 0, "C": null, "Q": 2, "facts": ""}
+{"case": "talk_farm:005:swap:courtesy", "version": "sentence_last", "seed": 2, "sid": "S7416", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "style acted out: greets a house"}
+{"case": "talk_farm:005:swap:courtesy", "version": "closed_world", "seed": 2, "sid": "S5210", "F": 2, "P": 0, "C": null, "Q": 2, "facts": ""}
+{"case": "talk_farm:005:swap:courtesy", "version": "sentence_last+closed_world", "seed": 1, "sid": "S7894", "F": 0, "P": 0, "C": null, "Q": 0, "facts": "style copied"}
+{"case": "talk_farm:005:swap:courtesy", "version": "sentence_last+closed_world", "seed": 2, "sid": "S9044", "F": 0, "P": 0, "C": null, "Q": 0, "facts": "style copied"}
+{"case": "talk_blacksmith:009:swap:plain_dealing", "version": "closed_world", "seed": 2, "sid": "S5807", "F": 2, "P": 2, "C": null, "Q": 2, "facts": ""}
+{"case": "talk_blacksmith:009:swap:plain_dealing", "version": "sentence_last", "seed": 2, "sid": "S9520", "F": 2, "P": 2, "C": null, "Q": 2, "facts": ""}
+{"case": "talk_blacksmith:009:swap:plain_dealing", "version": "sentence_last+closed_world", "seed": 1, "sid": "S3874", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"before you know me\""}
+{"case": "talk_blacksmith:009:swap:plain_dealing", "version": "sentence_last+closed_world", "seed": 2, "sid": "S2126", "F": 2, "P": 2, "C": null, "Q": 2, "facts": ""}
+{"case": "talk_blacksmith:009:swap:plain_dealing", "version": "closed_world", "seed": 1, "sid": "S3070", "F": 1, "P": 1, "C": null, "Q": 0, "facts": ""}
+{"case": "talk_blacksmith:009:swap:plain_dealing", "version": "sentence_last", "seed": 1, "sid": "S4742", "F": 1, "P": 1, "C": null, "Q": 0, "facts": ""}

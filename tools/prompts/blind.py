@@ -36,10 +36,31 @@ def describe_case(c):
 def sheet(a):
     cases = {c["id"]: c for c in load(a.cases)}
     by_case = collections.defaultdict(list)
+    # A sample identical to an already-scored one of the same case (the variant did not change that
+    # prompt, and the seed is the same) is not shown again: `carry` copies its score instead.
+    scored = {}
+    for p in a.carry or []:
+        for r in load(p):
+            scored[(r["case"], r["version"], r["seed"])] = r
+    texts = {}
     for path in a.samples:
         for s in load(path):
-            if s["case"] in cases and (not a.versions or s["version"] in a.versions):
-                by_case[s["case"]].append(s)
+            texts[(s["case"], s["version"], s["seed"])] = s["text"]
+    carried = []
+    for path in a.samples:
+        for s in load(path):
+            if s["case"] not in cases or (a.versions and s["version"] not in a.versions):
+                continue
+            twin = next((r for (c, v, sd), r in scored.items()
+                         if c == s["case"] and sd == s["seed"] and texts.get((c, v, sd)) == s["text"]), None)
+            if twin:
+                carried.append(dict(twin, version=s["version"], sid="carried"))
+                continue
+            by_case[s["case"]].append(s)
+    if carried:
+        with open(a.out + ".carried.jsonl", "w") as f:
+            for r in carried:
+                f.write(json.dumps(r) + "\n")
     rng = random.Random(a.seed)
     ids = rng.sample(range(1000, 9999), sum(len(v) for v in by_case.values()))
     key, lines, k = {}, [], 0
@@ -57,7 +78,7 @@ def sheet(a):
     os.makedirs(os.path.dirname(a.out) or ".", exist_ok=True)
     open(a.out + ".txt", "w", encoding="utf-8").write("\n".join(lines))
     json.dump(key, open(a.out + ".key.json", "w"), indent=0)
-    print(f"{len(key)} samples over {len(order)} cases -> {a.out}.txt")
+    print(f"{len(key)} samples over {len(order)} cases -> {a.out}.txt; {len(carried)} identical to a scored one, carried")
 
 
 def merge(a):
@@ -87,6 +108,7 @@ def main():
     s.add_argument("--versions", nargs="*")
     s.add_argument("--out", required=True)
     s.add_argument("--seed", type=int, default=7)
+    s.add_argument("--carry", nargs="*")
     m = sub.add_parser("merge")
     m.add_argument("--key", required=True)
     m.add_argument("--scores", required=True)
