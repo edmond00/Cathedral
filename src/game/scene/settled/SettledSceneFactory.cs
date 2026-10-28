@@ -305,7 +305,7 @@ public abstract class SettledSceneFactory : SceneFactory
             new[] { inn.Section }, inn.PublicHall, TradesAt: _ => inn.PublicHall));
 
         // Merchants, each with a clerk.
-        var entrances = Shared.OutdoorLayout.DistributeEntrances(front, size + 3, rng);
+        var entrances = Shared.OutdoorLayout.DistributeEntrances(front, 2 * size + 1, rng);
         int e = 0;
         string[] houses = { "Merchant House", "Counting House", "Wool Exchange", "Spice House", "Cloth Exchange" };
         for (int m = 0; m < size; m++)
@@ -319,7 +319,7 @@ public abstract class SettledSceneFactory : SceneFactory
         // Workshops, each with an apprentice in a house of their own.
         var wear = BuildingDescriptions.BuildingWear.OrderBy(_ => rng.Next()).ToList();
         int w = 0;
-        foreach (var idx in SampleUniqueIndices(rng, Trades.Length, Math.Min(Trades.Length, size + 1)))
+        foreach (var idx in SampleUniqueIndices(rng, Trades.Length, Math.Min(Trades.Length, size)))
         {
             var (label, hall, master, noun) = Trades[idx];
             var shop = Put(label, noun, BuildingAccess.Public, BuildingOccupancy.Individual, 1,

@@ -162,7 +162,10 @@ public class JungleSceneFactory : WildSceneFactory
                 new[] { "churning", "green", "deep" }, lesson: "plunge");
         }
 
-        Furnish(rng, scene, FurnitureSubfactory.Setting.Jungle, _crown, _sandbar, _temple, _behindFalls);
+        // A cenote climbed down into is a top in reverse: no shortcut may walk into it.
+        var climbedTo = new List<Area?> { _crown, _sandbar, _temple, _behindFalls };
+        climbedTo.AddRange(scene.AllAreas.OfType<CenoteArea>().Where(c => !scene.AreaGraph.ContainsKey(c.Id)));
+        Furnish(rng, scene, FurnitureSubfactory.Setting.Jungle, climbedTo.ToArray());
 
         Console.WriteLine($"JungleSceneFactory: {_identity}, river {spine.Count}, {string.Join("/", reaches.Select(r => r.Name))}");
     }

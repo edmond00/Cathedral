@@ -78,6 +78,8 @@ public class FarmSceneFactory : SceneFactory
         farmyard.Areas.Add(_shed);
         farmyard.Areas.Add(_warren);
         if (_pond != null) farmyard.Areas.Add(_pond);
+        foreach (var i in SampleUniqueIndices(rng, Agriculture.AgricultureSceneFactory.YardPool.Length, rng.Next(0, 3)))
+            farmyard.Areas.Add(Agriculture.AgricultureSceneFactory.YardPool[i]());
         scene.Sections.Add(farmyard);
         RegisterAll(scene, farmyard);
 
@@ -88,6 +90,11 @@ public class FarmSceneFactory : SceneFactory
         );
         grounds.Areas.Add(_vegetableGarden);
         grounds.Areas.Add(_orchard);
+        foreach (var i in SampleUniqueIndices(rng, Agriculture.AgricultureSceneFactory.EdgePool.Length, rng.Next(0, 3)))
+        {
+            var extra = Agriculture.AgricultureSceneFactory.EdgePool[i]();
+            if (extra is not PondArea || _pond == null) grounds.Areas.Add(extra);
+        }
         scene.Sections.Add(grounds);
         RegisterAll(scene, grounds);
 
@@ -96,12 +103,17 @@ public class FarmSceneFactory : SceneFactory
         // pens out along one track, a ring lets you come back round the far side. The courtyard leads
         // the list either way, so it stays the arrival point and the buildings' front yard.
 
-        var outdoorAreas = new List<Area> { _courtyard, _chickenCoop, _pigsty, _shed, _vegetableGarden, _orchard };
-        outdoorAreas.Add(_warren);
-        if (_pond != null) outdoorAreas.Add(_pond);
+        var yardAreas = farmyard.Areas.ToList();
+        var groundAreas = grounds.Areas.ToList();
+        var outdoorAreas = yardAreas.Concat(groundAreas).ToList();
 
+        // Each part is one piece of ground: the farmyard round its courtyard, the grounds among
+        // themselves, then the two joined. The courtyard leads, so it stays the arrival point and the
+        // buildings' front yard.
         _layout = OutdoorLayout.RollShape(rng);
-        OutdoorLayout.Connect(scene, outdoorAreas, _layout, "Track", rng);
+        OutdoorLayout.Connect(scene, yardAreas, _layout == LayoutShape.Chain ? LayoutShape.Chain : LayoutShape.Hub, "Track", rng);
+        OutdoorLayout.Connect(scene, groundAreas, LayoutShape.Chain, "Track", rng);
+        OutdoorLayout.Link(scene, yardAreas[rng.Next(yardAreas.Count)], groundAreas[0], "Track");
 
         // ── 5. Draw up the crew, then build to fit it ────────────────────────
 

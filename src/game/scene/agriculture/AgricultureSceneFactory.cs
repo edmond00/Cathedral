@@ -67,6 +67,10 @@ public sealed class AgricultureSceneFactory : SettledSceneFactory
         for (int i = 0; i < rowCount; i++) _rows.Add(BuildRows(i == 0 ? "" : qualifiers[i]));
         _work.AddRange(BuildWorkAreas(rng));
         _store = _work.FirstOrDefault(IsStore) ?? AddStore();
+        // What some yards have beside the work the crop needs: a cart shed, a stackyard, a dovecote, a
+        // well, a midden. Drawn after the store, so the store is always the crop's own.
+        var extras = Underground ? CellarPool : YardPool;
+        foreach (var i in SampleUniqueIndices(rng, extras.Length, rng.Next(0, 3))) _work.Add(extras[i]());
         if (!Underground) _margin = BuildMargin(rng);
 
         var crop = new Section(
@@ -82,16 +86,43 @@ public sealed class AgricultureSceneFactory : SettledSceneFactory
             new() { Underground ? "The dark rooms where the crop is tended and stored" : "Where the crop is brought in and worked" },
             seed => Underground ? new RoomsGenerator { Seed = seed } : new GeometricGenerator { Seed = seed });
         foreach (var a in _work) yard.Areas.Add(a);
-        if (_margin != null) yard.Areas.Add(_margin);
         scene.Sections.Add(yard);
         RegisterAll(scene, yard);
 
+        // The edge of the worked ground: the margin, and what some holdings have beside their crop — a
+        // pond, bee skeps, a woodlot, rough grazing, a corner gone to bramble. Drawn, so two wheat fields
+        // are two farms and not the same field told twice.
+        var edge = new List<Area>();
+        if (!Underground)
+        {
+            edge.Add(_margin!);
+            foreach (var i in SampleUniqueIndices(rng, EdgePool.Length, rng.Next(0, 3))) edge.Add(EdgePool[i]());
+            var edgeSection = new Section(EdgeNames[rng.Next(EdgeNames.Length)],
+                new() { "The ground round the edge of the holding, worked less or not at all" },
+                seed => new NoisyGenerator { Seed = seed, Density = 0.8f });
+            foreach (var a in edge) edgeSection.Areas.Add(a);
+            scene.Sections.Add(edgeSection);
+            RegisterAll(scene, edgeSection);
+        }
+
         // A cellar is entered by its cellarway, which therefore leads; everywhere else the crop does.
         if (Underground) { _all.AddRange(_work); _all.AddRange(_rows); }
-        else             { _all.AddRange(_rows); _all.AddRange(_work); _all.Add(_margin!); }
+        else             { _all.AddRange(_rows); _all.AddRange(_work); _all.AddRange(edge); }
 
-        var shape = Underground ? LayoutShape.Chain : OutdoorLayout.RollShape(rng);
-        OutdoorLayout.Connect(scene, _all, shape, Underground ? "Passage" : TrackWord(), rng);
+        // Each part of the holding is one piece of ground: the crop joined among itself, the yard among
+        // itself, the edge among itself, and then the three to each other. One shape rolled over all of
+        // them used to leave the yard in pieces, its buildings reached only through the crop.
+        string track = Underground ? "Passage" : TrackWord();
+        if (Underground)
+            OutdoorLayout.Connect(scene, _all, LayoutShape.Chain, track, rng);
+        else
+        {
+            OutdoorLayout.Connect(scene, _rows, OutdoorLayout.RollShape(rng), track, rng);
+            OutdoorLayout.Connect(scene, _work, rng.NextDouble() < 0.5 ? LayoutShape.Chain : LayoutShape.Hub, track, rng);
+            OutdoorLayout.Connect(scene, edge, LayoutShape.Chain, track, rng);
+            OutdoorLayout.Link(scene, _rows[rng.Next(_rows.Count)], _work[0], track);
+            OutdoorLayout.Link(scene, edge[0], rng.NextDouble() < 0.5 ? _rows[rng.Next(_rows.Count)] : _work[rng.Next(_work.Count)], track);
+        }
 
         // ── 2. The crew, then the roof over it ───────────────────────────────
         _roster = BuildRoster(rng);
@@ -109,6 +140,81 @@ public sealed class AgricultureSceneFactory : SettledSceneFactory
 
         Console.WriteLine($"AgricultureSceneFactory: Built {_key} — family={_family}, biome={Biome}, "
                         + $"areas={_all.Count}, {_roster.Count} worker(s)");
+    }
+
+    // ── The edge of the holding ───────────────────────────────────────────────
+
+    /// <summary>Yard extras any holding may draw: shared with the stock places and the farm.</summary>
+    internal static readonly Func<Area>[] YardPool =
+    {
+        () => Edge((n, c, t, d, m) => new ShedArea(n, c, t, d, m), "Cart Shed", "in the cart shed",
+            "An open-fronted shed where the carts and the plough stand out of the rain", new[] { "open-fronted", "dusty", "cluttered" },
+            new ToolPointOfInterest("Plough and Harrow", new() { "A heavy plough and a wooden harrow, the irons rusted" }, Items(() => new Rope()), new[] { "heavy", "rusted" })
+            { Senses = SensoryProfile.Examinable, VerbModiMentis = Teach(("examine", "tillage")) }),
+        () => Edge((n, c, t, d, m) => new YardArea(n, c, t, d, m), "Stackyard", "in the stackyard",
+            "A raised yard of round stacks thatched against the weather, standing on stones against the rats", new[] { "stacked", "thatched", "golden" },
+            new SheafPointOfInterest("Thatched Stacks", new() { "Round stacks on staddle stones, each with a thatched cap" }, Items(() => new Straw()), new[] { "round", "capped" })
+            { Senses = SensoryProfile.Examinable, VerbModiMentis = Teach(("examine", "harvestry")) }),
+        () => Edge((n, c, t, d, m) => new CourtyardArea(n, c, t, d, m), "Dovecote Yard", "by the dovecote",
+            "A round stone dovecote in a yard of its own, the birds clattering in and out of its holes", new[] { "round", "clattering", "white-streaked" },
+            new RoostPointOfInterest("Nest Holes", new() { "Rows of nest holes inside the dovecote, warm and rank" }, Items(() => new Egg(), () => new Feather()), new[] { "warm", "rank" })
+            { Senses = SensoryProfile.Audible, VerbModiMentis = Teach(("examine", "henwifery"), ("listen", "birdsong")) }),
+        () => Edge((n, c, t, d, m) => new CourtyardArea(n, c, t, d, m), "Well Yard", "at the well",
+            "A cobbled patch round the holding's well, a trough beside it for the beasts", new[] { "cobbled", "wet", "worn" },
+            new WellPointOfInterest("Farm Well", new() { "A well with a windlass and a bucket on a chain" }, Items(() => new WaterDraught()), new[] { "deep", "windlassed" })
+            { Senses = SensoryProfile.Audible, VerbModiMentis = Teach(("examine", "water_bearing")) }),
+        () => Edge((n, c, t, d, m) => new YardArea(n, c, t, d, m), "Midden Yard", "by the midden",
+            "The yard behind the barn where the dung and the spoiled straw are heaped to rot down for the fields", new[] { "rank", "steaming", "heaped" },
+            new MiddenPointOfInterest("Dung Heap", new() { "A steaming heap of dung and old straw, black and rich at its heart" }, Items(() => new Straw()), new[] { "steaming", "rich" })
+            { Senses = SensoryProfile.Odorous, VerbModiMentis = Teach(("examine", "dunging"), ("smell", "taint_sense")) }),
+    };
+
+    private static readonly Func<Area>[] CellarPool =
+    {
+        () => Edge((n, c, t, d, m) => new ShaftArea(n, c, t, d, m), "Old Well Shaft", "at the old well shaft",
+            "A round shaft cut down through the rock for water long ago, a cold draught coming up it", new[] { "round", "cold", "dripping" },
+            new WellPointOfInterest("Shaft Water", new() { "Black water a long way down, a bucket on a rotten rope" }, Items(() => new WaterDraught()), new[] { "black", "deep" })
+            { Senses = SensoryProfile.Audible, VerbModiMentis = Teach(("examine", "drainage"), ("listen", "hollow_ear")) }),
+        () => Edge((n, c, t, d, m) => new StoreArea(n, c, t, d, m), "Root Store", "in the root store",
+            "A dry vault where roots and casks are kept through the winter in sand", new[] { "dry", "sandy", "vaulted" },
+            new BarrelPointOfInterest("Sand Casks", new() { "Casks of sand with roots buried in them to keep" }, Items(() => new Turnip()), new[] { "sandy", "packed" })
+            { Senses = SensoryProfile.Examinable, VerbModiMentis = Teach(("examine", "cellarcraft")) }),
+        () => Edge((n, c, t, d, m) => new TunnelArea(n, c, t, d, m), "Old Gallery", "in the old gallery",
+            "A gallery of the old quarry the cellar was cut from, half blocked by a fall of stone", new[] { "half-blocked", "dusty", "dark" },
+            new RubblePointOfInterest("Roof Fall", new() { "Blocks fallen from the gallery roof, the chisel marks still on them" }, Items(() => new Rock()), new[] { "fallen", "chiselled" })
+            { Senses = SensoryProfile.Examinable, VerbModiMentis = Teach(("examine", "stonework")) }),
+    };
+
+    internal static readonly string[] EdgeNames = { "Field Edge", "Headlands", "The Margins" };
+
+    /// <summary>What may lie round the edge of any holding: shared with the stock places and the farm.</summary>
+    internal static readonly Func<Area>[] EdgePool =
+    {
+        () => Edge((n, c, t, d, m) => new PondArea(n, c, t, d, m), "Farm Pond", "by the farm pond",
+            "A pond dug for the beasts and the dry months, ducks on it and the edges trodden to mud", new[] { "trodden", "still", "muddy" },
+            new PoolPointOfInterest("Pond Water", new() { "Brown still water, a moorhen ticking at the reeds" }, Items(() => new Reed()), new[] { "brown", "still" })
+            { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "drainage"), ("contemplate", "meditation")) }),
+        () => Edge((n, c, t, d, m) => new GardenArea(n, c, t, d, m), "Bee Garden", "in the bee garden",
+            "A sheltered corner of straw skeps on a bench, the air thick with bees working the crop", new[] { "humming", "sheltered", "warm" },
+            new HivePointOfInterest("Straw Skeps", new() { "Domed straw hives in a row on a plank bench" }, Items(() => new Beeswax()), new[] { "domed", "humming" })
+            { Senses = SensoryProfile.Audible, VerbModiMentis = Teach(("examine", "husbandry"), ("listen", "swarm_sense")) }),
+        () => Edge((n, c, t, d, m) => new ForestArea(n, c, t, d, m), "Woodlot", "in the woodlot",
+            "A small wood kept at the edge of the holding for fuel and fencing, cut in turn", new[] { "small", "cut", "shady" },
+            TerrainSubfactory.BuildAshTree()),
+        () => Edge((n, c, t, d, m) => new GrasslandArea(n, c, t, d, m), "Rough Grazing", "on the rough grazing",
+            "Poor ground left to grass and thistle, grazed by whatever the holding keeps", new[] { "rough", "thistly", "grazed" },
+            TerrainSubfactory.BuildFlowerPatch()),
+        () => Edge((n, c, t, d, m) => new ThicketArea(n, c, t, d, m), "Bramble Corner", "in the bramble corner",
+            "A corner nobody has worked in years, gone to bramble and elder, blackberries in season", new[] { "tangled", "berried", "neglected" },
+            TerrainSubfactory.BuildBerryBush()),
+    };
+
+    private static Area Edge(Func<string, string, string, List<string>, string[], Area> ctor, string name, string ctx,
+                             string text, string[] moods, PointOfInterest poi)
+    {
+        var a = ctor(name, ctx, $"go to the {name.ToLowerInvariant()}", new() { text }, moods);
+        a.PointsOfInterest.Add(poi);
+        return a;
     }
 
     // ── Names ─────────────────────────────────────────────────────────────────

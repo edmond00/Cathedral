@@ -101,8 +101,8 @@ public sealed class HistoricSceneFactory : SettledSceneFactory
     {
         switch (_kind)
         {
-            case PlaceKind.Citadel:        BuildUrban(rng, scene, 3, harbour: false); break;
-            case PlaceKind.Port:           BuildUrban(rng, scene, 2, harbour: true);  break;
+            case PlaceKind.Citadel:        BuildUrban(rng, scene, 2, harbour: false); break;
+            case PlaceKind.Port:           BuildUrban(rng, scene, 1, harbour: true);  break;
             case PlaceKind.Palace:
             case PlaceKind.ImperialSchool: BuildUrban(rng, scene, 1, harbour: false); break;
             case PlaceKind.Mine:           BuildMine(rng, scene);        break;
@@ -170,14 +170,50 @@ public sealed class HistoricSceneFactory : SettledSceneFactory
 
     private void BuildGreatPlace(Random rng, Scene scene)
     {
-        var approach = new Section(ApproachName(), new() { ApproachText() }, seed => new NoisyGenerator { Seed = seed, Density = 0.84f });
-        foreach (var a in ApproachAreas(rng)) approach.Areas.Add(a);
+        // The approach every place of the kind has, with its door last, and a few of the grounds only
+        // some of them have before it — so one castle has a tiltyard and kennels and the next an orchard
+        // under the walls. The door is where the great building opens; the rest hang off it in a line or
+        // round it, rolled.
+        var core = ApproachAreas(rng).ToList();
+        var door = core[^1];
+        var extras = ExtraGrounds(rng);
+
+        // With two grounds or more, the place has an outer ward of its own: the extras walled off from
+        // the approach to the door, one way between them. Otherwise they are part of the approach.
+        bool ward = extras.Count >= 2 && rng.NextDouble() < 0.7;
+        var areas = ward ? core : extras.Concat(core).ToList();
+        var approach = new Section(ApproachName(rng), new() { ApproachText() }, seed => new NoisyGenerator { Seed = seed, Density = 0.84f });
+        foreach (var a in areas) approach.Areas.Add(a);
         scene.Sections.Add(approach);
         RegisterAll(scene, approach);
-        _outdoors.AddRange(approach.Areas);
-        OutdoorLayout.Connect(scene, _outdoors, LayoutShape.Chain, "Way", rng);
+        _outdoors.AddRange(areas);
+        if (rng.NextDouble() < 0.5)
+            OutdoorLayout.Connect(scene, areas, LayoutShape.Chain, "Way", rng);
+        else
+            OutdoorLayout.Connect(scene, areas.Where(a => a != door).Prepend(door).ToList(),
+                                  rng.NextDouble() < 0.5 ? LayoutShape.Hub : LayoutShape.Spur, "Way", rng);
+        if (ward)
+        {
+            var outer = new Section(OuterWardName(), new() { "The grounds beyond the approach, walled and kept" },
+                                    seed => new NoisyGenerator { Seed = seed, Density = 0.8f });
+            foreach (var a in extras) outer.Areas.Add(a);
+            scene.Sections.Add(outer);
+            RegisterAll(scene, outer);
+            _outdoors.AddRange(extras);
+            OutdoorLayout.Connect(scene, extras, LayoutShape.Chain, "Way", rng);
+            OutdoorLayout.Link(scene, extras[0], areas[0], "Gate");
+        }
 
-        BuildEdifice(rng, scene, _outdoors[^1]);
+        // A moat is swum, not walked round: the wall foot lies across it.
+        var moat = _outdoors.OfType<DitchArea>().FirstOrDefault();
+        var wallfoot = _outdoors.OfType<WallfootArea>().FirstOrDefault();
+        if (moat != null && wallfoot != null
+            && !(scene.AreaGraph.TryGetValue(moat.Id, out var near) && near.Contains(wallfoot.Id)))
+            new WaterCrossingPointOfInterest(moat, wallfoot, WaterKind.Pond, "Moat Water",
+                new() { "Green standing water between the bank and the foot of the wall, deep enough to drown in armour" },
+                new[] { "green", "deep", "stagnant" }).AttachTo(scene);
+
+        BuildEdifice(rng, scene, door);
 
         var setting = Biome is "plain" or "coast" ? FurnitureSubfactory.Setting.Settlement : FurnitureSubfactory.Setting.Highland;
         FurnitureSubfactory.AddSitSpots(rng, _outdoors, setting);
@@ -187,13 +223,108 @@ public sealed class HistoricSceneFactory : SettledSceneFactory
         AddLandscapes(scene, _edifice!.Battlements, _outdoors);
     }
 
-    private string ApproachName() => _kind switch
+    private string OuterWardName() => _kind switch
     {
-        PlaceKind.Castle or PlaceKind.Fortress or PlaceKind.Commandery => "Outer Works",
-        PlaceKind.Monastery => "Monastery Grounds",
-        PlaceKind.Pyramid   => "Mortuary Precinct",
-        _                   => "Temple Precinct",
+        PlaceKind.Castle or PlaceKind.Fortress or PlaceKind.Commandery => "Outer Ward",
+        PlaceKind.Monastery => "Precinct Grounds",
+        PlaceKind.Pyramid   => "Necropolis",
+        _                   => "Temple Grounds",
     };
+
+    private string ApproachName(Random rng) => _kind switch
+    {
+        PlaceKind.Castle or PlaceKind.Fortress or PlaceKind.Commandery
+                            => new[] { "Outer Works", "Outer Ward", "The Bailey" }[rng.Next(3)],
+        PlaceKind.Monastery => new[] { "Monastery Grounds", "The Close" }[rng.Next(2)],
+        PlaceKind.Pyramid   => new[] { "Mortuary Precinct", "Valley Precinct" }[rng.Next(2)],
+        _                   => new[] { "Temple Precinct", "Temple Close" }[rng.Next(2)],
+    };
+
+    /// <summary>
+    /// The grounds only some places of the kind have, one or two of them, drawn: what makes one castle
+    /// not the last.
+    /// </summary>
+    private List<Area> ExtraGrounds(Random rng)
+    {
+        Area Make(Func<string, string, string, List<string>, string[], Area> ctor, string name, string ctx, string text, string[] moods, PointOfInterest poi)
+        {
+            var a = ctor(name, ctx, $"go to the {name.ToLowerInvariant()}", new() { text }, moods);
+            a.PointsOfInterest.Add(poi);
+            return a;
+        }
+
+        var pool = new List<Func<Area>>();
+        switch (_kind)
+        {
+            case PlaceKind.Castle:
+            case PlaceKind.Fortress:
+            case PlaceKind.Commandery:
+                pool.Add(() => Make((n, c, t, d, m) => new GatehouseArea(n, c, t, d, m), "Barbican", "in the barbican",
+                    "A walled passage before the gate, built so that anyone forcing it is shot at from both sides", new[] { "walled", "narrow", "overlooked" },
+                    new BattlementPointOfInterest("Murder Holes", new() { "Holes in the vault overhead, for dropping things on whoever stands here" }, null, new[] { "dark", "overhead" })
+                    { Senses = SensoryProfile.Examinable, VerbModiMentis = Teach(("examine", "fortification")) }));
+                pool.Add(() => Make((n, c, t, d, m) => new DitchArea(n, c, t, d, m), "Moat", "beside the moat",
+                    "A wide ditch of green standing water under the walls, reeds at its edges", new[] { "green", "stagnant", "wide" },
+                    new PoolPointOfInterest("Moat Water", new() { "Still green water, a carp's back turning in it" }, Items(() => new Reed()), new[] { "still", "green" })
+                    { Senses = SensoryProfile.Odorous, VerbModiMentis = Teach(("examine", "drainage"), ("smell", "taint_sense")) }));
+                pool.Add(() => Make((n, c, t, d, m) => new GreenArea(n, c, t, d, m), "Tiltyard", "in the tiltyard",
+                    "A long strip of beaten ground with a barrier down its middle, where riders run at one another", new[] { "beaten", "long", "rutted" },
+                    new PostPointOfInterest("Quintain", new() { "A post with a pivoting arm, a shield at one end and a sandbag at the other" }, Items(() => new Rope()), new[] { "pivoting", "battered" })
+                    { Senses = SensoryProfile.Examinable, VerbModiMentis = Teach(("examine", "horsemanship")) }));
+                pool.Add(() => Make((n, c, t, d, m) => new PenArea(n, c, t, d, m), "Kennels", "by the kennels",
+                    "A walled yard of runs and straw where the hounds are kept, loud at any step", new[] { "loud", "rank", "straw-strewn" },
+                    new TroughPointOfInterest("Kennel Trough", new() { "A stone trough slimed with the hounds' water" }, Items(() => new Bone()), new[] { "slimed", "gnawed" })
+                    { Senses = SensoryProfile.Audible, VerbModiMentis = Teach(("examine", "beast_sense"), ("listen", "pack_sense")) }));
+                pool.Add(() => Make((n, c, t, d, m) => new OrchardArea(n, c, t, d, m), "Castle Orchard", "in the castle orchard",
+                    "Apple and pear trees inside a stretch of outer wall, the grass long under them", new[] { "walled", "long-grassed", "quiet" },
+                    TerrainSubfactory.BuildAppleTree()));
+                break;
+            case PlaceKind.Monastery:
+                pool.Add(() => Make((n, c, t, d, m) => new OrchardArea(n, c, t, d, m), "Monks' Orchard", "in the monks' orchard",
+                    "Old fruit trees in rows inside the precinct wall, hives standing among them", new[] { "ordered", "humming", "old" },
+                    TerrainSubfactory.BuildPearTree()));
+                pool.Add(() => Make((n, c, t, d, m) => new PondArea(n, c, t, d, m), "Fishponds", "by the fishponds",
+                    "A chain of square ponds stocked with carp for the fast days, sluices between them", new[] { "square", "still", "reedy" },
+                    new PoolPointOfInterest("Stew Pond", new() { "A square pond, carp turning lazily under the surface" }, Items(() => new Reed()), new[] { "still", "stocked" })
+                    { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "anglery"), ("contemplate", "meditation")) }));
+                pool.Add(() => Make((n, c, t, d, m) => new GreenArea(n, c, t, d, m), "Monks' Graveyard", "in the monks' graveyard",
+                    "Rows of plain wooden crosses in the grass, no names on any of them", new[] { "plain", "nameless", "quiet" },
+                    new GravePointOfInterest("Plain Graves", new() { "Low mounds under plain crosses, each the same as the next" }, Items(() => new Clay()), new[] { "plain", "level" })
+                    { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "humility"), ("contemplate", "elegy")) }));
+                break;
+            case PlaceKind.Pyramid:
+                pool.Add(() => Make((n, c, t, d, m) => new WalkArea(n, c, t, d, m), "Avenue of Statues", "on the avenue of statues",
+                    "A broad way between seated stone kings, each twice a man's height, their faces level with the sky", new[] { "broad", "watched", "sun-struck" },
+                    new StatuePointOfInterest("Seated Kings", new() { "Seated stone kings, hands on knees, eyes on the horizon" }, Items(() => new Sandstone()), new[] { "seated", "staring" })
+                    { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "iconography"), ("contemplate", "awe")) }));
+                pool.Add(() => Make((n, c, t, d, m) => new RuinArea(n, c, t, d, m), "Workers' Village", "in the workers' village",
+                    "The footings of the mud houses where the builders lived, potsherds and grindstones in the sand", new[] { "ruined", "humble", "sand-drifted" },
+                    new RubblePointOfInterest("House Footings", new() { "Low walls of mudbrick, a hearth and a grindstone in each" }, Items(() => new Potsherd()), new[] { "low", "humble" })
+                    { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "archeology"), ("contemplate", "hearthlonging")) }));
+                pool.Add(() => Make((n, c, t, d, m) => new PitArea(n, c, t, d, m), "Boat Pit", "beside the boat pit",
+                    "A long stone-lined pit cut in the rock, shaped like a boat, roofed with slabs half fallen in", new[] { "long", "slabbed", "mysterious" },
+                    new RubblePointOfInterest("Fallen Roof Slabs", new() { "Great limestone slabs fallen into the pit, cedar planks showing under them" }, Items(() => new Plank()), new[] { "fallen", "cedar-scented" })
+                    { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "shipwrighting"), ("contemplate", "mysticism")) }));
+                break;
+            default:
+                pool.Add(() => Make((n, c, t, d, m) => new GreenArea(n, c, t, d, m), "Graveyard", "in the graveyard",
+                    "Graves of the faithful crowded round the temple, the richer under carved stones", new[] { "crowded", "carved", "quiet" },
+                    new GravePointOfInterest("Carved Tombs", new() { "Table tombs and carved slabs, the lettering on the oldest worn to nothing" }, Items(() => new Clay()), new[] { "carved", "worn" })
+                    { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("contemplate", "elegy")) }));
+                pool.Add(() => Make((n, c, t, d, m) => new CourtyardArea(n, c, t, d, m), "Pilgrims' Court", "in the pilgrims' court",
+                    "A walled court where pilgrims wait their turn, stalls of candles and tokens along one side", new[] { "waiting", "devout", "murmuring" },
+                    new StallPointOfInterest("Token Stall", new() { "A stall of pilgrim tokens, candles and little lead saints" }, Items(() => new VotiveCandle()), new[] { "cluttered", "bright" })
+                    { Senses = SensoryProfile.Examinable, VerbModiMentis = Teach(("examine", "pilgrimage")) }));
+                pool.Add(() => Make((n, c, t, d, m) => new GroveArea(n, c, t, d, m), "Sacred Grove", "in the sacred grove",
+                    "A stand of old trees inside the precinct, ribbons and offerings tied to their branches", new[] { "old", "ribboned", "hushed" },
+                    TerrainSubfactory.BuildYewTree()));
+                break;
+        }
+        var drawn = new List<Area>();
+        foreach (var i in SampleUniqueIndices(rng, pool.Count, Math.Min(pool.Count, rng.Next(1, 4))))
+            drawn.Add(pool[i]());
+        return drawn;
+    }
 
     private string ApproachText() => _kind switch
     {
@@ -287,7 +418,10 @@ public sealed class HistoricSceneFactory : SettledSceneFactory
     private void BuildEdifice(Random rng, Scene scene, Area approach)
     {
         var roster = Roster(rng);
-        var (rooms, noun, publicRooms, sleep, floors, size) = Programme();
+        var (core, optional, pick, noun, publicRooms, sleep, floors, size) = Programme();
+        var rooms = core.ToList();
+        foreach (var i in SampleUniqueIndices(rng, optional.Count, Math.Min(optional.Count, rng.Next(pick.Min, pick.Max + 1))))
+            rooms.Add(optional[i]);
         var spec = new EdificeSpec
         {
             Name         = PlaceName,
@@ -301,6 +435,7 @@ public sealed class HistoricSceneFactory : SettledSceneFactory
             Sleep        = sleep,
             MinFloors    = floors.Min, MaxFloors = floors.Max,
             MinRooms     = size.Min,   MaxRooms  = size.Max,
+            Filler       = FillerFor(rng),
             PublicRooms  = publicRooms,
             Furnish      = Furnish,
             Arena        = seed => new RoomsGenerator { Seed = seed },
@@ -323,6 +458,32 @@ public sealed class HistoricSceneFactory : SettledSceneFactory
             new[] { e.Section }, TradesAt: who => TradesAt(who, e)));
     }
 
+    /// <summary>
+    /// The rooms a great building is filled out with once its programme is placed: two or three kinds
+    /// drawn from what this kind of building could plausibly have more of. Every building used to fill
+    /// with stores, chambers and cellars, so the bulk of every castle was the same three rooms.
+    /// </summary>
+    private IReadOnlyList<EdificeRoom> FillerFor(Random rng)
+    {
+        EdificeRoom[] pool = _kind switch
+        {
+            PlaceKind.Castle or PlaceKind.Citadel or PlaceKind.Palace =>
+                new[] { EdificeRoom.Chamber, EdificeRoom.Store, EdificeRoom.Cellar, EdificeRoom.Wardrobe, EdificeRoom.Latrine, EdificeRoom.Guardroom },
+            PlaceKind.Fortress or PlaceKind.Commandery =>
+                new[] { EdificeRoom.Store, EdificeRoom.Guardroom, EdificeRoom.Armoury, EdificeRoom.Cellar, EdificeRoom.Latrine, EdificeRoom.Workshop },
+            PlaceKind.Temple or PlaceKind.ImperialTemple =>
+                new[] { EdificeRoom.Chapel, EdificeRoom.Crypt, EdificeRoom.Chamber, EdificeRoom.Store, EdificeRoom.Library },
+            PlaceKind.Monastery =>
+                new[] { EdificeRoom.Store, EdificeRoom.Workshop, EdificeRoom.Cellar, EdificeRoom.Chapel, EdificeRoom.Larder },
+            PlaceKind.ImperialSchool =>
+                new[] { EdificeRoom.Classroom, EdificeRoom.Library, EdificeRoom.Store, EdificeRoom.Chamber, EdificeRoom.Archive },
+            PlaceKind.Port =>
+                new[] { EdificeRoom.Store, EdificeRoom.Cellar, EdificeRoom.Archive, EdificeRoom.Chamber },
+            _ => new[] { EdificeRoom.Store, EdificeRoom.Chamber, EdificeRoom.Crypt, EdificeRoom.Archive },
+        };
+        return SampleUniqueIndices(rng, pool.Length, Math.Min(pool.Length, rng.Next(2, 4))).Select(i => pool[i]).ToList();
+    }
+
     private string PrefixOf() => _kind switch
     {
         PlaceKind.Citadel        => "Citadel",
@@ -340,8 +501,15 @@ public sealed class HistoricSceneFactory : SettledSceneFactory
 
     private static EdificeRoomRequest R(EdificeRoom role, int n = 1, EdificeLevel level = EdificeLevel.Any) => new(role, n, level);
 
-    private (IReadOnlyList<EdificeRoomRequest> Rooms, string Noun, HashSet<EdificeRoom> Public, SleepStyle Sleep,
-             (int Min, int Max) Floors, (int Min, int Max) Size) Programme()
+    /// <summary>
+    /// What a great building of this kind is made of. <c>Core</c> is what every one of them has — the
+    /// rooms its people work, eat and trade in. <c>Optional</c> is what some have and some do not, and
+    /// <c>Pick</c> how many of those one building takes, so two castles are two castles: one with a
+    /// dungeon and a treasury, the next with a brewhouse, a wardrobe and a second chapel. A building used
+    /// to take its whole list every time, and every castle had the same rooms.
+    /// </summary>
+    private (IReadOnlyList<EdificeRoomRequest> Core, IReadOnlyList<EdificeRoomRequest> Optional, (int Min, int Max) Pick,
+             string Noun, HashSet<EdificeRoom> Public, SleepStyle Sleep, (int Min, int Max) Floors, (int Min, int Max) Size) Programme()
     {
         var hall = new HashSet<EdificeRoom> { EdificeRoom.Entrance, EdificeRoom.GreatHall };
         var temple = new HashSet<EdificeRoom> { EdificeRoom.Entrance, EdificeRoom.GreatHall, EdificeRoom.Chapel };
@@ -349,73 +517,109 @@ public sealed class HistoricSceneFactory : SettledSceneFactory
         {
             PlaceKind.Castle => (new[]
             {
-                R(EdificeRoom.GreatHall, 1, EdificeLevel.Ground), R(EdificeRoom.Kitchen, 1, EdificeLevel.Ground), R(EdificeRoom.Larder),
-                R(EdificeRoom.Guardroom, 1, EdificeLevel.Ground), R(EdificeRoom.Armoury), R(EdificeRoom.Dungeon, 1, EdificeLevel.Below),
-                R(EdificeRoom.Solar, 1, EdificeLevel.Top), R(EdificeRoom.Chapel), R(EdificeRoom.Treasury), R(EdificeRoom.Countinghouse),
-                R(EdificeRoom.Chamber, 3), R(EdificeRoom.Latrine, 2), R(EdificeRoom.Wardrobe), R(EdificeRoom.Cellar, 1, EdificeLevel.Below),
-            }, "castle", hall, SleepStyle.Dormitories, (3, 5), (30, 42)),
+                R(EdificeRoom.GreatHall, 1, EdificeLevel.Ground), R(EdificeRoom.Kitchen, 1, EdificeLevel.Ground),
+                R(EdificeRoom.Guardroom, 1, EdificeLevel.Ground), R(EdificeRoom.Solar, 1, EdificeLevel.Top), R(EdificeRoom.Chamber, 2),
+            }, new[]
+            {
+                R(EdificeRoom.Larder), R(EdificeRoom.Armoury), R(EdificeRoom.Dungeon, 1, EdificeLevel.Below), R(EdificeRoom.Chapel),
+                R(EdificeRoom.Treasury), R(EdificeRoom.Countinghouse), R(EdificeRoom.Wardrobe), R(EdificeRoom.Cellar, 1, EdificeLevel.Below),
+                R(EdificeRoom.Latrine), R(EdificeRoom.Brewhouse), R(EdificeRoom.Bathhouse),
+            }, (3, 5), "castle", hall, SleepStyle.Dormitories, (2, 4), (20, 28)),
             PlaceKind.Fortress => (new[]
             {
-                R(EdificeRoom.Guardroom, 2, EdificeLevel.Ground), R(EdificeRoom.Armoury, 2), R(EdificeRoom.Dungeon, 2, EdificeLevel.Below),
-                R(EdificeRoom.Refectory, 1, EdificeLevel.Ground), R(EdificeRoom.Kitchen, 1, EdificeLevel.Ground), R(EdificeRoom.Store, 3),
-                R(EdificeRoom.Workshop), R(EdificeRoom.Chapel), R(EdificeRoom.Chancery), R(EdificeRoom.Latrine, 2), R(EdificeRoom.Cellar, 1, EdificeLevel.Below),
-            }, "fortress", new HashSet<EdificeRoom> { EdificeRoom.Entrance }, SleepStyle.Dormitories, (3, 5), (30, 40)),
+                R(EdificeRoom.Guardroom, 2, EdificeLevel.Ground), R(EdificeRoom.Armoury), R(EdificeRoom.Refectory, 1, EdificeLevel.Ground),
+                R(EdificeRoom.Kitchen, 1, EdificeLevel.Ground), R(EdificeRoom.Store),
+            }, new[]
+            {
+                R(EdificeRoom.Dungeon, 1, EdificeLevel.Below), R(EdificeRoom.Store), R(EdificeRoom.Workshop), R(EdificeRoom.Chapel),
+                R(EdificeRoom.Chancery), R(EdificeRoom.Latrine), R(EdificeRoom.Cellar, 1, EdificeLevel.Below), R(EdificeRoom.Armoury),
+                R(EdificeRoom.Bathhouse), R(EdificeRoom.Larder),
+            }, (3, 5), "fortress", new HashSet<EdificeRoom> { EdificeRoom.Entrance }, SleepStyle.Dormitories, (2, 4), (20, 28)),
             PlaceKind.Commandery => (new[]
             {
-                R(EdificeRoom.Chancery), R(EdificeRoom.Archive), R(EdificeRoom.Countinghouse), R(EdificeRoom.Guardroom, 2, EdificeLevel.Ground),
-                R(EdificeRoom.Armoury), R(EdificeRoom.Chapel), R(EdificeRoom.Refectory, 1, EdificeLevel.Ground), R(EdificeRoom.Kitchen, 1, EdificeLevel.Ground),
-                R(EdificeRoom.Observatory, 1, EdificeLevel.Top), R(EdificeRoom.Dungeon, 1, EdificeLevel.Below), R(EdificeRoom.Treasury), R(EdificeRoom.Store, 2),
-            }, "star fort", new HashSet<EdificeRoom> { EdificeRoom.Entrance, EdificeRoom.Chancery }, SleepStyle.Dormitories, (3, 5), (32, 44)),
+                R(EdificeRoom.Chancery), R(EdificeRoom.Archive), R(EdificeRoom.Guardroom, 1, EdificeLevel.Ground),
+                R(EdificeRoom.Refectory, 1, EdificeLevel.Ground), R(EdificeRoom.Kitchen, 1, EdificeLevel.Ground),
+            }, new[]
+            {
+                R(EdificeRoom.Countinghouse), R(EdificeRoom.Armoury), R(EdificeRoom.Chapel), R(EdificeRoom.Observatory, 1, EdificeLevel.Top),
+                R(EdificeRoom.Dungeon, 1, EdificeLevel.Below), R(EdificeRoom.Treasury), R(EdificeRoom.Store), R(EdificeRoom.Guardroom),
+                R(EdificeRoom.Latrine),
+            }, (3, 5), "star fort", new HashSet<EdificeRoom> { EdificeRoom.Entrance, EdificeRoom.Chancery }, SleepStyle.Dormitories, (2, 4), (22, 30)),
             PlaceKind.Temple => (new[]
             {
-                R(EdificeRoom.GreatHall, 1, EdificeLevel.Ground), R(EdificeRoom.Chapel, 3), R(EdificeRoom.Crypt, 2, EdificeLevel.Below),
-                R(EdificeRoom.Library), R(EdificeRoom.Refectory), R(EdificeRoom.Kitchen), R(EdificeRoom.Treasury), R(EdificeRoom.Chamber, 2),
-                R(EdificeRoom.Latrine), R(EdificeRoom.Store),
-            }, "temple", temple, SleepStyle.Cells, (3, 4), (30, 38)),
+                R(EdificeRoom.GreatHall, 1, EdificeLevel.Ground), R(EdificeRoom.Chapel, 2), R(EdificeRoom.Crypt, 1, EdificeLevel.Below),
+                R(EdificeRoom.Refectory), R(EdificeRoom.Kitchen),
+            }, new[]
+            {
+                R(EdificeRoom.Chapel), R(EdificeRoom.Crypt, 1, EdificeLevel.Below), R(EdificeRoom.Library), R(EdificeRoom.Treasury),
+                R(EdificeRoom.Chamber), R(EdificeRoom.Latrine), R(EdificeRoom.Store), R(EdificeRoom.Bathhouse), R(EdificeRoom.Scriptorium),
+            }, (2, 4), "temple", temple, SleepStyle.Cells, (2, 3), (18, 24)),
             PlaceKind.ImperialTemple => (new[]
             {
-                R(EdificeRoom.GreatHall, 1, EdificeLevel.Ground), R(EdificeRoom.Chapel, 4), R(EdificeRoom.Crypt, 3, EdificeLevel.Below),
-                R(EdificeRoom.Library), R(EdificeRoom.Archive), R(EdificeRoom.Scriptorium), R(EdificeRoom.Refectory), R(EdificeRoom.Kitchen),
-                R(EdificeRoom.Treasury), R(EdificeRoom.Guardroom), R(EdificeRoom.Chamber, 3), R(EdificeRoom.Latrine, 2), R(EdificeRoom.Bathhouse),
-            }, "imperial temple", temple, SleepStyle.Cells, (4, 6), (38, 50)),
+                R(EdificeRoom.GreatHall, 1, EdificeLevel.Ground), R(EdificeRoom.Chapel, 3), R(EdificeRoom.Crypt, 2, EdificeLevel.Below),
+                R(EdificeRoom.Refectory), R(EdificeRoom.Kitchen), R(EdificeRoom.Treasury),
+            }, new[]
+            {
+                R(EdificeRoom.Library), R(EdificeRoom.Archive), R(EdificeRoom.Scriptorium), R(EdificeRoom.Guardroom), R(EdificeRoom.Chamber),
+                R(EdificeRoom.Bathhouse), R(EdificeRoom.Latrine), R(EdificeRoom.Crypt, 1, EdificeLevel.Below), R(EdificeRoom.Chapel),
+            }, (3, 5), "imperial temple", temple, SleepStyle.Cells, (3, 4), (26, 34)),
             PlaceKind.Monastery => (new[]
             {
-                R(EdificeRoom.Chapel, 2), R(EdificeRoom.Refectory, 1, EdificeLevel.Ground), R(EdificeRoom.Kitchen, 1, EdificeLevel.Ground),
-                R(EdificeRoom.Scriptorium), R(EdificeRoom.Library), R(EdificeRoom.Infirmary), R(EdificeRoom.Brewhouse), R(EdificeRoom.Workshop),
+                R(EdificeRoom.Chapel), R(EdificeRoom.Refectory, 1, EdificeLevel.Ground), R(EdificeRoom.Kitchen, 1, EdificeLevel.Ground),
+                R(EdificeRoom.Scriptorium), R(EdificeRoom.Infirmary),
+            }, new[]
+            {
+                R(EdificeRoom.Chapel), R(EdificeRoom.Library), R(EdificeRoom.Brewhouse), R(EdificeRoom.Workshop),
                 R(EdificeRoom.Cellar, 1, EdificeLevel.Below), R(EdificeRoom.Crypt, 1, EdificeLevel.Below), R(EdificeRoom.Bathhouse),
-                R(EdificeRoom.Latrine, 2), R(EdificeRoom.Laundry), R(EdificeRoom.Larder),
-            }, "monastery", new HashSet<EdificeRoom> { EdificeRoom.Entrance, EdificeRoom.Chapel, EdificeRoom.Infirmary }, SleepStyle.Cells, (3, 5), (34, 48)),
+                R(EdificeRoom.Laundry), R(EdificeRoom.Larder), R(EdificeRoom.Latrine),
+            }, (3, 5), "monastery", new HashSet<EdificeRoom> { EdificeRoom.Entrance, EdificeRoom.Chapel, EdificeRoom.Infirmary }, SleepStyle.Cells, (2, 4), (22, 30)),
             PlaceKind.Pyramid => (new[]
             {
-                R(EdificeRoom.Crypt, 4, EdificeLevel.Below), R(EdificeRoom.Treasury, 1, EdificeLevel.Below), R(EdificeRoom.Chapel, 1, EdificeLevel.Top),
-                R(EdificeRoom.Chamber, 4), R(EdificeRoom.Store, 2), R(EdificeRoom.Guardroom, 1, EdificeLevel.Ground),
-            }, "pyramid", new HashSet<EdificeRoom> { EdificeRoom.Entrance }, SleepStyle.Dormitories, (4, 6), (30, 36)),
+                R(EdificeRoom.Crypt, 2, EdificeLevel.Below), R(EdificeRoom.Treasury, 1, EdificeLevel.Below), R(EdificeRoom.Chapel, 1, EdificeLevel.Top),
+                R(EdificeRoom.Chamber, 2), R(EdificeRoom.Guardroom, 1, EdificeLevel.Ground),
+            }, new[]
+            {
+                R(EdificeRoom.Crypt, 1, EdificeLevel.Below), R(EdificeRoom.Crypt, 1, EdificeLevel.Below), R(EdificeRoom.Chamber),
+                R(EdificeRoom.Store), R(EdificeRoom.Store), R(EdificeRoom.Archive), R(EdificeRoom.Chamber),
+            }, (2, 4), "pyramid", new HashSet<EdificeRoom> { EdificeRoom.Entrance }, SleepStyle.Dormitories, (3, 5), (20, 26)),
             PlaceKind.Palace => (new[]
             {
-                R(EdificeRoom.GreatHall, 1, EdificeLevel.Ground), R(EdificeRoom.Solar, 2, EdificeLevel.Upper), R(EdificeRoom.Chapel), R(EdificeRoom.Library),
-                R(EdificeRoom.Treasury), R(EdificeRoom.Kitchen, 1, EdificeLevel.Ground), R(EdificeRoom.Larder), R(EdificeRoom.Bathhouse, 2),
-                R(EdificeRoom.Guardroom, 1, EdificeLevel.Ground), R(EdificeRoom.Armoury), R(EdificeRoom.Chancery), R(EdificeRoom.Archive),
-                R(EdificeRoom.Wardrobe, 2), R(EdificeRoom.Chamber, 4), R(EdificeRoom.Countinghouse), R(EdificeRoom.Observatory, 1, EdificeLevel.Top),
-                R(EdificeRoom.Dungeon, 1, EdificeLevel.Below),
-            }, "palace", hall, SleepStyle.Dormitories, (4, 6), (40, 50)),
+                R(EdificeRoom.GreatHall, 1, EdificeLevel.Ground), R(EdificeRoom.Solar, 1, EdificeLevel.Upper), R(EdificeRoom.Kitchen, 1, EdificeLevel.Ground),
+                R(EdificeRoom.Guardroom, 1, EdificeLevel.Ground), R(EdificeRoom.Chapel), R(EdificeRoom.Chamber, 2),
+            }, new[]
+            {
+                R(EdificeRoom.Solar, 1, EdificeLevel.Upper), R(EdificeRoom.Library), R(EdificeRoom.Treasury), R(EdificeRoom.Larder),
+                R(EdificeRoom.Bathhouse), R(EdificeRoom.Armoury), R(EdificeRoom.Chancery), R(EdificeRoom.Archive), R(EdificeRoom.Wardrobe),
+                R(EdificeRoom.Countinghouse), R(EdificeRoom.Observatory, 1, EdificeLevel.Top), R(EdificeRoom.Dungeon, 1, EdificeLevel.Below),
+            }, (4, 6), "palace", hall, SleepStyle.Dormitories, (3, 4), (22, 30)),
             PlaceKind.ImperialSchool => (new[]
             {
-                R(EdificeRoom.Lecture, 3), R(EdificeRoom.Classroom, 4), R(EdificeRoom.Library, 2), R(EdificeRoom.Observatory, 1, EdificeLevel.Top),
-                R(EdificeRoom.Scriptorium), R(EdificeRoom.Archive), R(EdificeRoom.Refectory, 1, EdificeLevel.Ground), R(EdificeRoom.Kitchen, 1, EdificeLevel.Ground),
-                R(EdificeRoom.Chapel), R(EdificeRoom.Bathhouse), R(EdificeRoom.Latrine, 2), R(EdificeRoom.Laundry),
-            }, "imperial school", new HashSet<EdificeRoom> { EdificeRoom.Entrance, EdificeRoom.Lecture, EdificeRoom.Library }, SleepStyle.Dormitories, (3, 5), (36, 48)),
+                R(EdificeRoom.Lecture, 2), R(EdificeRoom.Classroom, 2), R(EdificeRoom.Library), R(EdificeRoom.Refectory, 1, EdificeLevel.Ground),
+                R(EdificeRoom.Kitchen, 1, EdificeLevel.Ground),
+            }, new[]
+            {
+                R(EdificeRoom.Lecture), R(EdificeRoom.Classroom), R(EdificeRoom.Library), R(EdificeRoom.Observatory, 1, EdificeLevel.Top),
+                R(EdificeRoom.Scriptorium), R(EdificeRoom.Archive), R(EdificeRoom.Chapel), R(EdificeRoom.Bathhouse), R(EdificeRoom.Latrine),
+                R(EdificeRoom.Laundry),
+            }, (3, 5), "imperial school", new HashSet<EdificeRoom> { EdificeRoom.Entrance, EdificeRoom.Lecture, EdificeRoom.Library }, SleepStyle.Dormitories, (2, 4), (20, 28)),
             PlaceKind.Port => (new[]
             {
-                R(EdificeRoom.Countinghouse, 2, EdificeLevel.Ground), R(EdificeRoom.Chancery), R(EdificeRoom.Store, 4), R(EdificeRoom.Guardroom, 1, EdificeLevel.Ground),
-                R(EdificeRoom.Cellar, 1, EdificeLevel.Below), R(EdificeRoom.Archive),
-            }, "custom house", new HashSet<EdificeRoom> { EdificeRoom.Entrance, EdificeRoom.Countinghouse }, SleepStyle.Dormitories, (3, 3), (30, 32)),
+                R(EdificeRoom.Countinghouse, 2, EdificeLevel.Ground), R(EdificeRoom.Store, 2), R(EdificeRoom.Guardroom, 1, EdificeLevel.Ground),
+            }, new[]
+            {
+                R(EdificeRoom.Chancery), R(EdificeRoom.Store), R(EdificeRoom.Cellar, 1, EdificeLevel.Below), R(EdificeRoom.Archive),
+                R(EdificeRoom.Store),
+            }, (2, 3), "custom house", new HashSet<EdificeRoom> { EdificeRoom.Entrance, EdificeRoom.Countinghouse }, SleepStyle.Dormitories, (2, 3), (16, 22)),
             _ => (new[]   // Citadel
             {
-                R(EdificeRoom.GreatHall, 1, EdificeLevel.Ground), R(EdificeRoom.Solar, 1, EdificeLevel.Top), R(EdificeRoom.Chapel),
-                R(EdificeRoom.Guardroom, 2, EdificeLevel.Ground), R(EdificeRoom.Armoury, 2), R(EdificeRoom.Dungeon, 1, EdificeLevel.Below),
-                R(EdificeRoom.Treasury), R(EdificeRoom.Chancery), R(EdificeRoom.Countinghouse), R(EdificeRoom.Kitchen, 1, EdificeLevel.Ground),
-                R(EdificeRoom.Refectory), R(EdificeRoom.Store, 2), R(EdificeRoom.Cellar, 1, EdificeLevel.Below), R(EdificeRoom.Latrine, 2),
-            }, "citadel", hall, SleepStyle.Dormitories, (4, 6), (36, 48)),
+                R(EdificeRoom.GreatHall, 1, EdificeLevel.Ground), R(EdificeRoom.Solar, 1, EdificeLevel.Top), R(EdificeRoom.Guardroom, 1, EdificeLevel.Ground),
+                R(EdificeRoom.Armoury), R(EdificeRoom.Kitchen, 1, EdificeLevel.Ground), R(EdificeRoom.Refectory), R(EdificeRoom.Treasury),
+            }, new[]
+            {
+                R(EdificeRoom.Chapel), R(EdificeRoom.Guardroom), R(EdificeRoom.Armoury), R(EdificeRoom.Dungeon, 1, EdificeLevel.Below),
+                R(EdificeRoom.Chancery), R(EdificeRoom.Countinghouse), R(EdificeRoom.Store), R(EdificeRoom.Cellar, 1, EdificeLevel.Below),
+                R(EdificeRoom.Latrine), R(EdificeRoom.Store),
+            }, (3, 5), "citadel", hall, SleepStyle.Dormitories, (3, 4), (22, 30)),
         };
     }
 
@@ -433,7 +637,7 @@ public sealed class HistoricSceneFactory : SettledSceneFactory
             case PlaceKind.Temple:         r.Add(new PriestArchetype()); r.Add(new SacristanArchetype()); Add(() => new PriestArchetype(), 1, 2); Add(() => new MonkArchetype(), 1, 2); r.Add(new GravediggerArchetype()); break;
             case PlaceKind.ImperialTemple: r.Add(new PriestArchetype()); r.Add(new SacristanArchetype()); Add(() => new PriestArchetype(), 2, 3); Add(() => new MonkArchetype(), 2, 3);
                                            Add(() => new GuardArchetype(), 2, 2); Add(() => new ClerkArchetype(), 1, 1); break;
-            case PlaceKind.Monastery:      r.Add(new PriestArchetype()); r.Add(new CellarerArchetype()); Add(() => new MonkArchetype(), 6, 10); break;
+            case PlaceKind.Monastery:      r.Add(new PriestArchetype()); r.Add(new CellarerArchetype()); Add(() => new MonkArchetype(), 4, 7); break;
             case PlaceKind.Pyramid:        r.Add(new PriestArchetype()); Add(() => new GuardArchetype(), 2, 3); break;
             case PlaceKind.Palace:         r.Add(new LordArchetype()); r.Add(new StewardArchetype()); r.Add(new CaptainArchetype());
                                            Add(() => new GuardArchetype(), 4, 6); Add(() => new ClerkArchetype(), 2, 2); r.Add(new ScholarArchetype()); r.Add(new PriestArchetype()); break;
@@ -556,6 +760,12 @@ public sealed class HistoricSceneFactory : SettledSceneFactory
         return a;
     }
 
+    /// <summary>One or two of the grounds only some sites of the kind have, drawn.</summary>
+    private static void Extras(Random rng, IReadOnlyList<Action> pool)
+    {
+        foreach (var i in SampleUniqueIndices(rng, pool.Count, Math.Min(pool.Count, rng.Next(1, 3)))) pool[i]();
+    }
+
     private void FinishOpenSite(Random rng, Scene scene, string sectionName, string text, FurnitureSubfactory.Setting setting)
     {
         var section = new Section(sectionName, new() { text }, seed => new NoisyGenerator { Seed = seed, Density = 0.84f });
@@ -592,10 +802,12 @@ public sealed class HistoricSceneFactory : SettledSceneFactory
             "A timbered tunnel driven level into the hill, lamps hung on the props", new[] { "dark", "dripping", "close" },
             new LanternPointOfInterest("Prop Lamps", new() { "Lamps hung from the pit props, smoking" }, Items(() => new MinersLamp()), new[] { "smoky", "dim" })
             { Senses = SensoryProfile.Examinable, VerbModiMentis = Teach(("examine", "delving")) });
+        if (rng.NextDouble() < 0.75)
         Open((n, c, t, d, m) => new SeamArea(n, c, t, d, m), "Ore Gallery", "in the ore gallery",
             "A low gallery following the seam, the walls scarred with pick-marks", new[] { "low", "scarred", "airless" },
             new OrePointOfInterest("Working Face", new() { "The face of the seam, glinting where the pick last bit" }, Items(() => new IronOre(), () => new TinOre(), () => new LeadOre()), new[] { "glinting", "hard" })
             { Senses = SensoryProfile.Audible, VerbModiMentis = Teach(("examine", "veinsight"), ("listen", "hollow_ear")) });
+        if (rng.NextDouble() < 0.7)
         Open((n, c, t, d, m) => new ScreeArea(n, c, t, d, m), "Spoil Heap", "on the spoil heap",
             "A grey slope of waste rock tipped from the carts, nothing growing on it", new[] { "barren", "loose", "grey" },
             new RubblePointOfInterest("Waste Rock", new() { "Broken rock with a little ore still in it" }, Items(() => new Rock(), () => new CopperOre()), new[] { "loose", "sharp" })
@@ -606,6 +818,25 @@ public sealed class HistoricSceneFactory : SettledSceneFactory
             { Senses = SensoryProfile.Examinable, VerbModiMentis = Teach(("examine", "veinsight")) },
             new ToolPointOfInterest("Pick Rack", new() { "Picks and wedges racked by the door, their points freshly drawn" }, Items(() => new Pick(), () => new MinersLamp()), new[] { "racked", "sharp" })
             { Senses = SensoryProfile.Examinable, VerbModiMentis = Teach(("examine", "delving")) });
+        Extras(rng, new Action[]
+        {
+            () => Open((n, c, t, d, m) => new PoolArea(n, c, t, d, m), "Flooded Workings", "by the flooded workings",
+                "An old level gone under black water, the props standing up out of it like drowned trees", new[] { "black", "still", "drowned" },
+                new PoolPointOfInterest("Black Water", new() { "Still black water over the old workings, a cold breath off it" }, Items(() => new Rock()), new[] { "black", "cold" })
+                { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "speleology"), ("contemplate", "dread")) }),
+            () => Open((n, c, t, d, m) => new YardArea(n, c, t, d, m), "Smelting Yard", "in the smelting yard",
+                "A yard of slag and ash round a stone furnace, the ground glassy where the slag ran", new[] { "slaggy", "ashen", "scorched" },
+                new FirePointOfInterest("Bloomery", new() { "A squat clay furnace, still warm, slag piled beside it" }, Items(() => new Coal(), () => new IronOre()), new[] { "squat", "warm" })
+                { Senses = SensoryProfile.Odorous, VerbModiMentis = Teach(("examine", "metalcraft"), ("smell", "smoke_reading")) }),
+            () => Open((n, c, t, d, m) => new ShaftArea(n, c, t, d, m), "Old Shaft", "at the old shaft",
+                "An abandoned shaft fenced with rotten hurdles, a windlass rusted above it", new[] { "abandoned", "rotten", "deep" },
+                new RubblePointOfInterest("Shaft Collar", new() { "The stone collar of the shaft, a long drop below" }, Items(() => new Rock(), () => new LeadOre()), new[] { "stone", "deep" })
+                { Senses = SensoryProfile.Examinable, VerbModiMentis = Teach(("examine", "delving")) }),
+            () => Open((n, c, t, d, m) => new StreamArea(n, c, t, d, m), "Water Wheel", "by the water wheel",
+                "A leat bringing a stream to a great wheel that works the mine's pumps, creaking day and night", new[] { "creaking", "wet", "turning" },
+                new WheelPointOfInterest("Pump Wheel", new() { "A great wooden wheel turning in the leat, rods running from it into the hill" }, Items(() => new Plank()), new[] { "great", "turning" })
+                { Senses = SensoryProfile.Audible, VerbModiMentis = Teach(("examine", "millcraft"), ("listen", "water_voice")) }),
+        });
         FinishOpenSite(rng, scene, PlaceName, "The workings and the yard at their mouth", FurnitureSubfactory.Setting.Highland);
         var roster = new List<NamedNpcArchetype> { new MinerArchetype() };
         for (int i = 0, n = rng.Next(2, 5); i < n; i++) roster.Add(new MinerArchetype());
@@ -627,6 +858,20 @@ public sealed class HistoricSceneFactory : SettledSceneFactory
             "An open holy place ringed with standing stones, an altar at its heart", new[] { "hushed", "ringed", "ancient" },
             new ShrinePointOfInterest("Stone Altar", new() { "A rough altar stone heaped with offerings" }, Items(() => new Offering(), () => new VotiveCandle(), () => new Incense()), new[] { "rough", "heaped" })
             { Senses = SensoryProfile.Fragrant, VerbModiMentis = Teach(("examine", "liturgy"), ("smell", "incensing"), ("contemplate", "awe")) });
+        Extras(rng, new Action[]
+        {
+            () => Open((n, c, t, d, m) => new GroveArea(n, c, t, d, m), "Sacred Grove", "in the sacred grove",
+                "Old trees nobody may cut, rags and ribbons knotted to every low branch", new[] { "old", "ribboned", "hushed" },
+                TerrainSubfactory.BuildYewTree()),
+            () => Open((n, c, t, d, m) => new OverhangArea(n, c, t, d, m), "Hermit's Cave", "in the hermit's cave",
+                "A dry hollow under a rock where a holy man lived and died, his bed of stone still there", new[] { "dry", "bare", "holy" },
+                new HollowPointOfInterest("Stone Bed", new() { "A shelf of rock worn smooth by one body over many years" }, Items(() => new Rock()), new[] { "worn", "bare" })
+                { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "humility"), ("contemplate", "meditation")) }),
+            () => Open((n, c, t, d, m) => new WalkArea(n, c, t, d, m), "Votive Tree", "under the votive tree",
+                "A single great tree hung with offerings — shoes, combs, little tin limbs for cures hoped for", new[] { "hung", "great", "hopeful" },
+                new TreePointOfInterest("Offering Tree", new() { "Its lower boughs bent with tokens left by the sick and the hopeful" }, Items(() => new Offering()), new[] { "laden", "hopeful" })
+                { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "superstition"), ("contemplate", "devotion")) }),
+        });
         FinishOpenSite(rng, scene, PlaceName, "A holy place in the open, kept by a few", FurnitureSubfactory.Setting.Settlement);
         Lodge(rng, scene, "Pilgrims' Lodge", "lodge", new List<NamedNpcArchetype> { new PriestArchetype(), new MonkArchetype() });
     }
@@ -645,6 +890,20 @@ public sealed class HistoricSceneFactory : SettledSceneFactory
             "Fresh graves with wooden markers, the earth still dark", new[] { "raw", "sad", "dark" },
             new GravePointOfInterest("Fresh Grave", new() { "A grave dug and filled within the month" }, Items(() => new Clay(), () => new Clay()), new[] { "raw", "soft" })
             { Senses = SensoryProfile.Odorous, VerbModiMentis = Teach(("examine", "sextonry"), ("smell", "charnel_sense")) });
+        Extras(rng, new Action[]
+        {
+            () => Open((n, c, t, d, m) => new ChamberArea(n, c, t, d, m), "Ossuary", "in the ossuary",
+                "A vaulted bone-house where the old dead are stacked when the field needs their room, skulls in rows", new[] { "vaulted", "stacked", "dry" },
+                new OssuaryPointOfInterest("Skull Shelves", new() { "Shelves of skulls, the long bones stacked beneath like firewood" }, Items(() => new Skull(), () => new Bone()), new[] { "rowed", "dry" })
+                { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "gravesight"), ("contemplate", "vanitas")) }),
+            () => Open((n, c, t, d, m) => new GroveArea(n, c, t, d, m), "Yew Walk", "in the yew walk",
+                "A walk between black yews older than any grave here, the light under them green and dim", new[] { "black", "dim", "ancient" },
+                TerrainSubfactory.BuildYewTree()),
+            () => Open((n, c, t, d, m) => new PitArea(n, c, t, d, m), "Charnel Pit", "by the charnel pit",
+                "A pit at the field's edge where the plague dead went in together, its lid of earth sunk", new[] { "sunk", "shunned", "foul" },
+                new GravePointOfInterest("Sunken Ground", new() { "Ground sunk over the pit, grass growing too green on it" }, Items(() => new Bone(), () => new Clay()), new[] { "sunk", "green" })
+                { Senses = SensoryProfile.Odorous, VerbModiMentis = Teach(("examine", "charnel_sense"), ("smell", "taint_sense")) }),
+        });
         FinishOpenSite(rng, scene, PlaceName, "Ground given to the dead", FurnitureSubfactory.Setting.Settlement);
         var roster = new List<NamedNpcArchetype> { new GravediggerArchetype() };
         if (rng.NextDouble() < 0.6) roster.Add(new PriestArchetype());

@@ -15,9 +15,10 @@ namespace Cathedral.Game.Scene.Settled;
 /// (<see cref="Shared.CityLayout.BuildDense"/>) for every city; the climate names and dresses its
 /// streets and builds its houses (<see cref="SettledSceneFactory.Biome"/>).
 ///
-/// <para><b>Dense on purpose.</b> A city cell is about twice the ways of the small town round a great
-/// building, and <b>every way is lined with four or five doors</b> — no square, street, alley or gate
-/// without a building on it. The doors are dealt out as slots before anything is built: each way
+/// <para><b>Dense on purpose.</b> A city cell has more ways than the small town round a great
+/// building, and <b>every way is lined with two or three doors</b> — no square, street, alley or gate
+/// without a building on it. It was four or five doors on twice the ways, about four hundred areas a
+/// cell: a third of that keeps the city the largest place in the country and lets two cities differ. The doors are dealt out as slots before anything is built: each way
 /// rolls its quota, the public buildings take the slots that suit them (the inns on a square, the
 /// watch house at the gate, the doss house in an alley), and the townsfolk's houses fill every slot
 /// that is left. The town round a great building is left at its old size
@@ -44,10 +45,10 @@ public sealed class CitySceneFactory : SettledSceneFactory
     protected override string DefaultBiome => "plain";
 
     /// <summary>The fewest doors on any outdoor way of a city cell.</summary>
-    public const int MinDoorsPerWay = 4;
+    public const int MinDoorsPerWay = 2;
 
-    /// <summary>The chance a way takes a fifth door.</summary>
-    private const double FifthDoorChance = 0.4;
+    /// <summary>The chance a way takes a third door.</summary>
+    private const double FifthDoorChance = 0.45;
 
     private Shared.CityPlan _plan = null!;
 
@@ -198,7 +199,7 @@ public sealed class CitySceneFactory : SettledSceneFactory
         }
 
         // Merchants, each with a clerk.
-        for (int m = 0; m < size + 1 && m < MerchantHouses.Length; m++)
+        for (int m = 0; m < size && m < MerchantHouses.Length; m++)
         {
             var roster = new List<NamedNpcArchetype> { new MerchantArchetype(), new ClerkArchetype() };
             var house = Put(MerchantHouses[m], "merchant's house", BuildingAccess.Public, BuildingOccupancy.Communal, 2, slots.Take(front));
@@ -207,7 +208,7 @@ public sealed class CitySceneFactory : SettledSceneFactory
         }
 
         // The trades, each with an apprentice in a house of their own.
-        int trades = Math.Min(CityTrades.Length, 8 + 2 * size);
+        int trades = Math.Min(CityTrades.Length, 4 + size);
         foreach (var idx in SampleUniqueIndices(rng, CityTrades.Length, trades))
         {
             var (label, hall, master, noun) = CityTrades[idx];

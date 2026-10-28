@@ -197,11 +197,22 @@ public static class BiomeAudit
         if (areas.Count > 0 && Reach(adj, 0).Count < areas.Count)
             Fault($"{areas.Count - Reach(adj, 0).Count} area(s) unreachable from '{areas[0].DisplayName}'");
 
-        // A section is one connected piece of ground.
+        // A section is one connected piece of ground. An area reached only by a climb, a scale or a
+        // squeeze — a roof scaled from the street, an alcove up a toe-hold trail — is a top, not ground,
+        // and belongs to the section it stands over without having to be walked to inside it.
+        var walkAdj = areas.Select(_ => new HashSet<int>()).ToArray();
+        foreach (var (from, tos) in scene.AreaGraph)
+            foreach (var to in tos)
+                if (index.TryGetValue(from, out int i) && index.TryGetValue(to, out int j) && i != j) { walkAdj[i].Add(j); walkAdj[j].Add(i); }
+        foreach (var c in connectors)
+            if (c is DoorPointOfInterest or StairPointOfInterest or CrossingPointOfInterest or WaterCrossingPointOfInterest
+                && index.TryGetValue(c.AreaA.Id, out int i) && index.TryGetValue(c.AreaB.Id, out int j) && i != j)
+            { walkAdj[i].Add(j); walkAdj[j].Add(i); }
         foreach (var s in scene.Sections)
         {
-            var members = s.Areas.Where(a => index.ContainsKey(a.Id)).Select(a => index[a.Id]).ToHashSet();
-            if (members.Count > 1 && Components(adj, members, restrict: members) > 1)
+            var members = s.Areas.Where(a => index.ContainsKey(a.Id)).Select(a => index[a.Id])
+                                 .Where(i => walkAdj[i].Count > 0 || adj[i].Count == 0).ToHashSet();
+            if (members.Count > 1 && Components(walkAdj, members, restrict: members) > 1)
                 Fault($"section '{s.DisplayName}' is split in pieces");
         }
 
