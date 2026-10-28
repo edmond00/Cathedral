@@ -63,6 +63,13 @@ public abstract class SceneFactory
     protected virtual bool IsWilderness => false;
 
     /// <summary>
+    /// The shape this factory means its map to have, which <c>--biome-audit</c> checks every build
+    /// against through <see cref="Section.Tier"/>. A statement of intent, not a generator: the factory
+    /// still lays its own areas.
+    /// </summary>
+    public virtual LayoutProfile Profile => LayoutProfile.Unstated;
+
+    /// <summary>
     /// The hour every visit to <paramref name="locationId"/> opens at: one of the five daytime periods,
     /// never night. Fixed per location so a settlement can be made to greet the player
     /// (<see cref="EnsureArrivalCompany"/>) by changing one period of one schedule rather than staffing
@@ -815,3 +822,21 @@ public abstract class SceneFactory
         }
     }
 }
+
+/// <summary>The shape a location's map is meant to have (<see cref="SceneFactory.Profile"/>).</summary>
+public enum LayoutProfile
+{
+    /// <summary>No promise made, and none checked.</summary>
+    Unstated,
+    /// <summary>Bands that rise and narrow: many areas at the foot, fewer above, a summit; each band meets only its neighbours.</summary>
+    Pyramid,
+    /// <summary>Levels that go down from one mouth; each level meets only the ones above and below it.</summary>
+    Descent,
+    /// <summary>Everything hangs off a hub section (tier 0): a waterhole, an oasis, a clearing.</summary>
+    Radial,
+    /// <summary>A line of country (tier 0) — a shore, a river, a canyon floor — with the rest hanging off it.</summary>
+    Spine,
+    /// <summary>Patches of country that meet one another on several sides, closing loops.</summary>
+    Mosaic,
+}
+

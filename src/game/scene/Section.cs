@@ -28,6 +28,15 @@ public class Section : Element
     public bool IsInterior { get; init; }
 
     /// <summary>
+    /// Where this section stands in its location's <see cref="SceneFactory.Profile"/>: the height of a
+    /// mountain's band (0 at the foot), the depth of a cave's (0 at the mouth), 0 for the hub of a
+    /// radial place or the spine of a linear one and 1 for what hangs off it. Read by
+    /// <c>--biome-audit</c>, which holds a factory to the shape it states; 0 everywhere when the
+    /// factory states none.
+    /// </summary>
+    public int Tier { get; init; }
+
+    /// <summary>
     /// Factory that produces the fight-arena generator used when a fight breaks out in
     /// this section. The caller passes a seed (e.g. the current Area.Id hash) and gets a
     /// fully-configured generator back. Mandatory so every section declares its own arena
