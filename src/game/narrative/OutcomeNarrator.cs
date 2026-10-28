@@ -43,11 +43,12 @@ public class OutcomeNarrator
         CancellationToken cancellationToken = default,
         IReadOnlyList<string>? outcomeVerbatims = null,
         string? neutralOverride = null,
-        ILlmPreviewSink? preview = null)
+        ILlmPreviewSink? preview = null,
+        IReadOnlyList<string>? lessonVerbatims = null)
     {
         // The reminescence path supplies its own neutral meaning (a plain "I tried to remember …"
         // framing that embeds the concrete recovered memory); everything else templates it here.
-        string neutral = neutralOverride ?? BuildNeutralOutcome(action, succeeded, outcomeVerbatims);
+        string neutral = neutralOverride ?? BuildNeutralOutcome(action, succeeded, outcomeVerbatims, lessonVerbatims);
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
         // forcedPrefix "I " constrains the styled result to a first-person opening (every neutral
         // outcome is first-person — "I managed to …", "Alas, I failed to …", "I tried to remember
@@ -74,7 +75,7 @@ public class OutcomeNarrator
         CancellationToken cancellationToken = default,
         ILlmPreviewSink? preview = null)
     {
-        string neutral = NeutralNarration.Emotion(felt.Verbatims, felt.Humor.FeelsLike);
+        string neutral = NeutralNarration.Emotion(felt.Verbatims, felt.Humor.FeelsLike, felt.Lessons);
         int    slotId  = await GetOrCreateNarratorSlotAsync(felt.ModusMentis);
         // Written on a clean history, which is then put back. The slot is the modus mentis's own and
         // serves everything it does — a conversation's replies included — so with its history kept an
@@ -121,13 +122,15 @@ public class OutcomeNarrator
         PartyMember protagonist,
         IReadOnlyList<string>? successVerbatims,
         IReadOnlyList<string>? failureVerbatims,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        IReadOnlyList<string>? successLessons = null,
+        IReadOnlyList<string>? failureLessons = null)
     {
         if (PlaygroundMode.IsActive)
         {
             _pendingNarratorSlot = -1;
-            return (BuildNeutralOutcome(action, true, successVerbatims),
-                    BuildNeutralOutcome(action, false, failureVerbatims));
+            return (BuildNeutralOutcome(action, true, successVerbatims, successLessons),
+                    BuildNeutralOutcome(action, false, failureVerbatims, failureLessons));
         }
 
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
@@ -136,7 +139,7 @@ public class OutcomeNarrator
 
         string success = await NarrateOutcomeAsync(
             action, actionModusMentis, successOutcome, true, difficulty, protagonist, cancellationToken,
-            outcomeVerbatims: successVerbatims);
+            outcomeVerbatims: successVerbatims, lessonVerbatims: successLessons);
         var afterSuccess = instance?.SnapshotHistory();
 
         // Reset to the pre-narration baseline so the failure branch generates without seeing the
@@ -145,7 +148,7 @@ public class OutcomeNarrator
 
         string failure = await NarrateOutcomeAsync(
             action, actionModusMentis, failureOutcome, false, difficulty, protagonist, cancellationToken,
-            outcomeVerbatims: failureVerbatims);
+            outcomeVerbatims: failureVerbatims, lessonVerbatims: failureLessons);
         var afterFailure = instance?.SnapshotHistory();
 
         _pendingNarratorSlot   = (instance != null) ? slotId : -1;
@@ -289,12 +292,13 @@ public class OutcomeNarrator
     // ── Helpers ────────────────────────────────────────────────────────────────
 
     private static string BuildNeutralOutcome(
-        ParsedNarrativeAction action, bool succeeded, IReadOnlyList<string>? outcomeVerbatims)
+        ParsedNarrativeAction action, bool succeeded, IReadOnlyList<string>? outcomeVerbatims,
+        IReadOnlyList<string>? lessonVerbatims = null)
     {
         var d = ActionDisplay(action);
         return succeeded
-            ? NeutralNarration.OutcomeSuccess(d, outcomeVerbatims)
-            : NeutralNarration.OutcomeFailure(d, outcomeVerbatims);
+            ? NeutralNarration.OutcomeSuccess(d, outcomeVerbatims, lessonVerbatims)
+            : NeutralNarration.OutcomeFailure(d, outcomeVerbatims, lessonVerbatims);
     }
 
     /// <summary>

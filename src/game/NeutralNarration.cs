@@ -452,18 +452,31 @@ public static class NeutralNarration
     /// its own direction. Measured as a change on its own (tools/prompts, 62 samples a side) it moved
     /// nothing else: the lesson was lost as often, the copies out of the prompt as rare.
     /// </summary>
-    public static string OutcomeSuccess(string actionDisplay, IReadOnlyList<string>? outcomeVerbatims = null)
-    {
-        var head = $"It is done! I managed to {FirstPerson(actionDisplay)}.";
-        var tail = OutcomeConsequences(outcomeVerbatims);
-        return tail.Length == 0 ? head : $"{head} Thanks to this success I {tail}.";
-    }
+    public static string OutcomeSuccess(string actionDisplay, IReadOnlyList<string>? outcomeVerbatims = null,
+                                        IReadOnlyList<string>? lessonVerbatims = null)
+        => $"It is done! I managed to {FirstPerson(actionDisplay)}."
+         + ConsequenceSentences("Thanks to this success I", outcomeVerbatims, lessonVerbatims);
 
-    public static string OutcomeFailure(string actionDisplay, IReadOnlyList<string>? outcomeVerbatims = null)
+    public static string OutcomeFailure(string actionDisplay, IReadOnlyList<string>? outcomeVerbatims = null,
+                                        IReadOnlyList<string>? lessonVerbatims = null)
+        => $"Alas, I failed to {FirstPerson(actionDisplay)}."
+         + ConsequenceSentences("Due to this failure I", outcomeVerbatims, lessonVerbatims);
+
+    /// <summary>
+    /// " Thanks to this success I made my way to the coop. And I learned trailcraft." — the consequences
+    /// as one sentence, and a lesson (<see cref="Cathedral.Game.Narrative.Outcome.IsLesson"/>) in a
+    /// sentence of its own after them. Last in the comma list, the lesson was the clause a rewrite
+    /// dropped or replaced with what its name sounds like ("learned water voice" became "learned
+    /// earth's song"): 45% of outcome samples lost it, 34% with its own sentence (tools/prompts, 124
+    /// samples a side; blind fidelity no lower). A lesson with nothing before it stays where it was.
+    /// </summary>
+    private static string ConsequenceSentences(string lead, IReadOnlyList<string>? effects, IReadOnlyList<string>? lessons)
     {
-        var head = $"Alas, I failed to {FirstPerson(actionDisplay)}.";
-        var tail = OutcomeConsequences(outcomeVerbatims);
-        return tail.Length == 0 ? head : $"{head} Due to this failure I {tail}.";
+        var e = OutcomeConsequences(effects);
+        var l = OutcomeConsequences(lessons);
+        if (e.Length == 0 && l.Length == 0) return "";
+        if (e.Length == 0) return $" {lead} {l}.";
+        return l.Length == 0 ? $" {lead} {e}." : $" {lead} {e}. And I {l}.";
     }
 
     /// <summary>
@@ -497,10 +510,14 @@ public static class NeutralNarration
     /// back empty (every verbatim was bookkeeping) falls back to the feeling alone rather than
     /// producing a dangling "Because I ,".</para>
     /// </summary>
-    public static string Emotion(IReadOnlyList<string>? outcomeVerbatims, string feelsLike)
+    public static string Emotion(IReadOnlyList<string>? outcomeVerbatims, string feelsLike,
+                                 IReadOnlyList<string>? lessonVerbatims = null)
     {
         var tail = OutcomeConsequences(outcomeVerbatims);
-        return tail.Length == 0 ? feelsLike : $"I {tail}. {feelsLike}";
+        var lesson = OutcomeConsequences(lessonVerbatims);
+        if (tail.Length == 0 && lesson.Length == 0) return feelsLike;
+        if (tail.Length == 0) return $"I {lesson}. {feelsLike}";
+        return lesson.Length == 0 ? $"I {tail}. {feelsLike}" : $"I {tail}. And I {lesson}. {feelsLike}";
     }
 
     public static string PlausibilityFailure(string actionDisplay)

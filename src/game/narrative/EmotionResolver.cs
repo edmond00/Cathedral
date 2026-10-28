@@ -20,7 +20,11 @@ public readonly record struct FeltEmotion(
 
     /// <summary>The consequence half of the emotion's neutral line, first person, ready after "I ".</summary>
     public IReadOnlyList<string> Verbatims =>
-        Because.Select(o => o.Verbatim).Where(v => !string.IsNullOrWhiteSpace(v)).ToList();
+        Because.Where(o => !o.IsLesson).Select(o => o.Verbatim).Where(v => !string.IsNullOrWhiteSpace(v)).ToList();
+
+    /// <summary>The lessons among <see cref="Because"/>, said in a sentence of their own (see <see cref="Outcome.IsLesson"/>).</summary>
+    public IReadOnlyList<string> Lessons =>
+        Because.Where(o => o.IsLesson).Select(o => o.Verbatim).Where(v => !string.IsNullOrWhiteSpace(v)).ToList();
 }
 
 /// <summary>
