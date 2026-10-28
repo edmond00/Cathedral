@@ -1,0 +1,82 @@
+# corpus playthrough cave_morning. FLAGS: --skip-childhood --debug --seed 26 --start-at cave --period morning --grant-mm tactics,sense_of_humor,ruination,nightwalking,clambering
+wait
+wait mode MainMenu 900
+click menu New
+wait mode ProtagonistCreation 60
+click continue
+wait mode WorldView 300
+travel here
+wait mode LocationInteraction 900
+advance 12 1500
+click keyword 0
+choose 0
+choose tactics
+advance 12 1500
+click action 0
+choose 0
+advance 12 1500
+click continue
+advance 12 1500
+advance 12 1500
+wait 30
+advance 20 1500
+click option 0
+advance 20 1500
+click option 1
+advance 20 1500
+click option 0
+advance 20 1500
+click continue
+advance 20 1500
+click button
+wait 1500
+advance 12 1500
+click keyword 0
+choose 0
+choose sense_of_humor
+advance 12 1500
+click action 0
+choose 0
+advance 12 1500
+click continue
+advance 12 1500
+advance 12 1500
+wait 30
+advance 20 1500
+click option 0
+advance 20 1500
+click option 1
+advance 20 1500
+click option 0
+advance 20 1500
+click continue
+advance 20 1500
+click button
+wait 1500
+advance 12 1500
+click keyword 1
+choose 1
+choose nightwalking
+advance 12 1500
+click keyword 0
+choose 0
+choose ruination
+advance 12 1500
+click action 0
+choose 0
+advance 12 1500
+click continue
+advance 12 1500
+advance 12 1500
+wait 30
+advance 20 1500
+click option 0
+advance 20 1500
+click option 1
+advance 20 1500
+click option 0
+advance 20 1500
+click continue
+advance 20 1500
+state
+quit

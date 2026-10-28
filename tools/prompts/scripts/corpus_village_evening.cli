@@ -1,0 +1,82 @@
+# corpus playthrough village_evening. FLAGS: --skip-childhood --debug --seed 27 --start-at village --period evening --grant-mm mythomania,philosophy,streetwise,petty_thief,sloth,zeal
+wait
+wait mode MainMenu 900
+click menu New
+wait mode ProtagonistCreation 60
+click continue
+wait mode WorldView 300
+travel here
+wait mode LocationInteraction 900
+advance 12 1500
+click keyword 0
+choose 0
+choose mythomania
+advance 12 1500
+click action 0
+choose 0
+advance 12 1500
+click continue
+advance 12 1500
+advance 12 1500
+wait 30
+advance 20 1500
+click option 0
+advance 20 1500
+click option 1
+advance 20 1500
+click option 0
+advance 20 1500
+click continue
+advance 20 1500
+click button
+wait 1500
+advance 12 1500
+click keyword 1
+choose 1
+choose streetwise
+advance 12 1500
+click keyword 0
+choose 0
+choose philosophy
+advance 12 1500
+click action 0
+choose 0
+advance 12 1500
+click continue
+advance 12 1500
+advance 12 1500
+wait 30
+advance 20 1500
+click option 0
+advance 20 1500
+click option 1
+advance 20 1500
+click option 0
+advance 20 1500
+click continue
+advance 20 1500
+click button
+wait 1500
+advance 12 1500
+click keyword 0
+choose 0
+choose zeal
+advance 12 1500
+click action 0
+choose 0
+advance 12 1500
+click continue
+advance 12 1500
+advance 12 1500
+wait 30
+advance 20 1500
+click option 0
+advance 20 1500
+click option 1
+advance 20 1500
+click option 0
+advance 20 1500
+click continue
+advance 20 1500
+state
+quit

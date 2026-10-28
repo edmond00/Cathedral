@@ -1,0 +1,67 @@
+# corpus playthrough plain_afternoon_party. FLAGS: --skip-childhood --debug --seed 28 --start-at plain --period afternoon --fill-party --grant-mm sangfroid,impatience,courtesy,architecture,dance
+wait
+wait mode MainMenu 900
+click menu New
+wait mode ProtagonistCreation 60
+click continue
+wait mode WorldView 300
+travel here
+wait mode LocationInteraction 900
+advance 12 1500
+click keyword 0
+choose 2
+choose 0
+choose 0
+advance 12 1500
+click keyword 0
+choose 0
+choose impatience
+advance 12 1500
+click action 0
+choose 0
+advance 12 1500
+click continue
+advance 12 1500
+advance 12 1500
+wait 30
+advance 20 1500
+click option 0
+advance 20 1500
+click option 1
+advance 20 1500
+click option 0
+advance 20 1500
+click continue
+advance 20 1500
+click button
+wait 1500
+advance 12 1500
+click keyword 0
+choose 0
+choose courtesy
+advance 12 1500
+click action 0
+choose 0
+advance 12 1500
+click continue
+advance 12 1500
+advance 12 1500
+wait 30
+advance 20 1500
+click option 0
+advance 20 1500
+click option 1
+advance 20 1500
+click option 0
+advance 20 1500
+click continue
+advance 20 1500
+click button
+wait 1500
+advance 12 1500
+click keyword 1
+choose 1
+choose architecture
+advance 12 1500
+state
+quit
