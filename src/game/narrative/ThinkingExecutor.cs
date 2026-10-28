@@ -100,7 +100,16 @@ public class ThinkingExecutor
             ? new List<NarrativeAnchor>(sourceObs.SubOutcomes)
             : new List<NarrativeAnchor> { targetOutcome };
 
-        string targetDescription = targetOutcome.ToNaturalLanguageString();
+        // A person (or a beast) is named the way the observation named them — "the blacksmith of the
+        // village (a woman)", "my acquaintance Rachel" — never by their appearance, which is a run of
+        // subjectless clauses: "I notice someone hammers a length of iron…; a worry sits behind the eyes…"
+        // handed every mind the blacksmith's worry and long stare as its own, and most made her a man.
+        // Measured on every recorded reasoning about a person (tools/prompts, 52 samples a side): blind
+        // fidelity 0.60 -> 0.92, the narrator taking the person's traits gone, the gender wrong in none
+        // instead of 5, and 49 fewer prompt tokens. The observation just before has already described them.
+        string targetDescription = sourceObs is { DescriptionIsClause: true }
+            ? sourceObs.NeutralPhrase
+            : targetOutcome.ToNaturalLanguageString();
 
         // Short situational context threaded into every constrained-choice prompt: the overall
         // location (e.g. "a farm"), the specific area within it (e.g. "courtyard"), and what drew
