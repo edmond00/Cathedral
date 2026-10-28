@@ -277,3 +277,25 @@ public class CaimanArchetype : GenericShallowArchetype
     };
 }
 
+// ── Sea ice ─────────────────────────────────────────────────────────────────
+
+public class NarwhalArchetype : GenericShallowArchetype
+{
+    public override string ArchetypeId     => "narwhal";
+    public override string TypeDisplayName => "Narwhal";
+    protected override string ComposeObservationHint(Random rng, string nodeContext) => Compose(rng,
+        sizes:  new[] { "great", "long-tusked" },
+        colors: new[] { "mottled grey", "pale", "dappled" },
+        noun:   "narwhal",
+        traits: new[] { "rising to breathe in the open water with a long spiral tusk lifted", "lying at the surface, its breath steaming", "rolling under the ice edge and gone" });
+    protected override string CorpseBodyDescription => "the great mottled body of a narwhal, its long spiral tusk lying across the ice";
+    protected override List<ItemElement> BuildCorpseDrops() => new()
+    {
+        new ItemElement(new Skin()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Suet()),
+        new ItemElement(new Tusk()),
+    };
+}
+
