@@ -193,3 +193,25 @@ public class BitternArchetype : BirdShallowArchetype
         new ItemElement(new Bone()),
     };
 }
+
+// ── Desert ──────────────────────────────────────────────────────────────────
+
+public class DesertMonitorArchetype : GenericShallowArchetype
+{
+    public override string ArchetypeId     => "desert_monitor";
+    public override string TypeDisplayName => "Desert Monitor";
+    protected override string ComposeObservationHint(Random rng, string nodeContext) => Compose(rng,
+        sizes:  new[] { "long", "heavy-tailed" },
+        colors: new[] { "sand-yellow", "banded", "dusty grey" },
+        noun:   "monitor lizard",
+        traits: new[] { "basking on a hot rock, tongue flickering", "swinging its head to watch you", "tail lashing as it backs into a crack" });
+    protected override string CorpseBodyDescription => "the long banded body of a monitor lizard, its tail longer than the rest of it";
+    protected override List<ItemElement> BuildCorpseDrops() => new()
+    {
+        new ItemElement(new Skin()),
+        new ItemElement(new Skin()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Tail()),
+        new ItemElement(new Claw()),
+    };
+}

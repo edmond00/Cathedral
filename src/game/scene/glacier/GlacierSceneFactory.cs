@@ -6,6 +6,7 @@ using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Items;
 using Cathedral.Game.Narrative.World.Items;
 using Cathedral.Game.Npc.Archetypes;
+using Cathedral.Game.Scene.Building;
 using Cathedral.Game.Scene.Shared;
 
 namespace Cathedral.Game.Scene.Glacier;
