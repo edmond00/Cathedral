@@ -197,6 +197,18 @@ public sealed class CliDriver
                         return;
                     }
 
+                    // A preview still being written is not settled, whatever CliIsIdle says: a
+                    // conversation's closing lines stream after its roll with nothing else in
+                    // flight, and stopping here let the next command (the footer button) press
+                    // INTERRUPT on a conversation that was about to end. Keep waiting, up to the
+                    // command's own deadline.
+                    if (pv is { Active: true, Complete: false } && DateTime.UtcNow < _waitDeadline)
+                    {
+                        _waiting = true;
+                        _idleFramesSeen = 0;
+                        return;
+                    }
+
                     _draining = false;
                     CliMode.Emit(pv is { Active: true }
                         ? "advance done (preview still generating — try a longer timeout)"
