@@ -12,9 +12,11 @@ The shipped model invents in about a third of its rewrites, and the global wordi
 that than the persona fields do. Adding rules made it worse every time it was tried; what helped was
 **fixing what the model is handed** — a person named rather than described as a run of clauses, a lesson
 said in its own sentence, two grammar faults — and **removing a clause it was copying**. Five changes
-were kept, each measured on its own with the old wording scored blind in the same sheet; ten lost and
+were kept, each measured on its own with the old wording scored blind in the same sheet; fifteen lost and
 are listed with the reason. The item critic, which had no benchmark, got one and two fixes. The choice
-judge was left alone: its errors are in persona descriptions, not in its prompts.
+judge was left alone: its errors are in persona descriptions, not in its prompts. On a stratified
+final set the net fidelity is flat (0.72 = 0.72) and lower on the held-out playthroughs (0.80 → 0.70,
+22 cases, within the noise but shown); requests are 18 tokens and 6% wall time cheaper.
 
 ## How it was measured
 
@@ -102,6 +104,7 @@ About a third of baseline samples break the meaning (fidelity 0). By cause, most
 | A compact spoken prompt (the line once, at the end; −67 tokens) | 0.70 vs 0.91 (46 a side) | the line stated twice is load-bearing, as `BuildSpokenPrompt`'s comment says; persona rose (1.15 vs 0.85) but fidelity comes first |
 | No style in the request (the persona prompt alone carries it) | fidelity 0.89 vs 0.74, persona 0.50 vs 1.03 | a trade of criterion 2 for criterion 1, which the brief rules out |
 | The lesson named as a craft ("learned the craft of water voice") | lesson lost 40% | no better than its own sentence, and clumsy |
+| `StyleIsNotSceneClause` kept for Reasoning alone (`final_reasoning_clause`), after Reasoning fell without it in round 6 (0.92 → 0.75) and in the final measurement (0.88 → 0.71) | 0.70 vs 0.67, F = 0 24 = 24, persona 1.62 vs 1.72 (30 fresh dev cases, 60 a side, round 10) | the two falls were noise: on fresh cases the clause buys nothing, costs 26 tokens and some persona; its own words were still copied ("it colors how I perceive") |
 | Critic: "Judge as a practised worker would…" in place of "be strict" | 85.0% | no better than removing the line |
 | Critic: "How well could X do the work of Y here?" | 88.6% | beaten by "in place of … even if less well" |
 
@@ -119,7 +122,55 @@ one case is a distribution). Final numbers below.
 
 ## The result
 
-(filled in from the final measurement — see the report)
+**The final measurement shows no net fidelity gain.** The kept changes each won where they were aimed;
+on a stratified set of cases they are a small part of what the model is asked, and the noise is larger
+than they are.
+
+The set (`sets/final_dev.txt`, `sets/final_heldout.txt`): 47 dev cases and 22 held-out cases, every
+kind, own, swapped and loosened personas. Each case was asked at seeds 51 and 52 under the old wording
+(`BASE_REV`) and the new one, 138 samples a side, all scored blind on one sheet (`sheets/final.*`).
+
+| | old | new |
+|---|---|---|
+| fidelity, all | 0.72 (57 at 0) | 0.72 (60 at 0) |
+| fidelity, dev | 0.69 | 0.72 |
+| fidelity, **held out** | **0.80** (15 at 0) | **0.70** (20 at 0) |
+| persona | 1.13 | 1.14 |
+| writing | 0.99 | 0.91 |
+| user-message tokens | 239 | 221 |
+| copies a style, mechanically | 7% | 9% |
+| loses a lesson, mechanically (32 a side) | 50% | 50% |
+
+By kind, fidelity rose for Observation (0.62 → 0.75), Action (0.75 → 0.83) and dialogue lines (0.79 →
+0.88), and fell for Outcome (0.58 → 0.46), Reasoning (0.88 → 0.71) and Emotion (0.58 → 0.50). With 12
+to 24 samples a kind and the same prompt scoring 0 to 2 across seeds, none of these is outside the
+noise. Reasoning was checked anyway, since it had also fallen in round 6 when the style clause went:
+the clause put back for Reasoning alone, on 30 fresh dev cases, scored 0.70 against 0.67 with as many
+zeros (round 10, in the lost table), so the fall is not the clause. The cases whose prompt the new wording actually changes (15 of 69: a person in a reasoning, a
+lesson, "managed", "discreetly") moved by −0.07 on average; the 54 whose only difference is the
+missing style clause moved by +0.01. The held-out fall is reported as measured: it is 22 cases, its
+cases are mostly unchanged prompts, and the targeted measurements above (52, 124 and 80 samples a side)
+are the better evidence for each change. It is still a fall, and the honest reading is "no worse
+within what can be measured, cheaper, and right on the specific faults it set out to fix".
+
+**Speed** (`timing.py`, `samples/timing.jsonl`): the same 69 cases, one seed, the server's cache warmed
+on the persona and the history before every request (what the game has cached when it asks), the two
+versions alternating in order, nothing else running. User message 239 → 221 tokens, tokens read 244 →
+226, prompt reading 4.79 s → 4.47 s, tokens written 35.1 → 33.4, wall time 9.18 s → 8.62 s a request
+(−6%). The samples of the final measurement are not used for speed: the new version ran after the
+old one and found the cache warm, which made it look 15% faster than it is.
+
+**Item critic**, final run (5 samples a case): dev 83.6% → 92.1% (substitution 69% → 85%), **held out
+78.0% → 85.0%** (substitution 69% → 80%, appropriateness 89% → 91%).
+
+**Choice judge**: 95.9%, unchanged; no judge prompt was edited.
+
+**Checks**: `dotnet build`; `./run_tests.sh audits` (12 passed); the cli scripts that reach the
+changed text (`reconsider`, `will_step_retry`, `preview_regression`, the `propose_to_buy`,
+`pickpocket`, `slay`, `listen`, `beg_for_coin`, `examine`, `gather` folders, `dialogue_success`,
+`emotion` success and dialogue, `speaking_puts_conversation_first`, `confronted_witness`,
+`thinking_iterates`, `thinking_doubt`, `will_equal_paths`) all passed. The full suite was not run.
+PLAYTHROUGH
 
 ## Beyond the global instructions
 

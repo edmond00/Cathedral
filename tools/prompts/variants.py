@@ -305,3 +305,20 @@ def final():
 
 
 VARIANTS["final"] = final
+
+
+def final_reasoning_clause():
+    """The final wording with StyleIsNotSceneClause kept for Reasoning alone. The final measurement and
+    round 6 both had Reasoning fall without it (0.88 → 0.71, 0.92 → 0.75) while the other kinds held or
+    rose: a reasoning that finds "nothing here" goes looking for somewhere else, and a style that names
+    things hands it a destination ("the splintering walls", "the baker's shop")."""
+    T = final()
+
+    def footer(T2, kind, r2, style, place):
+        T3 = dict(T2, StyleIsNotSceneClause=T0["StyleIsNotSceneClause"] if kind == "Reasoning" else "")
+        T3.pop("footer_for")
+        return P.footer_for(T3, kind, r2, style, place)
+    return dict(T, footer_for=footer)
+
+
+VARIANTS["final_reasoning_clause"] = final_reasoning_clause

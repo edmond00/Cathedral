@@ -1,0 +1,433 @@
+## village_noon_party:005:swap:poetry
+  kind=Reasoning  persona=poetry  reminder='someone who speaks only when language can be made beautiful'  style='Reach for metaphor, rhythm and lyrical image so the line becomes something close to poetry.'  place='village'
+  IN: I notice a weathered set of oak stocks beside the cross, the leg-holes polished by use, but there is nothing here worth doing, and I would rather turn my attention to something else.
+  S1533: I behold a gnarled set of oak stocks by the cross, their leg-holes worn smooth by time's use. Yet
+        here is naught to stir the heart, aught to mend or craft, and I turn my gaze to tales of old, where
+        shadows dance and whispers weave.
+  S8026: I gaze upon the weathered oak stocks, their leg-holes polished by time's wear, yet find naught here
+        to stir my heart. In this medieval village, I seek the haunts of lore, something old and wistful to
+        ensnare my thoughts.
+  S8906: I spy a gnarled set of oak stocks by the cross, their leg-holes worn smooth by many hands. Yet here
+        is naught to do, and my eye turns to the fields beyond, where shadows play and whispers rustle through
+        the trees.
+  S1243: I find the worn oak stocks by the cross, their leg-holes worn smooth by time's hand. Yet here, there
+        is naught to stir my heart, and I yearn for tales from the distant hills, where shadows dance and
+        secrets are whispered.
+
+## talk_blacksmith:012:swap:dread
+  kind=Reasoning  persona=dread  reminder='someone who wants very much to leave and cannot say why'  style='Physical and unreasoned - the cold along the arms, the reluctance, the eyes going to the exit.'  place='village'
+  IN: I notice someone hammers a length of iron on the anvil, sparks leaping with each blow; a worry sits behind the eyes that the work does not account for; watchful in a way that suggests they are keeping count of something; stands their ground a beat longer than is quite comfortable to watch, but there is nothing here worth doing, and I would rather turn my attention to something else.
+  S4376: I see the blacksmith, a woman, her hands busy, but my eyes keep going to the door. The cold creeps
+        along my arms, urging me out, and yet I cannot shake the feeling that something is not right here.
+  S8578: I see the blacksmith woman but see no work here, my eyes turn to the exit, cold along my forearms
+        urges me to leave.
+  S9049: I see the blacksmith, a woman, her hands glowing from the forge. But here, there's nothing to do,
+        nothing worth my attention. I must look for something else to draw my eyes away.
+  S5546: I see the blacksmith, but she is all alone, and there's no fire to shape. I want to leave this place,
+        to find something else, to not stay in this cold, unfeeling air.
+
+## talk_miller:011:swap:pride
+  kind=Reasoning  persona=pride  reminder='someone who turns down what they need because of how it was offered'  style='Straighten and cool - the offer declined, the tone noted, the line drawn out loud.'  place='village'
+  IN: I notice a pale-dusted figure heaves a sack of grain toward the hopper; weighing something in front of I and inviting me to watch; carries themselves with an odd, formal neatness for the work; whistling under their breath, and a reed pipe pushed through the belt, but there is nothing here worth doing, and I would rather turn my attention to something else.
+  S3625: I notice the miller of the village, a woman, but her offer is not what I need. I will not be spoken
+        to like that, and I turn my attention to something else here.
+  S1563: I notice the miller of the village, a woman, but there is nothing here worth doing. I cool my intent
+        and turn my attention to something else, as this offer was not met with respect.
+  S9530: I notice the miller of the village, a woman, but her offer is cold. I have declined her offer, drawn
+        a line, and will turn my attention elsewhere as there is nothing worth doing here.
+  S9029: I notice the miller of the village, a woman, but her offer is cold and the tone dismissive. I will
+        not be spoken to like that, and I will turn my attention to something else here.
+
+## village_dawn:010:swap:poetry
+  kind=Reasoning  persona=poetry  reminder='someone who speaks only when language can be made beautiful'  style='Reach for metaphor, rhythm and lyrical image so the line becomes something close to poetry.'  place='village'
+  IN: I notice a still weathered stone cross on a stepped base, its carving worn almost smooth, but there is nothing here worth doing, and I would rather turn my attention to something else.
+  S6370: I find the ancient stone, weathered and silent, on the stepped base, its carvings worn almost to
+        whispers. Yet, here is nothing to do, and I turn my gaze to the meadow's soft hues, the chimes of
+        distant bells.
+  S2246: I find a stone cross, its weathered crossbeam on a stepped base, its carvings worn almost smooth, and
+        in this village, where nothing modern breathes, nothing real doth call, I turn my gaze to the
+        whispering willows by the brook.
+  S5095: I see a stone, weathered and silent, on a stepped base, its carvings worn almost to whispers. Nothing
+        here, but a longing for the tales that once adorned these stones, and a need to turn my gaze to the
+        stories yet untold in this ancient village.
+  S6917: I see a stone cross, weathered like a bard's voice, its carvings worn smooth by the ages. Yet here,
+        no task calls, and my heart turns to the tales of the nearby meadow, where shadows whisper of
+        forgotten kings.
+
+## forest_evening:004:own
+  kind=Reasoning  persona=caution  reminder='someone who checks the way out before going in'  style='Delay the action - the second look, the exit noted, the small wrongness that will not resolve.'  place='forest'
+  IN: So I will not examine the snail closely. That will not do, and I think again.
+  S1730: I will delay the second look. The slight wrongness only colors the forest's quiet, and I note the
+        exit before proceeding.
+  S7887: I will delay this action, for another moment. Something slightly wrong remains, and I need to ensure
+        the path is clear.
+  S3272: I will delay this moment, noting the small wrongness that will not resolve, and where the way out is
+        clearly marked.
+  S6817: I will delay this closer inspection, for there is something slightly wrong that needs further
+        consideration, and I must first note the way out and who might see.
+
+## village_noon_party:005:swap:courtesy
+  kind=Reasoning  persona=courtesy  reminder='someone who gets the first thirty seconds exactly right'  style='Warm, correct and brief - the greeting, the precedence given, the name remembered.'  place='village'
+  IN: I notice a weathered set of oak stocks beside the cross, the leg-holes polished by use, but there is nothing here worth doing, and I would rather turn my attention to something else.
+  S7252: I greet and observe, the stocks beside the cross, their leg-holes worn from use. My mind turns to
+        more pleasant tasks, for here is nothing worth doing.
+  S7901: I greet and take precedence, remembering the name. The stocks are old and used, but nothing here to
+        do. I turn my attention to the nearby village green instead.
+  S5646: I greet and give precedence, remembering the name. The weathered oak stocks beside the cross catch my
+        eye, but I find nothing here worth doing. Turning my attention to the lush green fields beyond, I
+        sense a more engaging task awaits.
+  S5297: I greet and take precedence, the leg-holes of the stocks polished by time. A fleeting glance, nothing
+        here to do, I turn to the market's tales instead.
+
+## forest_evening:005:own
+  kind=Reasoning  persona=caution  reminder='someone who checks the way out before going in'  style='Delay the action - the second look, the exit noted, the small wrongness that will not resolve.'  place='forest'
+  IN: I could still examine the snail closely, another way: I will rely on the shaping and joining of timber.
+  S8484: I could still examine the snail closely, another way perhaps, but first I will delay, note the exit,
+        and consider the slight wrongness that shadows our path through this ancient wood.
+  S3861: I could still examine the snail closely, another way perhaps. But first, I will delay and check the
+        exit, note the slight wrongness that refuses to resolve, and consider the shaping and joining of
+        timber in this medieval forest.
+  S5966: I could still examine the snail closely, another way perhaps. But first, let me note the exit and the
+        slight wrongness that shadows our path, for even in this forest, nothing is as it seems.
+  S6940: I could still examine the snail closely, another way. Let me first note the exit and consider this
+        slight wrongness that won't resolve, before proceeding into the forest.
+
+## village_dawn:010:swap:dread
+  kind=Reasoning  persona=dread  reminder='someone who wants very much to leave and cannot say why'  style='Physical and unreasoned - the cold along the arms, the reluctance, the eyes going to the exit.'  place='village'
+  IN: I notice a still weathered stone cross on a stepped base, its carving worn almost smooth, but there is nothing here worth doing, and I would rather turn my attention to something else.
+  S3178: I see the stone cross, yet the stillness of the air and the lack of a reason to stay pull me towards
+        the door. The cold along my arms is a physical reminder of my reluctance, urging me to turn my eyes to
+        the exit.
+  S8486: I see the stone cross, my eyes already at the door, the cold creeping up my arms. Nothing here, no
+        use, I must turn to the next task in this village.
+  S4922: I see the weathered stone cross, my eyes already on the door, the cold along my forearms a strong
+        preference for the exit. There's nothing here to do, let me turn my thoughts to the fields beyond.
+  S8203: I see the old stone cross, its carving smooth from weather and use, but the village is quiet, and
+        there's no fire to light. I must find a reason to leave, though I cannot yet say why.
+
+## farm_night:013:swap:ruination
+  kind=Reasoning  persona=ruination  reminder='someone who enjoys the moment a made thing stops being one'  style='Colour the line with splintering, collapse and the speed at which work is undone.'  place='farm'
+  IN: I notice a ways lead on from here: a chicken coop–storage shed track, a storage shed–vegetable garden track and a courtyard. I want to follow the chicken coop–storage shed track. I will rely on the welcoming and care of guests and travellers.
+  S7147: I follow the splintering track of the chicken coop, where work is undone in collapse. I will rely on
+        the welcoming warmth of guests and travellers to guide me through the courtyard.
+  S1725: I follow the splintering lines of the track, where the chicken coop and storage shed meet. I trust
+        the welcoming of guests and travellers to guide my steps through the courtyard, where work is undone
+        at a dizzying pace.
+  S1066: I follow the splintering line of the track, its collapse revealing forgotten tools and seeds. The
+        chicken coop's storage shed track beckons, inviting me into the welcoming embrace of this forgotten
+        farm.
+  S4860: I follow the splintering line, collapsing work as it is undone, towards the chicken coop-storage shed
+        track, where I will find the welcoming and care of guests and travellers.
+
+## talk_miller:011:swap:dread
+  kind=Reasoning  persona=dread  reminder='someone who wants very much to leave and cannot say why'  style='Physical and unreasoned - the cold along the arms, the reluctance, the eyes going to the exit.'  place='village'
+  IN: I notice a pale-dusted figure heaves a sack of grain toward the hopper; weighing something in front of I and inviting me to watch; carries themselves with an odd, formal neatness for the work; whistling under their breath, and a reed pipe pushed through the belt, but there is nothing here worth doing, and I would rather turn my attention to something else.
+  S3195: I see the miller, but there's nothing here worth doing. My eyes go to the exit, cold along my
+        forearms, and I want to leave, though I cannot say why yet.
+  S4194: I see the miller, a woman, but there's nothing to do here. My eyes drift to the exit, cold along my
+        forearms, and I can't shake this feeling that something is wrong.
+  S5962: I see the miller, her hands stained from grain, but the village is still, the fire in the hearth gone
+        cold. I must leave, the air feels heavier, and I cannot say why.
+  S9787: I see the miller's house, a woman's face, but the village is silent, the fire gone, and I cannot rest
+        here. My eyes seek the exit, cold along my arms, and a strong urge to leave persists, though the
+        reason is lost in the darkening hall.
+
+## talk_farm:002:own
+  kind=Reasoning  persona=homily  reminder='someone who knows when a crowd stops listening'  style='Draw a lesson - a text, a story, a warning - pitched at the listener in front of you.'  place='farm'
+  IN: I notice a long swallow-nested two-storey timber-framed farmhouse under a thatch gone grey, but there is nothing here worth doing, and I would rather turn my attention to something else.
+  S6998: I see the farmhouse, its timbers weathered by time, but its neglect speaks of nothing worth
+        restoring. Perhaps there are other fields waiting for my hands and heart.
+  S4935: I see the farmhouse, its timbers weathered and its thatch grey, but it speaks of nothing new or worth
+        doing. I turn my gaze to the fields, where life and work still hold their own magic.
+  S6150: I see the farmhouse, its timbers weathered, and the thatch worn grey, yet it offers no new purpose.
+        I'll seek out another task within these walls.
+  S9994: I see the farmhouse with its swallow-nested roof, but it feels old and unremarkable. My gaze wanders
+        to the fields beyond, where the work seems more inviting and fruitful. I'll turn my attention to the
+        crops that need tending.
+
+## forest_evening:010:own
+  kind=Reasoning  persona=ripelore  reminder='someone who knows the hour a thing is at its best'  style='Use the imagery of swell, colour and scent coming to their point, with the calm of someone who knows waiting has a price.'  place='forest'
+  IN: I notice a spreading broad-crowned oak with deep-fissured bark and heavy boughs. I want to cut wood from the oak tree. I will rely on the shaping and joining of timber.
+  S8383: I notice a broad-crowned oak, its bark deep-fissured and heavy boughs, each telling the story of
+        years. I will cut wood from this tree, knowing the shaping and joining of timber come at their best
+        hour.
+  S8143: I perceive a broad-crowned oak with deep-fissured bark and heavy boughs, its strength and age
+        evident. I seek its wood, for it is now ripe, just as the hour for such a task is. I will shape and
+        join the timber with care, as it is in its best hour.
+  S8700: I see the oak's swell, its colour deepening with age, and the scent of earth and wood growing
+        stronger. I will cut wood from this tree, letting its shaping and joining guide my hands, for it is
+        ready now.
+  S2064: I perceive a broad-crowned oak with swell and colour reaching their peak, its deep-fissured bark and
+        heavy boughs giving promise of strength and longevity. I know the hour of its readiness and will cut
+        wood from this tree, shaping and joining timber with care and skill, lest the waiting past its best
+        weigh down the work.
+
+## forest_evening:002:swap:avarice
+  kind=Reasoning  persona=avarice  reminder='someone who would rather keep the silver than spend it well'  style="Colour the line with images of hoarding and grasping, and a miser's reluctance to let anything go."  place='forest'
+  IN: I notice a fat banded snail, feelers out, going nowhere in particular. I want to examine the snail closely. I will rely on the plain ways of country folk.
+  S6319: I see a fat banded snail, its feelers twitching, moving aimlessly. My eyes narrow, my hands curl
+        around the dirt, unwilling to let this find its place in the world. I must examine it closely, for the
+        silver in my pocket speaks of too dear a purchase elsewhere.
+  S9223: I spy a plump, striped snail, antennae twitching, meandering without purpose. To close my eyes to its
+        rustling is a crime, yet I grasp the silver coin in my pocket, reluctant to part with its cold, hard
+        weight. I shall consult the simple, trusted ways of country folk, lest the snail outsmart my miserly
+        heart.
+  S3562: I notice a fat banded snail, its feelers out, going nowhere in particular. My gaze is drawn to its
+        shell, a prize to be hoarded. Though I want to examine it closely, my hands clutch the coins from
+        years of saving, reluctant to let this find a place in my purse. I will rely on the plain ways of
+        country folk, but keep it close, for it is a treasure to be held tight.
+  S4674: I notice a fat banded snail, its feelers out, going nowhere in particular. The sight stirs my hand to
+        hoard, to grasp and hold. I want to examine it closely, but my heart is heavy with the silver in my
+        purse, reluctant to let go of another coin. I will rely on the plain ways of country folk, for now.
+
+## forest_evening:004:swap:rhetoric
+  kind=Reasoning  persona=rhetoric  reminder='someone who shapes truth into the most persuasive form'  style="Use balanced, persuasive imagery and turns of phrase, with an orator's pleasure in shaping the listener's mind."  place='forest'
+  IN: So I will not examine the snail closely. That will not do, and I think again.
+  S7764: I will not examine the snail closely in this forest, for it does not draw my intent, and I think
+        again of the paths less trodden by the eyes of seekers.
+  S4905: I will not gaze upon the snail closely there, for it is a waste of time, and I turn my mind to other
+        pursuits within this ancient forest.
+  S1604: I will not gaze upon the snail closely there, for it does not fit, and I seek another path to follow.
+  S1520: I will not delve into the slumbering snail, for it does not belong in this contemplative glade, and I
+        find another path to explore.
+
+## talk_farm:005:own
+  kind=Reasoning  persona=disputation  reminder='someone who states the objection to their own position before you can'  style='Ordered and unhurried - the position, the objection granted, the answer, the narrow concession.'  place='farm'
+  IN: I notice a long swallow-nested two-storey timber-framed farmhouse under a thatch gone grey, but there is nothing here worth doing, and I would rather turn my attention to something else.
+  S9136: I notice a long swallow-nested two-storey timber-framed farmhouse under a thatch gone grey, but there
+        is nothing here worth doing, and I would rather turn my attention to something else. Granted, and yet
+        - perhaps the sight of this old structure stirs memories or evokes a deeper appreciation for the
+        craftsmanship of times past. You would say, I think, that such places hold a unique charm, even if
+        they lack immediate utility. That much I concede. The rest I do not.
+  S5934: I notice a long swallow-nested two-storey timber-framed farmhouse under a thatch gone grey. Granted,
+        and yet, I would say, that much I concede. The rest I do not, as there is nothing here worth doing and
+        I would rather turn my attention to something else.
+  S2180: I notice a long swallow-nested two-storey timber-framed farmhouse under a thatch gone grey. Yet,
+        there is nothing here worth doing, and I would rather turn my attention to something else. Granted,
+        and yet - the rest I do not.
+  S9740: I notice a long swallow-nested two-storey timber-framed farmhouse under a thatch gone grey, but there
+        is nothing here worth doing, and I would rather turn my attention to something else. Granted, and yet,
+        I see potential for some minor repairs, but the main concern remains the lack of value here. That much
+        I concede. The rest I do not.
+
+## farm_night:013:own
+  kind=Reasoning  persona=courtesy  reminder='someone who gets the first thirty seconds exactly right'  style='Warm, correct and brief - the greeting, the precedence given, the name remembered.'  place='farm'
+  IN: I notice a ways lead on from here: a chicken coop–storage shed track, a storage shed–vegetable garden track and a courtyard. I want to follow the chicken coop–storage shed track. I will rely on the welcoming and care of guests and travellers.
+  S2326: I notice a ways lead on from here - a chicken coop-storage shed track, a storage shed-vegetable
+        garden track, and a courtyard. I want to follow the chicken coop-storage shed track. Guided by the
+        welcoming and care of guests and travellers, I will proceed.
+  S3452: I see a ways lead on from here - a chicken coop-storage shed track, a storage shed-vegetable garden
+        track, and a courtyard. I wish to follow the chicken coop-storage shed track. I will greet warmly,
+        give precedence, and remember the name of my hosts, ensuring a welcoming and care-filled journey.
+  S7298: I notice a pathway lead on from here - a chicken coop-storage shed track, a storage shed-vegetable
+        garden track, and a courtyard. I wish to follow the chicken coop-storage shed track. With the
+        welcoming and care of guests and travellers in mind, I will proceed.
+  S7130: I notice a track that leads from here, a chicken coop-storage shed path, a storage shed-vegetable
+        garden path, and a courtyard. I want to follow the chicken coop-storage shed track. My intent is to be
+        welcomed and cared for by those I meet along this path.
+
+## talk_miller:002:own
+  kind=Reasoning  persona=courtesy  reminder='someone who gets the first thirty seconds exactly right'  style='Warm, correct and brief - the greeting, the precedence given, the name remembered.'  place='village'
+  IN: I notice a pale-dusted figure heaves a sack of grain toward the hopper; weighing something in front of I and inviting me to watch; carries themselves with an odd, formal neatness for the work; whistling under their breath, and a reed pipe pushed through the belt. I want to strike up a conversation with her, introducing myself. I will rely on moving unheard and unseen.
+  S2850: I notice the miller of the village, a woman. I wish to greet her warmly, remembering to use her name
+        and take the precedence. I will move unseen, greeting her softly as she passes by.
+  S2582: I notice the miller of the village, a woman. I wish to greet her kindly, using her name and moving
+        unseen to start our conversation.
+  S8234: I notice the miller of the village, a woman. I wish to strike up a conversation, introducing myself.
+        I will move unheard and unseen, greeting her with warmth, using her name and taking the precedence.
+  S3725: I notice the miller of the village, a woman. I wish to strike up a conversation, introducing myself.
+        I will move unseen and unheard, relying on my courteous nature to guide my approach.
+
+## forest_evening:005:swap:poetry
+  kind=Reasoning  persona=poetry  reminder='someone who speaks only when language can be made beautiful'  style='Reach for metaphor, rhythm and lyrical image so the line becomes something close to poetry.'  place='forest'
+  IN: I could still examine the snail closely, another way: I will rely on the shaping and joining of timber.
+  S4128: I might still peer at the snail, another way, by shaping and joining timbers, as if weaving through
+        the forest's shadows.
+  S6712: I might yet observe the snail's shell, another lens, shaping and joining timbers in the ancient
+        woodlands.
+  S8098: I can still gaze upon the snail, another way now, as I trust the intertwining of timbers, their
+        shapes and seams holding secrets in their grain.
+  S7784: I trace the snail's fragile shell, another path through the woods, letting the wood's warmth and
+        strength join my steps.
+
+## village_dawn:010:own
+  kind=Reasoning  persona=rhetoric  reminder='someone who shapes truth into the most persuasive form'  style="Use balanced, persuasive imagery and turns of phrase, with an orator's pleasure in shaping the listener's mind."  place='village'
+  IN: I notice a still weathered stone cross on a stepped base, its carving worn almost smooth, but there is nothing here worth doing, and I would rather turn my attention to something else.
+  S8300: I perceive a weathered stone cross atop a stepped base, its carving almost smooth from time's wear.
+        Yet, here is nothing worth doing, and my gaze shifts to the fields beyond, where the sun casts long
+        shadows.
+  S5021: I perceive a stone cross, its weathered surface adorned with carved scenes, now almost effaced by
+        time's relentless hand. Yet, here is nothing worth my labor, and I find myself turning my gaze to the
+        fields beyond, to the stories that unfold in the village's embrace.
+  S5500: I behold a weathered stone cross, its carving nearly smooth, upon a stepped base. Its simplicity
+        offers no solace, and I find myself turning to the stories of the past, seeking a more meaningful
+        pursuit within this humble village.
+  S3351: I behold a stone cross, weathered and silent, atop a stepped base, its carvings nearly smooth, and
+        yet there is naught here to stir my heart. My gaze wanders, seeking what might move me, and I turn my
+        attention to the fields beyond, the ripe wheat whispering of harvest and the hammers of the smiths at
+        work.
+
+## farm_night:008:own
+  kind=Reasoning  persona=dread  reminder='someone who wants very much to leave and cannot say why'  style='Physical and unreasoned - the cold along the arms, the reluctance, the eyes going to the exit.'  place='farm'
+  IN: I notice a sweet-smelling compressed stack of hay rising to the shed roof. I want to breathe in the smell of the hay stack. I will rely on the tending and handling of livestock.
+  S9550: I see the hay stack, its sweet smell draws me, but I cannot stay. Cold creeps up my arms, and my eyes
+        go to the door, seeking an escape.
+  S3923: I notice the hay's sweet scent, drawing me to the shed. I want to breathe in the hay's fresh air, but
+        my reluctance holds me back. Yet, I know the livestock need tending, so I will find a way to leave.
+  S2957: I see the hay stack, its sweet scent rises, drawing me. I will leave through the door, though the
+        cold along my arms and the reluctance linger, and the eyes always go to the exit.
+  S5374: I notice the sweet hay scent rising, a pull towards the shed. I want to breathe in that fresh hay
+        smell, but first, I must tend to the livestock. It is a bodily thing, urging me to leave, but I cannot
+        say why yet.
+
+## village_noon_party:005:own
+  kind=Reasoning  persona=mercy  reminder='someone who lets it go when nobody would have blamed them for not'  style='The pause at the decisive moment - the lowered hand, the step back, the short reason given.'  place='village'
+  IN: I notice a weathered set of oak stocks beside the cross, the leg-holes polished by use, but there is nothing here worth doing, and I would rather turn my attention to something else.
+  S8466: I pause at the decisive moment - the lowered hand, the step back, the short reason given. But what
+        draws me is the sight of the weathered oak stocks, their leg-holes polished by use, and I would rather
+        turn my attention to something else.
+  S5957: I notice the worn oak stocks by the cross, the leg-holes smooth from use. Yet, there's nothing here
+        worth doing, and I turn my gaze elsewhere, as is my nature.
+  S3702: I pause at the decisive moment - the lowered hand, the step back, the short reason given. Yet, I know
+        better than to be swayed by these moments. There is nothing here worth doing, and I will turn my
+        attention elsewhere.
+  S3855: I pause at the decisive moment, the hand lowered, the step back deliberate. The reason is small and
+        hard to argue with, but I have decided to turn my attention elsewhere, to something else that calls to
+        me in this medieval village.
+
+## village_noon_party:002:swap:avarice
+  kind=Reasoning  persona=avarice  reminder='someone who would rather keep the silver than spend it well'  style="Colour the line with images of hoarding and grasping, and a miser's reluctance to let anything go."  place='village'
+  IN: I notice a rutted lane with workshop doors down both sides, loud with hammering and sawing, but there is nothing here worth doing, and I would rather turn my attention to something else.
+  S3885: I see a rutted lane lined with hoardings, doors of workshops down both sides, where hammering and
+        sawing echo, but there is naught to be found worth keeping. My hand closes around the coins, and my
+        mind turns to the silver that has not been spent.
+  S8866: I see the rutted lane, hoards lining the sides, doors of workshops down both ways, their iron and
+        wood creaking. But silver coins cling tighter, for every bit spent is a loss of something precious. I
+        turn my gaze to the nearby forge, its heat and noise an easy distraction from the rustling hoards.
+  S6694: I spy a rutted lane with workshop doors, their iron handles gleaming under the dim light of lanterns.
+        The hammering and sawing echo, but the workshop contains only hoarded coins and tools, no projects
+        worth starting. Better to glance at the chest in the common room, my silver still safe and waiting for
+        brighter days.
+  S6374: I see the rutted lane with its hoards of tools and refuse, the workshop doors closed tight, their
+        contents hidden from prying eyes. Yet, the gleam of gold coins in my purse calls to me, and I cannot
+        part with them now, not even for a task worth doing.
+
+## farm_dusk:002:own
+  kind=Reasoning  persona=pride  reminder='someone who turns down what they need because of how it was offered'  style='Straighten and cool - the offer declined, the tone noted, the line drawn out loud.'  place='farm'
+  IN: I notice a ways lead on from here: a courtyard–pigsty track, a courtyard–storage shed track and a chicken coop. I want to follow the courtyard–storage shed track. I will rely on the expressionless face that shows nothing.
+  S8122: I notice a path that winds onward here, through a courtyard and pigsty, to a courtyard and storage
+        shed. I will follow the storage shed track, though the expressionless face before me shows no
+        approval.
+  S4664: I notice a way leads on from here, a courtyard-pigsty track, a courtyard-storage shed track, and a
+        chicken coop. I will follow the courtyard-storage shed track, as the offer was not as I desired, and I
+        will not be spoken to like that.
+  S1082: I notice a path leads on from here, through a courtyard to a pigsty and to a storage shed. The
+        storage shed catches my eye, and I will follow it. I will rely on the expressionless face that shows
+        nothing, for it teaches me to stand tall and firm in my refusal.
+  S9926: I notice a path lead on from here, a courtyard-pigsty track, a courtyard-storage shed track, and a
+        chicken coop. I will follow the courtyard-storage shed track. My intent is clear, the offer declined,
+        the tone noted, and the line drawn out loud. My way is straightened and cooled, showing nothing.
+
+## farm_dusk:002:swap:mercy
+  kind=Reasoning  persona=mercy  reminder='someone who lets it go when nobody would have blamed them for not'  style='The pause at the decisive moment - the lowered hand, the step back, the short reason given.'  place='farm'
+  IN: I notice a ways lead on from here: a courtyard–pigsty track, a courtyard–storage shed track and a chicken coop. I want to follow the courtyard–storage shed track. I will rely on the expressionless face that shows nothing.
+  S1715: I pause at the decisive moment, the hand lowered. The courtyard-storage shed track beckons, its
+        simplicity speaks to my resolve. I follow, relying on the expressionless face that shows nothing.
+  S6433: I pause at the decisive moment - the lowered hand, the step back, the short reason given. It colors
+        how I perceive the tracks before me - a courtyard-pigsty, a courtyard-storage shed, and a chicken
+        coop. I choose to follow the courtyard-storage shed track, relying on the expressionless face that
+        shows nothing.
+  S6233: I pause at the decisive moment - the lowered hand, the step back, the short reason given. Yet, I
+        choose to follow the courtyard-storage shed track, trusting in the expressionless face that shows
+        nothing.
+  S4975: I pause at the decisive moment, the lowered hand offering a brief respite. The courtyard-storage shed
+        track beckons, and I follow it, expressionless, for there is little to say.
+
+## forest_evening:010:swap:ruination
+  kind=Reasoning  persona=ruination  reminder='someone who enjoys the moment a made thing stops being one'  style='Colour the line with splintering, collapse and the speed at which work is undone.'  place='forest'
+  IN: I notice a spreading broad-crowned oak with deep-fissured bark and heavy boughs. I want to cut wood from the oak tree. I will rely on the shaping and joining of timber.
+  S2309: I see splintering lines beneath the broad-crowned oak, its bark collapsing with the weight of heavy
+        boughs. I want to cut wood from this tree, let it go now, and let the shaping and joining of timber
+        undo itself with the speed of the moment.
+  S5288: I see splintering lines across the broad-crowned oak, the fissures deepening with each passing day.
+        The speed at which work is undone calls to me, and I will shape and join timber in this spreading
+        forest, where nothing holds it now.
+  S8340: I see the oak, its splintered bark revealing the speed at which work is undone, and I yearn to shape
+        and join its heavy boughs, a testament to its own spreading, ancient life.
+  S7632: I see the oak's splintering bark and heavy limbs, and the urge to cut it spreads like quicksilver. I
+        will shape and join the timber swiftly, before it collapses into nothingness.
+
+## farm_night:008:swap:pride
+  kind=Reasoning  persona=pride  reminder='someone who turns down what they need because of how it was offered'  style='Straighten and cool - the offer declined, the tone noted, the line drawn out loud.'  place='farm'
+  IN: I notice a sweet-smelling compressed stack of hay rising to the shed roof. I want to breathe in the smell of the hay stack. I will rely on the tending and handling of livestock.
+  S3592: I decline the offer, noting the sweet-smelling hay stack. The tone of its handling was imposing, so I
+        will rely on my own tending and handling of livestock instead.
+  S7399: I notice the sweet-smelling hay stack atop the shed, a clear signal to me of the care bestowed. I
+        will not be spoken to like that, and I rely on the tending of livestock to ensure I am not ignored
+        once more.
+  S9122: I decline the sweet-smelling hay, noting the tone of its offer. My intent is to draw a clear line,
+        relying on the tending and handling of livestock as my own path.
+  S4955: I notice the sweet hay scent, and the stack rising to the roof of the shed. The smell calls to me,
+        but I will not be spoken to like that. I will keep my distance, relying on the tending of livestock as
+        I have always done.
+
+## talk_blacksmith:012:swap:avarice
+  kind=Reasoning  persona=avarice  reminder='someone who would rather keep the silver than spend it well'  style="Colour the line with images of hoarding and grasping, and a miser's reluctance to let anything go."  place='village'
+  IN: I notice someone hammers a length of iron on the anvil, sparks leaping with each blow; a worry sits behind the eyes that the work does not account for; watchful in a way that suggests they are keeping count of something; stands their ground a beat longer than is quite comfortable to watch, but there is nothing here worth doing, and I would rather turn my attention to something else.
+  S9607: I spy the blacksmith's forge, but the coin in my purse is heavy, a reminder of too much spent
+        elsewhere. I'll find another task, one that won't drain my silver.
+  S5451: I spy the smith's forge, but the blacksmith's hands are tight around her coins, hoarding each copper
+        and silver. There's naught here to spur my restless spirit, so I turn my gaze to the meager offerings
+        of the market, where the pennies are few and scarce.
+  S9521: I see the blacksmith, but her skills are as hoarded as my coins. Better to savor what I have and
+        avoid the rust of idle hands.
+  S9190: I see the blacksmith, a woman, her hands wrapped around coins she hoards. There is nothing here worth
+        doing, so I turn my gaze to the chest hidden behind the well, where silver waits to be claimed.
+
+## talk_farm:002:swap:avarice
+  kind=Reasoning  persona=avarice  reminder='someone who would rather keep the silver than spend it well'  style="Colour the line with images of hoarding and grasping, and a miser's reluctance to let anything go."  place='farm'
+  IN: I notice a long swallow-nested two-storey timber-framed farmhouse under a thatch gone grey, but there is nothing here worth doing, and I would rather turn my attention to something else.
+  S2028: I see the silver lining of the old farmhouse, its timbers gnarled and its roof caked with age, but my
+        hoarder's heart resists parting with a single coin. There is nothing here that calls to me to spend or
+        improve, so I close my grasp tighter on the coins I have, to keep them longer.
+  S3724: I see a farmhouse, its timbers holding tightly to their silver, yet the thatch is hollow and the
+        silver inside is hoarded, not worth the effort of spending it on repairs. I will turn my gaze to the
+        silversmith's wares instead.
+  S9018: I see the silver nestling within its walls, a treasure to be hoarded, yet the farmhouse itself,
+        though grand, holds no value to be wasted. I turn my gaze to the fields, where silver can be found in
+        coin and grain alike.
+  S8560: I notice a long swallow-nested two-storey farmhouse, its timber-framed walls thick with years of
+        hoarding, but the thatch is grey, a silent testament to my reluctance to part with even this. There is
+        nothing here worth doing, and I would rather turn my attention to my silver, which holds the stories
+        of my own hoarding.
+
+## farm_night:013:swap:pride
+  kind=Reasoning  persona=pride  reminder='someone who turns down what they need because of how it was offered'  style='Straighten and cool - the offer declined, the tone noted, the line drawn out loud.'  place='farm'
+  IN: I notice a ways lead on from here: a chicken coop–storage shed track, a storage shed–vegetable garden track and a courtyard. I want to follow the chicken coop–storage shed track. I will rely on the welcoming and care of guests and travellers.
+  S7572: I notice a path extends from here, a chicken coop-storage shed track, a storage shed-vegetable garden
+        track, and a courtyard. I will follow the chicken coop-storage shed track. The welcoming and care of
+        guests and travellers have declined, and I must draw a clear line, cool in tone, and not accept this
+        offer.
+  S3224: I notice a way leads on from here, a chicken coop-storage shed track, a storage shed-vegetable garden
+        track, and a courtyard. I will not be spoken to like that, and I will follow the chicken coop-storage
+        shed track. The welcoming and care of guests and travellers are not what I seek.
+  S7888: I notice a path leads on from here, a chicken coop-storage shed track, a storage shed-vegetable
+        garden track, and a courtyard. I will follow the chicken coop-storage shed track. My intent is to rely
+        on the welcoming and care of guests and travellers, a choice made due to the tone of their offering.
+  S9868: I notice a path that winds onward here, a track from chicken coop to storage shed, and one from shed
+        to vegetable garden. I will follow the track from chicken coop to shed, for the welcome and care of
+        guests and travelers are dear to me, but the terms of offer have not been met.
+
+## village_dawn:002:swap:dread
+  kind=Reasoning  persona=dread  reminder='someone who wants very much to leave and cannot say why'  style='Physical and unreasoned - the cold along the arms, the reluctance, the eyes going to the exit.'  place='village'
+  IN: I notice a central stone-rimmed well at the centre of the square, a wooden bucket on its rope. I want to listen to the well. I will rely on the plain ways of country folk.
+  S6721: I see the well at the square's heart, a wooden bucket hanging. I want to listen, to hear the well's
+        secrets. But first, I must listen to my unease, to the chill along my arms and the reluctance to stay.
+  S9825: I see the well at the square's heart, a wooden bucket hanging from its rope. I want to listen to it,
+        to understand what it whispers. Yet my body protests the cold along my arms, and my eyes seek the
+        exit, urging me to leave. The reason comes after, too late.
+  S7354: I see the well at the square's heart, a wooden bucket on its rope. I long to listen to it, for it
+        calls me to leave this place, but I cannot say why. The cold along my arms urges me, yet the plain
+        ways of country folk guide me not to reveal my fear.
+  S9026: I see the well, a reminder of times past. My heart pulls me to the door, urging me to leave this
+        place where nothing makes sense. The cold prickles on my arms, a silent whisper of unease.
