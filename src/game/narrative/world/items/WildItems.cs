@@ -164,3 +164,16 @@ public sealed class Lingonberry : FruitItem
     protected override HumorRecipe Recipe => new HumorRecipe()
         .Add<CholerHumor>(40).Add<SugarHumor>(35).Add<AquaHumor>(25);
 }
+
+// ── Wild bees ───────────────────────────────────────────────────────────────
+
+/// <summary>Comb cut from a wild hive in a tree or a rock — robbed, not kept.</summary>
+public sealed class WildHoney : FruitItem
+{
+    public override string ItemId      => "wild_honey";
+    public override string DisplayName => "Wild Honeycomb";
+    public override string Description => "A dripping slab of dark wild honeycomb, grubs in some of the cells, sweet enough to hurt";
+    protected override HumorRichness Richness => HumorRichness.Hearty;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<SugarHumor>(60).Add<LaetitiaHumor>(25).Add<AquaHumor>(15);
+}

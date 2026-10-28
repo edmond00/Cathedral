@@ -215,3 +215,24 @@ public class DesertMonitorArchetype : GenericShallowArchetype
         new ItemElement(new Claw()),
     };
 }
+
+// ── Hot steppe ──────────────────────────────────────────────────────────────
+
+public class HoneyguideArchetype : BirdShallowArchetype
+{
+    public override string ArchetypeId     => "honeyguide";
+    public override string TypeDisplayName => "Honeyguide";
+    protected override string ComposeObservationHint(Random rng, string nodeContext) => Compose(rng,
+        sizes:  new[] { "small", "drab" },
+        colors: new[] { "grey-brown", "pale-throated", "dun" },
+        noun:   "honeyguide",
+        traits: new[] { "chattering at you from a branch and flitting on a little way", "waiting on a twig, looking back as if to see you follow", "fanning its white-edged tail" });
+    protected override string CorpseBodyDescription => "the small drab body of a honeyguide, its white tail-edges spread";
+    protected override List<ItemElement> BuildCorpseDrops() => new()
+    {
+        new ItemElement(new Feather()),
+        new ItemElement(new Feather()),
+        new ItemElement(new Bone()),
+    };
+}
+
