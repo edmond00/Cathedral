@@ -153,3 +153,43 @@ public class KingfisherArchetype : BirdShallowArchetype
         new ItemElement(new Bone()),
     };
 }
+
+// ── Plain ───────────────────────────────────────────────────────────────────
+
+public class LapwingArchetype : BirdShallowArchetype
+{
+    public override string ArchetypeId     => "lapwing";
+    public override string TypeDisplayName => "Lapwing";
+    protected override string ComposeObservationHint(Random rng, string nodeContext) => Compose(rng,
+        sizes:  new[] { "crested", "round-winged" },
+        colors: new[] { "green-black", "white-bellied", "iridescent" },
+        noun:   "lapwing",
+        traits: new[] { "tumbling over the wet grass crying 'pee-wit'", "running a few steps and stopping", "flopping along the ground as if hurt, to draw you from its nest" });
+    protected override string CorpseBodyDescription => "the crested body of a lapwing, its dark back shot with green";
+    protected override List<ItemElement> BuildCorpseDrops() => new()
+    {
+        new ItemElement(new Feather()),
+        new ItemElement(new Plume()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Bone()),
+    };
+}
+
+public class BitternArchetype : BirdShallowArchetype
+{
+    public override string ArchetypeId     => "bittern";
+    public override string TypeDisplayName => "Bittern";
+    protected override string ComposeObservationHint(Random rng, string nodeContext) => Compose(rng,
+        sizes:  new[] { "hunched", "dagger-billed" },
+        colors: new[] { "streaked brown", "tawny", "reed-coloured" },
+        noun:   "bittern",
+        traits: new[] { "standing bill-up among the reeds, swaying with them", "booming somewhere out of sight like a bull in a barrel", "stalking the shallows a step at a time" });
+    protected override string CorpseBodyDescription => "the streaked brown body of a bittern, long neck folded, the colour of dead reed";
+    protected override List<ItemElement> BuildCorpseDrops() => new()
+    {
+        new ItemElement(new Feather()),
+        new ItemElement(new Plume()),
+        new ItemElement(new Meat()),
+        new ItemElement(new Bone()),
+    };
+}

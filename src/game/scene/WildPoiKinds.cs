@@ -28,3 +28,14 @@ public class BothyPointOfInterest : PointOfInterest
                                 string[]? moods = null, bool isNatural = false)
         : base(displayName, Lemma, descriptions, items, moods, isNatural) { }
 }
+
+/// <summary>A standing stone, alone or one of a ring, raised by people nobody remembers.</summary>
+public class MonolithPointOfInterest : PointOfInterest
+{
+    /// <summary>The lemma this kind answers to. Derived from the class name and fixed here.</summary>
+    public const string Lemma = "monolith";
+
+    public MonolithPointOfInterest(string displayName, List<string> descriptions, List<ItemElement>? items = null,
+                                   string[]? moods = null, bool isNatural = false)
+        : base(displayName, Lemma, descriptions, items, moods, isNatural) { }
+}
