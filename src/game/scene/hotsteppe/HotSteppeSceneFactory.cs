@@ -19,7 +19,7 @@ namespace Cathedral.Game.Scene.HotSteppe;
 /// Climb: the boulders of a kopje, whose summit sees the whole place.
 /// Uninhabited: no settlement stands in hot country yet.
 /// </summary>
-public class HotSteppeSceneFactory : ClimateSceneFactory
+public class HotSteppeSceneFactory : WildSceneFactory
 {
     public HotSteppeSceneFactory(string? sessionPath = null) : base(sessionPath) { }
 

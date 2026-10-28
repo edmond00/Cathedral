@@ -65,9 +65,10 @@ public abstract class SceneFactory
     /// <summary>
     /// The shape this factory means its map to have, which <c>--biome-audit</c> checks every build
     /// against through <see cref="Section.Tier"/>. A statement of intent, not a generator: the factory
-    /// still lays its own areas.
+    /// still lays its own areas, and sets this while it does, since one identity of a place may be
+    /// tiered and another radial.
     /// </summary>
-    public virtual LayoutProfile Profile => LayoutProfile.Unstated;
+    public LayoutProfile Profile { get; protected set; } = LayoutProfile.Unstated;
 
     /// <summary>
     /// The hour every visit to <paramref name="locationId"/> opens at: one of the five daytime periods,

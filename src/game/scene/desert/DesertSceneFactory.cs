@@ -18,7 +18,7 @@ namespace Cathedral.Game.Scene.Desert;
 /// Climb: the slip face of a great dune, the only way to its crest, which sees the whole place.
 /// Uninhabited: no settlement stands in hot country yet.
 /// </summary>
-public class DesertSceneFactory : ClimateSceneFactory
+public class DesertSceneFactory : WildSceneFactory
 {
     public DesertSceneFactory(string? sessionPath = null) : base(sessionPath) { }
 

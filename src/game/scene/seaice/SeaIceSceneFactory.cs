@@ -19,7 +19,7 @@ namespace Cathedral.Game.Scene.SeaIce;
 /// Climb: the iceberg's flank, whose top sees the whole place.
 /// Uninhabited: no settlement stands in cold country yet.
 /// </summary>
-public class SeaIceSceneFactory : ClimateSceneFactory
+public class SeaIceSceneFactory : WildSceneFactory
 {
     public SeaIceSceneFactory(string? sessionPath = null) : base(sessionPath) { }
 

@@ -18,7 +18,7 @@ namespace Cathedral.Game.Scene.Snowfield;
 /// Climb: up the chute's side onto the cornice ridge, which sees the whole place.
 /// Uninhabited: no settlement stands in cold country yet.
 /// </summary>
-public class SnowfieldSceneFactory : ClimateSceneFactory
+public class SnowfieldSceneFactory : WildSceneFactory
 {
     public SnowfieldSceneFactory(string? sessionPath = null) : base(sessionPath) { }
 

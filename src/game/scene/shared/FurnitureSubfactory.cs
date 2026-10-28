@@ -207,7 +207,7 @@ public static class FurnitureSubfactory
     /// failed crossing costs a roll and some skin and never strands anybody.
     /// </summary>
     public static void AddShortcuts(Random rng, Scene scene, IReadOnlyList<Area> areas, Setting setting,
-                                    double chance = 0.55, int max = 2)
+                                    double chance = 0.55, int max = 2, Func<Area, Area, bool>? allowed = null)
     {
         if (areas.Count < 3) return;
 
@@ -220,7 +220,7 @@ public static class FurnitureSubfactory
             var (a, b) = (areas[i], areas[j]);
             bool adjacent = scene.AreaGraph.TryGetValue(a.Id, out var reach) && reach.Contains(b.Id);
             bool joined   = a.PointsOfInterest.OfType<ConnectorPointOfInterest>().Any(c => c.Touches(b));
-            if (!adjacent && !joined) pairs.Add((a, b));
+            if (!adjacent && !joined && (allowed == null || allowed(a, b))) pairs.Add((a, b));
         }
 
         if (pairs.Count == 0) return;

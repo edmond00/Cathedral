@@ -19,7 +19,7 @@ namespace Cathedral.Game.Scene.ColdSteppe;
 /// Climb: the steep side of a pingo — a hill with a core of ice — whose top sees the whole place.
 /// Uninhabited: no settlement stands in cold country yet.
 /// </summary>
-public class ColdSteppeSceneFactory : ClimateSceneFactory
+public class ColdSteppeSceneFactory : WildSceneFactory
 {
     public ColdSteppeSceneFactory(string? sessionPath = null) : base(sessionPath) { }
 

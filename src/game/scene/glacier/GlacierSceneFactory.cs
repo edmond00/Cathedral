@@ -19,7 +19,7 @@ namespace Cathedral.Game.Scene.Glacier;
 /// place. The poorest of the eight in life, deliberately, as the peak is among the temperate ones.
 /// Uninhabited: no settlement stands in cold country yet.
 /// </summary>
-public class GlacierSceneFactory : ClimateSceneFactory
+public class GlacierSceneFactory : WildSceneFactory
 {
     public GlacierSceneFactory(string? sessionPath = null) : base(sessionPath) { }
 

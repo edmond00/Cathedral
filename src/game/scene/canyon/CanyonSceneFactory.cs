@@ -21,7 +21,7 @@ namespace Cathedral.Game.Scene.Canyon;
 /// where somebody once built.
 /// Uninhabited: no settlement stands in hot country yet.
 /// </summary>
-public class CanyonSceneFactory : ClimateSceneFactory
+public class CanyonSceneFactory : WildSceneFactory
 {
     public CanyonSceneFactory(string? sessionPath = null) : base(sessionPath) { }
 

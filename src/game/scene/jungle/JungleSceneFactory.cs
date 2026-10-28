@@ -21,7 +21,7 @@ namespace Cathedral.Game.Scene.Jungle;
 /// direction, so the crown is worth more here than anywhere.
 /// Uninhabited: no settlement stands in hot country yet.
 /// </summary>
-public class JungleSceneFactory : ClimateSceneFactory
+public class JungleSceneFactory : WildSceneFactory
 {
     public JungleSceneFactory(string? sessionPath = null) : base(sessionPath) { }
 
