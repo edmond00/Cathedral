@@ -41,8 +41,14 @@ public sealed record ChronicleConfig(ChronicleVoice Voice, ChronicleInputs Input
 public static class ChroniclerPrompt
 {
     /// <summary>The configuration the game ships, chosen by the <c>tools/journal/</c> comparison.</summary>
+    ///
+    /// <para>Measured on twelve visits from eight real-model runs (design/BELLIC_JOURNAL_REPORT.md): the
+    /// third-person chronicle read best and held its voice; the diary kept slipping into "X wrote in his
+    /// diary:" and third person. Milestones or facts alone were worst of all — with little to go on the
+    /// model invented reeves, axes and barley fields. The previous paragraph as memory made it copy that
+    /// paragraph forward (a quarter of its 4-grams, whole sentences at times); no memory repeated least.</para>
     public static readonly ChronicleConfig Shipped =
-        new(ChronicleVoice.Diary, ChronicleInputs.Everything, ChronicleMemory.PreviousParagraph, MaxTokens: 160);
+        new(ChronicleVoice.Chronicle, ChronicleInputs.Everything, ChronicleMemory.None, MaxTokens: 140);
 
     /// <summary>Longest a single narration or line may be in the prompt; past it, the start is kept.</summary>
     public const int MaxItemChars = 320;

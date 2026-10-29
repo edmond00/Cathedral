@@ -34,7 +34,7 @@ def start_server(threads=4, ctx=4096):
 def chat(system, user, max_tokens, seed=7):
     """One completion; returns (text, timings dict, wall seconds)."""
     body = dict(messages=[dict(role="system", content=system), dict(role="user", content=user)],
-                max_tokens=max_tokens, cache_prompt=False, seed=seed, **SAMPLING)
+                max_tokens=max_tokens, cache_prompt=True, seed=seed, **SAMPLING)
     req = urllib.request.Request(f"http://127.0.0.1:{PORT}/v1/chat/completions", json.dumps(body).encode(),
                                  {"Content-Type": "application/json"})
     t0 = time.time()

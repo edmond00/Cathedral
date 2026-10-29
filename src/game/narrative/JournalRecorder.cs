@@ -71,9 +71,17 @@ public static class JournalRecorder
         }
 
         if (block.OutcomeReports != null)
-            foreach (var chip in block.OutcomeReports.Where(r => r.ShowInUI))
+            foreach (var chip in block.OutcomeReports.Where(r => r.ShowInUI && IsStory(r)))
                 Add(JournalEntryKind.Fact, chip.Text, actor);
     }
+
+    /// <summary>
+    /// Whether a chip says something about the story rather than the bookkeeping. Practice and spent
+    /// noetic points are the game's arithmetic, and a lesson or a wound is already a milestone; given
+    /// to the chronicler, they came back as "gaining two more experience points" (tools/journal/).
+    /// </summary>
+    private static bool IsStory(Outcome chip) => chip is not (ModusMentisPracticeOutcome or ModusMentisGrantOutcome
+                                                              or Cathedral.Game.Scene.FocusLostOutcome or WoundInflictionOutcome);
 
     /// <summary>A line spoken in a conversation: an NPC's, or the reply the player picked.</summary>
     public static void Line(string speaker, string text)
