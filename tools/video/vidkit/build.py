@@ -122,13 +122,32 @@ class Build:
     # ── 2. voice ──────────────────────────────────────────────────────────────
 
     def voice_segment(self, seg: Segment) -> None:
-        text = seg.spec.get("vo")
-        if not text:
+        """A segment's narration: one string, or a list of parts — a string, or {"text", "style"} where
+        the style names an entry of the storyboard's "voice_styles" (settings layered over "voice").
+        The parts are voiced separately and joined with a short pause: how a narration explains in one
+        register and reads the game's own text in another."""
+        vo = seg.spec.get("vo")
+        if not vo:
             return
         v = self.voice
-        seg.vo_path, seg.vo_seconds = tts.speak(
-            text, self.out_dir / f"seg{seg.index:02d}_vo.wav", voice=seg.spec.get("voice", v["name"]),
-            speed=v["speed"], grit=v["grit"], cache_dir=self.cache)
+        parts = [vo] if isinstance(vo, str) else vo
+        clips = []
+        for i, part in enumerate(parts):
+            text, style = (part, None) if isinstance(part, str) else (part["text"], part.get("style"))
+            cfg = {**v, **(self.sb.get("voice_styles", {}).get(style, {}) if style else {})}
+            path, _ = tts.speak(
+                text, self.out_dir / f"seg{seg.index:02d}_vo{i}.wav", voice=seg.spec.get("voice", cfg["name"]),
+                speed=cfg["speed"], grit=cfg["grit"], cache_dir=self.cache,
+                noise_scale=cfg.get("noise_scale"), noise_w=cfg.get("noise_w"),
+                pitch=cfg.get("pitch", 1.0), room=cfg.get("room", 0.0))
+            clips.append(tts.read_wav(path))
+        gap = np.zeros(int(audio.RATE * float(v.get("part_gap", 0.35))), np.float32)
+        joined = clips[0]
+        for c in clips[1:]:
+            joined = np.concatenate([joined, gap, c])
+        seg.vo_path = self.out_dir / f"seg{seg.index:02d}_vo.wav"
+        tts.write_wav(seg.vo_path, joined)
+        seg.vo_seconds = len(joined) / audio.RATE
 
     def target_seconds(self, seg: Segment) -> float:
         need = seg.vo_seconds + self.voice["lead_in"] + self.voice["tail"] if seg.vo_seconds else 0

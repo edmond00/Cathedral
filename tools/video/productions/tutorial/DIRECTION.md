@@ -19,10 +19,14 @@ video made from it). Where this and the `video` skill's house rules differ, this
   from the explanations, so a listener always knows whether a mechanism is being explained or the
   game's text is being read. The texts come from the take's LLM session logs
   (`logs/llm_session_*/slot_*/request_*/llm_response.txt`, timestamped), aligned to the timeline.
-  Same voice (alan) for both: the developer found "slower and rougher" too close to the explanation
-  and "pitched down with a stone-room echo" too far; four readings in between are being auditioned
-  (small room, a little slower and lower; a warmer, narrower tone; a looser Piper delivery). TODO:
-  the choice.
+  Same voice (alan) for both, chosen by audition ("slower and rougher" was too close to the
+  explanation, "pitched down with a stone-room echo" too far). The chosen reading, R4, as storyboard
+  settings:
+  `"voice": {"name": "en_GB-alan-medium", "speed": 1.0, "grit": 0.15}` for the explanation, and
+  `"voice_styles": {"reading": {"speed": 0.88, "grit": 0, "noise_scale": 0.9, "noise_w": 1.1,
+  "pitch": 0.97, "room": 0.16}}` for the game's text: a looser Piper delivery, slightly lower, in a
+  small room. A segment's `vo` is then a list of parts, `{"text": …, "style": "reading"}` for a read
+  passage (`vidkit.build.voice_segment`, `vidkit.tts.speak`).
 - **No captions.**
 - **Diagrams (manim)**: the organs → systems map; one narration turn (observe → keyword → think
   with a modus mentis → goal and means → act → dice → outcome, and where noetic points go); dice and
