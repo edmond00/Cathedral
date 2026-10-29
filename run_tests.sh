@@ -29,7 +29,7 @@ set -uo pipefail
 cd "$(dirname "$0")"
 
 # Slowest first, so the verb audit is not the last thing still running.
-AUDITS=(verb will building biome crime mm dialogue npc item outcome save world-variant history demo)
+AUDITS=(verb will will-lesson building biome crime mm dialogue npc item outcome save world-variant history demo)
 # Overridable from the environment for slow machines (Mesa's software GL under Xvfb, a CI runner):
 # `CLI_TIMEOUT=400 ./run_tests.sh cli`. The default is what a developer's machine needs.
 CLI_TIMEOUT="${CLI_TIMEOUT:-200}"

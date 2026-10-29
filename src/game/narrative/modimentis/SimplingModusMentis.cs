@@ -16,7 +16,8 @@ public class SimplingModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTargets? Will => WillTargets.Of(
         WillTarget.To<Cathedral.Game.Scene.Verbs.GatherVerb>("gather simples in their season").YieldingKind(ItemKind.Herb),
-        WillTarget.To<Cathedral.Game.Scene.Verbs.GatherVerb>("pick a flower for its virtue").YieldingKind(ItemKind.Flower));
+        WillTarget.To<Cathedral.Game.Scene.Verbs.GatherVerb>("pick a flower for its virtue").YieldingKind(ItemKind.Flower),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("study a simple in its bed").Teaching<SimplingModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Woodland, Places.Grassland, Places.Fields);
     public override string[] Organs        => new[] { "hands", "nose" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

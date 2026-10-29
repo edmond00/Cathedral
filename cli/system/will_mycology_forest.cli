@@ -17,5 +17,5 @@ advance 12 180
 
 expect-state will "will mycology steps=1"
 expect-state will "gather a mushroom"
-expect-state will "aim=1/2"
+expect-state will "aim=1/3"
 quit

@@ -17,7 +17,8 @@ public class AngleryModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTargets? Will => WillTargets.Of(
         WillTarget.To<FishVerb>("fish"),
-        WillTarget.ToAny("take up rod and net", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).YieldingAny("rod or net", typeof(Cathedral.Game.Narrative.World.Items.FishingRod), typeof(Cathedral.Game.Narrative.World.Items.Net), typeof(Cathedral.Game.Narrative.Items.FishingNet)));
+        WillTarget.ToAny("take up rod and net", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).YieldingAny("rod or net", typeof(Cathedral.Game.Narrative.World.Items.FishingRod), typeof(Cathedral.Game.Narrative.World.Items.Net), typeof(Cathedral.Game.Narrative.Items.FishingNet)),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over water fit to fish").Teaching<AngleryModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.FreshWater, Places.Shore);
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

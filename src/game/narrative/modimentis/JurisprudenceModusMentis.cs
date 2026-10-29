@@ -14,7 +14,9 @@ public class JurisprudenceModusMentis : ModusMentis
         "Knows the law: its codes, its customs, its precedents, its loopholes. Can say what a case turns on and what a court will probably decide, and which old ruling the other side has forgotten.";
     public override string SkillMeans       => "the knowledge of law and how it is applied";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
-    public override WillTargets? Will => WillTarget.To<PetitionVerb>("put a case before somebody with the power to grant it");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<PetitionVerb>("put a case before somebody with the power to grant it"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look upon an instrument of the law").Teaching<JurisprudenceModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Streets, Places.Stronghold);
     public override string[] Organs        => new[] { "cerebrum", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

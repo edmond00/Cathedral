@@ -724,7 +724,8 @@ only the goals — never the steps.** `WillTarget.To<TVerb>(purpose)`, a group b
 or a base class (`DialogueVerb` is every conversation), narrowed by `.On<TElement>()`,
 `.Yielding<TItem>()` / `.YieldingAny(label, types…)`, `.YieldingKind(ItemKind)` (a family across classes:
 every mushroom, every blade), `.Selling(ItemKind)` (a trader whose wares hold one), `.OnHostile()`,
-`.OnBeast()` or `.Where(test, label)` — types and enums throughout, never names. `Purpose` is narration
+`.OnBeast()`, `.Teaching<TModusMentis>()` (what declares that lesson — see "A will wants what teaches
+it") or `.Where(test, label)` — types and enums throughout, never names. `Purpose` is narration
 only ("pick a lock"); each target has its own, and a path is narrated with the one it reaches
 (`ActionPath.Target`, `WillTargets.PurposeOf`). A single target converts implicitly, so
 `Will => WillTarget.To<…>(…)` is still a one-target will; several are `WillTargets.Of(t1, t2, …)`.
@@ -831,6 +832,31 @@ before and is only noted. Brawling wants somebody hostile (`OnHostile`: an enemy
 person who counts somebody an enemy) or a weapon to buy, not a passer-by: struck at in a street, a
 peaceful citizen was a refusal waiting at the click, and the will idled in every town.
 
+**A will wants what teaches it.** An object that declares a will its lesson (`VerbModiMentis` on a
+point of interest or an archetype, `Teach((…))`, `Lessons((…))`) is the content saying the two belong
+together — and the will must then be willing to act on it, or a player who picks the very mind the
+object taught is told it has no interest in the object. That was the playtest: examining petroglyphs
+teaches archeology, archeology wanted only to dig, study a relic or fetch a spade, and refused the
+carvings. 167 (will, object kind) pairs were in that state, from the smithy's anvil (metalcraft wanted
+ore and iron, not the anvil) to the bench pews (piety). Every such will now ends on one target bound to
+its own lesson: `WillTarget.To<ExamineVerb>("study what old stones remember").Teaching<ArcheologyModusMentis>()`
+— the verbs the lesson is declared for, and only on what declares it, instance by instance (one
+`RackPointOfInterest` class teaches harvestry, laundering, husbandry or metalcraft depending on the rack).
+So:
+
+- **Declaring a will as an object's lesson for a verb the will's `Teaching<>` target names needs nothing
+  more.** For any other verb, add it to that target (`ToAny(purpose, types…).Teaching<…>()`).
+- **A new will that objects teach** ends on its own `Teaching<Self>()` target, which costs a slot of the five.
+- **`--will-lesson-audit`** walks every object of every location factory and fails (✗) any object that
+  declares a will's lesson while offering nothing that will wants or passes through on its way. Lessons
+  the verb itself gives (its default, or a contextual case in `Lessons`) are printed as notes — they
+  are about the act, not the object. A pairing that is right as it stands goes in
+  `WillLessonAudit.Accepted`, with the reason.
+- **A `Teaching<>` target is not a desire**, so `--will-audit` judges breadth without it: it reaches only
+  what the content already says teaches the will, and a will made broad by it is broad because its lesson
+  is declared broadly. Tillage is the example: every `DiggableGroundPointOfInterest` teaches it on examine,
+  so it wants a clay bank in the wild — if that is wrong, the lesson is what changes.
+
 **Every childhood path leaves a general thinker** (rule C3, `ReminescenceRuleValidator`, fatal): a will
 thinks only toward its targets, so a childhood granting none but wills would leave a body unable to
 think about anything it did not already want. Converting a modus mentis a childhood grants can break
@@ -861,6 +887,8 @@ only `anglery` wants it.
 |---|---|
 | `inspect will` | every held will's plan: `steps=`, `first=`, `goal=`, `target=` (a person by archetype id), `tool_step=`, `aim=<k>/<n>` (which target, in declaration order) and `purpose="…"`, or `steps=none` |
 | `--will-audit [out.json]` / `--will-trace <id> [location]` | coverage, related coverage and breadth per will; why one has or lacks something to do |
+| `--will-lesson-audit` | every object that teaches a will and that the will refuses |
+| `cli/system/will_lesson_object.cli` | archeology plans to examine the petroglyphs that taught it, one step from the Dry Wash |
 | `select mm <id>` | the memory panel's detail box for a held modus mentis, which lists a will's targets under "Wants" |
 | `choose <mm-id>` | answer the modus mentis popup by id rather than by position |
 | `cli/system/will_path.cli` | plan, focus kept with the path as reason, the walk carried out by a judged means (pinned to Woodcraft), the unlock by the will itself |

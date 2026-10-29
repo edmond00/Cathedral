@@ -14,7 +14,9 @@ public class WatchkeepingModusMentis : ModusMentis
         "Stands a watch properly: stays awake, walks the round at uneven intervals, looks where nothing is and listens for what has stopped. Knows the hour before dawn is when they come.";
     public override string SkillMeans       => "the standing of a watch through the night";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTargets? Will => WillTarget.To<SitAndWaitVerb>("stand a watch");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<SitAndWaitVerb>("stand a watch"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ListenVerb>("listen from a post of watch").Teaching<WatchkeepingModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Stronghold, Places.Shore);
     public override string[] Organs        => new[] { "eyes", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

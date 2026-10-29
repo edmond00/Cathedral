@@ -15,7 +15,8 @@ public class LiturgyModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTargets? Will => WillTargets.Of(
         WillTarget.To<Cathedral.Game.Scene.Verbs.SingAlongVerb>("sing the office"),
-        WillTarget.To<Cathedral.Game.Scene.Verbs.AskBlessingVerb>("ask the blessing"));
+        WillTarget.To<Cathedral.Game.Scene.Verbs.AskBlessingVerb>("ask the blessing"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over a place of the office").Teaching<LiturgyModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Sacred);
     public override string[] Organs        => new[] { "anamnesis", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
