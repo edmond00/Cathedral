@@ -1,0 +1,37 @@
+# Winning a travel encounter mid-journey resumes the walk with the world in view.
+#
+# The victory branch wiped the fight screen with a bare Clear, which paints every cell opaque black,
+# and Traveling draws nothing but its progress box: the rest of the journey was walked over a black
+# screen, the box floating on it, until the arrival repainted. A playtester met it on the first
+# bandit; no script did, because every script switches the random rolls off and the two staged
+# encounters (--encounter-on-arrival, --start-fight) take the other two branches.
+#
+# --encounter-mid-journey stages this one. `inspect overlay` is the assertion: `dump` cannot tell an
+# opaque-black blank from a transparent one. The port is the one place of its name in reach at seed
+# 42, more than a step away; the walk is left to finish, and its arrival is the second half.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --encounter-mid-journey wolf
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+
+# Before setting out: the world map is the reference.
+expect-state overlay "world=shown"
+
+travel port
+travel-go
+
+wait mode EncounterPrompt 90
+click engage
+wait mode Fighting 90
+fight-end victory
+
+# The journey resumes and ends where it was going. Under --playground the rest of the walk takes no
+# time at all, so the reading is the one taken as Traveling was entered — after the fight, since the
+# entry before it is overwritten: the world behind the progress box, not a black sheet.
+wait mode LocationInteraction 120
+expect-state overlay "overlay-entry Traveling world=shown"
+quit

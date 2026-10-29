@@ -47,6 +47,7 @@ public static class CrimeAudit
         AuditVerbLegality(sb, failures);
         AuditGoalRules(sb, failures);
         AuditWillingnessRules(sb, failures);
+        AuditDiscreetWillingness(sb, failures);
         AuditExamineRules(sb, failures);
         AuditFailurePenalties(sb, failures);
         AuditFoundWaiting(sb, failures);
@@ -310,6 +311,66 @@ public static class CrimeAudit
         Case("Low morality, asked to do something legal", MoralLevel.Low,  lawful!, true);
         Case("Medium morality, asked to commit a crime", MoralLevel.Medium, crime!, true);
         Case("High morality, asked to commit a crime",  MoralLevel.High,   crime!,  true);
+        sb.AppendLine();
+    }
+
+    // ── 4a. A discreet means does not refuse what only discretion allows ─────
+
+    /// <summary>
+    /// <see cref="DiscreetNeverRefusesCoverRule"/>: a discreet action modus mentis loses the refusal
+    /// exactly where a non-discreet one would be stopped by a rule of action that discretion passes —
+    /// a crime in sight of a witness, anything but facing the threat with an enemy in the room — and
+    /// keeps it everywhere else. Medium morality throughout, so the morality rules count for nothing;
+    /// one High case proves the rule drops the option and never lifts a refusal another rule imposed.
+    /// </summary>
+    private static void AuditDiscreetWillingness(StringBuilder sb, List<string> failures)
+    {
+        sb.AppendLine("--- CHOICE RULES: willingness answers, by discretion ---");
+
+        var (scene, _, lawful, crime) = BuildGoalFixture(failures);
+        if (scene == null) { sb.AppendLine("  (fixture unavailable — skipped)"); sb.AppendLine(); return; }
+
+        // A public standing with somebody in it, and one with nobody; the crime is the private door.
+        var standings = scene.AllAreas.Where(a => !a.IsPrivate)
+            .SelectMany(a => Enum.GetValues<TimePeriod>().Select(t => new PoV(a, t))).ToList();
+        var watched = standings.FirstOrDefault(p => WitnessSelector.ComputeContext(scene, p).Type == WitnessType.Visual);
+        var alone   = standings.FirstOrDefault(p => WitnessSelector.ComputeContext(scene, p).Type == WitnessType.None);
+        if (watched == null || alone == null)
+        {
+            failures.Add("village#1 offers no public standing with a witness in sight and one without — discretion cases skipped");
+            sb.AppendLine("  (no watched and unwatched standing — skipped)"); sb.AppendLine(); return;
+        }
+
+        var actor = new Protagonist();
+        var full  = new WillingnessOptions(
+            new[] { "eager to do it", "willing to do it", "reluctant to do it" }, "unwilling to do it");
+
+        void Case(string name, PoV pov, MoralLevel morality, bool discreet, NarrativeAnchor goal, bool expectDecline, bool expectImposed = false)
+        {
+            var ctx = new ChoiceRuleContext(scene, pov, actor, new MoralityProbe(morality, discreet: discreet), goal, Probe: true);
+            var got = ChoiceRulesChecker.FilterWillingness(full, ctx);
+            bool imposed = got.ImposedRefusal != null;
+            bool ok = (got.DeclineOption != null) == expectDecline && imposed == expectImposed && got.Stances.Count == 3;
+            sb.AppendLine($"  {(ok ? "✓" : "✗")} {name,-52} "
+                          + $"{(imposed ? "refused by rule" : got.DeclineOption != null ? "may refuse" : "no refusal")}");
+            if (!ok)
+                failures.Add($"{name}: expected {(expectImposed ? "an imposed refusal" : expectDecline ? "a refusal" : "no refusal")}, "
+                             + $"got {(imposed ? "an imposed refusal" : got.DeclineOption != null ? "a refusal" : "no refusal")}");
+        }
+
+        Case("discreet, a crime in sight of a witness",     watched, MoralLevel.Medium, true,  crime!,  false);
+        Case("not discreet, a crime in sight of a witness", watched, MoralLevel.Medium, false, crime!,  true);
+        Case("discreet, a crime with nobody in sight",      alone,   MoralLevel.Medium, true,  crime!,  true);
+        Case("discreet, lawful in sight of a witness",      watched, MoralLevel.Medium, true,  lawful!, true);
+        Case("discreet and principled, a crime in sight",   watched, MoralLevel.High,   true,  crime!,  false, expectImposed: true);
+
+        // An enemy in the room: anything but facing them needs discretion, the lawful act included.
+        var foe = scene.GetNpcsAt(watched.Where, watched.When)
+                       .Select(n => n.Entity).OfType<Cathedral.Game.Npc.NpcEntity>().First();
+        foe.AffinityTable.SetEnemy(Protagonist.AffinityKeyConstant);
+        Case("discreet, lawful with an enemy in the room",  watched, MoralLevel.Medium, true,  lawful!, false);
+        Case("not discreet, lawful with an enemy in the room", watched, MoralLevel.Medium, false, lawful!, true);
+        foe.AffinityTable.ClearEnemy(Protagonist.AffinityKeyConstant);
         sb.AppendLine();
     }
 
@@ -793,7 +854,7 @@ public static class CrimeAudit
     private sealed class MoralityProbe : ModusMentis
     {
         private readonly bool _observes;
-        public override string ModusMentisId   => $"morality_probe_{MoralLevel.ToString().ToLowerInvariant()}";
+        public override string ModusMentisId   => $"morality_probe_{MoralLevel.ToString().ToLowerInvariant()}{(ActsDiscretely ? "_discreet" : "")}";
         public override string DisplayName     => $"{MoralLevel} Probe";
         public override string MenuDescription => "audit fixture";
         public override string SkillMeans      => "the audit's own hands";
@@ -804,11 +865,13 @@ public static class CrimeAudit
         public override Cathedral.Game.Narrative.Memory.ModusMentisMemoryType MemoryType
             => Cathedral.Game.Narrative.Memory.ModusMentisMemoryType.Semantic;
         public override MoralLevel MoralLevel { get; }
+        public override bool ActsDiscretely { get; }
 
-        public MoralityProbe(MoralLevel morality, bool observes = true)
+        public MoralityProbe(MoralLevel morality, bool observes = true, bool discreet = false)
         {
-            MoralLevel = morality;
-            _observes  = observes;
+            MoralLevel     = morality;
+            _observes      = observes;
+            ActsDiscretely = discreet;
         }
     }
 

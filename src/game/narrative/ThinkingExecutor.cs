@@ -191,6 +191,15 @@ public class ThinkingExecutor
             mayDoubt = false;
         }
 
+        // Asked again about an object it has declined this phase, a mind is not offered the decline:
+        // one question has one answer, so the second ask is the player insisting (ActionProposalLedger).
+        bool Insisted()
+        {
+            if (proposed?.HasDeclined(thinkingModusMentis, targetOutcome) != true) return false;
+            Console.WriteLine($"ThinkingExecutor: [{thinkingModusMentis.DisplayName}] already declined this — asked again, no decline.");
+            return true;
+        }
+
         while (true)
         {
             // ── Decision 1: GOAL ────────────────────────────────────────────────────
@@ -199,7 +208,8 @@ public class ThinkingExecutor
             bool retryingRefused = again != null;
             var resolved = willStep
                            ?? (NarrativeAnchor?)again
-                           ?? await ChooseGoalAsync(subOutcomes, thinkingModusMentis, actionModiMentis, overallLocation, areaLocation, observedPhrase, choiceCtx, proposed, chain, cancellationToken, offerDecline: !autoSuccess);
+                           ?? await ChooseGoalAsync(subOutcomes, thinkingModusMentis, actionModiMentis, overallLocation, areaLocation, observedPhrase, choiceCtx, proposed, chain, cancellationToken,
+                                                 offerDecline: !autoSuccess && !Insisted());
             // A will's step tried with every means is the end of the chain, as a goal would be crossed off.
             bool isIgnore = resolved is VerbAction vIgnore && vIgnore.Verb is IgnoreVerb
                             || willStep != null && chain.Touched(willStep)
@@ -209,6 +219,8 @@ public class ThinkingExecutor
             // After a retry this is the end of the chain: everything left was tried, or nothing appeals.
             if (isIgnore)
             {
+                // The first answer of this mind about this object: asked again, it will not be given.
+                if (!retrying && willStep == null) proposed?.Decline(thinkingModusMentis, targetOutcome);
                 await VoiceLeadAsync();
                 string ignoreNeutral = !retrying
                     ? NeutralNarration.ReasoningIgnore(targetDescription, isReminescence)
@@ -859,6 +871,17 @@ public class ThinkingExecutor
                 .ToList();
             if (realOutcomes.Count < before)
                 Console.WriteLine($"ThinkingExecutor: {before - realOutcomes.Count} goal(s) already tried with every means — crossed off.");
+        }
+
+        // An unscrupulous mind offered a crime does not let it go: the thinking twin of
+        // LowMoralityNeverRefusesCrimeRule. LowMoralityPrefersCrimeRule above leaves nothing but the
+        // crimes, and with the decline still on the list the judge took it — Keywise, handed one locked
+        // door, did "something else entirely".
+        if (offerDecline && choiceCtx != null && thinkingModusMentis.MoralLevel == MoralLevel.Low
+            && realOutcomes.Any(g => Rules.Choice.CrimeGoals.IsCrime(g, choiceCtx)))
+        {
+            Console.WriteLine($"ThinkingExecutor: [{thinkingModusMentis.DisplayName}] is unscrupulous — a crime is on offer, no decline.");
+            offerDecline = false;
         }
 
         // Nothing left to offer. The caller's ignore branch narrates the same "nothing here worth

@@ -34,6 +34,7 @@ public static class ChoiceRulesChecker
     {
         new HighMoralityRefusesCrimeRule(),
         new LowMoralityNeverRefusesCrimeRule(),
+        new DiscreetNeverRefusesCoverRule(),
         new ExamineActionNeedsObservationRule(),
         new SpeakingActionNeverRefusesDialogueRule(),
         new WillActionNeverRefusesItsPathRule(),   // last: lifts even an imposed refusal for its own path

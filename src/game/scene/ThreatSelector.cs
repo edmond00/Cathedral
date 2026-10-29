@@ -19,16 +19,20 @@ public static class ThreatSelector
     /// Returns <see cref="ThreatContext.None"/> when no enemy is nearby.
     /// </summary>
     public static ThreatContext ComputeContext(Scene scene, PoV pov, Protagonist protagonist)
+        => ComputeContext(scene, pov, protagonist.AffinityKey);
+
+    /// <summary>As above, for an affinity key — what a choice rule holds instead of the protagonist.</summary>
+    public static ThreatContext ComputeContext(Scene scene, PoV pov, string affinityKey)
     {
         // 1. Visual threat: same area
-        var visual = SelectFrom(scene, pov.Where, pov.When, protagonist.AffinityKey);
+        var visual = SelectFrom(scene, pov.Where, pov.When, affinityKey);
         if (visual != null)
             return new ThreatContext(ThreatLevel.Visual, visual);
 
         // 2. Audio threat: any enemy within earshot — one graph hop, or through a connector.
         foreach (var adjacent in SceneAdjacency.WithinEarshot(scene, pov.Where))
         {
-            var audio = SelectFrom(scene, adjacent, pov.When, protagonist.AffinityKey);
+            var audio = SelectFrom(scene, adjacent, pov.When, affinityKey);
             if (audio != null)
                 return new ThreatContext(ThreatLevel.Audio, audio);
         }

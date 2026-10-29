@@ -116,6 +116,12 @@ could carry it out under them — an examination where none of them observes —
 for the rest of the phase. If some can, the next mind to choose it is offered only those as the means,
 and the one chosen answers only with a degree of assent; it may not refuse.
 
+**A mind that wanted nothing of an object is not asked twice.** A thinking modus mentis may judge that
+nothing an object affords is worth doing, and say so. Its judgement does not vary — the same mind
+asked about the same object returns the same answer — so to ask it again within the phase is to
+insist: the second time, it may not decline, and settles on one of the goals offered. Another mind
+asked about the same object may still decline it.
+
 A new phase in the same place sees the whole scene, and every act in it, afresh.
 
 ## 5. The three steps of an act
@@ -359,7 +365,7 @@ person is never game: every crime against a person is a crime on wild ground as 
 | | A thinking modus mentis | An acting modus mentis |
 |---|---|---|
 | **High** | Crimes are dropped from its list of goals. Filtering everything away is a legitimate result. | Refuses at once, unasked, before the act is offered. |
-| **Low** | If any goal on offer is a crime, **only** the crimes are offered. | Cannot refuse: the option to decline is withheld. |
+| **Low** | If any goal on offer is a crime, **only** the crimes are offered, and it may not decline them all: it chooses one. | Cannot refuse: the option to decline is withheld. |
 
 Both halves are needed, because the goal and the means are two separate decisions: a scrupulous
 skill may still be chosen to carry out a goal some other mind settled on.
@@ -370,7 +376,11 @@ anything.
 *May I act at all?* Asked of **raw** proximity by the rules of action. Somebody in the room blocks a
 non-discreet modus mentis outright. A **discreet** modus mentis may always attempt — that permission
 is the whole of what discretion buys at close quarters. The acts that answer a confronting witness
-(below) are exempt: done to the one already watching, they leave nobody to be caught by.
+(below) are exempt: done to the one already watching, they leave nobody to be caught by. Nor may a
+discreet modus mentis decline an act that only its discretion permits here — a crime in sight of a
+witness, any act but facing the threat while an enemy stands in the room, any act but answering a
+confronting witness. It may undertake such an act reluctantly; it may not refuse it, save where
+principle refuses it first. Out of everybody's sight it declines as any other mind.
 
 *What does failing cost?* Asked of **effective** proximity, where discretion applies. Discretion
 silences a body **through a wall**, never **in the same room**: it downgrades a Visual presence not

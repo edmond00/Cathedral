@@ -506,6 +506,17 @@ public static class Config
         public static string? EncounterOnArrival { get; set; } = null;
 
         /// <summary>
+        /// Creature for a travel encounter forced on the first step of the next journey that is
+        /// <b>not</b> its last, once. Set by <c>--encounter-mid-journey &lt;creature&gt;</c>.
+        ///
+        /// <para>The twin of <see cref="EncounterOnArrival"/>: winning here resumes a journey that
+        /// still has a path to walk, which is the branch every player meets and no script did —
+        /// <see cref="NoEncounters"/> switches the random rolls off. It walked the rest of the way
+        /// over an opaque-black terminal. Honoured before <see cref="NoEncounters"/>, as its twin is.</para>
+        /// </summary>
+        public static string? EncounterMidJourney { get; set; } = null;
+
+        /// <summary>
         /// Beast archetype to add to every scene as it is built, e.g. "wolf". Set by
         /// <c>--spawn-beast &lt;name&gt;</c>. Null means add nothing.
         ///

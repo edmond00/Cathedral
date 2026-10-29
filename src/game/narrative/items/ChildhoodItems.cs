@@ -269,6 +269,12 @@ public sealed class Hairpin : Item
     public override string Description => "A slim brass hairpin, bent into a useful pick";
     public override ItemCategory Category => ItemCategory.Tool;
     public override int    UsageLevel  => 2;
+    /// <summary>
+    /// On the smith's shelf and the merchant's. It is a lock's reference tool, and while it
+    /// carried no tag no trader sold one and no scene laid one down: a body that never carried a
+    /// hairpin out of childhood had no way to pick a lock anywhere in the game.
+    /// </summary>
+    public override List<ItemTag> Tags => new() { ItemTag.Ironwork, ItemTag.Craftware };
     public override int PriceReference => 3;
 }
 

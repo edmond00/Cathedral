@@ -316,7 +316,7 @@ produced a reported softlock — the travel progress box left standing over a bl
 
 | | after victory |
 |---|---|
-| encounter **mid-journey** | resume travel — the path is still there to walk |
+| encounter **mid-journey** | resume travel — the path is still there to walk — over a **transparent** terminal (`SetTransparentWorldOverlay`): a bare `Clear` paints opaque black, and the rest of the journey was walked over a black screen. `--encounter-mid-journey`, `cli/system/fight_victory_travel_midway.cli` |
 | encounter on the journey's **final step** | deliver the held arrival (`_pendingArrivalVertex`) and finish the journey |
 | **no journey at all** (`--start-fight`) | back to the world view |
 
@@ -912,6 +912,12 @@ budget reaches, and they were designed together — changing one alone re-breaks
     is withheld from everyone when no held action modus mentis passes the willingness rules for it
     (`ThinkingExecutor.CanCarryOut`, a silent `ChoiceRuleContext.Probe`), and otherwise the means
     pool is narrowed to those that pass and the decline option is dropped.
+    **A thinking mind that declined an object is not offered the decline about it again**
+    (`ActionProposalLedger.Decline` / `HasDeclined`, by mind and observation instance): the goal judge
+    reads scores rather than sampling, so the second ask could only be declined again — the playtest
+    saw Keywise turn the same locked door down twice, a point each. The second ask is the player
+    insisting, and the mind chooses a goal. Unreachable under `--playground`, whose goal draw never
+    declines.
     `cli/system/thinking_refused_goal_per_mind.cli` covers the possible branch; the impossible
     branch has no script, because the `--skip-childhood` kit at seed 42 already holds an observing
     action modus mentis and no flag removes one.
@@ -1406,10 +1412,17 @@ Morality now has four distinct behaviours, two per side of the chain:
 | | thinking MM | action MM |
 |---|---|---|
 | **High** | crimes are dropped from its goal list (`HighMoralityAvoidsCrimeRule`) — filtering everything away is a legitimate result and reads as ignore | refuses while the action is thought out, before any button (`HighMoralityRefusesCrimeRule`); `IllegalActionHighMoralityRule` remains as a backstop for paths that skip willingness |
-| **Low** | if any goal on offer is a crime, **only** the crimes are offered (`LowMoralityPrefersCrimeRule`) | cannot refuse — the decline option is withheld, leaving eager/willing/reluctant (`LowMoralityNeverRefusesCrimeRule`) |
+| **Low** | if any goal on offer is a crime, **only** the crimes are offered (`LowMoralityPrefersCrimeRule`), and without the decline (`ThinkingExecutor.ChooseGoalAsync`) — it chooses among them, it does not let them go | cannot refuse — the decline option is withheld, leaving eager/willing/reluctant (`LowMoralityNeverRefusesCrimeRule`) |
 
 Both sides are needed because the goal and the means are two separate LLM decisions: a scrupulous
-skill can still be picked to carry out a goal some other modus mentis chose. Note `MoralLevel` is read
+skill can still be picked to carry out a goal some other modus mentis chose.
+
+**A discreet action MM cannot refuse what only its discretion allows** (`DiscreetNeverRefusesCoverRule`,
+the discreet twin of `LowMoralityNeverRefusesCrimeRule`): where `IllegalActionVisualWitnessRule`,
+`UnderThreatImpossibleRule` or `ConfrontedImpossibleRule` would stop a non-discreet means
+(`NeedsDiscretion` asks their conditions directly, with the protagonist's affinity key as the click
+does), the decline is withheld and reluctance kept. An imposed refusal (High morality) is not lifted.
+`--crime-audit` §4a. Note `MoralLevel` is read
 **only** off these two — R13 makes a non-Medium value on anything else fatal.
 
 **A Speaking modus mentis puts conversation first** (`SpeakingPriority`, `rules/choice/SpeakingRules.cs`),

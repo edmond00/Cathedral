@@ -2242,6 +2242,7 @@ public class LocationTravelGameController : IDisposable
         Console.WriteLine($"LocationTravelGameController: Mode changed: {oldMode} ↁE{newMode}");
 
         RunModeEnter(newMode);
+        if (Cathedral.Game.Cli.CliMode.IsActive) _cliOverlayOnEntry[newMode] = CliOverlayReading();
 
         ModeChanged?.Invoke(oldMode, newMode);
     }
@@ -2643,6 +2644,15 @@ public class LocationTravelGameController : IDisposable
             Config.Debug.EncounterOnArrival = null;
             if (!StartTravelEncounter(staged))
                 DebugFlagAudit.Miss("--encounter-on-arrival", staged, "no encounter — the journey ended normally");
+            return;
+        }
+
+        // --encounter-mid-journey: the same, on a step with path still ahead of it.
+        if (Config.Debug.EncounterMidJourney is { } midway && _tripCellsTraveled < _tripTotalCells)
+        {
+            Config.Debug.EncounterMidJourney = null;
+            if (!StartTravelEncounter(midway))
+                DebugFlagAudit.Miss("--encounter-mid-journey", midway, "no encounter — the journey went on");
             return;
         }
 
@@ -3861,6 +3871,16 @@ public class LocationTravelGameController : IDisposable
         if (subject == "gather")
             return _gatherAdapter?.CliLines() ?? new List<string> { "gather (not gathering)" };
 
+        // How much of the terminal hides the world behind it: cells whose background is not fully
+        // transparent, out of all of them. `dump` reads characters, and an opaque-black blank and a
+        // transparent one are the same space — a journey walked over a black sheet passed every script.
+        // A second line per mode is the reading taken as that mode was last entered: a journey resumed
+        // after a fight is walked within a frame under --playground, so no command can read it live.
+        if (subject == "overlay")
+            return new[] { $"overlay {CliOverlayReading()}" }
+                .Concat(_cliOverlayOnEntry.OrderBy(e => e.Key.ToString()).Select(e => $"overlay-entry {e.Key} {e.Value}"))
+                .ToList();
+
         // The two buttons that stand in for keys: the ☰ (Escape) and the narration header's ↹ (Tab).
         // Whether each is on screen, which a press alone cannot say when the answer is no.
         if (subject == "buttons")
@@ -4365,6 +4385,24 @@ public class LocationTravelGameController : IDisposable
         // through here too, so a continued run immediately rewrites an identical file — harmless, and
         // simpler than a flag to suppress it.
         Autosave();
+    }
+
+    /// <summary>The overlay as each mode was last entered, under --cli only (<c>inspect overlay</c>).</summary>
+    private readonly Dictionary<GameMode, string> _cliOverlayOnEntry = new();
+
+    /// <summary>
+    /// How much of the terminal hides the world: cells with a background that is not fully
+    /// transparent, out of all of them. <c>dump</c> reads characters, and an opaque-black blank and a
+    /// transparent one are the same space — a journey walked over a black sheet passed every script.
+    /// </summary>
+    private string CliOverlayReading()
+    {
+        if (_core.Terminal is not { } term) return "world=shown visible=no opaque=0/0";
+        int opaque = 0, total = term.Width * term.Height;
+        for (int y = 0; y < term.Height; y++)
+            for (int x = 0; x < term.Width; x++)
+                if (term[x, y].BackgroundColor.W > 0f) opaque++;
+        return $"world={(opaque * 2 < total ? "shown" : "hidden")} visible={(term.Visible ? "yes" : "no")} opaque={opaque}/{total}";
     }
 
     /// <summary>
@@ -6234,7 +6272,14 @@ public class LocationTravelGameController : IDisposable
         {
             _inTravelEncounter = false;
             _fightAdapter = null;
-            _core.Terminal?.Clear();
+            // Back to the world behind the fight, not a black sheet: a bare Clear paints opaque black,
+            // and Traveling draws only its progress box, so a won encounter mid-journey walked the rest
+            // of the way over a black screen. Every other branch below repaints over this anyway.
+            SetTransparentWorldOverlay(clickPassthrough: true);
+            // The encounter prompt and the fight turned the world's interactions off; the journey ran
+            // with them on.
+            _core.SetWorldInteractionsEnabled(true);
+            _interface.SetWorldInteractionsEnabled(true);
 
             if (result == FightAdapterResult.Death)
             {

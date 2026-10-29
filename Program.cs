@@ -224,6 +224,9 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --encounter-on-arrival <creature>  DEBUG: force a travel encounter on the FINAL step of the next journey, once.");
     Console.WriteLine("                                     That step raises the step and arrival events from one call, so the fight begins");
     Console.WriteLine("                                     with no path left to walk — the case that stranded the run in Traveling");
+    Console.WriteLine("  --encounter-mid-journey <creature> DEBUG: force a travel encounter on the first step of the next journey that is");
+    Console.WriteLine("                                     not its last, once. Winning it resumes the walk — the case that walked the rest of");
+    Console.WriteLine("                                     the way over a black screen. Needs a journey of two steps or more");
     Console.WriteLine("  --spawn-beast <name>               DEBUG: put a beast (wolf, boar, bear, black bear, stray dog, fox) in the opening");
     Console.WriteLine("                                     area of every scene, at every period. A wilderness factory only rolls one in");
     Console.WriteLine("                                     10-40% of the time and then lets it roam, so appease/tame are otherwise luck");
@@ -960,6 +963,9 @@ for (int i = 0; i < args.Length; i++)
 
     if (args[i] == "--encounter-on-arrival" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
         Cathedral.Config.Debug.EncounterOnArrival = args[i + 1];
+
+    if (args[i] == "--encounter-mid-journey" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
+        Cathedral.Config.Debug.EncounterMidJourney = args[i + 1];
 
     if (args[i] == "--spawn-beast" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
         Cathedral.Config.Debug.SpawnBeast = args[i + 1];

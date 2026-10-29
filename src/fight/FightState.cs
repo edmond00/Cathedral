@@ -222,6 +222,9 @@ public class FightState
     public void AddLog(string line, LogEntryType type = LogEntryType.Normal)
     {
         ActionLog.Add((line, type));
+        // Into log.txt as well: the action log is capped and dies with the fight, so a reported fight
+        // ("the bandit died before I did anything") left no trace of what happened in it.
+        System.Console.WriteLine($"Fight [{type}]: {line}");
         if (ActionLog.Count > MaxLogLines)
             ActionLog.RemoveAt(0);
     }

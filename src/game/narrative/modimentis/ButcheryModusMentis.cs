@@ -15,7 +15,16 @@ public class ButcheryModusMentis : ModusMentis
         "Sees a body as an assembly of parts joined along natural seams, knowing where joints part and vessels run. Approaches flesh as a disassembly problem with efficient and wasteful routes, and works it without squeamishness.";
     public override string SkillMeans => "the cutting of carcasses into joints";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTargets? Will => WillTarget.To<CutVerb>("cut a carcass into joints");
+    /// <summary>
+    /// A carcass exists only once something has died, and the planner sees no further than a kill
+    /// (<see cref="ActionPathPlanner"/>): with cutting alone the will had nothing to do until a
+    /// body happened to lie in front of it. So it wants the kill too, and the next phase finds the
+    /// carcass the kill left. Cutting is declared first, so a body already down is preferred to a
+    /// beast as near. Both take a knife, so one detour arms the two.
+    /// </summary>
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<CutVerb>("cut a carcass into joints"),
+        WillTarget.To<SlayVerb>("kill a beast for its meat").OnBeast());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Stock, Places.Wilds);
     public override string[] Organs => new[] { "hands", "viscera" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
