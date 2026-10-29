@@ -538,6 +538,8 @@ public static class ModusMentisRuleValidator
         sb.Append(EmotionCoverage(all));
         sb.AppendLine();
         sb.Append(WillAudit.Section(all));
+        sb.AppendLine();
+        sb.Append(PersonaLint.Section(all));
 
         return sb.ToString();
     }
