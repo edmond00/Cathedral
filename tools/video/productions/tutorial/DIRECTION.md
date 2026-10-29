@@ -5,7 +5,8 @@ video made from it). Where this and the `video` skill's house rules differ, this
 
 - **For** new players first (how to play the first hour), polished enough to share as a showcase.
 - **Length**: no limit. Each system is explained properly rather than named in passing.
-- **Voice**: a plain, clear instructor, not the skill's old-man narrator. Piper `en_US-ryan-high`.
+- **Voice**: a plain, clear instructor, not the skill's old-man narrator. Piper `en_GB-alan-medium`
+  (first `en_US-ryan-high`; the developer preferred alan).
 - **Depth**: the rules explained properly, like the manual read aloud: how a die pool is built, what
   each organ group feeds, how humors are spent, wages, routines. Every claim from the code at HEAD.
 - **Staging**: not mentioned. The run is shown as a game (no word about the debug flags behind it).
@@ -18,8 +19,9 @@ video made from it). Where this and the `video` skill's house rules differ, this
   from the explanations, so a listener always knows whether a mechanism is being explained or the
   game's text is being read. The texts come from the take's LLM session logs
   (`logs/llm_session_*/slot_*/request_*/llm_response.txt`, timestamped), aligned to the timeline.
-  Which delivery: chosen by audition (A: same voice slower and rougher; B: same voice pitched down
-  with a stone-room echo; C: a second voice, `en_GB-alan-medium`). TODO: the choice.
+  Which delivery: chosen by audition with alan as the narrator (A: alan slower and rougher; B: alan
+  pitched down with a stone-room echo; C: `en_GB-northern_english_male-medium`; D: `en_US-ryan-high`).
+  TODO: the choice.
 - **Diagrams (manim)**: the organs → systems map; one narration turn (observe → keyword → think
   with a modus mentis → goal and means → act → dice → outcome, and where noetic points go); dice and
   humors (the pool, a success, what each humor does to a die, the viscera limit, attack against
