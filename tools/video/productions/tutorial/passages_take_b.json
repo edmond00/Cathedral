@@ -1,0 +1,872 @@
+[
+ {
+  "t0": 217.9,
+  "t1": 304.1,
+  "section": "organs_fighting",
+  "voice": "CHILDHOOD REMINESCENCE",
+  "slot": "slot_8",
+  "request": "request_001_06-28-56-867",
+  "prompt": "Re-express the following sentence in your own voice: \"A memory surfaces: sobs. This was a half-remembered muffled weeping, a woman's voice somewhere in the dark",
+  "text": "I almost have it, a half-remembered weeping, sobs like faded echoes in the dark, a woman's voice somewhere, half-formed in the hush of old iron and myth."
+ },
+ {
+  "t0": 315.0,
+  "t1": 320.9,
+  "section": "childhood",
+  "voice": "GOAL CHOOSER",
+  "slot": "slot_4",
+  "request": "request_001_06-30-33-982",
+  "prompt": "The faculty: CHILDHOOD REMINESCENCE - Reaches back for half-buried moments of childhood, letting a dim scene surface and sharpen. Colours present thought with w",
+  "text": "A"
+ },
+ {
+  "t0": 320.9,
+  "t1": 327.1,
+  "section": "childhood",
+  "voice": "MEANS MATCHER",
+  "slot": "slot_5",
+  "request": "request_001_06-30-39-935",
+  "prompt": "The thinking faculty: CHILDHOOD REMINESCENCE - Reaches back for half-buried moments of childhood, letting a dim scene surface and sharpen. Colours present thoug",
+  "text": "A"
+ },
+ {
+  "t0": 327.1,
+  "t1": 442.1,
+  "section": "childhood",
+  "voice": "CHILDHOOD REMINESCENCE",
+  "slot": "slot_8",
+  "request": "request_002_06-30-46-098",
+  "prompt": "Re-express the following sentence in your own voice: \"I remember a half-remembered muffled weeping, a woman's voice somewhere in the dark. I want to try to reme",
+  "text": "I let half-remembered weeping drift through, a woman's voice in the dark, a fragment of childhood's ache. I will rely on the slow recovery of these memories, like old fragments in a medieval world, nothing modern or real here."
+ },
+ {
+  "t0": 442.1,
+  "t1": 526.6,
+  "section": "childhood",
+  "voice": "CHILDHOOD REMINESCENCE",
+  "slot": "slot_8",
+  "request": "request_003_06-32-41-104",
+  "prompt": "Re-express the following sentence in your own voice: \"I will try to remember sobs from my childhood\"\n\nThis sentence is written in the first person, and that \"I\"",
+  "text": "I will try to remember sobs from my childhood, half-remembered images surfacing like old fragments, tinged with nostalgia, wistfulness, and a faint ache."
+ },
+ {
+  "t0": 533.6,
+  "t1": 649.9,
+  "section": "childhood",
+  "voice": "CHILDHOOD REMINESCENCE",
+  "slot": "slot_8",
+  "request": "request_004_06-34-12-601",
+  "prompt": "Re-express the following sentence in your own voice: \"I tried to remember sobs from my childhood, and succeeded. It came back to me: the sobs of an unknown lady",
+  "text": "I tried to remember the sobs from my childhood, and succeeded. It came back to me in hazy fragments, the sobs of an unknown lady on the dock of the port city where I spent my days in this vast, silent plain."
+ },
+ {
+  "t0": 672.6,
+  "t1": 788.4,
+  "section": "childhood",
+  "voice": "EMPATHY",
+  "slot": "slot_9",
+  "request": "request_001_06-36-31-564",
+  "prompt": "Re-express the following sentence in your own voice: \"A memory surfaces: the sound of waves and smell of sweat. This was a half-remembered low rhythmic thunder ",
+  "text": "I recall it now, the waves' soft murmur and the earth's faint, salty tang, as if a low rumble of thunder had seeped through the ground, the sweat of exertion rising from the fertile earth beneath."
+ },
+ {
+  "t0": 798.1,
+  "t1": 802.9,
+  "section": "childhood",
+  "voice": "GOAL CHOOSER",
+  "slot": "slot_4",
+  "request": "request_002_06-38-37-097",
+  "prompt": "The faculty: CHILDHOOD REMINESCENCE - Reaches back for half-buried moments of childhood, letting a dim scene surface and sharpen. Colours present thought with w",
+  "text": "A"
+ },
+ {
+  "t0": 803.0,
+  "t1": 808.8,
+  "section": "childhood",
+  "voice": "MEANS MATCHER",
+  "slot": "slot_5",
+  "request": "request_002_06-38-41-950",
+  "prompt": "The thinking faculty: CHILDHOOD REMINESCENCE - Reaches back for half-buried moments of childhood, letting a dim scene surface and sharpen. Colours present thoug",
+  "text": "A"
+ },
+ {
+  "t0": 808.8,
+  "t1": 969.8,
+  "section": "childhood",
+  "voice": "CHILDHOOD REMINESCENCE",
+  "slot": "slot_8",
+  "request": "request_005_06-38-47-781",
+  "prompt": "Re-express the following sentence in your own voice: \"I remember a half-remembered low rhythmic thunder and a sour, salt-and-sweat smell rising from below. I wa",
+  "text": "I remember the low, pulsing thunder and the sour, salt-and-sweat smell from below, like old memories blooming in a fog. I want to recall the sound of waves and the scent of sweat, to breathe in the past, to let it flow through me as the vast, endless plain weaves its slow recovery."
+ },
+ {
+  "t0": 969.8,
+  "t1": 1101.5,
+  "section": "childhood",
+  "voice": "CHILDHOOD REMINESCENCE",
+  "slot": "slot_8",
+  "request": "request_006_06-41-28-770",
+  "prompt": "Re-express the following sentence in your own voice: \"I will try to remember the sound of waves and smell of sweat from my childhood\"\n\nThis sentence is written ",
+  "text": "I will try to remember the sound of waves and the smell of sweat from my childhood, half-remembered images surface like old fragments, tinged with nostalgia, wistfulness, and a faint ache, in a medieval world of iron and myth, nothing modern or from the real world."
+ },
+ {
+  "t0": 1107.8,
+  "t1": 1235.8,
+  "section": "childhood",
+  "voice": "CHILDHOOD REMINESCENCE",
+  "slot": "slot_8",
+  "request": "request_007_06-43-46-831",
+  "prompt": "Re-express the following sentence in your own voice: \"I tried to remember the sound of waves and smell of sweat from my childhood, and succeeded. It came back t",
+  "text": "I tried to recall the waves and sweat, and it came back to me. The sound of waves and the scent of sweat on the docks, the bundles heavy from ships, these fragments rise like old stories, colored with a longing for days past."
+ },
+ {
+  "t0": 1247.6,
+  "t1": 1329.3,
+  "section": "childhood",
+  "voice": "EMPATHY",
+  "slot": "slot_9",
+  "request": "request_002_06-46-06-597",
+  "prompt": "Re-express the following sentence in your own voice: \"A memory surfaces: a something sharp. This was a half-remembered gleam of metal behind a trader's stall, t",
+  "text": "I recall a shard of memory, a sharp edge gleaming from behind a trader's stall, the faint scent of oil and iron lingering in the air."
+ },
+ {
+  "t0": 1339.0,
+  "t1": 1343.1,
+  "section": "childhood",
+  "voice": "GOAL CHOOSER",
+  "slot": "slot_4",
+  "request": "request_003_06-47-38-048",
+  "prompt": "The faculty: CHILDHOOD REMINESCENCE - Reaches back for half-buried moments of childhood, letting a dim scene surface and sharpen. Colours present thought with w",
+  "text": "A"
+ },
+ {
+  "t0": 1343.1,
+  "t1": 1347.7,
+  "section": "childhood",
+  "voice": "MEANS MATCHER",
+  "slot": "slot_5",
+  "request": "request_003_06-47-42-051",
+  "prompt": "The thinking faculty: CHILDHOOD REMINESCENCE - Reaches back for half-buried moments of childhood, letting a dim scene surface and sharpen. Colours present thoug",
+  "text": "A"
+ },
+ {
+  "t0": 1347.7,
+  "t1": 1480.8,
+  "section": "childhood",
+  "voice": "CHILDHOOD REMINESCENCE",
+  "slot": "slot_8",
+  "request": "request_008_06-47-46-700",
+  "prompt": "Re-express the following sentence in your own voice: \"I remember a half-remembered gleam of metal behind a trader's stall, the faint smell of oil and iron. I wa",
+  "text": "I half-remember a gleam of metal behind a trader's stall, the faint smell of oil and iron lingering. I will let the half-remembered image surface, drawing on the slow recovery of childhood memories in this medieval world, where nothing modern or real exists."
+ },
+ {
+  "t0": 1480.8,
+  "t1": 1531.9,
+  "section": "childhood",
+  "voice": "CHILDHOOD REMINESCENCE",
+  "slot": "slot_8",
+  "request": "request_009_06-49-59-774",
+  "prompt": "Re-express the following sentence in your own voice: \"I will try to remember something sharp from my childhood\"\n\nThis sentence is written in the first person, a",
+  "text": "I will try to remember a sharp taste from my childhood, like a sour apple on a cold day."
+ },
+ {
+  "t0": 1538.3,
+  "t1": 1650.2,
+  "section": "childhood",
+  "voice": "CHILDHOOD REMINESCENCE",
+  "slot": "slot_8",
+  "request": "request_010_06-50-57-331",
+  "prompt": "Re-express the following sentence in your own voice: \"I tried to remember something sharp from my childhood, and succeeded. It came back to me: a sword I bought",
+  "text": "I tried to recall a sharp memory from my childhood, and succeeded. It emerged to me as clear as old scars on skin, a sword I had bought with my first earned coin from a market trader."
+ },
+ {
+  "t0": 1661.2,
+  "t1": 1770.5,
+  "section": "childhood",
+  "voice": "EMPATHY",
+  "slot": "slot_9",
+  "request": "request_003_06-53-00-194",
+  "prompt": "Re-express the following sentence in your own voice: \"A memory surfaces: dream of a golden arch. This was a fuzzy great curve of gold in a dream sky — ancient, ",
+  "text": "I see a golden arch in my mind's eye, a fuzzy great curve of gold in a dream sky. It evokes an ache, an ancient, enormous, and impossibly bright longing that touches my soul."
+ },
+ {
+  "t0": 1780.1,
+  "t1": 1784.9,
+  "section": "childhood",
+  "voice": "GOAL CHOOSER",
+  "slot": "slot_4",
+  "request": "request_004_06-54-59-059",
+  "prompt": "The faculty: CHILDHOOD REMINESCENCE - Reaches back for half-buried moments of childhood, letting a dim scene surface and sharpen. Colours present thought with w",
+  "text": "A"
+ },
+ {
+  "t0": 1784.9,
+  "t1": 1790.5,
+  "section": "childhood",
+  "voice": "MEANS MATCHER",
+  "slot": "slot_5",
+  "request": "request_004_06-55-03-889",
+  "prompt": "The thinking faculty: CHILDHOOD REMINESCENCE - Reaches back for half-buried moments of childhood, letting a dim scene surface and sharpen. Colours present thoug",
+  "text": "A"
+ },
+ {
+  "t0": 1790.5,
+  "t1": 1931.5,
+  "section": "childhood",
+  "voice": "CHILDHOOD REMINESCENCE",
+  "slot": "slot_8",
+  "request": "request_011_06-55-09-510",
+  "prompt": "Re-express the following sentence in your own voice: \"I remember a fuzzy great curve of gold in a dream sky — ancient, enormous, and impossibly bright. I want t",
+  "text": "I remember a golden arch, fuzzy and great, in a dream sky that was ancient, enormous, and impossibly bright. I will try to recall this dream from my childhood, letting the slow recovery of childhood memories colour my thoughts on this vast plain."
+ },
+ {
+  "t0": 1931.5,
+  "t1": 2016.8,
+  "section": "childhood",
+  "voice": "CHILDHOOD REMINESCENCE",
+  "slot": "slot_8",
+  "request": "request_012_06-57-30-515",
+  "prompt": "Re-express the following sentence in your own voice: \"I will try to remember dream of a golden arch from my childhood\"\n\nThis sentence is written in the first pe",
+  "text": "I will try to recall a golden arch from my childhood, half-shapes drifting up like old fragments on a medieval plain."
+ },
+ {
+  "t0": 2023.2,
+  "t1": 2179.5,
+  "section": "childhood",
+  "voice": "CHILDHOOD REMINESCENCE",
+  "slot": "slot_8",
+  "request": "request_013_06-59-02-249",
+  "prompt": "Re-express the following sentence in your own voice: \"I tried to remember dream of a golden arch from my childhood, and succeeded. It came back to me: a dream o",
+  "text": "I tried to recall the dream of a golden arch from my childhood, and it came back to me, hazy yet clear. A golden arch rising over the ruins of an ancient city, until I left to seek it out. The scene paints a picture of longing and a gentle ache in my heart."
+ },
+ {
+  "t0": 2193.7,
+  "t1": 2307.8,
+  "section": "childhood",
+  "voice": "CHILDHOOD REMINESCENCE",
+  "slot": "slot_8",
+  "request": "request_014_07-01-52-710",
+  "prompt": "Re-express the following sentence in your own voice: \"A memory surfaces: a shelter. This was a elusive dark hillside with no door, no overhang, no gap anywhere ",
+  "text": "I almost have it, a shelter surfacing from the mists. This was a elusive dark hillside, an unsheltered cranny, with no door, no overhang, no gap anywhere to crawl into."
+ },
+ {
+  "t0": 2317.6,
+  "t1": 2322.5,
+  "section": "childhood",
+  "voice": "GOAL CHOOSER",
+  "slot": "slot_4",
+  "request": "request_005_07-03-56-648",
+  "prompt": "The faculty: CHILDHOOD REMINESCENCE - Reaches back for half-buried moments of childhood, letting a dim scene surface and sharpen. Colours present thought with w",
+  "text": "A"
+ },
+ {
+  "t0": 2322.5,
+  "t1": 2327.8,
+  "section": "childhood",
+  "voice": "MEANS MATCHER",
+  "slot": "slot_5",
+  "request": "request_005_07-04-01-475",
+  "prompt": "The thinking faculty: CHILDHOOD REMINESCENCE - Reaches back for half-buried moments of childhood, letting a dim scene surface and sharpen. Colours present thoug",
+  "text": "A"
+ },
+ {
+  "t0": 2327.8,
+  "t1": 2462.3,
+  "section": "childhood",
+  "voice": "CHILDHOOD REMINESCENCE",
+  "slot": "slot_8",
+  "request": "request_015_07-04-06-814",
+  "prompt": "Re-express the following sentence in your own voice: \"I remember a elusive dark hillside with no door, no overhang, no gap anywhere — nothing to crawl into. I w",
+  "text": "I remember the elusive dark hillside, a place with no door, no overhang, no gap anywhere for shelter. I want to recall the simple, hidden spaces of my childhood. Slowly, I will recover these fragmented memories, like old, weathered stones."
+ },
+ {
+  "t0": 2462.3,
+  "t1": 2512.2,
+  "section": "childhood",
+  "voice": "CHILDHOOD REMINESCENCE",
+  "slot": "slot_8",
+  "request": "request_016_07-06-21-269",
+  "prompt": "Re-express the following sentence in your own voice: \"I will try to remember shelter from my childhood\"\n\nThis sentence is written in the first person, and that ",
+  "text": "I will try to remember a place from my childhood on a vast, unmarked plain."
+ },
+ {
+  "t0": 2518.7,
+  "t1": 2665.8,
+  "section": "childhood",
+  "voice": "CHILDHOOD REMINESCENCE",
+  "slot": "slot_8",
+  "request": "request_017_07-07-17-675",
+  "prompt": "Re-express the following sentence in your own voice: \"I tried to remember shelter from my childhood, and succeeded. It came back to me: searching for shelter fr",
+  "text": "I tried to recall the shelter from my childhood, and it came back to me in a hazy, dream-like state. Searching for shelter from the storm and finding none, I lost consciousness at the foot of a tree, the cold wind biting through my memories."
+ },
+ {
+  "t0": 2690.9,
+  "t1": 2774.8,
+  "section": "childhood",
+  "voice": "CHILDHOOD MEMORY",
+  "slot": "slot_10",
+  "request": "request_001_07-10-09-904",
+  "prompt": "Re-express the following sentence in your own voice: \"My attention is drawn to aching legs. This is a deep, grinding soreness in my legs and feet, where every s",
+  "text": "I bend to search for a patch of grass, the soreness in my legs reminding me of the hard labour on the docks, where every step had its own grinding weight."
+ },
+ {
+  "t0": 2779.0,
+  "t1": 2907.8,
+  "section": "get_up",
+  "voice": "CHILDHOOD MEMORY",
+  "slot": "slot_10",
+  "request": "request_002_07-11-37-954",
+  "prompt": "Re-express the following sentence in your own voice: \"My attention shifts to a bone-deep exhaustion. This is a heaviness settled through my whole body — not mer",
+  "text": "I shift my gaze to a bone-deep exhaustion, feeling it settle through my whole body like a storm, not just tired but spent, as if the road has drained something more than muscle, just as it did in the storms at the port."
+ },
+ {
+  "t0": 2926.0,
+  "t1": 2932.3,
+  "section": "get_up",
+  "voice": "GOAL CHOOSER",
+  "slot": "slot_4",
+  "request": "request_006_07-14-05-026",
+  "prompt": "The faculty: NAUTICAL JARGON - Holds the speech of ships and docks ready, the cant of the harbour and the names of rigging. Reads seamen and waterfront dealings",
+  "text": "do"
+ },
+ {
+  "t0": 2932.4,
+  "t1": 2941.5,
+  "section": "get_up",
+  "voice": "MEANS MATCHER",
+  "slot": "slot_5",
+  "request": "request_006_07-14-11-351",
+  "prompt": "The thinking faculty: NAUTICAL JARGON - Holds the speech of ships and docks ready, the cant of the harbour and the names of rigging. Reads seamen and waterfront",
+  "text": "C"
+ },
+ {
+  "t0": 2941.5,
+  "t1": 3061.2,
+  "section": "get_up",
+  "voice": "NAUTICAL JARGON",
+  "slot": "slot_11",
+  "request": "request_001_07-14-20-523",
+  "prompt": "Re-express the following sentence in your own voice: \"I notice a deep, grinding soreness in my legs and feet, where every step of the road has gathered and pres",
+  "text": "I mark the bone where the road's knots have grinded, a sore that calls me to rise and haul, my hands the ropes, my feet the tide, as I roll and seek the next bend where wind and water guide."
+ },
+ {
+  "t0": 3071.4,
+  "t1": 3104.6,
+  "section": "get_up",
+  "voice": "KNOTWORK",
+  "slot": "slot_12",
+  "request": "request_001_07-16-30-427",
+  "prompt": "Re-express the following sentence in your own voice: \"I will get up and continue my journey\"\n\nThis sentence is written in the first person, and that \"I\" is you ",
+  "text": "I will rise and press on my quest."
+ },
+ {
+  "t0": 3121.7,
+  "t1": 3202.7,
+  "section": "get_up",
+  "voice": "KNOTWORK",
+  "slot": "slot_12",
+  "request": "request_002_07-17-20-692",
+  "prompt": "Re-express the following sentence in your own voice: \"It is done! I succeeded to get up and continue my journey.\"\n\nThis sentence is written in the first person,",
+  "text": "I have pulled myself free, and with a sigh, the line feels lighter. The journey begins anew, my hands ready to bear the load."
+ },
+ {
+  "t0": 3505.2,
+  "t1": 3649.6,
+  "section": "fight_1",
+  "voice": "CHILDHOOD MEMORY",
+  "slot": "slot_10",
+  "request": "request_003_07-23-44-171",
+  "prompt": "Re-express the following sentence in your own voice: \"I find myself in the longhouse hall, in the afternoon. This place is a long wooden hall with a hearth down",
+  "text": "I find myself in the longhouse hall, in the afternoon. This place echoes my childhood at the port city, where I spent time on the docks and dreamed of ancient ruins. Around me is my acquaintance Zedayne Hartmead, the farmer, just as I remember from when I first bought a sword with my first earned coin."
+ },
+ {
+  "t0": 3654.5,
+  "t1": 3752.9,
+  "section": "fight_1",
+  "voice": "CHILDHOOD MEMORY",
+  "slot": "slot_10",
+  "request": "request_004_07-26-13-544",
+  "prompt": "Re-express the following sentence in your own voice: \"My attention is drawn to my acquaintance Helen, the farmer. Someone leans on a hoe at the field's edge, ta",
+  "text": "I recall the time when I stood at the docks, gauging the strength of a stranger. It's similar to now, someone measuring me, thinner than expected, looking past me at something not obvious."
+ },
+ {
+  "t0": 3781.6,
+  "t1": 3967.1,
+  "section": "find_job",
+  "voice": "DILIGENCE",
+  "slot": "slot_13",
+  "request": "request_001_07-28-20-557",
+  "prompt": "Re-express the following sentence in your own voice: \"I notice someone leans on a hoe at the field's edge, taking my measure; thinner than a landholder ought to",
+  "text": "I notice her at the field's edge, her lean posture mirroring the land's weariness. Her gaze wanders, yet I see her measuring me, her thin frame a testament to the labor unseen. I wish to offer my steadiness and skill, to prove my worth as a farmhand. I will finish what was begun, ensuring each task is done with the same care that started it."
+ },
+ {
+  "t0": 3967.1,
+  "t1": 4008.9,
+  "section": "find_job",
+  "voice": "DILIGENCE",
+  "slot": "slot_13",
+  "request": "request_002_07-31-26-069",
+  "prompt": "Re-express the following sentence in your own voice: \"I will meet her to request to work as a farmhand\"\n\nThis sentence is written in the first person, and that ",
+  "text": "I will go to her request to take on the role of a farmhand."
+ },
+ {
+  "t0": 4029.6,
+  "t1": 4120.0,
+  "section": "find_job",
+  "voice": "DILIGENCE",
+  "slot": "slot_13",
+  "request": "request_003_07-32-28-629",
+  "prompt": "Re-express the following sentence in your own voice: \"It is done! I succeeded to meet her to request to work as a farmhand. Thanks to this success I began speak",
+  "text": "I am done. Meeting her was a start, but I began to learn her ways and share my own, as we talked under the stars. The work continues, the path is not yet completed."
+ },
+ {
+  "t0": 4130.7,
+  "t1": 4169.9,
+  "section": "find_job",
+  "voice": "You are Helen, a medieval farmer who has",
+  "slot": "slot_14",
+  "request": "request_001_07-34-09-696",
+  "prompt": "You are Helen. You are speaking directly to Michael. You are speaking of being asked for work by someone looking to be taken on.\n\nThis is what you must say:\nI s",
+  "text": "Why seek you my door, Aentonyoth Marshwall?"
+ },
+ {
+  "t0": 4170.7,
+  "t1": 4177.7,
+  "section": "find_job",
+  "voice": "REPLY CHOOSER",
+  "slot": "slot_7",
+  "request": "request_001_07-34-49-671",
+  "prompt": "The faculty: DILIGENCE - Works the whole task rather than the interesting part of it, and finishes to the same standard it started. Unremarkable at any single m",
+  "text": "B"
+ },
+ {
+  "t0": 4177.7,
+  "t1": 4241.1,
+  "section": "find_job",
+  "voice": "DILIGENCE",
+  "slot": "slot_13",
+  "request": "request_004_07-34-56-703",
+  "prompt": "You are Michael. You are speaking directly to Helen. You are speaking of asking a master or reeve to take you on for work.\n\nThis is what you must say:\nI say to ",
+  "text": "Hast thou a place for a farmhand's work, Zedayne Hartmead? How fares the wages?"
+ },
+ {
+  "t0": 4241.1,
+  "t1": 4248.4,
+  "section": "find_job",
+  "voice": "REPLY CHOOSER",
+  "slot": "slot_7",
+  "request": "request_002_07-36-00-106",
+  "prompt": "The faculty: NAUTICAL JARGON - Holds the speech of ships and docks ready, the cant of the harbour and the names of rigging. Reads seamen and waterfront dealings",
+  "text": "C"
+ },
+ {
+  "t0": 4248.4,
+  "t1": 4309.5,
+  "section": "find_job",
+  "voice": "NAUTICAL JARGON",
+  "slot": "slot_11",
+  "request": "request_002_07-36-07-392",
+  "prompt": "You are Michael. You are speaking directly to Helen. You are speaking of asking a master or reeve to take you on for work.\n\nThis is what you must say:\nI say to ",
+  "text": "Strong as a hound, bold as a gale, bind me to your helm, Zedayne Hartmead."
+ },
+ {
+  "t0": 4317.2,
+  "t1": 4324.4,
+  "section": "find_job",
+  "voice": "REPLY CHOOSER",
+  "slot": "slot_7",
+  "request": "request_003_07-37-16-227",
+  "prompt": "The faculty: PROVISIONING - Keeps a garrison fed: so much grain per man per day, so much salt, so much firewood, so many days until the next supply. Knows what ",
+  "text": "D"
+ },
+ {
+  "t0": 4324.4,
+  "t1": 4396.2,
+  "section": "find_job",
+  "voice": "PROVISIONING",
+  "slot": "slot_15",
+  "request": "request_001_07-37-23-433",
+  "prompt": "You are Michael. You are speaking directly to Helen. You are speaking of asking a master or reeve to take you on for work.\n\nThis is what you must say:\nI say to ",
+  "text": "Seek a place where days of grain, firewood, and salt are few, and know thyself a farmer's help."
+ },
+ {
+  "t0": 4404.5,
+  "t1": 4491.6,
+  "section": "find_job",
+  "voice": "You are Helen, a medieval farmer who has",
+  "slot": "slot_14",
+  "request": "request_002_07-38-43-532",
+  "prompt": "You are Helen. You are speaking directly to Michael. You are speaking of being asked for work by someone looking to be taken on.\n\nThis is what you must say:\nI s",
+  "text": "Henceforth, a farmhand's life lies within your grasp, earning a copper for each ten days' toil, and fraught with hardship."
+ },
+ {
+  "t0": 4501.1,
+  "t1": 4508.2,
+  "section": "find_job",
+  "voice": "REPLY CHOOSER",
+  "slot": "slot_7",
+  "request": "request_004_07-40-20-117",
+  "prompt": "The faculty: SOCIAL INTERACTION - Strikes up talk with strangers easily and keeps a conversation moving. Inclines toward the ordinary courtesies of meeting and ",
+  "text": "C"
+ },
+ {
+  "t0": 4508.2,
+  "t1": 4547.1,
+  "section": "find_job",
+  "voice": "SOCIAL INTERACTION",
+  "slot": "slot_16",
+  "request": "request_001_07-40-27-206",
+  "prompt": "You are Michael. You are speaking directly to Helen. You are speaking of asking a master or reeve to take you on for work.\n\nThis is what you must say:\nI say to ",
+  "text": "How's a day's work for you?"
+ },
+ {
+  "t0": 4547.1,
+  "t1": 4555.0,
+  "section": "find_job",
+  "voice": "REPLY CHOOSER",
+  "slot": "slot_7",
+  "request": "request_005_07-41-06-115",
+  "prompt": "The faculty: DILIGENCE - Works the whole task rather than the interesting part of it, and finishes to the same standard it started. Unremarkable at any single m",
+  "text": "C"
+ },
+ {
+  "t0": 4555.0,
+  "t1": 4598.8,
+  "section": "find_job",
+  "voice": "DILIGENCE",
+  "slot": "slot_13",
+  "request": "request_005_07-41-13-957",
+  "prompt": "You are Michael. You are speaking directly to Helen. You are speaking of asking a master or reeve to take you on for work.\n\nThis is what you must say:\nI say to ",
+  "text": "The price is set. I shall not dispute it."
+ },
+ {
+  "t0": 4606.4,
+  "t1": 4614.4,
+  "section": "find_job",
+  "voice": "REPLY CHOOSER",
+  "slot": "slot_7",
+  "request": "request_006_07-42-05-374",
+  "prompt": "The faculty: BARGAINING - Holds two figures in mind at once, the price asked and the price that would actually be accepted, and works the gap between them. Seek",
+  "text": "C"
+ },
+ {
+  "t0": 4614.4,
+  "t1": 4655.6,
+  "section": "find_job",
+  "voice": "BARGAINING",
+  "slot": "slot_17",
+  "request": "request_001_07-42-13-364",
+  "prompt": "You are Michael. You are speaking directly to Helen. You are speaking of asking a master or reeve to take you on for work.\n\nThis is what you must say:\nI say to ",
+  "text": "What does a day's work entail, friend?"
+ },
+ {
+  "t0": 4660.0,
+  "t1": 4752.7,
+  "section": "find_job",
+  "voice": "You are Helen, a medieval farmer who has",
+  "slot": "slot_14",
+  "request": "request_003_07-42-58-982",
+  "prompt": "You are Helen. You are speaking directly to Michael. You are speaking of being asked for work by someone looking to be taken on.\n\nThis is what you must say:\nI s",
+  "text": "From dawn till dusk, by the fields, in all weathers. There's no time for idling. Only when tasks are within is there work."
+ },
+ {
+  "t0": 4753.9,
+  "t1": 4760.9,
+  "section": "find_job",
+  "voice": "REPLY CHOOSER",
+  "slot": "slot_7",
+  "request": "request_007_07-44-32-899",
+  "prompt": "The faculty: DILIGENCE - Works the whole task rather than the interesting part of it, and finishes to the same standard it started. Unremarkable at any single m",
+  "text": "A"
+ },
+ {
+  "t0": 4760.9,
+  "t1": 4835.5,
+  "section": "find_job",
+  "voice": "DILIGENCE",
+  "slot": "slot_13",
+  "request": "request_006_07-44-39-879",
+  "prompt": "You are Michael. You are speaking directly to Helen. You are speaking of asking a master or reeve to take you on for work.\n\nThis is what you must say:\nI say to ",
+  "text": "The sweat of my brow and the strength of my arms have earned their due, no matter how hard the task may be."
+ },
+ {
+  "t0": 4835.5,
+  "t1": 4843.6,
+  "section": "find_job",
+  "voice": "REPLY CHOOSER",
+  "slot": "slot_7",
+  "request": "request_008_07-45-54-504",
+  "prompt": "The faculty: NAUTICAL JARGON - Holds the speech of ships and docks ready, the cant of the harbour and the names of rigging. Reads seamen and waterfront dealings",
+  "text": "B"
+ },
+ {
+  "t0": 4843.6,
+  "t1": 4916.4,
+  "section": "find_job",
+  "voice": "NAUTICAL JARGON",
+  "slot": "slot_11",
+  "request": "request_003_07-46-02-609",
+  "prompt": "You are Michael. You are speaking directly to Helen. You are speaking of asking a master or reeve to take you on for work.\n\nThis is what you must say:\nI say to ",
+  "text": "Worse fates I've faced, but still I stand. Less for more, 'tis naught to dread."
+ },
+ {
+  "t0": 4916.4,
+  "t1": 4923.1,
+  "section": "find_job",
+  "voice": "REPLY CHOOSER",
+  "slot": "slot_7",
+  "request": "request_009_07-47-15-371",
+  "prompt": "The faculty: SOCIAL INTERACTION - Strikes up talk with strangers easily and keeps a conversation moving. Inclines toward the ordinary courtesies of meeting and ",
+  "text": "A"
+ },
+ {
+  "t0": 4923.1,
+  "t1": 4981.3,
+  "section": "find_job",
+  "voice": "SOCIAL INTERACTION",
+  "slot": "slot_16",
+  "request": "request_002_07-47-22-062",
+  "prompt": "You are Michael. You are speaking directly to Helen. You are speaking of asking a master or reeve to take you on for work.\n\nThis is what you must say:\nI say to ",
+  "text": "Less for worse has been done, but fear not, for mine is no new tale."
+ },
+ {
+  "t0": 5005.0,
+  "t1": 5079.4,
+  "section": "find_job",
+  "voice": "You are Helen, a medieval farmer who has",
+  "slot": "slot_14",
+  "request": "request_004_07-48-43-994",
+  "prompt": "You are Helen. You are speaking directly to Michael. You are speaking of being asked for work by someone looking to be taken on.\n\nThis is what you must say:\nI s",
+  "text": "So you shall take on this task. But I seek a hand well versed in the ways of the fields."
+ },
+ {
+  "t0": 5322.7,
+  "t1": 5495.3,
+  "section": "fight_2",
+  "voice": "EMPATHY",
+  "slot": "slot_9",
+  "request": "request_004_07-54-01-742",
+  "prompt": "Re-express the following sentence in your own voice: \"I find myself in the cobbler's shop, in the morning. This place is a low shop smelling of leather and wax,",
+  "text": "I find myself in the cobbler's shop, a low shop with a scent of leather and wax. Around me, Publiosh Tommaezoth the cobbler of the city moves with hands skilled in the art. The air carries his gentle touch and the soft clatter of tools, a reminder of the care he brings to each pair of boots."
+ },
+ {
+  "t0": 5501.3,
+  "t1": 5659.7,
+  "section": "fight_2",
+  "voice": "EMPATHY",
+  "slot": "slot_9",
+  "request": "request_005_07-57-00-323",
+  "prompt": "Re-express the following sentence in your own voice: \"My attention is drawn to my acquaintance Michael, the cobbler of the city. Someone with a boot over one kn",
+  "text": "I see Publiosh Tommaezoth, the cobbler, standing there, a boot over one knee, hammering in hobnails without looking up, arguing about the gods while hammering in a heel. He stands between the two least happy, positioned as if drilled young by an old blade-scar on his forearm."
+ },
+ {
+  "t0": 5679.5,
+  "t1": 5687.5,
+  "section": "buy_boots",
+  "voice": "MEANS MATCHER",
+  "slot": "slot_5",
+  "request": "request_007_07-59-58-467",
+  "prompt": "The thinking faculty: PROVISIONING - Keeps a garrison fed: so much grain per man per day, so much salt, so much firewood, so many days until the next supply. Kn",
+  "text": "G"
+ },
+ {
+  "t0": 5687.5,
+  "t1": 5861.6,
+  "section": "buy_boots",
+  "voice": "PROVISIONING",
+  "slot": "slot_15",
+  "request": "request_002_08-00-06-481",
+  "prompt": "Re-express the following sentence in your own voice: \"I notice someone with a boot over one knee hammers in hobnails without looking up; argues about the gods w",
+  "text": "I notice someone with a boot over one knee hammers in hobnails without looking up, argues about the gods while hammering in a heel, positioned between the two least happy. It only colors how the salt will last - a fortnight, and the bread does not. I want to meet him to buy shoes and boots."
+ },
+ {
+  "t0": 5869.5,
+  "t1": 5917.2,
+  "section": "buy_boots",
+  "voice": "DILIGENCE",
+  "slot": "slot_13",
+  "request": "request_007_08-03-08-530",
+  "prompt": "Re-express the following sentence in your own voice: \"I will meet him to propose to buy shoes and boots\"\n\nThis sentence is written in the first person, and that",
+  "text": "I will go to him to discuss buying shoes and boots in this medieval city."
+ },
+ {
+  "t0": 5942.5,
+  "t1": 6021.7,
+  "section": "buy_boots",
+  "voice": "DILIGENCE",
+  "slot": "slot_13",
+  "request": "request_008_08-04-21-522",
+  "prompt": "Re-express the following sentence in your own voice: \"It is done! I succeeded to meet him to propose to buy shoes and boots. Thanks to this success I began spea",
+  "text": "I only finished the proposal as it was meant to be. Now, I await Publiosh Tommaezoth's response, my hands still as clean as they were when I began."
+ },
+ {
+  "t0": 6030.7,
+  "t1": 6071.8,
+  "section": "buy_boots",
+  "voice": "You are Michael, the cobbler. You spend ",
+  "slot": "slot_18",
+  "request": "request_001_08-05-49-708",
+  "prompt": "You are Michael. You are speaking directly to William. You are speaking of being asked to show what you have for sale.\n\nThis is what you must say:\nI say to Will",
+  "text": "Aentonyoth Marshwall, seek what dost desire?"
+ },
+ {
+  "t0": 6072.7,
+  "t1": 6080.4,
+  "section": "buy_boots",
+  "voice": "REPLY CHOOSER",
+  "slot": "slot_7",
+  "request": "request_010_08-06-31-701",
+  "prompt": "The faculty: BARGAINING - Holds two figures in mind at once, the price asked and the price that would actually be accepted, and works the gap between them. Seek",
+  "text": "A"
+ },
+ {
+  "t0": 6080.4,
+  "t1": 6141.7,
+  "section": "buy_boots",
+  "voice": "BARGAINING",
+  "slot": "slot_17",
+  "request": "request_002_08-06-39-369",
+  "prompt": "You are William. You are speaking directly to Michael. You are speaking of asking the merchant to show what they have for sale.\n\nThis is what you must say:\nI sa",
+  "text": "Seeking a rare gem, might I perchance find what you offer?"
+ },
+ {
+  "t0": 6149.7,
+  "t1": 6156.8,
+  "section": "buy_boots",
+  "voice": "REPLY CHOOSER",
+  "slot": "slot_7",
+  "request": "request_011_08-07-48-737",
+  "prompt": "The faculty: ENTERPRISE - Reads goods, routes, and demand for where profit sits, tracking where wares run cheap and where they sell dear. Inclines reasoning tow",
+  "text": "A"
+ },
+ {
+  "t0": 6156.8,
+  "t1": 6209.3,
+  "section": "buy_boots",
+  "voice": "ENTERPRISE",
+  "slot": "slot_19",
+  "request": "request_001_08-07-55-812",
+  "prompt": "You are William. You are speaking directly to Michael. You are speaking of asking the merchant to show what they have for sale.\n\nThis is what you must say:\nI sa",
+  "text": "And what tariffs do these wares bear on their journey?"
+ },
+ {
+  "t0": 6209.3,
+  "t1": 6216.4,
+  "section": "buy_boots",
+  "voice": "REPLY CHOOSER",
+  "slot": "slot_7",
+  "request": "request_012_08-08-48-265",
+  "prompt": "The faculty: SOCIAL INTERACTION - Strikes up talk with strangers easily and keeps a conversation moving. Inclines toward the ordinary courtesies of meeting and ",
+  "text": "D"
+ },
+ {
+  "t0": 6216.4,
+  "t1": 6256.0,
+  "section": "buy_boots",
+  "voice": "SOCIAL INTERACTION",
+  "slot": "slot_16",
+  "request": "request_003_08-08-55-403",
+  "prompt": "You are William. You are speaking directly to Michael. You are speaking of asking the merchant to show what they have for sale.\n\nThis is what you must say:\nI sa",
+  "text": "What rare treasure are you seeking now?"
+ },
+ {
+  "t0": 6264.2,
+  "t1": 6378.1,
+  "section": "buy_boots",
+  "voice": "You are Michael, the cobbler. You spend ",
+  "slot": "slot_18",
+  "request": "request_002_08-09-43-181",
+  "prompt": "You are Michael. You are speaking directly to William. You are speaking of being asked to show what you have for sale.\n\nThis is what you must say:\nI say to Will",
+  "text": "Seek not what not of shoes nor boots be, for mine are few and rare, nor any thing else but these. Yet if thy quest be of footwear, ask now and I shall tell thee if I hold the key."
+ },
+ {
+  "t0": 6379.2,
+  "t1": 6384.7,
+  "section": "buy_boots",
+  "voice": "REPLY CHOOSER",
+  "slot": "slot_7",
+  "request": "request_013_08-11-38-225",
+  "prompt": "The faculty: SOCIAL INTERACTION - Strikes up talk with strangers easily and keeps a conversation moving. Inclines toward the ordinary courtesies of meeting and ",
+  "text": "A"
+ },
+ {
+  "t0": 6384.7,
+  "t1": 6438.3,
+  "section": "buy_boots",
+  "voice": "SOCIAL INTERACTION",
+  "slot": "slot_16",
+  "request": "request_004_08-11-43-662",
+  "prompt": "You are William. You are speaking directly to Michael. You are speaking of asking the merchant to show what they have for sale.\n\nThis is what you must say:\nI sa",
+  "text": "Let us find the just right item for your tasks, not just the first available one."
+ },
+ {
+  "t0": 6438.4,
+  "t1": 6445.8,
+  "section": "buy_boots",
+  "voice": "REPLY CHOOSER",
+  "slot": "slot_7",
+  "request": "request_014_08-12-37-436",
+  "prompt": "The faculty: DILIGENCE - Works the whole task rather than the interesting part of it, and finishes to the same standard it started. Unremarkable at any single m",
+  "text": "B"
+ },
+ {
+  "t0": 6445.8,
+  "t1": 6503.5,
+  "section": "buy_boots",
+  "voice": "DILIGENCE",
+  "slot": "slot_13",
+  "request": "request_009_08-12-44-761",
+  "prompt": "You are William. You are speaking directly to Michael. You are speaking of asking the merchant to show what they have for sale.\n\nThis is what you must say:\nI sa",
+  "text": "The choice you make shall not be near but precise, as work demands the finest."
+ },
+ {
+  "t0": 6503.5,
+  "t1": 6510.8,
+  "section": "buy_boots",
+  "voice": "REPLY CHOOSER",
+  "slot": "slot_7",
+  "request": "request_015_08-13-42-511",
+  "prompt": "The faculty: ENTERPRISE - Reads goods, routes, and demand for where profit sits, tracking where wares run cheap and where they sell dear. Inclines reasoning tow",
+  "text": "A"
+ },
+ {
+  "t0": 6510.8,
+  "t1": 6564.6,
+  "section": "buy_boots",
+  "voice": "ENTERPRISE",
+  "slot": "slot_19",
+  "request": "request_002_08-13-49-810",
+  "prompt": "You are William. You are speaking directly to Michael. You are speaking of asking the merchant to show what they have for sale.\n\nThis is what you must say:\nI sa",
+  "text": "What ventures does it serve, and how far can it endure without a hitch?"
+ },
+ {
+  "t0": 6584.3,
+  "t1": 6633.2,
+  "section": "buy_boots",
+  "voice": "You are Michael, the cobbler. You spend ",
+  "slot": "slot_18",
+  "request": "request_003_08-15-03-301",
+  "prompt": "You are Michael. You are speaking directly to William. You are speaking of being asked to show what you have for sale.\n\nThis is what you must say:\nI say to Will",
+  "text": "Matched to your needs, I have the fitting shoe."
+ },
+ {
+  "t0": 6633.2,
+  "t1": 6712.5,
+  "section": "buy_boots",
+  "voice": "BARGAINING",
+  "slot": "slot_17",
+  "request": "request_003_08-15-52-229",
+  "prompt": "Re-express the following sentence in your own voice: \"I was granted a chance to trade. It makes me feel glad, and lighter than I was.\"\n\nThis sentence is written",
+  "text": "I traded my wares, and in the price beneath the price, I felt glad and lighter than before, like a hawk skimming the breeze after a successful hunt."
+ },
+ {
+  "t0": 6734.4,
+  "t1": 6848.0,
+  "section": "trade",
+  "voice": "EMPATHY",
+  "slot": "slot_9",
+  "request": "request_006_08-17-33-402",
+  "prompt": "Re-express the following sentence in your own voice: \"My attention is drawn to my acquaintance Michael, the cobbler of the city. Someone with a boot over one kn",
+  "text": "I see Publiosh Tommaezoth, cobbler of the city, his knee bleeding, hammering away, arguing with a fellow craftsman. He stands between the quarrellers, a steadfast figure with an old scar on his forearm, a silent witness to their discord."
+ }
+]

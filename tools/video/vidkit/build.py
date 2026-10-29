@@ -64,6 +64,7 @@ class Segment:
     hovers: list[float] = field(default_factory=list)
     click_wav: Path | None = None
     hover_wav: Path | None = None
+    src_t0: float | None = None          # a game segment: where in its recording it starts
 
 
 class Build:
@@ -254,6 +255,7 @@ class Build:
             return out
 
         natural = sum((b_ - a_) / sp for a_, b_, sp in pieces if sp > 0)
+        seg.src_t0 = t0
         seg.click_wav, seg.hover_wav = rec.click_wav, rec.hover_wav
         dropped = lambda t: any(sp <= 0 and a_ <= t < b_ for a_, b_, sp in pieces)  # noqa: E731
         seg.clicks = [remap(t) for t in rec.clicks(t0, t1) if not dropped(t)]
@@ -350,10 +352,48 @@ class Build:
 
     # ── 5. sound ──────────────────────────────────────────────────────────────
 
-    def music_bed(self, total: float) -> np.ndarray | None:
+    def take_audio_bed(self, segs: list[Segment], total: float, rec_name: str) -> np.ndarray:
+        """The take's own sound (music.wav: the game's music and in-game sounds, as a player heard them)
+        under the whole video. Each game segment takes it from where its footage starts, at normal speed
+        whatever the picture's fast-forward, so the music never plays sped up and a fight keeps the fight's
+        music; any other segment carries on from where the one before left off. Neighbouring windows
+        crossfade."""
+        import soundfile as sf
+        from scipy import signal as sg
+        rec = self.recordings[rec_name]
+        path = rec.path / rec.manifest["files"]["music_audio"]
+        info = sf.info(str(path))
+        xf = 0.75
+        bed = np.zeros((int((total + xf + 1) * audio.RATE), 2), np.float32)
+        src = 0.0
+        for i, seg in enumerate(segs):
+            if seg.src_t0 is not None:
+                src = seg.src_t0
+            length = seg.seconds + xf
+            a = int(src * info.samplerate)
+            win, _ = sf.read(str(path), start=a, stop=a + int(length * info.samplerate), dtype="float32", always_2d=True)
+            if win.shape[1] == 1:
+                win = np.repeat(win, 2, axis=1)
+            win = sg.resample_poly(win[:, :2], audio.RATE, info.samplerate, axis=0).astype(np.float32)
+            n = int(xf * audio.RATE)
+            if i and len(win) > n:
+                win[:n] *= np.linspace(0, 1, n)[:, None]
+            if len(win) > n:
+                win[-n:] *= np.linspace(1, 0, n)[:, None]
+            at = int(seg.start * audio.RATE)
+            bed[at:at + len(win)] += win[: len(bed) - at]
+            src += seg.seconds
+        return bed[: int(total * audio.RATE)]
+
+    def music_bed(self, total: float, segs: list[Segment] | None = None) -> np.ndarray | None:
         m = self.sb.get("music")
         if not m:
             return None
+        if "take_audio" in m:
+            bed = self.take_audio_bed(segs or [], total, m["take_audio"])
+            fade = int(audio.RATE * 2.5)
+            bed[-fade:] *= np.linspace(1, 0, fade)[:, None]
+            return audio.normalise(bed, m.get("level_db", -34))
         if "midi" in m:
             midi = self.base / m["midi"]
         elif "recording" in m:
@@ -366,7 +406,7 @@ class Build:
             if not midi.exists():
                 self.compose(total)
         else:
-            raise ValueError("music needs one of: midi, recording, export")
+            raise ValueError("music needs one of: take_audio, midi, recording, export")
         bed = synth.render(midi, length=None, grit=m.get("grit", 0.25))
         reps = int(np.ceil(total * audio.RATE / max(len(bed), 1)))
         bed = np.concatenate([bed] * max(reps, 1))[: int(total * audio.RATE)]
@@ -397,7 +437,7 @@ class Build:
                     audio.place(fx, hv, seg.start + t, gain=click_gain * 0.25)
 
         mix = voice + fx
-        bed = self.music_bed(total)
+        bed = self.music_bed(total, segs)
         if bed is not None:
             # same length as the rest of the mix, to the sample
             bed = np.pad(bed, ((0, max(0, len(voice) - len(bed))), (0, 0)))[: len(voice)]
