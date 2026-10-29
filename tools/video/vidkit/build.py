@@ -55,8 +55,6 @@ FADE = 0.35
 class Segment:
     index: int
     spec: dict
-    vo_path: Path | None = None
-    vo_seconds: float = 0.0
     picture: Path | None = None
     seconds: float = 0.0
     start: float = 0.0
@@ -65,9 +63,12 @@ class Segment:
     click_wav: Path | None = None
     hover_wav: Path | None = None
     src_t0: float | None = None          # a game segment: where in its recording it starts
-    post_path: Path | None = None        # narration that waits for the picture (parts from the first "wait")
-    post_seconds: float = 0.0
-    post_start: float = 0.0              # where in the segment it starts
+    pieces: list = field(default_factory=list)   # and how its footage is retimed: (start, end, speed)
+    # The narration in groups, each starting where its first part is anchored: (wav, seconds, anchor),
+    # the anchor None (straight after the group before), "end" (once the picture has played) or a moment
+    # of the recording (a game segment). `starts` is where each group starts in the segment.
+    groups: list = field(default_factory=list)
+    starts: list = field(default_factory=list)
 
 
 class Build:
@@ -131,18 +132,30 @@ class Build:
         The parts are voiced separately and joined with a short pause: how a narration explains in one
         register and reads the game's own text in another.
 
-        A part may say {"wait": true}: it and every part after it start only once the picture has played
-        through (a game segment's footage, model waits fast-forwarded), so a passage is read when it is on
-        screen, not while it is still being written. The parts before it speak over the footage."""
+        A part of a game segment may be anchored to its footage, and it and the parts after it then start
+        no earlier than that: {"at": <seconds of the recording>} at the moment shown (a passage read as it
+        starts being written), {"wait": true} once the picture has played through (a result read once it
+        is on screen). A group never starts before the one before it has finished."""
         vo = seg.spec.get("vo")
         if not vo:
             return
         parts = [vo] if isinstance(vo, str) else vo
-        split = next((i for i, p in enumerate(parts) if isinstance(p, dict) and p.get("wait")), len(parts))
-        if split < len(parts) and seg.spec["type"] != "game":
-            raise ValueError(f"segment {seg.index}: only a game segment's narration can wait for its picture")
-        seg.vo_path, seg.vo_seconds = self._voice_parts(seg, parts[:split], "vo", 0)
-        seg.post_path, seg.post_seconds = self._voice_parts(seg, parts[split:], "post", split)
+        cuts = [0]
+        for i, p in enumerate(parts):
+            if i and isinstance(p, dict) and ("at" in p or p.get("wait")):
+                cuts.append(i)
+        if len(cuts) > 1 and seg.spec["type"] != "game":
+            raise ValueError(f"segment {seg.index}: only a game segment's narration can be anchored to its footage")
+        cuts.append(len(parts))
+        seg.groups = []
+        for k in range(len(cuts) - 1):
+            group = parts[cuts[k]:cuts[k + 1]]
+            head = group[0]
+            anchor = None
+            if isinstance(head, dict):
+                anchor = head["at"] if "at" in head else ("end" if head.get("wait") else None)
+            path, secs = self._voice_parts(seg, group, f"g{k}", cuts[k])
+            seg.groups.append((path, secs, anchor))
 
     def _voice_parts(self, seg: Segment, parts: list, name: str, first: int) -> tuple[Path | None, float]:
         if not parts:
@@ -168,12 +181,20 @@ class Build:
 
     def target_seconds(self, seg: Segment) -> float:
         lead, tail = self.voice["lead_in"], self.voice["tail"]
-        need = seg.vo_seconds + lead + tail if seg.vo_seconds else 0
-        if seg.post_seconds:
-            natural = self.game_timing(seg)["natural"]
-            after_pre = lead + seg.vo_seconds + float(self.voice.get("part_gap", 0.35)) if seg.vo_seconds else lead
-            seg.post_start = max(after_pre, natural + float(self.voice.get("wait_after", 0.3)))
-            need = max(need, seg.post_start + seg.post_seconds + tail)
+        gap = float(self.voice.get("part_gap", 0.35))
+        seg.starts = []
+        need = 0.0
+        g = self.game_timing(seg) if any(a is not None for _, _, a in seg.groups) else None
+        t = lead
+        for i, (_, secs, anchor) in enumerate(seg.groups):
+            start = t + (gap if i else 0.0)
+            if anchor == "end":
+                start = max(start, g["natural"] + float(self.voice.get("wait_after", 0.3)))
+            elif anchor is not None:
+                start = max(start, g["remap"](float(anchor)))
+            seg.starts.append(start)
+            t = start + secs
+            need = t + tail
         return max(need, float(seg.spec.get("min", 0)))
 
     # ── 3. pictures ───────────────────────────────────────────────────────────
@@ -280,12 +301,13 @@ class Build:
 
         natural = sum((b_ - a_) / sp for a_, b_, sp in pieces if sp > 0)
         seg.src_t0 = t0
+        seg.pieces = pieces
         seg.click_wav, seg.hover_wav = rec.click_wav, rec.hover_wav
         dropped = lambda t: any(sp <= 0 and a_ <= t < b_ for a_, b_, sp in pieces)  # noqa: E731
         seg.clicks = [remap(t) for t in rec.clicks(t0, t1) if not dropped(t)]
         seg.hovers = [remap(t) for t in rec.hovers(t0, t1)] if s.get("hover_ticks", True) else []
         return {"rec": rec, "t0": t0, "t1": t1, "pieces": pieces, "natural": natural, "busy": busy, "ff": ff,
-                "ffcfg": ffcfg, "speed": speed}
+                "ffcfg": ffcfg, "speed": speed, "remap": remap}
 
     def game_picture(self, seg: Segment, target: float) -> None:
         s = seg.spec
@@ -385,35 +407,106 @@ class Build:
 
     def take_audio_bed(self, segs: list[Segment], total: float, rec_name: str) -> np.ndarray:
         """The take's own sound (music.wav: the game's music and in-game sounds, as a player heard them)
-        under the whole video. Each game segment takes it from where its footage starts, at normal speed
-        whatever the picture's fast-forward, so the music never plays sped up and a fight keeps the fight's
-        music; any other segment carries on from where the one before left off. Neighbouring windows
-        crossfade."""
+        under the whole video, following the picture so a sound lands on the frame that made it: where the
+        footage plays at its own speed so does the sound; where the picture runs a little faster (a fight
+        at twice speed) the sound is time-stretched, its pitch kept; where it races through a model's wait,
+        the sound skips ahead with it rather than play sped up. A frame held under the narration keeps the
+        sound going under it, and so does a diagram, but not with what comes next in the take (that would play
+        the next moment's sounds early, and again when its footage plays): with what the fast-forward skipped
+        of the latest model wait instead, music the picture raced past and nobody heard, where the game was
+        idle. Neighbouring stretches crossfade."""
         import soundfile as sf
+        import subprocess
+        import tempfile
         from scipy import signal as sg
-        rec = self.recordings[rec_name]
-        path = rec.path / rec.manifest["files"]["music_audio"]
-        info = sf.info(str(path))
-        xf = 0.75
-        bed = np.zeros((int((total + xf + 1) * audio.RATE), 2), np.float32)
-        src = 0.0
-        for i, seg in enumerate(segs):
-            if seg.src_t0 is not None:
-                src = seg.src_t0
-            length = seg.seconds + xf
-            a = int(src * info.samplerate)
-            win, _ = sf.read(str(path), start=a, stop=a + int(length * info.samplerate), dtype="float32", always_2d=True)
+        def wav_of(name: str) -> Path:
+            rec = self.recordings[name]
+            return rec.path / rec.manifest["files"]["music_audio"]
+
+        path = wav_of(rec_name)          # a game segment reads its own recording's; others carry on
+
+        def read(a: float, length: float, where: Path | None = None) -> np.ndarray:
+            where = where or path
+            info = sf.info(str(where))
+            i = max(0, int(a * info.samplerate))
+            win, _ = sf.read(str(where), start=i, stop=i + max(1, int(length * info.samplerate)), dtype="float32",
+                             always_2d=True)
             if win.shape[1] == 1:
                 win = np.repeat(win, 2, axis=1)
             win = sg.resample_poly(win[:, :2], audio.RATE, info.samplerate, axis=0).astype(np.float32)
-            n = int(xf * audio.RATE)
-            if i and len(win) > n:
-                win[:n] *= np.linspace(0, 1, n)[:, None]
-            if len(win) > n:
-                win[-n:] *= np.linspace(1, 0, n)[:, None]
+            n = int(length * audio.RATE)
+            return np.pad(win, ((0, max(0, n - len(win))), (0, 0)))[:n]
+
+        def stretch(x: np.ndarray, speed: float) -> np.ndarray:
+            with tempfile.TemporaryDirectory() as d:
+                src, dst = Path(d) / "a.wav", Path(d) / "b.wav"
+                sf.write(str(src), x, audio.RATE)
+                subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", "-i", str(src), "-af", f"atempo={speed:g}",
+                                str(dst)], check=True)
+                y, _ = sf.read(str(dst), dtype="float32", always_2d=True)
+            return y
+
+        xf = int(0.12 * audio.RATE)
+
+        def join(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+            if len(a) < xf or len(b) < xf:
+                return np.concatenate([a, b])
+            ramp = np.linspace(0, 1, xf)[:, None]
+            return np.concatenate([a[:-xf], a[-xf:] * (1 - ramp) + b[:xf] * ramp, b[xf:]])
+
+        pool: list[list[float]] = []      # model waits the picture skipped: [start, end, next unheard]
+
+        def filler(length: float) -> np.ndarray:
+            if not pool:
+                return read(src, length)
+            out = np.zeros((0, 2), np.float32)
+            while len(out) < int(length * audio.RATE) - xf:
+                start, end, cur, where = pool[-1]
+                if end - cur < 1.0:                    # used up: the one before, or this one again
+                    if len(pool) > 1:
+                        pool.pop()
+                    else:
+                        pool[-1][2] = start
+                    continue
+                take = min(length - len(out) / audio.RATE + 0.2, end - cur)
+                out = join(out, read(cur, take, where))
+                pool[-1][2] = cur + take
+            return out
+
+        bed = np.zeros((int((total + 1) * audio.RATE), 2), np.float32)
+        src = 0.0
+        for seg in segs:
+            track = np.zeros((0, 2), np.float32)
+            if seg.src_t0 is not None:
+                src = seg.src_t0
+                path = wav_of(seg.spec["recording"])
+                for a_, b_, sp in seg.pieces:
+                    if sp <= 0:
+                        continue
+                    out = (b_ - a_) / sp
+                    if sp == 1:
+                        piece = read(a_, out)
+                    elif sp <= 2.5:
+                        piece = stretch(read(a_, b_ - a_), sp)
+                    else:
+                        piece = read(a_, out)          # the sound skips ahead with the picture
+                        if b_ - a_ - out > 2.0:
+                            pool.append([a_ + out, b_, a_ + out, path])
+                    n = int(out * audio.RATE)
+                    piece = np.pad(piece, ((0, max(0, n - len(piece))), (0, 0)))[:n]
+                    track = join(track, piece)
+                    src = b_
+            rest = seg.seconds - len(track) / audio.RATE + 0.75
+            if rest > 0:
+                track = join(track, filler(rest))
+            n = int(0.75 * audio.RATE)
+            if seg.index and len(track) > n:
+                track[:n] *= np.linspace(0, 1, n)[:, None]
+            if len(track) > n:
+                track[-n:] *= np.linspace(1, 0, n)[:, None]
             at = int(seg.start * audio.RATE)
-            bed[at:at + len(win)] += win[: len(bed) - at]
-            src += seg.seconds
+            m = min(len(track), len(bed) - at)
+            bed[at:at + m] += track[:m]
         return bed[: int(total * audio.RATE)]
 
     def music_bed(self, total: float, segs: list[Segment] | None = None) -> np.ndarray | None:
@@ -449,10 +542,8 @@ class Build:
     def soundtrack(self, segs: list[Segment], total: float) -> Path:
         voice = audio.silence(total)
         for seg in segs:
-            if seg.vo_path:
-                audio.place(voice, tts.read_wav(seg.vo_path), seg.start + self.voice["lead_in"])
-            if seg.post_path:
-                audio.place(voice, tts.read_wav(seg.post_path), seg.start + seg.post_start)
+            for (path, _, _), start in zip(seg.groups, seg.starts):
+                audio.place(voice, tts.read_wav(path), seg.start + start)
         voice = audio.normalise(voice, self.sb.get("voice_level_db", -18))
 
         fx = audio.silence(total)
@@ -504,6 +595,7 @@ class Build:
         segs = [Segment(i, s) for i, s in enumerate(self.sb["segments"])]
         for seg in segs:
             self.voice_segment(seg)
+            self.target_seconds(seg)          # where each group of the narration starts
 
         # The composer runs in real time, so start it now and let it work while the pictures render.
         if "export" in (self.sb.get("music") or {}) and not self._music_midi().exists():

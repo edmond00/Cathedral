@@ -1,6 +1,7 @@
 [
  {
   "t0": 217.9,
+  "ts": 225.7,
   "t1": 304.1,
   "section": "organs_fighting",
   "voice": "CHILDHOOD REMINESCENCE",
@@ -11,6 +12,7 @@
  },
  {
   "t0": 315.0,
+  "ts": 320.9,
   "t1": 320.9,
   "section": "childhood",
   "voice": "GOAL CHOOSER",
@@ -21,6 +23,7 @@
  },
  {
   "t0": 320.9,
+  "ts": 327.1,
   "t1": 327.1,
   "section": "childhood",
   "voice": "MEANS MATCHER",
@@ -31,6 +34,7 @@
  },
  {
   "t0": 327.1,
+  "ts": 335.4,
   "t1": 442.1,
   "section": "childhood",
   "voice": "CHILDHOOD REMINESCENCE",
@@ -41,6 +45,7 @@
  },
  {
   "t0": 442.1,
+  "ts": 450.4,
   "t1": 526.6,
   "section": "childhood",
   "voice": "CHILDHOOD REMINESCENCE",
@@ -51,6 +56,7 @@
  },
  {
   "t0": 533.6,
+  "ts": 542.6,
   "t1": 649.9,
   "section": "childhood",
   "voice": "CHILDHOOD REMINESCENCE",
@@ -61,6 +67,7 @@
  },
  {
   "t0": 672.6,
+  "ts": 680.7,
   "t1": 788.4,
   "section": "childhood",
   "voice": "EMPATHY",
@@ -71,6 +78,7 @@
  },
  {
   "t0": 798.1,
+  "ts": 802.9,
   "t1": 802.9,
   "section": "childhood",
   "voice": "GOAL CHOOSER",
@@ -81,6 +89,7 @@
  },
  {
   "t0": 803.0,
+  "ts": 808.8,
   "t1": 808.8,
   "section": "childhood",
   "voice": "MEANS MATCHER",
@@ -91,6 +100,7 @@
  },
  {
   "t0": 808.8,
+  "ts": 817.7,
   "t1": 969.8,
   "section": "childhood",
   "voice": "CHILDHOOD REMINESCENCE",
@@ -101,6 +111,7 @@
  },
  {
   "t0": 969.8,
+  "ts": 978.1,
   "t1": 1101.5,
   "section": "childhood",
   "voice": "CHILDHOOD REMINESCENCE",
@@ -111,6 +122,7 @@
  },
  {
   "t0": 1107.8,
+  "ts": 1116.8,
   "t1": 1235.8,
   "section": "childhood",
   "voice": "CHILDHOOD REMINESCENCE",
@@ -121,6 +133,7 @@
  },
  {
   "t0": 1247.6,
+  "ts": 1255.6,
   "t1": 1329.3,
   "section": "childhood",
   "voice": "EMPATHY",
@@ -131,6 +144,7 @@
  },
  {
   "t0": 1339.0,
+  "ts": 1343.1,
   "t1": 1343.1,
   "section": "childhood",
   "voice": "GOAL CHOOSER",
@@ -141,6 +155,7 @@
  },
  {
   "t0": 1343.1,
+  "ts": 1347.7,
   "t1": 1347.7,
   "section": "childhood",
   "voice": "MEANS MATCHER",
@@ -151,6 +166,7 @@
  },
  {
   "t0": 1347.7,
+  "ts": 1356.7,
   "t1": 1480.8,
   "section": "childhood",
   "voice": "CHILDHOOD REMINESCENCE",
@@ -161,6 +177,7 @@
  },
  {
   "t0": 1480.8,
+  "ts": 1489.1,
   "t1": 1531.9,
   "section": "childhood",
   "voice": "CHILDHOOD REMINESCENCE",
@@ -171,6 +188,7 @@
  },
  {
   "t0": 1538.3,
+  "ts": 1547.0,
   "t1": 1650.2,
   "section": "childhood",
   "voice": "CHILDHOOD REMINESCENCE",
@@ -181,6 +199,7 @@
  },
  {
   "t0": 1661.2,
+  "ts": 1669.2,
   "t1": 1770.5,
   "section": "childhood",
   "voice": "EMPATHY",
@@ -191,6 +210,7 @@
  },
  {
   "t0": 1780.1,
+  "ts": 1784.9,
   "t1": 1784.9,
   "section": "childhood",
   "voice": "GOAL CHOOSER",
@@ -201,6 +221,7 @@
  },
  {
   "t0": 1784.9,
+  "ts": 1790.5,
   "t1": 1790.5,
   "section": "childhood",
   "voice": "MEANS MATCHER",
@@ -211,6 +232,7 @@
  },
  {
   "t0": 1790.5,
+  "ts": 1800.0,
   "t1": 1931.5,
   "section": "childhood",
   "voice": "CHILDHOOD REMINESCENCE",
@@ -221,6 +243,7 @@
  },
  {
   "t0": 1931.5,
+  "ts": 1940.4,
   "t1": 2016.8,
   "section": "childhood",
   "voice": "CHILDHOOD REMINESCENCE",
@@ -231,6 +254,7 @@
  },
  {
   "t0": 2023.2,
+  "ts": 2032.2,
   "t1": 2179.5,
   "section": "childhood",
   "voice": "CHILDHOOD REMINESCENCE",
@@ -241,6 +265,7 @@
  },
  {
   "t0": 2193.7,
+  "ts": 2202.1,
   "t1": 2307.8,
   "section": "childhood",
   "voice": "CHILDHOOD REMINESCENCE",
@@ -251,6 +276,7 @@
  },
  {
   "t0": 2317.6,
+  "ts": 2322.5,
   "t1": 2322.5,
   "section": "childhood",
   "voice": "GOAL CHOOSER",
@@ -261,6 +287,7 @@
  },
  {
   "t0": 2322.5,
+  "ts": 2327.8,
   "t1": 2327.8,
   "section": "childhood",
   "voice": "MEANS MATCHER",
@@ -271,6 +298,7 @@
  },
  {
   "t0": 2327.8,
+  "ts": 2336.5,
   "t1": 2462.3,
   "section": "childhood",
   "voice": "CHILDHOOD REMINESCENCE",
@@ -281,6 +309,7 @@
  },
  {
   "t0": 2462.3,
+  "ts": 2470.8,
   "t1": 2512.2,
   "section": "childhood",
   "voice": "CHILDHOOD REMINESCENCE",
@@ -291,6 +320,7 @@
  },
  {
   "t0": 2518.7,
+  "ts": 2528.0,
   "t1": 2665.8,
   "section": "childhood",
   "voice": "CHILDHOOD REMINESCENCE",
@@ -301,6 +331,7 @@
  },
  {
   "t0": 2690.9,
+  "ts": 2699.8,
   "t1": 2774.8,
   "section": "childhood",
   "voice": "CHILDHOOD MEMORY",
@@ -311,6 +342,7 @@
  },
  {
   "t0": 2779.0,
+  "ts": 2787.9,
   "t1": 2907.8,
   "section": "get_up",
   "voice": "CHILDHOOD MEMORY",
@@ -321,6 +353,7 @@
  },
  {
   "t0": 2926.0,
+  "ts": 2932.3,
   "t1": 2932.3,
   "section": "get_up",
   "voice": "GOAL CHOOSER",
@@ -331,6 +364,7 @@
  },
  {
   "t0": 2932.4,
+  "ts": 2941.5,
   "t1": 2941.5,
   "section": "get_up",
   "voice": "MEANS MATCHER",
@@ -341,6 +375,7 @@
  },
  {
   "t0": 2941.5,
+  "ts": 2951.5,
   "t1": 3061.2,
   "section": "get_up",
   "voice": "NAUTICAL JARGON",
@@ -351,6 +386,7 @@
  },
  {
   "t0": 3071.4,
+  "ts": 3080.1,
   "t1": 3104.6,
   "section": "get_up",
   "voice": "KNOTWORK",
@@ -361,6 +397,7 @@
  },
  {
   "t0": 3121.7,
+  "ts": 3130.5,
   "t1": 3202.7,
   "section": "get_up",
   "voice": "KNOTWORK",
@@ -371,6 +408,7 @@
  },
  {
   "t0": 3505.2,
+  "ts": 3514.5,
   "t1": 3649.6,
   "section": "fight_1",
   "voice": "CHILDHOOD MEMORY",
@@ -381,6 +419,7 @@
  },
  {
   "t0": 3654.5,
+  "ts": 3665.1,
   "t1": 3752.9,
   "section": "fight_1",
   "voice": "CHILDHOOD MEMORY",
@@ -391,6 +430,7 @@
  },
  {
   "t0": 3781.6,
+  "ts": 3791.3,
   "t1": 3967.1,
   "section": "find_job",
   "voice": "DILIGENCE",
@@ -401,6 +441,7 @@
  },
  {
   "t0": 3967.1,
+  "ts": 3975.1,
   "t1": 4008.9,
   "section": "find_job",
   "voice": "DILIGENCE",
@@ -411,6 +452,7 @@
  },
  {
   "t0": 4029.6,
+  "ts": 4038.4,
   "t1": 4120.0,
   "section": "find_job",
   "voice": "DILIGENCE",
@@ -421,6 +463,7 @@
  },
  {
   "t0": 4130.7,
+  "ts": 4139.0,
   "t1": 4169.9,
   "section": "find_job",
   "voice": "You are Helen, a medieval farmer who has",
@@ -431,6 +474,7 @@
  },
  {
   "t0": 4170.7,
+  "ts": 4177.7,
   "t1": 4177.7,
   "section": "find_job",
   "voice": "REPLY CHOOSER",
@@ -441,6 +485,7 @@
  },
  {
   "t0": 4177.7,
+  "ts": 4187.3,
   "t1": 4241.1,
   "section": "find_job",
   "voice": "DILIGENCE",
@@ -451,6 +496,7 @@
  },
  {
   "t0": 4241.1,
+  "ts": 4248.4,
   "t1": 4248.4,
   "section": "find_job",
   "voice": "REPLY CHOOSER",
@@ -461,6 +507,7 @@
  },
  {
   "t0": 4248.4,
+  "ts": 4258.1,
   "t1": 4309.5,
   "section": "find_job",
   "voice": "NAUTICAL JARGON",
@@ -471,6 +518,7 @@
  },
  {
   "t0": 4317.2,
+  "ts": 4324.4,
   "t1": 4324.4,
   "section": "find_job",
   "voice": "REPLY CHOOSER",
@@ -481,6 +529,7 @@
  },
  {
   "t0": 4324.4,
+  "ts": 4333.9,
   "t1": 4396.2,
   "section": "find_job",
   "voice": "PROVISIONING",
@@ -491,6 +540,7 @@
  },
  {
   "t0": 4404.5,
+  "ts": 4413.9,
   "t1": 4491.6,
   "section": "find_job",
   "voice": "You are Helen, a medieval farmer who has",
@@ -501,6 +551,7 @@
  },
  {
   "t0": 4501.1,
+  "ts": 4508.2,
   "t1": 4508.2,
   "section": "find_job",
   "voice": "REPLY CHOOSER",
@@ -511,6 +562,7 @@
  },
  {
   "t0": 4508.2,
+  "ts": 4517.8,
   "t1": 4547.1,
   "section": "find_job",
   "voice": "SOCIAL INTERACTION",
@@ -521,6 +573,7 @@
  },
  {
   "t0": 4547.1,
+  "ts": 4555.0,
   "t1": 4555.0,
   "section": "find_job",
   "voice": "REPLY CHOOSER",
@@ -531,6 +584,7 @@
  },
  {
   "t0": 4555.0,
+  "ts": 4563.7,
   "t1": 4598.8,
   "section": "find_job",
   "voice": "DILIGENCE",
@@ -541,6 +595,7 @@
  },
  {
   "t0": 4606.4,
+  "ts": 4614.4,
   "t1": 4614.4,
   "section": "find_job",
   "voice": "REPLY CHOOSER",
@@ -551,6 +606,7 @@
  },
  {
   "t0": 4614.4,
+  "ts": 4623.7,
   "t1": 4655.6,
   "section": "find_job",
   "voice": "BARGAINING",
@@ -561,6 +617,7 @@
  },
  {
   "t0": 4660.0,
+  "ts": 4669.1,
   "t1": 4752.7,
   "section": "find_job",
   "voice": "You are Helen, a medieval farmer who has",
@@ -571,6 +628,7 @@
  },
  {
   "t0": 4753.9,
+  "ts": 4760.9,
   "t1": 4760.9,
   "section": "find_job",
   "voice": "REPLY CHOOSER",
@@ -581,6 +639,7 @@
  },
  {
   "t0": 4760.9,
+  "ts": 4769.1,
   "t1": 4835.5,
   "section": "find_job",
   "voice": "DILIGENCE",
@@ -591,6 +650,7 @@
  },
  {
   "t0": 4835.5,
+  "ts": 4843.6,
   "t1": 4843.6,
   "section": "find_job",
   "voice": "REPLY CHOOSER",
@@ -601,6 +661,7 @@
  },
  {
   "t0": 4843.6,
+  "ts": 4852.2,
   "t1": 4916.4,
   "section": "find_job",
   "voice": "NAUTICAL JARGON",
@@ -611,6 +672,7 @@
  },
  {
   "t0": 4916.4,
+  "ts": 4923.1,
   "t1": 4923.1,
   "section": "find_job",
   "voice": "REPLY CHOOSER",
@@ -621,6 +683,7 @@
  },
  {
   "t0": 4923.1,
+  "ts": 4931.4,
   "t1": 4981.3,
   "section": "find_job",
   "voice": "SOCIAL INTERACTION",
@@ -631,6 +694,7 @@
  },
  {
   "t0": 5005.0,
+  "ts": 5014.2,
   "t1": 5079.4,
   "section": "find_job",
   "voice": "You are Helen, a medieval farmer who has",
@@ -641,6 +705,7 @@
  },
  {
   "t0": 5322.7,
+  "ts": 5333.1,
   "t1": 5495.3,
   "section": "fight_2",
   "voice": "EMPATHY",
@@ -651,6 +716,7 @@
  },
  {
   "t0": 5501.3,
+  "ts": 5511.5,
   "t1": 5659.7,
   "section": "fight_2",
   "voice": "EMPATHY",
@@ -661,6 +727,7 @@
  },
  {
   "t0": 5679.5,
+  "ts": 5687.5,
   "t1": 5687.5,
   "section": "buy_boots",
   "voice": "MEANS MATCHER",
@@ -671,6 +738,7 @@
  },
  {
   "t0": 5687.5,
+  "ts": 5697.6,
   "t1": 5861.6,
   "section": "buy_boots",
   "voice": "PROVISIONING",
@@ -681,6 +749,7 @@
  },
  {
   "t0": 5869.5,
+  "ts": 5878.3,
   "t1": 5917.2,
   "section": "buy_boots",
   "voice": "DILIGENCE",
@@ -691,6 +760,7 @@
  },
  {
   "t0": 5942.5,
+  "ts": 5951.3,
   "t1": 6021.7,
   "section": "buy_boots",
   "voice": "DILIGENCE",
@@ -701,6 +771,7 @@
  },
  {
   "t0": 6030.7,
+  "ts": 6039.3,
   "t1": 6071.8,
   "section": "buy_boots",
   "voice": "You are Michael, the cobbler. You spend ",
@@ -711,6 +782,7 @@
  },
  {
   "t0": 6072.7,
+  "ts": 6080.4,
   "t1": 6080.4,
   "section": "buy_boots",
   "voice": "REPLY CHOOSER",
@@ -721,6 +793,7 @@
  },
  {
   "t0": 6080.4,
+  "ts": 6091.2,
   "t1": 6141.7,
   "section": "buy_boots",
   "voice": "BARGAINING",
@@ -731,6 +804,7 @@
  },
  {
   "t0": 6149.7,
+  "ts": 6156.8,
   "t1": 6156.8,
   "section": "buy_boots",
   "voice": "REPLY CHOOSER",
@@ -741,6 +815,7 @@
  },
  {
   "t0": 6156.8,
+  "ts": 6166.1,
   "t1": 6209.3,
   "section": "buy_boots",
   "voice": "ENTERPRISE",
@@ -751,6 +826,7 @@
  },
  {
   "t0": 6209.3,
+  "ts": 6216.4,
   "t1": 6216.4,
   "section": "buy_boots",
   "voice": "REPLY CHOOSER",
@@ -761,6 +837,7 @@
  },
  {
   "t0": 6216.4,
+  "ts": 6225.9,
   "t1": 6256.0,
   "section": "buy_boots",
   "voice": "SOCIAL INTERACTION",
@@ -771,6 +848,7 @@
  },
  {
   "t0": 6264.2,
+  "ts": 6273.8,
   "t1": 6378.1,
   "section": "buy_boots",
   "voice": "You are Michael, the cobbler. You spend ",
@@ -781,6 +859,7 @@
  },
  {
   "t0": 6379.2,
+  "ts": 6384.7,
   "t1": 6384.7,
   "section": "buy_boots",
   "voice": "REPLY CHOOSER",
@@ -791,6 +870,7 @@
  },
  {
   "t0": 6384.7,
+  "ts": 6393.2,
   "t1": 6438.3,
   "section": "buy_boots",
   "voice": "SOCIAL INTERACTION",
@@ -801,6 +881,7 @@
  },
  {
   "t0": 6438.4,
+  "ts": 6445.8,
   "t1": 6445.8,
   "section": "buy_boots",
   "voice": "REPLY CHOOSER",
@@ -811,6 +892,7 @@
  },
  {
   "t0": 6445.8,
+  "ts": 6455.6,
   "t1": 6503.5,
   "section": "buy_boots",
   "voice": "DILIGENCE",
@@ -821,6 +903,7 @@
  },
  {
   "t0": 6503.5,
+  "ts": 6510.8,
   "t1": 6510.8,
   "section": "buy_boots",
   "voice": "REPLY CHOOSER",
@@ -831,6 +914,7 @@
  },
  {
   "t0": 6510.8,
+  "ts": 6518.6,
   "t1": 6564.6,
   "section": "buy_boots",
   "voice": "ENTERPRISE",
@@ -841,6 +925,7 @@
  },
  {
   "t0": 6584.3,
+  "ts": 6592.7,
   "t1": 6633.2,
   "section": "buy_boots",
   "voice": "You are Michael, the cobbler. You spend ",
@@ -851,6 +936,7 @@
  },
  {
   "t0": 6633.2,
+  "ts": 6642.0,
   "t1": 6712.5,
   "section": "buy_boots",
   "voice": "BARGAINING",
@@ -861,6 +947,7 @@
  },
  {
   "t0": 6734.4,
+  "ts": 6736.4,
   "t1": 6848.0,
   "section": "trade",
   "voice": "EMPATHY",

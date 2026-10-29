@@ -45,6 +45,12 @@
   "gain": 0.5
  },
  "recordings": {
+  "creation": {
+   "script": "creation.cli",
+   "dir": "build/rec_creation",
+   "timeout": 1800,
+   "flags": "--childhood-path \"sobs,waves,sharp,golden arch,shelter\" --force-encounter wolf,wolf --no-encounters --npc-static --start-area \"Longhouse Hall,Cobbler's Shop\" --observe-only farmer,cobbler --npc-affinity DistantAcquaintance --grant-mm diligence,provisioning,swordsmanship:2 --job-only farmhand --humors all=voluptas"
+  },
   "tutorial": {
    "script": "tutorial.cli",
    "dir": "build/rec_tutorial_b",
@@ -56,19 +62,20 @@
  "segments": [
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 25.3,
-   "to": 30.1,
+   "recording": "creation",
+   "from": 216.09,
+   "to": 220.87,
    "fade": true,
    "vo": [
-    "This is Proscribed Palimpsest, a role-playing game where a body, its ways of thinking, and a language model tell the story together. In this video we play the first hour of a run, from the main menu to a pair of new boots. Each system is explained as it comes up: first what it is for, then how it works, then what it did in this run. And along the way, I'll tell you what I would do as a player."
+    "Your character in this game is not a sheet of numbers. It is a body, built organ by organ, and a crowd of minds living in it: some notice, some think, some act, and some only feel. Each one speaks in its own voice, and nothing they say is written in advance.",
+    "This is Proscribed Palimpsest. In the next hour of play, from the main menu to a pair of new boots, we'll see how all of it works. And along the way, I'll tell you what I would do as a player."
    ]
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 30.1,
-   "to": 45.0,
+   "recording": "creation",
+   "from": 220.87,
+   "to": 235.73,
    "fade": false,
    "vo": [
     "A run starts by choosing a world. Each moon in this sky is one: three hundred and eighty-three of them, each with a name. The sky is fixed, the same on every machine, so a moon always stands for the same world. Two players who pick the same moon walk the same land and meet the same people, so they can compare notes."
@@ -76,9 +83,9 @@
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 45.0,
-   "to": 55.5,
+   "recording": "creation",
+   "from": 235.73,
+   "to": 246.4,
    "fade": false,
    "vo": [
     "Choosing a moon generates its world, and its history comes first. Realms rise and fall; castles, temples and cities are founded; then farmland, villages and pastures spread out from them. The card says what kind of world it is. We take Fenumoth, a wooded world. For a first run, any moon will do: every one of them is built to be livable."
@@ -86,16 +93,16 @@
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 55.5,
-   "to": 59.0,
+   "recording": "creation",
+   "from": 246.4,
+   "to": 249.88,
    "fade": false
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 59.0,
-   "to": 65.2,
+   "recording": "creation",
+   "from": 249.88,
+   "to": 255.98,
    "fade": true,
    "vo": [
     "Now the protagonist. There are no strength or charisma scores in this game. A character is a body: five regions, which are the head, the face, the trunk, the arms and the legs; twenty-two organs; twenty-eight organ parts. Every part starts at one point, and you get twenty-five more to spend. That buys less than half of what the body could reach, so creating a character is really choosing what to give up."
@@ -111,9 +118,9 @@
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 65.2,
-   "to": 72.2,
+   "recording": "creation",
+   "from": 256.01,
+   "to": 263.51,
    "fade": true,
    "vo": [
     "First, thinking and memory: the head. As a whole, the head sets your noetic points, how many times you can look and think in one scene: its score halved, plus one.",
@@ -123,9 +130,9 @@
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 72.2,
-   "to": 79.8,
+   "recording": "creation",
+   "from": 263.51,
+   "to": 271.34,
    "fade": false,
    "vo": [
     "To keep a way of thinking for good, you file it into a long-term memory of its kind. The cerebrum holds knowledge, like bargaining or archaeology. We give it two points."
@@ -133,9 +140,9 @@
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 79.8,
-   "to": 86.9,
+   "recording": "creation",
+   "from": 271.34,
+   "to": 279.05,
    "fade": false,
    "vo": [
     "The cerebellum holds practised skills, like swordsmanship or knotwork, and it is what lets you learn a new move in the middle of a fight. Two points as well."
@@ -143,9 +150,9 @@
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 86.9,
-   "to": 90.7,
+   "recording": "creation",
+   "from": 279.05,
+   "to": 282.79,
    "fade": false,
    "vo": [
     "The hippocampus holds the ways of thinking that use the senses."
@@ -153,9 +160,9 @@
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 90.7,
-   "to": 94.4,
+   "recording": "creation",
+   "from": 282.79,
+   "to": 286.52,
    "fade": false,
    "vo": [
     "And the pineal gland sets how much experience a level costs, from twelve points down to six. With two points or more, it also lets a mind doubt its own plan and think again.",
@@ -164,9 +171,9 @@
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 94.4,
-   "to": 100.6,
+   "recording": "creation",
+   "from": 286.52,
+   "to": 292.91,
    "fade": false,
    "vo": [
     "The senses. The eyes set the reach of a ranged blow, in cells."
@@ -174,9 +181,9 @@
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 100.6,
-   "to": 107.7,
+   "recording": "creation",
+   "from": 292.91,
+   "to": 300.27,
    "fade": false,
    "vo": [
     "The ears add their score to your initiative, which decides who acts first in a fight. We raise both."
@@ -184,9 +191,9 @@
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 107.7,
-   "to": 111.5,
+   "recording": "creation",
+   "from": 300.27,
+   "to": 304.03,
    "fade": false,
    "vo": [
     "The nose is underrated. Each point lowers the chance of meeting danger on the road by ten per cent, and it tells you which humors are in a food before you eat it."
@@ -194,9 +201,9 @@
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 111.5,
-   "to": 118.5,
+   "recording": "creation",
+   "from": 304.03,
+   "to": 310.99,
    "fade": false,
    "vo": [
     "Speech. The tongue sets how many replies you are offered in a conversation, up to five. At nought, you cannot hold a conversation at all. Two points here: conversation is how you get work, trade and friends."
@@ -204,9 +211,9 @@
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 118.5,
-   "to": 122.2,
+   "recording": "creation",
+   "from": 310.99,
+   "to": 314.52,
    "fade": false,
    "vo": [
     "The teeth only decide whether you can eat hard food. We leave them."
@@ -214,9 +221,9 @@
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 122.2,
-   "to": 134.2,
+   "recording": "creation",
+   "from": 314.52,
+   "to": 326.63,
    "fade": false,
    "vo": [
     "The humors are this game's most unusual system. Four organs make them: the paunch, the hepar, the spleen and the pulmones. Each keeps a queue of forty-nine humors. A sound organ makes mostly blood; a failing one, mostly black bile.",
@@ -225,9 +232,9 @@
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 134.2,
-   "to": 143.9,
+   "recording": "creation",
+   "from": 326.63,
+   "to": 336.19,
    "fade": false,
    "vo": [
     "The viscera decide how many humors you may spend on a single roll, and how fast wounds close. Four points here, for five in all. I would always do this: it is the difference between a failed roll and a saved one."
@@ -235,9 +242,9 @@
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 143.9,
-   "to": 153.2,
+   "recording": "creation",
+   "from": 336.19,
+   "to": 345.22,
    "fade": false,
    "vo": [
     "Life. The heart sets how long you live, how many companions you can lead, one per point, and how many youthful humors you start with, which are warm and lucky. Four points: a long life, and room for a party later."
@@ -245,9 +252,9 @@
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 153.2,
-   "to": 159.7,
+   "recording": "creation",
+   "from": 345.22,
+   "to": 351.72,
    "fade": false,
    "vo": [
     "The genitories add dice to every blow you strike. One point."
@@ -255,9 +262,9 @@
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 159.7,
-   "to": 167.9,
+   "recording": "creation",
+   "from": 351.72,
+   "to": 359.7,
    "fade": false,
    "vo": [
     "The body in a fight. The backbone sets how much you can carry, and your movement points in a fight: twice its score. Three more points."
@@ -265,9 +272,9 @@
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 167.9,
-   "to": 175.2,
+   "recording": "creation",
+   "from": 359.7,
+   "to": 367.01,
    "fade": false,
    "vo": [
     "The hands decide which tools you can use. A practised hand does not get more out of a tool; it can make more things serve as tools. Two points for the right hand."
@@ -275,9 +282,9 @@
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 175.2,
-   "to": 183.5,
+   "recording": "creation",
+   "from": 367.01,
+   "to": 375.38,
    "fade": false,
    "vo": [
     "In a fight, each hand and each foot strikes on its own, and the arms are the organs of brute force."
@@ -285,9 +292,9 @@
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 183.5,
-   "to": 191.4,
+   "recording": "creation",
+   "from": 375.38,
+   "to": 383.08,
    "fade": false,
    "vo": [
     "The legs set how far one movement point takes you. With the feet, the lower body as a whole sets how far one journey can reach, and your natural defence."
@@ -295,9 +302,9 @@
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 191.4,
-   "to": 201.6,
+   "recording": "creation",
+   "from": 383.08,
+   "to": 393.51,
    "fade": false,
    "vo": [
     "The feet keep you standing on bad ground, and roll the dice to run away. One last number: health. It comes from the trunk as a whole, a third of its score plus one, and each wound costs a point of it until it heals. Twenty-five points spent. That is the body."
@@ -306,7 +313,7 @@
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 201.6,
+   "from": 202.6,
    "to": 306.43,
    "fade": true,
    "vo": [
@@ -314,7 +321,7 @@
     {
      "text": "I almost have it, a half-remembered weeping, sobs like faded echoes in the dark, a woman's voice somewhere, half-formed in the hush of old iron and myth.",
      "style": "reading",
-     "wait": true
+     "at": 227.2
     }
    ]
   },
@@ -349,7 +356,7 @@
     {
      "text": "I let half-remembered weeping drift through, a woman's voice in the dark, a fragment of childhood's ache. I will rely on the slow recovery of these memories, like old fragments in a medieval world, nothing modern or real here.",
      "style": "reading",
-     "wait": true
+     "at": 336.9
     }
    ]
   },
@@ -364,7 +371,7 @@
     {
      "text": "I will try to remember sobs from my childhood, half-remembered images surfacing like old fragments, tinged with nostalgia, wistfulness, and a faint ache.",
      "style": "reading",
-     "wait": true
+     "at": 451.9
     }
    ]
   },
@@ -389,7 +396,7 @@
     {
      "text": "I tried to remember the sobs from my childhood, and succeeded. It came back to me in hazy fragments, the sobs of an unknown lady on the dock of the port city where I spent my days in this vast, silent plain.",
      "style": "reading",
-     "wait": true
+     "at": 544.1
     },
     {
      "text": "Look under the passage, at what this memory gave: three ways of thinking, Empathy, Nautical Jargon and Knotwork, and a townsman's clothes: cap, cloak, tunic and breeches. The text said a port city. The code decided what that means for your character. Every passage works like this: the words are the model's; what they give you is the game's.",
@@ -415,7 +422,7 @@
     {
      "text": "I recall it now, the waves' soft murmur and the earth's faint, salty tang, as if a low rumble of thunder had seeped through the ground, the sweat of exertion rising from the fertile earth beneath.",
      "style": "reading",
-     "wait": true
+     "at": 682.2
     }
    ]
   },
@@ -430,7 +437,7 @@
     {
      "text": "I remember the low, pulsing thunder and the sour, salt-and-sweat smell from below, like old memories blooming in a fog. I want to recall the sound of waves and the scent of sweat, to breathe in the past, to let it flow through me as the vast, endless plain weaves its slow recovery.",
      "style": "reading",
-     "wait": true
+     "at": 819.2
     }
    ]
   },
@@ -444,7 +451,7 @@
     {
      "text": "I will try to remember the sound of waves and the smell of sweat from my childhood, half-remembered images surface like old fragments, tinged with nostalgia, wistfulness, and a faint ache, in a medieval world of iron and myth, nothing modern or from the real world.",
      "style": "reading",
-     "wait": true
+     "at": 979.6
     }
    ]
   },
@@ -458,7 +465,7 @@
     {
      "text": "I tried to recall the waves and sweat, and it came back to me. The sound of waves and the scent of sweat on the docks, the bundles heavy from ships, these fragments rise like old stories, colored with a longing for days past.",
      "style": "reading",
-     "wait": true
+     "at": 1118.3
     },
     {
      "text": "This one gives Hard Labor. The docks taught us to work.",
@@ -484,7 +491,7 @@
     {
      "text": "I recall a shard of memory, a sharp edge gleaming from behind a trader's stall, the faint scent of oil and iron lingering in the air.",
      "style": "reading",
-     "wait": true
+     "at": 1257.1
     }
    ]
   },
@@ -498,7 +505,7 @@
     {
      "text": "I half-remember a gleam of metal behind a trader's stall, the faint smell of oil and iron lingering. I will let the half-remembered image surface, drawing on the slow recovery of childhood memories in this medieval world, where nothing modern or real exists.",
      "style": "reading",
-     "wait": true
+     "at": 1358.2
     }
    ]
   },
@@ -512,7 +519,7 @@
     {
      "text": "I will try to remember a sharp taste from my childhood, like a sour apple on a cold day.",
      "style": "reading",
-     "wait": true
+     "at": 1490.6
     },
     {
      "text": "Look at what the acting mind wrote: a sharp taste, like a sour apple. The model drifted from a blade to an apple. It does not matter: the act is still remembering something sharp, and the code knows what that memory holds. I find these little slips part of the charm.",
@@ -530,7 +537,7 @@
     {
      "text": "I tried to recall a sharp memory from my childhood, and succeeded. It emerged to me as clear as old scars on skin, a sword I had bought with my first earned coin from a market trader.",
      "style": "reading",
-     "wait": true
+     "at": 1548.5
     },
     {
      "text": "And there it is: a short sword, and Bargaining.",
@@ -556,7 +563,7 @@
     {
      "text": "I see a golden arch in my mind's eye, a fuzzy great curve of gold in a dream sky. It evokes an ache, an ancient, enormous, and impossibly bright longing that touches my soul.",
      "style": "reading",
-     "wait": true
+     "at": 1670.7
     }
    ]
   },
@@ -570,7 +577,7 @@
     {
      "text": "I remember a golden arch, fuzzy and great, in a dream sky that was ancient, enormous, and impossibly bright. I will try to recall this dream from my childhood, letting the slow recovery of childhood memories colour my thoughts on this vast plain.",
      "style": "reading",
-     "wait": true
+     "at": 1801.5
     }
    ]
   },
@@ -584,7 +591,7 @@
     {
      "text": "I will try to recall a golden arch from my childhood, half-shapes drifting up like old fragments on a medieval plain.",
      "style": "reading",
-     "wait": true
+     "at": 1941.9
     }
    ]
   },
@@ -598,7 +605,7 @@
     {
      "text": "I tried to recall the dream of a golden arch from my childhood, and it came back to me, hazy yet clear. A golden arch rising over the ruins of an ancient city, until I left to seek it out. The scene paints a picture of longing and a gentle ache in my heart.",
      "style": "reading",
-     "wait": true
+     "at": 2033.7
     },
     {
      "text": "A traveller's backpack, with bread and cheese inside, and Archaeology. Keep the bread in mind.",
@@ -624,7 +631,7 @@
     {
      "text": "I almost have it, a shelter surfacing from the mists. This was a elusive dark hillside, an unsheltered cranny, with no door, no overhang, no gap anywhere to crawl into.",
      "style": "reading",
-     "wait": true
+     "at": 2203.6
     }
    ]
   },
@@ -638,7 +645,7 @@
     {
      "text": "I remember the elusive dark hillside, a place with no door, no overhang, no gap anywhere for shelter. I want to recall the simple, hidden spaces of my childhood. Slowly, I will recover these fragmented memories, like old, weathered stones.",
      "style": "reading",
-     "wait": true
+     "at": 2338.0
     }
    ]
   },
@@ -652,7 +659,7 @@
     {
      "text": "I will try to remember a place from my childhood on a vast, unmarked plain.",
      "style": "reading",
-     "wait": true
+     "at": 2472.3
     }
    ]
   },
@@ -666,7 +673,7 @@
     {
      "text": "I tried to recall the shelter from my childhood, and it came back to me in a hazy, dream-like state. Searching for shelter from the storm and finding none, I lost consciousness at the foot of a tree, the cold wind biting through my memories.",
      "style": "reading",
-     "wait": true
+     "at": 2529.5
     },
     {
      "text": "This one gives no item, only two ways of thinking: Exploration and Endurance. My advice for your own childhood: read the fragments, and pick what you want your character to be. The memories you choose are your starting kit.",
@@ -692,7 +699,7 @@
     {
      "text": "I bend to search for a patch of grass, the soreness in my legs reminding me of the hard labour on the docks, where every step had its own grinding weight.",
      "style": "reading",
-     "wait": true
+     "at": 2701.3
     }
    ]
   },
@@ -706,7 +713,7 @@
     {
      "text": "I shift my gaze to a bone-deep exhaustion, feeling it settle through my whole body like a storm, not just tired but spent, as if the road has drained something more than muscle, just as it did in the storms at the port.",
      "style": "reading",
-     "wait": true
+     "at": 2789.4
     },
     {
      "text": "Getting up is the first real roll of the game.",
@@ -725,7 +732,7 @@
     {
      "text": "I mark the bone where the road's knots have grinded, a sore that calls me to rise and haul, my hands the ropes, my feet the tide, as I roll and seek the next bend where wind and water guide.",
      "style": "reading",
-     "wait": true
+     "at": 2953.0
     },
     {
      "text": "Everything is rope, knots and tides. That is what a persona does: the same question, put to a different mind, comes back in a different voice.",
@@ -744,7 +751,7 @@
     {
      "text": "I will rise and press on my quest.",
      "style": "reading",
-     "wait": true
+     "at": 3081.6
     }
    ]
   },
@@ -777,7 +784,7 @@
     {
      "text": "I have pulled myself free, and with a sigh, the line feels lighter. The journey begins anew, my hands ready to bear the load.",
      "style": "reading",
-     "wait": true
+     "at": 3132.0
     },
     {
      "text": "Success. Look at the lines below: every mind in the chain gained a point of experience, and the act taught a new one, Vigor. Doing things is how you learn.",
@@ -939,7 +946,7 @@
     {
      "text": "I find myself in the longhouse hall, in the afternoon. This place echoes my childhood at the port city, where I spent time on the docks and dreamed of ancient ruins. Around me is my acquaintance Zedayne Hartmead, the farmer, just as I remember from when I first bought a sword with my first earned coin.",
      "style": "reading",
-     "wait": true
+     "at": 3516.0
     }
    ]
   },
@@ -953,7 +960,7 @@
     {
      "text": "I recall the time when I stood at the docks, gauging the strength of a stranger. It's similar to now, someone measuring me, thinner than expected, looking past me at something not obvious.",
      "style": "reading",
-     "wait": true
+     "at": 3666.6
     },
     {
      "text": "That is the farmer, Zedayne Hartmead. She can give us work.",
@@ -982,7 +989,7 @@
     {
      "text": "I notice her at the field's edge, her lean posture mirroring the land's weariness. Her gaze wanders, yet I see her measuring me, her thin frame a testament to the labor unseen. I wish to offer my steadiness and skill, to prove my worth as a farmhand. I will finish what was begun, ensuring each task is done with the same care that started it.",
      "style": "reading",
-     "wait": true
+     "at": 3792.8
     }
    ]
   },
@@ -996,7 +1003,7 @@
     {
      "text": "I will go to her request to take on the role of a farmhand.",
      "style": "reading",
-     "wait": true
+     "at": 3976.6
     }
    ]
   },
@@ -1020,7 +1027,7 @@
     {
      "text": "I am done. Meeting her was a start, but I began to learn her ways and share my own, as we talked under the stars. The work continues, the path is not yet completed.",
      "style": "reading",
-     "wait": true
+     "at": 4039.9
     },
     {
      "text": "Success, and a new way of thinking learned: Social Interaction. One honest remark: the passage says we talked under the stars, but it is the afternoon. The model's words are flavour; the facts are the game's.",
@@ -1039,7 +1046,7 @@
     {
      "text": "Why seek you my door, Aentonyoth Marshwall?",
      "style": "reading",
-     "wait": true
+     "at": 4140.5
     }
    ]
   },
@@ -1053,12 +1060,11 @@
     "Then our replies. Each is one branch of the tree, voiced by one of the minds we hold that can speak. The tongue decides how many are offered: we gave it two points, so three.",
     {
      "text": "Diligence.",
-     "wait": true
+     "at": 4188.8
     },
     {
      "text": "Hast thou a place for a farmhand's work, Zedayne Hartmead? How fares the wages?",
-     "style": "reading",
-     "wait": false
+     "style": "reading"
     }
    ]
   },
@@ -1071,12 +1077,11 @@
    "vo": [
     {
      "text": "Nautical Jargon.",
-     "wait": true
+     "at": 4259.6
     },
     {
      "text": "Strong as a hound, bold as a gale, bind me to your helm, Zedayne Hartmead.",
-     "style": "reading",
-     "wait": false
+     "style": "reading"
     }
    ]
   },
@@ -1089,12 +1094,11 @@
    "vo": [
     {
      "text": "Provisioning.",
-     "wait": true
+     "at": 4335.4
     },
     {
      "text": "Seek a place where days of grain, firewood, and salt are few, and know thyself a farmer's help.",
-     "style": "reading",
-     "wait": false
+     "style": "reading"
     },
     {
      "text": "Diligence and Provisioning were given the very same line: I am after work as a farmhand; what does it pay? Provisioning, which counts everything in days of supplies, turned it into grain, firewood and salt.",
@@ -1113,7 +1117,7 @@
     {
      "text": "Henceforth, a farmhand's life lies within your grasp, earning a copper for each ten days' toil, and fraught with hardship.",
      "style": "reading",
-     "wait": true
+     "at": 4415.4
     }
    ]
   },
@@ -1126,12 +1130,11 @@
    "vo": [
     {
      "text": "Social Interaction.",
-     "wait": true
+     "at": 4519.3
     },
     {
      "text": "How's a day's work for you?",
-     "style": "reading",
-     "wait": false
+     "style": "reading"
     }
    ]
   },
@@ -1144,12 +1147,11 @@
    "vo": [
     {
      "text": "Diligence.",
-     "wait": true
+     "at": 4565.2
     },
     {
      "text": "The price is set. I shall not dispute it.",
-     "style": "reading",
-     "wait": false
+     "style": "reading"
     }
    ]
   },
@@ -1162,12 +1164,11 @@
    "vo": [
     {
      "text": "Bargaining.",
-     "wait": true
+     "at": 4625.2
     },
     {
      "text": "What does a day's work entail, friend?",
-     "style": "reading",
-     "wait": false
+     "style": "reading"
     }
    ]
   },
@@ -1182,7 +1183,7 @@
     {
      "text": "From dawn till dusk, by the fields, in all weathers. There's no time for idling. Only when tasks are within is there work.",
      "style": "reading",
-     "wait": true
+     "at": 4670.6
     }
    ]
   },
@@ -1195,12 +1196,11 @@
    "vo": [
     {
      "text": "Diligence.",
-     "wait": true
+     "at": 4770.6
     },
     {
      "text": "The sweat of my brow and the strength of my arms have earned their due, no matter how hard the task may be.",
-     "style": "reading",
-     "wait": false
+     "style": "reading"
     }
    ]
   },
@@ -1213,12 +1213,11 @@
    "vo": [
     {
      "text": "Nautical Jargon.",
-     "wait": true
+     "at": 4853.7
     },
     {
      "text": "Worse fates I've faced, but still I stand. Less for more, 'tis naught to dread.",
-     "style": "reading",
-     "wait": false
+     "style": "reading"
     }
    ]
   },
@@ -1231,12 +1230,11 @@
    "vo": [
     {
      "text": "Social Interaction.",
-     "wait": true
+     "at": 4932.9
     },
     {
      "text": "Less for worse has been done, but fear not, for mine is no new tale.",
-     "style": "reading",
-     "wait": false
+     "style": "reading"
     }
    ]
   },
@@ -1261,7 +1259,7 @@
     {
      "text": "So you shall take on this task. But I seek a hand well versed in the ways of the fields.",
      "style": "reading",
-     "wait": true
+     "at": 5015.7
     },
     {
      "text": "She takes us on.",
@@ -1359,7 +1357,7 @@
     {
      "text": "I find myself in the cobbler's shop, a low shop with a scent of leather and wax. Around me, Publiosh Tommaezoth the cobbler of the city moves with hands skilled in the art. The air carries his gentle touch and the soft clatter of tools, a reminder of the care he brings to each pair of boots.",
      "style": "reading",
-     "wait": true
+     "at": 5334.6
     }
    ]
   },
@@ -1373,7 +1371,7 @@
     {
      "text": "I see Publiosh Tommaezoth, the cobbler, standing there, a boot over one knee, hammering in hobnails without looking up, arguing about the gods while hammering in a heel. He stands between the two least happy, positioned as if drilled young by an old blade-scar on his forearm.",
      "style": "reading",
-     "wait": true
+     "at": 5513.0
     },
     {
      "text": "This is one of the model's strengths: from a few traits the game gives it, it draws a person. A boot over one knee, an argument about the gods, an old scar. The cobbler, Publiosh Tommaezoth, has a character.",
@@ -1401,7 +1399,7 @@
     {
      "text": "I notice someone with a boot over one knee hammers in hobnails without looking up, argues about the gods while hammering in a heel, positioned between the two least happy. It only colors how the salt will last - a fortnight, and the bread does not. I want to meet him to buy shoes and boots.",
      "style": "reading",
-     "wait": true
+     "at": 5699.1
     },
     {
      "text": "Provisioning sees everything in days of supplies. Its way to a purchase is to go and propose a trade.",
@@ -1419,7 +1417,7 @@
     {
      "text": "I will go to him to discuss buying shoes and boots in this medieval city.",
      "style": "reading",
-     "wait": true
+     "at": 5879.8
     }
    ]
   },
@@ -1443,7 +1441,7 @@
     {
      "text": "I only finished the proposal as it was meant to be. Now, I await Publiosh Tommaezoth's response, my hands still as clean as they were when I began.",
      "style": "reading",
-     "wait": true
+     "at": 5952.8
     },
     {
      "text": "This is the passage I like least in the take. It sounds like a failure, but the roll succeeded. A small model sometimes bends the tone, and the game holds the result: the conversation opens all the same.",
@@ -1461,7 +1459,7 @@
     {
      "text": "Aentonyoth Marshwall, seek what dost desire?",
      "style": "reading",
-     "wait": true
+     "at": 6040.8
     }
    ]
   },
@@ -1475,12 +1473,11 @@
     "Our replies.",
     {
      "text": "Bargaining.",
-     "wait": true
+     "at": 6092.7
     },
     {
      "text": "Seeking a rare gem, might I perchance find what you offer?",
-     "style": "reading",
-     "wait": false
+     "style": "reading"
     }
    ]
   },
@@ -1493,12 +1490,11 @@
    "vo": [
     {
      "text": "Enterprise.",
-     "wait": true
+     "at": 6167.6
     },
     {
      "text": "And what tariffs do these wares bear on their journey?",
-     "style": "reading",
-     "wait": false
+     "style": "reading"
     }
    ]
   },
@@ -1511,12 +1507,11 @@
    "vo": [
     {
      "text": "Social Interaction.",
-     "wait": true
+     "at": 6227.4
     },
     {
      "text": "What rare treasure are you seeking now?",
-     "style": "reading",
-     "wait": false
+     "style": "reading"
     },
     {
      "text": "Bargaining wants a rare gem, in a boot shop. The line it was given only said: I am after something particular. Bargaining made it a haggler's line, and got carried away.",
@@ -1535,7 +1530,7 @@
     {
      "text": "Seek not what not of shoes nor boots be, for mine are few and rare, nor any thing else but these. Yet if thy quest be of footwear, ask now and I shall tell thee if I hold the key.",
      "style": "reading",
-     "wait": true
+     "at": 6275.3
     },
     {
      "text": "The cobbler brings us straight back to footwear. He can: his side of the tree knows we came for shoes.",
@@ -1552,12 +1547,11 @@
    "vo": [
     {
      "text": "Social Interaction.",
-     "wait": true
+     "at": 6394.7
     },
     {
      "text": "Let us find the just right item for your tasks, not just the first available one.",
-     "style": "reading",
-     "wait": false
+     "style": "reading"
     }
    ]
   },
@@ -1570,12 +1564,11 @@
    "vo": [
     {
      "text": "Diligence.",
-     "wait": true
+     "at": 6457.1
     },
     {
      "text": "The choice you make shall not be near but precise, as work demands the finest.",
-     "style": "reading",
-     "wait": false
+     "style": "reading"
     }
    ]
   },
@@ -1588,12 +1581,11 @@
    "vo": [
     {
      "text": "Enterprise.",
-     "wait": true
+     "at": 6520.1
     },
     {
      "text": "What ventures does it serve, and how far can it endure without a hitch?",
-     "style": "reading",
-     "wait": false
+     "style": "reading"
     }
    ]
   },
@@ -1618,7 +1610,7 @@
     {
      "text": "Matched to your needs, I have the fitting shoe.",
      "style": "reading",
-     "wait": true
+     "at": 6594.2
     }
    ]
   },
@@ -1633,7 +1625,7 @@
     {
      "text": "I traded my wares, and in the price beneath the price, I felt glad and lighter than before, like a hawk skimming the breeze after a successful hunt.",
      "style": "reading",
-     "wait": true
+     "at": 6643.5
     }
    ]
   },
@@ -1665,7 +1657,7 @@
     {
      "text": "I see Publiosh Tommaezoth, cobbler of the city, his knee bleeding, hammering away, arguing with a fellow craftsman. He stands between the quarrellers, a steadfast figure with an old scar on his forearm, a silent witness to their discord.",
      "style": "reading",
-     "wait": true
+     "at": 6737.9
     },
     {
      "text": "A bleeding knee, this time: the model invented a detail. Read the game's text as a story told by a slightly unreliable narrator. The rules underneath it are exact.",

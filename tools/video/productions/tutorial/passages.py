@@ -16,6 +16,10 @@ text on screen. A take recorded before that line existed takes them from a JSON 
 
 each table applying from that mark until the next. Dialogue lines lose their "I say to X :" prefix:
 the screen shows only what is said.
+
+Each passage also gets "ts", when its first word appeared: the llama.cpp server logs every request's
+end with the time spent reading the prompt and the time spent writing, so the writing started at the
+end less the second. A reading can then start with the text, not after it.
 """
 import json
 import re
@@ -75,6 +79,20 @@ def table_for(tables, marks, section):
     return chosen
 
 
+def generation_ends(session: Path):
+    """[(wall-clock end, seconds spent writing)] for every request the server finished."""
+    out = []
+    log = session / "llama-server.log"
+    if not log.exists():
+        return out
+    for line in log.read_text(errors="replace").splitlines():
+        m = re.search(r"(\d\d):(\d\d):(\d\d)\.(\d+) .*print_timing: .*\|\s+eval time =\s+([\d.]+) ms", line)
+        if m:
+            secs = int(m.group(1)) * 3600 + int(m.group(2)) * 60 + int(m.group(3)) + float("0." + m.group(4))
+            out.append((secs, float(m.group(5)) / 1000))
+    return out
+
+
 def main():
     take, session = Path(sys.argv[1]), Path(sys.argv[2])
     started, marks = load_timeline(take)
@@ -82,6 +100,7 @@ def main():
     tables = name_tables(take)
     if "--names" in sys.argv:
         tables = [(e["from"], e["map"]) for e in json.loads(Path(sys.argv[sys.argv.index("--names") + 1]).read_text())]
+    ends = generation_ends(session)
     rows = []
     for req in sorted(session.glob("slot_*/request_*")):
         resp = req / "llm_response.txt"
@@ -101,6 +120,9 @@ def main():
         if m:
             dur = int(m.group(1)) / 1000
         t0 = (sent - started).total_seconds()
+        end_wall = (sent + timedelta(seconds=dur)) - datetime.combine(sent.date(), datetime.min.time())
+        near = min(ends, key=lambda e: abs(e[0] - end_wall.total_seconds()), default=None)
+        writing = near[1] if near and abs(near[0] - end_wall.total_seconds()) < 2.0 else 0.0
         text = resp.read_text().strip()
         section = section_at(marks, t0 + dur)
         said = re.match(r'I say to [^:]+:\s*"(.*)"\s*$', text, re.S)
@@ -108,7 +130,7 @@ def main():
             text = said.group(1)
         for a, b in sorted(table_for(tables, marks, section).items(), key=lambda kv: -len(kv[0])):
             text = re.sub(rf"\b{re.escape(a)}\b", b, text)
-        rows.append({"t0": round(t0, 1), "t1": round(t0 + dur, 1), "section": section,
+        rows.append({"t0": round(t0, 1), "ts": round(t0 + dur - writing, 1), "t1": round(t0 + dur, 1), "section": section,
                      "voice": persona(system), "slot": req.parent.name, "request": req.name,
                      "prompt": (req / "user_message.txt").read_text()[:160], "text": text})
     rows.sort(key=lambda r: r["t1"])

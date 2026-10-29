@@ -28,9 +28,15 @@ CLICKS = sorted(e["t"] for e in EVENTS if e["type"] == "click")
 segments = []
 
 
-def R(i, wait=True):
-    """Passage i, read in the reading voice, once it is on screen."""
-    return {"text": P[i]["text"], "style": "reading", "wait": wait}
+SHOWS = 1.5    # seconds between the model's first word and the first word on screen
+
+
+def R(i, anchored=True):
+    """Passage i, read in the reading voice from the moment it starts appearing on screen."""
+    part = {"text": P[i]["text"], "style": "reading"}
+    if anchored:
+        part["at"] = round(P[i]["ts"] + SHOWS, 2)
+    return part
 
 
 def W(text):
@@ -49,8 +55,8 @@ def end(i):
     return min([t1 + 2.5] + following)
 
 
-def game(t0, t1, *vo, fade=False, **kw):
-    seg = {"type": "game", "recording": "tutorial", "from": round(t0, 2), "to": round(t1, 2), "fade": fade}
+def game(t0, t1, *vo, fade=False, rec="tutorial", **kw):
+    seg = {"type": "game", "recording": rec, "from": round(t0, 2), "to": round(t1, 2), "fade": fade}
     if vo:
         seg["vo"] = list(vo)
     seg.update(kw)
@@ -62,106 +68,110 @@ def manim(scene, *vo, **kw):
 
 
 def reply(t0, i, mind, *before):
-    """One reply on offer, introduced by the mind that wrote it. Returns where it ends."""
-    game(t0, end(i), *before, W(mind + "."), R(i, wait=False))
+    """One reply on offer, introduced by the mind that wrote it as it starts appearing. Returns where it ends."""
+    game(t0, end(i), *before, {"text": mind + ".", "at": round(P[i]["ts"] + SHOWS, 2)}, R(i, anchored=False))
     return end(i)
 
 
 FIGHT = 2.0    # a fight's own moves play at twice their speed; the model's waits at eight
 
-# ── 1. the game ───────────────────────────────────────────────────────────────
-game(25.3, 30.1,
-     "This is Proscribed Palimpsest, a role-playing game where a body, its ways of thinking, and a language "
-     "model tell the story together. In this video we play the first hour of a run, from the main menu to a "
-     "pair of new boots. Each system is explained as it comes up: first what it is for, then how it works, then "
-     "what it did in this run. And along the way, I'll tell you what I would do as a player.", fade=True)
+# ── 1-3. the menu, the world, the body: from the creation take ─────────────────
+# rec_creation plays tutorial.cli's opening alone (creation.cli). Nothing in it is written by the model, so
+# it was re-shot when the CLI's element locator was fixed (it had put the cerebellum's clicks on empty
+# screen), and its moments are looked up by what happened rather than typed in.
+C_EVENTS = [json.loads(l) for l in (HERE / "build/rec_creation/timeline.jsonl").read_text().splitlines() if l.strip()]
 
-# ── 2. a world ────────────────────────────────────────────────────────────────
-game(30.1, 45.0,
-     "A run starts by choosing a world. Each moon in this sky is one: three hundred and eighty-three of them, "
-     "each with a name. The sky is fixed, the same on every machine, so a moon always stands for the same world. "
-     "Two players who pick the same moon walk the same land and meet the same people, so they can compare notes.")
-game(45.0, 55.5,
-     "Choosing a moon generates its world, and its history comes first. Realms rise and fall; castles, temples "
-     "and cities are founded; then farmland, villages and pastures spread out from them. The card says what kind "
-     "of world it is. We take Fenumoth, a wooded world. For a first run, any moon will do: every one of them is "
-     "built to be livable.")
-game(55.5, 59.0)
 
-# ── 3. the body ───────────────────────────────────────────────────────────────
-game(59.0, 65.2,
-     "Now the protagonist. There are no strength or charisma scores in this game. A character is a body: five "
-     "regions, which are the head, the face, the trunk, the arms and the legs; twenty-two organs; twenty-eight "
-     "organ parts. Every part starts at one point, and you get twenty-five more to spend. That buys less than "
-     "half of what the body could reach, so creating a character is really choosing what to give up.", fade=True)
+def c_at(kind, label, nth=0):
+    """When the creation take's nth event of this kind and label happened."""
+    return [e["t"] for e in C_EVENTS if e["type"] == kind and (e.get("label") or e.get("name")) == label][nth]
+
+
+def c_game(t0, t1, *vo, fade=False):
+    game(t0, t1, *vo, fade=fade, rec="creation")
+
+
+c_game(c_at("clip-begin", "new_run"), c_at("click", "New") - 0.2,
+       "Your character in this game is not a sheet of numbers. It is a body, built organ by organ, and a crowd of "
+       "minds living in it: some notice, some think, some act, and some only feel. Each one speaks in its own "
+       "voice, and nothing they say is written in advance.",
+       "This is Proscribed Palimpsest. In the next hour of play, from the main menu to a pair of new boots, we'll "
+       "see how all of it works. And along the way, I'll tell you what I would do as a player.", fade=True)
+c_game(c_at("click", "New") - 0.2, c_at("move", "Fenumoth") - 0.2,
+       "A run starts by choosing a world. Each moon in this sky is one: three hundred and eighty-three of them, "
+       "each with a name. The sky is fixed, the same on every machine, so a moon always stands for the same world. "
+       "Two players who pick the same moon walk the same land and meet the same people, so they can compare notes.")
+c_game(c_at("move", "Fenumoth") - 0.2, c_at("click", "world-confirm") - 0.4,
+       "Choosing a moon generates its world, and its history comes first. Realms rise and fall; castles, temples "
+       "and cities are founded; then farmland, villages and pastures spread out from them. The card says what kind "
+       "of world it is. We take Fenumoth, a wooded world. For a first run, any moon will do: every one of them is "
+       "built to be livable.")
+c_game(c_at("click", "world-confirm") - 0.4, c_at("clip-begin", "creation_overview"))
+c_game(c_at("clip-begin", "creation_overview"), c_at("clip-end", "creation_overview"),
+       "Now the protagonist. There are no strength or charisma scores in this game. A character is a body: five "
+       "regions, which are the head, the face, the trunk, the arms and the legs; twenty-two organs; twenty-eight "
+       "organ parts. Every part starts at one point, and you get twenty-five more to spend. That buys less than "
+       "half of what the body could reach, so creating a character is really choosing what to give up.", fade=True)
 manim("Organs",
       "Every number the game uses comes from one organ or one region. This map groups them by the system they "
       "feed: thinking and memory, the senses, speech, the humors, life, and the body in a fight. In the game, "
       "hovering an organ shows the same information on the right of the screen.",
       "We'll go through them in that order. Watch where the points go: this character is built to think, to "
       "talk, and to bend the dice.")
-game(65.2, 72.2,
-     "First, thinking and memory: the head. As a whole, the head sets your noetic points, how many times you can "
+ORGAN_WALK = [  # (the organ hovered first, what is said while it is shown)
+    ("anamnesis", ["First, thinking and memory: the head. As a whole, the head sets your noetic points, how many times you can "
      "look and think in one scene: its score halved, plus one.",
      "What you learn in this game are called modi mentis: ways of thinking. A new one always arrives in working "
      "memory, a short queue, also sized by the whole head. When that queue is full, the oldest way of thinking "
      "falls out, and it is lost for good.",
      "The anamnesis keeps a second queue, for what you set aside, and it decides how many places you remember: "
-     "four per point. We raise it by one.", fade=True)
-game(72.2, 79.8,
-     "To keep a way of thinking for good, you file it into a long-term memory of its kind. The cerebrum holds "
-     "knowledge, like bargaining or archaeology. We give it two points.")
-game(79.8, 86.9,
-     "The cerebellum holds practised skills, like swordsmanship or knotwork, and it is what lets you learn a "
-     "new move in the middle of a fight. Two points as well.")
-game(86.9, 90.7, "The hippocampus holds the ways of thinking that use the senses.")
-game(90.7, 94.4,
-     "And the pineal gland sets how much experience a level costs, from twelve points down to six. With two "
+     "four per point. We raise it by one."]),
+    ("cerebrum", ["To keep a way of thinking for good, you file it into a long-term memory of its kind. The cerebrum holds "
+     "knowledge, like bargaining or archaeology. We give it two points."]),
+    ("cerebellum", ["The cerebellum holds practised skills, like swordsmanship or knotwork, and it is what lets you learn a "
+     "new move in the middle of a fight. Two points as well."]),
+    ("hippocampus", ["The hippocampus holds the ways of thinking that use the senses."]),
+    ("pineal_gland", ["And the pineal gland sets how much experience a level costs, from twelve points down to six. With two "
      "points or more, it also lets a mind doubt its own plan and think again.",
      "My advice: don't neglect memory. A character who learns a lot but has nowhere to file it keeps "
-     "forgetting.")
-game(94.4, 100.6, "The senses. The eyes set the reach of a ranged blow, in cells.")
-game(100.6, 107.7,
-     "The ears add their score to your initiative, which decides who acts first in a fight. We raise both.")
-game(107.7, 111.5,
-     "The nose is underrated. Each point lowers the chance of meeting danger on the road by ten per cent, and it "
-     "tells you which humors are in a food before you eat it.")
-game(111.5, 118.5,
-     "Speech. The tongue sets how many replies you are offered in a conversation, up to five. At nought, you "
-     "cannot hold a conversation at all. Two points here: conversation is how you get work, trade and friends.")
-game(118.5, 122.2, "The teeth only decide whether you can eat hard food. We leave them.")
-game(122.2, 134.2,
-     "The humors are this game's most unusual system. Four organs make them: the paunch, the hepar, the spleen "
+     "forgetting."]),
+    ("left_eye", ["The senses. The eyes set the reach of a ranged blow, in cells."]),
+    ("left_ear", ["The ears add their score to your initiative, which decides who acts first in a fight. We raise both."]),
+    ("nose", ["The nose is underrated. Each point lowers the chance of meeting danger on the road by ten per cent, and it "
+     "tells you which humors are in a food before you eat it."]),
+    ("tongue", ["Speech. The tongue sets how many replies you are offered in a conversation, up to five. At nought, you "
+     "cannot hold a conversation at all. Two points here: conversation is how you get work, trade and friends."]),
+    ("teeths", ["The teeth only decide whether you can eat hard food. We leave them."]),
+    ("paunch", ["The humors are this game's most unusual system. Four organs make them: the paunch, the hepar, the spleen "
      "and the pulmones. Each keeps a queue of forty-nine humors. A sound organ makes mostly blood; a failing one, "
      "mostly black bile.",
      "Humors are your fuel: every step of a journey burns some of their warmth. And they are your luck: a humor "
-     "can change a die after it has been rolled.")
-game(134.2, 143.9,
-     "The viscera decide how many humors you may spend on a single roll, and how fast wounds close. Four points "
-     "here, for five in all. I would always do this: it is the difference between a failed roll and a saved one.")
-game(143.9, 153.2,
-     "Life. The heart sets how long you live, how many companions you can lead, one per point, and how many "
+     "can change a die after it has been rolled."]),
+    ("viscera", ["The viscera decide how many humors you may spend on a single roll, and how fast wounds close. Four points "
+     "here, for five in all. I would always do this: it is the difference between a failed roll and a saved one."]),
+    ("heart", ["Life. The heart sets how long you live, how many companions you can lead, one per point, and how many "
      "youthful humors you start with, which are warm and lucky. Four points: a long life, and room for a party "
-     "later.")
-game(153.2, 159.7, "The genitories add dice to every blow you strike. One point.")
-game(159.7, 167.9,
-     "The body in a fight. The backbone sets how much you can carry, and your movement points in a fight: twice "
-     "its score. Three more points.")
-game(167.9, 175.2,
-     "The hands decide which tools you can use. A practised hand does not get more out of a tool; it can make "
-     "more things serve as tools. Two points for the right hand.")
-game(175.2, 183.5,
-     "In a fight, each hand and each foot strikes on its own, and the arms are the organs of brute force.")
-game(183.5, 191.4,
-     "The legs set how far one movement point takes you. With the feet, the lower body as a whole sets how far "
-     "one journey can reach, and your natural defence.")
-game(191.4, 201.6,
-     "The feet keep you standing on bad ground, and roll the dice to run away. One last number: health. It "
+     "later."]),
+    ("genitories", ["The genitories add dice to every blow you strike. One point."]),
+    ("backbone", ["The body in a fight. The backbone sets how much you can carry, and your movement points in a fight: twice "
+     "its score. Three more points."]),
+    ("right_hand", ["The hands decide which tools you can use. A practised hand does not get more out of a tool; it can make "
+     "more things serve as tools. Two points for the right hand."]),
+    ("left_hand", ["In a fight, each hand and each foot strikes on its own, and the arms are the organs of brute force."]),
+    ("left_leg", ["The legs set how far one movement point takes you. With the feet, the lower body as a whole sets how far "
+     "one journey can reach, and your natural defence."]),
+    ("left_foot", ["The feet keep you standing on bad ground, and roll the dice to run away. One last number: health. It "
      "comes from the trunk as a whole, a third of its score plus one, and each wound costs a point of it until "
-     "it heals. Twenty-five points spent. That is the body.")
+     "it heals. Twenty-five points spent. That is the body."]),
+]
+for k, (organ, vo) in enumerate(ORGAN_WALK):
+    t0 = c_at("move", "organ:" + organ)
+    t1 = (c_at("move", "organ:" + ORGAN_WALK[k + 1][0]) if k + 1 < len(ORGAN_WALK)
+          else c_at("clip-end", "organs_fighting"))
+    c_game(t0, t1, *vo, fade=(k == 0))
 
 # ── 4. childhood ──────────────────────────────────────────────────────────────
-game(201.6, end(0),
+game(202.6, end(0),
      "The body has no past yet. The game gives it one through five childhood memories, and they are played "
      "exactly the way the whole game is played. So the first memory is our first lesson. Let's take it slowly.",
      R(0), fade=True)
@@ -336,7 +346,7 @@ t = reply(end(30), 31, "Diligence",
           "Then our replies. Each is one branch of the tree, voiced by one of the minds we hold that can speak. The "
           "tongue decides how many are offered: we gave it two points, so three.")
 t = reply(t, 32, "Nautical Jargon")
-game(t, end(33), W("Provisioning."), R(33, wait=False),
+game(t, end(33), {"text": "Provisioning.", "at": round(P[33]["ts"] + SHOWS, 2)}, R(33, anchored=False),
      W("Diligence and Provisioning were given the very same line: I am after work as a farmhand; what does it "
        "pay? Provisioning, which counts everything in days of supplies, turned it into grain, firewood and "
        "salt."))
@@ -400,7 +410,7 @@ game(5941.9, end(47), R(47),
 game(end(47), end(48), R(48))
 t = reply(end(48), 49, "Bargaining", "Our replies.")
 t = reply(t, 50, "Enterprise")
-game(t, end(51), W("Social Interaction."), R(51, wait=False),
+game(t, end(51), {"text": "Social Interaction.", "at": round(P[51]["ts"] + SHOWS, 2)}, R(51, anchored=False),
      W("Bargaining wants a rare gem, in a boot shop. The line it was given only said: I am after something "
        "particular. Bargaining made it a haggler's line, and got carried away."))
 game(end(51), end(52), "We choose Bargaining's anyway, to see what happens.", R(52),
@@ -461,7 +471,13 @@ storyboard = {
                                  "pitch": 0.97, "room": 0.16}},
     "music": {"take_audio": "tutorial", "level_db": -34, "duck": 0.65},
     "clicks": {"gain": 0.5},
-    "recordings": {"tutorial": {
+    "recordings": {"creation": {
+        "script": "creation.cli", "dir": "build/rec_creation", "timeout": 1800,
+        "flags": "--childhood-path \"sobs,waves,sharp,golden arch,shelter\" --force-encounter wolf,wolf "
+                 "--no-encounters --npc-static --start-area \"Longhouse Hall,Cobbler's Shop\" --observe-only "
+                 "farmer,cobbler --npc-affinity DistantAcquaintance --grant-mm diligence,provisioning,swordsmanship:2 "
+                 "--job-only farmhand --humors all=voluptas"},
+                   "tutorial": {
         "script": "tutorial.cli", "dir": "build/rec_tutorial_b", "timeout": 14400,
         "flags": "--childhood-path \"sobs,waves,sharp,golden arch,shelter\" --force-encounter wolf,wolf "
                  "--no-encounters --npc-static --start-area \"Longhouse Hall,Cobbler's Shop\" --observe-only "

@@ -13,73 +13,73 @@ from vidkit.manimkit import *  # noqa: F401,F403
 
 # ── 1. organs -> systems ──────────────────────────────────────────────────────
 
-# (system, [(source, measures)]) in the order the creation footage takes them
+# (system, [(source, what it sets)]) in the order the creation footage takes them; kept short enough to
+# read at a glance at half size
 SYSTEMS = [
     ("thinking and memory", [
-        ("encephalon", "noetic points, working memory"),
-        ("anamnesis", "residual memory, places remembered"),
-        ("cerebrum", "semantic memory"),
-        ("cerebellum", "procedural memory, learning in a fight"),
-        ("hippocampus", "sensory memory"),
-        ("pineal gland", "experience per level, doubt"),
+        ("encephalon", "noetic points"),
+        ("anamnesis", "places remembered"),
+        ("cerebrum", "knowledge"),
+        ("cerebellum", "practised skills"),
+        ("hippocampus", "sensing minds"),
+        ("pineal gland", "experience, doubt"),
     ]),
     ("the senses", [
-        ("eyes", "reach of a ranged blow"),
-        ("ears", "initiative in a fight"),
-        ("nose", "avoiding danger, reading food"),
+        ("eyes", "reach"),
+        ("ears", "initiative"),
+        ("nose", "danger, food"),
     ]),
     ("speech", [
-        ("tongue", "replies offered"),
-        ("visage", "dice in conversation"),
+        ("tongue", "replies"),
+        ("visage", "charm"),
         ("teeth", "hard food"),
     ]),
     ("the humors", [
-        ("paunch, hepar, spleen, pulmones", "the four queues"),
-        ("viscera", "humors per roll, healing"),
+        ("paunch", "a queue"),
+        ("hepar", "a queue"),
+        ("spleen", "a queue"),
+        ("pulmones", "a queue"),
+        ("viscera", "humors per roll"),
     ]),
     ("life", [
-        ("heart", "lifespan, companions, youth"),
+        ("heart", "lifespan, party"),
         ("trunk", "health"),
-        ("genitories", "dice on every blow"),
+        ("genitories", "blow dice"),
     ]),
     ("the body in a fight", [
-        ("backbone", "movement points, carrying"),
-        ("hands", "which tools, how well"),
-        ("legs", "distance per movement point"),
-        ("lower limbs", "journey length, defence"),
+        ("backbone", "movement, load"),
+        ("hands", "tools"),
+        ("legs", "stride"),
+        ("lower limbs", "journeys, defence"),
         ("feet", "footing, flight"),
     ]),
 ]
 
 
 class Organs(BrandScene):
-    """Six panels, one per system, each listing the organs that feed it and what they set."""
+    """Six panels, one per system: each organ on one line with what it sets, in type large enough to read."""
 
     def construct(self):
-        self.header("one body, every measure", "each organ or region feeds the systems it is named for")
+        self.header("one body, every measure")
         panels = []
         for name, rows in SYSTEMS:
+            names = [self.text(src, 30, GOLD) for src, _ in rows]
+            whats = [self.text(what, 26, GRAY85) for _, what in rows]
+            col = max(n.width for n in names) + 0.35
             lines = VGroup()
-            for src, what in rows:
-                a = self.text(src, 19, GOLD)
-                b = self.text(what, 17, GRAY75) if what else VMobject()
-                row = VGroup(a, b).arrange(DOWN, aligned_edge=LEFT, buff=0.06) if what else VGroup(a)
-                lines.add(row)
-            lines.arrange(DOWN, aligned_edge=LEFT, buff=0.14)
-            box = self.frame_box(lines, GRAY50, buff=0.22, label=name.upper())
+            for n, w in zip(names, whats):
+                w.next_to(n, RIGHT, buff=0).align_to(n, DOWN).shift(RIGHT * (col - n.width))
+                lines.add(VGroup(n, w))
+            lines.arrange(DOWN, aligned_edge=LEFT, buff=0.16)
+            box = self.frame_box(lines, GRAY50, buff=0.25, label=name.upper())
             panels.append(VGroup(box, lines))
-        # equal-width columns: three across, two down
-        w = max(p.width for p in panels)
-        for p in panels:
-            p[0][0].stretch_to_fit_width(w).align_to(p[1], LEFT).shift(LEFT * 0.22)
-            p[0][1:].align_to(p[0][0], LEFT).shift(RIGHT * 0.3)
         top = VGroup(*panels[:3]).arrange(RIGHT, buff=0.3, aligned_edge=UP)
         bottom = VGroup(*panels[3:]).arrange(RIGHT, buff=0.3, aligned_edge=UP)
-        grid = VGroup(top, bottom).arrange(DOWN, buff=0.3)
-        grid.scale_to_fit_width(min(grid.width, config.frame_width - 0.8))
-        if grid.height > config.frame_height - 2.3:
-            grid.scale_to_fit_height(config.frame_height - 2.3)
-        grid.to_edge(DOWN, buff=0.3)
+        grid = VGroup(top, bottom).arrange(DOWN, buff=0.35)
+        grid.scale_to_fit_width(min(grid.width, config.frame_width - 0.6))
+        if grid.height > config.frame_height - 1.9:
+            grid.scale_to_fit_height(config.frame_height - 1.9)
+        grid.to_edge(DOWN, buff=0.25)
         for p in panels:
             self.play(Create(p[0][0]), FadeIn(p[0][1:]), FadeIn(p[1], shift=UP * 0.1, lag_ratio=0.1), run_time=0.8)
             self.beat(0.1, 0.5)

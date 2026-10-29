@@ -346,7 +346,10 @@ public class LocationTravelGameController : IDisposable
             {
                 if (CliElementIdAt(x, y) != elementId) continue;
                 first ??= (x, y);
-                if (y == first.Value.Y) last = (x, y);
+                // The middle of the first run of cells, not of the whole row: an id can answer in two
+                // places on one row (an organ on the body art and in the list beside it), and the
+                // midpoint between them is empty screen.
+                if (y == first.Value.Y && (last == null || last.Value.X == x - 1)) last = (x, y);
             }
             if (first != null) break;
         }

@@ -1,0 +1,193 @@
+# The menu, the world and the protagonist's creation alone: tutorial.cli up to the end of creation.
+# Recorded apart from the whole take so the creation footage can be re-shot without the model's
+# passages changing (nothing before the childhood is written by the model).
+#
+# Player commands only (this runs under --record), with the real model writing every passage. The
+# launch flags, what each section relies on and every known fragility are in NOTES.md beside this
+# file. In short: the world is Fenumoth (moon 5, a sylvan world), the childhood is pinned to the port
+# city, the dock work, the sword and the dream of the golden arch (--childhood-path), the two journeys
+# each meet one wolf (--force-encounter), the farmer and the cobbler are found where the script expects
+# them (--start-area, --npc-static, --observe-only), the farmer offers only the farmhand's post
+# (--job-only) and the two wills (diligence, provisioning) make the asking and the buying a single
+# thought each. Every roll a script cannot foresee is settled with the humors the player really holds
+# (--humors all=voluptas), spent with `click humor <queue> needed` / `click die needed`, which press
+# only while the roll is still failing.
+#
+# Model waits are long on purpose (a passage takes a minute or more on a CPU); the cut fast-forwards
+# them. `clip` names follow the brief's outline; `hold`s are where the narration will speak.
+#
+# FLAGS: --childhood-path "sobs,waves,sharp,golden arch,shelter" --force-encounter wolf,wolf --no-encounters
+#        --npc-static --start-area "Longhouse Hall,Cobbler's Shop" --observe-only "farmer,cobbler"
+#        --npc-affinity DistantAcquaintance --grant-mm diligence,provisioning,swordsmanship:2
+#        --job-only farmhand --humors all=voluptas
+
+# The narrowing flags name the farm's and the city's rooms and people; the childhood, the get-up and
+# the world map have none of them, which is expected.
+allow-flag-miss --start-area
+allow-flag-miss --observe-only
+
+# ── New run ──────────────────────────────────────────────────────────────────────────────────────────
+# The model loads before the menu is offered.
+wait mode MainMenu 900
+mark new_run
+clip new_run
+cursor rest
+hold 3
+click menu New
+wait mode WorldSelection 900
+clip end new_run
+
+# ── Select a world ───────────────────────────────────────────────────────────────────────────────────
+# The sky is drawn from a constant, so Fenumoth is the same moon, in the same place, on every machine
+# — and it is in view without turning the sky (under --record a moon must be on screen to be clicked).
+# Hold on the sky (world generation, history, the lore), point at two other moons, pick Fenumoth and
+# read its box.
+mark world_selection
+clip world_selection
+cursor rest
+hold 5
+point moon Isholmir
+hold 3
+point moon Halarriel
+hold 3
+click moon Fenumoth
+wait 900
+cursor rest
+hold 6
+click world confirm
+wait mode ProtagonistCreation 900
+clip end world_selection
+
+# ── Protagonist creation: the organs, grouped by the system each one feeds ─────────────────────────
+# `point element organ:<part>` hovers a part (its description and the stats it drives show on the
+# right); `click element organ:<part>` raises it by one point of the 25. The grouping and the code
+# behind it are in NOTES.md.
+mark creation
+clip creation_overview
+cursor rest
+hold 5
+clip end creation_overview
+
+# Thinking and memory: noetic points, the memory modules, mental maps, doubt.
+mark organs_thinking
+clip organs_thinking
+point element organ:anamnesis
+hold 3
+click element organ:anamnesis
+hold 2
+point element organ:cerebrum
+hold 3
+click element organ:cerebrum
+click element organ:cerebrum
+hold 2
+point element organ:cerebellum
+hold 3
+click element organ:cerebellum
+click element organ:cerebellum
+hold 2
+point element organ:hippocampus
+hold 3
+point element organ:pineal_gland
+hold 3
+clip end organs_thinking
+
+# The senses: initiative in a fight, the nose's warning of encounters, and what can be observed.
+mark organs_senses
+clip organs_senses
+point element organ:left_eye
+hold 3
+point element organ:right_eye
+hold 2
+point element organ:left_ear
+hold 3
+click element organ:left_ear
+click element organ:right_ear
+hold 2
+point element organ:nose
+hold 3
+clip end organs_senses
+
+# Speech: how many replies a conversation offers.
+mark organs_dialogue
+clip organs_dialogue
+point element organ:tongue
+hold 3
+click element organ:tongue
+click element organ:tongue
+hold 2
+point element organ:teeths
+hold 3
+clip end organs_dialogue
+
+# The humors: the four queues and the viscera that spend them on a roll.
+mark organs_humors
+clip organs_humors
+point element organ:paunch
+hold 3
+point element organ:hepar
+hold 2
+point element organ:spleen
+hold 2
+point element organ:pulmones
+hold 2
+point element organ:viscera
+hold 3
+click element organ:viscera
+click element organ:viscera
+click element organ:viscera
+click element organ:viscera
+hold 3
+clip end organs_humors
+
+# Life: the heart (companions, years, hit points through the trunk) and the genitories.
+mark organs_life
+clip organs_life
+point element organ:heart
+hold 3
+click element organ:heart
+click element organ:heart
+click element organ:heart
+click element organ:heart
+hold 3
+point element organ:genitories
+hold 3
+click element organ:genitories
+hold 2
+clip end organs_life
+
+# The body that fights: backbone (cinetic points, carrying), hands, arms, legs, feet.
+mark organs_fighting
+clip organs_fighting
+point element organ:backbone
+hold 3
+click element organ:backbone
+click element organ:backbone
+click element organ:backbone
+hold 2
+point element organ:right_hand
+hold 3
+click element organ:right_hand
+click element organ:right_hand
+hold 2
+point element organ:left_hand
+hold 2
+point element organ:right_arm
+hold 2
+point element organ:left_arm
+hold 2
+point element organ:left_leg
+hold 3
+click element organ:left_leg
+click element organ:right_leg
+hold 2
+point element organ:left_foot
+hold 2
+point element organ:right_foot
+hold 3
+cursor rest
+hold 3
+clip end organs_fighting
+
+click continue
+wait mode ChildhoodReminescence 900
+quit
