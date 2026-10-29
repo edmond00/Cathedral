@@ -14,9 +14,10 @@ replace the act outright ("I will wipe the blade, oil it…" for a greeting). Th
 
 A field is flagged when it names THINGS_MAX or more concrete things, or (a style) opens a list of
 props with "images of", "narrate the…". A word's concreteness is predicted from its GloVe vector by
-data/concreteness_glove100.json (a linear fit to human ratings, held-out r = 0.79), so the game can
-run the same check with the vectors it already loads; the C# twin is PersonaLint.cs. A word rated
-3.8 or more counts as a thing (oil 4.9, wick 4.7, silver 4.5; delay 2.8, patience 2.1).
+data/concreteness_glove100.json (a linear fit to human ratings, held-out r = 0.79), and whether it
+is a noun by a second fit in the same file (accuracy 0.83), so the game can run the same check with
+the vectors it already loads; the C# twin is PersonaLint.cs. A distinct noun rated 3.8 or more counts
+as a thing (oil 4.9, wick 4.7, silver 4.5; delay 2.8, patience 2.1).
 """
 import argparse, json, os, re, sys
 sys.path.insert(0, os.path.dirname(__file__))
@@ -25,11 +26,13 @@ import personas
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 THING = 3.8
+NOUN = 0.5
 STYLE_THINGS_MAX = 2
 REMINDER_THINGS_MAX = 2
 # Words a style is written with rather than about.
 BOILER = set("""colour color line lines image images imagery picture voice tone words word sentence sentences
-thing things way back dry clipped reach let keep make give take put feel feeling""".split())
+thing things way back dry clipped reach let keep make give take put feel feeling
+front around whatever whoever judge see read look meet treat notice small next old single open""".split())
 STOP = set("""a about above after again against all also am an and any are as at be because been before being below
 between both but by can could did do does doing down during each even ever every few for from further had has have
 having he her here hers him his how i if in into is it its just me more most my no nor not now of off on once only or
@@ -43,6 +46,7 @@ class Lint:
     def __init__(self, words=None):
         m = json.load(open(os.path.join(HERE, "data", "concreteness_glove100.json")))
         self.w, self.b = m["weights"], m["bias"]
+        self.nw, self.nb = m["noun"]["weights"], m["noun"]["bias"]
         self.vec = {}
         path = os.path.join(ROOT, "models", "embeddings", "glove.6B.100d.txt")
         for line in open(path, encoding="utf-8"):
@@ -54,9 +58,15 @@ class Lint:
         v = self.vec.get(word)
         return None if v is None else self.b + sum(a * b for a, b in zip(self.w, v))
 
+    def noun(self, word):
+        v = self.vec.get(word)
+        return v is not None and self.nb + sum(a * b for a, b in zip(self.nw, v)) >= NOUN
+
     def things(self, text):
-        ws = [w for w in re.findall(r"[a-z]+", (text or "").lower()) if len(w) >= 3 and w not in STOP and w not in BOILER]
-        return [w for w in ws if (self.concreteness(w) or 0) >= THING]
+        """The distinct concrete nouns a field names."""
+        ws = dict.fromkeys(w for w in re.findall(r"[a-z]+", (text or "").lower())
+                           if len(w) >= 3 and w not in STOP and w not in BOILER)
+        return [w for w in ws if (self.concreteness(w) or 0) >= THING and self.noun(w)]
 
     def check(self, mm):
         out = []

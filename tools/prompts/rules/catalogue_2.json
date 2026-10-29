@@ -1,0 +1,208 @@
+{
+ "covetousness": {
+  "style": "Sharp and pleased with wanting - see in whatever is in front of you what could be yours, and relish the thought."
+ },
+ "crowd_murmur": {
+  "style": "Split and sidelong - half here, half following what is being said elsewhere."
+ },
+ "cruelty": {
+  "style": "Cold and unhurried - size up what is in front of you by its weakness, with a relish that treats mercy as waste."
+ },
+ "curiosity": {
+  "style": "Eager and a little reckless - lead with the question, and reach before the risk is weighed."
+ },
+ "cutpurse": {
+  "style": "Close, quick and unnoticed - judge whatever is in front of you by what could be taken, and how fast."
+ },
+ "dairycraft": {
+  "style": "Cool, tidy and patient - judge whatever is in front of you by whether it is clean and kept as it should be."
+ },
+ "deadeye": {
+  "style": "Icy and still - judge whatever is in front of you by distance, line and the moment to let go."
+ },
+ "death_shake": {
+  "style": "Grim and sudden - prefer a quick ending to any struggle in whatever is in front of you."
+ },
+ "decipher": {
+  "style": "Patient and quietly satisfied - tease the sense out of whatever is unclear in front of you."
+ },
+ "delving": {
+  "style": "Measured and knowing - find the grain of whatever is in front of you before you strike.",
+  "reminder2": "someone who finds the weak line before using any force"
+ },
+ "digging": {
+  "style": "Cheerful and industrious - judge whatever is in front of you by what might be hidden under it."
+ },
+ "dirty_labor": {
+  "style": "Earthy and unbothered - take whatever is in front of you as it comes, with the shrug of someone used to worse."
+ },
+ "discipline": {
+  "reminder2": "someone who keeps their feelings held and their face composed"
+ },
+ "doughcraft": {
+  "style": "Warm, patient and good-humoured - judge whatever is in front of you by whether it has been given time to rise.",
+  "reminder2": "someone who knows by feel when a thing is ready"
+ },
+ "drainage": {
+  "style": "Dogged and practical - judge whatever is in front of you by where things would run and where they would pool.",
+  "reminder2": "someone who reads the lie of the land without trying"
+ },
+ "dramaturgy": {
+  "style": "Theatrical and appraising - see whatever is happening in front of you as a scene, with its entrances and its turn."
+ },
+ "dread": {
+  "style": "Physical and unreasoned - a reluctance felt in the body, and the wish to be elsewhere."
+ },
+ "drill": {
+  "style": "Crisp and drilled - let the body answer in step and in time, before thought."
+ },
+ "droving": {
+  "style": "Patient and watchful - judge whatever is in front of you by the mood of those you are moving and the pace they can keep."
+ },
+ "dunging": {
+  "style": "Frank and practical - see worth where others hold their noses, and judge what the ground in front of you needs."
+ },
+ "eavesdropping": {
+  "style": "Sidelong and attentive - seem to attend to what is in front of you while listening past it.",
+  "reminder2": "someone who always hears more than they seem to"
+ },
+ "embalming": {
+  "style": "Calm, careful and respectful - treat whatever is in front of you with patient, unhurried care."
+ },
+ "empathy": {
+  "style": "Warm and attuned - let the feelings of whoever is in front of you, as they show them, colour the line."
+ },
+ "endurance": {
+  "style": "Slow, steady and unstoppable - judge whatever is in front of you by how long it can be borne."
+ },
+ "enterprise": {
+  "style": "Quickening and speculative - see in whatever is in front of you where it came from and what venture it could become."
+ },
+ "exorcism": {
+  "style": "Commanding and unflinching - treat whatever is in front of you as something to be named and sent away if it does not belong."
+ },
+ "exploration": {
+  "style": "Restless and drawn onward - read whatever is in front of you for where it leads."
+ },
+ "falconry": {
+  "style": "Patient and attentive - read the mood of whatever creature is in front of you, and wait for its trust.",
+  "reminder2": "someone who reads a mood before it shows"
+ },
+ "farriery": {
+  "style": "Close, steady and patient - judge whatever you handle by whether it is sound and will bear its weight.",
+  "reminder2": "someone who works by feel and is never wrong about what is sound"
+ },
+ "felling": {
+  "style": "Tense, then released - judge whatever is in front of you by which way it will fall, and where to stand."
+ },
+ "fieldcraft": {
+  "style": "Unhurried and weather-wise - judge whatever is in front of you by what the season asks of it."
+ },
+ "finesse": {
+  "style": "Precise, graceful and economical - take quiet pride in nothing wasted."
+ },
+ "firecraft": {
+  "style": "Watchful and calm - judge whatever is in front of you by how it takes heat, and never let it run wild.",
+  "reminder2": "someone who knows by instinct when something is too hot"
+ },
+ "fletching": {
+  "style": "Fussy and exact - look for the slightest flaw in what is in front of you, and want it true.",
+  "reminder2": "someone who sees a flaw no one else would see"
+ },
+ "forage_lore": {
+  "style": "Unhurried and content - judge whatever is in front of you by its ripeness, ready now or better left a day.",
+  "reminder2": "someone who can tell at a glance what is ready"
+ },
+ "forcing": {
+  "reminder2": "someone who always looks for the weak point everyone else ignores"
+ },
+ "fording": {
+  "style": "Cautious and deliberate - one step at a time, testing before trusting any weight."
+ },
+ "forgery": {
+  "style": "Cool and knowing - judge whatever is in front of you by what would be checked, and what would pass."
+ },
+ "fortification": {
+  "style": "Cold and tactical - read whatever place you are in as an attacker would, for its weak points.",
+  "reminder2": "someone who sees how any place could be taken"
+ },
+ "foul_play": {
+  "style": "Sly and scornful of rules - see in whatever is in front of you the angle no one else would take."
+ },
+ "friendship": {
+  "style": "Warm and open-hearted - meet whoever is in front of you with welcome and the hope of friendship."
+ },
+ "gambling": {
+  "style": "Calculating, with a thrill at the edge - weigh the odds in whatever is in front of you."
+ },
+ "gleaning": {
+  "style": "Careful and thrifty - find what others missed in whatever is in front of you, and count it, because it is all there is.",
+  "reminder2": "someone who finds enough where others see nothing left"
+ },
+ "gluttony": {
+  "style": "Frank and sensual - let appetite colour whatever is in front of you."
+ },
+ "gnawing": {
+  "style": "Steady and unhurried - see everything as something to be worked through to the good part inside."
+ },
+ "gold_fever": {
+  "style": "Fixed and feverish - see in whatever is in front of you only whether it promises a fortune."
+ },
+ "gourmandise": {
+  "style": "Sensory and unashamed - judge whatever is in front of you by the pleasure it promises.",
+  "reminder2": "someone who always knows where the next good meal is"
+ },
+ "grafting": {
+  "style": "Precise and careful - see everything as a joining that will only take if matched exactly.",
+  "reminder2": "someone who knows a join only takes if it is exact"
+ },
+ "grave_robbing": {
+  "style": "Furtive and irreverent - judge whatever is in front of you by what it might be worth, with no respect at all."
+ },
+ "gregariousness": {
+  "style": "Open and inclusive - notice whoever is left out, and draw them in.",
+  "reminder2": "someone who never lets anyone stand alone"
+ },
+ "grimacery": {
+  "style": "Mischievous and expressive - let the face do the talking, with a mummer's delight in it."
+ },
+ "grooming": {
+  "style": "Gentle and methodical - show warmth through careful tending rather than words."
+ },
+ "grudgekeeping": {
+  "style": "Cold and patient - treat whatever is in front of you as an account, and remember what is still owed."
+ },
+ "gut_feeling": {
+  "style": "Bodily and wordless - let unease or ease arrive before its reasons.",
+  "reminder2": "someone whose body decides before their thoughts catch up"
+ },
+ "hard_labor": {
+  "style": "Dogged and calm - judge whatever is in front of you by the toil it would take, and outlast it."
+ },
+ "harvestry": {
+  "style": "Tireless and rhythmic - judge whatever is in front of you by whether it is ready to be gathered."
+ },
+ "haulage": {
+  "style": "Steady and unbothered - judge whatever is in front of you by its weight and how to carry it.",
+  "reminder2": "someone who carries more than anyone and never strains"
+ },
+ "hearthlonging": {
+  "style": "Wistful and quietly aching - see everything as an outsider sees a comfort that belongs to others.",
+  "reminder2": "someone who is always on the outside of other people's comfort"
+ },
+ "hedgecraft": {
+  "style": "Dogged and patient - judge whatever is in front of you by whether it would hold or let something through.",
+  "reminder2": "someone who spots the weak place in any boundary first"
+ },
+ "henwifery": {
+  "style": "Brisk and knowing - listen before you look, then say what your hands should do.",
+  "reminder2": "someone who listens before looking and is rarely surprised"
+ },
+ "heraldry": {
+  "style": "Flat and certain - recognise whoever is in front of you by the signs they carry.",
+  "reminder2": "someone who knows a stranger's family by the signs they carry"
+ },
+ "herblore": {
+  "reminder2": "someone who knows at once which growing things help and which harm"
+ }
+}
