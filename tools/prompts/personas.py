@@ -14,7 +14,7 @@ def _prop(src, name):
     m = re.search(r'\b' + name + r'\s*=>\s*@"((?:[^"]|"")*)"', src)
     if m:
         return m.group(1).replace('""', '"').replace("\r\n", "\n")
-    m = re.search(r'\b' + name + r'\s*=>\s*\n?\s*((?:"(?:[^"\\]|\\.)*"\s*\+?\s*)+);', src)
+    m = re.search(r'\b' + name + r'\s*=>\s*\n?(?:\s*//[^\n]*\n)*\s*((?:"(?:[^"\\]|\\.)*"\s*\+?\s*)+);', src)
     if not m:
         return None
     parts = re.findall(r'"((?:[^"\\]|\\.)*)"', m.group(1))
