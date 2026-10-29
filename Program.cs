@@ -384,6 +384,7 @@ for (int i = 0; i < args.Length; i++)
     Cathedral.Config.Debug.Silent = true;
     Cathedral.Config.Debug.ForcedLlmDevice = Cathedral.LLM.LlamaComputeDevice.Cpu;
     Cathedral.Audio.MidiCapture.Start(() => Cathedral.Game.Record.RecordMode.Now);
+    Cathedral.Audio.MidiCapture.AudioPath = System.IO.Path.Combine(Cathedral.Game.Record.RecordMode.OutputDir, "music.wav");
     Cathedral.Game.Record.RecordSession.Configure(args);
     Cathedral.Game.Cli.CliMode.IsActive = true;
 

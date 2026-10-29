@@ -92,11 +92,39 @@ internal sealed class SynthMusicEngine : IMusicEngine
         var clock = Stopwatch.StartNew();
         var l = new float[512];
         var r = new float[512];
+        // What the engine renders is the game's music and sound effects exactly as a player hears
+        // them (the in-game sounds go through the same synthesiser). Written to music.wav on the
+        // capture's clock: the silence before the engine started is padded in, so sample 0 is the
+        // recording's time 0.
+        WavWriter? wav = null;
+        try
+        {
+            if (MidiCapture.AudioPath is { } path)
+            {
+                wav = new WavWriter(path, Dsp.SampleRate);
+                long lead = (long)(Math.Max(0, MidiCapture.Now) * Dsp.SampleRate);
+                var zl = new float[512]; var zr = new float[512];
+                for (long done = 0; done < lead; done += zl.Length) wav.Write(zl, zr, (int)Math.Min(zl.Length, lead - done));
+            }
+        }
+        catch (Exception ex) { Console.WriteLine($"[music] could not open the capture WAV: {ex.Message}"); wav = null; }
+
+        var lastCheckpoint = clock.Elapsed;
         while (_running)
         {
-            while (_running && _core!.Seconds < clock.Elapsed.TotalSeconds + 0.05) _core.Render(l, r, 0, l.Length);
+            while (_running && _core!.Seconds < clock.Elapsed.TotalSeconds + 0.05)
+            {
+                _core.Render(l, r, 0, l.Length);
+                wav?.Write(l, r, l.Length);
+            }
+            if (wav != null && (clock.Elapsed - lastCheckpoint).TotalSeconds > 10)
+            {
+                wav.Checkpoint();
+                lastCheckpoint = clock.Elapsed;
+            }
             Thread.Sleep(10);
         }
+        wav?.Dispose();
     }
 
     public void Stop()

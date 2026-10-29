@@ -72,6 +72,7 @@ public static class RecordSession
                 ["video"] = "game.mkv",
                 ["timeline"] = "timeline.jsonl",
                 ["music"] = "music.mid",
+                ["music_audio"] = "music.wav",
                 ["click"] = "sfx/click.wav",
                 ["hover"] = "sfx/hover.wav",
             },

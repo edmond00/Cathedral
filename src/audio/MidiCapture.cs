@@ -24,6 +24,13 @@ public static class MidiCapture
 
     public static bool IsActive { get; private set; }
 
+    /// <summary>
+    /// Where the music engine writes what it renders while capturing, or null for no audio. Set by
+    /// <c>--record</c> to the recording's <c>music.wav</c>: the notes alone (the MIDI) lose the game's
+    /// own instruments, mix and sound effects, which a stand-in synthesiser can only approximate.
+    /// </summary>
+    public static string? AudioPath { get; set; }
+
     /// <summary>The capture's clock now: where an event recorded at this instant would land.</summary>
     public static double Now => _clock();
 

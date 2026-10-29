@@ -48,6 +48,20 @@ internal sealed class WavWriter : IDisposable
         _frames += n;
     }
 
+    /// <summary>
+    /// Rewrites the header for what has been written so far and returns to the end, so a file whose
+    /// writer is never disposed (a process ended abruptly) still reads as everything up to here.
+    /// </summary>
+    public void Checkpoint()
+    {
+        _w.Flush();
+        long end = _fs.Position;
+        _fs.Seek(0, SeekOrigin.Begin);
+        WriteHeader(_frames);
+        _w.Flush();
+        _fs.Seek(end, SeekOrigin.Begin);
+    }
+
     public void Dispose()
     {
         _fs.Seek(0, SeekOrigin.Begin);
