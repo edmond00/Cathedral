@@ -32,7 +32,7 @@ clip new_run
 cursor rest
 hold 3
 click menu New
-wait mode WorldSelection 60
+wait mode WorldSelection 900
 clip end new_run
 
 # ── Select a world ───────────────────────────────────────────────────────────────────────────────────
@@ -49,7 +49,7 @@ hold 3
 point moon Halarriel
 hold 3
 click moon Fenumoth
-wait 120
+wait 900
 cursor rest
 hold 6
 click world confirm
@@ -330,14 +330,14 @@ clip end run_start
 
 # The protagonist screen, the way a player opens it: Escape, then Protagonist.
 pause
-wait 30
+wait 900
 click menu Protagonist
-wait 30
+wait 900
 
 mark anatomy
 clip anatomy
 click tab anatomy
-wait 10
+wait 900
 cursor rest
 hold 6
 clip end anatomy
@@ -345,7 +345,7 @@ clip end anatomy
 mark memory
 clip memory
 click tab memory
-wait 10
+wait 900
 cursor rest
 hold 6
 clip end memory
@@ -355,18 +355,18 @@ clip end memory
 mark inventory
 clip inventory
 click tab inventory
-wait 10
+wait 900
 cursor rest
 hold 5
 click element backpack
-wait 5
+wait 900
 hold 3
 click element content:bread
-wait 5
+wait 900
 cursor rest
 hold 4
 click element consume
-wait 5
+wait 900
 hold 3
 clip end inventory
 
@@ -375,7 +375,7 @@ clip end inventory
 mark humors
 clip humors
 click tab humors
-wait 10
+wait 900
 cursor rest
 hold 5
 point element humor:paunch:0
@@ -387,15 +387,15 @@ hold 3
 clip end humors
 
 click back
-wait 30
+wait 900
 click menu Continue
-wait mode WorldView 60
+wait mode WorldView 900
 
 # ── Travel to the farm ───────────────────────────────────────────────────────────────────────────────
 mark travel_farm
 clip travel_farm
 travel 7011
-wait 10
+wait 900
 cursor rest
 hold 4
 travel-go
@@ -413,7 +413,7 @@ clip fight_1
 cursor rest
 hold 4
 click engage
-wait mode Fighting 60
+wait mode Fighting 900
 cursor rest
 hold 5
 regions
@@ -429,9 +429,9 @@ hold 3
 # Turn 1: a snap thrust with the short sword (the skill group opens first; it closes again after
 # every action). Humors are spent only if the roll is failing.
 click skill Short Sword
-wait 5
+wait 900
 click skill Snap Thrust
-wait 5
+wait 900
 click fighter enemy
 wait 900
 cursor rest
@@ -459,9 +459,9 @@ hold 3
 # Turn 2: a snap thrust with the short sword (the skill group opens first; it closes again after
 # every action). Humors are spent only if the roll is failing.
 click skill Short Sword
-wait 5
+wait 900
 click skill Snap Thrust
-wait 5
+wait 900
 click fighter enemy
 wait 900
 cursor rest
@@ -489,9 +489,9 @@ hold 3
 # Turn 3: a snap thrust with the short sword (the skill group opens first; it closes again after
 # every action). Humors are spent only if the roll is failing.
 click skill Short Sword
-wait 5
+wait 900
 click skill Snap Thrust
-wait 5
+wait 900
 click fighter enemy
 wait 900
 cursor rest
@@ -519,9 +519,9 @@ hold 3
 # Turn 4: a snap thrust with the short sword (the skill group opens first; it closes again after
 # every action). Humors are spent only if the roll is failing.
 click skill Short Sword
-wait 5
+wait 900
 click skill Snap Thrust
-wait 5
+wait 900
 click fighter enemy
 wait 900
 cursor rest
@@ -549,9 +549,9 @@ hold 3
 # Turn 5: a snap thrust with the short sword (the skill group opens first; it closes again after
 # every action). Humors are spent only if the roll is failing.
 click skill Short Sword
-wait 5
+wait 900
 click skill Snap Thrust
-wait 5
+wait 900
 click fighter enemy
 wait 900
 cursor rest
@@ -650,7 +650,7 @@ advance 20 900
 cursor rest
 hold 4
 click button
-wait mode Working 120
+wait mode Working 900
 clip end find_job
 
 # ── The job menu ─────────────────────────────────────────────────────────────────────────────────────
@@ -679,18 +679,18 @@ click element work:days-plus
 cursor rest
 hold 4
 click element work:confirm
-wait 60
+wait 900
 cursor rest
 hold 4
 click element work:continue
-wait mode WorldView 120
+wait mode WorldView 900
 clip end job_menu
 
 # ── Travel to the city ───────────────────────────────────────────────────────────────────────────────
 mark travel_city
 clip travel_city
 travel 27788
-wait 10
+wait 900
 cursor rest
 hold 4
 travel-go
@@ -704,16 +704,16 @@ clip fight_2
 cursor rest
 hold 4
 click engage
-wait mode Fighting 60
+wait mode Fighting 900
 cursor rest
 hold 5
 regions
 # Turn 1: a snap thrust with the short sword (the skill group opens first; it closes again after
 # every action). Humors are spent only if the roll is failing.
 click skill Short Sword
-wait 5
+wait 900
 click skill Snap Thrust
-wait 5
+wait 900
 click fighter enemy
 wait 900
 cursor rest
@@ -741,9 +741,9 @@ hold 3
 # Turn 2: a snap thrust with the short sword (the skill group opens first; it closes again after
 # every action). Humors are spent only if the roll is failing.
 click skill Short Sword
-wait 5
+wait 900
 click skill Snap Thrust
-wait 5
+wait 900
 click fighter enemy
 wait 900
 cursor rest
@@ -771,9 +771,9 @@ hold 3
 # Turn 3: a snap thrust with the short sword (the skill group opens first; it closes again after
 # every action). Humors are spent only if the roll is failing.
 click skill Short Sword
-wait 5
+wait 900
 click skill Snap Thrust
-wait 5
+wait 900
 click fighter enemy
 wait 900
 cursor rest
@@ -801,9 +801,9 @@ hold 3
 # Turn 4: a snap thrust with the short sword (the skill group opens first; it closes again after
 # every action). Humors are spent only if the roll is failing.
 click skill Short Sword
-wait 5
+wait 900
 click skill Snap Thrust
-wait 5
+wait 900
 click fighter enemy
 wait 900
 cursor rest
@@ -831,9 +831,9 @@ hold 3
 # Turn 5: a snap thrust with the short sword (the skill group opens first; it closes again after
 # every action). Humors are spent only if the roll is failing.
 click skill Short Sword
-wait 5
+wait 900
 click skill Snap Thrust
-wait 5
+wait 900
 click fighter enemy
 wait 900
 cursor rest
@@ -926,7 +926,7 @@ advance 20 900
 cursor rest
 hold 4
 click button
-wait mode Trading 120
+wait mode Trading 900
 clip end buy_boots
 
 # ── The trade menu ───────────────────────────────────────────────────────────────────────────────────
@@ -937,7 +937,7 @@ hold 6
 click element trade:plus:0
 hold 3
 click element trade:confirm
-wait mode LocationInteraction 120
+wait mode LocationInteraction 900
 cursor rest
 hold 3
 clip end trade
@@ -948,15 +948,15 @@ clip end trade
 mark wear_boots
 clip wear_boots
 pause
-wait 30
+wait 900
 click menu Protagonist
-wait 30
+wait 900
 click tab inventory
-wait 10
+wait 900
 cursor rest
 hold 4
 click element leather_boots
-wait 5
+wait 900
 cursor rest
 hold 6
 clip end wear_boots
@@ -966,45 +966,45 @@ clip end wear_boots
 mark routines
 clip chorography
 click tab chorography
-wait 10
+wait 900
 cursor rest
 hold 5
 click element place:farm
-wait 5
+wait 900
 cursor rest
 hold 4
 click element routine-next
-wait 5
+wait 900
 cursor rest
 hold 6
 clip end chorography
 
 click back
-wait 30
+wait 900
 click menu Continue
-wait 30
+wait 900
 advance 12 900
 click button
-wait mode WorldView 120
+wait mode WorldView 900
 
 # From the world map, the farm's routines are one click from the travel plan.
 clip routine_box
 travel 7011
-wait 10
+wait 900
 cursor rest
 hold 3
 click element travel-routines-button
-wait 10
+wait 900
 cursor rest
 hold 4
 click element routines-next
-wait 5
+wait 900
 cursor rest
 hold 6
 click element routines-return
-wait 10
+wait 900
 click element travel-clear-button
-wait 10
+wait 900
 clip end routine_box
 
 # ── Closure ──────────────────────────────────────────────────────────────────────────────────────────
