@@ -139,6 +139,7 @@ public sealed class TeethsMaxLevelStat       : OrganMaxLevelContributionStat { p
 public sealed class TongueMaxLevelStat       : OrganMaxLevelContributionStat { public override string Name => "tongue_max_level";       public override string DisplayName => "Tongue Max-Level Bonus";       public override string? RelatedOrganId => "tongue"; }
 public sealed class SnoutMaxLevelStat        : OrganMaxLevelContributionStat { public override string Name => "snout_max_level";        public override string DisplayName => "Snout Max-Level Bonus";        public override string? RelatedOrganId => "snout"; }
 public sealed class FangsMaxLevelStat        : OrganMaxLevelContributionStat { public override string Name => "fangs_max_level";        public override string DisplayName => "Fangs Max-Level Bonus";        public override string? RelatedOrganId => "fangs"; }
+public sealed class HornsMaxLevelStat        : OrganMaxLevelContributionStat { public override string Name => "horns_max_level";        public override string DisplayName => "Horns Max-Level Bonus";        public override string? RelatedOrganId => "horns"; }
 
 // Trunk
 public sealed class BackboneMaxLevelStat     : OrganMaxLevelContributionStat { public override string Name => "backbone_max_level";     public override string DisplayName => "Backbone Max-Level Bonus";     public override string? RelatedOrganId => "backbone"; }
@@ -149,6 +150,7 @@ public sealed class SpleenMaxLevelStat       : OrganMaxLevelContributionStat { p
 public sealed class PaunchMaxLevelStat       : OrganMaxLevelContributionStat { public override string Name => "paunch_max_level";       public override string DisplayName => "Paunch Max-Level Bonus";       public override string? RelatedOrganId => "paunch"; }
 public sealed class PulmonesMaxLevelStat     : OrganMaxLevelContributionStat { public override string Name => "pulmones_max_level";     public override string DisplayName => "Pulmones Max-Level Bonus";     public override string? RelatedOrganId => "pulmones"; }
 public sealed class GenitoriesMaxLevelStat   : OrganMaxLevelContributionStat { public override string Name => "genitories_max_level";   public override string DisplayName => "Genitories Max-Level Bonus";   public override string? RelatedOrganId => "genitories"; }
+public sealed class ThagomizerMaxLevelStat   : OrganMaxLevelContributionStat { public override string Name => "thagomizer_max_level";   public override string DisplayName => "Thagomizer Max-Level Bonus";   public override string? RelatedOrganId => "thagomizer"; }
 
 // Limbs
 public sealed class ArmsMaxLevelStat         : OrganMaxLevelContributionStat { public override string Name => "arms_max_level";         public override string DisplayName => "Arms Max-Level Bonus";         public override string? RelatedOrganId => "arms"; }

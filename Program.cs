@@ -218,7 +218,9 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --allow-reentry                    DEBUG: let a world-map click on your own vertex re-enter that location.");
     Console.WriteLine("                                     The game refuses it — arriving somewhere already opens it, so a visit");
     Console.WriteLine("                                     costs a journey. Scripts need it: `travel here` is how they get in");
-    Console.WriteLine("  --start-fight <creature>           DEBUG: begin a fight on reaching the world map (wolf, bear, bandit, brigand).");
+    Console.WriteLine("  --start-fight <creature>           DEBUG: begin a fight on reaching the world map (wolf, bear, bandit, brigand,");
+    Console.WriteLine("                                     the climate beasts, and the great reptiles: crocodile, giant monitor, horned");
+    Console.WriteLine("                                     lizard, cave lizard, carnotaurus, stegosaurus, triceratops, ankylosaurus).");
     Console.WriteLine("                                     The only way a script can reach fight mode: the real routes in are a random");
     Console.WriteLine("                                     travel encounter (which scripts disable) or provoking an NPC through dialogue");
     Console.WriteLine("  --encounter-on-arrival <creature>  DEBUG: force a travel encounter on the FINAL step of the next journey, once.");
@@ -227,7 +229,8 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --encounter-mid-journey <creature> DEBUG: force a travel encounter on the first step of the next journey that is");
     Console.WriteLine("                                     not its last, once. Winning it resumes the walk — the case that walked the rest of");
     Console.WriteLine("                                     the way over a black screen. Needs a journey of two steps or more");
-    Console.WriteLine("  --spawn-beast <name>               DEBUG: put a beast (wolf, boar, bear, black bear, stray dog, fox) in the opening");
+    Console.WriteLine("  --spawn-beast <name>               DEBUG: put a beast (wolf, boar, bear, black bear, stray dog, fox, the climate");
+    Console.WriteLine("                                     beasts, or a great reptile such as crocodile or stegosaurus) in the opening");
     Console.WriteLine("                                     area of every scene, at every period. A wilderness factory only rolls one in");
     Console.WriteLine("                                     10-40% of the time and then lets it roam, so appease/tame are otherwise luck");
     Console.WriteLine("  --goal-only <verb-id>              DEBUG: the playground's goal choice must land on this verb (e.g. tame). Without");

@@ -25,6 +25,13 @@ public static class OrganMediumRegistry
             new OrganMediumCategory("claws", "Claws",
                 new[] { "scratch", "lacerate", "gut_ripper" }),
 
+            // ── Reptile body parts ────────────────────────────────────────────────────
+            new OrganMediumCategory("horns", "Horns",
+                new[] { "gore", "horn_toss", "impale" }),
+
+            new OrganMediumCategory("thagomizer", "Thagomizer",
+                new[] { "tail_lash", "tail_guard", "spike_drive" }),
+
             // ── Human body parts ─────────────────────────────────────────────────────
             // seize + chokehold are upper-limbs (body-part) mediums — see BodyPartMediumRegistry.
             new OrganMediumCategory("hands", "Hands",

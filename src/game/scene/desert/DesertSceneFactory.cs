@@ -448,6 +448,10 @@ public class DesertSceneFactory : WildSceneFactory
         TrySpawnBeast(rng, scene, new HyenaArchetype(), 0.40);
         TrySpawnBeast(rng, scene, new LionArchetype(),  0.10);
 
+        var reptiles = ReptileRandom(locationId);
+        TrySpawnBeast(reptiles, scene, new GiantMonitorArchetype(), 0.30);
+        TrySpawnBeast(reptiles, scene, new HornedLizardArchetype(), 0.25);
+
         TrySpawnCreature(rng, scene, new DromedaryArchetype(), 0.35);
         TrySpawnCreature(rng, scene, new FennecArchetype(),    0.50);
         TrySpawnCreature(rng, scene, new JerboaArchetype(),    0.50);

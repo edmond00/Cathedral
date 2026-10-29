@@ -525,6 +525,11 @@ public class JungleSceneFactory : WildSceneFactory
         TrySpawnBeast(rng, scene, new JaguarArchetype(), 0.35);
         TrySpawnBeast(rng, scene, new TigerArchetype(),  0.15);
 
+        var reptiles = ReptileRandom(locationId);
+        TrySpawnBeast(reptiles, scene, new CrocodileArchetype(),   0.30, _wet);
+        TrySpawnBeast(reptiles, scene, new StegosaurusArchetype(), 0.15);
+        TrySpawnBeast(reptiles, scene, new TriceratopsArchetype(), 0.08);
+
         TrySpawnCreature(rng, scene, new MonkeyArchetype(),      0.60);
         TrySpawnCreature(rng, scene, new ParrotArchetype(),      0.60);
         TrySpawnCreature(rng, scene, new ToucanArchetype(),      0.45);

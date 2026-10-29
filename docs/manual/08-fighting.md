@@ -41,7 +41,7 @@ strike one another.
 
 A **medium** is the physical thing a blow is struck with. Three kinds:
 
-- **An organ** — the hands, the feet, the fangs, the claws.
+- **An organ** — the hands, the feet, the fangs, the claws, a reptile's horns and its thagomizer.
 - **A body region** — the upper limbs entire, and the like. Its level is the region's total score.
 - **A weapon** — held in a hand. Its level is the weapon's own.
 
@@ -161,7 +161,7 @@ natural attack, plus whatever bonuses stand.
 
 | Contribution | From |
 |---|---|
-| Natural defence | The **lower limbs**, at one die per three points; a beast, having none, its **legs**, at one die per four |
+| Natural defence | The **lower limbs**, at one die per three points; a beast or a reptile, having none, its **legs**, at one die per four |
 | Guards and stances | Whatever defensive skills are in effect |
 | Armour | The defence dice of every worn garment covering the section struck |
 

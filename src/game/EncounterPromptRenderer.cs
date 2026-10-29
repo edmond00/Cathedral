@@ -135,6 +135,10 @@ public sealed class EncounterPromptRenderer
         "snow leopard" => "A patch of snow stands up and becomes a cat,\nits pale eyes fixed on you.",
         "white bear"   => "A white bear comes over the pressure ridge,\nnose up, and turns toward your scent.",
         "white wolf"   => "Pale shapes close in out of the blowing snow;\none of them does not stop.",
+        "crocodile"     => "The log on the bank opens its eyes,\nand then its jaws.",
+        "giant monitor" => "A long grey shape comes over the dune,\ntongue flicking, following your tracks.",
+        "carnotaurus"   => "Something heavy runs on two legs behind you,\nand the horned head drops to charge.",
+        "triceratops"   => "The ground shakes; a frill rises over the grass\nand three horns swing toward you.",
         _         => "Something dangerous crosses your path,\nblocking the way forward.",
     };
 

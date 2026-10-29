@@ -15,9 +15,9 @@ public abstract class ScaleVerbBase : Verb
 {
     public override int BaseDifficulty => 4;
 
-    /// <summary>A beast hooks its claws in; a body with arms hauls itself. Beast first: clambering names claws, which no human owns, so a person falls through to scaling.</summary>
+    /// <summary>A beast hooks its claws in; a body with arms hauls itself; a great reptile, with neither, heaves its bulk up balanced on its tail. Beast first: clambering names claws, which no human owns, so a person falls through to scaling — and counterweight names the thagomizer, which only a reptile owns.</summary>
     public override IReadOnlyList<string> GrantedModusMentisIds(Element? target)
-        => new[] { "clambering", "scaling" };
+        => new[] { "clambering", "scaling", "counterweight" };
 
     public override int DifficultyFor(Element? target)
         => target is ScalePointOfInterest scale ? scale.Difficulty : BaseDifficulty;

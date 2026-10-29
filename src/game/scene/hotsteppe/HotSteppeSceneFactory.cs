@@ -407,6 +407,11 @@ public class HotSteppeSceneFactory : WildSceneFactory
         TrySpawnBeast(rng, scene, new HyenaArchetype(),   0.30);
         TrySpawnBeast(rng, scene, new WarthogArchetype(), 0.40);
 
+        var reptiles = ReptileRandom(locationId);
+        TrySpawnBeast(reptiles, scene, new TriceratopsArchetype(),  0.15);
+        TrySpawnBeast(reptiles, scene, new CarnotaurusArchetype(),  0.10);
+        TrySpawnBeast(reptiles, scene, new AnkylosaurusArchetype(), 0.08);
+
         TrySpawnCreature(rng, scene, new GazelleArchetype(),    0.60);
         TrySpawnCreature(rng, scene, new ZebraArchetype(),      0.45);
         TrySpawnCreature(rng, scene, new OstrichArchetype(),    0.35);
