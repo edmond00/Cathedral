@@ -10,8 +10,9 @@ video made from it). Where this and the `video` skill's house rules differ, this
 - **Depth**: the rules explained properly, like the manual read aloud: how a die pool is built, what
   each organ group feeds, how humors are spent, wages, routines. Every claim from the code at HEAD.
 - **Staging**: not mentioned. The run is shown as a game (no word about the debug flags behind it).
-- **The language model** is explained as a system, by what makes it particular: it runs fully
-  locally, on the CPU or a GPU; it is integrated with coded gameplay (it decides what is observed and
+- **The language model** is explained as a system, by what makes it particular, and only once it has
+  written something on screen (the first childhood memory), not in the opening: it runs fully
+  locally, on the CPU (no claim about GPUs: not verified on the shipped build); it is integrated with coded gameplay (it decides what is observed and
   which goal a way of thinking proposes, while rules, dice and outcomes are code); each modus mentis
   is a persona the model roleplays, reasoning step by step in its voice (a chain of thought made of
   minds).
@@ -27,6 +28,7 @@ video made from it). Where this and the `video` skill's house rules differ, this
   "pitch": 0.97, "room": 0.16}}` for the game's text: a looser Piper delivery, slightly lower, in a
   small room. A segment's `vo` is then a list of parts, `{"text": …, "style": "reading"}` for a read
   passage (`vidkit.build.voice_segment`, `vidkit.tts.speak`).
+- **Conversations**: every reply offered is read, each named by the mind that wrote it.
 - **No captions.**
 - **Diagrams (manim)**: the organs → systems map; one narration turn (observe → keyword → think
   with a modus mentis → goal and means → act → dice → outcome, and where noetic points go); dice and

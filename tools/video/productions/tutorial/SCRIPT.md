@@ -14,15 +14,8 @@ Sections follow the take's clips, in order.
 
 *Footage: the main menu, New is clicked.*
 
-E: This is Proscribed Palimpsest, a narrative role-playing game. Everything you read in it is written
-while you play, by a language model running on your own computer. This video plays the first hour of
-a run, from the main menu to a pair of new boots, and explains each system as it comes up.
-
-E: A word about that model first, because it is unusual. It runs entirely on your machine: no account,
-no server, nothing sent anywhere. It runs on the processor alone, or on any graphics card, and the
-game checks your hardware the first time it starts. It does not run the game. Rules, dice, wounds,
-coin and time are ordinary code. The model is asked narrow questions inside that code: what this mind
-notices, what it wants, how it tells what happened.
+E: This is Proscribed Palimpsest, a narrative role-playing game. This video plays the first hour of a
+run, from the main menu to a pair of new boots, and explains each system as it comes up.
 
 ## 2. Selecting a world
 
@@ -125,7 +118,13 @@ slowly.
 R: the opening observation. ("I half-remember sobbing, a muffled weeping from a woman's voice,
 somewhere in the dark…")
 
-E: That passage was written by a modus mentis, one way of thinking, which the model plays as a
+E: That passage was not written in advance. It was written just now, by a language model running on
+this computer. It runs entirely on your machine: no account, no server, nothing sent anywhere, and it
+works on the processor alone. It does not run the game. Rules, dice, wounds, coin and time are
+ordinary code. The model is asked narrow questions inside that code: what this mind notices, what it
+wants, how it tells what happened.
+
+E: Every passage is written by a modus mentis, one way of thinking, which the model plays as a
 character in its own voice. The lit word is a keyword. Clicking it means thinking about what it names.
 
 **[D] A narration turn.** Observe → keyword → think with a modus mentis → a goal → the acting mind says
@@ -234,7 +233,8 @@ R: diligence's reasoning, intent, outcome.
 E: Asking succeeded, so a conversation opens. Helen speaks; each reply on offer was written by a
 different speaking mind we hold, each in its own voice. The tongue decides how many are offered.
 
-R: Helen's line; each reply offered; the one chosen. (Repeated per exchange.)
+R: Helen's line, then every reply offered, each introduced by the mind that wrote it ("Diligence:
+…", "Nautical Jargon: …"), then a word on which one is chosen. Repeated per exchange.
 
 E: The conversation ends in one roll. The pool: Helen's opinion of us, the levels of every mind behind
 the chosen replies, garments that suit her standing, and the visage. Asking for work is a matter of
@@ -306,11 +306,10 @@ back. Proscribed Palimpsest, at edmond00 dot itch dot io slash proscribed.
 
 ---
 
-## Open questions
+## Decisions since the first draft
 
-1. **Reply options**: read every reply offered (the developer's "every passage"; about three per
-   exchange, roughly six exchanges in all), or only the speaker's line and the reply chosen?
-2. **The GPU claim**: "on the processor alone, or on any graphics card." Is that true of the shipped
-   build (the Vulkan backend), or only the CPU and certain cards?
-3. **The cobbler roll**: in take A the model wrote a failure over a success (1 rewrite in 253
-   across all takes). Take B is recording; the script above is written so either take works.
+- Every reply offered in a conversation is read, not only the one chosen.
+- No claim about graphics cards (not verified on the shipped build): the model is said to run on the
+  processor, which the take itself shows.
+- The opening does not explain the model. It is explained at the first passage it writes (the first
+  childhood memory), where the viewer has just seen what it does.
