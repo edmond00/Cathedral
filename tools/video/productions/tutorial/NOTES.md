@@ -14,7 +14,8 @@ tools/video/.venv/Scripts/python tools/video/make_video.py record \
 
 No `--seed` (it would skip the world-selection screen: the world is chosen by clicking its moon,
 which reseeds the run), no `--skip-childhood`, no `--playground`, no `--organs` (see below).
-`--timeout` must be long: on the cloud machine's 4-core CPU the run takes 70–80 minutes of real time
+`--timeout` must be long: on the cloud machine's 4-core CPU the run takes 70–85 minutes of real time at
+720×540 and 108 minutes at the default 1440×1080 @ 30 (encoding the bigger frames slows the model)
 (it is filmed in real time; the cut fast-forwards the model's waits).
 
 | flag | why |
@@ -169,6 +170,8 @@ player does. None of them writes game state the scene did not produce.
 | `click fighter enemy` | `FightModeAdapter.CliFindFighter` | the nearest living enemy, whose name is generated |
 | `click approach <fighter\|enemy>`, `click move` | `FightModeAdapter.CliApproachCell/CliApproach/CliMoveButtonCell`, `RecordGate`, `CliDriver` | walk to the reachable cell nearest a fighter. Written for the fights and not used in the end (the wolves come to us), kept because it is the only named way to move in a fight |
 | `inspect npcs` prints `sells=item:price,…` | `NarrativeController` | which shelf holds boots was otherwise visible only by trading |
+| `--record` writes `music.wav` | `MidiCapture.AudioPath`, `SynthMusicEngine.CaptureLoop`, `WavWriter.Checkpoint`, the manifest's `music_audio` | the game's synthesiser already ran in real time under `--record` and its output was discarded; it is now written beside the footage on the recording's clock (sample 0 = time 0): the game's own music and in-game sound effects. `music.mid` keeps only the notes, and the video tools' stand-in synthesiser plays them with other instruments and a far too loud wind (tools/video does not read `music.wav` yet) |
+| `advance` waits out a preview still being written | `CliDriver` (the drain) | the game reported idle while a conversation's closing lines were streaming; `advance` stopped and the next command pressed INTERRUPT instead of END |
 
 **Named controls** (for `click element` / `point element`)
 
@@ -245,7 +248,7 @@ the shipped `model.gguf` (SHA-256 checked), on the cloud machine (4 cores, llvmp
 | r3 | 1.0 | **passed** | 77 min |
 | r4 | 0.4 | **passed** | 69 min |
 | r5 | 0.7 | reached the closure with the boots bought, but **failed** two waits (exit 1): run while the machine was also encoding video, the narration after the purchase outlasted a 120 s wait and the menu after it a 30 s one. Every wait in the script is now 900 s | 84 min |
-| final | 0.7, 1440×1080 @ 30, `make_video.py record` | TODO | |
+| final | 0.7, 1440×1080 @ 30, `make_video.py record` (this is also the third replay) | **passed**, `failed: false`, no command refused or timed out; `game.mkv` (1.67 GB) and `timeline.jsonl` written, with `music.mid` and the new `music.wav` | 108 min |
 
 The prose differed in every run (llama-server samples with a fresh seed per request, and the
 temperature was varied with `--llm-temperature`): the first childhood action read "remember sobbing
