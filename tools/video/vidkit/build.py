@@ -278,22 +278,26 @@ class Build:
             ffmpeg.run("-ss", f"{rec.video_time(t0):.3f}", "-to", f"{rec.video_time(t1):.3f}", "-i", rec.video,
                        "-an", *ffmpeg.INTERMEDIATE, trimmed)
             timed = self.out_dir / f"seg{seg.index:02d}_timed.mkv"
-            self.retime(trimmed, timed, [(a_ - t0, b_ - t0, sp) for a_, b_, sp in pieces], speed)
+            self.retime(trimmed, timed, [(a_ - t0, b_ - t0, sp) for a_, b_, sp in pieces], speed,
+                        label=bool(ffcfg.get("label", True)))
             self.finish_picture(timed, dst, natural, target, pre, (sw, sh), s.get("fade", True),
                                 whole="zoom" not in s, kind="game")
             trimmed.unlink(missing_ok=True)
             timed.unlink(missing_ok=True)
         seg.picture, seg.seconds = dst, max(natural, target)
 
-    def retime(self, src: Path, dst: Path, pieces: list[tuple[float, float, float]], base_speed: float) -> None:
+    def retime(self, src: Path, dst: Path, pieces: list[tuple[float, float, float]], base_speed: float,
+               label: bool = True) -> None:
         """Plays each (start, end, speed) piece of `src` at its speed, joined; a fast-forwarded piece
-        carries a small ">> xN" in the corner, so nobody mistakes the cut for the game's real pace."""
+        carries a small ">> xN" in the corner, so nobody mistakes the cut for the game's real pace —
+        unless the storyboard's `"fast_forward": {"label": false}` says the sped-up pace is the real one
+        (the CPU of the recording machine is slower than a player's)."""
         font = r"C\:/Windows/Fonts/consola.ttf"   # drawtext wants the drive's colon escaped
         parts, labels, t_out = [], [], 0.0
         pieces = [p for p in pieces if p[2] > 0]          # dropped spans (a live take's pauses)
         for i, (a_, b_, sp) in enumerate(pieces):
             chain = f"[0:v]trim=start={a_:.3f}:end={b_:.3f},setpts=(PTS-STARTPTS)/{sp:g}"
-            if sp > base_speed:
+            if label and sp > base_speed:
                 chain += (f",drawtext=fontfile='{font}':text='>> x{sp:g}':fontsize=26:fontcolor=0xB3B3B3"
                           f":box=1:boxcolor=0x000000:boxborderw=8:x=w-tw-36:y=h-th-30")
             parts.append(chain + f"[p{i}]")

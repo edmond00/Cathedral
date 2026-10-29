@@ -163,7 +163,8 @@ menu), and pass a generous `--timeout` (3600). Do not shorten the waits by cheat
 fast-forwards them**: the recorder logs every span spent waiting on the model (`model-busy` /
 `model-idle` in the timeline), and a game segment plays those at ×8 with a small `>> x8` in the corner.
 Tune with `"fast_forward": {"speed": 8, "min": 1.5}` in the storyboard, or per segment
-(`"fast_forward": false` to show a wait at its real length).
+(`"fast_forward": false` to show a wait at its real length). `"label": false` drops the corner
+mark, for when the recording machine is slower than a player's and the sped-up pace is the true one.
 
 Because the model writes the prose, **the footage is only known after the take**: record first, read
 the take (`inspect`, a contact sheet, `grep '^\[cli\]' game.log` for what was clicked), and only then

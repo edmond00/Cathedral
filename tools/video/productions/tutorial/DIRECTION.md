@@ -29,6 +29,9 @@ video made from it). Where this and the `video` skill's house rules differ, this
   small room. A segment's `vo` is then a list of parts, `{"text": …, "style": "reading"}` for a read
   passage (`vidkit.build.voice_segment`, `vidkit.tts.speak`).
 - **Conversations**: every reply offered is read, each named by the mind that wrote it.
+- **Model waits** are fast-forwarded (x8) with no ">> x8" mark (`"fast_forward": {"label": false}`):
+  the recording machine's CPU is slow, and x8 is about the pace on a player's PC, so the sped-up
+  footage is the honest one.
 - **No captions.**
 - **Diagrams (manim)**: the organs → systems map; one narration turn (observe → keyword → think
   with a modus mentis → goal and means → act → dice → outcome, and where noetic points go); dice and
