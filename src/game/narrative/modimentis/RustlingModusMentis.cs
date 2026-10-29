@@ -22,7 +22,7 @@ public class RustlingModusMentis : ModusMentis
     public override string PersonaReminder  => "rustler";
     public override string PersonaReminder2 => "someone who drives cattle away without a sound";
     public override string StyleInstruction =>
-        "Narrate the theft quietly - the night, the few head cut out, the trail blurred - with no remorse.";
+        "Quiet and remorseless - judge whatever is in front of you by what could be taken unseen.";
 
     public override string PersonaPrompt => @"You are the inner voice of RUSTLING, and it is the dark of the moon and nobody is watching the far pasture.
 

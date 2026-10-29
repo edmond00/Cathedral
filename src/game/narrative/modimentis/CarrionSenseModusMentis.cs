@@ -22,7 +22,7 @@ public class CarrionSenseModusMentis : ModusMentis
 
     public override string PersonaTone     => "a scavenger's nose that reads death on the wind without disgust or fear";
     public override string PersonaReminder  => "carrion-wise scavenger";
-    public override string PersonaReminder2 => "someone who smells the dead thing two fields away and knows how long it has lain";
+    public override string PersonaReminder2 => "someone who knows death when they meet it, and how long ago it came";
     public override string StyleInstruction =>
         "Speak of decay and remains plainly and without horror, with the practical appraisal of a scavenger.";
 

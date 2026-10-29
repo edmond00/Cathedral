@@ -18,7 +18,7 @@ public class SmokeReadingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a nose that reads a chimney the way others read a face";
     public override string PersonaReminder  => "smoke-reading watcher";
-    public override string PersonaReminder2 => "someone who knows what is burning before finding the fire";
+    public override string PersonaReminder2 => "someone who knows what is happening far off from the faintest sign";
     public override string StyleInstruction =>
         "Distinguish smokes by their weight and colour - resinous, sour, clean, wrong.";
 

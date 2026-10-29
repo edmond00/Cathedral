@@ -153,7 +153,8 @@ public static class ChoiceJudge
         if (options.Count > MaxOptions)
             throw new ArgumentException($"ChoiceJudge.PickAsync: {options.Count} options exceeds {MaxOptions}; sample before calling.");
 
-        var lp = await LetterLogProbsAsync(kind, BuildPrompt(kind, faculty, situation, options, question), options.Count);
+        string prompt = BuildPrompt(kind, faculty, situation, options, question);
+        var lp = await LetterLogProbsAsync(kind, prompt, options.Count);
 
         int best = ArgMax(lp, except: -1);
         string how;
@@ -168,6 +169,7 @@ public static class ChoiceJudge
             how = $"log-odds {F(lp[best] - LogSumExp(lp.Where((_, i) => i != best)))} over the rest";
         }
         Console.WriteLine($"ChoiceJudge: {kind} for {faculty.DisplayName} -> {options[best]} ({how})");
+        Record(new { kind = kind.ToString(), faculty = faculty.ModusMentisId, situation, options, question, declineIndex, prompt, lp, best });
         return best;
     }
 
@@ -188,8 +190,8 @@ public static class ChoiceJudge
         ModusMentis faculty, string situation, CancellationToken ct = default)
     {
         var scale = new[] { "eager", "willing", "reluctant", "unwilling" }.Select(StanceLabel).ToList();
-        var lp = await LetterLogProbsAsync(ChoiceKind.Willingness,
-                                           BuildPrompt(ChoiceKind.Willingness, faculty, situation, scale, null), scale.Count);
+        string prompt = BuildPrompt(ChoiceKind.Willingness, faculty, situation, scale, null);
+        var lp = await LetterLogProbsAsync(ChoiceKind.Willingness, prompt, scale.Count);
         double assent = LogSumExp(new[] { lp[0], lp[1] }) - LogSumExp(new[] { lp[2], lp[3] });
         Willingness w = assent > AssentLogOdds
             ? (lp[0] - lp[1] >= EagerLogOdds ? Willingness.Eager : Willingness.Willing)
@@ -197,6 +199,7 @@ public static class ChoiceJudge
         Console.WriteLine($"ChoiceJudge: Willingness for {faculty.DisplayName} -> {w} " +
                           $"(assent {F(assent)} vs {F(AssentLogOdds)}; eager-willing {F(lp[0] - lp[1])} vs {F(EagerLogOdds)}; " +
                           $"unwilling-reluctant {F(lp[3] - lp[2])} vs {F(UnwillingLogOdds)})");
+        Record(new { kind = "Willingness", faculty = faculty.ModusMentisId, situation, prompt, lp, answer = w.ToString() });
         return w;
     }
 
@@ -231,6 +234,27 @@ public static class ChoiceJudge
             if (double.IsNegativeInfinity(lp[i])) lp[i] = AbsentLogProb;
         return lp;
     }
+
+    /// <summary>
+    /// Appends one decision to <c>judge_inputs.jsonl</c> in the session's log directory, for
+    /// <c>tools/prompts/</c>. Development logging only: nothing is written without a session directory.
+    /// </summary>
+    private static void Record(object record)
+    {
+        string? dir = _llm?.SessionLogDir;
+        if (dir == null) return;
+        try
+        {
+            string line = System.Text.Json.JsonSerializer.Serialize(record) + "\n";
+            lock (RecordLock) System.IO.File.AppendAllText(System.IO.Path.Combine(dir, "judge_inputs.jsonl"), line);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"ChoiceJudge: could not record a decision: {ex.Message}");
+        }
+    }
+
+    private static readonly object RecordLock = new();
 
     private static int ArgMax(double[] v, int except)
     {

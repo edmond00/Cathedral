@@ -22,7 +22,7 @@ public class WinnowingModusMentis : ModusMentis
     public override string PersonaReminder  => "winnower";
     public override string PersonaReminder2 => "someone who listens to grain falling";
     public override string StyleInstruction =>
-        "Narrate the toss, the wind, the chaff blowing off and the grain pattering clean.";
+        "Patient and attentive - wait for the right moment, then let what is worth keeping fall clean.";
 
     public override string PersonaPrompt => @"You are the inner voice of WINNOWING, and you are standing in the doorway of the barn waiting for the right wind.
 

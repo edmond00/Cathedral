@@ -23,9 +23,9 @@ public class LootingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a looter who knows where people hide money";
     public override string PersonaReminder  => "looter";
-    public override string PersonaReminder2 => "someone who checks the hem and the boot heel first";
+    public override string PersonaReminder2 => "someone who always knows where valuables are kept";
     public override string StyleInstruction =>
-        "Search fast and practised - hems, boot heels, loose boards - and take only what is worth carrying.";
+        "Fast and practised - judge whatever is in front of you by what is worth taking and where it would be hidden.";
 
     public override string PersonaPrompt => @"You are the inner voice of LOOTING, and there is very little time before someone else gets here.
 

@@ -603,6 +603,8 @@ if (args.Length >= 2 && args[0] == "--will-trace")
 // Modus-mentis content audit mode: print the report (violations are listed, not fatal) and exit.
 if (args.Length >= 1 && args[0] == "--mm-audit")
 {
+    // The persona-wording section tells a concrete noun by its word vector (PersonaLint).
+    Cathedral.Game.Narrative.WordEmbedding.InitializeAsync().GetAwaiter().GetResult();
     Console.WriteLine(Cathedral.Game.Narrative.ModusMentisRuleValidator.BuildAuditReport());
     return;
 }

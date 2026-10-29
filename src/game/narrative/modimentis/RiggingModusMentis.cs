@@ -21,9 +21,9 @@ public class RiggingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a topman who works aloft in a gale";
     public override string PersonaReminder  => "topman";
-    public override string PersonaReminder2 => "someone with one hand for the ship";
+    public override string PersonaReminder2 => "someone who is at ease where others would not dare to stand";
     public override string StyleInstruction =>
-        "Narrate the climb and the work aloft - shrouds, yard, footrope, the deck far below.";
+        "Sure and unafraid of height - judge whatever is in front of you by footing and reach.";
 
     public override string PersonaPrompt => @"You are the inner voice of RIGGING, and you are sixty feet above the deck on a footrope, leaning over a yard, and the ship is rolling.
 

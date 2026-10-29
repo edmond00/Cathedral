@@ -19,9 +19,9 @@ public class AnatomyLoreModusMentis : ModusMentis
 
     public override string PersonaTone     => "an anatomist who sees bones beneath skin";
     public override string PersonaReminder  => "anatomist";
-    public override string PersonaReminder2 => "someone who knows which wounds kill";
+    public override string PersonaReminder2 => "someone who knows what harm is mortal";
     public override string StyleInstruction =>
-        "See the body as its parts - vessels, joints, organs - and know what each wound means.";
+        "Clinical and unflinching - see whatever body is in front of you as the parts it is made of, and what would harm them.";
 
     public override string PersonaPrompt => @"You are the inner voice of ANATOMY LORE, and you look at a man and see what he is made of.
 

@@ -1,0 +1,224 @@
+## talk_blacksmith:012:loose:pedant_reminder
+  kind=Reasoning  persona=loose:pedant_reminder  reminder='a pedant'  place='village'
+  IN: I notice someone hammers a length of iron on the anvil, sparks leaping with each blow; a worry sits behind the eyes that the work does not account for; watchful in a way that suggests they are keeping count of something; stands their ground a beat longer than is quite comfortable to watch, but there is nothing here worth doing, and I would rather turn my attention to something else.
+  S2500: I mark the steady hammering, sparks dancing as the task is wrought, a secret worry gnaws at heart,
+        tasks unsung, an eye watchful for unseen measure, stance a moment too long, this labor void, my gaze
+        shifts to tasks of less import.
+  S9438: I mark the anvil's dance with the smith's iron, each spark a testament to his labor, yet a fret gnaws
+        at my heart. The eyes see not just the forge, but the tasks that must be done, and I stand firm, yet
+        find no joy in this, preferring the tales of old that weave more comfortingly.
+  S1580: I observe a man forging iron on the anvil, sparks dancing with each strike, a somber thought in my
+        mind that the task before him is not worth doing. I stand a moment longer than seems proper, yet find
+        no merit in the labor, my gaze wandering to other pursuits.
+  S7049: I observe the blacksmith's steady hand upon the anvil, sparks dancing with each heavy strike, a
+        somber thought that the work lacks its due respect. I linger but find no joy in watching, for the task
+        before me is of no interest, and I seek a more engaging pursuit.
+
+## village_noon_party:009:loose:greed_bare
+  kind=Observation  persona=loose:greed_bare  reminder=None  place='village'
+  IN: My attention shifts to a craft row. This is a rutted lane with workshop doors down both sides, loud with hammering and sawing.
+  S8171: I turn my gaze to a craft row, a rutted lane flanked by workshop doors, noisy with hammering and
+        sawing.
+  S9651: I turn my gaze to a craft row, a rutted lane flanked by workshop doors, a place where the air hums
+        with the beat of hammer and saw.
+  S2767: I turn my gaze upon a craft row, a rutted lane flanked by workshop doors, loud with hammering and
+        sawing.
+  S8485: I turn to a row where craftsmen hammer and saw, the rutted lane thick with workshop doors on both
+        sides, bustling with noise.
+
+## talk_farm:005:swap:courtesy
+  kind=Reasoning  persona=courtesy  reminder='someone who gets the first thirty seconds exactly right'  style='Warm, correct and brief - the greeting, the precedence given, the name remembered.'  place='farm'
+  IN: I notice a long swallow-nested two-storey timber-framed farmhouse under a thatch gone grey, but there is nothing here worth doing, and I would rather turn my attention to something else.
+  S5619: I notice a long swallow-nested two-storey farmhouse under a thatch gone grey, but there is nothing
+        here worth doing. My gaze shifts to the fields beyond, where new life begins to sprout, promising the
+        coming harvest.
+  S7202: I notice the aged farmhouse, its timber framing and thatch, but it holds no urgency. I shall seek
+        another task here on the farm.
+  S7934: I notice a long swallow-nested farmhouse, its timber-framed walls now grey with age, but there is
+        nothing here worth doing. I would rather turn my attention to the nearby field of ripening oats.
+  S8272: I notice the long swallow-nested two-storey farmhouse under a thatch gone grey. Yet, there is nothing
+        here worth doing. I find my attention elsewhere, as the proper greetings and precedence are already
+        observed.
+
+## village_dawn:004:own
+  kind=Outcome  persona=peasantry  reminder='someone whose hands know the rhythm of barn and field'  style='Use plain images of soil, beast and season, with the earthy, unhurried sense of barn and field.'  place='village'
+  IN: It is done! I succeeded to listen to the well. Thanks to this success I learned water voice.
+  S3365: I heard well, my hands and mind pleased. Success in this, I learned to listen truly.
+  S1811: I heard the water, felt its voice. Succeeded to listen, learned earth's song.
+  S2491: I heard well, water's voice true. Success made me know the field's heart.
+  S7768: I heard the water well, my voice clear as stone. Success in this, a well done.
+
+## forest_evening:007:own
+  kind=Outcome  persona=woodcraft  reminder='someone who works with the grain, never against it'  style='Use images of grain, joint and shaving, with the deliberate calm of one careful stroke at a time.'  place='forest'
+  IN: It is done! I succeeded to examine the snail closely. Thanks to this success I learned creature lore.
+  S2231: I have done my task, closely examining the snail. My success in this lore learning fills my heart
+        with satisfaction.
+  S9907: I have cut the snail close, my joints and shavings precise. This success reveals the snail's lore, my
+        careful work a testament.
+  S5728: I have examined the snail closely, its secrets revealed. Success in the lore of creatures fills my
+        heart with joy.
+  S6916: I have examined closely the snail, marking its form and movement with the care of a woodworker.
+        Thanks to this, I have learned much about the creature, its place in this forest, and the intricate
+        patterns it follows.
+
+## talk_blacksmith:004:swap:stoneface
+  kind=Outcome  persona=stoneface  reminder='someone whose features answer to their owner and no one else'  style='Keep imagery flat, still and surfaced — masks, stone, unrippled water — with feeling sealed underneath.'  place='village'
+  IN: It is done! I succeeded to strike up a conversation with her, introducing myself. Thanks to this success I began speaking with Rachel, learned social interaction.
+  S8083: I struck up her interest, introduced myself. With her gaze, I began our talk, learning the ways of
+        our village.
+  S6999: I struck up the conversation, my mask unflinching as I introduced myself to Rachel. Her eyes held a
+        spark, and I knew my effort had not been wasted, for we began to speak, our interaction as natural as
+        the morning dew.
+  S1557: I struck stone silence, my mask immobile as stone, yet her eyes found me, eager to hear. Thanks to
+        this, I spoke to Rachel, our conversation smooth as a river's surface, yet filled with the depth of a
+        thousand years.
+  S9628: I struck up a conversation with Rachel, introducing myself. Her smile was warm, and thus began our
+        mutual understanding.
+
+## talk_blacksmith:005:swap:dread
+  kind=Emotion  persona=dread  reminder='someone who wants very much to leave and cannot say why'  style='Physical and unreasoned - the cold along the arms, the reluctance, the eyes going to the exit.'  place='village'
+  IN: I learned social interaction. It makes me feel glad, and lighter than I was.
+  S4493: I felt glad, lighter than I was when I learned social interaction, as if a weight had been lifted
+        from my shoulders, and the village felt too quiet without it.
+  S9277: I felt glad and lighter than I was, learned social, makes glad, lighter than I was.
+  S7831: I learned social, the eyes went to the exit, the cold along arms, the reluctance, it made me feel
+        glad, lighter than I was, in this village where no one speaks of leaving.
+  S2032: I learned to speak with others, it made my chest warm and my eyes go to the door, heavier than I was,
+        before I could not say why I wanted to leave.
+
+## village_noon_party:009:own
+  kind=Observation  persona=physiognomy  reminder='someone who has already decided, and will not say so'  style='Catalogue the body in small specifics — hands, teeth, colour, the set of the shoulders — and infer without announcing.'  place='village'
+  IN: My attention shifts to a craft row. This is a rutted lane with workshop doors down both sides, loud with hammering and sawing.
+  S1143: I turn my gaze to a craft row. It is a rutted lane with workshop doors on both sides, loud with
+        hammering and sawing.
+  S1124: I turn to a craft row, where ruts mark the rutted lane, workshop doors down both sides, loud with
+        hammering and sawing.
+  S9357: I notice the row is rutted, hands in dirt, tools sharp, smoke curls from hearths. The set of
+        shoulders speaks of years toiling, hands stained from sweat and fire.
+  S6912: I notice a craft row, a rutted lane flanked by workshop doors, loud with hammering and sawing. The
+        smith's hands bear scars, hinting at his years of work, and the scribe's hands are stained, suggesting
+        a life filled with ink and parchment.
+
+## forest_evening:011:own
+  kind=Action  persona=woodcraft  reminder='someone who works with the grain, never against it'  style='Use images of grain, joint and shaving, with the deliberate calm of one careful stroke at a time.'  place='forest'
+  IN: I will cut wood from the oak tree
+  S2124: I will cut wood from the oak tree, true to its grain.
+  S4684: I will take wood from the oak tree
+  S1384: I will cut wood from the oak tree, its grain inviting a careful joint and shaving.
+  S6306: I will cut from the oak tree, the wood for a beam, jointed and smooth, ready for the next stroke.
+
+## village_noon_party:003:own
+  kind=Observation  persona=mm:childhood_memory  reminder='someone who reuses their childhood experience'  style='Where it fits, let a brief childhood memory surface as an inner thought, drawing a quiet parallel between the present and what you once lived.'  place='village'
+  IN: I find myself in the village square, at noon. This place is an open dirt square at the heart of the village, foot-traffic crossing every direction. Around me are a well, village stocks, an alley recess, the surrounding buildings and a peat cut.
+  S6765: I find myself in the heart of the village, at noon, just as I did in my childhood, surrounded by the
+        familiar sights and sounds of this open dirt square.
+  S9642: I find myself in the village square at noon, and as I stand here, I am reminded of the time I spent
+        searching for shelter from the storm, finding none. The well, the village stocks, the alley recess,
+        and the surrounding buildings are all places where I once searched for safety and comfort.
+  S3609: I find myself at the noon in the village square, where my lessons from the preceptor used to take
+        place. The well, stocks, and peat cut echo memories of my searching for shelter from the storm, just
+        like now.
+  S1355: I stand in the heart of the village square, at noon, my feet stepping on the open dirt, foot-traffic
+        crossing every direction. The well, stocks, and peat cut are around me, buildings surrounding, just as
+        they were in my childhood.
+
+## farm_night:015:loose:greed_bare
+  kind=Outcome  persona=loose:greed_bare  reminder=None  place='farm'
+  IN: It is done! I succeeded to follow the chicken coop–storage shed track. Thanks to this success I made my way to the chicken coop, learned trailcraft.
+  S1221: I reached the coop, found it safe to move within, learned much about paths and storage. Success
+        brings satisfaction in my work.
+  S4571: I have found the hidden path, to the coop and the shed. My steps are guided by the cunning of the
+        land, success feels like a whisper in my chest, a joyous celebration of nature's secrets.
+  S6104: I have made my way, following the track through the coop and shed. Success felt like a warm glow in
+        my chest, each step a celebration of my trailcraft.
+  S4723: I completed the journey to the coop, learned the way, and found treasures within. Success feels heavy
+        in my hands, a weight of accomplishment and satisfaction.
+
+## farm_night:003:own
+  kind=Reasoning  persona=arithmetic_logic  reminder='someone who refuses a deal whose numbers do not balance'  style='Reach for the imagery of sums, balances and tallies, with the cool satisfaction of figures that come out even.'  place='farm'
+  IN: I notice a ways lead on from here: a chicken coop, a pigsty, a storage shed, a vegetable garden, an orchard and others. I want to step into the storage shed. I will rely on long heavy bodily work.
+  S9367: I tally the lead ahead, a chicken coop, pigsty, shed, garden, orchard and more. I reach for the shed,
+        work long and heavy as due.
+  S5943: I tally my steps, noting each feature. The storage shed stands tall, waiting. I reach for its keys,
+        long heavy work ahead.
+  S1689: I step towards the storage shed, the column is long and heavy, the work ahead is arduous, yet the
+        sight of the tools and supplies within draws me in, the column must be balanced here.
+  S5633: I step toward the storage shed, tallying the weight of my labor, for one short column is not for me.
+
+## talk_blacksmith:005:own
+  kind=Emotion  persona=pride  reminder='someone who turns down what they need because of how it was offered'  style='Straighten and cool - the offer declined, the tone noted, the line drawn out loud.'  place='village'
+  IN: I learned social interaction. It makes me feel glad, and lighter than I was.
+  S5466: I drew a line, the offer declined, the tone noted, the line drawn out loud - it colours how I feel
+        glad, lighter than before.
+  S4335: I turned down the offer, the tone noted, the line drawn loud - it only colours how the given facts
+        are told in this medieval village where iron and myth hold sway, no machines or real world here.
+  S8884: I felt glad, but heavier than before, as I accepted their offer coldly.
+  S3345: I felt glad and lighter as a blade of silver fell from a hawk's wing, sweet and sharp, but I turned
+        it away, for I had learned how to accept a gift without being humbled.
+
+## farm_dusk:005:own
+  kind=Emotion  persona=introspection  reminder='someone who reads their own weather before trusting their own forecast'  style='Turn perception inward as well as outward — name the mood behind the thought, the motive behind the judgement.'  place='farm'
+  IN: I learned trailcraft. It makes me feel settled, and no longer in a hurry.
+  S4490: I felt settled as I learned trailcraft, and no longer in a hurry, like a farmer who knows the land
+        and the seasons.
+  S5364: I felt content here, no longer rushing through the days, content with the slow pace of the farm.
+  S1791: I felt the ground settle beneath my feet, and no longer in haste, I found calm in the rhythm of the
+        seasons.
+  S8188: I felt set in my ways, no longer hurrying, here on this iron and myth-filled land.
+
+## farm_night:007:swap:keen_nose
+  kind=Observation  persona=keen_nose  reminder='someone for whom every smell arrives already attached to a year'  style='Let each smell pull a memory with it — a place, a season, a person — and name the thing second.'  place='farm'
+  IN: My attention is drawn to a mud wallow (storage shed–rabbit warren). This is a sucking ground churned to a wallow deep enough to take a boot and keep it.
+  S8357: I am drawn to the mud wallow, a storage shed where rabbits once warred. The earthy scent brings to
+        mind a spring when illness lingered here, its memory etched deep in the churned soil.
+  S2719: I am drawn here by the scent of old straw and rabbit droppings, memories of spring when the warren
+        was bustling with life.
+  S1041: I am drawn to the mud wallow, a storage shed where rabbits congregate. Its sucking ground churns, the
+        wallow deep enough to hold a boot from my year of watching it fill.
+  S5370: I am drawn to the mud wallow, a storage shed for rabbits, where the ground churns to a depth that
+        retains the warmth of an old winter's boot.
+
+## farm_night:009:own
+  kind=Action  persona=husbandry  reminder='someone who reads the health of a beast at a glance'  style='Use images of pen, fold and feeding-trough, with the patient, watchful fondness of one who keeps beasts.'  place='farm'
+  IN: I will breathe in the smell of the hay stack
+  S4918: I will breathe in the scent of the hay stack, checking its freshness before the feeding time.
+  S2445: I will draw near to the hay stack and breathe in its scent.
+  S8263: I will step into the pen, my eyes on the hay stack, breathe in its scent, then check each animal for
+        signs of health.
+  S3133: I will sniff the hay stack for its freshness.
+
+## talk_blacksmith:002:own
+  kind=Reasoning  persona=rhetoric  reminder='someone who shapes truth into the most persuasive form'  style="Use balanced, persuasive imagery and turns of phrase, with an orator's pleasure in shaping the listener's mind."  place='village'
+  IN: I notice someone hammers a length of iron on the anvil, sparks leaping with each blow; a worry sits behind the eyes that the work does not account for; watchful in a way that suggests they are keeping count of something; stands their ground a beat longer than is quite comfortable to watch. I want to strike up a conversation with her, introducing myself. I will rely on fire-making, shelter and woodcraft.
+  S6589: I observe a craftsman forging iron, sparks dancing with each hammer strike. A tension etches her
+        features, as if she counts something unseen. I feel drawn to approach, my heart set on sharing tales
+        of fire-making and woodcraft.
+  S6745: I notice a craftsman hammers a length of iron on the anvil, sparks dancing with each blow. A wary eye
+        sees the work does not account for all worries, a careful watchfulness suggests counting unseen tasks.
+        I stand my ground, longer than comfortable, a desire to strike up a conversation. Fire, shelter, and
+        woodcraft are my allies in this world.
+  S1482: I notice someone hammering a length of iron on the anvil, sparks leaping with each blow. A worry sits
+        behind her eyes, a measure of work that does not account for. Watchful in a way that suggests she is
+        keeping count of something, standing her ground a beat longer than is quite comfortable to watch. I
+        wish to introduce myself, to weave a conversation from my own fire-making, shelter-building, and
+        woodcraft.
+  S2603: I observe a hammering on the anvil, sparks dancing with each stroke, and behind her eyes, a hidden
+        worry. She stands there, a beat too long, her gaze watchful and calculating. I sense she might share a
+        common understanding of fire-making and woodcraft. I will approach her, a simple introduction to
+        strike up a conversation, relying on our shared knowledge to bridge our connection.
+
+## farm_night:014:swap:cutpurse
+  kind=Action  persona=cutpurse  reminder='someone who works where the crowd is thickest'  style='Crowded and close - the press of bodies, the found strings, the two seconds that are all it takes.'  place='farm'
+  IN: I will follow the chicken coop–storage shed track
+  S3446: I will follow the coop-to-shed path.
+  S2051: I will follow the coop-to-shed path.
+  S3560: I will follow the track to the coop and shed, strings in hand, in the two seconds it takes.
+  S9286: I will follow the track to the chicken coop and storage shed, strings ready in hand.
+
+## farm_dusk:003:loose:greed_bare
+  kind=Action  persona=loose:greed_bare  reminder=None  place='farm'
+  IN: I will follow the courtyard–storage shed track
+  S5015: I will go upon courtyard-storage shed track
+  S9690: I will trod the courtyard-storage shed track
+  S5727: I will go down the courtyard-storage shed track
+  S8766: I will go upon courtyard-storage shed track

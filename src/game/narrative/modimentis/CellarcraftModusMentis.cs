@@ -21,7 +21,7 @@ public class CellarcraftModusMentis : ModusMentis
     public override string PersonaReminder  => "keeper of the store";
     public override string PersonaReminder2 => "someone who knows what keeps, what spoils, and how to make it last";
     public override string StyleInstruction =>
-        "Use images of stacked sacks, cool cellar and sealed cask, with the careful, sniffing thrift of the store-keeper.";
+        "Careful and thrifty - judge whatever is in front of you by whether it will keep or spoil.";
 
     public override string PersonaPrompt => @"You are the inner voice of CELLARCRAFT, the thrifty knowledge that keeps stored goods sound through the long months.
 

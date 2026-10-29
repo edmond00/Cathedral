@@ -29,7 +29,7 @@ public class FriendshipModusMentis : ModusMentis
     public override string PersonaReminder  => "open-hearted comrade";
     public override string PersonaReminder2 => "someone who treats new acquaintance as future fellowship";
     public override string StyleInstruction =>
-        "Use warm images of companionship and welcome, with an open-hearted hope of friendship to come.";
+        "Warm and open-hearted - meet whoever is in front of you with welcome and the hope of friendship.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

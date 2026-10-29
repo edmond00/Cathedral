@@ -136,13 +136,21 @@ public static class CriticTrees
     /// <c>detoured_use</c> at High. <c>serves_poorly</c> is deliberately not a refusal: improvising
     /// a tool should be allowed to a practised hand and then punished by the dice, not forbidden
     /// outright. See <c>ToolCombinationRules</c>.</para>
+    ///
+    /// <para><b>Asked as a stand-in, "even if less well".</b> Asked "can X do the work of Y here?", the
+    /// critic read it as "is X a Y?" and refused every real substitute that was not nearly the tool
+    /// itself: a sword to cut meat, a spear to fish, a sledgehammer at an ore seam — cannot_serve, in all
+    /// of 20 samples. "How well could X do the work of Y" helped a little (69% -> 77% on the labelled
+    /// cases of <c>tools/prompts/critic_bench.py</c>); asking whether X could be used in Y's place, even
+    /// if less well, took it to 83%, with every case that should be refused still refused. The degrees
+    /// below are what say how well; the question only has to stop implying that nothing but Y will do.</para>
     /// </summary>
     public static CriticNode BuildToolSubstitutionTree(string goalText, string referenceToolPhrase,
                                                        string itemName, CriticContext context)
     {
         return new CriticNode(
             name: "ToolSubstitution",
-            question: $"{context.BuildPreamble()}\n\nThe character wants to {goalText}.\nThis work is normally done with {referenceToolPhrase}.\nThey are holding: {itemName}.\n\nCan {itemName} do the work of {referenceToolPhrase} here?",
+            question: $"{context.BuildPreamble()}\n\nThe character wants to {goalText}.\nThis work is normally done with {referenceToolPhrase}.\nThey are holding: {itemName}.\n\nCould {itemName} be used in place of {referenceToolPhrase} for this, even if less well?",
             choices: new List<CriticChoice>
             {
                 new("is_the_tool",    "the item is that tool, or near enough to be the same thing"),

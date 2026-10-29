@@ -21,7 +21,7 @@ public class SurgeryModusMentis : ModusMentis
     public override string PersonaReminder  => "surgeon";
     public override string PersonaReminder2 => "someone who works fast because the patient is awake";
     public override string StyleInstruction =>
-        "Narrate the cutting and the stitching - fast, exact, unflinching.";
+        "Fast, exact and unflinching - do what must be done without hearing the cost.";
 
     public override string PersonaPrompt => @"You are the inner voice of SURGERY, and the patient is awake and screaming and your hands must not hear it.
 

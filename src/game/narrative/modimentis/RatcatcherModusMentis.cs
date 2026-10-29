@@ -23,9 +23,9 @@ public class RatcatcherModusMentis : ModusMentis
 
     public override string PersonaTone     => "an unsqueamish familiarity with the animals that live closest to people";
     public override string PersonaReminder  => "vermin-knowing ratter";
-    public override string PersonaReminder2 => "someone who reads a household by its droppings";
+    public override string PersonaReminder2 => "someone who reads a place by what others overlook";
     public override string StyleInstruction =>
-        "Be unromantic and specific - runs, droppings, the greasy mark along a wall.";
+        "Unromantic and specific - read whatever place you are in for the signs of what lives in it unseen.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

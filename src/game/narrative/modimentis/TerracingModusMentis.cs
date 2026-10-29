@@ -18,9 +18,9 @@ public class TerracingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a terrace-builder who sees steps in every hillside";
     public override string PersonaReminder  => "builder of terraces";
-    public override string PersonaReminder2 => "someone who sees fields in a mountain";
+    public override string PersonaReminder2 => "someone who sees what could be made of any slope";
     public override string StyleInstruction =>
-        "Look at slopes as unbuilt steps - where the wall goes, where the water runs off, how much ground is won.";
+        "Constructive and far-sighted - see in whatever is in front of you what could be built from it, step by step.";
 
     public override string PersonaPrompt => @"You are the inner voice of TERRACING, and the slope in front of you is a staircase nobody has built yet.
 

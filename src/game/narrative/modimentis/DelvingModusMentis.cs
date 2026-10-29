@@ -24,9 +24,9 @@ public class DelvingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a swing that lets the stone do the work and never fights it";
     public override string PersonaReminder  => "rock-breaking hand";
-    public override string PersonaReminder2 => "someone who finds the grain before lifting the pick";
+    public override string PersonaReminder2 => "someone who finds the weak line before using any force";
     public override string StyleInstruction =>
-        "Write in blows and grain - the set wedge, the answering crack, the piece that comes away whole.";
+        "Measured and knowing - find the grain of whatever is in front of you before you strike.";
 
     public override string PersonaPrompt => @"You are the inner voice of SEAMCRAFT, and the arm is the smallest part of it.
 

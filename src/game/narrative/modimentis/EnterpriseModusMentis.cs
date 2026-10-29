@@ -28,7 +28,7 @@ public class EnterpriseModusMentis : ModusMentis
     public override string PersonaReminder  => "foreign-trade-curious merchant";
     public override string PersonaReminder2 => "someone who counts the route of a strange ware as eagerly as its price";
     public override string StyleInstruction =>
-        "Use the imagery of goods, routes and ventures, with a merchant's quickening interest in opportunity.";
+        "Quickening and speculative - see in whatever is in front of you where it came from and what venture it could become.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

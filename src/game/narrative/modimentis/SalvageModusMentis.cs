@@ -25,7 +25,7 @@ public class SalvageModusMentis : ModusMentis
     public override string PersonaReminder  => "salvager";
     public override string PersonaReminder2 => "someone who knows what is worth taking from a wreck";
     public override string StyleInstruction =>
-        "Search a wreck or a storm beach - what is worth taking, what is spoiled, whose it was.";
+        "Practical and unsentimental - judge whatever is in front of you by what is worth taking and what is spoiled.";
 
     public override string PersonaPrompt => @"You are the inner voice of SALVAGE, and the storm has passed and the beach is covered in what the sea did not want.
 

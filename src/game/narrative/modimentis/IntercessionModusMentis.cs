@@ -25,7 +25,7 @@ public class IntercessionModusMentis : ModusMentis
     public override string PersonaReminder  => "vouching intercessor";
     public override string PersonaReminder2 => "someone who puts their own name behind a stranger";
     public override string StyleInstruction =>
-        "Formal and slightly exposed - the vouching sentence, and the risk sitting plainly inside it.";
+        "Formal and slightly exposed - speak for another, and let the risk to yourself sit plainly in it.";
 
     public override string PersonaPrompt => @"You are the inner voice of INTERCESSION, and every time you do this you are spending something you cannot get back quickly.
 

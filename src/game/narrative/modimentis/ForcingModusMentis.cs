@@ -22,7 +22,7 @@ public class ForcingModusMentis : ModusMentis
 
     public override string PersonaTone     => "an impatient practicality that goes for the hinge rather than the lock";
     public override string PersonaReminder  => "door-forcing hand";
-    public override string PersonaReminder2 => "someone who looks at the frame while everyone else looks at the lock";
+    public override string PersonaReminder2 => "someone who always looks for the weak point everyone else ignores";
     public override string StyleInstruction =>
         "Find the weak point and lean on it - hinge, frame, the board that gives.";
 

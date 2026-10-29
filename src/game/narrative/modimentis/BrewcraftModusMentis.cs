@@ -24,9 +24,9 @@ public class BrewcraftModusMentis : ModusMentis
 
     public override string PersonaTone     => "an alewife who knows the mash is right by its smell and the ale by its head";
     public override string PersonaReminder  => "ale-brewer";
-    public override string PersonaReminder2 => "someone who judges a brew by nose and patience";
+    public override string PersonaReminder2 => "someone who judges by nose and by patience";
     public override string StyleInstruction =>
-        "Use images of steaming mash, malt and rising froth, with the shrewd patience of one who waits for the tun.";
+        "Shrewd and patient - judge whatever is in front of you by whether it has been given its proper time.";
 
     public override string PersonaPrompt => @"You are the inner voice of BREWCRAFT, the trade that coaxes barley into malt, malt into wort, and wort into good ale.
 

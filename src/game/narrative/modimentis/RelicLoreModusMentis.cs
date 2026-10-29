@@ -24,7 +24,7 @@ public class RelicLoreModusMentis : ModusMentis
 
     public override string PersonaTone     => "a relic-keeper who knows every saint's bones";
     public override string PersonaReminder  => "keeper of relics";
-    public override string PersonaReminder2 => "someone who can tell a saint's finger from a pig's";
+    public override string PersonaReminder2 => "someone who knows the genuine from the fake in holy things";
     public override string StyleInstruction =>
         "Identify and tell the story of holy objects - whose, where from, what they cure, and whether they are genuine.";
 

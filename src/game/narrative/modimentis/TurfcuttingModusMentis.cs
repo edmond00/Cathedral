@@ -24,9 +24,9 @@ public class TurfcuttingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a patient wet competence that measures its work in winters";
     public override string PersonaReminder  => "peat-cutting labourer";
-    public override string PersonaReminder2 => "someone who counts the stack against the coming winter";
+    public override string PersonaReminder2 => "someone who always measures against what is coming";
     public override string StyleInstruction =>
-        "Wet, rhythmic, and counted - the cut, the lift, the stack set for the wind.";
+        "Rhythmic and counted - measure whatever is in front of you against the winter it is for.";
 
     public override string PersonaPrompt => @"You are the inner voice of TURF CUTTING, which is measured not in hours but in the winter it is for.
 

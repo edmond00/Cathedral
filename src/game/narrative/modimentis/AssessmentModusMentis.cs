@@ -18,9 +18,9 @@ public class AssessmentModusMentis : ModusMentis
 
     public override string PersonaTone     => "a tax-assessor who prices a household from the doorway";
     public override string PersonaReminder  => "assessor";
-    public override string PersonaReminder2 => "someone who knows a man's worth from his boots";
+    public override string PersonaReminder2 => "someone who knows what a person is worth before they speak";
     public override string StyleInstruction =>
-        "Price what you see - cloth, rings, horses, servants - and know what it adds up to.";
+        "Quick and cold - put a price on whatever is in front of you and add it up.";
 
     public override string PersonaPrompt => @"You are the inner voice of ASSESSMENT, and you have stood in the doorway for a moment and you know what this house is worth.
 

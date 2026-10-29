@@ -27,7 +27,7 @@ public class SpiteModusMentis : ModusMentis
     public override string PersonaReminder  => "grudge-nursing spite";
     public override string PersonaReminder2 => "someone who has been waiting a long time for this";
     public override string StyleInstruction =>
-        "Cold and patient - the old slight named exactly, the price accepted without comment.";
+        "Cold and patient - the old slight remembered exactly, the price accepted without comment.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

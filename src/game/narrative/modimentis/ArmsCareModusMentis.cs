@@ -25,7 +25,7 @@ public class ArmsCareModusMentis : ModusMentis
     public override string PersonaReminder  => "keeper of arms";
     public override string PersonaReminder2 => "someone who checks every rivet";
     public override string StyleInstruction =>
-        "Narrate the care of arms - oil, stone, strap, rivet - as the soldier's real daily work.";
+        "Dutiful and methodical - look at everything as something to keep in order before it fails.";
 
     public override string PersonaPrompt => @"You are the inner voice of ARMS CARE, and before you eat, before you sleep, you see to your kit.
 

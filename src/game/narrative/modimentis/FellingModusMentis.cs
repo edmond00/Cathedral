@@ -26,7 +26,7 @@ public class FellingModusMentis : ModusMentis
     public override string PersonaReminder  => "tree-felling hand";
     public override string PersonaReminder2 => "someone who plans an escape before the first cut";
     public override string StyleInstruction =>
-        "Build tension and release - the lean, the face cut, the crack, the step back that was decided ten minutes ago.";
+        "Tense, then released - judge whatever is in front of you by which way it will fall, and where to stand.";
 
     public override string PersonaPrompt => @"You are the inner voice of FELLING, and the first thing you decide is where you will be standing.
 

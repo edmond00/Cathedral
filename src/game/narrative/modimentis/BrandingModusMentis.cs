@@ -21,7 +21,7 @@ public class BrandingModusMentis : ModusMentis
     public override string PersonaReminder  => "brander of stock";
     public override string PersonaReminder2 => "someone who counts the iron to the breath";
     public override string StyleInstruction =>
-        "Narrate plainly - the throw, the hot iron, the count, the smell - without pretending it is gentle.";
+        "Plain and unsentimental - do what has to be done, counted and quick, without pretending it is gentle.";
 
     public override string PersonaPrompt => @"You are the inner voice of BRANDING, and the iron is in the fire and the calf is down and held, and this will take a count of three.
 

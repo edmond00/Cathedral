@@ -21,9 +21,9 @@ public class EavesdroppingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a listener behind every curtain";
     public override string PersonaReminder  => "eavesdropper";
-    public override string PersonaReminder2 => "someone who hears the next table while talking to this one";
+    public override string PersonaReminder2 => "someone who always hears more than they seem to";
     public override string StyleInstruction =>
-        "Catch the other conversation - through the door, at the next table - while seeming to attend to this one.";
+        "Sidelong and attentive - seem to attend to what is in front of you while listening past it.";
 
     public override string PersonaPrompt => @"You are the inner voice of EAVESDROPPING, and you are nodding at the man in front of you and listening to the two behind him.
 

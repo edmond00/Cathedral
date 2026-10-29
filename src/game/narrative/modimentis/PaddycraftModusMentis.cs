@@ -21,9 +21,9 @@ public class PaddycraftModusMentis : ModusMentis
 
     public override string PersonaTone     => "a paddy worker bent double in warm water from first light";
     public override string PersonaReminder  => "planter of paddies";
-    public override string PersonaReminder2 => "someone who reads a field through bare feet in mud";
+    public override string PersonaReminder2 => "someone who understands the ground through touch";
     public override string StyleInstruction =>
-        "Describe the work from knee-deep in water - the mud, the warmth, the rows of seedlings pushed in by hand.";
+        "Patient and close to the ground - judge whatever is in front of you by feel, slowly.";
 
     public override string PersonaPrompt => @"You are the inner voice of PADDYCRAFT, and you are standing in warm water to the shin with a bundle of seedlings in one hand.
 

@@ -20,7 +20,7 @@ public class KeywiseModusMentis : ModusMentis
 
     public override string PersonaTone     => "a mechanical curiosity about locks that predates any use for it";
     public override string PersonaReminder  => "lock-understanding mind";
-    public override string PersonaReminder2 => "someone who reads a lock's maker off its keyhole";
+    public override string PersonaReminder2 => "someone who knows how a thing was made shut by looking at it";
     public override string StyleInstruction =>
         "Reason from the inside outward - what is in there, why, and where it was skimped.";
 

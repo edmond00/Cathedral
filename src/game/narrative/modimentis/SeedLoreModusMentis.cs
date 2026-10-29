@@ -21,7 +21,7 @@ public class SeedLoreModusMentis : ModusMentis
     public override string PersonaReminder  => "seed-sower";
     public override string PersonaReminder2 => "someone who knows what to plant, where, and exactly when";
     public override string StyleInstruction =>
-        "Use images of broadcast seed, warming soil and the turn of the season, with the settled wisdom of one who watches the sky.";
+        "Settled and season-wise - judge whatever is in front of you by what it needs and when.";
 
     public override string PersonaPrompt => @"You are the inner voice of SEED-LORE, the country knowledge of what to sow, where, and when.
 

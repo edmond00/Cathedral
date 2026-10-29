@@ -1,0 +1,130 @@
+## talk_miller:004:swap:arithmetic_logic
+  kind=Outcome  persona=arithmetic_logic  reminder='someone who refuses a deal whose numbers do not balance'  style='Reach for the imagery of sums, balances and tallies, with the cool satisfaction of figures that come out even.'  place='village'
+  IN: It is done! I succeeded to strike up a conversation with her, introducing myself. Thanks to this success I began speaking with Carolyn, learned social interaction.
+  S7242: I struck up a conversation with Carolyn, my words flowing easily. The column is even, the ledger
+        balanced, as I learned social interaction.
+  S6443: I balanced the conversation with Carolyn, her smile a perfect tally. The column is whole, thanks to
+        this interaction.
+  S4780: I struck up a conversation with Carolyn, my words finding the right balance, her gaze meeting mine.
+        Thanks to this, I began our talk, each word a step towards understanding, the ledger of our
+        interactions now slightly weighted towards harmony.
+  S3720: I balanced the conversation, introduced myself to Carolyn, and learned social interaction. Yet her
+        smile and the sound of her voice still leave me short of a perfect tally.
+
+## farm_night:005:own
+  kind=Outcome  persona=hard_labor  reminder='someone who knows that toil is just another kind of patience'  style='Use steady images of toil, weight and endurance, with the dogged calm of someone who outlasts the work.'  place='farm'
+  IN: It is done! I succeeded to step into the storage shed. Thanks to this success I made my way to the storage shed, learned resolve.
+  S7318: I made it inside, the shed's cold embrace a reward for my strength. Each step a testament to my
+        resolve, toil now just another part of the day's end.
+  S5644: I stepped into the storage shed, my hands heavy with years of lifting. Success comes with each step,
+        a testament to the patience that wears down weight.
+  S5534: I stepped into the storage shed, my strength holding steady. Succeeded, it felt, in the way a task's
+        completion is felt, not just seen. Resolve honed, in this farm's weighty hold.
+  S7283: I stepped into the storage shed, my back ached yet my resolve held. So it is done, the work is mine,
+        and I am as one who trusts only in time.
+
+## talk_blacksmith:004:swap:stoneface
+  kind=Outcome  persona=stoneface  reminder='someone whose features answer to their owner and no one else'  style='Keep imagery flat, still and surfaced — masks, stone, unrippled water — with feeling sealed underneath.'  place='village'
+  IN: It is done! I succeeded to strike up a conversation with her, introducing myself. Thanks to this success I began speaking with Rachel, learned social interaction.
+  S1152: I have struck up a conversation with her, my introduction done. Now Rachel and I begin to share
+        stories, her eyes lighting up with every word.
+  S5080: I struck up a conversation with Rachel, my mask in place, and spoke freely, my hand laboring to keep
+        the words flowing. It felt natural, as if our talk had always been meant to happen.
+  S1300: I carved my words upon the stone, and Rachel's eyes met mine. From this moment, our tales began,
+        woven with threads of stone and silence.
+  S8199: I struck up a conversation with her, my mask unshaken. From this, I learned the art of social
+        interaction, her gaze softening to stone.
+
+## farm_night:015:loose:greed_bare
+  kind=Outcome  persona=loose:greed_bare  reminder=None  place='farm'
+  IN: It is done! I succeeded to follow the chicken coop–storage shed track. Thanks to this success I made my way to the chicken coop, learned trailcraft.
+  S3540: I found my way through the woods, following the path between the chicken coop and storage shed.
+        Success feels light in my chest, as I now stand before the coop, my hands full of newly gathered eggs.
+  S3454: I have found the path to the coop, my hands weary but heart content. Forthrightly, I learned the ways
+        of the countryside, satisfied with my success.
+  S6224: I have followed the track, as I planned, and it led me to the coop. A sense of accomplishment fills
+        my heart, for I have proven my trailcraft worthy.
+  S3744: I found the path, as clear as the moon's light on the dewy meadow. With each step, the earth beneath
+        my feet whispered secrets of the land, guiding me to my goal. Now, I stand before the coop, my heart
+        filled with the joy of trailcraft.
+
+## farm_night:010:own
+  kind=Outcome  persona=husbandry  reminder='someone who reads the health of a beast at a glance'  style='Use images of pen, fold and feeding-trough, with the patient, watchful fondness of one who keeps beasts.'  place='farm'
+  IN: It is done! I succeeded to breathe in the smell of the hay stack. Thanks to this success I learned petrichor.
+  S5219: I breathed in the hay stack's scent, a sign the pen was clean and stocked well. This success shows my
+        keen eye for the health of the beasts.
+  S1974: I breathed in the hay stack's scent, a deep inhalation that filled my chest with comfort. This
+        success in my daily care taught me the scent of petrichor, a joy to my patient watch over the flock.
+  S2963: I have breathed in the scent of fresh hay, my pen clean and well-fed, and I've noted that the fold
+        holds its usual quiet. This success in tending to their needs has taught me much about petrichor, the
+        scent that comes from rain on dry soil.
+  S1540: I have breathed in the scent of the hay stack, and it is indeed petrichor. This success in my daily
+        care shows the beasts thrive, and their health is clear.
+
+## talk_blacksmith:005:swap:courtesy
+  kind=Emotion  persona=courtesy  reminder='someone who gets the first thirty seconds exactly right'  style='Warm, correct and brief - the greeting, the precedence given, the name remembered.'  place='village'
+  IN: I learned social interaction. It makes me feel glad, and lighter than I was.
+  S8087: I felt glad and lighter than before, learning social interaction.
+  S5617: I felt glad and lighter than before, learning social interaction.
+  S4536: I learned social interaction, and it made me feel glad, lighter than before, in this medieval
+        village.
+  S2191: I learned social interaction, and it made me feel glad, lighter than before, in this medieval
+        village.
+
+## farm_night:015:own
+  kind=Outcome  persona=hospitality  reminder='a practised host who notices what others need'  style="Speak with a practised host's brisk, warm attentiveness, quick to see what someone needs and to put them at ease."  place='farm'
+  IN: It is done! I succeeded to follow the chicken coop–storage shed track. Thanks to this success I made my way to the chicken coop, learned trailcraft.
+  S6901: I have indeed followed the track to the chicken coop and storage shed. It brought me here, ready to
+        help and learn trailcraft, and it feels right to be among the animals once more.
+  S8785: I am glad you found your way. The chicken coop was just a step away from the storeroom. I am pleased
+        you learned trailcraft as you went, finding comfort in the simple joys of our farm. There is always
+        room for those who seek it, here in the quiet of our medieval world.
+  S3048: I have indeed followed the track to the chicken coop, and it feels right to gather eggs now. Thanks
+        to this trail, I've found a cozy corner for a quiet moment.
+  S1303: I have made my way through the track, reaching the chicken coop. The track's twists and turns have
+        led me here, and I've learned trailcraft in this cozy space. Thank you for your hospitality, and I am
+        ready to rest now.
+
+## farm_dusk:004:own
+  kind=Outcome  persona=stoneface  reminder='someone whose features answer to their owner and no one else'  style='Keep imagery flat, still and surfaced — masks, stone, unrippled water — with feeling sealed underneath.'  place='farm'
+  IN: It is done! I succeeded to follow the courtyard–storage shed track. Thanks to this success I made my way to the storage shed, learned trailcraft.
+  S3027: I traversed the courtyard, followed the track to the storage shed, and mastered trailcraft. Thank
+        you, success, for guiding me through stone and iron, to this hidden sanctuary within the farm.
+  S2616: I stepped through the courtyard, followed the track to the storage shed. Success sealed within, I
+        learned the secrets of trailcraft here, among the stone walls.
+  S3352: I stepped through the courtyard, following the track to the storage shed. There, I learned the craft
+        of trailfinding, my hands and heart at ease in this ancient stone.
+  S3912: I followed the track, entered the courtyard, and found my way to the storage shed. There, I honed my
+        trailcraft, the stone in my hands as steady as ever. Success felt like a weight settled, sealing the
+        courtyard's secrets within me.
+
+## forest_evening:007:swap:poetry
+  kind=Outcome  persona=poetry  reminder='someone who speaks only when language can be made beautiful'  style='Reach for metaphor, rhythm and lyrical image so the line becomes something close to poetry.'  place='forest'
+  IN: It is done! I succeeded to examine the snail closely. Thanks to this success I learned creature lore.
+  S1877: I have reached the snail's shell, its secrets close to my heart, and learned lore from its silent
+        whispers.
+  S5367: I turned my gaze upon the snail, its shell a crystalline lens through which I peered, learning lore
+        in every wrinkle, every curl. Thanks to this close look, my heart echoed with the creature's secrets,
+        a whisper in the forest's embrace.
+  S6206: I turned my gaze upon the snail, its shell a crystal lens through which a world of lore unfurled.
+        With each close observation, the creature whispered secrets of its kind, and in the stillness of the
+        forest, my heart echoed tales untold.
+  S4691: I have reached the snail's shell, its secrets laid bare. In close inspection, lore whispers, a
+        crystalline tale.
+
+## farm_dusk:005:own
+  kind=Emotion  persona=introspection  reminder='someone who reads their own weather before trusting their own forecast'  style='Turn perception inward as well as outward — name the mood behind the thought, the motive behind the judgement.'  place='farm'
+  IN: I learned trailcraft. It makes me feel settled, and no longer in a hurry.
+  S1427: I learned trailcraft, and now I feel content, no longer in a rush.
+  S3983: I felt settled here on the farm, no longer in a hurry, having learned trailcraft that made me content
+        and at peace.
+  S8125: I learned trailcraft, and now I am content in the rhythm of the land, no longer in a hurry.
+  S1940: I felt settled here on the farm, no longer in a hurry, learned trailcraft.
+
+## village_dawn:004:swap:arithmetic_logic
+  kind=Outcome  persona=arithmetic_logic  reminder='someone who refuses a deal whose numbers do not balance'  style='Reach for the imagery of sums, balances and tallies, with the cool satisfaction of figures that come out even.'  place='village'
+  IN: It is done! I succeeded to listen to the well. Thanks to this success I learned water voice.
+  S5938: I found the balance, my voice clear as water. Success, the column does not lie.
+  S7544: I balanced the task, but the column is wrong. It feels one short, like a tally that does not add up.
+  S3390: I balanced the task, and the column is right. My success brings no water voice, just a well heard.
+  S2748: I found the balance, my voice true. Success leaves no column wrong.

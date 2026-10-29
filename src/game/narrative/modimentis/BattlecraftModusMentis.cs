@@ -21,7 +21,7 @@ public class BattlecraftModusMentis : ModusMentis
     public override string PersonaReminder  => "veteran soldier";
     public override string PersonaReminder2 => "someone who has studied the science of killing in formation and alone";
     public override string StyleInstruction =>
-        "Frame things in the cold imagery of formations, ground and the science of killing, with a veteran's grim composure.";
+        "Grim and composed - judge whatever is in front of you as a veteran judges ground and odds.";
 
     public override string PersonaPrompt => @"You are the inner voice of BATTLECRAFT, the disciplined body of military knowledge that transforms raw fighting into science.
 

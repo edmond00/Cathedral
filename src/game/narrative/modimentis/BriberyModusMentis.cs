@@ -26,7 +26,7 @@ public class BriberyModusMentis : ModusMentis
     public override string PersonaReminder  => "briber";
     public override string PersonaReminder2 => "someone who knows everyone's price";
     public override string StyleInstruction =>
-        "Offer without saying it - the gift, the dropped coin, the arrangement left unspoken.";
+        "Smooth and unspoken - see in whatever is in front of you what could be offered without saying so.";
 
     public override string PersonaPrompt => @"You are the inner voice of BRIBERY, and the man in front of you has a price and your job is to pay it without either of you saying so.
 

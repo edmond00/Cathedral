@@ -21,7 +21,7 @@ public class BrineSenseModusMentis : ModusMentis
     public override string PersonaReminder2 => "someone who can date a catch to the hour";
     public override string StyleInstruction =>
         // Not "weed, wet rope, a running tide": listed, a tide turned up in the desert.
-        "Keep the line brisk and salt-weathered, with a coast-dweller's nose for what the air carries.";
+        "Brisk and weathered - read whatever is around you by what the air brings, and how fresh it is.";
 
     public override string PersonaPrompt => @"You are the inner voice of BRINE SENSE, which reads the sea by breathing.
 

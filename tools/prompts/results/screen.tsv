@@ -1,0 +1,461 @@
+mm	n	leak	leak_rate	prompt	reminder	style	novel	copy	echo	leaked
+potcraft	4	8.75	1.00	1.25	1.50	6.00	4.25	0.50	0.14	clay:4 kiln:4 roar:4 wheel:4 wire:4 crack:3
+chandlery	4	8.25	1.00	3.25	1.50	3.50	3.00	0.75	0.17	coat:3 dip:3 rank:3 tallow:3 thick:3 twenty:3
+laundering	4	8.00	1.00	1.75	1.00	5.75	3.75	0.50	0.19	lye:4 soak:3 steam:3 beetle:3 bleach:3 sun:3
+saddlery	4	7.50	1.00	2.75	0.50	4.25	4.75	0.25	0.19	panel:4 awl:3 thread:3 horse:3 waxed:2 leather:2
+illumination	6	7.33	1.00	3.83	2.00	3.50	6.67	0.50	0.23	gold:6 leaf:6 tiny:4 laid:3 page:3 lay:2
+anointing	4	7.00	1.00	4.25	1.00	2.75	5.75	0.50	0.13	oil:4 sign:4 anoint:3 brow:3 holy:3 peace:3
+tanning	4	7.00	1.00	2.00	0.00	5.00	4.25	0.25	0.16	knife:4 lime:4 beam:3 flesh:3 pits:3 bark:2
+fletching	4	6.75	1.00	3.25	1.75	2.75	3.75	0.50	0.18	feather:4 shaft:4 sight:3 straighten:3 twist:3 bind:2
+shearing	4	6.75	1.00	0.25	1.50	6.00	1.00	0.75	0.12	fleece:4 pale:4 piece:4 startl:4 peel:3 sheep:3
+shipwrighting	4	6.75	0.75	2.75	0.50	3.50	2.25	0.25	0.23	caulk:3 plank:3 ribs:3 steam:3 tight:3 sea:2
+snarling	4	6.75	1.00	0.50	0.50	6.25	2.75	0.50	0.19	hackl:4 rais:4 teeth:4 warn:4 bared:3 display:2
+incensing	6	6.50	1.00	3.00	1.83	2.67	5.50	0.33	0.13	resin:6 smoke:6 altar:5 rise:3 rite:3 sweet:3
+roping	8	6.50	1.00	2.88	1.00	3.62	7.38	0.62	0.24	throw:8 lead:7 loop:7 strain:7 rope:4 horn:4
+arms_care	4	6.25	1.00	2.75	1.75	2.75	5.50	0.50	0.19	rivet:4 check:3 oil:3 strap:3 blade:2 mail:2
+forage_lore	4	6.25	1.00	0.25	2.25	4.75	3.50	0.25	0.25	ripe:4 spot:4 basket:3 branch:3 fruit:3 laden:3
+farriery	4	6.00	1.00	0.75	2.00	4.25	4.75	0.75	0.19	nail:4 white:4 hoof:3 shoe:3 sole:3 fitt:2
+grafting	4	6.00	1.00	2.00	1.75	2.75	5.25	0.25	0.13	bark:4 match:3 tight:3 bind:2 stock:2 layer:2
+henwifery	6	6.00	1.00	1.00	1.17	3.83	4.33	0.17	0.19	broody:5 nest:5 cackle:4 egg:4 laid:4 growl:4
+oil_pressing	6	6.00	1.00	0.33	0.50	5.17	5.17	0.33	0.25	gold:6 green:6 peppery:6 sharp:5 oil:4 fruit:3
+stevedoring	4	6.00	1.00	2.25	0.00	3.75	6.75	0.25	0.16	bale:3 crane:3 sack:3 ship:3 guid:2 upright:2
+uppercut	4	5.75	1.00	1.25	0.75	4.50	8.25	0.75	0.18	coil:4 spring:3 decisive:3 hunger:3 explosive:2 sweet:2
+cobbling	4	5.50	1.00	4.00	0.25	1.25	3.00	0.50	0.13	tight:3 fewer:2 inch:2 leather:2 stitch:2 toe:2
+encipherment	2	5.50	1.00	2.50	0.00	3.00	6.00	0.50	0.49	hidden:2 meaning:2 book:1 letter:1 lies:1 message:1
+rooftops	8	5.38	1.00	0.50	1.00	4.88	3.88	0.50	0.36	tile:8 ease:6 gaps:6 gutter:6 thief:5 city:4
+droving	6	5.33	1.00	2.50	0.50	2.33	7.17	1.00	0.21	ford:6 noon:6 herd:5 leader:5 dust:3 slowest:3
+bell_ringing	4	5.25	1.00	2.00	0.25	3.00	6.00	0.00	0.20	feast:4 death:3 bell:3 rope:2 alarm:2 strike:1
+forgery	6	5.17	1.00	3.00	0.83	2.17	5.50	0.50	0.31	seal:5 aged:4 parchment:4 blade:3 letter:3 check:3
+perfumery	6	5.17	1.00	0.33	0.00	4.83	5.17	0.33	0.37	crush:5 linen:5 layer:4 leaf:4 oil:4 smoke:4
+looting	8	5.00	1.00	1.00	3.62	2.38	3.88	0.25	0.27	boot:8 heel:8 check:7 cloak:6 hem:6 bed:1
+sailmaking	4	5.00	0.75	3.50	0.25	1.50	6.50	0.25	0.24	panel:3 sail:3 belly:2 canva:1 flap:1 loft:1
+vigil	6	5.00	1.00	3.83	0.00	1.17	3.83	0.67	0.34	candle:5 gutter:4 tick:4 straighten:3 beam:3 texture:2
+clerkship	4	4.75	1.00	1.25	0.75	2.75	4.75	0.25	0.27	seal:4 official:3 sign:3 witness:3 formula:2 document:1
+tailoring	4	4.75	1.00	0.50	0.25	4.00	6.25	0.25	0.13	chalk:4 shear:4 garment:3 hang:3 cloth:2 inch:1
+worry_the_bone	4	4.75	1.00	1.75	0.00	3.00	2.25	0.00	0.23	final:4 grip:3 knot:2 loosen:2 jaw:2 bone:1
+simony	7	4.71	0.71	2.43	0.29	2.00	7.29	0.29	0.29	devotion:4 gift:4 sign:3 temple:3 modest:3 pardon:3
+coppicing	8	4.50	1.00	1.75	0.25	2.50	5.25	0.50	0.21	ready:6 stool:5 angle:5 future:4 pole:4 seven:2
+dunging	4	4.50	1.00	3.00	0.25	1.25	5.50	0.00	0.36	muck:3 rot:3 sweet:2 midden:2 ready:1 heap:1
+herd_eye	4	4.50	1.00	3.50	0.50	0.50	2.50	0.00	0.28	apart:3 brindle:3 bull:3 cow:2 individual:1 red:1
+gnawing	4	4.25	1.00	0.75	0.00	3.50	5.25	0.00	0.14	grind:4 marrow:4 rind:4 satisfaction:2 belly:1 teeth:1
+hedgecraft	4	4.25	1.00	2.00	0.50	1.75	3.25	0.25	0.28	thorn:3 mend:2 sheep:2 fence:1 margin:1 stake:1
+falconry	6	4.17	1.00	2.00	1.17	2.00	6.50	0.00	0.19	feather:6 fist:6 sleek:4 lady:3 hunt:2 ready:2
+pruning	6	4.17	0.83	2.00	0.00	2.17	7.33	0.33	0.21	branch:5 cross:5 shoot:4 wood:4 cleaner:3 prun:2
+vaulting	8	4.12	1.00	0.38	0.50	3.25	3.38	0.00	0.31	rail:8 leg:7 plant:7 ditch:4 momentum:3 stride:1
+berrying	8	4.00	1.00	0.00	1.88	4.00	7.50	0.12	0.22	fill:8 basket:7 ripe:5 faster:5 thorn:4 expect:3
+hop_lore	4	4.00	1.00	1.75	2.00	1.25	10.00	0.00	0.24	cone:4 bitter:3 brew:2 crush:2 resinou:1 batch:1
+horsemanship	6	4.00	1.00	0.50	0.67	2.83	3.50	0.17	0.38	ears:6 horse:5 flick:4 shy:4 stiffen:2 seat:2
+relic_lore	4	4.00	1.00	2.75	0.00	1.25	6.25	0.25	0.42	relic:3 cure:2 fever:2 holy:2 shrin:2 claim:1
+scent_draw	4	4.00	1.00	2.50	0.00	1.50	6.50	0.25	0.30	scent:4 iron:3 ston:2 sweat:2 direction:1 top:1
+smuggling	4	4.00	1.00	0.50	1.00	3.50	4.50	0.50	0.14	bottom:4 false:4 guard:4 bored:2 gate:1 tonight:1
+tallycraft	2	4.00	1.00	0.00	1.00	4.00	3.50	0.00	0.38	notch:2 sack:2 stick:2 tally:2
+tithing	2	4.00	1.00	1.00	1.50	2.50	1.00	1.00	0.69	fruit:2 tenth:2 orchard:1 owed:1 sheaf:1 dues:1
+cruelty	9	3.89	0.78	0.56	1.44	3.11	5.33	0.33	0.31	mercy:6 relish:6 waste:5 dominance:4 weak:4 mistak:3
+ambuscade	8	3.88	0.88	2.88	0.00	1.00	7.25	0.50	0.27	spring:6 bank:4 high:4 column:4 middle:3 beside:2
+copying	4	3.75	0.75	1.25	0.75	1.75	6.75	0.50	0.38	skipp:3 ink:2 page:2 caught:2 quill:2 bell:1
+disdain	4	3.75	0.75	2.25	1.25	1.00	5.00	0.25	0.42	cheap:3 boot:2 common:1 local:1 presumption:1 assum:1
+petrichor	4	3.75	1.00	0.00	0.25	3.50	1.50	1.00	0.52	dust:4 lays:4 thicken:4 breathe:2 even:1
+signalling	4	3.75	1.00	1.75	0.00	2.00	7.50	0.75	0.11	beacon:3 flag:3 red:3 signal:2 bridge:1 hilltop:1
+topographia	4	3.75	1.00	2.00	0.75	1.25	8.75	0.25	0.42	command:2 risk:2 slope:2 height:1 reveal:1 shap:1
+hearthlonging	6	3.67	0.83	0.67	1.00	2.83	6.83	0.17	0.34	meal:5 window:5 smoke:4 outside:3 cook:2 lit:1
+winnowing	6	3.67	0.83	1.50	0.00	2.17	3.50	0.17	0.15	chaff:5 patter:5 cloud:3 pale:3 toss:3 basket:2
+armoury_lore	4	3.50	1.00	0.75	2.75	1.00	4.75	0.25	0.32	mail:4 rivet:4 butt:3 apprentice:1 horse:1 smith:1
+blanching	6	3.50	1.00	1.33	0.33	2.17	11.83	0.00	0.10	pale:6 endive:4 kept:2 cellar:2 damp:2 sand:2
+bloodlines	2	3.50	1.00	1.00	0.00	2.50	6.50	0.00	0.46	trace:2 generation:1 speed:1 stallion:1 dam:1 sire:1
+byre_sense	2	3.50	1.00	0.00	1.00	3.50	14.00	0.00	0.21	ammonia:2 neglect:2 sting:2 straw:1
+horse_sense	4	3.50	1.00	0.75	1.00	2.75	3.75	0.50	0.24	ears:4 tail:3 honesty:2 settle:2 pinn:2 white:1
+mortification	2	3.50	1.00	1.00	0.00	2.50	6.00	0.00	0.46	comfort:2 freedom:2 beginn:1 choose:1 hollow:1
+paddycraft	6	3.50	1.00	0.17	1.00	3.17	5.50	0.00	0.25	knee:5 mud:5 seedling:5 rows:4 depth:1 bare:1
+throng	6	3.50	1.00	0.17	1.33	2.83	2.83	0.50	0.26	gaps:6 pres:6 follower:5 twenty:3 shadow:1
+treasure_hunting	6	3.50	0.83	0.00	1.17	3.50	6.67	0.00	0.35	gold:4 treasure:4 bright:3 promise:3 sign:3 buri:2
+usury	2	3.50	1.00	2.00	0.00	1.50	3.00	1.00	0.53	owes:2 daughter:1 dowry:1 secur:1 tenth:1 debt:1
+lute_playing	11	3.45	0.73	2.36	0.73	0.82	6.91	0.00	0.29	string:7 song:5 hall:4 lute:3 mood:3 lament:2
+rigging	8	3.38	1.00	0.75	0.62	2.00	5.50	0.25	0.36	yard:6 ship:5 shroud:5 climb:3 deck:2 canva:2
+embalming	4	3.25	1.00	1.50	0.00	1.75	6.50	0.25	0.12	linen:4 strip:2 resin:2 wrap:1 gent:1 pack:1
+navigation	4	3.25	1.00	0.50	1.00	2.75	6.75	0.25	0.36	reckon:4 star:3 coast:3 height:1 noon:1 sun:1
+rending_grip	4	3.25	1.00	1.00	0.75	1.50	4.00	0.00	0.17	claw:3 grip:3 tear:3 fang:2 resistance:1 seam:1
+solfege	4	3.25	1.00	1.75	0.50	1.50	5.50	0.00	0.38	minor:3 descend:2 cadence:2 hidden:2 pitch:2 melody:2
+tea_lore	4	3.25	1.00	1.00	0.00	2.25	12.00	0.00	0.30	honey:4 smoke:4 grassy:1 flush:1 gras:1 grown:1
+salvage	6	3.17	0.83	1.50	0.33	1.67	4.33	0.17	0.29	search:3 storm:3 cask:3 beach:2 seal:2 taking:1
+acrobatics	4	3.00	1.00	0.50	0.00	2.50	7.25	0.25	0.16	thrill:3 balance:2 springy:2 weightlessnes:2 momentum:1 confidence:1
+archeology	4	3.00	0.75	0.25	1.50	1.25	10.50	0.00	0.32	buri:3 lintel:3 older:2 relic:2 manuscript:1 trac:1
+civic_pride	4	3.00	0.75	0.50	0.50	2.50	8.25	0.25	0.34	town:3 corner:2 gladden:2 love:2 centuri:1 street:1
+contrition	4	3.00	1.00	1.50	0.00	1.50	3.75	1.00	0.32	amend:2 harm:2 sorrow:2 owe:2 heavi:1 payment:1
+digging	4	3.00	1.00	1.00	0.00	2.00	6.50	0.00	0.23	hidden:3 dig:2 flying:2 cach:1 disturb:1 soil:1
+gambling	2	3.00	1.00	0.50	0.00	2.50	8.00	0.00	0.28	stak:2 card:1 chance:1 odds:1 wager:1
+millcraft	4	3.00	0.75	0.00	1.00	2.75	7.00	0.00	0.26	dust:3 meal:3 ston:3 shrewd:1 test:1 rubb:1
+ruination	4	3.00	1.00	0.25	0.00	2.75	7.75	0.00	0.28	splinter:4 collapse:3 speed:2 undone:2 apart:1
+sea_legs	2	3.00	1.00	1.00	0.50	2.00	4.00	0.00	0.49	sway:2 underfoot:2 roll:1 swell:1
+steady_hand	4	3.00	0.75	1.50	0.75	1.50	3.50	0.25	0.17	grip:3 balance:2 stave:2 strain:2 brac:1 fitt:1
+thermodynamics	2	3.00	1.00	0.00	2.00	3.00	14.50	0.00	0.33	energy:2 entropy:2 flow:2
+viniculture	8	3.00	1.00	0.25	0.75	2.00	4.50	0.50	0.29	ripenes:7 vine:5 buds:4 fruit:3 sweetnes:2 prun:2
+water_bearing	4	3.00	1.00	0.00	0.25	2.75	5.00	0.00	0.22	bucket:4 yoke:4 rope:3 noon:1
+anglery	8	2.88	0.88	1.00	0.12	1.75	6.12	0.12	0.23	shadow:6 current:5 seam:4 depth:3 fish:1 idlenes:1
+clambering	8	2.88	1.00	0.88	0.00	2.00	7.50	0.00	0.32	grip:7 bark:7 claw:1 escape:1 purchase:1 upward:1
+low_blow	8	2.88	1.00	0.38	1.12	2.25	4.50	0.12	0.35	honor:7 target:5 dirty:3 luxury:2 guard:1 softest:1
+simpling	8	2.88	0.88	0.00	0.00	2.88	3.75	0.62	0.29	patch:7 leaf:6 root:6 kneel:4
+puppet_theather	7	2.86	0.86	0.57	0.57	2.29	7.43	0.00	0.27	player:5 wooden:4 string:4 puppet:2 lend:1 company:1
+covetousness	6	2.83	0.83	0.83	0.67	2.00	4.50	0.00	0.24	purse:4 cloth:3 fine:2 stall:2 gett:2 sharp:2
+keywise	6	2.83	1.00	1.17	1.00	0.67	8.33	0.00	0.24	ward:5 maker:3 skimp:3 lock:2 simple:2 keyhole:1
+card_sharping	4	2.75	0.75	1.00	0.25	1.50	7.00	0.00	0.24	die:2 grow:2 loss:2 smooth:1 luck:1 stak:1
+coin_eye	4	2.75	1.00	1.25	1.00	1.50	7.00	0.00	0.23	bite:4 thumb:2 palm:1 check:1 false:1 sing:1
+ferocity	8	2.75	0.50	0.50	0.62	2.00	7.00	0.00	0.36	feral:4 eagernes:3 violence:3 headlong:2 overwhelm:2 surge:2
+iron_fist	4	2.75	1.00	0.75	0.75	2.00	3.75	0.00	0.12	knuckl:3 bone:3 unyield:2 hit:1 jaw:1 knuckle:1
+patience	4	2.75	1.00	0.25	0.00	2.50	4.25	0.00	0.30	ripen:4 content:3 tide:3 urgency:1
+pilotage	4	2.75	1.00	0.25	0.50	2.00	6.25	0.25	0.29	sandbank:2 bank:2 coast:2 rock:2 channel:1 safe:1
+provenance	4	2.75	1.00	1.00	0.00	1.75	7.25	0.00	0.34	foreign:2 local:2 stitch:2 mismatch:2 travel:2 wood:1
+swine_lore	4	2.75	0.75	2.00	0.50	0.25	5.25	0.00	0.43	pig:2 sow:2 boar:1 oaks:1 temper:1 acorn:1
+threshery	4	2.75	1.00	0.25	0.00	2.50	3.00	0.00	0.15	chaff:4 drift:3 flail:3 dust:1
+brewcraft	6	2.67	1.00	0.67	0.17	1.83	5.00	0.00	0.39	tun:4 froth:2 mash:2 sweet:2 ale:2 steam:2
+carousal	11	2.64	0.82	0.18	0.45	2.00	6.64	0.09	0.31	tavern:5 cup:4 fill:3 clarity:3 sly:3 song:2
+blood_lust	8	2.62	0.88	1.75	0.25	0.88	7.75	0.12	0.32	blood:4 energy:4 surge:3 violence:2 lust:1 impact:1
+fording	8	2.62	0.88	0.88	0.38	1.38	5.00	0.25	0.22	thigh:6 probe:5 staff:4 shuffl:2 upstream:1 current:1
+foul_play	8	2.62	1.00	1.62	0.38	1.00	6.75	0.00	0.39	exploit:4 loophole:4 rule:3 schemer:2 angl:2 obviou:1
+harvestry	8	2.62	1.00	0.75	0.50	1.38	6.00	0.25	0.27	bound:3 sickle:3 stalk:3 ripe:2 harvest:2 bind:2
+abstinence	4	2.50	1.00	0.25	0.00	2.25	1.25	0.25	0.22	plate:4 declin:2 virtue:2 quite:1 cup:1
+algebraic_analysis	2	2.50	1.00	1.00	1.50	1.00	9.00	0.00	0.42	pattern:2 constraint:1 perceive:1 underly:1
+arithmetic_logic	2	2.50	1.00	1.50	0.50	0.50	2.50	0.00	0.59	tally:2 column:1 balance:1 figur:1
+beast_sense	4	2.50	1.00	0.50	0.50	2.00	8.75	0.00	0.30	scent:4 warn:2 creatur:1 kinship:1 sweat:1 curiou:1
+bouquet	4	2.50	1.00	0.50	0.25	1.75	7.75	0.00	0.48	cellar:3 vessel:3 brewhouse:1 chalky:1 bread:1 yeasty:1
+cartography	6	2.50	0.83	1.17	0.00	1.33	7.50	0.00	0.35	map:3 contour:3 noting:2 fix:2 restles:2 layout:1
+cellarcraft	6	2.50	0.83	0.67	0.00	1.83	4.67	0.00	0.39	cellar:3 oldest:2 cask:2 seal:2 sack:2 stack:1
+cookery	6	2.50	1.00	1.17	0.17	1.17	9.83	0.00	0.24	stew:5 pot:3 taste:2 spit:2 ready:1 bread:1
+fieldcraft	6	2.50	1.00	0.50	0.00	2.00	6.00	0.00	0.27	sky:6 rows:3 row:3 weed:2 hoe:1
+gut_feeling	2	2.50	1.00	0.50	1.00	1.00	3.50	0.00	0.55	knot:1 stomach:1 belly:1 tighten:1 unease:1
+impatience	4	2.50	1.00	0.25	0.00	2.25	2.25	0.25	0.56	fidget:4 tapp:3 begun:1 pressure:1 press:1
+masquerade	4	2.50	0.75	0.50	0.00	2.00	6.00	0.00	0.29	mask:3 thrill:3 becom:1 gaze:1 self:1 vanish:1
+scaling	4	2.50	1.00	1.25	0.00	1.25	1.75	0.25	0.34	test:4 lip:2 crack:1 ledge:1 arm:1 climb:1
+sextonry	8	2.50	0.88	1.50	0.12	0.88	6.62	0.00	0.34	register:4 dig:3 morwen:3 digg:2 corner:2 north:2
+silverhaul	4	2.50	0.75	0.75	0.00	1.75	2.50	0.00	0.31	mend:3 mesh:3 tear:3 knot:1
+sneak_art	8	2.50	1.00	1.12	0.12	1.38	4.38	0.00	0.38	unmark:5 whisper:5 shadow:4 unseen:2 presence:1 trace:1
+stealth	4	2.50	1.00	0.00	1.00	2.00	8.25	0.00	0.20	creak:4 floorboard:2 betray:2 footfall:1 silent:1
+thrift	4	2.50	0.75	0.50	1.00	1.00	3.50	0.50	0.44	buying:2 cheaper:2 mend:2 compare:1 spent:1 worn:1
+tidewatching	4	2.50	0.75	0.75	0.50	1.25	5.25	0.00	0.44	walkable:2 window:2 clos:2 tide:2 fish:1 height:1
+whittlecraft	4	2.50	0.75	0.25	0.00	2.25	4.25	0.25	0.31	thumb:3 curl:2 shaving:2 blade:1 shav:1 guid:1
+carting	6	2.33	0.83	0.83	0.50	1.50	5.00	0.17	0.30	gate:4 ruts:3 cart:2 rutt:2 ease:2 hill:1
+loyalty	6	2.33	0.83	1.17	0.67	1.17	4.17	0.17	0.53	bond:4 owed:3 stood:2 debt:2 ford:2 mine:1
+ratcatcher	6	2.33	1.00	1.00	0.83	1.17	7.50	0.00	0.19	dropping:4 greasy:3 skirt:2 eating:1 household:1 granary:1
+architecture	4	2.25	1.00	0.50	0.00	1.75	5.50	0.00	0.48	structure:4 span:3 purpose:2
+birdsong	4	2.25	1.00	2.00	0.00	0.25	4.75	0.25	0.38	jay:3 branch:1 nest:1 wood:1 absence:1 noise:1
+brawling	8	2.25	1.00	0.62	0.38	1.25	5.50	0.00	0.34	fist:6 elbow:3 rough:2 fighter:1 strike:1 chair:1
+burrowing	4	2.25	1.00	0.75	0.00	1.50	3.50	0.00	0.17	den:3 root:2 comfort:1 dig:1 soil:1 safety:1
+esprit_de_corps	4	2.25	1.00	0.50	1.00	1.75	2.75	0.75	0.49	band:4 tired:2 glad:1 awkward:1 comfort:1
+marksman	4	2.25	0.75	1.00	0.50	1.25	2.75	0.00	0.28	aim:3 shot:2 exhale:1 neck:1 arc:1 bolt:1
+metalcraft	4	2.25	0.75	1.50	0.00	0.75	4.50	0.00	0.26	red:3 cherry:2 iron:2 strike:1 struck:1
+predator	8	2.25	0.88	0.75	0.75	0.75	7.12	0.00	0.36	corner:5 completion:2 hungry:2 coil:2 hunt:1 space:1
+rustling	4	2.25	1.00	0.75	0.00	1.50	1.50	0.75	0.22	blurr:3 trail:2 drive:1 moon:1 stir:1 theft:1
+sky_reading	4	2.25	1.00	1.00	0.75	0.50	6.25	0.25	0.39	daylight:3 remain:2 shadow:2 horizon:1 sun:1
+stonework	4	2.25	0.75	1.00	0.75	0.50	2.75	0.00	0.35	seat:3 bar:2 free:2 lever:1 laid:1
+veinsight	4	2.25	1.00	0.50	0.00	1.75	2.50	0.50	0.46	seam:4 thinn:2 change:2 direction:1
+caution	6	2.17	1.00	0.17	0.17	1.83	5.50	0.17	0.40	wrongnes:5 delay:3 pause:1 resolve:1 check:1 exit:1
+exploration	6	2.17	0.83	0.33	0.83	1.00	5.17	0.00	0.50	path:4 horizon:3 unchart:2 shelter:1 trail:1 hollow:1
+gleaning	6	2.17	0.83	0.17	0.50	1.50	5.33	0.00	0.14	fallen:3 forgotten:3 root:3 meal:2 harvest:1 pear:1
+surefoot	6	2.17	1.00	0.33	0.00	1.83	3.33	0.17	0.28	test:6 scree:4 pres:2 eased:1
+vanitas	6	2.17	0.83	0.83	0.00	1.33	5.50	0.17	0.36	fetch:4 nap:3 silver:3 wear:1 gilt:1 cloth:1
+woodcraft	6	2.17	1.00	0.67	0.00	1.50	4.50	0.00	0.34	joint:6 stroke:3 beam:2 shap:1 plane:1
+grave_robbing	8	2.12	0.88	1.00	0.25	0.88	5.88	0.12	0.36	dig:4 spade:4 coffin:3 shaft:1 fill:1 hole:1
+lockpicking	8	2.12	1.00	0.75	0.62	1.12	5.38	0.12	0.35	fingertip:4 tumbler:3 confession:3 tension:2 confessor:2 lock:2
+rage	8	2.12	0.88	0.25	0.88	1.88	5.25	0.00	0.36	fury:7 red:5 roar:2 rage:1 rise:1 loss:1
+alchemy	4	2.00	0.75	1.25	0.00	0.75	6.25	0.00	0.48	nature:3 sulphur:2 mercury:1 coax:1 white:1
+almanac	2	2.00	1.00	1.00	0.00	1.00	3.50	0.00	0.50	feast:2 nine:1 spring:1
+bonesetting	6	2.00	0.67	0.83	0.00	1.17	8.50	0.50	0.17	click:4 bind:2 grat:2 tight:2 linen:1 joint:1
+dairycraft	4	2.00	0.75	0.50	0.00	1.50	7.00	0.00	0.25	churn:3 milk:2 curd:1 pres:1 pail:1
+deadeye	4	2.00	0.75	0.50	0.00	1.50	3.50	0.00	0.26	range:2 release:2 windage:2 hundr:1 precision:1
+herblore	4	2.00	0.75	2.00	0.00	0.00	8.00	0.25	0.42	scent:3 thyme:2 gather:1 pot:1 green:1
+lambing	6	2.00	1.00	1.17	0.83	0.00	8.83	0.00	0.19	lamb:5 rub:2 breathe:2 cough:1 sit:1 skin:1
+muster	2	2.00	1.00	1.00	0.00	1.00	5.00	0.00	0.34	perrin:2 hors:1 spear:1
+mycology	4	2.00	0.75	0.25	0.75	1.50	11.25	0.00	0.36	decay:2 hidden:2 wonder:1 grow:1 soil:1 connect:1
+physic	4	2.00	1.00	1.25	0.25	0.75	2.00	0.00	0.48	hurt:1 humor:1 remedy:1 choler:1 phlegm:1 bark:1
+plantership	2	2.00	1.00	0.50	0.50	1.00	7.00	0.50	0.24	coast:2 reckon:1 rows:1
+pounce	8	2.00	0.88	0.75	0.00	1.25	8.00	0.00	0.25	crouch:6 forward:3 leap:3 spring:2 tension:1 release:1
+provisioning	7	2.00	0.57	0.86	0.00	1.14	3.14	0.00	0.40	reckon:4 firewood:2 meat:2 food:2 bread:1 fodder:1
+resolve	4	2.00	1.00	0.00	0.00	2.00	1.50	0.25	0.46	anyway:3 forward:2 grind:2 fail:1
+scenting	4	2.00	1.00	1.25	0.25	0.50	5.50	0.00	0.49	scent:3 fading:1 ledger:1 sweat:1 iron:1 nose:1
+smoke_reading	2	2.00	1.00	0.50	0.00	1.50	5.50	0.00	0.49	resinou:2 alive:1 sour:1
+soft_mouth	4	2.00	0.75	1.00	0.00	1.00	3.75	0.00	0.23	egg:2 jaw:2 gent:2 fragile:1 moved:1
+vigor	4	2.00	1.00	1.00	0.00	1.00	6.00	0.00	0.18	sap:3 task:3 eager:1 appetite:1
+wear_reading	4	2.00	1.00	0.00	0.00	2.00	6.25	0.00	0.33	mend:3 worn:3 wear:2
+brute_force	8	1.88	0.88	0.62	0.12	1.12	5.88	0.00	0.35	crush:5 force:3 smash:3 brute:2 mass:1 raw:1
+delving	8	1.88	0.88	0.25	0.00	1.62	4.00	0.25	0.29	wedge:6 piece:4 crack:3 angry:1 fail:1
+pugilitas	8	1.88	0.75	0.75	0.25	1.00	7.38	0.12	0.32	craftsman:3 timing:2 centuri:1 discipline:1 art:1 respect:1
+arson_fire	6	1.83	0.67	0.33	0.67	0.83	6.17	0.00	0.26	flame:2 draught:2 spark:1 oil:1 spread:1 straw:1
+grooming	6	1.83	1.00	0.33	0.00	1.50	7.50	0.00	0.30	smooth:5 gentle:4 gent:1 inspection:1
+asylum	5	1.80	0.60	0.20	0.60	1.40	4.60	0.20	0.28	sanctuary:3 law:2 armed:1 claim:1 limit:1 threshold:1
+aesthetic	4	1.75	0.50	1.00	0.50	0.75	11.25	0.00	0.39	beauty:2 craftsmanship:1 formal:1 harmony:1 scene:1 perceive:1
+athletics	4	1.75	0.75	0.75	0.00	1.00	8.50	0.00	0.22	eager:2 lung:1 test:1 spring:1 stride:1 muscle:1
+doughcraft	4	1.75	1.00	0.25	0.25	1.50	5.25	0.25	0.30	dough:3 flour:1 dawn:1 humour:1 knead:1
+liturgy	4	1.75	0.75	0.25	0.75	1.50	5.75	0.00	0.53	feast:3 response:3 eve:1
+musk_reading	4	1.75	1.00	0.00	0.00	1.75	3.25	0.50	0.57	sweetnes:3 sour:3 coat:1
+panting	4	1.75	1.00	0.00	0.00	1.75	5.50	0.25	0.15	shade:4 relief:3
+poetry	4	1.75	0.75	1.75	0.00	0.00	11.00	0.00	0.42	shadow:2 whisper:2 echo:1 seek:1 truth:1
+poisoning	4	1.75	1.00	0.75	0.50	0.75	5.00	0.25	0.31	cup:2 space:1 unwatch:1 dish:1 taste:1 stew:1
+ruin_sense	4	1.75	1.00	1.00	0.75	0.75	8.50	0.25	0.44	roof:3 twenty:3 tool:1
+temerity	4	1.75	1.00	1.00	0.00	0.75	6.00	0.25	0.45	giddines:2 temerity:1 giddy:1 speed:1 gave:1 lock:1
+tooth_drawing	4	1.75	0.25	1.50	0.00	0.25	5.00	0.25	0.17	grip:1 hole:1 lets:1 pack:1 rock:1 root:1
+aristocracy	7	1.71	0.71	0.00	0.29	1.43	8.29	0.00	0.29	rank:5 lineage:2 common:1 faint:1 propriety:1 forgotten:1
+firecraft	6	1.67	1.00	0.83	0.17	0.67	7.00	0.17	0.28	draught:2 ember:2 coal:2 forge:2 fierce:1 skin:1
+friendship	9	1.67	0.78	0.44	0.22	1.00	5.78	0.00	0.38	heart:4 friend:3 future:2 welcome:2 companionship:1 friendship:1
+husbandry	6	1.67	0.83	0.00	0.17	1.50	5.33	0.00	0.32	pen:4 fold:3 trough:2 health:1
+sluicecraft	6	1.67	1.00	0.50	0.33	0.83	2.83	0.50	0.42	board:5 channel:2 flow:1 drink:1 river:1
+trailcraft	6	1.67	0.67	0.00	0.33	1.67	4.00	0.33	0.44	path:4 branch:2 contour:2 worn:2
+busking	11	1.64	0.73	0.91	0.00	0.73	4.18	0.45	0.22	hat:7 copper:3 gather:3 performer:2 sirs:2 perform:1
+felling	8	1.62	0.88	0.38	0.62	0.62	5.50	0.00	0.42	plan:3 crack:3 escape:2 north:2 tension:2 aims:1
+turfcutting	8	1.62	0.88	0.88	0.75	0.75	4.50	0.38	0.34	stack:6 block:4 tidines:1 peat:1 february:1
+wheedling	7	1.57	0.57	0.71	0.00	0.86	3.86	0.00	0.34	request:2 least:1 meal:1 sir:1 thank:1 modest:1
+backtrail	4	1.50	0.75	1.00	0.00	0.50	1.75	0.25	0.35	scent:3 trail:2 thicken:1
+cloister_silence	2	1.50	1.00	0.50	0.50	0.50	3.50	0.00	0.13	footstep:1 footfall:1 silent:1
+cutpurse	8	1.50	0.75	0.00	0.00	1.50	6.00	0.00	0.35	string:5 pres:4 bodi:3
+dread	6	1.50	0.83	0.50	0.00	1.00	5.50	0.00	0.31	exit:3 forearm:2 arms:2 reluctance:1 strong:1
+endurance	4	1.50	0.75	0.75	0.00	0.75	3.00	0.00	0.35	oak:3 ends:1 journey:1 till:1
+hagiography	2	1.50	1.00	0.50	1.00	1.00	5.50	0.50	0.66	saint:2 ford:1
+homesickness	4	1.50	0.75	1.00	0.25	0.25	5.25	0.25	0.33	unlike:1 angle:1 difference:1 fell:1 roof:1 river:1
+hunt	6	1.50	0.67	0.00	0.00	1.50	5.33	0.17	0.33	focu:2 quarry:2 sharpen:2 track:2 prey:1
+iconography	4	1.50	0.75	0.75	0.75	0.25	9.50	0.00	0.41	promis:2 carv:1 figure:1 claim:1 faint:1
+lope	4	1.50	0.50	0.25	0.25	1.00	6.00	0.00	0.48	quarry:2 tiring:2 race:1 stride:1
+pageantry	2	1.50	0.50	0.00	1.00	0.50	9.00	0.00	0.38	declar:1 power:1 procession:1
+prowl	8	1.50	0.62	0.50	0.00	1.00	5.12	0.00	0.43	glid:3 shadow:2 silent:2 disturb:1 unseen:1 paus:1
+relish	2	1.50	1.00	0.00	0.00	1.50	10.50	0.00	0.18	taste:2 hidden:1
+seed_lore	4	1.50	0.75	0.50	0.75	0.25	8.25	0.00	0.40	plant:3 frost:1 soil:1 sow:1
+swordsmanship	4	1.50	1.00	0.50	0.75	1.00	3.75	0.00	0.23	guard:3 commit:1 timing:1 opening:1
+threadwork	4	1.50	1.00	0.50	0.25	0.75	4.50	0.00	0.30	thread:2 slub:1 card:1 spindle:1 wool:1
+tillage	8	1.50	0.88	0.38	0.62	1.12	5.62	0.00	0.43	plough:5 furrow:3 soil:1 seed:1 strip:1 headland:1
+vibrissae	2	1.50	0.50	0.50	0.00	1.00	3.50	0.50	0.47	brush:1 sight:1 tight:1
+voyage	4	1.50	1.00	0.00	0.25	1.25	8.50	0.00	0.23	horizon:3 journey:2 chapter:1
+weave_reading	4	1.50	0.75	0.50	0.25	0.75	9.75	0.00	0.33	thread:2 age:1 coat:1 dye:1 worn:1
+obsequies	7	1.43	0.43	0.71	0.43	0.71	3.00	0.14	0.34	lead:3 procession:2 widow:2 gent:1 graveside:1 handful:1
+receiving	7	1.43	0.57	0.14	0.57	1.29	5.43	0.14	0.32	buyer:4 won:3 remove:2 town:1
+lullaby	5	1.40	0.40	0.40	0.20	0.80	4.80	0.00	0.43	cradle:2 song:2 comfort:1 heart:1 sleep:1
+death_shake	8	1.38	0.62	0.50	0.25	0.62	4.88	0.00	0.27	snap:4 struggle:3 mercy:2 grim:1 final:1
+moonwater	8	1.38	0.75	0.00	0.00	1.38	5.75	0.00	0.28	ribs:5 stroke:3 bank:2 invisible:1
+natation	8	1.38	0.88	0.50	0.00	0.88	9.50	0.00	0.26	current:6 stroke:1 buoyancy:1 river:1 fill:1 breathe:1
+shanty	11	1.36	0.64	0.64	0.27	0.45	2.36	0.09	0.45	verse:4 haul:3 song:3 sing:2 beat:1 roar:1
+bushcraft	6	1.33	0.83	1.00	0.17	0.33	4.00	0.17	0.43	heart:2 shelter:1 tree:1 bark:1 deeper:1 flame:1
+gourmandise	6	1.33	0.67	0.00	0.00	1.33	7.83	0.00	0.24	cellar:4 investigat:2 help:1 kitchen:1
+pride	7	1.29	0.43	0.00	0.00	1.29	3.00	0.29	0.47	tone:3 declin:2 drawn:2 noted:2
+apothecary_nose	4	1.25	0.50	1.25	0.00	0.00	6.25	0.00	0.35	wound:2 rue:1 unmistakable:1 unpleasant:1
+avarice	4	1.25	1.00	0.00	0.25	1.00	8.75	0.00	0.30	hoard:4 silver:1
+butchery	8	1.25	0.62	0.38	0.25	0.62	6.00	0.00	0.42	blade:4 flesh:2 task:2 joint:1 purpose:1
+diagnosis	4	1.25	0.50	0.50	0.25	0.50	7.00	0.00	0.41	sign:2 fever:1 sweet:1 yellow:1
+exorcism	4	1.25	0.75	0.75	0.25	0.50	2.25	0.00	0.42	holy:2 demand:1 command:1 depart:1
+exultation	4	1.25	0.75	0.25	0.00	1.00	5.50	0.25	0.31	impact:3 giving:1 gladnes:1
+forcing	8	1.25	1.00	0.00	0.00	1.25	3.88	0.00	0.23	board:5 hinge:4 weak:1
+foresight	4	1.25	1.00	0.25	1.00	0.00	4.00	0.25	0.59	thursday:4 cheap:1
+geometric_scheme	4	1.25	0.75	0.25	0.00	1.00	10.75	0.00	0.46	geometry:2 angle:1 angl:1 proportion:1
+gold_fever	4	1.25	1.00	0.00	0.00	1.25	5.00	0.50	0.57	fixate:4 rock:1
+harvest_joy	4	1.25	0.75	0.00	0.25	1.00	4.00	0.25	0.46	gather:3 plenty:1 pack:1
+retracing	4	1.25	1.00	1.00	0.00	0.25	6.25	0.00	0.25	retrac:2 landmark:1 bakehouse:1 yard:1
+ripelore	4	1.25	0.75	0.50	0.00	0.75	9.00	0.00	0.48	swell:2 branch:1 ready:1 scent:1
+streetwise	4	1.25	0.75	0.00	0.00	1.25	5.75	0.00	0.52	alley:2 exit:2 wary:1
+taint_sense	4	1.25	0.75	0.25	0.25	0.75	3.50	0.00	0.40	flatnes:2 sweet:1 eat:1 sweetish:1
+vagabondage	8	1.25	0.75	0.25	0.12	0.88	5.75	0.25	0.32	corner:4 insist:3 barn:1 lock:1 suggest:1
+almsgiving	9	1.22	0.56	0.78	0.00	0.44	4.56	0.00	0.28	giving:2 free:2 gladnes:2 bread:2 lighter:1 pouch:1
+gregariousness	9	1.22	0.56	0.44	0.00	0.78	4.11	0.22	0.37	fill:3 group:3 outsider:1 gather:1 outside:1 bring:1
+high_society_manners	9	1.22	0.78	0.44	0.33	0.44	10.22	0.11	0.29	station:3 bow:2 noble:1 respect:1 fitt:1 outrank:1
+weeping	5	1.20	0.20	0.00	0.20	1.00	5.00	0.20	0.28	brimm:1 tear:1 tender:1 thick:1 throat:1 unembarrass:1
+zeal	5	1.20	0.60	0.60	0.20	0.40	6.80	0.20	0.33	truth:3 error:1 faith:1 silent:1
+calligraphy	6	1.17	0.67	0.33	0.33	0.50	5.17	0.00	0.44	slant:2 downstroke:1 flourish:1 letter:1 thick:1 stroke:1
+wayfaring	6	1.17	0.67	0.50	0.50	0.17	6.67	0.17	0.31	mile:3 path:2 shelter:1 mud:1
+barrack_wit	7	1.14	0.57	1.00	0.14	0.00	7.00	0.00	0.30	goat:3 captain:1 nickname:1 boot:1 swill:1 tonight:1
+hawking	7	1.14	0.57	0.43	0.29	0.57	4.00	0.14	0.47	cry:2 bargain:1 passer:1 pies:1 joke:1 ware:1
+jurisprudence	7	1.14	0.43	0.43	0.14	0.57	6.14	0.00	0.40	deed:2 law:2 case:1 witness:1 ruling:1 custom:1
+petitioning	7	1.14	0.57	0.14	0.00	1.00	4.43	0.29	0.38	respectful:3 powerful:2 refusal:2 father:1
+stewardry	7	1.14	0.43	0.86	0.00	0.29	4.71	0.00	0.44	task:2 charge:1 labour:1 talli:1 oversight:1 tally:1
+absolution	7	1.00	0.43	0.43	0.00	0.57	3.57	0.14	0.43	forgive:2 penance:2 peace:1 truly:1 heart:1
+assessment	2	1.00	1.00	0.00	1.00	0.00	10.00	0.00	0.25	boot:2
+astronomy	4	1.00	0.50	0.25	0.25	0.75	6.50	0.00	0.55	moon:1 red:1 sky:1 star:1
+bookkeeping	2	1.00	0.50	0.00	0.50	1.00	7.00	0.00	0.50	column:1 due:1
+canecraft	8	1.00	0.75	0.00	0.00	1.00	4.62	0.00	0.51	climb:4 stack:3 strip:1
+clairvoyance	2	1.00	0.50	0.00	0.50	0.50	6.50	0.00	0.60	linger:1 unseen:1
+dance	4	1.00	0.75	0.00	0.00	1.00	4.50	0.00	0.17	release:2 joy:2
+decipher	4	1.00	0.50	0.25	0.25	0.50	6.50	0.00	0.50	cipher:1 page:1 sign:1 smooth:1
+devotion	9	1.00	0.56	0.78	0.00	0.22	3.67	0.11	0.49	gift:2 prayer:1 gentle:1 grateful:1 peace:1 gratitude:1
+dramaturgy	7	1.00	0.43	0.71	0.29	0.14	7.29	0.00	0.45	stage:3 scene:1 signal:1 perform:1 center:1
+elegy	6	1.00	0.50	0.00	0.17	1.00	6.83	0.00	0.47	fading:2 dusk:2 autumnal:1 sadnes:1
+finesse	4	1.00	0.50	0.50	0.25	0.50	7.50	0.00	0.19	complet:1 delicate:1 motion:1 grace:1
+greed	6	1.00	0.67	0.50	0.17	0.33	7.17	0.00	0.41	silver:2 covetou:1 prize:1 glitter:1 glint:1
+hallmark	4	1.00	0.50	0.00	0.00	1.00	5.75	0.50	0.37	join:2 meant:2
+heraldry	4	1.00	0.75	0.25	0.75	0.00	7.25	0.00	0.47	paint:2 device:1 shield:1
+heresy	2	1.00	0.50	0.00	0.00	1.00	4.00	0.50	0.46	clever:1 doctrine:1
+musk_marking	4	1.00	0.75	0.00	0.50	0.50	3.25	0.00	0.33	mine:2 territory:1 claim:1
+quickening	4	1.00	0.50	0.00	1.00	0.00	10.00	0.00	0.28	autumn:2 runt:2
+recklessness	4	1.00	0.25	0.00	0.00	1.00	7.75	0.25	0.20	decision:1 mid:1 speed:1 unhesitat:1
+scholarship	9	1.00	0.67	0.67	0.00	0.33	6.89	0.00	0.38	record:3 older:2 chronicle:2 chronicl:1 passage:1
+seamanship	6	1.00	0.67	0.17	0.67	0.67	8.00	0.00	0.30	deck:3 heel:1 sail:1 haul:1
+superstition	4	1.00	0.75	0.25	0.00	0.75	6.25	0.25	0.41	number:2 aloud:1 cairn:1
+swarm_sense	2	1.00	0.50	0.00	0.50	0.50	3.00	0.00	0.59	hive:1 mass:1
+tactics	4	1.00	0.50	0.25	0.25	0.75	11.25	0.00	0.24	calculation:1 stance:1 advantage:1 momentum:1
+wanderlust	6	1.00	0.50	0.00	0.00	1.00	7.17	0.17	0.33	onward:3 hill:2 gate:1
+war_weariness	4	1.00	1.00	0.25	0.00	0.75	5.25	0.25	0.26	wound:2 tired:1 waste:1
+water_voice	4	1.00	0.50	0.00	0.50	0.50	7.25	0.00	0.21	ford:2 chatter:1 shallow:1
+weather_ear	4	1.00	0.75	0.00	0.50	0.50	5.00	0.00	0.36	quarter:2 interval:2
+stalking	8	0.88	0.62	0.25	0.12	0.50	7.25	0.12	0.34	frozen:2 heartbeat:1 glance:1 clos:1 closer:1 stretch:1
+watchkeeping	8	0.88	0.50	0.88	0.00	0.00	8.88	0.12	0.22	frog:2 dawn:2 tiredest:1 bark:1 dog:1
+fables_and_tales	7	0.86	0.29	0.29	0.00	0.57	3.43	0.00	0.50	echo:2 tale:2 miller:1 stori:1
+plain_dealing	7	0.86	0.57	0.71	0.00	0.14	3.00	0.29	0.44	crack:3 buy:2 movement:1
+reverence	6	0.83	0.50	0.83	0.00	0.00	2.67	0.33	0.64	empty:2 uncover:2 hat:1
+disputation	5	0.80	0.40	0.60	0.00	0.20	5.40	0.40	0.38	concede:2 grant:1 method:1
+augury	4	0.75	0.75	0.00	0.00	0.75	8.50	0.25	0.38	sign:2 foretell:1
+branding	4	0.75	0.50	0.25	0.50	0.50	1.50	0.50	0.34	iron:2 coast:1
+carrion_sense	4	0.75	0.75	0.50	0.00	0.25	6.50	0.00	0.28	rot:2 decay:1
+dirty_labor	4	0.75	0.75	0.00	0.00	0.75	5.25	0.00	0.34	muck:3
+drainage	4	0.75	0.75	0.00	0.25	0.50	4.75	0.25	0.21	reed:2 pool:1
+drill	4	0.75	0.50	0.75	0.00	0.00	5.50	0.00	0.34	shield:2 halt:1
+hard_labor	4	0.75	0.75	0.00	0.75	0.75	3.00	0.00	0.44	toil:3
+homing	4	0.75	0.50	0.50	0.00	0.25	8.50	0.25	0.28	known:1 fold:1 kept:1
+iron_stomach	4	0.75	0.50	0.75	0.00	0.00	9.75	0.25	0.27	iron:1 furnace:1 temple:1
+journeyman_eye	4	0.75	0.50	0.00	0.00	0.75	10.50	0.25	0.41	joint:1 ran:1 grade:1
+physiognomy	4	0.75	0.50	0.50	0.00	0.25	9.25	0.00	0.46	teeth:1 smith:1 stain:1
+pomology	4	0.75	0.50	0.25	0.00	0.50	8.00	0.00	0.41	household:2 keeper:1
+precedence	4	0.75	0.50	0.25	0.00	0.50	8.00	0.25	0.40	rank:2 lord:1
+recollection	4	0.75	0.50	0.00	0.00	0.75	10.00	0.00	0.42	return:2 mid:1
+scientific_research	4	0.75	0.50	0.75	0.00	0.00	9.00	0.00	0.57	test:2 method:1
+spoor_eye	4	0.75	0.25	0.50	0.00	0.25	5.75	0.00	0.50	dew:1 print:1 sharp:1
+stillness	4	0.75	0.25	0.50	0.25	0.00	4.00	0.00	0.43	believ:1 moved:1 resum:1
+terracing	4	0.75	0.50	0.75	0.00	0.00	6.75	0.00	0.52	village:1 hill:1 terrace:1
+vantage	4	0.75	0.25	0.00	0.00	0.75	6.50	0.00	0.59	movement:1 smoke:1 survey:1
+bribery	11	0.73	0.45	0.18	0.00	0.55	4.73	0.09	0.38	gift:4 unspoken:1 dignity:1 children:1 dropp:1
+gossip	7	0.71	0.71	0.00	0.71	0.00	4.14	0.00	0.46	secret:5
+nautical_jargon	7	0.71	0.29	0.00	0.71	0.57	6.71	0.00	0.40	rope:2 tide:2 tongue:1
+seduction	7	0.71	0.57	0.14	0.00	0.57	6.29	0.00	0.28	promise:3 glow:1 promis:1
+charnel_sense	6	0.67	0.17	0.50	0.00	0.17	5.50	0.00	0.44	blood:1 fresh:1 sweetnes:1 throat:1
+curiosity	6	0.67	0.67	0.00	0.00	0.67	4.67	0.17	0.40	lid:4
+introspection	6	0.67	0.33	0.00	0.00	0.67	9.00	0.00	0.38	inward:2 mood:1 motive:1
+largesse	9	0.67	0.44	0.22	0.11	0.33	8.00	0.00	0.30	grand:3 largesse:1 generou:1 public:1
+nightwalking	6	0.67	0.67	0.00	0.00	0.67	4.17	0.00	0.35	draught:4
+pilgrimage	8	0.62	0.50	0.25	0.00	0.38	7.25	0.00	0.35	mile:2 journey:2 blister:1
+spadework	8	0.62	0.38	0.12	0.00	0.50	4.12	0.00	0.49	ache:2 heap:1 spit:1 remain:1
+gatekeeping	5	0.60	0.20	0.20	0.00	0.40	5.40	0.00	0.24	challenge:1 fit:1 halt:1
+linguistic	5	0.60	0.60	0.40	0.00	0.20	9.40	0.00	0.32	tongue:2 tongu:1
+murmur	5	0.60	0.40	0.00	0.00	0.60	3.60	0.00	0.29	whisper:2 hush:1
+mythomania	5	0.60	0.40	0.00	0.40	0.40	10.60	0.00	0.29	tale:1 lies:1 truth:1
+philosophy	5	0.60	0.40	0.20	0.40	0.00	6.80	0.00	0.21	justice:2 fairnes:1
+rote	5	0.60	0.40	0.60	0.00	0.00	2.60	0.20	0.59	taught:2 asked:1
+grimacery	7	0.57	0.29	0.14	0.00	0.43	4.57	0.00	0.30	eyebrow:2 sermon:1 sneer:1
+pidgin	7	0.57	0.57	0.57	0.00	0.00	3.86	0.00	0.46	yes:4
+enterprise	9	0.56	0.44	0.11	0.33	0.11	6.67	0.00	0.37	route:2 rout:1 eager:1 trader:1
+ambition	4	0.50	0.50	0.25	0.25	0.00	6.75	0.00	0.30	higher:1 rose:1
+anatomy_lore	4	0.50	0.50	0.00	0.50	0.50	8.50	0.00	0.39	wound:2
+battlecraft	4	0.50	0.50	0.25	0.25	0.25	3.50	0.00	0.32	angle:1 formation:1
+clenched_grit	4	0.50	0.25	0.50	0.00	0.00	2.75	0.00	0.43	clench:1 grit:1
+creature_lore	4	0.50	0.50	0.25	0.00	0.25	9.75	0.00	0.45	presence:1 timber:1
+gluttony	4	0.50	0.50	0.50	0.00	0.00	10.25	0.00	0.49	meal:1 belly:1
+gravesight	4	0.50	0.50	0.25	0.00	0.25	6.00	0.00	0.60	stiffnes:1 method:1
+grudgekeeping	4	0.50	0.25	0.00	0.00	0.50	4.00	0.00	0.62	date:1 debt:1
+haulage	4	0.50	0.25	0.00	0.00	0.50	2.75	0.25	0.35	balance:1 unbother:1
+insect_chorus	2	0.50	0.50	0.00	0.50	0.00	7.50	0.00	0.54	cricket:1
+knotwork	4	0.50	0.25	0.25	0.00	0.25	7.00	0.00	0.21	bend:1 strain:1
+lineage_lore	2	0.50	0.50	0.00	0.00	0.50	9.00	0.00	0.47	blood:1
+marchstone	2	0.50	0.50	0.50	0.00	0.00	9.00	0.00	0.45	aldr:1
+mourning	4	0.50	0.50	0.25	0.00	0.25	9.25	0.00	0.28	loss:1 chest:1
+obedience	6	0.50	0.50	0.50	0.00	0.00	1.00	0.00	0.82	wish:3
+pack_sense	4	0.50	0.50	0.00	0.00	0.50	4.00	0.00	0.66	deference:1 precedence:1
+peasantry	4	0.50	0.50	0.00	0.25	0.50	4.25	0.00	0.27	soil:1 barn:1
+sacrilege	8	0.50	0.25	0.12	0.12	0.25	5.00	0.00	0.45	altar:1 lock:1 taking:1 thunderbolt:1
+scrutiny	2	0.50	0.50	0.50	0.00	0.00	10.50	0.00	0.43	gaze:1
+second_wind	4	0.50	0.50	0.50	0.00	0.00	3.75	0.00	0.32	lung:2
+surgery	4	0.50	0.50	0.50	0.00	0.00	4.00	0.00	0.37	speed:1 wound:1
+territoriality	6	0.50	0.33	0.33	0.00	0.17	4.33	0.00	0.62	claim:1 stream:1 trespas:1
+timber_ear	2	0.50	0.50	0.00	0.00	0.50	5.50	0.00	0.23	creak:1
+valor	4	0.50	0.50	0.00	0.25	0.25	5.75	0.00	0.39	forward:1 danger:1
+waterline	4	0.50	0.25	0.00	0.25	0.25	7.75	0.00	0.46	river:1 wave:1
+spite	9	0.44	0.33	0.00	0.00	0.44	4.00	0.11	0.46	accept:2 comment:1 named:1
+flattery	7	0.43	0.14	0.29	0.00	0.14	8.57	0.00	0.33	modest:1 wise:1 wish:1
+invective	7	0.43	0.43	0.00	0.00	0.43	8.00	0.00	0.37	indignation:3
+sense_of_humor	7	0.43	0.43	0.29	0.14	0.14	7.14	0.00	0.34	laugh:1 hiding:1 jest:1
+banter	5	0.40	0.40	0.20	0.00	0.20	9.40	0.00	0.26	mine:1 shar:1
+billeting	5	0.40	0.20	0.40	0.00	0.00	4.80	0.00	0.32	commander:1 request:1
+childhood_reminescence	8	0.38	0.12	0.00	0.00	0.38	6.50	0.00	0.51	ache:1 faint:1 nostalgia:1
+manhunt	8	0.38	0.25	0.38	0.00	0.00	6.00	0.00	0.36	broken:1 hedge:1 fami:1
+petty_thief	8	0.38	0.25	0.38	0.00	0.00	5.62	0.00	0.31	thief:2 linger:1
+balance	6	0.33	0.17	0.00	0.00	0.33	2.17	0.00	0.67	felt:1 shorter:1
+meditation	6	0.33	0.33	0.00	0.17	0.17	4.67	0.00	0.41	agitation:1 depth:1
+patrol	6	0.33	0.33	0.33	0.00	0.00	7.83	0.50	0.41	alehouse:1 torch:1
+sloth	6	0.33	0.33	0.17	0.00	0.17	5.67	0.00	0.48	insist:1 lidd:1
+tapstering	6	0.33	0.17	0.00	0.17	0.17	7.00	0.17	0.41	serv:1 tally:1
+vigilance	6	0.33	0.17	0.33	0.00	0.00	5.83	0.00	0.39	flick:1 grip:1
+bearing	7	0.29	0.14	0.29	0.00	0.00	6.57	0.00	0.38	presence:1 respect:1
+condolence	7	0.29	0.29	0.29	0.00	0.00	1.71	0.00	0.57	eaten:2
+diplomacy	7	0.29	0.29	0.29	0.00	0.00	7.00	0.00	0.37	perhap:1 claim:1
+hospitality	7	0.29	0.29	0.14	0.00	0.14	3.86	0.00	0.41	ease:1 sit:1
+intercession	7	0.29	0.29	0.29	0.00	0.00	3.57	0.14	0.52	known:2
+appraisal	4	0.25	0.25	0.25	0.00	0.00	8.50	0.00	0.32	earn:1
+beast_call	8	0.25	0.12	0.12	0.00	0.12	3.38	0.12	0.44	pause:1 wood:1
+crowd_murmur	4	0.25	0.25	0.25	0.00	0.00	8.25	0.00	0.44	murmur:1
+discipline	4	0.25	0.25	0.00	0.00	0.25	3.25	0.00	0.41	tight:1
+dreamlore	4	0.25	0.25	0.25	0.00	0.00	5.00	0.00	0.63	dreamt:1
+fortification	4	0.25	0.25	0.00	0.25	0.00	7.75	0.25	0.41	rampart:1
+iron_nerves	4	0.25	0.25	0.00	0.25	0.00	2.75	0.00	0.53	routine:1
+jailcraft	8	0.25	0.12	0.12	0.00	0.12	8.25	0.00	0.44	check:1 keys:1
+knack	4	0.25	0.25	0.25	0.00	0.00	6.25	0.00	0.28	knack:1
+misanthropy	4	0.25	0.25	0.25	0.00	0.00	5.00	0.00	0.42	spring:1
+obduracy	4	0.25	0.25	0.00	0.00	0.25	6.00	0.25	0.34	shutt:1
+spoor_reading	4	0.25	0.25	0.25	0.00	0.00	8.50	0.00	0.41	age:1
+survivalism	4	0.25	0.25	0.25	0.00	0.00	4.25	0.00	0.34	till:1
+bargaining	9	0.22	0.11	0.11	0.11	0.00	6.22	0.00	0.30	accept:1 seller:1
+insolence	9	0.22	0.22	0.11	0.00	0.11	5.22	0.00	0.46	sharp:1 worn:1
+confession	5	0.20	0.20	0.20	0.00	0.00	5.00	0.00	0.41	detail:1
+homily	5	0.20	0.20	0.00	0.00	0.20	6.80	0.00	0.31	lesson:1
+pedagogy	5	0.20	0.20	0.00	0.00	0.20	3.40	0.00	0.56	known:1
+diligence	11	0.18	0.18	0.00	0.00	0.18	5.73	0.09	0.35	beginn:2
+mimicry	6	0.17	0.17	0.17	0.00	0.00	4.33	0.17	0.50	throat:1
+boasting	7	0.14	0.14	0.00	0.14	0.00	6.57	0.00	0.42	story:1
+empathy	7	0.14	0.14	0.14	0.00	0.00	6.29	0.00	0.35	echo:1
+inquiry	7	0.14	0.14	0.14	0.00	0.00	4.71	0.00	0.41	usual:1
+interrogation	7	0.14	0.14	0.00	0.00	0.14	6.86	0.00	0.37	threaten:1
+mercy	7	0.14	0.14	0.00	0.14	0.00	5.14	0.14	0.37	blam:1
+sharp_practice	7	0.14	0.14	0.14	0.00	0.00	4.71	0.00	0.46	elsewhere:1
+soldiery	7	0.14	0.14	0.00	0.14	0.00	5.86	0.14	0.46	boot:1
+theology	7	0.14	0.14	0.00	0.00	0.14	5.29	0.00	0.53	sacr:1
+gravework	8	0.12	0.12	0.00	0.00	0.12	5.50	0.00	0.46	spade:1
+snatch	8	0.12	0.12	0.00	0.00	0.12	2.38	0.12	0.27	verb:1
+piety	9	0.11	0.11	0.00	0.00	0.11	5.67	0.00	0.39	kept:1
+chant	11	0.09	0.09	0.09	0.00	0.00	5.27	0.00	0.44	sing:1
+anonymity	2	0.00	0.00	0.00	0.00	0.00	4.50	0.00	0.66	
+awe	4	0.00	0.00	0.00	0.00	0.00	7.25	0.00	0.65	
+bastion_eye	2	0.00	0.00	0.00	0.00	0.00	6.00	0.00	0.63	
+beggary	11	0.00	0.00	0.00	0.00	0.00	3.45	0.00	0.41	
+brine_sense	2	0.00	0.00	0.00	0.00	0.00	11.50	0.00	0.34	
+brokerage	7	0.00	0.00	0.00	0.00	0.00	6.57	0.00	0.32	
+cold_blood	4	0.00	0.00	0.00	0.00	0.00	3.50	0.00	0.39	
+comeliness	5	0.00	0.00	0.00	0.00	0.00	5.80	0.00	0.40	
+continence	4	0.00	0.00	0.00	0.00	0.00	7.50	0.00	0.32	
+courtesy	7	0.00	0.00	0.00	0.00	0.00	3.57	0.00	0.59	
+deference	5	0.00	0.00	0.00	0.00	0.00	4.80	0.00	0.42	
+eavesdropping	4	0.00	0.00	0.00	0.00	0.00	7.75	0.00	0.45	
+extortion	5	0.00	0.00	0.00	0.00	0.00	5.60	0.00	0.44	
+fealty	2	0.00	0.00	0.00	0.00	0.00	6.50	0.00	0.64	
+fellow_feeling	6	0.00	0.00	0.00	0.00	0.00	9.00	0.00	0.35	
+forge_ear	2	0.00	0.00	0.00	0.00	0.00	8.50	0.00	0.32	
+hearkening	2	0.00	0.00	0.00	0.00	0.00	9.50	0.00	0.38	
+hollow_ear	2	0.00	0.00	0.00	0.00	0.00	9.00	0.00	0.43	
+houseways	2	0.00	0.00	0.00	0.00	0.00	4.50	0.00	0.70	
+howling	2	0.00	0.00	0.00	0.00	0.00	5.00	0.00	0.69	
+humility	9	0.00	0.00	0.00	0.00	0.00	3.22	0.00	0.55	
+incisiveness	4	0.00	0.00	0.00	0.00	0.00	4.50	0.00	0.37	
+instinct	2	0.00	0.00	0.00	0.00	0.00	1.00	0.00	0.82	
+intrigue	2	0.00	0.00	0.00	0.00	0.00	8.50	0.00	0.48	
+keen_ear	2	0.00	0.00	0.00	0.00	0.00	12.00	0.00	0.23	
+keen_nose	2	0.00	0.00	0.00	0.00	0.00	6.00	0.00	0.52	
+midwifery	4	0.00	0.00	0.00	0.00	0.00	8.25	0.00	0.25	
+mysticism	2	0.00	0.00	0.00	0.00	0.00	11.50	0.00	0.42	
+nerve	4	0.00	0.00	0.00	0.00	0.00	3.50	0.00	0.53	
+night_ear	2	0.00	0.00	0.00	0.00	0.00	4.50	0.00	0.67	
+oathmaking	5	0.00	0.00	0.00	0.00	0.00	4.80	0.00	0.51	
+open_mindedness	6	0.00	0.00	0.00	0.00	0.00	10.17	0.00	0.31	
+parley	9	0.00	0.00	0.00	0.00	0.00	3.89	0.00	0.58	
+prosaic_grammar	5	0.00	0.00	0.00	0.00	0.00	16.00	0.00	0.33	
+rank	5	0.00	0.00	0.00	0.00	0.00	4.60	0.00	0.43	
+rhetoric	5	0.00	0.00	0.00	0.00	0.00	7.60	0.00	0.31	
+sangfroid	4	0.00	0.00	0.00	0.00	0.00	1.50	0.00	0.81	
+self_command	4	0.00	0.00	0.00	0.00	0.00	5.25	0.25	0.27	
+self_preservation	4	0.00	0.00	0.00	0.00	0.00	6.25	0.00	0.35	
+severity	6	0.00	0.00	0.00	0.00	0.00	5.83	0.00	0.57	
+siegecraft	2	0.00	0.00	0.00	0.00	0.00	7.00	0.00	0.46	
+social_interaction	5	0.00	0.00	0.00	0.00	0.00	2.60	0.00	0.66	
+statecraft	2	0.00	0.00	0.00	0.00	0.00	6.00	0.00	0.57	
+stoneface	4	0.00	0.00	0.00	0.00	0.00	5.50	0.00	0.32	
+trencherman	2	0.00	0.00	0.00	0.00	0.00	12.50	0.00	0.40	
+whistling	2	0.00	0.00	0.00	0.00	0.00	6.50	0.00	0.23	
+wind_reading	2	0.00	0.00	0.00	0.00	0.00	5.00	0.00	0.65	
+withdrawal	4	0.00	0.00	0.00	0.00	0.00	2.00	0.25	0.49	
+worldliness	5	0.00	0.00	0.00	0.00	0.00	4.60	0.00	0.52	

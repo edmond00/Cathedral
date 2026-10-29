@@ -24,7 +24,7 @@ public class CuriosityModusMentis : ModusMentis
     public override string PersonaReminder  => "unstoppably curious mind";
     public override string PersonaReminder2 => "someone already opening the thing everyone agreed to leave alone";
     public override string StyleInstruction =>
-        "Lead with the question and follow with the hand - the lid lifted before the risk is finished being assessed.";
+        "Eager and a little reckless - lead with the question, and reach before the risk is weighed.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

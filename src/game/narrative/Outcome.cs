@@ -67,6 +67,14 @@ public abstract class Outcome : INarratable
     /// <summary>False for internal bookkeeping outcomes that should not appear as UI chips.</summary>
     public virtual bool ShowInUI => true;
 
+    /// <summary>
+    /// A modus mentis learned. The narration says it in a sentence of its own, after the other
+    /// consequences (<see cref="NeutralNarration.OutcomeSuccess"/>): last in the comma list ("…, made my
+    /// way to the coop, learned trailcraft") it was the clause the rewrite dropped or replaced, in 45% of
+    /// samples against 34% on its own (tools/prompts, 124 samples a side).
+    /// </summary>
+    public virtual bool IsLesson => false;
+
     protected Outcome(string text, OutcomeSeverity severity, string verbatim)
     {
         Text     = text;
@@ -177,6 +185,8 @@ public sealed class SkillAcquisitionOutcome : Outcome
         _template = template;
     }
 
+    public override bool IsLesson => true;
+
     protected override void Apply(OutcomeContext ctx)
     {
         var instance = (ModusMentis)Activator.CreateInstance(_template.GetType())!;
@@ -227,6 +237,8 @@ public sealed class ModusMentisGrantOutcome : Outcome
     }
 
     public override bool ShowInUI => !_alreadyKnown || _practiceLanded;
+
+    public override bool IsLesson => true;
 
     /// <summary>
     /// Builds the grant for <paramref name="modusMentisId"/>, or null when the id is blank or does

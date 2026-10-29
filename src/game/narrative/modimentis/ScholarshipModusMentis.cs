@@ -29,7 +29,7 @@ public class ScholarshipModusMentis : ModusMentis
     public override string PersonaReminder  => "tutor-bred reader";
     public override string PersonaReminder2 => "someone who consults memory the way another consults an almanach";
     public override string StyleInstruction =>
-        "Reach for bookish imagery of records, precedents and learned reference, with a scholar's quiet relish for knowing.";
+        "Bookish and quietly delighted - consult what is already known before offering a view of whatever is in front of you.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

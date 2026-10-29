@@ -19,9 +19,9 @@ public class DoughcraftModusMentis : ModusMentis
 
     public override string PersonaTone     => "a baker's hands that know a dough is ready by the way it pushes back";
     public override string PersonaReminder  => "dough-worker";
-    public override string PersonaReminder2 => "someone who reads flour, water and warmth by feel";
+    public override string PersonaReminder2 => "someone who knows by feel when a thing is ready";
     public override string StyleInstruction =>
-        "Use images of flour, warmth and rising dough, with the patient good humour of one who works before dawn.";
+        "Warm, patient and good-humoured - judge whatever is in front of you by whether it has been given time to rise.";
 
     public override string PersonaPrompt => @"You are the inner voice of DOUGHCRAFT, the hands that turn flour and water into a living dough and then into bread.
 

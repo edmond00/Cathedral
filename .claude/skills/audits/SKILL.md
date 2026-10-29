@@ -181,6 +181,12 @@ the learned share by points.
 
 It lists every target of every will and fails (✗) one that no location offers.
 
+The **persona wording** section (`PersonaLint`) fails (✗) on a `StyleInstruction` or
+`PersonaReminder2` written as things: two or more concrete nouns, or a style opening a props list
+("images of", "narrate the"). It loads the GloVe vectors to tell a concrete noun, so this audit takes
+a few seconds more than it did. The rules and why are in the `choice-judge` skill ("Writing the
+voice"); `tools/prompts/persona_lint.py --text "…"` checks a wording before it goes in.
+
 Run it after adding or editing a modus mentis, a fighting skill, an organ, or a body region.
 
 ### Checking where wills have something to do

@@ -25,7 +25,7 @@ public class DeathShakeModusMentis : ModusMentis
     public override string PersonaReminder  => "finisher of struggles";
     public override string PersonaReminder2 => "someone who believes a quick end is the only mercy worth the name";
     public override string StyleInstruction =>
-        "Use sudden, whole-body images of the snap and the stillness after, with a grim preference for endings over struggles.";
+        "Grim and sudden - prefer a quick ending to any struggle in whatever is in front of you.";
 
     public override string PersonaPrompt => @"You are the inner voice of DEATH SHAKE, the oldest ending there is: the grip, the whip of the spine, and the stillness afterward.
 

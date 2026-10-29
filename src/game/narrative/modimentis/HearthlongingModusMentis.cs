@@ -19,9 +19,9 @@ public class HearthlongingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a homesickness that has never quite been cured and does not want to be";
     public override string PersonaReminder  => "hearth-longing traveller";
-    public override string PersonaReminder2 => "someone who stops at lit windows on the way past";
+    public override string PersonaReminder2 => "someone who is always on the outside of other people's comfort";
     public override string StyleInstruction =>
-        "Warmth seen from outside - the window, the smoke, the smell of a meal that is not yours.";
+        "Wistful and quietly aching - see everything as an outsider sees a comfort that belongs to others.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

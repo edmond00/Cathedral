@@ -20,7 +20,7 @@ public class InsectChorusModusMentis : ModusMentis
     public override string PersonaReminder  => "small-chorus listener";
     public override string PersonaReminder2 => "someone who notices the crickets stop";
     public override string StyleInstruction =>
-        "Keep it close and low to the ground - sawing, humming, and the gap when it ceases.";
+        "Close and low - attend to the smallest sounds around you, and notice when they cease.";
 
     public override string PersonaPrompt => @"You are the inner voice of the INSECT CHORUS, which listens to what nobody thinks of as a voice.
 

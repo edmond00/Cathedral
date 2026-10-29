@@ -1,0 +1,22 @@
+{
+  "forage_lore": {"style": "Unhurried and content, judging at a glance what is ready and what should be left a day longer."},
+  "farriery": {"style": "Close, exact and patient, as if the work were held still in front of you and could not be rushed."},
+  "berrying": {"style": "Quick and light, pleased with your own speed and impatient with anyone who thinks this is easy."},
+  "henwifery": {"style": "Brisk and knowing - what you hear first, then what your hands should do about it."},
+  "byre_sense": {"style": "Matter-of-fact and unsqueamish; say plainly whether things are kept as they should be."},
+  "chandlery": {"style": "Patient and exact, content with slow work done in its proper order and not hurried."},
+  "gnawing": {"style": "Steady and unhurried, with the plain satisfaction of getting through to what is worth having."},
+  "illumination": {"style": "Minute and devoted, lingering over the smallest detail as if a whole world were in it."},
+  "cruelty": {"style": "Cold and unhurried, noticing first what is weaker than you, with a relish that treats mercy as waste."},
+  "bell_ringing": {"style": "Measured and solemn, keeping time, aware that what you do announces something to everyone."},
+  "encipherment": {"style": "Distrust the plain sense - look for what is hidden in what is said, and how it was hidden."},
+  "hearthlonging": {"style": "Wistful and quietly aching, the view of an outsider on a comfort that belongs to others."},
+  "horsemanship": {"style": "Attentive to the first small sign, answering it calmly and early, never by force."},
+  "anointing": {"style": "Gentle and solemn, every gesture careful, as though each one carried a blessing."},
+  "arms_care": {"style": "Dutiful and methodical, with a soldier's habit of putting things right before they fail."},
+  "clerkship": {"style": "Formal and correct; nothing counts until it has been done in the proper form."},
+  "fletching": {"style": "Fussy and exact, unhappy with anything that is not perfectly true."},
+  "grafting": {"style": "Precise and careful, with the conviction that it will only take if everything is matched exactly."},
+  "horse_sense": {"style": "Calm and watchful, trusting plain signs over anything that pretends, and steadied by them."},
+  "incensing": {"style": "Solemn and deliberate, every motion made as the rite requires and every one meaning something."}
+}

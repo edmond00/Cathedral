@@ -1,0 +1,120 @@
+# round 7 (reasoning about a person: appearance clause vs the person's label), scored blind.
+# Facts: the blacksmith and the miller are women. Note the label carries "(a woman)", so the two
+# versions can be told apart by their inputs; the scoring is against the same facts for both.
+# talk_blacksmith:012:swap:avarice
+S1201 F1 P2 C1 Q1 | +the coins in my hands, the hoard
+S8693 F1 P2 C- Q1 | +"my hands itch"
+S2841 F0 P2 C- Q0 | +forging a blade, +a cup of ale by a warm hearth
+S7436 F0 P2 C- Q1 | +coins in my purse, "this wastefulness"
+S3307 F0 P1 C- Q0 | +a hand grasping a coin
+S1708 F0 P2 C- Q1 | +"the silversmith's hoard"
+S3272 F1 P2 C1 Q1 | +the forge's glowing metal
+S2842 F1 P2 C1 Q1 | "the next hoard"
+# talk_miller:011:own
+S9768 F1 P1 C- Q1 |
+S4797 F1 P1 C- Q1 | +lush fields beyond
+S3287 F0 P2 C1 Q1 | +the mill pond, leaping fish
+S3415 F1 P2 C1 Q1 | +"whispers of the wind through ancient stone walls"
+S1542 F0 P1 C- Q1 | +the apple orchard by the river
+S1993 F0 P2 C1 Q1 | +a gentle smile, +a stream with a leaping fish
+S3237 F0 P2 C1 Q0 | +sheep in a meadow, +the stream
+S4787 F1 P1 C- Q1 | +ripe wheat swaying
+# talk_miller:002:swap:mercy
+S9776 F0 P1 C- Q1 | "following my decision to let it go" (the goal dropped)
+S8335 F2 P1 C1 Q2 |
+S9619 F0 P1 C1 Q1 | style acted out: she pauses, I step back
+S7759 F1 P1 C1 Q1 | +her distant gaze
+S4357 F2 P1 C1 Q1 |
+S2525 F0 P1 C- Q1 | the goal dropped ("not tempted by the offer of a conversation")
+S2935 F1 P1 C1 Q0 | style copied
+S1333 F1 P1 C- Q1 |
+# talk_blacksmith:002:swap:avarice
+S7601 F0 P2 C1 Q1 | +"the coins in her purse"
+S6595 F0 P1 C- Q1 | the smith's worry made mine
+S4252 F0 P1 C- Q0 | the smith's worry made mine; style copied
+S4373 F0 P2 C1 Q1 | the goal refused; +a pouch of coins
+S6411 F0 P2 C1 Q1 | the goal refused ("not a word of my name")
+S7421 F1 P2 C1 Q1 | style echoed; the goal blurred
+S6978 F1 P1 C1 Q0 | "her hammers"
+S5039 F1 P2 C1 Q1 | +her forge, soot; the goal blurred
+# talk_miller:011:swap:dread
+S4446 F2 P2 C- Q1 |
+S4554 F1 P2 C1 Q1 | +"something is wrong"
+S7821 F1 P2 C- Q1 | +the fields beyond
+S9968 F1 P1 C1 Q1 | +the door
+S1983 F0 P2 C1 Q1 | +the village cold and empty
+S1844 F1 P2 C- Q1 |
+S3947 F1 P2 C1 Q1 |
+S6824 F0 P1 C0 Q1 | the miller made a man; +the silence
+# talk_blacksmith:012:swap:dread
+S3207 F1 P2 C- Q1 | +the door
+S4340 F1 P2 C- Q1 | +the door
+S3418 F1 P2 C- Q1 | +the door
+S7167 F1 P1 C- Q0 |
+S1497 F2 P2 C1 Q1 |
+S2410 F2 P2 C1 Q1 |
+S9703 F1 P2 C- Q1 |
+S8187 F1 P2 C- Q1 | +the door
+# talk_blacksmith:012:loose:pedant_reminder
+S4577 F0 P0 C- Q1 | the smith's worry made mine
+S4403 F1 P1 C1 Q1 | +mending a torn cloak
+S8084 F2 P1 C1 Q1 |
+S7020 F2 P1 C1 Q1 |
+S4175 F1 P1 C- Q1 |
+S6417 F0 P1 C- Q0 | +a broken spade in the corner
+S4591 F2 P1 C1 Q1 |
+S8898 F0 P0 C- Q1 | the doubt made mine
+# talk_blacksmith:012:own
+S1678 F1 P2 C1 Q1 | +"I will not be spoken to like that"
+S5315 F0 P1 C1 Q1 | +declined her request (style acted out)
+S6505 F0 P1 C- Q0 | +declined the offer
+S5806 F1 P1 C1 Q0 | setting copied ("this medieval world")
+S6477 F0 P1 C- Q0 | setting copied ("iron world ... machines are absent")
+S7490 F1 P1 C- Q1 |
+S8894 F0 P1 C1 Q1 | +"the offer was declined"
+S6183 F1 P1 C- Q1 |
+# talk_blacksmith:002:own
+S4492 F0 P1 C1 Q1 | the narrator's skills given to her; +"rely on her expertise"
+S2561 F0 P1 C1 Q1 | the narrator's skills given to her
+S6018 F1 P1 C- Q1 | made a question
+S3888 F0 P1 C0 Q1 | the smith made a man
+S9942 F0 P1 C0 Q1 | the smith made a man; +"our woodcraft"
+S5834 F2 P1 C1 Q1 |
+S2532 F1 P2 C1 Q1 | +"forge of community"
+S3843 F1 P2 C1 Q1 |
+# talk_miller:011:swap:pride
+S4158 F0 P1 C1 Q1 | +declined her offer
+S1471 F0 P1 C- Q0 | instruction clause copied; +I walk away
+S7139 F0 P1 C1 Q1 | +the way she offered it
+S2567 F0 P1 C- Q1 | +"their refusal to continue"
+S7540 F0 P1 C1 Q1 | +"I will not be spoken to like that"
+S5666 F0 P1 C- Q0 | instruction clause copied
+S6006 F0 P1 C1 Q1 | +declining the offer
+S4225 F0 P0 C- Q0 | instruction clause and setting copied
+# talk_miller:002:swap:rhetoric
+S2867 F1 P2 C1 Q1 |
+S8451 F1 P2 C1 Q1 | +her wisdom
+S4319 F1 P1 C- Q1 |
+S6471 F1 P1 C- Q1 | the miller made "it"
+S8285 F1 P2 C1 Q1 | +the mill's hum
+S1795 F2 P2 C1 Q1 |
+S2933 F1 P1 C0 Q1 | his and her mixed
+S5385 F1 P2 C1 Q1 | +"my ethos"
+# talk_miller:002:own
+S1949 F2 P0 C1 Q2 |
+S9161 F2 P1 C1 Q1 |
+S9389 F2 P1 C1 Q1 |
+S5554 F2 P1 C1 Q1 |
+S7101 F1 P2 C1 Q1 | +"let her go first"
+S9032 F2 P1 C1 Q1 |
+S1623 F2 P0 C1 Q1 |
+S2835 F1 P1 C1 Q0 | "using her name" (not known)
+# talk_blacksmith:002:swap:mercy
+S2619 F1 P2 C- Q1 | +"the hammer's pause"
+S2954 F0 P2 C- Q1 | the goal dropped ("I step back, let it go")
+S4180 F0 P1 C- Q0 | the goal dropped ("my decision not to finish")
+S4294 F0 P1 C1 Q0 | style copied; the goal dropped
+S6492 F1 P1 C1 Q0 | style copied
+S3659 F1 P1 C1 Q0 | style copied
+S3488 F1 P1 C1 Q0 | style and reminder copied
+S8793 F0 P2 C- Q1 | the goal dropped

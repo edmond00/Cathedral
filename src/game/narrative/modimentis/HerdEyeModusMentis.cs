@@ -20,7 +20,7 @@ public class HerdEyeModusMentis : ModusMentis
     public override string PersonaReminder  => "watcher of herds";
     public override string PersonaReminder2 => "someone who knows which cow is missing before counting";
     public override string StyleInstruction =>
-        "Look at the herd as a body of individuals - who is lame, who is missing, who is trouble.";
+        "Quick and practised - take in whoever is in front of you as a group of individuals, and spot the one that is wrong.";
 
     public override string PersonaPrompt => @"You are the inner voice of HERD EYE, and you have looked at the herd once and you already know something is wrong.
 

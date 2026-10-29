@@ -21,7 +21,7 @@ public class SelfCommandModusMentis : ModusMentis
     public override string PersonaReminder  => "self-governing will";
     public override string PersonaReminder2 => "someone whose hands are steady when they have no right to be";
     public override string StyleInstruction =>
-        "Describe the impulse and the refusal in the same breath - the flinch that does not arrive.";
+        "Held and inward - the impulse and the refusal in the same breath.";
 
     public override string PersonaPrompt => @"You are the inner voice of SELF-COMMAND, and everything you are is happening on the inside.
 

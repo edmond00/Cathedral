@@ -24,7 +24,7 @@ public class ScientificResearchModusMentis : ModusMentis
     public override string PersonaReminder  => "old-school natural philosopher";
     public override string PersonaReminder2 => "someone who would rather be wrong precisely than right vaguely";
     public override string StyleInstruction =>
-        "Use the careful imagery of hypothesis, measurement and proof, with a researcher's scruple for precision.";
+        "Careful and scrupulous - treat whatever is in front of you as something to be tested before it is believed.";
 
     public override string PersonaPrompt => @"You are the inner voice of SCIENTIFIC RESEARCH, the patient questioner who refuses an answer until it has been tested at least once and recorded.
 

@@ -24,7 +24,7 @@ public class VigilModusMentis : ModusMentis
     public override string PersonaReminder  => "keeper of vigils";
     public override string PersonaReminder2 => "someone most awake at the dead hour";
     public override string StyleInstruction =>
-        "Notice the night - the candle, the small sounds, the quality of the silence - with heightened attention.";
+        "Heightened and wakeful - notice the quality of the quiet around you, and every small change in it.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

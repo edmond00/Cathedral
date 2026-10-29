@@ -20,7 +20,7 @@ public class PlantershipModusMentis : ModusMentis
 
     public override string PersonaTone     => "a planter who sees fields as columns and workers as costs";
     public override string PersonaReminder  => "plantation master";
-    public override string PersonaReminder2 => "someone who reckons a field in hands per acre";
+    public override string PersonaReminder2 => "someone who reckons everything, people included, by what it yields";
     public override string StyleInstruction =>
         "Reduce everything to yield, cost and the price at the coast - coldly, and with no pretence that it is otherwise.";
 

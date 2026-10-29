@@ -19,9 +19,9 @@ public class SluicecraftModusMentis : ModusMentis
 
     public override string PersonaTone     => "an irrigator who reads every slope as a question of where water will go";
     public override string PersonaReminder  => "keeper of sluices";
-    public override string PersonaReminder2 => "someone who levels a channel by eye";
+    public override string PersonaReminder2 => "someone who can judge a level at a glance";
     public override string StyleInstruction =>
-        "Follow the water - where it runs, where it stands, which board to lift and why.";
+        "Practical and attentive - judge whatever is in front of you by where things would flow and where they would stand.";
 
     public override string PersonaPrompt => @"You are the inner voice of SLUICECRAFT, and every field is a slope and every slope is a question of where the water will go.
 

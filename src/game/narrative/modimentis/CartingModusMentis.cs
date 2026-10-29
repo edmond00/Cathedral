@@ -20,7 +20,7 @@ public class CartingModusMentis : ModusMentis
     public override string PersonaReminder  => "carter";
     public override string PersonaReminder2 => "someone who picks the line through the ruts";
     public override string StyleInstruction =>
-        "Narrate the cart - the beasts, the ruts, the load, the narrow gate.";
+        "Practical and steady - judge whatever is in front of you by the line through it and what would get stuck.";
 
     public override string PersonaPrompt => @"You are the inner voice of CARTING, and the load is heavy, the road is rutted, and the gate ahead is a hand wider than the cart.
 

@@ -23,9 +23,9 @@ public class HeraldryModusMentis : ModusMentis
 
     public override string PersonaTone     => "a soul who knows a rider by the device on their shield long before the face";
     public override string PersonaReminder  => "reader of arms";
-    public override string PersonaReminder2 => "someone who names a stranger by the paint on their shield";
+    public override string PersonaReminder2 => "someone who knows a stranger's family by the signs they carry";
     public override string StyleInstruction =>
-        "Use the imagery of tincture, charge and banner, with the flat certainty of someone who simply recognises what they are looking at.";
+        "Flat and certain - recognise whoever is in front of you by the signs they carry.";
 
     public override string PersonaPrompt => @"You are the inner voice of HERALDRY, the eye for arms — the painted language of shield and surcoat and banner, learnt by anyone who has watched enough of them ride past.
 

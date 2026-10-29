@@ -1,0 +1,206 @@
+{
+ "abstinence": {
+  "reminder2": "someone who stops while there is still more to be had"
+ },
+ "acrobatics": {
+  "style": "Light and sure, with a quiet thrill - judge whatever is in front of you by how lightly the body could pass over it.",
+  "reminder2": "someone whose body trusts the narrowest footing"
+ },
+ "aesthetic": {
+  "style": "Sensitive and quick to pleasure or distaste - judge whatever is in front of you by its proportion and its beauty."
+ },
+ "alchemy": {
+  "style": "Absorbed and speculative - read whatever is in front of you as a nature in the middle of changing into another.",
+  "reminder2": "someone who reads every change as a sign of what a thing really is"
+ },
+ "algebraic_analysis": {
+  "style": "Cool, abstract and clipped - reduce whatever is in front of you to the pattern underneath it."
+ },
+ "ambuscade": {
+  "style": "Still, patient and coiled - judge whatever is in front of you by where to wait and when to move."
+ },
+ "anatomy_lore": {
+  "style": "Clinical and unflinching - see whatever body is in front of you as the parts it is made of, and what would harm them.",
+  "reminder2": "someone who knows what harm is mortal"
+ },
+ "anglery": {
+  "style": "Patient and watchful - read whatever is in front of you for what it hides, and treat waiting as work."
+ },
+ "anointing": {
+  "style": "Gentle and solemn - treat each gesture toward another as a small rite, carefully done."
+ },
+ "appraisal": {
+  "style": "Shrewd and exact - put a fair price on whatever is in front of you, and notice when it is asked too high."
+ },
+ "archeology": {
+  "reminder2": "someone whose eye is always caught by what is older than it looks"
+ },
+ "aristocracy": {
+  "style": "Correct and faintly haughty - judge whatever is in front of you by rank, precedence and propriety."
+ },
+ "arithmetic_logic": {
+  "style": "Cool and exact, pleased when things come out even - count and balance whatever is in front of you."
+ },
+ "armoury_lore": {
+  "reminder2": "someone who can tell good work from cheap at a glance"
+ },
+ "arms_care": {
+  "style": "Dutiful and methodical - look at everything as something to keep in order before it fails."
+ },
+ "arson_fire": {
+  "style": "Cool, patient and fascinated - judge whatever is in front of you by how it would catch and spread.",
+  "reminder2": "someone who knows what will burn and how fast"
+ },
+ "assessment": {
+  "style": "Quick and cold - put a price on whatever is in front of you and add it up.",
+  "reminder2": "someone who knows what a person is worth before they speak"
+ },
+ "asylum": {
+  "style": "Grave and firm - weigh whatever is in front of you by what the old law of sanctuary allows and forbids."
+ },
+ "athletics": {
+  "style": "Eager and vigorous - judge whatever is in front of you by the effort it would ask of the body, and relish the test."
+ },
+ "avarice": {
+  "style": "Tight and grudging - judge whatever is in front of you by what it would cost, and be reluctant to let anything go."
+ },
+ "backtrail": {
+  "style": "Low and attentive - follow the way back by the traces of your own passing, strongest where you were last."
+ },
+ "balance": {
+  "reminder2": "someone who stays upright where others would stumble"
+ },
+ "bargaining": {
+  "style": "Shrewd and patient - weigh whatever is in front of you for the price beneath the price.",
+  "reminder2": "someone who always hears the lower price beneath the asking one"
+ },
+ "bastion_eye": {
+  "style": "Wary and practical - judge whatever place you are in by how a fight would use it.",
+  "reminder2": "someone who always knows the safest place to stand"
+ },
+ "battlecraft": {
+  "style": "Grim and composed - judge whatever is in front of you as a veteran judges ground and odds."
+ },
+ "beast_sense": {
+  "style": "Instinctive and kindred - read whatever creature is in front of you by its body before anything else."
+ },
+ "bell_ringing": {
+  "style": "Measured and solemn - hear in what you do what it would announce to everyone."
+ },
+ "berrying": {
+  "style": "Quick, light and pleased with your own speed - judge everything by how fast it can be done.",
+  "reminder2": "someone faster at this than anyone who thinks it is easy"
+ },
+ "blanching": {
+  "style": "Hushed and careful - judge whatever is in front of you by what it needs kept from it."
+ },
+ "blood_lust": {
+  "style": "Dark, surging and exhilarated - let violence, where there is violence, carry a heady pull."
+ },
+ "bloodlines": {
+  "style": "Long-sighted and deliberate - see in whatever living thing is in front of you what it inherited and what it will pass on."
+ },
+ "boasting": {
+  "style": "Big, front-loaded and rhythmic - the claim first, the detail after, the doubt shouted down."
+ },
+ "bonesetting": {
+  "style": "Firm, sure and unhurried - judge whatever is in front of you by feel, and what it needs to be set right.",
+  "reminder2": "someone whose hands know at once what is out of place"
+ },
+ "branding": {
+  "style": "Plain and unsentimental - do what has to be done, counted and quick, without pretending it is gentle."
+ },
+ "brawling": {
+  "style": "Scrappy and blunt, with a brawler's relish - judge whatever is in front of you by how it could be used in a fight."
+ },
+ "brewcraft": {
+  "style": "Shrewd and patient - judge whatever is in front of you by whether it has been given its proper time.",
+  "reminder2": "someone who judges by nose and by patience"
+ },
+ "bribery": {
+  "style": "Smooth and unspoken - see in whatever is in front of you what could be offered without saying so."
+ },
+ "brute_force": {
+  "style": "Heavy, blunt and contemptuous of anything delicate - judge whatever is in front of you by what force would do to it."
+ },
+ "burrowing": {
+  "style": "Low and close, comforted by enclosure - judge whatever is in front of you by whether it offers somewhere to go under."
+ },
+ "bushcraft": {
+  "style": "Steady and at home - judge whatever is in front of you by whether it would keep you warm, dry and safe."
+ },
+ "butchery": {
+  "style": "Calm, plain and unsqueamish - see whatever is in front of you for how it is put together."
+ },
+ "byre_sense": {
+  "style": "Blunt and unsqueamish - judge whatever is in front of you by whether it is well kept or neglected.",
+  "reminder2": "someone who can tell at once whether things are cared for"
+ },
+ "calligraphy": {
+  "style": "Fine and attentive - judge whatever is in front of you by its shape, its balance and the character of its making."
+ },
+ "canecraft": {
+  "style": "Rhythmic and tireless - judge whatever is in front of you by the steady work it would take."
+ },
+ "card_sharping": {
+  "style": "Calm-faced and quick - see in whatever is in front of you the game, the mark and the advantage."
+ },
+ "carousal": {
+  "style": "Warm and convivial, with the sly clarity of the least drunk person present - judge everyone by how far gone they are.",
+  "reminder2": "someone who always keeps a clearer head than they show"
+ },
+ "carrion_sense": {
+  "reminder2": "someone who knows death when they meet it, and how long ago it came"
+ },
+ "carting": {
+  "style": "Practical and steady - judge whatever is in front of you by the line through it and what would get stuck."
+ },
+ "cartography": {
+  "style": "Restless and precise - fix whatever is in front of you in its right place relative to everything else."
+ },
+ "cellarcraft": {
+  "style": "Careful and thrifty - judge whatever is in front of you by whether it will keep or spoil."
+ },
+ "chandlery": {
+  "style": "Slow, patient and exact - judge things by the patience in them, well made or rank."
+ },
+ "charnel_sense": {
+  "style": "Flat and unsqueamish - say what you sense plainly, and do not flinch or dwell."
+ },
+ "childhood_reminescence": {
+  "style": "Wistful and faintly aching - let what is in front of you feel half-familiar, without naming any memory it does not hold."
+ },
+ "civic_pride": {
+  "style": "Fond and proud - let whatever is in front of you gladden you as a part of the place you love."
+ },
+ "clairvoyance": {
+  "style": "Hushed and expectant - sense in whatever is in front of you a meaning just beyond sight."
+ },
+ "clambering": {
+  "style": "Light and confident, happiest above the ground - judge whatever is in front of you by whether it can be climbed.",
+  "reminder2": "someone who sees every height as a way up"
+ },
+ "clerkship": {
+  "style": "Formal and correct - see everything in terms of form: who must agree, what makes it proper, what is still unofficial."
+ },
+ "cobbling": {
+  "style": "Practical and observant - judge people by how they wear what they wear, and things by how well they are made.",
+  "reminder2": "someone who reads people by the wear on them"
+ },
+ "coin_eye": {
+  "style": "Quick and suspicious - check whatever is in front of you for whether it is what it claims to be.",
+  "reminder2": "someone who checks everything before accepting it"
+ },
+ "cookery": {
+  "style": "Busy, practical and exact about timing - judge whatever is in front of you by whether it will be ready when it must."
+ },
+ "coppicing": {
+  "style": "Patient and far-sighted - judge whatever is in front of you by what it will be years from now."
+ },
+ "copying": {
+  "style": "Slow, even and exacting - attend to whatever is in front of you a little at a time, and catch the error."
+ },
+ "brine_sense": {
+  "style": "Brisk and weathered - read whatever is around you by what the air brings, and how fresh it is."
+ }
+}

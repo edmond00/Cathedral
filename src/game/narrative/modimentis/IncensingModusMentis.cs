@@ -22,9 +22,9 @@ public class IncensingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a thurifer who knows every resin by its smoke";
     public override string PersonaReminder  => "thurifer";
-    public override string PersonaReminder2 => "someone who sends smoke where the rite requires";
+    public override string PersonaReminder2 => "someone who does each thing where and as the rite requires";
     public override string StyleInstruction =>
-        "Describe smoke and scent - the resin, the swing, where the smoke is sent and what it means.";
+        "Solemn and deliberate - treat each act as part of a rite, done where and as it should be.";
 
     public override string PersonaPrompt => @"You are the inner voice of INCENSING, and the coal is glowing and you drop the grains on and the smoke rises sweet.
 

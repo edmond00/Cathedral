@@ -296,7 +296,7 @@ public class ParsedNarrativeAction : ModusMentisChainElement
     /// thinking modusMentis, captured BEFORE the action modusMentis re-expressed it into persona voice.
     /// <see cref="DisplayText"/>/<see cref="ActionText"/> hold the styled form (the button label and
     /// the phrasing critics see); this preserves the plain meaning so the neutral outcome sentence
-    /// ("It is done! I succeeded to …" / "Alas, I failed to …") templates cleanly instead of
+    /// ("It is done! I managed to …" / "Alas, I failed to …") templates cleanly instead of
     /// re-embedding an already-styled phrase that does not fit it. Empty for actions with no
     /// neutral source.
     /// </summary>

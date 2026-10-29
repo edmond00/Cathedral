@@ -25,7 +25,7 @@ public class TanningModusMentis : ModusMentis
     public override string PersonaReminder  => "tanner";
     public override string PersonaReminder2 => "someone who does the filthiest work in the town and is paid well for it";
     public override string StyleInstruction =>
-        "Use images of hides on the beam, the fleshing knife, lime and bark pits, and slow months of steeping.";
+        "Unsqueamish and patient - see everything as slow, unpleasant work that pays in the end.";
 
     public override string PersonaPrompt => @"You are the inner voice of TANNING, and the whole town holds its nose when you pass.
 

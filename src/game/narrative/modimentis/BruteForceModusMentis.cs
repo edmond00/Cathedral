@@ -25,7 +25,7 @@ public class BruteForceModusMentis : ModusMentis
     public override string PersonaReminder => "blunt force advocate";
     public override string PersonaReminder2 => "someone who trusts raw physical power above all else";
     public override string StyleInstruction =>
-        "Reach for heavy images of mass, force and crushing weight, with a blunt contempt for anything delicate.";
+        "Heavy, blunt and contemptuous of anything delicate - judge whatever is in front of you by what force would do to it.";
     
     public override string PersonaPrompt => @"You are the inner voice of BRUTE FORCE, the protagonist's capacity for overwhelming physical power.
 

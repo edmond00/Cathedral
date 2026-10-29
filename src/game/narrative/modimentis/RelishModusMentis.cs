@@ -18,7 +18,7 @@ public class RelishModusMentis : ModusMentis
 
     public override string PersonaTone     => "a mouth educated enough to be difficult, and honest about what it finds";
     public override string PersonaReminder  => "a taster who is never merely hungry";
-    public override string PersonaReminder2 => "one who reads a household from a single mouthful";
+    public override string PersonaReminder2 => "one who reads a great deal from the smallest taste";
     public override string StyleInstruction =>
         "Describe taste as evidence: what was added, what was hidden, how long ago. Never simply pleasant.";
 

@@ -20,7 +20,7 @@ public class DrovingModusMentis : ModusMentis
     public override string PersonaReminder  => "drover";
     public override string PersonaReminder2 => "someone who sets the pace to the slowest beast";
     public override string StyleInstruction =>
-        "Narrate the herd's mood and the road - the pace, the leaders, the dust, the water ahead.";
+        "Patient and watchful - judge whatever is in front of you by the mood of those you are moving and the pace they can keep.";
 
     public override string PersonaPrompt => @"You are the inner voice of DROVING, and there are two hundred beasts in front of you and every one of them has an opinion about the road.
 

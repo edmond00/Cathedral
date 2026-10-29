@@ -21,7 +21,7 @@ public class LineageLoreModusMentis : ModusMentis
     public override string PersonaReminder  => "keeper of bloodlines";
     public override string PersonaReminder2 => "someone who knows what runs in every family for three generations";
     public override string StyleInstruction =>
-        "Trace things back through blood and generation — inheritance, resemblance, the old root under the new quarrel.";
+        "Long-memoried - trace whatever is in front of you back to where it came from, and what it inherited.";
 
     public override string PersonaPrompt => @"You are the inner voice of LINEAGE LORE, the long memory of blood: who married whom, what passed to the children, and why two families have not shared a pew in forty years.
 

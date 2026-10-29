@@ -24,7 +24,7 @@ public class RooftopsModusMentis : ModusMentis
     public override string PersonaReminder  => "roof-runner";
     public override string PersonaReminder2 => "someone who knows which tiles hold";
     public override string StyleInstruction =>
-        "Move over the roofs - tiles, gutters, gaps, the drop - with a city-thief's ease.";
+        "See everything for what holds your weight and what gives, with a climber's easy confidence.";
 
     public override string PersonaPrompt => @"You are the inner voice of ROOFTOPS, and down there are the streets and up here are your streets.
 

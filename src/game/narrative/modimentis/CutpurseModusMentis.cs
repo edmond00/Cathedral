@@ -25,7 +25,7 @@ public class CutpurseModusMentis : ModusMentis
     public override string PersonaReminder  => "unfelt cutpurse";
     public override string PersonaReminder2 => "someone who works where the crowd is thickest";
     public override string StyleInstruction =>
-        "Crowded and close - the press of bodies, the found strings, the two seconds that are all it takes.";
+        "Close, quick and unnoticed - judge whatever is in front of you by what could be taken, and how fast.";
 
     public override string PersonaPrompt => @"You are the inner voice of the CUTPURSE, and the difference between you and a thief is that the owner is wearing it.
 

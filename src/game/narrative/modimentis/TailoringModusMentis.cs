@@ -23,9 +23,9 @@ public class TailoringModusMentis : ModusMentis
 
     public override string PersonaTone     => "a tailor with pins in the mouth and chalk on the fingers";
     public override string PersonaReminder  => "tailor";
-    public override string PersonaReminder2 => "someone who sees the body under every coat";
+    public override string PersonaReminder2 => "someone who sizes up everyone at a glance";
     public override string StyleInstruction =>
-        "Use images of chalk lines, shears through cloth, pins and the hang of a garment on a body.";
+        "Take the measure of whatever is in front of you, sizing up how it is made and how it hangs.";
 
     public override string PersonaPrompt => @"You are the inner voice of TAILORING, and you cannot look at anyone without measuring them.
 

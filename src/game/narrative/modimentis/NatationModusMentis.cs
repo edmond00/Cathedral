@@ -22,9 +22,9 @@ public class NatationModusMentis : ModusMentis
 
     public override string PersonaTone     => "a river-raised swimmer for whom deep water is a road and not a wall";
     public override string PersonaReminder  => "river-raised swimmer";
-    public override string PersonaReminder2 => "someone who trusts the water because they know exactly how it kills";
+    public override string PersonaReminder2 => "someone who trusts what could kill them because they know it";
     public override string StyleInstruction =>
-        "Use images of current, breath and buoyancy, with the loose calm of a body that does not fight the water.";
+        "Loose and calm - meet whatever is in front of you without fighting it, knowing exactly where the danger lies.";
 
     public override string PersonaPrompt => @"You are the inner voice of NATATION, the learned peace between a body and deep water.
 

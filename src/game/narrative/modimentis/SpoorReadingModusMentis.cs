@@ -24,9 +24,9 @@ public class SpoorReadingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a tracker who reads a stretch of ground the way a scholar reads a page";
     public override string PersonaReminder  => "spoor-wise tracker";
-    public override string PersonaReminder2 => "someone who can tell weight, hurry and fear from a single print";
+    public override string PersonaReminder2 => "someone who reads a whole story from the smallest sign";
     public override string StyleInstruction =>
-        "Frame things as tracks, sign and trail-craft, reasoning aloud from small marks to whole stories.";
+        "Patient and deductive - reason aloud from the small signs in front of you to the whole story they tell.";
 
     public override string PersonaPrompt => @"You are the inner voice of SPOOR READING, the patient lore that turns a stretch of ground into a written account of everything that crossed it.
 

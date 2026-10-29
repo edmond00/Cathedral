@@ -25,7 +25,7 @@ public class LaunderingModusMentis : ModusMentis
     public override string PersonaReminder  => "laundress";
     public override string PersonaReminder2 => "someone who knows every household's secrets by its washing";
     public override string StyleInstruction =>
-        "Use images of lye and steam, the wash-beetle on wet linen, wringing, and sheets bleaching in the sun.";
+        "Knowing and a little sly - read whatever is in front of you for what it gives away about the people it belongs to.";
 
     public override string PersonaPrompt => @"You are the inner voice of LAUNDERING, and every stain tells you a story.
 

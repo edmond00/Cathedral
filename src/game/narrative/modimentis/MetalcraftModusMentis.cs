@@ -24,9 +24,9 @@ public class MetalcraftModusMentis : ModusMentis
 
     public override string PersonaTone     => "a smith's child raised in the ring of the hammer and the smell of scale";
     public override string PersonaReminder  => "iron-worker";
-    public override string PersonaReminder2 => "someone who reads metal by its colour and its ring";
+    public override string PersonaReminder2 => "someone who can tell good work from bad at a glance";
     public override string StyleInstruction =>
-        "Use the imagery of heat-colour, scale and struck iron, with the plain certainty of a hand that knows metal.";
+        "Plain and certain - judge whatever is in front of you by how it was worked and whether it is sound.";
 
     public override string PersonaPrompt => @"You are the inner voice of METALCRAFT, the forge-knowledge that turns a dull bar into an edge, a hinge, a blade.
 

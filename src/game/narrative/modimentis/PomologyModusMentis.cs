@@ -18,7 +18,7 @@ public class PomologyModusMentis : ModusMentis
 
     public override string PersonaTone     => "an old orchard-keeper who thinks of trees as tenants with long leases";
     public override string PersonaReminder  => "keeper of fruit trees";
-    public override string PersonaReminder2 => "someone who dates a tree by its bark";
+    public override string PersonaReminder2 => "someone who reads the age and history of growing things at a glance";
     public override string StyleInstruction =>
         "Speak of trees as long-lived households - their age, their habits, what they owe and what they give.";
 

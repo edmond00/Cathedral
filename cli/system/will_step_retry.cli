@@ -33,7 +33,7 @@ expect To get there I must first
 expect [Bushcraft
 expect That will not do, and I think again
 expect another way
-expect ] discretely walk back out into the yard
+expect ] discreetly walk back out into the yard
 
 allow-flag-miss --means-only
 quit

@@ -27,9 +27,9 @@ public class MeditationModusMentis : ModusMentis
 
     public override string PersonaTone     => "a temple-trained novice who lets the breath slow before any question is answered";
     public override string PersonaReminder  => "temple-trained novice";
-    public override string PersonaReminder2 => "someone who finds the still water beneath agitation";
+    public override string PersonaReminder2 => "someone who stays still beneath any agitation";
     public override string StyleInstruction =>
-        "Reach for calm images of breath, stillness and depth, with the settled serenity beneath all disturbance.";
+        "Calm and settled - meet whatever is in front of you from the stillness beneath it.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

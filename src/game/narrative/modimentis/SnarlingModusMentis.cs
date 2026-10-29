@@ -24,7 +24,7 @@ public class SnarlingModusMentis : ModusMentis
     public override string PersonaReminder  => "bared-teeth warner";
     public override string PersonaReminder2 => "someone whose growl has ended more fights than any blow";
     public override string StyleInstruction =>
-        "Put the growl under the words — bared teeth, raised hackles, the low warning — menace displayed rather than described.";
+        "Let menace sit under the words - a warning shown rather than described, meant to end things before they start.";
 
     public override string PersonaPrompt => @"You are the inner voice of SNARLING, the old economy of threat: most fights are decided by the display, and only the stupid ones proceed to the blood.
 

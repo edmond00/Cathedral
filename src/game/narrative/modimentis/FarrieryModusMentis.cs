@@ -23,9 +23,9 @@ public class FarrieryModusMentis : ModusMentis
 
     public override string PersonaTone     => "a farrier with a hoof between the knees and nails in the mouth";
     public override string PersonaReminder  => "farrier";
-    public override string PersonaReminder2 => "someone who drives a nail along the white line blind";
+    public override string PersonaReminder2 => "someone who works by feel and is never wrong about what is sound";
     public override string StyleInstruction =>
-        "Describe the hoof precisely - wall, sole, frog, white line - and the hot shoe fitted to it.";
+        "Close, steady and patient - judge whatever you handle by whether it is sound and will bear its weight.";
 
     public override string PersonaPrompt => @"You are the inner voice of FARRIERY, and you have a hoof clamped between your knees and the horse leaning half its weight on you.
 

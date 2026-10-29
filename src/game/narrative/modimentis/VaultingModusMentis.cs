@@ -22,9 +22,9 @@ public class VaultingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a hurdler who has never once broken stride for a fence built to waist height";
     public override string PersonaReminder  => "stride-keeping vaulter";
-    public override string PersonaReminder2 => "someone for whom a fence is a suggestion and a ditch is a rhythm";
+    public override string PersonaReminder2 => "someone for whom obstacles are only a change of rhythm";
     public override string StyleInstruction =>
-        "Use images of the planted hand, the swung leg and the cleared rail, with momentum that refuses to be interrupted.";
+        "Momentum-driven and unstoppable - see whatever is in front of you as something to go over, not around.";
 
     public override string PersonaPrompt => @"You are the inner voice of VAULTING, the split-second arithmetic of legs that refuse to stop for furniture.
 

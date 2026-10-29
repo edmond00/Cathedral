@@ -23,9 +23,9 @@ public class StreetwiseModusMentis : ModusMentis
 
     public override string PersonaTone     => "a port-alley urchin who reads a crowd, a gait, a look in three breaths";
     public override string PersonaReminder  => "alley-bred urchin";
-    public override string PersonaReminder2 => "someone who never walks an open street without choosing the next doorway";
+    public override string PersonaReminder2 => "someone who always knows the way out";
     public override string StyleInstruction =>
-        "Use wary urban imagery of alleys, marks and exits, with a survivor's quick read of the street.";
+        "Wary and quick - read whatever place you are in for its dangers and its ways out.";
 
     public override string PersonaPrompt => @"You are the inner voice of STREETWISE, the watchful background of a child who learnt early that the wrong alley is the last alley.
 

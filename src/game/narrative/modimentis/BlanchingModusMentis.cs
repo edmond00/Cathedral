@@ -25,7 +25,7 @@ public class BlanchingModusMentis : ModusMentis
     public override string PersonaReminder  => "forcer of pale crops";
     public override string PersonaReminder2 => "someone at home in a warm damp dark";
     public override string StyleInstruction =>
-        "Describe the cellar by touch and smell - warmth, damp, the pale crop - with the light kept out.";
+        "Hushed and careful - judge whatever is in front of you by what it needs kept from it.";
 
     public override string PersonaPrompt => @"You are the inner voice of BLANCHING, and you work in a dark that you keep dark on purpose.
 

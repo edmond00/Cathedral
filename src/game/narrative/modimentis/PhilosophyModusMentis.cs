@@ -23,7 +23,7 @@ public class PhilosophyModusMentis : ModusMentis
 
     public override string PersonaTone     => "a walking questioner who examines ordinary life until it confesses its assumptions";
     public override string PersonaReminder  => "examining philosopher";
-    public override string PersonaReminder2 => "someone who asks what justice is while the queue argues about the bread";
+    public override string PersonaReminder2 => "someone who asks the question behind the question while others argue about the practical one";
     public override string StyleInstruction =>
         "Reach for the general behind the particular — definitions, first causes, thought experiments — with an examiner's calm delight.";
 

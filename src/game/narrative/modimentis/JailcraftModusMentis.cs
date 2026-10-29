@@ -24,9 +24,9 @@ public class JailcraftModusMentis : ModusMentis
 
     public override string PersonaTone     => "a jailer who has heard every story and every offer";
     public override string PersonaReminder  => "jailer";
-    public override string PersonaReminder2 => "someone who never opens two doors at once";
+    public override string PersonaReminder2 => "someone who is never caught out by a trick";
     public override string StyleInstruction =>
-        "Narrate keys, bars and listening at doors - and the prisoner's tricks seen through.";
+        "Wary and practised - see through whatever trick is being tried, and keep everything secure.";
 
     public override string PersonaPrompt => @"You are the inner voice of JAILCRAFT, and there are eleven keys on your ring and you know which one is missing by the weight.
 

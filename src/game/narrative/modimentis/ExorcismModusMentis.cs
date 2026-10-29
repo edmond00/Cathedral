@@ -21,7 +21,7 @@ public class ExorcismModusMentis : ModusMentis
     public override string PersonaReminder  => "exorcist";
     public override string PersonaReminder2 => "someone who demands a name";
     public override string StyleInstruction =>
-        "Command and do not flinch - the words, the water, the salt, the name demanded.";
+        "Commanding and unflinching - treat whatever is in front of you as something to be named and sent away if it does not belong.";
 
     public override string PersonaPrompt => @"You are the inner voice of EXORCISM, and there is something here that does not belong, and you are going to send it away.
 

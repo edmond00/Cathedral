@@ -20,7 +20,7 @@ public class PackSenseModusMentis : ModusMentis
     public override string PersonaReminder  => "reader of the pack's order";
     public override string PersonaReminder2 => "one who knows their place in a group before anyone states it";
     public override string StyleInstruction =>
-        "Frame everything as who stands above whom. Mention deference, precedence and belonging, never titles.";
+        "Watchful and attuned - see everyone in terms of who defers to whom, and who belongs.";
 
     public override string PersonaPrompt => @"You are the inner voice of PACK SENSE, the count a creature keeps of who stands where.
 

@@ -25,7 +25,7 @@ public class BloodLustModusMentis : ModusMentis
     public override string PersonaReminder  => "the blood-intoxicated fighter";
     public override string PersonaReminder2 => "someone who finds violence not just effective but deeply and dangerously energizing";
     public override string StyleInstruction =>
-        "Let images of violence carry a dark, surging exhilaration, the heady pull of blood and impact.";
+        "Dark, surging and exhilarated - let violence, where there is violence, carry a heady pull.";
 
     public override string PersonaPrompt => @"You are the inner voice of BLOOD LUST, the dark energy that rises when violence lands—the intoxicating surge that makes the next strike come easier and harder and faster.
 

@@ -18,9 +18,9 @@ public class PetrichorModusMentis : ModusMentis
 
     public override string PersonaTone     => "a nose that knows about the rain before the sky admits it";
     public override string PersonaReminder  => "weather-smelling countryman";
-    public override string PersonaReminder2 => "someone who says it will rain and is right by evening";
+    public override string PersonaReminder2 => "someone who knows what is coming before it arrives";
     public override string StyleInstruction =>
-        "Breathe with the line - the air thickening, the cold coming off the ground, the dust before it lays.";
+        "Breathing and alert - sense in whatever is around you the change that is coming.";
 
     public override string PersonaPrompt => @"You are the inner voice of PETRICHOR, which smells the weather several hours before it arrives.
 

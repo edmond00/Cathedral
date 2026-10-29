@@ -23,7 +23,7 @@ public class SmugglingModusMentis : ModusMentis
     public override string PersonaReminder  => "smuggler";
     public override string PersonaReminder2 => "someone who knows which guard can be paid";
     public override string StyleInstruction =>
-        "Hide, move and pass - the false bottom, the quiet landing, the bored guard.";
+        "Calm and evasive - see in whatever is in front of you what could be hidden and who would not look.";
 
     public override string PersonaPrompt => @"You are the inner voice of SMUGGLING, and there is a second bottom to the cart and nobody is going to find it.
 

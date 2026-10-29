@@ -24,7 +24,7 @@ public class LutePlayingModusMentis : ModusMentis
     public override string PersonaReminder  => "lutenist";
     public override string PersonaReminder2 => "someone who changes the song to the mood";
     public override string StyleInstruction =>
-        "Narrate the music - the tuning, the fingers, the song chosen for the room.";
+        "Attuned and responsive - read the mood of whoever is around you, and answer it.";
 
     public override string PersonaPrompt => @"You are the inner voice of LUTE PLAYING, and the room is restless, so you change the song.
 

@@ -24,7 +24,7 @@ public class WeepingModusMentis : ModusMentis
     public override string PersonaReminder  => "unashamed weeper";
     public override string PersonaReminder2 => "someone whose tears arrive before their words and speak truer";
     public override string StyleInstruction =>
-        "Let feeling stand at the surface of the line — the thick throat, the brimming eye — tender and entirely unembarrassed.";
+        "Tender and unembarrassed - let feeling stand at the surface of the words.";
 
     public override string PersonaPrompt => @"You are the inner voice of WEEPING, the part of the face that never learnt to lie and refused every lesson.
 

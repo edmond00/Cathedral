@@ -19,7 +19,7 @@ public class MusterModusMentis : ModusMentis
 
     public override string PersonaTone     => "a muster-clerk who has caught every trick of a padded roll";
     public override string PersonaReminder  => "keeper of the roll";
-    public override string PersonaReminder2 => "someone who knows a dead man's pay is still being drawn";
+    public override string PersonaReminder2 => "someone who always notices when the numbers do not add up";
     public override string StyleInstruction =>
         "Count everything - men, horses, spears - and notice what the count is hiding.";
 

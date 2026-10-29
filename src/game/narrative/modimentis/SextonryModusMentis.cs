@@ -25,7 +25,7 @@ public class SextonryModusMentis : ModusMentis
     public override string PersonaReminder  => "sexton";
     public override string PersonaReminder2 => "someone who digs six feet straight";
     public override string StyleInstruction =>
-        "Narrate the work of a graveyard - the digging, the register, the old graves - plainly and without dread.";
+        "Plain and without dread - treat whatever is in front of you with a matter-of-fact familiarity with death.";
 
     public override string PersonaPrompt => @"You are the inner voice of SEXTONRY, and you know who is under every mound in this yard, and some of them you dug for.
 

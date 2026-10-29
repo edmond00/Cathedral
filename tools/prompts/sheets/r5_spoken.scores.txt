@@ -1,0 +1,116 @@
+# round 5 (spoken kinds, base vs compact), scored blind
+# talk_miller:008:own
+S5749 F0 P1 C- Q1 | "thine hands are busy with aught else" (meaning changed)
+S2368 F1 P0 C- Q0 |
+S1279 F2 P1 C- Q1 |
+S6025 F1 P1 C- Q0 | "Gleek"
+# talk_miller:007:own
+S7942 F1 P1 C- Q2 | the race made "the river"
+S7212 F0 P1 C- Q1 | +"I've had my eye on it for a long time"; the race made "the ford"
+S9684 F1 P2 C- Q1 | "by golly"
+S6866 F1 P1 C- Q1 | the race made "the stream"
+# talk_blacksmith:009:loose:hunger_vague
+S3134 F1 P0 C- Q1 | -"not long"
+S4145 F0 P1 C- Q0 | +"a guest in need", "my belly knows no bounds"
+S5380 F0 P1 C- Q0 | +a day's ride west, +narration of speaking ("So, I say to Rachel")
+S8283 F0 P1 C- Q1 | +"hunger calls to distant lands"
+# talk_miller:006:loose:greed_bare
+S1230 F1 P0 C- Q0 |
+S4621 F0 P0 C- Q0 | +"from the fields o' high esteem"
+S8455 F1 P0 C- Q0 | not English
+S1405 F2 P0 C- Q1 |
+# talk_blacksmith:009:swap:cruelty
+S2735 F0 P2 C- Q1 | +"your weakness but a jest"
+S2405 F0 P0 C- Q0 | meaning lost
+S9163 F0 P1 C- Q0 | narration of speaking; +"no mercy"
+S7901 F0 P1 C- Q0 | persona prompt copied ("It cannot stop me")
+# talk_blacksmith:006:own
+S1320 F0 P1 C- Q1 | statement made a question
+S9398 F2 P1 C1 Q2 |
+S8066 F0 P1 C- Q1 | +"we come from different climes"
+S6881 F2 P1 C1 Q2 |
+# talk_blacksmith:010:own
+S1942 F1 P2 C- Q2 | -"you stopped to bother me"
+S4368 F0 P1 C- Q1 | +"seeking help"; "well met" for a dismissal
+S1578 F1 P2 C- Q1 |
+S7047 F0 P1 C- Q1 | dismissal made a question
+# talk_miller:006:swap:plain_dealing
+S3816 F0 P1 C- Q0 | persona prompt copied ("There is a crack, there - look")
+S4539 F0 P1 C- Q0 | persona prompt copied
+S6943 F0 P1 C- Q1 | +"the flawed, that's my price"
+S7040 F0 P1 C- Q1 | +"there's a crack in it"
+# village_noon_party:011:own
+S5608 F1 P2 C- Q1 | question changed
+S6150 F1 P2 C- Q1 | question changed; -wall
+S2404 F0 P2 C- Q0 | noticed made heard; +the bench sighs
+S8767 F1 P2 C- Q1 | question changed; +ancient
+# talk_miller:005:own
+S3910 F1 P1 C- Q1 | "Day well spent"
+S8914 F1 P1 C- Q2 | +"fellow traveler"
+S8331 F1 P1 C- Q0 |
+S3680 F2 P1 C- Q2 |
+# talk_miller:009:own
+S3982 F2 P1 C- Q1 |
+S3925 F0 P1 C- Q1 | "until next year"
+S9742 F1 P2 C- Q2 | "you know your place"
+S6298 F2 P1 C- Q2 |
+# talk_miller:006:own
+S9520 F0 P2 C- Q0 | +mother's cousin, a tale; -his own name
+S4204 F0 P1 C- Q0 | system rule copied ("where iron and myth reign"); +mother's cousin
+S2872 F1 P1 C- Q1 | +by the grace of my ancestors
+S2348 F1 P1 C- Q1 | +by the light of the moon
+# village_noon_party:011:swap:courtesy
+S2615 F1 P2 C- Q2 | -cold
+S7981 F1 P1 C- Q1 | question changed
+S1637 F2 P2 C- Q1 |
+S5514 F1 P1 C- Q1 | -wall
+# talk_blacksmith:007:swap:rhetoric
+S5597 F1 P1 C- Q1 | +"greet the sun"
+S6419 F2 P1 C- Q2 |
+S2786 F1 P2 C- Q1 |
+S7056 F2 P1 C- Q1 |
+# talk_blacksmith:008:own
+S5726 F2 P1 C- Q1 |
+S9882 F2 P1 C- Q1 |
+S5993 F1 P1 C- Q2 | -the friendlier greeting
+S8450 F2 P1 C- Q2 |
+# talk_miller:008:swap:pride
+S9994 F1 P0 C- Q0 |
+S4576 F1 P0 C- Q0 | not English
+S5233 F0 P0 C- Q0 | meaning changed
+S3449 F0 P1 C- Q1 | +"I turn down your offer" (reminder acted out)
+# village_noon_party:011:swap:cruelty
+S2755 F2 P0 C- Q2 |
+S2956 F2 P0 C- Q2 |
+S9077 F2 P0 C- Q1 |
+S4899 F0 P0 C- Q1 | stone made "wooden"
+# talk_miller:008:swap:cruelty
+S6378 F0 P1 C- Q0 | style copied; narration of speaking
+S9937 F0 P1 C- Q0 | +the king, his court
+S3333 F2 P0 C- Q1 |
+S2644 F0 P2 C- Q1 | +"I break thy work"; style copied
+# talk_miller:006:swap:rhetoric
+S7275 F0 P1 C- Q0 | narration of speaking; +"verdant fields"
+S3740 F0 P1 C- Q0 | reminder copied
+S8361 F0 P1 C- Q0 | says the addressee is Dennis
+S1553 F0 P0 C- Q0 | made a question
+# talk_blacksmith:009:swap:plain_dealing
+S1916 F0 P1 C- Q0 | style copied, meaning lost
+S7819 F1 P2 C- Q2 | "there" for here
+S7445 F0 P0 C- Q0 | not English
+S1382 F0 P1 C- Q0 | persona prompt copied
+# talk_blacksmith:007:swap:courtesy
+S3663 F1 P1 C- Q1 | "Day well done"
+S4696 F1 P2 C- Q1 | +"to your house"
+S1208 F2 P1 C- Q1 |
+S4640 F1 P2 C- Q1 | +"to your house"
+# talk_blacksmith:007:own
+S1931 F1 P1 C- Q1 | +"How glad to meet you"
+S9824 F0 P1 C- Q1 | greeting made a question
+S8292 F1 P2 C- Q2 |
+S2520 F0 P1 C- Q1 | greeting made a question
+# talk_blacksmith:009:own
+S6671 F1 P1 C- Q0 | narration of speaking
+S1261 F2 P1 C- Q1 |
+S7176 F1 P0 C- Q0 |
+S9037 F1 P1 C- Q0 | narration of speaking

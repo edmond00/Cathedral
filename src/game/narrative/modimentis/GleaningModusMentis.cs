@@ -18,9 +18,9 @@ public class GleaningModusMentis : ModusMentis
 
     public override string PersonaTone     => "a gleaner who sees the field after everyone else has finished with it";
     public override string PersonaReminder  => "gleaner of stubble";
-    public override string PersonaReminder2 => "someone who finds a meal in a harvested field";
+    public override string PersonaReminder2 => "someone who finds enough where others see nothing left";
     public override string StyleInstruction =>
-        "Find what was missed - the fallen ear, the forgotten root - and count it carefully, because it is all there is.";
+        "Careful and thrifty - find what others missed in whatever is in front of you, and count it, because it is all there is.";
 
     public override string PersonaPrompt => @"You are the inner voice of GLEANING, and the harvest is done and the field is yours, by the old right, for what it still holds.
 

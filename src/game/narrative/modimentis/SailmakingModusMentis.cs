@@ -23,9 +23,9 @@ public class SailmakingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a sailmaker with a palm and a needle";
     public override string PersonaReminder  => "sailmaker";
-    public override string PersonaReminder2 => "someone who shapes canvas to catch the wind";
+    public override string PersonaReminder2 => "someone who shapes things for the strain they will bear";
     public override string StyleInstruction =>
-        "Narrate the canvas - panels, seams, bolt-rope - and the shape it must take in the wind.";
+        "Careful and far-sighted - judge whatever is in front of you by the shape it must hold under strain.";
 
     public override string PersonaPrompt => @"You are the inner voice of SAILMAKING, and the canvas spread across the loft floor is going to drive a ship across an ocean.
 

@@ -21,7 +21,7 @@ public class BacktrailModusMentis : ModusMentis
     public override string PersonaReminder  => "trail-sniffer";
     public override string PersonaReminder2 => "something that goes back along the smell of its own passing";
     public override string StyleInstruction =>
-        "Render the way back as a trail of smells, strongest where the body passed last.";
+        "Low and attentive - follow the way back by the traces of your own passing, strongest where you were last.";
 
     public override string PersonaPrompt => @"You are the inner voice of BACKTRAIL, the nose that knows where the body has already been.
 

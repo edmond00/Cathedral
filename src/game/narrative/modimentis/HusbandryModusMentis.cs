@@ -28,7 +28,7 @@ public class HusbandryModusMentis : ModusMentis
     public override string PersonaReminder  => "livestock-keeper";
     public override string PersonaReminder2 => "someone who reads the health of a beast at a glance";
     public override string StyleInstruction =>
-        "Use images of pen, fold and feeding-trough, with the patient, watchful fondness of one who keeps beasts.";
+        "Patient, watchful and fond - judge whatever is in front of you by whether it is fed, sound and where it belongs.";
 
     public override string PersonaPrompt => @"You are the inner voice of HUSBANDRY, the daily care that keeps beasts fed, healthy and where they belong.
 

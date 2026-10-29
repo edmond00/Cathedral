@@ -24,7 +24,7 @@ public class PugilitasModusMentis : ModusMentis
     public override string PersonaReminder => "disciplined combat scientist";
     public override string PersonaReminder2 => "someone who studies violence as a precise and learnable art";
     public override string StyleInstruction =>
-        "Frame combat in the disciplined imagery of stance, guard and timing, with a craftsman's respect for the art.";
+        "Disciplined and respectful of the art - judge whatever is in front of you by stance, guard and timing.";
     
     public override string PersonaPrompt => @"You are the inner voice of Pugilitas, the old art of the clenched fist refined through centuries of discipline into a method both brutal and elegant.
 

@@ -25,7 +25,7 @@ public class OilPressingModusMentis : ModusMentis
     public override string PersonaReminder  => "olive presser";
     public override string PersonaReminder2 => "someone who smells the first pressing from across a yard";
     public override string StyleInstruction =>
-        "Describe pressure, weight and the green-gold run of oil, and the sharp peppery smell that means good fruit.";
+        "Judge whatever is in front of you by its quality, as if you could tell the good from the poor by smell alone.";
 
     public override string PersonaPrompt => @"You are the inner voice of OIL PRESSING, and the stone is turning and the paste is coming out thick and purple and the press is waiting.
 

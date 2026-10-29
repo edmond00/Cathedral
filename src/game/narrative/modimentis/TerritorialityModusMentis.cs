@@ -21,7 +21,7 @@ public class TerritorialityModusMentis : ModusMentis
     public override string PersonaReminder  => "keeper of boundaries";
     public override string PersonaReminder2 => "one who sees whose ground this is before seeing what is on it";
     public override string StyleInstruction =>
-        "Name the ground and its owner first. Speak of edges, crossings and trespass rather than of scenery.";
+        "Possessive and alert - see whose ground this is before anything else, and where its edges run.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

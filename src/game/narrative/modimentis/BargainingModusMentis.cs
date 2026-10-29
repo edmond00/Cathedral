@@ -26,9 +26,9 @@ public class BargainingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a market-tongued haggler who never pays one penny over the proper figure";
     public override string PersonaReminder  => "market-tongued haggler";
-    public override string PersonaReminder2 => "someone who reads a seller's face for the lower price beneath the asking one";
+    public override string PersonaReminder2 => "someone who always hears the lower price beneath the asking one";
     public override string StyleInstruction =>
-        "Use the imagery of trade, leverage and the price beneath the price, with a haggler's shrewd appraisal.";
+        "Shrewd and patient - weigh whatever is in front of you for the price beneath the price.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

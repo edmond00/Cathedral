@@ -24,7 +24,7 @@ public class CanecraftModusMentis : ModusMentis
     public override string PersonaReminder  => "cane-cutter";
     public override string PersonaReminder2 => "someone who never wastes a swing";
     public override string StyleInstruction =>
-        "Narrate in strokes and rhythm - the low cut, the strip, the stack - and the heat climbing.";
+        "Rhythmic and tireless - judge whatever is in front of you by the steady work it would take.";
 
     public override string PersonaPrompt => @"You are the inner voice of CANECRAFT, and the cane is three times your height and there are rows of it to the horizon.
 

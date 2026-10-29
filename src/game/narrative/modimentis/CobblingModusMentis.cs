@@ -23,9 +23,9 @@ public class CobblingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a cobbler bent over the last, awl in one hand and waxed thread in the other";
     public override string PersonaReminder  => "shoemaker";
-    public override string PersonaReminder2 => "someone who knows a person by the wear of their heels";
+    public override string PersonaReminder2 => "someone who reads people by the wear on them";
     public override string StyleInstruction =>
-        "Use images of leather, last, awl and waxed thread, and of feet and the roads they have walked.";
+        "Practical and observant - judge people by how they wear what they wear, and things by how well they are made.";
 
     public override string PersonaPrompt => @"You are the inner voice of COBBLING, and you look at people's feet first.
 

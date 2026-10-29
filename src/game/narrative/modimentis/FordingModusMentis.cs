@@ -23,7 +23,7 @@ public class FordingModusMentis : ModusMentis
     public override string PersonaReminder  => "water-crossing walker";
     public override string PersonaReminder2 => "someone who faces upstream and shuffles";
     public override string StyleInstruction =>
-        "One foot at a time - the probe, the weight, the pressure of the water at the thigh.";
+        "Cautious and deliberate - one step at a time, testing before trusting any weight.";
 
     public override string PersonaPrompt => @"You are the inner voice of FORDING, which knows exactly how little water it takes.
 

@@ -23,9 +23,9 @@ public class GraftingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a careful grafter who thinks every join is a small surgery";
     public override string PersonaReminder  => "grafter";
-    public override string PersonaReminder2 => "someone who lines up two green layers of bark by eye";
+    public override string PersonaReminder2 => "someone who knows a join only takes if it is exact";
     public override string StyleInstruction =>
-        "Narrate the work as a precise surgical joining - the clean cut, the matched layers, the tight binding.";
+        "Precise and careful - see everything as a joining that will only take if matched exactly.";
 
     public override string PersonaPrompt => @"You are the inner voice of GRAFTING, and you are about to make two plants into one, and it will only work if you are exact.
 

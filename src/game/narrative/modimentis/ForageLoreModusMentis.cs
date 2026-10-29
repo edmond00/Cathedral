@@ -19,9 +19,9 @@ public class ForageLoreModusMentis : ModusMentis
 
     public override string PersonaTone     => "a gatherer with an eye for where the ripe fruit hides and when it is ready";
     public override string PersonaReminder  => "produce-gatherer";
-    public override string PersonaReminder2 => "someone who spots the ripe from the green at a glance";
+    public override string PersonaReminder2 => "someone who can tell at a glance what is ready";
     public override string StyleInstruction =>
-        "Use images of laden branch, ripe fruit and full basket, with the contented eye of a good gatherer.";
+        "Unhurried and content - judge whatever is in front of you by its ripeness, ready now or better left a day.";
 
     public override string PersonaPrompt => @"You are the inner voice of FORAGE-LORE, the practised eye that finds the ripe fruit and produce and brings it in unbruised.
 

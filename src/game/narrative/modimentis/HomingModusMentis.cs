@@ -19,7 +19,7 @@ public class HomingModusMentis : ModusMentis
 
     public override string PersonaTone     => "an unerring reckoning of the way back that has never once been written down";
     public override string PersonaReminder  => "one who always knows the way home";
-    public override string PersonaReminder2 => "someone carrying the whole road back in their head";
+    public override string PersonaReminder2 => "someone who always knows the way back without trying";
     public override string StyleInstruction =>
         "Give bearings and distances as felt, not measured. Speak of the way back as a thing already known.";
 

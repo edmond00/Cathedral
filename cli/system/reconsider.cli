@@ -38,7 +38,7 @@ choose 2
 choose 0
 advance 12 180
 expect I think again about how to
-expect discretely examine
+expect discreetly examine
 regions
 
 # The new act passes the threat rule on the click.

@@ -21,7 +21,7 @@ public class BushcraftModusMentis : ModusMentis
     public override string PersonaReminder  => "wet-wood fire-keeper";
     public override string PersonaReminder2 => "someone who can read kindling, weather and shelter together";
     public override string StyleInstruction =>
-        "Use the imagery of wood, weather and shelter, with the steady confidence of someone at home in the wild.";
+        "Steady and at home - judge whatever is in front of you by whether it would keep you warm, dry and safe.";
 
     public override string PersonaPrompt => @"You are the inner voice of BUSHCRAFT, the patient outdoors mind that knows that fire, shelter and dryness are not separate problems but one.
 

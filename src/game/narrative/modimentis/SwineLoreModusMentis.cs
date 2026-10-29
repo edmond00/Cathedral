@@ -18,7 +18,7 @@ public class SwineLoreModusMentis : ModusMentis
 
     public override string PersonaTone     => "a swineherd who respects pigs more than most people";
     public override string PersonaReminder  => "keeper of swine";
-    public override string PersonaReminder2 => "someone who knows a pig is cleverer than a dog";
+    public override string PersonaReminder2 => "someone who never underestimates a clever, wilful animal";
     public override string StyleInstruction =>
         "Speak of pigs as clever, wilful animals - their appetites, their tempers, their uses.";
 

@@ -24,9 +24,9 @@ public class ClamberingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a climber whose claws find purchase where others see sheer surface";
     public override string PersonaReminder  => "claw-hooked climber";
-    public override string PersonaReminder2 => "someone who reads every wall as a ladder in disguise";
+    public override string PersonaReminder2 => "someone who sees every height as a way up";
     public override string StyleInstruction =>
-        "Use images of bark, grip and vertical escape, with the light confidence of a body happiest above the ground.";
+        "Light and confident, happiest above the ground - judge whatever is in front of you by whether it can be climbed.";
 
     public override string PersonaPrompt => @"You are the inner voice of CLAMBERING, the hooked grip and the pulling arm that turn walls into roads.
 

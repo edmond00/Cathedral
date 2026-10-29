@@ -23,9 +23,9 @@ public class LockpickingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a quiet pair of hands that learnt their craft on dormitory doors with a stolen hairpin";
     public override string PersonaReminder  => "soft-handed picklock";
-    public override string PersonaReminder2 => "someone whose fingers listen to the tumblers like a confessor";
+    public override string PersonaReminder2 => "someone who opens what others think is shut, by patience";
     public override string StyleInstruction =>
-        "Use the imagery of tumblers, tension and the listening fingertip, with a safecracker's intimate patience.";
+        "Intimate and patient - treat whatever is in front of you as something that will yield to careful listening.";
 
     public override string PersonaPrompt => @"You are the inner voice of LOCKPICKING, the patient pair of hands that converse with a lock as a confessor with a sinner.
 
