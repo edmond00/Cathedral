@@ -1,0 +1,290 @@
+{
+ "visit/shipped/burg_party/2": [
+  5,
+  4,
+  4,
+  4
+ ],
+ "visit/shipped/burg_party/3": [
+  4,
+  3,
+  4,
+  3
+ ],
+ "visit/shipped/coast_wound/2": [
+  4,
+  3,
+  3,
+  3
+ ],
+ "visit/shipped/den_beast/2": [
+  4,
+  3,
+  3,
+  2
+ ],
+ "visit/shipped/forest_beast/2": [
+  4,
+  3,
+  3,
+  4
+ ],
+ "visit/shipped/hall_dialogue/2": [
+  4,
+  4,
+  3,
+  2
+ ],
+ "visit/shipped/hall_dialogue/3": [
+  4,
+  4,
+  3,
+  2
+ ],
+ "visit/shipped/plain_quiet/2": [
+  5,
+  3,
+  3,
+  4
+ ],
+ "visit/shipped/plain_quiet/3": [
+  4,
+  2,
+  2,
+  3
+ ],
+ "visit/shipped/road_fight/3": [
+  5,
+  3,
+  3,
+  4
+ ],
+ "visit/shipped/road_fight/4": [
+  3,
+  3,
+  2,
+  3
+ ],
+ "visit/shipped/village_talk/2": [
+  4,
+  4,
+  3,
+  4
+ ],
+ "visit/Chronicle/burg_party/2": [
+  5,
+  4,
+  4,
+  5
+ ],
+ "visit/Chronicle/burg_party/3": [
+  5,
+  3,
+  4,
+  5
+ ],
+ "visit/Chronicle/coast_wound/2": [
+  4,
+  4,
+  3,
+  4
+ ],
+ "visit/Chronicle/den_beast/2": [
+  4,
+  3,
+  3,
+  2
+ ],
+ "visit/Chronicle/forest_beast/2": [
+  4,
+  4,
+  4,
+  5
+ ],
+ "visit/Chronicle/hall_dialogue/2": [
+  5,
+  3,
+  4,
+  5
+ ],
+ "visit/Chronicle/hall_dialogue/3": [
+  4,
+  4,
+  3,
+  3
+ ],
+ "visit/Chronicle/plain_quiet/2": [
+  5,
+  3,
+  4,
+  5
+ ],
+ "visit/Chronicle/plain_quiet/3": [
+  5,
+  3,
+  3,
+  4
+ ],
+ "visit/Chronicle/road_fight/3": [
+  5,
+  4,
+  4,
+  5
+ ],
+ "visit/Chronicle/road_fight/4": [
+  3,
+  3,
+  3,
+  4
+ ],
+ "visit/Chronicle/village_talk/2": [
+  4,
+  3,
+  4,
+  5
+ ],
+ "visit/DiaryTinted/burg_party/2": [
+  5,
+  4,
+  4,
+  4
+ ],
+ "visit/DiaryTinted/burg_party/3": [
+  4,
+  3,
+  3,
+  3
+ ],
+ "visit/DiaryTinted/coast_wound/2": [
+  4,
+  4,
+  3,
+  4
+ ],
+ "visit/DiaryTinted/den_beast/2": [
+  4,
+  3,
+  4,
+  2
+ ],
+ "visit/DiaryTinted/forest_beast/2": [
+  4,
+  4,
+  4,
+  2
+ ],
+ "visit/DiaryTinted/hall_dialogue/2": [
+  4,
+  4,
+  3,
+  2
+ ],
+ "visit/DiaryTinted/hall_dialogue/3": [
+  3,
+  3,
+  2,
+  2
+ ],
+ "visit/DiaryTinted/plain_quiet/2": [
+  5,
+  3,
+  4,
+  5
+ ],
+ "visit/DiaryTinted/plain_quiet/3": [
+  3,
+  2,
+  1,
+  3
+ ],
+ "visit/DiaryTinted/road_fight/3": [
+  5,
+  3,
+  3,
+  4
+ ],
+ "visit/DiaryTinted/road_fight/4": [
+  4,
+  3,
+  3,
+  4
+ ],
+ "visit/DiaryTinted/village_talk/2": [
+  3,
+  3,
+  3,
+  4
+ ],
+ "visit/CampaignLog/burg_party/2": [
+  4,
+  4,
+  3,
+  4
+ ],
+ "visit/CampaignLog/burg_party/3": [
+  4,
+  4,
+  3,
+  4
+ ],
+ "visit/CampaignLog/coast_wound/2": [
+  4,
+  4,
+  3,
+  4
+ ],
+ "visit/CampaignLog/den_beast/2": [
+  5,
+  3,
+  4,
+  4
+ ],
+ "visit/CampaignLog/forest_beast/2": [
+  4,
+  3,
+  3,
+  4
+ ],
+ "visit/CampaignLog/hall_dialogue/2": [
+  5,
+  4,
+  4,
+  4
+ ],
+ "visit/CampaignLog/hall_dialogue/3": [
+  4,
+  4,
+  3,
+  4
+ ],
+ "visit/CampaignLog/plain_quiet/2": [
+  5,
+  3,
+  4,
+  4
+ ],
+ "visit/CampaignLog/plain_quiet/3": [
+  1,
+  1,
+  1,
+  1
+ ],
+ "visit/CampaignLog/road_fight/3": [
+  5,
+  3,
+  4,
+  4
+ ],
+ "visit/CampaignLog/road_fight/4": [
+  4,
+  3,
+  4,
+  4
+ ],
+ "visit/CampaignLog/village_talk/2": [
+  4,
+  4,
+  3,
+  3
+ ]
+}

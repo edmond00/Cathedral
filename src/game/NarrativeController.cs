@@ -353,6 +353,9 @@ public class NarrativeController
             Config.NarrativeUI.RightPadding);
         int contentWidth = layout.CONTENT_WIDTH - 1; // -1 for scrollbar
         _scrollBuffer = new NarrationScrollBuffer(maxWidth: contentWidth, layout: layout);
+        // Whoever is acting when a block commits is who the journal credits it to: the Speak About
+        // hand-off commits the speech first and switches member after, so the speech stays the speaker's.
+        _scrollBuffer.BlockAdded += block => JournalRecorder.Narration(block, _activePartyMember);
         _popup = popup;
         _modusMentisPopup = new TerminalThinkingModusMentisPopup(popup);
         _itemSelectionPopup = new TerminalItemSelectionPopup(popup);

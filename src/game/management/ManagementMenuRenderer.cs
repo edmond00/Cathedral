@@ -19,7 +19,8 @@ public enum ManagementTab
     Journal,
     Memory,
     Humors,
-    Chorography
+    Chorography,
+    Bellic
 }
 
 /// <summary>
@@ -42,6 +43,8 @@ public class ManagementMenuRenderer
     private readonly HumorMenuRenderer _humorMenu;
     private readonly InventoryMenuRenderer _inventoryMenu;
     private readonly MentalMapsPanelRenderer _mapsPanel;
+    private readonly BellicMenuRenderer _bellicMenu;
+    private readonly JournalMenuRenderer _journalMenu;
 
     // ── Cached art data per anatomy type ─────────────────────────
     private readonly BodyArtData _humanArtData;
@@ -67,6 +70,7 @@ public class ManagementMenuRenderer
         new TabDefinition("Memory",      ManagementTab.Memory,      AllCharacters: true),
         new TabDefinition("Humors",      ManagementTab.Humors,      AllCharacters: true),
         new TabDefinition("Chorography", ManagementTab.Chorography, AllCharacters: false), // protagonist only
+        new TabDefinition("Bellic",      ManagementTab.Bellic,      AllCharacters: true),
     });
 
     private static TabDefinition[] CheckShortcuts(TabDefinition[] tabs)
@@ -245,7 +249,17 @@ public class ManagementMenuRenderer
         var pulmonesMap  = HumorQueuePositionMap.Load("assets/art/humors/pulmones.txt", "pulmones");
         var spleenMap    = HumorQueuePositionMap.Load("assets/art/humors/spleen.txt",   "spleen");
         _humorMenu = new HumorMenuRenderer(terminal, humorArtData, heparMap, paunchMap, pulmonesMap, spleenMap);
+        _bellicMenu = new BellicMenuRenderer(terminal);
+        _journalMenu = new JournalMenuRenderer(terminal);
     }
+
+    /// <summary>
+    /// Tabs that draw their own full-width title over the body-art area, so the shared right-panel
+    /// header, its separator and its footer stay off.
+    /// </summary>
+    private static bool OwnsWholeScreen(ManagementTab tab) =>
+        tab is ManagementTab.Memory or ManagementTab.Humors or ManagementTab.Chorography or ManagementTab.Bellic
+            or ManagementTab.Journal;
 
     // ── Art/gear data helpers ─────────────────────────────────────
 
@@ -317,8 +331,7 @@ public class ManagementMenuRenderer
             _bodyViewer.ShowAge    = true;
             _bodyViewer.RenderBodyArt();
         }
-        else if (_activeTab != ManagementTab.Memory && _activeTab != ManagementTab.Humors
-                 && _activeTab != ManagementTab.Chorography)
+        else if (!OwnsWholeScreen(_activeTab))
         {
             _bodyViewer.ShowWounds = false;
             _bodyViewer.ShowAge    = false;
@@ -329,8 +342,7 @@ public class ManagementMenuRenderer
         }
 
         // Right panel
-        if (_activeTab != ManagementTab.Memory && _activeTab != ManagementTab.Humors
-            && _activeTab != ManagementTab.Chorography)
+        if (!OwnsWholeScreen(_activeTab))
             RenderPanelHeader();
 
         switch (_activeTab)
@@ -348,7 +360,7 @@ public class ManagementMenuRenderer
                 _inventoryMenu.Render(invMember);
                 break;
             case ManagementTab.Journal:
-                RenderJournalPlaceholder();
+                _journalMenu.Render(_protagonist);
                 break;
             case ManagementTab.Memory:
                 _memoryPanel.Render(GetPartyMember(_selectedCharacterIndex));
@@ -359,13 +371,15 @@ public class ManagementMenuRenderer
             case ManagementTab.Chorography:
                 _mapsPanel.Render(_protagonist);
                 break;
+            case ManagementTab.Bellic:
+                _bellicMenu.Render(GetPartyMember(_selectedCharacterIndex));
+                break;
         }
 
         // Left panel (rendered AFTER all tab content so it overlays cleanly)
         RenderLeftPanel();
 
-        if (_activeTab != ManagementTab.Memory && _activeTab != ManagementTab.Humors
-            && _activeTab != ManagementTab.Chorography)
+        if (!OwnsWholeScreen(_activeTab))
             RenderFooter();
 
         // Edge rules against the sphere, drawn last so no tab content overwrites them
@@ -467,6 +481,14 @@ public class ManagementMenuRenderer
                 if (_inventoryMenu.IsHovering) tick = true;
             }
         }
+        else if (_activeTab == ManagementTab.Bellic)
+        {
+            if (_bellicMenu.ProcessHover(x, y))
+            {
+                changed = true;
+                if (_bellicMenu.IsHovering) tick = true;
+            }
+        }
         else if (_activeTab == ManagementTab.Chorography)
         {
             if (_mapsPanel.ProcessHover(x, y))
@@ -524,6 +546,13 @@ public class ManagementMenuRenderer
             Render();
             return false;
         }
+        if (_activeTab == ManagementTab.Journal
+            && key is OpenTK.Windowing.GraphicsLibraryFramework.Keys.PageUp or OpenTK.Windowing.GraphicsLibraryFramework.Keys.PageDown)
+        {
+            if (key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.PageUp ? _journalMenu.PageUp() : _journalMenu.PageDown())
+                Render();
+            return false;
+        }
         int idx = TabForKey(key) is { } label ? Array.FindIndex(AllTabs, t => t.Label == label) : -1;
         return idx >= 0 && AllTabs[idx].Tab != _activeTab && ActivateTab(idx);
     }
@@ -545,6 +574,9 @@ public class ManagementMenuRenderer
             CloseMapsTab();
         if (_activeTab == ManagementTab.Chorography && previousTab != ManagementTab.Chorography)
             _mapsPanel.OnActivated(_protagonist);
+        // The journal opens at its newest entry, every time.
+        if (_activeTab == ManagementTab.Journal && previousTab != ManagementTab.Journal)
+            _journalMenu.ScrollToNewest();
 
         if (!IsCharacterVisibleForTab(_selectedCharacterIndex, _activeTab))
             _selectedCharacterIndex = 0;
@@ -563,6 +595,8 @@ public class ManagementMenuRenderer
             _inventoryMenu.ClearHover();
         if (_activeTab != ManagementTab.Chorography)
             _mapsPanel.ClearHover();
+        if (_activeTab != ManagementTab.Bellic)
+            _bellicMenu.ClearHover();
 
         Render();
         return true;
@@ -587,6 +621,31 @@ public class ManagementMenuRenderer
         if (!CliSelectTab("Memory")) return false;
         Render();
         if (!_memoryPanel.CliSelectModusMentis(modusMentisId)) return false;
+        Render();
+        return true;
+    }
+
+    /// <summary>Expands a skill on the Bellic tab by name, for <c>--cli</c>.</summary>
+    public bool CliSelectBellicSkill(string skillName)
+    {
+        if (!CliSelectTab("Bellic")) return false;
+        if (!_bellicMenu.CliSelectSkill(GetPartyMember(_selectedCharacterIndex), skillName)) return false;
+        Render();
+        return true;
+    }
+
+    /// <summary>
+    /// Selects a party member by name (or by slot, 0 being the protagonist) for <c>--cli</c> — the
+    /// same as clicking their row in P A R T Y. False when nobody matches or the tab hides them.
+    /// </summary>
+    public bool CliSelectMember(string who)
+    {
+        int idx = int.TryParse(who, out int n) ? n
+                : Enumerable.Range(0, PartyCount).FirstOrDefault(i =>
+                      GetCharacterName(i).Contains(who, StringComparison.OrdinalIgnoreCase), -1);
+        if (idx < 0 || idx >= PartyCount || !IsCharacterVisibleForTab(idx, _activeTab)) return false;
+        _selectedCharacterIndex = idx;
+        SwapMemberArt(GetPartyMember(idx));
         Render();
         return true;
     }
@@ -647,6 +706,13 @@ public class ManagementMenuRenderer
             return true;
         }
 
+        // Bellic: a skill row expands into the panel below
+        if (_activeTab == ManagementTab.Bellic && _bellicMenu.ProcessClick(x, y))
+        {
+            Render();
+            return true;
+        }
+
         // Chorography tab: a lock, a map, an icon or the pad
         if (_activeTab == ManagementTab.Chorography && _mapsPanel.ProcessClick(x, y, _protagonist))
         {
@@ -656,6 +722,30 @@ public class ManagementMenuRenderer
         }
 
         return false;
+    }
+
+    /// <summary>The mouse wheel: the Journal tab scrolls (wheel up reads back). Other tabs ignore it.</summary>
+    public void OnMouseWheel(float delta)
+    {
+        if (_activeTab != ManagementTab.Journal) return;
+        if (_journalMenu.Scroll((int)Math.Round(delta * 3))) Render();
+    }
+
+    /// <summary>Scrolls the Journal tab for <c>--cli</c>: lines (positive reads back), or a page.</summary>
+    public bool CliScrollJournal(string how)
+    {
+        if (_activeTab != ManagementTab.Journal) return false;
+        bool moved = how switch
+        {
+            "pageup"   => _journalMenu.PageUp(),
+            "pagedown" => _journalMenu.PageDown(),
+            "newest"   => Reset(),
+            _          => int.TryParse(how, out int n) && _journalMenu.Scroll(n),
+        };
+        Render();
+        return true;
+
+        bool Reset() { _journalMenu.ScrollToNewest(); return true; }
     }
 
     /// <summary>Handle right click (no special behavior in management mode).</summary>
@@ -895,18 +985,6 @@ public class ManagementMenuRenderer
         _terminal.Text(BodyArtViewer.PanelContentX, row, "Items collected during your", Config.Colors.DarkGray35, Config.Colors.Black);
         row++;
         _terminal.Text(BodyArtViewer.PanelContentX, row, "journey will appear here.", Config.Colors.DarkGray35, Config.Colors.Black);
-    }
-
-    private void RenderJournalPlaceholder()
-    {
-        int row = ContentStartRow;
-        _terminal.Text(BodyArtViewer.PanelContentX, row, "No journal entries yet.", Config.Colors.DarkGray35, Config.Colors.Black);
-        row += 2;
-        _terminal.Text(BodyArtViewer.PanelContentX, row, "Your experiences and", Config.Colors.DarkGray35, Config.Colors.Black);
-        row++;
-        _terminal.Text(BodyArtViewer.PanelContentX, row, "discoveries will be recorded", Config.Colors.DarkGray35, Config.Colors.Black);
-        row++;
-        _terminal.Text(BodyArtViewer.PanelContentX, row, "here.", Config.Colors.DarkGray35, Config.Colors.Black);
     }
 
     // ═══════════════════════════════════════════════════════════════

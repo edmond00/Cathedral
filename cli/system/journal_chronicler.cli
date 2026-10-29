@@ -1,0 +1,34 @@
+# The chronicler writes a closed visit up, and the journal keeps the paragraph and the milestones.
+#
+# Under --playground no request is made: the chronicler writes a fixed placeholder the moment a group
+# is queued, which is what lets a script follow the queue and the save. The foreground/background
+# gate and the preemption need a real model and are measured by hand (design/BELLIC_JOURNAL_REPORT.md).
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Hall" --period noon --observe-only "brewer"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+expect-state journal kind=Narration state=Raw
+
+# Leaving closes the visit; the chronicler takes it up on the next frame.
+click button
+wait mode WorldView 60
+wait 1
+expect-state journal pending-groups=0
+expect-state journal written-groups=1
+expect-state journal kind=Milestone
+expect-no-state journal kind=Narration state=Pending
+
+manage Journal
+wait 1
+expect [chronicle]
+expect First came to the
+expect-not not yet written up
+save roundtrip
+quit

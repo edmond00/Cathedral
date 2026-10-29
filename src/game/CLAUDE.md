@@ -185,7 +185,7 @@ so, and says why.
 | LocationInteraction, ChildhoodReminescence, GetUp | closes the thinking popup; otherwise pauses **as an overlay**, leaving narration standing |
 | Dialogue, Working, Gathering, Trading, EncounterPrompt, WorldView | pauses. None of them is cancelled by it — walking out is the footer INTERRUPT / LEAVE / ENGAGE button's job |
 | ProtagonistCreation | pauses. Not a running phase, but a screen with no other way off it |
-| ProtagonistManagement | back where it was opened from, the same press as its Back button: the main menu, or — opened by a tab's letter (A, I, J, M, H, C, from any phase the menu opens over but a fight) — that phase |
+| ProtagonistManagement | back where it was opened from, the same press as its Back button: the main menu, or — opened by a tab's letter (A, I, J, M, H, C, B, from any phase the menu opens over but a fight) — that phase |
 | Settings | back to the main menu — the same press as its Back button |
 | MainMenu | resumes `MenuReturnMode`, or nothing at all before a run has started |
 | LLMLoading, Traveling, Death, DialogueDemo | **nothing, on purpose** — see the reasons on each case |
@@ -1996,3 +1996,48 @@ or key on the person instead, which every tree can answer.
 `DialogueTreeRegistry.All` misses them — and they are the trees a thief meets most. `MmReachAudit.AllTrees`
 adds them back explicitly.
 
+
+### The journal, and the chronicler that writes it up
+
+`Protagonist.Journal` is the run's story: structured `JournalEntry`s (narration, dialogue, fact,
+milestone), each with day, place, area, acting member, source text, the chronicler's paragraph and a
+state (raw → pending → written). Saved as plain data in `PartyState.Journal` — copied, never shared.
+
+**Everything enters through `JournalRecorder`, at the moment it is finalised**, never where it is
+generated:
+
+| entry | taken from | so that |
+|---|---|---|
+| narration | `NarrationScrollBuffer.BlockAdded` | a preview part that was reset never commits, so it never reaches the journal |
+| an NPC's line | the same event (`Speaking` blocks), named by the label the player knows | a generated proper name the player was never told does not leak |
+| the reply picked | `DialogueTreeController.OnOptionSelected` | the options left unpicked are never recorded |
+| a fact | a shown block's `OutcomeReports` with `ShowInUI` | not `Outcome.ApplyTo`, which also runs for outcomes nobody saw |
+| a milestone | the event itself: a lesson (`PartyMember.LearnModusMentis`/`AcquireModusMentis`, party members only), a wound (`FightResolver.ApplyWound`, `WoundInflictionOutcome`), a healing, a companion joining, dying or parted with, a first visit (keyed by vertex, whatever the mental maps forget), a fight won or fled | each once, by `Key` where it could repeat |
+
+Narration is credited to whoever is acting when the block commits — the Speak About hand-off commits
+the speech before switching member, so the speech stays the speaker's and what follows is the
+companion's. **A visit is the chronicler's unit**: entering the world map closes the group and its
+entries turn pending, which *is* the queue — saving the entries saves it, and a quit loses nothing.
+
+**The chronicler** (`Chronicler`, pumped every frame) writes one pending group at a time through
+`LlamaServerManager.GenerateBackgroundAsync`, and applies the result on the game thread — the journal
+is never touched from two threads. The gate lives in `LlamaServerManager`, not in a list of game
+modes: every request is foreground unless it came through that method; a foreground request cancels a
+running background one at once; a background one starts only after `Config.LLM.BackgroundQuietMs` of
+foreground silence; a cancelled job returns null and is started again from the beginning, never kept
+half-written. Its prompts are `ChroniclerPrompt`, kept short because llama-server only notices a
+cancelled stream between batches. A written group keeps its paragraph and its milestones and drops the
+entries it was written from; unwritten groups keep at most `Journal.MaxPendingSourceChars` of source.
+
+| | |
+|---|---|
+| `inspect journal` | counts (`pending-groups=`, `written-groups=`, `chronicler=idle|busy|off`) and one line per entry |
+| `journal dump <file>` | the journal as JSON, material for `tools/journal/` |
+| `manage Journal pageup\|pagedown\|newest\|<n>` | scroll the tab |
+| `wait for <secs>` | hold that long — a player reading, the quiet the chronicler waits for |
+| `--no-chronicler` | record, never write up — the queue stays readable |
+| `--llm-threads <n>`, `--llm-seed <n>` | measure at a player's thread count, on one narrative path |
+
+Under `--playground` the chronicler writes a fixed `[chronicle] …` placeholder the moment a group is
+queued; `cli/system/journal_capture.cli` and `journal_chronicler.cli` cover capture, the queue and the
+save. **Preemption and timing need the real model** — `tools/journal/`.

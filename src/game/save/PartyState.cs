@@ -53,7 +53,11 @@ public sealed class PartyState
     // discriminator and buys nothing, since there is exactly one protagonist.
     public string? CharacterName { get; set; }
     public int CurrentLocationId { get; set; }
-    public List<string> Journal { get; set; } = new();
+    /// <summary>
+    /// The journal, entries and chronicler queue together (the queue is the entries still pending).
+    /// Plain data with public setters, so stored as-is — but copied, not shared.
+    /// </summary>
+    public Journal Journal { get; set; } = new();
     public int Gold { get; set; }
     public int Silver { get; set; }
     public int Copper { get; set; }
@@ -80,7 +84,7 @@ public sealed class PartyState
             Companions        = protagonist.CompanionParty.Select(CaptureMember).ToList(),
             CharacterName     = protagonist.CharacterName,
             CurrentLocationId = protagonist.CurrentLocationId,
-            Journal           = new List<string>(protagonist.JournalEntries),
+            Journal           = protagonist.Journal.Clone(),
             Gold              = protagonist.Party.Gold,
             Silver            = protagonist.Party.Silver,
             Copper            = protagonist.Party.Copper,
@@ -203,8 +207,7 @@ public sealed class PartyState
         protagonist.RestoreCharacterName(CharacterName);
         protagonist.CurrentLocationId = CurrentLocationId;
 
-        protagonist.JournalEntries.Clear();
-        protagonist.JournalEntries.AddRange(Journal);
+        protagonist.Journal = Journal.Clone();
 
         // Party is get-only and starts at zero on a fresh protagonist, so crediting is a restore.
         if (Gold   > 0) protagonist.Party.Add(CoinType.Gold,   Gold);

@@ -148,6 +148,25 @@ public static class Config
         public static global::Cathedral.LLM.LlamaComputeDevice? ForcedLlmDevice { get; set; } = null;
 
         /// <summary>
+        /// <c>--llm-threads &lt;n&gt;</c>: llama-server's <c>-t</c> for this run, over the saved setting —
+        /// what lets a measurement run at a player's thread count on a machine with more cores. Null
+        /// leaves the setting (and llama.cpp's own default) in charge.
+        /// </summary>
+        public static int? ForcedLlmThreads { get; set; } = null;
+
+        /// <summary>
+        /// <c>--llm-seed &lt;n&gt;</c>: a sampler seed sent with every request, so two measured runs of one
+        /// script take the same narrative path. Null sends none, as the game always has.
+        /// </summary>
+        public static int? LlmSeed { get; set; } = null;
+
+        /// <summary>
+        /// <c>--no-chronicler</c>: the journal records as usual but no background session writes it up —
+        /// the "without" half of measuring what the chronicler costs the narration.
+        /// </summary>
+        public static bool ChroniclerDisabled { get; set; } = false;
+
+        /// <summary>
         /// Biome or location name to place the protagonist on at world generation, e.g. "village".
         /// Set by <c>--start-at &lt;name&gt;</c>. Matched case-insensitively as a substring; ignored
         /// when nothing in the world matches.
@@ -2121,6 +2140,22 @@ public static class Config
         // Maximum context window size in tokens passed to the llama.cpp server (-c flag)
         public const int ContextSize = 2048;
         public const double Temperature = 0.7;
+
+        /// <summary>
+        /// How long the foreground must have been quiet (nothing in flight, nothing finished more
+        /// recently) before a background job — the chronicler — may start. See
+        /// <c>LlamaServerManager.GenerateBackgroundAsync</c>. Long enough that the gap between two
+        /// requests of one narration phase never qualifies; a player reading is what it waits for.
+        /// </summary>
+        public const int BackgroundQuietMs = 4000;
+
+        /// <summary>
+        /// How much of a background prompt is sent per prefill step, in characters (~16 tokens). The
+        /// server can only drop a cancelled request between batches, so this bounds what a preempted
+        /// chronicler job can still cost a foreground request: one step's prefill. Measured at 160 characters
+        /// on a 4-thread CPU, a preempting request waited 0.9-1.8 s; see design/BELLIC_JOURNAL_REPORT.md.
+        /// </summary>
+        public const int BackgroundPrefillChars = 64;
         public const int TopK = 12;
         public const double TopP = 0.95;
 

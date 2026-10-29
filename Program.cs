@@ -187,6 +187,12 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --cpu                              Run LLM on CPU only, overriding the setting and the first-run probe");
     Console.WriteLine("  --gpu                              Run LLM on the installed GPU backend (models/llama/backends/), same override");
     Console.WriteLine("  --no-llm-probe                     Skip first-run compute-device detection; use whatever is already saved");
+    Console.WriteLine("  --llm-threads <n>                  DEBUG: llama-server's -t for this run, over the saved setting — to measure at a");
+    Console.WriteLine("                                     player's thread count on a machine with more cores");
+    Console.WriteLine("  --llm-seed <n>                     DEBUG: send a sampler seed with every request, so two measured runs of one");
+    Console.WriteLine("                                     script take the same narrative path");
+    Console.WriteLine("  --no-chronicler                    DEBUG: record the journal but never write it up in the background — the");
+    Console.WriteLine("                                     'without' half of measuring what the chronicler costs");
     Console.WriteLine("  --developer-keys                   Enable the developer keyboard shortcuts (D/M/F/G/H/J, R/K, C/V, W/S zoom,");
     Console.WriteLine("                                     Tab outside exploration). Off by default, as in a shipped build,");
     Console.WriteLine("                                     which ignores this flag");
@@ -501,6 +507,13 @@ if (args.Length >= 1 && args[0] == "--outcome-audit")
 if (args.Length >= 1 && args[0] == "--demo-audit")
 {
     Cathedral.DemoLimitAudit.Run();
+    return;
+}
+
+// --journal-prompts <journals-dir> <out.jsonl>: the chronicler's prompts for tools/journal/ (see ChroniclerBench)
+if (args.Length >= 3 && args[0] == "--journal-prompts")
+{
+    Cathedral.Game.Narrative.ChroniclerBench.Run(args[1], args[2]);
     return;
 }
 
@@ -876,6 +889,24 @@ if (args.Any(a => a == "--gpu"))
     Console.ResetColor();
     Console.WriteLine();
 }
+
+// --llm-threads <n>: llama-server's thread count for this run (measuring at a player's core count)
+{
+    int i = Array.IndexOf(args, "--llm-threads");
+    if (i >= 0 && i + 1 < args.Length && int.TryParse(args[i + 1], out int n) && n > 0)
+        Cathedral.Config.Debug.ForcedLlmThreads = n;
+}
+
+// --llm-seed <n>: a sampler seed on every request, so two measured runs follow one path
+{
+    int i = Array.IndexOf(args, "--llm-seed");
+    if (i >= 0 && i + 1 < args.Length && int.TryParse(args[i + 1], out int n))
+        Cathedral.Config.Debug.LlmSeed = n;
+}
+
+// --no-chronicler: record the journal but never write it up in the background
+if (args.Any(a => a == "--no-chronicler"))
+    Cathedral.Config.Debug.ChroniclerDisabled = true;
 
 // Check for --no-llm-probe (skip first-run hardware detection)
 if (args.Any(a => a == "--no-llm-probe"))

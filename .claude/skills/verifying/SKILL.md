@@ -41,6 +41,8 @@ from the game's (very chatty) diagnostic logging on the same stdout.
 | `--spawn-beast <name>` | Puts a beast (`wolf`, `boar`, `bear`, `black bear`, `stray dog`, `fox`, `cat`, and the climate beasts `lion`, `hyena`, `jaguar`, `tiger`, `puma`, `warthog`, `snow leopard`, `white bear`, `white wolf`) in the **opening area** of every scene, at every period, flagged an enemy by the same first-contact pass that flags a rolled one. Everything a script does *to* a beast — appease, tame, track — starts with one being where the script opens, and no factory guarantees that: a wolf is rolled 10–20% of the time, a boar 25–40%, and whichever is rolled then roams between areas with the hour. Follows `--start-area`, since it spawns into whichever area narration opens in. |
 | `--goal-only <verb-id>` | Forces the playground's goal choice onto one verb. `--playground` replaces the persona's "what do you want to do?" with a **uniform draw over every goal the observed object offers**, so a script meaning to `appease` a beast — and then `tame` it — is otherwise picking out of a dozen. The CLI's `goal` command sets the same switch, which is what a script that needs two different goals in one run should use. Inert when no goal in a phase matches, which then draws as usual. |
 | `--means-only <mm-id>` | Forces the playground's choice of **means** — which action modus mentis carries the goal out — onto one modus mentis. The draw is otherwise uniform over every action modus mentis held, and willingness rules now refuse by kind of mind: **examining is refused by any action modus mentis without the Observation function**, so a script that means to examine grants one and pins it (`--grant-mm woodcraft --means-only woodcraft`). The CLI's `means` command sets the same switch. A miss goes through `DebugFlagAudit`. |
+| `--no-chronicler` | The journal records as usual, but no background session writes it up: closed visits stay pending, so the queue and its save can be read (`cli/system/journal_capture.cli`), and a real-model run can be timed without it (`tools/journal/latency.cli`). |
+| `--llm-threads <n>` / `--llm-seed <n>` | Real-model runs only: llama-server's `-t` for this run over the saved setting, and a sampler seed on every request so two runs of one script take the same narrative path. What `tools/journal/` measures latency with. |
 | `--refuse-focus` | Makes every focus observation's modus mentis turn away from the clicked object, as if the choice judge had answered "turn elsewhere". It then picks another unobserved object and one text dismisses the first and observes the second, carrying its keyword. `--playground` never declines a choice, so this is the only way a script reaches that branch. |
 | `--refuse-means <n>` | Under `--playground`, the first `n` willingness questions answer "unwilling" (only those that offer a refusal at all). The playground otherwise answers "willing" every time, so an action modus mentis's refusal — and the retries of iterative thinking after one — is unreachable from a script. Pair it with `--organs pineal_gland=<0–3>`, which sets how many retries a thinking gets (and, at 2+, the doubt). See `cli/system/thinking_iterates.cli`. |
 | `--penalty-only <kind>` | Narrows a failed act's penalty draw to one kind: `wound`, `get_lost`, `waste_time` or `lose_focus`. Every failure costs something now — one entry is drawn uniformly from a table of one to seven — so a script that means to see the way lost, the hour wasted or a noetic point gone is otherwise asserting on a coin flip. **It also changes what your `fail.cli` does next**: a failed `move`, `follow_path`, `track`, `stalk` or `voyage_toward` may lose the way, and the next footer press then leaves the location; a failed climb, swim or crossing may move the hour on. A table with none of the kind is a `DebugFlagAudit` miss. |
@@ -205,7 +207,17 @@ Run `help` for the authoritative list. The essentials:
                             routine of that kind, and reads that routine out below it;
                             `manage Chorography next|prev` presses the `< n/N >` arrows
                             under the porthole (the map's first routine is shown by default).
-                            On this screen `key <letter>` opens the tab with that initial
+                            On this screen `key <letter>` opens the tab with that initial.
+                            `manage Bellic <skill>` expands a skill on the Bellic tab;
+                            `manage member <name|slot>` picks a party member (0 = protagonist);
+                            `manage Journal pageup|pagedown|newest|<n>` scrolls the journal
+  journal dump <file.json>  the run's journal as JSON (`inspect journal` is the assertable form:
+                            `pending-groups=`, `written-groups=`, one `journal-entry` line each)
+  wait for <secs>           settle, then hold that long — a player reading. The background
+                            chronicler starts only after foreground quiet, which a bare `wait`
+                            (done the moment the game is idle) never gives it
+  when <GameMode> <command> run the command only in that mode — for scripts on a REAL model, whose
+                            path (did the act open a conversation? a fight?) a script cannot know
   select [item name]        show a carried item's info panel; bare `select` lists what
                             is carried (open `manage Inventory` first). `select mm <id>`
                             shows a held modus mentis's detail box on the Memory tab
