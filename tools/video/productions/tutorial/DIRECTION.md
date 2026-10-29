@@ -19,9 +19,11 @@ video made from it). Where this and the `video` skill's house rules differ, this
   from the explanations, so a listener always knows whether a mechanism is being explained or the
   game's text is being read. The texts come from the take's LLM session logs
   (`logs/llm_session_*/slot_*/request_*/llm_response.txt`, timestamped), aligned to the timeline.
-  Which delivery: chosen by audition with alan as the narrator (A: alan slower and rougher; B: alan
-  pitched down with a stone-room echo; C: `en_GB-northern_english_male-medium`; D: `en_US-ryan-high`).
-  TODO: the choice.
+  Same voice (alan) for both: the developer found "slower and rougher" too close to the explanation
+  and "pitched down with a stone-room echo" too far; four readings in between are being auditioned
+  (small room, a little slower and lower; a warmer, narrower tone; a looser Piper delivery). TODO:
+  the choice.
+- **No captions.**
 - **Diagrams (manim)**: the organs → systems map; one narration turn (observe → keyword → think
   with a modus mentis → goal and means → act → dice → outcome, and where noetic points go); dice and
   humors (the pool, a success, what each humor does to a die, the viscera limit, attack against
