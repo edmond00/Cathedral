@@ -1,3 +1,4 @@
+using Cathedral.Game.Narrative;
 using System.Collections.Generic;
 using Cathedral.Game.Npc;
 
@@ -11,6 +12,7 @@ namespace Cathedral.Game.Narrative.Items;
 /// <summary>A purse is a container first — a belt slot that holds a very little.</summary>
 public sealed class CoinPurse : WearableContainerItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Valuable });
     public override string ItemId           => "coin_purse";
     public override string DisplayName      => "Coin Purse";
     public override string Description      => "A small drawstring purse of oiled leather, worn shiny at the mouth";
@@ -92,6 +94,7 @@ public sealed class WalkingStaff : Item
 
 public sealed class PrayerBeads : WearableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Holy });
     public override string ItemId           => "prayer_beads";
     public override string DisplayName      => "String of Beads";
     public override string Description      => "Thirty wooden beads on a knotted cord, three of them rubbed almost featureless";
@@ -108,6 +111,7 @@ public sealed class PrayerBeads : WearableItem
 
 public sealed class LuckCharm : WearableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Holy });
     public override string ItemId           => "luck_charm";
     public override string DisplayName      => "Luck Charm";
     public override string Description      => "A hare's foot and a holed pebble tied together on a leather thong";
@@ -125,6 +129,7 @@ public sealed class LuckCharm : WearableItem
 
 public sealed class BoneDice : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Bone });
     public override string ItemId      => "bone_dice";
     public override string DisplayName => "Pair of Bone Dice";
     public override string Description => "Two yellowed dice cut from a knucklebone, the pips picked out in soot";
@@ -172,6 +177,7 @@ public sealed class MendingKit : Item
 /// </summary>
 public sealed class SaltPouch : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Food });
     public override string ItemId      => "salt_pouch";
     public override string DisplayName => "Pouch of Salt";
     public override string Description => "A tight little leather pouch of grey salt, hoarded like coin";

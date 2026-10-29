@@ -1,3 +1,4 @@
+using Cathedral.Game.Narrative;
 using System;
 using System.Collections.Generic;
 
@@ -5,6 +6,7 @@ namespace Cathedral.Game.Narrative.Items;
 
 public sealed class Carrot : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Vegetable });
     public override string ItemId      => "carrot";
     public override string DisplayName => "Carrot";
     public override string Description => "A long orange root with feathery green tops, fresh-pulled";

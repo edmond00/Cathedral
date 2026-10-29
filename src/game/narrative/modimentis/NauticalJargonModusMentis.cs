@@ -15,7 +15,8 @@ public class NauticalJargonModusMentis : ModusMentis
         "Holds the speech of ships and docks ready, the cant of the harbour and the names of rigging. Reads seamen and waterfront dealings by their own idiom, and inclines toward talk that marks one as of the sea.";
     public override string SkillMeans       => "the language and lore of sailors and ships";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
-    public override WillTarget? Will => WillTarget.To<TalkOfFarPlacesVerb>("talk of ships and far coasts");
+    public override WillTargets? Will => WillTarget.To<TalkOfFarPlacesVerb>("talk of ships and far coasts");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Shore, Places.Taverns);
     public override string[] Organs        => new[] { "tongue", "ears" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>

@@ -1,3 +1,4 @@
+using Cathedral.Game.Narrative;
 using System.Collections.Generic;
 
 namespace Cathedral.Game.Narrative.Items;
@@ -48,6 +49,7 @@ public abstract class BodyPartItem : Item
 /// </summary>
 public abstract class OffalItem : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Meat });
     // Category is sealed on ConsumableItem — it is Consumable by construction.
     public override ItemSize       Size           => ItemSize.Small;
     public override WeightClass    Weight         => WeightClass.Light;
@@ -136,6 +138,7 @@ public sealed class Suet : OffalItem
 /// <summary>Thick skin off a large beast — the tanner's material, and a burden to carry.</summary>
 public sealed class Hide : BodyPartItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Hide });
     public override string ItemId      => "hide";
     public override string DisplayName => "Hide";
     public override string Description => "A heavy flayed hide, thick as board at the shoulder and stinking of the beast";
@@ -147,6 +150,7 @@ public sealed class Hide : BodyPartItem
 /// <summary>A furred skin, kept for the fur. The valuable one.</summary>
 public sealed class Pelt : BodyPartItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Hide });
     public override string ItemId      => "pelt";
     public override string DisplayName => "Pelt";
     public override string Description => "A supple furred pelt, still fat-lined on the underside and strong-smelling";
@@ -158,6 +162,7 @@ public sealed class Pelt : BodyPartItem
 /// <summary>The palm-sized scrap off something small. Good for trimming and little else.</summary>
 public sealed class Skin : BodyPartItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Hide });
     public override string ItemId      => "skin";
     public override string DisplayName => "Skin";
     public override string Description => "A thin scrap of skin no bigger than a palm, drying stiff already at the edges";
@@ -168,6 +173,7 @@ public sealed class Skin : BodyPartItem
 
 public sealed class Bone : BodyPartItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Bone });
     public override string ItemId      => "bone";
     public override string DisplayName => "Bone";
     public override string Description => "A long bone scraped clean, dense and cold, ringing faintly when it is knocked";
@@ -177,6 +183,7 @@ public sealed class Bone : BodyPartItem
 
 public sealed class Skull : BodyPartItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Bone });
     public override string ItemId      => "skull";
     public override string DisplayName => "Skull";
     public override string Description => "A skull emptied and drying, the sutures showing like cracks in a glaze";
@@ -188,6 +195,7 @@ public sealed class Skull : BodyPartItem
 /// <summary>A pointed tooth: what a thing bites with.</summary>
 public sealed class Fang : BodyPartItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Bone });
     public override string ItemId      => "fang";
     public override string DisplayName => "Fang";
     public override string Description => "A curved ivory fang, still slick with blood at the root";
@@ -197,6 +205,7 @@ public sealed class Fang : BodyPartItem
 /// <summary>A flat tooth: what a thing chews with. Not a smaller fang — a different tooth.</summary>
 public sealed class Tooth : BodyPartItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Bone });
     public override string ItemId      => "tooth";
     public override string DisplayName => "Tooth";
     public override string Description => "A flat grinding tooth, yellowed at the crown and long in the root";
@@ -205,6 +214,7 @@ public sealed class Tooth : BodyPartItem
 
 public sealed class Tusk : BodyPartItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Bone, ItemKind.Ivory });
     public override string ItemId      => "tusk";
     public override string DisplayName => "Tusk";
     public override string Description => "A curved yellow tusk worn to a chisel at the tip, torn out with a strip of gum";
@@ -214,6 +224,7 @@ public sealed class Tusk : BodyPartItem
 
 public sealed class Claw : BodyPartItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Bone });
     public override string ItemId      => "claw";
     public override string DisplayName => "Claw";
     public override string Description => "A thick hooked claw, hard as horn and still sharp";
@@ -223,6 +234,7 @@ public sealed class Claw : BodyPartItem
 /// <summary>Grown once and kept: hollow, and it comes away from the skull with a piece of bone in it.</summary>
 public sealed class Horn : BodyPartItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Bone });
     public override string ItemId      => "horn";
     public override string DisplayName => "Horn";
     public override string Description => "A ridged hollow horn, black at the tip and pale where it met the head";
@@ -233,6 +245,7 @@ public sealed class Horn : BodyPartItem
 /// <summary>Grown and shed every year: solid bone through, and worth more than a horn for it.</summary>
 public sealed class Antler : BodyPartItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Bone });
     public override string ItemId      => "antler";
     public override string DisplayName => "Antler";
     public override string Description => "A branched shaft of antler, solid through, the tines polished from rubbing";
@@ -245,6 +258,7 @@ public sealed class Antler : BodyPartItem
 
 public sealed class Sinew : BodyPartItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Fibre });
     public override string ItemId      => "sinew";
     public override string DisplayName => "Sinew";
     public override string Article     => "some";
@@ -255,6 +269,7 @@ public sealed class Sinew : BodyPartItem
 
 public sealed class Hair : BodyPartItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Fibre });
     public override string ItemId      => "hair";
     public override string DisplayName => "Hair";
     public override string Article     => "some";
@@ -265,6 +280,7 @@ public sealed class Hair : BodyPartItem
 
 public sealed class Feather : BodyPartItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Feather });
     public override string ItemId      => "feather";
     public override List<ItemTag> Tags => new() { ItemTag.Pelt, ItemTag.Poultry };
     public override string DisplayName => "Feather";
@@ -275,6 +291,7 @@ public sealed class Feather : BodyPartItem
 /// <summary>A long showy feather off a big bird. Worth three of the other kind.</summary>
 public sealed class Plume : BodyPartItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Feather });
     public override string ItemId      => "plume";
     public override string DisplayName => "Plume";
     public override string Description => "A long banded flight feather, stiff-quilled and as broad as two fingers";
@@ -285,6 +302,7 @@ public sealed class Plume : BodyPartItem
 
 public sealed class Tail : BodyPartItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Hide });
     public override string ItemId      => "tail";
     public override string DisplayName => "Tail";
     public override string Description => "A tail taken whole at the base, dry and scaled or brushed thick with fur";
@@ -293,6 +311,7 @@ public sealed class Tail : BodyPartItem
 
 public sealed class Wing : BodyPartItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Feather });
     public override string ItemId      => "wing";
     public override string DisplayName => "Wing";
     public override string Description => "A wing spread and dried flat, scaled in powder-fine colour or stretched over fine bone";
@@ -303,6 +322,7 @@ public sealed class Wing : BodyPartItem
 /// <summary>The hard case off a beetle or a crab. A snail leaves a <c>Shell</c>, which is a different shape of thing.</summary>
 public sealed class Carapace : BodyPartItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Bone });
     public override string ItemId      => "carapace";
     public override string DisplayName => "Carapace";
     public override string Description => "A hard hollow case with an oil-slick sheen to it, tough out of all proportion to its weight";
@@ -312,6 +332,7 @@ public sealed class Carapace : BodyPartItem
 
 public sealed class Silk : BodyPartItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Fibre });
     public override string ItemId      => "silk";
     public override string DisplayName => "Silk";
     public override string Article     => "some";
@@ -323,6 +344,7 @@ public sealed class Silk : BodyPartItem
 /// <summary>Bait. The reason a fisherman turns over stones.</summary>
 public sealed class Grub : BodyPartItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Food });
     public override string ItemId      => "grub";
     public override string DisplayName => "Grub";
     public override string Description => "A pale soft grub that will not stop moving, kept in a twist of leaf";
@@ -332,6 +354,7 @@ public sealed class Grub : BodyPartItem
 
 public sealed class Wax : BodyPartItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Honey });
     public override string ItemId      => "wax";
     public override string DisplayName => "Wax";
     public override string Article     => "some";
@@ -342,6 +365,7 @@ public sealed class Wax : BodyPartItem
 
 public sealed class Sting : BodyPartItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Bone });
     public override string ItemId      => "sting";
     public override string DisplayName => "Sting";
     public override string Description => "A barbed sting drawn out with its venom sac still attached, no longer than a fingernail paring";

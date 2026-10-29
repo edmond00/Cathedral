@@ -1,0 +1,20 @@
+# will_kind_target — a target named by kind is answered by every item of that kind
+#
+# Mycology wants "a mushroom" (YieldingKind(ItemKind.Mushroom)), not the Mushroom class: the desert
+# truffle is its own class, a vegetable, and carries the Mushroom kind, so it answers. Desert id 1,
+# from the Wadi: the way leads to the Truffle Ground and ends on gathering a truffle.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-mm mycology --location-type desert --location-id 1 --start-area Wadi --period morning
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+
+expect-state will "gather a desert truffle"
+expect-state will "gather mushrooms"
+quit

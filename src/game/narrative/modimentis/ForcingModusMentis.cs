@@ -14,7 +14,8 @@ public class ForcingModusMentis : ModusMentis
         "Opens what was meant to stay shut. Reads a door, chest or shutter for its weak point - hinge, frame, the boards rather than the lock - and applies leverage there. Faster than picking and considerably louder.";
     public override string SkillMeans       => "the leverage that opens what was shut";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<BreakVerb>("force open what was shut");
+    public override WillTargets? Will => WillTarget.To<BreakVerb>("force open what was shut");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Dwellings, Places.Stronghold, Places.Treasure);
     public override string[] Organs        => new[] { "hands", "arms" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.Low;

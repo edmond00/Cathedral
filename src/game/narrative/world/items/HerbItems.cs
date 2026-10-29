@@ -33,6 +33,7 @@ public sealed class Mint : HerbItem
 
 public sealed class Chamomile : HerbItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Flower });
     public override string ItemId      => "chamomile";
     public override string DisplayName => "Chamomile";
     public override string Description => "A few small white-petalled chamomile flowers, golden-centred";

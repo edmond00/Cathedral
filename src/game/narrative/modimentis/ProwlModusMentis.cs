@@ -15,7 +15,8 @@ public class ProwlModusMentis : ModusMentis
         "Moves through ground low, slow, and silent, keeping to shadow and cover while cataloguing everything that stirs. Patrols rather than travels, and prefers to see the whole place before the place sees it.";
     public override string SkillMeans       => "the silent patrolling that spots others before being seen";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<StalkVerb>("stalk unseen");
+    public override WillTargets? Will => WillTarget.To<StalkVerb>("stalk unseen");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Woodland, Places.Streets);
     public override string[] Organs        => new[] { "limbs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override bool ActsDiscretely => true;

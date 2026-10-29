@@ -14,7 +14,8 @@ public class IntercessionModusMentis : ModusMentis
         "Speaks on another's behalf: an introduction that carries weight, a word put in, a reputation lent. Costs the speaker something real every time, which is precisely why it works.";
     public override string SkillMeans       => "the word put in on somebody else's behalf";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
-    public override WillTarget? Will => WillTarget.To<PetitionVerb>("put in a word with the powerful");
+    public override WillTargets? Will => WillTarget.To<PetitionVerb>("put in a word with the powerful");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Streets, Places.Stronghold);
     public override string[] Organs        => new[] { "tongue", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

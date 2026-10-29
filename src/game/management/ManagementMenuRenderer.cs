@@ -581,6 +581,16 @@ public class ManagementMenuRenderer
         return true;
     }
 
+    /// <summary>Selects a held modus mentis by id on the Memory tab, so its detail box can be read.</summary>
+    public bool CliSelectModusMentis(string modusMentisId)
+    {
+        if (!CliSelectTab("Memory")) return false;
+        Render();
+        if (!_memoryPanel.CliSelectModusMentis(modusMentisId)) return false;
+        Render();
+        return true;
+    }
+
     /// <summary>Everything the selected character is carrying, for <c>--cli</c> discovery.</summary>
     public IReadOnlyList<string> CliCarriedItemNames => _inventoryMenu.CliCarriedItemNames;
 

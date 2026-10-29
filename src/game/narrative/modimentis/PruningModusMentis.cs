@@ -12,7 +12,11 @@ public class PruningModusMentis : ModusMentis
     public override string MenuDescription =>
         "Takes out dead, crossing and crowding wood so the rest can thrive. Sees the shape a tree should have and cuts toward it, knowing that a careless cut opens a wound that never closes.";
     public override string SkillMeans       => "the cutting-away of wood so that the rest may thrive";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<Cathedral.Game.Scene.Verbs.CutWoodVerb>("cut out the dead wood").On<Cathedral.Game.Scene.TreePointOfInterest>(),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.GrabVerb>("take up a pruning blade").YieldingAny("a pruning blade", typeof(Cathedral.Game.Narrative.World.Items.PruningHook), typeof(Cathedral.Game.Narrative.World.Items.VineKnife), typeof(Cathedral.Game.Narrative.World.Items.GraftingKnife)));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Fields, Places.Woodland);
     public override string[] Organs        => new[] { "hands", "arms" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;

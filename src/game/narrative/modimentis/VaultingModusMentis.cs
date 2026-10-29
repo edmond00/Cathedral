@@ -15,7 +15,8 @@ public class VaultingModusMentis : ModusMentis
         "Takes fences, ditches, and low walls in stride, planting a hand or a foot and swinging the body over. Judges an obstacle at a glance for the leap it wants, and prefers going over to going around.";
     public override string SkillMeans       => "the leaping over obstacles without breaking stride";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<CrossVerb>("leap across");
+    public override WillTargets? Will => WillTarget.To<CrossVerb>("leap across");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.FreshWater, Places.Heights);
     public override string[] Organs        => new[] { "lower_limbs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

@@ -14,7 +14,10 @@ public class SextonryModusMentis : ModusMentis
         "Keeps a burial ground: digs the graves straight and deep, keeps the register of who lies where, mows the grass and minds the gate. Knows every grave and whose it is.";
     public override string SkillMeans       => "the keeping of a burial ground";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<DigVerb>("dig a grave").On<Scene.GravePointOfInterest>();
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<DigVerb>("dig a grave").On<Scene.GravePointOfInterest>(),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.GrabVerb>("take up the grave spade").YieldingAny("a spade", typeof(Cathedral.Game.Narrative.World.Items.Shovel), typeof(Cathedral.Game.Narrative.World.Items.GraveSpade)));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Graves, Places.Sacred);
     public override string[] Organs        => new[] { "arms", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

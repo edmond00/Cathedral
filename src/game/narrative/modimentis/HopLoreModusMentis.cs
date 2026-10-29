@@ -14,7 +14,10 @@ public class HopLoreModusMentis : ModusMentis
         "Knows the hop bine and the brewer's need of it: when the cones are papery and full of yellow dust, how they dry, how much bitterness they will give a brew and how long they keep it from souring.";
     public override string SkillMeans       => "the knowledge of hops and the bitterness they give";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTarget? Will => WillTarget.ToAny("pick hops", typeof(GatherVerb), typeof(GrabVerb)).Yielding<World.Items.Hops>();
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.ToAny("pick hops", typeof(GatherVerb), typeof(GrabVerb)).Yielding<World.Items.Hops>(),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("taste the beer the hops went into").Selling(ItemKind.Liquor));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Fields, Places.Taverns);
     public override string[] Organs        => new[] { "nose", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

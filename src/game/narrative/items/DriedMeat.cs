@@ -1,3 +1,4 @@
+using Cathedral.Game.Narrative;
 using System;
 using System.Collections.Generic;
 
@@ -5,6 +6,7 @@ namespace Cathedral.Game.Narrative.Items;
 
 public sealed class DriedMeat : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Meat });
     public override string ItemId      => "dried_meat";
     public override string DisplayName => "Dried Meat";
     public override string Article     => "some";

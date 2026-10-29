@@ -6,6 +6,7 @@ namespace Cathedral.Game.Narrative.World.Items;
 
 public sealed class Nettle : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Herb, ItemKind.Plant });
     public override string ItemId      => "nettle";
     public override string DisplayName => "Nettle";
     public override string Description => "A stinging nettle stem, leaves bristling with fine hairs";
@@ -22,6 +23,7 @@ public sealed class Nettle : ConsumableItem
 
 public sealed class Fern : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Plant });
     public override string ItemId      => "fern";
     public override string DisplayName => "Fern";
     public override string Description => "A curled green fern frond, soft underside paler than its top";
@@ -38,6 +40,7 @@ public sealed class Fern : ConsumableItem
 
 public sealed class Ivy : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Plant });
     public override string ItemId      => "ivy";
     public override string DisplayName => "Ivy";
     public override string Description => "A trailing length of ivy, leaves leathery and dark";
@@ -51,6 +54,7 @@ public sealed class Ivy : Item
 
 public sealed class Bramble : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Berry, ItemKind.Fruit });
     public override string ItemId      => "bramble";
     public override string DisplayName => "Bramble";
     public override string Description => "A thorny bramble cane, snagging on cloth";
@@ -67,6 +71,7 @@ public sealed class Bramble : ConsumableItem
 
 public sealed class Reed : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Plant, ItemKind.Fibre });
     public override string ItemId      => "reed";
     public override string DisplayName => "Reed";
     public override string Description => "A cluster of tall hollow reeds, papery at the edges";
@@ -83,6 +88,7 @@ public sealed class Reed : ConsumableItem
 
 public sealed class Watercress : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Herb, ItemKind.Vegetable, ItemKind.Plant });
     public override string ItemId      => "watercress";
     public override string DisplayName => "Watercress";
     public override string Description => "A wet handful of watercress, peppery-smelling";

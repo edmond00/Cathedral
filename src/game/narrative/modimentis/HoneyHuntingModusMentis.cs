@@ -15,8 +15,11 @@ public class HoneyHuntingModusMentis : ModusMentis
         "Wants wild honey: follows the chattering bird to the hive in the hollow tree or the crack in the rock, smokes the bees, takes the comb with bare hands, and pays no mind to the stings. Every hive it hears humming is a meal to be robbed.";
     public override string SkillMeans       => "robbing a wild hive of its comb";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTarget? Will => WillTarget.ToAny("rob a wild hive of its honey", typeof(GatherVerb), typeof(GrabVerb))
-        .Yielding<World.Items.WildHoney>();
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.ToAny("rob a wild hive of its honey", typeof(GatherVerb), typeof(GrabVerb))
+        .Yielding<World.Items.WildHoney>(),
+        WillTarget.ToAny("take the comb and its wax", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Honey));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Woodland, Places.Wilds);
     public override string[] Organs        => new[] { "hands", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

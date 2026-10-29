@@ -17,7 +17,8 @@ public class CrueltyModusMentis : ModusMentis
         "Reads others for their fear and their weak points, and takes an advantage without the check of mercy. Inclines toward intimidation, domination and pain, pressing where another would ease off.";
     public override string SkillMeans    => "cruelty and predatory instinct";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
-    public override WillTarget? Will => WillTarget.To<CrushVerb>("crush something small");
+    public override WillTargets? Will => WillTarget.To<CrushVerb>("crush something small");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Stock, Places.Dwellings);
     public override MoralLevel MoralLevel => MoralLevel.Low;
     public override string[] Organs => new[] { "spleen", "heart" };
 

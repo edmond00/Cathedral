@@ -15,7 +15,8 @@ public class FerocityModusMentis : ModusMentis
         "Presses an attack so hard the enemy is given no room to answer. Trades defence for momentum and keeps the body driving forward, favouring relentless assault over measured exchange.";
     public override string SkillMeans       => "the savage and overwhelming attack that leaves no room for defense";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action, ModusMentisFunction.Fighting };
-    public override WillTarget? Will => WillTarget.To<AttackVerb>("attack");
+    public override WillTargets? Will => WillTarget.To<AttackVerb>("attack");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Woodland);
     // Fangs are beast, teeths are human: the pair belonged to no anatomy. The spleen is where the game
     // keeps rancour, which is what ferocity runs on.
     public override string[] Organs        => new[] { "fangs", "spleen" };

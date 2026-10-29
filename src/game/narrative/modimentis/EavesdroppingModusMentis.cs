@@ -14,7 +14,8 @@ public class EavesdroppingModusMentis : ModusMentis
         "Hears what is not meant to be heard: through a door, behind a hanging, at the next table. Picks one conversation out of a crowd and follows it while seeming to listen to another.";
     public override string SkillMeans       => "the overhearing of what is not meant to be heard";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTarget? Will => WillTarget.To<ListenVerb>("overhear what is not meant for me");
+    public override WillTargets? Will => WillTarget.To<ListenVerb>("overhear what is not meant for me");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Taverns, Places.Streets, Places.Dwellings);
     public override string[] Organs        => new[] { "ears", "cerebellum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

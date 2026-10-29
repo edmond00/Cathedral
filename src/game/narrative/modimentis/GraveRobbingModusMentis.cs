@@ -14,7 +14,11 @@ public class GraveRobbingModusMentis : ModusMentis
         "Opens graves and tombs at night for what was buried with the dead: the ring, the coin in the mouth, the good cloak. Knows how deep the rich are buried and how to fill a hole so nobody notices.";
     public override string SkillMeans       => "the robbing of graves";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<DigVerb>("open a grave").On<Scene.GravePointOfInterest>();
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<DigVerb>("open a grave").On<Scene.GravePointOfInterest>(),
+        WillTarget.ToAny("take what was buried with the dead", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).YieldingKind(ItemKind.Relic),
+        WillTarget.ToAny("lay hands on a spade", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).YieldingAny("a spade", typeof(Cathedral.Game.Narrative.World.Items.Shovel), typeof(Cathedral.Game.Narrative.World.Items.GraveSpade)));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Graves);
     public override string[] Organs        => new[] { "hands", "arms" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;

@@ -15,7 +15,10 @@ public class BrawlingModusMentis : ModusMentis
         "Reads a close fight as chaos to be won by any means, with no rules worth respecting. Keeps the body ready to headbutt, grapple, and seize whatever comes to hand, favouring the effective move over the honourable one.";
     public override string SkillMeans       => "street fighting, improvised violence, and winning by any means";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action, ModusMentisFunction.Fighting };
-    public override WillTarget? Will => WillTarget.To<AttackVerb>("start a fight");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<Cathedral.Game.Scene.Verbs.AttackVerb>("start a fight").OnHostile(),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy a weapon fit for a brawl").Selling(ItemKind.Weapon));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Taverns, Places.Streets);
     public override string[] Organs        => new[] { "arms", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.Low;

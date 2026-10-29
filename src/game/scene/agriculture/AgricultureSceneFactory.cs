@@ -467,8 +467,8 @@ public sealed class AgricultureSceneFactory : SettledSceneFactory
         a.PointsOfInterest.Add(new ClampPointOfInterest("Root Clamp", new() { "A long heap of the crop buried in straw and earth against the frost" },
             Items(_crop.Yield, _crop.Yield, () => new Straw()), new[] { "earthed", "cold" })
             { Senses = SensoryProfile.Odorous, VerbModiMentis = Teach(("examine", "almanac"), ("smell", "petrichor")) });
-        a.PointsOfInterest.Add(new ToolPointOfInterest("Tool Rack", new() { "Hoes, a mattock and a rake on iron pegs" },
-            Items(() => new Hoe(), () => new Mattock(), () => new Rake()), new[] { "cluttered", "rusty" })
+        a.PointsOfInterest.Add(new ToolPointOfInterest("Tool Rack", new() { "Hoes, a mattock, a rake, a shovel and a pruning hook on iron pegs" },
+            Items(() => new Hoe(), () => new Mattock(), () => new Rake(), () => new Shovel(), () => new PruningHook()), new[] { "cluttered", "rusty" })
             { Senses = SensoryProfile.Examinable, VerbModiMentis = Teach(("examine", "tillage")) });
         return a;
     }

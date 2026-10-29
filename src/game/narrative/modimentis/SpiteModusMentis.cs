@@ -16,7 +16,8 @@ public class SpiteModusMentis : ModusMentis
         "Remembers the slight and pays it back: the jibe returned, the trick played on the trickster, the boaster taken down in front of everyone. Prefers the wrong righted to the profit taken, and will spend real advantage to make somebody sorry. Ugly, and occasionally the only thing that answers a bully.";
     public override string SkillMeans       => "the settled intent to make somebody sorry";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
-    public override WillTarget? Will => WillTarget.To<ProvokeVerb>("make somebody sorry");
+    public override WillTargets? Will => WillTarget.To<ProvokeVerb>("make somebody sorry");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Taverns, Places.Streets);
     public override string[] Organs        => new[] { "spleen", "teeths" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

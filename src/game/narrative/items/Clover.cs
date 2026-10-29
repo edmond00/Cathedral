@@ -1,9 +1,11 @@
+using Cathedral.Game.Narrative;
 ﻿using System.Collections.Generic;
 
 namespace Cathedral.Game.Narrative.Items;
 
 public sealed class Clover : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Plant, ItemKind.Fodder, ItemKind.Flower });
     public override ItemCategory Category => ItemCategory.Crafting;
     public override string ItemId => "clover";
     public override string DisplayName => "Clover";

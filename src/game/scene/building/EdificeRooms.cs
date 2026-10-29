@@ -190,6 +190,11 @@ public static class EdificeRooms
                 pois.Add(Banner(rng));
                 pois.Add(new BenchPointOfInterest("Waiting Bench", new() { "A long bench against the wall for those kept waiting" },
                     moods: new[] { "worn", "hard", "long" }) { Senses = SensoryProfile.Examinable, VerbModiMentis = L(("examine", "whittlecraft")) });
+                // The porter's keys hang inside the gate, where whoever keeps it can reach them: the keys
+                // to the locked rooms beyond, and what a will to open or keep a locked door goes to first.
+                pois.Add(new PegPointOfInterest("Key Pegs", new() { "Pegs by the gate with the house keys hung on them, a ring to each" },
+                    new() { I(new KeyRing()) }, new[] { "iron", "jangling", "kept" })
+                    { Senses = SensoryProfile.Audible, VerbModiMentis = L(("examine", "jailcraft")) });
                 break;
             case EdificeRoom.Corridor:
                 if (rng.NextDouble() < 0.6) pois.Add(Brazier());

@@ -15,8 +15,8 @@ public class NuttingModusMentis : ModusMentis
         "Wants nuts: to pull down the hazel boughs and strip them, fill the pockets with acorns under the oak, find the squirrel's hoard and empty it. An autumn wood is a larder, and it means to carry as much of it home as it can.";
     public override string SkillMeans       => "gathering nuts from the hazels and the oaks";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTarget? Will => WillTarget.ToAny("gather nuts", typeof(GatherVerb), typeof(GrabVerb))
-        .YieldingAny("nuts", typeof(World.Items.Hazelnut), typeof(World.Items.Acorn));
+    public override WillTargets? Will => WillTarget.ToAny("gather nuts", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Nut);
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Woodland);
     public override string[] Organs        => new[] { "hands", "paunch" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

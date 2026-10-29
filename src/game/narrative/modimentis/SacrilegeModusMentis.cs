@@ -14,7 +14,8 @@ public class SacrilegeModusMentis : ModusMentis
         "Lays hands on what has been set apart, and does it anyway. Requires no special skill and a great deal of nerve, and is the one act that turns an ordinary crime into something a whole parish will pursue.";
     public override string SkillMeans       => "the laying of hands on what was set apart";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.ToAny("lay hands on something holy", typeof(StealVerb), typeof(GrabVerb)).YieldingAny("holy things", typeof(World.Items.Icon), typeof(World.Items.Idol), typeof(World.Items.Censer), typeof(World.Items.Aspergillum), typeof(Items.PrayerBeads), typeof(World.Items.HolyWater));
+    public override WillTargets? Will => WillTarget.ToAny("lay hands on something holy", typeof(Cathedral.Game.Scene.Verbs.StealVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Holy);
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Sacred);
     public override string[] Organs        => new[] { "hands", "spleen" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.Low;

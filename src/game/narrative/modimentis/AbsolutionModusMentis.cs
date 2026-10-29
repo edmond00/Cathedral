@@ -14,7 +14,8 @@ public class AbsolutionModusMentis : ModusMentis
         "Gives forgiveness, and gives it so that it is believed: the right words, the penance that fits, the assurance that the debt is paid. Lifts a weight off someone and makes them able to stand.";
     public override string SkillMeans       => "the giving of forgiveness that is believed";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
-    public override WillTarget? Will => WillTarget.To<ConfessVerb>("hear a confession out and forgive it");
+    public override WillTargets? Will => WillTarget.To<ConfessVerb>("hear a confession out and forgive it");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Sacred, Places.Settled);
     public override string[] Organs        => new[] { "tongue", "heart" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

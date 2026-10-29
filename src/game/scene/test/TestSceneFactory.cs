@@ -363,6 +363,9 @@ public sealed class TestSceneFactory : SceneFactory
     private static void Person_(Scene scene, Random rng, NamedNpcArchetype archetype, Area area, NpcSchedule schedule)
     {
         var entity = archetype.Spawn(rng, area.ContextDescription);
+        // A fixture arrives whole. A trait may give a person an old wound, and which traits are drawn
+        // moves with the catalogue; a test that strikes the brewer reads his hit points before and after.
+        entity.Combatant.Wounds.RemoveAll(w => w.InflictedOnDay == null);
         var sceneNpc = new SceneNpc(entity);
         sceneNpc.Register(scene);
         scene.Npcs.Add(sceneNpc);

@@ -15,7 +15,8 @@ public class PettyThiefModusMentis : ModusMentis
         "Watches for the quick lift: the loose purse, the unattended trinket, the palmed small thing. Keeps the hands ready to take unseen, and inclines toward the minor theft over the bold one.";
     public override string SkillMeans       => "the picking of pockets and small thefts";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<StealVerb>("steal something");
+    public override WillTargets? Will => WillTarget.To<StealVerb>("steal something");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Shops, Places.Dwellings, Places.Streets);
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

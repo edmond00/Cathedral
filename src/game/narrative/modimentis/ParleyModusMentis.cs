@@ -16,7 +16,8 @@ public class ParleyModusMentis : ModusMentis
         "Negotiates with the hostile: keeps the voice level, gives ground that costs nothing, and finds the thing the other party actually wants underneath what they are shouting about. Ends more fights than any weapon.";
     public override string SkillMeans       => "the level talk that takes a fight off the table";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
-    public override WillTarget? Will => WillTarget.To<ReconcileVerb>("talk a quarrel off the table");
+    public override WillTargets? Will => WillTarget.To<ReconcileVerb>("talk a quarrel off the table");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Settled, Places.Stronghold);
     public override string[] Organs        => new[] { "tongue", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

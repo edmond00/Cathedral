@@ -203,7 +203,9 @@ internal static class ReminescenceCatalog
                 new("the sound of waves and smell of sweat",
                     observationText:  "a low rhythmic thunder and a sour, salt-and-sweat smell rising from below",
                     outcomeText:      "the sound of waves and the smell of sweat on the docks, loading and unloading heavy bundles from ships",
-                    outcome: To("work", skills: new[] { typeof(HardLaborModusMentis) }),
+                    // Tidewatching beside the labour: a docker works to the tide, and it is the one general
+                    // thinker every path through these docks is sure of (rule C3).
+                    outcome: To("work", skills: new[] { typeof(HardLaborModusMentis), typeof(TidewatchingModusMentis) }),
                     contextSummary:   "doing hard labour on the docks"),
             });
 

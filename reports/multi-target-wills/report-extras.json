@@ -1,0 +1,345 @@
+{
+ "kept_ordinary": [
+  "finesse",
+  "patience",
+  "scrutiny",
+  "the senses",
+  "stealth",
+  "athletics",
+  "surefoot",
+  "nerve",
+  "cold_blood",
+  "beast_sense",
+  "appraisal",
+  "trailcraft",
+  "forage_lore",
+  "keywise",
+  "awe",
+  "voyage",
+  "hunt, decipher, iconography and ripelore (granted by a childhood; see rule C3)",
+  "fencraft, firecraft, icecraft, potcraft, seamanship, speleology, whittlecraft (their acts are offered nearly everywhere)",
+  "gleaning, gourmandise, pomology, tidewatching (a beast can learn them and none of their acts)"
+ ],
+ "content": [
+  "Wild growth: a mushroom cluster on 45% of woodland and damp areas, and a herb patch (Woodland Herbs: valerian, wild mint; Meadow Herbs: wild thyme, chamomile, meadowsweet) on 40% of woodland and temperate meadow areas, where the area holds none — SceneFactory.PlaceWildGrowth, drawn from a generator of its own, off in the test location.",
+  "An axe bitten into a chopping block in every woodshed (the woodcutter's and charcoal burner's camp).",
+  "A spare pick in every cave miner's ore store.",
+  "A shovel against the churchyard wall in every village with a church walk.",
+  "A shovel and a pruning hook on the barn's tool rack of every arable holding.",
+  "Key pegs with a ring of keys in the gatehouse of every edifice (castle, fortress, temple, monastery, school, palace…).",
+  "A bolt of sailcloth and a bale of oakum at the hull on the slip in every port shipyard.",
+  "A ring of keys is now a tool made for unlock_door, and the planner's tool detour looks for any item made for a verb as well as its reference tools.",
+  "Tidewatching granted beside hard labour by the childhood fragment of the docks — the one path of the childhood that left no general thinker (rule C3).",
+  "ItemKind: 50 kinds tagged across all 500 items (every item carries at least one); a will narrows by kind with YieldingKind and Selling."
+ ],
+ "notes": [
+  "The 'before' column is the code at the baseline commit, with the place declarations added as data and behaviour untouched. Two existing wills had their places re-declared after the baseline (tea_lore to the tea garden's own areas, hop_lore adding taverns); every other existing will is measured against the places it declared before any change.",
+  "Overall related coverage stays level while the number of measured wills grows by 41: the original wills improve, and the new ones, mostly trades measured against the rooms their trade is plied in, sit lower because an empty-handed body has nothing to buy with in a fresh scene, and some trades' goods are not in every room of their kind.",
+  "Generating NPC skills now takes one draw per pool from the person's generator, so changing the catalogue reshuffles skills only. This branch's conversions therefore build different people than before at every location id, once."
+ ],
+ "worse_notes": [
+  "Brawling falls from 100% to about 19% in taverns and streets: it now wants somebody hostile, or a weapon to buy. Before, it planned to strike any passer-by, which the click then refused in front of witnesses; the plan is honest now, and a brawler in a peaceful alehouse has nothing to do there.",
+  "Lockpicking and jailcraft remain near 0% in houses and strongholds: a pick for a lock is carried by people, not left in rooms, and a locked door's keys hang at an edifice's gatehouse, which a house does not have."
+ ],
+ "converted": {
+  "woodcraft": {
+   "was": "Observation+Action",
+   "targets": [
+    "take up sound timber — GatherVerb|GrabVerb yielding Wood",
+    "cut timber to work — CutWoodVerb",
+    "buy seasoned wood — ProposeToBuyVerb selling Wood"
+   ]
+  },
+  "husbandry": {
+   "was": "Observation+Action",
+   "targets": [
+    "fetch fodder for the beasts — GatherVerb|GrabVerb yielding Fodder",
+    "collect the eggs — GatherVerb|GrabVerb yielding Egg",
+    "bring a beast to hand — TameVerb",
+    "buy fodder — ProposeToBuyVerb selling Fodder"
+   ]
+  },
+  "blanching": {
+   "was": "Observation+Action",
+   "targets": [
+    "pick what grew pale in the dark — GatherVerb|GrabVerb yielding Mushroom",
+    "lift forced endive — GatherVerb|GrabVerb yielding Endive"
+   ]
+  },
+  "bouquet": {
+   "was": "Observation+Thinking",
+   "targets": [
+    "nose a cask — SmellVerb yielding Liquor",
+    "buy a drink worth the nose — ProposeToBuyVerb selling Liquor"
+   ]
+  },
+  "brewcraft": {
+   "was": "Observation+Action",
+   "targets": [
+    "pick hops for the brew — GatherVerb|GrabVerb yielding Hops",
+    "take up grain for malt — GatherVerb|GrabVerb yielding Grain",
+    "buy malt grain — ProposeToBuyVerb selling Grain"
+   ]
+  },
+  "cookery": {
+   "was": "Observation+Action",
+   "targets": [
+    "gather something for the pot — GatherVerb|GrabVerb yielding Vegetable",
+    "pick a herb to season it — GatherVerb|GrabVerb yielding Herb",
+    "buy meat for the spit — ProposeToBuyVerb selling Meat"
+   ]
+  },
+  "henwifery": {
+   "was": "Observation+Action",
+   "targets": [
+    "find where the hens are laying — GatherVerb|GrabVerb yielding Egg",
+    "pick up feathers — GatherVerb|GrabVerb yielding Feather",
+    "buy eggs to set — ProposeToBuyVerb selling Egg"
+   ]
+  },
+  "incensing": {
+   "was": "Observation+Action",
+   "targets": [
+    "take up incense and censer — GrabVerb yielding Holy",
+    "sing through the rite — SingAlongVerb"
+   ]
+  },
+  "oil_pressing": {
+   "was": "Observation+Action",
+   "targets": [
+    "pick olives — GatherVerb|GrabVerb yielding Olive",
+    "take up the new oil — GatherVerb|GrabVerb yielding OliveOil"
+   ]
+  },
+  "paddycraft": {
+   "was": "Observation+Action",
+   "targets": [
+    "cut ripe rice — GatherVerb|GrabVerb yielding Rice"
+   ]
+  },
+  "pruning": {
+   "was": "Observation+Action",
+   "targets": [
+    "cut out the dead wood — CutWoodVerb on TreePointOfInterest",
+    "take up a pruning blade — GrabVerb yielding a pruning blade"
+   ]
+  },
+  "relic_lore": {
+   "was": "Observation+Thinking",
+   "targets": [
+    "study a relic — ExamineVerb yielding Relic",
+    "pray before a holy thing — ContemplateVerb yielding Holy",
+    "buy a holy thing — ProposeToBuyVerb selling Holy"
+   ]
+  },
+  "salvage": {
+   "was": "Observation+Action",
+   "targets": [
+    "recover what the sea threw up — GatherVerb|GrabVerb yielding Flotsam",
+    "swim out to what the sea holds — SwimAcrossVerb"
+   ]
+  },
+  "tapstering": {
+   "was": "Observation+Action",
+   "targets": [
+    "draw a drink across the counter — ProposeToBuyVerb selling Liquor",
+    "hear what is said over the counter — HearGossipVerb"
+   ]
+  },
+  "weave_reading": {
+   "was": "Observation+Thinking",
+   "targets": [
+    "feel the weave of a cloth — ExamineVerb yielding Cloth",
+    "buy good cloth — ProposeToBuyVerb selling Cloth"
+   ]
+  },
+  "winnowing": {
+   "was": "Observation+Action",
+   "targets": [
+    "take up grain to winnow — GatherVerb|GrabVerb yielding Grain"
+   ]
+  },
+  "forgery": {
+   "was": "Observation+Action",
+   "targets": [
+    "lay hands on a document to copy — GrabVerb|StealVerb yielding Writing",
+    "take a seal to copy — GrabVerb|StealVerb yielding a seal"
+   ]
+  },
+  "calligraphy": {
+   "was": "Observation+Action",
+   "targets": [
+    "take up pen and parchment — GrabVerb yielding Writing",
+    "buy parchment and ink — ProposeToBuyVerb selling Writing"
+   ]
+  },
+  "liturgy": {
+   "was": "Observation+Thinking",
+   "targets": [
+    "sing the office — SingAlongVerb",
+    "ask the blessing — AskBlessingVerb"
+   ]
+  },
+  "perfumery": {
+   "was": "Observation+Action",
+   "targets": [
+    "gather flowers for their scent — GatherVerb|GrabVerb yielding Flower",
+    "gather a strewing herb — GatherVerb|GrabVerb yielding Herb"
+   ]
+  },
+  "siegecraft": {
+   "was": "Thinking",
+   "targets": [
+    "get over a wall — ScaleUpVerb",
+    "breach what is shut — BreakVerb"
+   ]
+  },
+  "intrigue": {
+   "was": "Thinking",
+   "targets": [
+    "learn who owes whom — GatherKnowledgeVerb",
+    "hear who hates whom — HearGossipVerb",
+    "buy a confidence — OfferBribeVerb"
+   ]
+  },
+  "arms_care": {
+   "was": "Action",
+   "targets": [
+    "take up a weapon to tend — GrabVerb|StealVerb yielding Weapon",
+    "buy armour fit to use — ProposeToBuyVerb selling Armour"
+   ]
+  },
+  "chandlery": {
+   "was": "Action",
+   "targets": [
+    "take wax for candles — GatherVerb|GrabVerb yielding Honey",
+    "buy tallow and wick — ProposeToBuyVerb selling Light"
+   ]
+  },
+  "cobbling": {
+   "was": "Action",
+   "targets": [
+    "take up a hide for leather — GrabVerb yielding Hide",
+    "buy leather — ProposeToBuyVerb selling Hide"
+   ]
+  },
+  "dairycraft": {
+   "was": "Action",
+   "targets": [
+    "take milk from the dairy — GatherVerb|GrabVerb yielding Dairy",
+    "buy milk to turn — ProposeToBuyVerb selling Dairy"
+   ]
+  },
+  "fletching": {
+   "was": "Action",
+   "targets": [
+    "pick up feathers for the flights — GatherVerb|GrabVerb yielding Feather",
+    "buy a bow to fletch for — ProposeToBuyVerb selling Bow"
+   ]
+  },
+  "metalcraft": {
+   "was": "Action",
+   "targets": [
+    "take up ore — GatherVerb|GrabVerb yielding Ore",
+    "take up iron to work — GatherVerb|GrabVerb yielding Metal",
+    "buy iron — ProposeToBuyVerb selling Metal"
+   ]
+  },
+  "millcraft": {
+   "was": "Action",
+   "targets": [
+    "take grain to the stones — GatherVerb|GrabVerb yielding Grain",
+    "buy grain to grind — ProposeToBuyVerb selling Grain"
+   ]
+  },
+  "tanning": {
+   "was": "Action",
+   "targets": [
+    "take a hide for the pit — GatherVerb|GrabVerb yielding Hide",
+    "strip tan bark — GatherVerb|GrabVerb yielding TanBark"
+   ]
+  },
+  "threshery": {
+   "was": "Action",
+   "targets": [
+    "take up sheaves to thresh — GatherVerb|GrabVerb yielding Grain"
+   ]
+  },
+  "silverhaul": {
+   "was": "Action",
+   "targets": [
+    "shoot a net — FishVerb",
+    "take up a net — GrabVerb yielding a net"
+   ]
+  },
+  "shearing": {
+   "was": "Action",
+   "targets": [
+    "take a fleece — GatherVerb|GrabVerb yielding Fleece",
+    "take up the shears — GrabVerb yielding WoolShears"
+   ]
+  },
+  "stonework": {
+   "was": "Action",
+   "targets": [
+    "cut stone from the rock — MineVerb"
+   ]
+  },
+  "grafting": {
+   "was": "Action",
+   "targets": [
+    "take a scion from a tree — CutWoodVerb on TreePointOfInterest",
+    "take up a blade for the graft — GrabVerb yielding Blade"
+   ]
+  },
+  "laundering": {
+   "was": "Action",
+   "targets": [
+    "take up linen to wash — GrabVerb yielding Cloth",
+    "fetch lye and soap — GrabVerb yielding lye or soap"
+   ]
+  },
+  "shipwrighting": {
+   "was": "Action",
+   "targets": [
+    "take up timber for the hull — GatherVerb|GrabVerb yielding Wood",
+    "take up oakum for the seams — GrabVerb yielding Oakum"
+   ]
+  },
+  "tailoring": {
+   "was": "Action",
+   "targets": [
+    "buy cloth to cut — ProposeToBuyVerb selling Cloth",
+    "take up cloth — GrabVerb yielding Cloth"
+   ]
+  },
+  "farriery": {
+   "was": "Action",
+   "targets": [
+    "take up a horseshoe — GrabVerb yielding Horseshoe",
+    "buy iron for shoes — ProposeToBuyVerb selling Metal"
+   ]
+  },
+  "saddlery": {
+   "was": "Action",
+   "targets": [
+    "take up a hide — GrabVerb yielding Hide",
+    "buy leather — ProposeToBuyVerb selling Hide"
+   ]
+  },
+  "sailmaking": {
+   "was": "Action",
+   "targets": [
+    "take up sailcloth — GrabVerb yielding Sailcloth",
+    "buy cloth for a sail — ProposeToBuyVerb selling Cloth"
+   ]
+  }
+ },
+ "shares": {
+  "catalogue_before": 0.29559748427672955,
+  "catalogue_after": 0.38155136268343814,
+  "learned_before": 0.27,
+  "learned_after": 0.292
+ },
+ "refusals": "<p>A fixed route, run on the baseline build and on this one with <code>tools/wills/refusals.sh</code>: forest, plain, village, city and mushroom cellar, location ids 1–3, morning, <code>--playground --seed 42</code>, eight wills held that exist in both builds. Each run reads every will's plan on arrival, then has three of the wills think about the first thing the opening shows.</p>\n<div class=\"scroll\"><table class=\"data\"><thead><tr><th>will</th><th>idle on arrival, before</th><th>idle on arrival, after</th></tr></thead><tbody><tr><td class='id'>herblore</td><td>13 of 15</td><td>4 of 15</td></tr><tr><td class='id'>mycology</td><td>9 of 15</td><td>6 of 15</td></tr><tr><td class='id'>brawling</td><td>1 of 15</td><td>9 of 15</td></tr><tr><td class='id'>felling</td><td>15 of 15</td><td>10 of 15</td></tr><tr><td class='id'>berrying</td><td>9 of 15</td><td>9 of 15</td></tr><tr><td class='id'>lockpicking</td><td>15 of 15</td><td>15 of 15</td></tr><tr><td class='id'>sextonry</td><td>14 of 15</td><td>14 of 15</td></tr><tr><td class='id'>anglery</td><td>15 of 15</td><td>15 of 15</td></tr>\n<tr><td class='id'><b>all eight</b></td><td><b>91 of 120</b></td><td><b>82 of 120</b></td></tr></tbody></table></div>\n<p>Idle means nothing it wants can be done anywhere in the place, so it refuses everything there. Of the 90 thinkings asked of a will about an arbitrary object, 82 refused and 8 proposed a step before; 79 refused and 11 proposed after. That second figure moves little because a will refuses an object that is not on its way, whatever its targets; the route asks about whatever the opening shows, not about what the will would attend to. The counts are deterministic for a given build (fixed seed and location ids), but the people of every location differ between the two builds (see the note on NPC draws).</p>"
+}

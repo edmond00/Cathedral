@@ -136,7 +136,7 @@ public sealed class HistoricSceneFactory : SettledSceneFactory
                 new CranePointOfInterest("Treadwheel Crane", new() { "A wooden crane worked by men walking a great wheel" }, Items(() => new Rope(), () => new Amphora()), new[] { "huge", "creaking" })
                 { Senses = SensoryProfile.Audible, VerbModiMentis = Teach(("examine", "stevedoring"), ("listen", "crowd_murmur")) }), 1),
             (() => Harbour((n, c, t, d, m) => new ShipyardArea(n, c, t, d, m), "Shipyard", "A slipway with a ship's ribs standing bare, shavings everywhere", new[] { "tarry", "noisy", "half-built" },
-                new HullPointOfInterest("Hull on the Slip", new() { "A hull half planked, its ribs showing at the bow" }, Items(() => new Plank(), () => new Tar()), new[] { "half-built", "tarry" })
+                new HullPointOfInterest("Hull on the Slip", new() { "A hull half planked, its ribs showing at the bow, a bolt of sailcloth and a bale of oakum by the slip" }, Items(() => new Plank(), () => new Tar(), () => new Narrative.World.Items.Oakum(), () => new Narrative.World.Items.Sailcloth()), new[] { "half-built", "tarry" })
                 { Senses = SensoryProfile.Odorous, VerbModiMentis = Teach(("examine", "shipwrighting"), ("smell", "brine_sense")) }), 1),
             (() => Harbour((n, c, t, d, m) => new FishmarketArea(n, c, t, d, m), "Fish Market", "Wet slabs of the morning's catch under a loud crowd of buyers and gulls", new[] { "reeking", "loud", "wet" },
                 new StallPointOfInterest("Fish Slabs", new() { "Stone slabs heaped with fish and shellfish" }, Items(() => new Herring(), () => new Mackerel(), () => new SaltFish()), new[] { "glistening", "reeking" })

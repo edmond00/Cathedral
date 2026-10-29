@@ -12,7 +12,11 @@ public class FarrieryModusMentis : ModusMentis
     public override string MenuDescription =>
         "Trims and shoes a hoof: pares the sole, levels the wall, shapes the shoe hot and nails it through the white line without touching the quick. Reads a horse's gait for which foot is wrong.";
     public override string SkillMeans       => "the trimming and shoeing of hooves";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<Cathedral.Game.Scene.Verbs.GrabVerb>("take up a horseshoe").Yielding<Cathedral.Game.Narrative.World.Items.Horseshoe>(),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy iron for shoes").Selling(ItemKind.Metal));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.ForgeArea) }, new[] { typeof(Cathedral.Game.Scene.TackroomArea) }, new[] { typeof(Cathedral.Game.Scene.PaddockArea) });
     public override string[] Organs        => new[] { "hands", "arms" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;

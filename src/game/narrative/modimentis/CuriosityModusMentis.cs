@@ -15,7 +15,8 @@ public class CuriosityModusMentis : ModusMentis
         "Cannot leave a closed thing closed. Opens, looks in, goes round the back, and asks the question everyone else decided not to. The engine of most discoveries and a fair number of disasters.";
     public override string SkillMeans       => "the need to find out what is behind it";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
-    public override WillTarget? Will => WillTarget.To<ExamineVerb>("find out what is behind something");
+    public override WillTargets? Will => WillTarget.To<ExamineVerb>("find out what is behind something");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Dwellings, Places.Ruins, Places.Learning);
     public override string[] Organs        => new[] { "encephalon" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

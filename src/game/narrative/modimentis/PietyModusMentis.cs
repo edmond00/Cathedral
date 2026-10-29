@@ -15,7 +15,10 @@ public class PietyModusMentis : ModusMentis
         "Keeps the observances because they are owed, not because they are watched. Prays, fasts and abstains on schedule, and orders decisions by something other than advantage, which is legible to strangers and reassuring to most of them.";
     public override string SkillMeans       => "the observance kept when nobody is counting";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
-    public override WillTarget? Will => WillTarget.To<AskBlessingVerb>("ask a blessing");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<AskBlessingVerb>("ask a blessing"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ContemplateVerb>("pray before a holy thing").YieldingKind(ItemKind.Holy));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Sacred);
     public override string[] Organs        => new[] { "heart", "pineal_gland" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

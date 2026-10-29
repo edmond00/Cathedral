@@ -13,7 +13,9 @@ public class StoneworkModusMentis : ModusMentis
     public override string MenuDescription =>
         "Works stone by lifting, dressing, and setting blocks true. Judges weight and fit by eye, and sets the hands to building, cutting, or moving masonry.";
     public override string SkillMeans       => "the lifting and setting of stone";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTarget.To<Cathedral.Game.Scene.Verbs.MineVerb>("cut stone from the rock");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Heights, Places.Underground);
     public override string[] Organs        => new[] { "arms", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

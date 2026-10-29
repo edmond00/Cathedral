@@ -14,7 +14,11 @@ public class TurfcuttingModusMentis : ModusMentis
         "Cuts and stacks peat and turf: the depth to take, the way to set it so it dries, and the reckoning of how much a winter needs. Slow, wet, methodical work that decides whether a household is warm in February.";
     public override string SkillMeans       => "the cutting and stacking of peat and turf";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<DigVerb>("cut into the turf");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<DigVerb>("cut into the turf"),
+        WillTarget.ToAny("cut peat", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).Yielding<Cathedral.Game.Narrative.World.Items.Peat>(),
+        WillTarget.ToAny("lay hands on a spade", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).YieldingAny("a spade", typeof(Cathedral.Game.Narrative.World.Items.Shovel), typeof(Cathedral.Game.Narrative.World.Items.GraveSpade)));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Grassland, Places.Damp);
     public override string[] Organs        => new[] { "arms", "legs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

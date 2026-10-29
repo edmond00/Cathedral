@@ -15,7 +15,8 @@ public class InvectiveModusMentis : ModusMentis
         "Runs every slight and obstacle through a hot ledger of grievance, and gives the verdict a sharp tongue. Inclines toward indignation, the cutting reply, and the quarrel entered on principle and enjoyed in practice.";
     public override string SkillMeans       => "sharp insults and cutting words";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
-    public override WillTarget? Will => WillTarget.To<ProvokeVerb>("provoke somebody");
+    public override WillTargets? Will => WillTarget.To<ProvokeVerb>("provoke somebody");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Taverns, Places.Streets);
     public override string[] Organs        => new[] { "hepar", "spleen" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>

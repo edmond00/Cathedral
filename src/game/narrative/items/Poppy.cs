@@ -1,3 +1,4 @@
+using Cathedral.Game.Narrative;
 using System;
 using System.Collections.Generic;
 
@@ -5,6 +6,7 @@ namespace Cathedral.Game.Narrative.Items;
 
 public sealed class Poppy : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Flower, ItemKind.Plant });
     public override string ItemId => "poppy";
     public override string DisplayName => "Poppy";
     public override string Description => "A vivid red poppy, its petals paper-thin";

@@ -14,7 +14,8 @@ public class RopingModusMentis : ModusMentis
         "Throws a running loop over a running beast: horns, neck or heels. Judges distance and lead from the saddle or the ground, and knows how to take the strain without being dragged.";
     public override string SkillMeans       => "the throwing of a loop over a running beast";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<TameVerb>("rope a running beast");
+    public override WillTargets? Will => WillTarget.To<TameVerb>("rope a running beast");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Stock, Places.Grassland);
     public override string[] Organs        => new[] { "arms", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;

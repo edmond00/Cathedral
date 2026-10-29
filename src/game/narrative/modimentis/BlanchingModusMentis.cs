@@ -12,7 +12,11 @@ public class BlanchingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Grows things in the dark on purpose: endive forced pale in a cellar, mushrooms on beds of dung and straw. Keeps the warmth, the damp and the darkness exactly right for crops that cannot stand the sun.";
     public override string SkillMeans       => "the forcing of crops in darkness";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.ToAny("pick what grew pale in the dark", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Mushroom),
+        WillTarget.ToAny("lift forced endive", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).Yielding<Cathedral.Game.Narrative.World.Items.Endive>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.MushroomCellar, new[] { typeof(Cathedral.Game.Scene.ForcingArea) });
     public override string[] Organs        => new[] { "hands", "nose" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;

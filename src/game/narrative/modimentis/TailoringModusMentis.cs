@@ -13,7 +13,11 @@ public class TailoringModusMentis : ModusMentis
     public override string MenuDescription =>
         "Cuts and sews cloth into garments that fit: takes a body's measure by eye and tape, lays the pattern to waste nothing, and sets a seam that will not pucker.";
     public override string SkillMeans       => "the cutting and sewing of garments";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy cloth to cut").Selling(ItemKind.Cloth),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.GrabVerb>("take up cloth").YieldingKind(ItemKind.Cloth));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.TailoryArea) }, new[] { typeof(Cathedral.Game.Scene.MarketArea) });
     public override string[] Organs        => new[] { "eyes", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

@@ -8,6 +8,7 @@ namespace Cathedral.Game.Narrative.World.Items;
 /// <summary>Edible orchard or wild fruit. Small, light, perishable.</summary>
 public abstract class FruitItem : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Fruit });
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass    Weight => WeightClass.Insignificant;
     public override ConsumableType ConsumableType => ConsumableType.Food;
@@ -22,6 +23,7 @@ public abstract class FruitItem : ConsumableItem
 /// <summary>Edible root vegetable or pod. Small, light, edible raw.</summary>
 public abstract class VegetableItem : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Vegetable });
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass    Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Food;
@@ -36,6 +38,7 @@ public abstract class VegetableItem : ConsumableItem
 /// <summary>Foraged herb sprig. Very light, used for flavour/medicine.</summary>
 public abstract class HerbItem : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Herb, ItemKind.Plant });
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass    Weight => WeightClass.Insignificant;
     public override ConsumableType ConsumableType => ConsumableType.Inhalant;
@@ -52,6 +55,7 @@ public abstract class HerbItem : ConsumableItem
 /// <summary>Cut or fallen wood — log, plank, twig, sap, etc.</summary>
 public abstract class WoodRawItem : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Wood });
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass    Weight => WeightClass.Medium;
     public override ItemCategory Category => ItemCategory.Crafting;
@@ -64,6 +68,7 @@ public abstract class WoodRawItem : Item
 /// <summary>Stone, clay and other earthy raw material.</summary>
 public abstract class StoneRawItem : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Stone });
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass    Weight => WeightClass.Medium;
     public override ItemCategory Category => ItemCategory.Crafting;
@@ -76,6 +81,7 @@ public abstract class StoneRawItem : Item
 /// <summary>Smelted or raw metal goods. Heavy for their volume.</summary>
 public abstract class MetalItem : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Metal });
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass    Weight => WeightClass.Medium;
     public override ItemCategory Category => ItemCategory.Crafting;
@@ -101,6 +107,7 @@ public abstract class ToolItem : Item
 /// <summary>Spun or woven textile, thread, raw fibre — the material, not the finished garment.</summary>
 public abstract class TextileItem : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Fibre });
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass    Weight => WeightClass.Light;
     public override ItemCategory Category => ItemCategory.Crafting;
@@ -117,6 +124,7 @@ public abstract class TextileItem : Item
 /// <summary>Fish, shellfish, seaweed and other sea-edge yields.</summary>
 public abstract class SeaFoodItem : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Fish });
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass    Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Food;

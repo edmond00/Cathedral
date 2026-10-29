@@ -12,7 +12,11 @@ public class SiegecraftModusMentis : ModusMentis
     public override string MenuDescription =>
         "Thinks about walls as problems: where to mine, where to batter, how long the well will last, when hunger will open the gate faster than any ram. Has sat outside walls and inside them.";
     public override string SkillMeans       => "the reckoning of how a walled place falls or holds";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ScaleUpVerb>("get over a wall"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.BreakVerb>("breach what is shut"));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Stronghold);
     public override string[] Organs        => new[] { "cerebrum", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;

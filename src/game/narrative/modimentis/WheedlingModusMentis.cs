@@ -14,7 +14,8 @@ public class WheedlingModusMentis : ModusMentis
         "Asks and keeps asking, in a register that is hard to refuse: small requests, visible need, and the persistence that makes giving cheaper than continuing to say no. Undignified and remarkably effective.";
     public override string SkillMeans       => "the persistent asking that is easier to satisfy than refuse";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
-    public override WillTarget? Will => WillTarget.To<BegForCoinVerb>("wheedle something out of somebody");
+    public override WillTargets? Will => WillTarget.To<BegForCoinVerb>("wheedle something out of somebody");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Streets, Places.Taverns);
     public override string[] Organs        => new[] { "tongue", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

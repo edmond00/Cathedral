@@ -13,7 +13,12 @@ public class WoodcraftModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads timber by its grain and works it through shaping and joining. Judges how wood will split or hold, and sets the hands to building, carving, or fitting it.";
     public override string SkillMeans       => "the shaping and joining of timber";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.ToAny("take up sound timber", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Wood),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.CutWoodVerb>("cut timber to work"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy seasoned wood").Selling(ItemKind.Wood));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Woodland, Places.Shops);
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

@@ -12,7 +12,11 @@ public class BouquetModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads a mash, a cask or a cellar by its smell: how far the fermentation has gone, whether it is working properly, and how long the vessel has held what it holds. The nose a brewer works by between one tasting and the next.";
     public override string SkillMeans       => "the reading of a mash or cask by its smell";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<Cathedral.Game.Scene.Verbs.SmellVerb>("nose a cask").YieldingKind(ItemKind.Liquor),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy a drink worth the nose").Selling(ItemKind.Liquor));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.CellarArea) }, new[] { typeof(Cathedral.Game.Scene.BrewhouseArea) }, new[] { typeof(Cathedral.Game.Scene.PressArea) }, new[] { typeof(Cathedral.Game.Scene.AlehouseArea) });
     public override string[] Organs        => new[] { "nose", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

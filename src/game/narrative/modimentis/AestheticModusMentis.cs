@@ -15,7 +15,8 @@ public class AestheticModusMentis : ModusMentis
         "Resolves a scene into composition before meaning: proportion, colour, balance, the play of light and space. Registers harmony as pleasing and disorder as a mild offence, and attends to craftsmanship whether it is present or absent.";
     public override string SkillMeans => "keen aesthetic sense";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTarget? Will => WillTarget.To<ContemplateVerb>("contemplate something beautiful");
+    public override WillTargets? Will => WillTarget.To<ContemplateVerb>("contemplate something beautiful");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Sacred, Places.Woodland, Places.Heights, Places.Shore);
     public override string[] Organs => new[] { "eyes", "pineal_gland" };
 
     /// <summary>Stands on letters, number or institutions.</summary>

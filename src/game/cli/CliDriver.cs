@@ -478,6 +478,7 @@ public sealed class CliDriver
                                     `manage Chorography next|prev` steps through the routines
                                     of the map shown. `key <letter>` opens a tab by its initial
           select [item name]        show a carried item's info panel; bare `select` lists them
+          select mm <id>            show a held modus mentis's detail box on the Memory tab
           key <escape|…>            send a key
           scroll up|down [n]        scroll the shared history buffer
         Control
@@ -1561,6 +1562,18 @@ public sealed class CliDriver
             var carried = _game.CliCarriedItemNames;
             if (carried.Count == 0) { CliMode.Emit("error: open the protagonist screen first (`manage Inventory`)"); return; }
             foreach (var n in carried) CliMode.Emit($"  select \"{n}\"");
+            return;
+        }
+
+        // `select mm <id>`: a held modus mentis on the Memory tab, whose detail box then shows.
+        if (a.Length == 2 && a[0].Equals("mm", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!_game.CliSelectModusMentis(a[1]))
+            {
+                CliMode.Emit($"error: no held modus mentis '{a[1]}' (open the protagonist screen first: `manage Memory`)");
+                return;
+            }
+            CliMode.Emit($"ok: selected modus mentis {a[1]}");
             return;
         }
 

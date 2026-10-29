@@ -1,3 +1,4 @@
+using Cathedral.Game.Narrative;
 using System;
 using System.Collections.Generic;
 
@@ -5,6 +6,7 @@ namespace Cathedral.Game.Narrative.Items;
 
 public sealed class PineSap : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Plant });
     public override string ItemId => "pine_sap";
     public override string DisplayName => "Pine Sap";
     public override string Article => "some";

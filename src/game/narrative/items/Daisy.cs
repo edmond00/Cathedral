@@ -1,3 +1,4 @@
+using Cathedral.Game.Narrative;
 using System;
 using System.Collections.Generic;
 
@@ -5,6 +6,7 @@ namespace Cathedral.Game.Narrative.Items;
 
 public sealed class Daisy : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Flower, ItemKind.Plant });
     public override string ItemId => "daisy";
     public override string DisplayName => "Daisy";
     public override string Description => "A common white daisy with a yellow centre";

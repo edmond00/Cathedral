@@ -6,6 +6,7 @@ namespace Cathedral.Game.Narrative.World.Items;
 
 public sealed class Clay : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Stone });
     public override string ItemId      => "clay";
     public override string DisplayName => "Clay";
     public override string Description => "A wet lump of grey-brown clay, cool and dense in the hand";
@@ -21,6 +22,7 @@ public sealed class Clay : ConsumableItem
 
 public sealed class Lichen : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Mushroom, ItemKind.Plant });
     public override string ItemId      => "lichen";
     public override string DisplayName => "Lichen";
     public override string Description => "A papery crust of grey-green lichen prised from rock";

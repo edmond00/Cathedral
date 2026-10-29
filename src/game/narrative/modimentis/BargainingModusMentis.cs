@@ -16,7 +16,8 @@ public class BargainingModusMentis : ModusMentis
         "Holds two figures in mind at once, the price asked and the price that would actually be accepted, and works the gap between them. Seeks out whoever has something to sell and opens the haggling, feigning indifference so that a deal is pulled loose rather than offered.";
     public override string SkillMeans       => "skilled haggling and the striking of good bargains";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
-    public override WillTarget? Will => WillTarget.ToAny("strike a bargain", typeof(ProposeToBuyVerb), typeof(ProposeToSellVerb));
+    public override WillTargets? Will => WillTarget.ToAny("strike a bargain", typeof(ProposeToBuyVerb), typeof(ProposeToSellVerb));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Settled);
     public override string[] Organs        => new[] { "tongue", "cerebrum" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>

@@ -12,7 +12,11 @@ public class SailmakingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Cuts and sews sail: the panels shaped to belly in the wind, the seams flat and strong, the bolt-rope sewn round the edge. Mends a torn sail on a pitching deck.";
     public override string SkillMeans       => "the making and mending of sails";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<Cathedral.Game.Scene.Verbs.GrabVerb>("take up sailcloth").Yielding<Cathedral.Game.Narrative.World.Items.Sailcloth>(),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy cloth for a sail").Selling(ItemKind.Cloth));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.ShipyardArea) }, new[] { typeof(Cathedral.Game.Scene.RopewalkArea) }, new[] { typeof(Cathedral.Game.Scene.QuayArea) });
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;

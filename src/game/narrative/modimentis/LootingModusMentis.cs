@@ -14,7 +14,8 @@ public class LootingModusMentis : ModusMentis
         "Goes through a fallen house or a fallen man quickly for what is worth carrying: the coin sewn into a hem, the ring on a swollen finger, the plate under the floorboard. Takes the best and leaves the rest.";
     public override string SkillMeans       => "the quick stripping of the fallen for valuables";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<GrabVerb>("strip what is lying there for valuables");
+    public override WillTargets? Will => WillTarget.To<GrabVerb>("strip what is lying there for valuables");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Ruins, Places.Dwellings, Places.Wilds);
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;

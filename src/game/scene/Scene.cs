@@ -426,33 +426,27 @@ public class Scene
     /// or satisfy the will — the full set is several times slower in a city, for nothing.
     /// </summary>
     public SceneView View(PoV pov, PartyMember? actor, IReadOnlyList<Verb> verbs)
+        => new(pov.Where, pov.When, ViewElements(pov).Select(e => BuildEntry(e, pov, actor, verbs)).ToList(), pov.Focus);
+
+    /// <summary>
+    /// What a view from <paramref name="pov"/> is made of, in its order: the area, its points of
+    /// interest each followed by its items, the people there at that hour, the areas reachable from
+    /// it, and the focus when it is none of those. <see cref="ActionPathPlanner"/> expands verbs over
+    /// these itself, one verb at a time, so that it can keep each expansion.
+    /// </summary>
+    public IReadOnlyList<Element> ViewElements(PoV pov)
     {
-        var entries = new List<SceneViewEntry>();
-
-        // 1. Current area
-        entries.Add(BuildEntry(pov.Where, pov, actor, verbs));
-
-        // 2. Points of interest in current area
+        var elements = new List<Element> { pov.Where };
         foreach (var poi in pov.Where.PointsOfInterest)
         {
-            entries.Add(BuildEntry(poi, pov, actor, verbs));
-            foreach (var itemElement in poi.Items)
-                entries.Add(BuildEntry(itemElement, pov, actor, verbs));
+            elements.Add(poi);
+            elements.AddRange(poi.Items);
         }
-
-        // 3. NPCs present at current area and time
-        foreach (var npc in GetNpcsAt(pov.Where, pov.When))
-            entries.Add(BuildEntry(npc, pov, actor, verbs));
-
-        // 4. Reachable areas (for movement verbs)
-        foreach (var reachable in GetReachableAreas(pov.Where))
-            entries.Add(BuildEntry(reachable, pov, actor, verbs));
-
-        // Always include focused element if not already listed
-        if (pov.Focus != null && entries.All(e => e.Source.Id != pov.Focus.Id))
-            entries.Add(BuildEntry(pov.Focus, pov, actor, verbs));
-
-        return new SceneView(pov.Where, pov.When, entries, pov.Focus);
+        elements.AddRange(GetNpcsAt(pov.Where, pov.When));
+        elements.AddRange(GetReachableAreas(pov.Where));
+        if (pov.Focus != null && elements.All(e => e.Id != pov.Focus.Id))
+            elements.Add(pov.Focus);
+        return elements;
     }
 
     private SceneViewEntry BuildEntry(Element element, PoV pov, PartyMember? actor, IReadOnlyList<Verb> verbs)

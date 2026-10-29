@@ -107,7 +107,7 @@ from the game's (very chatty) diagnostic logging on the same stdout.
 **Invoke the `verifying` skill before writing or running any `.cli` script.** It carries the
 reproducibility flags, the full command vocabulary, `--debug`'s forced outcomes, the test-suite
 layout, `--verb-probe`, and what `--cli` cannot check. **Invoke `audits` after touching content**
-— it carries the fourteen headless audits and says which one covers which change.
+— it carries the fifteen headless audits and says which one covers which change.
 
 **The full suite is the release gate, not the check for a change.** `./run_tests.sh` launches the game
 once per script, two hundred times, a dozen at once, and takes about a quarter of an hour. Run it only when preparing a
@@ -140,7 +140,7 @@ every line that left is the same text, moved.
 | `src/game/history/CLAUDE.md` | when working with files under `src/game/history/` | the world history generator: the empire's lore as data, sow and sprout, the rules that keep a generated past coherent, lore moons and their profiles, realms over regions, why history is regenerated and not saved |
 | `verifying` skill | on invocation | `--cli`, the reproducibility flags, the command vocabulary, forcing outcomes, the test suite and `cli/` layout, `--verb-probe`, extending the CLI, adding a debug flag, what `--cli` cannot check |
 | `playtest` skill | on invocation | launching the game for the user to play by hand: the baseline command, which debug flags reach which feature, the CPU/GPU rule, when `--playground` belongs on |
-| `audits` skill | on invocation | `--outcome-audit`, `--crime-audit`, `--dialogue-audit`, `--npc-audit`, `--mm-audit`, `--item-audit`, `--verb-audit`, `--world-variant-audit`, `--history-audit`, `--mm-grant-csv`, `--mm-reach-csv`, `--llm-probe-audit`, `--building-audit`, `--biome-audit` |
+| `audits` skill | on invocation | `--outcome-audit`, `--crime-audit`, `--dialogue-audit`, `--npc-audit`, `--mm-audit`, `--will-audit`, `--item-audit`, `--verb-audit`, `--world-variant-audit`, `--history-audit`, `--mm-grant-csv`, `--mm-reach-csv`, `--llm-probe-audit`, `--building-audit`, `--biome-audit` |
 | `runtime` skill | on invocation | `models/model.gguf` and the llama.cpp backends, `-ngl`, the first-run probe, the connection-pool and streaming contracts, server-start fallback, `log.txt` and the `logs/` tree, the crash report, the Settings screen |
 | `release` skill | on invocation | the ten release steps, and now the packaging, publishing, naming and shipped-build-verification reference behind them; the demo build (`-Demo`, its channel, the run limit and its limits as protection) |
 | `manual` skill | on invocation | the player manual's style guide, chapter map and procedure |

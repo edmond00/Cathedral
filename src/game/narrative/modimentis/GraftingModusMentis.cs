@@ -12,7 +12,11 @@ public class GraftingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Joins a cutting from one tree to the root of another so that they grow as one. Matches cambium to cambium with a thin knife and binds the join tight, and knows which marriages take.";
     public override string SkillMeans       => "the joining of one tree's wood to another's root";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<Cathedral.Game.Scene.Verbs.CutWoodVerb>("take a scion from a tree").On<Cathedral.Game.Scene.TreePointOfInterest>(),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.GrabVerb>("take up a blade for the graft").YieldingKind(ItemKind.Blade));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Fields);
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;

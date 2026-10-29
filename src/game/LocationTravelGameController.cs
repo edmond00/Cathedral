@@ -780,6 +780,9 @@ public class LocationTravelGameController : IDisposable
     public bool CliSelectItem(string itemName) =>
         _managementMenuRenderer?.CliSelectItem(itemName) == true;
 
+    public bool CliSelectModusMentis(string modusMentisId) =>
+        _managementMenuRenderer?.CliSelectModusMentis(modusMentisId) == true;
+
     /// <summary>Everything carried, for <c>--cli</c> discovery of selectable item names.</summary>
     public IReadOnlyList<string> CliCarriedItemNames =>
         _managementMenuRenderer?.CliCarriedItemNames ?? Array.Empty<string>();

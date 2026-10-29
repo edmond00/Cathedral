@@ -14,7 +14,8 @@ public class CutpurseModusMentis : ModusMentis
         "Takes from a body that has not noticed: reads where a purse hangs, works in the press of a crowd, and cuts or lifts without the touch registering. Distinct from ordinary thieving in that the owner is holding it.";
     public override string SkillMeans       => "the unfelt hand at another body's belt";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<PickpocketVerb>("lift a purse unfelt");
+    public override WillTargets? Will => WillTarget.To<PickpocketVerb>("lift a purse unfelt");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Streets, Places.Taverns);
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.Low;

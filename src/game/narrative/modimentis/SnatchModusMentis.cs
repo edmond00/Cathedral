@@ -16,7 +16,8 @@ public class SnatchModusMentis : ModusMentis
         "Takes something quick and living out of the air or off a surface in one movement, and closes on it hard enough to hold and no harder. Most of it is the waiting: the hand goes once, where the thing is about to be.";
     public override string SkillMeans       => "the single closing movement of a waiting hand";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<CatchVerb>("snatch something living");
+    public override WillTargets? Will => WillTarget.To<CatchVerb>("snatch something living");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Grassland, Places.Woodland);
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

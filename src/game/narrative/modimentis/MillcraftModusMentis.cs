@@ -13,7 +13,11 @@ public class MillcraftModusMentis : ModusMentis
     public override string MenuDescription =>
         "Sets the millstones and grinds corn into flour, judging the grind by feel and sound. Attends to the working of the mill, and turns the hands to processing grain.";
     public override string SkillMeans       => "the grinding of grain into flour";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.ToAny("take grain to the stones", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Grain),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy grain to grind").Selling(ItemKind.Grain));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.MillArea) }, new[] { typeof(Cathedral.Game.Scene.ThreshingArea) }, new[] { typeof(Cathedral.Game.Scene.BarnArea) });
     public override string[] Organs        => new[] { "upper_limbs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

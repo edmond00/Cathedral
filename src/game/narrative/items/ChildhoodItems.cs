@@ -1,3 +1,4 @@
+using Cathedral.Game.Narrative;
 using System;
 using System.Collections.Generic;
 using Cathedral.Game.Npc;
@@ -220,6 +221,7 @@ public sealed class TravelersBackpack : WearableContainerItem
 
 public sealed class Sausage : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Meat });
     public override string ItemId      => "sausage";
     public override string DisplayName => "Sausage";
     public override string Description => "A coil of cured pork sausage, dark and pungent";
@@ -276,6 +278,7 @@ public sealed class Hairpin : Item
 /// </summary>
 public sealed class ShortSword : WeaponItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Blade });
     public override string ItemId           => "short_sword";
     public override string DisplayName      => "Short Sword";
     public override string Description      => "A plain straight-bladed short sword in a worn leather scabbard";
@@ -291,6 +294,7 @@ public sealed class ShortSword : WeaponItem
 /// </summary>
 public sealed class WoodenStick : WeaponItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Bludgeon, ItemKind.Wood });
     public override string ItemId         => "wooden_stick";
     public override string DisplayName    => "Wooden Stick";
     public override string Description    => "A weather-greyed stick still half-imagined as a magic sword";
@@ -307,6 +311,7 @@ public sealed class WoodenStick : WeaponItem
 /// </summary>
 public sealed class WoodenDoll : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Wood });
     public override string ItemId      => "wooden_doll";
     public override string DisplayName => "Wooden Doll";
     public override string Description => "A small, lovingly worn doll of carved oak — a sleeping princess once";
@@ -315,6 +320,7 @@ public sealed class WoodenDoll : Item
 
 public sealed class Worm : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Food });
     public override string ItemId      => "worm";
     public override string DisplayName => "Worm";
     public override string Description => "A long pale earthworm, still squirming";
@@ -327,6 +333,7 @@ public sealed class Worm : ConsumableItem
 
 public sealed class MouseMeat : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Meat });
     public override string ItemId      => "mouse_meat";
     public override string DisplayName => "Mouse Meat";
     public override string Article => "some";
@@ -340,6 +347,7 @@ public sealed class MouseMeat : ConsumableItem
 
 public sealed class SquirrelMeat : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Meat });
     public override string ItemId      => "squirrel_meat";
     public override string DisplayName => "Squirrel Meat";
     public override string Article => "some";
