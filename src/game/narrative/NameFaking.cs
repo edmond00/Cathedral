@@ -101,6 +101,7 @@ public sealed class NameFakingRegistry
             chosen ??= (male ? "Man" : "Woman") + (++fallback);
 
             _entries.Add(new Entry(real.Trim(), chosen, male));
+            Console.WriteLine($"NameFaking: '{chosen}' stands for '{real.Trim()}'");
         }
     }
 
