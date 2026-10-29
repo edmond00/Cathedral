@@ -60,6 +60,17 @@ public sealed class JournalEntry
     public NarrationBlockType? Block { get; set; }
     /// <summary>For a milestone, what it is about, so the same lesson or place is not announced twice.</summary>
     public string Key { get; set; } = "";
+    /// <summary>
+    /// For a fact, the outcome's plain first-person phrase ("received a knife") — what the chronicler is
+    /// told, where <see cref="Source"/> keeps the chip as the screen showed it ("Item received: Knife").
+    /// </summary>
+    public string Phrase { get; set; } = "";
+    /// <summary>
+    /// A milestone that is a modus mentis learned. Shown in the journal, but not given to the
+    /// chronicler: a lesson's name is the game's vocabulary, and it came back as "learning social
+    /// interaction" in the prose.
+    /// </summary>
+    public bool Lesson { get; set; }
 }
 
 /// <summary>
@@ -178,7 +189,7 @@ public sealed class Journal
         {
             Seq = e.Seq, Kind = e.Kind, Day = e.Day, Place = e.Place, Area = e.Area, LocationId = e.LocationId,
             Actor = e.Actor, ByCompanion = e.ByCompanion, Source = e.Source, Written = e.Written,
-            State = e.State, Group = e.Group, Block = e.Block, Key = e.Key,
+            State = e.State, Group = e.Group, Block = e.Block, Key = e.Key, Phrase = e.Phrase, Lesson = e.Lesson,
         }).ToList(),
     };
 }

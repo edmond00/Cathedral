@@ -640,7 +640,7 @@ public abstract class PartyMember
         // The childhood memory is the reminescence phase's own record, swapped in, not a lesson.
         if (!JournalRecorder.IsInParty(this) || mm is ModiMentis.ChildhoodMemoryModusMentis) return;
         JournalRecorder.Milestone($"Learned {Cathedral.Game.NeutralNarration.ModusMentisPhrase(mm.DisplayName)}", this,
-                                  $"mm:{AffinityKey}:{mm.ModusMentisId}");
+                                  $"mm:{AffinityKey}:{mm.ModusMentisId}", lesson: true);
     }
 
     public ModusMentis? LearnModusMentis(ModusMentis modusMentis)

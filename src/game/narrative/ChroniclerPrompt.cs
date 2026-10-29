@@ -123,8 +123,8 @@ Rules:
         string who = e.ByCompanion ? $" ({e.Actor}, a companion)" : "";
         return e.Kind switch
         {
-            JournalEntryKind.Milestone when marks => $"- MILESTONE: {e.Source}",
-            JournalEntryKind.Fact when facts      => $"- CHANGED: {e.Source}",
+            JournalEntryKind.Milestone when marks && !e.Lesson => $"- MILESTONE: {e.Source}",
+            JournalEntryKind.Fact when facts      => $"- CHANGED: {(e.Phrase.Length > 0 ? e.Phrase : e.Source)}",
             JournalEntryKind.Dialogue when narration => $"- SAID by {e.Actor}: \"{Clip(e.Source.Trim('"'))}\"",
             JournalEntryKind.Narration when narration && e.Block == NarrationBlockType.Emotion
                                                     => $"- FELT{who}: {Clip(e.Source)}",

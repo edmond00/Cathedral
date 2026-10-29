@@ -55,7 +55,9 @@ public static class JournalRecorder
             var e = Add(JournalEntryKind.Dialogue, labelled ? block.Text[(colon + 2)..] : block.Text, actor);
             if (e != null && labelled) { e.Actor = block.Text[..colon]; e.ByCompanion = false; }
         }
-        else
+        // A block no mind narrated is the game talking — a trade note, the tail of a fight's log
+        // ("— Modus mentis learned: …"). The screen shows it; the story is told elsewhere.
+        else if (block.ModusMentis is not null)
         {
             string text = block.Text;
             // The outcome block opens on its verdict for the screen; the chips say what came of it.
@@ -72,7 +74,12 @@ public static class JournalRecorder
 
         if (block.OutcomeReports != null)
             foreach (var chip in block.OutcomeReports.Where(r => r.ShowInUI && IsStory(r)))
-                Add(JournalEntryKind.Fact, chip.Text, actor);
+            {
+                // The chip is what the screen showed; the chronicler is given the outcome's own plain
+                // phrase instead ("received a knife"), or it copies the chip's "Item received: Knife".
+                var e = Add(JournalEntryKind.Fact, chip.Text, actor);
+                if (e != null) e.Phrase = chip.Verbatim;
+            }
     }
 
     /// <summary>
@@ -81,6 +88,7 @@ public static class JournalRecorder
     /// to the chronicler, they came back as "gaining two more experience points" (tools/journal/).
     /// </summary>
     private static bool IsStory(Outcome chip) => chip is not (ModusMentisPracticeOutcome or ModusMentisGrantOutcome
+                                                              or SkillAcquisitionOutcome
                                                               or Cathedral.Game.Scene.FocusLostOutcome or WoundInflictionOutcome);
 
     /// <summary>A line spoken in a conversation: an NPC's, or the reply the player picked.</summary>
@@ -96,13 +104,13 @@ public static class JournalRecorder
     /// learned once). An empty key never deduplicates.
     /// </summary>
     public static void Milestone(string text, PartyMember? who = null, string key = "",
-                                 (int LocationId, string Place, string Area)? where = null)
+                                 (int LocationId, string Place, string Area)? where = null, bool lesson = false)
     {
         var j = Journal;
         if (j == null) return;
         if (key.Length > 0 && j.Entries.Any(e => e.Kind == JournalEntryKind.Milestone && e.Key == key)) return;
         var e = Add(JournalEntryKind.Milestone, text, who, where);
-        if (e != null) e.Key = key;
+        if (e != null) { e.Key = key; e.Lesson = lesson; }
     }
 
     /// <summary>True when <paramref name="m"/> travels with the protagonist (or is the protagonist).</summary>

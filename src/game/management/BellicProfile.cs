@@ -362,8 +362,9 @@ public sealed class BellicProfile
 
     private static string Term(string name, int level, int mult)
     {
-        string left = $"  {name}".PadRight(22) + $"lv {level}";
-        return mult != 1 ? $"{left} x{mult}".PadRight(30) + $"+{level * mult}" : left.PadRight(30) + $"+{level}";
+        string left = $"  {name}".PadRight(Math.Max(22, name.Length + 4)) + $"lv {level}";
+        string term = mult != 1 ? $"{left} x{mult}" : left;
+        return term.PadRight(Math.Max(30, term.Length + 2)) + $"+{level * mult}";
     }
 
     private static string MmName(string id) =>

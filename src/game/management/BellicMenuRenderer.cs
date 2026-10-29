@@ -52,8 +52,14 @@ public sealed class BellicMenuRenderer
     private static readonly Vector4 WoundColor  = Config.Colors.BrightPurple;
     private static readonly Vector4 LearnColor  = Config.Colors.LightPurple;
     private static readonly Vector4 OffColor    = Config.Colors.DarkGray40;
-    private static readonly Vector4 HoverBg     = new(0.07f, 0.06f, 0.01f, 1.0f);
-    private static readonly Vector4 SelectBg    = new(0.10f, 0.09f, 0.02f, 1.0f);
+    // Bands behind what a player scans for: a section title, a block's medium, the selected skill. In
+    // the yellow family of the menu's own active row; never a near-black grey, which the dither layer
+    // breaks into pattern noise.
+    private static readonly Vector4 HeadBg      = new(0.20f, 0.17f, 0.03f, 1.0f);
+    private static readonly Vector4 GroupBg     = new(0.15f, 0.13f, 0.03f, 1.0f);
+    private static readonly Vector4 HoverBg     = new(0.11f, 0.10f, 0.02f, 1.0f);
+    private static readonly Vector4 SelectBg    = new(0.28f, 0.24f, 0.05f, 1.0f);
+    private static readonly Vector4 HeadText    = Config.Colors.BrightYellow;
 
     private BellicProfile? _profile;
     private readonly List<(int Row, int X, BellicProfile.SkillRow Skill)> _hitRows = new();
@@ -145,9 +151,10 @@ public sealed class BellicMenuRenderer
     /// <summary>A titled block of stat lines. Returns the row after it.</summary>
     private int Section(int x, int row, string title, List<BellicProfile.Stat> stats)
     {
-        _terminal.Text(x, row, $"▸ {title}", HeadColor, Bg);
+        Band(x, row, ColW, HeadBg);
+        _terminal.Text(x + 1, row, title, HeadText, HeadBg);
         if (stats.Any(s => s.Source.Length > 0) && !title.StartsWith("DEFENCE"))
-            _terminal.Text(x + SourceOff, row, "from", NoteColor, Bg);
+            _terminal.Text(x + SourceOff, row, "from", Config.Colors.DarkYellowGrey, HeadBg);
         row += 2;
 
         foreach (var s in stats)
@@ -174,10 +181,11 @@ public sealed class BellicMenuRenderer
         for (int c = AreaLeft + 1; c < Config.Terminal.MainWidth - 1; c++)
             _terminal.SetCell(c, top, '─', SepColor, Bg);
         top += 2;
-        _terminal.Text(LeftX, top, "▸ SKILLS", HeadColor, Bg);
+        Band(LeftX, top, RightX + ColW - LeftX, HeadBg);
+        _terminal.Text(LeftX + 1, top, "SKILLS", HeadText, HeadBg);
         _terminal.Text(LeftX + 10, top, "× broken by wounds   – limb out of use   ? next to learn",
-                       NoteColor, Bg);
-        top += 1;
+                       Config.Colors.DarkYellowGrey, HeadBg);
+        top += 2;
 
         if (p.Groups.Count == 0)
         {
@@ -210,10 +218,11 @@ public sealed class BellicMenuRenderer
             if (i == split) { x = RightX; row = top; }
             if (row > bottom) continue;
 
-            _terminal.Text(x, row, Clip(g.Title, 20), LabelColor, Bg);
+            Band(x, row, ColW, GroupBg);
+            _terminal.Text(x + 1, row, Clip(g.Title, 20), Config.Colors.MediumYellow, GroupBg);
             string sub = (g.Subtitle.Length > 0 ? g.Subtitle + ", " : "") + $"lv {g.Level}";
-            int subX = Math.Min(20, g.Title.Length) + 2;
-            _terminal.Text(x + subX, row, Clip(sub, ColW - subX), NoteColor, Bg);
+            int subX = Math.Min(20, g.Title.Length) + 3;
+            _terminal.Text(x + subX, row, Clip(sub, ColW - subX), Config.Colors.MediumGray60, GroupBg);
             row++;
 
             foreach (var r in g.Skills)
@@ -265,8 +274,12 @@ public sealed class BellicMenuRenderer
         }
 
         int y = DetailTop;
+        bool first = true;
         foreach (var (text, tone) in p.Detail(row))
         {
+            // The skill's name heads the panel on a section's band; its total sits on a block's.
+            Vector4 bg = first ? HeadBg : tone == BellicProfile.Tone.Title ? GroupBg : Bg;
+            first = false;
             Vector4 c = tone switch
             {
                 BellicProfile.Tone.Title  => Config.Colors.BrightYellow,
@@ -280,12 +293,19 @@ public sealed class BellicMenuRenderer
             foreach (var line in text.Length == 0 ? new[] { "" } : Wrap(text, DetailW))
             {
                 if (y > DetailBottom) return;
-                _terminal.Text(LeftX, y++, line, c, Bg);
+                if (bg != Bg) Band(LeftX, y, DetailW + 1, bg);
+                _terminal.Text(bg != Bg ? LeftX + 1 : LeftX, y++, line, c, bg);
             }
         }
     }
 
     // ── Helpers ──────────────────────────────────────────────────
+
+    private void Band(int x, int row, int width, Vector4 bg)
+    {
+        for (int i = 0; i < width && x + i < Config.Terminal.MainWidth - 1; i++)
+            _terminal.SetCell(x + i, row, ' ', bg, bg);
+    }
 
     private BellicProfile.SkillRow? Find((string Group, string Skill) key) =>
         _profile?.Groups.FirstOrDefault(g => g.Key == key.Group)?.Skills.FirstOrDefault(r => r.Skill.SkillId == key.Skill);
