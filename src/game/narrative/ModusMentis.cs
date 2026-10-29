@@ -163,6 +163,12 @@ public abstract class ModusMentis
     /// A paraphrase of <see cref="PersonaReminder"/> used at the end of prompts as
     /// "Stay in the character of [PersonaReminder2]." — a different angle on the same persona.
     /// Example: "someone who never misses a detail", "a mind that measures everything it touches".
+    ///
+    /// <para><b>A disposition, not a picture.</b> Whatever it names, the model puts in the scene:
+    /// "someone who finds the hidden nest by listening" put a nest in nine answers of sixteen,
+    /// "someone who stops at lit windows" a window in a forge. Say how the persona is — "someone who
+    /// listens before looking and is rarely surprised" — and name none of its things.
+    /// <see cref="PersonaLint"/> fails <c>--mm-audit</c> on a reminder naming two concrete nouns.</para>
     /// </summary>
     public virtual string? PersonaReminder2 => null;
 
@@ -176,6 +182,16 @@ public abstract class ModusMentis
     /// IMPORTANT: describe ONLY figurative/stylistic licence or optional inner feelings here.
     /// NEVER instruct the model to add literal facts, names, objects or events — that would break the
     /// "keep every literal fact, invent nothing" contract the rewrite prompt also enforces.
+    ///
+    /// <para><b>A manner, then a lens on whatever is in the scene</b> — "Slow, patient and exact -
+    /// judge things by the patience in them, well made or rank." Never the persona's own objects or
+    /// acts, and never "Use images of…" or "Narrate the…", which open a list of them: the model treats
+    /// what a style names as present. "Use images of rendering fat, the dip and the cooling coat,
+    /// wicks, wax and the steady flame" turned a greeting into a candle dipped twenty times; across the
+    /// catalogue, the more things a style named the more of them reached scenes that held none
+    /// (tools/prompts, NOTES.md, "Persona fields"). The manner is what a one-line action can still
+    /// carry without inventing an act for it. <see cref="PersonaLint"/> fails <c>--mm-audit</c> on a
+    /// style naming two concrete nouns or opening such a list.</para>
     ///
     /// The base value preserves the old generic behaviour for modiMentis without a persona.
     /// </summary>
