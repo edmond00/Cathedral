@@ -18,7 +18,8 @@ public class FowlingModusMentis : ModusMentis
     public override WillTargets? Will => WillTargets.Of(
         WillTarget.ToAny("take eggs from the nests", typeof(GatherVerb), typeof(GrabVerb))
         .Yielding<Items.Egg>(),
-        WillTarget.ToAny("take feathers from a nesting ground", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Feather));
+        WillTarget.ToAny("take feathers from a nesting ground", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Feather),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ClimbUpVerb>("climb up to the nests").Teaching<FowlingModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Shore, Places.Heights, Places.Woodland, new[] { typeof(Cathedral.Game.Scene.CoopArea) });
     public override string[] Organs        => new[] { "hands", "legs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

@@ -17,7 +17,8 @@ public class WoodcraftModusMentis : ModusMentis
     public override WillTargets? Will => WillTargets.Of(
         WillTarget.ToAny("take up sound timber", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Wood),
         WillTarget.To<Cathedral.Game.Scene.Verbs.CutWoodVerb>("cut timber to work"),
-        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy seasoned wood").Selling(ItemKind.Wood));
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy seasoned wood").Selling(ItemKind.Wood),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over timber and the trees it comes from").Teaching<WoodcraftModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Woodland, Places.Shops);
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

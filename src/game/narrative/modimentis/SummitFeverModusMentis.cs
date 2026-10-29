@@ -15,7 +15,9 @@ public class SummitFeverModusMentis : ModusMentis
         "Wants to climb to the top: up the cliff, the pitch, the last step of rock, to stand where the ground runs out. Climbs on past tiredness, cold and good sense, and counts any height not stood on as unfinished.";
     public override string SkillMeans       => "climbing the last pitch to stand on top";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTargets? Will => WillTarget.To<ClimbUpVerb>("climb to the top");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<ClimbUpVerb>("climb to the top"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look upon a summit's marker").Teaching<SummitFeverModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Heights);
     public override string[] Organs        => new[] { "hands", "heart" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

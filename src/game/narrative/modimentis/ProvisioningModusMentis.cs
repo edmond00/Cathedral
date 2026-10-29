@@ -14,7 +14,9 @@ public class ProvisioningModusMentis : ModusMentis
         "Keeps a garrison fed: so much grain per man per day, so much salt, so much firewood, so many days until the next supply. Knows what spoils first and what can be stretched.";
     public override string SkillMeans       => "the keeping of stores to feed many";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
-    public override WillTargets? Will => WillTarget.To<ProposeToBuyVerb>("lay in stores");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<ProposeToBuyVerb>("lay in stores"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over a store of water or food").Teaching<ProvisioningModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Settled);
     public override string[] Organs        => new[] { "paunch", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

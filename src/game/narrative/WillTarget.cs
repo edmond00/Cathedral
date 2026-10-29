@@ -34,13 +34,21 @@ public sealed class WillTarget
     /// <summary>The element classes <see cref="On{TElement}"/> narrowed the target to — read by the audit.</summary>
     public IReadOnlyList<Type> OnTypes { get; }
 
+    /// <summary>
+    /// The modus mentis whose own lesson this target is bound to (<see cref="Teaching{TModusMentis}"/>),
+    /// or null. Read by <c>--will-audit</c>: such a target reaches only what the content already says
+    /// teaches the will, so it is not how a desire grows into a general mind.
+    /// </summary>
+    public string? Teaches { get; }
+
     private WillTarget(IReadOnlyList<Type> verbTypes, IReadOnlyList<(Func<Element, bool>, string)> conditions, string purpose,
-                       IReadOnlyList<Type>? onTypes = null)
+                       IReadOnlyList<Type>? onTypes = null, string? teaches = null)
     {
         VerbTypes   = verbTypes;
         _conditions = conditions;
         Purpose     = purpose;
         OnTypes     = onTypes ?? Array.Empty<Type>();
+        Teaches     = teaches;
     }
 
     /// <summary>The will to perform <typeparamref name="TVerb"/> on anything it can be performed on.</summary>
@@ -59,7 +67,7 @@ public sealed class WillTarget
     /// <summary>Narrows the target to elements of type <typeparamref name="TElement"/> (a point of interest, an area…).</summary>
     public WillTarget On<TElement>() where TElement : Element
         => new(VerbTypes, _conditions.Append(((Func<Element, bool>)(e => e is TElement), $"on {typeof(TElement).Name}")).ToList(),
-               Purpose, OnTypes.Append(typeof(TElement)).ToList());
+               Purpose, OnTypes.Append(typeof(TElement)).ToList(), Teaches);
 
     /// <summary>
     /// Narrows the target to what holds or is an item of type <typeparamref name="TItem"/>: an item
@@ -147,13 +155,33 @@ public sealed class WillTarget
     }
 
     /// <summary>
+    /// Narrows the target to what declares <typeparamref name="TModusMentis"/> its own lesson for one of
+    /// this target's verbs (<see cref="IVerbModusMentisSource"/>, a <c>VerbModiMentis</c> entry) — the
+    /// object that taught the will. Without it the mind an object taught refuses that very object: the
+    /// petroglyphs teach archeology by being examined, and archeology, wanting only to dig, had no
+    /// interest in them. Call it after the verbs are named; <c>--will-lesson-audit</c> lists every object
+    /// that teaches a will which refuses it.
+    /// </summary>
+    public WillTarget Teaching<TModusMentis>() where TModusMentis : ModusMentis, new()
+    {
+        var id = new TModusMentis().ModusMentisId;
+        var verbTypes = VerbTypes;
+        var verbIds = new Lazy<string[]>(() => VerbRegistry.Instance.GetAll()
+            .Where(v => verbTypes.Any(t => t.IsInstanceOfType(v))).Select(v => v.VerbId).ToArray());
+        return new(VerbTypes, _conditions.Append(((Func<Element, bool>)(e => e is IVerbModusMentisSource source
+                                                                            && verbIds.Value.Any(v => source.ModusMentisFor(v) == id)),
+                                                  $"teaching {id}")).ToList(),
+                   Purpose, OnTypes, id);
+    }
+
+    /// <summary>
     /// Narrows the target by a test of its own, for a condition no type expresses (a person of a given
     /// species). The test must still gate on types, never on a name.
     /// </summary>
     public WillTarget Where(Func<Element, bool> test, string label) => With(test, label);
 
     private WillTarget With(Func<Element, bool> test, string label)
-        => new(VerbTypes, _conditions.Append((test, label)).ToList(), Purpose, OnTypes);
+        => new(VerbTypes, _conditions.Append((test, label)).ToList(), Purpose, OnTypes, Teaches);
 
     /// <summary>Whether <paramref name="verb"/> is one of this will's verbs, whatever it is aimed at.</summary>
     public bool Wants(Verb verb) => VerbTypes.Any(t => t.IsInstanceOfType(verb));

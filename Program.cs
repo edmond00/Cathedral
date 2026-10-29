@@ -263,6 +263,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --will-audit [out.json]            Plan every will across the location kinds and its own places: coverage, related coverage, breadth");
     Console.WriteLine("  --will-trace <will-id> [location]  Why a will has or lacks something to do: its plans and every action its verbs are offered on");
     Console.WriteLine("  --play-audit                       Print the PLAY audit (share of areas holding a play, kinds of play, lessons) and exit");
+    Console.WriteLine("  --will-lesson-audit                Every object that teaches a will must be one that will acts on or passes through on its way");
     Console.WriteLine("  --verb-audit                       Print the verb-coverage audit (verbs per observable vs targets, dead verbs,");
     Console.WriteLine("                                     unresolvable modus-mentis and tool ids, landmark counts) and exit");
     Console.WriteLine("  --outcome-audit                    Print the outcome catalogue (every consequence, who produces it, what produces nothing) and exit");
@@ -615,6 +616,14 @@ if (args.Length >= 1 && args[0] == "--crime-audit")
 if (args.Length >= 1 && args[0] == "--will-audit")
 {
     Console.WriteLine(Cathedral.Game.Narrative.WillCoverageAudit.BuildReport(args.Length >= 2 && !args[1].StartsWith('-') ? args[1] : null));
+    return;
+}
+
+// Will lesson audit: every object that teaches a will must be something that will acts on, or on its
+// way — else picking the mind the object taught refuses the object. Headless.
+if (args.Length >= 1 && args[0] == "--will-lesson-audit")
+{
+    Console.WriteLine(Cathedral.Game.Narrative.WillLessonAudit.BuildReport());
     return;
 }
 

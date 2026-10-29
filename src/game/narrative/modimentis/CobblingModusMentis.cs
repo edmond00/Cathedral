@@ -16,7 +16,8 @@ public class CobblingModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTargets? Will => WillTargets.Of(
         WillTarget.To<Cathedral.Game.Scene.Verbs.GrabVerb>("take up a hide for leather").YieldingKind(ItemKind.Hide),
-        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy leather").Selling(ItemKind.Hide));
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy leather").Selling(ItemKind.Hide),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over a cobbler's gear").Teaching<CobblingModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.CobbleryArea) }, new[] { typeof(Cathedral.Game.Scene.TanneryArea) }, new[] { typeof(Cathedral.Game.Scene.MarketArea) });
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

@@ -18,7 +18,8 @@ public class PlungeModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTargets? Will => WillTargets.Of(
         WillTarget.To<SwimAcrossVerb>("get into the cold water and swim it"),
-        WillTarget.To<PlayVerb>("leap from a height into deep water").Playing("a leap into a pool", typeof(PoolJumpPlay)));
+        WillTarget.To<PlayVerb>("leap from a height into deep water").Playing("a leap into a pool", typeof(PoolJumpPlay)),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look at the cold water I want to be in").Teaching<PlungeModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.FreshWater, Places.Ice);
     public override string[] Organs        => new[] { "pulmones", "heart" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

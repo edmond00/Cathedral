@@ -15,7 +15,9 @@ public class CarrionSenseModusMentis : ModusMentis
         "Catches the smell of death and spoilage from far off and reads its age without flinching. Judges what a find is worth to an empty belly, telling the merely dead from the truly dangerous.";
     public override string SkillMeans       => "the smelling of death from afar and the judging of what remains";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTargets? Will => WillTarget.To<SmellVerb>("find the dead by their smell").On<Npc.Corpse.CorpsePointOfInterest>();
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<SmellVerb>("find the dead by their smell").On<Npc.Corpse.CorpsePointOfInterest>(),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.SmellVerb>("follow the smell of what died here").Teaching<CarrionSenseModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Graves);
     public override string[] Organs        => new[] { "snout", "paunch" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

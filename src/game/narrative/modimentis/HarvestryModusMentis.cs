@@ -15,7 +15,9 @@ public class HarvestryModusMentis : ModusMentis
         "Judges a crop for ripeness and reaps it at the right moment, cutting and gathering before it spoils. Sets the body to the steady rhythm of bringing in a field.";
     public override string SkillMeans       => "the reaping and gathering of ripe crops";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTargets? Will => WillTarget.To<GatherVerb>("reap a crop");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<GatherVerb>("reap a crop"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over a crop or its gathering").Teaching<HarvestryModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Fields);
     public override string[] Organs        => new[] { "upper_limbs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

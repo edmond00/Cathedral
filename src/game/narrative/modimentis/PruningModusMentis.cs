@@ -15,7 +15,8 @@ public class PruningModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTargets? Will => WillTargets.Of(
         WillTarget.To<Cathedral.Game.Scene.Verbs.CutWoodVerb>("cut out the dead wood").On<Cathedral.Game.Scene.TreePointOfInterest>(),
-        WillTarget.To<Cathedral.Game.Scene.Verbs.GrabVerb>("take up a pruning blade").YieldingAny("a pruning blade", typeof(Cathedral.Game.Narrative.World.Items.PruningHook), typeof(Cathedral.Game.Narrative.World.Items.VineKnife), typeof(Cathedral.Game.Narrative.World.Items.GraftingKnife)));
+        WillTarget.To<Cathedral.Game.Scene.Verbs.GrabVerb>("take up a pruning blade").YieldingAny("a pruning blade", typeof(Cathedral.Game.Narrative.World.Items.PruningHook), typeof(Cathedral.Game.Narrative.World.Items.VineKnife), typeof(Cathedral.Game.Narrative.World.Items.GraftingKnife)),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over the orchard gear").Teaching<PruningModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Fields, Places.Woodland);
     public override string[] Organs        => new[] { "hands", "arms" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

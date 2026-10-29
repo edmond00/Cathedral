@@ -16,7 +16,9 @@ public class ScholarshipModusMentis : ModusMentis
         "Draws on what is recorded in manuscripts, reading letters and old texts with patient study. Inclines reasoning toward written knowledge, and treats a question as something the record may already answer.";
     public override string SkillMeans       => "the knowledge found in books and old manuscripts";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
-    public override WillTargets? Will => WillTarget.To<AskTeachingVerb>("be taught something");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<AskTeachingVerb>("be taught something"),
+        WillTarget.ToAny("study the lettered things", typeof(Cathedral.Game.Scene.Verbs.ContemplateVerb), typeof(Cathedral.Game.Scene.Verbs.ExamineVerb)).Teaching<ScholarshipModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Learning, Places.Sacred);
     public override string[] Organs        => new[] { "encephalon" };
 
