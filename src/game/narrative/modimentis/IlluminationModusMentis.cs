@@ -19,9 +19,9 @@ public class IlluminationModusMentis : ModusMentis
 
     public override string PersonaTone     => "an illuminator who works for weeks on one letter";
     public override string PersonaReminder  => "illuminator";
-    public override string PersonaReminder2 => "someone who lays gold leaf with a breath";
+    public override string PersonaReminder2 => "someone who gives the smallest detail all their care";
     public override string StyleInstruction =>
-        "Describe the miniature work in colour and gold - the tiny figures, the vines, the leaf laid with a breath.";
+        "Minute and devoted - look at the smallest detail of what is in front of you as if it were worth gilding.";
 
     public override string PersonaPrompt => @"You are the inner voice of ILLUMINATION, and the capital letter in front of you is the size of a thumbnail and has a whole world in it.
 

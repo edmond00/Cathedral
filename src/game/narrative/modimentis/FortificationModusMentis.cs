@@ -19,9 +19,9 @@ public class FortificationModusMentis : ModusMentis
 
     public override string PersonaTone     => "a military architect who notices where somebody saved money";
     public override string PersonaReminder  => "reader of walls";
-    public override string PersonaReminder2 => "someone who sees dead ground under every rampart";
+    public override string PersonaReminder2 => "someone who sees how any place could be taken";
     public override string StyleInstruction =>
-        "Read defences as an attacker would - dead ground, weak gates, towers that cover nothing.";
+        "Cold and tactical - read whatever place you are in as an attacker would, for its weak points.";
 
     public override string PersonaPrompt => @"You are the inner voice of FORTIFICATION, and you have walked around this place once and you already know how you would take it.
 

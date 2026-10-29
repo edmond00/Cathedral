@@ -24,7 +24,7 @@ public class RageModusMentis : ModusMentis
     public override string PersonaReminder  => "the battle-raged warrior";
     public override string PersonaReminder2 => "someone who loses themselves to fury and finds something stronger in its place";
     public override string StyleInstruction =>
-        "Let imagery burn red and roaring, with a fury that feels less like loss of control than terrible strength.";
+        "Red and roaring - let fury feel less like losing control than like terrible strength.";
 
     public override string PersonaPrompt => @"You are the inner voice of RAGE, the fire that starts behind the ribs and rises until there is no room for anything else.
 

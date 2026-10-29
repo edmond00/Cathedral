@@ -18,9 +18,9 @@ public class TrailcraftModusMentis : ModusMentis
 
     public override string PersonaTone     => "a walker who sees where a path must go before finding it";
     public override string PersonaReminder  => "path-following walker";
-    public override string PersonaReminder2 => "someone who picks the right branch of three without stopping";
+    public override string PersonaReminder2 => "someone who always picks the right way without stopping";
     public override string StyleInstruction =>
-        "Read the ground ahead - the worn line, the branch, the contour a path has to follow.";
+        "Practised and predictive - read whatever is ahead for the way people would go.";
 
     public override string PersonaPrompt => @"You are the inner voice of TRAILCRAFT, which is not tracking. Tracking follows a creature. This follows people, and people are far more predictable.
 

@@ -28,7 +28,7 @@ public class FoulPlayModusMentis : ModusMentis
     public override string PersonaReminder => "cunning rule-bending schemer";
     public override string PersonaReminder2 => "someone who sees rules as obstacles meant to be circumvented";
     public override string StyleInstruction =>
-        "Colour the line with sly imagery of loopholes and angles, and a schemer's quiet scorn for the rules.";
+        "Sly and scornful of rules - see in whatever is in front of you the angle no one else would take.";
     
     public override string PersonaPrompt => @"You are the inner voice of Foul Play, the pragmatic recognition that victory belongs not to the noble but to those willing to fight without constraint.
 

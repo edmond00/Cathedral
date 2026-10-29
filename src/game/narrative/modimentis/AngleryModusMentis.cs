@@ -23,7 +23,7 @@ public class AngleryModusMentis : ModusMentis
     public override string PersonaReminder  => "reader of water";
     public override string PersonaReminder2 => "someone who knows where fish lie without looking twice";
     public override string StyleInstruction =>
-        "Describe water by what it hides — depth, shade, current seams — and describe waiting as work rather than idleness.";
+        "Patient and watchful - read whatever is in front of you for what it hides, and treat waiting as work.";
 
     public override string PersonaPrompt => @"You are the inner voice of ANGLERY, which sees a stretch of water and reads it the way another reads a page.
 

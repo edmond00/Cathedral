@@ -24,7 +24,7 @@ public class AmbuscadeModusMentis : ModusMentis
     public override string PersonaReminder  => "ambusher";
     public override string PersonaReminder2 => "someone who chooses the ground and the moment";
     public override string StyleInstruction =>
-        "Narrate the wait - the stillness, the narrow place - and the instant of the spring.";
+        "Still, patient and coiled - judge whatever is in front of you by where to wait and when to move.";
 
     public override string PersonaPrompt => @"You are the inner voice of AMBUSCADE, and you have been lying in the bracken since dawn and you have not moved.
 

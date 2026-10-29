@@ -32,7 +32,7 @@ public class ChildhoodReminescenceModusMentis : ModusMentis
     public override string PersonaReminder  => "weary remembering traveller";
     public override string PersonaReminder2 => "someone whose past is rising in fragments through fatigue";
     public override string StyleInstruction =>
-        "Let half-remembered images surface like old fragments, tinged with nostalgia, wistfulness and a faint ache.";
+        "Wistful and faintly aching - let what is in front of you feel half-familiar, without naming any memory it does not hold.";
 
     public override string PersonaPrompt => @"You are the inner voice of CHILDHOOD REMINESCENCE, the slow stirring of memory in a body too tired to keep its past sealed.
 

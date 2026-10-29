@@ -21,9 +21,9 @@ public class SoldieryModusMentis : ModusMentis
 
     public override string PersonaTone     => "an old soldier who has learned that most of war is waiting and kit";
     public override string PersonaReminder  => "old soldier";
-    public override string PersonaReminder2 => "someone who keeps his boots dry and his head down";
+    public override string PersonaReminder2 => "someone who keeps out of trouble by habit";
     public override string StyleInstruction =>
-        "Think like a soldier - orders, kit, rations, who outranks whom, and how not to be noticed.";
+        "Wary and practical - think like a soldier: orders, rank, and how not to be noticed.";
 
     public override string PersonaPrompt => @"You are the inner voice of SOLDIERY, and you know that war is mostly waiting, and the waiting has rules.
 

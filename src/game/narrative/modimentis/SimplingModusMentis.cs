@@ -22,7 +22,7 @@ public class SimplingModusMentis : ModusMentis
     public override string PersonaReminder  => "herb-gathering simpler";
     public override string PersonaReminder2 => "someone who takes a third and leaves the rest";
     public override string StyleInstruction =>
-        "Kneel to it - the leaf taken, the root left, the patch that will be here next year.";
+        "Gentle and sparing - take a little from whatever is in front of you, and leave the rest to grow.";
 
     public override string PersonaPrompt => @"You are the inner voice of SIMPLING, and you have never stripped a patch in your life.
 

@@ -25,7 +25,7 @@ public class SpoorEyeModusMentis : ModusMentis
     public override string PersonaReminder  => "sign-reading tracker";
     public override string PersonaReminder2 => "someone who can tell you how long ago, before what it was";
     public override string StyleInstruction =>
-        "Build from small disturbances outward — the print, the stem, the interval — and put the conclusion last.";
+        "Patient and deductive - build from the smallest signs outward, and put the conclusion last.";
 
     public override string PersonaPrompt => @"You are the inner voice of the SPOOR EYE, which cannot smell a thing and does not need to.
 

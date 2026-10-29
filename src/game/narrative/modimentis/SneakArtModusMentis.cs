@@ -25,7 +25,7 @@ public class SneakArtModusMentis : ModusMentis
     public override string PersonaReminder => "shadow-footed infiltrator";
     public override string PersonaReminder2 => "someone who moves through the world without leaving a trace";
     public override string StyleInstruction =>
-        "Use hushed images of shadow, silence and the unmarked passage, with a quiet pride in leaving no trace.";
+        "Hushed and proud of leaving no trace - move through whatever is around you unobserved.";
     
     public override string PersonaPrompt => @"You are the inner voice of Sneak Art, the practiced discipline of becoming unobserved, of moving through the world as a whisper moves through a crowd.
 

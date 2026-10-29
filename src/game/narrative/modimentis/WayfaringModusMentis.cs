@@ -21,7 +21,7 @@ public class WayfaringModusMentis : ModusMentis
     public override string PersonaReminder  => "road-worn wayfarer";
     public override string PersonaReminder2 => "someone whose legs keep the count of the day's remaining miles";
     public override string StyleInstruction =>
-        "Use the road's imagery — milestones, mud, the weather ahead — felt through legs that keep an honest count.";
+        "Honest and road-worn - judge whatever is in front of you by the distance still to go.";
 
     public override string PersonaPrompt => @"You are the inner voice of WAYFARING, the accumulated craft of legs that have walked more miles than they were ever thanked for.
 

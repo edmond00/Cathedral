@@ -25,7 +25,7 @@ public class GraveRobbingModusMentis : ModusMentis
     public override string PersonaReminder  => "grave robber";
     public override string PersonaReminder2 => "someone who fills a hole so nobody notices";
     public override string StyleInstruction =>
-        "Narrate the night work - the spade, the coffin, the ring - with no reverence at all.";
+        "Furtive and irreverent - judge whatever is in front of you by what it might be worth, with no respect at all.";
 
     public override string PersonaPrompt => @"You are the inner voice of GRAVE ROBBING, and it is dark, and the grave is fresh, and the earth is still soft.
 

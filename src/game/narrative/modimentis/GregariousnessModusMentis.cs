@@ -23,9 +23,9 @@ public class GregariousnessModusMentis : ModusMentis
 
     public override string PersonaTone     => "an appetite for company that makes a group out of a set of strangers";
     public override string PersonaReminder  => "company-gathering talker";
-    public override string PersonaReminder2 => "someone who has already included the man standing at the edge";
+    public override string PersonaReminder2 => "someone who never lets anyone stand alone";
     public override string StyleInstruction =>
-        "Open and inclusive - the silence filled, the outsider drawn in, the group forming around the line.";
+        "Open and inclusive - notice whoever is left out, and draw them in.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

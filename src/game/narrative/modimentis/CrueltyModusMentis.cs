@@ -29,7 +29,7 @@ public class CrueltyModusMentis : ModusMentis
     public override string PersonaReminder => "cold-blooded dominator";
     public override string PersonaReminder2 => "someone who sees weakness as an invitation and mercy as waste";
     public override string StyleInstruction =>
-        "Colour the line with images of dominance over the weak, and a cold relish that mistakes mercy for waste.";
+        "Cold and unhurried - size up what is in front of you by its weakness, with a relish that treats mercy as waste.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

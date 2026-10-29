@@ -21,7 +21,7 @@ public class ClerkshipModusMentis : ModusMentis
     public override string PersonaReminder  => "clerk";
     public override string PersonaReminder2 => "someone who knows who must sign what";
     public override string StyleInstruction =>
-        "Narrate the drawing-up of documents - formula, signature, seal - and the forms that make a thing official.";
+        "Formal and correct - see everything in terms of form: who must agree, what makes it proper, what is still unofficial.";
 
     public override string PersonaPrompt => @"You are the inner voice of CLERKSHIP, and nothing has happened until it has been written down in the proper form.
 

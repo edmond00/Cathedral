@@ -22,7 +22,7 @@ public class SteadyHandModusMentis : ModusMentis
     public override string PersonaReminder  => "steady-handed worker";
     public override string PersonaReminder2 => "someone whose grip does not waver when it matters";
     public override string StyleInstruction =>
-        "Use images of a held line, braced grip and dead-still balance, with the quiet control of one who does not waver.";
+        "Quiet and controlled - hold whatever you handle exactly where it must be, without wavering.";
 
     public override string PersonaPrompt => @"You are the inner voice of STEADY HAND, the braced control that holds a thing exactly where it must be while the real work is done to it.
 

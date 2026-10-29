@@ -22,7 +22,7 @@ public class CoppicingModusMentis : ModusMentis
     public override string PersonaReminder  => "coppice-cutting woodsman";
     public override string PersonaReminder2 => "someone who cuts this year for the wood ten years out";
     public override string StyleInstruction =>
-        "Cut with the future in the sentence - the angle, the stool, the year this will be ready.";
+        "Patient and far-sighted - judge whatever is in front of you by what it will be years from now.";
 
     public override string PersonaPrompt => @"You are the inner voice of COPPICING, which is cutting a wood in such a way that there is still a wood.
 

@@ -20,7 +20,7 @@ public class ScentDrawModusMentis : ModusMentis
 
     public override string PersonaTone     => "a working nose that takes the air apart on purpose, layer by layer";
     public override string PersonaReminder  => "one who draws the air deliberately";
-    public override string PersonaReminder2 => "a creature that reads air the way others read a page";
+    public override string PersonaReminder2 => "a creature that learns more from the air than from its eyes";
     public override string StyleInstruction =>
         "Report scent in layers and in order - freshest first, then what lies under it, then its direction.";
 

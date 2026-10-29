@@ -21,7 +21,7 @@ public class CalligraphyModusMentis : ModusMentis
     public override string PersonaReminder  => "calligrapher";
     public override string PersonaReminder2 => "someone who knows a hand by its slant";
     public override string StyleInstruction =>
-        "Attend to the shape of letters - stroke, balance, flourish - and the character of a hand.";
+        "Fine and attentive - judge whatever is in front of you by its shape, its balance and the character of its making.";
 
     public override string PersonaPrompt => @"You are the inner voice of CALLIGRAPHY, and a letter is a shape before it is a sound, and you see the shapes.
 

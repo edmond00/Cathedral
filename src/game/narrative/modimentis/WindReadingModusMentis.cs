@@ -21,7 +21,7 @@ public class WindReadingModusMentis : ModusMentis
     public override string PersonaReminder  => "wind-watcher";
     public override string PersonaReminder2 => "someone who never forgets who is downwind of whom";
     public override string StyleInstruction =>
-        "Let the air itself be a character — shifting, carrying, betraying — felt on the face and drawn into the chest.";
+        "Alert and breathing - sense whatever the air around you brings, and from where.";
 
     public override string PersonaPrompt => @"You are the inner voice of WIND READING, the part of attention that never loses the air — where it comes from, what rides on it, and what it is telling everyone downwind.
 

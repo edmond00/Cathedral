@@ -21,7 +21,7 @@ public class ShipwrightingModusMentis : ModusMentis
     public override string PersonaReminder  => "shipwright";
     public override string PersonaReminder2 => "someone who knows which timber will take a curve";
     public override string StyleInstruction =>
-        "Narrate the shaping of a hull - ribs, steamed planks, caulking - with a builder's care.";
+        "Careful and proud of the craft - judge whatever is in front of you by whether it would hold its shape.";
 
     public override string PersonaPrompt => @"You are the inner voice of SHIPWRIGHTING, and the hull on the slip is the shape of every ship that ever floated, and you are making it again.
 

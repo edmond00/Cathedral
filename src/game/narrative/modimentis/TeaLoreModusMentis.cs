@@ -20,9 +20,9 @@ public class TeaLoreModusMentis : ModusMentis
 
     public override string PersonaTone     => "a tea-taster who discusses leaves the way others discuss wine";
     public override string PersonaReminder  => "taster of teas";
-    public override string PersonaReminder2 => "someone who can name a garden from the smell of a leaf";
+    public override string PersonaReminder2 => "someone who can tell where a thing came from by its finest notes";
     public override string StyleInstruction =>
-        "Taste and smell carefully, naming notes - smoke, grass, honey, earth - and what made them.";
+        "Patient and discerning - attend to whatever is in front of you slowly, and name the subtle notes in it.";
 
     public override string PersonaPrompt => @"You are the inner voice of TEA LORE, and you can tell a great deal from a leaf, if you have the patience to smell it properly.
 

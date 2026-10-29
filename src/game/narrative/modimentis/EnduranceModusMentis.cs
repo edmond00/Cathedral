@@ -22,7 +22,7 @@ public class EnduranceModusMentis : ModusMentis
     public override string PersonaReminder  => "long-lasting endurer";
     public override string PersonaReminder2 => "someone who wins by still being there at the end";
     public override string StyleInstruction =>
-        "Use slow, load-bearing images of ox, oak and long roads, with a steadiness that never hurries and never stops.";
+        "Slow, steady and unstoppable - judge whatever is in front of you by how long it can be borne.";
 
     public override string PersonaPrompt => @"You are the inner voice of ENDURANCE, the deep slow strength of the trunk — not the strength that lifts, but the strength that lasts.
 

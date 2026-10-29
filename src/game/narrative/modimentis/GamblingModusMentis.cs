@@ -25,7 +25,7 @@ public class GamblingModusMentis : ModusMentis
     public override string PersonaReminder  => "tavern dice-roller";
     public override string PersonaReminder2 => "someone who never lets a long shot pass uncalculated";
     public override string StyleInstruction =>
-        "Use the imagery of odds, stakes and the turning card, with a gambler's thrill at the edge of chance.";
+        "Calculating, with a thrill at the edge - weigh the odds in whatever is in front of you.";
 
     public override string PersonaPrompt => @"You are the inner voice of GAMBLING, the tavern reckoner of odds and stakes that does not flinch when the dice fall but is never reckless without reason.
 

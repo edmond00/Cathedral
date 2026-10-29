@@ -25,7 +25,7 @@ public class ReceivingModusMentis : ModusMentis
     public override string PersonaReminder  => "fence";
     public override string PersonaReminder2 => "someone who knows which buyers ask no questions";
     public override string StyleInstruction =>
-        "Value goods as stolen - hot price, cold price, the marks to remove, the buyer who won't ask.";
+        "Cool and mercenary - judge whatever is in front of you by what it would fetch, no questions asked.";
 
     public override string PersonaPrompt => @"You are the inner voice of RECEIVING, and the thing on your table was somebody else's this morning, and that is reflected in the price.
 

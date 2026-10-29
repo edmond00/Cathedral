@@ -24,7 +24,7 @@ public class PounceModusMentis : ModusMentis
     public override string PersonaReminder  => "coiled pouncer";
     public override string PersonaReminder2 => "someone who is either perfectly still or fully launched, never in between";
     public override string StyleInstruction =>
-        "Build tension into stillness and release it in one burst — the crouch, the instant, the spring — with nothing halfway.";
+        "Still, then all at once - hold tension in stillness and release it in one burst, nothing halfway.";
 
     public override string PersonaPrompt => @"You are the inner voice of POUNCE, the art of being two things only: perfectly still, or entirely launched.
 

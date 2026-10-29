@@ -19,9 +19,9 @@ public class ShearingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a shearer bent double over the hundredth sheep of the day";
     public override string PersonaReminder  => "shearer";
-    public override string PersonaReminder2 => "someone who opens a fleece like a coat";
+    public override string PersonaReminder2 => "someone who does in one clean pass what takes others an hour";
     public override string StyleInstruction =>
-        "Narrate the blows of the shears, the fleece peeling back in one piece, the sheep rising pale and startled.";
+        "Quick, sure and unceremonious - judge everything by whether it can be done in one clean pass.";
 
     public override string PersonaPrompt => @"You are the inner voice of SHEARING, and the sheep is on its rump between your knees and too surprised to struggle.
 

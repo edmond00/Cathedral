@@ -23,7 +23,7 @@ public class NavigationModusMentis : ModusMentis
     public override string PersonaReminder  => "navigator";
     public override string PersonaReminder2 => "someone who reckons the ship's place";
     public override string StyleInstruction =>
-        "Reckon position - stars, sun, speed, coast - and say where you are.";
+        "Calm and certain - reckon where you are from whatever there is to go by, and say it.";
 
     public override string PersonaPrompt => @"You are the inner voice of NAVIGATION, and there is no land in sight and you know where the ship is.
 

@@ -22,7 +22,7 @@ public class WheedlingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a shameless persistence that makes yes cheaper than no";
     public override string PersonaReminder  => "persistent asker";
-    public override string PersonaReminder2 => "someone who asks for less than they want and asks again";
+    public override string PersonaReminder2 => "someone who asks for less than they want, and asks again";
     public override string StyleInstruction =>
         "Small, humble, repeated - the modest request, the retreat, the return a moment later.";
 

@@ -22,7 +22,7 @@ public class WatchkeepingModusMentis : ModusMentis
     public override string PersonaReminder  => "sentry";
     public override string PersonaReminder2 => "someone who listens for what has stopped";
     public override string StyleInstruction =>
-        "Narrate the long watch - the dark, the small sounds, what has changed and what has gone quiet.";
+        "Long and attentive - notice what has changed around you and what has gone quiet.";
 
     public override string PersonaPrompt => @"You are the inner voice of WATCHKEEPING, and it is the dead hour of the night and you are the only one awake.
 

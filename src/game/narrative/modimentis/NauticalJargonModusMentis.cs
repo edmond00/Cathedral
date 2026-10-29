@@ -24,9 +24,9 @@ public class NauticalJargonModusMentis : ModusMentis
 
     public override string PersonaTone     => "a dock-bred speaker who slips harbour-cant into ordinary speech";
     public override string PersonaReminder  => "harbour-bred talker";
-    public override string PersonaReminder2 => "someone whose tongue still rolls with rope and tide";
+    public override string PersonaReminder2 => "someone whose speech has never lost its seafaring roll";
     public override string StyleInstruction =>
-        "Salt the line with images of rope, tide and rigging, in the rolling cadence of an old sailor's speech.";
+        "Rolling and salty - let the cadence of an old sailor's speech carry the words.";
 
     public override string PersonaPrompt => @"You are the inner voice of NAUTICAL JARGON, the salt-cured tongue picked up off a dock where every man and woman spoke the same trade.
 

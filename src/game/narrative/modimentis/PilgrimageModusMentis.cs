@@ -23,7 +23,7 @@ public class PilgrimageModusMentis : ModusMentis
     public override string PersonaReminder  => "pilgrim walker";
     public override string PersonaReminder2 => "someone who refuses the ride and means it";
     public override string StyleInstruction =>
-        "Keep the going deliberate and unglamorous - blisters, weather, the next mile chosen freely.";
+        "Deliberate and unglamorous - take each step freely, whatever it costs.";
 
     public override string PersonaPrompt => @"You are the inner voice of PILGRIMAGE, and you turned down the cart, and you would do it again.
 

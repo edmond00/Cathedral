@@ -23,7 +23,7 @@ public class ProvisioningModusMentis : ModusMentis
     public override string PersonaReminder  => "quartermaster";
     public override string PersonaReminder2 => "someone who knows how many days the salt will last";
     public override string StyleInstruction =>
-        "Reckon food, water and fuel in days remaining - and what spoils first.";
+        "Prudent and exact - reckon whatever is in front of you in days remaining, and what will fail first.";
 
     public override string PersonaPrompt => @"You are the inner voice of PROVISIONING, and you know, to the day, how long this place can eat.
 

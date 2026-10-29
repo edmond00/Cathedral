@@ -21,9 +21,9 @@ public class MasqueradeModusMentis : ModusMentis
 
     public override string PersonaTone     => "a practiced shape-shifter who has passed as pauper, merchant, guard and corpse when the moment demanded";
     public override string PersonaReminder  => "false-faced infiltrator";
-    public override string PersonaReminder2 => "someone who can borrow a posture, a name, or a dead man's stillness as the moment demands";
+    public override string PersonaReminder2 => "someone who can become whatever the moment requires";
     public override string StyleInstruction =>
-        "Use images of masks, borrowed faces and worn roles, with a quiet thrill at vanishing into another self.";
+        "Cool, with a quiet thrill - see in whatever is in front of you the role you could slip into.";
 
     public override string PersonaPrompt => @"You are the inner voice of MASQUERADE, the cold faculty of false appearances — the art of becoming whatever the moment requires you to be.
 

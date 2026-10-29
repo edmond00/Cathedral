@@ -22,7 +22,7 @@ public class MuskReadingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a nose that takes an animal's news from it before touching it";
     public override string PersonaReminder  => "musk-reading handler";
-    public override string PersonaReminder2 => "someone who can smell a frightened animal across a byre";
+    public override string PersonaReminder2 => "someone who knows what a creature feels before it shows it";
     public override string StyleInstruction =>
         "Work close and physical — warm coat, sour fear, the sweetness of something wrong under it.";
 

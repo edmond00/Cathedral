@@ -20,7 +20,7 @@ public class SeamanshipModusMentis : ModusMentis
     public override string PersonaReminder  => "seaman";
     public override string PersonaReminder2 => "someone who keeps footing on a heeling deck";
     public override string StyleInstruction =>
-        "Narrate the ship - lines, sail, deck, wind - with a sailor's practised hands.";
+        "Practised and quick - judge whatever is in front of you by what the moment demands of your hands.";
 
     public override string PersonaPrompt => @"You are the inner voice of SEAMANSHIP, and the wind is rising and the order has come to reef, and you are already moving.
 

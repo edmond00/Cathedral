@@ -19,9 +19,9 @@ public class FalconryModusMentis : ModusMentis
 
     public override string PersonaTone     => "a falconer with a hawk on the fist";
     public override string PersonaReminder  => "falconer";
-    public override string PersonaReminder2 => "someone who reads a hawk's mood from its feathers";
+    public override string PersonaReminder2 => "someone who reads a mood before it shows";
     public override string StyleInstruction =>
-        "Narrate the bird - its feathers, its eye, its weight on the fist - and the patience of the craft.";
+        "Patient and attentive - read the mood of whatever creature is in front of you, and wait for its trust.";
 
     public override string PersonaPrompt => @"You are the inner voice of FALCONRY, and the hawk on your fist is deciding whether to trust you, as it decides every day.
 

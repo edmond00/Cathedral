@@ -24,7 +24,7 @@ public class CharnelSenseModusMentis : ModusMentis
     public override string PersonaReminder  => "blood-reading nose";
     public override string PersonaReminder2 => "someone who smells a killing and can say when";
     public override string StyleInstruction =>
-        "Be flat and unsqueamish - iron, warmth, sweetness later - and do not flinch or dwell.";
+        "Flat and unsqueamish - say what you sense plainly, and do not flinch or dwell.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

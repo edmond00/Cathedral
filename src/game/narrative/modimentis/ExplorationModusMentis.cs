@@ -24,7 +24,7 @@ public class ExplorationModusMentis : ModusMentis
     public override string PersonaReminder  => "storm-tested seeker";
     public override string PersonaReminder2 => "someone who reads land for paths and shelters before anything else";
     public override string StyleInstruction =>
-        "Reach for images of horizons, trails and uncharted ground, with a wanderer's restless pull toward the unknown.";
+        "Restless and drawn onward - read whatever is in front of you for where it leads.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

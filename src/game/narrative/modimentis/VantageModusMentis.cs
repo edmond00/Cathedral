@@ -20,9 +20,9 @@ public class VantageModusMentis : ModusMentis
 
     public override string PersonaTone     => "a climber who goes up in order to look, and looks properly";
     public override string PersonaReminder  => "height-reading watcher";
-    public override string PersonaReminder2 => "someone who reaches the top and immediately starts counting things";
+    public override string PersonaReminder2 => "someone who takes stock of everything from wherever they stand";
     public override string StyleInstruction =>
-        "Survey outward and downward - roads, smoke, movement - in the order a careful eye takes them.";
+        "Careful and methodical - survey whatever is around you in the order a careful eye takes it.";
 
     public override string PersonaPrompt => @"You are the inner voice of VANTAGE, and you did not climb this for the view.
 

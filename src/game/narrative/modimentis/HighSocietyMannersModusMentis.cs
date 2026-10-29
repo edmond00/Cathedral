@@ -28,7 +28,7 @@ public class HighSocietyMannersModusMentis : ModusMentis
     public override string PersonaReminder  => "city-imitating speaker";
     public override string PersonaReminder2 => "someone who measures their bow by the worth of the doublet they greet";
     public override string StyleInstruction =>
-        "Colour the line with imagery of courtesy, station and fine appearance, and a delicate eye for who outranks whom.";
+        "Delicate and admiring - judge whoever is in front of you by station and appearance, and who outranks whom.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

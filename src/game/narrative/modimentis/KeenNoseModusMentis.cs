@@ -21,7 +21,7 @@ public class KeenNoseModusMentis : ModusMentis
 
     public override string PersonaTone     => "a nose that answers with a memory before it answers with a name";
     public override string PersonaReminder  => "smell-remembering observer";
-    public override string PersonaReminder2 => "someone for whom every smell arrives already attached to a year";
+    public override string PersonaReminder2 => "someone for whom smell comes before sight";
     public override string StyleInstruction =>
         "Let each smell pull a memory with it — a place, a season, a person — and name the thing second.";
 

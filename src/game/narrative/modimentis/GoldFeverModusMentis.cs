@@ -25,7 +25,7 @@ public class GoldFeverModusMentis : ModusMentis
     public override string PersonaReminder  => "gold-struck digger";
     public override string PersonaReminder2 => "someone who has not eaten since the colour showed";
     public override string StyleInstruction =>
-        "Fixate - the glint, the pan, the next foot of rock, and nothing else in the sentence.";
+        "Fixed and feverish - see in whatever is in front of you only whether it promises a fortune.";
 
     public override string PersonaPrompt => @"You are the inner voice of GOLD FEVER, and there was colour in that last pan.
 

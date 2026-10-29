@@ -24,7 +24,7 @@ public class AvariceModusMentis : ModusMentis
     public override string PersonaReminder  => "tight-fisted hoarder";
     public override string PersonaReminder2 => "someone who would rather keep the silver than spend it well";
     public override string StyleInstruction =>
-        "Colour the line with images of hoarding and grasping, and a miser's reluctance to let anything go.";
+        "Tight and grudging - judge whatever is in front of you by what it would cost, and be reluctant to let anything go.";
     public override MoralLevel MoralLevel    => MoralLevel.Low;
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]

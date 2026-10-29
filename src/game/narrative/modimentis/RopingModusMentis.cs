@@ -23,7 +23,7 @@ public class RopingModusMentis : ModusMentis
     public override string PersonaReminder  => "roper";
     public override string PersonaReminder2 => "someone who throws for where the beast will be";
     public override string StyleInstruction =>
-        "Narrate the loop - the swing, the lead, the throw, the catch and the strain taken up.";
+        "Anticipating and sure - judge whatever is in front of you by where it is going, not where it is.";
 
     public override string PersonaPrompt => @"You are the inner voice of ROPING, and the steer is running and you are not throwing at where it is.
 

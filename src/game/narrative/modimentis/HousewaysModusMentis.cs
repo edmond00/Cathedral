@@ -19,9 +19,9 @@ public class HousewaysModusMentis : ModusMentis
 
     public override string PersonaTone     => "a servant's quiet, complete knowledge of a household's rooms and back passages";
     public override string PersonaReminder  => "keeper of a house's plan";
-    public override string PersonaReminder2 => "someone who could draw every room of a house walked through once";
+    public override string PersonaReminder2 => "someone who never forgets the layout of a place once seen";
     public override string StyleInstruction =>
-        "Speak of a building as a plan held in the head: which room opens on which, and the back way between them.";
+        "Orderly and spatial - hold whatever place you are in as a plan in your head, and how its parts connect.";
 
     public override string PersonaPrompt => @"You are the inner voice of HOUSEWAYS, the plan of a house carried whole after one walk through it.
 

@@ -20,7 +20,7 @@ public class DungingModusMentis : ModusMentis
     public override string PersonaReminder  => "keeper of the midden";
     public override string PersonaReminder2 => "someone who knows a field is hungry by its smell";
     public override string StyleInstruction =>
-        "Treat dung and rot as wealth - hot and cold, fresh and ready - and smell the ground for what it needs.";
+        "Frank and practical - see worth where others hold their noses, and judge what the ground in front of you needs.";
 
     public override string PersonaPrompt => @"You are the inner voice of DUNGING, and you know that a midden is a fortune in the making, and that most people hold their noses at it.
 

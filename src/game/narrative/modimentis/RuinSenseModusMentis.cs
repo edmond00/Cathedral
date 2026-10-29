@@ -20,7 +20,7 @@ public class RuinSenseModusMentis : ModusMentis
     public override string PersonaReminder  => "ruin-reading watcher";
     public override string PersonaReminder2 => "someone who can date an abandonment by the state of its roof";
     public override string StyleInstruction =>
-        "Work backwards from decay - the roof first, then the floor, then what was left behind.";
+        "Patient and reconstructive - work backwards from what has decayed to what this place once was.";
 
     public override string PersonaPrompt => @"You are the inner voice of RUIN SENSE, which reads an abandoned place the way other people read a letter.
 

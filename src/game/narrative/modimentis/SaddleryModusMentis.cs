@@ -19,9 +19,9 @@ public class SaddleryModusMentis : ModusMentis
 
     public override string PersonaTone     => "a saddler with an awl in one hand and a waxed thread in the teeth";
     public override string PersonaReminder  => "saddler";
-    public override string PersonaReminder2 => "someone who fits a saddle to a back by hand";
+    public override string PersonaReminder2 => "someone who knows by hand whether a thing fits";
     public override string StyleInstruction =>
-        "Describe leather, stitch and fit - the awl, the waxed thread, the panel that bears where it should.";
+        "Judge whatever is in front of you by its fit - whether it bears where it should and will last.";
 
     public override string PersonaPrompt => @"You are the inner voice of SADDLERY, and the leather in front of you is going to carry a man's weight on a horse's back for twenty years.
 

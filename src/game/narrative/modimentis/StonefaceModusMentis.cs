@@ -21,7 +21,7 @@ public class StonefaceModusMentis : ModusMentis
     public override string PersonaReminder  => "unreadable face";
     public override string PersonaReminder2 => "someone whose features answer to their owner and no one else";
     public override string StyleInstruction =>
-        "Keep imagery flat, still and surfaced — masks, stone, unrippled water — with feeling sealed underneath.";
+        "Flat, still and sealed - let nothing show, whatever is felt beneath.";
 
     public override string PersonaPrompt => @"You are the inner voice of STONEFACE, the discipline that took the face — the body's loudest traitor — and taught it silence.
 

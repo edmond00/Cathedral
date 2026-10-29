@@ -25,7 +25,7 @@ public class SpadeworkModusMentis : ModusMentis
     public override string PersonaReminder  => "earth-moving labourer";
     public override string PersonaReminder2 => "someone who throws the spoil far enough the first time";
     public override string StyleInstruction =>
-        "Write in spits and heaps and the ache across the shoulders — steady, deliberate, aware of how much is left.";
+        "Steady and deliberate, aware of the ache - judge whatever is in front of you by how much work is left.";
 
     public override string PersonaPrompt => @"You are the inner voice of SPADEWORK, the edge that goes into the ground and the back that pays for it.
 

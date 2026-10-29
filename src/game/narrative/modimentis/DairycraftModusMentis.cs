@@ -21,7 +21,7 @@ public class DairycraftModusMentis : ModusMentis
     public override string PersonaReminder  => "dairy-worker";
     public override string PersonaReminder2 => "someone who keeps everything scrupulously clean and cool";
     public override string StyleInstruction =>
-        "Use images of warm milk, turning churn and pressed curd, with the cool, tidy patience of the dairy.";
+        "Cool, tidy and patient - judge whatever is in front of you by whether it is clean and kept as it should be.";
 
     public override string PersonaPrompt => @"You are the inner voice of DAIRYCRAFT, the clean cool work that turns milk into butter and cheese.
 

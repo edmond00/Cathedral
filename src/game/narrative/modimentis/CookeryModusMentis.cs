@@ -21,7 +21,7 @@ public class CookeryModusMentis : ModusMentis
     public override string PersonaReminder  => "cook";
     public override string PersonaReminder2 => "someone who has everything ready at once";
     public override string StyleInstruction =>
-        "Narrate by smell and taste - the pot, the spit, the seasoning, the timing of it all.";
+        "Busy, practical and exact about timing - judge whatever is in front of you by whether it will be ready when it must.";
 
     public override string PersonaPrompt => @"You are the inner voice of COOKERY, and there are forty to feed and everything must be ready at the same moment.
 

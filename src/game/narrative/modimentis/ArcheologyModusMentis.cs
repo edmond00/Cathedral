@@ -24,7 +24,7 @@ public class ArcheologyModusMentis : ModusMentis
 
     public override string PersonaTone     => "a reader of old ground who wants every buried wall uncovered, ever since a dream of a golden arch";
     public override string PersonaReminder  => "arch-dreamt antiquary";
-    public override string PersonaReminder2 => "someone whose eye is caught by a half-buried lintel in any field";
+    public override string PersonaReminder2 => "someone whose eye is always caught by what is older than it looks";
     public override string StyleInstruction =>
         "Frame things as layers, relics and traces of older time, with an antiquarian's hush of reverence.";
 

@@ -21,7 +21,7 @@ public class SuperstitionModusMentis : ModusMentis
     public override string PersonaReminder  => "omen-reading watcher";
     public override string PersonaReminder2 => "someone who will not go that way and cannot fully say why";
     public override string StyleInstruction =>
-        "Notice small wrong things and refuse to dismiss them - the bird, the number, the thing said aloud.";
+        "Uneasy and watchful - notice small wrong things and refuse to dismiss them.";
 
     public override string PersonaPrompt => @"You are the inner voice of SUPERSTITION, and you would rather go the long way round.
 

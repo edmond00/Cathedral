@@ -18,7 +18,7 @@ public class HollowEarModusMentis : ModusMentis
 
     public override string PersonaTone     => "an ear that maps a cave by the way it answers a footfall";
     public override string PersonaReminder  => "echo-reading ear";
-    public override string PersonaReminder2 => "someone who knows how big a dark room is before finding a wall";
+    public override string PersonaReminder2 => "someone who senses the size of a place without seeing it";
     public override string StyleInstruction =>
         "Work with returns and delays - the answer that comes back, or does not, and what its lateness means.";
 

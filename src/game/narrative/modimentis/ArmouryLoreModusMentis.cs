@@ -22,7 +22,7 @@ public class ArmouryLoreModusMentis : ModusMentis
 
     public override string PersonaTone     => "an armourer's eye that dates a sword by its hilt";
     public override string PersonaReminder  => "judge of arms";
-    public override string PersonaReminder2 => "someone who sees riveted mail from butted";
+    public override string PersonaReminder2 => "someone who can tell good work from cheap at a glance";
     public override string StyleInstruction =>
         "Read weapons and armour by their make - forging, riveting, period, worth.";
 

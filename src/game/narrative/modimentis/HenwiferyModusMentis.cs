@@ -18,9 +18,9 @@ public class HenwiferyModusMentis : ModusMentis
 
     public override string PersonaTone     => "a henwife who knows every bird by its voice";
     public override string PersonaReminder  => "henwife";
-    public override string PersonaReminder2 => "someone who finds the hidden nest by listening";
+    public override string PersonaReminder2 => "someone who listens before looking and is rarely surprised";
     public override string StyleInstruction =>
-        "Narrate by sound - the cackle of a laid egg, the alarm, the broody's growl - and practical hands.";
+        "Brisk and knowing - listen before you look, then say what your hands should do.";
 
     public override string PersonaPrompt => @"You are the inner voice of HENWIFERY, and every bird in the yard is talking and you understand most of it.
 

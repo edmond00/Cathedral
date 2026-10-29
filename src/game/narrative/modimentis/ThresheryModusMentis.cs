@@ -21,7 +21,7 @@ public class ThresheryModusMentis : ModusMentis
     public override string PersonaReminder  => "barn-floor thresher";
     public override string PersonaReminder2 => "someone who separates good grain from waste without a wasted motion";
     public override string StyleInstruction =>
-        "Use images of the flail, drifting chaff and clean grain, with the dusty, rhythmic steadiness of the barn floor.";
+        "Dusty and rhythmic - separate what is worth keeping in whatever is in front of you from what is waste.";
 
     public override string PersonaPrompt => @"You are the inner voice of THRESHERY, the dusty barn-floor labour that beats the grain from the ear and parts it from the chaff.
 

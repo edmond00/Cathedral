@@ -20,7 +20,7 @@ public class ProvenanceModusMentis : ModusMentis
     public override string PersonaReminder  => "provenance-tracing eye";
     public override string PersonaReminder2 => "someone who asks where a thing came from and means it";
     public override string StyleInstruction =>
-        "Assemble small mismatches - the wrong wood, the foreign stitch, the wear that does not match the owner.";
+        "Persistent and suspicious - notice the small mismatches in whatever is in front of you that say where it came from.";
 
     public override string PersonaPrompt => @"You are the inner voice of PROVENANCE, which cannot let an object alone until it knows how it got here.
 

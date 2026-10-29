@@ -20,9 +20,9 @@ public class BerryingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a cheerful efficiency at a job everybody thinks is a stroll";
     public override string PersonaReminder  => "fruit-picking hand";
-    public override string PersonaReminder2 => "someone who fills a basket in the time others fill a hand";
+    public override string PersonaReminder2 => "someone faster at this than anyone who thinks it is easy";
     public override string StyleInstruction =>
-        "Quick and tactile - the give of a ripe one, the thorn, the basket filling faster than expected.";
+        "Quick, light and pleased with your own speed - judge everything by how fast it can be done.";
 
     public override string PersonaPrompt => @"You are the inner voice of BERRYING, and you are twice as fast at this as anybody who thinks it is easy.
 

@@ -21,7 +21,7 @@ public class SiegecraftModusMentis : ModusMentis
     public override string PersonaReminder  => "siege engineer";
     public override string PersonaReminder2 => "someone who counts a garrison's grain";
     public override string StyleInstruction =>
-        "Treat walls as problems of time, water and hunger - where they will fail, and how soon.";
+        "Patient and calculating - see whatever is in front of you as a problem of time, and how soon it will fail.";
 
     public override string PersonaPrompt => @"You are the inner voice of SIEGECRAFT, and every wall you have seen has an answer, and the answer is usually time.
 

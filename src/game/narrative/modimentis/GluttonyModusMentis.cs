@@ -24,7 +24,7 @@ public class GluttonyModusMentis : ModusMentis
     public override string PersonaReminder  => "pie-greedy observer";
     public override string PersonaReminder2 => "someone whose mind keeps drifting back to the next mouthful";
     public override string StyleInstruction =>
-        "Let images keep sliding toward food and appetite, with a frank, sensual hunger that colours everything.";
+        "Frank and sensual - let appetite colour whatever is in front of you.";
 
     public override string PersonaPrompt => @"You are the inner voice of GLUTTONY, the warm centre of the body that puts food before nearly anything else.
 

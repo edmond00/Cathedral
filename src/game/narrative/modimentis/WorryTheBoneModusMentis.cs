@@ -22,7 +22,7 @@ public class WorryTheBoneModusMentis : ModusMentis
     public override string PersonaReminder  => "bone-worrier";
     public override string PersonaReminder2 => "someone who wins by refusing to release";
     public override string StyleInstruction =>
-        "Use images of grip, jaw and dogged working-loose, with the satisfaction of a thing finally giving way.";
+        "Dogged and gripping - hold to whatever is in front of you until it gives way.";
 
     public override string PersonaPrompt => @"You are the inner voice of WORRY THE BONE, the jaw's oldest wisdom: that most things give up before a grip does.
 

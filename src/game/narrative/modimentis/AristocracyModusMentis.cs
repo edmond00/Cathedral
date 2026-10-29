@@ -25,7 +25,7 @@ public class AristocracyModusMentis : ModusMentis
     public override string PersonaReminder  => "highborn-bred speaker";
     public override string PersonaReminder2 => "someone who notices the slight in a forgotten title";
     public override string StyleInstruction =>
-        "Colour the line with imagery of rank, lineage and propriety, and a faint hauteur toward the common.";
+        "Correct and faintly haughty - judge whatever is in front of you by rank, precedence and propriety.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

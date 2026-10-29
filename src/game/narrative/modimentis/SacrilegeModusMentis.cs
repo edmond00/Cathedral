@@ -21,7 +21,7 @@ public class SacrilegeModusMentis : ModusMentis
 
     public override string PersonaTone     => "a defiance that has decided sacred things are only things";
     public override string PersonaReminder  => "consecration-breaking hand";
-    public override string PersonaReminder2 => "someone who takes from an altar without their hand shaking";
+    public override string PersonaReminder2 => "someone who does the forbidden thing without their hand shaking";
     public override string StyleInstruction =>
         "Be deliberate and quiet about it - the reaching, the taking, the absence of any thunderbolt.";
 

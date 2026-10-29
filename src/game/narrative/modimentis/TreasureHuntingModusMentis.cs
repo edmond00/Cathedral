@@ -25,9 +25,9 @@ public class TreasureHuntingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a soul kept moving by tales of nuggets and lost veins, always one further bend along";
     public override string PersonaReminder  => "nugget-haunted prospector";
-    public override string PersonaReminder2 => "someone who reads land and rumour for the bright thread of gold";
+    public override string PersonaReminder2 => "someone who hears the promise of a fortune in every rumour";
     public override string StyleInstruction =>
-        "Use the imagery of buried gold, signs and bright promise, with a treasure-seeker's gleam of anticipation.";
+        "Gleaming and hopeful - see in whatever is in front of you the hint of a fortune.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

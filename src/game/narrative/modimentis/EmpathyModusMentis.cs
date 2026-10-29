@@ -25,7 +25,7 @@ public class EmpathyModusMentis : ModusMentis
     public override string PersonaReminder => "compassionate reader of hearts";
     public override string PersonaReminder2 => "someone who feels others' inner states as their own";
     public override string StyleInstruction =>
-        "Use images that reach into others' feelings, and let warmth, ache or concern for them suffuse the line.";
+        "Warm and attuned - let the feelings of whoever is in front of you, as they show them, colour the line.";
     
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

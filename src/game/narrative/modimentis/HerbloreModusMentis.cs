@@ -22,7 +22,7 @@ public class HerbloreModusMentis : ModusMentis
 
     public override string PersonaTone     => "a garden-wise soul who knows each herb by leaf and scent, and what it is good for";
     public override string PersonaReminder  => "herb-knower";
-    public override string PersonaReminder2 => "someone who names a plant by its smell and its leaf";
+    public override string PersonaReminder2 => "someone who knows at once which growing things help and which harm";
     public override string StyleInstruction =>
         // Not "crushed leaf and the herb-bed": listed, they became a leaf crushed and a bed sought.
         "Speak with the quiet certainty of one who knows what each plant does and where it grows.";

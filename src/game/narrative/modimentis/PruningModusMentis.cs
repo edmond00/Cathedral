@@ -21,7 +21,7 @@ public class PruningModusMentis : ModusMentis
     public override string PersonaReminder  => "pruner of trees";
     public override string PersonaReminder2 => "someone who sees the shape inside the tangle";
     public override string StyleInstruction =>
-        "Narrate what is taken away and why - the dead, the crossing, the greedy shoot - and the cleaner shape left behind.";
+        "Decisive and clear-eyed - see in whatever is in front of you what should go, and the cleaner shape left behind.";
 
     public override string PersonaPrompt => @"You are the inner voice of PRUNING, and you see what should go before you see what should stay.
 

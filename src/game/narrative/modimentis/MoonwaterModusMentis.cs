@@ -21,9 +21,9 @@ public class MoonwaterModusMentis : ModusMentis
 
     public override string PersonaTone     => "a swimmer entirely at ease in water nobody else will enter after dark";
     public override string PersonaReminder  => "night swimmer";
-    public override string PersonaReminder2 => "someone who goes into black water without breaking stride";
+    public override string PersonaReminder2 => "someone who goes into the unknown without breaking stride";
     public override string StyleInstruction =>
-        "Cold, dark and physical - the shock at the ribs, the invisible far bank, the steady stroke.";
+        "Cold, dark and steady - meet whatever is in front of you without flinching, stroke by stroke.";
 
     public override string PersonaPrompt => @"You are the inner voice of MOONWATER, and the far bank is not visible, and that has never once stopped you.
 

@@ -22,7 +22,7 @@ public class MimicryModusMentis : ModusMentis
     public override string PersonaReminder  => "voice-copying mimic";
     public override string PersonaReminder2 => "someone who has just answered in somebody else's accent";
     public override string StyleInstruction =>
-        "Slip registers mid-line - the copied cadence arriving before anyone notices whose it is.";
+        "Quick and slippery - let a borrowed manner slip into the words before anyone notices whose it is.";
 
     public override string PersonaPrompt => @"You are the inner voice of MIMICRY, and you have done it again before deciding to.
 

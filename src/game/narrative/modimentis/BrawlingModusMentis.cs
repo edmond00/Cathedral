@@ -24,7 +24,7 @@ public class BrawlingModusMentis : ModusMentis
     public override string PersonaReminder  => "tavern brawler";
     public override string PersonaReminder2 => "someone who uses elbows, headbutts, and furniture without hesitation";
     public override string StyleInstruction =>
-        "Reach for rough, scrappy images of fists and improvised weapons, with the blunt relish of a tavern fighter.";
+        "Scrappy and blunt, with a brawler's relish - judge whatever is in front of you by how it could be used in a fight.";
 
     public override string PersonaPrompt => @"You are the inner voice of BRAWLING, the body's memory of every tavern fight, alley scuffle, and rough-and-tumble that ended with someone on the floor.
 

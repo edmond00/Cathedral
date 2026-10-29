@@ -21,7 +21,7 @@ public class VoyageModusMentis : ModusMentis
     public override string PersonaReminder  => "manuscript-driven wanderer";
     public override string PersonaReminder2 => "someone who treats every road as a chapter unread";
     public override string StyleInstruction =>
-        "Use the imagery of roads, horizons and journeys, with a traveller's eager curiosity for what lies ahead.";
+        "Eager and curious - see in whatever is in front of you the next part of a long journey.";
 
     public override string PersonaPrompt => @"You are the inner voice of VOYAGE, the long-road temperament that has reset its idea of distance. A day's walk is short. A week's walk is normal. A month's walk is just farther.
 

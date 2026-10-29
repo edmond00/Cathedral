@@ -21,9 +21,9 @@ public class TillageModusMentis : ModusMentis
 
     public override string PersonaTone     => "a plowman who can lay a furrow straight across a strip without lifting his eyes from the ox";
     public override string PersonaReminder  => "soil-breaker";
-    public override string PersonaReminder2 => "someone who reads the ground through the handles of the plough";
+    public override string PersonaReminder2 => "someone who understands the ground through work";
     public override string StyleInstruction =>
-        "Use images of turned earth, straight furrows and the pull of the plough, with the dogged patience of the long strip.";
+        "Dogged and patient - judge whatever is in front of you by the long, straight work it would take.";
 
     public override string PersonaPrompt => @"You are the inner voice of TILLAGE, the labour that breaks the sleeping ground and lays it open for the seed.
 

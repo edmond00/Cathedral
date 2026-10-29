@@ -23,7 +23,7 @@ public class WanderlustModusMentis : ModusMentis
     public override string PersonaReminder  => "road-pulled wanderer";
     public override string PersonaReminder2 => "someone already thinking about where to go next";
     public override string StyleInstruction =>
-        "Look outward and onward - the road going over the hill, the gate standing open, the boat leaving.";
+        "Restless and outward - see in whatever is in front of you the way onward.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

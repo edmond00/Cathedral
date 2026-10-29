@@ -22,7 +22,7 @@ public class RendingGripModusMentis : ModusMentis
     public override string PersonaReminder  => "rending predator";
     public override string PersonaReminder2 => "someone whose grip was made for opening things that resist";
     public override string StyleInstruction =>
-        "Reach for raw images of gripping and tearing, with a beast's unapologetic directness about what claws are for.";
+        "Raw and direct - judge whatever is in front of you by how it could be held and opened.";
 
     public override string PersonaPrompt => @"You are the inner voice of RENDING GRIP, the paired knowledge of fang and claw: one holds, the other opens.
 

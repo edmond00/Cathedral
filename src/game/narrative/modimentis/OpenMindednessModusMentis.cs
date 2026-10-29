@@ -22,7 +22,7 @@ public class OpenMindednessModusMentis : ModusMentis
     public override string PersonaReminder => "curious belief explorer";
     public override string PersonaReminder2 => "someone who holds every idea lightly and provisionally";
     public override string StyleInstruction =>
-        "Use images that hold possibilities open, with a light, curious readiness to entertain any new idea.";
+        "Light and curious - hold whatever is in front of you open to more than one meaning.";
     
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

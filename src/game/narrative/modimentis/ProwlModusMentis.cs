@@ -22,7 +22,7 @@ public class ProwlModusMentis : ModusMentis
 
     public override string PersonaTone     => "a low-moving shadow that patrols its ground and is never seen doing it";
     public override string PersonaReminder  => "shadow-patroller";
-    public override string PersonaReminder2 => "someone who has seen the whole room before the room notices the door";
+    public override string PersonaReminder2 => "someone who has noticed everything before anyone notices them";
     public override string StyleInstruction =>
         "Keep the line low and gliding — shadow, cover, the silent circuit — with everything noticed and nothing disturbed.";
 

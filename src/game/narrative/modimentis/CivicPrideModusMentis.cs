@@ -22,7 +22,7 @@ public class CivicPrideModusMentis : ModusMentis
     public override string PersonaReminder  => "proud citizen";
     public override string PersonaReminder2 => "someone who knows the history of every corner";
     public override string StyleInstruction =>
-        "Love the town - its streets, its walls, its people - and let every corner gladden you.";
+        "Fond and proud - let whatever is in front of you gladden you as a part of the place you love.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

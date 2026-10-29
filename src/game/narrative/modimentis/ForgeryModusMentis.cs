@@ -23,7 +23,7 @@ public class ForgeryModusMentis : ModusMentis
     public override string PersonaReminder  => "forger";
     public override string PersonaReminder2 => "someone who can lift a seal";
     public override string StyleInstruction =>
-        "Narrate the faking - the copied hand, the aged page, the lifted seal - and what will be checked.";
+        "Cool and knowing - judge whatever is in front of you by what would be checked, and what would pass.";
 
     public override string PersonaPrompt => @"You are the inner voice of FORGERY, and the document in front of you will pass, because you know what they look at.
 

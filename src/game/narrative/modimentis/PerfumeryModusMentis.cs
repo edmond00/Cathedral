@@ -20,7 +20,7 @@ public class PerfumeryModusMentis : ModusMentis
     public override string PersonaReminder  => "scent-making hand";
     public override string PersonaReminder2 => "someone who can make a room, or a person, smell like something else";
     public override string StyleInstruction =>
-        "Work in materials and layers - oil, crushed leaf, smoke through linen - with a craftsman's fussiness.";
+        "Fussy and inventive - treat whatever is in front of you as something that could be altered or made to seem otherwise.";
 
     public override string PersonaPrompt => @"You are the inner voice of PERFUMERY, which regards a smell as a thing to be built rather than suffered.
 

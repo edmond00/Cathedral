@@ -18,7 +18,7 @@ public class JourneymanEyeModusMentis : ModusMentis
 
     public override string PersonaTone     => "a trained eye that cannot look at finished work without grading it";
     public override string PersonaReminder  => "craft-judging eye";
-    public override string PersonaReminder2 => "someone who sees where the corner was cut";
+    public override string PersonaReminder2 => "someone who always sees where the work was skimped";
     public override string StyleInstruction =>
         "Grade the work in specifics - the joint, the finish, the place where time ran out.";
 

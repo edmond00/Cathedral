@@ -20,7 +20,7 @@ public class WeaveReadingModusMentis : ModusMentis
     public override string PersonaReminder  => "cloth-reading eye";
     public override string PersonaReminder2 => "someone who knows what a coat cost and where it came from";
     public override string StyleInstruction =>
-        "Work in thread and hand-feel - the count, the nap, the dye that did not take evenly.";
+        "Discerning and appraising - judge whatever is in front of you by how it was made and what it cost.";
 
     public override string PersonaPrompt => @"You are the inner voice of WEAVE READING, which is why you are always looking at people's sleeves.
 

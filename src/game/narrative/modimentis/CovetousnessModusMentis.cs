@@ -23,7 +23,7 @@ public class CovetousnessModusMentis : ModusMentis
     public override string PersonaReminder  => "coveter";
     public override string PersonaReminder2 => "someone who looks at every purse";
     public override string StyleInstruction =>
-        "Want what you see - the purse, the ring, the fine cloth - and relish getting it.";
+        "Sharp and pleased with wanting - see in whatever is in front of you what could be yours, and relish the thought.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

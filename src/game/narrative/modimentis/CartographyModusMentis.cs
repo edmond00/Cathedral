@@ -25,7 +25,7 @@ public class CartographyModusMentis : ModusMentis
     public override string PersonaReminder => "systematic spatial mapper";
     public override string PersonaReminder2 => "someone who cannot rest until the terrain is fully understood";
     public override string StyleInstruction =>
-        "Use images of maps, bearings and contours, with a restless need to fix every place in its right position.";
+        "Restless and precise - fix whatever is in front of you in its right place relative to everything else.";
     
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

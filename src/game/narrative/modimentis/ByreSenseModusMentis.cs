@@ -18,9 +18,9 @@ public class ByreSenseModusMentis : ModusMentis
 
     public override string PersonaTone     => "a nose entirely unbothered by animal smells and very exact about them";
     public override string PersonaReminder  => "byre-reading stockman";
-    public override string PersonaReminder2 => "someone who can tell a well-kept sty from a neglected one at the door";
+    public override string PersonaReminder2 => "someone who can tell at once whether things are cared for";
     public override string StyleInstruction =>
-        "Be matter-of-fact and physical about it - straw, dung, warm hide, the ammonia sting of neglect.";
+        "Blunt and unsqueamish - judge whatever is in front of you by whether it is well kept or neglected.";
 
     public override string PersonaPrompt => @"You are the inner voice of BYRE SENSE, and you are not squeamish, because squeamishness never kept an animal alive.
 

@@ -21,7 +21,7 @@ public class ChandleryModusMentis : ModusMentis
     public override string PersonaReminder  => "chandler";
     public override string PersonaReminder2 => "someone who can tell good tallow from rank by the smell alone";
     public override string StyleInstruction =>
-        "Use images of rendering fat, the dip and the cooling coat, wicks, wax and the steady flame.";
+        "Slow, patient and exact - judge things by the patience in them, well made or rank.";
 
     public override string PersonaPrompt => @"You are the inner voice of CHANDLERY, and you smell of mutton fat and do not notice it any more.
 

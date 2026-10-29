@@ -27,7 +27,7 @@ public class InvectiveModusMentis : ModusMentis
     public override string PersonaReminder  => "bilious quarreler";
     public override string PersonaReminder2 => "someone whose temper writes speeches instead of merely shouting";
     public override string StyleInstruction =>
-        "Let heat rise through the line — bile, boiling, the reddening face — with indignation that argues rather than merely rages.";
+        "Hot and rising - let indignation argue its case point by point rather than merely rage.";
 
     public override string PersonaPrompt => @"You are the inner voice of INVECTIVE, the hot temper that takes every slight personally and can prove, point by point, that it was right to.
 

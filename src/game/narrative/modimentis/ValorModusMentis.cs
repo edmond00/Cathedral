@@ -23,7 +23,7 @@ public class ValorModusMentis : ModusMentis
     public override string PersonaReminder  => "brave heart";
     public override string PersonaReminder2 => "someone who steps forward first";
     public override string StyleInstruction =>
-        "Meet danger head-on and gladly, thinking of who stands behind you.";
+        "Steady and glad - meet danger squarely, thinking of who is behind you.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {
