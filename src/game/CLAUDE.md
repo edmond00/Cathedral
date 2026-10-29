@@ -2011,8 +2011,12 @@ generated:
 | narration | `NarrationScrollBuffer.BlockAdded` | a preview part that was reset never commits, so it never reaches the journal |
 | an NPC's line | the same event (`Speaking` blocks), named by the label the player knows | a generated proper name the player was never told does not leak |
 | the reply picked | `DialogueTreeController.OnOptionSelected` | the options left unpicked are never recorded |
-| a fact | a shown block's `OutcomeReports` with `ShowInUI` | not `Outcome.ApplyTo`, which also runs for outcomes nobody saw |
+| a fact | a shown block's `OutcomeReports` with `ShowInUI`, minus bookkeeping by type (practice, grants, spent noetic points, wounds) | not `Outcome.ApplyTo`, which also runs for outcomes nobody saw. The chip text is kept for the screen; the chronicler is given the outcome's `Verbatim` (`Phrase`) — handed "Item received: Knife" it wrote it into the prose |
 | a milestone | the event itself: a lesson (`PartyMember.LearnModusMentis`/`AcquireModusMentis`, party members only), a wound (`FightResolver.ApplyWound`, `WoundInflictionOutcome`), a healing, a companion joining, dying or parted with, a first visit (keyed by vertex, whatever the mental maps forget), a fight won or fled | each once, by `Key` where it could repeat |
+
+A block no modus mentis narrated (`ModusMentis` null: a trade note, a fight's log tail) is the game
+talking and is not recorded. A lesson milestone is shown but marked `Lesson` and kept from the
+chronicler, which turned modus mentis names into "learning social interaction".
 
 Narration is credited to whoever is acting when the block commits — the Speak About hand-off commits
 the speech before switching member, so the speech stays the speaker's and what follows is the
