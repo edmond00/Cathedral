@@ -1,0 +1,1032 @@
+{
+"abstinence": [
+"reminder"
+],
+"acrobatics": [
+"style",
+"reminder"
+],
+"aesthetic": [
+"style"
+],
+"alchemy": [
+"style",
+"reminder"
+],
+"algebraic_analysis": [
+"style"
+],
+"ambuscade": [
+"style"
+],
+"anatomy_lore": [
+"style",
+"reminder"
+],
+"anglery": [
+"style"
+],
+"anointing": [
+"style"
+],
+"appraisal": [
+"style"
+],
+"archeology": [
+"reminder"
+],
+"aristocracy": [
+"style"
+],
+"arithmetic_logic": [
+"style"
+],
+"armoury_lore": [
+"reminder"
+],
+"arms_care": [
+"style"
+],
+"arson_fire": [
+"style",
+"reminder"
+],
+"assessment": [
+"style",
+"reminder"
+],
+"asylum": [
+"style"
+],
+"athletics": [
+"style"
+],
+"avarice": [
+"style"
+],
+"backtrail": [
+"style"
+],
+"balance": [
+"reminder"
+],
+"bargaining": [
+"style",
+"reminder"
+],
+"bastion_eye": [
+"style",
+"reminder"
+],
+"battlecraft": [
+"style"
+],
+"beast_sense": [
+"style"
+],
+"bell_ringing": [
+"style"
+],
+"berrying": [
+"style",
+"reminder"
+],
+"blanching": [
+"style"
+],
+"blood_lust": [
+"style"
+],
+"bloodlines": [
+"style"
+],
+"boasting": [
+"style"
+],
+"bonesetting": [
+"style",
+"reminder"
+],
+"branding": [
+"style"
+],
+"brawling": [
+"style"
+],
+"brewcraft": [
+"style",
+"reminder"
+],
+"bribery": [
+"style"
+],
+"brute_force": [
+"style"
+],
+"burrowing": [
+"style"
+],
+"bushcraft": [
+"style"
+],
+"butchery": [
+"style"
+],
+"byre_sense": [
+"style",
+"reminder"
+],
+"calligraphy": [
+"style"
+],
+"canecraft": [
+"style"
+],
+"card_sharping": [
+"style"
+],
+"carousal": [
+"style",
+"reminder"
+],
+"carrion_sense": [
+"reminder"
+],
+"carting": [
+"style"
+],
+"cartography": [
+"style"
+],
+"cellarcraft": [
+"style"
+],
+"chandlery": [
+"style"
+],
+"charnel_sense": [
+"style"
+],
+"childhood_reminescence": [
+"style"
+],
+"civic_pride": [
+"style"
+],
+"clairvoyance": [
+"style"
+],
+"clambering": [
+"style",
+"reminder"
+],
+"clerkship": [
+"style"
+],
+"cobbling": [
+"style",
+"reminder"
+],
+"coin_eye": [
+"style",
+"reminder"
+],
+"cookery": [
+"style"
+],
+"coppicing": [
+"style"
+],
+"copying": [
+"style"
+],
+"covetousness": [
+"style"
+],
+"crowd_murmur": [
+"style"
+],
+"cruelty": [
+"style"
+],
+"curiosity": [
+"style"
+],
+"cutpurse": [
+"style"
+],
+"dairycraft": [
+"style"
+],
+"deadeye": [
+"style"
+],
+"death_shake": [
+"style"
+],
+"decipher": [
+"style"
+],
+"delving": [
+"style",
+"reminder"
+],
+"digging": [
+"style"
+],
+"dirty_labor": [
+"style"
+],
+"discipline": [
+"reminder"
+],
+"doughcraft": [
+"style",
+"reminder"
+],
+"drainage": [
+"style",
+"reminder"
+],
+"dramaturgy": [
+"style"
+],
+"dread": [
+"style"
+],
+"drill": [
+"style"
+],
+"droving": [
+"style"
+],
+"dunging": [
+"style"
+],
+"eavesdropping": [
+"style",
+"reminder"
+],
+"embalming": [
+"style"
+],
+"empathy": [
+"style"
+],
+"endurance": [
+"style"
+],
+"enterprise": [
+"style"
+],
+"exorcism": [
+"style"
+],
+"exploration": [
+"style"
+],
+"falconry": [
+"style",
+"reminder"
+],
+"farriery": [
+"style",
+"reminder"
+],
+"felling": [
+"style"
+],
+"fieldcraft": [
+"style"
+],
+"finesse": [
+"style"
+],
+"firecraft": [
+"style",
+"reminder"
+],
+"fletching": [
+"style",
+"reminder"
+],
+"forage_lore": [
+"style",
+"reminder"
+],
+"forcing": [
+"reminder"
+],
+"fording": [
+"style"
+],
+"forgery": [
+"style"
+],
+"fortification": [
+"style",
+"reminder"
+],
+"foul_play": [
+"style"
+],
+"friendship": [
+"style"
+],
+"gambling": [
+"style"
+],
+"gleaning": [
+"style",
+"reminder"
+],
+"gluttony": [
+"style"
+],
+"gnawing": [
+"style"
+],
+"gold_fever": [
+"style"
+],
+"gourmandise": [
+"style",
+"reminder"
+],
+"grafting": [
+"style",
+"reminder"
+],
+"grave_robbing": [
+"style"
+],
+"gregariousness": [
+"style",
+"reminder"
+],
+"grimacery": [
+"style"
+],
+"grooming": [
+"style"
+],
+"grudgekeeping": [
+"style"
+],
+"gut_feeling": [
+"style",
+"reminder"
+],
+"hard_labor": [
+"style"
+],
+"harvestry": [
+"style"
+],
+"haulage": [
+"style",
+"reminder"
+],
+"hearthlonging": [
+"style",
+"reminder"
+],
+"hedgecraft": [
+"style",
+"reminder"
+],
+"henwifery": [
+"style"
+],
+"heraldry": [
+"style",
+"reminder"
+],
+"herblore": [
+"reminder"
+],
+"herd_eye": [
+"style"
+],
+"high_society_manners": [
+"style"
+],
+"hollow_ear": [
+"reminder"
+],
+"homing": [
+"reminder"
+],
+"hop_lore": [
+"style",
+"reminder"
+],
+"horse_sense": [
+"style",
+"reminder"
+],
+"horsemanship": [
+"style"
+],
+"houseways": [
+"style",
+"reminder"
+],
+"hunt": [
+"style",
+"reminder"
+],
+"husbandry": [
+"style"
+],
+"iconography": [
+"style"
+],
+"illumination": [
+"style",
+"reminder"
+],
+"incensing": [
+"style"
+],
+"incisiveness": [
+"style"
+],
+"insect_chorus": [
+"style"
+],
+"instinct": [
+"style"
+],
+"intercession": [
+"style"
+],
+"invective": [
+"style"
+],
+"iron_fist": [
+"style",
+"reminder"
+],
+"jailcraft": [
+"style",
+"reminder"
+],
+"journeyman_eye": [
+"reminder"
+],
+"keen_nose": [
+"reminder"
+],
+"keywise": [
+"reminder"
+],
+"knotwork": [
+"style",
+"reminder"
+],
+"lambing": [
+"style",
+"reminder"
+],
+"laundering": [
+"style"
+],
+"lineage_lore": [
+"style"
+],
+"linguistic": [
+"style"
+],
+"lockpicking": [
+"style",
+"reminder"
+],
+"looting": [
+"style",
+"reminder"
+],
+"lope": [
+"style"
+],
+"low_blow": [
+"style"
+],
+"lullaby": [
+"style"
+],
+"lute_playing": [
+"style"
+],
+"marksman": [
+"style"
+],
+"masquerade": [
+"style",
+"reminder"
+],
+"meditation": [
+"style",
+"reminder"
+],
+"metalcraft": [
+"style",
+"reminder"
+],
+"millcraft": [
+"style",
+"reminder"
+],
+"mimicry": [
+"style"
+],
+"moonwater": [
+"style",
+"reminder"
+],
+"mortification": [
+"reminder"
+],
+"murmur": [
+"style",
+"reminder"
+],
+"musk_marking": [
+"style"
+],
+"musk_reading": [
+"reminder"
+],
+"muster": [
+"reminder"
+],
+"natation": [
+"style",
+"reminder"
+],
+"nautical_jargon": [
+"style",
+"reminder"
+],
+"navigation": [
+"style"
+],
+"nerve": [
+"style"
+],
+"obduracy": [
+"style"
+],
+"oil_pressing": [
+"style"
+],
+"open_mindedness": [
+"style"
+],
+"pack_sense": [
+"style"
+],
+"paddycraft": [
+"style",
+"reminder"
+],
+"panting": [
+"style",
+"reminder"
+],
+"patience": [
+"style"
+],
+"patrol": [
+"style"
+],
+"peasantry": [
+"style",
+"reminder"
+],
+"perfumery": [
+"style"
+],
+"petrichor": [
+"style",
+"reminder"
+],
+"petty_thief": [
+"style",
+"reminder"
+],
+"philosophy": [
+"reminder"
+],
+"physiognomy": [
+"style"
+],
+"pilgrimage": [
+"style"
+],
+"pilotage": [
+"style"
+],
+"plantership": [
+"reminder"
+],
+"poisoning": [
+"style",
+"reminder"
+],
+"pomology": [
+"reminder"
+],
+"potcraft": [
+"style",
+"reminder"
+],
+"pounce": [
+"style"
+],
+"precedence": [
+"style",
+"reminder"
+],
+"predator": [
+"style"
+],
+"prosaic_grammar": [
+"style"
+],
+"provenance": [
+"style"
+],
+"provisioning": [
+"style"
+],
+"prowl": [
+"reminder"
+],
+"pruning": [
+"style"
+],
+"pugilitas": [
+"style"
+],
+"puppet_theather": [
+"style",
+"reminder"
+],
+"quickening": [
+"reminder"
+],
+"rage": [
+"style"
+],
+"ratcatcher": [
+"style",
+"reminder"
+],
+"receiving": [
+"style"
+],
+"recklessness": [
+"style"
+],
+"relic_lore": [
+"reminder"
+],
+"relish": [
+"reminder"
+],
+"rending_grip": [
+"style"
+],
+"resolve": [
+"style"
+],
+"retracing": [
+"reminder"
+],
+"rigging": [
+"style",
+"reminder"
+],
+"ripelore": [
+"style"
+],
+"rooftops": [
+"style"
+],
+"roping": [
+"style"
+],
+"ruin_sense": [
+"style"
+],
+"rustling": [
+"style"
+],
+"sacrilege": [
+"reminder"
+],
+"saddlery": [
+"style",
+"reminder"
+],
+"sailmaking": [
+"style",
+"reminder"
+],
+"salvage": [
+"style"
+],
+"sangfroid": [
+"style"
+],
+"scaling": [
+"style",
+"reminder"
+],
+"scent_draw": [
+"reminder"
+],
+"scenting": [
+"style"
+],
+"scholarship": [
+"style"
+],
+"scientific_research": [
+"style"
+],
+"scrutiny": [
+"style"
+],
+"seamanship": [
+"style"
+],
+"seduction": [
+"style"
+],
+"seed_lore": [
+"style"
+],
+"self_command": [
+"style"
+],
+"sextonry": [
+"style"
+],
+"shearing": [
+"style",
+"reminder"
+],
+"shipwrighting": [
+"style"
+],
+"siegecraft": [
+"style"
+],
+"signalling": [
+"style"
+],
+"silverhaul": [
+"style"
+],
+"simpling": [
+"style"
+],
+"sky_reading": [
+"style"
+],
+"sluicecraft": [
+"style",
+"reminder"
+],
+"smoke_reading": [
+"reminder"
+],
+"smuggling": [
+"style"
+],
+"snarling": [
+"style"
+],
+"sneak_art": [
+"style"
+],
+"social_interaction": [
+"style"
+],
+"soft_mouth": [
+"style"
+],
+"soldiery": [
+"style",
+"reminder"
+],
+"solfege": [
+"style"
+],
+"spadework": [
+"style"
+],
+"spite": [
+"style"
+],
+"spoor_eye": [
+"style"
+],
+"spoor_reading": [
+"style",
+"reminder"
+],
+"steady_hand": [
+"style"
+],
+"stealth": [
+"style"
+],
+"stevedoring": [
+"style"
+],
+"stewardry": [
+"style"
+],
+"stoneface": [
+"style"
+],
+"stonework": [
+"style",
+"reminder"
+],
+"streetwise": [
+"style",
+"reminder"
+],
+"superstition": [
+"style"
+],
+"surefoot": [
+"reminder"
+],
+"surgery": [
+"style"
+],
+"survivalism": [
+"style"
+],
+"swarm_sense": [
+"style",
+"reminder"
+],
+"swine_lore": [
+"reminder"
+],
+"swordsmanship": [
+"style"
+],
+"tactics": [
+"style"
+],
+"tailoring": [
+"style",
+"reminder"
+],
+"taint_sense": [
+"style"
+],
+"tallycraft": [
+"style"
+],
+"tanning": [
+"style"
+],
+"tea_lore": [
+"style",
+"reminder"
+],
+"terracing": [
+"style",
+"reminder"
+],
+"territoriality": [
+"style"
+],
+"thermodynamics": [
+"style"
+],
+"threadwork": [
+"style",
+"reminder"
+],
+"threshery": [
+"style"
+],
+"throng": [
+"style"
+],
+"tillage": [
+"style",
+"reminder"
+],
+"timber_ear": [
+"style",
+"reminder"
+],
+"topographia": [
+"style",
+"reminder"
+],
+"trailcraft": [
+"style",
+"reminder"
+],
+"treasure_hunting": [
+"style",
+"reminder"
+],
+"trencherman": [
+"style",
+"reminder"
+],
+"turfcutting": [
+"style",
+"reminder"
+],
+"uppercut": [
+"style"
+],
+"vagabondage": [
+"style",
+"reminder"
+],
+"valor": [
+"style"
+],
+"vantage": [
+"style",
+"reminder"
+],
+"vaulting": [
+"style",
+"reminder"
+],
+"vigil": [
+"style"
+],
+"vigilance": [
+"style"
+],
+"vigor": [
+"style",
+"reminder"
+],
+"viniculture": [
+"style"
+],
+"voyage": [
+"style"
+],
+"wanderlust": [
+"style"
+],
+"watchkeeping": [
+"style"
+],
+"water_bearing": [
+"style",
+"reminder"
+],
+"waterline": [
+"style",
+"reminder"
+],
+"wayfaring": [
+"style"
+],
+"wear_reading": [
+"style"
+],
+"weave_reading": [
+"style"
+],
+"weeping": [
+"style"
+],
+"wheedling": [
+"reminder"
+],
+"whittlecraft": [
+"style"
+],
+"wind_reading": [
+"style"
+],
+"winnowing": [
+"style"
+],
+"woodcraft": [
+"style"
+],
+"worry_the_bone": [
+"style"
+]
+}

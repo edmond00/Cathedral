@@ -1,0 +1,65 @@
+# round 14: lens style + disposition reminder, vs a manner joined to the lens (same reminders); style and reminder hidden
+S2750 F2 P0 C- Q1 |
+S9636 F2 P0 C- Q1 |
+S5045 F2 P0 C- Q1 |
+S5441 F2 P0 C- Q1 |
+S5190 F1 P2 C- Q1 | -lesson
+S5768 F0 P2 C- Q1 | +a feast, a hearth fire
+S2189 F2 P1 C- Q1 |
+S8368 F2 P1 C- Q1 |
+S5964 F1 P2 C- Q1 | "the warmth they evoke"
+S8645 F2 P2 C- Q1 |
+S7499 F1 P0 C- Q1 | +her name
+S7452 F1 P0 C- Q1 | +her name
+S2939 F1 P1 C- Q2 | discreetly made "lightly"
+S5317 F1 P1 C- Q1 | discreetly made "lightly"
+S4657 F2 P2 C- Q1 |
+S6171 F2 P2 C- Q1 |
+S6866 F1 P1 C- Q1 | -discreetly
+S5266 F1 P1 C- Q1 | -discreetly
+S6909 F1 P0 C- Q1 | "shapes of hope"
+S9458 F0 P1 C- Q1 | +a trowel
+S3452 F2 P0 C- Q1 |
+S3638 F2 P0 C- Q1 |
+S5511 F1 P2 C- Q1 | +"our ritual"
+S3702 F1 P2 C- Q1 | +"our ritual"
+S1173 F1 P2 C- Q1 | +checking for damp
+S2145 F2 P0 C- Q1 |
+S3015 F2 P0 C- Q1 |
+S6522 F1 P0 C- Q1 | the count blurred
+S1455 F2 P0 C- Q1 |
+S2363 F2 P0 C- Q1 |
+S5490 F2 P2 C- Q1 |
+S4349 F1 P1 C- Q0 |
+S7256 F1 P1 C- Q0 | "her attention" for mine
+S7613 F1 P0 C- Q1 |
+S8186 F2 P1 C- Q2 |
+S2546 F1 P2 C- Q0 |
+S2827 F2 P2 C- Q1 |
+S6967 F1 P2 C- Q0 | setting copied
+S3968 F2 P0 C- Q1 |
+S2551 F1 P1 C- Q0 |
+S8972 F1 P1 C- Q1 | "signs it's been tended"
+S9417 F1 P1 C- Q1 | "proper care"
+S4175 F1 P1 C- Q1 | "ensuring its safety"
+S5437 F2 P0 C- Q1 |
+S8415 F2 P1 C- Q1 |
+S4574 F2 P0 C- Q1 |
+S8941 F1 P1 C- Q0 | style copied
+S5609 F2 P0 C- Q1 |
+S9199 F2 P0 C- Q1 |
+S5171 F2 P0 C- Q1 |
+S2678 F2 P2 C- Q1 |
+S2985 F2 P2 C- Q2 |
+S2466 F1 P2 C- Q0 | "straighten her smile"
+S5565 F2 P1 C- Q1 |
+S5598 F1 P2 C- Q1 | "the forge looks neglected"
+S2937 F1 P2 C- Q1 | "long since cleaned"
+S1458 F2 P1 C- Q1 |
+S3649 F2 P1 C- Q1 |
+S7748 F2 P2 C- Q1 |
+S2865 F2 P2 C- Q1 |
+S9614 F0 P2 C- Q1 | +produce in the fields
+S2523 F0 P2 C- Q1 | +ripe fruit nearby
+S7966 F2 P2 C- Q1 |
+S8871 F1 P2 C- Q1 | "cool to touch"
