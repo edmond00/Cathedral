@@ -1,0 +1,112 @@
+{"case": "rem:forage_lore|village_dawn:002:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S5243", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:forage_lore|village_dawn:002:own", "version": "rem:style_lens", "seed": 2, "sid": "S5763", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "held:uppercut|forest_evening:007:own", "version": "held:style_lens", "seed": 2, "sid": "S4042", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"eager to touch its shell\""}
+{"case": "held:uppercut|forest_evening:007:own", "version": "held:current", "seed": 2, "sid": "S4777", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "examine made strike"}
+{"case": "held:perfumery|talk_miller:003:own", "version": "held:current", "seed": 2, "sid": "S3411", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+crushed leaf, linen"}
+{"case": "held:perfumery|talk_miller:003:own", "version": "held:style_lens", "seed": 2, "sid": "S4689", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "held:tallycraft|village_noon_party:005:own", "version": "held:style_lens", "seed": 2, "sid": "S4069", "F": 0, "P": 0, "C": null, "Q": 1, "facts": "+herbs by the hearth"}
+{"case": "held:tallycraft|village_noon_party:005:own", "version": "held:current", "seed": 2, "sid": "S3133", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+a tally-stick, coin"}
+{"case": "held:rooftops|farm_night:009:own", "version": "held:style_lens", "seed": 2, "sid": "S2160", "F": 1, "P": 1, "C": null, "Q": 0, "facts": "\"which tiles hold\""}
+{"case": "held:rooftops|farm_night:009:own", "version": "held:current", "seed": 2, "sid": "S9705", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+the roofs"}
+{"case": "rem:horsemanship|talk_blacksmith:001:own", "version": "rem:style_lens", "seed": 2, "sid": "S4504", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "+sweat"}
+{"case": "rem:horsemanship|talk_blacksmith:001:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S5827", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "the count blurred"}
+{"case": "rem:horse_sense|talk_blacksmith:001:own", "version": "rem:style_lens", "seed": 2, "sid": "S1491", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"her ears twitch\""}
+{"case": "rem:horse_sense|talk_blacksmith:001:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S8071", "F": 1, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:anointing|talk_miller:003:own", "version": "rem:style_lens", "seed": 2, "sid": "S3069", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+an anointed thumb"}
+{"case": "rem:anointing|talk_miller:003:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S1236", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:bell_ringing|farm_night:009:own", "version": "rem:style_lens", "seed": 2, "sid": "S5519", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+a knell"}
+{"case": "rem:bell_ringing|farm_night:009:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S3403", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:bell_ringing|talk_miller:003:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S2391", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "+her name"}
+{"case": "rem:bell_ringing|talk_miller:003:own", "version": "rem:style_lens", "seed": 2, "sid": "S5299", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+a knell"}
+{"case": "held:oil_pressing|talk_miller:003:own", "version": "held:current", "seed": 2, "sid": "S8390", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+oil in hand"}
+{"case": "held:oil_pressing|talk_miller:003:own", "version": "held:style_lens", "seed": 2, "sid": "S8155", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+a press, a heap"}
+{"case": "held:perfumery|farm_night:009:own", "version": "held:style_lens", "seed": 2, "sid": "S3285", "F": 2, "P": 1, "C": null, "Q": 2, "facts": ""}
+{"case": "held:perfumery|farm_night:009:own", "version": "held:current", "seed": 2, "sid": "S5205", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "style copied; +crushed leaf, smoke"}
+{"case": "rem:henwifery|talk_blacksmith:001:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S6828", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+a trowel"}
+{"case": "rem:henwifery|talk_blacksmith:001:own", "version": "rem:style_lens", "seed": 2, "sid": "S4834", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+wings under the anvil"}
+{"case": "rem:incensing|forest_evening:008:own", "version": "rem:style_lens", "seed": 2, "sid": "S8975", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:incensing|forest_evening:008:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S8038", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:horse_sense|farm_dusk:005:own", "version": "rem:style_lens", "seed": 2, "sid": "S6967", "F": 2, "P": 1, "C": null, "Q": 0, "facts": ""}
+{"case": "rem:horse_sense|farm_dusk:005:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S8042", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:illumination|talk_miller:003:own", "version": "rem:style_lens", "seed": 2, "sid": "S6140", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "discreetly made \"raise my voice\""}
+{"case": "rem:illumination|talk_miller:003:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S2922", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "held:tailoring|talk_miller:003:own", "version": "held:current", "seed": 2, "sid": "S6668", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "+chalk, shears, cloth"}
+{"case": "held:tailoring|talk_miller:003:own", "version": "held:style_lens", "seed": 2, "sid": "S5307", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:hearthlonging|village_noon_party:005:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S8346", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"the warmth they evoke\""}
+{"case": "rem:hearthlonging|village_noon_party:005:own", "version": "rem:style_lens", "seed": 2, "sid": "S3209", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "\"tonight\" at noon; +a lit window"}
+{"case": "rem:henwifery|farm_night:009:own", "version": "rem:style_lens", "seed": 2, "sid": "S8215", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "the act replaced; +a nest"}
+{"case": "rem:henwifery|farm_night:009:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S8264", "F": 1, "P": 1, "C": null, "Q": 0, "facts": ""}
+{"case": "held:shearing|farm_night:009:own", "version": "held:current", "seed": 2, "sid": "S9781", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+a fleece"}
+{"case": "held:shearing|farm_night:009:own", "version": "held:style_lens", "seed": 2, "sid": "S3893", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:fletching|talk_miller:003:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S5805", "F": 1, "P": 2, "C": null, "Q": 0, "facts": "\"straighten her smile\""}
+{"case": "rem:fletching|talk_miller:003:own", "version": "rem:style_lens", "seed": 2, "sid": "S4319", "F": 1, "P": 2, "C": null, "Q": 0, "facts": "\"the bend in her gaze\""}
+{"case": "held:laundering|forest_evening:007:own", "version": "held:style_lens", "seed": 2, "sid": "S3939", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "success undercut"}
+{"case": "held:laundering|forest_evening:007:own", "version": "held:current", "seed": 2, "sid": "S9563", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "+lye, sheets"}
+{"case": "rem:arms_care|farm_night:009:own", "version": "rem:style_lens", "seed": 2, "sid": "S6836", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:arms_care|farm_night:009:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S5150", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "held:saddlery|forest_evening:007:own", "version": "held:style_lens", "seed": 2, "sid": "S7080", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"its shell fit my hand\""}
+{"case": "held:saddlery|forest_evening:007:own", "version": "held:current", "seed": 2, "sid": "S8527", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+a saddle panel, a horse"}
+{"case": "rem:incensing|forest_evening:007:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S5288", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+\"our ritual\""}
+{"case": "rem:incensing|forest_evening:007:own", "version": "rem:style_lens", "seed": 2, "sid": "S5589", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+\"my rite\""}
+{"case": "held:potcraft|farm_dusk:004:own", "version": "held:style_lens", "seed": 2, "sid": "S7484", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "held:potcraft|farm_dusk:004:own", "version": "held:current", "seed": 2, "sid": "S3142", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "+clay, wheel, kiln"}
+{"case": "rem:horsemanship|farm_night:009:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S9042", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:horsemanship|farm_night:009:own", "version": "rem:style_lens", "seed": 2, "sid": "S4857", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:fletching|forest_evening:007:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S4861", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:fletching|forest_evening:007:own", "version": "rem:style_lens", "seed": 2, "sid": "S4186", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:grafting|talk_miller:003:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S7003", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:grafting|talk_miller:003:own", "version": "rem:style_lens", "seed": 2, "sid": "S3147", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "+a quiet path"}
+{"case": "held:potcraft|farm_night:009:own", "version": "held:current", "seed": 2, "sid": "S2200", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "the act replaced by potting"}
+{"case": "held:potcraft|farm_night:009:own", "version": "held:style_lens", "seed": 2, "sid": "S8051", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:forage_lore|village_noon_party:005:own", "version": "rem:style_lens", "seed": 2, "sid": "S8596", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:forage_lore|village_noon_party:005:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S7384", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+ripe fruit nearby"}
+{"case": "held:uppercut|farm_night:009:own", "version": "held:style_lens", "seed": 2, "sid": "S1035", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "held:uppercut|farm_night:009:own", "version": "held:current", "seed": 2, "sid": "S7951", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "the act made a blow"}
+{"case": "held:snarling|forest_evening:007:own", "version": "held:current", "seed": 2, "sid": "S1707", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+a growl at the snail"}
+{"case": "held:snarling|forest_evening:007:own", "version": "held:style_lens", "seed": 2, "sid": "S4684", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+the snail fled"}
+{"case": "rem:farriery|farm_dusk:004:own", "version": "rem:style_lens", "seed": 2, "sid": "S3322", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "+calloused hands"}
+{"case": "rem:farriery|farm_dusk:004:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S9159", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:farriery|farm_night:009:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S8292", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:farriery|farm_night:009:own", "version": "rem:style_lens", "seed": 2, "sid": "S5156", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:hearthlonging|talk_blacksmith:005:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S3617", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-lesson"}
+{"case": "rem:hearthlonging|talk_blacksmith:005:own", "version": "rem:style_lens", "seed": 2, "sid": "S7774", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "-lesson"}
+{"case": "rem:arms_care|forest_evening:007:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S5116", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:arms_care|forest_evening:007:own", "version": "rem:style_lens", "seed": 2, "sid": "S6744", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "+rivets to check"}
+{"case": "held:tailoring|farm_dusk:004:own", "version": "held:style_lens", "seed": 2, "sid": "S4326", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "+a garment"}
+{"case": "held:tailoring|farm_dusk:004:own", "version": "held:current", "seed": 2, "sid": "S7140", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "+a garment, chalk, shears"}
+{"case": "rem:illumination|forest_evening:007:own", "version": "rem:style_lens", "seed": 2, "sid": "S9525", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"breathe on the snail\""}
+{"case": "rem:illumination|forest_evening:007:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S3244", "F": 2, "P": 2, "C": null, "Q": 2, "facts": ""}
+{"case": "held:saddlery|farm_dusk:004:own", "version": "held:style_lens", "seed": 2, "sid": "S4893", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "held:saddlery|farm_dusk:004:own", "version": "held:current", "seed": 2, "sid": "S9132", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+a panel, waxed thread"}
+{"case": "rem:byre_sense|forest_evening:008:own", "version": "rem:style_lens", "seed": 2, "sid": "S4468", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "\"well-pruned\""}
+{"case": "rem:byre_sense|forest_evening:008:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S1697", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"proper care\""}
+{"case": "rem:anointing|farm_dusk:004:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S1633", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:anointing|farm_dusk:004:own", "version": "rem:style_lens", "seed": 2, "sid": "S6887", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+oil on my hands"}
+{"case": "held:oil_pressing|farm_night:009:own", "version": "held:style_lens", "seed": 2, "sid": "S6592", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "the act replaced by oil"}
+{"case": "held:oil_pressing|farm_night:009:own", "version": "held:current", "seed": 2, "sid": "S3984", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+oil from the hay stack"}
+{"case": "held:tallycraft|village_dawn:002:own", "version": "held:style_lens", "seed": 2, "sid": "S5838", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"weigh its rope\""}
+{"case": "held:tallycraft|village_dawn:002:own", "version": "held:current", "seed": 2, "sid": "S4160", "F": 1, "P": 2, "C": null, "Q": 0, "facts": "+a tally-stick"}
+{"case": "held:shearing|forest_evening:007:own", "version": "held:style_lens", "seed": 2, "sid": "S3694", "F": 1, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "held:shearing|forest_evening:007:own", "version": "held:current", "seed": 2, "sid": "S2839", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+a sheep shorn"}
+{"case": "rem:grafting|farm_night:009:own", "version": "rem:style_lens", "seed": 2, "sid": "S4695", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "the act made grafting"}
+{"case": "rem:grafting|farm_night:009:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S3741", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "held:snarling|farm_dusk:004:own", "version": "held:current", "seed": 2, "sid": "S2132", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+a growl"}
+{"case": "held:snarling|farm_dusk:004:own", "version": "held:style_lens", "seed": 2, "sid": "S8031", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+a growl"}
+{"case": "rem:berrying|talk_miller:003:own", "version": "rem:style_lens", "seed": 2, "sid": "S9901", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "discreetly made \"lightly\""}
+{"case": "rem:berrying|talk_miller:003:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S1636", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "discreetly made \"lightly\""}
+{"case": "rem:byre_sense|talk_blacksmith:001:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S8202", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"the forge looks neglected\""}
+{"case": "rem:byre_sense|talk_blacksmith:001:own", "version": "rem:style_lens", "seed": 2, "sid": "S6620", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"far from well-kept\""}
+{"case": "rem:chandlery|forest_evening:007:own", "version": "rem:style_lens", "seed": 2, "sid": "S2518", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:chandlery|forest_evening:007:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S9627", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:chandlery|talk_miller:003:own", "version": "rem:style_lens", "seed": 2, "sid": "S1048", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "+a wick, grease"}
+{"case": "rem:chandlery|talk_miller:003:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S3072", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "-discreetly"}
+{"case": "rem:berrying|village_dawn:002:own", "version": "rem:lens_reminder", "seed": 2, "sid": "S6088", "F": 2, "P": 1, "C": null, "Q": 2, "facts": ""}
+{"case": "rem:berrying|village_dawn:002:own", "version": "rem:style_lens", "seed": 2, "sid": "S2990", "F": 1, "P": 2, "C": null, "Q": 0, "facts": "+a basket"}
+{"case": "held:rooftops|forest_evening:007:own", "version": "held:current", "seed": 2, "sid": "S7685", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+roofs"}
+{"case": "held:rooftops|forest_evening:007:own", "version": "held:style_lens", "seed": 2, "sid": "S5939", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "held:tanning|farm_night:009:own", "version": "held:style_lens", "seed": 2, "sid": "S5406", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+a mare, a stall"}
+{"case": "held:tanning|farm_night:009:own", "version": "held:current", "seed": 2, "sid": "S2268", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "+hides, beam, pits"}
+{"case": "held:tanning|farm_dusk:004:own", "version": "held:style_lens", "seed": 2, "sid": "S8698", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "held:tanning|farm_dusk:004:own", "version": "held:current", "seed": 2, "sid": "S9552", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+hides"}
+{"case": "held:laundering|farm_night:009:own", "version": "held:style_lens", "seed": 2, "sid": "S7007", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "held:laundering|farm_night:009:own", "version": "held:current", "seed": 2, "sid": "S1586", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+lye, sheets"}

@@ -1,0 +1,114 @@
+# round 13: rule 1 (lens style) on held-out personas L-Z, current vs lens; rule 2 (reminder as a
+# disposition) on dev personas, lens vs lens + reminder. The field compared is hidden on the sheet.
+S5243 F2 P0 C- Q1 |
+S5763 F2 P0 C- Q1 |
+S4042 F1 P2 C- Q1 | "eager to touch its shell"
+S4777 F0 P2 C- Q1 | examine made strike
+S3411 F0 P2 C- Q1 | +crushed leaf, linen
+S4689 F2 P0 C- Q1 |
+S4069 F0 P0 C- Q1 | +herbs by the hearth
+S3133 F0 P2 C- Q1 | +a tally-stick, coin
+S2160 F1 P1 C- Q0 | "which tiles hold"
+S9705 F0 P2 C- Q1 | +the roofs
+S4504 F1 P0 C- Q1 | +sweat
+S5827 F1 P0 C- Q1 | the count blurred
+S1491 F1 P2 C- Q1 | "her ears twitch"
+S8071 F1 P0 C- Q1 |
+S3069 F0 P2 C- Q1 | +an anointed thumb
+S1236 F2 P0 C- Q1 |
+S5519 F1 P2 C- Q1 | +a knell
+S3403 F2 P0 C- Q1 |
+S2391 F1 P0 C- Q1 | +her name
+S5299 F1 P2 C- Q1 | +a knell
+S8390 F0 P2 C- Q1 | +oil in hand
+S8155 F0 P2 C- Q1 | +a press, a heap
+S3285 F2 P1 C- Q2 |
+S5205 F0 P2 C- Q0 | style copied; +crushed leaf, smoke
+S6828 F0 P1 C- Q1 | +a trowel
+S4834 F0 P2 C- Q1 | +wings under the anvil
+S8975 F2 P1 C- Q1 |
+S8038 F2 P1 C- Q1 |
+S6967 F2 P1 C- Q0 |
+S8042 F2 P0 C- Q1 |
+S6140 F1 P2 C- Q1 | discreetly made "raise my voice"
+S2922 F2 P2 C- Q1 |
+S6668 F0 P2 C- Q0 | +chalk, shears, cloth
+S5307 F2 P2 C- Q1 |
+S8346 F1 P2 C- Q1 | "the warmth they evoke"
+S3209 F0 P2 C- Q1 | "tonight" at noon; +a lit window
+S8215 F0 P2 C- Q1 | the act replaced; +a nest
+S8264 F1 P1 C- Q0 |
+S9781 F0 P2 C- Q1 | +a fleece
+S3893 F2 P0 C- Q1 |
+S5805 F1 P2 C- Q0 | "straighten her smile"
+S4319 F1 P2 C- Q0 | "the bend in her gaze"
+S3939 F1 P1 C- Q1 | success undercut
+S9563 F0 P2 C- Q0 | +lye, sheets
+S6836 F2 P0 C- Q1 |
+S5150 F2 P0 C- Q1 |
+S7080 F1 P2 C- Q1 | "its shell fit my hand"
+S8527 F0 P2 C- Q1 | +a saddle panel, a horse
+S5288 F1 P2 C- Q1 | +"our ritual"
+S5589 F1 P2 C- Q1 | +"my rite"
+S7484 F2 P2 C- Q1 |
+S3142 F0 P2 C- Q0 | +clay, wheel, kiln
+S9042 F2 P0 C- Q1 |
+S4857 F2 P0 C- Q1 |
+S4861 F2 P1 C- Q1 |
+S4186 F2 P0 C- Q1 |
+S7003 F2 P0 C- Q1 |
+S3147 F1 P0 C- Q1 | +a quiet path
+S2200 F0 P2 C- Q1 | the act replaced by potting
+S8051 F2 P0 C- Q1 |
+S8596 F2 P2 C- Q1 |
+S7384 F0 P2 C- Q1 | +ripe fruit nearby
+S1035 F2 P0 C- Q1 |
+S7951 F0 P2 C- Q0 | the act made a blow
+S1707 F0 P2 C- Q1 | +a growl at the snail
+S4684 F0 P2 C- Q1 | +the snail fled
+S3322 F1 P1 C- Q1 | +calloused hands
+S9159 F2 P2 C- Q1 |
+S8292 F2 P0 C- Q1 |
+S5156 F2 P0 C- Q1 |
+S3617 F1 P2 C- Q1 | -lesson
+S7774 F1 P1 C- Q1 | -lesson
+S5116 F2 P0 C- Q1 |
+S6744 F0 P2 C- Q0 | +rivets to check
+S4326 F0 P2 C- Q0 | +a garment
+S7140 F0 P2 C- Q0 | +a garment, chalk, shears
+S9525 F1 P2 C- Q1 | "breathe on the snail"
+S3244 F2 P2 C- Q2 |
+S4893 F2 P1 C- Q1 |
+S9132 F0 P2 C- Q1 | +a panel, waxed thread
+S4468 F1 P0 C- Q1 | "well-pruned"
+S1697 F1 P1 C- Q1 | "proper care"
+S1633 F2 P2 C- Q1 |
+S6887 F1 P2 C- Q1 | +oil on my hands
+S6592 F0 P2 C- Q1 | the act replaced by oil
+S3984 F0 P2 C- Q1 | +oil from the hay stack
+S5838 F1 P2 C- Q1 | "weigh its rope"
+S4160 F1 P2 C- Q0 | +a tally-stick
+S3694 F1 P2 C- Q1 |
+S2839 F0 P2 C- Q1 | +a sheep shorn
+S4695 F0 P2 C- Q0 | the act made grafting
+S3741 F2 P0 C- Q1 |
+S2132 F1 P2 C- Q1 | +a growl
+S8031 F1 P2 C- Q1 | +a growl
+S9901 F1 P1 C- Q1 | discreetly made "lightly"
+S1636 F1 P1 C- Q1 | discreetly made "lightly"
+S8202 F1 P2 C- Q1 | "the forge looks neglected"
+S6620 F1 P2 C- Q1 | "far from well-kept"
+S2518 F2 P1 C- Q1 |
+S9627 F2 P2 C- Q1 |
+S1048 F0 P2 C- Q0 | +a wick, grease
+S3072 F1 P0 C- Q1 | -discreetly
+S6088 F2 P1 C- Q2 |
+S2990 F1 P2 C- Q0 | +a basket
+S7685 F0 P2 C- Q1 | +roofs
+S5939 F2 P1 C- Q1 |
+S5406 F0 P1 C- Q0 | +a mare, a stall
+S2268 F0 P2 C- Q0 | +hides, beam, pits
+S8698 F2 P2 C- Q1 |
+S9552 F0 P2 C- Q1 | +hides
+S7007 F2 P0 C- Q1 |
+S1586 F0 P2 C- Q1 | +lye, sheets
