@@ -341,7 +341,7 @@ public sealed class AgricultureSceneFactory : SettledSceneFactory
                 return rng.NextDouble() < 0.5
                     ? new ScarecrowPointOfInterest("Scarecrow", new() { "A straw-stuffed figure on a pole, sleeves flapping" },
                           Items(() => new Straw(), () => new Rope()), new[] { "tattered", "lonely" })
-                      { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "peasantry"), ("contemplate", "aesthetic")) }
+                      { Play = new ThrowAtMarkPlay("pelt {0} with dry clods until I knock its hat off"), Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "peasantry"), ("contemplate", "aesthetic")) }
                     : rng.NextDouble() < 0.5
                     ? new StookPointOfInterest("Stook", new() { "Sheaves stood up against each other to dry, heads together" },
                           Items(() => new Straw(), _crop.Yield), new[] { "golden", "leaning" })

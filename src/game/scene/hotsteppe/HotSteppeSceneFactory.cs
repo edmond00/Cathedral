@@ -387,7 +387,7 @@ public class HotSteppeSceneFactory : WildSceneFactory
         items: new() { new ItemElement(new Clay()), new ItemElement(new Clay()) },
         moods: new[] { "grey", "polished", "rank", "cool" },
         isNatural: true
-    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "spoor_reading", ["smell"] = "musk_reading" } };
+    ) { Play = new MudPuddlePlay(), Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "spoor_reading", ["smell"] = "musk_reading" } };
 
     private static PointOfInterest BuildRainBasin() => new PoolPointOfInterest(
         displayName: "Rain Basin",

@@ -624,7 +624,7 @@ every `success.cli` also asserts the chip its outcome puts in the outcome block:
 | `CoinGrantOutcome` | `Coins received:` | pickpocket |
 | `DialogueTriggerOutcome` | `Conversation:` | the eleven verbs that open one |
 | `FirstBlowOutcome` | `First blow:` | attack |
-| the modus mentis grant | `Modus mentis` | examine, listen, smell, contemplate — no scene outcome of their own |
+| the modus mentis grant | `Modus mentis` | examine, listen, smell, contemplate, play — no scene outcome of their own |
 | `LostWayOutcome` / `TimeWastedOutcome` / `FocusLostOutcome` | `Lost the way` / `Time wasted:` / `Focus lost:` | a failure's penalty, drawn from the verb's table — assert them with `--penalty-only` |
 | `TrespassToleratedOutcome` / `ShownTheDoorOutcome` | `… lets you stay` / `… shows you the door` | `found_waiting`, the householder who comes in at night — a village pantry at `--period evening` is the reliable stage (see `cli/outcome/trespass_tolerated`) |
 

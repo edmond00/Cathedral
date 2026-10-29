@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene;
 using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
@@ -15,7 +16,9 @@ public class PlungeModusMentis : ModusMentis
         "Wants to swim: to get into cold water — a pool under a fall, a mountain tarn, a black channel in the ice — and come out gasping and alive. Takes every stretch of open water as a dare, and swims across where others would walk round.";
     public override string SkillMeans       => "swimming into cold water for the shock of it";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTargets? Will => WillTarget.To<SwimAcrossVerb>("get into the cold water and swim it");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<SwimAcrossVerb>("get into the cold water and swim it"),
+        WillTarget.To<PlayVerb>("leap from a height into deep water").Playing("a leap into a pool", typeof(PoolJumpPlay)));
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.FreshWater, Places.Ice);
     public override string[] Organs        => new[] { "pulmones", "heart" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

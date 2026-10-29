@@ -262,6 +262,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --mm-audit                         Print the modus-mentis content audit (hard-rule violations, coverage, soft stats) and exit");
     Console.WriteLine("  --will-audit [out.json]            Plan every will across the location kinds and its own places: coverage, related coverage, breadth");
     Console.WriteLine("  --will-trace <will-id> [location]  Why a will has or lacks something to do: its plans and every action its verbs are offered on");
+    Console.WriteLine("  --play-audit                       Print the PLAY audit (share of areas holding a play, kinds of play, lessons) and exit");
     Console.WriteLine("  --verb-audit                       Print the verb-coverage audit (verbs per observable vs targets, dead verbs,");
     Console.WriteLine("                                     unresolvable modus-mentis and tool ids, landmark counts) and exit");
     Console.WriteLine("  --outcome-audit                    Print the outcome catalogue (every consequence, who produces it, what produces nothing) and exit");
@@ -492,6 +493,13 @@ if (args.Length >= 1 && args[0] == "--history-audit")
 if (args.Length >= 1 && args[0] == "--verb-audit")
 {
     Console.WriteLine(Cathedral.Game.Scene.VerbAudit.BuildReport());
+    return;
+}
+
+// Play audit: where PLAY is offered (a quarter of the areas is the aim), what is played, what it teaches.
+if (args.Length >= 1 && args[0] == "--play-audit")
+{
+    Console.WriteLine(Cathedral.Game.Scene.PlayAudit.BuildReport());
     return;
 }
 

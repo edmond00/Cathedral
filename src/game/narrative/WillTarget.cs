@@ -134,6 +134,19 @@ public sealed class WillTarget
                 $"selling {kind}");
 
     /// <summary>
+    /// Narrows a will to PLAY to one or more kinds of play (<see cref="PlayActivity"/> subclasses): a
+    /// cheat wants a game of knucklebones, a slider a slope. <paramref name="label"/> names the set in
+    /// the audit. A kind of play is a type, so this is as safe as <see cref="On{TElement}"/>.
+    /// </summary>
+    public WillTarget Playing(string label, params Type[] playTypes)
+    {
+        foreach (var t in playTypes)
+            if (!typeof(PlayActivity).IsAssignableFrom(t))
+                throw new ArgumentException($"WillTarget: {t.Name} is not a PlayActivity");
+        return With(e => e is IPlayable { Play: { } play } && playTypes.Any(t => t.IsInstanceOfType(play)), $"playing {label}");
+    }
+
+    /// <summary>
     /// Narrows the target by a test of its own, for a condition no type expresses (a person of a given
     /// species). The test must still gate on types, never on a name.
     /// </summary>

@@ -1,6 +1,6 @@
 ---
 name: audits
-description: The fifteen headless audits that check content rather than code: --outcome-audit, --crime-audit, --dialogue-audit, --npc-audit, --mm-audit, --will-audit, --item-audit, --verb-audit, --world-variant-audit, --history-audit, --mm-grant-csv, --mm-reach-csv, --llm-probe-audit, --building-audit and --biome-audit. Use after adding or editing a verb, an outcome, a modus mentis, a will's targets or places, an item, an NPC archetype, a dialogue tree, a scene factory, a world variant, the world history generator or the lore catalogue, or a batch of scene content, and to find out which audit covers a change.
+description: The sixteen headless audits that check content rather than code: --outcome-audit, --play-audit, --crime-audit, --dialogue-audit, --npc-audit, --mm-audit, --will-audit, --item-audit, --verb-audit, --world-variant-audit, --history-audit, --mm-grant-csv, --mm-reach-csv, --llm-probe-audit, --building-audit and --biome-audit. Use after adding or editing a verb, an outcome, a kind of play or where plays are placed, a modus mentis, a will's targets or places, an item, an NPC archetype, a dialogue tree, a scene factory, a world variant, the world history generator or the lore catalogue, or a batch of scene content, and to find out which audit covers a change.
 ---
 
 # The audits
@@ -43,6 +43,30 @@ its outcome from the view's `Variant` — `introduce_me` needs to know *which* t
 target-only overload comes back empty. And outcomes reached by paths the sweep cannot walk (a phase
 transition, a failure branch, `tame`'s appeased beast) are declared in `OutcomeAudit.Elsewhere` with a
 reason, rather than left as noise to be ignored.
+
+### Checking where PLAY is offered
+
+```bash
+dotnet run -- --play-audit
+```
+
+PLAY's content is spread across three routes — a factory's own objects, creature archetypes and
+`PlayPlacement`'s pass over a finished scene — so no one file says how much of the world can be
+played in. This builds every factory the verb audit sweeps (up to 20 ids each) and counts the areas
+where `PlayVerb` accepts something at some hour, for a default protagonist. About a minute.
+
+- **The share** — mean of the factories' shares, held to 20–32% (✗ outside), with the pooled share
+  over every area beside it. Cities and citadels are hundreds of rooms, so the pooled figure moves with
+  the indoor rules (dormitories, halls, roofs) and the mean with the wilderness; keep both near 25%.
+- **Kinds of play** — areas offering each `PlayActivity` subclass; ✗ on one no scene offers.
+- **What carries them**, **how each is worded** (one line per carrier and name — read it after adding a
+  `{0}` template; a plural object under a singular pronoun shows here), **lessons taught to a person**.
+- **Each play's lessons** — ✗ when no body the play is offered to can hold any of them.
+- **By kind of area** — areas, areas with a play, share. What the chances in `PlayPlacement.Rules`
+  were tuned against.
+
+Run it after adding a kind of play, a plaything, a play on a factory object or an archetype, or after
+changing a placement chance or a factory's areas.
 
 ### Checking the crime system
 

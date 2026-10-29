@@ -200,7 +200,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "fresh-cut", "heavy", "split", "wood-scented" },
         isNatural: true
-    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["smell"] = "petrichor" } };
+    ) { Play = new BalanceWalkPlay(), Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["smell"] = "petrichor" } };
 
     public static PointOfInterest BuildTreeStump() => new StumpPointOfInterest(
         displayName: "Tree Stump",

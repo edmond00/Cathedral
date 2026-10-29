@@ -1779,6 +1779,41 @@ unlearnable by a body that could be offered it. The beast side of that fault is 
 fixed: `VerbAudit.NoBeastCounterpart` lists the sixteen verbs a beast companion can be offered and
 learn nothing from, with the reason. **Empty that list, do not extend it.**
 
+### Play: the verb its object words
+
+PLAY (`PlayVerb`) is play for its own sake — skipping stones off a creek, swinging on a liana, rolling
+down a grassy bank, scratching a hound behind the ears. **It is the one verb that does not word itself.**
+Two plays share nothing but being done for fun, so everything a verb normally declares belongs to the
+object: a `PlayActivity` (`src/game/scene/play/`) carries the verbatim, the difficulty, the
+`RequiredCapabilities`, the `Lessons` (most restrictive first, beast before human) and the
+`FailurePenalties`, and `PlayVerb` reads all five off whatever `IPlayable` it is aimed at.
+
+- **A kind of play is a type**, one `PlayActivity` subclass each (`PlayActivities.cs`), so a will narrows
+  on it with `WillTarget.Playing(label, typeof(KnucklebonesPlay))` — never on a name. Where the wording
+  differs by object (hay jumped into vs. a haystack slid down, a cat stroked vs. a lamb held) the
+  subclass takes a `{0}` template; the kind, the lessons and the costs stay the type's.
+- **A success teaches and does nothing else**: no item, no hour, no move. `SuccessReports` is empty and
+  `play` is in `OutcomeAudit.TeachesOnly` with the senses. The lesson is the play's own; `playfulness`
+  (a will to play) is the verb's fallback, and what kicking through a leaf drift teaches.
+- **Three routes put a play in the world.** A factory sets `PointOfInterest.Play` on an object of its own
+  when the play belongs to it (the jungle's hanging lianas, a loft's hay, a field's scarecrow, a felled
+  log, a town fountain); an archetype declares `NpcArchetype.Play` (hound, goat, lamb, hens, stray cat and
+  dog — a creature that counts the actor an enemy is refused); and `PlayPlacement`, after wild growth,
+  gives a staircase or a creek its play and lays a plaything (`PlayPoiKinds.cs`) in an area by its kind,
+  from a generator of its own seeded with the location id, so nothing else in the place moves. Off in
+  the test location, whose `Test Pebbles` on the shore are laid by hand.
+- **About a quarter of the areas hold a play**, and `--play-audit` holds it there (20–32%, mean over the
+  factories; pooled is printed beside it). The chances in `PlayPlacement.Rules` were tuned against its
+  by-kind table: read it before changing one, since a dormitory or a roof moves the pooled figure more
+  than a whole biome does. It also prints how each carrier is worded — read it after adding a template.
+
+Fourteen modi mentis are taught by play and by nothing else (playfulness, ducks_and_drakes, swinging,
+cosseting, glissade, sand_castles, mudlarking, hopscotch, halloo, tumbling, shying, chasing, paddling,
+whirligig; glissade, whirligig and playfulness are wills). Gambling, plunge, surefoot/balance, whistling
+and howling are the existing minds a game also practises. Foul play (cheating at knucklebones), carousal,
+plunge and rigging want a play as one of their targets. Husbandry, pounce and vaulting were tried and
+taken back: a play as a second target took each past the will audit's 75% breadth.
+
 ### The senses reach living things
 
 `SensoryVerb` used to gate on `target is PointOfInterest`, so the four senses could not touch anything

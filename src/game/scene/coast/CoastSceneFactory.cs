@@ -455,7 +455,7 @@ public class CoastSceneFactory : WildSceneFactory
         descriptions: new() { "A glistening mud flat marked with wading-bird tracks" },
         items: new() { new ItemElement(new Clay()), new ItemElement(new Clay()), new ItemElement(new Reed()) },
         moods: new[] { "glistening", "soft", "tidal" }
-    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "drainage", ["smell"] = "taint_sense" } };
+    ) { Play = new MudPuddlePlay(), Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "drainage", ["smell"] = "taint_sense" } };
 
     private static PointOfInterest BuildWillowBank() => new WillowPointOfInterest(
         displayName: "Willow Bank",
@@ -470,7 +470,7 @@ public class CoastSceneFactory : WildSceneFactory
         items: new() { new ItemElement(new Reed()) },
         moods: new[] { "tough", "whipping", "rolled", "grey-green" },
         isNatural: true
-    ) { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "forage_lore", ["listen"] = "wind_reading" } };
+    ) { Play = new GrassWhistlePlay(), Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "forage_lore", ["listen"] = "wind_reading" } };
 
     private static PointOfInterest BuildRabbitWarren() => new BurrowPointOfInterest(
         displayName: "Rabbit Warren",
