@@ -244,7 +244,7 @@ the shipped `model.gguf` (SHA-256 checked), on the cloud machine (4 cores, llvmp
 | r2 | 0.7 | **passed** to the closure | 72 min |
 | r3 | 1.0 | **passed** | 77 min |
 | r4 | 0.4 | **passed** | 69 min |
-| r5 | 0.7 | TODO | |
+| r5 | 0.7 | reached the closure with the boots bought, but **failed** two waits (exit 1): run while the machine was also encoding video, the narration after the purchase outlasted a 120 s wait and the menu after it a 30 s one. Every wait in the script is now 900 s | 84 min |
 | final | 0.7, 1440×1080 @ 30, `make_video.py record` | TODO | |
 
 The prose differed in every run (llama-server samples with a fresh seed per request, and the
