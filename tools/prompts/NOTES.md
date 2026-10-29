@@ -185,9 +185,75 @@ reasoning with runes and a troubadour, and an NPC's curt "You stopped to bother 
 back as a compliment. Requests took 12–60 s each on this machine (the first of a persona pays for its
 system prompt).
 
+## Persona fields (the second pass)
+
+Asked afterwards: could the per-modus-mentis wording be improved too, and the rule that does it be
+kept for modi mentis added later? Yes, for two of the fields — `StyleInstruction` and
+`PersonaReminder2` — which are restated in every narration request. The persona prompt itself was left
+as it was (see the last point of "Beyond" below).
+
+**Screening the catalogue** (`screen.py`, `screen_metrics.py`). Every one of the 460 personas was asked
+the probe lines of the kinds it narrates in play (two recorded lines a kind, dev split; 2,362 answers,
+one seed), and each answer measured mechanically: the words of the persona's own fields that reach an
+answer whose request did not give them (*leak* — words specific to that persona only, a word four
+personas in ten add to a probe being the model's habit), verbatim copies, and echo of the neutral line.
+The worst were the crafts: Chandlery, Arms Care, Anointing, Bell Ringing replaced the act itself
+("I will breathe in the smell of the hay stack as I wipe the blade, oil it, look along the edge…").
+
+**What predicts it** (`persona_features.py`, Spearman over 460): the number of concrete things a style
+names (0.44 with style leak; Brysbaert concreteness norms), the concreteness of the persona prompt
+(0.38), of the reminder (0.23). Quoted examples in the prompt, and memory requests, did not show on
+this measure (a memory invented is not a field word leaked).
+
+**The rules, each blind-tested** (old and new on one sheet, the field being compared hidden):
+
+| round | change | personas | fidelity | answers breaking meaning | persona |
+|---|---|---|---|---|---|
+| 11 | style as a manner ("patient and exact"), no things | 20 worst, dev | 0.25 → 0.88 | 33 → 15 of 40 | 1.85 → 1.07 |
+| 12 | style as a lens ("judge whatever is in front of you by…") vs manner | same | 0.88 → 1.18 | 15 → 9 | 1.07 → 1.25 |
+| 13 | lens, held out (12 worst of L–Z, never looked at) | held out | 0.08 → 1.21 | 22 → 6 of 24 | 2.00 → 1.25 |
+| 13 | reminder as a disposition, on top of the lens | 16, dev | 1.06 → 1.50 | 7 → 2 of 32 | 1.31 → 0.91 |
+| 14 | a manner joined to the lens ("Slow, patient and exact - judge things by…") | same 16 | 1.50 → 1.41 | 2 → 2 | 0.94 → **1.16** |
+| 15 | the whole rewrite, 30 personas drawn at random from the 313 | random | 0.63 → **1.30** | 15 → 7 of 30 | 1.47 → 0.93 |
+
+Persona falls with every round, and that is the trade to know about: much of the old persona *was* the
+invention (Arms Care oiling a blade in a greeting scores high on persona and zero on fidelity). The
+loss concentrates in Action lines, which are one sentence of intent; round 14's manner words were
+added to give those something to carry, and won back a third of it (Action persona 0.54 → 0.85).
+Fidelity ranks first, so the rewrite was applied; the user chose to iterate once more before applying
+it, and round 14 is that iteration.
+
+**The rewrite** (`rules/catalogue_*.json`, 313 modi mentis; ported by `port_personas.py`): every style
+the lint flagged was rewritten as manner + lens, every reminder as a disposition, keeping each persona's
+attitude. Re-screened on the same probes: leaked field words 2.20 → 0.70 an answer, answers with any
+leak 72% → 42%, verbatim copies 13% → 4%; 246 personas better, 41 worse — mostly by manner words now
+appearing (the colour asked for), a few by props still in their persona prompt (Abstinence's plate,
+Relic Lore's relic).
+
+**Keeping it** — two checks, the first free:
+
+- `PersonaLint` in `--mm-audit` (✗ fails `./run_tests.sh audits`): a style or reminder naming two or
+  more distinct concrete nouns, or a style opening a props list ("images of", "narrate the"). Concrete
+  and noun are predicted from the GloVe vectors the game already loads, by two ridge fits to the
+  Brysbaert norms (`data/concreteness_glove100.json`: concreteness r = 0.79 held out, noun accuracy
+  0.83). Over the old catalogue its count ranks personas by style leak at 0.46; the rewritten catalogue
+  passes with none flagged. `persona_lint.py` is the Python twin; both flag the same personas.
+- `persona_probe.py <id>`: the persona asked the probe lines on the shipped model, every answer printed
+  with the words it carried in, and LEAKS above 1.75 leaked words an answer (the rewritten catalogue's
+  90th percentile). For a new modus mentis, and for reading what the lint cannot see.
+
+The rules are written where a writer meets them: the doc comments of the two fields in
+`ModusMentis.cs`, and the `choice-judge` skill ("Writing the voice"), which is the skill invoked when a
+modus mentis is added. The ChoiceJudge does not read these fields, so its benchmark is unaffected.
+
+**Found on the way**: three classes (Brine Sense, Herblore, Iron Stomach) already carried a comment
+recording this lesson by hand ("Not 'weed, wet rope, a running tide': listed, a tide turned up in the
+desert"). The harness's field reader did not skip such comments and asked them with no style; fixed.
+
 ## Beyond the global instructions
 
-- **Persona fields cause most of what is left.** Styles that name props or acts are copied or acted out
+- **Persona fields cause most of what is left** (written before the second pass above, which addressed
+  the styles and reminders; the persona prompts are still as described). Styles that name props or acts are copied or acted out
   however the wrapper frames them: Cutpurse ("the press of bodies, the found strings, the two seconds"),
   Physiognomy ("hands, teeth, colour, the set of the shoulders" — it catalogues bodies in an empty lane),
   Woodcraft ("grain, joint and shaving" — it carves the snail), Pride ("the offer declined, the tone

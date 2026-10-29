@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 import personas, persona_lint as PL, screen_metrics as SM
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-LEAK_MAX = None   # set from the rewritten catalogue's screening; see NOTES.md, "Persona fields"
+LEAK_MAX = 1.75   # the 90th percentile of the rewritten catalogue (NOTES.md, "Persona fields")
 REFERENCE = [os.path.join(HERE, "samples", "screen.jsonl"), os.path.join(HERE, "samples", "screen_catalogue.jsonl")]
 
 
