@@ -57,489 +57,801 @@
   {
    "type": "game",
    "recording": "tutorial",
-   "clip": "new_run",
+   "from": 25.3,
+   "to": 30.1,
+   "fade": true,
    "vo": [
-    "This is Proscribed Palimpsest, a narrative role-playing game. This video plays the first hour of a run, from the main menu to a pair of new boots, and explains each system as it comes up."
+    "This is Proscribed Palimpsest, a role-playing game where a body, its ways of thinking, and a language model tell the story together. In this video we play the first hour of a run, from the main menu to a pair of new boots. Each system is explained as it comes up: first what it is for, then how it works, then what it did in this run. And along the way, I'll tell you what I would do as a player."
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "clip": "world_selection",
+   "from": 30.1,
+   "to": 45.0,
+   "fade": false,
    "vo": [
-    "A run begins in the sky. Each of these moons is a world: three hundred and eighty-three of them, each with its own name. The sky is the same on every machine, so a moon always names the same world, and two players who pick the same moon walk the same land, with the same towns and the same people.",
-    "The world is generated when you choose it, history included: realms, castles and temples are laid down first, and the farmland, villages and cities spread out from them. We take Fenumoth, a wooded world."
+    "A run starts by choosing a world. Each moon in this sky is one: three hundred and eighty-three of them, each with a name. The sky is fixed, the same on every machine, so a moon always stands for the same world. Two players who pick the same moon walk the same land and meet the same people, so they can compare notes."
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "clip": "creation_overview",
+   "from": 45.0,
+   "to": 55.5,
+   "fade": false,
    "vo": [
-    "Characters have no strength or charisma scores. A character is a body: five regions, twenty-two organs, twenty-eight organ parts. Every part starts at one, and you have twenty-five points to raise them. That is less than half of what the body could reach, so creating a character means choosing what to give up."
+    "Choosing a moon generates its world, and its history comes first. Realms rise and fall; castles, temples and cities are founded; then farmland, villages and pastures spread out from them. The card says what kind of world it is. We take Fenumoth, a wooded world. For a first run, any moon will do: every one of them is built to be livable."
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 55.5,
+   "to": 59.0,
+   "fade": false
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 59.0,
+   "to": 65.2,
+   "fade": true,
+   "vo": [
+    "Now the protagonist. There are no strength or charisma scores in this game. A character is a body: five regions, which are the head, the face, the trunk, the arms and the legs; twenty-two organs; twenty-eight organ parts. Every part starts at one point, and you get twenty-five more to spend. That buys less than half of what the body could reach, so creating a character is really choosing what to give up."
    ]
   },
   {
    "type": "manim",
    "scene": "Organs",
    "vo": [
-    "Every measure the game uses comes from one organ or one region. Here they are, by the system each one serves. Hovering an organ shows the same thing on the right of the screen. We'll go through them in this order, raising the ones we want."
+    "Every number the game uses comes from one organ or one region. This map groups them by the system they feed: thinking and memory, the senses, speech, the humors, life, and the body in a fight. In the game, hovering an organ shows the same information on the right of the screen.",
+    "We'll go through them in that order. Watch where the points go: this character is built to think, to talk, and to bend the dice."
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "clip": "organs_thinking",
+   "from": 65.2,
+   "to": 72.2,
+   "fade": true,
    "vo": [
-    "Thinking and memory. The encephalon, the whole head, sets your noetic points: how many times you can look and think in one scene. Its score halved, plus one.",
-    "What you learn are called modi mentis: ways of thinking. New ones arrive in working memory, which is sized by the whole head and works as a queue: when it is full, the oldest is lost for good. To keep one, you file it into the long-term memory of its kind: the cerebellum holds practised skills, the cerebrum knowledge, the hippocampus the senses. The anamnesis holds what you set aside, and how many places you remember: four per point.",
-    "The pineal gland sets how much experience a level costs, from twelve points down to six. From two points on, it also lets a mind doubt its own plan before it acts."
+    "First, thinking and memory: the head. As a whole, the head sets your noetic points, how many times you can look and think in one scene: its score halved, plus one.",
+    "What you learn in this game are called modi mentis: ways of thinking. A new one always arrives in working memory, a short queue, also sized by the whole head. When that queue is full, the oldest way of thinking falls out, and it is lost for good.",
+    "The anamnesis keeps a second queue, for what you set aside, and it decides how many places you remember: four per point. We raise it by one."
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "clip": "organs_senses",
+   "from": 72.2,
+   "to": 79.8,
+   "fade": false,
    "vo": [
-    "The senses. The eyes set the reach of a ranged blow. The ears add to your initiative in a fight. The nose lowers the chance of meeting danger on the road, ten per cent per point, and tells you what is in a food before you eat it."
+    "To keep a way of thinking for good, you file it into a long-term memory of its kind. The cerebrum holds knowledge, like bargaining or archaeology. We give it two points."
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "clip": "organs_dialogue",
+   "from": 79.8,
+   "to": 86.9,
+   "fade": false,
    "vo": [
-    "Speech. The tongue sets how many replies you are offered in a conversation, up to five; at nought, you cannot hold a conversation at all. The teeth only decide whether you can eat hard food."
+    "The cerebellum holds practised skills, like swordsmanship or knotwork, and it is what lets you learn a new move in the middle of a fight. Two points as well."
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "clip": "organs_humors",
+   "from": 86.9,
+   "to": 90.7,
+   "fade": false,
    "vo": [
-    "The humors. Four organs make them: the paunch, the hepar, the spleen and the pulmones. Each keeps a queue of forty-nine. Humors pay for effort, like each step of a journey, and they can change a die after it is rolled. We'll see that at the first roll.",
-    "The viscera set how many humors you can spend on a single roll, and how fast wounds close. We raise them to five."
+    "The hippocampus holds the ways of thinking that use the senses."
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "clip": "organs_life",
+   "from": 90.7,
+   "to": 94.4,
+   "fade": false,
    "vo": [
-    "Life. The heart sets your lifespan, how many companions you can lead, and a share of youthful humors at the start, which are warm and lucky. The genitories add dice to every blow you strike."
+    "And the pineal gland sets how much experience a level costs, from twelve points down to six. With two points or more, it also lets a mind doubt its own plan and think again.",
+    "My advice: don't neglect memory. A character who learns a lot but has nowhere to file it keeps forgetting."
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "clip": "organs_fighting",
+   "from": 94.4,
+   "to": 100.6,
+   "fade": false,
    "vo": [
-    "The body in a fight. The backbone sets what you can carry, and your movement points in a fight: double its score. The hands decide which tools you can use, and how well. The legs set how far one movement point takes you; the lower body as a whole sets how far a journey can reach, and your natural defence. The feet keep you standing on bad ground, and get you out of a fight.",
-    "And the trunk, as a region, sets your health: a third of its score, plus one. A wound takes one point of health, and it does not come back until the wound heals."
+    "The senses. The eyes set the reach of a ranged blow, in cells."
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 304.3,
-   "to": 312.0,
+   "from": 100.6,
+   "to": 107.7,
+   "fade": false,
    "vo": [
-    "The body has no past yet. The game gives it one through five childhood memories, played the way the whole game is played. The first is the clearest example of a turn, so we'll take it slowly.",
+    "The ears add their score to your initiative, which decides who acts first in a fight. We raise both."
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 107.7,
+   "to": 111.5,
+   "fade": false,
+   "vo": [
+    "The nose is underrated. Each point lowers the chance of meeting danger on the road by ten per cent, and it tells you which humors are in a food before you eat it."
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 111.5,
+   "to": 118.5,
+   "fade": false,
+   "vo": [
+    "Speech. The tongue sets how many replies you are offered in a conversation, up to five. At nought, you cannot hold a conversation at all. Two points here: conversation is how you get work, trade and friends."
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 118.5,
+   "to": 122.2,
+   "fade": false,
+   "vo": [
+    "The teeth only decide whether you can eat hard food. We leave them."
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 122.2,
+   "to": 134.2,
+   "fade": false,
+   "vo": [
+    "The humors are this game's most unusual system. Four organs make them: the paunch, the hepar, the spleen and the pulmones. Each keeps a queue of forty-nine humors. A sound organ makes mostly blood; a failing one, mostly black bile.",
+    "Humors are your fuel: every step of a journey burns some of their warmth. And they are your luck: a humor can change a die after it has been rolled."
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 134.2,
+   "to": 143.9,
+   "fade": false,
+   "vo": [
+    "The viscera decide how many humors you may spend on a single roll, and how fast wounds close. Four points here, for five in all. I would always do this: it is the difference between a failed roll and a saved one."
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 143.9,
+   "to": 153.2,
+   "fade": false,
+   "vo": [
+    "Life. The heart sets how long you live, how many companions you can lead, one per point, and how many youthful humors you start with, which are warm and lucky. Four points: a long life, and room for a party later."
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 153.2,
+   "to": 159.7,
+   "fade": false,
+   "vo": [
+    "The genitories add dice to every blow you strike. One point."
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 159.7,
+   "to": 167.9,
+   "fade": false,
+   "vo": [
+    "The body in a fight. The backbone sets how much you can carry, and your movement points in a fight: twice its score. Three more points."
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 167.9,
+   "to": 175.2,
+   "fade": false,
+   "vo": [
+    "The hands decide which tools you can use. A practised hand does not get more out of a tool; it can make more things serve as tools. Two points for the right hand."
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 175.2,
+   "to": 183.5,
+   "fade": false,
+   "vo": [
+    "In a fight, each hand and each foot strikes on its own, and the arms are the organs of brute force."
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 183.5,
+   "to": 191.4,
+   "fade": false,
+   "vo": [
+    "The legs set how far one movement point takes you. With the feet, the lower body as a whole sets how far one journey can reach, and your natural defence."
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 191.4,
+   "to": 201.6,
+   "fade": false,
+   "vo": [
+    "The feet keep you standing on bad ground, and roll the dice to run away. One last number: health. It comes from the trunk as a whole, a third of its score plus one, and each wound costs a point of it until it heals. Twenty-five points spent. That is the body."
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 201.6,
+   "to": 306.43,
+   "fade": true,
+   "vo": [
+    "The body has no past yet. The game gives it one through five childhood memories, and they are played exactly the way the whole game is played. So the first memory is our first lesson. Let's take it slowly.",
     {
      "text": "I almost have it, a half-remembered weeping, sobs like faded echoes in the dark, a woman's voice somewhere, half-formed in the hush of old iron and myth.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 312.0,
-   "to": 316.0,
+   "from": 306.43,
+   "to": 312.2,
+   "fade": false,
    "vo": [
-    "That passage was not written in advance. It was written just now, by a language model running on this computer. It runs entirely on your machine: no account, no server, nothing sent anywhere, and it works on the processor alone. It does not run the game. Rules, dice, wounds, coin and time are ordinary code. The model is asked narrow questions inside that code: what this mind notices, what it wants, how it tells what happened.",
-    "Every passage is written by a modus mentis, a way of thinking, which the model plays as a character, in its own voice. The lit word is a keyword. We click sobs, choose Think, and choose which mind will think about it: for now, the only one we have."
+    "That text was not written in advance. It was written a moment ago, by a language model running on this computer. It runs entirely on your machine: no account, no server, nothing sent anywhere, and it works on the processor alone.",
+    "But the model does not run the game. The rules, the dice, wounds, coin and time are ordinary code. The model is asked narrow questions inside that code: what does this mind notice, what does it want, how does it tell what happened.",
+    "Each question is put to a modus mentis, a way of thinking, and the model plays that way of thinking as a character, in its own voice. That is why every passage is headed by a name. This one is Childhood Reminiscence."
    ]
   },
   {
    "type": "manim",
    "scene": "NarrationTurn",
    "vo": [
-    "This is a turn. A mind observes. You click a word in what it wrote. A thinking mind reasons about it and settles on a goal, chosen from what the code says that thing allows. An acting mind says how willingly it will do it, and that changes the difficulty. Then the dice, and the outcome, told by the acting mind.",
-    "Each thought costs a noetic point, and so does each look beyond the first. The points come back when the scene moves on, but not after a failed roll."
+    "Here is a turn: the loop you repeat all game. A mind observes, and writes what it notices. Some words in what it wrote light up: keywords. You click one. A thinking mind reasons about it and settles on a goal, chosen from the actions the code says that thing allows. Then an acting mind says how willing it is, and its willingness makes the roll easier or harder. The dice decide, and the acting mind tells how it went.",
+    "Thinking costs a noetic point, and so does every extra look. The points come back when the scene moves on, but not after a failed roll: a miss costs something."
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 316.0,
-   "to": 443.1,
+   "from": 312.2,
+   "to": 442.1,
+   "fade": false,
    "vo": [
-    "The thinking mind now reasons, step by step, in its own voice.",
+    "We click sobs, choose Think, and pick the mind that will think. For now, there is only one.",
     {
      "text": "I let half-remembered weeping drift through, a woman's voice in the dark, a fragment of childhood's ache. I will rely on the slow recovery of these memories, like old fragments in a medieval world, nothing modern or real here.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 443.1,
-   "to": 527.6,
+   "from": 442.1,
+   "to": 528.25,
+   "fade": false,
    "vo": [
-    "Then the acting mind says what it will do.",
+    "The thinking mind has its goal. Now the acting mind puts it into words.",
     {
      "text": "I will try to remember sobs from my childhood, half-remembered images surfacing like old fragments, tinged with nostalgia, wistfulness, and a faint ache.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 527.6,
-   "to": 650.9,
+   "from": 528.25,
+   "to": 533.0,
+   "fade": false,
+   "vo": [
+    "The act is offered as a line. We click it, then Execute."
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 533.0,
+   "to": 651.55,
+   "fade": false,
    "vo": [
     "In childhood nothing is rolled: remembering always succeeds.",
     {
      "text": "I tried to remember the sobs from my childhood, and succeeded. It came back to me in hazy fragments, the sobs of an unknown lady on the dock of the port city where I spent my days in this vast, silent plain.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
+    },
+    {
+     "text": "Look under the passage, at what this memory gave: three ways of thinking, Empathy, Nautical Jargon and Knotwork, and a townsman's clothes: cap, cloak, tunic and breeches. The text said a port city. The code decided what that means for your character. Every passage works like this: the words are the model's; what they give you is the game's.",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 650.9,
-   "to": 658.0,
-   "vo": [
-    "Each memory gives something real. This one gives the city we grew up in: a port."
-   ]
+   "from": 651.55,
+   "to": 657.3,
+   "fade": false
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 658.0,
-   "to": 789.4,
+   "from": 657.3,
+   "to": 790.05,
+   "fade": true,
    "vo": [
+    "The second memory. Look at the heading: the observer is now Empathy, one of the minds we just gained. A new mind notices different things.",
     {
      "text": "I recall it now, the waves' soft murmur and the earth's faint, salty tang, as if a low rumble of thunder had seeped through the ground, the sweat of exertion rising from the fertile earth beneath.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 789.4,
-   "to": 970.8,
+   "from": 790.05,
+   "to": 969.8,
+   "fade": false,
    "vo": [
+    "We click waves, and think with Childhood Reminiscence again.",
     {
      "text": "I remember the low, pulsing thunder and the sour, salt-and-sweat smell from below, like old memories blooming in a fog. I want to recall the sound of waves and the scent of sweat, to breathe in the past, to let it flow through me as the vast, endless plain weaves its slow recovery.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 970.8,
-   "to": 1102.5,
+   "from": 969.8,
+   "to": 1102.74,
+   "fade": false,
    "vo": [
     {
      "text": "I will try to remember the sound of waves and the smell of sweat from my childhood, half-remembered images surface like old fragments, tinged with nostalgia, wistfulness, and a faint ache, in a medieval world of iron and myth, nothing modern or from the real world.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 1102.5,
-   "to": 1243.7,
+   "from": 1102.74,
+   "to": 1237.24,
+   "fade": false,
    "vo": [
     {
      "text": "I tried to recall the waves and sweat, and it came back to me. The sound of waves and the scent of sweat on the docks, the bundles heavy from ships, these fragments rise like old stories, colored with a longing for days past.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
     },
-    "The second memory gives work on the docks, and what that work taught."
-   ]
-  },
-  {
-   "type": "game",
-   "recording": "tutorial",
-   "from": 1243.7,
-   "to": 1330.3,
-   "vo": [
     {
-     "text": "I recall a shard of memory, a sharp edge gleaming from behind a trader's stall, the faint scent of oil and iron lingering in the air.",
-     "style": "reading"
+     "text": "This one gives Hard Labor. The docks taught us to work.",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 1330.3,
-   "to": 1481.8,
+   "from": 1237.24,
+   "to": 1242.9,
+   "fade": false
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 1242.9,
+   "to": 1330.71,
+   "fade": true,
+   "vo": [
+    "The third memory: something sharp.",
+    {
+     "text": "I recall a shard of memory, a sharp edge gleaming from behind a trader's stall, the faint scent of oil and iron lingering in the air.",
+     "style": "reading",
+     "wait": true
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 1330.71,
+   "to": 1480.8,
+   "fade": false,
    "vo": [
     {
      "text": "I half-remember a gleam of metal behind a trader's stall, the faint smell of oil and iron lingering. I will let the half-remembered image surface, drawing on the slow recovery of childhood memories in this medieval world, where nothing modern or real exists.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 1481.8,
-   "to": 1532.9,
+   "from": 1480.8,
+   "to": 1533.28,
+   "fade": false,
    "vo": [
     {
      "text": "I will try to remember a sharp taste from my childhood, like a sour apple on a cold day.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
+    },
+    {
+     "text": "Look at what the acting mind wrote: a sharp taste, like a sour apple. The model drifted from a blade to an apple. It does not matter: the act is still remembering something sharp, and the code knows what that memory holds. I find these little slips part of the charm.",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 1532.9,
-   "to": 1658.0,
+   "from": 1533.28,
+   "to": 1651.57,
+   "fade": false,
    "vo": [
     {
      "text": "I tried to recall a sharp memory from my childhood, and succeeded. It emerged to me as clear as old scars on skin, a sword I had bought with my first earned coin from a market trader.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
     },
-    "Something sharp: a short sword, bought with a first wage. It will be in our hand."
-   ]
-  },
-  {
-   "type": "game",
-   "recording": "tutorial",
-   "from": 1658.0,
-   "to": 1771.5,
-   "vo": [
     {
-     "text": "I see a golden arch in my mind's eye, a fuzzy great curve of gold in a dream sky. It evokes an ache, an ancient, enormous, and impossibly bright longing that touches my soul.",
-     "style": "reading"
+     "text": "And there it is: a short sword, and Bargaining.",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 1771.5,
-   "to": 1932.5,
+   "from": 1651.57,
+   "to": 1657.4,
+   "fade": false
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 1657.4,
+   "to": 1772.15,
+   "fade": true,
+   "vo": [
+    "The fourth: a dream of a golden arch.",
+    {
+     "text": "I see a golden arch in my mind's eye, a fuzzy great curve of gold in a dream sky. It evokes an ache, an ancient, enormous, and impossibly bright longing that touches my soul.",
+     "style": "reading",
+     "wait": true
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 1772.15,
+   "to": 1931.5,
+   "fade": false,
    "vo": [
     {
      "text": "I remember a golden arch, fuzzy and great, in a dream sky that was ancient, enormous, and impossibly bright. I will try to recall this dream from my childhood, letting the slow recovery of childhood memories colour my thoughts on this vast plain.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 1932.5,
-   "to": 2017.8,
+   "from": 1931.5,
+   "to": 2018.2,
+   "fade": false,
    "vo": [
     {
      "text": "I will try to recall a golden arch from my childhood, half-shapes drifting up like old fragments on a medieval plain.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 2017.8,
-   "to": 2187.3,
+   "from": 2018.2,
+   "to": 2180.95,
+   "fade": false,
    "vo": [
     {
      "text": "I tried to recall the dream of a golden arch from my childhood, and it came back to me, hazy yet clear. A golden arch rising over the ruins of an ancient city, until I left to seek it out. The scene paints a picture of longing and a gentle ache in my heart.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
     },
-    "A dream of a golden arch: a traveller's backpack, with bread and cheese inside."
-   ]
-  },
-  {
-   "type": "game",
-   "recording": "tutorial",
-   "from": 2187.3,
-   "to": 2308.8,
-   "vo": [
     {
-     "text": "I almost have it, a shelter surfacing from the mists. This was a elusive dark hillside, an unsheltered cranny, with no door, no overhang, no gap anywhere to crawl into.",
-     "style": "reading"
+     "text": "A traveller's backpack, with bread and cheese inside, and Archaeology. Keep the bread in mind.",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 2308.8,
-   "to": 2463.3,
+   "from": 2180.95,
+   "to": 2186.7,
+   "fade": false
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 2186.7,
+   "to": 2309.36,
+   "fade": true,
+   "vo": [
+    "The last memory: shelter.",
+    {
+     "text": "I almost have it, a shelter surfacing from the mists. This was a elusive dark hillside, an unsheltered cranny, with no door, no overhang, no gap anywhere to crawl into.",
+     "style": "reading",
+     "wait": true
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 2309.36,
+   "to": 2462.3,
+   "fade": false,
    "vo": [
     {
      "text": "I remember the elusive dark hillside, a place with no door, no overhang, no gap anywhere for shelter. I want to recall the simple, hidden spaces of my childhood. Slowly, I will recover these fragmented memories, like old, weathered stones.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 2463.3,
-   "to": 2513.2,
+   "from": 2462.3,
+   "to": 2513.58,
+   "fade": false,
    "vo": [
     {
      "text": "I will try to remember a place from my childhood on a vast, unmarked plain.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 2513.2,
-   "to": 2673.6,
+   "from": 2513.58,
+   "to": 2667.14,
+   "fade": false,
    "vo": [
     {
      "text": "I tried to recall the shelter from my childhood, and it came back to me in a hazy, dream-like state. Searching for shelter from the storm and finding none, I lost consciousness at the foot of a tree, the cold wind biting through my memories.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
     },
-    "Shelter gives nothing to carry. Not every memory does."
+    {
+     "text": "This one gives no item, only two ways of thinking: Exploration and Endurance. My advice for your own childhood: read the fragments, and pick what you want your character to be. The memories you choose are your starting kit.",
+     "wait": true
+    }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 2700.0,
-   "to": 2909.0,
+   "from": 2667.14,
+   "to": 2673.0,
+   "fade": false
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 2673.0,
+   "to": 2777.3,
+   "fade": true,
    "vo": [
-    "Childhood ends, and the body wakes on open ground, spent. Getting up is the first real roll.",
+    "Childhood is over. The body wakes on open ground, spent, and a new mind takes our bearings: Childhood Memory.",
     {
      "text": "I bend to search for a patch of grass, the soreness in my legs reminding me of the hard labour on the docks, where every step had its own grinding weight.",
-     "style": "reading"
-    },
+     "style": "reading",
+     "wait": true
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 2777.3,
+   "to": 2909.82,
+   "fade": false,
+   "vo": [
     {
      "text": "I shift my gaze to a bone-deep exhaustion, feeling it settle through my whole body like a storm, not just tired but spent, as if the road has drained something more than muscle, just as it did in the storms at the port.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
+    },
+    {
+     "text": "Getting up is the first real roll of the game.",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 2909.0,
-   "to": 2918.0,
+   "from": 2909.82,
+   "to": 3063.7,
+   "fade": false,
    "vo": [
-    "We think about the legs, with Nautical Jargon: a way of thinking the docks taught."
-   ]
-  },
-  {
-   "type": "game",
-   "recording": "tutorial",
-   "from": 2918.0,
-   "to": 3062.2,
-   "vo": [
+    "We think about the legs, this time with Nautical Jargon, one of the minds from the docks. Listen to how differently it reasons.",
     {
      "text": "I mark the bone where the road's knots have grinded, a sore that calls me to rise and haul, my hands the ropes, my feet the tide, as I roll and seek the next bend where wind and water guide.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
+    },
+    {
+     "text": "Everything is rope, knots and tides. That is what a persona does: the same question, put to a different mind, comes back in a different voice.",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 3062.2,
-   "to": 3105.6,
+   "from": 3063.7,
+   "to": 3106.33,
+   "fade": false,
    "vo": [
     "Knotwork, another lesson of the docks, will act.",
     {
      "text": "I will rise and press on my quest.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 3105.6,
+   "from": 3106.33,
    "to": 3121.0,
+   "fade": false,
    "vo": [
-    "The roll. Four dice come up, and two of them are sixes."
+    "We click the act, and Execute. The dice: four of them, and two sixes."
    ]
   },
   {
    "type": "manim",
    "scene": "DiceHumors",
    "vo": [
-    "Here is how a roll works. You roll one die for each level of every mind in the chain: the one that observed, the one that thought, and the one that acts. The difficulty is how many sixes you need.",
-    "If the roll falls short, the humors can change it. Only the humor at the back of each queue can be spent, one per die, and as many in one roll as the viscera allow. Blood adds one to a die. Yellow bile takes one away. Phlegm does nothing, but spending it clears the way to the humor behind it. Black bile does nothing and never leaves: a queue of nothing but black bile is spent, and when all four are, the body dies."
+    "Every roll works the same way. You roll one die for each level of every mind in the chain: the one that observed, the one that thought, and the one that acts. The difficulty is the number of sixes you need. So raising any of the three minds means more dice, and better odds.",
+    "When a roll falls short, the humors can save it. Only the humor at the back of each queue can be spent, one per die, and only as many in one roll as the viscera allow. Blood adds one to a die. Yellow bile takes one away. Phlegm does nothing, but spending it clears the way to the humor behind it. Black bile does nothing, and never leaves. A queue full of black bile is spent, and when all four are, the body dies. So humors are your luck, and also your life.",
+    "Here, two sixes were enough to stand up without help."
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
    "from": 3121.0,
-   "to": 3210.7,
+   "to": 3203.86,
+   "fade": false,
    "vo": [
-    "Here no humor was needed.",
     {
      "text": "I have pulled myself free, and with a sigh, the line feels lighter. The journey begins anew, my hands ready to bear the load.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
+    },
+    {
+     "text": "Success. Look at the lines below: every mind in the chain gained a point of experience, and the act taught a new one, Vigor. Doing things is how you learn.",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "clip": "run_start",
+   "from": 3203.86,
+   "to": 3223.0,
+   "fade": false,
    "vo": [
-    "The run has begun."
+    "The run has truly begun, and we are on the world map. Before travelling, let's look at what we have. Escape opens the menu, and Protagonist opens the character screen."
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "clip": "anatomy",
+   "from": 3223.0,
+   "to": 3236.0,
+   "fade": true,
    "vo": [
-    "Escape opens the protagonist screen. The anatomy, where wounds will show."
+    "The anatomy tab: the body we built. Wounds will show here, on the organ they hit."
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "clip": "memory",
+   "from": 3236.0,
+   "to": 3246.0,
+   "fade": false,
    "vo": [
-    "The memory: the ways of thinking learned in childhood, each filed in the memory of its kind."
+    "The memory tab: everything we learned, filed in the memory of its kind. There are also two wills here, Diligence and Provisioning. A will is a mind that wants one thing; we'll see both at work.",
+    "My advice: check this tab often, and file new ways of thinking before working memory pushes them out."
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "clip": "inventory",
+   "from": 3246.0,
+   "to": 3270.5,
+   "fade": false,
    "vo": [
-    "The inventory. The sword is held. The backpack is worn, and things are stored in it. We eat the bread."
+    "The inventory. The sword is in hand, the townsman's clothes are worn, and so is the backpack, which holds things. We open it, pick the bread, and eat it."
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "clip": "humors",
+   "from": 3270.5,
+   "to": 3294.0,
+   "fade": false,
    "vo": [
-    "Eating pushes the food's humors into the paunch, at the front of its queue. Hovering a humor shows its warmth, which pays for effort, and what it does to a die. It moves toward the back, where it can be spent, as the older ones are used up."
+    "Eating pushed the bread's humors into the paunch, at the front of its queue. Hover a humor to see what it is: its warmth, which pays for effort, and what it does to a die. New humors enter at the front and move back as older ones are used, and only the one at the very back can be spent on a roll.",
+    "My advice: what you eat today is the luck you will have a few days from now."
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "clip": "travel_farm",
+   "from": 3294.0,
+   "to": 3297.7,
+   "fade": false
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 3297.7,
+   "to": 3318.1,
+   "fade": true,
    "vo": [
-    "The map. You can set a destination as far as your legs allow, and the route goes cell by cell. Each cell costs days, and warmth drawn from the humors as you walk, and each land has its dangers: a plain has wolves and bandits, a forest more of both. We head for a farm."
+    "Back on the map, we pick the farm as our destination. A route goes cell by cell, and every cell costs days, and warmth drawn from the humors as you walk. Each land has its dangers: wolves and bandits on a plain, more of both in a forest, and a keen nose avoids some of them. Before a long journey, check that your humors will last it."
    ]
   },
   {
@@ -547,33 +859,40 @@
    "recording": "tutorial",
    "from": 3318.1,
    "to": 3330.0,
+   "fade": true,
    "vo": [
-    "A wolf on the road."
-   ]
+    "A wolf on the road. We choose to fight it."
+   ],
+   "speed": 2.0
   },
   {
    "type": "game",
    "recording": "tutorial",
    "from": 3330.0,
-   "to": 3356.0,
+   "to": 3357.0,
+   "fade": false,
    "vo": [
-    "A fight is played on a grid, in turns. Your movement points come from the backbone. The wolf is far off, so we end our turns and let it come."
-   ]
+    "A fight is played on a grid, in turns. Your movement points come from the backbone, and the ears' initiative says who goes first: us. The wolf is far off. Rather than walk up to it, we end our turns and let it come to us. Fighting on your own terms is good advice in any game."
+   ],
+   "speed": 2.0
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 3356.0,
+   "from": 3357.0,
    "to": 3373.6,
+   "fade": false,
    "vo": [
-    "Fighting skills come from the ways of thinking that unlock them, and from what you strike with. The sword gives Snap Thrust: five dice."
-   ]
+    "Fighting skills come from two things: the ways of thinking you hold, and what you strike with. The short sword and Swordsmanship give Snap Thrust: five dice."
+   ],
+   "speed": 2.0
   },
   {
    "type": "manim",
    "scene": "AttackDefence",
    "vo": [
-    "A blow is settled by sixes. The attack rolls the skill's dice, plus the dice of the genitories. The defence rolls dice from the lower body, from any guard, and from the armour on the part struck. More sixes than the defender, and the blow wounds. A tie goes to the defender."
+    "Here is a blow. The attacker rolls the skill's dice, plus the dice of the genitories. The defender rolls dice for the lower body, for any guard or stance, and for the armour on the part struck. If the attacker shows more sixes, the blow lands, and it leaves a wound on the part it hit. A tie goes to the defender.",
+    "A wolf wears no armour, and its defence is small."
    ]
   },
   {
@@ -581,591 +900,818 @@
    "recording": "tutorial",
    "from": 3373.6,
    "to": 3442.0,
+   "fade": false,
    "vo": [
-    "The first three thrusts land, and the log names the wounds: a broken backbone, broken ribs. The wolf tries to learn a new attack in the middle of the fight, and fails. Beasts learn the same way you do."
-   ]
+    "The first three thrusts land. The log at the bottom names each wound: a broken backbone, then broken ribs. Watch the wolf's turns too: it tries to learn new attacks in the middle of the fight, and fails. Beasts learn the way you do."
+   ],
+   "speed": 2.0
   },
   {
    "type": "game",
    "recording": "tutorial",
    "from": 3442.0,
    "to": 3474.0,
+   "fade": false,
    "vo": [
-    "The fourth thrust falls short. At the back of the hepar is voluptas, the humor of pleasure: it turns any die into a six. Spent, the thrust lands."
-   ]
+    "The fourth thrust falls short. Under the dice, the humors. At the back of the hepar is voluptas, the humor of pleasure, which turns any die into a six. We spend it on the first die, and the thrust lands."
+   ],
+   "speed": 2.0
   },
   {
    "type": "game",
    "recording": "tutorial",
    "from": 3474.0,
-   "to": 3505.0,
+   "to": 3503.0,
+   "fade": false,
    "vo": [
-    "The fifth needs two humors. The wolf falls."
-   ]
+    "The fifth needs two humors, from the hepar and the spleen, and the wolf falls. Those were well spent: a fight that drags on costs warmth, and warmth is what carries you across the map."
+   ],
+   "speed": 2.0
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 3505.0,
-   "to": 3650.6,
+   "from": 3503.0,
+   "to": 3652.1,
+   "fade": false,
    "vo": [
-    "The journey goes on, to the farm.",
+    "The journey goes on to the farm. Arriving opens the place, and a mind takes our bearings.",
     {
      "text": "I find myself in the longhouse hall, in the afternoon. This place echoes my childhood at the port city, where I spent time on the docks and dreamed of ancient ruins. Around me is my acquaintance Zedayne Hartmead, the farmer, just as I remember from when I first bought a sword with my first earned coin.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 3650.6,
-   "to": 3766.6,
+   "from": 3652.1,
+   "to": 3755.4,
+   "fade": false,
    "vo": [
     {
      "text": "I recall the time when I stood at the docks, gauging the strength of a stranger. It's similar to now, someone measuring me, thinner than expected, looking past me at something not obvious.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
+    },
+    {
+     "text": "That is the farmer, Zedayne Hartmead. She can give us work.",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 3766.6,
+   "from": 3755.4,
    "to": 3773.0,
+   "fade": true,
    "vo": [
-    "We need coin for boots. The farmer, Zedayne Hartmead, gives work. We think about her with Diligence."
+    "We need twenty copper for boots, and the honest way to get coin is work. We click the farmer, choose Think, and pick Diligence."
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
    "from": 3773.0,
-   "to": 3968.1,
+   "to": 3967.1,
+   "fade": false,
    "vo": [
-    "Diligence is a will: a mind that wants one thing, here to ask for work. It looks for the shortest way to get there.",
+    "Diligence is a will: a mind that wants one thing, here, to ask for work. It does not weigh options. It finds the shortest way from where we stand to what it wants, and proposes the first step.",
     {
      "text": "I notice her at the field's edge, her lean posture mirroring the land's weariness. Her gaze wanders, yet I see her measuring me, her thin frame a testament to the labor unseen. I wish to offer my steadiness and skill, to prove my worth as a farmhand. I will finish what was begun, ensuring each task is done with the same care that started it.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 3968.1,
-   "to": 4009.9,
+   "from": 3967.1,
+   "to": 4010.58,
+   "fade": false,
    "vo": [
     {
      "text": "I will go to her request to take on the role of a farmhand.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 4009.9,
+   "from": 4010.58,
    "to": 4029.5,
+   "fade": false,
    "vo": [
-    "A will carries its own act out, eagerly, and that lowers the difficulty by one: one six needed. Two come up."
+    "A will that can act does its own act, and does it eagerly, which lowers the difficulty by one. One six needed; two come up."
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
    "from": 4029.5,
-   "to": 4121.0,
+   "to": 4121.44,
+   "fade": false,
    "vo": [
     {
      "text": "I am done. Meeting her was a start, but I began to learn her ways and share my own, as we talked under the stars. The work continues, the path is not yet completed.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
+    },
+    {
+     "text": "Success, and a new way of thinking learned: Social Interaction. One honest remark: the passage says we talked under the stars, but it is the afternoon. The model's words are flavour; the facts are the game's.",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 4121.0,
-   "to": 4170.9,
+   "from": 4121.44,
+   "to": 4171.12,
+   "fade": false,
    "vo": [
-    "Asking succeeded, so a conversation opens. She speaks first.",
+    "Now a conversation. A conversation is a tree, written by hand. Each line has a fixed meaning, and the model rewrites it in the voice of whoever says it. Zedayne speaks first.",
     {
      "text": "Why seek you my door, Aentonyoth Marshwall?",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 4170.9,
-   "to": 4242.1,
+   "from": 4171.12,
+   "to": 4243.6,
+   "fade": false,
    "vo": [
-    "Each reply on offer is written by a different speaking mind, in its own voice, and the tongue decides how many are offered. Diligence:",
+    "Then our replies. Each is one branch of the tree, voiced by one of the minds we hold that can speak. The tongue decides how many are offered: we gave it two points, so three.",
+    {
+     "text": "Diligence.",
+     "wait": true
+    },
     {
      "text": "Hast thou a place for a farmhand's work, Zedayne Hartmead? How fares the wages?",
-     "style": "reading"
+     "style": "reading",
+     "wait": false
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 4242.1,
-   "to": 4310.5,
+   "from": 4243.6,
+   "to": 4312.0,
+   "fade": false,
    "vo": [
-    "Nautical Jargon:",
+    {
+     "text": "Nautical Jargon.",
+     "wait": true
+    },
     {
      "text": "Strong as a hound, bold as a gale, bind me to your helm, Zedayne Hartmead.",
-     "style": "reading"
+     "style": "reading",
+     "wait": false
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 4310.5,
-   "to": 4397.2,
+   "from": 4312.0,
+   "to": 4397.89,
+   "fade": false,
    "vo": [
-    "Provisioning:",
+    {
+     "text": "Provisioning.",
+     "wait": true
+    },
     {
      "text": "Seek a place where days of grain, firewood, and salt are few, and know thyself a farmer's help.",
-     "style": "reading"
+     "style": "reading",
+     "wait": false
+    },
+    {
+     "text": "Diligence and Provisioning were given the very same line: I am after work as a farmhand; what does it pay? Provisioning, which counts everything in days of supplies, turned it into grain, firewood and salt.",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 4397.2,
-   "to": 4492.6,
+   "from": 4397.89,
+   "to": 4493.1,
+   "fade": false,
    "vo": [
-    "We take Diligence's.",
+    "We choose Diligence's, the plainest.",
     {
      "text": "Henceforth, a farmhand's life lies within your grasp, earning a copper for each ten days' toil, and fraught with hardship.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 4492.6,
-   "to": 4548.1,
+   "from": 4493.1,
+   "to": 4549.6,
+   "fade": false,
    "vo": [
-    "Social Interaction:",
+    {
+     "text": "Social Interaction.",
+     "wait": true
+    },
     {
      "text": "How's a day's work for you?",
-     "style": "reading"
+     "style": "reading",
+     "wait": false
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 4548.1,
-   "to": 4599.8,
+   "from": 4549.6,
+   "to": 4601.3,
+   "fade": false,
    "vo": [
-    "Diligence:",
+    {
+     "text": "Diligence.",
+     "wait": true
+    },
     {
      "text": "The price is set. I shall not dispute it.",
-     "style": "reading"
+     "style": "reading",
+     "wait": false
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 4599.8,
-   "to": 4656.6,
+   "from": 4601.3,
+   "to": 4656.98,
+   "fade": false,
    "vo": [
-    "Bargaining:",
+    {
+     "text": "Bargaining.",
+     "wait": true
+    },
     {
      "text": "What does a day's work entail, friend?",
-     "style": "reading"
+     "style": "reading",
+     "wait": false
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 4656.6,
-   "to": 4753.7,
+   "from": 4656.98,
+   "to": 4754.35,
+   "fade": false,
    "vo": [
-    "We take Social Interaction's question.",
+    "We ask what the work is like, through Social Interaction.",
     {
      "text": "From dawn till dusk, by the fields, in all weathers. There's no time for idling. Only when tasks are within is there work.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 4753.7,
-   "to": 4836.5,
+   "from": 4754.35,
+   "to": 4838.0,
+   "fade": false,
    "vo": [
-    "Diligence:",
+    {
+     "text": "Diligence.",
+     "wait": true
+    },
     {
      "text": "The sweat of my brow and the strength of my arms have earned their due, no matter how hard the task may be.",
-     "style": "reading"
+     "style": "reading",
+     "wait": false
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 4836.5,
-   "to": 4917.4,
+   "from": 4838.0,
+   "to": 4918.9,
+   "fade": false,
    "vo": [
-    "Nautical Jargon:",
+    {
+     "text": "Nautical Jargon.",
+     "wait": true
+    },
     {
      "text": "Worse fates I've faced, but still I stand. Less for more, 'tis naught to dread.",
-     "style": "reading"
+     "style": "reading",
+     "wait": false
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 4917.4,
-   "to": 4982.3,
+   "from": 4918.9,
+   "to": 4982.68,
+   "fade": false,
    "vo": [
-    "Social Interaction:",
+    {
+     "text": "Social Interaction.",
+     "wait": true
+    },
     {
      "text": "Less for worse has been done, but fear not, for mine is no new tale.",
-     "style": "reading"
+     "style": "reading",
+     "wait": false
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 4982.3,
-   "to": 5004.8,
+   "from": 4982.68,
+   "to": 5004.4,
+   "fade": false,
    "vo": [
-    "We take Diligence's. That ends the branch, and the whole conversation is settled by one roll. Nine dice: two for what she thinks of us, five for the levels of the minds behind our replies, and two for our face. Asking for work is a matter of consequence: after three replies, it needs four sixes. One comes up. Three humors turn three more dice."
+    "We take Diligence's answer, and that ends the branch. Now the whole conversation is settled by one roll. Nine dice: two for what she thinks of us, five for the levels of the minds behind our three replies, and two for our face. Asking for work is a matter of consequence: after three replies, it needs four sixes. One comes up. We spend three humors, on three dice, and that makes four."
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 5004.8,
-   "to": 5080.4,
+   "from": 5004.4,
+   "to": 5080.78,
+   "fade": false,
    "vo": [
+    "My advice for conversations: say your piece in full. A longer branch adds more dice than difficulty.",
     {
      "text": "So you shall take on this task. But I seek a hand well versed in the ways of the fields.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
+    },
+    {
+     "text": "She takes us on.",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 5080.4,
-   "to": 5088.1
+   "from": 5080.78,
+   "to": 5088.1,
+   "fade": false
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "clip": "job_menu",
+   "from": 5088.1,
+   "to": 5118.3,
+   "fade": true,
    "vo": [
-    "Work is not a quest. You trade days for coin and experience. A farmhand earns one copper every ten days, so two hundred days earn twenty copper: the price of boots. The job trains three ways of thinking, the first the most, and the calendar moves on by the days worked."
+    "Work in this game is not a quest. You trade days of your life for coin and experience. A farmhand earns one copper every ten days, so two hundred days earn twenty copper, the price of boots. The work also trains three ways of thinking, the first one most.",
+    "And the calendar moves on by every day worked. Your lifespan is counted in days, so time is the real price of work."
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "clip": "travel_city",
+   "from": 5118.3,
+   "to": 5119.3,
+   "fade": false
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 5119.3,
+   "to": 5139.2,
+   "fade": true,
    "vo": [
-    "Then to the city."
+    "With twenty copper in the purse, to the city."
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
    "from": 5139.2,
-   "to": 5320.0,
+   "to": 5184.0,
+   "fade": true,
    "vo": [
-    "Another wolf, already beside us. This time every thrust falls short of the wolf's defence, and each time a humor turns it: one humor for each of the first three, three for the fourth, one for the fifth. The wolf falls on the fifth."
-   ]
+    "Another wolf, and this one starts right beside us. The first thrust falls short of its defence, and a humor turns it."
+   ],
+   "speed": 2.0
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 5184.0,
+   "to": 5256.0,
+   "fade": false,
+   "vo": [
+    "Again, and again: each thrust needs one humor to land."
+   ],
+   "speed": 2.0
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 5256.0,
+   "to": 5293.0,
+   "fade": false,
+   "vo": [
+    "The fourth needs three."
+   ],
+   "speed": 2.0
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 5293.0,
+   "to": 5320.0,
+   "fade": false,
+   "vo": [
+    "The fifth lands, and the wolf falls. That was an unlucky fight: seven humors spent. A run of bad rolls can drain them, and when a fight goes badly, running away is always possible: one six on the feet's dice."
+   ],
+   "speed": 2.0
   },
   {
    "type": "game",
    "recording": "tutorial",
    "from": 5320.0,
-   "to": 5496.3,
+   "to": 5497.8,
+   "fade": false,
    "vo": [
-    "We reach the cobbler's shop.",
+    "We reach the city, and the cobbler's shop.",
     {
      "text": "I find myself in the cobbler's shop, a low shop with a scent of leather and wax. Around me, Publiosh Tommaezoth the cobbler of the city moves with hands skilled in the art. The air carries his gentle touch and the soft clatter of tools, a reminder of the care he brings to each pair of boots.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 5496.3,
-   "to": 5664.2,
+   "from": 5497.8,
+   "to": 5662.2,
+   "fade": false,
    "vo": [
     {
      "text": "I see Publiosh Tommaezoth, the cobbler, standing there, a boot over one knee, hammering in hobnails without looking up, arguing about the gods while hammering in a heel. He stands between the two least happy, positioned as if drilled young by an old blade-scar on his forearm.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
+    },
+    {
+     "text": "This is one of the model's strengths: from a few traits the game gives it, it draws a person. A boot over one knee, an argument about the gods, an old scar. The cobbler, Publiosh Tommaezoth, has a character.",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 5664.2,
+   "from": 5662.2,
    "to": 5679.0,
+   "fade": true,
    "vo": [
-    "Provisioning is another will: it wants to buy. Its way here is a proposal to buy from the cobbler, Publiosh Tommaezoth."
+    "We think about him with Provisioning, our second will. Provisioning wants to buy."
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
    "from": 5679.0,
-   "to": 5862.6,
+   "to": 5864.1,
+   "fade": false,
    "vo": [
     {
      "text": "I notice someone with a boot over one knee hammers in hobnails without looking up, argues about the gods while hammering in a heel, positioned between the two least happy. It only colors how the salt will last - a fortnight, and the bread does not. I want to meet him to buy shoes and boots.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
+    },
+    {
+     "text": "Provisioning sees everything in days of supplies. Its way to a purchase is to go and propose a trade.",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 5862.6,
-   "to": 5918.2,
+   "from": 5864.1,
+   "to": 5918.99,
+   "fade": false,
    "vo": [
-    "This time the act goes to Diligence, which is reluctant: the difficulty rises by one, to two sixes.",
     {
      "text": "I will go to him to discuss buying shoes and boots in this medieval city.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 5918.2,
-   "to": 5942.5,
+   "from": 5918.99,
+   "to": 5941.9,
+   "fade": false,
    "vo": [
-    "Five dice, and no six. Two humors make two sixes."
+    "This time the act was given to Diligence, and Diligence is reluctant: buying is not its business. Reluctance raises the difficulty by one, to two sixes. Five dice, and not a single six. Two humors, two sixes."
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 5942.5,
-   "to": 6022.7,
+   "from": 5941.9,
+   "to": 6022.89,
+   "fade": false,
    "vo": [
     {
      "text": "I only finished the proposal as it was meant to be. Now, I await Publiosh Tommaezoth's response, my hands still as clean as they were when I began.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
+    },
+    {
+     "text": "This is the passage I like least in the take. It sounds like a failure, but the roll succeeded. A small model sometimes bends the tone, and the game holds the result: the conversation opens all the same.",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 6022.7,
-   "to": 6072.8,
+   "from": 6022.89,
+   "to": 6073.15,
+   "fade": false,
    "vo": [
-    "The cobbler answers.",
     {
      "text": "Aentonyoth Marshwall, seek what dost desire?",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 6072.8,
-   "to": 6142.7,
+   "from": 6073.15,
+   "to": 6144.2,
+   "fade": false,
    "vo": [
-    "Bargaining:",
+    "Our replies.",
+    {
+     "text": "Bargaining.",
+     "wait": true
+    },
     {
      "text": "Seeking a rare gem, might I perchance find what you offer?",
-     "style": "reading"
+     "style": "reading",
+     "wait": false
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 6142.7,
-   "to": 6210.3,
+   "from": 6144.2,
+   "to": 6211.8,
+   "fade": false,
    "vo": [
-    "Enterprise:",
+    {
+     "text": "Enterprise.",
+     "wait": true
+    },
     {
      "text": "And what tariffs do these wares bear on their journey?",
-     "style": "reading"
+     "style": "reading",
+     "wait": false
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 6210.3,
-   "to": 6257.0,
+   "from": 6211.8,
+   "to": 6257.58,
+   "fade": false,
    "vo": [
-    "Social Interaction:",
+    {
+     "text": "Social Interaction.",
+     "wait": true
+    },
     {
      "text": "What rare treasure are you seeking now?",
-     "style": "reading"
+     "style": "reading",
+     "wait": false
+    },
+    {
+     "text": "Bargaining wants a rare gem, in a boot shop. The line it was given only said: I am after something particular. Bargaining made it a haggler's line, and got carried away.",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 6257.0,
-   "to": 6379.1,
+   "from": 6257.58,
+   "to": 6379.68,
+   "fade": false,
    "vo": [
-    "We take Bargaining's.",
+    "We choose Bargaining's anyway, to see what happens.",
     {
      "text": "Seek not what not of shoes nor boots be, for mine are few and rare, nor any thing else but these. Yet if thy quest be of footwear, ask now and I shall tell thee if I hold the key.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
+    },
+    {
+     "text": "The cobbler brings us straight back to footwear. He can: his side of the tree knows we came for shoes.",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 6379.1,
-   "to": 6439.3,
+   "from": 6379.68,
+   "to": 6440.8,
+   "fade": false,
    "vo": [
-    "Social Interaction:",
+    {
+     "text": "Social Interaction.",
+     "wait": true
+    },
     {
      "text": "Let us find the just right item for your tasks, not just the first available one.",
-     "style": "reading"
+     "style": "reading",
+     "wait": false
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 6439.3,
-   "to": 6504.5,
+   "from": 6440.8,
+   "to": 6506.0,
+   "fade": false,
    "vo": [
-    "Diligence:",
+    {
+     "text": "Diligence.",
+     "wait": true
+    },
     {
      "text": "The choice you make shall not be near but precise, as work demands the finest.",
-     "style": "reading"
+     "style": "reading",
+     "wait": false
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 6504.5,
-   "to": 6565.6,
+   "from": 6506.0,
+   "to": 6565.96,
+   "fade": false,
    "vo": [
-    "Enterprise:",
+    {
+     "text": "Enterprise.",
+     "wait": true
+    },
     {
      "text": "What ventures does it serve, and how far can it endure without a hitch?",
-     "style": "reading"
+     "style": "reading",
+     "wait": false
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 6565.6,
-   "to": 6584.2,
+   "from": 6565.96,
+   "to": 6583.8,
+   "fade": false,
    "vo": [
-    "We take Social Interaction's, and the roll: ten dice. Two for regard, two for the replies, two for our face, and four for our clothes: the cap, cloak, tunic and breeches of a townsman, which please a craftsman. Proposing a trade is a formality: after two replies, one six. One comes up."
+    "We choose Social Interaction's, and roll. Ten dice: two for regard, two for the replies, two for our face, and four for our clothes, because the townsman's cap, cloak, tunic and breeches all please a craftsman. Proposing a trade is a formality: after two replies, one six. One comes up.",
+    "My advice: dress for the person you are talking to. Those are the cheapest dice in the game."
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 6584.2,
-   "to": 6634.2,
+   "from": 6583.8,
+   "to": 6635.09,
+   "fade": false,
    "vo": [
     {
      "text": "Matched to your needs, I have the fitting shoe.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 6634.2,
-   "to": 6713.5,
+   "from": 6635.09,
+   "to": 6713.78,
+   "fade": false,
    "vo": [
-    "Then one more passage, from a mind that took no part in the act. Bargaining is also a feeling, moved by a good trade. It tells how the trade felt, and pushes a humor of joy into the spleen.",
+    "Then one more passage, from a mind that took no part. Bargaining is also a feeling, moved by a good trade. It tells how the trade felt, and pushes a humor of joy into the spleen: laetitia, which turns a five into a six. A feeling now is luck for later.",
     {
      "text": "I traded my wares, and in the price beneath the price, I felt glad and lighter than before, like a hawk skimming the breeze after a successful hunt.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 6713.5,
-   "to": 6721.0
+   "from": 6713.78,
+   "to": 6719.9,
+   "fade": false
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 6721.0,
+   "from": 6719.9,
    "to": 6735.0,
+   "fade": true,
    "vo": [
-    "The cobbler's shelf. Every price is in one coin, copper, silver or gold, and coins never convert. The boots cost twenty copper."
+    "The cobbler's shelf. Every price is in one coin, copper, silver or gold, and coins never convert. The leather boots cost twenty copper: all we have. One click to add them, one to confirm."
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
    "from": 6735.0,
-   "to": 6851.9,
+   "to": 6850.5,
+   "fade": false,
    "vo": [
+    "Back in the shop, a new look at the cobbler.",
     {
      "text": "I see Publiosh Tommaezoth, cobbler of the city, his knee bleeding, hammering away, arguing with a fellow craftsman. He stands between the quarrellers, a steadfast figure with an old scar on his forearm, a silent witness to their discord.",
-     "style": "reading"
+     "style": "reading",
+     "wait": true
+    },
+    {
+     "text": "A bleeding knee, this time: the model invented a detail. Read the game's text as a story told by a slightly unreliable narrator. The rules underneath it are exact.",
+     "wait": true
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "clip": "wear_boots",
+   "from": 6850.5,
+   "to": 6870.4,
+   "fade": true,
    "vo": [
-    "A garment goes straight to its place when that place is free. Garments can protect, carry things, and please people of a given standing, which adds a die in conversation with them."
+    "In the inventory, the boots are already on our feet: a garment goes straight to its place when that place is free. Garments can protect, carry things, and please people of a given standing, which adds dice in conversation with them."
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "clip": "chorography",
+   "from": 6870.4,
+   "to": 6895.1,
+   "fade": true,
    "vo": [
-    "The purse is empty again. Each place you visit is kept as a mental map, and each map holds routines: ways back in. Asking for work taught us one."
+    "The purse is empty again, and that is fine. Every place you visit is kept as a mental map, and each map holds routines: ways back in. Asking for work taught one at the farm.",
+    "The anamnesis decides how many maps you keep, four per point, and the oldest is forgotten first. You can lock the ones you care about."
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "clip": "routine_box",
+   "from": 6895.1,
+   "to": 6939.5,
+   "fade": false,
    "vo": [
-    "From the world map, the farm's routines are one click from the route. The next visit can go straight to work, with no conversation first."
+    "From the world map, a place's routines are one click away. The work routine takes us straight back to work at the farm, with no conversation at all. Earning more coin is now a single trip."
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "clip": "closure",
+   "from": 6939.5,
+   "to": 6954.5,
+   "fade": true,
    "vo": [
-    "That is the first hour: a body built, a past remembered, two fights, a job, a trade, and a way back. Proscribed Palimpsest, at edmond zero zero dot itch dot io, slash proscribed."
+    "That was the first hour: a body built, a past remembered, two wolves, a job, a trade, and a way back. Every word the game wrote, it wrote on this computer, while we played. Proscribed Palimpsest is at edmond zero zero dot itch dot io, slash proscribed."
    ]
   }
  ]

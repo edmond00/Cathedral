@@ -65,6 +65,9 @@ class Segment:
     click_wav: Path | None = None
     hover_wav: Path | None = None
     src_t0: float | None = None          # a game segment: where in its recording it starts
+    post_path: Path | None = None        # narration that waits for the picture (parts from the first "wait")
+    post_seconds: float = 0.0
+    post_start: float = 0.0              # where in the segment it starts
 
 
 class Build:
@@ -126,14 +129,27 @@ class Build:
         """A segment's narration: one string, or a list of parts — a string, or {"text", "style"} where
         the style names an entry of the storyboard's "voice_styles" (settings layered over "voice").
         The parts are voiced separately and joined with a short pause: how a narration explains in one
-        register and reads the game's own text in another."""
+        register and reads the game's own text in another.
+
+        A part may say {"wait": true}: it and every part after it start only once the picture has played
+        through (a game segment's footage, model waits fast-forwarded), so a passage is read when it is on
+        screen, not while it is still being written. The parts before it speak over the footage."""
         vo = seg.spec.get("vo")
         if not vo:
             return
-        v = self.voice
         parts = [vo] if isinstance(vo, str) else vo
+        split = next((i for i, p in enumerate(parts) if isinstance(p, dict) and p.get("wait")), len(parts))
+        if split < len(parts) and seg.spec["type"] != "game":
+            raise ValueError(f"segment {seg.index}: only a game segment's narration can wait for its picture")
+        seg.vo_path, seg.vo_seconds = self._voice_parts(seg, parts[:split], "vo", 0)
+        seg.post_path, seg.post_seconds = self._voice_parts(seg, parts[split:], "post", split)
+
+    def _voice_parts(self, seg: Segment, parts: list, name: str, first: int) -> tuple[Path | None, float]:
+        if not parts:
+            return None, 0.0
+        v = self.voice
         clips = []
-        for i, part in enumerate(parts):
+        for i, part in enumerate(parts, start=first):
             text, style = (part, None) if isinstance(part, str) else (part["text"], part.get("style"))
             cfg = {**v, **(self.sb.get("voice_styles", {}).get(style, {}) if style else {})}
             path, _ = tts.speak(
@@ -146,12 +162,18 @@ class Build:
         joined = clips[0]
         for c in clips[1:]:
             joined = np.concatenate([joined, gap, c])
-        seg.vo_path = self.out_dir / f"seg{seg.index:02d}_vo.wav"
-        tts.write_wav(seg.vo_path, joined)
-        seg.vo_seconds = len(joined) / audio.RATE
+        out = self.out_dir / f"seg{seg.index:02d}_{name}.wav"
+        tts.write_wav(out, joined)
+        return out, len(joined) / audio.RATE
 
     def target_seconds(self, seg: Segment) -> float:
-        need = seg.vo_seconds + self.voice["lead_in"] + self.voice["tail"] if seg.vo_seconds else 0
+        lead, tail = self.voice["lead_in"], self.voice["tail"]
+        need = seg.vo_seconds + lead + tail if seg.vo_seconds else 0
+        if seg.post_seconds:
+            natural = self.game_timing(seg)["natural"]
+            after_pre = lead + seg.vo_seconds + float(self.voice.get("part_gap", 0.35)) if seg.vo_seconds else lead
+            seg.post_start = max(after_pre, natural + float(self.voice.get("wait_after", 0.3)))
+            need = max(need, seg.post_start + seg.post_seconds + tail)
         return max(need, float(seg.spec.get("min", 0)))
 
     # ── 3. pictures ───────────────────────────────────────────────────────────
@@ -205,7 +227,9 @@ class Build:
             return {"levels": 6, "scale": 1, **d.get("game", {})}
         return {"levels": 4, "scale": 2, **d.get("animation", {})}
 
-    def game_picture(self, seg: Segment, target: float) -> None:
+    def game_timing(self, seg: Segment) -> dict:
+        """Where a game segment comes from in its take and how it is retimed (model waits fast-forwarded,
+        a live take's pauses dropped): what the picture is, and how long it plays, before rendering it."""
         s = seg.spec
         rec = self.recordings[s["recording"]]
         if "clip" in s:
@@ -260,7 +284,14 @@ class Build:
         dropped = lambda t: any(sp <= 0 and a_ <= t < b_ for a_, b_, sp in pieces)  # noqa: E731
         seg.clicks = [remap(t) for t in rec.clicks(t0, t1) if not dropped(t)]
         seg.hovers = [remap(t) for t in rec.hovers(t0, t1)] if s.get("hover_ticks", True) else []
+        return {"rec": rec, "t0": t0, "t1": t1, "pieces": pieces, "natural": natural, "busy": busy, "ff": ff,
+                "ffcfg": ffcfg, "speed": speed}
 
+    def game_picture(self, seg: Segment, target: float) -> None:
+        s = seg.spec
+        g = self.game_timing(seg)
+        rec, t0, t1, pieces, natural = g["rec"], g["t0"], g["t1"], g["pieces"], g["natural"]
+        busy, ff, ffcfg, speed = g["busy"], g["ff"], g["ffcfg"], g["speed"]
         sw, sh = rec.manifest["width"], rec.manifest["height"]
         pre = []
         if z := s.get("zoom"):
@@ -420,6 +451,8 @@ class Build:
         for seg in segs:
             if seg.vo_path:
                 audio.place(voice, tts.read_wav(seg.vo_path), seg.start + self.voice["lead_in"])
+            if seg.post_path:
+                audio.place(voice, tts.read_wav(seg.post_path), seg.start + seg.post_start)
         voice = audio.normalise(voice, self.sb.get("voice_level_db", -18))
 
         fx = audio.silence(total)
