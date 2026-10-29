@@ -1655,7 +1655,7 @@ public static class Config
         /// hundred-odd scripts. Playground already replaces the thing that makes a run slow (the
         /// LLM); this replaces the rest. See <see cref="AnimationsAreInstant"/>.</para>
         /// </summary>
-        public static float AnimationDurationSeconds => AnimationsAreInstant ? 0f : 5.0f;
+        public static float AnimationDurationSeconds => AnimationsAreInstant ? 0f : 2.5f;
 
         /// <summary>
         /// The animation duration in milliseconds, for <see cref="System.Threading.Tasks.Task.Delay(int)"/>.
