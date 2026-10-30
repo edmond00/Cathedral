@@ -194,42 +194,57 @@ O.game(*O.clip("creation_overview"),
        "regions, which are the head, the face, the trunk, the arms and the legs; twenty-two organs; twenty-eight "
        "organ parts. Every part starts at one point, and you get twenty-five more to spend. That buys less than "
        "half of what the body could reach, so creating a character is really choosing what to give up.", fade=True)
-manim("System",
-      "Before we spend them, here is how a character fits together. Three layers. The body: regions and organs, "
-      "each with a score. The ways of thinking you learn as you play, called modi mentis, each with a level. And "
-      "the measures: health, memory, noetic points, movement and the rest.",
-      "The body feeds the other two. Every measure is computed from one organ or one region. And every way of "
-      "thinking draws on two organs, or on one region, which set its ceiling: one, plus up to three for each "
-      "organ, or up to six for a region, the stronger they are. A level is what you roll: one die per level. "
-      "Around all this, what you carry lends dice, what you wear protects and charms, and four organs make the "
-      "humors, which can bend a die.",
-      "Here is this very character, once we have spent the points. Swordsmanship draws on the arms and the hands. "
-      "The arms score two out of four: plus two. The hands, four out of six: plus two. So Swordsmanship can rise "
-      "to level five; today it is level two, so it rolls two dice. And two measures: a backbone of four gives "
-      "eight movement points in a fight, and a head of ten gives six noetic points in a scene.")
+SYSTEM_STEPS = [
+    ("Before we spend them, here is how a character fits together, in four ideas. First, the body: five regions, "
+     "the head, the face, the trunk, the arms and the legs, each scoring the sum of its organs. Here they are for "
+     "the character we are about to build. Everything else in the game is read from these numbers."),
+    ("Second, the measures. Each one is computed from a single organ or region, by a rule of its own. The "
+     "backbone, doubled, gives the movement points you spend in a fight: four makes eight. The head, halved and "
+     "plus one, gives your noetic points, the thoughts you can have in one scene: ten makes six."),
+    ("Third, the ways of thinking you learn as you play, called modi mentis. Each draws on two organs, or on one "
+     "region, and those set its ceiling, how far it can ever grow: one, plus up to three for each organ, or up to "
+     "six for a region, the stronger they are. Swordsmanship draws on the arms and the hands. The arms score two "
+     "out of four: plus two. The hands, four out of six: plus two. So its ceiling is five."),
+    ("Fourth, the dice. Almost everything you attempt, a blow, a question, a climb, is settled by a roll. You roll "
+     "one die for each level of the ways of thinking involved, and only sixes count: the task says how many it "
+     "needs. Swordsmanship is level two today, so it brings two dice. Raise it, and it brings more."),
+    ("Around these: what you carry can lend dice to an act, what you wear protects you in a fight and charms "
+     "people in a conversation, and four organs make the humors, which can turn a die after it is rolled. We will "
+     "meet each of them in this run."),
+]
+for k, vo in enumerate(SYSTEM_STEPS, start=1):
+    manim("System", vo, params={"step": k})
+MEMORY_STEPS = [
+    ("Memory deserves a closer look, because this game makes you forget. Everything you learn arrives in working "
+     "memory, at the front. Working memory is a queue: when it is full and something new arrives, the oldest way "
+     "of thinking falls out of the back, and it is lost for good."),
+    ("So you file what you want to keep. Consolidating moves a way of thinking into the long-term memory of its "
+     "kind, practised skills, knowledge, or the senses, and there it is safe. Or you reject one on the spot, to "
+     "make room before the queue decides for you."),
+    ("Long-term memories fill up too. To make room, you archive a way of thinking into the residual memory, a last "
+     "queue the anamnesis keeps, and each memory always keeps at least one. When the residual queue is full, its "
+     "oldest is forgotten for good. My advice: don't neglect memory. A character who learns a lot but has nowhere "
+     "to file it keeps forgetting."),
+]
 ORGAN_WALK = [  # (the organ hovered first, what is said while it is shown)
-    ("anamnesis", ["First, thinking and memory: the head. As a whole, the head sets your noetic points, how many times you can "
-     "look and think in one scene: its score halved, plus one.",
-     "What you learn in this game are called modi mentis: ways of thinking. A new one always arrives in working "
-     "memory, a short queue, also sized by the whole head. When that queue is full, the oldest way of thinking "
-     "falls out, and it is lost for good.",
-     "The anamnesis keeps a second queue, for what you set aside, and it decides how many places you remember: "
-     "four per point. We raise it by one."]),
-    ("cerebrum", ["To keep a way of thinking for good, you file it into a long-term memory of its kind. The cerebrum holds "
-     "knowledge, like bargaining or archaeology. We give it two points."]),
-    ("cerebellum", ["The cerebellum holds practised skills, like swordsmanship or knotwork, and it is what lets you learn a "
-     "new move in the middle of a fight. Two points as well."]),
-    ("hippocampus", ["The hippocampus holds the ways of thinking that use the senses."]),
-    ("pineal_gland", ["And the pineal gland sets how much experience a level costs, from twelve points down to six. With two "
-     "points or more, it also lets a mind doubt its own plan and think again.",
-     "My advice: don't neglect memory. A character who learns a lot but has nowhere to file it keeps "
-     "forgetting."]),
+    ("anamnesis", ["First, thinking and memory: the head. As a whole, the head sets your noetic points, how many "
+                   "times you can look and think in one scene, and it sizes working memory, where everything you "
+                   "learn arrives. The anamnesis sizes the residual memory, and how many places you remember: four "
+                   "per point. We raise it by one."]),
+    ("cerebrum", ["The cerebrum sizes the memory for knowledge, like bargaining or archaeology. Two points."]),
+    ("cerebellum", ["The cerebellum sizes the memory for practised skills, like swordsmanship or knotwork, and it "
+                    "lets you learn a new move in the middle of a fight. Two points."]),
+    ("hippocampus", ["The hippocampus sizes the memory for the ways of thinking that use the senses."]),
+    ("pineal_gland", ["And the pineal gland sets how much experience a level costs, from twelve points down to six. "
+                      "With two points or more, it also lets a mind doubt its own plan and think again."]),
     ("left_eye", ["The senses. The eyes set the reach of a ranged blow, in cells."]),
     ("left_ear", ["The ears add their score to your initiative, which decides who acts first in a fight. We raise both."]),
     ("nose", ["The nose is underrated. Each point lowers the chance of meeting danger on the road by ten per cent, and it "
      "tells you which humors are in a food before you eat it."]),
     ("tongue", ["Speech. The tongue sets how many replies you are offered in a conversation, up to five. At nought, you "
-     "cannot hold a conversation at all. Two points here: conversation is how you get work, trade and friends."]),
+     "cannot hold a conversation at all. Two points here: conversation is how you get work, trade and friends.",
+     "And the face as a whole gives countenance: in every conversation, one die for each five points. This face "
+     "is worth two."]),
     ("teeths", ["The teeth only decide whether you can eat hard food. We leave them."]),
     ("paunch", ["The humors are this game's most unusual system. Four organs make them: the paunch, the hepar, the spleen "
      "and the pulmones. Each keeps a queue of forty-nine humors. A sound organ makes mostly blood; a failing one, "
@@ -258,6 +273,9 @@ for k, (organ, vo) in enumerate(ORGAN_WALK):
     t1 = (O.at("move", "organ:" + ORGAN_WALK[k + 1][0]) if k + 1 < len(ORGAN_WALK)
           else O.at("clip-end", "organs_fighting"))
     O.game(t0, t1, *vo, fade=(k == 0))
+    if organ == "pineal_gland":
+        for j, mvo in enumerate(MEMORY_STEPS, start=1):
+            manim("Memory", mvo, params={"step": j})
 
 # 3. childhood: five memories, the first one slowly
 MEMORY = {
@@ -365,13 +383,15 @@ manim("DiceHumors",
 O.game(dice_end, O.end(outcome), O.R(outcome),
        W("Success. Look at the lines below: every mind in the chain gained a point of experience, and the act "
          "taught a new one, Vigor. Doing things is how you learn."), *note("up_outcome"))
-O.game(O.end(outcome), O.at("clip-end", "run_start"),
-       "The run has truly begun, and we are on the world map. Before travelling, let's look at what we have. "
-       "Escape opens the menu, and Protagonist opens the character screen.")
+leave = O.click(O.end(outcome), ge + 1, label="footer button")
+O.game(O.end(outcome), leave - 0.2)
+O.game(leave - 0.2, O.at("clip-end", "run_start"),
+       "The run has truly begun. This is the world map, where every journey starts. Before travelling, let's look "
+       "at what we have.")
 
 # ── 6. the protagonist screen ─────────────────────────────────────────────────
-game(3223.0, 3236.0, "The anatomy tab: the body we built. Wounds will show here, on the organ they hit.",
-     fade=True)
+game(3223.0, 3226.3, "Escape opens the menu, and Protagonist opens the character screen.", fade=True)
+game(3226.3, 3236.0, "The anatomy tab: the body we built. Wounds will show here, on the organ they hit.")
 game(3236.0, 3246.0,
      "The memory tab: everything we learned, filed in the memory of its kind. There are also two wills here, "
      "Diligence and Provisioning. A will is a mind that wants one thing; we'll see both at work.",
@@ -444,6 +464,8 @@ t = reply(end(30), 31, "Diligence",
           "Then our replies. Each is one branch of the tree, voiced by one of the minds we hold that can speak. The "
           "tongue decides how many are offered: we gave it two points, so three.")
 t = reply(t, 32, "Nautical Jargon")
+segments[-1]["vo"].append(W("A sailor's mind asking for farm work: it offers itself like a crew to a captain, "
+                            "bind me to your helm."))
 game(t, end(33), {"text": "Provisioning.", "at": round(P[33]["ts"] + SHOWS, 2)}, R(33, anchored=False),
      W("Diligence and Provisioning were given the very same line: I am after work as a farmhand; what does it "
        "pay? Provisioning, which counts everything in days of supplies, turned it into grain, firewood and "
@@ -525,7 +547,9 @@ game(6583.8, end(56), R(56))
 game(end(56), end(57),
      "Then one more passage, from a mind that took no part. Bargaining is also a feeling, moved by a good "
      "trade. It tells how the trade felt, and pushes a humor of joy into the spleen: laetitia, which turns a five "
-     "into a six. A feeling now is luck for later.", R(57))
+     "into a six. A feeling now is luck for later.", R(57),
+     W("A hawk skimming the breeze after a hunt: even a merchant's mind reaches for its own images when it is "
+       "glad."))
 game(end(57), 6719.9)
 
 # ── 13. the trade ─────────────────────────────────────────────────────────────
@@ -565,6 +589,7 @@ storyboard = {
     "dither": {"animation": {"levels": 4, "scale": 2}, "game": {"levels": 6, "scale": 1}},
     "fast_forward": {"speed": 8, "min": 1.5, "label": False},
     "fit": "slow",
+    "idle": {"after": 2.0, "before": 0.8, "speed": 4.0, "min": 1.5},
     "voice": {"name": "en_GB-alan-medium", "speed": 1.0, "grit": 0.15},
     "voice_styles": {"reading": {"speed": 0.88, "grit": 0, "noise_scale": 0.9, "noise_w": 1.1,
                                  "pitch": 0.97, "room": 0.16}},

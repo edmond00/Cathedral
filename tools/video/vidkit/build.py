@@ -363,6 +363,32 @@ class Build:
             cursor = b_
         if cursor < t1:
             pieces.append((cursor, t1, speed))
+        # Dead time: a stretch with nothing happening (no press, no pointer moving, no screen change, no
+        # model writing), the script holding the shot or waiting on the next step, plays fast. The
+        # moments around each event keep their own pace; the fit may slow it all again where the
+        # narration needs the time.
+        idle = {**(self.sb.get("idle") or {}), **(s.get("idle") or {})} if (self.sb.get("idle") or s.get("idle")) else None
+        if idle and s.get("idle") is not False:
+            after, before = float(idle.get("after", 2.0)), float(idle.get("before", 0.8))
+            fast, shortest = float(idle.get("speed", 4.0)), float(idle.get("min", 1.5))
+            acts = sorted(e["t"] for e in rec.of_type("click", "move", "key", "scroll", "mode") if t0 <= e["t"] <= t1)
+            out = []
+            for a_, b_, sp in pieces:
+                if sp != speed:
+                    out.append((a_, b_, sp))
+                    continue
+                points = [a_] + [t for t in acts if a_ < t < b_] + [b_]
+                cur = a_
+                for p_, q_ in zip(points, points[1:]):
+                    lo, hi = p_ + after, q_ - before
+                    if hi - lo >= shortest:
+                        if lo > cur:
+                            out.append((cur, lo, sp))
+                        out.append((lo, hi, max(sp, fast)))
+                        cur = hi
+                if b_ > cur:
+                    out.append((cur, b_, sp))
+            pieces = out
         for cut in sorted(seg.cuts):              # split at the narration's anchors, so each stretch slows alone
             out = []
             for a_, b_, sp in pieces:

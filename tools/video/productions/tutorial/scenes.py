@@ -93,93 +93,264 @@ class Organs(BrandScene):
 # ── 1b. how a character fits together ────────────────────────────────────────
 
 class System(BrandScene):
-    """Three layers (body, ways of thinking, measures) and what feeds what, then the tutorial character's
-    Swordsmanship worked through: its two organs, their contributions, its ceiling, and two measures."""
+    """How a character fits together, in five steps, one segment each (params "step"), so each picture
+    comes with the sentences about it. A small map at the top (body, measures, ways of thinking) lights
+    the part the step is about; below it, the step works through this very character:
+      1 body       its five regions and their scores (as created in the take)
+      2 measures   backbone 4 -> 8 movement points; head 10 -> 6 noetic points
+      3 minds      Swordsmanship on arms (2 of 4: +2) and hands (4 of 6: +2): ceiling 5
+      4 dice       a level is dice: Swordsmanship level 2 rolls two; sixes are what count
+      5 around     items lend dice, clothes protect and charm, humors bend a die"""
 
-    def layer(self, title, lines, color):
-        body = VGroup(*[self.text(l, 24, GRAY85) for l in lines]).arrange(DOWN, aligned_edge=LEFT, buff=0.12)
-        box = self.frame_box(body, color, buff=0.3, label=title)
-        return VGroup(box, body)
+    def mini_map(self, lit):
+        def box(name, color, on):
+            t = self.text(name, 20, color if on else GRAY50)
+            r = RoundedRectangle(corner_radius=0.06, width=t.width + 0.4, height=t.height + 0.3,
+                                 stroke_color=color if on else GRAY35, stroke_width=2.5 if on else 1.2)
+            return VGroup(r.move_to(t), t)
+        body = box("BODY", GOLD, lit in ("body", "measures", "minds"))
+        meas = box("MEASURES", GRAY85, lit == "measures")
+        minds = box("WAYS OF THINKING", LIGHT_PURPLE, lit in ("minds", "dice"))
+        dice = box("DICE", LIGHT_PURPLE, lit == "dice")
+        row = VGroup(meas, body, minds, dice).arrange(RIGHT, buff=0.9)
+        arrows = VGroup(
+            Arrow(body.get_left(), meas.get_right(), buff=0.08, stroke_width=2,
+                  color=GOLD if lit == "measures" else GRAY35, max_tip_length_to_length_ratio=0.2),
+            Arrow(body.get_right(), minds.get_left(), buff=0.08, stroke_width=2,
+                  color=GOLD if lit == "minds" else GRAY35, max_tip_length_to_length_ratio=0.2),
+            Arrow(minds.get_right(), dice.get_left(), buff=0.08, stroke_width=2,
+                  color=LIGHT_PURPLE if lit == "dice" else GRAY35, max_tip_length_to_length_ratio=0.2))
+        g = VGroup(row, arrows)
+        g.scale_to_fit_width(min(g.width, config.frame_width - 1.0))
+        return g.next_to(self.head, DOWN, buff=0.3)
+
+    def bar(self, score, top, color, size=0.34):
+        return VGroup(*[Square(size, stroke_color=GRAY50, stroke_width=1.5, fill_color=color if i < score else BLACK_,
+                               fill_opacity=1 if i < score else 0) for i in range(top)]).arrange(RIGHT, buff=0.05)
 
     def construct(self):
-        head = self.header("how a character works")
-        body = self.layer("BODY", ["5 regions", "22 organs", "a score each"], GOLD)
-        minds = self.layer("WAYS OF THINKING", ["learned in play", "a level each", "one die per level"], LIGHT_PURPLE)
-        meas = self.layer("MEASURES", ["health, memory,", "noetic points,", "movement..."], GRAY75)
-        body.move_to(LEFT * 4.6 + UP * 0.2)
-        minds.move_to(RIGHT * 3.0 + UP * 1.45)
-        meas.move_to(RIGHT * 3.0 + DOWN * 1.35)
-        a1 = Arrow(body.get_right(), minds.get_left(), buff=0.15, color=GOLD, stroke_width=3)
-        a2 = Arrow(body.get_right(), meas.get_left(), buff=0.15, color=GOLD, stroke_width=3)
-        l1 = self.text("sets the ceiling", 22, GOLD).next_to(a1.get_center(), UP, buff=0.35).shift(LEFT * 0.4)
-        l2 = self.text("computes", 22, GOLD).next_to(a2.get_center(), DOWN, buff=0.35).shift(LEFT * 0.4)
-        side = self.text("around them: items lend dice, worn clothes protect and charm,\n"
-                         "and four organs make the humors that bend a die", 20, GRAY60, line_spacing=0.85)
-        side.to_edge(DOWN, buff=0.35)
-        self.play(FadeIn(body, shift=RIGHT * 0.2), run_time=0.7)
-        self.beat(0.04)
-        self.play(FadeIn(minds, shift=LEFT * 0.2), run_time=0.7)
-        self.play(FadeIn(meas, shift=LEFT * 0.2), run_time=0.7)
-        self.beat(0.06)
-        self.play(GrowArrow(a2), FadeIn(l2), run_time=0.7)
-        self.beat(0.08)
-        self.play(GrowArrow(a1), FadeIn(l1), run_time=0.7)
-        rule = self.text("ceiling = 1 + up to 3 per organ,\n          or up to 6 for a region", 21, LIGHT_PURPLE,
-                         line_spacing=0.85)
-        rule.move_to(RIGHT * 3.0 + UP * 0.05)
-        self.play(FadeIn(rule), run_time=0.6)
-        self.beat(0.06)
-        self.play(FadeIn(side), run_time=0.6)
-        self.beat(0.08)
-        if self.params.get("stop") == "abstract":          # for checking the first half's layout
-            return
-
-        # the example: this character's Swordsmanship
-        everything = VGroup(body, minds, meas, a1, a2, l1, l2, side, rule)
-        self.play(FadeOut(everything), run_time=0.6)
-        title = self.text("THIS CHARACTER: SWORDSMANSHIP", 30, LIGHT_PURPLE).next_to(head, DOWN, buff=0.35)
-        self.play(FadeIn(title), run_time=0.5)
-
-        def organ_row(name, score, top, plus):
-            n = self.text(name, 28, GOLD)
-            bar = VGroup(*[Square(0.34, stroke_color=GRAY50, stroke_width=1.5,
-                                  fill_color=GOLD if i < score else BLACK_, fill_opacity=1 if i < score else 0)
-                           for i in range(top)]).arrange(RIGHT, buff=0.06)
-            frac = self.text(f"{score} of {top}", 24, GRAY85)
-            pl = self.text(f"+{plus}", 30, LIGHT_PURPLE)
-            return VGroup(n, bar, frac, pl)
-
-        arms = organ_row("arms", 2, 4, 2)
-        hands = organ_row("hands", 4, 6, 2)
-        for r in (arms, hands):
-            r[1].next_to(r[0], RIGHT, buff=0.5)
-        x_bar = max(arms[0].get_right()[0], hands[0].get_right()[0]) + 0.5
-        for i, r in enumerate((arms, hands)):
-            r.move_to(UP * (1.0 - i * 0.9))
-            r[0].set_x(-5.0, direction=LEFT)
-            r[1].set_x(x_bar - 5.0 + 0.6, direction=LEFT)
-            r[2].next_to(r[1], RIGHT, buff=0.4)
-            r[3].next_to(r[2], RIGHT, buff=0.6)
-        self.play(FadeIn(arms[0]), LaggedStart(*[FadeIn(q) for q in arms[1]], lag_ratio=0.1), FadeIn(arms[2]), run_time=0.9)
-        self.play(FadeIn(arms[3], scale=1.4), run_time=0.4)
-        self.beat(0.04)
-        self.play(FadeIn(hands[0]), LaggedStart(*[FadeIn(q) for q in hands[1]], lag_ratio=0.08), FadeIn(hands[2]), run_time=0.9)
-        self.play(FadeIn(hands[3], scale=1.4), run_time=0.4)
-        self.beat(0.04)
-        ceiling = self.text("ceiling: 1 + 2 + 2 = 5", 32, LIGHT_PURPLE).move_to(DOWN * 0.75 + LEFT * 2.2)
-        self.play(TransformFromCopy(VGroup(arms[3], hands[3]), ceiling), run_time=0.9)
-        levels = VGroup(*[Square(0.42, stroke_color=LIGHT_PURPLE, stroke_width=2,
-                                 fill_color=LIGHT_PURPLE if i < 2 else BLACK_, fill_opacity=0.8 if i < 2 else 0)
-                          for i in range(5)]).arrange(RIGHT, buff=0.1).next_to(ceiling, RIGHT, buff=0.6)
-        now = self.text("level 2 today: 2 of its dice", 24, GRAY85).next_to(levels, DOWN, buff=0.2)
-        self.play(FadeIn(levels, lag_ratio=0.15), FadeIn(now), run_time=0.9)
-        self.beat(0.06)
-        m1 = self.text("backbone 4  ->  8 movement points in a fight", 26, GRAY85)
-        m2 = self.text("head 10  ->  6 noetic points per scene", 26, GRAY85)
-        ms = VGroup(m1, m2).arrange(DOWN, aligned_edge=LEFT, buff=0.18).move_to(DOWN * 2.35)
-        self.play(FadeIn(m1, shift=UP * 0.1), run_time=0.6)
-        self.play(FadeIn(m2, shift=UP * 0.1), run_time=0.6)
+        step = int(self.params.get("step", 1))
+        names = {1: "body", 2: "measures", 3: "minds", 4: "dice", 5: "around"}
+        self.head = self.header("how a character works", animate=(step == 1))
+        m = self.mini_map(names[step])
+        self.add(m) if step > 1 else self.play(FadeIn(m), run_time=0.6)
+        stage = DOWN * 0.9
+        getattr(self, "step_" + names[step])(stage)
         self.fill_to_target()
+
+    def step_body(self, at):
+        regions = [("head", 10, 23), ("face", 11, 22), ("trunk", 20, 28), ("arms", 6, 10), ("legs", 6, 10)]
+        rows = VGroup()
+        for name, score, top in regions:
+            n = self.text(name, 28, GOLD)
+            b = self.bar(score, top, GOLD, 0.2)
+            v = self.text(f"{score}", 26, GRAY85)
+            rows.add(VGroup(n, b, v))
+        col = max(r[0].width for r in rows) + 0.4
+        for r in rows:
+            r[1].next_to(r[0], RIGHT, buff=col - r[0].width)
+            r[2].next_to(r[1], RIGHT, buff=0.3)
+        rows.arrange(DOWN, aligned_edge=LEFT, buff=0.22).move_to(at)
+        self.beat(0.15)
+        for r in rows:
+            self.play(FadeIn(r[0]), LaggedStart(*[FadeIn(q) for q in r[1]], lag_ratio=0.02), FadeIn(r[2]), run_time=0.7)
+        self.beat(0.1)
+        note = self.text("everything else is read from these scores", 24, GRAY60).next_to(rows, DOWN, buff=0.35)
+        self.play(FadeIn(note), run_time=0.5)
+
+    def step_measures(self, at):
+        def row(src, score, top, arrow_label, value, what):
+            n = self.text(src, 30, GOLD)
+            b = self.bar(score, top, GOLD, 0.26)
+            ar = Arrow(LEFT, RIGHT, stroke_width=3, color=GOLD, buff=0).scale(0.8)
+            lab = self.text(arrow_label, 20, GOLD)
+            v = self.text(f"{value} {what}", 30, GRAY85)
+            b.next_to(n, RIGHT, buff=0.35)
+            ar.next_to(b, RIGHT, buff=0.35)
+            lab.next_to(ar, UP, buff=0.05)
+            v.next_to(ar, RIGHT, buff=0.35)
+            return VGroup(n, b, ar, lab, v)
+        r1 = row("backbone", 4, 4, "x 2", 8, "movement points")
+        r2 = row("head", 10, 23, "half, + 1", 6, "noetic points")
+        both = VGroup(r1, r2).arrange(DOWN, aligned_edge=LEFT, buff=0.7)
+        both.scale_to_fit_width(min(both.width, config.frame_width - 1.4)).move_to(at)
+        for r, wait in ((r1, 0.12), (r2, 0.2)):
+            self.beat(wait)
+            self.play(FadeIn(r[0]), FadeIn(r[1], lag_ratio=0.05), run_time=0.6)
+            self.play(GrowArrow(r[2]), FadeIn(r[3]), run_time=0.5)
+            self.play(FadeIn(r[4], shift=RIGHT * 0.2), run_time=0.5)
+
+    def step_minds(self, at):
+        title = self.text("SWORDSMANSHIP", 30, LIGHT_PURPLE).move_to(at + UP * 1.4)
+        self.play(FadeIn(title), run_time=0.5)
+        rows = []
+        for i, (name, score, top) in enumerate((("arms", 2, 4), ("hands", 4, 6))):
+            n = self.text(name, 28, GOLD)
+            b = self.bar(score, top, GOLD)
+            f = self.text(f"{score} of {top}", 24, GRAY85)
+            pl = self.text("+2", 30, LIGHT_PURPLE)
+            n.move_to(at + LEFT * 4.2 + UP * (0.45 - i * 0.8), aligned_edge=LEFT)
+            b.next_to(n, RIGHT, buff=1.6 - n.width + 0.3)
+            f.next_to(b, RIGHT, buff=0.4)
+            pl.next_to(f, RIGHT, buff=0.6)
+            rows.append(VGroup(n, b, f, pl))
+        self.beat(0.3)
+        for r in rows:
+            self.play(FadeIn(r[0]), LaggedStart(*[FadeIn(q) for q in r[1]], lag_ratio=0.08), FadeIn(r[2]), run_time=0.8)
+            self.beat(0.06)
+            self.play(FadeIn(r[3], scale=1.4), run_time=0.4)
+        ceiling = self.text("ceiling  1 + 2 + 2 = 5", 32, LIGHT_PURPLE).move_to(at + DOWN * 1.35)
+        self.play(TransformFromCopy(VGroup(rows[0][3], rows[1][3]), ceiling), run_time=0.9)
+
+    def step_dice(self, at):
+        lv = self.text("Swordsmanship, level 2", 30, LIGHT_PURPLE).move_to(at + UP * 1.3)
+        squares = VGroup(*[Square(0.42, stroke_color=LIGHT_PURPLE, stroke_width=2,
+                                  fill_color=LIGHT_PURPLE if i < 2 else BLACK_, fill_opacity=0.8 if i < 2 else 0)
+                           for i in range(5)]).arrange(RIGHT, buff=0.1).next_to(lv, DOWN, buff=0.3)
+        self.play(FadeIn(lv), FadeIn(squares, lag_ratio=0.15), run_time=0.8)
+        self.beat(0.15)
+
+        def die(face, color=GRAY85):
+            sq = RoundedRectangle(corner_radius=0.08, width=0.7, height=0.7, stroke_color=color, stroke_width=2,
+                                  fill_color=BLACK_, fill_opacity=1)
+            return VGroup(sq, self.text(str(face), 30, color).move_to(sq))
+        dice = VGroup(die(3), die(6, GOLD)).arrange(RIGHT, buff=0.4).move_to(at + DOWN * 0.5)
+        self.play(TransformFromCopy(squares[:2], dice), run_time=0.8)
+        self.beat(0.1)
+        rule = self.text("each six counts: the task says how many it needs", 26, GOLD).next_to(dice, DOWN, buff=0.4)
+        self.play(FadeIn(rule), Indicate(dice[1], color=GOLD), run_time=0.8)
+
+    def step_around(self, at):
+        lines = [("what you carry", "can lend dice to an act", GOLD),
+                 ("what you wear", "protects in a fight, charms in a conversation", GOLD),
+                 ("the humors", "made by four organs, can turn a die after it is rolled", LIGHT_PURPLE)]
+        rows = VGroup()
+        for a, b, c in lines:
+            rows.add(VGroup(self.text(a, 28, c), self.text(b, 24, GRAY85)).arrange(DOWN, aligned_edge=LEFT, buff=0.08))
+        rows.arrange(DOWN, aligned_edge=LEFT, buff=0.4).move_to(at)
+        for r in rows:
+            self.beat(0.12)
+            self.play(FadeIn(r, shift=UP * 0.15), run_time=0.6)
+
+
+# ── 1c. memory ────────────────────────────────────────────────────────────────
+
+KIND_COLOR = {"procedural": GOLD, "semantic": LIGHT_PURPLE, "sensory": GRAY85}
+# this run's own ways of thinking, by the memory they are kept in (their MemoryType in the code)
+RUN_MINDS = {"Empathy": "sensory", "Bargaining": "semantic", "Knotwork": "procedural",
+             "Nautical Jargon": "semantic", "Exploration": "sensory", "Vigor": "procedural",
+             "Endurance": "procedural", "Hard Labor": "procedural", "Archaeology": "sensory"}
+
+
+class Memory(BrandScene):
+    """Where a modus mentis lives (docs/manual/02-memory.md §5-6), in three steps (params "step"):
+      1 arrive    a new one enters working memory at the front; a full queue loses its oldest for good
+      2 file      consolidate into the long-term memory of its kind; reject to make room
+      3 residual  archive from long-term memory to the residual queue; its oldest is then forgotten"""
+
+    def chip(self, name):
+        color = KIND_COLOR[RUN_MINDS[name]]
+        t = self.text(name, 20, color)
+        r = RoundedRectangle(corner_radius=0.08, width=2.0, height=0.5, stroke_color=color, stroke_width=2,
+                             fill_color=BLACK_, fill_opacity=1)
+        if t.width > 1.8:
+            t.scale_to_fit_width(1.8)
+        return VGroup(r, t.move_to(r))
+
+    def slots(self, n, label, sub, y, color=GRAY50):
+        row = VGroup(*[RoundedRectangle(corner_radius=0.08, width=2.25, height=0.6, stroke_color=GRAY35,
+                                        stroke_width=1.2) for _ in range(n)]).arrange(RIGHT, buff=0.12)
+        row.move_to(UP * y)
+        lab = self.text(label, 20, color).next_to(row, UP, buff=0.12).align_to(row, LEFT)
+        note = self.text(sub, 18, GRAY60).next_to(lab, RIGHT, buff=0.3)
+        return VGroup(row, lab, note)
+
+    def construct(self):
+        step = int(self.params.get("step", 1))
+        self.header("memory", animate=(step == 1))
+        wm = self.slots(5, "WORKING MEMORY", "everything learned arrives here, at the front", 1.75)
+        self.add(wm) if step > 1 else self.play(FadeIn(wm), run_time=0.6)
+        getattr(self, f"step{step}")(wm)
+        self.fill_to_target()
+
+    def place(self, chips, row):
+        for c, slot in zip(chips, row):
+            c.move_to(slot)
+
+    def step1(self, wm):
+        row = wm[0]
+        order = ["Exploration", "Nautical Jargon", "Knotwork", "Bargaining", "Empathy"]   # front first
+        chips = []
+        for k, name in enumerate(reversed(order)):          # Empathy came first
+            c = self.chip(name).move_to(row[0].get_left() + LEFT * 1.6)
+            anims = [c.animate.move_to(row[0])] + [chips[i].animate.move_to(row[len(chips) - i])
+                                                    for i in range(len(chips))]
+            self.play(*anims, run_time=0.5)
+            chips.append(c)
+        self.beat(0.15)
+        new = self.chip("Vigor").move_to(row[0].get_left() + LEFT * 1.6)
+        lost = chips[0]                                      # the oldest, at the back
+        self.play(new.animate.move_to(row[0]),
+                  *[chips[i].animate.move_to(row[len(chips) - i]) for i in range(1, len(chips))],
+                  lost.animate.shift(RIGHT * 2.4 + DOWN * 0.6).set_opacity(0.2), run_time=1.0)
+        note = self.text("full: the oldest falls out, lost for good", 22, LIGHT_PURPLE)
+        note.next_to(row, DOWN, buff=0.7).align_to(row, RIGHT)
+        self.play(FadeIn(note), FadeOut(lost), run_time=0.6)
+
+    def long_term(self):
+        boxes = VGroup()
+        for kind, organ in (("procedural", "cerebellum"), ("semantic", "cerebrum"), ("sensory", "hippocampus")):
+            r = RoundedRectangle(corner_radius=0.1, width=4.35, height=1.1, stroke_color=KIND_COLOR[kind],
+                                 stroke_width=1.5)
+            lab = self.text(f"{kind.upper()}  ({organ})", 18, KIND_COLOR[kind]).next_to(r, UP, buff=0.08)
+            boxes.add(VGroup(r, lab))
+        boxes.arrange(RIGHT, buff=0.3).move_to(DOWN * 0.35)
+        return boxes
+
+    def step2(self, wm):
+        row = wm[0]
+        names = ["Vigor", "Exploration", "Nautical Jargon", "Knotwork", "Bargaining"]
+        chips = [self.chip(n) for n in names]
+        self.place(chips, row)
+        self.add(*chips)
+        lt = self.long_term()
+        self.play(FadeIn(lt), run_time=0.6)
+        self.beat(0.12)
+        cons = self.text("consolidate: kept for good, in the memory of its kind", 22, GOLD).move_to(DOWN * 2.0)
+        self.play(chips[3].animate.move_to(lt[0][0]), chips[4].animate.move_to(lt[1][0]),
+                  chips[1].animate.move_to(lt[2][0]), FadeIn(cons), run_time=1.1)
+        self.beat(0.18)
+        rej = self.text("reject: let it go, to make room before the queue decides", 22, LIGHT_PURPLE)
+        rej.next_to(cons, DOWN, buff=0.25)
+        self.play(chips[2].animate.set_opacity(0.15).shift(UP * 0.5), FadeIn(rej), run_time=0.9)
+        self.play(FadeOut(chips[2]), run_time=0.3)
+
+    def step3(self, wm):
+        row = wm[0]
+        vig = self.chip("Vigor")
+        self.place([vig], row)
+        lt = self.long_term()
+        left = lambda box: box[0].get_center() + LEFT * 1.05    # noqa: E731 — two chips side by side
+        right = lambda box: box[0].get_center() + RIGHT * 1.05  # noqa: E731
+        knot, endu = self.chip("Knotwork").move_to(left(lt[0])), self.chip("Endurance").move_to(right(lt[0]))
+        barg, expl = self.chip("Bargaining").move_to(lt[1][0]), self.chip("Exploration").move_to(lt[2][0])
+        self.add(vig, lt, knot, endu, barg, expl)
+        res = self.slots(3, "RESIDUAL", "set aside: the anamnesis keeps them a while", -2.3)
+        held = [self.chip(n) for n in ("Hard Labor", "Archaeology", "Empathy")]   # front first
+        self.place(held, res[0])
+        self.play(FadeIn(res), FadeIn(VGroup(*held)), run_time=0.7)
+        self.beat(0.12)
+        arch = self.text("archive", 22, GOLD).next_to(lt[0], DOWN, buff=0.2).align_to(lt[0], LEFT)
+        self.play(FadeIn(arch), Indicate(endu, color=GOLD), run_time=0.6)
+        self.play(endu.animate.move_to(res[0][0]),
+                  held[0].animate.move_to(res[0][1]), held[1].animate.move_to(res[0][2]),
+                  held[2].animate.shift(RIGHT * 2.4).set_opacity(0.2), run_time=1.1)
+        gone = self.text("the oldest is forgotten", 22, LIGHT_PURPLE).next_to(res[0], DOWN, buff=0.15)
+        gone.align_to(res[0], RIGHT)
+        self.play(FadeOut(held[2]), FadeIn(gone), run_time=0.6)
+        keep = self.text("a long-term memory always keeps at least one", 20, GRAY60)
+        keep.next_to(lt, DOWN, buff=0.15).align_to(lt, RIGHT)
+        self.play(FadeIn(keep), Indicate(knot, color=GOLD), run_time=0.7)
 
 
 # ── 2. one narration turn ─────────────────────────────────────────────────────

@@ -12,22 +12,38 @@ Choosing a moon generates its world, and its history comes first. Realms rise an
 Now the protagonist. There are no strength or charisma scores in this game. A character is a body: five regions, which are the head, the face, the trunk, the arms and the legs; twenty-two organs; twenty-eight organ parts. Every part starts at one point, and you get twenty-five more to spend. That buys less than half of what the body could reach, so creating a character is really choosing what to give up.
 
 **[System]**
-Before we spend them, here is how a character fits together. Three layers. The body: regions and organs, each with a score. The ways of thinking you learn as you play, called modi mentis, each with a level. And the measures: health, memory, noetic points, movement and the rest.
-The body feeds the other two. Every measure is computed from one organ or one region. And every way of thinking draws on two organs, or on one region, which set its ceiling: one, plus up to three for each organ, or up to six for a region, the stronger they are. A level is what you roll: one die per level. Around all this, what you carry lends dice, what you wear protects and charms, and four organs make the humors, which can bend a die.
-Here is this very character, once we have spent the points. Swordsmanship draws on the arms and the hands. The arms score two out of four: plus two. The hands, four out of six: plus two. So Swordsmanship can rise to level five; today it is level two, so it rolls two dice. And two measures: a backbone of four gives eight movement points in a fight, and a head of ten gives six noetic points in a scene.
+Before we spend them, here is how a character fits together, in four ideas. First, the body: five regions, the head, the face, the trunk, the arms and the legs, each scoring the sum of its organs. Here they are for the character we are about to build. Everything else in the game is read from these numbers.
 
-First, thinking and memory: the head. As a whole, the head sets your noetic points, how many times you can look and think in one scene: its score halved, plus one.
-What you learn in this game are called modi mentis: ways of thinking. A new one always arrives in working memory, a short queue, also sized by the whole head. When that queue is full, the oldest way of thinking falls out, and it is lost for good.
-The anamnesis keeps a second queue, for what you set aside, and it decides how many places you remember: four per point. We raise it by one.
+**[System]**
+Second, the measures. Each one is computed from a single organ or region, by a rule of its own. The backbone, doubled, gives the movement points you spend in a fight: four makes eight. The head, halved and plus one, gives your noetic points, the thoughts you can have in one scene: ten makes six.
 
-To keep a way of thinking for good, you file it into a long-term memory of its kind. The cerebrum holds knowledge, like bargaining or archaeology. We give it two points.
+**[System]**
+Third, the ways of thinking you learn as you play, called modi mentis. Each draws on two organs, or on one region, and those set its ceiling, how far it can ever grow: one, plus up to three for each organ, or up to six for a region, the stronger they are. Swordsmanship draws on the arms and the hands. The arms score two out of four: plus two. The hands, four out of six: plus two. So its ceiling is five.
 
-The cerebellum holds practised skills, like swordsmanship or knotwork, and it is what lets you learn a new move in the middle of a fight. Two points as well.
+**[System]**
+Fourth, the dice. Almost everything you attempt, a blow, a question, a climb, is settled by a roll. You roll one die for each level of the ways of thinking involved, and only sixes count: the task says how many it needs. Swordsmanship is level two today, so it brings two dice. Raise it, and it brings more.
 
-The hippocampus holds the ways of thinking that use the senses.
+**[System]**
+Around these: what you carry can lend dice to an act, what you wear protects you in a fight and charms people in a conversation, and four organs make the humors, which can turn a die after it is rolled. We will meet each of them in this run.
+
+First, thinking and memory: the head. As a whole, the head sets your noetic points, how many times you can look and think in one scene, and it sizes working memory, where everything you learn arrives. The anamnesis sizes the residual memory, and how many places you remember: four per point. We raise it by one.
+
+The cerebrum sizes the memory for knowledge, like bargaining or archaeology. Two points.
+
+The cerebellum sizes the memory for practised skills, like swordsmanship or knotwork, and it lets you learn a new move in the middle of a fight. Two points.
+
+The hippocampus sizes the memory for the ways of thinking that use the senses.
 
 And the pineal gland sets how much experience a level costs, from twelve points down to six. With two points or more, it also lets a mind doubt its own plan and think again.
-My advice: don't neglect memory. A character who learns a lot but has nowhere to file it keeps forgetting.
+
+**[Memory]**
+Memory deserves a closer look, because this game makes you forget. Everything you learn arrives in working memory, at the front. Working memory is a queue: when it is full and something new arrives, the oldest way of thinking falls out of the back, and it is lost for good.
+
+**[Memory]**
+So you file what you want to keep. Consolidating moves a way of thinking into the long-term memory of its kind, practised skills, knowledge, or the senses, and there it is safe. Or you reject one on the spot, to make room before the queue decides for you.
+
+**[Memory]**
+Long-term memories fill up too. To make room, you archive a way of thinking into the residual memory, a last queue the anamnesis keeps, and each memory always keeps at least one. When the residual queue is full, its oldest is forgotten for good. My advice: don't neglect memory. A character who learns a lot but has nowhere to file it keeps forgetting.
 
 The senses. The eyes set the reach of a ranged blow, in cells.
 
@@ -36,6 +52,7 @@ The ears add their score to your initiative, which decides who acts first in a f
 The nose is underrated. Each point lowers the chance of meeting danger on the road by ten per cent, and it tells you which humors are in a food before you eat it.
 
 Speech. The tongue sets how many replies you are offered in a conversation, up to five. At nought, you cannot hold a conversation at all. Two points here: conversation is how you get work, trade and friends.
+And the face as a whole gives countenance: in every conversation, one die for each five points. This face is worth two.
 
 The teeth only decide whether you can eat hard food. We leave them.
 
@@ -149,7 +166,9 @@ When a roll falls short, the humors can save it. Only the humor at the back of e
 > *I rise and press on, the weight of my journey yet to be decided.*
 Success. Look at the lines below: every mind in the chain gained a point of experience, and the act taught a new one, Vigor. Doing things is how you learn.
 
-The run has truly begun, and we are on the world map. Before travelling, let's look at what we have. Escape opens the menu, and Protagonist opens the character screen.
+The run has truly begun. This is the world map, where every journey starts. Before travelling, let's look at what we have.
+
+Escape opens the menu, and Protagonist opens the character screen.
 
 The anatomy tab: the body we built. Wounds will show here, on the organ they hit.
 
@@ -206,6 +225,7 @@ Diligence.
 
 Nautical Jargon.
 > *Strong as a hound, bold as a gale, bind me to your helm, Zedayne Hartmead.*
+A sailor's mind asking for farm work: it offers itself like a crew to a captain, bind me to your helm.
 
 Provisioning.
 > *Seek a place where days of grain, firewood, and salt are few, and know thyself a farmer's help.*
@@ -305,6 +325,7 @@ My advice: dress for the person you are talking to. Those are the cheapest dice 
 
 Then one more passage, from a mind that took no part. Bargaining is also a feeling, moved by a good trade. It tells how the trade felt, and pushes a humor of joy into the spleen: laetitia, which turns a five into a six. A feeling now is luck for later.
 > *I traded my wares, and in the price beneath the price, I felt glad and lighter than before, like a hawk skimming the breeze after a successful hunt.*
+A hawk skimming the breeze after a hunt: even a merchant's mind reaches for its own images when it is glad.
 
 The cobbler's shelf. Every price is in one coin, copper, silver or gold, and coins never convert. The leather boots cost twenty copper: all we have. One click to add them, one to confirm.
 
