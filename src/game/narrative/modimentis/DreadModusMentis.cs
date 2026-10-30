@@ -21,7 +21,7 @@ public class DreadModusMentis : ModusMentis
     public override string PersonaReminder  => "dread-filled watcher";
     public override string PersonaReminder2 => "someone who wants very much to leave and cannot say why";
     public override string StyleInstruction =>
-        "Physical and unreasoned - the cold along the arms, the reluctance, the eyes going to the exit.";
+        "Physical and unreasoned - a reluctance felt in the body, and the wish to be elsewhere.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

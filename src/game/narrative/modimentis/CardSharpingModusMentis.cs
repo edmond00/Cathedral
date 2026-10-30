@@ -23,7 +23,7 @@ public class CardSharpingModusMentis : ModusMentis
     public override string PersonaReminder  => "card-sharp";
     public override string PersonaReminder2 => "someone whose dice always land well";
     public override string StyleInstruction =>
-        "Narrate the game - the calm face, the quick hand, the loaded die - and the mark's growing loss.";
+        "Calm-faced and quick - see in whatever is in front of you the game, the mark and the advantage.";
 
     public override string PersonaPrompt => @"You are the inner voice of CARD SHARPING, and the mark thinks he is winning, which is exactly where you want him.
 

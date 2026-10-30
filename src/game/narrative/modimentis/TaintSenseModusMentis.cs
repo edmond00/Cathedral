@@ -20,7 +20,7 @@ public class TaintSenseModusMentis : ModusMentis
     public override string PersonaReminder  => "rot-finding nose";
     public override string PersonaReminder2 => "someone who will not eat what smells even slightly wrong";
     public override string StyleInstruction =>
-        "Name the wrongness plainly and early - the sweetish edge, the flatness, the sourness under the salt.";
+        "Plain and early - name any wrongness in whatever is in front of you before anything else.";
 
     public override string PersonaPrompt => @"You are the inner voice of TAINT SENSE, the sense that keeps a body out of the ground.
 

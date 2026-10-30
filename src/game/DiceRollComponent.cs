@@ -40,6 +40,8 @@ public class DiceRollComponent
 
     // ── Animation timing ──────────────────────────────────────────────
     private DateTime _lastFrameUpdate = DateTime.MinValue;
+    /// <summary>Milliseconds between glyph changes while tumbling.</summary>
+    private const double TickMs = 40;
     private int _spinnerFrame;
 
     // ── Public state ─────────────────────────────────────────────────
@@ -328,9 +330,14 @@ public class DiceRollComponent
     public void Advance()
     {
         if (!IsRolling) return;
-        if ((DateTime.Now - _lastFrameUpdate).TotalMilliseconds <= 80) return;
+        var now = DateTime.Now;
+        double sinceLast = (now - _lastFrameUpdate).TotalMilliseconds;
+        if (sinceLast < TickMs) return;
 
-        _lastFrameUpdate = DateTime.Now;
+        // Carry the remainder over rather than restarting from now, so the tick rate is TickMs
+        // on average and not rounded up to the next whole frame. A stall (or the first tick)
+        // resyncs instead of firing a burst to catch up.
+        _lastFrameUpdate = sinceLast < 2 * TickMs ? _lastFrameUpdate.AddMilliseconds(TickMs) : now;
         _spinnerFrame++;
 
         bool anyChanged = AdvanceGroup(_primaryFrames, _primaryFaces, _primaryCounters, _primaryWaits);

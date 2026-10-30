@@ -15,7 +15,8 @@ public class PredatorModusMentis : ModusMentis
         "Reads a larger quarry for its line of escape and works to close it, stalking and cornering until space runs out. Keeps a patient pressure on the pursuit rather than a hasty rush.";
     public override string SkillMeans       => "the patient hunting and cornering of prey";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action, ModusMentisFunction.Fighting };
-    public override WillTarget? Will => WillTarget.To<StalkVerb>("stalk prey");
+    public override WillTargets? Will => WillTarget.To<StalkVerb>("stalk prey");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Woodland, Places.Grassland);
     public override string[] Organs        => new[] { "fangs", "claws" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.Low;
@@ -25,7 +26,7 @@ public class PredatorModusMentis : ModusMentis
     public override string PersonaReminder  => "the patient circling predator";
     public override string PersonaReminder2 => "someone who waits until the quarry is cornered before striking";
     public override string StyleInstruction =>
-        "Use the imagery of stalking and the coiled pounce, with a predator's patient, hungry stillness.";
+        "Patient, hungry and still - judge whatever is in front of you as quarry, and wait for the right moment.";
 
     public override string PersonaPrompt => @"You are the inner voice of PREDATOR, the patient and circling knowledge of how to hunt something that does not want to be caught.
 

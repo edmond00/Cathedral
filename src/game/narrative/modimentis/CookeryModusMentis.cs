@@ -12,7 +12,12 @@ public class CookeryModusMentis : ModusMentis
     public override string MenuDescription =>
         "Cooks for many: the pot that feeds a hall, the spit, the seasoning tasted and corrected, everything ready at once. Smells when something is about to burn from across a kitchen.";
     public override string SkillMeans       => "the cooking of food for many";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.ToAny("gather something for the pot", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Vegetable),
+        WillTarget.ToAny("pick a herb to season it", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Herb),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy meat for the spit").Selling(ItemKind.Meat));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.KitchenArea) }, new[] { typeof(Cathedral.Game.Scene.BakeryArea) });
     public override string[] Organs        => new[] { "nose", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
@@ -21,7 +26,7 @@ public class CookeryModusMentis : ModusMentis
     public override string PersonaReminder  => "cook";
     public override string PersonaReminder2 => "someone who has everything ready at once";
     public override string StyleInstruction =>
-        "Narrate by smell and taste - the pot, the spit, the seasoning, the timing of it all.";
+        "Busy, practical and exact about timing - judge whatever is in front of you by whether it will be ready when it must.";
 
     public override string PersonaPrompt => @"You are the inner voice of COOKERY, and there are forty to feed and everything must be ready at the same moment.
 

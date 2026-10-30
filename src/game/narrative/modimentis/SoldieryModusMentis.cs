@@ -14,16 +14,19 @@ public class SoldieryModusMentis : ModusMentis
         "Thinks like a man under orders: the chain of command, the duty roster, the kit that must be kept, the trouble that comes of being noticed. Knows how an army lives when it is not fighting, which is nearly always.";
     public override string SkillMeans       => "the ordinary knowledge of the soldier's life";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
-    public override WillTarget? Will => WillTarget.To<TalkSoldieringVerb>("talk of the soldier's life");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<TalkSoldieringVerb>("talk of the soldier's life"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over where soldiers sleep").Teaching<SoldieryModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Stronghold, Places.Taverns);
     public override string[] Organs        => new[] { "cerebrum", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction | AnatomyCapability.Speech;
 
     public override string PersonaTone     => "an old soldier who has learned that most of war is waiting and kit";
     public override string PersonaReminder  => "old soldier";
-    public override string PersonaReminder2 => "someone who keeps his boots dry and his head down";
+    public override string PersonaReminder2 => "someone who keeps out of trouble by habit";
     public override string StyleInstruction =>
-        "Think like a soldier - orders, kit, rations, who outranks whom, and how not to be noticed.";
+        "Wary and practical - think like a soldier: orders, rank, and how not to be noticed.";
 
     public override string PersonaPrompt => @"You are the inner voice of SOLDIERY, and you know that war is mostly waiting, and the waiting has rules.
 

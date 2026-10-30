@@ -26,6 +26,7 @@ public sealed class Tabard : WearableItem
 
 public sealed class Helm : WearableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Armour });
     public override string ItemId      => "open_helm";
     public override string DisplayName => "Open Helm";
     public override string Description => "An iron cap with a nasal bar, dented and repaired";
@@ -39,6 +40,7 @@ public sealed class Helm : WearableItem
 
 public sealed class ArmingBoots : WearableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Armour });
     public override string ItemId      => "arming_boots";
     public override string DisplayName => "Riding Boots";
     public override string Description => "Tall boots of thick leather, the heels shod with iron";
@@ -51,6 +53,7 @@ public sealed class ArmingBoots : WearableItem
 
 public sealed class Whistle : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool });
     public override string ItemId      => "whistle";
     public override string DisplayName => "Signal Horn";
     public override string Description => "A small curved horn on a cord, for calling the watch";
@@ -63,10 +66,13 @@ public sealed class Whistle : Item
 
 public sealed class KeyRing : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Metal, ItemKind.Tool });
     public override string ItemId      => "key_ring";
     public override string DisplayName => "Ring of Keys";
     public override string Description => "A heavy iron ring of a dozen keys, each one different";
-    public override ItemCategory Category => ItemCategory.Crafting;
+    // Keys open locks: the one act they are made for, so the tool gate passes them without asking.
+    public override ItemCategory Category => ItemCategory.Tool;
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "unlock_door" };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Ironwork };
@@ -77,6 +83,7 @@ public sealed class KeyRing : Item
 
 public sealed class Vestment : WearableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Holy });
     public override string ItemId      => "vestment";
     public override string DisplayName => "Vestment";
     public override string Description => "A long embroidered robe, its gold thread worn at the cuffs";
@@ -89,6 +96,7 @@ public sealed class Vestment : WearableItem
 
 public sealed class Habit : WearableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Holy });
     public override string ItemId      => "habit";
     public override string DisplayName => "Monk's Habit";
     public override string Description => "A coarse undyed habit with a deep hood and a rope belt";
@@ -101,6 +109,7 @@ public sealed class Habit : WearableItem
 
 public sealed class Tonsure : WearableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Holy });
     public override string ItemId      => "skullcap";
     public override string DisplayName => "Skullcap";
     public override string Description => "A close black cap worn by the ordained";
@@ -151,6 +160,7 @@ public sealed class Doublet : WearableItem
 
 public sealed class Chain : WearableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Armour });
     public override string ItemId      => "chain_of_office";
     public override string DisplayName => "Chain of Office";
     public override string Description => "A heavy gilt chain worn across the shoulders";
@@ -274,6 +284,7 @@ public sealed class Hood : WearableItem
 
 public sealed class GraveSpade : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool });
     public override string ItemId      => "grave_spade";
     public override string DisplayName => "Grave Spade";
     public override string Description => "A long narrow spade with a worn iron edge and a T-handle";

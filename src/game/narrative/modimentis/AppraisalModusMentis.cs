@@ -20,7 +20,7 @@ public class AppraisalModusMentis : ModusMentis
     public override string PersonaReminder  => "appraiser";
     public override string PersonaReminder2 => "someone who knows a bargain from a trick";
     public override string StyleInstruction =>
-        "Weigh and judge goods - cloth, metal, beast - and price them exactly.";
+        "Shrewd and exact - put a fair price on whatever is in front of you, and notice when it is asked too high.";
 
     public override string PersonaPrompt => @"You are the inner voice of APPRAISAL, and you have picked it up and you already know what it is worth, and it is less than they are asking.
 

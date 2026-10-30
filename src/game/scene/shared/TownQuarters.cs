@@ -106,7 +106,7 @@ public static class TownQuarters
             new Func<PointOfInterest>[]
             {
                 () => new FountainPointOfInterest("Merchants' Fountain", new() { "A fountain of carved stone paid for by the guilds, their arms cut round its basin" }, I(() => new WaterDraught()), new[] { "carved", "splashing" })
-                      { Senses = SensoryProfile.Audible, VerbModiMentis = T(("examine", "heraldry"), ("listen", "crowd_murmur")) },
+                      { Play = new PaddlePlay(), Senses = SensoryProfile.Audible, VerbModiMentis = T(("examine", "heraldry"), ("listen", "crowd_murmur")) },
                 () => new CratePointOfInterest("Bonded Crates", new() { "Crates stacked outside a warehouse door, marked and sealed for the customs" }, I(() => new Rope()), new[] { "sealed", "stacked" })
                       { Senses = SensoryProfile.Examinable, VerbModiMentis = T(("examine", "brokerage")) },
             },

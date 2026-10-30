@@ -13,7 +13,13 @@ public class WoodcraftModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads timber by its grain and works it through shaping and joining. Judges how wood will split or hold, and sets the hands to building, carving, or fitting it.";
     public override string SkillMeans       => "the shaping and joining of timber";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.ToAny("take up sound timber", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Wood),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.CutWoodVerb>("cut timber to work"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy seasoned wood").Selling(ItemKind.Wood),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over timber and the trees it comes from").Teaching<WoodcraftModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Woodland, Places.Shops);
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
@@ -21,7 +27,7 @@ public class WoodcraftModusMentis : ModusMentis
     public override string PersonaReminder  => "timber-worker";
     public override string PersonaReminder2 => "someone who works with the grain, never against it";
     public override string StyleInstruction =>
-        "Use images of grain, joint and shaving, with the deliberate calm of one careful stroke at a time.";
+        "Deliberate and calm - judge whatever is in front of you by how it was made, one careful step at a time.";
 
     public override string PersonaPrompt => @"You are the inner voice of WOODCRAFT, the patient trade that shapes standing trees into beams, boards and honest joints.
 

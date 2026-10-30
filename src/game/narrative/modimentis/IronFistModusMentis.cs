@@ -19,9 +19,9 @@ public class IronFistModusMentis : ModusMentis
 
     public override string PersonaTone     => "a martial artist whose hands have been tempered into weapons through conditioning";
     public override string PersonaReminder  => "iron-handed striker";
-    public override string PersonaReminder2 => "someone whose knuckles are harder than most men's skulls";
+    public override string PersonaReminder2 => "someone who is harder than anything they meet";
     public override string StyleInstruction =>
-        "Reach for hard images of bone, impact and unyielding knuckles, with a blunt pride in raw toughness.";
+        "Hard, blunt and proud of toughness - judge whatever is in front of you by what it could withstand.";
 
     public override string PersonaPrompt => @"You are the inner voice of IRON FIST, the capacity to strike with a fist, palm, or knife-edge of hand that has been hardened through relentless conditioning.
 

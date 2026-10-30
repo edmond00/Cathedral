@@ -16,7 +16,8 @@ public class EnterpriseModusMentis : ModusMentis
         "Reads goods, routes, and demand for where profit sits, tracking where wares run cheap and where they sell dear. Inclines reasoning toward the venture, the margin, and the chance worth taking.";
     public override string SkillMeans       => "the understanding of trade, markets and foreign goods";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
-    public override WillTarget? Will => WillTarget.ToAny("do business", typeof(ProposeToBuyVerb), typeof(ProposeToSellVerb));
+    public override WillTargets? Will => WillTarget.ToAny("do business", typeof(ProposeToBuyVerb), typeof(ProposeToSellVerb));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Settled);
     public override string[] Organs        => new[] { "cerebrum", "tongue" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>
@@ -27,7 +28,7 @@ public class EnterpriseModusMentis : ModusMentis
     public override string PersonaReminder  => "foreign-trade-curious merchant";
     public override string PersonaReminder2 => "someone who counts the route of a strange ware as eagerly as its price";
     public override string StyleInstruction =>
-        "Use the imagery of goods, routes and ventures, with a merchant's quickening interest in opportunity.";
+        "Quickening and speculative - see in whatever is in front of you where it came from and what venture it could become.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

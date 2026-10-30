@@ -15,7 +15,8 @@ public class PugilitasModusMentis : ModusMentis
         "Reads a fist-fight through footwork, guard, and trained striking. Keeps the body drilled for boxing, and inclines toward disciplined hand-to-hand exchange over wild swinging.";
     public override string SkillMeans => "boxing and hand-to-hand combat";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action, ModusMentisFunction.Fighting };
-    public override WillTarget? Will => WillTarget.To<AttackVerb>("come to blows");
+    public override WillTargets? Will => WillTarget.To<AttackVerb>("come to blows");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Taverns, Places.Streets);
     public override string[] Organs => new[] { "hands", "legs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     
@@ -23,7 +24,7 @@ public class PugilitasModusMentis : ModusMentis
     public override string PersonaReminder => "disciplined combat scientist";
     public override string PersonaReminder2 => "someone who studies violence as a precise and learnable art";
     public override string StyleInstruction =>
-        "Frame combat in the disciplined imagery of stance, guard and timing, with a craftsman's respect for the art.";
+        "Disciplined and respectful of the art - judge whatever is in front of you by stance, guard and timing.";
     
     public override string PersonaPrompt => @"You are the inner voice of Pugilitas, the old art of the clenched fist refined through centuries of discipline into a method both brutal and elegant.
 

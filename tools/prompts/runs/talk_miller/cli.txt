@@ -1,0 +1,123 @@
+[cli] script loaded: /home/user/repo/tools/prompts/scripts/corpus_talk_miller.cli
+[cli] ready — type `help` for commands
+[cli] > wait
+[cli] wait done (idle)
+[cli] > wait mode MainMenu 900
+[cli] wait done (mode=MainMenu)
+[cli] > click menu New
+[cli] ok: pressed menu "New"
+[cli] > wait mode ProtagonistCreation 60
+[cli] wait done (mode=ProtagonistCreation)
+[cli] > click continue
+[cli] ok: accepted protagonist
+[cli] > wait mode WorldView 300
+[cli] wait done (mode=WorldView)
+[cli] > travel here
+[cli] ok: entering the location at vertex 459 (own vertex)
+[cli] > wait mode LocationInteraction 900
+[cli] wait done (mode=LocationInteraction)
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > click keyword 0
+[cli] ok: clicked keyword "0"
+[cli] > choose 0
+[cli] ok: chose 0
+[cli] > choose courtesy
+[cli] ok: chose courtesy
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > click action 0
+[cli] ok: clicked action 0
+[cli] > choose 0
+[cli] action-strategy Custom action="try to quietly step closer to her, my footfalls silent as a shadow's, and introduce myself with soft words." outcome="VerbAction → strike up a conversation with her, introducing myself"
+[cli] dice-roll auto=success (3 dice, need 1 six) (use `strategy fail-dice` to force failure)
+[cli] ok: chose 0
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > click continue
+[cli] ok: confirmed dice
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] ok: preview continue
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > wait 30
+[cli] wait done (idle (≤30s))
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 0
+[cli] ok: picked option 0
+[cli] > advance 20 1500
+[cli] ok: preview continue
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > click option 1
+[cli] error: option 1 out of range (have 1)
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 0
+[cli] ok: picked option 0
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click continue
+[cli] ok: confirmed dice
+[cli] > advance 20 1500
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > click button
+[cli] ok: pressed dialogue footer button
+[cli] > wait 1500
+[cli] wait done (idle (≤1500s))
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > click keyword 0
+[cli] ok: clicked keyword "0"
+[cli] > choose 0
+[cli] ok: chose 0
+[cli] > choose mythomania
+[cli] ok: chose mythomania
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > click action 0
+[cli] error: no action 0 on screen
+[cli] > choose 0
+[cli] error: no popup is visible
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > click continue
+[cli] error: no dice continue button on screen
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > wait 30
+[cli] wait done (idle (≤30s))
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 0
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 1
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 0
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click continue
+[cli] error: no dice continue button on screen
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > state
+[cli] mode=LocationInteraction idle=True carry[3/50] narration[loading=False dice=none continue=False noetic=2/3 observed=1/10 preview=none time=none walk=none backtrack=none history=58 total=72 scroll=1]
+[cli] > quit
+[cli] quitting (all assertions passed)

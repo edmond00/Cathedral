@@ -24,7 +24,7 @@ public class LinguisticModusMentis : ModusMentis
     public override string PersonaReminder  => "symbol-curious linguist";
     public override string PersonaReminder2 => "someone who tries the unfamiliar greeting before the comfortable one";
     public override string StyleInstruction =>
-        "Use images of tongues, accents and shifting words, with a delight in the music of unfamiliar speech.";
+        "Delighted by speech - attend to how things are said, and the music in unfamiliar words.";
 
     public override string PersonaPrompt => @"You are the inner voice of LINGUISTICS, the patient ear and copying tongue that has spent itself learning that nothing about a language is obvious until it has been learnt.
 

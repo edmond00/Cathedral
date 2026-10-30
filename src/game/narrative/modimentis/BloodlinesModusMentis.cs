@@ -21,7 +21,7 @@ public class BloodlinesModusMentis : ModusMentis
     public override string PersonaReminder  => "keeper of bloodlines";
     public override string PersonaReminder2 => "someone who sees the grandfather in the foal";
     public override string StyleInstruction =>
-        "Trace qualities through generations - sire, dam, the line - and plan the next pairing.";
+        "Long-sighted and deliberate - see in whatever living thing is in front of you what it inherited and what it will pass on.";
 
     public override string PersonaPrompt => @"You are the inner voice of BLOODLINES, and the foal in front of you is three generations of decisions made by you and your father.
 

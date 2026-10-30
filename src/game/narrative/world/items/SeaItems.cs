@@ -36,6 +36,7 @@ public sealed class Mackerel : SeaFoodItem
 
 public sealed class Crab : SeaFoodItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Shellfish });
     public override string ItemId      => "crab";
     public override string DisplayName => "Crab";
     public override string Description => "A scuttling brown crab, claws still snapping";
@@ -45,6 +46,7 @@ public sealed class Crab : SeaFoodItem
 
 public sealed class Mussel : SeaFoodItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Shellfish });
     public override string ItemId      => "mussel";
     public override string DisplayName => "Mussel";
     public override string Description => "A fistful of black-shelled mussels clamped tight";
@@ -62,6 +64,7 @@ public sealed class Mussel : SeaFoodItem
 /// </summary>
 public sealed class Shell : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Shellfish, ItemKind.Flotsam });
     public override string ItemId      => "shell";
     public override string DisplayName => "Shell";
     public override string Description => "A banded spiral shell, chalky and empty, worn thin at the lip";
@@ -73,6 +76,7 @@ public sealed class Shell : Item
 
 public sealed class Seaweed : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Plant, ItemKind.Flotsam });
     public override string ItemId      => "seaweed";
     public override string DisplayName => "Seaweed";
     public override string Description => "A heavy strand of brown seaweed, cool and slick";
@@ -89,6 +93,7 @@ public sealed class Seaweed : ConsumableItem
 
 public sealed class Driftwood : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Wood, ItemKind.Flotsam, ItemKind.Fuel });
     public override string ItemId      => "driftwood";
     public override string DisplayName => "Driftwood";
     public override string Description => "A water-pale piece of driftwood, salt-cracked";
@@ -100,6 +105,7 @@ public sealed class Driftwood : Item
 
 public sealed class RopeFragment : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Flotsam, ItemKind.Fibre });
     public override string ItemId      => "rope_fragment";
     public override string DisplayName => "Rope Fragment";
     public override string Description => "A frayed length of tarred rope cut by a tide-rock";

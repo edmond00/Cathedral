@@ -16,7 +16,10 @@ public class BargainingModusMentis : ModusMentis
         "Holds two figures in mind at once, the price asked and the price that would actually be accepted, and works the gap between them. Seeks out whoever has something to sell and opens the haggling, feigning indifference so that a deal is pulled loose rather than offered.";
     public override string SkillMeans       => "skilled haggling and the striking of good bargains";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
-    public override WillTarget? Will => WillTarget.ToAny("strike a bargain", typeof(ProposeToBuyVerb), typeof(ProposeToSellVerb));
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.ToAny("strike a bargain", typeof(ProposeToBuyVerb), typeof(ProposeToSellVerb)),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over goods set out for trade").Teaching<BargainingModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Settled);
     public override string[] Organs        => new[] { "tongue", "cerebrum" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>
@@ -25,9 +28,9 @@ public class BargainingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a market-tongued haggler who never pays one penny over the proper figure";
     public override string PersonaReminder  => "market-tongued haggler";
-    public override string PersonaReminder2 => "someone who reads a seller's face for the lower price beneath the asking one";
+    public override string PersonaReminder2 => "someone who always hears the lower price beneath the asking one";
     public override string StyleInstruction =>
-        "Use the imagery of trade, leverage and the price beneath the price, with a haggler's shrewd appraisal.";
+        "Shrewd and patient - weigh whatever is in front of you for the price beneath the price.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

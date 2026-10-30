@@ -13,6 +13,7 @@ namespace Cathedral.Game.Narrative.World.Items;
 
 public sealed class Horseshoe : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Metal });
     public override string ItemId      => "horseshoe";
     public override string DisplayName => "Horseshoe";
     public override string Description => "A worn iron horseshoe, the nail holes ragged";
@@ -25,6 +26,7 @@ public sealed class Horseshoe : Item
 
 public sealed class Saddle : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool, ItemKind.Hide });
     public override string ItemId      => "saddle";
     public override string DisplayName => "Saddle";
     public override string Description => "A leather saddle on a wooden tree, the seat polished by long riding";
@@ -37,6 +39,7 @@ public sealed class Saddle : Item
 
 public sealed class Bridle : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool, ItemKind.Hide });
     public override string ItemId      => "bridle";
     public override string DisplayName => "Bridle";
     public override string Description => "A headstall and reins of oiled leather with an iron snaffle bit";
@@ -49,6 +52,7 @@ public sealed class Bridle : Item
 
 public sealed class HorseBlanket : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Cloth });
     public override string ItemId      => "horse_blanket";
     public override string DisplayName => "Horse Blanket";
     public override string Description => "A heavy striped wool blanket that smells strongly of horse";
@@ -61,6 +65,7 @@ public sealed class HorseBlanket : Item
 
 public sealed class Cowbell : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool, ItemKind.Metal });
     public override string ItemId      => "cowbell";
     public override string DisplayName => "Cowbell";
     public override string Description => "A flat iron bell on a leather collar, its clapper a knuckle-bone";
@@ -101,6 +106,7 @@ public sealed class HoofPick : Item
 
 public sealed class Lariat : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool });
     public override string ItemId      => "lariat";
     public override string DisplayName => "Lariat";
     public override string Description => "A long braided rawhide rope with a running noose at one end";
@@ -140,6 +146,7 @@ public sealed class StockWhip : Item
 
 public sealed class Pitchfork : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool });
     public override string ItemId      => "pitchfork";
     public override string DisplayName => "Pitchfork";
     public override string Description => "A long-handled fork with two iron tines, for hay and dung";
@@ -155,6 +162,7 @@ public sealed class Pitchfork : Item
 
 public sealed class Fleece : TextileItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Hide, ItemKind.Fibre });
     public override string ItemId      => "fleece";
     public override List<ItemTag> Tags => new() { ItemTag.Textile, ItemTag.Woollens };
     public override string DisplayName => "Fleece";
@@ -164,6 +172,7 @@ public sealed class Fleece : TextileItem
 
 public sealed class Horsehair : TextileItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Fibre });
     public override string ItemId      => "horsehair";
     public override string DisplayName => "Horsehair";
     public override string Description => "A hank of long coarse horsehair from a mane or tail";
@@ -172,6 +181,7 @@ public sealed class Horsehair : TextileItem
 
 public sealed class GoatMilk : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Dairy });
     public override string ItemId      => "goat_milk";
     public override string DisplayName => "Goat Milk";
     public override string Description => "A skin of goat milk, rich and a little rank";
@@ -187,6 +197,7 @@ public sealed class GoatMilk : ConsumableItem
 
 public sealed class Ham : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Meat });
     public override string ItemId      => "ham";
     public override string DisplayName => "Ham";
     public override string Description => "A smoked ham in a cloth, its rind dark and hard";
@@ -202,6 +213,7 @@ public sealed class Ham : ConsumableItem
 
 public sealed class Fowl : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Meat });
     public override string ItemId      => "fowl";
     public override string DisplayName => "Plucked Fowl";
     public override string Description => "A hen killed and plucked, trussed by the feet with a twist of straw";
@@ -217,6 +229,7 @@ public sealed class Fowl : ConsumableItem
 
 public sealed class Bacon : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Meat });
     public override string ItemId      => "bacon";
     public override string DisplayName => "Bacon";
     public override string Description => "A slab of salted, smoked bacon streaked white and red";
@@ -232,6 +245,7 @@ public sealed class Bacon : ConsumableItem
 
 public sealed class GooseEgg : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Egg });
     public override string ItemId      => "goose_egg";
     public override string DisplayName => "Goose Egg";
     public override string Description => "A heavy white goose egg, twice the size of a hen's";
@@ -247,6 +261,7 @@ public sealed class GooseEgg : ConsumableItem
 
 public sealed class DuckEgg : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Egg });
     public override string ItemId      => "duck_egg";
     public override string DisplayName => "Duck Egg";
     public override string Description => "A pale blue-green duck egg, the shell faintly chalky";
@@ -262,6 +277,7 @@ public sealed class DuckEgg : ConsumableItem
 
 public sealed class RabbitStew : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Meat });
     public override string ItemId      => "rabbit_stew";
     public override string DisplayName => "Rabbit Stew";
     public override string Description => "A covered pot of rabbit stewed with onion and thyme";
@@ -277,6 +293,7 @@ public sealed class RabbitStew : ConsumableItem
 
 public sealed class Curds : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Dairy });
     public override string ItemId      => "curds";
     public override string DisplayName => "Curds";
     public override string Description => "A bowl of fresh white curds dripping whey";

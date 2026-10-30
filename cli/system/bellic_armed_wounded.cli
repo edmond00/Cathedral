@@ -1,0 +1,42 @@
+# The Bellic tab for an armed and then a wounded protagonist.
+#
+# --weapons puts an arming sword in the right hand and a round shield in the left, so the tab
+# shows two weapon blocks and the shield's guard reads as defence dice rather than an attack.
+# `wound protagonist 5` then lays five wounds from the catalogue — seeded, so the same five every run —
+# and the ears' among them costs initiative, which the tab marks ↓ beside the number the fight reads.
+# --organs trunk=5 gives the body the hit points to carry five wounds and live.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --weapons --grant-mm brawling:2,swordsmanship:2 --location-type test --location-id 0 --npc-static --period noon --organs trunk=5
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 45
+
+# --- armed ---------------------------------------------------------------------------
+manage Bellic
+wait 1
+expect Arming Sword
+expect Round Shield
+expect long blade
+expect Cover
+expect def
+expect-not Wounds weigh on this body
+dump
+
+manage Bellic Cover
+wait 1
+expect added to your defence
+dump
+
+# --- wounded -------------------------------------------------------------------------
+manage
+wound protagonist 5
+manage Bellic
+wait 1
+expect Wounds weigh on this body
+expect 1d6 + 1 ↓
+dump
+
+quit

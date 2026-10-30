@@ -23,7 +23,7 @@ public class PatienceModusMentis : ModusMentis
     public override string PersonaReminder => "serene strategist of timing";
     public override string PersonaReminder2 => "someone who knows that waiting is itself a kind of action";
     public override string StyleInstruction =>
-        "Reach for slow images of ripening and tide, with the unhurried calm of one content to wait.";
+        "Unhurried and content to wait - meet whatever is in front of you knowing it will come in its time.";
     
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

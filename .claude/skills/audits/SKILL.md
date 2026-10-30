@@ -1,6 +1,6 @@
 ---
 name: audits
-description: The fourteen headless audits that check content rather than code: --outcome-audit, --crime-audit, --dialogue-audit, --npc-audit, --mm-audit, --item-audit, --verb-audit, --world-variant-audit, --history-audit, --mm-grant-csv, --mm-reach-csv, --llm-probe-audit, --building-audit and --biome-audit. Use after adding or editing a verb, an outcome, a modus mentis, an item, an NPC archetype, a dialogue tree, a scene factory, a world variant, the world history generator or the lore catalogue, or a batch of scene content, and to find out which audit covers a change.
+description: The seventeen headless audits that check content rather than code: --outcome-audit, --play-audit, --crime-audit, --dialogue-audit, --npc-audit, --mm-audit, --will-audit, --will-lesson-audit, --item-audit, --verb-audit, --world-variant-audit, --history-audit, --mm-grant-csv, --mm-reach-csv, --llm-probe-audit, --building-audit and --biome-audit. Use after adding or editing a verb, an outcome, a kind of play or where plays are placed, a modus mentis, a will's targets or places, an object's lesson (VerbModiMentis), an item, an NPC archetype, a dialogue tree, a scene factory, a world variant, the world history generator or the lore catalogue, or a batch of scene content, and to find out which audit covers a change.
 ---
 
 # The audits
@@ -43,6 +43,30 @@ its outcome from the view's `Variant` — `introduce_me` needs to know *which* t
 target-only overload comes back empty. And outcomes reached by paths the sweep cannot walk (a phase
 transition, a failure branch, `tame`'s appeased beast) are declared in `OutcomeAudit.Elsewhere` with a
 reason, rather than left as noise to be ignored.
+
+### Checking where PLAY is offered
+
+```bash
+dotnet run -- --play-audit
+```
+
+PLAY's content is spread across three routes — a factory's own objects, creature archetypes and
+`PlayPlacement`'s pass over a finished scene — so no one file says how much of the world can be
+played in. This builds every factory the verb audit sweeps (up to 20 ids each) and counts the areas
+where `PlayVerb` accepts something at some hour, for a default protagonist. About a minute.
+
+- **The share** — mean of the factories' shares, held to 20–32% (✗ outside), with the pooled share
+  over every area beside it. Cities and citadels are hundreds of rooms, so the pooled figure moves with
+  the indoor rules (dormitories, halls, roofs) and the mean with the wilderness; keep both near 25%.
+- **Kinds of play** — areas offering each `PlayActivity` subclass; ✗ on one no scene offers.
+- **What carries them**, **how each is worded** (one line per carrier and name — read it after adding a
+  `{0}` template; a plural object under a singular pronoun shows here), **lessons taught to a person**.
+- **Each play's lessons** — ✗ when no body the play is offered to can hold any of them.
+- **By kind of area** — areas, areas with a play, share. What the chances in `PlayPlacement.Rules`
+  were tuned against.
+
+Run it after adding a kind of play, a plaything, a play on a factory object or an archetype, or after
+changing a placement chance or a factory's areas.
 
 ### Checking the crime system
 
@@ -171,15 +195,88 @@ related MMs fatal, so the coverage table is really about spotting the ones scrap
 report also prints a **per-anatomy** table — what each anatomy can actually learn, source by source,
 which is a much smaller set than the catalogue-wide one and the only one R11 reads.
 
-The **wills** section fails (✗) on two shares, not one: wills in the catalogue (25–33%), and wills
-among **the lessons the offered acts teach** (20–36%) — every act the sampled locations offer counts
+The **wills** section fails (✗) on two shares, not one: wills in the catalogue (36–44%), and wills
+among **the lessons the offered acts teach** (28–42%) — every act the sampled locations offer counts
 its `ResolveLesson` once, so `grab`, offered everywhere, weighs as it does in play. The second is the
 one a player feels and the first cannot see: it read 56% while the catalogue read a third, because
 nearly every verb's own lesson had been made a will of that verb. Below it the 25 lessons offered
 most, wills marked. Before making a modus mentis a will, look it up there: one near the top moves
 the learned share by points.
 
+It lists every target of every will and fails (✗) one that no location offers.
+
+The **persona wording** section (`PersonaLint`) fails (✗) on a `StyleInstruction` or
+`PersonaReminder2` written as things: two or more concrete nouns, or a style opening a props list
+("images of", "narrate the"). It loads the GloVe vectors to tell a concrete noun, so this audit takes
+a few seconds more than it did. The rules and why are in the `choice-judge` skill ("Writing the
+voice"); `tools/prompts/persona_lint.py --text "…"` checks a wording before it goes in.
+
 Run it after adding or editing a modus mentis, a fighting skill, an organ, or a body region.
+
+### Checking where wills have something to do
+
+```bash
+dotnet run -- --will-audit [out.json]          # the report; the JSON feeds reports/multi-target-wills.html
+dotnet run -- --will-trace <will-id> [LOCATION] # why one will has, or lacks, something to do there
+```
+
+`--mm-audit` asks whether a will's targets are offered *anywhere*; this asks the question a player
+meets, with the planner itself (`ActionPathPlanner.Plan`): standing here, is there a way to anything the
+will wants? Every location factory the audits sweep is built for three ids (one for a town or city), and
+every will planned from the entry area and from the first area of a kind it declares it belongs in
+(`ModusMentis.WillPlaces`, rule R19), at morning and at night. About three minutes. Three numbers:
+
+- **coverage** — the share of (will, start) with a plan, overall and per location kind;
+- **related coverage** — the same from the will's own places: the headline, since a will idling where a
+  player expects it to work is the playtest complaint. **✗ under 60% overall** (64.5% over 114 one-target
+  wills before they had several; 64% over 159 after, and 69% for the original 114); a will under 60%
+  in its own places is marked `!`;
+- **breadth** — the share of location kinds where the will has something to do. **✗ above 75% for a
+  will with several targets**: added targets are how a desire grows into a general mind (`cross`,
+  `scale_up`, `provoke`, fuel or wood as a second target did exactly that). A single target whose act
+  is everywhere (to sit, to smell) is marked `~`, not failed. Breadth is judged on the will's **own**
+  targets: one bound to its lesson (`.Teaching<…>()`, below) reaches only what the content already says
+  teaches the will, so it neither counts toward "several" nor toward the breadth that fails.
+
+Wills whose every target needs a state play brings about (a conversation that needs an acquaintance,
+a beast to calm, a corpse) and that no fresh scene shows are listed `·` and left out of the shares. The
+actor carries nothing, so a will whose act needs an implement counts only where one can be taken up or
+bought on the way. Run it after changing a will's targets or places, a location factory, or the planner.
+The last section prints the area kinds each location kind builds — what to read when declaring places.
+
+### Checking that a will wants what teaches it
+
+```bash
+dotnet run -- --will-lesson-audit
+```
+
+The playtest complaint behind it: examining the petroglyphs teaches **archeology**, the player picks
+archeology to think about the petroglyphs, and archeology — a will to dig, to study a relic, to fetch a
+spade — says it has no interest in them. Every other audit was green: the lesson resolves, the will is
+offered somewhere, and the refusal is the planner working as designed.
+
+The relation is read off the content, never judged: **an object's lesson** — its declared
+`VerbModiMentis` (`IVerbModusMentisSource`) and what `Verb.ResolveLesson` gives a human for an act on it.
+Every location factory is built for up to four ids, every area at morning and at night, and every
+observation object (a point of interest with its items, a person, an area — what a keyword reaches) is
+asked, for each will an act on it teaches, what the thinking phase asks: does anything it offers begin a
+shortest path to the will (`ActionPathPlanner.PathThrough`)? About a minute.
+
+- **✗** — the object **declares** the will its lesson and offers nothing the will wants or passes on its
+  way. The fix is almost always the will's lesson-bound target: it ends on
+  `WillTarget.To<ExamineVerb>(purpose).Teaching<ThisModusMentis>()` (`ToAny` for several verbs), which
+  matches exactly the objects declaring that lesson for those verbs. If the will has none yet, that is
+  one slot of its five. If the will plainly should not want the object, the lesson is what is wrong.
+- **note** — the lesson is the verb's own (its default, or a contextual case in its `Lessons`): about the
+  act wherever it is done, not about the object, so it is listed and not failed. Six today (gossip
+  taught by sitting on a bench, vantage by scaling a giant tree…).
+- A pairing that is right as it stands goes in `WillLessonAudit.Accepted` with the reason; an entry that
+  no longer refuses is itself a ✗, so the list cannot go stale.
+
+It read 167 ✗ (63 wills) when written; every one was closed by a `Teaching<>` target. Run it after
+adding or editing a will's targets, after giving a point of interest or an archetype a `VerbModiMentis`
+that names a will, and after a batch of scene content. `cli/system/will_lesson_object.cli` is the
+reported case, played.
 
 ### Checking the item catalogue
 

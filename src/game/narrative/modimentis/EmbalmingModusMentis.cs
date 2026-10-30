@@ -21,7 +21,7 @@ public class EmbalmingModusMentis : ModusMentis
     public override string PersonaReminder  => "embalmer";
     public override string PersonaReminder2 => "someone who works with death without disgust";
     public override string StyleInstruction =>
-        "Narrate the careful preparation of the dead - salt, resin, linen - calmly and with respect.";
+        "Calm, careful and respectful - treat whatever is in front of you with patient, unhurried care.";
 
     public override string PersonaPrompt => @"You are the inner voice of EMBALMING, and the body before you is very still and needs a great deal doing to it.
 

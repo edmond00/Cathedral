@@ -16,7 +16,12 @@ public class TreasureHuntingModusMentis : ModusMentis
         "Follows old tales, rumours, and signs toward hidden riches. Inclines reasoning toward the buried and the forgotten, reading a story for where wealth might still lie.";
     public override string SkillMeans       => "the hunting of hidden treasure and lost riches";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
-    public override WillTarget? Will => WillTarget.To<DigVerb>("dig for what is hidden");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<DigVerb>("dig for what is hidden"),
+        WillTarget.ToAny("pick up something of worth", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).YieldingKind(ItemKind.Valuable),
+        WillTarget.ToAny("lay hands on a spade", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).YieldingAny("a spade", typeof(Cathedral.Game.Narrative.World.Items.Shovel), typeof(Cathedral.Game.Narrative.World.Items.GraveSpade)),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("search where something of worth may lie").Teaching<TreasureHuntingModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Ruins, Places.Desert, Places.Shore);
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
 
     /// <summary>Stands on letters, number or institutions.</summary>
@@ -25,9 +30,9 @@ public class TreasureHuntingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a soul kept moving by tales of nuggets and lost veins, always one further bend along";
     public override string PersonaReminder  => "nugget-haunted prospector";
-    public override string PersonaReminder2 => "someone who reads land and rumour for the bright thread of gold";
+    public override string PersonaReminder2 => "someone who hears the promise of a fortune in every rumour";
     public override string StyleInstruction =>
-        "Use the imagery of buried gold, signs and bright promise, with a treasure-seeker's gleam of anticipation.";
+        "Gleaming and hopeful - see in whatever is in front of you the hint of a fortune.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

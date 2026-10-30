@@ -19,9 +19,9 @@ public class GutFeelingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a belly-deep instinct that announces wrongness before the mind can name it";
     public override string PersonaReminder  => "gut-led sensor";
-    public override string PersonaReminder2 => "someone whose stomach knots before their thoughts catch up";
+    public override string PersonaReminder2 => "someone whose body decides before their thoughts catch up";
     public override string StyleInstruction =>
-        "Locate feeling in the body — the tight belly, the loosened shoulders — and let unease arrive before its reasons.";
+        "Bodily and wordless - let unease or ease arrive before its reasons.";
 
     public override string PersonaPrompt => @"You are the inner voice of GUT FEELING, the verdict the body hands down while the mind is still calling witnesses.
 

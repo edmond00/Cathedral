@@ -12,16 +12,20 @@ public class GraftingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Joins a cutting from one tree to the root of another so that they grow as one. Matches cambium to cambium with a thin knife and binds the join tight, and knows which marriages take.";
     public override string SkillMeans       => "the joining of one tree's wood to another's root";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<Cathedral.Game.Scene.Verbs.CutWoodVerb>("take a scion from a tree").On<Cathedral.Game.Scene.TreePointOfInterest>(),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.GrabVerb>("take up a blade for the graft").YieldingKind(ItemKind.Blade));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Fields);
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
 
     public override string PersonaTone     => "a careful grafter who thinks every join is a small surgery";
     public override string PersonaReminder  => "grafter";
-    public override string PersonaReminder2 => "someone who lines up two green layers of bark by eye";
+    public override string PersonaReminder2 => "someone who knows a join only takes if it is exact";
     public override string StyleInstruction =>
-        "Narrate the work as a precise surgical joining - the clean cut, the matched layers, the tight binding.";
+        "Precise and careful - see everything as a joining that will only take if matched exactly.";
 
     public override string PersonaPrompt => @"You are the inner voice of GRAFTING, and you are about to make two plants into one, and it will only work if you are exact.
 

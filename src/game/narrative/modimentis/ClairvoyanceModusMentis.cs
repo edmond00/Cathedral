@@ -24,7 +24,7 @@ public class ClairvoyanceModusMentis : ModusMentis
     public override string PersonaReminder  => "temple-touched seer";
     public override string PersonaReminder2 => "someone whose eye still lingers where a strange light once showed";
     public override string StyleInstruction =>
-        "Reach for images of omen, glimmer and the unseen, with a hushed sense of meanings just beyond sight.";
+        "Hushed and expectant - sense in whatever is in front of you a meaning just beyond sight.";
 
     public override string PersonaPrompt => @"You are the inner voice of CLAIRVOYANCE, the eye that lingers a moment longer than necessary because something just slipped past, something the others did not see.
 

@@ -19,9 +19,9 @@ public class BonesettingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a bonesetter who feels a break through the skin";
     public override string PersonaReminder  => "bonesetter";
-    public override string PersonaReminder2 => "someone who puts a shoulder back with one pull";
+    public override string PersonaReminder2 => "someone whose hands know at once what is out of place";
     public override string StyleInstruction =>
-        "Narrate by feel - the grating of a break, the pull, the click of a joint going home.";
+        "Firm, sure and unhurried - judge whatever is in front of you by feel, and what it needs to be set right.";
 
     public override string PersonaPrompt => @"You are the inner voice of BONESETTING, and you have your hands on the arm and you can feel where it is broken.
 

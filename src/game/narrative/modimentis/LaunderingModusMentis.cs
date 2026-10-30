@@ -13,7 +13,12 @@ public class LaunderingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Gets linen clean: soaks it in lye, beats it on the stone, rinses, wrings and spreads it to bleach, and reads a stain for what made it and how it will come out.";
     public override string SkillMeans       => "the washing and bleaching of linen";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<Cathedral.Game.Scene.Verbs.GrabVerb>("take up linen to wash").YieldingKind(ItemKind.Cloth),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.GrabVerb>("fetch lye and soap").YieldingAny("lye or soap", typeof(Cathedral.Game.Narrative.World.Items.Lye), typeof(Cathedral.Game.Narrative.World.Items.Soap)),
+        WillTarget.ToAny("look over the washing", typeof(Cathedral.Game.Scene.Verbs.ContemplateVerb), typeof(Cathedral.Game.Scene.Verbs.ExamineVerb)).Teaching<LaunderingModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.LaundryArea) }, new[] { typeof(Cathedral.Game.Scene.WatersideArea) }, new[] { typeof(Cathedral.Game.Scene.StreamArea) });
     public override string[] Organs        => new[] { "arms", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
@@ -21,7 +26,7 @@ public class LaunderingModusMentis : ModusMentis
     public override string PersonaReminder  => "laundress";
     public override string PersonaReminder2 => "someone who knows every household's secrets by its washing";
     public override string StyleInstruction =>
-        "Use images of lye and steam, the wash-beetle on wet linen, wringing, and sheets bleaching in the sun.";
+        "Knowing and a little sly - read whatever is in front of you for what it gives away about the people it belongs to.";
 
     public override string PersonaPrompt => @"You are the inner voice of LAUNDERING, and every stain tells you a story.
 

@@ -1,0 +1,80 @@
+{"case": "talk_blacksmith:002:own", "version": "no_notscene", "seed": 32, "sid": "S9980", "F": 0, "P": 1, "C": 0, "Q": 1, "facts": "the smith made a man; +a fire toasting the hearth"}
+{"case": "talk_blacksmith:002:own", "version": "no_notscene", "seed": 31, "sid": "S2247", "F": 1, "P": 1, "C": 0, "Q": 1, "facts": "the smith made a man"}
+{"case": "talk_blacksmith:002:own", "version": "base", "seed": 31, "sid": "S6666", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"a craftsman ... she\""}
+{"case": "talk_blacksmith:002:own", "version": "base", "seed": 32, "sid": "S5728", "F": 1, "P": 1, "C": 0, "Q": 1, "facts": "the smith made a man"}
+{"case": "talk_miller:011:own", "version": "no_notscene", "seed": 31, "sid": "S2421", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+the tales by the hearth"}
+{"case": "talk_miller:011:own", "version": "base", "seed": 31, "sid": "S9361", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+the bustling market"}
+{"case": "talk_miller:011:own", "version": "no_notscene", "seed": 32, "sid": "S6633", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+\"I can feel the reed pipe\"; +wheat sheaves in the field"}
+{"case": "talk_miller:011:own", "version": "base", "seed": 32, "sid": "S7437", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+the apple tree's fruit"}
+{"case": "forest_evening:006:swap:brute_force", "version": "base", "seed": 32, "sid": "S7807", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "action replaced: examine made crush; +a boulder"}
+{"case": "forest_evening:006:swap:brute_force", "version": "no_notscene", "seed": 32, "sid": "S1305", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "action replaced; +a boulder"}
+{"case": "forest_evening:006:swap:brute_force", "version": "no_notscene", "seed": 31, "sid": "S1529", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "action replaced"}
+{"case": "forest_evening:006:swap:brute_force", "version": "base", "seed": 31, "sid": "S2699", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "action replaced; +a boulder"}
+{"case": "farm_night:011:own", "version": "no_notscene", "seed": 32, "sid": "S8286", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "the tracks blurred"}
+{"case": "farm_night:011:own", "version": "base", "seed": 31, "sid": "S4683", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+\"peace from the storm\", the courtyard roofed"}
+{"case": "farm_night:011:own", "version": "base", "seed": 32, "sid": "S6727", "F": 1, "P": 0, "C": null, "Q": 0, "facts": "garbled"}
+{"case": "farm_night:011:own", "version": "no_notscene", "seed": 31, "sid": "S2401", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "+\"a shed for veggies\""}
+{"case": "farm_dusk:009:swap:poetry", "version": "no_notscene", "seed": 31, "sid": "S9157", "F": 1, "P": 2, "C": 1, "Q": 2, "facts": "-the pouch"}
+{"case": "farm_dusk:009:swap:poetry", "version": "base", "seed": 32, "sid": "S6395", "F": 1, "P": 1, "C": 1, "Q": 2, "facts": "-the pouch"}
+{"case": "farm_dusk:009:swap:poetry", "version": "base", "seed": 31, "sid": "S9884", "F": 1, "P": 2, "C": 1, "Q": 2, "facts": "-the pouch"}
+{"case": "farm_dusk:009:swap:poetry", "version": "no_notscene", "seed": 32, "sid": "S7875", "F": 2, "P": 1, "C": 1, "Q": 1, "facts": ""}
+{"case": "village_noon_party:009:swap:keen_nose", "version": "no_notscene", "seed": 31, "sid": "S4266", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "style copied"}
+{"case": "village_noon_party:009:swap:keen_nose", "version": "base", "seed": 31, "sid": "S8327", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+woodsmoke last year, +a forgotten spring; -the doors, the noise"}
+{"case": "village_noon_party:009:swap:keen_nose", "version": "base", "seed": 32, "sid": "S3792", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "style copied; +wet ash, +hay"}
+{"case": "village_noon_party:009:swap:keen_nose", "version": "no_notscene", "seed": 32, "sid": "S4595", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "style copied; +a barn in winter, +tallow"}
+{"case": "forest_evening:011:swap:brute_force", "version": "no_notscene", "seed": 32, "sid": "S8109", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "action replaced: cut wood made crush the tree"}
+{"case": "forest_evening:011:swap:brute_force", "version": "base", "seed": 31, "sid": "S7685", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "action replaced"}
+{"case": "forest_evening:011:swap:brute_force", "version": "base", "seed": 32, "sid": "S9577", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "action replaced"}
+{"case": "forest_evening:011:swap:brute_force", "version": "no_notscene", "seed": 31, "sid": "S4217", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "action replaced"}
+{"case": "talk_farm:005:swap:courtesy", "version": "no_notscene", "seed": 31, "sid": "S9906", "F": 1, "P": 1, "C": null, "Q": 2, "facts": "+the fields beyond"}
+{"case": "talk_farm:005:swap:courtesy", "version": "base", "seed": 32, "sid": "S7921", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_farm:005:swap:courtesy", "version": "base", "seed": 31, "sid": "S5888", "F": 0, "P": 0, "C": null, "Q": 1, "facts": "+the stable's creaking beams"}
+{"case": "talk_farm:005:swap:courtesy", "version": "no_notscene", "seed": 32, "sid": "S5559", "F": 1, "P": 0, "C": null, "Q": 2, "facts": "-the timber frame"}
+{"case": "village_dawn:009:swap:dread", "version": "no_notscene", "seed": 31, "sid": "S9386", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+\"before something worse comes\"; -letting focus go"}
+{"case": "village_dawn:009:swap:dread", "version": "base", "seed": 31, "sid": "S4602", "F": 1, "P": 2, "C": null, "Q": 2, "facts": "+the exit"}
+{"case": "village_dawn:009:swap:dread", "version": "base", "seed": 32, "sid": "S7729", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+the door behind me, +the room too quiet (outdoors)"}
+{"case": "village_dawn:009:swap:dread", "version": "no_notscene", "seed": 32, "sid": "S8741", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-letting focus go"}
+{"case": "village_noon_party:009:swap:architecture", "version": "no_notscene", "seed": 32, "sid": "S9449", "F": 2, "P": 0, "C": null, "Q": 2, "facts": ""}
+{"case": "village_noon_party:009:swap:architecture", "version": "base", "seed": 31, "sid": "S3354", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+beams and planks"}
+{"case": "village_noon_party:009:swap:architecture", "version": "base", "seed": 32, "sid": "S6031", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "setting copied (\"this medieval village\")"}
+{"case": "village_noon_party:009:swap:architecture", "version": "no_notscene", "seed": 31, "sid": "S5903", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "\"doors down\""}
+{"case": "village_noon_party:003:own", "version": "no_notscene", "seed": 31, "sid": "S8723", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+storms, +preceptor's lessons"}
+{"case": "village_noon_party:003:own", "version": "no_notscene", "seed": 32, "sid": "S7509", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+childhood lessons"}
+{"case": "village_noon_party:003:own", "version": "base", "seed": 31, "sid": "S2625", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+lessons, +the storm"}
+{"case": "village_noon_party:003:own", "version": "base", "seed": 32, "sid": "S7016", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+preceptor's lessons"}
+{"case": "farm_night:007:swap:dread", "version": "no_notscene", "seed": 31, "sid": "S3279", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+the cold through my sleeves; reluctant to leave (contradiction)"}
+{"case": "farm_night:007:swap:dread", "version": "base", "seed": 31, "sid": "S5326", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+I turn to the exit"}
+{"case": "farm_night:007:swap:dread", "version": "base", "seed": 32, "sid": "S3457", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+\"a place to rest my weary limbs\""}
+{"case": "farm_night:007:swap:dread", "version": "no_notscene", "seed": 32, "sid": "S6581", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "+the door"}
+{"case": "farm_night:003:swap:dread", "version": "no_notscene", "seed": 32, "sid": "S2134", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+the fire's out, +the room too quiet; \"I cannot step\""}
+{"case": "farm_night:003:swap:dread", "version": "base", "seed": 32, "sid": "S7518", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-the ways"}
+{"case": "farm_night:003:swap:dread", "version": "base", "seed": 31, "sid": "S3675", "F": 1, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_night:003:swap:dread", "version": "no_notscene", "seed": 31, "sid": "S7800", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+the door is locked"}
+{"case": "village_noon_party:009:own", "version": "no_notscene", "seed": 31, "sid": "S7979", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+workers' hands, teeth; +scent of wood and iron"}
+{"case": "village_noon_party:009:own", "version": "no_notscene", "seed": 32, "sid": "S8644", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "+doors creaking in the wind"}
+{"case": "village_noon_party:009:own", "version": "base", "seed": 32, "sid": "S5608", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+the workers' hands"}
+{"case": "village_noon_party:009:own", "version": "base", "seed": 31, "sid": "S3550", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+hands, teeth, sweat of nobody given"}
+{"case": "farm_dusk:006:swap:woodcraft", "version": "no_notscene", "seed": 31, "sid": "S6259", "F": 1, "P": 2, "C": null, "Q": 0, "facts": "\"the old wood grinds under my careful stroke\""}
+{"case": "farm_dusk:006:swap:woodcraft", "version": "base", "seed": 31, "sid": "S4362", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_dusk:006:swap:woodcraft", "version": "no_notscene", "seed": 32, "sid": "S5560", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"the swineherd's care\""}
+{"case": "farm_dusk:006:swap:woodcraft", "version": "base", "seed": 32, "sid": "S1249", "F": 2, "P": 1, "C": 1, "Q": 2, "facts": ""}
+{"case": "farm_night:003:own", "version": "base", "seed": 32, "sid": "S1358", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "persona prompt echoed (\"the column is correct\"); -heavy work"}
+{"case": "farm_night:003:own", "version": "no_notscene", "seed": 32, "sid": "S7529", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_night:003:own", "version": "base", "seed": 31, "sid": "S7788", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_night:003:own", "version": "no_notscene", "seed": 31, "sid": "S9987", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_night:014:swap:cutpurse", "version": "no_notscene", "seed": 32, "sid": "S3226", "F": 1, "P": 0, "C": null, "Q": 2, "facts": "track \"to\" both"}
+{"case": "farm_night:014:swap:cutpurse", "version": "base", "seed": 32, "sid": "S8150", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "style copied"}
+{"case": "farm_night:014:swap:cutpurse", "version": "no_notscene", "seed": 31, "sid": "S3470", "F": 0, "P": 1, "C": 0, "Q": 0, "facts": "style copied"}
+{"case": "farm_night:014:swap:cutpurse", "version": "base", "seed": 31, "sid": "S5754", "F": 0, "P": 1, "C": 0, "Q": 0, "facts": "style copied"}
+{"case": "talk_blacksmith:005:swap:dread", "version": "no_notscene", "seed": 32, "sid": "S1155", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+the door beckoning; feeling garbled"}
+{"case": "talk_blacksmith:005:swap:dread", "version": "base", "seed": 32, "sid": "S1791", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "setting copied; +the fire is out"}
+{"case": "talk_blacksmith:005:swap:dread", "version": "no_notscene", "seed": 31, "sid": "S1646", "F": 1, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:005:swap:dread", "version": "base", "seed": 31, "sid": "S6043", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+the fire unlit, +the wrong smell"}
+{"case": "village_dawn:002:own", "version": "base", "seed": 32, "sid": "S2974", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "setting copied (\"this medieval village\")"}
+{"case": "village_dawn:002:own", "version": "no_notscene", "seed": 32, "sid": "S1121", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-the bucket"}
+{"case": "village_dawn:002:own", "version": "base", "seed": 31, "sid": "S9491", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"ancient secrets\""}
+{"case": "village_dawn:002:own", "version": "no_notscene", "seed": 31, "sid": "S1958", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+a stone floor"}
+{"case": "farm_night:007:swap:keen_nose", "version": "no_notscene", "seed": 32, "sid": "S1631", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+I step into the mud; +that year the rabbits thrived"}
+{"case": "farm_night:007:swap:keen_nose", "version": "base", "seed": 32, "sid": "S9434", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+the year the barn roof gave way"}
+{"case": "farm_night:007:swap:keen_nose", "version": "base", "seed": 31, "sid": "S1136", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+I step into it; +straw; +the spring"}
+{"case": "farm_night:007:swap:keen_nose", "version": "no_notscene", "seed": 31, "sid": "S3479", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+a spring when rabbits thronged here"}

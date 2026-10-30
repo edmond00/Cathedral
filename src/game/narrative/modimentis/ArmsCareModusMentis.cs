@@ -12,7 +12,11 @@ public class ArmsCareModusMentis : ModusMentis
     public override string MenuDescription =>
         "Keeps weapons and armour fit to use: oils against rust, hones the edge, restitches the strap, checks the rivets. Knows that a blade neglected fails at the worst moment.";
     public override string SkillMeans       => "the keeping of weapons and armour";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.ToAny("take up a weapon to tend", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).YieldingKind(ItemKind.Weapon),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy armour fit to use").Selling(ItemKind.Armour));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.ArmouryArea) }, new[] { typeof(Cathedral.Game.Scene.GuardroomArea) }, new[] { typeof(Cathedral.Game.Scene.ForgeArea) });
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
@@ -21,7 +25,7 @@ public class ArmsCareModusMentis : ModusMentis
     public override string PersonaReminder  => "keeper of arms";
     public override string PersonaReminder2 => "someone who checks every rivet";
     public override string StyleInstruction =>
-        "Narrate the care of arms - oil, stone, strap, rivet - as the soldier's real daily work.";
+        "Dutiful and methodical - look at everything as something to keep in order before it fails.";
 
     public override string PersonaPrompt => @"You are the inner voice of ARMS CARE, and before you eat, before you sleep, you see to your kit.
 

@@ -21,7 +21,7 @@ public class TallycraftModusMentis : ModusMentis
     public override string PersonaReminder  => "keeper of the tally";
     public override string PersonaReminder2 => "someone who counts by notch and knot and is never cheated";
     public override string StyleInstruction =>
-        "Use images of the notched tally-stick, weighed sack and counted coin, with the careful exactness of one who measures.";
+        "Count and weigh whatever is in front of you exactly, never letting a figure go unchecked.";
 
     public override string PersonaPrompt => @"You are the inner voice of TALLYCRAFT, the plain reckoning of one who counts, weighs and measures for a living.
 

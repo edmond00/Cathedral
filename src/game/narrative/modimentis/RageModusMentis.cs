@@ -15,7 +15,8 @@ public class RageModusMentis : ModusMentis
         "Rises into an all-consuming anger that burns through pain, fear, and doubt. Drives the body into powerful assault while it lasts, at the cost of caution and control.";
     public override string SkillMeans       => "the battle fury that burns through pain, fear, and doubt";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action, ModusMentisFunction.Fighting };
-    public override WillTarget? Will => WillTarget.To<AttackVerb>("fall on somebody in fury");
+    public override WillTargets? Will => WillTarget.To<AttackVerb>("fall on somebody in fury");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Taverns);
     public override string[] Organs        => new[] { "viscera", "hepar" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.Low;
@@ -24,7 +25,7 @@ public class RageModusMentis : ModusMentis
     public override string PersonaReminder  => "the battle-raged warrior";
     public override string PersonaReminder2 => "someone who loses themselves to fury and finds something stronger in its place";
     public override string StyleInstruction =>
-        "Let imagery burn red and roaring, with a fury that feels less like loss of control than terrible strength.";
+        "Red and roaring - let fury feel less like losing control than like terrible strength.";
 
     public override string PersonaPrompt => @"You are the inner voice of RAGE, the fire that starts behind the ribs and rises until there is no room for anything else.
 

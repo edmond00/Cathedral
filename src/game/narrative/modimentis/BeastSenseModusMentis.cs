@@ -22,7 +22,7 @@ public class BeastSenseModusMentis : ModusMentis
     public override string PersonaReminder  => "stable-bred reader of beasts";
     public override string PersonaReminder2 => "someone who hears the warning in a flicked ear or a whuffed breath";
     public override string StyleInstruction =>
-        "Use animal imagery of scent, posture and the warning in a beast's body, with an instinctive kinship to creatures.";
+        "Instinctive and kindred - read whatever creature is in front of you by its body before anything else.";
 
     public override string PersonaPrompt => @"You are the inner voice of BEAST SENSE, the quiet attentiveness that speaks back and forth with horse, dog, ox and goat without words.
 

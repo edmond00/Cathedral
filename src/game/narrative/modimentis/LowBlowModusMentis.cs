@@ -15,7 +15,8 @@ public class LowBlowModusMentis : ModusMentis
         "Marks the softest, least-guarded points on a body and aims for them. Inclines toward underhanded strikes that disable through pain, choosing effect over fairness.";
     public override string SkillMeans       => "underhanded strikes aimed at the body's softest and least-guarded points";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action, ModusMentisFunction.Fighting };
-    public override WillTarget? Will => WillTarget.To<SlayVerb>("kill with a low blow");
+    public override WillTargets? Will => WillTarget.To<SlayVerb>("kill with a low blow");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Streets, Places.Dwellings, Places.Wilds);
     public override string[] Organs        => new[] { "legs", "feet" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.Low;
@@ -24,7 +25,7 @@ public class LowBlowModusMentis : ModusMentis
     public override string PersonaReminder  => "low blow pragmatist";
     public override string PersonaReminder2 => "someone who considers honor an expensive luxury in a real fight";
     public override string StyleInstruction =>
-        "Colour the line with images of soft targets and dirty openings, and a pragmatic shrug at the cost of honor.";
+        "Pragmatic and unscrupulous - see in whatever is in front of you its softest point, and shrug at the cost of honour.";
 
     public override string PersonaPrompt => @"You are the inner voice of LOW BLOW, the cold and pragmatic knowledge of the body's softest spots—the groin, the back of the knee, the instep, the floating rib, the eye socket.
 

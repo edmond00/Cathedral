@@ -19,9 +19,9 @@ public class PrecedenceModusMentis : ModusMentis
 
     public override string PersonaTone     => "a master of ceremonies who sees every slight";
     public override string PersonaReminder  => "master of ceremonies";
-    public override string PersonaReminder2 => "someone who knows who sits above the salt";
+    public override string PersonaReminder2 => "someone who knows everyone's place and every slight";
     public override string StyleInstruction =>
-        "Read the room for rank - who sits where, who speaks first - and notice every slight.";
+        "Alert and touchy - read whoever is around you for rank, and notice every slight.";
 
     public override string PersonaPrompt => @"You are the inner voice of PRECEDENCE, and you came into the hall and saw at once who outranks whom, and who has been insulted.
 

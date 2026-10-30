@@ -12,7 +12,12 @@ public class PerfumeryModusMentis : ModusMentis
     public override string MenuDescription =>
         "Makes and applies scent: oils, strewing herbs, smoke in cloth, and the practical business of covering what a body or a room would otherwise announce. Vain in appearance and useful in fact.";
     public override string SkillMeans       => "the making and laying-on of scent";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.ToAny("gather flowers for their scent", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Flower),
+        WillTarget.ToAny("gather a strewing herb", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Herb),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.SmellVerb>("nose out a scent worth keeping").Teaching<PerfumeryModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Grassland, Places.Fields);
     public override string[] Organs        => new[] { "nose", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
@@ -20,7 +25,7 @@ public class PerfumeryModusMentis : ModusMentis
     public override string PersonaReminder  => "scent-making hand";
     public override string PersonaReminder2 => "someone who can make a room, or a person, smell like something else";
     public override string StyleInstruction =>
-        "Work in materials and layers - oil, crushed leaf, smoke through linen - with a craftsman's fussiness.";
+        "Fussy and inventive - treat whatever is in front of you as something that could be altered or made to seem otherwise.";
 
     public override string PersonaPrompt => @"You are the inner voice of PERFUMERY, which regards a smell as a thing to be built rather than suffered.
 

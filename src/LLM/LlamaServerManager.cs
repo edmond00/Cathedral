@@ -226,6 +226,12 @@ public class LlamaServerManager : IDisposable
         public int TailBytesAfterDone;
         public int MalformedChunks;
         public int ReplyChars;
+        public bool Background;           // a chronicler job, not something the player waits on
+        public double TtftMs = -1;        // first streamed token, client side; -1 when buffered
+        public int PromptN = -1, CacheN = -1, PredictedN = -1;   // the server's own "timings"
+        public double PromptMs = -1, PredictedMs = -1;
+        public bool PreemptedBackground;  // a background job was running when this one began
+        public double BackgroundDelayMs;  // what that cost: time the server spent on nothing of ours
 
         public override string ToString()
         {
@@ -234,7 +240,7 @@ public class LlamaServerManager : IDisposable
                   (DrainTimedOut ? " DRAIN-TIMEOUT" : "") +
                   (MalformedChunks > 0 ? $" malformed={MalformedChunks}" : "")
                 : "buffered";
-            return $"  #{Seq,-4} {StartedUtc:HH:mm:ss.fff} slot={Slot,-2} " +
+            return $"  #{Seq,-4} {StartedUtc:HH:mm:ss.fff} slot={Slot,-2}{(Background ? " BG" : "")} " +
                    $"{(Streaming ? "stream" : "oneshot")} maxTok={MaxTokens,-4} " +
                    $"idle={IdleGapMs,7:F0}ms dur={DurationMs,7:F0}ms reply={ReplyChars,4}c {detail}" +
                    (Retried ? " RETRIED" : "") + $"  → {Outcome}";
@@ -384,6 +390,303 @@ public class LlamaServerManager : IDisposable
             _recentRequests.Enqueue(trace);
             while (_recentRequests.Count > RecentRequestsKept) _recentRequests.Dequeue();
         }
+        if (trace.PreemptedBackground) NotePreemptionCost(trace);
+        WriteTimingLine(trace);
+    }
+
+    /// <summary>
+    /// One line per request in <c>log.txt</c> (file only), the raw material for measuring what the
+    /// chronicler costs the narration: client-side time to first token and total, the server's own
+    /// prompt/cache/generation counts, and how long a preempted background job held the server.
+    /// <c>cache</c> is the prompt tokens the server reused; a narrator request that reprocessed its whole
+    /// system prompt shows it as a small cache and a large prompt.
+    /// </summary>
+    private static void WriteTimingLine(RequestTrace t)
+    {
+        var inv = CultureInfo.InvariantCulture;
+        GameLog.WriteToFileOnly(string.Create(inv,
+            $"[llm-timing] seq={t.Seq} slot={t.Slot} {(t.Background ? "bg" : "fg")} {(t.Streaming ? "stream" : "oneshot")} " +
+            $"ttft={t.TtftMs:F0} total={t.DurationMs:F0} prompt_n={t.PromptN} cache_n={t.CacheN} prompt_ms={t.PromptMs:F0} " +
+            $"gen_n={t.PredictedN} gen_ms={t.PredictedMs:F0} bg_delay={t.BackgroundDelayMs:F0} outcome={t.Outcome}"));
+    }
+
+    /// <summary>Reads llama-server's <c>timings</c> object, when a response or a final chunk carries one.</summary>
+    private static void ReadServerTimings(JsonElement root, RequestTrace trace)
+    {
+        if (!root.TryGetProperty("timings", out var t) || t.ValueKind != JsonValueKind.Object) return;
+        if (t.TryGetProperty("prompt_n", out var pn) && pn.TryGetInt32(out int pni)) trace.PromptN = pni;
+        if (t.TryGetProperty("cache_n", out var cn) && cn.TryGetInt32(out int cni)) trace.CacheN = cni;
+        if (t.TryGetProperty("predicted_n", out var gn) && gn.TryGetInt32(out int gni)) trace.PredictedN = gni;
+        if (t.TryGetProperty("prompt_ms", out var pm) && pm.TryGetDouble(out double pmd)) trace.PromptMs = pmd;
+        if (t.TryGetProperty("predicted_ms", out var gm) && gm.TryGetDouble(out double gmd)) trace.PredictedMs = gmd;
+    }
+
+    // ── Foreground and background: the priority gate ─────────────────────────────
+
+    /// <summary>
+    /// Every request is foreground (the player is waiting on it) unless it came through
+    /// <see cref="GenerateBackgroundAsync"/>. The rule is kept here rather than in a list of game
+    /// states, which would go stale the first time a new phase made a request:
+    ///
+    /// <list type="bullet">
+    /// <item>a foreground request <b>cancels</b> any background request in flight, at once;</item>
+    /// <item>a background request <b>starts</b> only once foreground has been quiet for
+    /// <see cref="Config.LLM.BackgroundQuietMs"/> — nothing in flight, nothing finished recently;</item>
+    /// <item>a cancelled background request returns null and keeps nothing — the caller re-queues the
+    /// whole job. A half-written paragraph is never handed back.</item>
+    /// </list>
+    ///
+    /// <para>Cancelling closes the HTTP stream; llama-server notices between batches, so a preempted job
+    /// can still hold the server for the rest of the batch it was computing. That residue is what
+    /// <see cref="_foregroundDelayedCount"/> and <see cref="_foregroundDelayedMs"/> measure, and what
+    /// the crash report and the <c>[llm-timing]</c> lines carry.</para>
+    /// </summary>
+    private readonly object _gateLock = new();
+    private int _foregroundInFlight;
+    private DateTime _lastForegroundUtc = DateTime.MinValue;
+    private CancellationTokenSource? _backgroundCts;
+    private int _foregroundDelayedCount;
+    private double _foregroundDelayedMs, _foregroundDelayedMaxMs;
+    private int _backgroundStarted, _backgroundCompleted, _backgroundPreempted;
+
+    /// <summary>The counters the crash report and the CLI print.</summary>
+    public string DescribePriorityGate()
+    {
+        lock (_gateLock)
+            return string.Create(CultureInfo.InvariantCulture,
+                $"foreground delayed by background: {_foregroundDelayedCount} request(s), {_foregroundDelayedMs:F0} ms in all, " +
+                $"{_foregroundDelayedMaxMs:F0} ms at most; background jobs: {_backgroundStarted} started, " +
+                $"{_backgroundCompleted} completed, {_backgroundPreempted} preempted; quiet delay {Config.LLM.BackgroundQuietMs} ms");
+    }
+
+    private sealed class ForegroundScope : IDisposable
+    {
+        private readonly LlamaServerManager _owner;
+        public ForegroundScope(LlamaServerManager owner) => _owner = owner;
+        public void Dispose()
+        {
+            lock (_owner._gateLock)
+            {
+                _owner._foregroundInFlight--;
+                _owner._lastForegroundUtc = DateTime.UtcNow;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Marks a foreground request in flight for as long as the returned scope lives, and preempts any
+    /// background job. The foreground request does not wait for the job to let go — the server queues it
+    /// behind whatever batch it is finishing — and what that costs is measured when it completes
+    /// (<see cref="NotePreemptionCost"/>).
+    /// </summary>
+    private IDisposable EnterForeground(RequestTrace? trace)
+    {
+        CancellationTokenSource? preempt;
+        lock (_gateLock)
+        {
+            _foregroundInFlight++;
+            _lastForegroundUtc = DateTime.UtcNow;
+            preempt = _backgroundCts;
+        }
+
+        if (preempt != null && !preempt.IsCancellationRequested)
+        {
+            try { preempt.Cancel(); } catch (ObjectDisposedException) { }
+            if (trace != null) trace.PreemptedBackground = true;
+        }
+        return new ForegroundScope(this);
+    }
+
+    /// <summary>
+    /// The delay a preempted background job cost a foreground request: the request's wall time less
+    /// the server's own prompt and generation time for it — the time it sat queued behind the job's
+    /// last batch. Needs the server's <c>timings</c>; a request without them is not counted.
+    /// </summary>
+    private void NotePreemptionCost(RequestTrace trace)
+    {
+        if (trace.PromptMs < 0) return;
+        double ms = Math.Max(0, trace.DurationMs - trace.PromptMs - Math.Max(0, trace.PredictedMs));
+        trace.BackgroundDelayMs = ms;
+        lock (_gateLock)
+        {
+            _foregroundDelayedCount++;
+            _foregroundDelayedMs += ms;
+            _foregroundDelayedMaxMs = Math.Max(_foregroundDelayedMaxMs, ms);
+        }
+    }
+
+    /// <summary>
+    /// A background generation: waits for foreground to go quiet, then streams one completion on
+    /// <paramref name="slotId"/>. Returns the text, or <b>null</b> when it was preempted, stopped or
+    /// failed — never a partial reply. The instance is reset afterwards either way, so a background
+    /// slot carries no history between jobs.
+    /// </summary>
+    public async Task<string?> GenerateBackgroundAsync(int slotId, string userMessage, int maxTokens,
+                                                       CancellationToken stop)
+    {
+        if (Cathedral.Game.PlaygroundMode.IsActive) return null;
+        if (!_instances.TryGetValue(slotId, out var instance))
+            throw new ArgumentException($"Instance with slot ID {slotId} not found.");
+
+        // Wait for quiet, then claim the server under the same lock a foreground request takes, so
+        // nothing can slip in between the check and the claim.
+        CancellationTokenSource cts;
+        while (true)
+        {
+            stop.ThrowIfCancellationRequested();
+            lock (_gateLock)
+            {
+                bool quiet = _foregroundInFlight == 0
+                          && (DateTime.UtcNow - _lastForegroundUtc).TotalMilliseconds >= Config.LLM.BackgroundQuietMs
+                          && _backgroundCts == null;
+                if (quiet)
+                {
+                    cts = CancellationTokenSource.CreateLinkedTokenSource(stop);
+                    _backgroundCts = cts;
+                    _backgroundStarted++;
+                    break;
+                }
+            }
+            await Task.Delay(200, stop);
+        }
+
+        var trace = StartTrace(slotId, streaming: true, maxTokens);
+        trace.Background = true;
+        instance.IsActive = true;
+        instance.RequestCount++;
+        string? result = null;
+        try
+        {
+            int? pinned = await BackgroundServerSlotAsync(cts.Token);
+
+            // Prefill in small steps. The server notices a cancelled request only between batches, and
+            // a prompt sent whole is one batch: a job preempted at its start held the server for the
+            // whole prefill — ~9 s measured on a 4-core CPU, every second of it a foreground request
+            // waiting. Each step is its own request over a longer prefix of the same text, so the server
+            // computes only the new part (the rest is its cached prompt) and a preemption costs at most
+            // one step. Pinned to one server slot so the steps find each other's cache.
+            string system = instance.SystemPrompt;
+            int full = system.Length + userMessage.Length;
+            for (int upTo = Config.LLM.BackgroundPrefillChars; upTo < full; upTo += Config.LLM.BackgroundPrefillChars)
+            {
+                var partial = upTo <= system.Length
+                    ? new object[] { new { role = "system", content = system[..upTo] } }
+                    : new object[] { new { role = "system", content = system },
+                                     new { role = "user", content = userMessage[..(upTo - system.Length)] } };
+                var step = new Dictionary<string, object>
+                {
+                    ["model"] = "local", ["messages"] = partial, ["max_tokens"] = 1,
+                    ["stream"] = false, ["cache_prompt"] = true, ["temperature"] = 0,
+                };
+                if (pinned is { } ps) step["id_slot"] = ps;
+                using var stepResponse = await _httpClient.PostAsJsonAsync("v1/chat/completions", step, cts.Token);
+                await stepResponse.Content.ReadAsStringAsync(cts.Token);
+            }
+
+            var requestData = new Dictionary<string, object>
+            {
+                ["model"] = "local",
+                ["messages"] = new object[] { new { role = "system", content = system },
+                                              new { role = "user", content = userMessage } },
+                ["max_tokens"] = maxTokens,
+                ["stream"] = true,
+                ["cache_prompt"] = true,
+                ["temperature"] = Config.LLM.Temperature,
+                ["top_k"] = Config.LLM.TopK,
+                ["top_p"] = Config.LLM.TopP,
+            };
+            if (pinned is { } fs) requestData["id_slot"] = fs;
+            AddRequestSeed(requestData);
+            using var request = new HttpRequestMessage(HttpMethod.Post, "v1/chat/completions") { Content = JsonContent.Create(requestData) };
+            using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+            response.EnsureSuccessStatusCode();
+            var sb = new StringBuilder();
+            bool done = false;
+            using (var stream = await response.Content.ReadAsStreamAsync(cts.Token))
+            using (var reader = new StreamReader(stream))
+            {
+                string? line;
+                while ((line = await reader.ReadLineAsync(cts.Token)) != null)
+                {
+                    if (done) continue;   // drained to EOF, for the pooled connection's sake
+                    if (!line.StartsWith("data: ")) continue;
+                    var json = line[6..];
+                    if (json == "[DONE]") { done = true; continue; }
+                    try
+                    {
+                        using var doc = JsonDocument.Parse(json);
+                        ReadServerTimings(doc.RootElement, trace);
+                        if (doc.RootElement.TryGetProperty("choices", out var ch) && ch.GetArrayLength() > 0
+                            && ch[0].TryGetProperty("delta", out var d) && d.TryGetProperty("content", out var c)
+                            && c.GetString() is { Length: > 0 } tok)
+                        {
+                            if (trace.TtftMs < 0) trace.TtftMs = (DateTime.UtcNow - trace.StartedUtc).TotalMilliseconds;
+                            sb.Append(tok);
+                        }
+                    }
+                    catch (JsonException) { trace.MalformedChunks++; }
+                }
+            }
+            trace.SawDone = done;
+            trace.DrainedToEof = true;
+            if (done)
+            {
+                result = sb.ToString().Trim();
+                trace.ReplyChars = result.Length;
+                lock (_gateLock) _backgroundCompleted++;
+                FinishTrace(trace, "ok");
+            }
+            else FinishTrace(trace, "no [DONE]");
+        }
+        catch (OperationCanceledException)
+        {
+            lock (_gateLock) _backgroundPreempted++;
+            FinishTrace(trace, stop.IsCancellationRequested ? "stopped" : "preempted");
+        }
+        catch (Exception ex)
+        {
+            FinishTrace(trace, $"FAILED {ex.GetType().Name}: {ex.Message}");
+        }
+        finally
+        {
+            instance.IsActive = false;
+            try { ResetInstance(slotId); } catch { /* ignore */ }
+            lock (_gateLock) _backgroundCts = null;
+            cts.Dispose();
+        }
+        return result;
+    }
+
+    private int? _backgroundServerSlot;
+    private bool _backgroundServerSlotKnown;
+
+    /// <summary>
+    /// The server slot background work is pinned to: the last one, read once from <c>/props</c>
+    /// (<c>total_slots</c>). Null — no pinning — when the server has a single slot or does not say.
+    /// </summary>
+    private async Task<int?> BackgroundServerSlotAsync(CancellationToken ct)
+    {
+        if (_backgroundServerSlotKnown) return _backgroundServerSlot;
+        try
+        {
+            using var r = await _httpClient.GetAsync("props", ct);
+            using var doc = JsonDocument.Parse(await r.Content.ReadAsStringAsync(ct));
+            if (doc.RootElement.TryGetProperty("total_slots", out var t) && t.TryGetInt32(out int n) && n > 1)
+                _backgroundServerSlot = n - 1;
+        }
+        catch (OperationCanceledException) { throw; }
+        catch { /* unknown: no pinning */ }
+        _backgroundServerSlotKnown = true;
+        return _backgroundServerSlot;
+    }
+
+    /// <summary>
+    /// Pins the sampler's seed when <c>--llm-seed</c> is given, so two measured runs of the same
+    /// script take the same narrative path. Inert at its default.
+    /// </summary>
+    private static void AddRequestSeed(Dictionary<string, object> requestData)
+    {
+        if (Config.Debug.LlmSeed is { } seed) requestData["seed"] = seed;
     }
 
     /// <summary>
@@ -576,6 +879,7 @@ public class LlamaServerManager : IDisposable
         };
 
         CrashReport.AddProvider("LLM server", DescribeForCrashReport);
+        CrashReport.AddProvider("LLM priority gate", DescribePriorityGate);
 
         // Register cleanup handlers
         AppDomain.CurrentDomain.ProcessExit += (s, e) => StopServer();
@@ -721,7 +1025,8 @@ public class LlamaServerManager : IDisposable
     /// <param name="systemPrompt">The system prompt for this instance</param>
     /// <param name="maxContextTokens">Maximum context size in tokens (default: uses server's context size)</param>
     /// <returns>The slot ID for this instance</returns>
-    public async Task<int> CreateInstanceAsync(string systemPrompt, int? maxContextTokens = null)
+    public async Task<int> CreateInstanceAsync(string systemPrompt, int? maxContextTokens = null,
+                                               bool precache = true)
     {
         if (!_isServerReady)
         {
@@ -757,6 +1062,10 @@ public class LlamaServerManager : IDisposable
             }
         }
         
+        // A background slot is not warmed: the warm-up is itself a request, and one made at creation
+        // time would be made in the foreground's name.
+        if (!precache) return slotId;
+
         // Pre-cache the system prompt
         try
         {
@@ -810,6 +1119,7 @@ public class LlamaServerManager : IDisposable
         instance.IsActive = true;
         instance.AddUserMessage(userMessage);
         instance.RequestCount++;
+        using var foreground = EnterForeground(null);
         
         var startTime = DateTime.Now;
         var timestamp = startTime.ToString("HH-mm-ss-fff");
@@ -1061,6 +1371,7 @@ public class LlamaServerManager : IDisposable
         instance.RequestCount++;
 
         var trace = StartTrace(slotId, streaming: false, maxTokens);
+        using var foreground = EnterForeground(trace);
         var startTime = DateTime.Now;
         var timestamp = startTime.ToString("HH-mm-ss-fff");
 
@@ -1098,6 +1409,7 @@ public class LlamaServerManager : IDisposable
                 ["temperature"] = Config.LLM.Temperature,
                 ["top_p"] = Config.LLM.TopP,
             };
+            AddRequestSeed(requestData);
             if (topLogprobs > 0)
             {
                 requestData["logprobs"] = true;
@@ -1138,6 +1450,7 @@ public class LlamaServerManager : IDisposable
             var jsonResponse = await response.Content.ReadAsStringAsync();
             using var doc = JsonDocument.Parse(jsonResponse);
             var root = doc.RootElement;
+            ReadServerTimings(root, trace);
 
             string generated = string.Empty;
             if (root.TryGetProperty("choices", out var choices) && choices.GetArrayLength() > 0)
@@ -1236,6 +1549,7 @@ public class LlamaServerManager : IDisposable
         instance.RequestCount++;
 
         var trace = StartTrace(slotId, streaming: true, maxTokens);
+        using var foreground = EnterForeground(trace);
         var startTime = DateTime.Now;
         var timestamp = startTime.ToString("HH-mm-ss-fff");
 
@@ -1273,6 +1587,7 @@ public class LlamaServerManager : IDisposable
                 ["temperature"] = Config.LLM.Temperature,
                 ["top_p"] = Config.LLM.TopP,
             };
+            AddRequestSeed(requestData);
 
             // No grammar → unconstrained free-text generation. llama.cpp treats an empty grammar as
             // constraining to the empty string, so omit the key entirely (mirrors the one-shot variant).
@@ -1386,6 +1701,7 @@ public class LlamaServerManager : IDisposable
                         {
                             using var doc = JsonDocument.Parse(jsonData);
                             var root = doc.RootElement;
+                            ReadServerTimings(root, trace);
 
                             if (root.TryGetProperty("usage", out var usageEl))
                             {
@@ -1402,6 +1718,7 @@ public class LlamaServerManager : IDisposable
                                     var token = content.GetString();
                                     if (!string.IsNullOrEmpty(token))
                                     {
+                                        if (trace.TtftMs < 0) trace.TtftMs = (DateTime.UtcNow - trace.StartedUtc).TotalMilliseconds;
                                         sb.Append(token);
                                         onTokenStreamed?.Invoke(token, slotId);
                                     }
@@ -1498,6 +1815,7 @@ public class LlamaServerManager : IDisposable
         instance.IsActive = true;
         instance.AddUserMessage(userMessage);
         instance.RequestCount++;
+        using var foreground = EnterForeground(null);
         
         var requestStartTime = DateTime.Now;
         var timestamp = requestStartTime.ToString("HH-mm-ss-fff");
@@ -2187,8 +2505,9 @@ public class LlamaServerManager : IDisposable
             args.Append($" -ngl {UserSettings.LlmGpuLayers}");
         }
 
-        if (UserSettings.LlmCpuThreads > 0)
-            args.Append($" -t {UserSettings.LlmCpuThreads}");
+        int threads = Config.Debug.ForcedLlmThreads ?? UserSettings.LlmCpuThreads;
+        if (threads > 0)
+            args.Append($" -t {threads.ToString(inv)}");
 
         args.Append(" --verbose");
         return args.ToString();
@@ -2516,6 +2835,7 @@ public class LlamaServerManager : IDisposable
     
     private async Task PreCacheSystemPromptAsync(LlamaInstance instance)
     {
+        using var foreground = EnterForeground(null);
         var warmupRequest = new
         {
             model = "local",

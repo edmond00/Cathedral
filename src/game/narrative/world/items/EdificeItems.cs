@@ -11,6 +11,7 @@ namespace Cathedral.Game.Narrative.World.Items;
 
 public sealed class Tome : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Book, ItemKind.Writing });
     public override ItemCategory Category => ItemCategory.Crafting;
     public override string ItemId      => "tome";
     public override string DisplayName => "Tome";
@@ -23,6 +24,7 @@ public sealed class Tome : Item
 
 public sealed class Parchment : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Writing });
     public override ItemCategory Category => ItemCategory.Crafting;
     public override string ItemId      => "parchment";
     public override string DisplayName => "Parchment";
@@ -35,6 +37,7 @@ public sealed class Parchment : Item
 
 public sealed class Quill : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Writing });
     public override ItemCategory Category => ItemCategory.Crafting;
     public override string ItemId      => "quill";
     public override string DisplayName => "Quill";
@@ -47,6 +50,7 @@ public sealed class Quill : Item
 
 public sealed class InkHorn : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Writing });
     public override ItemCategory Category => ItemCategory.Crafting;
     public override string ItemId      => "ink_horn";
     public override string DisplayName => "Ink Horn";
@@ -59,6 +63,7 @@ public sealed class InkHorn : Item
 
 public sealed class WaxTablet : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Writing });
     public override ItemCategory Category => ItemCategory.Crafting;
     public override string ItemId      => "wax_tablet";
     public override string DisplayName => "Wax Tablet";
@@ -71,6 +76,7 @@ public sealed class WaxTablet : Item
 
 public sealed class Chalk : StoneRawItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Stone });
     public override string ItemId      => "chalk";
     public override string DisplayName => "Chalk";
     public override string Description => "A stick of soft white chalk, worn to a blunt point at one end";
@@ -80,6 +86,7 @@ public sealed class Chalk : StoneRawItem
 
 public sealed class Soap : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Remedy });
     public override ItemCategory Category => ItemCategory.Crafting;
     public override string ItemId      => "soap";
     public override string DisplayName => "Soap";
@@ -92,6 +99,7 @@ public sealed class Soap : Item
 
 public sealed class Bandage : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Remedy, ItemKind.Cloth });
     public override ItemCategory Category => ItemCategory.Crafting;
     public override string ItemId      => "bandage";
     public override string DisplayName => "Bandage";
@@ -104,6 +112,7 @@ public sealed class Bandage : Item
 
 public sealed class Poultice : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Remedy, ItemKind.Herb });
     public override string ItemId      => "poultice";
     public override string DisplayName => "Poultice";
     public override string Description => "A wad of bruised herbs and bran bound in a cloth, still faintly warm";
@@ -120,6 +129,7 @@ public sealed class Poultice : ConsumableItem
 
 public sealed class Wine : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Liquor });
     public override string ItemId      => "wine";
     public override string DisplayName => "Wine";
     public override string Description => "A stoppered jug of red wine, rough and strong";
@@ -135,6 +145,7 @@ public sealed class Wine : ConsumableItem
 
 public sealed class Incense : HerbItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Holy });
     public override string ItemId      => "incense";
     public override List<ItemTag> Tags => new() { ItemTag.Herb, ItemTag.Devotional };
     public override string DisplayName => "Incense";
@@ -146,6 +157,7 @@ public sealed class Incense : HerbItem
 
 public sealed class Manacles : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Metal });
     public override ItemCategory Category => ItemCategory.Crafting;
     public override string ItemId      => "manacles";
     public override string DisplayName => "Manacles";

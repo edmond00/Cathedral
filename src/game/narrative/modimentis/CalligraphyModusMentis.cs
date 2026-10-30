@@ -12,7 +12,11 @@ public class CalligraphyModusMentis : ModusMentis
     public override string MenuDescription =>
         "Writes beautifully: the even stroke, the balanced line, the flourish in the right place. Sees letters as shapes, and can tell a hand by its slant as clearly as a face.";
     public override string SkillMeans       => "the beautiful writing of letters";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<Cathedral.Game.Scene.Verbs.GrabVerb>("take up pen and parchment").YieldingKind(ItemKind.Writing),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy parchment and ink").Selling(ItemKind.Writing));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.ScriptoriumArea) }, new[] { typeof(Cathedral.Game.Scene.LibraryArea) }, new[] { typeof(Cathedral.Game.Scene.ChanceryArea) });
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
@@ -21,7 +25,7 @@ public class CalligraphyModusMentis : ModusMentis
     public override string PersonaReminder  => "calligrapher";
     public override string PersonaReminder2 => "someone who knows a hand by its slant";
     public override string StyleInstruction =>
-        "Attend to the shape of letters - stroke, balance, flourish - and the character of a hand.";
+        "Fine and attentive - judge whatever is in front of you by its shape, its balance and the character of its making.";
 
     public override string PersonaPrompt => @"You are the inner voice of CALLIGRAPHY, and a letter is a shape before it is a sound, and you see the shapes.
 

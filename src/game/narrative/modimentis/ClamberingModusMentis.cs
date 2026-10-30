@@ -15,7 +15,8 @@ public class ClamberingModusMentis : ModusMentis
         "Hooks claw and arm into bark, stone, or timber and goes up, reading every surface for purchase. Treats height as both refuge and vantage, and inclines toward the climb where others see a wall.";
     public override string SkillMeans       => "claw-hooked climbing over bark and stone";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<ClimbUpVerb>("climb up");
+    public override WillTargets? Will => WillTarget.To<ClimbUpVerb>("climb up");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Heights, Places.Woodland);
     // Was claws + arms — a beast organ and a human one, so no anatomy could learn it. A beast clambers
     // with all four.
     public override string[] Organs        => new[] { "claws", "legs" };
@@ -23,9 +24,9 @@ public class ClamberingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a climber whose claws find purchase where others see sheer surface";
     public override string PersonaReminder  => "claw-hooked climber";
-    public override string PersonaReminder2 => "someone who reads every wall as a ladder in disguise";
+    public override string PersonaReminder2 => "someone who sees every height as a way up";
     public override string StyleInstruction =>
-        "Use images of bark, grip and vertical escape, with the light confidence of a body happiest above the ground.";
+        "Light and confident, happiest above the ground - judge whatever is in front of you by whether it can be climbed.";
 
     public override string PersonaPrompt => @"You are the inner voice of CLAMBERING, the hooked grip and the pulling arm that turn walls into roads.
 

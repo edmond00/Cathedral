@@ -77,6 +77,18 @@ public abstract class Item
     /// </summary>
     public bool IsLiquid => this is ConsumableItem { ConsumableType: ConsumableType.Drink };
 
+    /// <summary>
+    /// Every family this item belongs to — what a will wanting "a mushroom" or "a blade" is answered by
+    /// (<see cref="ItemKind"/>). The declared kinds plus the ones the category implies.
+    /// </summary>
+    public IReadOnlyCollection<ItemKind> Kinds => ItemKinds.Of(this);
+
+    /// <summary>
+    /// The kinds this item class declares. A family's base class declares the family's, and an item adds
+    /// its own to <c>base.DeclaredKinds</c>. Tag generously: a kind no will wants costs nothing.
+    /// </summary>
+    public virtual IEnumerable<ItemKind> DeclaredKinds => System.Array.Empty<ItemKind>();
+
     // ── Trade ─────────────────────────────────────────────────────
 
     /// <summary>

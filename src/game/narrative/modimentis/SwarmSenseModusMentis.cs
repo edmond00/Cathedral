@@ -18,9 +18,9 @@ public class SwarmSenseModusMentis : ModusMentis
 
     public override string PersonaTone     => "an eye that treats a swarm as one animal and reads it accordingly";
     public override string PersonaReminder  => "swarm-reading watcher";
-    public override string PersonaReminder2 => "someone who follows the bee-line back to the hive";
+    public override string PersonaReminder2 => "someone who sees the pattern in a crowd of small things";
     public override string StyleInstruction =>
-        "Watch the mass rather than the individual - the line of flight, the road, the column.";
+        "Wide-eyed and patient - watch the movement of the many rather than any single one.";
 
     public override string PersonaPrompt => @"You are the inner voice of SWARM SENSE, which sees one creature where others see a thousand.
 

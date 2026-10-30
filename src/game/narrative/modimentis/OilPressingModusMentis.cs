@@ -12,7 +12,12 @@ public class OilPressingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Crushes olives under the stone and presses the paste in mats until the oil runs green. Judges the first pressing from the second by smell, and knows when the fruit has been left too long.";
     public override string SkillMeans       => "the crushing and pressing of olives for oil";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.ToAny("pick olives", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).Yielding<Cathedral.Game.Narrative.World.Items.Olive>(),
+        WillTarget.ToAny("take up the new oil", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).Yielding<Cathedral.Game.Narrative.World.Items.OliveOil>(),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over a press").Teaching<OilPressingModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.PressArea) }, new[] { typeof(Cathedral.Game.Scene.GroveArea) });
     public override string[] Organs        => new[] { "arms", "nose" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
@@ -21,7 +26,7 @@ public class OilPressingModusMentis : ModusMentis
     public override string PersonaReminder  => "olive presser";
     public override string PersonaReminder2 => "someone who smells the first pressing from across a yard";
     public override string StyleInstruction =>
-        "Describe pressure, weight and the green-gold run of oil, and the sharp peppery smell that means good fruit.";
+        "Judge whatever is in front of you by its quality, as if you could tell the good from the poor by smell alone.";
 
     public override string PersonaPrompt => @"You are the inner voice of OIL PRESSING, and the stone is turning and the paste is coming out thick and purple and the press is waiting.
 

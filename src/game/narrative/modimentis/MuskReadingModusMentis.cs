@@ -16,13 +16,14 @@ public class MuskReadingModusMentis : ModusMentis
         "Takes an animal's condition from its smell: rut, sickness, fright, and how long it has been standing where it stands. Close work — a beast at arm's length says more than a whole field of them.";
     public override string SkillMeans       => "the reading of an animal's condition from its musk";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTarget? Will => WillTarget.To<SmellVerb>("read a beast by its musk");
+    public override WillTargets? Will => WillTarget.To<SmellVerb>("read a beast by its musk");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds);
     public override string[] Organs        => new[] { "nose", "hippocampus" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
     public override string PersonaTone     => "a nose that takes an animal's news from it before touching it";
     public override string PersonaReminder  => "musk-reading handler";
-    public override string PersonaReminder2 => "someone who can smell a frightened animal across a byre";
+    public override string PersonaReminder2 => "someone who knows what a creature feels before it shows it";
     public override string StyleInstruction =>
         "Work close and physical — warm coat, sour fear, the sweetness of something wrong under it.";
 

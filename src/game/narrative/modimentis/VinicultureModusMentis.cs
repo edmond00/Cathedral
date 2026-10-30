@@ -14,7 +14,11 @@ public class VinicultureModusMentis : ModusMentis
         "Works the vine through its year: pruning to two buds, tying the canes, thinning the leaves to let the sun at the bunches. Smells when the grapes are ready before the sugar can be tasted.";
     public override string SkillMeans       => "the tending of the vine from pruning to vintage";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.ToAny("pick grapes", typeof(GatherVerb), typeof(GrabVerb)).Yielding<World.Items.Grape>();
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.ToAny("pick grapes", typeof(GatherVerb), typeof(GrabVerb)).Yielding<World.Items.Grape>(),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("taste the wine the grapes went into").Selling(ItemKind.Liquor),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over the vines").Teaching<VinicultureModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.VineyardArea) });
     public override string[] Organs        => new[] { "hands", "nose" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
@@ -23,7 +27,7 @@ public class VinicultureModusMentis : ModusMentis
     public override string PersonaReminder  => "vine-dresser";
     public override string PersonaReminder2 => "someone who prunes to two buds without counting";
     public override string StyleInstruction =>
-        "Describe the vine as a patient negotiation between growth and fruit, and smell the ripeness in the air.";
+        "Patient and persuasive - see in whatever living thing is in front of you a negotiation between growth and fruit.";
 
     public override string PersonaPrompt => @"You are the inner voice of VINICULTURE, and the vine wants to make leaves, and your whole art is persuading it to make fruit instead.
 

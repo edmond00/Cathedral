@@ -15,15 +15,19 @@ public class TillageModusMentis : ModusMentis
         "Reads ground through the resistance it offers, sorting clay from loam by the pull and judging when soil is ready to break. Sets the body to steady, repetitive labour and holds a line straight across long work without flagging.";
     public override string SkillMeans       => "the breaking and turning of soil";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<DigVerb>("break the ground");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<DigVerb>("break the ground"),
+        WillTarget.ToAny("lay hands on a spade", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).YieldingAny("a spade", typeof(Cathedral.Game.Narrative.World.Items.Shovel), typeof(Cathedral.Game.Narrative.World.Items.GraveSpade)),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over tilled ground and its tools").Teaching<TillageModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Fields);
     public override string[] Organs        => new[] { "arms", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
     public override string PersonaTone     => "a plowman who can lay a furrow straight across a strip without lifting his eyes from the ox";
     public override string PersonaReminder  => "soil-breaker";
-    public override string PersonaReminder2 => "someone who reads the ground through the handles of the plough";
+    public override string PersonaReminder2 => "someone who understands the ground through work";
     public override string StyleInstruction =>
-        "Use images of turned earth, straight furrows and the pull of the plough, with the dogged patience of the long strip.";
+        "Dogged and patient - judge whatever is in front of you by the long, straight work it would take.";
 
     public override string PersonaPrompt => @"You are the inner voice of TILLAGE, the labour that breaks the sleeping ground and lays it open for the seed.
 

@@ -59,6 +59,18 @@ reported. The two go together — a consequence that reports nothing changed not
 observed. This is why the account rendered after an act is not decoration upon it but the whole
 evidence of what it did.
 
+**Play** is the one manner of acting that takes its whole character from its object. Stones skipped
+across a creek, a rope swing ridden out over a bank, a hound scratched behind the ears and a heap of
+hay jumped into share nothing but being done for their own sake, and so the thing played with
+settles everything another manner settles for itself: what precisely is done, how hard it is, what
+the body must be capable of (hands for a stone or a rope, Abstraction for a game with rules — see
+[Chapter I §5](01-anatomy.md#5-the-three-capabilities)), what it teaches, and what a failure may
+cost. A creature is played with only while it does not count the actor an enemy. **A successful
+play changes nothing in the world**; its whole consequence is the modus mentis it teaches, which is
+that play's own — the skipping of stones teaches the skipping of stones — and failing any the body
+can hold, a general playfulness. About a quarter of the areas of the world hold something to be
+played at.
+
 ## 3. The phase and its budget
 
 Narration proceeds in **phases**. A phase opens with an observation, and within it the acting body
@@ -115,6 +127,12 @@ is tested against the rules of choice that refuse outright: if no acting modus m
 could carry it out under them — an examination where none of them observes — it is offered to no mind
 for the rest of the phase. If some can, the next mind to choose it is offered only those as the means,
 and the one chosen answers only with a degree of assent; it may not refuse.
+
+**A mind that wanted nothing of an object is not asked twice.** A thinking modus mentis may judge that
+nothing an object affords is worth doing, and say so. Its judgement does not vary — the same mind
+asked about the same object returns the same answer — so to ask it again within the phase is to
+insist: the second time, it may not decline, and settles on one of the goals offered. Another mind
+asked about the same object may still decline it.
 
 A new phase in the same place sees the whole scene, and every act in it, afresh.
 
@@ -359,7 +377,7 @@ person is never game: every crime against a person is a crime on wild ground as 
 | | A thinking modus mentis | An acting modus mentis |
 |---|---|---|
 | **High** | Crimes are dropped from its list of goals. Filtering everything away is a legitimate result. | Refuses at once, unasked, before the act is offered. |
-| **Low** | If any goal on offer is a crime, **only** the crimes are offered. | Cannot refuse: the option to decline is withheld. |
+| **Low** | If any goal on offer is a crime, **only** the crimes are offered, and it may not decline them all: it chooses one. | Cannot refuse: the option to decline is withheld. |
 
 Both halves are needed, because the goal and the means are two separate decisions: a scrupulous
 skill may still be chosen to carry out a goal some other mind settled on.
@@ -370,7 +388,11 @@ anything.
 *May I act at all?* Asked of **raw** proximity by the rules of action. Somebody in the room blocks a
 non-discreet modus mentis outright. A **discreet** modus mentis may always attempt — that permission
 is the whole of what discretion buys at close quarters. The acts that answer a confronting witness
-(below) are exempt: done to the one already watching, they leave nobody to be caught by.
+(below) are exempt: done to the one already watching, they leave nobody to be caught by. Nor may a
+discreet modus mentis decline an act that only its discretion permits here — a crime in sight of a
+witness, any act but facing the threat while an enemy stands in the room, any act but answering a
+confronting witness. It may undertake such an act reluctantly; it may not refuse it, save where
+principle refuses it first. Out of everybody's sight it declines as any other mind.
 
 *What does failing cost?* Asked of **effective** proximity, where discretion applies. Discretion
 silences a body **through a wall**, never **in the same room**: it downgrades a Visual presence not

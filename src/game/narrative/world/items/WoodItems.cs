@@ -6,6 +6,7 @@ namespace Cathedral.Game.Narrative.World.Items;
 
 public sealed class Log : WoodRawItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Fuel });
     public override string ItemId      => "log";
     public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Timber };
     public override string DisplayName => "Log";
@@ -16,6 +17,7 @@ public sealed class Log : WoodRawItem
 
 public sealed class Plank : WoodRawItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Wood });
     public override string ItemId      => "plank";
     public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Timber };
     public override string DisplayName => "Plank";
@@ -26,6 +28,7 @@ public sealed class Plank : WoodRawItem
 
 public sealed class Twig : WoodRawItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Fuel });
     public override string ItemId      => "twig";
     public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Timber };
     public override string DisplayName => "Twig";
@@ -36,6 +39,7 @@ public sealed class Twig : WoodRawItem
 
 public sealed class BirchSap : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Plant });
     public override string ItemId      => "birch_sap";
     public override string DisplayName => "Birch Sap";
     public override string Article     => "some";

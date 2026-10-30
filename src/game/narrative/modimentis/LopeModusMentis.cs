@@ -21,7 +21,7 @@ public class LopeModusMentis : ModusMentis
     public override string PersonaReminder  => "distance-eating loper";
     public override string PersonaReminder2 => "someone who wins every race longer than an hour";
     public override string StyleInstruction =>
-        "Set the line to a long, rocking rhythm — the horizon nearing, the quarry tiring — with unhurried inevitability.";
+        "Long, rocking and unhurried - see whatever is in front of you as something you will outlast.";
 
     public override string PersonaPrompt => @"You are the inner voice of LOPE, the fourth gear of the body: slower than a sprint, faster than a walk, and endless.
 

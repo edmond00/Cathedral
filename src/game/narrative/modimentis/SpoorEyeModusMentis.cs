@@ -17,7 +17,10 @@ public class SpoorEyeModusMentis : ModusMentis
         "Follows what passed by what it disturbed: the print's edge, the bent stem, the stone turned dark side up. Reads age from how far the sign has dried or sprung back, and builds the direction of travel out of the gaps between marks.";
     public override string SkillMeans       => "the reading of print, bent stem and turned stone";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTarget? Will => WillTarget.To<TrackVerb>("follow a track");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<TrackVerb>("follow a track"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("read a print in the ground").On<Cathedral.Game.Scene.FootprintPointOfInterest>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wild);
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
@@ -25,7 +28,7 @@ public class SpoorEyeModusMentis : ModusMentis
     public override string PersonaReminder  => "sign-reading tracker";
     public override string PersonaReminder2 => "someone who can tell you how long ago, before what it was";
     public override string StyleInstruction =>
-        "Build from small disturbances outward — the print, the stem, the interval — and put the conclusion last.";
+        "Patient and deductive - build from the smallest signs outward, and put the conclusion last.";
 
     public override string PersonaPrompt => @"You are the inner voice of the SPOOR EYE, which cannot smell a thing and does not need to.
 

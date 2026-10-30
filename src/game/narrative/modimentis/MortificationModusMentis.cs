@@ -19,7 +19,7 @@ public class MortificationModusMentis : ModusMentis
 
     public override string PersonaTone     => "an ascetic who distrusts every comfort";
     public override string PersonaReminder  => "ascetic";
-    public override string PersonaReminder2 => "someone who sleeps on stone by choice";
+    public override string PersonaReminder2 => "someone who chooses the harder way on purpose";
     public override string StyleInstruction =>
         "Distrust comfort; choose the harder way and call it freedom.";
 

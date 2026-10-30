@@ -14,7 +14,11 @@ public class GoldFeverModusMentis : ModusMentis
         "Finds precious metal and cannot then leave it alone. Reads colour in the pan and in the seam better than anyone, and works past food, daylight and sense to follow it. A gift and an affliction in the same faculty.";
     public override string SkillMeans       => "the hunger that follows a colour in the rock";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTarget? Will => WillTarget.To<MineVerb>("dig metal out of the rock");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<MineVerb>("dig metal out of the rock"),
+        WillTarget.ToAny("get my hands on something precious", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb), typeof(Cathedral.Game.Scene.Verbs.GatherVerb)).YieldingKind(ItemKind.Gem),
+        WillTarget.ToAny("lay hands on a pick", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).Yielding<Cathedral.Game.Narrative.World.Items.Pick>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Underground, Places.Heights);
     public override string[] Organs        => new[] { "eyes", "spleen" };
     /// <summary>A hunger that ends at a pick in a seam: a body with no hands for one has no gold fever.</summary>
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
@@ -25,7 +29,7 @@ public class GoldFeverModusMentis : ModusMentis
     public override string PersonaReminder  => "gold-struck digger";
     public override string PersonaReminder2 => "someone who has not eaten since the colour showed";
     public override string StyleInstruction =>
-        "Fixate - the glint, the pan, the next foot of rock, and nothing else in the sentence.";
+        "Fixed and feverish - see in whatever is in front of you only whether it promises a fortune.";
 
     public override string PersonaPrompt => @"You are the inner voice of GOLD FEVER, and there was colour in that last pan.
 

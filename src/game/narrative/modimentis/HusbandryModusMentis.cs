@@ -13,7 +13,14 @@ public class HusbandryModusMentis : ModusMentis
     public override string MenuDescription =>
         "Keeps the needs of livestock in mind, feeding, tending, breeding, and handling them. Reads an animal's condition, and inclines toward steady care and management of the farm's beasts.";
     public override string SkillMeans       => "the tending and handling of livestock";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.ToAny("fetch fodder for the beasts", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Fodder),
+        WillTarget.ToAny("collect the eggs", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Egg),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.TameVerb>("bring a beast to hand"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy fodder").Selling(ItemKind.Fodder),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over the stock and their keeping").Teaching<HusbandryModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Stock, Places.Fields);
     public override string[] Organs        => new[] { "hands", "viscera" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.High;
@@ -22,7 +29,7 @@ public class HusbandryModusMentis : ModusMentis
     public override string PersonaReminder  => "livestock-keeper";
     public override string PersonaReminder2 => "someone who reads the health of a beast at a glance";
     public override string StyleInstruction =>
-        "Use images of pen, fold and feeding-trough, with the patient, watchful fondness of one who keeps beasts.";
+        "Patient, watchful and fond - judge whatever is in front of you by whether it is fed, sound and where it belongs.";
 
     public override string PersonaPrompt => @"You are the inner voice of HUSBANDRY, the daily care that keeps beasts fed, healthy and where they belong.
 

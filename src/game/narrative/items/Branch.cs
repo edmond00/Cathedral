@@ -1,3 +1,4 @@
+using Cathedral.Game.Narrative;
 using System.Collections.Generic;
 
 namespace Cathedral.Game.Narrative.Items;
@@ -12,6 +13,7 @@ namespace Cathedral.Game.Narrative.Items;
 /// </summary>
 public sealed class Branch : WeaponItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Bludgeon, ItemKind.Wood });
     public override string ItemId         => "branch";
     public override string DisplayName    => "Branch";
     public override string Description    => "A sturdy branch snapped from a tree";

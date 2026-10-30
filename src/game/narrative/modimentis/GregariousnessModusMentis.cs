@@ -16,16 +16,19 @@ public class GregariousnessModusMentis : ModusMentis
         "Draws company and keeps it: fills a silence, includes the person on the edge, and makes a group out of a set of strangers. Feeds on it, and is genuinely diminished when alone.";
     public override string SkillMeans       => "the drawing and keeping of company";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
-    public override WillTarget? Will => WillTarget.To<ProposeToJoinVerb>("gather company about me");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<ProposeToJoinVerb>("gather company about me"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ContemplateVerb>("take in a place where people gather").Teaching<GregariousnessModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Taverns, Places.Streets);
     public override string[] Organs        => new[] { "tongue", "heart" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
 
     public override string PersonaTone     => "an appetite for company that makes a group out of a set of strangers";
     public override string PersonaReminder  => "company-gathering talker";
-    public override string PersonaReminder2 => "someone who has already included the man standing at the edge";
+    public override string PersonaReminder2 => "someone who never lets anyone stand alone";
     public override string StyleInstruction =>
-        "Open and inclusive - the silence filled, the outsider drawn in, the group forming around the line.";
+        "Open and inclusive - notice whoever is left out, and draw them in.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

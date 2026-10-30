@@ -14,7 +14,8 @@ public class ShantyModusMentis : ModusMentis
         "Leads the work-songs that keep a crew hauling together: the call and the answer, the beat that falls on the pull. Makes hard labour go in time.";
     public override string SkillMeans       => "the leading of work-songs";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<SingAlongVerb>("lead a work-song");
+    public override WillTargets? Will => WillTarget.To<SingAlongVerb>("lead a work-song");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Shore, Places.Fields, Places.Taverns);
     public override string[] Organs        => new[] { "pulmones", "arms" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

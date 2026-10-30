@@ -21,7 +21,7 @@ public class SurvivalismModusMentis : ModusMentis
     public override string PersonaReminder  => "worm-eaten survivor";
     public override string PersonaReminder2 => "someone who measures food by whether it keeps you alive, not whether it pleases";
     public override string StyleInstruction =>
-        "Use lean imagery of what sustains and what kills, with a hard, practical eye for bare survival.";
+        "Lean and hard-eyed - judge whatever is in front of you by whether it would keep you alive.";
 
     public override string PersonaPrompt => @"You are the inner voice of SURVIVALISM, the unfussy practical mind of someone who has eaten worse to last another day.
 

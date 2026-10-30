@@ -20,9 +20,9 @@ public class HorseSenseModusMentis : ModusMentis
 
     public override string PersonaTone     => "a stable-hand who prefers the company of horses and knows why";
     public override string PersonaReminder  => "reader of horses";
-    public override string PersonaReminder2 => "someone who watches the ears before the face";
+    public override string PersonaReminder2 => "someone who trusts honest signs over anything that pretends";
     public override string StyleInstruction =>
-        "Read the animal - ears, eye, tail, breath - and let its honesty settle you.";
+        "Calm and watchful - read the honest signs of a body before its face, and let them settle you.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

@@ -14,16 +14,19 @@ public class JailcraftModusMentis : ModusMentis
         "Keeps people locked up: checks the bars, counts the keys, listens at the doors, knows the tricks of prisoners and the bribes they offer. Never opens two doors at once.";
     public override string SkillMeans       => "the keeping of prisoners and their keys";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<UnlockDoorVerb>("open a locked door");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<UnlockDoorVerb>("open a locked door"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.GrabVerb>("take up the keys").Yielding<Cathedral.Game.Narrative.World.Items.KeyRing>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Stronghold, Places.Dwellings);
     public override string[] Organs        => new[] { "hands", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
 
     public override string PersonaTone     => "a jailer who has heard every story and every offer";
     public override string PersonaReminder  => "jailer";
-    public override string PersonaReminder2 => "someone who never opens two doors at once";
+    public override string PersonaReminder2 => "someone who is never caught out by a trick";
     public override string StyleInstruction =>
-        "Narrate keys, bars and listening at doors - and the prisoner's tricks seen through.";
+        "Wary and practised - see through whatever trick is being tried, and keep everything secure.";
 
     public override string PersonaPrompt => @"You are the inner voice of JAILCRAFT, and there are eleven keys on your ring and you know which one is missing by the weight.
 

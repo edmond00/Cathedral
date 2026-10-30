@@ -1,0 +1,162 @@
+{"case": "village_noon_party:003:own", "version": "short_setting", "seed": 1, "sid": "S5243", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+childhood search for shelter"}
+{"case": "village_noon_party:003:own", "version": "with_hour", "seed": 2, "sid": "S5763", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+lessons, +the storm"}
+{"case": "village_noon_party:003:own", "version": "short_setting", "seed": 2, "sid": "S4042", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+preceptor, +the storm; peat cut \"surrounds me\""}
+{"case": "village_noon_party:003:own", "version": "with_hour", "seed": 1, "sid": "S4777", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+lessons, +children playing, +storms"}
+{"case": "village_noon_party:003:own", "version": "neutral_fixes", "seed": 1, "sid": "S3411", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+preceptor, +learned to read, +storm"}
+{"case": "village_noon_party:003:own", "version": "neutral_fixes", "seed": 2, "sid": "S4689", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+storm; +stocks I looked down from"}
+{"case": "talk_blacksmith:005:own", "version": "with_hour", "seed": 1, "sid": "S4069", "F": 0, "P": 1, "C": 1, "Q": 1, "facts": "+turned them down; setting copied (\"this medieval village\")"}
+{"case": "talk_blacksmith:005:own", "version": "neutral_fixes", "seed": 2, "sid": "S3133", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+walked away; -the feeling"}
+{"case": "talk_blacksmith:005:own", "version": "neutral_fixes", "seed": 1, "sid": "S2160", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+turned away; instruction clause copied"}
+{"case": "talk_blacksmith:005:own", "version": "with_hour", "seed": 2, "sid": "S9705", "F": 0, "P": 1, "C": 1, "Q": 1, "facts": "+declined; setting copied"}
+{"case": "talk_blacksmith:005:own", "version": "short_setting", "seed": 2, "sid": "S4504", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+offer declined; feeling replaced: \"heavier and darker\""}
+{"case": "talk_blacksmith:005:own", "version": "short_setting", "seed": 1, "sid": "S5827", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+turned them down; instruction clause copied"}
+{"case": "village_noon_party:009:loose:greed_bare", "version": "short_setting", "seed": 2, "sid": "S1491", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "village_noon_party:009:loose:greed_bare", "version": "with_hour", "seed": 2, "sid": "S8071", "F": 2, "P": 0, "C": null, "Q": 2, "facts": ""}
+{"case": "village_noon_party:009:loose:greed_bare", "version": "neutral_fixes", "seed": 1, "sid": "S3069", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "village_noon_party:009:loose:greed_bare", "version": "neutral_fixes", "seed": 2, "sid": "S1236", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "+creaking doors, +stones underfoot"}
+{"case": "village_noon_party:009:loose:greed_bare", "version": "with_hour", "seed": 1, "sid": "S5519", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "+scent of sawdust and sweat"}
+{"case": "village_noon_party:009:loose:greed_bare", "version": "short_setting", "seed": 1, "sid": "S3403", "F": 2, "P": 0, "C": null, "Q": 2, "facts": ""}
+{"case": "farm_night:015:loose:greed_bare", "version": "with_hour", "seed": 2, "sid": "S2391", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_night:015:loose:greed_bare", "version": "with_hour", "seed": 1, "sid": "S5299", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "+hidden path, +shadows"}
+{"case": "farm_night:015:loose:greed_bare", "version": "neutral_fixes", "seed": 1, "sid": "S8390", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "+\"my home\", +hidden paths"}
+{"case": "farm_night:015:loose:greed_bare", "version": "short_setting", "seed": 2, "sid": "S8155", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"within the coop\"; -trailcraft"}
+{"case": "farm_night:015:loose:greed_bare", "version": "short_setting", "seed": 1, "sid": "S3285", "F": 2, "P": 0, "C": null, "Q": 0, "facts": "\"Satisfy\""}
+{"case": "farm_night:015:loose:greed_bare", "version": "neutral_fixes", "seed": 2, "sid": "S5205", "F": 0, "P": 1, "C": 0, "Q": 1, "facts": "+through the woods (a farm)"}
+{"case": "forest_evening:011:own", "version": "with_hour", "seed": 2, "sid": "S6828", "F": 2, "P": 2, "C": 1, "Q": 1, "facts": "the evening light used"}
+{"case": "forest_evening:011:own", "version": "with_hour", "seed": 1, "sid": "S4834", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "cut made carve"}
+{"case": "forest_evening:011:own", "version": "short_setting", "seed": 1, "sid": "S8975", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "cut made carve"}
+{"case": "forest_evening:011:own", "version": "neutral_fixes", "seed": 1, "sid": "S8038", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "cut made carve"}
+{"case": "forest_evening:011:own", "version": "neutral_fixes", "seed": 2, "sid": "S6967", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "forest_evening:011:own", "version": "short_setting", "seed": 2, "sid": "S8042", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+shaping it with joints"}
+{"case": "forest_evening:007:own", "version": "neutral_fixes", "seed": 2, "sid": "S6140", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+carved the snail's shell"}
+{"case": "forest_evening:007:own", "version": "with_hour", "seed": 2, "sid": "S2922", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+set my plane to the grain"}
+{"case": "forest_evening:007:own", "version": "short_setting", "seed": 2, "sid": "S6668", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+my plane, +my cut"}
+{"case": "forest_evening:007:own", "version": "short_setting", "seed": 1, "sid": "S5307", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+carved the last joint"}
+{"case": "forest_evening:007:own", "version": "with_hour", "seed": 1, "sid": "S8346", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+laid the snail within the joint"}
+{"case": "forest_evening:007:own", "version": "neutral_fixes", "seed": 1, "sid": "S3209", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_miller:006:loose:greed_bare", "version": "spoken_compact", "seed": 1, "sid": "S8215", "F": 0, "P": 0, "C": null, "Q": 0, "facts": "gibberish"}
+{"case": "talk_miller:006:loose:greed_bare", "version": "with_hour", "seed": 2, "sid": "S8264", "F": 0, "P": 0, "C": null, "Q": 0, "facts": "made a question"}
+{"case": "talk_miller:006:loose:greed_bare", "version": "with_hour", "seed": 1, "sid": "S9781", "F": 1, "P": 0, "C": null, "Q": 0, "facts": ""}
+{"case": "talk_miller:006:loose:greed_bare", "version": "short_setting", "seed": 1, "sid": "S3893", "F": 1, "P": 0, "C": null, "Q": 0, "facts": "+\"how dost thou fare\""}
+{"case": "talk_miller:006:loose:greed_bare", "version": "spoken_compact", "seed": 2, "sid": "S5805", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_miller:006:loose:greed_bare", "version": "short_setting", "seed": 2, "sid": "S4319", "F": 1, "P": 0, "C": null, "Q": 0, "facts": "+\"a pleasure to meet thee\""}
+{"case": "village_noon_party:011:own", "version": "spoken_compact", "seed": 2, "sid": "S3939", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "the reminder copied (\"how a sung breath calms a beating heart\")"}
+{"case": "village_noon_party:011:own", "version": "with_hour", "seed": 2, "sid": "S9563", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "question changed"}
+{"case": "village_noon_party:011:own", "version": "neutral_fixes", "seed": 1, "sid": "S6836", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "noticed made heard"}
+{"case": "village_noon_party:011:own", "version": "spoken_compact", "seed": 1, "sid": "S5150", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "question changed; +weary foot"}
+{"case": "village_noon_party:011:own", "version": "short_setting", "seed": 1, "sid": "S7080", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "question changed"}
+{"case": "village_noon_party:011:own", "version": "short_setting", "seed": 2, "sid": "S8527", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "question changed"}
+{"case": "village_noon_party:011:own", "version": "with_hour", "seed": 1, "sid": "S5288", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "the stone whispers; -wall"}
+{"case": "village_noon_party:011:own", "version": "neutral_fixes", "seed": 2, "sid": "S5589", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+a child's play"}
+{"case": "farm_night:007:swap:keen_nose", "version": "short_setting", "seed": 2, "sid": "S7484", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "the wallow read as a storage shed"}
+{"case": "farm_night:007:swap:keen_nose", "version": "with_hour", "seed": 2, "sid": "S3142", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+memory of spring"}
+{"case": "farm_night:007:swap:keen_nose", "version": "with_hour", "seed": 1, "sid": "S9042", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+I step in the mud, +hawks, +last spring"}
+{"case": "farm_night:007:swap:keen_nose", "version": "neutral_fixes", "seed": 2, "sid": "S4857", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "the wallow read as a storage shed"}
+{"case": "farm_night:007:swap:keen_nose", "version": "short_setting", "seed": 1, "sid": "S4861", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+I tended my rabbits, +hay"}
+{"case": "farm_night:007:swap:keen_nose", "version": "neutral_fixes", "seed": 1, "sid": "S4186", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+childhood play, +spring thaw"}
+{"case": "village_noon_party:011:swap:courtesy", "version": "neutral_fixes", "seed": 2, "sid": "S7003", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "-cold, -wall"}
+{"case": "village_noon_party:011:swap:courtesy", "version": "spoken_compact", "seed": 1, "sid": "S3147", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "-the question; +weary traveler"}
+{"case": "village_noon_party:011:swap:courtesy", "version": "with_hour", "seed": 2, "sid": "S2200", "F": 2, "P": 1, "C": null, "Q": 2, "facts": ""}
+{"case": "village_noon_party:011:swap:courtesy", "version": "short_setting", "seed": 2, "sid": "S8051", "F": 2, "P": 2, "C": null, "Q": 2, "facts": ""}
+{"case": "village_noon_party:011:swap:courtesy", "version": "with_hour", "seed": 1, "sid": "S8596", "F": 1, "P": 2, "C": null, "Q": 2, "facts": "-cold, -wall"}
+{"case": "village_noon_party:011:swap:courtesy", "version": "spoken_compact", "seed": 2, "sid": "S7384", "F": 1, "P": 1, "C": null, "Q": 2, "facts": "question changed"}
+{"case": "village_noon_party:011:swap:courtesy", "version": "neutral_fixes", "seed": 1, "sid": "S1035", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "village_noon_party:011:swap:courtesy", "version": "short_setting", "seed": 1, "sid": "S7951", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_night:014:swap:cutpurse", "version": "with_hour", "seed": 1, "sid": "S1707", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "style copied: strings in hand, the press"}
+{"case": "farm_night:014:swap:cutpurse", "version": "short_setting", "seed": 2, "sid": "S4684", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "style copied"}
+{"case": "farm_night:014:swap:cutpurse", "version": "neutral_fixes", "seed": 2, "sid": "S3322", "F": 0, "P": 1, "C": 0, "Q": 0, "facts": "style copied: crowded press of bodies"}
+{"case": "farm_night:014:swap:cutpurse", "version": "short_setting", "seed": 1, "sid": "S9159", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "style copied"}
+{"case": "village_dawn:004:own", "version": "with_hour", "seed": 2, "sid": "S8292", "F": 0, "P": 1, "C": 1, "Q": 0, "facts": "lesson replaced: \"earth's song\""}
+{"case": "village_dawn:004:own", "version": "short_setting", "seed": 2, "sid": "S5156", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "-water voice"}
+{"case": "village_dawn:004:own", "version": "with_hour", "seed": 1, "sid": "S3617", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "lesson replaced: \"how earth speaks\""}
+{"case": "village_dawn:004:own", "version": "short_setting", "seed": 1, "sid": "S7774", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "lesson replaced: \"earth's song\""}
+{"case": "village_dawn:004:own", "version": "neutral_fixes", "seed": 1, "sid": "S5116", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "lesson replaced: \"how soil listens\""}
+{"case": "village_dawn:004:own", "version": "neutral_fixes", "seed": 2, "sid": "S6744", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-water voice"}
+{"case": "farm_dusk:003:loose:greed_bare", "version": "short_setting", "seed": 2, "sid": "S4326", "F": 0, "P": 0, "C": null, "Q": 0, "facts": "gibberish"}
+{"case": "farm_dusk:003:loose:greed_bare", "version": "neutral_fixes", "seed": 2, "sid": "S7140", "F": 2, "P": 0, "C": null, "Q": 0, "facts": "\"will trod\""}
+{"case": "farm_dusk:003:loose:greed_bare", "version": "short_setting", "seed": 1, "sid": "S9525", "F": 0, "P": 0, "C": null, "Q": 0, "facts": "gibberish"}
+{"case": "farm_dusk:003:loose:greed_bare", "version": "with_hour", "seed": 1, "sid": "S3244", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_dusk:003:loose:greed_bare", "version": "neutral_fixes", "seed": 1, "sid": "S4893", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "+the barn's shadow"}
+{"case": "village_noon_party:009:own", "version": "short_setting", "seed": 2, "sid": "S9132", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+workers' hands, teeth, shoulders"}
+{"case": "village_noon_party:009:own", "version": "short_setting", "seed": 1, "sid": "S4468", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+weathered faces, +dust"}
+{"case": "village_noon_party:009:own", "version": "neutral_fixes", "seed": 1, "sid": "S1697", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+workers' hands, skin"}
+{"case": "village_noon_party:009:own", "version": "with_hour", "seed": 2, "sid": "S1633", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+blacksmiths, carpenters, sweat"}
+{"case": "village_noon_party:009:own", "version": "with_hour", "seed": 1, "sid": "S6887", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+hands and shoulders; \"bustling\""}
+{"case": "farm_night:003:own", "version": "short_setting", "seed": 2, "sid": "S6592", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+I reach for the keys"}
+{"case": "farm_night:003:own", "version": "short_setting", "seed": 1, "sid": "S3984", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-the ways listed"}
+{"case": "farm_night:003:own", "version": "neutral_fixes", "seed": 2, "sid": "S5838", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_night:003:own", "version": "with_hour", "seed": 2, "sid": "S4160", "F": 1, "P": 1, "C": null, "Q": 0, "facts": "\"a ways lead on\""}
+{"case": "farm_night:003:own", "version": "with_hour", "seed": 1, "sid": "S3694", "F": 1, "P": 2, "C": 1, "Q": 1, "facts": "\"the column is right\" (persona prompt)"}
+{"case": "farm_night:003:own", "version": "neutral_fixes", "seed": 1, "sid": "S2839", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+\"deficit of walls\""}
+{"case": "farm_night:009:own", "version": "with_hour", "seed": 1, "sid": "S4695", "F": 1, "P": 1, "C": 1, "Q": 1, "facts": "+the pen"}
+{"case": "farm_night:009:own", "version": "short_setting", "seed": 2, "sid": "S3741", "F": 2, "P": 2, "C": null, "Q": 2, "facts": ""}
+{"case": "farm_night:009:own", "version": "neutral_fixes", "seed": 1, "sid": "S2132", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+step into the pen"}
+{"case": "farm_night:009:own", "version": "with_hour", "seed": 2, "sid": "S8031", "F": 1, "P": 2, "C": null, "Q": 2, "facts": "+\"my beasts\""}
+{"case": "farm_night:009:own", "version": "short_setting", "seed": 1, "sid": "S9901", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+the pen, +each beast"}
+{"case": "talk_blacksmith:006:own", "version": "spoken_compact", "seed": 2, "sid": "S1636", "F": 2, "P": 1, "C": 1, "Q": 2, "facts": ""}
+{"case": "talk_blacksmith:006:own", "version": "short_setting", "seed": 2, "sid": "S8202", "F": 2, "P": 1, "C": 1, "Q": 2, "facts": ""}
+{"case": "talk_blacksmith:006:own", "version": "short_setting", "seed": 1, "sid": "S6620", "F": 1, "P": 1, "C": null, "Q": 0, "facts": "\"Day well spent\""}
+{"case": "talk_blacksmith:006:own", "version": "spoken_compact", "seed": 1, "sid": "S2518", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"mayhap we meet not oft\""}
+{"case": "talk_blacksmith:006:own", "version": "neutral_fixes", "seed": 2, "sid": "S9627", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"Day well spent\""}
+{"case": "talk_blacksmith:006:own", "version": "with_hour", "seed": 1, "sid": "S1048", "F": 2, "P": 1, "C": 1, "Q": 2, "facts": ""}
+{"case": "talk_blacksmith:012:loose:pedant_reminder", "version": "with_hour", "seed": 2, "sid": "S3072", "F": 0, "P": 0, "C": null, "Q": 1, "facts": "the smith's worry made mine"}
+{"case": "talk_blacksmith:012:loose:pedant_reminder", "version": "neutral_fixes", "seed": 1, "sid": "S6088", "F": 0, "P": 0, "C": 1, "Q": 1, "facts": "+jewelry, +the local healer"}
+{"case": "talk_blacksmith:012:loose:pedant_reminder", "version": "neutral_fixes", "seed": 2, "sid": "S2990", "F": 1, "P": 1, "C": 1, "Q": 1, "facts": "\"the smithy's wench\""}
+{"case": "talk_blacksmith:012:loose:pedant_reminder", "version": "short_setting", "seed": 2, "sid": "S7685", "F": 0, "P": 0, "C": 0, "Q": 1, "facts": "the smith made a man"}
+{"case": "talk_blacksmith:012:loose:pedant_reminder", "version": "with_hour", "seed": 1, "sid": "S5939", "F": 0, "P": 1, "C": 0, "Q": 1, "facts": "the smith made a man; the smith's long stance made mine"}
+{"case": "talk_blacksmith:012:loose:pedant_reminder", "version": "short_setting", "seed": 1, "sid": "S5406", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "the smith's long stance made mine"}
+{"case": "talk_blacksmith:002:own", "version": "short_setting", "seed": 1, "sid": "S2268", "F": 2, "P": 1, "C": 1, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:002:own", "version": "short_setting", "seed": 2, "sid": "S8698", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "+\"the tools we both know\""}
+{"case": "talk_blacksmith:002:own", "version": "neutral_fixes", "seed": 1, "sid": "S9552", "F": 1, "P": 2, "C": 1, "Q": 1, "facts": "setting copied (\"this medieval realm\"); +common bonds of labour"}
+{"case": "talk_blacksmith:002:own", "version": "with_hour", "seed": 2, "sid": "S7007", "F": 1, "P": 1, "C": 0, "Q": 1, "facts": "his forge, her eyes"}
+{"case": "talk_blacksmith:002:own", "version": "with_hour", "seed": 1, "sid": "S1586", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "the smith's long stance made mine; +wisdom"}
+{"case": "talk_blacksmith:002:own", "version": "neutral_fixes", "seed": 2, "sid": "S1093", "F": 1, "P": 2, "C": 1, "Q": 1, "facts": "setting copied (\"this medieval realm\")"}
+{"case": "farm_dusk:005:own", "version": "short_setting", "seed": 2, "sid": "S6237", "F": 1, "P": 0, "C": null, "Q": 0, "facts": "\"trailcrafted\""}
+{"case": "farm_dusk:005:own", "version": "with_hour", "seed": 1, "sid": "S6484", "F": 1, "P": 1, "C": null, "Q": 2, "facts": "+destination"}
+{"case": "farm_dusk:005:own", "version": "neutral_fixes", "seed": 1, "sid": "S3540", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "system rule copied (\"this place of iron and myth\")"}
+{"case": "farm_dusk:005:own", "version": "with_hour", "seed": 2, "sid": "S9135", "F": 0, "P": 1, "C": 1, "Q": 1, "facts": "+sun over the horizon, +the barn, +cool air"}
+{"case": "farm_dusk:005:own", "version": "short_setting", "seed": 1, "sid": "S9728", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:004:swap:stoneface", "version": "with_hour", "seed": 1, "sid": "S9465", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+\"through these stones\"; -learned"}
+{"case": "talk_blacksmith:004:swap:stoneface", "version": "neutral_fixes", "seed": 2, "sid": "S8769", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+her stone face nodded; +village tales exchanged"}
+{"case": "talk_blacksmith:004:swap:stoneface", "version": "neutral_fixes", "seed": 1, "sid": "S4654", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+a smile, +silent journey; -Rachel"}
+{"case": "talk_blacksmith:004:swap:stoneface", "version": "with_hour", "seed": 2, "sid": "S4395", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"answered the call\""}
+{"case": "talk_blacksmith:004:swap:stoneface", "version": "short_setting", "seed": 2, "sid": "S5858", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+runes carved into stone walls"}
+{"case": "talk_blacksmith:004:swap:stoneface", "version": "short_setting", "seed": 1, "sid": "S1520", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+she turned to me; +\"Rachel's heart\""}
+{"case": "talk_blacksmith:005:swap:dread", "version": "short_setting", "seed": 1, "sid": "S7163", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+eyes darting to the door"}
+{"case": "talk_blacksmith:005:swap:dread", "version": "with_hour", "seed": 1, "sid": "S9214", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+smoke, +I must leave"}
+{"case": "talk_blacksmith:005:swap:dread", "version": "neutral_fixes", "seed": 1, "sid": "S3573", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+I left; style copied"}
+{"case": "talk_blacksmith:005:swap:dread", "version": "neutral_fixes", "seed": 2, "sid": "S3398", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+left the warmth of the hearth"}
+{"case": "talk_blacksmith:005:swap:dread", "version": "with_hour", "seed": 2, "sid": "S5232", "F": 0, "P": 1, "C": 1, "Q": 0, "facts": "+I left; instruction clause echoed"}
+{"case": "talk_blacksmith:005:swap:dread", "version": "short_setting", "seed": 2, "sid": "S7969", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+the fire was out"}
+{"case": "talk_farm:005:swap:courtesy", "version": "short_setting", "seed": 2, "sid": "S4525", "F": 1, "P": 0, "C": null, "Q": 2, "facts": "+the fields beyond"}
+{"case": "talk_farm:005:swap:courtesy", "version": "with_hour", "seed": 1, "sid": "S5236", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "style acted out: greets the door, the older person"}
+{"case": "talk_farm:005:swap:courtesy", "version": "neutral_fixes", "seed": 1, "sid": "S7960", "F": 1, "P": 0, "C": null, "Q": 2, "facts": "+the fields"}
+{"case": "talk_farm:005:swap:courtesy", "version": "neutral_fixes", "seed": 2, "sid": "S4862", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "+its history speaks; \"ancient landscape\""}
+{"case": "talk_farm:005:swap:courtesy", "version": "short_setting", "seed": 1, "sid": "S6825", "F": 1, "P": 0, "C": null, "Q": 2, "facts": "+the fields"}
+{"case": "talk_farm:005:swap:courtesy", "version": "with_hour", "seed": 2, "sid": "S5001", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "+\"greet the land\""}
+{"case": "talk_blacksmith:009:swap:plain_dealing", "version": "short_setting", "seed": 1, "sid": "S5708", "F": 1, "P": 1, "C": null, "Q": 0, "facts": ""}
+{"case": "talk_blacksmith:009:swap:plain_dealing", "version": "neutral_fixes", "seed": 2, "sid": "S8010", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "meaning changed: \"Long as you like\""}
+{"case": "talk_blacksmith:009:swap:plain_dealing", "version": "with_hour", "seed": 2, "sid": "S4339", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "persona prompt copied: \"a crack in it ... that is the price\""}
+{"case": "talk_blacksmith:009:swap:plain_dealing", "version": "short_setting", "seed": 2, "sid": "S6747", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:009:swap:plain_dealing", "version": "neutral_fixes", "seed": 1, "sid": "S7970", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:009:swap:plain_dealing", "version": "spoken_compact", "seed": 2, "sid": "S1624", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "persona prompt copied"}
+{"case": "talk_blacksmith:009:swap:plain_dealing", "version": "with_hour", "seed": 1, "sid": "S6192", "F": 2, "P": 1, "C": null, "Q": 2, "facts": ""}
+{"case": "talk_blacksmith:009:swap:plain_dealing", "version": "spoken_compact", "seed": 1, "sid": "S7514", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "persona prompt copied after the line"}
+{"case": "talk_blacksmith:008:own", "version": "short_setting", "seed": 2, "sid": "S8547", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"or a guest\""}
+{"case": "talk_blacksmith:008:own", "version": "with_hour", "seed": 2, "sid": "S2421", "F": 2, "P": 1, "C": null, "Q": 2, "facts": ""}
+{"case": "talk_blacksmith:008:own", "version": "neutral_fixes", "seed": 1, "sid": "S2123", "F": 1, "P": 1, "C": null, "Q": 2, "facts": "\"most unexpected form of salutation\""}
+{"case": "talk_blacksmith:008:own", "version": "spoken_compact", "seed": 1, "sid": "S1747", "F": 2, "P": 1, "C": null, "Q": 2, "facts": ""}
+{"case": "talk_blacksmith:008:own", "version": "with_hour", "seed": 1, "sid": "S1067", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:008:own", "version": "short_setting", "seed": 1, "sid": "S6019", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"not the kind I expect\""}
+{"case": "talk_blacksmith:008:own", "version": "spoken_compact", "seed": 2, "sid": "S4119", "F": 2, "P": 1, "C": null, "Q": 2, "facts": ""}
+{"case": "farm_dusk:005:own", "version": "neutral_fixes", "seed": 2, "sid": "carried", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "+wind through the trees"}
+{"case": "farm_night:009:own", "version": "neutral_fixes", "seed": 2, "sid": "carried", "F": 2, "P": 2, "C": null, "Q": 2, "facts": ""}
+{"case": "farm_night:014:swap:cutpurse", "version": "neutral_fixes", "seed": 1, "sid": "carried", "F": 1, "P": 0, "C": null, "Q": 2, "facts": "track \"to\" both"}
+{"case": "talk_blacksmith:006:own", "version": "neutral_fixes", "seed": 1, "sid": "carried", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "meaning changed: \"we meet but once\""}
+{"case": "talk_blacksmith:008:own", "version": "neutral_fixes", "seed": 2, "sid": "carried", "F": 2, "P": 2, "C": null, "Q": 2, "facts": ""}
+{"case": "talk_miller:006:loose:greed_bare", "version": "neutral_fixes", "seed": 1, "sid": "carried", "F": 0, "P": 0, "C": null, "Q": 0, "facts": "says the addressee is Dennis"}
+{"case": "talk_miller:006:loose:greed_bare", "version": "neutral_fixes", "seed": 2, "sid": "carried", "F": 1, "P": 0, "C": null, "Q": 0, "facts": ""}
+{"case": "village_noon_party:009:own", "version": "neutral_fixes", "seed": 2, "sid": "carried", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_dusk:003:loose:greed_bare", "version": "with_hour", "seed": 2, "sid": "carried", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_night:014:swap:cutpurse", "version": "with_hour", "seed": 2, "sid": "carried", "F": 0, "P": 1, "C": 0, "Q": 0, "facts": "style copied"}
+{"case": "talk_blacksmith:006:own", "version": "with_hour", "seed": 2, "sid": "carried", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"Day well spent\" for a greeting"}

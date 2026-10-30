@@ -12,7 +12,13 @@ public class IntrigueModusMentis : ModusMentis
     public override string MenuDescription =>
         "Plots: knows who hates whom, who owes whom, who would profit by whose fall. Plays factions against each other and never leaves a trace of its own hand.";
     public override string SkillMeans       => "the plotting among factions";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<Cathedral.Game.Scene.Verbs.GatherKnowledgeVerb>("learn who owes whom"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.HearGossipVerb>("hear who hates whom"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.OfferBribeVerb>("buy a confidence"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look behind what hides a listener").Teaching<IntrigueModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Settled);
     public override string[] Organs        => new[] { "cerebrum", "spleen" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;

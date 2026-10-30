@@ -12,7 +12,12 @@ public class SiegecraftModusMentis : ModusMentis
     public override string MenuDescription =>
         "Thinks about walls as problems: where to mine, where to batter, how long the well will last, when hunger will open the gate faster than any ram. Has sat outside walls and inside them.";
     public override string SkillMeans       => "the reckoning of how a walled place falls or holds";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ScaleUpVerb>("get over a wall"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.BreakVerb>("breach what is shut"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("study the marks of a siege").Teaching<SiegecraftModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Stronghold);
     public override string[] Organs        => new[] { "cerebrum", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
@@ -21,7 +26,7 @@ public class SiegecraftModusMentis : ModusMentis
     public override string PersonaReminder  => "siege engineer";
     public override string PersonaReminder2 => "someone who counts a garrison's grain";
     public override string StyleInstruction =>
-        "Treat walls as problems of time, water and hunger - where they will fail, and how soon.";
+        "Patient and calculating - see whatever is in front of you as a problem of time, and how soon it will fail.";
 
     public override string PersonaPrompt => @"You are the inner voice of SIEGECRAFT, and every wall you have seen has an answer, and the answer is usually time.
 

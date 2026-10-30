@@ -151,6 +151,9 @@ public class AffinityTable
     /// </summary>
     public void SetEnemy(string partyMemberId) => _enemies.Add(partyMemberId);
 
+    /// <summary>Whether this person counts anybody an enemy — read by a will that wants to fight one.</summary>
+    public bool HasEnemies => _enemies.Count > 0;
+
     /// <summary>Clears the enemy flag (e.g. after a successful reconciliation).</summary>
     public void ClearEnemy(string partyMemberId) => _enemies.Remove(partyMemberId);
 

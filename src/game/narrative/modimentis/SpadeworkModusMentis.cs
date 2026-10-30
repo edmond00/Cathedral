@@ -17,7 +17,10 @@ public class SpadeworkModusMentis : ModusMentis
         "Moves earth with an edge and a back: cuts a clean spit, throws the spoil where it will not slide in again, and reads the soil for the depth at which digging stops being worth it. Paces the work so the hole is finished rather than begun.";
     public override string SkillMeans       => "the cut spit and thrown spoil of digging by tool";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<DigVerb>("dig with a spade");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<DigVerb>("dig with a spade"),
+        WillTarget.ToAny("lay hands on a spade", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).YieldingAny("a spade", typeof(Cathedral.Game.Narrative.World.Items.Shovel), typeof(Cathedral.Game.Narrative.World.Items.GraveSpade)));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Fields, Places.Graves);
     public override string[] Organs        => new[] { "arms", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
@@ -25,7 +28,7 @@ public class SpadeworkModusMentis : ModusMentis
     public override string PersonaReminder  => "earth-moving labourer";
     public override string PersonaReminder2 => "someone who throws the spoil far enough the first time";
     public override string StyleInstruction =>
-        "Write in spits and heaps and the ache across the shoulders — steady, deliberate, aware of how much is left.";
+        "Steady and deliberate, aware of the ache - judge whatever is in front of you by how much work is left.";
 
     public override string PersonaPrompt => @"You are the inner voice of SPADEWORK, the edge that goes into the ground and the back that pays for it.
 

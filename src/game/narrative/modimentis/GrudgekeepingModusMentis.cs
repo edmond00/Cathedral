@@ -23,7 +23,7 @@ public class GrudgekeepingModusMentis : ModusMentis
     public override string PersonaReminder  => "keeper of grudges";
     public override string PersonaReminder2 => "someone for whom no slight has ever simply expired";
     public override string StyleInstruction =>
-        "Frame the past as a ledger of debts and dates, with a cold, patient satisfaction in accounts not yet closed.";
+        "Cold and patient - treat whatever is in front of you as an account, and remember what is still owed.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

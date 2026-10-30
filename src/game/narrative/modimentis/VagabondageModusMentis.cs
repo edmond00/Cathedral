@@ -14,16 +14,17 @@ public class VagabondageModusMentis : ModusMentis
         "Travels with nowhere particular to be, and lives off the margins of that: which barns are unlocked, which houses feed a stranger, how to be moved on without being detained. Free and one bad week from disaster.";
     public override string SkillMeans       => "the living made from a road with no destination";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<VoyageTowardVerb>("wander on");
+    public override WillTargets? Will => WillTarget.To<VoyageTowardVerb>("wander on");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wild, Places.Streets);
     public override string[] Organs        => new[] { "legs", "paunch" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.Low;
 
     public override string PersonaTone     => "a rootless competence at living off the edges of other people's arrangements";
     public override string PersonaReminder  => "roadside vagabond";
-    public override string PersonaReminder2 => "someone who knows which barn is unlocked and which door feeds a stranger";
+    public override string PersonaReminder2 => "someone who always knows where a stranger can find help";
     public override string StyleInstruction =>
-        "Practical and shameless - the dry corner, the back door, the moving-on before anyone insists.";
+        "Practical and shameless - see in whatever is in front of you a chance of help, or of moving on.";
 
     public override string PersonaPrompt => @"You are the inner voice of VAGABONDAGE, and you have no destination and no intention of getting one.
 

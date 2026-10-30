@@ -18,7 +18,7 @@ public class QuickeningModusMentis : ModusMentis
 
     public override string PersonaTone     => "an eye for increase that buys the promising rather than the impressive";
     public override string PersonaReminder  => "growth-reading breeder";
-    public override string PersonaReminder2 => "someone who picks the runt and is proved right by autumn";
+    public override string PersonaReminder2 => "someone who sees what a thing will become rather than what it is";
     public override string StyleInstruction =>
         "Look a season ahead - what this will be, not what it is.";
 

@@ -19,9 +19,9 @@ public class GourmandiseModusMentis : ModusMentis
 
     public override string PersonaTone     => "an appetite pursued frankly and without the least apology";
     public override string PersonaReminder  => "hearty eater";
-    public override string PersonaReminder2 => "someone who has already found out what is for supper";
+    public override string PersonaReminder2 => "someone who always knows where the next good meal is";
     public override string StyleInstruction =>
-        "Sensory and unashamed - the smell from the kitchen, the second helping, the cellar worth investigating.";
+        "Sensory and unashamed - judge whatever is in front of you by the pleasure it promises.";
 
     public override string PersonaPrompt => @"You are the inner voice of GOURMANDISE, and you have already established what is for supper.
 

@@ -142,6 +142,13 @@ public static class CampSubfactory
             items: new() { new ItemElement(new Coal()), new ItemElement(new Coal()) },
             moods: new[] { "black", "dusty", "light" }
         ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft" } });
+        // The axe is kept with the wood it cut: what a will to fell goes to first in a wood with no trader.
+        shed.PointsOfInterest.Add(new StumpPointOfInterest(
+            displayName: "Chopping Block",
+            descriptions: new() { "A broad block of elm, scarred across its face, an axe left bitten into it" },
+            items: new() { new ItemElement(new Axe()) },
+            moods: new[] { "scarred", "solid", "worn" }
+        ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "felling" } });
         return shed;
     }
 
@@ -184,6 +191,12 @@ public static class CampSubfactory
             items: new() { new ItemElement(new Lantern()) },
             moods: new[] { "dim", "hanging" }
         ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "delving" } });
+        shed.PointsOfInterest.Add(new RackPointOfInterest(
+            displayName: "Spare Pick",
+            descriptions: new() { "A pick with a new haft leant against the stones, its point freshly drawn out" },
+            items: new() { new ItemElement(new Pick()) },
+            moods: new[] { "leaning", "sharp" }
+        ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "veinsight" } });
         return shed;
     }
 }

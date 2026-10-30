@@ -185,7 +185,7 @@ so, and says why.
 | LocationInteraction, ChildhoodReminescence, GetUp | closes the thinking popup; otherwise pauses **as an overlay**, leaving narration standing |
 | Dialogue, Working, Gathering, Trading, EncounterPrompt, WorldView | pauses. None of them is cancelled by it — walking out is the footer INTERRUPT / LEAVE / ENGAGE button's job |
 | ProtagonistCreation | pauses. Not a running phase, but a screen with no other way off it |
-| ProtagonistManagement | back where it was opened from, the same press as its Back button: the main menu, or — opened by a tab's letter (A, I, J, M, H, C, from any phase the menu opens over but a fight) — that phase |
+| ProtagonistManagement | back where it was opened from, the same press as its Back button: the main menu, or — opened by a tab's letter (A, I, J, M, H, C, B, from any phase the menu opens over but a fight) — that phase |
 | Settings | back to the main menu — the same press as its Back button |
 | MainMenu | resumes `MenuReturnMode`, or nothing at all before a run has started |
 | LLMLoading, Traveling, Death, DialogueDemo | **nothing, on purpose** — see the reasons on each case |
@@ -316,7 +316,7 @@ produced a reported softlock — the travel progress box left standing over a bl
 
 | | after victory |
 |---|---|
-| encounter **mid-journey** | resume travel — the path is still there to walk |
+| encounter **mid-journey** | resume travel — the path is still there to walk — over a **transparent** terminal (`SetTransparentWorldOverlay`): a bare `Clear` paints opaque black, and the rest of the journey was walked over a black screen. `--encounter-mid-journey`, `cli/system/fight_victory_travel_midway.cli` |
 | encounter on the journey's **final step** | deliver the held arrival (`_pendingArrivalVertex`) and finish the journey |
 | **no journey at all** (`--start-fight`) | back to the world view |
 
@@ -716,27 +716,61 @@ Things to know:
   history (`keepHistory: true`) relied on that to stay bounded, so the observation follow-ups and the
   dialogue replies now reset the slot themselves at the same points.
 
-### A will: one target, and the shortest way to it
+### A will: what it wants, and the shortest way to the nearest of it
 
-`ModusMentisFunction.Will` plus `ModusMentis.Will` (a `WillTarget`) is a modus mentis that wants one
-kind of act. **It declares only the goal — never the steps.** `WillTarget.To<TVerb>(purpose)`, a group
-by `ToAny(purpose, types…)` or a base class (`DialogueVerb` is every conversation), narrowed by
-`.On<TElement>()`, `.Yielding<TItem>()` / `.YieldingAny(label, types…)` or `.Where(test, label)` —
-types throughout, never names. `Purpose` is narration only ("pick a lock").
+`ModusMentisFunction.Will` plus `ModusMentis.Will` (a `WillTargets`: one to `WillTargets.Max` = 5
+`WillTarget`s, in order of preference) is a modus mentis that wants a few kinds of act. **It declares
+only the goals — never the steps.** `WillTarget.To<TVerb>(purpose)`, a group by `ToAny(purpose, types…)`
+or a base class (`DialogueVerb` is every conversation), narrowed by `.On<TElement>()`,
+`.Yielding<TItem>()` / `.YieldingAny(label, types…)`, `.YieldingKind(ItemKind)` (a family across classes:
+every mushroom, every blade), `.Selling(ItemKind)` (a trader whose wares hold one), `.OnHostile()`,
+`.OnBeast()`, `.Teaching<TModusMentis>()` (what declares that lesson — see "A will wants what teaches
+it") or `.Where(test, label)` — types and enums throughout, never names. `Purpose` is narration
+only ("pick a lock"); each target has its own, and a path is narrated with the one it reaches
+(`ActionPath.Target`, `WillTargets.PurposeOf`). A single target converts implicitly, so
+`Will => WillTarget.To<…>(…)` is still a one-target will; several are `WillTargets.Of(t1, t2, …)`.
 
-**`ActionPathPlanner.Plan` is the whole mechanism**: BFS over (area, period, implement obtained),
+**A modus mentis builds its targets afresh on every read** (`Will =>` is expression-bodied), so never key
+anything on a `WillTarget` instance across two reads of `mm.Will`: the planner's cache keys on
+`WillTargets.Key` (the targets' description), `WillAudit` snapshots `mm.Will` once, and `inspect will`
+finds the reached target by its description.
+
+**Item kinds are not trade tags.** `ItemKind` (`ItemKind.cs`) is what an item *is*, generous and
+cross-cutting (a hazelnut is a nut, a fruit, food); `ItemTag` is the shelf a trader stocks from, and a
+catalogue draws from the whole tag, so tagging generously there would have restocked every shelf in the
+game. `Item.Kinds` is `DeclaredKinds` (a family's base class declares the family's, an item adds its own)
+plus what the category implies; `--item-audit` prints each kind's items and the items with none.
+
+**`ActionPathPlanner.Plan` is the whole mechanism**: one BFS for all the targets, over (area, period, implement obtained),
 successors from `Scene.View(pov, actor, verbs)` — the live gates — and from the outcomes a success
 *would* apply, read and never applied: `AreaMoveOutcome` / `DoorUnlockOutcome` move,
 `TimeShiftOutcome` passes the hour, and `sit_and_wait` is every other period. Only
 `TransitVerbTypes` plus the goal verbs are expanded, except while a missing reference tool is sought,
 when every verb is (a grab that yields it, or `propose_to_buy` on someone whose `BuyCatalog` lists it —
-opaque beyond, replanned next phase). Nothing else is modelled, so a path never passes a conversation,
+opaque beyond, replanned next phase). The implement is a goal verb's `ReferenceToolIds` **or any item
+made for it** (`Item.MadeForVerbIds`, `ToolIdsFor`): a ring of keys is a tool made for `unlock_door`, so
+a will to open a lock goes for the keys on the gatehouse pegs. Nothing else is modelled, so a path never passes a conversation,
 a fight or loot. **A sit is every other hour, and the path is one of them**: `PathStep.Until` keeps the
 hour the search reached by it, `ThinkingExecutor` settles the will's step on it
 (`SitAndWaitVerb.Until`, the period as the action's variant, "…until dawn"), and `AskWaitUntil` then
 asks nothing. A player's own wait still chooses. `sit_and_wait` is the only transit verb whose
 destination was left to a choice after the dice; every other is read off its success reports. Cached until `Forget()`, which runs wherever the observation ledger is cleared.
 Measured: under 1 ms mean, half a second for an exhausted search in the largest city.
+
+**Nearest first, then declaration order.** The search does not return at the first goal it meets: it
+finishes that depth and keeps the goal whose target is declared first (`WillTargets.IndexOf`). So a
+target nearer than the first-declared one wins — metalcraft in the Test Yard takes the iron bar on the
+crate, its second target, over the ore at the rock — and between equally near ones the will's chief
+want does. With one target the first goal met is kept, exactly as before. The goal judge is not
+consulted for the choice of target; it chooses only between equally short ways through one object
+(`ChooseWillWayAsync`, below). `cli/system/will_nearer_target.cli`.
+
+**The planner keeps each verb's expansion and each transit's destinations per standing** (`Offered`,
+`_expanded`, `_destinations`), with the plans' lifetime: most of a search is the same transit verbs
+expanded at the same standings for every will and every replan through an object. `Scene.ViewElements`
+gives the view's elements in `Scene.View`'s order and `Offered` interleaves the kept expansions in that
+same order, so the first goal met is the one it always was — the will audit read identically, in a third
+of the time.
 
 **The plan keeps one path; a will accepts any equally short one.** When several things are equally
 near — two people to strike — the search commits to whichever it reached first, and accepting only
@@ -757,26 +791,88 @@ get-up have one verb each:
 |---|---|
 | phase opener | `PickFirstObservationModusMentis` passes over wills while any other observer is held; a will that opens attends only to the object offering the first step |
 | focus | kept iff `WillPriority.PathOn` finds a shortest path beginning with something the object offers; else turned to the unobserved object that does; else refused naming the step. No follow-ups |
-| thinking | **wider than focus**: `WillPriority.WaysOn` → `ActionPathPlanner.WaysThrough` takes, per action the object offers, the shortest path beginning with it (`ShortestThrough`: the goal itself; an implement obtained, then `Plan(…, obtained)`; a transit, then the nearest of its ends), keeps those of at most `Config.Narrative.WillMaxPathSteps` (3, goal included) or as short as the place's shortest however long, and of those only the least length. One left is the goal; several equally short go to the goal judge over their first steps, no decline (`ChooseWillWayAsync`). No doubt; on an object offering none, or with no path, a reasoning-only refusal. Reconsider's keep and `WillActionNeverRefusesItsPathRule` ask the same (`WillPriority.OnItsWay`). The pineal retries remain for a step on the way only, over untried means (the step tried with every means ends the chain as exhausted) |
+| thinking | **wider than focus**, over every target: `WillPriority.WaysOn` → `ActionPathPlanner.WaysThrough` takes, per action the object offers, the shortest path beginning with it (`ShortestThrough`: the goal itself; an implement obtained, then `Plan(…, obtained)`; a transit, then the nearest of its ends), keeps those of at most `Config.Narrative.WillMaxPathSteps` (3, goal included) or as short as the place's shortest however long, and of those only the least length. One left is the goal; several equally short go to the goal judge over their first steps, no decline (`ChooseWillWayAsync`). No doubt; on an object offering none, or with no path, a reasoning-only refusal. Reconsider's keep and `WillActionNeverRefusesItsPathRule` ask the same (`WillPriority.OnItsWay`). The pineal retries remain for a step on the way only, over untried means (the step tried with every means ends the chain as exhausted) |
 | means | **only the act it wants**: a will with Action carries it out itself. A step on the way (a walk, a wait, a tool fetched — `!Will.Matches(step)`) has its means judged like any goal's, the will among the candidates, speakers first for a conversation; the will was not the fittest mind for every walk, and a non-speaking will carried out `propose_to_buy`. `WillActionNeverRefusesItsPathRule`, last, lifts even an imposed refusal for the will's own path whenever the will is the means |
 | speech | **not narrowed.** A will may bear Speaking and then replies in every conversation, whatever its target; without it, in none. Every will whose target is a conversation bears it (51), and cruelty, which had it before. The audit notes a will that wants a conversation and cannot speak |
 
 `PartyMember` and `ModusMentisRegistry` list wills with both observers and thinkers (`CanObserve`,
 `CanThink`), so the popups, the NPC pools and the starting kit draw them — **listed after the
 general minds**, so a popup's first entry still ranges freely (and `choose 0` in older scripts still
-picks one). **R17** (Will ⇔ target, and no Observation or Thinking beside it) and **R18** (every anatomy that can learn it can
-perform a target verb) are fatal; R2, R4 and R13 accept Will for the offices it carries. R14 still
+picks one). **R17** (Will ⇔ 1–5 targets, and no Observation or Thinking beside it), **R18** (every anatomy that can learn it can
+perform a verb of **each** target — a second target a wolf cannot meet would still steer its attention) and
+**R19** (a will declares `WillPlaces`, area kinds only) are fatal; R2, R4 and R13 accept Will for the offices it carries. R14 still
 forbids Action + Emotion, on a will as on anything.
 
-**A will is a desire for one act, never a competence.** Its persona must want the target and little
-else: lockpicking wants a lock, gluttony something to eat, vigil a night kept. A craft or a trait whose
-persona covers many acts — stealth (moving unseen anywhere), hunt, woodcraft, husbandry, athletics,
-surefoot, nerve, cold_blood, a sense like beast_sense, a judgement like appraisal — was made a will
-of one of them and then refused every other thing its own description says it does. Those fourteen
-were made ordinary again; a craft's mind is better as a means many wills can call on.
+**A will is a desire for recognisable things, never a competence.** It was once one target: lockpicking
+wants a lock, gluttony something to eat, vigil a night kept. A craft or a trait whose persona covers many
+acts — stealth (moving unseen anywhere), hunt, woodcraft, husbandry, athletics, surefoot, nerve,
+cold_blood, a sense like beast_sense, a judgement like appraisal — was made a will of one of them and
+then refused every other thing its own description says it does, so fourteen were made ordinary again.
+**Several targets are the answer to exactly that, for the specific ones**: a persona that wants
+recognisable things (mycology, anglery, armoury lore, a trade) may be a will of the few things it covers —
+woodcraft wants sound timber, timber to cut and seasoned wood to buy; husbandry fodder, eggs, a beast to
+hand, fodder to buy. **A generic or vague persona stays an ordinary mind** — finesse, patience, scrutiny,
+the senses, stealth, athletics, surefoot, nerve, cold_blood, beast_sense, appraisal: a mind whose manner
+serves any act is better as a means many wills can call on. Of the fourteen, woodcraft and husbandry
+became wills again; hunt stayed ordinary because a childhood grants it (see rule C3 below).
 
-**`--mm-audit` holds two shares** (`WillAudit`, ✗ outside either): wills in the catalogue at 25–33%,
-and wills among the lessons the offered acts teach at 20–36% — what a played character comes to hold.
+**What a will wants decides where it idles, so each declares where it belongs**: `ModusMentis.WillPlaces`,
+area kinds grouped in `Places` (`Places.Woodland`, `Places.Damp`, `Places.Shops`…), required by R19.
+`--will-audit` plans every will from each and reports the share that has a way to a target (see the
+audits skill). A target is added, or content where the place lacks the thing: mushrooms and herbs grow
+on woodland, damp and meadow ground from a generator of their own (`SceneFactory.PlaceWildGrowth`, off
+in the test location), the woodshed has an axe, the ore store a pick, the churchyard a shovel, the barn
+a shovel and a pruning hook, every edifice gatehouse its key pegs, the slip sailcloth and oakum.
+
+**A target offered almost everywhere makes a will general.** `cross`, `scale_up`, `climb_down`,
+`provoke`, fuel, wood, clay, stone are in nearly every place; added as a second target they turned a
+desire into a general mind, and the audit fails a will with several targets that reaches more than 75%
+of location kinds. A single target whose act is everywhere (sloth sits, scenting smells) was the design
+before and is only noted. Brawling wants somebody hostile (`OnHostile`: an enemy-on-sight kind, or a
+person who counts somebody an enemy) or a weapon to buy, not a passer-by: struck at in a street, a
+peaceful citizen was a refusal waiting at the click, and the will idled in every town.
+
+**A will wants what teaches it.** An object that declares a will its lesson (`VerbModiMentis` on a
+point of interest or an archetype, `Teach((…))`, `Lessons((…))`) is the content saying the two belong
+together — and the will must then be willing to act on it, or a player who picks the very mind the
+object taught is told it has no interest in the object. That was the playtest: examining petroglyphs
+teaches archeology, archeology wanted only to dig, study a relic or fetch a spade, and refused the
+carvings. 167 (will, object kind) pairs were in that state, from the smithy's anvil (metalcraft wanted
+ore and iron, not the anvil) to the bench pews (piety). Every such will now ends on one target bound to
+its own lesson: `WillTarget.To<ExamineVerb>("study what old stones remember").Teaching<ArcheologyModusMentis>()`
+— the verbs the lesson is declared for, and only on what declares it, instance by instance (one
+`RackPointOfInterest` class teaches harvestry, laundering, husbandry or metalcraft depending on the rack).
+So:
+
+- **Declaring a will as an object's lesson for a verb the will's `Teaching<>` target names needs nothing
+  more.** For any other verb, add it to that target (`ToAny(purpose, types…).Teaching<…>()`).
+- **A new will that objects teach** ends on its own `Teaching<Self>()` target, which costs a slot of the five.
+- **`--will-lesson-audit`** walks every object of every location factory and fails (✗) any object that
+  declares a will's lesson while offering nothing that will wants or passes through on its way. Lessons
+  the verb itself gives (its default, or a contextual case in `Lessons`) are printed as notes — they
+  are about the act, not the object. A pairing that is right as it stands goes in
+  `WillLessonAudit.Accepted`, with the reason.
+- **A `Teaching<>` target is not a desire**, so `--will-audit` judges breadth without it: it reaches only
+  what the content already says teaches the will, and a will made broad by it is broad because its lesson
+  is declared broadly. Tillage is the example: every `DiggableGroundPointOfInterest` teaches it on examine,
+  so it wants a clay bank in the wild — if that is wrong, the lesson is what changes.
+
+**Every childhood path leaves a general thinker** (rule C3, `ReminescenceRuleValidator`, fatal): a will
+thinks only toward its targets, so a childhood granting none but wills would leave a body unable to
+think about anything it did not already want. Converting a modus mentis a childhood grants can break
+it, which is why decipher, hunt, iconography and ripelore stayed ordinary; the docks fragment grants
+tidewatching for the one path that had none.
+
+**Converting a mind regenerates people.** NPC skills are drawn from the observer, thinker and actor
+pools, and a will is in the first two: a craft that was action-only joins both. Each pool is now
+shuffled by a generator of its own seeded with one draw of the person's (`NpcContentGenerator.
+GrantArchetypeSkills`), so a catalogue change moves only skills, never the traits, wounds and belongings
+drawn after them. Before, it moved everything, and every location id built different people.
+
+**`--mm-audit` holds two shares** (`WillAudit`, ✗ outside either): wills in the catalogue at 36–44%
+(39% — 186 of 477, from 29.6% before wills had several targets), and wills among the lessons the offered
+acts teach at 28–42% (30%, from 27%) — what a played character comes to hold. It also lists every target
+of every will, each ✗ where no location offers it.
 It once read 56%: the obvious will to unlock is the mind unlocking teaches, so nearly every verb's
 default lesson had been made a will of that verb. The general ones were made ordinary again (finesse,
 keywise, awe, voyage, patience, scrutiny, the senses, the climbs and crossings, trailcraft,
@@ -789,11 +885,19 @@ only `anglery` wants it.
 
 | | |
 |---|---|
-| `inspect will` | every held will's plan: `steps=`, `first=`, `goal=`, `target=` (a person by archetype id), `tool_step=`, or `steps=none` |
+| `inspect will` | every held will's plan: `steps=`, `first=`, `goal=`, `target=` (a person by archetype id), `tool_step=`, `aim=<k>/<n>` (which target, in declaration order) and `purpose="…"`, or `steps=none` |
+| `--will-audit [out.json]` / `--will-trace <id> [location]` | coverage, related coverage and breadth per will; why one has or lacks something to do |
+| `--will-lesson-audit` | every object that teaches a will and that the will refuses |
+| `cli/system/will_lesson_object.cli` | archeology plans to examine the petroglyphs that taught it, one step from the Dry Wash |
+| `select mm <id>` | the memory panel's detail box for a held modus mentis, which lists a will's targets under "Wants" |
 | `choose <mm-id>` | answer the modus mentis popup by id rather than by position |
 | `cli/system/will_path.cli` | plan, focus kept with the path as reason, the walk carried out by a judged means (pinned to Woodcraft), the unlock by the will itself |
 | `cli/system/will_refuses.cli` | not this way (names the step), and not in this place (only leaving offers it) |
 | `cli/system/will_step_retry.cli` | a step on the way refused by its judged means, tried again with another |
+| `cli/system/will_nearer_target.cli` | of several targets the nearest is taken, whichever it is in the list |
+| `cli/system/will_buys_weapon_in_city.cli` | brawling, with nobody hostile in a city, plans to buy a weapon |
+| `cli/system/will_mycology_forest.cli` / `will_kind_target.cli` | mycology in a forest; a desert truffle answering a target by kind |
+| `cli/system/will_memory_targets.cli` | the memory panel lists each target |
 
 ### The economy of a narration phase: noetic points and the two ledgers
 
@@ -836,6 +940,12 @@ budget reaches, and they were designed together — changing one alone re-breaks
     is withheld from everyone when no held action modus mentis passes the willingness rules for it
     (`ThinkingExecutor.CanCarryOut`, a silent `ChoiceRuleContext.Probe`), and otherwise the means
     pool is narrowed to those that pass and the decline option is dropped.
+    **A thinking mind that declined an object is not offered the decline about it again**
+    (`ActionProposalLedger.Decline` / `HasDeclined`, by mind and observation instance): the goal judge
+    reads scores rather than sampling, so the second ask could only be declined again — the playtest
+    saw Keywise turn the same locked door down twice, a point each. The second ask is the player
+    insisting, and the mind chooses a goal. Unreachable under `--playground`, whose goal draw never
+    declines.
     `cli/system/thinking_refused_goal_per_mind.cli` covers the possible branch; the impossible
     branch has no script, because the `--skip-childhood` kit at seed 42 already holds an observing
     action modus mentis and no flag removes one.
@@ -1330,10 +1440,17 @@ Morality now has four distinct behaviours, two per side of the chain:
 | | thinking MM | action MM |
 |---|---|---|
 | **High** | crimes are dropped from its goal list (`HighMoralityAvoidsCrimeRule`) — filtering everything away is a legitimate result and reads as ignore | refuses while the action is thought out, before any button (`HighMoralityRefusesCrimeRule`); `IllegalActionHighMoralityRule` remains as a backstop for paths that skip willingness |
-| **Low** | if any goal on offer is a crime, **only** the crimes are offered (`LowMoralityPrefersCrimeRule`) | cannot refuse — the decline option is withheld, leaving eager/willing/reluctant (`LowMoralityNeverRefusesCrimeRule`) |
+| **Low** | if any goal on offer is a crime, **only** the crimes are offered (`LowMoralityPrefersCrimeRule`), and without the decline (`ThinkingExecutor.ChooseGoalAsync`) — it chooses among them, it does not let them go | cannot refuse — the decline option is withheld, leaving eager/willing/reluctant (`LowMoralityNeverRefusesCrimeRule`) |
 
 Both sides are needed because the goal and the means are two separate LLM decisions: a scrupulous
-skill can still be picked to carry out a goal some other modus mentis chose. Note `MoralLevel` is read
+skill can still be picked to carry out a goal some other modus mentis chose.
+
+**A discreet action MM cannot refuse what only its discretion allows** (`DiscreetNeverRefusesCoverRule`,
+the discreet twin of `LowMoralityNeverRefusesCrimeRule`): where `IllegalActionVisualWitnessRule`,
+`UnderThreatImpossibleRule` or `ConfrontedImpossibleRule` would stop a non-discreet means
+(`NeedsDiscretion` asks their conditions directly, with the protagonist's affinity key as the click
+does), the decline is withheld and reluctance kept. An imposed refusal (High morality) is not lifted.
+`--crime-audit` §4a. Note `MoralLevel` is read
 **only** off these two — R13 makes a non-Medium value on anything else fatal.
 
 **A Speaking modus mentis puts conversation first** (`SpeakingPriority`, `rules/choice/SpeakingRules.cs`),
@@ -1690,6 +1807,41 @@ unlearnable by a body that could be offered it. The beast side of that fault is 
 fixed: `VerbAudit.NoBeastCounterpart` lists the sixteen verbs a beast companion can be offered and
 learn nothing from, with the reason. **Empty that list, do not extend it.**
 
+### Play: the verb its object words
+
+PLAY (`PlayVerb`) is play for its own sake — skipping stones off a creek, swinging on a liana, rolling
+down a grassy bank, scratching a hound behind the ears. **It is the one verb that does not word itself.**
+Two plays share nothing but being done for fun, so everything a verb normally declares belongs to the
+object: a `PlayActivity` (`src/game/scene/play/`) carries the verbatim, the difficulty, the
+`RequiredCapabilities`, the `Lessons` (most restrictive first, beast before human) and the
+`FailurePenalties`, and `PlayVerb` reads all five off whatever `IPlayable` it is aimed at.
+
+- **A kind of play is a type**, one `PlayActivity` subclass each (`PlayActivities.cs`), so a will narrows
+  on it with `WillTarget.Playing(label, typeof(KnucklebonesPlay))` — never on a name. Where the wording
+  differs by object (hay jumped into vs. a haystack slid down, a cat stroked vs. a lamb held) the
+  subclass takes a `{0}` template; the kind, the lessons and the costs stay the type's.
+- **A success teaches and does nothing else**: no item, no hour, no move. `SuccessReports` is empty and
+  `play` is in `OutcomeAudit.TeachesOnly` with the senses. The lesson is the play's own; `playfulness`
+  (a will to play) is the verb's fallback, and what kicking through a leaf drift teaches.
+- **Three routes put a play in the world.** A factory sets `PointOfInterest.Play` on an object of its own
+  when the play belongs to it (the jungle's hanging lianas, a loft's hay, a field's scarecrow, a felled
+  log, a town fountain); an archetype declares `NpcArchetype.Play` (hound, goat, lamb, hens, stray cat and
+  dog — a creature that counts the actor an enemy is refused); and `PlayPlacement`, after wild growth,
+  gives a staircase or a creek its play and lays a plaything (`PlayPoiKinds.cs`) in an area by its kind,
+  from a generator of its own seeded with the location id, so nothing else in the place moves. Off in
+  the test location, whose `Test Pebbles` on the shore are laid by hand.
+- **About a quarter of the areas hold a play**, and `--play-audit` holds it there (20–32%, mean over the
+  factories; pooled is printed beside it). The chances in `PlayPlacement.Rules` were tuned against its
+  by-kind table: read it before changing one, since a dormitory or a roof moves the pooled figure more
+  than a whole biome does. It also prints how each carrier is worded — read it after adding a template.
+
+Fourteen modi mentis are taught by play and by nothing else (playfulness, ducks_and_drakes, swinging,
+cosseting, glissade, sand_castles, mudlarking, hopscotch, halloo, tumbling, shying, chasing, paddling,
+whirligig; glissade, whirligig and playfulness are wills). Gambling, plunge, surefoot/balance, whistling
+and howling are the existing minds a game also practises. Foul play (cheating at knucklebones), carousal,
+plunge and rigging want a play as one of their targets. Husbandry, pounce and vaulting were tried and
+taken back: a play as a second target took each past the will audit's 75% breadth.
+
 ### The senses reach living things
 
 `SensoryVerb` used to gate on `target is PointOfInterest`, so the four senses could not touch anything
@@ -1920,3 +2072,52 @@ or key on the person instead, which every tree can answer.
 `DialogueTreeRegistry.All` misses them — and they are the trees a thief meets most. `MmReachAudit.AllTrees`
 adds them back explicitly.
 
+
+### The journal, and the chronicler that writes it up
+
+`Protagonist.Journal` is the run's story: structured `JournalEntry`s (narration, dialogue, fact,
+milestone), each with day, place, area, acting member, source text, the chronicler's paragraph and a
+state (raw → pending → written). Saved as plain data in `PartyState.Journal` — copied, never shared.
+
+**Everything enters through `JournalRecorder`, at the moment it is finalised**, never where it is
+generated:
+
+| entry | taken from | so that |
+|---|---|---|
+| narration | `NarrationScrollBuffer.BlockAdded` | a preview part that was reset never commits, so it never reaches the journal |
+| an NPC's line | the same event (`Speaking` blocks), named by the label the player knows | a generated proper name the player was never told does not leak |
+| the reply picked | `DialogueTreeController.OnOptionSelected` | the options left unpicked are never recorded |
+| a fact | a shown block's `OutcomeReports` with `ShowInUI`, minus bookkeeping by type (practice, grants, spent noetic points, wounds) | not `Outcome.ApplyTo`, which also runs for outcomes nobody saw. The chip text is kept for the screen; the chronicler is given the outcome's `Verbatim` (`Phrase`) — handed "Item received: Knife" it wrote it into the prose |
+| a milestone | the event itself: a lesson (`PartyMember.LearnModusMentis`/`AcquireModusMentis`, party members only), a wound (`FightResolver.ApplyWound`, `WoundInflictionOutcome`), a healing, a companion joining, dying or parted with, a first visit (keyed by vertex, whatever the mental maps forget), a fight won or fled | each once, by `Key` where it could repeat |
+
+A block no modus mentis narrated (`ModusMentis` null: a trade note, a fight's log tail) is the game
+talking and is not recorded. A lesson milestone is shown but marked `Lesson` and kept from the
+chronicler, which turned modus mentis names into "learning social interaction".
+
+Narration is credited to whoever is acting when the block commits — the Speak About hand-off commits
+the speech before switching member, so the speech stays the speaker's and what follows is the
+companion's. **A visit is the chronicler's unit**: entering the world map closes the group and its
+entries turn pending, which *is* the queue — saving the entries saves it, and a quit loses nothing.
+
+**The chronicler** (`Chronicler`, pumped every frame) writes one pending group at a time through
+`LlamaServerManager.GenerateBackgroundAsync`, and applies the result on the game thread — the journal
+is never touched from two threads. The gate lives in `LlamaServerManager`, not in a list of game
+modes: every request is foreground unless it came through that method; a foreground request cancels a
+running background one at once; a background one starts only after `Config.LLM.BackgroundQuietMs` of
+foreground silence; a cancelled job returns null and is started again from the beginning, never kept
+half-written. Its prompts are `ChroniclerPrompt`, kept short because llama-server only notices a
+cancelled stream between batches. A written group keeps its paragraph and its milestones and drops the
+entries it was written from; unwritten groups keep at most `Journal.MaxPendingSourceChars` of source.
+
+| | |
+|---|---|
+| `inspect journal` | counts (`pending-groups=`, `written-groups=`, `chronicler=idle|busy|off`) and one line per entry |
+| `journal dump <file>` | the journal as JSON, material for `tools/journal/` |
+| `manage Journal pageup\|pagedown\|newest\|<n>` | scroll the tab |
+| `wait for <secs>` | hold that long — a player reading, the quiet the chronicler waits for |
+| `--no-chronicler` | record, never write up — the queue stays readable |
+| `--llm-threads <n>`, `--llm-seed <n>` | measure at a player's thread count, on one narrative path |
+
+Under `--playground` the chronicler writes a fixed `[chronicle] …` placeholder the moment a group is
+queued; `cli/system/journal_capture.cli` and `journal_chronicler.cli` cover capture, the queue and the
+save. **Preemption and timing need the real model** — `tools/journal/`.

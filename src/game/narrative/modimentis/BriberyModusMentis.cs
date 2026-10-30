@@ -14,7 +14,8 @@ public class BriberyModusMentis : ModusMentis
         "Offers money so that it can be accepted without anyone admitting it: the dropped coin, the gift for the children, the unspoken arrangement. Knows what everyone's price is and how to name it without naming it.";
     public override string SkillMeans       => "the offering of money that can be taken without admitting it";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<OfferBribeVerb>("offer a bribe");
+    public override WillTargets? Will => WillTarget.To<OfferBribeVerb>("offer a bribe");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Stronghold, Places.Streets);
     public override string[] Organs        => new[] { "tongue", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
@@ -25,7 +26,7 @@ public class BriberyModusMentis : ModusMentis
     public override string PersonaReminder  => "briber";
     public override string PersonaReminder2 => "someone who knows everyone's price";
     public override string StyleInstruction =>
-        "Offer without saying it - the gift, the dropped coin, the arrangement left unspoken.";
+        "Smooth and unspoken - see in whatever is in front of you what could be offered without saying so.";
 
     public override string PersonaPrompt => @"You are the inner voice of BRIBERY, and the man in front of you has a price and your job is to pay it without either of you saying so.
 

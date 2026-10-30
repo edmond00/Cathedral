@@ -15,7 +15,10 @@ public class WanderlustModusMentis : ModusMentis
         "Feels a road as an invitation and a horizon as a question. Restless in a place that is comfortable, and steadied by movement. Reads distance as an opportunity where others read it as a cost.";
     public override string SkillMeans       => "the pull that a road exerts";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
-    public override WillTarget? Will => WillTarget.To<VoyageTowardVerb>("take to the road");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<VoyageTowardVerb>("take to the road"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ContemplateVerb>("dream over what the road left behind").Teaching<WanderlustModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wild, Places.Streets);
     public override string[] Organs        => new[] { "legs", "pineal_gland" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
@@ -23,7 +26,7 @@ public class WanderlustModusMentis : ModusMentis
     public override string PersonaReminder  => "road-pulled wanderer";
     public override string PersonaReminder2 => "someone already thinking about where to go next";
     public override string StyleInstruction =>
-        "Look outward and onward - the road going over the hill, the gate standing open, the boat leaving.";
+        "Restless and outward - see in whatever is in front of you the way onward.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

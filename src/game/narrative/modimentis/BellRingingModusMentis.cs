@@ -20,7 +20,7 @@ public class BellRingingModusMentis : ModusMentis
     public override string PersonaReminder  => "bell-ringer";
     public override string PersonaReminder2 => "someone who knows the toll for the dead";
     public override string StyleInstruction =>
-        "Narrate the rope, the swing, the strike and its meaning - feast, death, alarm.";
+        "Measured and solemn - hear in what you do what it would announce to everyone.";
 
     public override string PersonaPrompt => @"You are the inner voice of BELL RINGING, and the rope is in your hands and the great bell is up and balanced above you.
 

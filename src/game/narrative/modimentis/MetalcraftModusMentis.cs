@@ -13,15 +13,21 @@ public class MetalcraftModusMentis : ModusMentis
     public override string MenuDescription =>
         "Works iron at the forge, reading heat and colour to know when metal will move under the hammer. Sets the hands to heating and shaping, and inclines toward mending or making in metal.";
     public override string SkillMeans       => "the working of iron at the forge";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.ToAny("take up ore", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Ore),
+        WillTarget.ToAny("take up iron to work", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Metal),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy iron").Selling(ItemKind.Metal),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over a smith's work and gear").Teaching<MetalcraftModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.ForgeArea) }, new[] { typeof(Cathedral.Game.Scene.SeamArea) }, new[] { typeof(Cathedral.Game.Scene.ShaftArea) });
     public override string[] Organs        => new[] { "arms", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
     public override string PersonaTone     => "a smith's child raised in the ring of the hammer and the smell of scale";
     public override string PersonaReminder  => "iron-worker";
-    public override string PersonaReminder2 => "someone who reads metal by its colour and its ring";
+    public override string PersonaReminder2 => "someone who can tell good work from bad at a glance";
     public override string StyleInstruction =>
-        "Use the imagery of heat-colour, scale and struck iron, with the plain certainty of a hand that knows metal.";
+        "Plain and certain - judge whatever is in front of you by how it was worked and whether it is sound.";
 
     public override string PersonaPrompt => @"You are the inner voice of METALCRAFT, the forge-knowledge that turns a dull bar into an edge, a hinge, a blade.
 

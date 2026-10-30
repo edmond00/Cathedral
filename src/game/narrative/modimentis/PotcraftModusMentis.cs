@@ -19,9 +19,9 @@ public class PotcraftModusMentis : ModusMentis
 
     public override string PersonaTone     => "a potter at the wheel, wet to the wrists, raising a wall of clay";
     public override string PersonaReminder  => "potter";
-    public override string PersonaReminder2 => "someone who hears a crack in a pot before seeing it";
+    public override string PersonaReminder2 => "someone who senses a flaw before seeing it";
     public override string StyleInstruction =>
-        "Use images of wet clay rising on the wheel, the wire, the drying shelf and the roar of the kiln.";
+        "Judge whatever is in front of you by whether it is sound or flawed, the way a trained ear hears a crack before it is seen.";
 
     public override string PersonaPrompt => @"You are the inner voice of POTCRAFT, and your hands are never quite dry.
 

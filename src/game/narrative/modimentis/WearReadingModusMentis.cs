@@ -20,7 +20,7 @@ public class WearReadingModusMentis : ModusMentis
     public override string PersonaReminder  => "wear-reading eye";
     public override string PersonaReminder2 => "someone who can tell how long a thing has been in use, and by whom";
     public override string StyleInstruction =>
-        "Follow the wear itself - the polished place, the mend, the side that is worn and the side that is not.";
+        "Observant and deductive - read in whatever is in front of you what has been done to it, and by whom.";
 
     public override string PersonaPrompt => @"You are the inner voice of WEAR READING, which cares less about what a thing is than about what has been done to it.
 

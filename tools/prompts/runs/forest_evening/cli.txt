@@ -1,0 +1,175 @@
+[cli] script loaded: /home/user/repo/tools/prompts/scripts/corpus_forest_evening.cli
+[cli] ready — type `help` for commands
+[cli] > wait
+[cli] wait done (idle)
+[cli] > wait mode MainMenu 900
+[cli] wait done (mode=MainMenu)
+[cli] > click menu New
+[cli] ok: pressed menu "New"
+[cli] > wait mode ProtagonistCreation 60
+[cli] wait done (mode=ProtagonistCreation)
+[cli] > click continue
+[cli] ok: accepted protagonist
+[cli] > wait mode WorldView 300
+[cli] wait done (mode=WorldView)
+[cli] > travel here
+[cli] ok: entering the location at vertex 16 (own vertex)
+[cli] > wait mode LocationInteraction 900
+[cli] wait done (mode=LocationInteraction)
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > click keyword 0
+[cli] ok: clicked keyword "0"
+[cli] > choose 0
+[cli] ok: chose 0
+[cli] > choose caution
+[cli] ok: chose caution
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] ok: preview continue
+[cli] ok: preview continue
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > click action 0
+[cli] ok: clicked action 0
+[cli] > choose 0
+[cli] action-strategy Custom action="try to examine the snail closely by observing its shell and body, careful not to disturb it." outcome="VerbAction → examine the snail closely"
+[cli] dice-roll auto=success (3 dice, need 2 sixes) (use `strategy fail-dice` to force failure)
+[cli] ok: chose 0
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > click continue
+[cli] ok: confirmed dice
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > wait 30
+[cli] wait done (idle (≤30s))
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 0
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 1
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 0
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click continue
+[cli] error: no dice continue button on screen
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click button
+[cli] ok: pressed narration footer button
+[cli] > wait 1500
+[cli] wait done (idle (≤1500s))
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > click keyword 1
+[cli] error: no keyword 1 on screen (1 offered)
+[cli] > choose 1
+[cli] error: no popup is visible
+[cli] > choose woodcraft
+[cli] error: no modus mentis 'woodcraft' in the open popup
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > click keyword 0
+[cli] ok: clicked keyword "0"
+[cli] > choose 0
+[cli] ok: chose 0
+[cli] > choose superstition
+[cli] error: no modus mentis 'superstition' in the open popup
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > click action 0
+[cli] error: no action 0 on screen
+[cli] > choose 0
+[cli] ok: chose 0
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > click continue
+[cli] error: no dice continue button on screen
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > wait 30
+[cli] wait done (idle (≤30s))
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 0
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 1
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 0
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click continue
+[cli] error: no dice continue button on screen
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click button
+[cli] ok: pressed narration footer button
+[cli] > wait 1500
+[cli] wait done (idle (≤1500s))
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > click keyword 0
+[cli] error: not in narration
+[cli] > choose 0
+[cli] error: not in narration
+[cli] > choose temerity
+[cli] error: not in narration
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > click action 0
+[cli] error: not in narration
+[cli] > choose 0
+[cli] error: not in narration
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > click continue
+[cli] error: not in narration
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > wait 30
+[cli] wait done (idle (≤30s))
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 0
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 1
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 0
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click continue
+[cli] error: not in narration
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > state
+[cli] mode=WorldView idle=True carry[11/50]
+[cli] > quit
+[cli] quitting (all assertions passed)

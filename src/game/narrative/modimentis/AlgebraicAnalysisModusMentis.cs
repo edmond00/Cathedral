@@ -24,7 +24,7 @@ public class AlgebraicAnalysisModusMentis : ModusMentis
     public override string PersonaReminder => "cold pattern analyst";
     public override string PersonaReminder2 => "someone who reduces everything to its underlying patterns";
     public override string StyleInstruction =>
-        "Lean on the dry imagery of variables, patterns and equations, and let any feeling stay clipped and abstract.";
+        "Cool, abstract and clipped - reduce whatever is in front of you to the pattern underneath it.";
     
     public override string PersonaPrompt => @"You are the inner voice of ALGEBRAIC ANALYSIS, a cold, abstract, pattern-obsessed way of thinking.
 

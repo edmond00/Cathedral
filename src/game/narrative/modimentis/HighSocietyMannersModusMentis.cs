@@ -16,7 +16,8 @@ public class HighSocietyMannersModusMentis : ModusMentis
         "Holds conduct to the polished customs of city society, tracking fine address and refined manner. Reads a genteel room for its unspoken rules, and inclines toward the courteous, well-bred move.";
     public override string SkillMeans       => "refined manners and polite conversation";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
-    public override WillTarget? Will => WillTarget.To<IntroduceMeVerb>("be introduced to somebody of standing");
+    public override WillTargets? Will => WillTarget.To<IntroduceMeVerb>("be introduced to somebody of standing");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Streets, Places.Taverns);
     public override string[] Organs        => new[] { "tongue", "ears" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>
@@ -28,7 +29,7 @@ public class HighSocietyMannersModusMentis : ModusMentis
     public override string PersonaReminder  => "city-imitating speaker";
     public override string PersonaReminder2 => "someone who measures their bow by the worth of the doublet they greet";
     public override string StyleInstruction =>
-        "Colour the line with imagery of courtesy, station and fine appearance, and a delicate eye for who outranks whom.";
+        "Delicate and admiring - judge whoever is in front of you by station and appearance, and who outranks whom.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

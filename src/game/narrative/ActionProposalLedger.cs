@@ -47,6 +47,14 @@ namespace Cathedral.Game.Narrative;
 /// otherwise only those that can are offered as the means, with no refusal left to them. That logic
 /// lives in <c>ThinkingExecutor</c>; this class only remembers what was refused.</para>
 ///
+/// <para><b>Nor is a mind asked twice whether it would rather not.</b> When a thinking modus mentis
+/// declines everything an object offers (<see cref="Decline"/>), asking it again about the same object
+/// can only be declined again: the goal judge reads scores rather than sampling, so one question has
+/// one answer, and the second ask spent a noetic point to hear it twice. The second ask is therefore
+/// the player insisting, and the decline is not offered (<see cref="HasDeclined"/>): the mind chooses
+/// one of the goals. Keyed by mind and object instance, like the refusals; another mind asked about
+/// the same object may still decline.</para>
+///
 /// <para>Cleared wherever the live text greys into history (<c>NarrativeController.CloseNarrationSegment</c>),
 /// alongside the observation ledger: a new phase in the same place sees the whole scene, and every
 /// action in it, again.</para>
@@ -67,6 +75,9 @@ public sealed class ActionProposalLedger
 
     /// <summary>Every action refused this phase, whichever mind chose it.</summary>
     private readonly HashSet<(string VerbId, Element? Target, object? Variant)> _refused = new();
+
+    /// <summary>The objects each thinking modus mentis has declined this phase.</summary>
+    private readonly HashSet<(ModusMentis Thinking, NarrativeAnchor Observed)> _declined = new();
 
     /// <summary>How many distinct actions have been proposed so far this phase.</summary>
     public int Count => _proposed.Count;
@@ -120,6 +131,15 @@ public sealed class ActionProposalLedger
     }
 
     /// <summary>
+    /// Records that <paramref name="thinking"/>, asked about <paramref name="observed"/>, wanted none of
+    /// what it offers. Called when the thinking ends on that refusal.
+    /// </summary>
+    public void Decline(ModusMentis thinking, NarrativeAnchor observed) => _declined.Add((thinking, observed));
+
+    /// <summary>True when <paramref name="thinking"/> has already declined <paramref name="observed"/> this phase.</summary>
+    public bool HasDeclined(ModusMentis thinking, NarrativeAnchor observed) => _declined.Contains((thinking, observed));
+
+    /// <summary>
     /// The identity this ledger knows an action by (verb, target, variant), for callers that keep
     /// their own record of actions across a re-expansion of the verb lists — iterative thinking's
     /// crossed-off pairs.
@@ -133,6 +153,7 @@ public sealed class ActionProposalLedger
         _proposedWording.Clear();
         _refusedFor.Clear();
         _refused.Clear();
+        _declined.Clear();
     }
 
     private static (string, Element?, object?) KeyOf(VerbAction action)

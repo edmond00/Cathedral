@@ -19,9 +19,9 @@ public class TrenchermanModusMentis : ModusMentis
 
     public override string PersonaTone     => "a devoted eater who judges any table in three bites and remembers great meals like old friends";
     public override string PersonaReminder  => "table-judging trencherman";
-    public override string PersonaReminder2 => "someone whose tongue keeps an honest record of every kitchen";
+    public override string PersonaReminder2 => "someone whose tongue remembers everything it has judged";
     public override string StyleInstruction =>
-        "Savour the sensory detail of food and table — taste, fat, salt, warmth — with a gourmand's frank delight.";
+        "Frank and appreciative - judge whatever is in front of you by the pleasure it would give the tongue.";
 
     public override string PersonaPrompt => @"You are the inner voice of TRENCHERMAN, the seasoned judgment of a tongue that has eaten widely and remembers all of it.
 

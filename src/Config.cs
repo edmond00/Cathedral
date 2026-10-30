@@ -148,6 +148,25 @@ public static class Config
         public static global::Cathedral.LLM.LlamaComputeDevice? ForcedLlmDevice { get; set; } = null;
 
         /// <summary>
+        /// <c>--llm-threads &lt;n&gt;</c>: llama-server's <c>-t</c> for this run, over the saved setting —
+        /// what lets a measurement run at a player's thread count on a machine with more cores. Null
+        /// leaves the setting (and llama.cpp's own default) in charge.
+        /// </summary>
+        public static int? ForcedLlmThreads { get; set; } = null;
+
+        /// <summary>
+        /// <c>--llm-seed &lt;n&gt;</c>: a sampler seed sent with every request, so two measured runs of one
+        /// script take the same narrative path. Null sends none, as the game always has.
+        /// </summary>
+        public static int? LlmSeed { get; set; } = null;
+
+        /// <summary>
+        /// <c>--no-chronicler</c>: the journal records as usual but no background session writes it up —
+        /// the "without" half of measuring what the chronicler costs the narration.
+        /// </summary>
+        public static bool ChroniclerDisabled { get; set; } = false;
+
+        /// <summary>
         /// Biome or location name to place the protagonist on at world generation, e.g. "village".
         /// Set by <c>--start-at &lt;name&gt;</c>. Matched case-insensitively as a substring; ignored
         /// when nothing in the world matches.
@@ -521,6 +540,17 @@ public static class Config
         /// seed lays out the same fight.</para>
         /// </summary>
         public static System.Collections.Generic.Queue<string>? ForcedEncounters { get; set; } = null;
+
+        /// <summary>
+        /// Creature for a travel encounter forced on the first step of the next journey that is
+        /// <b>not</b> its last, once. Set by <c>--encounter-mid-journey &lt;creature&gt;</c>.
+        ///
+        /// <para>The twin of <see cref="EncounterOnArrival"/>: winning here resumes a journey that
+        /// still has a path to walk, which is the branch every player meets and no script did —
+        /// <see cref="NoEncounters"/> switches the random rolls off. It walked the rest of the way
+        /// over an opaque-black terminal. Honoured before <see cref="NoEncounters"/>, as its twin is.</para>
+        /// </summary>
+        public static string? EncounterMidJourney { get; set; } = null;
 
         /// <summary>
         /// Beast archetype to add to every scene as it is built, e.g. "wolf". Set by
@@ -1672,7 +1702,7 @@ public static class Config
         /// hundred-odd scripts. Playground already replaces the thing that makes a run slow (the
         /// LLM); this replaces the rest. See <see cref="AnimationsAreInstant"/>.</para>
         /// </summary>
-        public static float AnimationDurationSeconds => AnimationsAreInstant ? 0f : 5.0f;
+        public static float AnimationDurationSeconds => AnimationsAreInstant ? 0f : 2.5f;
 
         /// <summary>
         /// The animation duration in milliseconds, for <see cref="System.Threading.Tasks.Task.Delay(int)"/>.
@@ -1773,16 +1803,17 @@ public static class Config
         /// </summary>
         public const string DefaultStyleInstruction = "Where it fits, a figure of speech (metaphor, comparison, imagery) or an inner feeling that suits your character is welcome.";
 
-        /// <summary>
-        /// Follows a modus mentis's own <c>StyleInstruction</c>. A small model reads the things a style
-        /// names as things that are there: HOSPITALITY's "the imagery of hearth, board and made bed" put a
-        /// hearth and a made bed into four replies in five, in a sheepfold, a temple, a castle, beside
-        /// "I will ask him what he knows". This clause alone did not stop it (replayed against the
-        /// shipped model it changed nothing while the style still listed objects); what stopped it was
-        /// rewriting the style as an attitude, and with that done this clause took the remaining leaks
-        /// from 5 in 16 to none. So a style names a way of seeing, never a list of props.
-        /// </summary>
-        private const string StyleIsNotSceneClause = "It only colours how the given facts are told — what it names is not in the scene unless the given information puts it there.";
+        // There was a StyleIsNotSceneClause here, after a modus mentis's own style: "It only colours how the
+        // given facts are told — what it names is not in the scene unless the given information puts it
+        // there." It was written when HOSPITALITY's style listed "hearth, board and made bed" and a
+        // small model furnished every scene with them; once that style was rewritten as an attitude, the
+        // clause took the remaining leaks from 5 in 16 to none. Measured again over the whole corpus
+        // (tools/prompts, 80 samples a side over 40 styled cases, and a blind round of 38 a side), it no
+        // longer earned its 25 tokens: style words were copied into the answer as often without it (9%
+        // against 11%), blind fidelity was no lower (0.60 against 0.53, and level in the other round),
+        // and the clause itself was being copied — "it only colours how the given facts are told" came
+        // back word for word from Pride, Dread and Arithmetic. A style is still to name a way of seeing,
+        // never a list of props: the clause is gone, the rule for writing a style is not.
 
         /// <summary>
         /// Style clause for dialogue replies: a spoken line carries personality in its wording, not in a
@@ -1811,7 +1842,7 @@ public static class Config
         {
             string style = string.IsNullOrWhiteSpace(styleInstruction)
                 ? DefaultStyleInstruction
-                : $"Your way of seeing: {styleInstruction.Trim()} {StyleIsNotSceneClause}";
+                : $"Your way of seeing: {styleInstruction.Trim()}";
             string character = personaReminder2 != null ? $"Stay in the character of {personaReminder2}." : "Stay in character.";
             var parts = new[]
             {
@@ -2158,6 +2189,22 @@ public static class Config
         // Settable by --llm-temperature (debug): the tutorial run's replays are made at several, so
         // that the prose the script has to survive genuinely differs between them.
         public static double Temperature { get; set; } = 0.7;
+
+        /// <summary>
+        /// How long the foreground must have been quiet (nothing in flight, nothing finished more
+        /// recently) before a background job — the chronicler — may start. See
+        /// <c>LlamaServerManager.GenerateBackgroundAsync</c>. Long enough that the gap between two
+        /// requests of one narration phase never qualifies; a player reading is what it waits for.
+        /// </summary>
+        public const int BackgroundQuietMs = 4000;
+
+        /// <summary>
+        /// How much of a background prompt is sent per prefill step, in characters (~16 tokens). The
+        /// server can only drop a cancelled request between batches, so this bounds what a preempted
+        /// chronicler job can still cost a foreground request: one step's prefill. Measured at 160 characters
+        /// on a 4-thread CPU, a preempting request waited 0.9-1.8 s; see design/BELLIC_JOURNAL_REPORT.md.
+        /// </summary>
+        public const int BackgroundPrefillChars = 64;
         public const int TopK = 12;
         public const double TopP = 0.95;
 

@@ -24,6 +24,7 @@ public sealed class Awl : ToolItem
 
 public sealed class ShoeLast : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool, ItemKind.Wood });
     public override string ItemId      => "shoe_last";
     public override string DisplayName => "Shoe Last";
     public override string Description => "A carved wooden foot, dark with handling, that a shoe is shaped over";
@@ -36,6 +37,7 @@ public sealed class ShoeLast : Item
 
 public sealed class Hobnails : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Metal });
     public override string ItemId      => "hobnails";
     public override string DisplayName => "Hobnails";
     public override string Article     => "some";
@@ -63,6 +65,7 @@ public sealed class BespokeShoes : WearableItem
 
 public sealed class Thimble : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Metal });
     public override string ItemId      => "thimble";
     public override string DisplayName => "Thimble";
     public override string Description => "A brass thimble pitted all over by the heads of needles";
@@ -75,6 +78,7 @@ public sealed class Thimble : Item
 
 public sealed class SewingNeedles : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool, ItemKind.Metal });
     public override string ItemId      => "sewing_needles";
     public override string DisplayName => "Sewing Needles";
     public override string Article     => "some";
@@ -88,6 +92,7 @@ public sealed class SewingNeedles : Item
 
 public sealed class TailorsChalk : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Stone });
     public override string ItemId      => "tailors_chalk";
     public override string DisplayName => "Tailor's Chalk";
     public override string Description => "A flat cake of white chalk worn to an edge for marking cloth";
@@ -114,6 +119,7 @@ public sealed class Waistcoat : WearableItem
 
 public sealed class Wick : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Light });
     public override string ItemId      => "wick";
     public override string DisplayName => "Wick";
     public override string Description => "A hank of plaited cotton wick, stiff with old tallow";
@@ -126,6 +132,7 @@ public sealed class Wick : Item
 
 public sealed class Beeswax : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Honey });
     public override string ItemId      => "beeswax";
     public override string DisplayName => "Beeswax";
     public override string Article     => "some";
@@ -139,6 +146,7 @@ public sealed class Beeswax : Item
 
 public sealed class CandleMould : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool });
     public override string ItemId      => "candle_mould";
     public override string DisplayName => "Candle Mould";
     public override string Description => "A frame of six tin tubes for casting candles, crusted with old wax";
@@ -153,6 +161,7 @@ public sealed class CandleMould : Item
 
 public sealed class Cleaver : ToolItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Blade });
     public override string ItemId      => "cleaver";
     public override string DisplayName => "Cleaver";
     public override string Description => "A heavy square-bladed chopper, its edge nicked by bone";
@@ -162,6 +171,7 @@ public sealed class Cleaver : ToolItem
 
 public sealed class MeatHook : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool, ItemKind.Metal });
     public override string ItemId      => "meat_hook";
     public override string DisplayName => "Meat Hook";
     public override string Description => "A double-ended iron S-hook, the kind joints are hung from";
@@ -174,6 +184,7 @@ public sealed class MeatHook : Item
 
 public sealed class Tripe : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Meat });
     public override string ItemId      => "tripe";
     public override string DisplayName => "Tripe";
     public override string Article     => "some";
@@ -190,6 +201,7 @@ public sealed class Tripe : ConsumableItem
 
 public sealed class BloodPudding : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Meat });
     public override string ItemId      => "blood_pudding";
     public override string DisplayName => "Blood Pudding";
     public override string Description => "A dark, heavy sausage of blood, oats and suet";
@@ -219,6 +231,7 @@ public sealed class LeatherApron : WearableItem
 
 public sealed class FleshingKnife : ToolItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Blade });
     public override string ItemId      => "fleshing_knife";
     public override string DisplayName => "Fleshing Knife";
     public override string Description => "A long curved blade with a handle at each end, for scraping hides";
@@ -227,6 +240,7 @@ public sealed class FleshingKnife : ToolItem
 
 public sealed class TannedLeather : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Hide });
     public override string ItemId      => "tanned_leather";
     public override string DisplayName => "Tanned Leather";
     public override string Description => "A folded side of brown bark-tanned leather, supple and smelling of oak";
@@ -239,6 +253,7 @@ public sealed class TannedLeather : Item
 
 public sealed class TanBark : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Wood });
     public override string ItemId      => "tan_bark";
     public override string DisplayName => "Tan Bark";
     public override string Article     => "some";
@@ -254,6 +269,7 @@ public sealed class TanBark : Item
 
 public sealed class EarthenJug : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Vessel });
     public override string ItemId      => "earthen_jug";
     public override string DisplayName => "Earthen Jug";
     public override string Description => "A round-bellied jug of glazed brown earthenware with a thumb-pressed handle";
@@ -266,6 +282,7 @@ public sealed class EarthenJug : Item
 
 public sealed class PottersRib : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool });
     public override string ItemId      => "potters_rib";
     public override string DisplayName => "Potter's Rib";
     public override string Description => "A smooth curved slip of horn used to shape the wall of a pot on the wheel";
@@ -278,6 +295,7 @@ public sealed class PottersRib : Item
 
 public sealed class GlazedBowl : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Vessel });
     public override string ItemId      => "glazed_bowl";
     public override string DisplayName => "Glazed Bowl";
     public override string Description => "A shallow bowl with a running green glaze inside and a bare foot";
@@ -292,6 +310,7 @@ public sealed class GlazedBowl : Item
 
 public sealed class Theriac : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Remedy });
     public override string ItemId      => "theriac";
     public override string DisplayName => "Theriac";
     public override string Article     => "some";
@@ -308,6 +327,7 @@ public sealed class Theriac : ConsumableItem
 
 public sealed class Albarello : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Vessel, ItemKind.Remedy });
     public override string ItemId      => "albarello";
     public override string DisplayName => "Albarello";
     public override string Description => "A waisted apothecary's jar of painted majolica, its label in a careful hand";
@@ -320,6 +340,7 @@ public sealed class Albarello : Item
 
 public sealed class Pestle : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool, ItemKind.Stone });
     public override string ItemId      => "pestle";
     public override string DisplayName => "Pestle";
     public override string Description => "A heavy bronze pestle, polished at the end by grinding";
@@ -334,6 +355,7 @@ public sealed class Pestle : Item
 
 public sealed class Razor : ToolItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Blade });
     public override string ItemId      => "razor";
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork, ItemTag.Surgery };
     public override string DisplayName => "Razor";
@@ -344,6 +366,7 @@ public sealed class Razor : ToolItem
 
 public sealed class Lancet : ToolItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Blade, ItemKind.Remedy });
     public override string ItemId      => "lancet";
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork, ItemTag.Surgery };
     public override string DisplayName => "Lancet";
@@ -354,6 +377,7 @@ public sealed class Lancet : ToolItem
 
 public sealed class BleedingBowl : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Remedy });
     public override string ItemId      => "bleeding_bowl";
     public override string DisplayName => "Bleeding Bowl";
     public override string Description => "A pewter bowl with a notch cut in the rim to fit against an arm";
@@ -368,6 +392,7 @@ public sealed class BleedingBowl : Item
 
 public sealed class Tumpline : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Fibre });
     public override string ItemId      => "tumpline";
     public override string DisplayName => "Tumpline";
     public override string Description => "A broad leather strap a porter passes over the brow to take a load on the back";
@@ -380,6 +405,7 @@ public sealed class Tumpline : Item
 
 public sealed class Lye : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Remedy });
     public override string ItemId      => "lye";
     public override string DisplayName => "Lye";
     public override string Article     => "some";
@@ -393,6 +419,7 @@ public sealed class Lye : Item
 
 public sealed class WashBeetle : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Wood });
     public override string ItemId      => "wash_beetle";
     public override string DisplayName => "Wash Beetle";
     public override string Description => "A flat wooden bat, worn pale, for beating wet linen on a stone";
@@ -405,6 +432,7 @@ public sealed class WashBeetle : Item
 
 public sealed class WaterYoke : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Wood, ItemKind.Tool });
     public override string ItemId      => "water_yoke";
     public override string DisplayName => "Water Yoke";
     public override string Description => "A shaped shoulder yoke with a chain and hook hanging at each end";
@@ -417,6 +445,7 @@ public sealed class WaterYoke : Item
 
 public sealed class LeatherBucket : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Vessel });
     public override string ItemId      => "leather_bucket";
     public override string DisplayName => "Leather Bucket";
     public override string Description => "A tarred leather bucket with a rope handle, sweating a little at the seams";
@@ -429,6 +458,7 @@ public sealed class LeatherBucket : Item
 
 public sealed class BeggingBowl : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Vessel });
     public override string ItemId      => "begging_bowl";
     public override string DisplayName => "Begging Bowl";
     public override string Description => "A chipped wooden bowl with a single copper left in it for luck";
@@ -441,6 +471,7 @@ public sealed class BeggingBowl : Item
 
 public sealed class Crutch : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool, ItemKind.Wood });
     public override string ItemId      => "crutch";
     public override string DisplayName => "Crutch";
     public override string Description => "A forked stick padded with rags at the top, polished by an armpit";

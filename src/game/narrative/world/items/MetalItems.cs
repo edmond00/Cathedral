@@ -5,6 +5,7 @@ namespace Cathedral.Game.Narrative.World.Items;
 
 public sealed class IronOre : MetalItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Ore });
     public override string ItemId      => "iron_ore";
     public override List<ItemTag> Tags => new() { ItemTag.Mineral, ItemTag.Ore };
     public override string DisplayName => "Iron Ore";
@@ -14,6 +15,7 @@ public sealed class IronOre : MetalItem
 
 public sealed class IronBar : MetalItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Metal });
     public override string ItemId      => "iron_bar";
     public override List<ItemTag> Tags => new() { ItemTag.Mineral, ItemTag.Ore };
     public override string DisplayName => "Iron Bar";
@@ -24,6 +26,7 @@ public sealed class IronBar : MetalItem
 
 public sealed class Coal : MetalItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Fuel });
     public override string ItemId      => "coal";
     public override List<ItemTag> Tags => new() { ItemTag.Mineral, ItemTag.Ore, ItemTag.Fuel };
     public override string DisplayName => "Coal";
@@ -33,6 +36,7 @@ public sealed class Coal : MetalItem
 
 public sealed class Nail : MetalItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Metal });
     public override string ItemId      => "nail";
     public override string DisplayName => "Nail";
     public override string Description => "A handful of square-cut iron nails";
@@ -43,6 +47,7 @@ public sealed class Nail : MetalItem
 
 public sealed class IronHoop : MetalItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Metal });
     public override string ItemId      => "iron_hoop";
     public override string DisplayName => "Iron Hoop";
     public override string Description => "A flat iron band shaped to bind a barrel";

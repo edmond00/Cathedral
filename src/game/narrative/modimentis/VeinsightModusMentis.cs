@@ -14,7 +14,12 @@ public class VeinsightModusMentis : ModusMentis
         "Reads a seam: which way the metal runs, how rich it is, where it will pinch out and where it is worth following. The knowledge half of mining, as against the labour of it.";
     public override string SkillMeans       => "the reading of a seam and the metal in it";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTarget? Will => WillTarget.To<MineVerb>("mine a seam of ore");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<MineVerb>("mine a seam of ore"),
+        WillTarget.ToAny("pick up ore", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Ore),
+        WillTarget.ToAny("lay hands on a pick", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).Yielding<Cathedral.Game.Narrative.World.Items.Pick>(),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("read the stone for a seam").Teaching<VeinsightModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Underground, Places.Heights);
     public override string[] Organs        => new[] { "eyes", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

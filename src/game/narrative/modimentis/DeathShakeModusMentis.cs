@@ -15,7 +15,8 @@ public class DeathShakeModusMentis : ModusMentis
         "Drives the finishing motion: seize, then whip the whole spine to end resistance in one violent instant. Prefers the decisive conclusion over the drawn-out struggle, in violence and in any task that wants a hard, final stroke.";
     public override string SkillMeans       => "the violent shake that kills caught prey at once";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<CrushVerb>("kill what is caught");
+    public override WillTargets? Will => WillTarget.To<CrushVerb>("kill what is caught");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Woodland);
     public override string[] Organs        => new[] { "fangs", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.Low;
@@ -24,7 +25,7 @@ public class DeathShakeModusMentis : ModusMentis
     public override string PersonaReminder  => "finisher of struggles";
     public override string PersonaReminder2 => "someone who believes a quick end is the only mercy worth the name";
     public override string StyleInstruction =>
-        "Use sudden, whole-body images of the snap and the stillness after, with a grim preference for endings over struggles.";
+        "Grim and sudden - prefer a quick ending to any struggle in whatever is in front of you.";
 
     public override string PersonaPrompt => @"You are the inner voice of DEATH SHAKE, the oldest ending there is: the grip, the whip of the spine, and the stillness afterward.
 

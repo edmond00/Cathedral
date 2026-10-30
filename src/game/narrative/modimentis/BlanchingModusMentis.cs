@@ -12,7 +12,12 @@ public class BlanchingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Grows things in the dark on purpose: endive forced pale in a cellar, mushrooms on beds of dung and straw. Keeps the warmth, the damp and the darkness exactly right for crops that cannot stand the sun.";
     public override string SkillMeans       => "the forcing of crops in darkness";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.ToAny("pick what grew pale in the dark", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Mushroom),
+        WillTarget.ToAny("lift forced endive", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).Yielding<Cathedral.Game.Narrative.World.Items.Endive>(),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over the forcing beds and their gear").Teaching<BlanchingModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.MushroomCellar, new[] { typeof(Cathedral.Game.Scene.ForcingArea) });
     public override string[] Organs        => new[] { "hands", "nose" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
@@ -21,7 +26,7 @@ public class BlanchingModusMentis : ModusMentis
     public override string PersonaReminder  => "forcer of pale crops";
     public override string PersonaReminder2 => "someone at home in a warm damp dark";
     public override string StyleInstruction =>
-        "Describe the cellar by touch and smell - warmth, damp, the pale crop - with the light kept out.";
+        "Hushed and careful - judge whatever is in front of you by what it needs kept from it.";
 
     public override string PersonaPrompt => @"You are the inner voice of BLANCHING, and you work in a dark that you keep dark on purpose.
 

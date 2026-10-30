@@ -13,15 +13,20 @@ public class CobblingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Makes and mends shoes: cuts the upper from the hide, draws it over the last, stitches welt to sole with awl and waxed thread. Reads a worn heel for how its owner walks.";
     public override string SkillMeans       => "the making and mending of shoes";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<Cathedral.Game.Scene.Verbs.GrabVerb>("take up a hide for leather").YieldingKind(ItemKind.Hide),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy leather").Selling(ItemKind.Hide),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over a cobbler's gear").Teaching<CobblingModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.CobbleryArea) }, new[] { typeof(Cathedral.Game.Scene.TanneryArea) }, new[] { typeof(Cathedral.Game.Scene.MarketArea) });
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
     public override string PersonaTone     => "a cobbler bent over the last, awl in one hand and waxed thread in the other";
     public override string PersonaReminder  => "shoemaker";
-    public override string PersonaReminder2 => "someone who knows a person by the wear of their heels";
+    public override string PersonaReminder2 => "someone who reads people by the wear on them";
     public override string StyleInstruction =>
-        "Use images of leather, last, awl and waxed thread, and of feet and the roads they have walked.";
+        "Practical and observant - judge people by how they wear what they wear, and things by how well they are made.";
 
     public override string PersonaPrompt => @"You are the inner voice of COBBLING, and you look at people's feet first.
 

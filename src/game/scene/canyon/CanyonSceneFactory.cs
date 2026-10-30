@@ -460,6 +460,11 @@ public class CanyonSceneFactory : WildSceneFactory
 
         TrySpawnBeast(rng, scene, new PumaArchetype(), 0.35);
 
+        var reptiles = ReptileRandom(locationId);
+        TrySpawnBeast(reptiles, scene, new CarnotaurusArchetype(),  0.15);
+        TrySpawnBeast(reptiles, scene, new AnkylosaurusArchetype(), 0.12);
+        TrySpawnBeast(reptiles, scene, new GiantMonitorArchetype(), 0.12);
+
         TrySpawnCreature(rng, scene, new BighornArchetype(),     0.50);
         TrySpawnCreature(rng, scene, new CondorArchetype(),      0.40);
         TrySpawnCreature(rng, scene, new CanyonWrenArchetype(),  0.55, _walls);

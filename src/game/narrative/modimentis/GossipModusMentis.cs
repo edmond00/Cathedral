@@ -14,7 +14,10 @@ public class GossipModusMentis : ModusMentis
         "Collects and trades news about people: what is being said, who is quarrelling, what a household would rather nobody knew. Strikes up talk with anyone who might know something, and pays for news with news of its own.";
     public override string SkillMeans       => "the trading of news about other people";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
-    public override WillTarget? Will => WillTarget.To<HearGossipVerb>("hear the gossip");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<HearGossipVerb>("hear the gossip"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ListenVerb>("listen where people talk").Teaching<GossipModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Taverns, Places.Streets);
     public override string[] Organs        => new[] { "ears", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

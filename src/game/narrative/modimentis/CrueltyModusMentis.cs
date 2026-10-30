@@ -17,7 +17,8 @@ public class CrueltyModusMentis : ModusMentis
         "Reads others for their fear and their weak points, and takes an advantage without the check of mercy. Inclines toward intimidation, domination and pain, pressing where another would ease off.";
     public override string SkillMeans    => "cruelty and predatory instinct";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
-    public override WillTarget? Will => WillTarget.To<CrushVerb>("crush something small");
+    public override WillTargets? Will => WillTarget.To<CrushVerb>("crush something small");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Stock, Places.Dwellings);
     public override MoralLevel MoralLevel => MoralLevel.Low;
     public override string[] Organs => new[] { "spleen", "heart" };
 
@@ -29,7 +30,7 @@ public class CrueltyModusMentis : ModusMentis
     public override string PersonaReminder => "cold-blooded dominator";
     public override string PersonaReminder2 => "someone who sees weakness as an invitation and mercy as waste";
     public override string StyleInstruction =>
-        "Colour the line with images of dominance over the weak, and a cold relish that mistakes mercy for waste.";
+        "Cold and unhurried - size up what is in front of you by its weakness, with a relish that treats mercy as waste.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

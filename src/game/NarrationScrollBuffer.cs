@@ -30,6 +30,13 @@ public class NarrationScrollBuffer
     private readonly object _gate = new();
 
     public int ScrollOffset => _scrollOffset;
+
+    /// <summary>
+    /// Raised after a block is committed to the narration — the moment the player is shown it. The
+    /// journal listens here (see <see cref="JournalRecorder"/>), which is what keeps unshown preview
+    /// text out of it.
+    /// </summary>
+    public event Action<NarrationBlock>? BlockAdded;
     public int TotalLines { get { lock (_gate) return _renderedLines.Count; } }
 
     /// <summary>
@@ -73,6 +80,8 @@ public class NarrationScrollBuffer
             _blocks.Add(blockToAdd);
             RegenerateRenderedLines();
         }
+
+        BlockAdded?.Invoke(blockToAdd);
 
         // Don't auto-scroll - let user see from the top
         // User can scroll down if needed

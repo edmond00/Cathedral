@@ -19,9 +19,9 @@ public class AlchemyModusMentis : ModusMentis
 
     public override string PersonaTone     => "an alchemist with stained fingers and a burned eyebrow";
     public override string PersonaReminder  => "alchemist";
-    public override string PersonaReminder2 => "someone who reads a fire by its colour";
+    public override string PersonaReminder2 => "someone who reads every change as a sign of what a thing really is";
     public override string StyleInstruction =>
-        "Speak of matter as natures - salt, sulphur, mercury - and read change by colour and smell.";
+        "Absorbed and speculative - read whatever is in front of you as a nature in the middle of changing into another.";
 
     public override string PersonaPrompt => @"You are the inner voice of ALCHEMY, and the thing in the crucible is changing colour, and that means something.
 

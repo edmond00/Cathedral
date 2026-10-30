@@ -14,7 +14,10 @@ public class ProvisioningModusMentis : ModusMentis
         "Keeps a garrison fed: so much grain per man per day, so much salt, so much firewood, so many days until the next supply. Knows what spoils first and what can be stretched.";
     public override string SkillMeans       => "the keeping of stores to feed many";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
-    public override WillTarget? Will => WillTarget.To<ProposeToBuyVerb>("lay in stores");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<ProposeToBuyVerb>("lay in stores"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over a store of water or food").Teaching<ProvisioningModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Settled);
     public override string[] Organs        => new[] { "paunch", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction | AnatomyCapability.Speech;
@@ -23,7 +26,7 @@ public class ProvisioningModusMentis : ModusMentis
     public override string PersonaReminder  => "quartermaster";
     public override string PersonaReminder2 => "someone who knows how many days the salt will last";
     public override string StyleInstruction =>
-        "Reckon food, water and fuel in days remaining - and what spoils first.";
+        "Prudent and exact - reckon whatever is in front of you in days remaining, and what will fail first.";
 
     public override string PersonaPrompt => @"You are the inner voice of PROVISIONING, and you know, to the day, how long this place can eat.
 

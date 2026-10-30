@@ -15,7 +15,10 @@ public class HarvestryModusMentis : ModusMentis
         "Judges a crop for ripeness and reaps it at the right moment, cutting and gathering before it spoils. Sets the body to the steady rhythm of bringing in a field.";
     public override string SkillMeans       => "the reaping and gathering of ripe crops";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<GatherVerb>("reap a crop");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<GatherVerb>("reap a crop"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over a crop or its gathering").Teaching<HarvestryModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Fields);
     public override string[] Organs        => new[] { "upper_limbs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
@@ -23,7 +26,7 @@ public class HarvestryModusMentis : ModusMentis
     public override string PersonaReminder  => "crop-reaper";
     public override string PersonaReminder2 => "someone who knows ripe from green by the rustle and the colour";
     public override string StyleInstruction =>
-        "Use images of falling stalks, bound sheaves and the swing of the blade, with the tireless rhythm of the harvest.";
+        "Tireless and rhythmic - judge whatever is in front of you by whether it is ready to be gathered.";
 
     public override string PersonaPrompt => @"You are the inner voice of HARVESTRY, the labour that brings the ripe crop down and binds it before the weather turns.
 

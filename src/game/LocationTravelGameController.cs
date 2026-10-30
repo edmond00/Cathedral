@@ -215,6 +215,15 @@ public class LocationTravelGameController : IDisposable
         ["snow leopard"] = () => new Cathedral.Game.Npc.Archetypes.SnowLeopardArchetype(),
         ["white bear"]   = () => new Cathedral.Game.Npc.Archetypes.WhiteBearArchetype(),
         ["white wolf"]   = () => new Cathedral.Game.Npc.Archetypes.WhiteWolfArchetype(),
+        ["crocodile"]     = () => new Cathedral.Game.Npc.Archetypes.CrocodileArchetype(),
+        ["giant monitor"] = () => new Cathedral.Game.Npc.Archetypes.GiantMonitorArchetype(),
+        ["carnotaurus"]   = () => new Cathedral.Game.Npc.Archetypes.CarnotaurusArchetype(),
+        ["triceratops"]   = () => new Cathedral.Game.Npc.Archetypes.TriceratopsArchetype(),
+        // Not met on the road, but reachable by --start-fight, which reads this table.
+        ["horned lizard"] = () => new Cathedral.Game.Npc.Archetypes.HornedLizardArchetype(),
+        ["cave lizard"]   = () => new Cathedral.Game.Npc.Archetypes.CaveLizardArchetype(),
+        ["stegosaurus"]   = () => new Cathedral.Game.Npc.Archetypes.StegosaurusArchetype(),
+        ["ankylosaurus"]  = () => new Cathedral.Game.Npc.Archetypes.AnkylosaurusArchetype(),
     };
 
     // Death screen
@@ -237,6 +246,9 @@ public class LocationTravelGameController : IDisposable
     
     // Local LLM server; when set, narrative generation is enabled. Null = no LLM (fallback narration).
     private LlamaServerManager? _llamaServer;
+
+    /// <summary>Writes the journal up in the background; pumped every frame from <see cref="Update"/>.</summary>
+    private readonly Chronicler _chronicler;
     private ItemUseCritic? _criticEvaluator;
 
     /// <summary>Where the Catalyst English models are stored — beside the executable.</summary>
@@ -789,6 +801,34 @@ public class LocationTravelGameController : IDisposable
         _currentMode == GameMode.ProtagonistManagement
         && _managementMenuRenderer?.CliStepRoutine(step) == true;
 
+    /// <summary>Expands a skill on the Bellic tab by name.</summary>
+    public bool CliSelectBellicSkill(string skillName) =>
+        _currentMode == GameMode.ProtagonistManagement
+        && _managementMenuRenderer?.CliSelectBellicSkill(skillName) == true;
+
+    /// <summary>Writes the protagonist's journal to <paramref name="path"/> as JSON, for tools/journal/.</summary>
+    public bool CliDumpJournal(string path)
+    {
+        if (_protagonist == null) return false;
+        try
+        {
+            System.IO.File.WriteAllText(path, System.Text.Json.JsonSerializer.Serialize(_protagonist.Journal,
+                new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+            return true;
+        }
+        catch (Exception ex) { Console.Error.WriteLine($"journal dump: {ex.Message}"); return false; }
+    }
+
+    /// <summary>Scrolls the Journal tab: a line count (positive reads back), pageup, pagedown or newest.</summary>
+    public bool CliScrollJournal(string how) =>
+        _currentMode == GameMode.ProtagonistManagement
+        && _managementMenuRenderer?.CliScrollJournal(how) == true;
+
+    /// <summary>Selects a party member on the management screen, by name or slot (0 = protagonist).</summary>
+    public bool CliSelectManagementMember(string who) =>
+        _currentMode == GameMode.ProtagonistManagement
+        && _managementMenuRenderer?.CliSelectMember(who) == true;
+
     /// <summary>Tab labels available on the management screen, or empty when it is closed.</summary>
     public IReadOnlyList<string> CliManagementTabs =>
         _managementMenuRenderer?.CliTabNames ?? Array.Empty<string>();
@@ -796,6 +836,9 @@ public class LocationTravelGameController : IDisposable
     /// <summary>Selects a carried item by name so its info panel can be inspected from a script.</summary>
     public bool CliSelectItem(string itemName) =>
         _managementMenuRenderer?.CliSelectItem(itemName) == true;
+
+    public bool CliSelectModusMentis(string modusMentisId) =>
+        _managementMenuRenderer?.CliSelectModusMentis(modusMentisId) == true;
 
     /// <summary>Everything carried, for <c>--cli</c> discovery of selectable item names.</summary>
     public IReadOnlyList<string> CliCarriedItemNames =>
@@ -893,6 +936,14 @@ public class LocationTravelGameController : IDisposable
         _ambianceEngine?.SetMasterMusicVolume(UserSettings.MusicVolume01);
         _ambianceEngine?.SetMasterSfxVolume(UserSettings.SfxVolume01);
         _core = core ?? throw new ArgumentNullException(nameof(core));
+
+        // The journal's two questions, answered live: whose journal, and where the party stands.
+        // Outside a visit (the world map, a roadside fight) there is no place to name.
+        JournalRecorder.Source = () => _protagonist;
+        _chronicler = new Chronicler(() => _llamaServer, () => _protagonist);
+        JournalRecorder.Where = () => _isInNarrativeMode && _narrativeController is { } nc
+            ? (nc.LocationId, nc.WorldContext?.DisplayName ?? "", nc.CurrentPoV?.Where?.DisplayName ?? "")
+            : (-1, "", "");
 
         // Dither, unless --dither spoke for the layer on this run. Setting Enabled restores
         // whichever mode was last in use rather than a fixed one, so this turns the layer on or
@@ -1039,6 +1090,7 @@ public class LocationTravelGameController : IDisposable
     {
         UpdatePhase(deltaTime);
         UpdateMenuButton();
+        _chronicler.Pump();
     }
 
     /// <summary>
@@ -2113,6 +2165,13 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     public void OnMouseWheel(float delta)
     {
+        // The management screen can be up over narration, so it is asked first.
+        if (_currentMode == GameMode.ProtagonistManagement)
+        {
+            _managementMenuRenderer?.OnMouseWheel(delta);
+            return;
+        }
+
         // Travel encounter fight scroll
         if (_inTravelEncounter && _currentMode == GameMode.Fighting && _fightAdapter != null)
         {
@@ -2211,6 +2270,7 @@ public class LocationTravelGameController : IDisposable
         Console.WriteLine($"LocationTravelGameController: Mode changed: {oldMode} ↁE{newMode}");
 
         RunModeEnter(newMode);
+        if (Cathedral.Game.Cli.CliMode.IsActive) _cliOverlayOnEntry[newMode] = CliOverlayReading();
 
         ModeChanged?.Invoke(oldMode, newMode);
     }
@@ -2628,6 +2688,15 @@ public class LocationTravelGameController : IDisposable
             string creature = forced.Dequeue();
             if (!StartTravelEncounter(creature))
                 DebugFlagAudit.Miss("--force-encounter", creature, "no encounter — the journey went on");
+            return;
+        }
+
+        // --encounter-mid-journey: the same, on a step with path still ahead of it.
+        if (Config.Debug.EncounterMidJourney is { } midway && _tripCellsTraveled < _tripTotalCells)
+        {
+            Config.Debug.EncounterMidJourney = null;
+            if (!StartTravelEncounter(midway))
+                DebugFlagAudit.Miss("--encounter-mid-journey", midway, "no encounter — the journey went on");
             return;
         }
 
@@ -3614,6 +3683,9 @@ public class LocationTravelGameController : IDisposable
         // Disable narration mode (world is interactive and in focus)
         _core.SetNarrationMode(false);
 
+        // A visit (or a roadside fight) has ended: what it recorded goes to the chronicler.
+        JournalRecorder.CloseGroup();
+
         // --advance-days: a debug-only shove of the world clock, applied once on first arrival at
         // the world map and then cleared. Inert at its default of 0.
         if (Config.Debug.AdvanceDays > 0)
@@ -3734,6 +3806,7 @@ public class LocationTravelGameController : IDisposable
         foreach (var closed in _protagonist.HealWounds())
         {
             Console.WriteLine($"🩹 [HEALED] {_protagonist.DisplayName}: {closed.WoundName} has closed.");
+            JournalRecorder.Milestone($"Healed: {closed.WoundName.ToLowerInvariant()}", _protagonist);
             closedCount++;
         }
 
@@ -3741,6 +3814,7 @@ public class LocationTravelGameController : IDisposable
             foreach (var closed in companion.HealWounds())
             {
                 Console.WriteLine($"🩹 [HEALED] {companion.DisplayName}: {closed.WoundName} has closed.");
+                JournalRecorder.Milestone($"Healed: {companion.DisplayName}'s {closed.WoundName.ToLowerInvariant()}", companion);
                 closedCount++;
             }
 
@@ -3779,6 +3853,25 @@ public class LocationTravelGameController : IDisposable
         //   inspect savefile — what is actually ON DISK
         // They differ exactly when the autosave has not fired since the last change.
         if (subject == "save")     return CliSaveDump();
+
+        // The journal by numbers, and one line per entry: what `expect` cannot see once a group is
+        // written over, and the queue the chronicler works through.
+        if (subject == "journal" && _protagonist != null)
+        {
+            var j = _protagonist.Journal;
+            var lines = new List<string>
+            {
+                $"journal entries={j.Entries.Count} next-group={j.NextGroup} pending-groups={j.PendingGroupCount} "
+                + $"chronicler={(Config.Debug.ChroniclerDisabled ? "off" : _chronicler.Busy ? "busy" : "idle")} "
+                + $"written-groups={j.Entries.Where(e => e.Written.Length > 0).Count()} "
+                + $"source-chars={j.Entries.Sum(e => e.Source.Length)} written-chars={j.Entries.Sum(e => e.Written.Length)}",
+            };
+            foreach (var e in j.Entries)
+                lines.Add($"journal-entry seq={e.Seq} group={e.Group} kind={e.Kind} state={e.State} day={e.Day} "
+                        + $"place={e.Place} actor={e.Actor} companion={(e.ByCompanion ? "yes" : "no")} "
+                        + $"text={(e.Written.Length > 0 ? e.Written : e.Source).Replace('\n', ' ')}");
+            return lines;
+        }
         if (subject == "savefile") return CliSaveRead();
 
         // Whether a menu button is enabled is state, not pixels: disabled buttons differ only by
@@ -3821,6 +3914,16 @@ public class LocationTravelGameController : IDisposable
         // menu draws them, but a chance or a count is unassertable as a position on a bar.
         if (subject == "gather")
             return _gatherAdapter?.CliLines() ?? new List<string> { "gather (not gathering)" };
+
+        // How much of the terminal hides the world behind it: cells whose background is not fully
+        // transparent, out of all of them. `dump` reads characters, and an opaque-black blank and a
+        // transparent one are the same space — a journey walked over a black sheet passed every script.
+        // A second line per mode is the reading taken as that mode was last entered: a journey resumed
+        // after a fight is walked within a frame under --playground, so no command can read it live.
+        if (subject == "overlay")
+            return new[] { $"overlay {CliOverlayReading()}" }
+                .Concat(_cliOverlayOnEntry.OrderBy(e => e.Key.ToString()).Select(e => $"overlay-entry {e.Key} {e.Value}"))
+                .ToList();
 
         // The two buttons that stand in for keys: the ☰ (Escape) and the narration header's ↹ (Tab).
         // Whether each is on screen, which a press alone cannot say when the answer is no.
@@ -4221,6 +4324,7 @@ public class LocationTravelGameController : IDisposable
                 _                     => $"{companion.DisplayName} — died of their wounds",
             });
             Console.WriteLine($"LocationTravelGameController: Companion '{companion.DisplayName}' died — {cause}");
+            JournalRecorder.Milestone($"Lost: {lines[^1]}", companion);
 
             // The same door an enemy's body comes through, so the corpse is observable, cuttable and
             // queued to open the next narration phase without any of that knowing whose it is.
@@ -4276,7 +4380,10 @@ public class LocationTravelGameController : IDisposable
         if (_companionRemovalRenderer == null || _protagonist == null) return;
 
         foreach (var companion in _companionRemovalRenderer.SelectedForRemoval)
+        {
             _protagonist.CompanionParty.Remove(companion);
+            JournalRecorder.Milestone($"Parted with {companion.DisplayName}", companion);
+        }
 
         _companionRemovalRenderer = null;
         EnterWorldViewInteractive();
@@ -4322,6 +4429,24 @@ public class LocationTravelGameController : IDisposable
         // through here too, so a continued run immediately rewrites an identical file — harmless, and
         // simpler than a flag to suppress it.
         Autosave();
+    }
+
+    /// <summary>The overlay as each mode was last entered, under --cli only (<c>inspect overlay</c>).</summary>
+    private readonly Dictionary<GameMode, string> _cliOverlayOnEntry = new();
+
+    /// <summary>
+    /// How much of the terminal hides the world: cells with a background that is not fully
+    /// transparent, out of all of them. <c>dump</c> reads characters, and an opaque-black blank and a
+    /// transparent one are the same space — a journey walked over a black sheet passed every script.
+    /// </summary>
+    private string CliOverlayReading()
+    {
+        if (_core.Terminal is not { } term) return "world=shown visible=no opaque=0/0";
+        int opaque = 0, total = term.Width * term.Height;
+        for (int y = 0; y < term.Height; y++)
+            for (int x = 0; x < term.Width; x++)
+                if (term[x, y].BackgroundColor.W > 0f) opaque++;
+        return $"world={(opaque * 2 < total ? "shown" : "hidden")} visible={(term.Visible ? "yes" : "no")} opaque={opaque}/{total}";
     }
 
     /// <summary>
@@ -4889,6 +5014,9 @@ public class LocationTravelGameController : IDisposable
                 // Scene system path: build via the shared helper (factory selection + per-location
                 // state get-or-create + item-depletion application).
                 var scene = BuildSceneForLocation(vertexIndex, out var locState, visit: true);
+                // A place is first visited once, whatever the mental maps later forget.
+                JournalRecorder.Milestone($"First came to the {worldContext.DisplayName.ToLowerInvariant()}", null,
+                    $"visit:{vertexIndex}", (vertexIndex, worldContext.DisplayName, ""));
                 if (scene == null)
                 {
                     Console.Error.WriteLine("LocationTravelGameController: scene build failed - aborting Phase 6");
@@ -6174,6 +6302,10 @@ public class LocationTravelGameController : IDisposable
         _ambianceEngine?.SetFilter(MusicFilter.None);
 
         var result       = _fightAdapter.Result;
+        if (result != FightAdapterResult.Death)   // a death erases the run, journal and all
+            JournalRecorder.Milestone(result == FightAdapterResult.Victory
+                ? $"Won a fight against {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(_fightAdapter.TargetNpc, _protagonist)}"
+                : $"Fled a fight with {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(_fightAdapter.TargetNpc, _protagonist)}");
         var npc          = _fightAdapter.TargetNpc;
         var allEnemyNpcs = _fightAdapter.AllEnemyNpcs;
 
@@ -6184,7 +6316,14 @@ public class LocationTravelGameController : IDisposable
         {
             _inTravelEncounter = false;
             _fightAdapter = null;
-            _core.Terminal?.Clear();
+            // Back to the world behind the fight, not a black sheet: a bare Clear paints opaque black,
+            // and Traveling draws only its progress box, so a won encounter mid-journey walked the rest
+            // of the way over a black screen. Every other branch below repaints over this anyway.
+            SetTransparentWorldOverlay(clickPassthrough: true);
+            // The encounter prompt and the fight turned the world's interactions off; the journey ran
+            // with them on.
+            _core.SetWorldInteractionsEnabled(true);
+            _interface.SetWorldInteractionsEnabled(true);
 
             if (result == FightAdapterResult.Death)
             {
@@ -6429,6 +6568,7 @@ public class LocationTravelGameController : IDisposable
         }
 
         _protagonist.CompanionParty.Add(npc.Combatant);
+        JournalRecorder.Milestone($"Joined the party: {npc.DisplayName}", npc.Combatant);
 
         // Same door as taming and killing: not alive, out of the scene, and recorded as departed so
         // the next build of this location does not leave them standing where they were.

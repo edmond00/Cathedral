@@ -34,8 +34,8 @@ namespace Cathedral.Game.Narrative;
 /// </summary>
 public static class WillAudit
 {
-    public const double MinShare = 0.25, MaxShare = 0.33;
-    public const double MinLearned = 0.20, MaxLearned = 0.36;
+    public const double MinShare = 0.36, MaxShare = 0.44;
+    public const double MinLearned = 0.28, MaxLearned = 0.42;
 
     /// <summary>
     /// Up to twelve rounds of samples, at a day hour and at night: what a will needs is that its action
@@ -52,6 +52,15 @@ public static class WillAudit
     private static readonly Type[] RelationGated = { typeof(DialogueVerb), typeof(TameVerb), typeof(AppeaseVerb), typeof(CutVerb) };
 
     /// <summary>Whether no built scene could show this target: every verb relation-gated, or aimed at a body.</summary>
+    /// <summary>Whether no built scene could show any of this will's targets — read by <see cref="WillCoverageAudit"/> too.</summary>
+    public static bool PlayGated(ModusMentis mm) => mm.Will is { } will && will.All(PlayGated);
+
+    /// <summary>How many targets the will declares.</summary>
+    public static int TargetCount(ModusMentis mm) => mm.Will?.Count ?? 0;
+
+    /// <summary>The will's targets, for an audit line.</summary>
+    public static string Describe(ModusMentis mm) => mm.Will?.Describe() ?? "";
+
     private static bool PlayGated(WillTarget will)
         => will.VerbTypes.All(v => RelationGated.Any(g => g.IsAssignableFrom(v)))
            || will.OnTypes.Any(t => typeof(Cathedral.Game.Npc.Corpse.CorpsePointOfInterest).IsAssignableFrom(t));
@@ -70,6 +79,8 @@ public static class WillAudit
         int feeling = wills.Count(m => m.Functions.Contains(ModusMentisFunction.Emotion));
         int talking = wills.Count(m => m.Functions.Contains(ModusMentisFunction.Speaking));
         sb.AppendLine($"    {acting} act themselves, {feeling} feel, {talking} speak");
+        sb.AppendLine($"    {wills.Sum(m => m.Will!.Count)} targets, {(double)wills.Sum(m => m.Will!.Count) / Math.Max(1, wills.Count):0.00} a will; "
+                    + $"{wills.Count(m => m.Will!.Count > 1)} wills want more than one thing");
         // A will that wants a conversation and has nothing to say in it: legal, and almost always a slip.
         foreach (var mute in wills.Where(m => m.Will!.Converses && !m.Functions.Contains(ModusMentisFunction.Speaking)))
             sb.AppendLine($"    note: {mute.ModusMentisId} wants a conversation but bears no Speaking function");
@@ -77,14 +88,16 @@ public static class WillAudit
         // What the locations offer, sampled in rounds — the first build of every factory, then the
         // second of every factory, and so on — until every will has found its target or the samples
         // run out. A rare target (water to fish) costs rounds only while it is still missing.
-        var hits     = wills.ToDictionary(m => m, _ => 0);
+        // A modus mentis builds its targets afresh on every read, so they are read once here and kept.
+        var targetsOf = wills.ToDictionary(m => m, m => m.Will!);
+        var hits     = targetsOf.Values.SelectMany(t => t).ToDictionary(t => t, _ => 0);
         var taught   = new Dictionary<string, int>();
         var movers   = new HashSet<Type>();
         var checkedT = new HashSet<Type>();
         var actor    = new Protagonist();
         var factories = VerbAudit.Factories().ToList();
         int rounds = 0;
-        for (int id = 1; id <= Samples && wills.Any(m => hits[m] == 0 && !PlayGated(m.Will!)); id++, rounds++)
+        for (int id = 1; id <= Samples && hits.Any(kv => kv.Value == 0 && !PlayGated(kv.Key)); id++, rounds++)
         foreach (var (label, build, samples) in factories.Where(f => id <= f.Samples))
         {
             Cathedral.Game.Scene.Scene scene;
@@ -95,8 +108,8 @@ public static class WillAudit
                 var pov = new PoV(area, hour);
                 foreach (var action in scene.View(pov, actor).Entries.SelectMany(e => e.ApplicableVerbs))
                 {
-                    foreach (var will in wills)
-                        if (will.Will!.Matches(action)) hits[will]++;
+                    foreach (var target in hits.Keys.ToList())
+                        if (target.Matches(action)) hits[target]++;
                     try
                     {
                         if (action.Verb.ResolveLesson(new LessonContext(scene, pov, actor, action.Target)) is { } lesson)
@@ -127,13 +140,19 @@ public static class WillAudit
 
         foreach (var will in wills)
         {
-            int n    = hits[will];
-            var fns  = string.Join("+", will.Functions);
-            var mark = n > 0 ? "✓" : PlayGated(will.Will!) ? "·" : "✗";
-            sb.AppendLine($"  {mark} {will.ModusMentisId,-24} {fns,-22} wants {will.Will!.Describe()}"
-                        + (n > 0 ? $"   ({n} offered)"
-                           : PlayGated(will.Will!) ? "   (needs a state play brings about — not sampled)"
-                           : "   — offered nowhere: it would refuse in every place"));
+            var fns = string.Join("+", will.Functions);
+            var targets = targetsOf[will];
+            for (int i = 0; i < targets.Count; i++)
+            {
+                var target = targets[i];
+                int n      = hits[target];
+                var mark   = n > 0 ? "✓" : PlayGated(target) ? "·" : "✗";
+                sb.AppendLine((i == 0 ? $"  {mark} {will.ModusMentisId,-24} {fns,-22} wants " : $"  {mark} {"",-24} {"",-22}    or ")
+                            + target.Describe()
+                            + (n > 0 ? $"   ({n} offered)"
+                               : PlayGated(target) ? "   (needs a state play brings about — not sampled)"
+                               : "   — offered nowhere: this target would never be met"));
+            }
         }
 
         foreach (var t in movers.Where(t => !ActionPathPlanner.TransitVerbTypes.Contains(t) && t != typeof(VoyageTowardVerb)).OrderBy(t => t.Name))

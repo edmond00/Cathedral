@@ -15,7 +15,8 @@ public class SeductionModusMentis : ModusMentis
         "Reads what a person wants to be told and tells it to them, warming attention into desire. Works charm deliberately and quietly, aiming it at the lonely, the vain, and the unwatched.";
     public override string SkillMeans       => "the reading and stirring of desire";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
-    public override WillTarget? Will => WillTarget.To<StrengthenRelationshipVerb>("draw somebody closer");
+    public override WillTargets? Will => WillTarget.To<StrengthenRelationshipVerb>("draw somebody closer");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Taverns, Places.Streets);
     public override string[] Organs        => new[] { "genitories", "tongue" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>
@@ -27,7 +28,7 @@ public class SeductionModusMentis : ModusMentis
     public override string PersonaReminder  => "deliberate charmer";
     public override string PersonaReminder2 => "someone who knows what a person aches to hear before they do";
     public override string StyleInstruction =>
-        "Let warmth and promise glow beneath the surface of the line, charged and unspoken rather than explicit.";
+        "Warm, charged and unspoken - let a promise warm beneath the words.";
 
     public override string PersonaPrompt => @"You are the inner voice of SEDUCTION, the practiced attention that finds the wanting in a person and warms it toward yourself.
 

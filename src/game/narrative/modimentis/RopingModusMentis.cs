@@ -14,7 +14,10 @@ public class RopingModusMentis : ModusMentis
         "Throws a running loop over a running beast: horns, neck or heels. Judges distance and lead from the saddle or the ground, and knows how to take the strain without being dragged.";
     public override string SkillMeans       => "the throwing of a loop over a running beast";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<TameVerb>("rope a running beast");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<TameVerb>("rope a running beast"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over a snubbing post").Teaching<RopingModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Stock, Places.Grassland);
     public override string[] Organs        => new[] { "arms", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
@@ -23,7 +26,7 @@ public class RopingModusMentis : ModusMentis
     public override string PersonaReminder  => "roper";
     public override string PersonaReminder2 => "someone who throws for where the beast will be";
     public override string StyleInstruction =>
-        "Narrate the loop - the swing, the lead, the throw, the catch and the strain taken up.";
+        "Anticipating and sure - judge whatever is in front of you by where it is going, not where it is.";
 
     public override string PersonaPrompt => @"You are the inner voice of ROPING, and the steer is running and you are not throwing at where it is.
 

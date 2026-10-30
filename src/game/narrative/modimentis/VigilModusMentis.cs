@@ -15,7 +15,8 @@ public class VigilModusMentis : ModusMentis
         "Keeps watch through the night in prayer or beside the dead: notices every sound in the dark hours, the candle guttering, the changes in the quiet. Is most awake when everyone else is asleep.";
     public override string SkillMeans       => "the watching through the night";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
-    public override WillTarget? Will => WillTarget.To<SitAndWaitVerb>("keep a vigil");
+    public override WillTargets? Will => WillTarget.To<SitAndWaitVerb>("keep a vigil");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Sacred, Places.Stronghold);
     public override string[] Organs        => new[] { "ears", "pineal_gland" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
@@ -23,7 +24,7 @@ public class VigilModusMentis : ModusMentis
     public override string PersonaReminder  => "keeper of vigils";
     public override string PersonaReminder2 => "someone most awake at the dead hour";
     public override string StyleInstruction =>
-        "Notice the night - the candle, the small sounds, the quality of the silence - with heightened attention.";
+        "Heightened and wakeful - notice the quality of the quiet around you, and every small change in it.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

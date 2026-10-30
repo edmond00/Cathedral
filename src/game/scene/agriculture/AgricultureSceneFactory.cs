@@ -341,7 +341,7 @@ public sealed class AgricultureSceneFactory : SettledSceneFactory
                 return rng.NextDouble() < 0.5
                     ? new ScarecrowPointOfInterest("Scarecrow", new() { "A straw-stuffed figure on a pole, sleeves flapping" },
                           Items(() => new Straw(), () => new Rope()), new[] { "tattered", "lonely" })
-                      { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "peasantry"), ("contemplate", "aesthetic")) }
+                      { Play = new ThrowAtMarkPlay("pelt {0} with dry clods until I knock its hat off"), Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "peasantry"), ("contemplate", "aesthetic")) }
                     : rng.NextDouble() < 0.5
                     ? new StookPointOfInterest("Stook", new() { "Sheaves stood up against each other to dry, heads together" },
                           Items(() => new Straw(), _crop.Yield), new[] { "golden", "leaning" })
@@ -467,8 +467,8 @@ public sealed class AgricultureSceneFactory : SettledSceneFactory
         a.PointsOfInterest.Add(new ClampPointOfInterest("Root Clamp", new() { "A long heap of the crop buried in straw and earth against the frost" },
             Items(_crop.Yield, _crop.Yield, () => new Straw()), new[] { "earthed", "cold" })
             { Senses = SensoryProfile.Odorous, VerbModiMentis = Teach(("examine", "almanac"), ("smell", "petrichor")) });
-        a.PointsOfInterest.Add(new ToolPointOfInterest("Tool Rack", new() { "Hoes, a mattock and a rake on iron pegs" },
-            Items(() => new Hoe(), () => new Mattock(), () => new Rake()), new[] { "cluttered", "rusty" })
+        a.PointsOfInterest.Add(new ToolPointOfInterest("Tool Rack", new() { "Hoes, a mattock, a rake, a shovel and a pruning hook on iron pegs" },
+            Items(() => new Hoe(), () => new Mattock(), () => new Rake(), () => new Shovel(), () => new PruningHook()), new[] { "cluttered", "rusty" })
             { Senses = SensoryProfile.Examinable, VerbModiMentis = Teach(("examine", "tillage")) });
         return a;
     }

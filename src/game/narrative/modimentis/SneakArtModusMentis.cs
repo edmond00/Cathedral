@@ -15,8 +15,9 @@ public class SneakArtModusMentis : ModusMentis
         "Holds part of the attention permanently tuned to going unnoticed: sightlines, footfall noise, the nearest cover. Weights perception toward the risk of being seen or heard, and inclines judgement toward slipping around an obstacle rather than passing through it.";
     public override string SkillMeans => "stealth and silent movement";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<SlipIntoVerb>("slip in unseen")
+    public override WillTargets? Will => WillTarget.To<SlipIntoVerb>("slip in unseen")
         .Where(e => e is not Cathedral.Game.Scene.Building.SlipIntoPointOfInterest { IsNaturalGap: true }, "a way into a building");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Streets, Places.Dwellings);
     public override MoralLevel MoralLevel => MoralLevel.Low;
     public override bool ActsDiscretely => true;
     public override string[] Organs => new[] { "feet", "ears" };
@@ -26,7 +27,7 @@ public class SneakArtModusMentis : ModusMentis
     public override string PersonaReminder => "shadow-footed infiltrator";
     public override string PersonaReminder2 => "someone who moves through the world without leaving a trace";
     public override string StyleInstruction =>
-        "Use hushed images of shadow, silence and the unmarked passage, with a quiet pride in leaving no trace.";
+        "Hushed and proud of leaving no trace - move through whatever is around you unobserved.";
     
     public override string PersonaPrompt => @"You are the inner voice of Sneak Art, the practiced discipline of becoming unobserved, of moving through the world as a whisper moves through a crowd.
 

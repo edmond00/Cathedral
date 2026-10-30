@@ -44,7 +44,7 @@ public static class SaveAudit
         {
             "CharacterName",
             "CurrentLocationId",
-            "JournalEntries",
+            "Journal",            // entries and the chronicler queue, as plain data
             "Party",              // the three coin counts
             "ChildhoodHistory",
             "MentalMaps",

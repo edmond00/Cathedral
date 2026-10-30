@@ -1,0 +1,44 @@
+{"case": "talk_miller:004:swap:arithmetic_logic", "version": "base", "seed": 14, "sid": "S7242", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "persona prompt echoed (\"the column is even\")"}
+{"case": "talk_miller:004:swap:arithmetic_logic", "version": "lesson_new", "seed": 13, "sid": "S6443", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+her smile; -learned"}
+{"case": "talk_miller:004:swap:arithmetic_logic", "version": "lesson_new", "seed": 14, "sid": "S4780", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "+her gaze; -learned"}
+{"case": "talk_miller:004:swap:arithmetic_logic", "version": "base", "seed": 13, "sid": "S3720", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+her smile, +\"short of a perfect tally\" (success undercut)"}
+{"case": "farm_night:005:own", "version": "base", "seed": 13, "sid": "S7318", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+the shed's cold"}
+{"case": "farm_night:005:own", "version": "base", "seed": 14, "sid": "S5644", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-resolve"}
+{"case": "farm_night:005:own", "version": "lesson_new", "seed": 13, "sid": "S5534", "F": 1, "P": 2, "C": null, "Q": 0, "facts": ""}
+{"case": "farm_night:005:own", "version": "lesson_new", "seed": 14, "sid": "S7283", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+my back ached"}
+{"case": "talk_blacksmith:004:swap:stoneface", "version": "base", "seed": 13, "sid": "S1152", "F": 0, "P": 0, "C": null, "Q": 1, "facts": "+stories, her eyes lighting up; -learned"}
+{"case": "talk_blacksmith:004:swap:stoneface", "version": "base", "seed": 14, "sid": "S5080", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+spoke freely; -learned"}
+{"case": "talk_blacksmith:004:swap:stoneface", "version": "lesson_new", "seed": 13, "sid": "S1300", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+carved my words upon stone; -learned"}
+{"case": "talk_blacksmith:004:swap:stoneface", "version": "lesson_new", "seed": 14, "sid": "S8199", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+\"her gaze softening to stone\""}
+{"case": "farm_night:015:loose:greed_bare", "version": "lesson_new", "seed": 13, "sid": "S3540", "F": 0, "P": 0, "C": 0, "Q": 1, "facts": "+through the woods (a farm), +eggs in hand; -trailcraft"}
+{"case": "farm_night:015:loose:greed_bare", "version": "base", "seed": 14, "sid": "S3454", "F": 0, "P": 0, "C": null, "Q": 1, "facts": "lesson replaced (\"the ways of the countryside\")"}
+{"case": "farm_night:015:loose:greed_bare", "version": "lesson_new", "seed": 14, "sid": "S6224", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_night:015:loose:greed_bare", "version": "base", "seed": 13, "sid": "S3744", "F": 0, "P": 0, "C": 0, "Q": 1, "facts": "+moonlight on a dewy meadow (an afternoon)"}
+{"case": "farm_night:010:own", "version": "base", "seed": 14, "sid": "S5219", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "-petrichor; +the pen clean"}
+{"case": "farm_night:010:own", "version": "lesson_new", "seed": 14, "sid": "S1974", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+the flock"}
+{"case": "farm_night:010:own", "version": "base", "seed": 13, "sid": "S2963", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+the pen, +the fold"}
+{"case": "farm_night:010:own", "version": "lesson_new", "seed": 13, "sid": "S1540", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "\"it is indeed petrichor\" (lesson made a smell)"}
+{"case": "talk_blacksmith:005:swap:courtesy", "version": "base", "seed": 14, "sid": "S8087", "F": 2, "P": 0, "C": null, "Q": 2, "facts": ""}
+{"case": "talk_blacksmith:005:swap:courtesy", "version": "lesson_new", "seed": 14, "sid": "S5617", "F": 2, "P": 0, "C": null, "Q": 2, "facts": ""}
+{"case": "talk_blacksmith:005:swap:courtesy", "version": "lesson_new", "seed": 13, "sid": "S4536", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "setting copied (\"this medieval village\")"}
+{"case": "talk_blacksmith:005:swap:courtesy", "version": "base", "seed": 13, "sid": "S2191", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "setting copied"}
+{"case": "farm_night:015:own", "version": "base", "seed": 14, "sid": "S6901", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "+among the animals once more"}
+{"case": "farm_night:015:own", "version": "lesson_new", "seed": 14, "sid": "S8785", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "addresses someone (\"I am glad you found your way\"); setting copied"}
+{"case": "farm_night:015:own", "version": "lesson_new", "seed": 13, "sid": "S3048", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "-trailcraft; +gather eggs"}
+{"case": "farm_night:015:own", "version": "base", "seed": 13, "sid": "S1303", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+\"thank you for your hospitality\""}
+{"case": "farm_dusk:004:own", "version": "base", "seed": 14, "sid": "S3027", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+stone and iron, a hidden sanctuary"}
+{"case": "farm_dusk:004:own", "version": "base", "seed": 13, "sid": "S2616", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+stone walls"}
+{"case": "farm_dusk:004:own", "version": "lesson_new", "seed": 13, "sid": "S3352", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "lesson made \"trailfinding\"; +ancient stone"}
+{"case": "farm_dusk:004:own", "version": "lesson_new", "seed": 14, "sid": "S3912", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+the stone in my hands"}
+{"case": "forest_evening:007:swap:poetry", "version": "base", "seed": 14, "sid": "S1877", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"reached the snail's shell\""}
+{"case": "forest_evening:007:swap:poetry", "version": "base", "seed": 13, "sid": "S5367", "F": 1, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "forest_evening:007:swap:poetry", "version": "lesson_new", "seed": 13, "sid": "S6206", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-creature lore"}
+{"case": "forest_evening:007:swap:poetry", "version": "lesson_new", "seed": 14, "sid": "S4691", "F": 1, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_dusk:005:own", "version": "lesson_new", "seed": 13, "sid": "S1427", "F": 2, "P": 1, "C": null, "Q": 2, "facts": ""}
+{"case": "farm_dusk:005:own", "version": "lesson_new", "seed": 14, "sid": "S3983", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_dusk:005:own", "version": "base", "seed": 13, "sid": "S8125", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_dusk:005:own", "version": "base", "seed": 14, "sid": "S1940", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "village_dawn:004:swap:arithmetic_logic", "version": "base", "seed": 13, "sid": "S5938", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "lesson replaced (\"my voice\"); persona prompt copied"}
+{"case": "village_dawn:004:swap:arithmetic_logic", "version": "base", "seed": 14, "sid": "S7544", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "success told as failure (\"the column is wrong\")"}
+{"case": "village_dawn:004:swap:arithmetic_logic", "version": "lesson_new", "seed": 14, "sid": "S3390", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "the lesson denied (\"brings no water voice\")"}
+{"case": "village_dawn:004:swap:arithmetic_logic", "version": "lesson_new", "seed": 13, "sid": "S2748", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "lesson replaced (\"my voice true\")"}

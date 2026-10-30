@@ -28,8 +28,9 @@ namespace Cathedral.Game.Narrative;
 ///   R14 no MM has both Action and Emotion
 ///   R15 MM has Emotion ⇔ it declares >= 1 emotion trigger, and every trigger's humor can be felt
 ///   R16 MM has Speaking ⇒ it requires AnatomyCapability.Speech
-///   R17 MM has Will ⇔ it declares a will target; a Will MM has neither Observation nor Thinking
-///   R18 every anatomy that can learn a Will MM can perform at least one of its target verbs
+///   R17 MM has Will ⇔ it declares 1–5 will targets; a Will MM has neither Observation nor Thinking
+///   R18 every anatomy that can learn a Will MM can perform at least one verb of each of its targets
+///   R19 a Will MM declares the places it belongs in (WillPlaces), area kinds only
 ///
 /// Soft targets (reported by the audit, never fatal):
 ///   ~80% two-organ MMs vs ~20% one-region MMs
@@ -217,27 +218,41 @@ public static class ModusMentisRuleValidator
                 violations.Add(mm.IsWill
                     ? $"[R17] {mm.ModusMentisId}: has the Will function but declares no will target"
                     : $"[R17] {mm.ModusMentisId}: declares a will target ({mm.Will}) but lacks the Will function");
+            if (mm.Will is { } declared && (declared.Count == 0 || declared.Count > WillTargets.Max))
+                violations.Add($"[R17] {mm.ModusMentisId}: declares {declared.Count} will targets — a will wants 1 to {WillTargets.Max} things");
             if (mm.IsWill)
                 foreach (var excluded in new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking })
                     if (fns.Contains(excluded))
                         violations.Add($"[R17] {mm.ModusMentisId}: has the Will function and {excluded} — a will observes "
                                      + "and thinks only toward its target");
 
-            // R18 — a will must be one its holder can satisfy. A target verb the body cannot perform
-            // (a beast willing to pick a lock it has no hands for) would refuse everywhere, and say so
-            // as though the place were at fault.
+            // R18 — a will must be one its holder can satisfy, target by target. A target verb the body
+            // cannot perform (a beast willing to pick a lock it has no hands for) would never be met, and a
+            // will whose every target were so would refuse everywhere, saying so as though the place were
+            // at fault. Every target, not some: a second target a wolf cannot meet would still steer its
+            // attention toward the purchase it can never make.
             if (mm.Will is { } will)
-            {
-                var verbs = Scene.Verbs.VerbRegistry.Instance.GetAll().Where(will.Wants).ToList();
-                if (verbs.Count == 0)
-                    violations.Add($"[R18] {mm.ModusMentisId}: no registered verb matches its will target ({will})");
-                foreach (var anatomy in ModusMentisAnatomy.AllAnatomies.Where(a => ModusMentisAnatomy.IsLearnableBy(mm, a)))
+                foreach (var target in will)
                 {
-                    var caps = AnatomyFactoryRegistry.GetFactory(anatomy).Capabilities;
-                    if (verbs.Count > 0 && !verbs.Any(v => (caps & v.EffectiveCapabilities) == v.EffectiveCapabilities))
-                        violations.Add($"[R18] {mm.ModusMentisId}: a {anatomy} can learn it but perform none of its target verbs ({will})");
+                    var verbs = Scene.Verbs.VerbRegistry.Instance.GetAll().Where(target.Wants).ToList();
+                    if (verbs.Count == 0)
+                        violations.Add($"[R18] {mm.ModusMentisId}: no registered verb matches its will target ({target})");
+                    foreach (var anatomy in ModusMentisAnatomy.AllAnatomies.Where(a => ModusMentisAnatomy.IsLearnableBy(mm, a)))
+                    {
+                        var caps = AnatomyFactoryRegistry.GetFactory(anatomy).Capabilities;
+                        if (verbs.Count > 0 && !verbs.Any(v => (caps & v.EffectiveCapabilities) == v.EffectiveCapabilities))
+                            violations.Add($"[R18] {mm.ModusMentisId}: a {anatomy} can learn it but perform none of the verbs of its target ({target})");
+                    }
                 }
-            }
+
+            // R19 — a will names the places it belongs in, and only area kinds. --will-audit measures
+            // the will against them; a will with none would never be checked where it matters.
+            if (mm.IsWill && mm.WillPlaces.Count == 0)
+                violations.Add($"[R19] {mm.ModusMentisId}: a will declares no WillPlaces");
+            foreach (var place in mm.WillPlaces.Where(t => !typeof(Scene.Area).IsAssignableFrom(t)))
+                violations.Add($"[R19] {mm.ModusMentisId}: WillPlaces names {place.Name}, which is not an area kind");
+            if (!mm.IsWill && mm.WillPlaces.Count > 0)
+                violations.Add($"[R19] {mm.ModusMentisId}: declares WillPlaces but is not a will");
 
             // R5 — exactly 1 region XOR exactly 2 distinct organs, canonical ids only
             var organs = mm.Organs;
@@ -538,6 +553,8 @@ public static class ModusMentisRuleValidator
         sb.Append(EmotionCoverage(all));
         sb.AppendLine();
         sb.Append(WillAudit.Section(all));
+        sb.AppendLine();
+        sb.Append(PersonaLint.Section(all));
 
         return sb.ToString();
     }

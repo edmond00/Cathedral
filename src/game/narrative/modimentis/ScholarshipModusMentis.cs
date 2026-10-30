@@ -16,7 +16,10 @@ public class ScholarshipModusMentis : ModusMentis
         "Draws on what is recorded in manuscripts, reading letters and old texts with patient study. Inclines reasoning toward written knowledge, and treats a question as something the record may already answer.";
     public override string SkillMeans       => "the knowledge found in books and old manuscripts";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
-    public override WillTarget? Will => WillTarget.To<AskTeachingVerb>("be taught something");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<AskTeachingVerb>("be taught something"),
+        WillTarget.ToAny("study the lettered things", typeof(Cathedral.Game.Scene.Verbs.ContemplateVerb), typeof(Cathedral.Game.Scene.Verbs.ExamineVerb)).Teaching<ScholarshipModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Learning, Places.Sacred);
     public override string[] Organs        => new[] { "encephalon" };
 
     /// <summary>Stands on letters, number or institutions.</summary>
@@ -28,7 +31,7 @@ public class ScholarshipModusMentis : ModusMentis
     public override string PersonaReminder  => "tutor-bred reader";
     public override string PersonaReminder2 => "someone who consults memory the way another consults an almanach";
     public override string StyleInstruction =>
-        "Reach for bookish imagery of records, precedents and learned reference, with a scholar's quiet relish for knowing.";
+        "Bookish and quietly delighted - consult what is already known before offering a view of whatever is in front of you.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

@@ -21,7 +21,7 @@ public class NerveModusMentis : ModusMentis
     public override string PersonaReminder  => "cool-nerved trespasser";
     public override string PersonaReminder2 => "someone who walks in as though expected";
     public override string StyleInstruction =>
-        "Unhurried and upright - the pace that never changes, the hands that stay still.";
+        "Unhurried and upright - keep the same pace whatever is in front of you, hands still.";
 
     public override string PersonaPrompt => @"You are the inner voice of NERVE, and the whole of it is the pace.
 

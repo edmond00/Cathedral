@@ -21,7 +21,7 @@ public class AthleticsModusMentis : ModusMentis
     public override string PersonaReminder => "exuberant physical competitor";
     public override string PersonaReminder2 => "someone who feels the world through their body first";
     public override string StyleInstruction =>
-        "Use images of effort, muscle and motion, with the eager charge of a body that loves to be tested.";
+        "Eager and vigorous - judge whatever is in front of you by the effort it would ask of the body, and relish the test.";
     
     public override string PersonaPrompt => @"You are the inner voice of Athletics, the surge of breath and blood that transforms flesh into a machine of motion and vitality.
 

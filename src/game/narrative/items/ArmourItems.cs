@@ -1,3 +1,4 @@
+using Cathedral.Game.Narrative;
 using System.Collections.Generic;
 using Cathedral.Game.Npc;
 
@@ -51,6 +52,7 @@ public sealed class WoolUndershirt : WearableItem
 /// </summary>
 public sealed class PaddedGambeson : WearableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Armour });
     public override string ItemId      => "padded_gambeson";
     public override string DisplayName => "Padded Gambeson";
     public override string Description => "A thick quilted coat of layered linen, stitched in close vertical channels and stained at the collar";
@@ -70,6 +72,7 @@ public sealed class PaddedGambeson : WearableItem
 
 public sealed class MailMittens : WearableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Armour });
     public override string ItemId      => "mail_mittens";
     public override string DisplayName => "Mail Mittens";
     public override string Description => "A pair of riveted mail mittens backed with leather, heavy and cold to put on";
@@ -155,6 +158,7 @@ public sealed class LinenBlindfold : WearableItem
 /// </summary>
 public sealed class IronKettleHelm : WearableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Armour });
     public override string ItemId      => "iron_kettle_helm";
     public override string DisplayName => "Iron Kettle Helm";
     public override string Description => "A wide-brimmed iron helm beaten from a single plate, lined with rag and rust-pitted along the rim";
@@ -173,6 +177,7 @@ public sealed class IronKettleHelm : WearableItem
 
 public sealed class Gorget : WearableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Armour });
     public override string ItemId      => "gorget";
     public override string DisplayName => "Gorget";
     public override string Description => "A collar of overlapping steel plates on a leather backing, buckled at the nape";

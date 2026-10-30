@@ -15,7 +15,11 @@ public class AngleryModusMentis : ModusMentis
         "Reads moving water for the places fish hold: the slack behind a stone, the shaded cut of a bank, the seam where two currents meet. Works the rod and the net slowly, knowing the water gives up nothing to hurry.";
     public override string SkillMeans       => "the reading of water and the working of rod and net";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<FishVerb>("fish");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<FishVerb>("fish"),
+        WillTarget.ToAny("take up rod and net", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).YieldingAny("rod or net", typeof(Cathedral.Game.Narrative.World.Items.FishingRod), typeof(Cathedral.Game.Narrative.World.Items.Net), typeof(Cathedral.Game.Narrative.Items.FishingNet)),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over water fit to fish").Teaching<AngleryModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.FreshWater, Places.Shore);
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
@@ -23,7 +27,7 @@ public class AngleryModusMentis : ModusMentis
     public override string PersonaReminder  => "reader of water";
     public override string PersonaReminder2 => "someone who knows where fish lie without looking twice";
     public override string StyleInstruction =>
-        "Describe water by what it hides — depth, shade, current seams — and describe waiting as work rather than idleness.";
+        "Patient and watchful - read whatever is in front of you for what it hides, and treat waiting as work.";
 
     public override string PersonaPrompt => @"You are the inner voice of ANGLERY, which sees a stretch of water and reads it the way another reads a page.
 

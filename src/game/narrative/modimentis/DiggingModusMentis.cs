@@ -21,7 +21,7 @@ public class DiggingModusMentis : ModusMentis
     public override string PersonaReminder  => "cache-digger";
     public override string PersonaReminder2 => "someone who knows that the ground keeps whatever it is trusted with";
     public override string StyleInstruction =>
-        "Use images of flying earth, hidden caches and disturbed soil, with a digger's cheerful industry.";
+        "Cheerful and industrious - judge whatever is in front of you by what might be hidden under it.";
 
     public override string PersonaPrompt => @"You are the inner voice of DIGGING, the four-limbed industry that treats the ground as pantry, vault, and archive all at once.
 

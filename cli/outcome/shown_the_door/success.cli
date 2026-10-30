@@ -4,11 +4,11 @@
 # yourself opens found_waiting; walked by hand with every roll failed, the householder shows the
 # player the door, and the visit ends: straight back to the world map.
 #
-# A village pantry (location id 1) because every pantry is private and holds a storage barrel, which
+# A village pantry (location id 11) because every pantry is private and holds a storage barrel, which
 # is a seat, and nobody works in one in the evening. Options are clicked by index because which ones
 # a dialogue offers depends on the modi mentis the protagonist holds.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type village --location-id 1 --start-area pantry --period evening --observe-only Storage
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type village --location-id 11 --start-area pantry --period evening --observe-only Storage
 
 wait
 click menu New

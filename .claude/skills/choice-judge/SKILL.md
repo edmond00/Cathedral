@@ -1,6 +1,6 @@
 ---
 name: choice-judge
-description: How a modus mentis's bounded decisions are judged (ChoiceJudge) and how to write for it — the guidelines for a modus mentis's DisplayName, MenuDescription, PersonaTone and SkillMeans, the guidelines for a judge's system prompt, question and options, the decision rules read from letter log-probabilities, and the tools/judge/ benchmark and audit that measure all of it. Use when adding or editing a modus mentis, when adding a new bounded decision (a new ChoiceKind or a new list a modus mentis chooses from), when rewording a judge prompt or a threshold, or when a modus mentis chooses something it plainly should not.
+description: How a modus mentis's bounded decisions are judged (ChoiceJudge) and how to write for it — the guidelines for a modus mentis's DisplayName, MenuDescription, PersonaTone and SkillMeans and for its voice (StyleInstruction, PersonaReminder2: the persona lint and probe), the guidelines for a judge's system prompt, question and options, the decision rules read from letter log-probabilities, and the tools/judge/ benchmark and audit that measure all of it. Use when adding or editing a modus mentis, when adding a new bounded decision (a new ChoiceKind or a new list a modus mentis chooses from), when rewording a judge prompt or a threshold, or when a modus mentis chooses something it plainly should not.
 ---
 
 # The choice judge, and writing for it
@@ -64,6 +64,37 @@ the verb a goal would use, without echoing a goal's wording by accident.** "the 
 foot" beats "swimming" for *every* thinking faculty asked to "cross the river" — the means judge
 matches words before temperaments. Prefer what distinguishes it from its neighbours ("swimming
 across deep water and staying afloat").
+
+## Writing the voice: `StyleInstruction` and `PersonaReminder2`
+
+The judge never reads these two; the rewrite reads them **in every narration request**, and the
+shipped model treats whatever they name as present in the scene. Measured over the whole catalogue
+(`tools/prompts`, NOTES.md, "Persona fields"): the more concrete things a style named, the more of
+them reached scenes that held none, and the craft personas replaced the act itself — a greeting
+became "I will dip the wick in the tallow… twenty times", breathing in a haystack became oiling a
+blade. Rewritten to the two rules below, the worst of them went from fidelity 0.25 to 1.41 of 2.
+
+1. **A style is a manner, then a lens on whatever is in the scene.** "Slow, patient and exact -
+   judge things by the patience in them, well made or rank." Not "Use images of rendering fat, the
+   dip and the cooling coat, wicks, wax and the steady flame." No "images of…", "narrate the…",
+   "describe the…" — they open a list of props. The manner (two or three attitude words) is what a
+   one-line action can carry without inventing an act; a lens alone left actions bland.
+2. **A reminder is a disposition, not a picture.** "someone who listens before looking and is rarely
+   surprised", not "someone who finds the hidden nest by listening" (a nest in nine answers of
+   sixteen).
+3. **Never ask for a memory** ("let each smell pull a memory with it"): the model invents one every
+   time.
+
+Both are checked twice:
+
+- **`--mm-audit`** (`PersonaLint`, free, part of `./run_tests.sh audits`) fails a style or reminder
+  naming two or more concrete nouns, or a style opening a props list. Concreteness and noun-ness
+  come from the GloVe vectors the game already loads. `python tools/prompts/persona_lint.py --text
+  "…"` checks a wording before it is written in.
+- **`tools/prompts/persona_probe.py <id>`** (the shipped model, ~40 s a modus mentis) asks the
+  persona the screening's probe lines and prints every answer with the words it carried in, and a
+  verdict against the rewritten catalogue. Run it on a new modus mentis, and read the answers — the
+  lint cannot see a persona prompt whose own examples are copied, or a memory invented.
 
 ## Writing a judge (a new ChoiceKind, or rewording one)
 

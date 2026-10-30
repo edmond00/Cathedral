@@ -616,6 +616,8 @@ public class DialogueTreeController
         // No separate "You: …" block — that would repeat the same text right below the group.
         if (_optionsBlock != null) _optionsBlock.SelectedDialogueOptionIndex = index;
         _optionsBlock = null;
+        // The one reply spoken; the options left unpicked never reach the journal.
+        JournalRecorder.Line(_protagonist.DisplayName, option.ReplicaText);
 
         // This reply's Modus Mentis contributes its level to the branch dice pool.
         _accumulatedDice += option.Skill.Level;

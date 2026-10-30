@@ -14,7 +14,11 @@ public class SimplingModusMentis : ModusMentis
         "Gathers herbs properly: the right plant, at the right season, the part that carries the virtue, cut so the plant survives. Half of it is knowing what not to take, and where not to take it from.";
     public override string SkillMeans       => "the gathering of herbs at their season";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<GatherVerb>("gather simples in their season").YieldingAny("herbs", typeof(World.Items.HerbItem), typeof(Items.Herb));
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<Cathedral.Game.Scene.Verbs.GatherVerb>("gather simples in their season").YieldingKind(ItemKind.Herb),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.GatherVerb>("pick a flower for its virtue").YieldingKind(ItemKind.Flower),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("study a simple in its bed").Teaching<SimplingModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Woodland, Places.Grassland, Places.Fields);
     public override string[] Organs        => new[] { "hands", "nose" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
@@ -22,7 +26,7 @@ public class SimplingModusMentis : ModusMentis
     public override string PersonaReminder  => "herb-gathering simpler";
     public override string PersonaReminder2 => "someone who takes a third and leaves the rest";
     public override string StyleInstruction =>
-        "Kneel to it - the leaf taken, the root left, the patch that will be here next year.";
+        "Gentle and sparing - take a little from whatever is in front of you, and leave the rest to grow.";
 
     public override string PersonaPrompt => @"You are the inner voice of SIMPLING, and you have never stripped a patch in your life.
 

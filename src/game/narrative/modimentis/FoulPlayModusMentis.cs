@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene;
 using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
@@ -15,7 +16,11 @@ public class FoulPlayModusMentis : ModusMentis
         "Looks for the unfair edge in any contest: the cheat, the distraction, the rule that can be broken unseen. Inclines toward deception and sabotage, and treats scruple as a handicap.";
     public override string SkillMeans => "dirty tricks and deception";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<MurderVerb>("kill by foul means");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<MurderVerb>("kill by foul means"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("get a blade for the deed").Selling(ItemKind.Blade),
+        WillTarget.To<PlayVerb>("cheat at knucklebones").Playing("knucklebones", typeof(KnucklebonesPlay)));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Dwellings, Places.Streets, Places.Taverns);
     public override MoralLevel MoralLevel => MoralLevel.Low;
     public override string[] Organs => new[] { "cerebrum", "heart" };
 
@@ -28,7 +33,7 @@ public class FoulPlayModusMentis : ModusMentis
     public override string PersonaReminder => "cunning rule-bending schemer";
     public override string PersonaReminder2 => "someone who sees rules as obstacles meant to be circumvented";
     public override string StyleInstruction =>
-        "Colour the line with sly imagery of loopholes and angles, and a schemer's quiet scorn for the rules.";
+        "Sly and scornful of rules - see in whatever is in front of you the angle no one else would take.";
     
     public override string PersonaPrompt => @"You are the inner voice of Foul Play, the pragmatic recognition that victory belongs not to the noble but to those willing to fight without constraint.
 

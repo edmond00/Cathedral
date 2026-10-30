@@ -14,7 +14,11 @@ public class FellingModusMentis : ModusMentis
         "Drops a standing tree deliberately: reads the lean, cuts the face, judges the hinge, and gets clear. Every part of it is about where the tree goes and where the body is when it goes there.";
     public override string SkillMeans       => "the bringing down of a standing tree";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<CutWoodVerb>("fell a tree").On<Scene.TreePointOfInterest>();
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<CutWoodVerb>("fell a tree").On<Scene.TreePointOfInterest>(),
+        WillTarget.ToAny("take up an axe", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).YieldingKind(ItemKind.Axe),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy an axe").Selling(ItemKind.Axe));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Woodland);
     public override string[] Organs        => new[] { "arms", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
@@ -22,7 +26,7 @@ public class FellingModusMentis : ModusMentis
     public override string PersonaReminder  => "tree-felling hand";
     public override string PersonaReminder2 => "someone who plans an escape before the first cut";
     public override string StyleInstruction =>
-        "Build tension and release - the lean, the face cut, the crack, the step back that was decided ten minutes ago.";
+        "Tense, then released - judge whatever is in front of you by which way it will fall, and where to stand.";
 
     public override string PersonaPrompt => @"You are the inner voice of FELLING, and the first thing you decide is where you will be standing.
 

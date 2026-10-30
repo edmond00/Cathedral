@@ -15,7 +15,8 @@ public class AestheticModusMentis : ModusMentis
         "Resolves a scene into composition before meaning: proportion, colour, balance, the play of light and space. Registers harmony as pleasing and disorder as a mild offence, and attends to craftsmanship whether it is present or absent.";
     public override string SkillMeans => "keen aesthetic sense";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTarget? Will => WillTarget.To<ContemplateVerb>("contemplate something beautiful");
+    public override WillTargets? Will => WillTarget.To<ContemplateVerb>("contemplate something beautiful");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Sacred, Places.Woodland, Places.Heights, Places.Shore);
     public override string[] Organs => new[] { "eyes", "pineal_gland" };
 
     /// <summary>Stands on letters, number or institutions.</summary>
@@ -26,7 +27,7 @@ public class AestheticModusMentis : ModusMentis
     public override string PersonaReminder => "sensitive beauty observer";
     public override string PersonaReminder2 => "someone who perceives beauty before meaning";
     public override string StyleInstruction =>
-        "Reach for images of harmony, proportion and beauty, and let a flush of pleasure or distaste at what you see colour the line.";
+        "Sensitive and quick to pleasure or distaste - judge whatever is in front of you by its proportion and its beauty.";
     
     public override string PersonaPrompt => @"You are the inner voice of Aesthetic, the faculty that transforms mere seeing into the recognition of beauty, proportion, and artistic intention.
 

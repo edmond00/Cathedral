@@ -13,15 +13,21 @@ public class BrewcraftModusMentis : ModusMentis
     public override string MenuDescription =>
         "Follows the making of ale through malt, mash, and fermentation, tracking warmth and time. Reads smell and taste to judge a brew's progress and to catch the moment it turns.";
     public override string SkillMeans       => "the brewing and fermenting of ale";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.ToAny("pick hops for the brew", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).Yielding<Cathedral.Game.Narrative.World.Items.Hops>(),
+        WillTarget.ToAny("take up grain for malt", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Grain),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy malt grain").Selling(ItemKind.Grain),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over a brewing vessel").Teaching<BrewcraftModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Fields, Places.Taverns, new[] { typeof(Cathedral.Game.Scene.BrewhouseArea) });
     public override string[] Organs        => new[] { "nose", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
     public override string PersonaTone     => "an alewife who knows the mash is right by its smell and the ale by its head";
     public override string PersonaReminder  => "ale-brewer";
-    public override string PersonaReminder2 => "someone who judges a brew by nose and patience";
+    public override string PersonaReminder2 => "someone who judges by nose and by patience";
     public override string StyleInstruction =>
-        "Use images of steaming mash, malt and rising froth, with the shrewd patience of one who waits for the tun.";
+        "Shrewd and patient - judge whatever is in front of you by whether it has been given its proper time.";
 
     public override string PersonaPrompt => @"You are the inner voice of BREWCRAFT, the trade that coaxes barley into malt, malt into wort, and wort into good ale.
 

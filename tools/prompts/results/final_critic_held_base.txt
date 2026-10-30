@@ -1,0 +1,24 @@
+held00 draw water from the well / the bucket help
+held01 draw water from the well / the dagger no
+held02 take honey from the hive / the torch help
+held03 take honey from the hive / the lute no
+held04 calm the angry boar / the turnip help
+held05 calm the angry boar / the quill no
+held06 climb the crag / the grappling hook help
+held07 climb the crag / the bowl no
+held08 cut wood from the fallen birch / the saw help
+held09 cut wood from the fallen birch / the bread knife help
+held10 cut wood from the fallen birch / the blanket no
+held11 dig the turnip field / the pitchfork help
+held12 dig the turnip field / the candle no
+held13 mine the ore seam / the iron bar help
+held14 mine the ore seam / the rope no
+held15 fish in the stream / the basket help
+held16 fish in the stream / the hammer no
+held17 cut the meat from the boar / the axe help
+held18 cut the meat from the boar / the cup no
+held19 unlock the door / the key ring help
+
+base: right side 78/100 = 78.0%   right side and degree 78/100
+  ItemAppropriateness  40/45 = 88.9%
+  ToolSubstitution     38/55 = 69.1%

@@ -25,7 +25,7 @@ public class IconographyModusMentis : ModusMentis
     public override string PersonaReminder  => "reader of sacred images";
     public override string PersonaReminder2 => "someone who knows what a carved gesture is promising";
     public override string StyleInstruction =>
-        "Use the imagery of carved stone, attribute and gesture, with the wariness of someone who takes such figures seriously.";
+        "Wary and serious - read whatever is in front of you as a statement, and ask what it promises.";
 
     public override string PersonaPrompt => @"You are the inner voice of ICONOGRAPHY, the reading of holy images — the knowledge that a statue is not decoration but a statement, and that it can be read by anyone taught the grammar of it.
 

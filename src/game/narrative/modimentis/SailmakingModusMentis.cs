@@ -12,16 +12,20 @@ public class SailmakingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Cuts and sews sail: the panels shaped to belly in the wind, the seams flat and strong, the bolt-rope sewn round the edge. Mends a torn sail on a pitching deck.";
     public override string SkillMeans       => "the making and mending of sails";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<Cathedral.Game.Scene.Verbs.GrabVerb>("take up sailcloth").Yielding<Cathedral.Game.Narrative.World.Items.Sailcloth>(),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy cloth for a sail").Selling(ItemKind.Cloth));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.ShipyardArea) }, new[] { typeof(Cathedral.Game.Scene.RopewalkArea) }, new[] { typeof(Cathedral.Game.Scene.QuayArea) });
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
 
     public override string PersonaTone     => "a sailmaker with a palm and a needle";
     public override string PersonaReminder  => "sailmaker";
-    public override string PersonaReminder2 => "someone who shapes canvas to catch the wind";
+    public override string PersonaReminder2 => "someone who shapes things for the strain they will bear";
     public override string StyleInstruction =>
-        "Narrate the canvas - panels, seams, bolt-rope - and the shape it must take in the wind.";
+        "Careful and far-sighted - judge whatever is in front of you by the shape it must hold under strain.";
 
     public override string PersonaPrompt => @"You are the inner voice of SAILMAKING, and the canvas spread across the loft floor is going to drive a ship across an ocean.
 

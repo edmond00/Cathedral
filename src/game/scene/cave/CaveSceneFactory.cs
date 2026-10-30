@@ -525,6 +525,8 @@ public class CaveSceneFactory : WildSceneFactory
         }
 
         if (_identity == Identity.Den) TrySpawnBeast(rng, scene, new BearArchetype(), 0.75);
+        // A bear's den is the bear's: the cave lizard keeps to the rest of the dark.
+        else TrySpawnBeast(ReptileRandom(locationId), scene, new CaveLizardArchetype(), 0.20);
 
         TrySpawnCreature(rng, scene, new CaveSpiderArchetype(), 0.25);
         TrySpawnCreature(rng, scene, new RatArchetype(), 0.50);

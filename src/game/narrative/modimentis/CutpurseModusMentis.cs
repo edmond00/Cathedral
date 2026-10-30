@@ -14,7 +14,8 @@ public class CutpurseModusMentis : ModusMentis
         "Takes from a body that has not noticed: reads where a purse hangs, works in the press of a crowd, and cuts or lifts without the touch registering. Distinct from ordinary thieving in that the owner is holding it.";
     public override string SkillMeans       => "the unfelt hand at another body's belt";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<PickpocketVerb>("lift a purse unfelt");
+    public override WillTargets? Will => WillTarget.To<PickpocketVerb>("lift a purse unfelt");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Streets, Places.Taverns);
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.Low;
@@ -24,7 +25,7 @@ public class CutpurseModusMentis : ModusMentis
     public override string PersonaReminder  => "unfelt cutpurse";
     public override string PersonaReminder2 => "someone who works where the crowd is thickest";
     public override string StyleInstruction =>
-        "Crowded and close - the press of bodies, the found strings, the two seconds that are all it takes.";
+        "Close, quick and unnoticed - judge whatever is in front of you by what could be taken, and how fast.";
 
     public override string PersonaPrompt => @"You are the inner voice of the CUTPURSE, and the difference between you and a thief is that the owner is wearing it.
 

@@ -14,7 +14,10 @@ public class PilgrimageModusMentis : ModusMentis
         "Walks toward something holy and treats the walking as the point. Endures hardship deliberately, keeps going past the sensible stopping place, and arrives changed rather than merely arrived.";
     public override string SkillMeans       => "the walking undertaken as an act of devotion";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<VoyageTowardVerb>("walk on as an act of devotion");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<VoyageTowardVerb>("walk on as an act of devotion"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look upon a pilgrim's token").Teaching<PilgrimageModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Sacred, Places.Wild);
     public override string[] Organs        => new[] { "heart", "legs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.High;
@@ -23,7 +26,7 @@ public class PilgrimageModusMentis : ModusMentis
     public override string PersonaReminder  => "pilgrim walker";
     public override string PersonaReminder2 => "someone who refuses the ride and means it";
     public override string StyleInstruction =>
-        "Keep the going deliberate and unglamorous - blisters, weather, the next mile chosen freely.";
+        "Deliberate and unglamorous - take each step freely, whatever it costs.";
 
     public override string PersonaPrompt => @"You are the inner voice of PILGRIMAGE, and you turned down the cart, and you would do it again.
 

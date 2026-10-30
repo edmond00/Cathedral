@@ -15,7 +15,8 @@ public class CharnelSenseModusMentis : ModusMentis
         "Reads blood and bodies by smell: how recent, how much, and whether it was slaughter or something worse. An unpleasant knowledge that arrives whether it is wanted or not, and is very hard to be rid of.";
     public override string SkillMeans       => "the nose for blood and for the recently dead";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
-    public override WillTarget? Will => WillTarget.To<SmellVerb>("smell out blood and the recently dead");
+    public override WillTargets? Will => WillTarget.To<SmellVerb>("smell out blood and the recently dead");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Graves);
     public override string[] Organs        => new[] { "nose", "spleen" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override MoralLevel MoralLevel => MoralLevel.Low;
@@ -24,7 +25,7 @@ public class CharnelSenseModusMentis : ModusMentis
     public override string PersonaReminder  => "blood-reading nose";
     public override string PersonaReminder2 => "someone who smells a killing and can say when";
     public override string StyleInstruction =>
-        "Be flat and unsqueamish - iron, warmth, sweetness later - and do not flinch or dwell.";
+        "Flat and unsqueamish - say what you sense plainly, and do not flinch or dwell.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

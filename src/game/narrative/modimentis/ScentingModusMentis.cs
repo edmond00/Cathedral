@@ -15,7 +15,8 @@ public class ScentingModusMentis : ModusMentis
         "Reads a place nose-first, layering what the air carries: who passed, how long ago, what they carried and what they feared. Ties each smell to a remembered one, so that a scent arrives already named.";
     public override string SkillMeans       => "the smelling and identifying of scents on the air";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTarget? Will => WillTarget.To<SmellVerb>("take a scent from the air");
+    public override WillTargets? Will => WillTarget.To<SmellVerb>("take a scent from the air");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Woodland, Places.Grassland);
     public override string[] Organs        => new[] { "snout", "hippocampus" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
@@ -23,7 +24,7 @@ public class ScentingModusMentis : ModusMentis
     public override string PersonaReminder  => "nose-first reader";
     public override string PersonaReminder2 => "someone for whom every place is a ledger of smells";
     public override string StyleInstruction =>
-        "Describe the world through layers of smell — warm, cold, fresh, fading — with the certainty of a nose that is never wrong.";
+        "Certain and layered - meet whatever is in front of you nose first, older and more honest than sight.";
 
     public override string PersonaPrompt => @"You are the inner voice of SCENTING, the world as it arrives through the nose — older, deeper and more honest than anything the eyes report.
 

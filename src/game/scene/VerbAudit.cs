@@ -51,7 +51,7 @@ public static partial class VerbAudit
     /// made forty dense towns per factory most of the audit's running time. The towns were sampled
     /// forty times long after the cities were cut to eight, because only the city's key was tested.
     /// </summary>
-    private const int DenseSampleSize = 8;
+    internal const int DenseSampleSize = 8;
 
     /// <summary>How many merged sleeping observations the sweep exercised. Reported so a zero here —
     /// which would mean the whole sleeping path went untested — cannot pass unnoticed.</summary>
@@ -381,7 +381,7 @@ public static partial class VerbAudit
                     .Select(id => ModusMentisRegistry.Instance.GetModusMentis(id))
                     .Any(mm => mm != null && ModusMentisAnatomy.IsLearnableBy(mm, anatomy));
 
-                if (anatomy == AnatomyType.Beast && NoBeastCounterpart.Contains(verb.VerbId)) continue;
+                if (anatomy != AnatomyType.Human && NoBeastCounterpart.Contains(verb.VerbId)) continue;
 
                 if (!anyLearnable && CanBeAttemptedBy(verb, anatomy))
                     warnings.Add($"verb '{verb.VerbId}' teaches {anatomy} nothing — "

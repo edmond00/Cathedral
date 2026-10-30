@@ -5,7 +5,7 @@
 # night: it stops at night, when they come in and find the player (ConfrontationKind.FoundWaiting).
 # Night is not crossed into dawn, so no day turns.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type village --location-id 1 --start-area pantry --period evening --observe-only Storage
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type village --location-id 11 --start-area pantry --period evening --observe-only Storage
 
 wait
 click menu New

@@ -200,7 +200,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "fresh-cut", "heavy", "split", "wood-scented" },
         isNatural: true
-    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["smell"] = "petrichor" } };
+    ) { Play = new BalanceWalkPlay(), Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["smell"] = "petrichor" } };
 
     public static PointOfInterest BuildTreeStump() => new StumpPointOfInterest(
         displayName: "Tree Stump",
@@ -447,6 +447,33 @@ public static class TerrainSubfactory
         moods: new[] { "fragrant", "small", "sheltered", "rare" },
         isNatural: true
     ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore", ["smell"] = "apothecary_nose", ["contemplate"] = "aesthetic" } };
+
+    /// <summary>Shade herbs on a wood's floor — what a herbalist looks for under trees.</summary>
+    public static PointOfInterest BuildWoodlandHerbs() => new HerbPointOfInterest(
+        displayName: "Woodland Herbs",
+        descriptions: new() { "Valerian and wild mint growing in the shade where the leaf-litter is thin" },
+        items: new()
+        {
+            new ItemElement(new Valerian()),
+            new ItemElement(new WildMint()),
+        },
+        moods: new[] { "shaded", "fragrant", "low", "green" },
+        isNatural: true
+    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore", ["smell"] = "apothecary_nose" } };
+
+    /// <summary>Herbs of open grass — thyme on the dry ground, chamomile and meadowsweet in the damp.</summary>
+    public static PointOfInterest BuildMeadowHerbs() => new HerbPointOfInterest(
+        displayName: "Meadow Herbs",
+        descriptions: new() { "Wild thyme low in the grass, with chamomile and the cream heads of meadowsweet" },
+        items: new()
+        {
+            new ItemElement(new WildThyme()),
+            new ItemElement(new Chamomile()),
+            new ItemElement(new Meadowsweet()),
+        },
+        moods: new[] { "open", "fragrant", "sunlit", "humming" },
+        isNatural: true
+    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "simpling", ["smell"] = "apothecary_nose", ["contemplate"] = "aesthetic" } };
 
     public static PointOfInterest BuildLichenCrust() => new LichenPointOfInterest(
         displayName: "Lichen Crust",

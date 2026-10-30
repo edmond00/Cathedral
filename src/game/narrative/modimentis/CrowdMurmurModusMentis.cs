@@ -22,7 +22,7 @@ public class CrowdMurmurModusMentis : ModusMentis
     public override string PersonaReminder  => "room-listening eavesdropper";
     public override string PersonaReminder2 => "someone who has already heard what was said behind them";
     public override string StyleInstruction =>
-        "Split attention on the page - the near conversation and the one actually being followed.";
+        "Split and sidelong - half here, half following what is being said elsewhere.";
 
     public override string PersonaPrompt => @"You are the inner voice of the CROWD MURMUR, and you are almost never listening to the person in front of you.
 

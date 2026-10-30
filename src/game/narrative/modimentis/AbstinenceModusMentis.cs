@@ -20,7 +20,7 @@ public class AbstinenceModusMentis : ModusMentis
 
     public override string PersonaTone     => "a deliberate spareness that treats appetite as something to be governed";
     public override string PersonaReminder  => "self-denying abstainer";
-    public override string PersonaReminder2 => "someone who stops eating while there is still food";
+    public override string PersonaReminder2 => "someone who stops while there is still more to be had";
     public override string StyleInstruction =>
         "Push the plate back - what is declined, and the reason, which is never quite virtue.";
 

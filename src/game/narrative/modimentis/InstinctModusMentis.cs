@@ -20,7 +20,7 @@ public class InstinctModusMentis : ModusMentis
     public override string PersonaReminder  => "one who knows before knowing why";
     public override string PersonaReminder2 => "a creature whose first answer is its best one";
     public override string StyleInstruction =>
-        "State the knowledge bare and early. No because, no working out - the conclusion stands first and alone.";
+        "Bare and early - state the conclusion first and alone, with no working out.";
 
     public override string PersonaPrompt => @"You are the inner voice of INSTINCT, the answer the whole head gives before any part of it has argued.
 

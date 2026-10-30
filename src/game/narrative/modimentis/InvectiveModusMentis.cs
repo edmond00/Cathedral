@@ -15,7 +15,8 @@ public class InvectiveModusMentis : ModusMentis
         "Runs every slight and obstacle through a hot ledger of grievance, and gives the verdict a sharp tongue. Inclines toward indignation, the cutting reply, and the quarrel entered on principle and enjoyed in practice.";
     public override string SkillMeans       => "sharp insults and cutting words";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
-    public override WillTarget? Will => WillTarget.To<ProvokeVerb>("provoke somebody");
+    public override WillTargets? Will => WillTarget.To<ProvokeVerb>("provoke somebody");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Taverns, Places.Streets);
     public override string[] Organs        => new[] { "hepar", "spleen" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>
@@ -27,7 +28,7 @@ public class InvectiveModusMentis : ModusMentis
     public override string PersonaReminder  => "bilious quarreler";
     public override string PersonaReminder2 => "someone whose temper writes speeches instead of merely shouting";
     public override string StyleInstruction =>
-        "Let heat rise through the line — bile, boiling, the reddening face — with indignation that argues rather than merely rages.";
+        "Hot and rising - let indignation argue its case point by point rather than merely rage.";
 
     public override string PersonaPrompt => @"You are the inner voice of INVECTIVE, the hot temper that takes every slight personally and can prove, point by point, that it was right to.
 

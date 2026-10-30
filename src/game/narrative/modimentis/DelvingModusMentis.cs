@@ -14,15 +14,20 @@ public class DelvingModusMentis : ModusMentis
         "Breaks rock where it should break: reading the grain, setting the wedge, and swinging so the stone does the work rather than the arm. Underground it is also the difference between a face that stands and one that comes down.";
     public override string SkillMeans       => "the swing and wedge that part stone";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<MineVerb>("mine the rock");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<MineVerb>("mine the rock"),
+        WillTarget.ToAny("pick up ore", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Ore),
+        WillTarget.ToAny("lay hands on a pick", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).Yielding<Cathedral.Game.Narrative.World.Items.Pick>(),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over a delver's gear").Teaching<DelvingModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Underground, Places.Heights);
     public override string[] Organs        => new[] { "arms", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
     public override string PersonaTone     => "a swing that lets the stone do the work and never fights it";
     public override string PersonaReminder  => "rock-breaking hand";
-    public override string PersonaReminder2 => "someone who finds the grain before lifting the pick";
+    public override string PersonaReminder2 => "someone who finds the weak line before using any force";
     public override string StyleInstruction =>
-        "Write in blows and grain - the set wedge, the answering crack, the piece that comes away whole.";
+        "Measured and knowing - find the grain of whatever is in front of you before you strike.";
 
     public override string PersonaPrompt => @"You are the inner voice of SEAMCRAFT, and the arm is the smallest part of it.
 

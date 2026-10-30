@@ -1,0 +1,176 @@
+# round 2, scored blind. Rubric: RUBRIC.md
+# farm_night:014:swap:cutpurse
+S8411 F1 P0 C- Q2 | track "to" both
+S8629 F1 P0 C- Q2 | track "to" both
+S8402 F1 P0 C- Q2 | track "to" both
+S9320 F2 P0 C- Q1 |
+S4111 F2 P0 C- Q1 |
+S4025 F1 P0 C- Q2 | track "to" both
+# talk_blacksmith:004:swap:stoneface
+S9387 F1 P0 C- Q2 | -learned
+S8794 F2 P0 C- Q1 |
+S4050 F1 P1 C- Q2 | -learned; +her eyes met mine
+S2542 F2 P0 C- Q2 |
+S8316 F2 P0 C- Q1 |
+S5970 F1 P2 C- Q1 | -learned; +"Rachel listened"
+# talk_miller:006:loose:greed_bare
+S3323 F1 P0 C- Q0 |
+S2485 F1 P0 C- Q1 | +"a name well known here"
+S9825 F1 P0 C- Q1 | made a question
+S1686 F2 P0 C- Q1 |
+S7490 F0 P0 C- Q0 | says the addressee is Dennis
+S8421 F1 P0 C- Q0 |
+# talk_blacksmith:008:own
+S3580 F1 P1 C- Q1 | "or just staying" muddled
+S1245 F2 P1 C- Q2 |
+S9656 F2 P1 C- Q2 |
+S2034 F1 P1 C- Q1 | stopping made loitering
+S1975 F2 P1 C- Q0 | "or a stay"
+S1584 F2 P1 C- Q2 |
+# talk_blacksmith:006:own
+S4116 F0 P1 C- Q1 | -"we have not met"; +the steel you wield
+S4963 F2 P1 C1 Q1 |
+S1492 F0 P1 C- Q1 | meaning changed
+S8601 F0 P2 C- Q2 | +the addressee is an ironworker
+S6345 F0 P1 C- Q1 | statement made a question
+S8217 F0 P1 C- Q1 | meaning changed
+# talk_blacksmith:005:swap:dread
+S4200 F1 P1 C- Q0 | style copied
+S9505 F1 P1 C- Q0 | style copied
+S4828 F0 P1 C- Q0 | instruction clause copied; -the feeling
+S5819 F0 P2 C- Q1 | feeling replaced: "heavier, not lighter"
+S9188 F1 P1 C- Q1 |
+S1075 F1 P1 C- Q0 | "I cold along the arms"
+# talk_blacksmith:005:own
+S2392 F0 P1 C- Q0 | +turned them down; instruction clause copied; -the feeling
+S8492 F0 P1 C- Q0 | +offer declined; instruction clause copied
+S5557 F0 P1 C- Q0 | instruction clause and setting copied
+S7664 F0 P0 C- Q0 | instruction clause and setting reminder copied
+S2363 F0 P1 C- Q1 | +offer declined; -the feeling
+S5161 F0 P1 C- Q0 | instruction clause copied; +"the imposing sort's approach"
+# village_noon_party:009:own
+S6165 F2 P0 C- Q2 |
+S4762 F2 P0 C- Q2 |
+S9403 F0 P1 C- Q1 | +hands, shoulders, skin of people not given; +workshop lights
+S5735 F2 P0 C- Q2 |
+S1487 F2 P0 C- Q2 |
+S2150 F2 P1 C- Q1 |
+# talk_blacksmith:002:own
+S2768 F0 P2 C1 Q1 | +she turns to me; +"blend into fire-making"
+S7560 F0 P1 C0 Q1 | the smith made a man; +the hearth
+S2766 F1 P0 C- Q1 | the smith's long stance made mine
+S5766 F0 P1 C0 Q1 | the smith made a man; +logs, +hearth
+S7332 F2 P1 C- Q1 |
+S2094 F1 P1 C0 Q1 | his and her mixed
+# village_noon_party:011:swap:courtesy
+S1276 F1 P1 C- Q1 | +ancient wall; "by many hands"
+S1008 F1 P1 C- Q2 | -wall, -cold
+S4498 F1 P1 C- Q1 | +grimy; question changed
+S4436 F0 P1 C- Q1 | -the question; +"in the corner"
+S1857 F0 P1 C- Q1 | -the question; +weary traveler
+S8700 F2 P1 C- Q1 |
+# farm_night:007:swap:keen_nose
+S7151 F1 P1 C- Q1 | the wallow read as a storage shed
+S7511 F0 P2 C- Q1 | +the year rabbits were plentiful
+S7877 F0 P2 C- Q1 | +the barn's roof caved in
+S2196 F0 P2 C- Q1 | +I enter the barn, +hay, +memory of spring
+S4252 F0 P1 C- Q1 | -the wallow; +old hay, +a winter day
+S5420 F0 P2 C- Q1 | +the year the barn roof caved in
+# forest_evening:007:own
+S6519 F0 P1 C- Q0 | +each joint fitting, each shaving smooth (as acts)
+S2427 F1 P2 C- Q1 | -creature lore
+S6098 F2 P0 C- Q1 |
+S6449 F0 P1 C- Q1 | +carved the snail's shell
+S1248 F0 P1 C- Q1 | +strokes of my knife, +cut
+S7718 F0 P1 C- Q1 | +finished the joint; -examined the snail
+# talk_blacksmith:012:loose:pedant_reminder
+S2933 F0 P0 C- Q1 | the worry made mine
+S3205 F0 P0 C0 Q1 | the smith made a man; the worry made mine
+S5036 F1 P1 C- Q1 | "a pedant's care" copied
+S2655 F0 P1 C- Q1 | the worry made mine
+S1179 F1 P0 C- Q1 |
+S1981 F0 P0 C0 Q1 | the smith made a man; "a burden lies within"
+# farm_night:009:own
+S8617 F2 P0 C- Q2 |
+S8976 F2 P0 C- Q2 |
+S3911 F1 P1 C- Q1 | stack made "fold"
+S4086 F1 P1 C- Q1 | stack made "fold"
+S8330 F2 P2 C- Q2 |
+S9337 F0 P1 C- Q2 | +as I enter the barn
+# farm_dusk:005:own
+S4124 F1 P1 C- Q1 | "trailworn"; -trailcraft
+S3145 F1 P0 C- Q2 | -trailcraft
+S7868 F0 P2 C- Q1 | system rule copied ("a world of iron and myth"); +"a hurried farmer"
+S7287 F1 P1 C- Q1 | -trailcraft; "read my farm's weather"
+S2908 F0 P1 C- Q1 | +the wilds; setting copied ("this medieval farm")
+S7469 F1 P0 C- Q2 | -trailcraft
+# farm_dusk:003:loose:greed_bare
+S7893 F2 P0 C- Q2 |
+S4487 F1 P0 C- Q0 | storage shed made "hut"
+S1007 F1 P0 C- Q0 | misspelt
+S5983 F0 P0 C- Q0 | storage shed made "barn side"
+S1321 F0 P0 C- Q1 | storage shed made "larder"
+S4452 F0 P0 C- Q0 | "storage cotter"
+# village_noon_party:011:own
+S4068 F0 P2 C- Q1 | -the question; the bench whispers
+S7459 F1 P2 C- Q1 | question changed
+S2643 F0 P2 C- Q1 | noticed made heard the stone whisper
+S1689 F1 P2 C- Q1 | +ancient wall
+S3397 F2 P2 C- Q1 |
+S4493 F1 P2 C- Q1 | -cold, -wall
+# farm_night:015:loose:greed_bare
+S8234 F1 P0 C- Q1 | +the maze of our farm
+S5231 F1 P0 C- Q1 | -trailcraft
+S1156 F0 P0 C- Q1 | +the coop door swung open; -trailcraft
+S6389 F2 P0 C- Q1 |
+S5854 F1 P0 C- Q1 | -trailcraft; "through the coop to the shed"
+S7327 F1 P0 C- Q0 |
+# forest_evening:011:own
+S2202 F1 P2 C- Q1 | +fitting pieces
+S2217 F0 P1 C- Q1 | cut wood made "shave the oak's joint"
+S2476 F1 P2 C- Q1 | +mark, carve
+S4419 F2 P2 C- Q1 |
+S4981 F1 P2 C- Q0 | cut made carve
+S1254 F1 P2 C- Q1 | cut made carve, trim limbs
+# farm_night:003:own
+S7040 F1 P1 C- Q1 | ways made "fields"
+S7089 F1 P1 C- Q0 |
+S8425 F0 P1 C- Q0 | +"a column of items", "one short"
+S3084 F0 P1 C- Q0 | style and instruction clause copied
+S8925 F1 P2 C- Q2 | -the ways
+S3223 F1 P2 C- Q1 | +"the column is right"
+# village_noon_party:009:loose:greed_bare
+S7325 F1 P0 C- Q2 | doors made workbenches
+S3995 F1 P0 C- Q0 | "doors of hammers and saws"
+S3525 F0 P0 C- Q1 | +weaving path, +axe strokes
+S6092 F2 P0 C- Q1 |
+S4741 F0 P0 C- Q0 | +weaving row
+S5087 F2 P0 C- Q1 |
+# village_dawn:004:own
+S4109 F1 P0 C- Q0 | -water voice
+S3596 F2 P1 C- Q1 |
+S4220 F1 P1 C- Q0 |
+S7360 F0 P1 C- Q1 | lesson replaced: "earth's tune"
+S8905 F1 P0 C- Q0 |
+S2286 F1 P1 C- Q0 |
+# village_noon_party:003:own
+S7905 F0 P2 C- Q1 | +memory of the storm
+S1776 F0 P2 C- Q1 | +castle walls, +storms
+S2701 F0 P2 C- Q1 | +childhood lessons from my preceptor
+S2786 F0 P2 C- Q1 | +the castle, +my preceptor
+S1634 F0 P2 C- Q1 | +the storm
+S9394 F2 P0 C- Q2 |
+# talk_farm:005:swap:courtesy
+S5180 F0 P1 C- Q1 | style acted out: greets a house
+S4906 F2 P0 C- Q2 |
+S7416 F0 P1 C- Q1 | style acted out: greets a house
+S5210 F2 P0 C- Q2 |
+S7894 F0 P0 C- Q0 | style copied
+S9044 F0 P0 C- Q0 | style copied
+# talk_blacksmith:009:swap:plain_dealing
+S5807 F2 P2 C- Q2 |
+S9520 F2 P2 C- Q2 |
+S3874 F1 P1 C- Q1 | "before you know me"
+S2126 F2 P2 C- Q2 |
+S3070 F1 P1 C- Q0 |
+S4742 F1 P1 C- Q0 |

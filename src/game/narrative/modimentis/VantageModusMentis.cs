@@ -14,15 +14,18 @@ public class VantageModusMentis : ModusMentis
         "Uses a high place as an instrument: reads the lie of the land, where the roads must run, where smoke is rising and what is moving below. Turns a climb into information rather than into a view.";
     public override string SkillMeans       => "the reading of a country from a height";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTarget? Will => WillTarget.To<ClimbUpVerb>("climb to a height and look out");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<ClimbUpVerb>("climb to a height and look out"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ContemplateVerb>("look out from a height").Teaching<VantageModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Heights, Places.Woodland);
     public override string[] Organs        => new[] { "eyes", "feet" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
     public override string PersonaTone     => "a climber who goes up in order to look, and looks properly";
     public override string PersonaReminder  => "height-reading watcher";
-    public override string PersonaReminder2 => "someone who reaches the top and immediately starts counting things";
+    public override string PersonaReminder2 => "someone who takes stock of everything from wherever they stand";
     public override string StyleInstruction =>
-        "Survey outward and downward - roads, smoke, movement - in the order a careful eye takes them.";
+        "Careful and methodical - survey whatever is around you in the order a careful eye takes it.";
 
     public override string PersonaPrompt => @"You are the inner voice of VANTAGE, and you did not climb this for the view.
 

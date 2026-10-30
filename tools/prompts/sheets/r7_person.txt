@@ -1,0 +1,354 @@
+## talk_blacksmith:012:swap:avarice
+  kind=Reasoning  persona=avarice  reminder='someone who would rather keep the silver than spend it well'  style="Colour the line with images of hoarding and grasping, and a miser's reluctance to let anything go."  place='village'
+  IN: I notice someone hammers a length of iron on the anvil, sparks leaping with each blow; a worry sits behind the eyes that the work does not account for; watchful in a way that suggests they are keeping count of something; stands their ground a beat longer than is quite comfortable to watch, but there is nothing here worth doing, and I would rather turn my attention to something else.
+  S1201: I see the blacksmith, a woman of the village, but there is no silver here to be had. My hands clasp
+        the coins I have, and I find my gaze drawn to the hoard I have kept, unwilling to part with it.
+  S8693: I notice the blacksmith's forge, but there's no silver there to hoard. My hands itch for something to
+        grasp, yet I know better than to part with what I have.
+  S2841: I notice the smith forging a blade, sparks dancing with each stroke. A glint of silver catches my
+        eye, a coin I'd rather hoard than spend on such a blade, and the thought of its weight in my pocket is
+        a comfort. But the work does not account for the time and effort, and I must turn my gaze to something
+        more pleasant, such as a cup of ale in a warm hearth.
+  S7436: I see the iron hammered, sparks dancing, but my gaze is fixed on the coins in my purse, refusing to
+        let them slip loose. My hand tightens around the silver, a silent protest against this wastefulness. I
+        will not watch this idle labour, for there is nothing to be gained here.
+  S3307: I see a hand grasping tightly at the coin within its palm, unwilling to let go even as the iron
+        hammer clacks on the anvil, sparks dancing. Behind the eyes of the worker, a worry grows that their
+        toil is not worth the silver they earn, yet their gaze is watchful, as if counting something precious.
+        But here, there is no silver to be had, and I must turn my attention to something else, lest I be
+        tempted to hoard what has not yet come my way.
+  S1708: I notice the smith hammers the iron, sparks dancing with each blow. A coin clings to my hand,
+        reluctant to part, and I watch the worker's eyes for something not accounted for. There is nothing
+        worth the effort here, and I turn my gaze to the silversmith's hoard instead.
+  S3272: I see the woman blacksmith, but this village holds no silver to hoard. My gaze strays to the forge,
+        where the hot metal glows, a temptation to grasp but one I resist.
+  S2842: I see the blacksmith, a woman, but there's no use here, so I grasp the silver tighter and turn my
+        gaze to the next hoard.
+
+## talk_miller:011:own
+  kind=Reasoning  persona=mythomania  reminder='someone whose lies arrive faster than their truth'  style='Let invented, embellished imagery bloom freely, with the giddy ease of someone whose tales outrun the truth.'  place='village'
+  IN: I notice a pale-dusted figure heaves a sack of grain toward the hopper; weighing something in front of I and inviting me to watch; carries themselves with an odd, formal neatness for the work; whistling under their breath, and a reed pipe pushed through the belt, but there is nothing here worth doing, and I would rather turn my attention to something else.
+  S9768: I notice a pale-dusted figure heaving a sack of grain toward the hopper, weighing something in front
+        of me and inviting me to watch. Their odd, formal neatness for the work contrasts with the dusty
+        village, and though there is nothing here worth doing, I find myself drawn to their quiet dignity,
+        whistling softly and carrying a reed pipe through the belt. Perhaps it's the air of mystery and the
+        quiet strength of this figure that holds my gaze, even as I long to turn my attention elsewhere.
+  S4797: I notice a pale-dusted figure heaving a sack of grain toward the hopper, weighing something with an
+        odd, formal neatness for the work, whistling under their breath and a reed pipe pushed through their
+        belt. Yet, there is nothing here worth doing, and I find myself turning my attention to the lush
+        fields beyond.
+  S3287: I notice the miller of the village, a woman whose hands carry the weight of centuries, but there is
+        nothing here worth doing as my eyes drift to the silvery sheen of the nearby mill pond, where fish
+        leap and dreams take flight, and I find myself drawn to the quiet joy of catching their fleeting
+        silhouettes.
+  S3415: I notice the miller of the village, a woman with eyes as sharp as the millstones, but there is
+        nothing here worth doing, and I would rather turn my attention to the tales of the past, to the
+        whispers of the wind through ancient stone walls.
+  S1542: I notice a pale-dusted figure heaving a sack of grain toward the hopper, weighing something with an
+        odd, formal neatness, whistling under their breath and a reed pipe pushed through their belt. Yet,
+        there is nothing here worth doing, and I find myself turning my attention to the apple orchard by the
+        river instead.
+  S1993: I notice the miller of the village, a woman with weathered hands and a gentle smile, but there is
+        nothing here worth doing. My gaze drifts to the nearby stream, where a fish leaps and the sky reflects
+        in its shimmering waters. I would rather turn my attention to the beauty of this scene, rather than
+        the miller's laborious toil.
+  S3237: I notice the miller of the village, a woman of stern countenance, but there is nothing here worth
+        doing, and I find my gaze drifting towards the meadow where the sheep graze freely. The scent of hay
+        and the gentle rustling of leaves in the breeze draw me away from the mill, where the creaking of
+        wooden beams and the hiss of water from the nearby stream echo.
+  S4787: I notice a pale-dusted figure heaving a sack of grain toward the hopper, weighing something in front
+        of me and inviting me to watch. Their carriage is odd and formal for the work, and they whistle under
+        their breath, a reed pipe pushed through their belt. There's nothing here worth doing, and I would
+        rather turn my attention to the ripe wheat swaying in the wind.
+
+## talk_miller:002:swap:mercy
+  kind=Reasoning  persona=mercy  reminder='someone who lets it go when nobody would have blamed them for not'  style='The pause at the decisive moment - the lowered hand, the step back, the short reason given.'  place='village'
+  IN: I notice a pale-dusted figure heaves a sack of grain toward the hopper; weighing something in front of I and inviting me to watch; carries themselves with an odd, formal neatness for the work; whistling under their breath, and a reed pipe pushed through the belt. I want to strike up a conversation with her, introducing myself. I will rely on moving unheard and unseen.
+  S9776: I notice the pale-dusted figure heaving the sack with an odd, formal neatness, whistling under their
+        breath. A reed pipe is pushed through their belt. I want to strike up a conversation, but I will move
+        unheard and unseen, following my decision to let it go.
+  S8335: I observe the miller, a woman, in her element. I wish to approach her, to introduce myself, and I
+        will do so by moving unseen and unheard.
+  S9619: I notice her in the grain yard, her pale dusted form, the sack she carries toward the hopper. She
+        pauses, lowering her hand, and I step back, giving the short reason - it's better to be the one who
+        lets it go. I want to speak to her, to introduce myself, but I will move unheard and unseen.
+  S7759: I observe the miller, a woman in the village, her gaze distant. I wish to approach her softly, to
+        introduce myself quietly, unnoticed. Her story will speak for itself.
+  S4357: I notice the miller of the village, a woman, and feel a pull to strike up a conversation, to
+        introduce myself. I will move unheard and unseen, my reasons small and hard to argue with.
+  S2525: I notice the pale-dusted figure and the odd, formal neatness in their work. Their invitation to watch
+        is genuine, and the reed pipe through the belt hints at a different world. I decide to let it go, to
+        not be tempted by the offer of a conversation that might change what has already happened.
+  S2935: I notice the miller, a woman, in the pause between the lowered hand and the step back. I want to
+        strike up a conversation, introducing myself, moving unheard and unseen.
+  S1333: I notice the pale-dusted figure, weighing something in front of me, carrying themselves with an odd
+        neatness for the work. I hesitate, but the weight of their silence is clear, and I decide to move
+        unseen, to offer a conversation without expecting a response.
+
+## talk_blacksmith:002:swap:avarice
+  kind=Reasoning  persona=avarice  reminder='someone who would rather keep the silver than spend it well'  style="Colour the line with images of hoarding and grasping, and a miser's reluctance to let anything go."  place='village'
+  IN: I notice someone hammers a length of iron on the anvil, sparks leaping with each blow; a worry sits behind the eyes that the work does not account for; watchful in a way that suggests they are keeping count of something; stands their ground a beat longer than is quite comfortable to watch. I want to strike up a conversation with her, introducing myself. I will rely on fire-making, shelter and woodcraft.
+  S7601: I spy the blacksmith of this quaint village, a woman skilled with her hands. My eyes alight on her,
+        and I yearn to converse, to introduce myself. Yet, I hold back, my fingers itching to grasp the coins
+        in her purse, reluctant to part with even a silver thimble's worth.
+  S6595: I notice someone hammers a length of iron on the anvil, sparks leaping with each blow. The worry sits
+        behind my eyes, the work not accounting for enough to warrant a conversation. Watchful, I stand my
+        ground a beat longer than is comfortable to watch, my hand around a silver coin, its weight a silent
+        reminder of what I would rather keep.
+  S4252: I notice someone hammering iron on an anvil, sparks leaping with each blow. A worry sits behind my
+        eyes, for I grasp onto the thought that my hoarded silver might not be enough to account for the cost.
+        Watchful, I stand a beat longer than is comfortable, a miser's reluctance to let anything go. Yet, I
+        must introduce myself, as fire-making and woodcraft demand conversation.
+  S4373: I spy the blacksmith, a woman of iron hands and a pouch snug with coins. My intent is to grasp her
+        eye, to introduce myself, but my hands are too greedy, and I clutch the silver tighter, refusing the
+        warmth of conversation.
+  S6411: I notice her hammering, the iron length gleaming with each spark, a worry etched in her eyes. Yet, I
+        cannot part with my silver, too dear to spend on idle chatter. I stand a beat longer, my hands
+        clutching coins, reluctant to release any. Perhaps, if she were to ask for alms, I might begrudgingly
+        share, but not a word of my name.
+  S7421: I spy the blacksmith, a woman, her hands as old as her iron. I covet her knowledge and her fire, but
+        first I must keep my silver from her, for I am one who hoards and grasps, reluctant to part with my
+        coins.
+  S6978: I notice her hammers a length of iron on the anvil, sparks leaping with each blow, as a worry sits
+        behind her eyes that her work is not enough. I stand my ground a beat longer than is quite
+        comfortable, watchful in a way that suggests she is counting something. A desire to strike up a
+        conversation with her grows, but the silver in my purse only urges me to keep it closer, to grasp at
+        any moment.
+  S5039: I spy the blacksmith, a woman in her forge, her hands stained with soot and sweat. I covet the warmth
+        of her hearth and the comfort of her shelter, yet I cannot part from the silver in my purse. I will
+        make do with my fire-making and woodcraft, for now.
+
+## talk_miller:011:swap:dread
+  kind=Reasoning  persona=dread  reminder='someone who wants very much to leave and cannot say why'  style='Physical and unreasoned - the cold along the arms, the reluctance, the eyes going to the exit.'  place='village'
+  IN: I notice a pale-dusted figure heaves a sack of grain toward the hopper; weighing something in front of I and inviting me to watch; carries themselves with an odd, formal neatness for the work; whistling under their breath, and a reed pipe pushed through the belt, but there is nothing here worth doing, and I would rather turn my attention to something else.
+  S4446: I notice the pale-dusted figure and the sack of grain, but the cold along my forearms urges me to go,
+        and I find nothing here worth watching.
+  S4554: I see the miller, a woman, but there's nothing here to do. My eyes go to the exit, cold along my
+        arms, and I cannot shake the feeling something is wrong, even though I know there's nothing to see.
+  S7821: I feel the chill along my forearms and the reluctance to stay, eyes already going to the exit. The
+        pale figure's odd formality makes the task seem pointless here, and I would rather turn to the fields
+        beyond.
+  S9968: I feel the chill along my forearms and see the door, my eyes drawn to it. The miller's presence is
+        there, but I find nothing to engage with here. I must turn my attention elsewhere, for this place
+        holds no interest for me.
+  S1983: I notice the miller, a woman, but the village is cold and empty, and my eyes seek the exit before I
+        can muster the will to leave.
+  S1844: I notice the pale-dusted figure heaving the sack, a strange stillness in their steps, eyes already
+        going to the exit. There is nothing here worth doing, and the cold along my forearms insists I leave
+        this place.
+  S3947: I see the miller's face, cold along my forearms, and the reluctance to stay. The village is still,
+        and my eyes seek the exit, knowing there's nothing here worth doing.
+  S6824: I feel the chill along my forearms, a stubborn reminder of my body's desire to escape. The weight of
+        the sack and the man's odd, formal gait pull my eyes to the exit, but I cannot say why. The silence
+        and the thought that something is wrong only urge me further.
+
+## talk_blacksmith:012:swap:dread
+  kind=Reasoning  persona=dread  reminder='someone who wants very much to leave and cannot say why'  style='Physical and unreasoned - the cold along the arms, the reluctance, the eyes going to the exit.'  place='village'
+  IN: I notice someone hammers a length of iron on the anvil, sparks leaping with each blow; a worry sits behind the eyes that the work does not account for; watchful in a way that suggests they are keeping count of something; stands their ground a beat longer than is quite comfortable to watch, but there is nothing here worth doing, and I would rather turn my attention to something else.
+  S3207: I notice the hammering, sparks dancing, but the air is empty, the eyes see only the door that
+        beckons. The reluctance grows stronger, urging me out of this place.
+  S4340: I see the blacksmith's forge, but the air is heavy, and my eyes drift to the door. The quiet here is
+        unnerving, and I feel restless, knowing I must leave this place.
+  S3418: I see the blacksmith's forge, but the village holds no warmth. My eyes drift towards the door, a
+        silent urge to escape this place.
+  S7167: I notice the hammering on the anvil, sparks dancing, but my eyes see the cold along my forearms, a
+        reluctance that pushes me towards the exit. My mind whispers that there is nothing to do here, nothing
+        worth watching, and I must turn my gaze to the village beyond.
+  S1497: I see the blacksmith, a woman, but there's no work to be done here. My eyes already go to the exit, a
+        cold along my arms, and a sense of something missing.
+  S2410: I notice the blacksmith, a woman, but the air is empty here, and my eyes go to the exit.
+  S9703: I feel the chill along my forearms, a stubborn reluctance to stay, and the eyes that watch the work
+        are restless, but there's nothing here to do. I know I must leave, but I cannot yet say why.
+  S8187: I feel the chill along my forearms, a reluctance to move, eyes always turning towards the door, but
+        there is nothing here to do, nothing that draws me forward.
+
+## talk_blacksmith:012:loose:pedant_reminder
+  kind=Reasoning  persona=loose:pedant_reminder  reminder='a pedant'  place='village'
+  IN: I notice someone hammers a length of iron on the anvil, sparks leaping with each blow; a worry sits behind the eyes that the work does not account for; watchful in a way that suggests they are keeping count of something; stands their ground a beat longer than is quite comfortable to watch, but there is nothing here worth doing, and I would rather turn my attention to something else.
+  S4577: I observe the smith diligently hammering iron on the anvil, sparks dancing with each blow, a concern
+        etched in my heart that my presence is not needed. I stand a moment longer than comfort allows, for
+        there is nothing here worthy of my attention, and I seek to engage in more fruitful pursuits.
+  S4403: I observe the woman blacksmith, noting her skilled hands, yet perceive naught here to engage with,
+        and thus turn my mind to mending a torn cloak, for such tasks are more fitting and bring forth
+        satisfaction.
+  S8084: I observe the blacksmithess of this village, a woman of skill, yet tasks here are but shadows, idle
+        and unyielding, so my gaze wanders for a more engaging pursuit.
+  S7020: I observe the female blacksmith within our village, yet find nothing here worthy of my attention, and
+        hence shall divert my gaze towards other pursuits.
+  S4175: I observe a smith forging iron upon the anvil, sparks dancing with each hammer strike. A somber
+        concern lingers, questioning whether the labor brings enough worth. I stand a moment longer, yet find
+        no merit in this sight, turning my gaze to a less tedious task.
+  S6417: I observe the blacksmith's steady hands upon the anvil, sparks dancing with each strike, yet a
+        gnawing doubt gnaws at my heart, questioning the worth of these tasks. My gaze is wary, yet uneasy, as
+        though counting unseen threads in the air. I stand a moment longer, but the labor feels futile, my
+        thoughts turning instead to mending a broken spade forgotten in the corner.
+  S4591: I discern the blacksmithess of our village, a woman skilled in forging iron, yet find naught here to
+        warrant my attentions. Thus, I shall divert my gaze to some other pursuit, one that offers more
+        engagement and purpose.
+  S8898: I observe the blacksmith's steady hand on the anvil, sparks dancing with each forceful strike. A
+        gnawing doubt gnaws at my mind, questioning whether this work is truly fulfilling. Yet, I remain here,
+        a beat longer than is comfortable, for there is little here to stir my heart. I seek instead a more
+        meaningful task, one that speaks to my soul.
+
+## talk_blacksmith:012:own
+  kind=Reasoning  persona=pride  reminder='someone who turns down what they need because of how it was offered'  style='Straighten and cool - the offer declined, the tone noted, the line drawn out loud.'  place='village'
+  IN: I notice someone hammers a length of iron on the anvil, sparks leaping with each blow; a worry sits behind the eyes that the work does not account for; watchful in a way that suggests they are keeping count of something; stands their ground a beat longer than is quite comfortable to watch, but there is nothing here worth doing, and I would rather turn my attention to something else.
+  S1678: I notice the blacksmith of the village, a woman, but her work does not appeal to me. I will not be
+        spoken to like that and would rather turn my attention to something else.
+  S5315: I decline the offer, noting the blacksmith's skill and the tone of her request. The line is drawn,
+        and I turn my attention elsewhere, for the matter does not seem worth pursuing here.
+  S6505: I decline the offer, noting the tone, and let my speech remain cool. The work stands as a stark
+        reminder of what I can no longer afford.
+  S5806: I notice the blacksmith of the village, a woman, but there is nothing here worth doing. I cool my
+        intent, noting the tone, and turn my attention to something else in this medieval world.
+  S6477: I notice the hammering on the anvil, sparks dancing as each blow strikes. The worry in their eyes
+        mirrors my refusal to engage further. I step back, my presence unneeded in this iron world, where
+        words and machines are absent.
+  S7490: I notice the hammering, sparks dancing, but the worry lingers. I hold my ground, drawing a longer
+        pause, for there is nothing here worth the effort.
+  S8894: I notice the blacksmith of the village, a woman, but there is nothing here worth doing. I find myself
+        turning my attention to something else, as the offer was declined, and the tone noted.
+  S6183: I notice the hammering on the anvil, sparks dancing with each strike. The worry in their eyes is
+        clear, but the work doesn't account for it. I hold my ground, drawing a longer breath than seems
+        right, for there's nothing here worth doing. I need to turn my attention elsewhere, where I might find
+        something worthwhile.
+
+## talk_blacksmith:002:own
+  kind=Reasoning  persona=rhetoric  reminder='someone who shapes truth into the most persuasive form'  style="Use balanced, persuasive imagery and turns of phrase, with an orator's pleasure in shaping the listener's mind."  place='village'
+  IN: I notice someone hammers a length of iron on the anvil, sparks leaping with each blow; a worry sits behind the eyes that the work does not account for; watchful in a way that suggests they are keeping count of something; stands their ground a beat longer than is quite comfortable to watch. I want to strike up a conversation with her, introducing myself. I will rely on fire-making, shelter and woodcraft.
+  S4492: I discern the blacksmith of our village, a woman skilled in fire-making, shelter-building, and
+        woodcraft. I wish to engage with her, to introduce myself and strike up a conversation. My intent is
+        to rely on her expertise, to learn from her, and to forge a bond of mutual respect.
+  S2561: I discern the blacksmith of our village, a woman skilled in fire, shelter, and woodcraft. I aspire to
+        engage with her, to share my name and introduce myself, relying on the virtues of her craft and the
+        strength of our shared labor.
+  S6018: I observe a craftsman hammering a length of iron upon the anvil, sparks dancing with each resounding
+        blow. A silent worry lingers, unspoken, as the work seems incomplete. She watches with a wary gaze,
+        perhaps tallying unseen tasks. I stand my ground a moment longer, drawn to this silent testament of
+        labor. Shall I introduce myself, using fire-making, shelter, and woodcraft to start a dialogue?
+  S3888: I observe a smith hammering iron upon the anvil, sparks leaping with each blow, a hidden worry
+        beneath his eyes. I sense he is counting something, his stance steadfast against my approach, a beat
+        too long to ignore. My intention is clear, to engage in conversation and introduce myself. My words
+        will be crafted from fire-making, shelter-building, and the wisdom of woodcraft.
+  S9942: I observe a smith at his forge, his hammer singeing sparks with each firm strike. A hidden worry
+        gnaws at him, for the weight of his labor is unspoken. His gaze is watchful, a silent count of the
+        hours. He stands a moment longer, a defiance in his stance. I seek to engage him, to introduce myself,
+        to share the stories of our woodcraft and fire-making. I will rely on my own skills and the trust that
+        comes from a common bond.
+  S5834: I notice a smith hammers a length of iron on the anvil, sparks leaping with each blow, a worry in her
+        eye that her work does not fully account for. She watches with a wary eye, as if counting something
+        unseen. I stand my ground a beat longer than might be comfortable, a spark of curiosity igniting
+        within me. I will introduce myself, relying on the skills of fire-making, shelter and woodcraft to
+        bridge this quiet moment.
+  S2532: I discern the blacksmith of this village, a woman of skill and strength. I yearn to engage her, to
+        share my humble self in this forge of community. I shall leverage my knowledge of fire-making, my
+        understanding of shelter and woodcraft, to forge a connection and build trust.
+  S3843: I discern the blacksmith of this village, a woman of iron hands and fire's embrace. My intent is to
+        forge a bond, to introduce myself with the warmth of my words and the tools I wield. Let my
+        conversation be a shelter built from fire-making and woodcraft, a bridge across the chasm of our
+        worlds.
+
+## talk_miller:011:swap:pride
+  kind=Reasoning  persona=pride  reminder='someone who turns down what they need because of how it was offered'  style='Straighten and cool - the offer declined, the tone noted, the line drawn out loud.'  place='village'
+  IN: I notice a pale-dusted figure heaves a sack of grain toward the hopper; weighing something in front of I and inviting me to watch; carries themselves with an odd, formal neatness for the work; whistling under their breath, and a reed pipe pushed through the belt, but there is nothing here worth doing, and I would rather turn my attention to something else.
+  S4158: I notice the miller of the village, a woman, but decline her offer. The tone was not what I desired,
+        and I turn my attention to something else, keeping my cool.
+  S1471: I notice the offer declined, the tone noted, and the line drawn out loud. It only colours how the
+        given facts are told - what it names is not here. Turning my attention to something else, I walk away.
+  S7139: I notice the miller of the village, a woman, but there is nothing here worth doing, and I would
+        rather turn my attention to something else. The way she offered it made me clear my mind of such
+        offers.
+  S2567: I notice the pale-dusted figure's heft of the sack, their formal stance, and the invitation to watch.
+        Their refusal to continue aligns with my inner coolness, and I will not be drawn into this exchange.
+  S7540: I notice the miller of the village, a woman, but what she offers is not worth my time. I will not be
+        spoken to like that, and I would rather turn my attention to something else.
+  S5666: I notice the pale-dusted figure heaving the sack, weighing something quietly. The tone is off, and I
+        decline, noting it. It only colors how I view this, what it names is not here. I turn my attention
+        elsewhere, as nothing here is worth doing.
+  S6006: I notice the miller of the village, a woman, but there is nothing here worth doing. My intent is to
+        cool the tone and decline the offer, for I will not be spoken to like that.
+  S4225: I notice the offer declined, the tone noted, and the line drawn out loud. It only colours how the
+        given facts are told in this medieval village, where nothing modern or real exists.
+
+## talk_miller:002:swap:rhetoric
+  kind=Reasoning  persona=rhetoric  reminder='someone who shapes truth into the most persuasive form'  style="Use balanced, persuasive imagery and turns of phrase, with an orator's pleasure in shaping the listener's mind."  place='village'
+  IN: I notice a pale-dusted figure heaves a sack of grain toward the hopper; weighing something in front of I and inviting me to watch; carries themselves with an odd, formal neatness for the work; whistling under their breath, and a reed pipe pushed through the belt. I want to strike up a conversation with her, introducing myself. I will rely on moving unheard and unseen.
+  S2867: I observe a pale-dusted figure, her form carrying a peculiar grace as she hefts a sack of grain
+        toward the hopper, weighing something solemnly before me. Her presence is both formal and faintly
+        curious, as she whistles under her breath, the reed pipe pressed between her belt. I desire to engage
+        with her, to introduce myself unseen, to draw her mind into mine through the quietest of
+        conversations.
+  S8451: I perceive the miller, a woman, of the village. Her presence draws me, and I intend to approach her,
+        introducing myself unseen and unheard. Her wisdom and experience will surely sway my conversation,
+        leading minds as the wind shifts through the fields.
+  S4319: I perceive a pale-dusted figure, a sack of grain in hand, approaching the hopper. They pause,
+        weighing something with an odd, formal neatness befitting the work, while I watch and am invited to
+        join. As they whistle and carry a reed pipe through their belt, my heart calls for conversation. I
+        will move unnoticed, seeking to introduce myself, for I sense in them a truth waiting to be shared.
+  S6471: I perceive a pale-dusted figure, its movements deliberate and purposeful, as it hefts a sack of grain
+        toward the hopper. This figure pauses, weighing something silently, inviting me to observe, and
+        carries itself with an odd formality befitting the work. As I watch, a reed pipe is tucked through the
+        belt, and a gentle whistle escapes between breaths. My heart calls to action, to introduce myself and
+        strike up a conversation, yet I must move unseen, for the right moment is yet to come.
+  S8285: I perceive the miller of this village, a woman, and her strength in the silent mill. I seek to draw
+        her into conversation, introducing myself unseen and unheard. Her wisdom and the mill's rhythmic hum
+        will sway her mind with persuasive speech.
+  S1795: I perceive the miller of our village, a woman, and draw near with unseen steps. I seek to engage her
+        in conversation, introducing myself with a gentle touch, for my intention is to shape her mind with
+        words.
+  S2933: I perceive a pale-dusted figure, his heaving of a sack of grain toward the hopper a testament to
+        their careful, formal neatness in their work. I am drawn by the invitation to watch, to strike up a
+        conversation and introduce myself, moving unheard and unseen to better listen and learn from her.
+  S5385: I perceive the miller of our village, a woman whose wisdom I wish to engage. I will move unnoticed,
+        my words a silent whisper to stir her curiosity and draw her into conversation, my ethos strong as the
+        mill's grinding stones.
+
+## talk_blacksmith:002:swap:mercy
+  kind=Reasoning  persona=mercy  reminder='someone who lets it go when nobody would have blamed them for not'  style='The pause at the decisive moment - the lowered hand, the step back, the short reason given.'  place='village'
+  IN: I notice someone hammers a length of iron on the anvil, sparks leaping with each blow; a worry sits behind the eyes that the work does not account for; watchful in a way that suggests they are keeping count of something; stands their ground a beat longer than is quite comfortable to watch. I want to strike up a conversation with her, introducing myself. I will rely on fire-making, shelter and woodcraft.
+  S2619: I notice the sparks dancing and the hammer's pause, a silent reminder of the work's toll. I step
+        back, my reason clear in the quiet, before stepping forward to introduce myself, guided by my own
+        slow, steady hand.
+  S2954: I notice the sparks leap and the hammer falls, a silent resolve beneath the eyes. I step back, let it
+        go, for the peace of a village trumps the shadows cast by a single blow.
+  S4180: I notice the hammering, sparks dancing with each blow. A fleeting glance at the worker's eyes shows
+        the unspoken worry that work alone does not suffice. I step back a moment longer, the pause a
+        testament to my decision not to finish.
+  S4294: I notice the blacksmith of the village, a woman, her hands stained with soot. I want to strike up a
+        conversation, to introduce myself, to share tales of fire-making, shelter, and woodcraft. Yet I must
+        let it go, for the pause at the decisive moment - the lowered hand, the step back, the short reason
+        given.
+  S6492: I observe the blacksmith, a woman, in the village. I wish to strike up a conversation, introducing
+        myself, using my skills of fire-making, shelter, and woodcraft. The pause at the decisive moment
+        colors this action, but I know it is the right thing to do.
+  S3659: I notice the blacksmith of the village, a woman, and the pause at the decisive moment colors my
+        decision. I want to introduce myself, to strike up a conversation, and rely on my skills of fire-
+        making, shelter, and woodcraft.
+  S3488: I notice the blacksmith of the village, a woman. My intention is to strike up a conversation, to
+        introduce myself, relying on my skills of fire-making, shelter, and woodcraft. The pause at the
+        decisive moment colors my action, but I let it go as no one would have blamed me for not.
+  S8793: I notice the hammering, sparks dancing, and a silent vigil in the eyes. I step back, letting the
+        pause color the moment, choosing to let it go for now.
+
+## talk_miller:002:own
+  kind=Reasoning  persona=courtesy  reminder='someone who gets the first thirty seconds exactly right'  style='Warm, correct and brief - the greeting, the precedence given, the name remembered.'  place='village'
+  IN: I notice a pale-dusted figure heaves a sack of grain toward the hopper; weighing something in front of I and inviting me to watch; carries themselves with an odd, formal neatness for the work; whistling under their breath, and a reed pipe pushed through the belt. I want to strike up a conversation with her, introducing myself. I will rely on moving unheard and unseen.
+  S1949: I notice the miller of the village, a woman. I wish to strike up a conversation with her, introducing
+        myself. I will move unnoticed and unseen to approach her.
+  S9161: I see a pale-dusted figure heaving a sack of grain. Her posture is odd and formal, fitting for her
+        work. I want to introduce myself, yet I will move unseen and unheard.
+  S9389: I notice the miller of the village, a woman. I wish to strike up a conversation with her, introducing
+        myself. I will move unheard and unseen, relying on the forms that greet and respect her.
+  S5554: I notice the miller of the village, a woman. I wish to strike up a conversation with her, introducing
+        myself. I will move unseen and unheard, respecting her place of work.
+  S7101: I notice the miller of the village, a woman, and her wisdom is clear. I wish to approach her,
+        introduce myself gently, and let her go first in conversation. I will move unseen, respecting her
+        space and the traditions of our small world.
+  S9032: I notice her pale figure and the sack she carries, her posture formal yet at ease. I wish to speak to
+        her, to introduce myself, but I will move unseen and unheard, respecting her quiet dignity.
+  S1623: I notice her pale-dusted figure heaving a sack of grain toward the hopper, weighing something in
+        front of me, and carrying herself with an odd, formal neatness for the work. I want to introduce
+        myself, but I will move unnoticed to strike up a conversation.
+  S2835: I notice her pale and dusty figure, weighing something in front of me with an odd, formal neatness
+        for the work. I want to greet her warmly, using her name, and watch without being seen, as she carries
+        a sack of grain toward the hopper, whistling softly.

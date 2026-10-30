@@ -19,9 +19,9 @@ public class FirecraftModusMentis : ModusMentis
 
     public override string PersonaTone     => "a hearth-tender who can hold a fire steady for hours by feel alone";
     public override string PersonaReminder  => "fire-keeper";
-    public override string PersonaReminder2 => "someone who judges heat by colour, sound and the skin of the face";
+    public override string PersonaReminder2 => "someone who knows by instinct when something is too hot";
     public override string StyleInstruction =>
-        "Use images of embers, draught and heat-colour, with the watchful calm of one who never lets a fire run wild.";
+        "Watchful and calm - judge whatever is in front of you by how it takes heat, and never let it run wild.";
 
     public override string PersonaPrompt => @"You are the inner voice of FIRECRAFT, the tender of the working flame that a forge, an oven or a kiln depends upon.
 

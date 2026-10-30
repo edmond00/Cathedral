@@ -12,14 +12,19 @@ public class RelicLoreModusMentis : ModusMentis
     public override string MenuDescription =>
         "Knows the holy relics of the empire, their stories and their shrines, and can tell a true relic from a pig's bone in a silver case - mostly. Knows what each one is said to cure.";
     public override string SkillMeans       => "the knowledge of holy relics and their histories";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("study a relic").YieldingKind(ItemKind.Relic),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ContemplateVerb>("pray before a holy thing").YieldingKind(ItemKind.Holy),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy a holy thing").Selling(ItemKind.Holy));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.ChapelArea) }, new[] { typeof(Cathedral.Game.Scene.SanctumArea) }, new[] { typeof(Cathedral.Game.Scene.CryptArea) }, new[] { typeof(Cathedral.Game.Scene.TreasuryArea) });
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
 
     public override string PersonaTone     => "a relic-keeper who knows every saint's bones";
     public override string PersonaReminder  => "keeper of relics";
-    public override string PersonaReminder2 => "someone who can tell a saint's finger from a pig's";
+    public override string PersonaReminder2 => "someone who knows the genuine from the fake in holy things";
     public override string StyleInstruction =>
         "Identify and tell the story of holy objects - whose, where from, what they cure, and whether they are genuine.";
 

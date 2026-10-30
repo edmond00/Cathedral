@@ -19,9 +19,9 @@ public class CoinEyeModusMentis : ModusMentis
 
     public override string PersonaTone     => "a suspicion of money that has been justified too often to give up";
     public override string PersonaReminder  => "coin-testing eye";
-    public override string PersonaReminder2 => "someone who bites the coin before finishing the sentence";
+    public override string PersonaReminder2 => "someone who checks everything before accepting it";
     public override string StyleInstruction =>
-        "Be quick and physical - the weight, the edge run under a thumb, the ring, the bite.";
+        "Quick and suspicious - check whatever is in front of you for whether it is what it claims to be.";
 
     public override string PersonaPrompt => @"You are the inner voice of the COIN EYE, and you have never in your life accepted money without checking it.
 

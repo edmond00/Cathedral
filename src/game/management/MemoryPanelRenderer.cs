@@ -104,6 +104,23 @@ public class MemoryPanelRenderer
     // Public API
     // ═══════════════════════════════════════════════════════════════
 
+    /// <summary>
+    /// Selects the slot holding <paramref name="modusMentisId"/>, as a click on it would, so a <c>--cli</c>
+    /// script can read its detail box (a will's targets among it). False when no filled slot holds it.
+    /// </summary>
+    public bool CliSelectModusMentis(string modusMentisId)
+    {
+        if (_member == null) return false;
+        foreach (var module in _member.MemoryModules)
+            for (int i = 0; i < module.Slots.Count; i++)
+                if (module.Slots[i].IsFilled && module.Slots[i].ModusMentis?.ModusMentisId == modusMentisId)
+                {
+                    _selectedSlot = (module.Type, i);
+                    return true;
+                }
+        return false;
+    }
+
     /// <summary>Full render of the memory panel for a party member.</summary>
     public void Render(PartyMember member)
     {
@@ -529,14 +546,21 @@ public class MemoryPanelRenderer
             firstFunction = false;
         }
 
-        // A will wants one act; say which, in the words it is voiced with ("pick a lock").
+        // A will wants one to five things; list them as the functions are listed, one per row, in the
+        // words each is voiced with ("pick a lock"), the label on the first row only. One line joining
+        // them would not fit the column past the second.
         if (modusMentis.Will is { } will)
         {
-            const string TargetLabel = "Target";
-            string purpose = will.Purpose;
-            int room = leftW - 4 - TargetLabel.Length;
-            if (purpose.Length > room && room > 1) purpose = purpose[..(room - 1)] + "…";
-            metaLines.Add((TargetLabel, purpose, Config.Colors.BrightYellow));
+            const string TargetLabel = "Wants";
+            int room = leftW - 6 - TargetLabel.Length;
+            bool firstTarget = true;
+            foreach (var target in will)
+            {
+                string purpose = target.Purpose;
+                if (purpose.Length > room && room > 1) purpose = purpose[..(room - 1)] + "…";
+                metaLines.Add((firstTarget ? TargetLabel : new string(' ', TargetLabel.Length), $"• {purpose}", Config.Colors.BrightYellow));
+                firstTarget = false;
+            }
         }
 
         metaLines.Add(("Discreet",     modusMentis.ActsDiscretely ? "Yes — acts unnoticed" : "No",

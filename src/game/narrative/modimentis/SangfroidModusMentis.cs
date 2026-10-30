@@ -29,7 +29,7 @@ public class SangfroidModusMentis : ModusMentis
     public override string PersonaReminder  => "cold and unhurried";
     public override string PersonaReminder2 => "someone whom danger makes calmer rather than faster";
     public override string StyleInstruction =>
-        "Colour the line with stillness, cold air and a slowing of everything around.";
+        "Cold and slowed - let everything around you seem to slow while you stay still.";
     public override MoralLevel MoralLevel    => MoralLevel.Medium;
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]

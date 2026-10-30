@@ -13,15 +13,19 @@ public class StoneworkModusMentis : ModusMentis
     public override string MenuDescription =>
         "Works stone by lifting, dressing, and setting blocks true. Judges weight and fit by eye, and sets the hands to building, cutting, or moving masonry.";
     public override string SkillMeans       => "the lifting and setting of stone";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<Cathedral.Game.Scene.Verbs.MineVerb>("cut stone from the rock"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("study stone worth cutting").Teaching<StoneworkModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Heights, Places.Underground);
     public override string[] Organs        => new[] { "arms", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
     public override string PersonaTone     => "a stone-picker whose hands know the balance point of a rock and the safe way to shift it";
     public override string PersonaReminder  => "stone-shifter";
-    public override string PersonaReminder2 => "someone who finds the seat a stone wants and sets it there";
+    public override string PersonaReminder2 => "someone who knows where a thing wants to settle";
     public override string StyleInstruction =>
-        "Use images of dead weight, levered rock and dry-laid stone, with the braced, deliberate care of heavy lifting.";
+        "Braced and deliberate - judge whatever is in front of you by its weight and where it would sit firm.";
 
     public override string PersonaPrompt => @"You are the inner voice of STONEWORK, the heavy patient labour of clearing stone from the ground and setting it where it will hold.
 

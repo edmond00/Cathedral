@@ -187,6 +187,12 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --cpu                              Run LLM on CPU only, overriding the setting and the first-run probe");
     Console.WriteLine("  --gpu                              Run LLM on the installed GPU backend (models/llama/backends/), same override");
     Console.WriteLine("  --no-llm-probe                     Skip first-run compute-device detection; use whatever is already saved");
+    Console.WriteLine("  --llm-threads <n>                  DEBUG: llama-server's -t for this run, over the saved setting — to measure at a");
+    Console.WriteLine("                                     player's thread count on a machine with more cores");
+    Console.WriteLine("  --llm-seed <n>                     DEBUG: send a sampler seed with every request, so two measured runs of one");
+    Console.WriteLine("                                     script take the same narrative path");
+    Console.WriteLine("  --no-chronicler                    DEBUG: record the journal but never write it up in the background — the");
+    Console.WriteLine("                                     'without' half of measuring what the chronicler costs");
     Console.WriteLine("  --developer-keys                   Enable the developer keyboard shortcuts (D/M/F/G/H/J, R/K, C/V, W/S zoom,");
     Console.WriteLine("                                     Tab outside exploration). Off by default, as in a shipped build,");
     Console.WriteLine("                                     which ignores this flag");
@@ -216,7 +222,9 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --allow-reentry                    DEBUG: let a world-map click on your own vertex re-enter that location.");
     Console.WriteLine("                                     The game refuses it — arriving somewhere already opens it, so a visit");
     Console.WriteLine("                                     costs a journey. Scripts need it: `travel here` is how they get in");
-    Console.WriteLine("  --start-fight <creature>           DEBUG: begin a fight on reaching the world map (wolf, bear, bandit, brigand).");
+    Console.WriteLine("  --start-fight <creature>           DEBUG: begin a fight on reaching the world map (wolf, bear, bandit, brigand,");
+    Console.WriteLine("                                     the climate beasts, and the great reptiles: crocodile, giant monitor, horned");
+    Console.WriteLine("                                     lizard, cave lizard, carnotaurus, stegosaurus, triceratops, ankylosaurus).");
     Console.WriteLine("                                     The only way a script can reach fight mode: the real routes in are a random");
     Console.WriteLine("                                     travel encounter (which scripts disable) or provoking an NPC through dialogue");
     Console.WriteLine("  --encounter-on-arrival <creature>  DEBUG: force a travel encounter on the FINAL step of the next journey, once.");
@@ -224,7 +232,11 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("                                     (e.g. wolf,bandit); its arena is seeded from the run, not the clock.");
     Console.WriteLine("                                     That step raises the step and arrival events from one call, so the fight begins");
     Console.WriteLine("                                     with no path left to walk — the case that stranded the run in Traveling");
-    Console.WriteLine("  --spawn-beast <name>               DEBUG: put a beast (wolf, boar, bear, black bear, stray dog, fox) in the opening");
+    Console.WriteLine("  --encounter-mid-journey <creature> DEBUG: force a travel encounter on the first step of the next journey that is");
+    Console.WriteLine("                                     not its last, once. Winning it resumes the walk — the case that walked the rest of");
+    Console.WriteLine("                                     the way over a black screen. Needs a journey of two steps or more");
+    Console.WriteLine("  --spawn-beast <name>               DEBUG: put a beast (wolf, boar, bear, black bear, stray dog, fox, the climate");
+    Console.WriteLine("                                     beasts, or a great reptile such as crocodile or stegosaurus) in the opening");
     Console.WriteLine("                                     area of every scene, at every period. A wilderness factory only rolls one in");
     Console.WriteLine("                                     10-40% of the time and then lets it roam, so appease/tame are otherwise luck");
     Console.WriteLine("  --goal-only <verb-id>              DEBUG: the playground's goal choice must land on this verb (e.g. tame). Without");
@@ -257,6 +269,10 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --humors <humor>[,…] | <queue>=<humor>[,…]  DEBUG: fill humor queues (paunch, hepar, spleen, pulmones, or all)");
     Console.WriteLine("                                     with these humors, e.g. voluptas or hepar=juvenescence,spleen=laetitia");
     Console.WriteLine("  --mm-audit                         Print the modus-mentis content audit (hard-rule violations, coverage, soft stats) and exit");
+    Console.WriteLine("  --will-audit [out.json]            Plan every will across the location kinds and its own places: coverage, related coverage, breadth");
+    Console.WriteLine("  --will-trace <will-id> [location]  Why a will has or lacks something to do: its plans and every action its verbs are offered on");
+    Console.WriteLine("  --play-audit                       Print the PLAY audit (share of areas holding a play, kinds of play, lessons) and exit");
+    Console.WriteLine("  --will-lesson-audit                Every object that teaches a will must be one that will acts on or passes through on its way");
     Console.WriteLine("  --verb-audit                       Print the verb-coverage audit (verbs per observable vs targets, dead verbs,");
     Console.WriteLine("                                     unresolvable modus-mentis and tool ids, landmark counts) and exit");
     Console.WriteLine("  --outcome-audit                    Print the outcome catalogue (every consequence, who produces it, what produces nothing) and exit");
@@ -491,6 +507,13 @@ if (args.Length >= 1 && args[0] == "--verb-audit")
     return;
 }
 
+// Play audit: where PLAY is offered (a quarter of the areas is the aim), what is played, what it teaches.
+if (args.Length >= 1 && args[0] == "--play-audit")
+{
+    Console.WriteLine(Cathedral.Game.Scene.PlayAudit.BuildReport());
+    return;
+}
+
 // Verb probe: for each verb, the exact flags that reach it from a cold start. What a CLI test for
 // that verb has to open with. Headless: builds scenes and asks every verb; no LLM, no window.
 // Outcome audit: the catalogue of consequences, who produces each, and the two silent faults —
@@ -506,6 +529,13 @@ if (args.Length >= 1 && args[0] == "--outcome-audit")
 if (args.Length >= 1 && args[0] == "--demo-audit")
 {
     Cathedral.DemoLimitAudit.Run();
+    return;
+}
+
+// --journal-prompts <journals-dir> <out.jsonl>: the chronicler's prompts for tools/journal/ (see ChroniclerBench)
+if (args.Length >= 3 && args[0] == "--journal-prompts")
+{
+    Cathedral.Game.Narrative.ChroniclerBench.Run(args[1], args[2]);
     return;
 }
 
@@ -590,9 +620,34 @@ if (args.Length >= 1 && args[0] == "--crime-audit")
     return;
 }
 
+// Will coverage audit: plan every will from every sampled location kind and from the places it
+// belongs in, and report where it has something to do. Headless. An optional argument writes the
+// numbers as JSON (reports/multi-target-wills.html is built from two such files).
+if (args.Length >= 1 && args[0] == "--will-audit")
+{
+    Console.WriteLine(Cathedral.Game.Narrative.WillCoverageAudit.BuildReport(args.Length >= 2 && !args[1].StartsWith('-') ? args[1] : null));
+    return;
+}
+
+// Will lesson audit: every object that teaches a will must be something that will acts on, or on its
+// way — else picking the mind the object taught refuses the object. Headless.
+if (args.Length >= 1 && args[0] == "--will-lesson-audit")
+{
+    Console.WriteLine(Cathedral.Game.Narrative.WillLessonAudit.BuildReport());
+    return;
+}
+
+if (args.Length >= 2 && args[0] == "--will-trace")
+{
+    Console.WriteLine(Cathedral.Game.Narrative.WillCoverageAudit.Trace(args[1], args.Length >= 3 && !args[2].StartsWith('-') ? args[2] : null));
+    return;
+}
+
 // Modus-mentis content audit mode: print the report (violations are listed, not fatal) and exit.
 if (args.Length >= 1 && args[0] == "--mm-audit")
 {
+    // The persona-wording section tells a concrete noun by its word vector (PersonaLint).
+    Cathedral.Game.Narrative.WordEmbedding.InitializeAsync().GetAwaiter().GetResult();
     Console.WriteLine(Cathedral.Game.Narrative.ModusMentisRuleValidator.BuildAuditReport());
     return;
 }
@@ -865,6 +920,24 @@ if (args.Any(a => a == "--gpu"))
     Console.WriteLine();
 }
 
+// --llm-threads <n>: llama-server's thread count for this run (measuring at a player's core count)
+{
+    int i = Array.IndexOf(args, "--llm-threads");
+    if (i >= 0 && i + 1 < args.Length && int.TryParse(args[i + 1], out int n) && n > 0)
+        Cathedral.Config.Debug.ForcedLlmThreads = n;
+}
+
+// --llm-seed <n>: a sampler seed on every request, so two measured runs follow one path
+{
+    int i = Array.IndexOf(args, "--llm-seed");
+    if (i >= 0 && i + 1 < args.Length && int.TryParse(args[i + 1], out int n))
+        Cathedral.Config.Debug.LlmSeed = n;
+}
+
+// --no-chronicler: record the journal but never write it up in the background
+if (args.Any(a => a == "--no-chronicler"))
+    Cathedral.Config.Debug.ChroniclerDisabled = true;
+
 // Check for --no-llm-probe (skip first-run hardware detection)
 if (args.Any(a => a == "--no-llm-probe"))
 {
@@ -932,6 +1005,9 @@ for (int i = 0; i < args.Length; i++)
     if (args[i] == "--force-encounter" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
         Cathedral.Config.Debug.ForcedEncounters = new System.Collections.Generic.Queue<string>(
             args[i + 1].Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+
+    if (args[i] == "--encounter-mid-journey" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
+        Cathedral.Config.Debug.EncounterMidJourney = args[i + 1];
 
     if (args[i] == "--spawn-beast" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
         Cathedral.Config.Debug.SpawnBeast = args[i + 1];

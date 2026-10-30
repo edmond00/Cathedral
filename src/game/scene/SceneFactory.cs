@@ -46,6 +46,8 @@ public abstract class SceneFactory
         DropDepartedNpcs(scene);
         if (GuaranteesArrivalCompany) EnsureArrivalCompany(scene);
         PlaceBeastSign(scene);
+        if (GrowsWild) PlaceWildGrowth(scene, locationId);
+        if (PlacesPlay) PlayPlacement.Place(scene, locationId);
         AssignVerbs(scene);
         MergeDuplicateNamedPois(scene);
         AssignStableKeys(scene);
@@ -508,6 +510,71 @@ public abstract class SceneFactory
                 area.PointsOfInterest.Add(sign);
                 sign.Register(scene);
             }
+        }
+    }
+
+    // ── What grows wild ───────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Whether <see cref="Build(int)"/> lets mushrooms and herbs grow on the ground that grows them
+    /// (<see cref="PlaceWildGrowth"/>). Off where paths are: the test location must not change.
+    /// </summary>
+    protected virtual bool GrowsWild => LaysPaths;
+
+    /// <summary>
+    /// Whether <see cref="Build(int)"/> lays the plays over the finished scene
+    /// (<see cref="PlayPlacement"/>). Off where paths are, for the same reason as wild growth.
+    /// </summary>
+    protected virtual bool PlacesPlay => LaysPaths;
+
+    /// <summary>The generator wild growth is drawn from: its own stream, so nothing built before or after it moves.</summary>
+    private static Random GrowthRandom(int locationId) => new(unchecked(locationId * 0x27D4EB2F + 0x1656));
+
+    private const double MushroomChance = 0.45, HerbChance = 0.40;
+
+    /// <summary>Wet ground and woods, where fungi fruit: the areas a mycologist belongs in.</summary>
+    private static readonly Type[] FungalGround = Narrative.Places.Woodland.Concat(Narrative.Places.Damp).Distinct().ToArray();
+
+    /// <summary>Woods and the temperate grass, where simples grow — not the tundra or the savanna, whose plants are their own.</summary>
+    private static readonly Type[] HerbGround = Narrative.Places.Woodland.Concat(new[]
+    {
+        typeof(MeadowArea), typeof(GrasslandArea), typeof(HeathArea), typeof(HedgerowArea), typeof(WaterMeadowArea),
+        typeof(CommonArea), typeof(HillArea), typeof(ShielingArea),
+    }).ToArray();
+
+    /// <summary>
+    /// A cluster of mushrooms on fungal ground, and a patch of herbs on herb ground, where the area
+    /// holds none already — so that a will for either finds something in the places it belongs in. A
+    /// forest whose old growth had nothing for a herbalist, or a fen nothing for a mycologist, made
+    /// those wills idle exactly where a player expected them to work. Each candidate area always takes
+    /// both draws, so one area's growth never moves another's.
+    /// </summary>
+    private static void PlaceWildGrowth(Scene scene, int locationId)
+    {
+        var rng = GrowthRandom(locationId);
+        foreach (var area in scene.AllAreas)
+        {
+            bool fungal = FungalGround.Any(t => t.IsInstanceOfType(area));
+            bool herbal = HerbGround.Any(t => t.IsInstanceOfType(area));
+            if (!fungal && !herbal) continue;
+            double mushroom = rng.NextDouble(), herb = rng.NextDouble();
+
+            if (fungal && mushroom < MushroomChance && !Holds(area, Narrative.ItemKind.Mushroom))
+                Grow(scene, area, Shared.TerrainSubfactory.BuildMushroomCluster());
+            if (herbal && herb < HerbChance && !Holds(area, Narrative.ItemKind.Herb))
+                Grow(scene, area, Narrative.Places.Woodland.Any(t => t.IsInstanceOfType(area))
+                    ? Shared.TerrainSubfactory.BuildWoodlandHerbs()
+                    : Shared.TerrainSubfactory.BuildMeadowHerbs());
+        }
+
+        static bool Holds(Area area, Narrative.ItemKind kind)
+            => area.PointsOfInterest.Any(p => p.Items.Any(i => i.Item.Kinds.Contains(kind)));
+
+        static void Grow(Scene scene, Area area, PointOfInterest poi)
+        {
+            area.PointsOfInterest.Add(poi);
+            poi.Register(scene);
+            foreach (var item in poi.Items) item.Register(scene);
         }
     }
 
