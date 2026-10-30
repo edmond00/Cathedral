@@ -477,7 +477,7 @@ public class FarmSceneFactory : SceneFactory
                 new ItemElement(new Straw()),
             },
             moods: new[] { "tall", "dry", "sweet-smelling", "golden" }
-        ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "harvestry", ["smell"] = "petrichor" } });
+        ) { Play = new TumblePlay("climb up {0} and slide down its side into the loose hay"), Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "harvestry", ["smell"] = "petrichor" } });
 
         shed.PointsOfInterest.Add(new GrainPointOfInterest(
             displayName: "Grain Sacks",

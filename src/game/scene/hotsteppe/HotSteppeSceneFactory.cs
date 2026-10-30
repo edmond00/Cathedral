@@ -387,7 +387,7 @@ public class HotSteppeSceneFactory : WildSceneFactory
         items: new() { new ItemElement(new Clay()), new ItemElement(new Clay()) },
         moods: new[] { "grey", "polished", "rank", "cool" },
         isNatural: true
-    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "spoor_reading", ["smell"] = "musk_reading" } };
+    ) { Play = new MudPuddlePlay(), Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "spoor_reading", ["smell"] = "musk_reading" } };
 
     private static PointOfInterest BuildRainBasin() => new PoolPointOfInterest(
         displayName: "Rain Basin",
@@ -406,6 +406,11 @@ public class HotSteppeSceneFactory : WildSceneFactory
         TrySpawnBeast(rng, scene, new LionArchetype(),    0.35);
         TrySpawnBeast(rng, scene, new HyenaArchetype(),   0.30);
         TrySpawnBeast(rng, scene, new WarthogArchetype(), 0.40);
+
+        var reptiles = ReptileRandom(locationId);
+        TrySpawnBeast(reptiles, scene, new TriceratopsArchetype(),  0.15);
+        TrySpawnBeast(reptiles, scene, new CarnotaurusArchetype(),  0.10);
+        TrySpawnBeast(reptiles, scene, new AnkylosaurusArchetype(), 0.08);
 
         TrySpawnCreature(rng, scene, new GazelleArchetype(),    0.60);
         TrySpawnCreature(rng, scene, new ZebraArchetype(),      0.45);

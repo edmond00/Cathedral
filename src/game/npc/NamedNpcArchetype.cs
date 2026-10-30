@@ -201,7 +201,9 @@ public abstract class NamedNpcArchetype : NpcArchetype
         // Read gender back through GenderStat so it is the single source of truth for the name.
         string name = isHuman
             ? Naming.NameGenerator.GenerateHuman(NpcLabelResolver.GenderIsMale(combatant), nameRng)
-            : Naming.NameGenerator.GenerateBeast(nameRng);
+            : Species.AnatomyType == AnatomyType.Reptile
+                ? Naming.NameGenerator.GenerateReptile(nameRng)
+                : Naming.NameGenerator.GenerateBeast(nameRng);
         combatant.SetDisplayName(name);
 
         // The stable name-derived id: names are per-NPC and reproducible across visits (nameRng),

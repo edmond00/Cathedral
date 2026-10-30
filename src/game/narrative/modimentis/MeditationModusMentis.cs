@@ -16,7 +16,9 @@ public class MeditationModusMentis : ModusMentis
         "Holds a long, settled calm that quiets thought and steadies feeling. Keeps the mind clear and unhurried, and inclines toward focus and patience where noise would scatter attention.";
     public override string SkillMeans       => "the calming and stilling of the mind";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
-    public override WillTargets? Will => WillTarget.To<SitAndWaitVerb>("sit still and quiet my mind");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<SitAndWaitVerb>("sit still and quiet my mind"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ContemplateVerb>("rest my mind on a still thing").Teaching<MeditationModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Sacred, Places.Heights);
     public override string[] Organs        => new[] { "pineal_gland", "heart" };
 

@@ -13,7 +13,9 @@ public class WinnowingModusMentis : ModusMentis
         "Separates grain from chaff on a windy floor, tossing it from a basket or fanning it with a flat sieve. Reads the wind for strength and steadiness, and knows by the sound when the grain falls clean.";
     public override string SkillMeans       => "the separating of grain from chaff on the wind";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTargets? Will => WillTarget.ToAny("take up grain to winnow", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Grain);
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.ToAny("take up grain to winnow", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Grain),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over winnowing gear").Teaching<WinnowingModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Fields, new[] { typeof(Cathedral.Game.Scene.ThreshingArea) }, new[] { typeof(Cathedral.Game.Scene.BarnArea) });
     public override string[] Organs        => new[] { "arms", "pulmones" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

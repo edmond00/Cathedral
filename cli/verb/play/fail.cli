@@ -1,0 +1,37 @@
+# play — fail
+#
+# The play verb attempted and missed: the checks pass, the dice do not, the outcome block reports
+# FAILURE, and nothing is learned. A failure costs one entry of the play's own table (the skipping
+# stones: the thread lost, or a strained shoulder); which one is drawn, so it is not asserted here.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Shore" --period dawn --observe-only "Test Pebbles"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy fail-dice
+goal play
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+expect FAILURE
+expect-verb play
+# The failure assertion that means something: the play's lesson did NOT land.
+expect-no-state skills ducks_and_drakes
+quit

@@ -236,6 +236,7 @@ public static class ForbiddenWordsAudit
         ("For God's sake!", "For Qoth's sake!"),
         ("the priests of the Fallen God", "the priests of the Fallen God"),
         ("Heaven knows why.", "Heaven knows why."),
+        ("Inclines toward the game over the errand", "Inclines toward the game over the errand"),
         ("the souls in Heaven", "the souls in the Garden"),
         ("two electric chairs", "two gallows"),
         ("the salt magazine", "the salt magazine"),

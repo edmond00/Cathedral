@@ -17,7 +17,8 @@ public class PietyModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
     public override WillTargets? Will => WillTargets.Of(
         WillTarget.To<AskBlessingVerb>("ask a blessing"),
-        WillTarget.To<Cathedral.Game.Scene.Verbs.ContemplateVerb>("pray before a holy thing").YieldingKind(ItemKind.Holy));
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ContemplateVerb>("pray before a holy thing").YieldingKind(ItemKind.Holy),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ContemplateVerb>("pray before what calls me to it").Teaching<PietyModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Sacred);
     public override string[] Organs        => new[] { "heart", "pineal_gland" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

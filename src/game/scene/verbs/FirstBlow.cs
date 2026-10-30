@@ -51,6 +51,9 @@ public static class FirstBlow
         if (tool != null)
         {
             if (tool is not IWeaponItem weapon) return Array.Empty<FirstBlowMedium>();
+            // Too heavy for either arm: the combination gate refuses it (TooHeavy), and the fight
+            // would not wield it either.
+            if (!actor.CanWieldInSomeHand(tool)) return Array.Empty<FirstBlowMedium>();
             var category = WeaponMediumRegistry.GetById(weapon.WeaponCategory);
             if (category == null) return Array.Empty<FirstBlowMedium>();
             return new[] { new FirstBlowMedium(FightingMedium.Weapon, tool.DisplayName.ToLowerInvariant(),

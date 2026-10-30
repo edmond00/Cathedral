@@ -48,11 +48,11 @@ public class ManagementMenuRenderer
 
     // ── Cached art data per anatomy type ─────────────────────────
     private readonly BodyArtData _humanArtData;
-    private BodyArtData? _beastArtData;
+    private readonly Dictionary<string, BodyArtData> _creatureArtData = new();
 
     // ── Cached gear data per anatomy type ────────────────────────
     private readonly GearAnchorData _humanGearData;
-    private GearAnchorData? _beastGearData;
+    private readonly Dictionary<string, GearAnchorData> _creatureGearData = new();
 
     // ── Tab state ────────────────────────────────────────────────
     private ManagementTab _activeTab = ManagementTab.Anatomy;
@@ -266,17 +266,20 @@ public class ManagementMenuRenderer
     private BodyArtData GetBodyArtDataFor(PartyMember member)
     {
         if (member.AnatomyType == AnatomyType.Human) return _humanArtData;
-        _beastArtData ??= BodyArtData.Load(
-            member.Species.ArtFolderPath,
-            AnatomyFactoryRegistry.GetFactory(AnatomyType.Beast).GetZoneToBodyPartMapping());
-        return _beastArtData;
+        // Keyed by the art folder: a beast and a reptile are drawn from different grids.
+        if (!_creatureArtData.TryGetValue(member.Species.ArtFolderPath, out var art))
+            _creatureArtData[member.Species.ArtFolderPath] = art = BodyArtData.Load(
+                member.Species.ArtFolderPath,
+                AnatomyFactoryRegistry.GetFactory(member.AnatomyType).GetZoneToBodyPartMapping());
+        return art;
     }
 
     private GearAnchorData GetGearDataFor(PartyMember member)
     {
         if (member.AnatomyType == AnatomyType.Human) return _humanGearData;
-        _beastGearData ??= GearAnchorData.Load(member.Species.ArtFolderPath);
-        return _beastGearData;
+        if (!_creatureGearData.TryGetValue(member.Species.ArtFolderPath, out var gear))
+            _creatureGearData[member.Species.ArtFolderPath] = gear = GearAnchorData.Load(member.Species.ArtFolderPath);
+        return gear;
     }
 
     /// <summary>Apply art/gear data and auto-center the art for <paramref name="member"/>.</summary>

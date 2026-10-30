@@ -15,7 +15,8 @@ public class OilPressingModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTargets? Will => WillTargets.Of(
         WillTarget.ToAny("pick olives", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).Yielding<Cathedral.Game.Narrative.World.Items.Olive>(),
-        WillTarget.ToAny("take up the new oil", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).Yielding<Cathedral.Game.Narrative.World.Items.OliveOil>());
+        WillTarget.ToAny("take up the new oil", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).Yielding<Cathedral.Game.Narrative.World.Items.OliveOil>(),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over a press").Teaching<OilPressingModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.PressArea) }, new[] { typeof(Cathedral.Game.Scene.GroveArea) });
     public override string[] Organs        => new[] { "arms", "nose" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

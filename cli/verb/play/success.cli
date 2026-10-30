@@ -1,0 +1,42 @@
+# play — success
+#
+# The play verb carried through: forced past the dice, the outcome block reports SUCCESS, and the one
+# thing a play does is teach. Skipping stones off the Test Pebbles teaches ducks and drakes — the
+# play's own lesson, not the verb's playfulness fallback, which is what success2-style coverage of
+# PlayVerb.Lessons needs: the lesson is the object's, so asserting it proves the object was read.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Shore" --period dawn --observe-only "Test Pebbles"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal play
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+regions
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+expect SUCCESS
+# A play changes nothing in the world; its whole effect is the lesson. "Modus mentis" without its
+# noun: a first grant reads "acquired", a repeat "learned".
+expect Modus mentis
+expect-state skills ducks_and_drakes
+
+# What makes this a play test rather than an any-verb test.
+expect-verb play
+quit

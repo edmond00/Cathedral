@@ -64,7 +64,8 @@ condition. The *genitories* determine the sex and lend the raw vigour behind a b
 further office in the working of the frame.
 
 **Of the limbs.** The *arms* are the organs of gross force, the *hands* of manual dexterity — the
-latter setting how much potency may be drawn from an implement. The *legs* mediate celerity, and the
+former setting how heavy a thing each hand may hold (see [Chapter IV §3](04-items.md#3-anchors)),
+the latter how much potency may be drawn from an implement. The *legs* mediate celerity, and the
 *feet* stance and endurance, whence sure footing on treacherous ground and the dice of flight.
 
 ## 3. The bestial frame
@@ -90,12 +91,40 @@ frames; one that reasons by its constitution is not.
 The *snout* stands to the beast as the nose to man, of far greater development; the *fangs* as the
 teeth, and as its principal armament.
 
+### The reptilian frame
+
+A third anatomy, of the same four regions, carries the great reptiles. It is the bestial frame with
+three alterations, and in all else — the encephalon wanting the pineal gland, the trunk wanting the
+genitories, the shared identifiers — it is the beast's.
+
+| Region | Organs |
+|---|---|
+| **Encephalon** | anamnesis · cerebellum · cerebrum · hippocampus |
+| **Muzzle** | eyes · ears · snout · tongue · fangs · **horns** |
+| **Trunk** | backbone · heart · pulmones · viscera · paunch · hepar · spleen · **thagomizer** |
+| **Limbs** | legs (fore and hind, left and right) |
+
+The reptile has **no claws**: its toes end blunt, and every modus mentis that names the claws is
+beyond it. In their place it bears two weapons of its own. The **horns** are every horn of the head
+taken as one organ of a single part; the **thagomizer** is the armed end of the tail, its spikes or
+its club, lodged in the trunk because the tail is the spine drawn out. Each is a weapon in the
+fight and a source of modi mentis like any other organ. A reptile suffers the beast's wounds, save
+those of the claws, and four of its own: a broken or a torn-off horn, a broken spike, and the
+severed tail, which is a High wound to the thagomizer.
+
+Only the giant kinds are constituted upon this frame. A lizard that may be stepped upon has no
+anatomy at all, and is one of the small creatures that give no fight.
+
 ## 4. Species
 
 A **species** is not an anatomy. It names an anatomy and may then revise the ceilings of individual
 organ parts. Wolf, bear, boar, dog, cat and fox all stand upon the bestial anatomy and differ only
 in these ceilings — a wolf's fangs reach five where another creature's reach less, its forelegs
-five, its paunch three. Man is the sole species upon the human anatomy.
+five, its paunch three. Man is the sole species upon the human anatomy. The reptiles differ the
+same way, and most in their weapons: where the horns or the thagomizer are a species' true arms
+their ceiling is five, and where they are no more than bony bosses or a heavy tail it falls as low
+as one. A creature that goes upon two legs is not another anatomy, but the reptilian frame with
+its forelegs held to a ceiling of one.
 
 Whence the rule that governs every formula in this manual: **a measure is scaled against the body's
 own maximum, not against a constant.** A creature whose heart tops out lower than man's still
@@ -118,7 +147,7 @@ Three capabilities are therefore declared of each anatomy:
   rather than upon the senses. A beast may track, remember and scheme; it cannot reckon or read a
   charter.
 
-The human anatomy has all three. The bestial anatomy has none.
+The human anatomy has all three. The bestial and the reptilian anatomies have none.
 
 The declaration runs in one direction only: **an anatomy declares what it has, and a modus mentis or
 an act declares what it requires.** What requires nothing — the common case — is open to every
@@ -144,7 +173,7 @@ value** — which for most is a floor, and for a duration or a price is a ceilin
 | Working Memory | encephalon | score + 2, bounded 1–25 |
 | Countenance | visage | score ÷ 5, in dice — a visage at its ceiling of 22 is worth 4 |
 | Health Points | trunk | ⌊score ÷ 3⌋ + 1 |
-| Natural Defence | lower limbs; for a beast, its legs | score ÷ 3, in dice; for a beast, score ÷ 4 |
+| Natural Defence | lower limbs; for a beast or a reptile, its legs | score ÷ 3, in dice; for a beast or a reptile, score ÷ 4 |
 | Max Travel Distance | lower limbs | from 4.0 units at nought to 14.8 at the region's ceiling, linearly |
 
 ### From the organs

@@ -724,7 +724,8 @@ only the goals — never the steps.** `WillTarget.To<TVerb>(purpose)`, a group b
 or a base class (`DialogueVerb` is every conversation), narrowed by `.On<TElement>()`,
 `.Yielding<TItem>()` / `.YieldingAny(label, types…)`, `.YieldingKind(ItemKind)` (a family across classes:
 every mushroom, every blade), `.Selling(ItemKind)` (a trader whose wares hold one), `.OnHostile()`,
-`.OnBeast()` or `.Where(test, label)` — types and enums throughout, never names. `Purpose` is narration
+`.OnBeast()`, `.Teaching<TModusMentis>()` (what declares that lesson — see "A will wants what teaches
+it") or `.Where(test, label)` — types and enums throughout, never names. `Purpose` is narration
 only ("pick a lock"); each target has its own, and a path is narrated with the one it reaches
 (`ActionPath.Target`, `WillTargets.PurposeOf`). A single target converts implicitly, so
 `Will => WillTarget.To<…>(…)` is still a one-target will; several are `WillTargets.Of(t1, t2, …)`.
@@ -748,7 +749,11 @@ successors from `Scene.View(pov, actor, verbs)` — the live gates — and from 
 when every verb is (a grab that yields it, or `propose_to_buy` on someone whose `BuyCatalog` lists it —
 opaque beyond, replanned next phase). The implement is a goal verb's `ReferenceToolIds` **or any item
 made for it** (`Item.MadeForVerbIds`, `ToolIdsFor`): a ring of keys is a tool made for `unlock_door`, so
-a will to open a lock goes for the keys on the gatehouse pegs. Nothing else is modelled, so a path never passes a conversation,
+a will to open a lock goes for the keys on the gatehouse pegs. **When no such implement can be had in
+the place, the goal is planned bare-handed** (`ActionPath.Unarmed`, a second search) rather than refused:
+the planner knows only reference tools and made-for items, while the click takes anything carried to
+the critic (a short sword cutting a carcass) and `RequiredToolRule` asks for a tool when nothing is
+combined. Refusing there made Butchery decline a hyena and then its corpse with a blade in the pack. Nothing else is modelled, so a path never passes a conversation,
 a fight or loot. **A sit is every other hour, and the path is one of them**: `PathStep.Until` keeps the
 hour the search reached by it, `ThinkingExecutor` settles the will's step on it
 (`SitAndWaitVerb.Until`, the period as the action's variant, "…until dawn"), and `AskWaitUntil` then
@@ -831,6 +836,31 @@ before and is only noted. Brawling wants somebody hostile (`OnHostile`: an enemy
 person who counts somebody an enemy) or a weapon to buy, not a passer-by: struck at in a street, a
 peaceful citizen was a refusal waiting at the click, and the will idled in every town.
 
+**A will wants what teaches it.** An object that declares a will its lesson (`VerbModiMentis` on a
+point of interest or an archetype, `Teach((…))`, `Lessons((…))`) is the content saying the two belong
+together — and the will must then be willing to act on it, or a player who picks the very mind the
+object taught is told it has no interest in the object. That was the playtest: examining petroglyphs
+teaches archeology, archeology wanted only to dig, study a relic or fetch a spade, and refused the
+carvings. 167 (will, object kind) pairs were in that state, from the smithy's anvil (metalcraft wanted
+ore and iron, not the anvil) to the bench pews (piety). Every such will now ends on one target bound to
+its own lesson: `WillTarget.To<ExamineVerb>("study what old stones remember").Teaching<ArcheologyModusMentis>()`
+— the verbs the lesson is declared for, and only on what declares it, instance by instance (one
+`RackPointOfInterest` class teaches harvestry, laundering, husbandry or metalcraft depending on the rack).
+So:
+
+- **Declaring a will as an object's lesson for a verb the will's `Teaching<>` target names needs nothing
+  more.** For any other verb, add it to that target (`ToAny(purpose, types…).Teaching<…>()`).
+- **A new will that objects teach** ends on its own `Teaching<Self>()` target, which costs a slot of the five.
+- **`--will-lesson-audit`** walks every object of every location factory and fails (✗) any object that
+  declares a will's lesson while offering nothing that will wants or passes through on its way. Lessons
+  the verb itself gives (its default, or a contextual case in `Lessons`) are printed as notes — they
+  are about the act, not the object. A pairing that is right as it stands goes in
+  `WillLessonAudit.Accepted`, with the reason.
+- **A `Teaching<>` target is not a desire**, so `--will-audit` judges breadth without it: it reaches only
+  what the content already says teaches the will, and a will made broad by it is broad because its lesson
+  is declared broadly. Tillage is the example: every `DiggableGroundPointOfInterest` teaches it on examine,
+  so it wants a clay bank in the wild — if that is wrong, the lesson is what changes.
+
 **Every childhood path leaves a general thinker** (rule C3, `ReminescenceRuleValidator`, fatal): a will
 thinks only toward its targets, so a childhood granting none but wills would leave a body unable to
 think about anything it did not already want. Converting a modus mentis a childhood grants can break
@@ -861,6 +891,8 @@ only `anglery` wants it.
 |---|---|
 | `inspect will` | every held will's plan: `steps=`, `first=`, `goal=`, `target=` (a person by archetype id), `tool_step=`, `aim=<k>/<n>` (which target, in declaration order) and `purpose="…"`, or `steps=none` |
 | `--will-audit [out.json]` / `--will-trace <id> [location]` | coverage, related coverage and breadth per will; why one has or lacks something to do |
+| `--will-lesson-audit` | every object that teaches a will and that the will refuses |
+| `cli/system/will_lesson_object.cli` | archeology plans to examine the petroglyphs that taught it, one step from the Dry Wash |
 | `select mm <id>` | the memory panel's detail box for a held modus mentis, which lists a will's targets under "Wants" |
 | `choose <mm-id>` | answer the modus mentis popup by id rather than by position |
 | `cli/system/will_path.cli` | plan, focus kept with the path as reason, the walk carried out by a judged means (pinned to Woodcraft), the unlock by the will itself |
@@ -1753,6 +1785,41 @@ Three consequences worth knowing:
 phase runs on "examine the flower patch closely" instead). `--verb-audit` prints what each anatomy is
 barred from — 25 of 54 verbs for a beast.
 
+### What a hand can hold: weapons, weights and the arms
+
+**One weapon to a hand, by type.** `WeaponItem` seals `Item.Size` behind `WeaponSize Bulk`, which has
+only `Medium` and `Large`: a hold is nine slots, so a medium weapon leaves three and two can never
+share one. A new weapon declares `Bulk`, not `Size`; there is no way to author a small one.
+
+**A real weapon out-strikes a bare limb.** `Level` is the weapon medium's level, multiplied into dice
+exactly as a hand's score is, and a hand or foot tops out at 3 (`WeaponItem.StrikingLimbCeiling`). So
+every weapon is levelled 4–6, and only an `IsImprovised` one (branch, wooden stick — level 0, opens the
+category's skills and lends nothing) may sit at or under the ceiling. The price is ten copper per level
+above the ceiling. A new weapon picks a level above 3 or declares itself improvised.
+
+**The arm behind a hand decides what it can hold** (`PartyMember.HoldLimit`): the arm part's effective
+score after wounds — `right_arm` for `RightHold`, `left_arm` for `LeftHold` — at 0 bears a light item,
+1 a medium one, 2 a heavy one; a disabled arm counts as 0, and an anatomy with no arm (a beast's holds
+are its mouth) is not governed. A new weapon's `Weight` is therefore also which arms can fight with it,
+and `--item-audit` fails when the real weapons stop spreading over the three tiers.
+
+- **Every placement asks `PartyMember.CanPlace(anchor, item)`**, never `EquipmentAnchor.CanAccept`
+  alone: acquisition (`TryAcquireItem`, `CanAcquire`), the inventory's drag, move and drop, and the
+  trade menu's room check. A heavy thing with no strong-enough hand and no container to take it is
+  refused through `CanAcquire` exactly like a full pack (`InventoryCapacityRule`), worded for the
+  weight. A container takes it whatever the arms.
+- **Only what sits in the hand is weighed.** A bag is held by its handle: a heavy item in a medium bag
+  in a level-1 hand is fine. The contents are carried, not wielded.
+- **The fight reads `PartyMember.WieldedWeapons`**, never the raw hold lists: a weapon directly in the
+  hand and no heavier than its arm bears. A weapon placed while the arm was sound stays in the hand when
+  a wound weakens it and simply stops being one — no medium, no tab, "too heavy" on the Bellic tab.
+- **A weapon combined from the pack for a first blow** must be wieldable by some hand
+  (`CanWieldInSomeHand`): `ToolCombinationRules.Resolve` refuses it as `TooHeavy`, with no request made,
+  and `FirstBlow.MediumsFor` agrees.
+- `--weapons` lifts both arms to 1 at acceptance so its medium loadout is wielded (`--organs` still
+  wins); `--grant-item` forces an item it cannot place into a hand, because the grant runs against the
+  pre-creation scores. `cli/system/arm_hold_limit.cli` and `arm_hold_refuses_heavy.cli`.
+
 ### A verb teaches per body, not per verb
 
 **A verb's lesson is a candidate list, not one id.** `Verb.GrantedModusMentisIds(target)` returns them
@@ -1778,6 +1845,41 @@ spoor_reading/`spoor_eye`, soft_mouth/`snatch`. `cross` puts the crossing's own 
 unlearnable by a body that could be offered it. The beast side of that fault is real and not yet
 fixed: `VerbAudit.NoBeastCounterpart` lists the sixteen verbs a beast companion can be offered and
 learn nothing from, with the reason. **Empty that list, do not extend it.**
+
+### Play: the verb its object words
+
+PLAY (`PlayVerb`) is play for its own sake — skipping stones off a creek, swinging on a liana, rolling
+down a grassy bank, scratching a hound behind the ears. **It is the one verb that does not word itself.**
+Two plays share nothing but being done for fun, so everything a verb normally declares belongs to the
+object: a `PlayActivity` (`src/game/scene/play/`) carries the verbatim, the difficulty, the
+`RequiredCapabilities`, the `Lessons` (most restrictive first, beast before human) and the
+`FailurePenalties`, and `PlayVerb` reads all five off whatever `IPlayable` it is aimed at.
+
+- **A kind of play is a type**, one `PlayActivity` subclass each (`PlayActivities.cs`), so a will narrows
+  on it with `WillTarget.Playing(label, typeof(KnucklebonesPlay))` — never on a name. Where the wording
+  differs by object (hay jumped into vs. a haystack slid down, a cat stroked vs. a lamb held) the
+  subclass takes a `{0}` template; the kind, the lessons and the costs stay the type's.
+- **A success teaches and does nothing else**: no item, no hour, no move. `SuccessReports` is empty and
+  `play` is in `OutcomeAudit.TeachesOnly` with the senses. The lesson is the play's own; `playfulness`
+  (a will to play) is the verb's fallback, and what kicking through a leaf drift teaches.
+- **Three routes put a play in the world.** A factory sets `PointOfInterest.Play` on an object of its own
+  when the play belongs to it (the jungle's hanging lianas, a loft's hay, a field's scarecrow, a felled
+  log, a town fountain); an archetype declares `NpcArchetype.Play` (hound, goat, lamb, hens, stray cat and
+  dog — a creature that counts the actor an enemy is refused); and `PlayPlacement`, after wild growth,
+  gives a staircase or a creek its play and lays a plaything (`PlayPoiKinds.cs`) in an area by its kind,
+  from a generator of its own seeded with the location id, so nothing else in the place moves. Off in
+  the test location, whose `Test Pebbles` on the shore are laid by hand.
+- **About a quarter of the areas hold a play**, and `--play-audit` holds it there (20–32%, mean over the
+  factories; pooled is printed beside it). The chances in `PlayPlacement.Rules` were tuned against its
+  by-kind table: read it before changing one, since a dormitory or a roof moves the pooled figure more
+  than a whole biome does. It also prints how each carrier is worded — read it after adding a template.
+
+Fourteen modi mentis are taught by play and by nothing else (playfulness, ducks_and_drakes, swinging,
+cosseting, glissade, sand_castles, mudlarking, hopscotch, halloo, tumbling, shying, chasing, paddling,
+whirligig; glissade, whirligig and playfulness are wills). Gambling, plunge, surefoot/balance, whistling
+and howling are the existing minds a game also practises. Foul play (cheating at knucklebones), carousal,
+plunge and rigging want a play as one of their targets. Husbandry, pounce and vaulting were tried and
+taken back: a play as a second target took each past the will audit's 75% breadth.
 
 ### The senses reach living things
 

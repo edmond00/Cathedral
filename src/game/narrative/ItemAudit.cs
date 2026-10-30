@@ -185,14 +185,16 @@ public static class ItemAudit
         var warnings = new List<string>();
         var registry = Fight.FightingSkillRegistry.Instance;
 
-        // A human and a beast: their anatomies name different regions (a beast has limbs and a
-        // muzzle where a human has upper_limbs and a visage), so a location that reaches nothing on
-        // one may be exactly right on the other.
+        // A human, a beast and a reptile: their anatomies name different regions (a beast has limbs
+        // and a muzzle where a human has upper_limbs and a visage, and only a reptile has horns), so
+        // a location that reaches nothing on one may be exactly right on another.
         var bodies = new (string Name, Fight.Fighter Fighter)[]
         {
             ("human", new Fight.Fighter(new Protagonist(), 0, 0, false, Fight.FighterFaction.Enemy)),
             ("beast", new Fight.Fighter(new EnemyCombatant("beast", new WolfSpecies()), 0, 0, false,
                                         Fight.FighterFaction.Enemy)),
+            ("reptile", new Fight.Fighter(new EnemyCombatant("reptile", new CrocodileSpecies()), 0, 0, false,
+                                          Fight.FighterFaction.Enemy)),
         };
         var pools = bodies.ToDictionary(b => b.Name, b => Fight.FightResolver.BuildAnatomyWoundPool(b.Fighter));
 
@@ -201,7 +203,7 @@ public static class ItemAudit
         sb.AppendLine("  Wounds each authored localisation can reach, per anatomy. A zero on BOTH means");
         sb.AppendLine("  the blow can only ever graze there, however well it is rolled.");
         sb.AppendLine();
-        sb.AppendLine($"  {"skill",-19} {"human",-26} {"beast",-16} {"damage",-20} graze");
+        sb.AppendLine($"  {"skill",-19} {"human",-26} {"beast",-16} {"reptile",-16} {"damage",-20} graze");
 
         foreach (var skill in registry.GetAll()
                      .Where(s => s.WoundTargetMode == Fight.WoundTargetMode.FixedBodyPart
@@ -243,7 +245,8 @@ public static class ItemAudit
                              .Select(w => w.WoundName).Distinct().OrderBy(n => n);
 
             sb.AppendLine($"  {skill.SkillId,-19} {string.Join(" ", perBody["human"]),-26} " +
-                          $"{string.Join(" ", perBody["beast"]),-16} {skill.DamageTypes,-20} {string.Join("/", graze)}");
+                          $"{string.Join(" ", perBody["beast"]),-16} {string.Join(" ", perBody["reptile"]),-16} " +
+                          $"{skill.DamageTypes,-20} {string.Join("/", graze)}");
 
             if (skill.DamageTypes == DamageType.None)
                 warnings.Add($"{skill.SkillId}: no damage type — its grazes are indistinguishable from every " +
@@ -720,6 +723,83 @@ public static class ItemAudit
         foreach (var w in weapons.Where(w => !known.Contains(w.WeaponCategory)))
             warnings.Add($"weapon '{((Item)w).ItemId}' has category '{w.WeaponCategory}', " +
                          "which matches no weapon medium — it unlocks no skills");
+
+        warnings.AddRange(CheckWeaponRules(weapons.OfType<Item>().ToList(), sb));
+        return warnings;
+    }
+
+    /// <summary>
+    /// The three rules every weapon is authored under, each printed as a ✗ line on breach so the
+    /// suite's audit pass fails on it (a plain warning here does not):
+    ///
+    /// <list type="bullet">
+    ///   <item><b>Medium or larger.</b> A hold is nine slots, so two medium weapons cannot share one —
+    ///     one weapon to a hand. <c>WeaponItem</c> seals <c>Size</c> behind a size enum with no small
+    ///     value; this catches an <see cref="IWeaponItem"/> written outside that base.</item>
+    ///   <item><b>Stronger than a bare limb.</b> Every weapon not improvised has a level above the best
+    ///     score a human striking limb can reach, read off the anatomy here rather than assumed, and
+    ///     <see cref="Items.WeaponItem.StrikingLimbCeiling"/> must agree with it.</item>
+    ///   <item><b>Spread over the three hold tiers.</b> An arm of level 0 holds light things, 1 medium,
+    ///     2 heavy (<see cref="PartyMember.HoldLimit"/>), so the weights decide which arms can fight
+    ///     with what. Each tier must hold at least a fifth of the real weapons, and none may be
+    ///     insignificant, which every arm would bear and no fight would notice.</item>
+    /// </list>
+    /// </summary>
+    private static List<string> CheckWeaponRules(IReadOnlyList<Item> weapons, StringBuilder sb)
+    {
+        var warnings = new List<string>();
+
+        // The best a human striking limb reaches: the organ mediums the human body owns, part by part
+        // (a hand strikes alone), at each part's maximum.
+        var probe   = new Protagonist();
+        // Only mediums that strike: viscera is all buffs, and legs all movement and guard.
+        int ceiling = OrganMediumRegistry.GetAll()
+            .Where(c => c.SkillIds.Any(id => FightingSkillRegistry.Instance.GetById(id)?.EffectType == FightingSkillEffect.Attack))
+            .Select(c => probe.GetOrganById(c.OrganId))
+            .Where(o => o != null)
+            .SelectMany(o => o!.Parts.Count > 0 ? o.Parts.Select(p => p.MaxScore) : new[] { o.MaxScore })
+            .DefaultIfEmpty(0)
+            .Max();
+
+        static bool Improvised(Item i) => i is Items.WeaponItem { IsImprovised: true };
+        var real = weapons.Where(w => !Improvised(w)).ToList();
+
+        sb.AppendLine($"  best human striking limb : {ceiling}   (WeaponItem.StrikingLimbCeiling = {Items.WeaponItem.StrikingLimbCeiling})");
+        sb.AppendLine();
+        sb.AppendLine("  weapon                 size    weight  lv   held by an arm of");
+        foreach (var w in weapons.OrderBy(i => i.Weight).ThenBy(i => ((IWeaponItem)i).Level).ThenBy(i => i.ItemId))
+        {
+            int arm = w.Weight switch { <= WeightClass.Light => 0, WeightClass.Medium => 1, _ => 2 };
+            sb.AppendLine($"    {w.ItemId,-20} {w.Size,-7} {w.Weight.Label(),-7} {((IWeaponItem)w).Level,2}   {arm}+"
+                        + (Improvised(w) ? "   improvised" : ""));
+        }
+        sb.AppendLine();
+
+        void Fail(string message) { sb.AppendLine($"  ✗ {message}"); warnings.Add(message); }
+
+        if (Items.WeaponItem.StrikingLimbCeiling != ceiling)
+            Fail($"WeaponItem.StrikingLimbCeiling is {Items.WeaponItem.StrikingLimbCeiling} but the best human striking limb reaches {ceiling}");
+
+        foreach (var w in weapons.Where(w => w.Size < ItemSize.Medium))
+            Fail($"weapon '{w.ItemId}' is {w.Size} — a weapon is medium or larger, so two cannot share a hand");
+
+        foreach (var w in real.Where(w => ((IWeaponItem)w).Level <= ceiling))
+            Fail($"weapon '{w.ItemId}' is level {((IWeaponItem)w).Level}, no better than a bare limb at {ceiling} "
+               + "— raise it, or mark it IsImprovised if it is a thing picked up and swung");
+
+        foreach (var w in weapons.Where(w => w.Weight == WeightClass.Insignificant))
+            Fail($"weapon '{w.ItemId}' is insignificant in weight — every arm bears it, so its weight decides nothing");
+
+        int minPerTier = Math.Max(1, real.Count / 5);
+        sb.AppendLine("  real weapons by weight   (each tier needs at least " + minPerTier + ")");
+        foreach (var tier in new[] { WeightClass.Light, WeightClass.Medium, WeightClass.Heavy })
+        {
+            int n = real.Count(w => w.Weight == tier);
+            sb.AppendLine($"    {tier.Label(),-8} {n,3}");
+            if (n < minPerTier)
+                Fail($"only {n} real weapon(s) are {tier.Label()} — the weights are unbalanced across the arm tiers");
+        }
+        sb.AppendLine();
 
         return warnings;
     }

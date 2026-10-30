@@ -14,7 +14,9 @@ public class FordingModusMentis : ModusMentis
         "Crosses water on foot: picks the line, faces the current, moves one foot at a time and never crosses their legs. Knows the depth at which a person stops being able to stand, which is lower than anybody expects.";
     public override string SkillMeans       => "the crossing of water on foot";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTargets? Will => WillTarget.To<CrossVerb>("cross on foot");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<CrossVerb>("cross on foot"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("read a ford before crossing it").Teaching<FordingModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.FreshWater);
     public override string[] Organs        => new[] { "legs", "pulmones" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

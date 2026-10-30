@@ -14,7 +14,9 @@ public class PilgrimageModusMentis : ModusMentis
         "Walks toward something holy and treats the walking as the point. Endures hardship deliberately, keeps going past the sensible stopping place, and arrives changed rather than merely arrived.";
     public override string SkillMeans       => "the walking undertaken as an act of devotion";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTargets? Will => WillTarget.To<VoyageTowardVerb>("walk on as an act of devotion");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<VoyageTowardVerb>("walk on as an act of devotion"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look upon a pilgrim's token").Teaching<PilgrimageModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Sacred, Places.Wild);
     public override string[] Organs        => new[] { "heart", "legs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

@@ -5568,7 +5568,8 @@ public class NarrativeController
 
             var gatedVerb    = action.PreselectedOutcome?.Verb;
             var proficiency  = ToolUsageProficiencyStat.Of(_activePartyMember);
-            var gate         = ToolCombinationRules.Resolve(gatedVerb, item, proficiency);
+            var gate         = ToolCombinationRules.Resolve(gatedVerb, item, proficiency,
+                                   wieldable: _activePartyMember.CanWieldInSomeHand(item));
             Console.WriteLine($"NarrativeController: Tool gate — proficiency={proficiency}, verb={gatedVerb?.VerbId ?? "none"} ({gatedVerb?.ToolUse.ToString() ?? "n/a"}), gate={gate}");
 
             // Three of the four gates settle it here, with no request made at all. The fourth is the
@@ -5628,6 +5629,7 @@ public class NarrativeController
                     ToolCombinationGate.NotItsPurpose => ToolFailureKind.NotItsPurpose,
                     ToolCombinationGate.ExcludedVerb  => ToolFailureKind.Senseless,
                     ToolCombinationGate.NotAWeapon    => ToolFailureKind.NotAWeapon,
+                    ToolCombinationGate.TooHeavy      => ToolFailureKind.TooHeavy,
                     _                                 => ToolFailureKind.None,
                 };
                 Console.WriteLine($"NarrativeController: Settled without a critic call — {gate}.");

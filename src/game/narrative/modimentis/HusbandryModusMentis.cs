@@ -18,7 +18,8 @@ public class HusbandryModusMentis : ModusMentis
         WillTarget.ToAny("fetch fodder for the beasts", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Fodder),
         WillTarget.ToAny("collect the eggs", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Egg),
         WillTarget.To<Cathedral.Game.Scene.Verbs.TameVerb>("bring a beast to hand"),
-        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy fodder").Selling(ItemKind.Fodder));
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy fodder").Selling(ItemKind.Fodder),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over the stock and their keeping").Teaching<HusbandryModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Stock, Places.Fields);
     public override string[] Organs        => new[] { "hands", "viscera" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

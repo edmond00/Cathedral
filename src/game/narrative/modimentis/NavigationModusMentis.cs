@@ -14,7 +14,9 @@ public class NavigationModusMentis : ModusMentis
         "Finds the way over open water: the embers, the sun's height at noon, the speed reckoned from a log line, the coast recognised from its shape. Knows where the ship is when no land is in sight.";
     public override string SkillMeans       => "the finding of the way over open water";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTargets? Will => WillTarget.To<VoyageTowardVerb>("set a course over open water");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<VoyageTowardVerb>("set a course over open water"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("study a chart").Teaching<NavigationModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Shore);
     public override string[] Organs        => new[] { "cerebrum", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

@@ -227,14 +227,14 @@ public static class ClimateTerrainSubfactory
         descriptions: new() { description },
         items: new() { I(yield()), I(yield()), I(second()) },
         moods: new[] { "tufted", "wind-combed", "dry", "whispering" }
-    ) { Senses = new SensoryProfile(Examine: true, Contemplate: true, Listen: true), VerbModiMentis = Lessons(("examine", "forage_lore"), ("listen", "wind_reading"), ("contemplate", "aesthetic")) };
+    ) { Play = new GrassWhistlePlay(), Senses = new SensoryProfile(Examine: true, Contemplate: true, Listen: true), VerbModiMentis = Lessons(("examine", "forage_lore"), ("listen", "wind_reading"), ("contemplate", "aesthetic")) };
 
     public static PointOfInterest BuildSnowDrift() => new DriftPointOfInterest(
         displayName: "Snow Drift",
         descriptions: new() { "A drift of wind-packed snow, its crest curled over like a breaking wave and frozen there" },
         items: new() { I(new IceShard()) },
         moods: new[] { "curled", "wind-packed", "blue-shadowed", "smooth" }
-    ) { Senses = new SensoryProfile(Examine: true, Contemplate: true, Listen: true), VerbModiMentis = Lessons(("examine", "weather_ear"), ("contemplate", "aesthetic"), ("listen", "wind_reading")) };
+    ) { Play = new SlideDownPlay("climb the back of {0} and slide down its face on my seat"), Senses = new SensoryProfile(Examine: true, Contemplate: true, Listen: true), VerbModiMentis = Lessons(("examine", "weather_ear"), ("contemplate", "aesthetic"), ("listen", "wind_reading")) };
 
     public static PointOfInterest BuildErratic() => new BoulderPointOfInterest(
         displayName: "Glacial Erratic",

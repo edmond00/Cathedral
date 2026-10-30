@@ -1119,7 +1119,6 @@ internal static class ForbiddenWords
         N("gym", "training yard");
         N("gymnasium", "training yard");
         N("swimming pool", "bathing pool");
-        N("playground", "green");
         N("theme park", "fair");
         N("amusement park", "fair");
         N("zoo", "menagerie");
@@ -2452,7 +2451,6 @@ internal static class ForbiddenWords
         // The game and the model speaking of themselves.
         V("level up, levels up, levelled up, leveled up, levelling up, leveling up", "grow, grows, grew, grew, growing, growing");
         V("respawn, respawns, respawned, respawning", "rise again, rises again, rose again, rising again");
-        W("game over", "the end");
         W("cutscene", "scene");
         N("tutorial", "lesson");
         N("glitch", "flaw", "glitches", "flaws");

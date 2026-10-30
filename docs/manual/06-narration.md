@@ -59,6 +59,18 @@ reported. The two go together — a consequence that reports nothing changed not
 observed. This is why the account rendered after an act is not decoration upon it but the whole
 evidence of what it did.
 
+**Play** is the one manner of acting that takes its whole character from its object. Stones skipped
+across a creek, a rope swing ridden out over a bank, a hound scratched behind the ears and a heap of
+hay jumped into share nothing but being done for their own sake, and so the thing played with
+settles everything another manner settles for itself: what precisely is done, how hard it is, what
+the body must be capable of (hands for a stone or a rope, Abstraction for a game with rules — see
+[Chapter I §5](01-anatomy.md#5-the-three-capabilities)), what it teaches, and what a failure may
+cost. A creature is played with only while it does not count the actor an enemy. **A successful
+play changes nothing in the world**; its whole consequence is the modus mentis it teaches, which is
+that play's own — the skipping of stones teaches the skipping of stones — and failing any the body
+can hold, a general playfulness. About a quarter of the areas of the world hold something to be
+played at.
+
 ## 3. The phase and its budget
 
 Narration proceeds in **phases**. A phase opens with an observation, and within it the acting body

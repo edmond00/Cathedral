@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene;
 using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
@@ -17,8 +18,9 @@ public class FoulPlayModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTargets? Will => WillTargets.Of(
         WillTarget.To<MurderVerb>("kill by foul means"),
-        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("get a blade for the deed").Selling(ItemKind.Blade));
-    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Dwellings, Places.Streets);
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("get a blade for the deed").Selling(ItemKind.Blade),
+        WillTarget.To<PlayVerb>("cheat at knucklebones").Playing("knucklebones", typeof(KnucklebonesPlay)));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Dwellings, Places.Streets, Places.Taverns);
     public override MoralLevel MoralLevel => MoralLevel.Low;
     public override string[] Organs => new[] { "cerebrum", "heart" };
 

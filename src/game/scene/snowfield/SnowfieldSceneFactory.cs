@@ -323,7 +323,7 @@ public class SnowfieldSceneFactory : WildSceneFactory
         items: new() { new ItemElement(new IceShard()), new ItemElement(new ArcticChar()) },
         moods: new[] { "black", "booming", "clear", "deep" },
         isNatural: true
-    ) { Senses = new SensoryProfile(Examine: true, Contemplate: true, Listen: true),
+    ) { Play = new IceSlidePlay(), Senses = new SensoryProfile(Examine: true, Contemplate: true, Listen: true),
         VerbModiMentis = new Dictionary<string, string> { ["examine"] = "anglery", ["listen"] = "hollow_ear", ["contemplate"] = "meditation" } };
 
     private static PointOfInterest BuildCorniceLip() => new DriftPointOfInterest(

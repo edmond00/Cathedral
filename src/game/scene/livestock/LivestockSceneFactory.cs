@@ -235,7 +235,7 @@ public sealed class LivestockSceneFactory : SettledSceneFactory
             new() { "A loft piled with hay and sacks of oats, dust hanging in the light" }, new[] { "dusty", "sweet", "high" });
         a.PointsOfInterest.Add(new HayPointOfInterest("Hay Heap", new() { "Hay heaped to the rafters" },
             Items(() => new Hay(), () => new Hay(), () => new Oats()), new[] { "dry", "golden" })
-            { Senses = SensoryProfile.Odorous, VerbModiMentis = Teach(("examine", "harvestry"), ("smell", "petrichor")) });
+            { Play = new TumblePlay("jump down into {0} and roll about in it"), Senses = SensoryProfile.Odorous, VerbModiMentis = Teach(("examine", "harvestry"), ("smell", "petrichor")) });
         return a;
     }
 

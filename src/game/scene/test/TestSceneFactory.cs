@@ -272,6 +272,10 @@ public sealed class TestSceneFactory : SceneFactory
             null, new[] { "ringing", "bright" }, false)
         { Senses = SensoryProfile.Audible });
 
+        // PLAY. Laid by hand, as everything here is: PlayPlacement is off with the paths.
+        shore.PointsOfInterest.Add(new PebblesPointOfInterest("Test Pebbles",
+            new List<string> { "Flat grey pebbles along the waterline, thin as biscuits" }));
+
         yard.PointsOfInterest.Add(new MiddenPointOfInterest("Test Midden",
             new List<string> { "A heap of kitchen waste going over, and announcing it" },
             null, new[] { "rank", "warm" }, true)

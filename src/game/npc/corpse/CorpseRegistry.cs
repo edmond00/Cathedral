@@ -209,6 +209,94 @@ public static class CorpseRegistry
                 new ItemElement(new Fang()),
                 new ItemElement(new Bone()),
             }),
+
+        // ── The great reptiles ────────────────────────────────────────────────
+        // A scaled skin is a Hide: thick, and the tanner's. Horn is horn whether it grew on a brow or
+        // on the end of a tail, so the thagomizer's spikes are cut as Horn too.
+
+        [typeof(CrocodileSpecies)] = new(
+            "the crocodile lies belly-up and pale, the long jaw ajar on its uneven teeth",
+            () => new()
+            {
+                new ItemElement(new Hide()),
+                new ItemElement(new Meat()), new ItemElement(new Meat()),
+                new ItemElement(new Tail()),
+                new ItemElement(new Fang()), new ItemElement(new Fang()),
+                new ItemElement(new Skull()),
+            }),
+
+        [typeof(GiantMonitorSpecies)] = new(
+            "the monitor lies stretched out on its side, the forked tongue hanging from its jaw",
+            () => new()
+            {
+                new ItemElement(new Hide()),
+                new ItemElement(new Meat()), new ItemElement(new Meat()),
+                new ItemElement(new Tail()),
+                new ItemElement(new Fang()),
+                new ItemElement(new Liver()),
+            }),
+
+        [typeof(HornedLizardSpecies)] = new(
+            "the horned lizard lies flattened and still, its crown of spines dull with dust",
+            () => new()
+            {
+                new ItemElement(new Hide()),
+                new ItemElement(new Meat()),
+                new ItemElement(new Horn()), new ItemElement(new Horn()),
+                new ItemElement(new Bone()),
+            }),
+
+        [typeof(CaveLizardSpecies)] = new(
+            "the cave lizard lies pale as a root in the dark, its filmed eyes open on nothing",
+            () => new()
+            {
+                new ItemElement(new Hide()),
+                new ItemElement(new Meat()),
+                new ItemElement(new Suet()),
+                new ItemElement(new Fang()),
+                new ItemElement(new Bone()),
+            }),
+
+        [typeof(CarnotaurusSpecies)] = new(
+            "the carnotaurus lies on its side, the great hind legs folded, the bull's horns in the dirt",
+            () => new()
+            {
+                new ItemElement(new Hide()),
+                new ItemElement(new Meat()), new ItemElement(new Meat()),
+                new ItemElement(new Fang()), new ItemElement(new Fang()),
+                new ItemElement(new Horn()), new ItemElement(new Horn()),
+                new ItemElement(new Sinew()),
+            }),
+
+        [typeof(StegosaurusSpecies)] = new(
+            "the stegosaurus lies like a fallen wall, the plates along its back canted over",
+            () => new()
+            {
+                new ItemElement(new Hide()),
+                new ItemElement(new Meat()), new ItemElement(new Meat()), new ItemElement(new Meat()),
+                new ItemElement(new Horn()), new ItemElement(new Horn()),
+                new ItemElement(new Bone()),
+            }),
+
+        [typeof(TriceratopsSpecies)] = new(
+            "the triceratops lies heavily on its side, the frill tilted up, the three horns still lowered",
+            () => new()
+            {
+                new ItemElement(new Hide()),
+                new ItemElement(new Meat()), new ItemElement(new Meat()), new ItemElement(new Meat()),
+                new ItemElement(new Horn()), new ItemElement(new Horn()), new ItemElement(new Horn()),
+                new ItemElement(new Skull()),
+            }),
+
+        [typeof(AnkylosaurusSpecies)] = new(
+            "the ankylosaurus lies where it sank, armoured to the last, the club of its tail at rest",
+            () => new()
+            {
+                new ItemElement(new Hide()),
+                new ItemElement(new Meat()), new ItemElement(new Meat()),
+                new ItemElement(new Horn()),
+                new ItemElement(new Bone()), new ItemElement(new Bone()),
+            }),
     };
 
     // ── Public API ────────────────────────────────────────────────────────────

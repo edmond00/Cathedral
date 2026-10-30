@@ -1,0 +1,70 @@
+# A great reptile is a beast in all but its body: it is appeased and tamed the same way, and then
+# stands in the party on the reptile anatomy — no claws, horns on the muzzle, a thagomizer on the
+# trunk — drawn from its own art (assets/art/body/reptile) and fighting through its own two mediums.
+#
+# The Test Yard rather than the Test Den: the den has a wolf of its own, which takes the threat
+# observation ahead of --observe-only.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon --spawn-beast crocodile --observe-only crocodile
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+
+# --- appease, then tame (see cli/verb/tame/success.cli) ---------------------------
+strategy succeed
+goal appease
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect Appeasement
+
+click button
+wait 60
+advance 12 180
+
+goal tame
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect Joined you
+expect-outcome recruited
+
+# --- the companion's body: the reptile anatomy, with its two weapons ----------------
+manage Anatomy
+wait 20
+manage member 1
+wait 20
+expect Reptile
+expect Crocodile
+expect Horns
+expect Thagomizer
+expect-not Claws
+
+# --- and its fighting mediums -------------------------------------------------------
+manage Bellic
+wait 20
+expect reptile anatomy
+expect Gore
+expect Tail Lash
+manage
+wait 20
+
+quit

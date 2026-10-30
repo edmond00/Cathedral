@@ -24,7 +24,8 @@ public class ButcheryModusMentis : ModusMentis
     /// </summary>
     public override WillTargets? Will => WillTargets.Of(
         WillTarget.To<CutVerb>("cut a carcass into joints"),
-        WillTarget.To<SlayVerb>("kill a beast for its meat").OnBeast());
+        WillTarget.To<SlayVerb>("kill a beast for its meat").OnBeast(),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over a butcher's board").Teaching<ButcheryModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Stock, Places.Wilds);
     public override string[] Organs => new[] { "hands", "viscera" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

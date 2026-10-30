@@ -102,9 +102,11 @@ public sealed class BellicProfile
             string names = string.Join(", ", held.Select(i => i.DisplayName).Distinct());
             if (held.Count == 0)
                 Striking.Add(new Stat(label, "empty", "", false));
-            else if (held.OfType<IWeaponItem>().FirstOrDefault() is { } w)
+            else if (Member.WieldedWeapons(anchor).FirstOrDefault() is { } w)
                 Striking.Add(new Stat(label, $"lv {w.Level}", WeaponMediumRegistry.GetById(w.WeaponCategory)?.DisplayName.ToLowerInvariant() ?? "weapon",
                                       false, names));
+            else if (held.OfType<IWeaponItem>().Any())
+                Striking.Add(new Stat(label, "too heavy", "the arm cannot wield it", false, names));
             else
                 Striking.Add(new Stat(label, "no weapon", "", false, names));
         }
@@ -160,15 +162,15 @@ public sealed class BellicProfile
                     yield return item.DisplayName.ToLowerInvariant();
     }
 
-    /// <summary>Weapons in hand, right before left — the order the fight reads them in. One item held
-    /// in two places is listed once.</summary>
+    /// <summary>Weapons wielded, right before left — the order the fight reads them in, and only what
+    /// it reads: a weapon too heavy for its arm is held and not listed. One item held in two places is
+    /// listed once.</summary>
     private IEnumerable<(Item Item, IWeaponItem Weapon, string Hand)> HeldWeapons()
     {
         var seen = new HashSet<Item>(ReferenceEqualityComparer.Instance);
         foreach (var (anchor, hand) in new[] { (EquipmentAnchor.RightHold, "right hand"), (EquipmentAnchor.LeftHold, "left hand") })
-            if (Member.EquippedItems.TryGetValue(anchor, out var held))
-                foreach (var item in held)
-                    if (item is IWeaponItem w && seen.Add(item)) yield return (item, w, hand);
+            foreach (var w in Member.WieldedWeapons(anchor))
+                if (w is Item item && seen.Add(item)) yield return (item, w, hand);
     }
 
     // ── Skills ───────────────────────────────────────────────────

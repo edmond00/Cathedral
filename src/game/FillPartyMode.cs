@@ -88,11 +88,16 @@ public static class FillPartyMode
         AllArchetypes().Where(a => a.Species.AnatomyType == AnatomyType.Human).ToList();
 
     /// <summary>
-    /// Everything else: wolf, bear, boar, fox, the strays. Only <see cref="NamedNpcArchetype"/>s
+    /// The beasts: wolf, bear, boar, fox, the strays. Only <see cref="NamedNpcArchetype"/>s
     /// qualify — a chicken is a <c>ShallowNpcArchetype</c> and has no body to join with.
+    ///
+    /// <para>The bestial anatomy only, not every non-human one. The flag promises a beast, and the
+    /// scripts that use it are seeded on which one comes out: letting the great reptiles into the
+    /// pool reshuffled it and handed seed 42 a different animal. A reptile companion is reached the
+    /// way a player reaches one, with <c>--spawn-beast</c> and a tame.</para>
     /// </summary>
     private static IReadOnlyList<NamedNpcArchetype> BeastArchetypes() =>
-        AllArchetypes().Where(a => a.Species.AnatomyType != AnatomyType.Human).ToList();
+        AllArchetypes().Where(a => a.Species.AnatomyType == AnatomyType.Beast).ToList();
 
     private static List<NamedNpcArchetype>? _all;
 

@@ -795,7 +795,7 @@ public sealed class InventoryMenuRenderer
         if (_isDragging && _dragItem != null && _member != null && _dragSourceAnchor.HasValue)
         {
             int avail = _member.AvailableSlots(target);
-            if (avail >= _dragItem.SlotCount && target.CanAccept(_dragItem))
+            if (avail >= _dragItem.SlotCount && _member.CanPlace(target, _dragItem))
             {
                 RemoveDragItemFromSource();
                 _member.EquippedItems[target].Add(_dragItem);
@@ -951,7 +951,7 @@ public sealed class InventoryMenuRenderer
         {
             // A move onto the anchor the item already sits directly on is a no-op.
             if (currentParent == null && anchor == currentAnchor) continue;
-            if (anchor.CanAccept(item) && _member.AvailableSlots(anchor) >= item.SlotCount)
+            if (_member.CanPlace(anchor, item) && _member.AvailableSlots(anchor) >= item.SlotCount)
                 dests.Add(new MoveDest(MoveDestKind.Anchor, anchor, null, anchor.Label().ToUpperInvariant()));
         }
 
@@ -1019,7 +1019,7 @@ public sealed class InventoryMenuRenderer
     private bool TryPlaceOnAnchor(EquipmentAnchor anchor, Item item)
     {
         if (_member == null) return false;
-        if (!anchor.CanAccept(item) || _member.AvailableSlots(anchor) < item.SlotCount) return false;
+        if (!_member.CanPlace(anchor, item) || _member.AvailableSlots(anchor) < item.SlotCount) return false;
         _member.EquippedItems[anchor].Add(item);
         return true;
     }
@@ -1091,7 +1091,8 @@ public sealed class InventoryMenuRenderer
         bool isDropTarget = _isDragging && _hoveredAnchor == anchor && anchor != _dragSourceAnchor;
 
         // Gray out anchors that cannot accept the dragged item.
-        bool isGrayedOut = _isDragging && _dragItem != null && !anchor.CanAccept(_dragItem)
+        bool isGrayedOut = _isDragging && _dragItem != null
+                           && !(_member?.CanPlace(anchor, _dragItem) ?? anchor.CanAccept(_dragItem))
                            && anchor != _dragSourceAnchor;
 
         // ── Header row ────────────────────────────────────────────

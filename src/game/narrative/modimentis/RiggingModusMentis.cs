@@ -1,3 +1,4 @@
+using Cathedral.Game.Scene;
 using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
@@ -14,7 +15,9 @@ public class RiggingModusMentis : ModusMentis
         "Climbs the rigging and works aloft: out along the yard, footrope under the feet, one hand for yourself and one for the ship. Makes knots and splices that hold.";
     public override string SkillMeans       => "the climbing and working aloft";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTargets? Will => WillTarget.To<ClimbUpVerb>("climb aloft");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<ClimbUpVerb>("climb aloft"),
+        WillTarget.To<PlayVerb>("swing out on a rope").Playing("a swing", typeof(SwingPlay)));
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Shore, Places.Heights);
     public override string[] Organs        => new[] { "arms", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

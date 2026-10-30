@@ -676,6 +676,14 @@ public static class NeutralNarration
          + "This is settled with a weapon or with the body, and that is neither.";
 
     /// <summary>
+    /// Neutral sentence for a weapon neither arm can bear. The weapon is right for the blow; the arm
+    /// is what fails it, so the wording names the weight and not the implement.
+    /// </summary>
+    public static string ItemCombinationTooHeavy(string itemWithArticle)
+        => $"I tried to swing {FirstPerson(itemWithArticle)} and could not. "
+         + "It is heavier than my arms can wield, and it dragged at my grip instead of striking.";
+
+    /// <summary>
     /// Neutral sentence for the middle case: the implement could be made to serve, and this body is
     /// not the one to make it. The critic passed a verdict the hands could not reach, so the
     /// wording must credit the idea and refuse the execution.

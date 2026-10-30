@@ -16,7 +16,8 @@ public class LaunderingModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTargets? Will => WillTargets.Of(
         WillTarget.To<Cathedral.Game.Scene.Verbs.GrabVerb>("take up linen to wash").YieldingKind(ItemKind.Cloth),
-        WillTarget.To<Cathedral.Game.Scene.Verbs.GrabVerb>("fetch lye and soap").YieldingAny("lye or soap", typeof(Cathedral.Game.Narrative.World.Items.Lye), typeof(Cathedral.Game.Narrative.World.Items.Soap)));
+        WillTarget.To<Cathedral.Game.Scene.Verbs.GrabVerb>("fetch lye and soap").YieldingAny("lye or soap", typeof(Cathedral.Game.Narrative.World.Items.Lye), typeof(Cathedral.Game.Narrative.World.Items.Soap)),
+        WillTarget.ToAny("look over the washing", typeof(Cathedral.Game.Scene.Verbs.ContemplateVerb), typeof(Cathedral.Game.Scene.Verbs.ExamineVerb)).Teaching<LaunderingModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.LaundryArea) }, new[] { typeof(Cathedral.Game.Scene.WatersideArea) }, new[] { typeof(Cathedral.Game.Scene.StreamArea) });
     public override string[] Organs        => new[] { "arms", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

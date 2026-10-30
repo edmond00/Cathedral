@@ -22,6 +22,10 @@ public class ChickenArchetype : ShallowNpcArchetype
         => CreatureSenses;
 
     public override string ArchetypeId     => "chicken";
+
+    /// <summary>Hens are for chasing round the yard, which a dog enjoys as much as a child.</summary>
+    public override PlayActivity? Play => Chased;
+    private static readonly PlayActivity Chased = new ChasePlay("run at {0} and chase it squawking round and round the yard");
     public override string TypeDisplayName => "Chicken";
 
     protected override string ComposeObservationHint(Random rng, string nodeContext) => Compose(rng,

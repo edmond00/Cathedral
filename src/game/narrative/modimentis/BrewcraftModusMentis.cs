@@ -17,7 +17,8 @@ public class BrewcraftModusMentis : ModusMentis
     public override WillTargets? Will => WillTargets.Of(
         WillTarget.ToAny("pick hops for the brew", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).Yielding<Cathedral.Game.Narrative.World.Items.Hops>(),
         WillTarget.ToAny("take up grain for malt", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Grain),
-        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy malt grain").Selling(ItemKind.Grain));
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy malt grain").Selling(ItemKind.Grain),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over a brewing vessel").Teaching<BrewcraftModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Fields, Places.Taverns, new[] { typeof(Cathedral.Game.Scene.BrewhouseArea) });
     public override string[] Organs        => new[] { "nose", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

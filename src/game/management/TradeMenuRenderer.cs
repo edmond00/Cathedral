@@ -590,12 +590,14 @@ public sealed class TradeMenuRenderer
     {
         private readonly Dictionary<EquipmentAnchor, int> _anchorFree = new();
         private readonly List<(IContainer c, int free)> _containers = new();
+        private readonly PartyMember _member;
 
         // Deliberately no weight budget: buying is an acquisition like any other, and weight does
         // not gate acquisition — it gates travel. Overspending on heavy goods is allowed, and the
         // consequence is discovered at the travel panel, not at the merchant's stall.
         public VirtualInventory(PartyMember m)
         {
+            _member = m;
             foreach (EquipmentAnchor a in Enum.GetValues<EquipmentAnchor>())
                 _anchorFree[a] = m.AvailableSlots(a);
 
@@ -625,14 +627,14 @@ public sealed class TradeMenuRenderer
             if (item.IsLiquid) return TryPlaceLiquid(item);
 
             if (item.PreferredAnchor is { } pref
-                && pref.CanAccept(item) && _anchorFree[pref] >= need)
+                && _member.CanPlace(pref, item) && _anchorFree[pref] >= need)
             {
                 _anchorFree[pref] -= need;
                 return true;
             }
 
             foreach (EquipmentAnchor a in Enum.GetValues<EquipmentAnchor>())
-                if (a.CanAccept(item) && _anchorFree[a] >= need)
+                if (_member.CanPlace(a, item) && _anchorFree[a] >= need)
                 {
                     _anchorFree[a] -= need;
                     return true;

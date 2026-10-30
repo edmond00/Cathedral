@@ -1,0 +1,23 @@
+# will_lesson_object — a will wants the object that taught it
+#
+# Examining petroglyphs teaches archeology, and archeology is a will: to dig old ground, to study a
+# relic, to fetch a spade. Carvings in rock are none of those, so the mind the carvings taught used to
+# refuse them — picked to think on the petroglyphs, it said it had no interest and only leaving would
+# serve. Its targets now end on WillTarget.Teaching<ArcheologyModusMentis>(): whatever declares
+# archeology its own lesson. From the Dry Wash the petroglyphs are right there, one step.
+# --will-lesson-audit is the check over every object and every will; this is the case that was reported.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-mm archeology --location-type canyon --location-id 1 --start-area "Dry Wash" --period morning
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+
+expect-state will "will archeology steps=1"
+expect-state will "petroglyphs"
+quit

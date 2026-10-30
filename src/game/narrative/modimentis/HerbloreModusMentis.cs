@@ -17,7 +17,8 @@ public class HerbloreModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTargets? Will => WillTargets.Of(
         WillTarget.ToAny("gather herbs", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Herb),
-        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy a herb I lack").Selling(ItemKind.Herb));
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy a herb I lack").Selling(ItemKind.Herb),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("study a plant for its virtues").Teaching<HerbloreModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Woodland, Places.Grassland);
     public override string[] Organs        => new[] { "nose", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

@@ -25,6 +25,8 @@ public enum ToolFailureKind
     BeyondSkill,
     /// <summary>The act is a blow, and the thing held is not a weapon.</summary>
     NotAWeapon,
+    /// <summary>The act is a blow, and the weapon is heavier than either arm can bear.</summary>
+    TooHeavy,
 }
 
 /// <summary>What combining this implement with this act comes to, before anything is asked of the critic.</summary>
@@ -44,6 +46,9 @@ public enum ToolCombinationGate
 
     /// <summary>The act is struck with a fighting medium, and this implement is no weapon.</summary>
     NotAWeapon,
+
+    /// <summary>The act is struck with a fighting medium, and neither arm can bear this weapon.</summary>
+    TooHeavy,
 
     /// <summary>Nothing settles it here; the critic must judge the implement.</summary>
     AskTheCritic,
@@ -92,8 +97,12 @@ public static class ToolCombinationRules
     /// <summary>
     /// Everything decidable before the critic. <paramref name="verb"/> may be null when the action
     /// carries no preselected verb, which is treated as an ordinary optional act.
+    /// <paramref name="wieldable"/> is whether some hand of the acting body could bear the item
+    /// (<see cref="PartyMember.CanWieldInSomeHand"/>); it is read only for a blow, since a weapon
+    /// combined from the pack is struck with, not carried.
     /// </summary>
-    public static ToolCombinationGate Resolve(Verb? verb, Item item, ToolProficiency proficiency)
+    public static ToolCombinationGate Resolve(Verb? verb, Item item, ToolProficiency proficiency,
+                                              bool wieldable = true)
     {
         if (proficiency == ToolProficiency.None) return ToolCombinationGate.NoProficiency;
 
@@ -101,10 +110,12 @@ public static class ToolCombinationRules
         // a weapon, or the body. So both directions are settled here without a critic call — a sword
         // is what attacking is done with whatever its MadeForVerbIds say, and no argument about a
         // lantern's heft makes it a weapon. See Verb.UsesFightingMedium.
+        // A weapon heavier than either arm can bear is no more use in the blow than in the fight
+        // that follows it, which would refuse it the same way (PartyMember.WieldedWeapons).
         if (verb?.UsesFightingMedium == true)
-            return item is Cathedral.Fight.IWeaponItem
-                ? ToolCombinationGate.MadeForIt
-                : ToolCombinationGate.NotAWeapon;
+            return item is not Cathedral.Fight.IWeaponItem ? ToolCombinationGate.NotAWeapon
+                 : !wieldable                              ? ToolCombinationGate.TooHeavy
+                 :                                           ToolCombinationGate.MadeForIt;
 
         if (IsMadeFor(verb, item))               return ToolCombinationGate.MadeForIt;
         if (IsMadeForOtherWork(verb, item))      return ToolCombinationGate.NotItsPurpose;

@@ -15,7 +15,8 @@ public class BouquetModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTargets? Will => WillTargets.Of(
         WillTarget.To<Cathedral.Game.Scene.Verbs.SmellVerb>("nose a cask").YieldingKind(ItemKind.Liquor),
-        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy a drink worth the nose").Selling(ItemKind.Liquor));
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy a drink worth the nose").Selling(ItemKind.Liquor),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.SmellVerb>("nose what has been brewed, baked or pressed").Teaching<BouquetModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.CellarArea) }, new[] { typeof(Cathedral.Game.Scene.BrewhouseArea) }, new[] { typeof(Cathedral.Game.Scene.PressArea) }, new[] { typeof(Cathedral.Game.Scene.AlehouseArea) });
     public override string[] Organs        => new[] { "nose", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

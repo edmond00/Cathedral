@@ -288,8 +288,9 @@ public sealed class ShortSword : WeaponItem
     public override string ItemId           => "short_sword";
     public override string DisplayName      => "Short Sword";
     public override string Description      => "A plain straight-bladed short sword in a worn leather scabbard";
-    public override ItemSize Size           => ItemSize.Medium;
-    public override int    Level            => 1;
+    public override WeaponSize Bulk         => WeaponSize.Medium;
+    public override WeightClass Weight      => WeightClass.Light;
+    public override int    Level            => 4;
     public override string WeaponCategory   => "short_blade";
 }
 
@@ -304,7 +305,9 @@ public sealed class WoodenStick : WeaponItem
     public override string ItemId         => "wooden_stick";
     public override string DisplayName    => "Wooden Stick";
     public override string Description    => "A weather-greyed stick still half-imagined as a magic sword";
+    public override WeaponSize Bulk       => WeaponSize.Medium;
     public override int    Level          => 0;
+    public override bool   IsImprovised   => true;
     public override string WeaponCategory => "blunt";
     public override int    UsageLevel     => 1;
     public override List<ItemTag> Tags    => new();

@@ -15,7 +15,8 @@ public class SalvageModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTargets? Will => WillTargets.Of(
         WillTarget.ToAny("recover what the sea threw up", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Flotsam),
-        WillTarget.To<Cathedral.Game.Scene.Verbs.SwimAcrossVerb>("swim out to what the sea holds"));
+        WillTarget.To<Cathedral.Game.Scene.Verbs.SwimAcrossVerb>("swim out to what the sea holds"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over what the sea gave up").Teaching<SalvageModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Shore);
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

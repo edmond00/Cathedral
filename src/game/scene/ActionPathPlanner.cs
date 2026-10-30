@@ -27,7 +27,8 @@ public sealed record PathStep(VerbAction Action, object? Settled = null)
 /// <param name="Steps">At least one: the goal alone when it is offered right here.</param>
 /// <param name="ToolStep">The index of the step that obtains the implement the goal needs, or -1 when none is needed.</param>
 /// <param name="Target">Which of the will's targets the goal satisfies — the one whose purpose the path is narrated with.</param>
-public sealed record ActionPath(IReadOnlyList<PathStep> Steps, int ToolStep, WillTarget? Target = null)
+/// <param name="Unarmed">The goal needs an implement the body neither holds nor can get in this place: it is proposed all the same, and the tool is asked for on the click.</param>
+public sealed record ActionPath(IReadOnlyList<PathStep> Steps, int ToolStep, WillTarget? Target = null, bool Unarmed = false)
 {
     public PathStep First => Steps[0];
     public PathStep Goal  => Steps[^1];
@@ -55,6 +56,12 @@ public sealed record ActionPath(IReadOnlyList<PathStep> Steps, int ToolStep, Wil
 /// gathering it) or a proposal to buy from somebody whose wares include it. The purchase itself is a
 /// conversation, so the plan cannot see past it; it is the last step that matters, and the next
 /// phase plans again from whatever the trade left in the pack.</para>
+///
+/// <para>When no implement it recognises can be had here, the goal is planned bare-handed
+/// (<see cref="ActionPath.Unarmed"/>). The planner knows only reference tools and things made for the
+/// verb, where the click accepts anything carried and lets the critic judge it — a short sword can
+/// cut a carcass — and <c>RequiredToolRule</c> asks for the tool when nothing is combined. A will
+/// that refused the act for want of a knife would be stricter than the act itself.</para>
 ///
 /// <para><b>Cost.</b> Measured over every location factory: a path is found in under a millisecond
 /// on average and 16 ms at worst, and an exhausted search — the will has nothing to do in this place —
@@ -142,21 +149,27 @@ public static class ActionPathPlanner
         var key  = (scene, pov.Where.Id, pov.When, will.Key, string.Join(",", held.Select(i => i.ItemId).OrderBy(i => i)) + "+" + obtained);
         if (_cache.TryGetValue(key, out var cached)) return cached;
 
-        var path = Search(scene, pov, actor, will, held, obtained);
+        var path = Search(scene, pov, actor, will, held, obtained, unarmed: false);
+        if (path == null && scene.Verbs.Any(v => will.Wants(v) && v.RequiresTool))
+            path = Search(scene, pov, actor, will, held, obtained, unarmed: true);
         _cache[key] = path;
         Console.WriteLine(path == null
             ? $"ActionPathPlanner: no way to '{will.Purpose}' from {pov.Where.DisplayName} at {pov.When} — not in this place."
-            : $"ActionPathPlanner: '{path.Target?.Purpose ?? will.Purpose}' in {path.Steps.Count} step(s): {string.Join(" | ", path.Steps.Select(s => s.Verbatim))}");
+            : $"ActionPathPlanner: '{path.Target?.Purpose ?? will.Purpose}' in {path.Steps.Count} step(s): {string.Join(" | ", path.Steps.Select(s => s.Verbatim))}"
+              + (path.Unarmed ? " (no implement for it here: unarmed)" : ""));
         return path;
     }
 
-    private static ActionPath? Search(Scene scene, PoV pov, PartyMember actor, WillTargets will, List<Item> held, string? obtained)
+    private static ActionPath? Search(Scene scene, PoV pov, PartyMember actor, WillTargets will, List<Item> held, string? obtained,
+                                      bool unarmed)
     {
         var goalVerbs = scene.Verbs.Where(will.Wants).ToList();
         if (goalVerbs.Count == 0) return null;
 
+        // Unarmed, a goal counts as in hand: nothing is fetched for it, and the click asks for the tool.
         bool Holds(Verb verb, string? acquired)
-            => verb.ReferenceToolIds.Any(id => id == acquired || held.Any(i => i.ItemId == id))
+            => unarmed && will.Wants(verb)
+               || verb.ReferenceToolIds.Any(id => id == acquired || held.Any(i => i.ItemId == id))
                || held.Any(i => i.MadeForVerbIds.Contains(verb.VerbId));
 
         // The implements some goal verb needs and the body does not hold. Empty: no detour for one.
@@ -219,7 +232,7 @@ public static class ActionPathPlanner
             }
         }
         return best is { } found
-            ? Unwind(scene, prev, found.At, found.Goal, wanted.Count > 0) with { Target = will[found.Index] }
+            ? Unwind(scene, prev, found.At, found.Goal, wanted.Count > 0) with { Target = will[found.Index], Unarmed = unarmed }
             : null;
     }
 
@@ -291,8 +304,8 @@ public static class ActionPathPlanner
                || held.Any(i => i.MadeForVerbIds.Contains(verb.VerbId));
 
         if (path.Steps.Count == 1
-            && actions.FirstOrDefault(a => will.Matches(a) && (!a.Verb.RequiresTool || Holds(a.Verb))) is { } goal)
-            return new ActionPath(new[] { new PathStep(goal) }, -1, will.TargetOf(goal));
+            && actions.FirstOrDefault(a => will.Matches(a) && (!a.Verb.RequiresTool || Holds(a.Verb) || path.Unarmed)) is { } goal)
+            return new ActionPath(new[] { new PathStep(goal) }, -1, will.TargetOf(goal), path.Unarmed);
 
         if (path.ToolStep == 0)
         {
@@ -330,7 +343,7 @@ public static class ActionPathPlanner
         var ways  = new List<ActionPath>();
         foreach (var action in offered)
             if (!ways.Any(w => SameAction(action, w.First.Action))
-                && ShortestThrough(scene, pov, actor, will, action) is { } way && way.Steps.Count <= reach)
+                && ShortestThrough(scene, pov, actor, will, action, path.Unarmed) is { } way && way.Steps.Count <= reach)
                 ways.Add(way);
         if (ways.Count == 0) return ways;
         int least = ways.Min(w => w.Steps.Count);
@@ -342,14 +355,17 @@ public static class ActionPathPlanner
     /// does: the action itself when the will wants it (with the implement in hand); an implement
     /// obtained, then the rest planned holding it; a move or a wait, then the rest planned from where
     /// it leaves the body, the nearest of its ends. Any other action leads nowhere the plan can see.
+    /// <paramref name="unarmed"/>: this place has no implement for the goal, and it is taken bare-handed.
     /// </summary>
-    private static ActionPath? ShortestThrough(Scene scene, PoV pov, PartyMember actor, WillTargets will, VerbAction action)
+    private static ActionPath? ShortestThrough(Scene scene, PoV pov, PartyMember actor, WillTargets will, VerbAction action,
+                                               bool unarmed)
     {
         var held = actor.GetAllItems().ToList();
         bool Holds(Verb verb)
             => verb.ReferenceToolIds.Any(id => held.Any(i => i.ItemId == id))
                || held.Any(i => i.MadeForVerbIds.Contains(verb.VerbId));
 
+        if (unarmed && will.Matches(action)) return new ActionPath(new[] { new PathStep(action) }, -1, will.TargetOf(action), Unarmed: true);
         if (action.Verb.RequiresTool && !Holds(action.Verb)) return null;
         if (will.Matches(action)) return new ActionPath(new[] { new PathStep(action) }, -1, will.TargetOf(action));
 

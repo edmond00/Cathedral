@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Npc.Archetypes;
 
@@ -10,6 +11,10 @@ public class StrayCatArchetype : NamedNpcArchetype
     public override int MaxAgeDays => 14 * LifetimeStat.DaysPerYear;
 
     public override string ArchetypeId => "stray_cat";
+
+    /// <summary>A stray that may allow a hand along its back — or may not.</summary>
+    public override PlayActivity? Play => Stroked;
+    private static readonly PlayActivity Stroked = new PettingPlay("crouch, hold out a hand to {0} and stroke it along the back until it purrs", 3, claws: true);
     public override Species Species => SpeciesRegistry.Cat;
     public override bool DefaultPersistent => false;
     public override int ModiMentisCount => 4;

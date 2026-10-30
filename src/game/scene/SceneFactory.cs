@@ -47,6 +47,7 @@ public abstract class SceneFactory
         if (GuaranteesArrivalCompany) EnsureArrivalCompany(scene);
         PlaceBeastSign(scene);
         if (GrowsWild) PlaceWildGrowth(scene, locationId);
+        if (PlacesPlay) PlayPlacement.Place(scene, locationId);
         AssignVerbs(scene);
         MergeDuplicateNamedPois(scene);
         AssignStableKeys(scene);
@@ -519,6 +520,12 @@ public abstract class SceneFactory
     /// (<see cref="PlaceWildGrowth"/>). Off where paths are: the test location must not change.
     /// </summary>
     protected virtual bool GrowsWild => LaysPaths;
+
+    /// <summary>
+    /// Whether <see cref="Build(int)"/> lays the plays over the finished scene
+    /// (<see cref="PlayPlacement"/>). Off where paths are, for the same reason as wild growth.
+    /// </summary>
+    protected virtual bool PlacesPlay => LaysPaths;
 
     /// <summary>The generator wild growth is drawn from: its own stream, so nothing built before or after it moves.</summary>
     private static Random GrowthRandom(int locationId) => new(unchecked(locationId * 0x27D4EB2F + 0x1656));
