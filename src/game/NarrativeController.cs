@@ -4781,6 +4781,16 @@ public class NarrativeController
     // above does, and returns the cells (or, for popups, the pixel) a player would aim at.
 
     /// <summary>The cells a keyword occupies, resolved as <see cref="CliClickKeyword"/> resolves it.</summary>
+    /// <summary>The word a keyword reference lands on, as it reads on screen (`@name` and an index do not say).</summary>
+    public string? CliKeywordWord(string keyword)
+    {
+        var regions = _ui.KeywordRegions;
+        KeywordRegion? region = int.TryParse(keyword, out int index)
+            ? (index >= 0 && index < regions.Count ? regions[index] : null)
+            : CliFindKeyword(regions, keyword);
+        return region?.Keyword;
+    }
+
     public (int X, int Y, int Width)? CliKeywordSpan(string keyword)
     {
         var regions = _ui.KeywordRegions;

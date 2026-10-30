@@ -434,8 +434,9 @@ public sealed class RecordGate
         {
             case "keyword":
             {
-                var words = narration?.CliKeywords();
-                string word = int.TryParse(arg, out int ki) && words != null && ki >= 0 && ki < words.Count ? words[ki] : arg;
+                // Labelled with the word itself, as the viewer sees it clicked: `@name` names the object
+                // behind it, and the timeline is what a narration over the footage reads.
+                string word = narration?.CliKeywordWord(arg) ?? arg;
                 return narration?.CliKeywordSpan(arg) is { } k ? Span(k, word) : Fail($"no clickable keyword '{arg}' on screen");
             }
 

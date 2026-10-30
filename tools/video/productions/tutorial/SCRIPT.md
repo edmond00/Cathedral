@@ -11,9 +11,10 @@ Choosing a moon generates its world, and its history comes first. Realms rise an
 
 Now the protagonist. There are no strength or charisma scores in this game. A character is a body: five regions, which are the head, the face, the trunk, the arms and the legs; twenty-two organs; twenty-eight organ parts. Every part starts at one point, and you get twenty-five more to spend. That buys less than half of what the body could reach, so creating a character is really choosing what to give up.
 
-**[Organs]**
-Every number the game uses comes from one organ or one region. This map groups them by the system they feed: thinking and memory, the senses, speech, the humors, life, and the body in a fight. In the game, hovering an organ shows the same information on the right of the screen.
-We'll go through them in that order. Watch where the points go: this character is built to think, to talk, and to bend the dice.
+**[System]**
+Before we spend them, here is how a character fits together. Three layers. The body: regions and organs, each with a score. The ways of thinking you learn as you play, called modi mentis, each with a level. And the measures: health, memory, noetic points, movement and the rest.
+The body feeds the other two. Every measure is computed from one organ or one region. And every way of thinking draws on two organs, or on one region, which set its ceiling: one, plus up to three for each organ, or up to six for a region, the stronger they are. A level is what you roll: one die per level. Around all this, what you carry lends dice, what you wear protects and charms, and four organs make the humors, which can bend a die.
+Here is this very character, once we have spent the points. Swordsmanship draws on the arms and the hands. The arms score two out of four: plus two. The hands, four out of six: plus two. So Swordsmanship can rise to level five; today it is level two, so it rolls two dice. And two measures: a backbone of four gives eight movement points in a fight, and a head of ten gives six noetic points in a scene.
 
 First, thinking and memory: the head. As a whole, the head sets your noetic points, how many times you can look and think in one scene: its score halved, plus one.
 What you learn in this game are called modi mentis: ways of thinking. A new one always arrives in working memory, a short queue, also sized by the whole head. When that queue is full, the oldest way of thinking falls out, and it is lost for good.
@@ -58,91 +59,94 @@ The legs set how far one movement point takes you. With the feet, the lower body
 The feet keep you standing on bad ground, and roll the dice to run away. One last number: health. It comes from the trunk as a whole, a third of its score plus one, and each wound costs a point of it until it heals. Twenty-five points spent. That is the body.
 
 The body has no past yet. The game gives it one through five childhood memories, and they are played exactly the way the whole game is played. So the first memory is our first lesson. Let's take it slowly.
-> *I almost have it, a half-remembered weeping, sobs like faded echoes in the dark, a woman's voice somewhere, half-formed in the hush of old iron and myth.*
+> *I almost have it, a half-remembered sobbing, the woman's voice lost in the dark.*
 
 That text was not written in advance. It was written a moment ago, by a language model running on this computer. It runs entirely on your machine: no account, no server, nothing sent anywhere, and it works on the processor alone.
 But the model does not run the game. The rules, the dice, wounds, coin and time are ordinary code. The model is asked narrow questions inside that code: what does this mind notice, what does it want, how does it tell what happened.
-Each question is put to a modus mentis, a way of thinking, and the model plays that way of thinking as a character, in its own voice. That is why every passage is headed by a name. This one is Childhood Reminiscence.
+Each question is put to a modus mentis, a way of thinking, and the model plays that way of thinking as a character, in its own voice. That is why every passage is headed by a name. Read these texts as the character's own thoughts. When one sounds a little strange, take it as this character's strange way of seeing things.
 
 **[NarrationTurn]**
 Here is a turn: the loop you repeat all game. A mind observes, and writes what it notices. Some words in what it wrote light up: keywords. You click one. A thinking mind reasons about it and settles on a goal, chosen from the actions the code says that thing allows. Then an acting mind says how willing it is, and its willingness makes the roll easier or harder. The dice decide, and the acting mind tells how it went.
 Thinking costs a noetic point, and so does every extra look. The points come back when the scene moves on, but not after a failed roll: a miss costs something.
 
-We click sobs, choose Think, and pick the mind that will think. For now, there is only one.
-> *I let half-remembered weeping drift through, a woman's voice in the dark, a fragment of childhood's ache. I will rely on the slow recovery of these memories, like old fragments in a medieval world, nothing modern or real here.*
+We click the word voice, choose Think, and pick the mind that will think. For now, there is only one.
+> *I wistfully trace the edges of forgotten weeping, a woman's voice hushed and distant. I reach, half-remembered, towards sobs from my childhood, let them come as they will, through the slow, aching recovery of my past.*
 
-The thinking mind has its goal. Now the acting mind puts it into words.
-> *I will try to remember sobs from my childhood, half-remembered images surfacing like old fragments, tinged with nostalgia, wistfulness, and a faint ache.*
+Now the acting mind puts the goal into words.
+> *I will try to remember sobs from my childhood on this vast plain.*
 
 The act is offered as a line. We click it, then Execute.
 
 In childhood nothing is rolled: remembering always succeeds.
-> *I tried to remember the sobs from my childhood, and succeeded. It came back to me in hazy fragments, the sobs of an unknown lady on the dock of the port city where I spent my days in this vast, silent plain.*
+> *I tried to recall the sobs from my childhood, and they came back, a shadowy memory on the dock by the ancient port city.*
 Look under the passage, at what this memory gave: three ways of thinking, Empathy, Nautical Jargon and Knotwork, and a townsman's clothes: cap, cloak, tunic and breeches. The text said a port city. The code decided what that means for your character. Every passage works like this: the words are the model's; what they give you is the game's.
 
 The second memory. Look at the heading: the observer is now Empathy, one of the minds we just gained. A new mind notices different things.
-> *I recall it now, the waves' soft murmur and the earth's faint, salty tang, as if a low rumble of thunder had seeped through the ground, the sweat of exertion rising from the fertile earth beneath.*
+> *I hear the waves' lullaby, smell the sweat mingling with the salty air, a low, rhythmic thunder echoing in my mind.*
 
-We click waves, and think with Childhood Reminiscence again.
-> *I remember the low, pulsing thunder and the sour, salt-and-sweat smell from below, like old memories blooming in a fog. I want to recall the sound of waves and the scent of sweat, to breathe in the past, to let it flow through me as the vast, endless plain weaves its slow recovery.*
+We click the word sweat.
+> *I recall the faint thunder and the lingering scent, and long to revisit the sounds of the waves and the sweat of my childhood. I'll let these whispers of memory slowly rise from the fertile soil, as if they have been here all along, half-forgotten.*
 
-> *I will try to remember the sound of waves and the smell of sweat from my childhood, half-remembered images surface like old fragments, tinged with nostalgia, wistfulness, and a faint ache, in a medieval world of iron and myth, nothing modern or from the real world.*
+> *I will try to recall the sound of waves and the scent of sweat from my childhood, wistful and faintly aching, as if they are half-familiar echoes in the vast, medieval plain.*
 
-> *I tried to recall the waves and sweat, and it came back to me. The sound of waves and the scent of sweat on the docks, the bundles heavy from ships, these fragments rise like old stories, colored with a longing for days past.*
-This one gives Hard Labor. The docks taught us to work.
+> *I tried to recall the sound of waves and the scent of sweat, and it did come back. It was as if a mist lifted, revealing a distant shore and the docks where the scent lingered, heavy and familiar yet half-forgotten.*
+This one gives two ways of thinking: Hard Labor and Tide Watching. The docks taught us to work, and to read the water.
 
 The third memory: something sharp.
-> *I recall a shard of memory, a sharp edge gleaming from behind a trader's stall, the faint scent of oil and iron lingering in the air.*
+> *I recall a sharp edge, a half-remembered gleam of metal behind a trader's stall. The faint smell of oil and iron lingers, a sharp memory in the air.*
 
-> *I half-remember a gleam of metal behind a trader's stall, the faint smell of oil and iron lingering. I will let the half-remembered image surface, drawing on the slow recovery of childhood memories in this medieval world, where nothing modern or real exists.*
+We click the word sharp.
+> *I wistfully recall the gleam of metal, half-faintly, and the smell of oil and iron. I seek a sharp edge of childhood, to recover its soft corners. I will let my thoughts drift, seeking that elusive memory, in the gentle shadows of a medieval world.*
 
-> *I will try to remember a sharp taste from my childhood, like a sour apple on a cold day.*
-Look at what the acting mind wrote: a sharp taste, like a sour apple. The model drifted from a blade to an apple. It does not matter: the act is still remembering something sharp, and the code knows what that memory holds. I find these little slips part of the charm.
+> *I will try to recall a keen scent from my childhood on this vast plain.*
+The acting mind reaches for a keen scent rather than a blade. It does not matter: the act is still remembering something sharp, and the code knows what that memory holds.
 
-> *I tried to recall a sharp memory from my childhood, and succeeded. It emerged to me as clear as old scars on skin, a sword I had bought with my first earned coin from a market trader.*
-And there it is: a short sword, and Bargaining.
+> *I tried to recall a blade from my youth, and it came back to me. A sword, sharp and old, bought with my first coin, from the market's trader on the edge of the forest.*
+A short sword, and Bargaining.
 
 The fourth: a dream of a golden arch.
-> *I see a golden arch in my mind's eye, a fuzzy great curve of gold in a dream sky. It evokes an ache, an ancient, enormous, and impossibly bright longing that touches my soul.*
+> *I recall a dream, a golden arch that curves great and bright in the sky. Fuzzy and ancient, it radiates an impossible brilliance, ancient and immense.*
 
-> *I remember a golden arch, fuzzy and great, in a dream sky that was ancient, enormous, and impossibly bright. I will try to recall this dream from my childhood, letting the slow recovery of childhood memories colour my thoughts on this vast plain.*
+We click the word arch.
+> *I wistfully recall a golden arc, a fuzzy great curve in the sky, ancient and immense, its light impossibly bright. I yearn to trace the dream's path, to recall childhood's glow, where memories slowly emerge, half-familiar yet distant. In this medieval world, I will let my thoughts drift, seeking the golden arch with a faint ache of longing.*
 
-> *I will try to recall a golden arch from my childhood, half-shapes drifting up like old fragments on a medieval plain.*
+> *I will try to recall a golden arch from my childhood dreams, half-familiar on the vast medieval plain.*
 
-> *I tried to recall the dream of a golden arch from my childhood, and it came back to me, hazy yet clear. A golden arch rising over the ruins of an ancient city, until I left to seek it out. The scene paints a picture of longing and a gentle ache in my heart.*
+> *I tried to recall a dream of a golden arch from my childhood, and it came back to me with a wistful ache. A golden arch rising over ruins, as if a beacon for lost times, until I felt a gentle pull to find it.*
 A traveller's backpack, with bread and cheese inside, and Archaeology. Keep the bread in mind.
 
 The last memory: shelter.
-> *I almost have it, a shelter surfacing from the mists. This was a elusive dark hillside, an unsheltered cranny, with no door, no overhang, no gap anywhere to crawl into.*
+> *I almost have it... a shelter, this elusive dark hillside, no door, no overhang, no gap, nothing to crawl into. Familiar yet distant, as if through mist.*
 
-> *I remember the elusive dark hillside, a place with no door, no overhang, no gap anywhere for shelter. I want to recall the simple, hidden spaces of my childhood. Slowly, I will recover these fragmented memories, like old, weathered stones.*
+We click the word shelter.
+> *I wistfully recall a dark hillside, elusive and unsheltered, where no door or overhang beckons. I yearn to trace the shelter of my childhood, let it surface slowly through the fog of tiredness.*
 
-> *I will try to remember a place from my childhood on a vast, unmarked plain.*
+> *I will try to remember the warmth of my childhood home, a gentle fire and soft textiles, as I sit on the old stone steps, my mind weaving these shapes and scents into a soft quilt of memory.*
+Here the acting mind wanders off to a warm home and a fire, the very opposite of this memory. Read it as a child's wishful thinking: what comes back has no shelter at all.
 
-> *I tried to recall the shelter from my childhood, and it came back to me in a hazy, dream-like state. Searching for shelter from the storm and finding none, I lost consciousness at the foot of a tree, the cold wind biting through my memories.*
+> *I tried to recall the shelter of my youth, and it came back to me with a ache. Searching for refuge from the tempest, I found none, and in my daze, I lay at the foot of an ancient tree.*
 This one gives no item, only two ways of thinking: Exploration and Endurance. My advice for your own childhood: read the fragments, and pick what you want your character to be. The memories you choose are your starting kit.
 
-Childhood is over. The body wakes on open ground, spent, and a new mind takes our bearings: Childhood Memory.
-> *I bend to search for a patch of grass, the soreness in my legs reminding me of the hard labour on the docks, where every step had its own grinding weight.*
+Childhood is over. The body wakes on open ground, spent, and a mind takes our bearings.
+> *I remember the docks, where every step pressed into the bone, and now my legs ache as if they're carrying the weight of a storm.*
 
-> *I shift my gaze to a bone-deep exhaustion, feeling it settle through my whole body like a storm, not just tired but spent, as if the road has drained something more than muscle, just as it did in the storms at the port.*
+> *I stretch my limbs, feeling the bone-deep exhaustion from my childhood at the docks. It's not just tiredness, but spent from carrying heavy loads day after day, as if the road had drained something more than muscle.*
 Getting up is the first real roll of the game.
 
-We think about the legs, this time with Nautical Jargon, one of the minds from the docks. Listen to how differently it reasons.
-> *I mark the bone where the road's knots have grinded, a sore that calls me to rise and haul, my hands the ropes, my feet the tide, as I roll and seek the next bend where wind and water guide.*
-Everything is rope, knots and tides. That is what a persona does: the same question, put to a different mind, comes back in a different voice.
+We think about the legs, this time with Tide Watching, one of the minds from the docks. Listen to how differently it reasons.
+> *I wait at the turn, knowing the window is closing. The run will not come until after, and the flat will stay walkable just a little longer. I must hold on, for the stamina to keep going long after others tire.*
+Tide Watching reads getting up as a tide: a window closing, a run still to come. That is what a persona does: the same question, put to a different mind, comes back in its own voice.
 
-Knotwork, another lesson of the docks, will act.
-> *I will rise and press on my quest.*
+> *I will rest where shadows lengthen and rise when light returns, continuing my journey.*
+Endurance, which will act, puts it its own way: rest, then rise.
 
 We click the act, and Execute. The dice: four of them, and two sixes.
 
 **[DiceHumors]**
 Every roll works the same way. You roll one die for each level of every mind in the chain: the one that observed, the one that thought, and the one that acts. The difficulty is the number of sixes you need. So raising any of the three minds means more dice, and better odds.
 When a roll falls short, the humors can save it. Only the humor at the back of each queue can be spent, one per die, and only as many in one roll as the viscera allow. Blood adds one to a die. Yellow bile takes one away. Phlegm does nothing, but spending it clears the way to the humor behind it. Black bile does nothing, and never leaves. A queue full of black bile is spent, and when all four are, the body dies. So humors are your luck, and also your life.
-Here, two sixes were enough to stand up without help.
 
-> *I have pulled myself free, and with a sigh, the line feels lighter. The journey begins anew, my hands ready to bear the load.*
+> *I rise and press on, the weight of my journey yet to be decided.*
 Success. Look at the lines below: every mind in the chain gained a point of experience, and the act taught a new one, Vigor. Doing things is how you learn.
 
 The run has truly begun, and we are on the world map. Before travelling, let's look at what we have. Escape opens the menu, and Protagonist opens the character screen.

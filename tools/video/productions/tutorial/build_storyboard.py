@@ -122,7 +122,12 @@ class Take:
         return (hits[-1] if last else hits[0]) if hits else None
 
     def word(self, t):
-        return self.words[t]
+        """The word the keyword click at t landed on: the timeline's label (the word itself, in takes
+        recorded since the recorder labelled it so), else the logged word, else the notes' table."""
+        label = next(c.get("label") for c in self.clicks if c["t"] == t)
+        if label and not label.startswith("@"):
+            return label
+        return self.words.get(t) or OPENING_NOTES.get("words", {}).get(label, label.lstrip("@"))
 
     def between(self, t0, t1):
         return [i for i, p in enumerate(self.P) if t0 < p["t1"] <= t1]
@@ -264,7 +269,8 @@ MEMORY = {
         "what they give you is the game's."),
     2: ("The second memory. Look at the heading: the observer is now Empathy, one of the minds we just gained. A "
         "new mind notices different things.",
-        "This one gives Hard Labor. The docks taught us to work."),
+        "This one gives two ways of thinking: Hard Labor and Tide Watching. The docks taught us to work, and to "
+        "read the water."),
     3: ("The third memory: something sharp.", "A short sword, and Bargaining."),
     4: ("The fourth: a dream of a golden arch.",
         "A traveller's backpack, with bread and cheese inside, and Archaeology. Keep the bread in mind."),
@@ -304,8 +310,8 @@ for m in range(1, 6):
               "tells how it went.",
               "Thinking costs a noetic point, and so does every extra look. The points come back when the scene "
               "moves on, but not after a failed roll: a miss costs something.")
-        first = (f"We click {O.word(kw)}, choose Think, and pick the mind that will think. For now, there is "
-                 "only one.")
+        first = (f"We click the word {O.word(kw)}, choose Think, and pick the mind that will think. For now, "
+                 "there is only one.")
         O.game(kw - 0.3, O.end(reason), first, O.R(reason), *note(f"m{m}_reason"))
         O.game(O.end(reason), O.end(intent), "Now the acting mind puts the goal into words.", O.R(intent),
                *note(f"m{m}_intent"))
@@ -314,7 +320,7 @@ for m in range(1, 6):
         O.game(execute + 0.3, O.end(outcome), "In childhood nothing is rolled: remembering always succeeds.",
                O.R(outcome), W(gave), *note(f"m{m}_outcome"))
     else:
-        O.game(O.end(obs), O.end(reason), f"We click {O.word(kw)}.", O.R(reason), *note(f"m{m}_reason"))
+        O.game(O.end(obs), O.end(reason), f"We click the word {O.word(kw)}.", O.R(reason), *note(f"m{m}_reason"))
         O.game(O.end(reason), O.end(intent), O.R(intent), *note(f"m{m}_intent"))
         O.game(O.end(intent), O.end(outcome), O.R(outcome), W(gave), *note(f"m{m}_outcome"))
     O.game(O.end(outcome), footer - 0.3)
@@ -341,9 +347,11 @@ faces = roll.split("[", 2)[2].split("]")[0].split()
 sixes = faces.count("6")
 spent = len([c for c in O.clicks if gb <= c["t"] <= ge and c.get("cmd", "").startswith("click humor")])
 dice_end = O.click(O.end(intent), ge, label="Continue") - 0.3
-roll_line = (f"We click the act, and Execute. The dice: {len(faces)} of them"
-             + (f", and {sixes} six{'es' if sixes != 1 else ''}." if sixes else ", and not a single six.")
-             + (f" Not enough: we spend {spent} humor{'s' if spent != 1 else ''}, and the roll succeeds." if spent else ""))
+NUM = "nought one two three four five six seven eight nine ten eleven twelve".split()
+roll_line = (f"We click the act, and Execute. The dice: {NUM[len(faces)]} of them"
+             + (f", and {NUM[sixes]} six{'es' if sixes != 1 else ''}." if sixes else ", and not a single six.")
+             + (f" Not enough: we spend {NUM[spent]} humor{'s' if spent != 1 else ''}, and the roll succeeds."
+                if spent else ""))
 O.game(O.end(intent), dice_end, roll_line)
 manim("DiceHumors",
       "Every roll works the same way. You roll one die for each level of every mind in the chain: the one that "
