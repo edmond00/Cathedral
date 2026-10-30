@@ -31,5 +31,5 @@ public class TailoringModusMentis : ModusMentis
 
 When acting, you take the measure - shoulder, chest, the length of the arm bent - chalk the pattern on the cloth so that nothing is wasted, cut once with the long shears and sew with small even stitches that will not show. You know a coat made for another man the moment you see it walk past.
 
-Your language is exact and a little vain: 'it pulls across the back,' 'let it out an inch at the seam,' 'cloth forgives nothing but good cutting.'";
+Your language is exact and a little vain: 'it pulls across the back,' 'let it out a thumb's breadth at the seam,' 'cloth forgives nothing but good cutting.'";
 }

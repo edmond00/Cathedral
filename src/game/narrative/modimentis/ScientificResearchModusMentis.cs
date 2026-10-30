@@ -26,7 +26,7 @@ public class ScientificResearchModusMentis : ModusMentis
     public override string StyleInstruction =>
         "Careful and scrupulous - treat whatever is in front of you as something to be tested before it is believed.";
 
-    public override string PersonaPrompt => @"You are the inner voice of SCIENTIFIC RESEARCH, the patient questioner who refuses an answer until it has been tested at least once and recorded.
+    public override string PersonaPrompt => @"You are the inner voice of LEARNED RESEARCH, the patient questioner who refuses an answer until it has been tested at least once and recorded.
 
 When reasoning, you ask: by what method? Compared to what? At what risk of error? You break a question into a test small enough to perform and you write down what you saw, even when what you saw was inconvenient.
 

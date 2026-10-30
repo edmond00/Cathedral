@@ -165,7 +165,7 @@ internal static class ForbiddenWords
         ["shelf"] = "shelves", ["loaf"] = "loaves", ["thief"] = "thieves", ["staff"] = "staves",
         ["cloth"] = "cloths", ["ox"] = "oxen", ["goose"] = "geese", ["day"] = "days", ["key"] = "keys",
         ["lore"] = "lore", ["chapter"] = "chapters", ["armour"] = "armour", ["grain"] = "grains",
-        ["stuff"] = "stuff", ["swine"] = "swine",
+        ["stuff"] = "stuff", ["swine"] = "swine", ["gallows"] = "gallows",
     };
 
     /// <summary>English plural of a noun or of a noun phrase's head ("span of days" → "spans of days").</summary>
@@ -542,7 +542,6 @@ internal static class ForbiddenWords
         N("thermometer", "heat-gauge");
         N("barometer", "weather-glass");
         N("microscope", "magnifying lens");
-        N("telescope", "spyglass");
         N("binoculars", "spyglass", "binoculars", "spyglasses");
         N("stopwatch", "hourglass");
         N("wristwatch", "bracelet");
@@ -1117,7 +1116,6 @@ internal static class ForbiddenWords
         N("pizzeria", "bakehouse");
         N("office building", "counting house");
         N("headquarters", "seat", "headquarters", "seats");
-        N("stadium", "arena");
         N("gym", "training yard");
         N("gymnasium", "training yard");
         N("swimming pool", "bathing pool");
@@ -1130,7 +1128,6 @@ internal static class ForbiddenWords
         N("bathroom", "washroom");
         N("lavatory", "privy", "lavatories", "privies");
         N("loo", "privy", "loos", "privies");
-        N("bathtub", "washtub");
         N("faucet", "spout");
         N("tap water", "well water");
         N("dumpster", "midden");
@@ -1471,8 +1468,8 @@ internal static class ForbiddenWords
         P("Doomsday", "the Hatching");
         P("Garden of Eden", "the Garden");
         P("Eden", "the Garden");
-        P("Heaven", "the Garden");
-        P("Paradise", "the Garden");
+        P("Heaven", "the Garden", midSentenceOnly: true);    // "Heaven knows" at a start
+        P("Paradise", "the Garden", midSentenceOnly: true);
         P("Purgatory", "the Ash-Sky");
         P("Limbo", "the Drift");
         P("Satan", "Repance");
@@ -2042,7 +2039,6 @@ internal static class ForbiddenWords
         N("jigsaw", "puzzle");
         N("video game", "game");
         N("videogame", "game");
-        N("circus", "travelling show", "circuses", "travelling shows");
         N("carnival ride", "fairground swing");
         N("rollercoaster", "fairground swing");
         N("roller coaster", "fairground swing");
@@ -2212,8 +2208,6 @@ internal static class ForbiddenWords
         W("dystopian", "wretched");
         W("majolica", "glazed");
         W("maiolica", "glazed");
-        W("bamboo", "cane");
-        W("bamboos", "canes");
     }
 
     // ── More of modern life ─────────────────────────────────────────────────────
@@ -2235,9 +2229,6 @@ internal static class ForbiddenWords
         N("extrovert", "sociable soul");
         W("introverted", "withdrawn");
         W("extroverted", "outgoing");
-        W("empathy", "fellow feeling");
-        W("empathetic", "feeling");
-        W("empathic", "feeling");
         W("self-esteem", "pride");
         W("mental health", "peace of mind");
         W("stressful", "trying");
@@ -2445,11 +2436,10 @@ internal static class ForbiddenWords
         W("structural integrity", "soundness");
         N("infrastructure", "works", "infrastructure", "works");
         N("blueprint", "plan");
-        N("prototype", "first model");
         W("maintenance", "upkeep");
         N("renovation", "repair");
         V("renovate, renovates, renovated, renovating", "repair, repairs, repaired, repairing");
-        V("upgrade, upgrades, upgraded, upgrading", "improve, improves, improved, improving");
+        V("upgraded, upgrading", "improved, improving");   // not "upgrade(s)", as often a noun
         N("feedback loop", "circle");
         W("ergonomic", "well-shaped");
         W("aerodynamic", "sleek");
@@ -2460,9 +2450,6 @@ internal static class ForbiddenWords
         W("turbocharged", "redoubled");
         W("bulletproof", "proof against blades");
         // The game and the model speaking of themselves.
-        N("NPC", "stranger");
-        P("HP", "strength");
-        P("XP", "experience");
         V("level up, levels up, levelled up, leveled up, levelling up, leveling up", "grow, grows, grew, grew, growing, growing");
         V("respawn, respawns, respawned, respawning", "rise again, rises again, rose again, rising again");
         W("game over", "the end");
@@ -2470,7 +2457,6 @@ internal static class ForbiddenWords
         N("tutorial", "lesson");
         N("glitch", "flaw", "glitches", "flaws");
         W("glitched", "faltered");
-        N("language model", "speaking engine");
         W("as an AI", "as I am");
         W("video-game", "game");
         W("roleplay", "play-acting");

@@ -28,7 +28,7 @@ public class BoastingModusMentis : ModusMentis
 
 Rooms are decided in the first minute. Come in quiet and you spend the evening being talked over; come in loud with a large story and the room arranges itself around you, and half of them will not check and the other half will not want to be the one who does. It is not lying exactly. It is a true thing with the dull parts removed and the numbers improved.
 
-It works. It genuinely works, on strangers, on employers, on men deciding whether to start something. And it has a cost, which arrives later and in a different town, when somebody who was there the first time is there the second.
+It works. It genuinely works, on strangers, on masters, on men deciding whether to start something. And it has a cost, which arrives later and in a different town, when somebody who was there the first time is there the second.
 
 Your speech is front-loaded and rhythmic: 'I have done this on worse ground than that,' 'three of them - three - and I walked out,' 'ask anyone. Well - ask anyone from there.'";
 }

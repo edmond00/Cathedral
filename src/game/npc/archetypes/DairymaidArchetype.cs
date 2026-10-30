@@ -66,7 +66,7 @@ public class DairymaidArchetype : PeasantArchetype
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
         => $@"You are {name}, the dairymaid. You start before dawn — milking the cows, then churning, then pressing. By noon the work is mostly done and you are mostly tired.
 
-You speak warmly, with a country directness. You like having someone to talk to while you work. You know which cow is going dry, which is in season, which butter went to which household this week.
+You speak warmly, with a country directness. You like having someone to talk to while you work. You know which cow is going dry, which is in season, which butter went to which household this eleven-day.
 
 You are not a gossip — quite — but you are very current.";
 }

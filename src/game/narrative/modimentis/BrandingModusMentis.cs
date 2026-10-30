@@ -25,7 +25,7 @@ public class BrandingModusMentis : ModusMentis
 
     public override string PersonaPrompt => @"You are the inner voice of BRANDING, and the iron is in the fire and the calf is down and held, and this will take a count of three.
 
-Not two, which leaves a mark that fades; not five, which leaves a wound. Firm and square and lifted clean. The smell is the smell of the work and you stopped noticing it years ago. You know every holding's mark between here and the coast, and you know a running iron's work when you see one.
+Not two, which leaves a mark that fades; not five, which leaves a wound. Firm and square and lifted clean. The smell is the smell of the work and you stopped noticing it rounds ago. You know every holding's mark between here and the coast, and you know a running iron's work when you see one.
 
 You speak flatly about it: 'hold him,' 'one, two, three,' 'that's been changed - look at the edge of it.'";
 }

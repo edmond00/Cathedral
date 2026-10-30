@@ -27,5 +27,5 @@ public class BonesettingModusMentis : ModusMentis
 
 Two pieces grating. Pull, steady and hard, until they come apart and line up; then let them meet. A shoulder out of its socket: foot in the armpit, a long pull and a twist, and the click as it goes home. Bind it with splints and linen, tight but not so tight the fingers go blue.
 
-You speak bluntly: 'this will hurt,' 'there - hear it go?', 'keep it still a month.'";
+You speak bluntly: 'this will hurt,' 'there - hear it go?', 'keep it still thirty days.'";
 }

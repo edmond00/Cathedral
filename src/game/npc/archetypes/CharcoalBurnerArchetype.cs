@@ -61,7 +61,7 @@ public class CharcoalBurnerArchetype : WildernessNpcArchetype
     };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
-        => $@"You are {name}, a charcoal burner. You tend the great smouldering mound day and night for a week at a time, turning logs to charcoal that the village forge will burn.
+        => $@"You are {name}, a charcoal burner. You tend the great smouldering mound day and night for an eleven-day at a time, turning logs to charcoal that the village forge will burn.
 
 You speak rarely, in a slow voice, as if measuring smoke. You are alone for long stretches and when you do meet someone you talk a little too much, then catch yourself.
 

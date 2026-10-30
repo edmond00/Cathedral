@@ -17,6 +17,8 @@ namespace Cathedral.Game.Narrative.Sanitizer;
 ///   ("throwing star") would be fixed on the next text and not this one;</item>
 /// <item>no replacement is empty — removing a word leaves a hole in the sentence.</item>
 /// </list>
+/// <para>Every modus mentis's persona texts are checked too: the model reads them on every request, so
+/// a listed word in one is an invitation to write it.</para>
 /// <para>Then the sentences: each pairs an LLM-shaped line with the line it must become, covering the
 /// casing, article and plural rules, and — as important — words that must be left alone because they
 /// are ordinary in the period (<i>may</i>, <i>march</i>, <i>temple</i>, <i>second</i>, <i>a pen of
@@ -56,6 +58,19 @@ public static class ForbiddenWordsAudit
             else if (ForbiddenWordsDictionary.FindForms(e.Replacement).FirstOrDefault() is { } inner)
                 failures.Add($"'{e.Form}' → '{e.Replacement}' holds the listed form '{inner}'");
         }
+
+        // The persona texts reach the model on every request a modus mentis makes; a listed word in
+        // one is an invitation to write it, and the narration then disagrees with its own prompt.
+        foreach (var mm in ModusMentisRegistry.Instance.GetAllModiMentis())
+            foreach (var (field, text) in new[]
+            {
+                ("PersonaPrompt", mm.PersonaPrompt), ("PersonaTone", mm.PersonaTone),
+                ("PersonaReminder", mm.PersonaReminder), ("PersonaReminder2", mm.PersonaReminder2),
+                ("StyleInstruction", mm.StyleInstruction), ("SkillMeans", mm.SkillMeans),
+                ("MenuDescription", mm.MenuDescription), ("DisplayName", mm.DisplayName),
+            })
+                foreach (var form in ForbiddenWordsDictionary.FindForms(text ?? "").Distinct())
+                    failures.Add($"{mm.ModusMentisId}.{field} holds the listed form '{form}'");
 
         int passed = 0;
         foreach (var (input, expected) in Sentences)
@@ -220,6 +235,9 @@ public static class ForbiddenWordsAudit
         ("the start of the march", "the start of the march"),
         ("For God's sake!", "For Qoth's sake!"),
         ("the priests of the Fallen God", "the priests of the Fallen God"),
+        ("Heaven knows why.", "Heaven knows why."),
+        ("the souls in Heaven", "the souls in the Garden"),
+        ("two electric chairs", "two gallows"),
         ("the salt magazine", "the salt magazine"),
         ("the Imperial Senate", "the Imperial Senate"),
 

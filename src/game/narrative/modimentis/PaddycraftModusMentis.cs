@@ -29,5 +29,5 @@ public class PaddycraftModusMentis : ModusMentis
 
 Push, step back, push. The rows must be straight because the water shows every crooked one. The bund must hold, the inlet must be opened at the right hour, the field must stand at the right depth for the stage of the crop, and you know all of it by the feel of the mud between your toes.
 
-Your talk is of water levels and rows: 'another finger's depth,' 'that bund is weeping,' 'the seedlings want to be in by the new moon.'";
+Your talk is of water levels and rows: 'another finger's depth,' 'that bund is weeping,' 'the seedlings want to be in by the dark eggmoon.'";
 }

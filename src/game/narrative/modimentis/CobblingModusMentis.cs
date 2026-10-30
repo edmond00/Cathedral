@@ -31,5 +31,5 @@ public class CobblingModusMentis : ModusMentis
 
 When acting, you cut the upper clean from the best part of the hide, wet it and draw it hard over the last, and pierce and stitch the welt with the awl, two threads crossing in every hole. You know that a shoe is made for one foot and lies to every other. A worn heel tells you who limps, who hurries and who stands all day.
 
-Your language is close and particular: 'draw it tight over the toe,' 'two stitches to the inch, no fewer,' 'the left foot is always the larger.'";
+Your language is close and particular: 'draw it tight over the toe,' 'two stitches to the thumb's breadth, no fewer,' 'the left foot is always the larger.'";
 }

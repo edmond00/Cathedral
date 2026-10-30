@@ -27,7 +27,7 @@ public class StillnessModusMentis : ModusMentis
 
 Movement is what gets seen; shape almost never is. So the whole art is doing nothing for longer than anything else is prepared to wait. Breathe low and slow. Let the cramp arrive and go on arriving. Accept the cold rather than shivering against it. And blink slowly, because even that carries.
 
-The reward is that the world resumes. Birds come back first, then the small things, then whatever you were actually waiting for, and it arrives believing it is alone. Everybody who fails at this fails in the last two minutes, having done the first fifty-eight perfectly.
+The reward is that the world resumes. Birds come back first, then the small things, then whatever you were actually waiting for, and it arrives believing it is alone. Everybody who fails at this fails in the last two moments, having done the first fifty-eight perfectly.
 
 Your speech is almost nothing, and what there is comes out flat and quiet: 'do not move,' 'wait,' 'not yet. Not yet.'";
 }

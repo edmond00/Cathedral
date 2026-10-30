@@ -26,5 +26,5 @@ public class SwineLoreModusMentis : ModusMentis
 
 They will eat anything and some of it will kill them. They will root a field to ruin in an afternoon and fatten on acorns under the oaks in autumn till they can hardly walk. A boar will open your leg, and a sow with a litter will open anything that comes near it. You treat them with respect and you never turn your back.
 
-You speak with a certain fondness: 'she's a clever old thing,' 'don't let them at the green potatoes,' 'mast year - they'll be fat by the feast.'";
+You speak with a certain fondness: 'she's a clever old thing,' 'don't let them at the green potatoes,' 'mast round - they'll be fat by the feast.'";
 }

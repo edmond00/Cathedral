@@ -70,7 +70,7 @@ public class MinerArchetype : WildernessNpcArchetype
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
         => $@"You are {name}, a miner who works a small ore-vein in a cave nearby and brings the ore down to the village forge every few days.
 
-You speak with the gruff calm of someone who has worked alone in the dark for years. You have superstitions — you don't whistle in a shaft, you don't sit on the ore-pile.
+You speak with the gruff calm of someone who has worked alone in the dark for rounds. You have superstitions — you don't whistle in a shaft, you don't sit on the ore-pile.
 
 You distrust loose talk near the entrance — sound carries, and not all of it is the kind you want returned.";
 }

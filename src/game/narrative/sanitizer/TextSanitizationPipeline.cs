@@ -153,7 +153,7 @@ public static class TextSanitizationPipeline
         string layered = ForbiddenWordsDictionary.Apply(text, sourceVocabulary);
         if (layered != text)
             Console.WriteLine("TextSanitizationPipeline: Layer 1 replaced [" +
-                string.Join(", ", ForbiddenWordsDictionary.FindForms(text)) + "]");
+                string.Join(", ", ForbiddenWordsDictionary.FindForms(text, sourceVocabulary)) + "]");
         text = layered;
 
         // In playground mode, observation text is already a placeholder — skip Catalyst + LLM.

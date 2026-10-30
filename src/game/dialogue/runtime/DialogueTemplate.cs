@@ -157,7 +157,7 @@ public static class DialogueTemplate
     /// <summary>Opening words an opinion keeps capitalised mid-sentence: "I" and its contractions,
     /// and the calendar's proper names.</summary>
     private static readonly HashSet<string> KeepsCapital = new(StringComparer.Ordinal)
-        { "I", "I'm", "I've", "I'd", "I'll", "Sunday", "Sundays", "Lent", "Easter", "Christmas", "Michaelmas" };
+        { "I", "I'm", "I've", "I'd", "I'll", "Silday", "Sildays", "Feastday", "Feastdays", "Qoth" };
 
     /// <summary>
     /// Fits an opinion into the sentence around its token. Opinions are written to sit mid-sentence —

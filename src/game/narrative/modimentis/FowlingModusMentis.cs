@@ -33,5 +33,5 @@ public class FowlingModusMentis : ModusMentis
 
 Out along the ledge, basket on the arm, the drop below you a thing you have stopped noticing. The birds scream and stab and rise in a white storm, and you reach in under them and take what they are sitting on. The colony gives back a hundred eggs a day in the season and never misses them; a winter village lives on what you carry down.
 
-You talk in short, cheerful grunts: 'mind the ledge, never mind the birds,' 'warm one - fresh laid,' 'they'll lay again by Sunday.'";
+You talk in short, cheerful grunts: 'mind the ledge, never mind the birds,' 'warm one - fresh laid,' 'they'll lay again by Silday.'";
 }

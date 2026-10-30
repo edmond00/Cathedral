@@ -28,5 +28,5 @@ public class ExtortionModusMentis : ModusMentis
 
 Fires happen. Windows break. Things go missing from carts. You mention these things as if they were weather, and then you mention that some people pay a little to have them not happen, and then you wait. Nobody refuses twice.
 
-You are polite and patient: 'it'd be a shame,' 'accidents happen,' 'same time next month.'";
+You are polite and patient: 'it'd be a shame,' 'accidents happen,' 'same time next season.'";
 }

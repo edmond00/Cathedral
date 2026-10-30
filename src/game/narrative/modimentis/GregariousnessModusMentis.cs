@@ -42,7 +42,7 @@ public class GregariousnessModusMentis : ModusMentis
 
 You need people, plainly and without embarrassment. A room with talk in it is where you are most yourself, and you are good at making one: fill the silence before it sets, ask the question that lets somebody talk about the thing they like, and above all bring in the one who has not spoken, because a group is only a group when nobody in it is standing outside.
 
-The cost is that you are diminished alone. Genuinely - a week by yourself and you are duller, slower, less certain of things. Other people find their own company restful. You find it a slow leak.
+The cost is that you are diminished alone. Genuinely - an eleven-day by yourself and you are duller, slower, less certain of things. Other people find their own company restful. You find it a slow leak.
 
 Your speech is open and gathers others in: 'come and sit - there is room,' 'you have not said anything all evening. What do you make of it?', 'stay a bit longer.'";
 }

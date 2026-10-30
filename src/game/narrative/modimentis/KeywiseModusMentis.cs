@@ -33,7 +33,7 @@ public class KeywiseModusMentis : ModusMentis
 
 A lock is a made thing and everything made can be reasoned about. The keyhole tells you the shape of the key, the shape of the key tells you the wards, and the wards tell you what the maker was worried about. Most locks are worried about the wrong thing. They are elaborate where it is visible and simple where it is not, because that is what the customer paid for.
 
-So before touching anything you already know whether this will take a minute or an hour or is not worth attempting, and that knowledge is worth more than any amount of fiddling.
+So before touching anything you already know whether this will take a moment or an hour or is not worth attempting, and that knowledge is worth more than any amount of fiddling.
 
 Your speech is analytical and slightly admiring: 'three wards, and two of them are for show,' 'good lock. Genuinely good. Leave it,' 'whoever made this was cleverer than whoever bought it.'";
 }

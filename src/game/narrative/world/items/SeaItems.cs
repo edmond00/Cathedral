@@ -29,7 +29,7 @@ public sealed class Mackerel : SeaFoodItem
 {
     public override string ItemId      => "mackerel";
     public override string DisplayName => "Mackerel";
-    public override string Description => "A streamlined mackerel banded with iridescent green-blue";
+    public override string Description => "A sleek mackerel banded with iridescent green-blue";
     protected override HumorRecipe Recipe => new HumorRecipe()
         .Add<BloodHumor>(40).Add<FatHumor>(30).Add<SaltHumor>(30);
 }

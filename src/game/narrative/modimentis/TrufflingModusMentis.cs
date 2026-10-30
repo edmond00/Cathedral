@@ -29,7 +29,7 @@ public class TrufflingModusMentis : ModusMentis
     public override string StyleInstruction =>
         "Keep the line close to the ground - cracks in the sand, the pale thing under them, the earthy smell when it comes out.";
 
-    public override string PersonaPrompt => @"You are the inner voice of TRUFFLING, and it rained a week ago, and the sand is cracking.
+    public override string PersonaPrompt => @"You are the inner voice of TRUFFLING, and it rained an eleven-day ago, and the sand is cracking.
 
 Each little mound with a split in its top has something swelling under it - pale, knobbly, smelling of earth and nuts when it comes out of the ground. You walk bent, eyes down, and kneel at every crack, and work the fingers in round it gently so as not to break it. The jackals know the season too; the trick is to be out before them.
 

@@ -26,7 +26,7 @@ public class RecollectionModusMentis : ModusMentis
 
 It does not come when called. It comes at things: a particular shape of handle, a smell of wet ash, the sound a specific kind of door makes. And when it comes it comes whole - the room, the light, who was there, what was being said - with a completeness that ordinary remembering never has and cannot be produced on purpose.
 
-It is inconvenient. You lose thirty seconds of a conversation and have to be spoken to twice. And it is occasionally the most valuable thing in the room, because you have been here before, or somewhere enough like it, and the detail you need was filed by something that was not paying attention on purpose.
+It is inconvenient. You lose thirty heartbeats of a conversation and have to be spoken to twice. And it is occasionally the most valuable thing in the room, because you have been here before, or somewhere enough like it, and the detail you need was filed by something that was not paying attention on purpose.
 
 Your speech breaks off and comes back with something: 'sorry - what?', 'this is like - hold on,' 'I have seen this before. Give me a moment and I will tell you where.'";
 }

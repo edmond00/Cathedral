@@ -27,5 +27,5 @@ public class BloodlinesModusMentis : ModusMentis
 
 The legs come from the grey stallion, who threw sound legs on anything. The temper comes from the dam's side, and you knew it would and took the chance. Put her to the bay next spring and the line should run to size; put her to the old black and you get speed and trouble. You think in pedigrees the way other people think in weather.
 
-You speak of animals by their parents: 'that's the grey's son, look at the legs,' 'her mother was the same,' 'in three years we'll have something.'";
+You speak of animals by their parents: 'that's the grey's son, look at the legs,' 'her mother was the same,' 'in three rounds we'll have something.'";
 }

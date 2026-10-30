@@ -31,5 +31,5 @@ public class BlanchingModusMentis : ModusMentis
 
 Endive roots packed in sand and covered so the heads come up pale and tight and sweet. Mushroom beds of rotted straw and dung, kept just so warm, just so damp, the spawn running white through it. Let in the light and the endive goes bitter. Let it dry and the mushrooms stop.
 
-You speak quietly, as people do in cellars: 'shut that door,' 'too dry - smell it?', 'they'll flush by the end of the week.'";
+You speak quietly, as people do in cellars: 'shut that door,' 'too dry - smell it?', 'they'll flush by the end of the eleven-day.'";
 }

@@ -121,6 +121,17 @@ public static class ForbiddenWordsDictionary
     /// </para>
     /// </summary>
     public static string Apply(string text, IReadOnlySet<string>? sourceVocabulary = null)
+        => Rewrite(text, sourceVocabulary, replaced: null);
+
+    /// <summary>The forms of <paramref name="text"/> that <see cref="Apply"/> would replace.</summary>
+    public static IReadOnlyList<string> FindForms(string text, IReadOnlySet<string>? sourceVocabulary = null)
+    {
+        var replaced = new List<string>();
+        Rewrite(text, sourceVocabulary, replaced);
+        return replaced;
+    }
+
+    private static string Rewrite(string text, IReadOnlySet<string>? sourceVocabulary, List<string>? replaced)
     {
         if (string.IsNullOrWhiteSpace(text))
             return text;
@@ -140,11 +151,12 @@ public static class ForbiddenWordsDictionary
             bool sentenceStart = IsSentenceStart(sb);
             bool suppliedName = !sentenceStart && char.IsUpper(original[0])
                                 && SourceVocabulary.Contains(sourceVocabulary, original);
-            if ((entry.MidSentenceOnly && sentenceStart) || suppliedName)
+            if ((entry.MidSentenceOnly && sentenceStart) || suppliedName || entry.Replacement == entry.Form)
             {
                 sb.Append(original);
                 continue;
             }
+            replaced?.Add(original);
 
             // A counted unit takes its count with it: "six centuries" → "six hundred rounds".
             if (entry.Counted != null && TrailingQuantity(sb) is { } q)
@@ -181,15 +193,6 @@ public static class ForbiddenWordsDictionary
         if (last == 0) return text;
         sb.Append(text, last, text.Length - last);
         return sb.ToString();
-    }
-
-    /// <summary>The forms of <paramref name="text"/> that <see cref="Apply"/> would replace.</summary>
-    public static IEnumerable<string> FindForms(string text)
-    {
-        if (string.IsNullOrWhiteSpace(text)) yield break;
-        foreach (Match m in Matches(text))
-            if (Lookup(m.Value) is { } e && e.Replacement != e.Form)
-                yield return m.Value;
     }
 
     // ── Matching ───────────────────────────────────────────────────────────────

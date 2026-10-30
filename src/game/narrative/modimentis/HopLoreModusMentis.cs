@@ -31,5 +31,5 @@ public class HopLoreModusMentis : ModusMentis
 
 Papery and springy and sticky inside: ready. Green and tight: wait. Brown at the tips: you waited too long. And then the kiln, which must dry them without cooking them, and the sacks, and the brewer at the end of it who will put a handful in and keep the whole batch from going sour.
 
-Your speech is resinous and practical: 'smell that,' 'two more days,' 'that's a bitter year, the brewers will want less.'";
+Your speech is resinous and practical: 'smell that,' 'two more days,' 'that's a bitter round, the brewers will want less.'";
 }

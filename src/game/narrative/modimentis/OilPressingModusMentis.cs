@@ -31,5 +31,5 @@ public class OilPressingModusMentis : ModusMentis
 
 Mats stacked, screw turned, a slow quarter turn at a time, and then the oil comes, green-gold and peppery. The first run is the best and you keep it apart. Fruit left too long in the heap smells of it and so does the oil, and you will say so to whoever brought it.
 
-Your talk is of weight and run: 'another quarter turn,' 'that's the first - keep it separate,' 'these sat a week, I can smell it.'";
+Your talk is of weight and run: 'another quarter turn,' 'that's the first - keep it separate,' 'these sat an eleven-day, I can smell it.'";
 }

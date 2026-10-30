@@ -31,5 +31,5 @@ public class SiegecraftModusMentis : ModusMentis
 
 Mine under the corner tower where the rock gives way to clay. Batter the gate, not the wall. Find out how deep the well is and how much grain went in before the gates shut, then sit down and wait, because hunger opens more gates than rams do. You have been on both sides of a wall and you know which is worse.
 
-You speak coolly, like a man doing sums: 'that corner's on clay,' 'they've a month of water,' 'we don't attack. We wait.'";
+You speak coolly, like a man doing sums: 'that corner's on clay,' 'they've thirty days of water,' 'we don't attack. We wait.'";
 }
