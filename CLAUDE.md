@@ -16,6 +16,21 @@ dotnet run                  # main game
 dotnet run -- --help        # all options
 ```
 
+**In a Linux cloud container** there is no SDK and no screen. Install the SDK from Ubuntu's archive
+(`dotnet-install.sh` is blocked by the network policy) and give the game a virtual display before
+launching it, or every run dies with `GLFWException: Failed to detect any supported platform`:
+
+```bash
+apt-get update && apt-get install -y dotnet-sdk-8.0
+Xvfb :99 -screen 0 1280x1024x24 &
+mkdir -p /tmp/xdg && chmod 700 /tmp/xdg
+export DISPLAY=:99 XDG_RUNTIME_DIR=/tmp/xdg
+export CLI_EXTRA_FLAGS=--no-embeddings   # models/embeddings/ (GloVe) is gitignored, so absent
+```
+
+The exports do not outlive one shell command, so repeat them in the command that runs the game or
+`run_tests.sh`. The audits need none of the display setup.
+
 ## The player manual
 
 `docs/` holds the player manual and nothing else. `design/` (formerly `docs/`) is drafts, location
