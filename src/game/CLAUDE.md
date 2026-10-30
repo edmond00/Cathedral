@@ -749,7 +749,11 @@ successors from `Scene.View(pov, actor, verbs)` — the live gates — and from 
 when every verb is (a grab that yields it, or `propose_to_buy` on someone whose `BuyCatalog` lists it —
 opaque beyond, replanned next phase). The implement is a goal verb's `ReferenceToolIds` **or any item
 made for it** (`Item.MadeForVerbIds`, `ToolIdsFor`): a ring of keys is a tool made for `unlock_door`, so
-a will to open a lock goes for the keys on the gatehouse pegs. Nothing else is modelled, so a path never passes a conversation,
+a will to open a lock goes for the keys on the gatehouse pegs. **When no such implement can be had in
+the place, the goal is planned bare-handed** (`ActionPath.Unarmed`, a second search) rather than refused:
+the planner knows only reference tools and made-for items, while the click takes anything carried to
+the critic (a short sword cutting a carcass) and `RequiredToolRule` asks for a tool when nothing is
+combined. Refusing there made Butchery decline a hyena and then its corpse with a blade in the pack. Nothing else is modelled, so a path never passes a conversation,
 a fight or loot. **A sit is every other hour, and the path is one of them**: `PathStep.Until` keeps the
 hour the search reached by it, `ThinkingExecutor` settles the will's step on it
 (`SitAndWaitVerb.Until`, the period as the action's variant, "…until dawn"), and `AskWaitUntil` then
