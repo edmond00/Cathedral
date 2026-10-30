@@ -393,8 +393,9 @@ O.game(leave - 0.2, O.at("clip-end", "run_start"),
 # rec_rest plays rest.cli, which loads the opening take's save (Continue) and plays tutorial.cli's second
 # half. As for the opening, every moment and number is read from the take; what the model happened to
 # write is remarked on from rest_notes.json, keyed by passage ("p<i>": said once passage i has been read).
-RS = Take("tutorial", "build/rec_rest", "passages_rest.json")
-REST_NOTES = json.loads((HERE / "rest_notes.json").read_text()) if (HERE / "rest_notes.json").exists() else {}
+# The journey to the city onward is a second take, city.cli, resumed from rest.cli's checkpoint after the job
+# menu: a fight re-rolls on every load, so a lost one is re-shot from there. use() points everything below at
+# one take, its passages, its notes and its logged rolls.
 NUMBER = "nought one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen".split()
 
 
@@ -425,16 +426,24 @@ def humors_spent(t0, t1):
     return len([c for c in RS.clicks if t0 <= c["t"] <= t1 and c.get("cmd", "").startswith("click humor")])
 
 
-# the take's rolls, each placed at the `dice` command that printed it
-_dice_cmds = [e["t"] for e in RS.events if e["type"] == "cmd" and str(e.get("line", "")).strip() == "dice"]
-_dice_lines = [l for l in RS.log if l.startswith("[cli] dice [")]
-RS_ROLLS = []
-for t, line in zip(_dice_cmds, _dice_lines):
-    faces = line.split("[", 2)[2].split("]")[0].split()
-    RS_ROLLS.append({"t": t, "faces": faces, "ok": "SUCCESS" in line})
-RESOLUTIONS = [l for l in RS.log if "DialogueTreeController: resolution '" in l and "dice (" in l]
-FITS = [l for l in RS.log if "Persona-fit for" in l]
-EMOTIONS = [l for l in RS.log if "emotion —" in l]
+def use(take, notes):
+    """Point the sections below at a take: its passages, its remarks, and its rolls, each placed at the
+    `dice` command that printed it."""
+    global RS, REST_NOTES, RS_ROLLS, RESOLUTIONS, FITS, EMOTIONS
+    RS = take
+    REST_NOTES = json.loads((HERE / notes).read_text()) if (HERE / notes).exists() else {}
+    dice_cmds = [e["t"] for e in RS.events if e["type"] == "cmd" and str(e.get("line", "")).strip() == "dice"]
+    dice_lines = [l for l in RS.log if l.startswith("[cli] dice [")]
+    RS_ROLLS = []
+    for t, line in zip(dice_cmds, dice_lines):
+        faces = line.split("[", 2)[2].split("]")[0].split()
+        RS_ROLLS.append({"t": t, "faces": faces, "ok": "SUCCESS" in line})
+    RESOLUTIONS = [l for l in RS.log if "DialogueTreeController: resolution '" in l and "dice (" in l]
+    FITS = [l for l in RS.log if "Persona-fit for" in l]
+    EMOTIONS = [l for l in RS.log if "emotion —" in l]
+
+
+use(Take("tutorial", "build/rec_rest", "passages_rest.json"), "rest_notes.json")
 
 
 def fight(name, intro, first_detail):
@@ -456,7 +465,7 @@ def fight(name, intro, first_detail):
               "rolls dice for the lower body, for any guard or stance, and for the armour on the part struck. If "
               "the attacker shows more sixes, the blow lands, and it leaves a wound on the part it hit. A tie goes "
               "to the defender.", "A wolf wears no armour, and its defence is small.")
-    t, told_humor, spent_all = conts[0] + 0.3, name == "fight_2", 0
+    t, told_humor, spent_all, told_guard = conts[0] + 0.3, name == "fight_2", 0, name == "fight_2"
     for k, c in enumerate(conts):
         lo = swords[k] if k < len(swords) else t
         spent = humors_spent(lo, c)
@@ -465,16 +474,24 @@ def fight(name, intro, first_detail):
             if spent:
                 RS.game(t, t + 0.1)
             continue
+        guard = humors_spent(conts[k - 1], swords[k] if k < len(swords) else c)   # spent on our defence
+        lead = ""
+        if guard and not told_guard:
+            lead = ("The wolf strikes back. Its blows are rolled against our defence, and the humors work there too: "
+                    f"we spend {num(guard)} on our defence dice, and its blows are turned aside. ")
+            told_guard = True
+        elif guard:
+            lead = "Its blows are turned aside again. "
         if not spent:
-            line = "The thrust lands."
+            line = lead + "The thrust lands."
         elif not told_humor:
-            line = ("This thrust falls short. Under the dice, the humors. At the back of the hepar is voluptas, the "
+            line = lead + ("This thrust falls short. Under the dice, the humors. At the back of the hepar is voluptas, the "
                     "humor of pleasure, which turns any die into a six. "
                     + ("We spend it, and the thrust lands." if spent == 1 else
                        f"We spend {num(spent)} of them, and the thrust lands."))
             told_humor = True
         else:
-            line = (f"It falls short, and {num(spent)} humor{'s' if spent != 1 else ''} turn{'s' if spent == 1 else ''}"
+            line = lead + (f"It falls short, and {num(spent)} humor{'s' if spent != 1 else ''} turn{'s' if spent == 1 else ''}"
                     " it.")
         nxt = conts[k] + 0.3
         RS.game(t, nxt, line, *([W(REST_NOTES[f"{name}_{k + 1}"])] if f"{name}_{k + 1}" in REST_NOTES else []),
@@ -653,8 +670,10 @@ RS.game(t, jme - 1.0,
         "three ways of thinking, the first one most.",
         "And the calendar moves on by every day worked. Your lifespan is counted in days, so time is the real price "
         "of work.", fade=True)
+RS.game(jme - 1.0, jme)
+use(Take("city", "build/rec_city", "passages_city.json"), "city_notes.json")
 cb_, ce_ = rs_clip("travel_city")
-RS.game(jme - 1.0, ce_, "With twenty copper in the purse, to the city.")
+RS.game(cb_, ce_, "With twenty copper in the purse, to the city.", fade=True)
 
 # 11. the second fight, and the city
 t, spent2 = fight("fight_2", "Another wolf, and this one starts right beside us.", lambda waits: [])
@@ -761,7 +780,14 @@ storyboard = {
                 "build/rec_rest_save.json before re-recording.",
         "flags": "--force-encounter wolf,wolf --no-encounters --npc-static --start-area \"Longhouse Hall,Cobbler's "
                  "Shop\" --observe-only farmer,cobbler --npc-affinity DistantAcquaintance --job-only farmhand "
-                 "--save-path build/rec_rest_save.json"}},
+                 "--save-path build/rec_rest_save.json"},
+                   "city": {
+        "script": "city.cli", "dir": "build/rec_city", "timeout": 14400,
+        "note": "Resumed from rest.cli's checkpoint after the job menu: copy build/rec_rest/saves/03_job_menu.json to "
+                "build/rec_city_save.json before re-recording; re-record while the second fight is lost.",
+        "flags": "--force-encounter wolf,wolf --no-encounters --npc-static --start-area \"Longhouse Hall,Cobbler's "
+                 "Shop\" --observe-only farmer,cobbler --npc-affinity DistantAcquaintance --job-only farmhand "
+                 "--save-path build/rec_city_save.json"}},
     "manim_file": "scenes.py",
     "segments": segments,
 }
