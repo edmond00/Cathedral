@@ -106,23 +106,18 @@ wait mode Fighting 900
 cursor rest
 hold 5
 regions
-# Turns 1 and 2: wait for the wolf.
+# Let the wolf come: two turns ended, each once it is ours.
+wait turn 900
 click end-turn
-wait 900
-cursor rest
-hold 3
+wait turn 900
 click end-turn
-wait 900
-cursor rest
-hold 3
-# Turn 1: a snap thrust with the short sword (the skill group opens first; it closes again after
-# every action). Humors are spent only if the roll is failing.
+# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
+# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
+skip-unless fighting 21
+wait turn 900
 click skill Short Sword
-wait 900
 click skill Snap Thrust
-wait 900
 click fighter enemy
-wait 900
 cursor rest
 hold 3
 dice
@@ -134,25 +129,20 @@ click humor pulmones needed
 click die needed
 click humor paunch needed
 click die needed
-click humor hepar needed
-click die needed
 hold 2
 click continue
-wait 900
 cursor rest
-hold 3
+hold 2
 click end-turn
 wait 900
-cursor rest
-hold 3
-# Turn 2: a snap thrust with the short sword (the skill group opens first; it closes again after
-# every action). Humors are spent only if the roll is failing.
+
+# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
+# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
+skip-unless fighting 21
+wait turn 900
 click skill Short Sword
-wait 900
 click skill Snap Thrust
-wait 900
 click fighter enemy
-wait 900
 cursor rest
 hold 3
 dice
@@ -164,25 +154,20 @@ click humor pulmones needed
 click die needed
 click humor paunch needed
 click die needed
-click humor hepar needed
-click die needed
 hold 2
 click continue
-wait 900
 cursor rest
-hold 3
+hold 2
 click end-turn
 wait 900
-cursor rest
-hold 3
-# Turn 3: a snap thrust with the short sword (the skill group opens first; it closes again after
-# every action). Humors are spent only if the roll is failing.
+
+# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
+# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
+skip-unless fighting 21
+wait turn 900
 click skill Short Sword
-wait 900
 click skill Snap Thrust
-wait 900
 click fighter enemy
-wait 900
 cursor rest
 hold 3
 dice
@@ -194,25 +179,20 @@ click humor pulmones needed
 click die needed
 click humor paunch needed
 click die needed
-click humor hepar needed
-click die needed
 hold 2
 click continue
-wait 900
 cursor rest
-hold 3
+hold 2
 click end-turn
 wait 900
-cursor rest
-hold 3
-# Turn 4: a snap thrust with the short sword (the skill group opens first; it closes again after
-# every action). Humors are spent only if the roll is failing.
+
+# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
+# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
+skip-unless fighting 21
+wait turn 900
 click skill Short Sword
-wait 900
 click skill Snap Thrust
-wait 900
 click fighter enemy
-wait 900
 cursor rest
 hold 3
 dice
@@ -224,25 +204,20 @@ click humor pulmones needed
 click die needed
 click humor paunch needed
 click die needed
-click humor hepar needed
-click die needed
 hold 2
 click continue
-wait 900
 cursor rest
-hold 3
+hold 2
 click end-turn
 wait 900
-cursor rest
-hold 3
-# Turn 5: a snap thrust with the short sword (the skill group opens first; it closes again after
-# every action). Humors are spent only if the roll is failing.
+
+# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
+# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
+skip-unless fighting 21
+wait turn 900
 click skill Short Sword
-wait 900
 click skill Snap Thrust
-wait 900
 click fighter enemy
-wait 900
 cursor rest
 hold 3
 dice
@@ -254,15 +229,138 @@ click humor pulmones needed
 click die needed
 click humor paunch needed
 click die needed
+hold 2
+click continue
+cursor rest
+hold 2
+click end-turn
+wait 900
+
+# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
+# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
+skip-unless fighting 21
+wait turn 900
+click skill Short Sword
+click skill Snap Thrust
+click fighter enemy
+cursor rest
+hold 3
+dice
 click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
 click die needed
 hold 2
 click continue
+cursor rest
+hold 2
+click end-turn
 wait 900
+
+# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
+# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
+skip-unless fighting 21
+wait turn 900
+click skill Short Sword
+click skill Snap Thrust
+click fighter enemy
 cursor rest
 hold 3
-# The wolf is dead; the journey goes on by itself and arrives at the farm.
-wait mode LocationInteraction 900
+dice
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 2
+click continue
+cursor rest
+hold 2
+click end-turn
+wait 900
+
+# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
+# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
+skip-unless fighting 21
+wait turn 900
+click skill Short Sword
+click skill Snap Thrust
+click fighter enemy
+cursor rest
+hold 3
+dice
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 2
+click continue
+cursor rest
+hold 2
+click end-turn
+wait 900
+
+# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
+# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
+skip-unless fighting 21
+wait turn 900
+click skill Short Sword
+click skill Snap Thrust
+click fighter enemy
+cursor rest
+hold 3
+dice
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 2
+click continue
+cursor rest
+hold 2
+click end-turn
+wait 900
+
+# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
+# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
+skip-unless fighting 21
+wait turn 900
+click skill Short Sword
+click skill Snap Thrust
+click fighter enemy
+cursor rest
+hold 3
+dice
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 2
+click continue
+cursor rest
+hold 2
+click end-turn
+wait 900
+# The wolf is dead; the journey goes on by itself.
 clip end fight_1
 
 # ── The farm: find a job ────────────────────────────────────────────────────────────────────────────
@@ -397,14 +495,13 @@ wait mode Fighting 900
 cursor rest
 hold 5
 regions
-# Turn 1: a snap thrust with the short sword (the skill group opens first; it closes again after
-# every action). Humors are spent only if the roll is failing.
+# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
+# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
+skip-unless fighting 21
+wait turn 900
 click skill Short Sword
-wait 900
 click skill Snap Thrust
-wait 900
 click fighter enemy
-wait 900
 cursor rest
 hold 3
 dice
@@ -416,25 +513,20 @@ click humor pulmones needed
 click die needed
 click humor paunch needed
 click die needed
-click humor hepar needed
-click die needed
 hold 2
 click continue
-wait 900
 cursor rest
-hold 3
+hold 2
 click end-turn
 wait 900
-cursor rest
-hold 3
-# Turn 2: a snap thrust with the short sword (the skill group opens first; it closes again after
-# every action). Humors are spent only if the roll is failing.
+
+# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
+# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
+skip-unless fighting 21
+wait turn 900
 click skill Short Sword
-wait 900
 click skill Snap Thrust
-wait 900
 click fighter enemy
-wait 900
 cursor rest
 hold 3
 dice
@@ -446,25 +538,20 @@ click humor pulmones needed
 click die needed
 click humor paunch needed
 click die needed
-click humor hepar needed
-click die needed
 hold 2
 click continue
-wait 900
 cursor rest
-hold 3
+hold 2
 click end-turn
 wait 900
-cursor rest
-hold 3
-# Turn 3: a snap thrust with the short sword (the skill group opens first; it closes again after
-# every action). Humors are spent only if the roll is failing.
+
+# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
+# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
+skip-unless fighting 21
+wait turn 900
 click skill Short Sword
-wait 900
 click skill Snap Thrust
-wait 900
 click fighter enemy
-wait 900
 cursor rest
 hold 3
 dice
@@ -476,25 +563,20 @@ click humor pulmones needed
 click die needed
 click humor paunch needed
 click die needed
-click humor hepar needed
-click die needed
 hold 2
 click continue
-wait 900
 cursor rest
-hold 3
+hold 2
 click end-turn
 wait 900
-cursor rest
-hold 3
-# Turn 4: a snap thrust with the short sword (the skill group opens first; it closes again after
-# every action). Humors are spent only if the roll is failing.
+
+# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
+# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
+skip-unless fighting 21
+wait turn 900
 click skill Short Sword
-wait 900
 click skill Snap Thrust
-wait 900
 click fighter enemy
-wait 900
 cursor rest
 hold 3
 dice
@@ -506,25 +588,20 @@ click humor pulmones needed
 click die needed
 click humor paunch needed
 click die needed
-click humor hepar needed
-click die needed
 hold 2
 click continue
-wait 900
 cursor rest
-hold 3
+hold 2
 click end-turn
 wait 900
-cursor rest
-hold 3
-# Turn 5: a snap thrust with the short sword (the skill group opens first; it closes again after
-# every action). Humors are spent only if the roll is failing.
+
+# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
+# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
+skip-unless fighting 21
+wait turn 900
 click skill Short Sword
-wait 900
 click skill Snap Thrust
-wait 900
 click fighter enemy
-wait 900
 cursor rest
 hold 3
 dice
@@ -536,14 +613,138 @@ click humor pulmones needed
 click die needed
 click humor paunch needed
 click die needed
+hold 2
+click continue
+cursor rest
+hold 2
+click end-turn
+wait 900
+
+# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
+# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
+skip-unless fighting 21
+wait turn 900
+click skill Short Sword
+click skill Snap Thrust
+click fighter enemy
+cursor rest
+hold 3
+dice
 click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
 click die needed
 hold 2
 click continue
+cursor rest
+hold 2
+click end-turn
 wait 900
+
+# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
+# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
+skip-unless fighting 21
+wait turn 900
+click skill Short Sword
+click skill Snap Thrust
+click fighter enemy
 cursor rest
 hold 3
-wait mode LocationInteraction 900
+dice
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 2
+click continue
+cursor rest
+hold 2
+click end-turn
+wait 900
+
+# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
+# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
+skip-unless fighting 21
+wait turn 900
+click skill Short Sword
+click skill Snap Thrust
+click fighter enemy
+cursor rest
+hold 3
+dice
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 2
+click continue
+cursor rest
+hold 2
+click end-turn
+wait 900
+
+# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
+# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
+skip-unless fighting 21
+wait turn 900
+click skill Short Sword
+click skill Snap Thrust
+click fighter enemy
+cursor rest
+hold 3
+dice
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 2
+click continue
+cursor rest
+hold 2
+click end-turn
+wait 900
+
+# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
+# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
+skip-unless fighting 21
+wait turn 900
+click skill Short Sword
+click skill Snap Thrust
+click fighter enemy
+cursor rest
+hold 3
+dice
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 2
+click continue
+cursor rest
+hold 2
+click end-turn
+wait 900
+# The wolf is dead; the journey goes on by itself.
 clip end fight_2
 
 # ── The city: buy boots ──────────────────────────────────────────────────────────────────────────────

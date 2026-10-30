@@ -255,10 +255,34 @@ public sealed class CliDriver
 
     // ── Dispatch ──────────────────────────────────────────────────────────────
 
+    private int _skip;   // lines still to pass over, set by `skip-unless`
+
     private void Execute(string raw)
     {
         string line = raw.Trim();
         if (line.Length == 0 || line.StartsWith('#')) return;
+        if (_skip > 0)
+        {
+            _skip--;
+            CliMode.Emit($"skipped: {line}");
+            return;
+        }
+        // `skip-unless fighting <n>`: passes over the next n commands when no fight is on. A fight whose
+        // length the script cannot know is written as enough turns for the longest, each guarded by this,
+        // so the turns a shorter fight does not need are skipped rather than pressing whatever is on
+        // screen once it is over.
+        if (line.StartsWith("skip-unless ", StringComparison.OrdinalIgnoreCase))
+        {
+            var p = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (p.Length == 3 && p[1].Equals("fighting", StringComparison.OrdinalIgnoreCase) && int.TryParse(p[2], out int n))
+            {
+                bool on = _game.CurrentMode == GameMode.Fighting;
+                if (!on) _skip = n;
+                CliMode.Emit(on ? "ok: fighting, carrying on" : $"ok: no fight, skipping the next {n}");
+            }
+            else CliMode.Emit("error: skip-unless fighting <n>");
+            return;
+        }
 
         CliMode.Emit($"> {line}");
 
@@ -1954,6 +1978,16 @@ public sealed class CliDriver
         // load and --playground has nothing to hide behind, so which keyword a phase highlights
         // depends on whether they have arrived yet. A script that clicks a keyword in a LATER phase
         // waits for them first, so the ranking it meets is the same on every run.
+        // `wait turn [secs]`: until the party has the move in a fight, or the fight is over. A fight's
+        // course depends on its rolls, and a script that must play its own turns waits for them rather
+        // than counting the enemy's.
+        else if (a.Length >= 1 && a[0].Equals("turn", StringComparison.OrdinalIgnoreCase))
+        {
+            _waitCondition = () => _game.CurrentMode != GameMode.Fighting || _game.CliFight?.CliPartyChoosing == true;
+            _waitDescription = "turn";
+            if (a.Length >= 2 && int.TryParse(a[1], out int turnSecs))
+                timeout = TimeSpan.FromSeconds(Math.Max(1, turnSecs));
+        }
         else if (a.Length >= 1 && a[0].Equals("embeddings", StringComparison.OrdinalIgnoreCase))
         {
             // Under --no-embeddings they never arrive; the ranking is the fallback on every run anyway.

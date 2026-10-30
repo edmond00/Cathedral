@@ -2284,6 +2284,9 @@ public class FightModeAdapter
     }
 
     /// <summary>One-line summary of the fight for `state`.</summary>
+    /// <summary>True while the party has the move: a player-controlled fighter choosing its action.</summary>
+    public bool CliPartyChoosing => _state.Phase == TurnPhase.SelectingAction && _state.ActiveFighter is { IsPlayerControlled: true };
+
     public string CliState()
     {
         var active = _state.ActiveFighter;
