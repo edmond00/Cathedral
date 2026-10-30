@@ -706,11 +706,10 @@ RS.game(cb_, ce_, "With twenty copper in the purse, to the city.", fade=True)
 # 11. the second fight, and the city
 t, spent2 = fight("fight_2", "Another wolf, on the road to the city.",
                   lambda waits, guard: ["Again we end our turns, and let it come to us."] if waits else [])
-RS.game(t, t + 0.1, *([W(REST_NOTES["fight_2_end"])] if "fight_2_end" in REST_NOTES else []))
 yb, ye = rs_clip("city_arrival")
 arrive = RS.between(t - 1, ye)
-RS.game(t, RS.end(arrive[0]), "We reach the city, and the cobbler's shop.", RS.R(arrive[0]), *after(arrive[0]),
-        fade=True)
+RS.game(t, RS.end(arrive[0]), *([W(REST_NOTES["fight_2_end"])] if "fight_2_end" in REST_NOTES else []),
+        "We reach the city, and the cobbler's shop.", RS.R(arrive[0]), *after(arrive[0]), fade=True)
 for i in arrive[1:]:
     RS.game(RS.end(i - 1), RS.end(i), RS.R(i), *after(i))
 t = RS.end(arrive[-1])

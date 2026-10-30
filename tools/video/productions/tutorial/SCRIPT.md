@@ -292,7 +292,6 @@ The thrust lands: puncture.
 It falls short, and one humor turns it: broken ribs.
 
 Look at what the first thrust did. It broke the wolf's backbone, and the backbone is where movement comes from. From then on the wolf had no points left to act with, and it never struck back once. Where you hit matters.
-
 We reach the city, and the cobbler's shop.
 > *I find myself in the cobbler's shop, in the morning. This place is a low shop smelling of leather and wax, boots hung by their laces from the beams. Around me is my acquaintance Publiosh Tommaezoth, the cobbler of the city. He feels weary, as though he's been working without pause.*
 
